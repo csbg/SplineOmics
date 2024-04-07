@@ -1,10 +1,8 @@
-# ==============================================================================
-# Section 1: Import libraries
-# ==============================================================================
+# Import libraries ---------------------------------------------
 library(limma)
 library(splines)
-
 library(ggplot2)
+library(tidyr)
 library(dplyr)
 library(tibble)
 library(dendextend)
@@ -13,36 +11,39 @@ library(patchwork)
 
 
 
-# ==============================================================================
-# Section 2: level 3 internal package functions
-# ==============================================================================
+# Internal functions level 4 ----------------------------------------------
+
+
+convertPlotToBase64ImgTag <- function(plot, fn5_plot_nrows, width = 7, 
+                                      base_height_per_row = 2.5, units = "in", 
+                                      html_img_width="100%") {
+  
+  additional_height_per_row <- 2.1
+  height <- base_height_per_row + (fn5_plot_nrows - 1) * 
+    additional_height_per_row
+  
+  # Temporarily save the plot as an image
+  img_file <- tempfile(fileext = ".png")
+  ggsave(img_file, plot=plot, width = width, height = height, units = units, 
+         limitsize = FALSE)
+  
+  # Convert the image to a Base64 string
+  img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
+  
+  # Delete the temporary image file
+  unlink(img_file)
+  
+  # Return the HTML img tag with the Base64 string and a fixed width
+  return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
+                 img_base64, html_img_width))
+}
+
+# Internal functions level 3 ---------------------------
 
 
 buildPlotReportHtml <- function(header_section, plots, rowcounts, path) {
   
-  convertPlotToBase64ImgTag <- function(plot, fn5_plot_nrows, width = 7, 
-                                        base_height_per_row = 2.5, units = "in", 
-                                        html_img_width="100%") {
-    
-    additional_height_per_row <- 2.1
-    height <- base_height_per_row + (fn5_plot_nrows - 1) * 
-      additional_height_per_row
-    
-    # Temporarily save the plot as an image
-    img_file <- tempfile(fileext = ".png")
-    ggsave(img_file, plot=plot, width = width, height = height, units = units, 
-           limitsize = FALSE)
-    
-    # Convert the image to a Base64 string
-    img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
-    
-    # Delete the temporary image file
-    unlink(img_file)
-    
-    # Return the HTML img tag with the Base64 string and a fixed width
-    return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
-                   img_base64, html_img_width))
-  }
+
   
   index <- 1
   for (plot in plots) {
@@ -68,9 +69,7 @@ buildPlotReportHtml <- function(header_section, plots, rowcounts, path) {
 
 
 
-# ==============================================================================
-# Section 3: level 2 internal package functions
-# ==============================================================================
+# Internal functions level 2 ---------------------------
 
 
 plot_dendrogram <- function(hc, k, title) {
@@ -126,7 +125,8 @@ plot_all_shapes <- function(curve_values, title) {
     factor(average_curves$cluster, 
            levels = sort(unique(as.numeric(average_curves$cluster))))
   
-  p_curves <- ggplot(average_curves, aes(x = Time, y = Value, color = factor(cluster))) +
+  p_curves <- ggplot(average_curves, aes(x = Time, y = Value, color = 
+                                           factor(cluster))) +
     geom_line() + 
     ggtitle(title) +
     xlab("Timepoints") + ylab("Values") +
@@ -135,30 +135,34 @@ plot_all_shapes <- function(curve_values, title) {
 }
 
 
-plot_single_and_consensus_splines <- function(df, x_vals, title) {
+plot_single_and_consensus_splines <- function(time_series_data, title) {
   # Transform the dataframe to a long format for ggplot2
-  df_long <- reshape2::melt(as.data.frame(t(df)), id.vars = NULL)
-  df_long$x_vals <- rep(x_vals, times = nrow(df))
+  df_long <- as.data.frame(t(time_series_data)) %>%
+    rownames_to_column(var = "time") %>%
+    pivot_longer(cols = -time, names_to = "feature", 
+                 values_to = "intensity") %>%
+    arrange(feature) %>%
+    mutate(time = as.numeric(time))
   
   # Compute consensus (mean of each column)
-  consensus <- colMeans(df, na.rm = TRUE)
-  consensus_df <- data.frame(x_vals = x_vals, consensus = consensus)
-  
+  consensus <- colMeans(time_series_data, na.rm = TRUE)
+  consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)), 
+                             consensus = consensus)
   
   p <- ggplot() +
-    geom_line(data = df_long, aes(x = x_vals, y = value, group = variable, 
+    geom_line(data = df_long, aes(x = time, y = intensity, group = feature,
                                   colour = "Single Shapes"),
               alpha = 0.3, linewidth = 0.5) +
-    geom_line(data = consensus_df, aes(x = x_vals, y = consensus, 
+    geom_line(data = consensus_df, aes(x = time, y = consensus,
                                        colour = "Consensus Shape"),
               linewidth = 1.5) +
-    scale_colour_manual("", values = c("Consensus Shape" = "darkblue", 
+    scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
                                        "Single Shapes" = "#6495ED")) +
     theme_minimal() +
     ggtitle(title) +
     xlab("time to feeding [min]") +
     ylab("Y")
-  
+
   return(p)
 }
 
@@ -173,12 +177,12 @@ plot_consensus_shapes <- function(curve_values, title) {
     subset_df <- subset(curve_values, cluster == current_cluster)
     subset_df$cluster <- NULL 
     
+    debug(plot_single_and_consensus_splines)
     plots[[length(plots) + 1]] <- plot_single_and_consensus_splines(
-      subset_df, time, current_title)
+      subset_df, current_title)
   }
   return(plots)
 }
-
 
 
 plot_splines <- function(top_table, data, meta, main_title) {
@@ -299,9 +303,7 @@ generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
 
 
 
-# ==============================================================================
-# Section 4: level 1 internal package functions
-# ==============================================================================
+# Internal functions level 1 ---------------------------
 
 
 make_clustering_report <- function(all_groups_clustering, group_factors, data, 
@@ -380,9 +382,7 @@ make_clustering_report <- function(all_groups_clustering, group_factors, data,
 
 
 
-# ==============================================================================
-# Section 3: exported package functions
-# ==============================================================================
+# Section 5: exported package functions -----------------------------------
 
 
 cluster_hits <- function(top_tables, data, meta, group_factors, p_values, 
@@ -428,7 +428,7 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
     
     DoF <- which(names(top_table) == "AveExpr") - 1
     
-    # ----------------------- Get smooth curves --------------------------------
+    # Get smooth curves 
     selected_group <- groups[i, ]
     subset_meta <- meta[apply(meta[, group_factors], 1, function(row) {
       all(row == unlist(selected_group))
@@ -460,7 +460,7 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
     curve_values <- as.data.frame(curve_values)
     rownames(curve_values) <- rownames(splineCoeffs)
     
-    # ---------------- Normalize smooth curves between 0 and 1 -------------------
+    ## Normalize smooth curves between 0 and 1 --------------------------------- 
     # Apply min-max normalization to each row (curve)
     normalized_curves <- apply(curve_values, 1, function(row) {
       (row - min(row)) / (max(row) - min(row))
@@ -472,7 +472,7 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
     # Replace the original dataframe with the normalized values
     curve_values[,] <- normalized_curves
     
-    # ----------------------------- Hierarchical clustering ----------------------
+    ## Hierarchical clustering -------------------------------------------------
     distance_matrix <- dist(curve_values, method = "euclidean")
     hc <- hclust(distance_matrix, method = "complete")
     cluster_assignments <- cutree(hc, k = k)

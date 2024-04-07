@@ -1,14 +1,10 @@
-# ==============================================================================
-# Section 1: Import libraries
-# ==============================================================================
+# Import libraries --------------------------------------------------------
 library(limma)
 library(splines)
 
 
 
-# ==============================================================================
-# Section 2: level 1 internal package functions
-# ==============================================================================
+# Internal functions level 1 ---------------------------
 
 
 run_limma_splines_integrated <- function(data, meta, design, DoFs, 
@@ -122,9 +118,8 @@ run_limma_splines_isolated <- function(data, meta, design, DoFs,
 }
 
 
-# ==============================================================================
-# Section 3: exported package functions
-# ==============================================================================
+
+# Export functions -----------------------------------
 
 
 run_limma_splines <- function(data, meta, design, DoFs, group_factors, feature_ids,
