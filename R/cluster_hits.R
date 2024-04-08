@@ -177,7 +177,6 @@ plot_consensus_shapes <- function(curve_values, title) {
     subset_df <- subset(curve_values, cluster == current_cluster)
     subset_df$cluster <- NULL 
     
-    debug(plot_single_and_consensus_splines)
     plots[[length(plots) + 1]] <- plot_single_and_consensus_splines(
       subset_df, current_title)
   }
@@ -191,14 +190,15 @@ plot_splines <- function(top_table, data, meta, main_title) {
   time_points <- meta$Time
   
   titles <- data.frame(
-    RowNames = rownames(top_table),
-    FeatureID = top_table$feature_id
+    FeatureID = top_table$feature_index,
+    feature_names = top_table$feature_names
   )
   
   plot_list <- list()
   
+  ## Generate individual plots ----
   for (hit in 1:nrow(top_table)) {
-    hit_index <- as.numeric(rownames(top_table)[hit])
+    hit_index <- as.numeric(top_table$feature_index[hit])
     y_values <- data[hit_index, ]
     
     intercept <- top_table$intercept[hit]
@@ -227,8 +227,8 @@ plot_splines <- function(top_table, data, meta, main_title) {
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
       labs(x = "Time [min]", y = "Intensity")
     
-    matched_row <- subset(titles, RowNames == hit_index)
-    title <- as.character(matched_row$FeatureID)
+    matched_row <- subset(titles, FeatureID == hit_index)
+    title <- as.character(matched_row$feature_name)
     if (is.na(title)) {
       title <- paste("feature:", hit_index)
     }
@@ -246,7 +246,8 @@ plot_splines <- function(top_table, data, meta, main_title) {
     plot_list[[length(plot_list) + 1]] <- p
   }
   
-  if(length(plot_list) > 0) {           # Generate the combined plot
+  ## Generate the combined plot ----
+  if(length(plot_list) > 0) {           
     num_plots <- length(plot_list)
     ncol <- 3
     nrows <- ceiling(num_plots / ncol)
@@ -255,7 +256,6 @@ plot_splines <- function(top_table, data, meta, main_title) {
       plot_annotation(title = paste(main_title, "| DoF:", DoF),
                       theme = theme(plot.title = element_text(hjust = 0.5, 
                                                               size = 14)))
-    # print(composite_plot)
     return(list(composite_plot = composite_plot, nrows = nrows))
   } else {
     stop("plot_list in function plot_splines splinetime package has length 0!")
@@ -347,24 +347,16 @@ make_clustering_report <- function(all_groups_clustering, group_factors, data,
       for (nr_cluster in unique(na.omit(top_table$cluster))) {
         main_title <- paste(",cluster:", nr_cluster, sep = " ")
         
-        if (!"rowname" %in% names(top_table)) {
-          top_table <- tibble::rownames_to_column(top_table, var = "rowname")
-        }
-        
         top_table_filt <- top_table %>%
           dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
-        top_table_filt <- 
-          tibble::column_to_rownames(top_table_filt, var = "rowname")
         
-        # debug(plot_splines)
         plot_splines_result <- plot_splines(top_table_filt, data_level, 
                                             meta_level, main_title)
         
         composite_plots[[length(composite_plots) + 1]] <- 
           plot_splines_result$composite_plot 
         
-        nrows[[length(nrows) + 1]] <- 
-          plot_splines_result$nrows 
+        nrows[[length(nrows) + 1]] <- plot_splines_result$nrows 
       }
       
       plot_list <- c(plot_list, list(dendrogram, p_curves), 
@@ -391,10 +383,7 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
     stop("top_tables must be a list of dataframes")
   } else if ((is.data.frame(data)) && (!is.matrix(data))) {
-    data <- data %>%
-      lapply(function(x) as.numeric(as.character(x))) %>%
-      data.frame() %>%
-      as.matrix()
+    data <- as.matrix(data)
   } else if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
     stop("meta must be a dataframe")
   } else if (!(is.character(group_factors))) {
@@ -499,7 +488,6 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
   }
   
   # Generate HTML report with the clustering results
-  # debug(make_clustering_report)
   make_clustering_report(all_groups_clustering, group_factors, data, meta, 
                          p_values, report_dir)
   
