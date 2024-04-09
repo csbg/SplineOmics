@@ -40,6 +40,7 @@ design <- "~ 1 + Phase*X + Reactor"
 group_factors <- c("Phase")
 feature_names <- annotation$First.Protein.Description
 
+# debug(run_limma_splines)
 result <- run_limma_splines(data, meta, design, DoFs, group_factors,
                                 feature_names, "integrated")
 

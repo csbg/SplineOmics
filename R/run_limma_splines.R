@@ -6,20 +6,54 @@ library(splines)
 # Internal functions level 1 ---------------------------------------------------
 
 
-between_level <- function(data, meta, design, DoF, factor, level2, 
+# between_level <- function(data, meta, design, DoF, factor, level2,
+#                           padjust_method) {
+#   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+#   design_matrix <- model.matrix(as.formula(design), data = meta)
+# 
+#   fit <- lmFit(data, design_matrix)
+#   fit <- eBayes(fit)
+# 
+#   contrast_coeff <- paste0(factor, level2)
+# 
+#   top_table_level_comparison <- topTable(fit, coef=contrast_coeff,
+#                                    adjust.method=padjust_method, number=Inf)
+# 
+#   return(top_table_level_comparison)
+# }
+
+
+between_level <- function(data, meta, design, DoF, factor, level1, level2, 
                           padjust_method) {
+  # Incorporate spline terms into meta
   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+  
+  # Generate the design matrix
   design_matrix <- model.matrix(as.formula(design), data = meta)
   
+  # Fit the linear model
   fit <- lmFit(data, design_matrix)
-  fit <- eBayes(fit)
   
-  contrast_coeff <- paste0(factor, level2)
-
-  top_table_level_comparison <- topTable(fit, coef=contrast_coeff,
-                                   adjust.method=padjust_method, number=Inf)
+  # Replace colons in column names to make them syntactically valid
+  modified_design_matrix <- design_matrix
+  colnames(modified_design_matrix) <- gsub(":", "_", colnames(design_matrix))
   
-  return(top_table_level_comparison)
+  # Define the contrast formula
+  contrastFormula <- paste0(factor, level2)
+  
+  # Create contrast matrix
+  cont.matrix <- makeContrasts(contrasts = setNames(contrastFormula, "level_comparison"),
+                               levels = modified_design_matrix)
+  
+  # Fit the contrasts and apply eBayes
+  fit2 <- contrasts.fit(fit, cont.matrix)
+  fit2 <- eBayes(fit2)
+  
+  # Extract significant features
+  top_table_comparison <- topTable(fit2, coef = contrastFormula,
+                                   adjust.method = padjust_method, number = Inf)
+  
+  return(top_table_comparison)
 }
 
 
@@ -111,10 +145,12 @@ run_limma_splines <- function(data, meta, design, DoFs, group_factors,
         
         level2 <- levels[i + 1]
         if (!is.na(level2)) {
+          
+          debug(between_level)
           ttlc <- 
-            between_level(data, meta, design, DoF, factor, level2, 
+            between_level(data, meta, design, DoF, factor, level, level2, 
                           padjust_method)
-          ttslc[[length(ttslc) + 1]] <- ttlc
+          ttslc[[paste0(level, "_vs_", level2)]] <- ttlc
         }
       }
       
