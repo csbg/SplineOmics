@@ -37,15 +37,16 @@ DoFs <- c(2L, 2L)
 
 design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
-group_factors <- c("Phase")
+factors <- c("Phase")
 feature_names <- annotation$First.Protein.Description
 
 # debug(run_limma_splines)
-result <- run_limma_splines(data, meta, design, DoFs, group_factors,
+result <- run_limma_splines(data, meta, design, DoFs, factors,
                                 feature_names, "integrated")
 
 top_tables <- result$top_tables
-ttslc <- result$ttslc
+ttslc_factor_only <- result$ttslc_factor_only
+ttslc_factor_time <- result$ttslc_factor_time
 
 ## Cluster hits ----
 p_values <- c(0.05, 0.05)
@@ -56,6 +57,100 @@ data <- removeBatchEffect(x = data, batch = meta$Reactor)
 clustering_results <- cluster_hits(top_tables, data, meta, group_factors, 
                                    p_values, clusters, report_dir)
 
-
-
 clustering_results[[2]]$clustered_hits
+
+
+
+
+
+
+
+
+# plot exp stat diff ----
+row_header <- 7011
+
+# Extract the row and convert it to numeric vector
+row_data <- as.numeric(data[row_header, ])
+
+# Split the row into two series of 17 values each
+series1 <- row_data[1:17]
+series2 <- row_data[18:34]
+
+# Get the first 17 Time values from 'meta'
+time_values <- meta$Time[1:17]
+
+# Combine both series into a single dataframe for plotting
+plot_data <- data.frame(
+  Time = c(time_values, time_values), # Duplicate Time for both series
+  Value = c(series1, series2),
+  Series = factor(c(rep("Series 1", 17), rep("Series 2", 17)))
+)
+
+# Plot without connecting lines
+p <- ggplot(plot_data, aes(x = Time, y = Value, color = Series)) +
+  geom_point() + # Only plot points, no connecting lines
+  theme_minimal() +
+  labs(title = paste("Comparison of Series for Row", row_header),
+       x = "Time",
+       y = "Value",
+       color = "Series")
+
+print(p)
+
+# Plot Series 1 individually
+p_series1 <- ggplot(subset(plot_data, Series == "Series 1"), aes(x = Time, y = Value)) +
+  geom_point(color = "blue") +
+  theme_minimal() +
+  labs(title = "Series 1 Individual Plot",
+       x = "Time",
+       y = "Value")
+
+print(p_series1) # Print Series 1 plot
+
+# Plot Series 2 individually
+p_series2 <- ggplot(subset(plot_data, Series == "Series 2"), aes(x = Time, y = Value)) +
+  geom_point(color = "red") +
+  theme_minimal() +
+  labs(title = "Series 2 Individual Plot",
+       x = "Time",
+       y = "Value")
+
+print(p_series2) # Print Series 2 plot
+
+
+
+# Special results generation section (delete afterwards again) ----
+
+## -------------------- Generate the final tables -----------------------------
+library(WriteXLS)
+
+
+ttlc <- ttslc[[1]]
+sorted_indices <- ttlc$feature_index
+sorted_annotation <- annotation
+sorted_annotation <- sorted_annotation[sorted_indices, ]
+
+desired_columns <- sorted_annotation[, c("Protein.Ids", "Genes", 
+                                         "First.Protein.Description")]
+ttlc_mod <- cbind(feature_index = sorted_indices, 
+                                     desired_columns, ttlc)
+
+
+
+
+## ---------------------- Generate the Excel file -------------------------------
+timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
+filename <- paste0("limma_splines_PTX_exp_stat_diff_", timestamp, ".xlsx")
+filepath <- here::here("results", filename)
+dir_path <- dirname(filepath)
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+}
+
+WriteXLS(x = ttlc_mod, 
+         ExcelFileName = filepath,  
+         AdjWidth = TRUE, 
+         BoldHeaderRow = TRUE, 
+         FreezeRow = 1, 
+         SheetNames = "exp_stat_diff",  
+         na = "N/A")

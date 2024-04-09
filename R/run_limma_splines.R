@@ -3,57 +3,46 @@ library(limma)
 library(splines)
 
 
+
+# Internal functions level 2 ----------------------------------------------
+
+
+modify_limma_top_table <- function(top_table, feature_names) {
+  top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
+    select(-feature_index, everything(), feature_index) %>%
+    mutate(feature_index = as.numeric(feature_index))
+  
+  sorted_feature_names <- feature_names[top_table$feature_index]
+  top_table <- top_table %>%
+    mutate(feature_names = sorted_feature_names)
+  
+  return(top_table)
+}
+
+
 # Internal functions level 1 ---------------------------------------------------
 
 
-# between_level <- function(data, meta, design, DoF, factor, level2,
-#                           padjust_method) {
-#   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
-#   design_matrix <- model.matrix(as.formula(design), data = meta)
-# 
-#   fit <- lmFit(data, design_matrix)
-#   fit <- eBayes(fit)
-# 
-#   contrast_coeff <- paste0(factor, level2)
-# 
-#   top_table_level_comparison <- topTable(fit, coef=contrast_coeff,
-#                                    adjust.method=padjust_method, number=Inf)
-# 
-#   return(top_table_level_comparison)
-# }
-
-
-between_level <- function(data, meta, design, DoF, factor, level1, level2, 
-                          padjust_method) {
-  # Incorporate spline terms into meta
+between_level <- function(data, meta, design, DoF, factor, level2,
+                          padjust_method, feature_names) {
   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
-  
-  # Generate the design matrix
   design_matrix <- model.matrix(as.formula(design), data = meta)
-  
-  # Fit the linear model
+
   fit <- lmFit(data, design_matrix)
+  fit <- eBayes(fit)
+
+  factor_only_contrast_coeff <- paste0(factor, level2)
+  ttlc_factor_only <- topTable(fit, coef=factor_only_contrast_coeff,
+                                   adjust.method=padjust_method, number=Inf)
+  ttlc_factor_only <- modify_limma_top_table(ttlc_factor_only, feature_names)
   
-  # Replace colons in column names to make them syntactically valid
-  modified_design_matrix <- design_matrix
-  colnames(modified_design_matrix) <- gsub(":", "_", colnames(design_matrix))
+  factor_time_contrast_coeffs <- paste0(factor, level2, ":X", seq_len(DoF))
+  ttlc_factor_time <- topTable(fit, coef=factor_time_contrast_coeffs,
+                               adjust.method=padjust_method, number=Inf)
+  ttlc_factor_time <- modify_limma_top_table(ttlc_factor_time, feature_names)
   
-  # Define the contrast formula
-  contrastFormula <- paste0(factor, level2)
-  
-  # Create contrast matrix
-  cont.matrix <- makeContrasts(contrasts = setNames(contrastFormula, "level_comparison"),
-                               levels = modified_design_matrix)
-  
-  # Fit the contrasts and apply eBayes
-  fit2 <- contrasts.fit(fit, cont.matrix)
-  fit2 <- eBayes(fit2)
-  
-  # Extract significant features
-  top_table_comparison <- topTable(fit2, coef = contrastFormula,
-                                   adjust.method = padjust_method, number = Inf)
-  
-  return(top_table_comparison)
+  return(list(ttlc_factor_only = ttlc_factor_only, 
+              ttlc_factor_time = ttlc_factor_time))
 }
 
 
@@ -74,13 +63,7 @@ within_level <- function(data, meta, factor, level, DoF, padjust_method) {
 
 process_top_table <- function(top_table, top_tables, feature_names, fit, factor, 
                               level) {
-  top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
-    select(-feature_index, everything(), feature_index) %>%
-    mutate(feature_index = as.numeric(feature_index))
-  
-  sorted_feature_names <- feature_names[top_table$feature_index]
-  top_table <- top_table %>%
-    mutate(feature_names = sorted_feature_names)
+  top_table <- modify_limma_top_table(top_table, feature_names)
   
   intercepts <- as.data.frame(coef(fit)[, "(Intercept)", drop = FALSE])
   intercepts_ordered <- intercepts[match(top_table$feature_index, 
@@ -99,7 +82,7 @@ process_top_table <- function(top_table, top_tables, feature_names, fit, factor,
 # Export functions -------------------------------------------------------------
 
 
-run_limma_splines <- function(data, meta, design, DoFs, group_factors, 
+run_limma_splines <- function(data, meta, design, DoFs, factors, 
                               feature_names, mode, padjust_method = "BH") {
   # Control arguments
   if ((is.data.frame(data)) && (!is.matrix(data))) {
@@ -110,8 +93,8 @@ run_limma_splines <- function(data, meta, design, DoFs, group_factors,
     stop("design must be a single string.")
   } else if (!is.integer(DoFs)) {
     stop("DoFs must be a integer vector")
-  } else if (!(is.character(group_factors))) {
-    stop("group_factors must be a non-empty character vector")
+  } else if (!(is.character(factors))) {
+    stop("factors must be a non-empty character vector")
   } else if (!(is.character(feature_ids))) {
     stop("feature_ids must be a non-empty character vector")
   } else if (!(mode == "integrated") || !(mode == "isolated")) {
@@ -119,9 +102,10 @@ run_limma_splines <- function(data, meta, design, DoFs, group_factors,
   }
   
   top_tables <- list()
-  ttslc <- list()        # top_tables_level_comparison
+  ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
+  ttslc_factor_time <- list()        # Factor AND time
   
-  for (factor in group_factors) {             # for example fermentation phase
+  for (factor in factors) {             # for example fermentation phase
     meta[[factor]] <- factor(meta[[factor]])
     levels <- levels(meta[[factor]])
     
@@ -145,12 +129,14 @@ run_limma_splines <- function(data, meta, design, DoFs, group_factors,
         
         level2 <- levels[i + 1]
         if (!is.na(level2)) {
-          
           debug(between_level)
-          ttlc <- 
-            between_level(data, meta, design, DoF, factor, level, level2, 
-                          padjust_method)
-          ttslc[[paste0(level, "_vs_", level2)]] <- ttlc
+          result <- between_level(data, meta, design, DoF, factor, level2, 
+                          padjust_method, feature_names)
+          
+          ttslc_factor_only[[paste0(level, "_vs_", level2)]] <- 
+            result$ttlc_factor_only
+          ttslc_factor_time[[paste0(level, "_vs_", level2)]] <- 
+            result$ttlc_factor_time
         }
       }
       
@@ -165,9 +151,12 @@ run_limma_splines <- function(data, meta, design, DoFs, group_factors,
   }
   
   if (mode == "isolated") {
-    print("mode == 'integrated' necessary for level comparison. Returning 
-          emtpy list.")
+    print("mode == 'integrated' necessary for between level comparison. 
+          Returning emtpy list for ttslc_factor_only and ttslc_factor_time
+          (ttslc = top_tables_level_comparison).")
   }
   
-  return(list(top_tables = top_tables, ttslc = ttslc))
+  return(list(top_tables = top_tables, 
+              ttslc_factor_only = ttslc_factor_only,
+              ttslc_factor_time = ttslc_factor_time))
 }
