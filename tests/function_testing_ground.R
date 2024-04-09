@@ -40,9 +40,11 @@ design <- "~ 1 + Phase*X + Reactor"
 group_factors <- c("Phase")
 feature_names <- annotation$First.Protein.Description
 
-top_tables <- run_limma_splines(data, meta, design, DoFs, group_factors,
+result <- run_limma_splines(data, meta, design, DoFs, group_factors,
                                 feature_names, "integrated")
 
+top_tables <- result$top_tables
+ttslc <- result$ttslc
 
 ## Cluster hits ----
 p_values <- c(0.05, 0.05)
