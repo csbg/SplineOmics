@@ -72,6 +72,8 @@ buildPlotReportHtml <- function(header_section, plots, rowcounts, path) {
 # Internal functions level 2 ---------------------------
 
 
+# Veronikas function space
+
 plot_dendrogram <- function(hc, k, title) {
   dend <- as.dendrogram(hc)
   
@@ -135,6 +137,7 @@ plot_all_shapes <- function(curve_values, title) {
 }
 
 
+# Veronika
 plot_single_and_consensus_splines <- function(time_series_data, title) {
   # Transform the dataframe to a long format for ggplot2
   df_long <- as.data.frame(t(time_series_data)) %>%
@@ -350,6 +353,9 @@ make_clustering_report <- function(all_groups_clustering, group_factors, data,
       i <- i + 1
       
       curve_values <- group_clustering$curve_values
+      
+      # For Veronika
+      # heatmap <- plot_heatmap()
       
       title <- 
         "Exponential phase\n\nHierarchical Clustering Dendrogram 

@@ -30,6 +30,85 @@ store_hits <- function(condition) {
 }
 
 
+plot_splines_combined <- function(data, meta, annotation, DoF, title) {
+  
+  indices <- sample(sign_splines[[column_name]], 
+                          num_to_sample, 
+                          replace = FALSE)
+  
+  plot_list <- list()
+  
+  # Generate all the individual plots
+  for(site_index in indices) {
+    y_values <- data[site_index, ]
+    splineCoeffs <- splineCoeffsList[[as.character(site_index)]]
+    
+    smooth_timepoints <- seq(-60, 240, length.out = 100)
+    X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
+    
+    fitted_values <- X %*% splineCoeffs + intercept_value
+    
+    site_id <- 
+      data_id_mapping$UniqueIdentifier[site_index]
+    
+    plot_data <- data.frame(Time = timePoints, 
+                            Y = y_values)
+    
+    plot_spline <- data.frame(Time = smooth_timepoints,
+                              Fitted = fitted_values)
+    
+    # Calculate the extension for the x-axis
+    x_max <- max(timePoints)
+    x_extension <- x_max * 0.05  # Extend the x-axis by 5% of its maximum value
+    
+    p <- ggplot() +
+      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
+      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
+                color = 'red') +
+      theme_minimal() +
+      scale_x_continuous(limits = c(min(timePoints), x_max + x_extension))
+    labs(x = "Time [min]", y = "Intensity")
+    
+    # if (annotation) {
+    title <- annotation$First.Protein.Description[site_index]  
+    # } else {
+    #   title <- paste("Feature:", site_index)
+    # }
+    
+    p <- p + labs(title = title, 
+                  x = "Time [min]", y = "Intensity") +
+      theme(plot.title = element_text(size = 4),
+            axis.title.x = element_text(size = 8), 
+            axis.title.y = element_text(size = 8)) +
+      annotate("text", x = x_max + (x_extension / 2), y = 
+                 max(fitted_values, na.rm = TRUE),
+               label = site_id,
+               hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
+    
+    plot_list[[length(plot_list) + 1]] <- p
+  }
+  
+  if(length(plot_list) > 0) {
+    # Generate the combined plot
+    num_plots <- length(plot_list)
+    ncol <- 3
+    nrow <- ceiling(num_plots / ncol)
+    
+    composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
+      plot_annotation(title = paste(data_descriptor, "| DoF:", 
+                                    DoF, 
+                                    "| p-value threshold:", 
+                                    p_value_threshold), 
+                      theme = theme(plot.title = element_text(hjust = 0.5, 
+                                                              size = 14)))
+    return(list(composite_plot = composite_plot, nrow = nrow))
+  } else {
+    return(plot_list)
+  }
+  
+}
+
+
 
 # Internal functions level 2 ----------------------------------------------
 
@@ -214,111 +293,17 @@ gen_hitcomp_plots <- function(all_combos_top_tables, plots, plots_len) {
 }
 
 
-plot_splines <- function(data_matrix, degree_of_freedom, 
-                         indices, data_id_mapping, 
-                         timePoints, fit, splineCoeffsList,
-                         p_value_threshold = "NA", 
-                         combine_plots = FALSE, 
-                         data_descriptor = "NA",
-                         annotation) {
-  # Description:
-  #     Plots fitted spline curves for significant phospho-sites against 
-  #     experimental data points,
-  #     including degree of freedom and P-value threshold information.
-  #
-  # Input:
-  #     data_matrix (matrix): Data matrix with rows as phospho-sites and 
-  #     columns as time points.
-  #     degree_of_freedom (integer): Degrees of freedom for the spline 
-  #     fitting.
-  #     indices (vector): Indices of phospho-sites to plot.
-  #     data_id_mapping (data.frame): Data frame with 
-  #     UniqueIdentifier column for phospho-sites.
-  #     timePoints (vector): Time points corresponding to the columns in 
-  #     data_matrix.
-  #     fit (lm object): Fitted model object from limma or similar.
-  #     splineCoeffsList (list): List of spline coefficients for each 
-  #     phospho-site.
-  #     p_value_threshold (numeric): P-value threshold used for determining 
-  #     significance.
-  #
-  # Output:
-  #     None. Plots are generated and printed directly.
+gen_combined_spline_plots <- function(all_combos_top_tables, plots, plots_len) {
   
-  plot_list <- list()
   
-  # Generate all the individual plots
-  for(site_index in indices) {
-    intercept_coef <- coef(fit)[site_index,]
-    intercept_value <- intercept_coef["(Intercept)"]
-    
-    y_values <- data_matrix[site_index, ]
-    splineCoeffs <- splineCoeffsList[[as.character
-                                              (site_index)]]
-    
-    smooth_timepoints <- seq(-60, 240, length.out = 100)
-    X <- ns(smooth_timepoints, df = degree_of_freedom, 
-                intercept = FALSE)
-    
-    fitted_values <- X %*% splineCoeffs + intercept_value
-    
-    site_id <- 
-      data_id_mapping$UniqueIdentifier[site_index]
-    
-    plot_data <- data.frame(Time = timePoints, 
-                                Y = y_values)
-    
-    plot_spline <- data.frame(Time = smooth_timepoints,
-                                  Fitted = fitted_values)
-    
-    # Calculate the extension for the x-axis
-    x_max <- max(timePoints)
-    x_extension <- x_max * 0.05  # Extend the x-axis by 5% of its maximum value
-    
-    p <- ggplot() +
-      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
-      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
-                color = 'red') +
-      theme_minimal() +
-      scale_x_continuous(limits = c(min(timePoints), x_max + x_extension))
-    labs(x = "Time [min]", y = "Intensity")
-    
-    # if (annotation) {
-    title <- annotation$First.Protein.Description[site_index]  
-    # } else {
-    #   title <- paste("Feature:", site_index)
-    # }
-    
-    p <- p + labs(title = title, 
-                          x = "Time [min]", y = "Intensity") +
-      theme(plot.title = element_text(size = 4),
-            axis.title.x = element_text(size = 8), 
-            axis.title.y = element_text(size = 8)) +
-      annotate("text", x = x_max + (x_extension / 2), y = 
-                 max(fitted_values, na.rm = TRUE),
-               label = site_id,
-               hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
-    
-    plot_list[[length(plot_list) + 1]] <- p
-  }
   
-  if(length(plot_list) > 0) {
-    # Generate the combined plot
-    num_plots <- length(plot_list)
-    ncol <- 3
-    nrow <- ceiling(num_plots / ncol)
-    
-    composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      plot_annotation(title = paste(data_descriptor, "| DoF:", 
-                                    degree_of_freedom, 
-                                    "| p-value threshold:", 
-                                    p_value_threshold), 
-                      theme = theme(plot.title = element_text(hjust = 0.5, 
-                                                              size = 14)))
-    return(list(composite_plot = composite_plot, nrow = nrow))
-  } else {
-    return(plot_list)
-  }
+  plot_splines_combined(data_matrix, degree_of_freedom, 
+                                    indices, data_id_mapping, 
+                                    timePoints, fit, splineCoeffsList,
+                                    p_value_threshold = "NA", 
+                                    combine_plots = FALSE, 
+                                    data_descriptor = "NA",
+                                    annotation) 
   
 }
 
@@ -412,8 +397,9 @@ plot_limma_combos_results <- function(all_combos_top_tables) {
   
   result <- gen_hitcomp_plots(all_combos_top_tables, plots, plots_len)
 
-  # result <- 
-  #   gen_spline_plots(all_combos_top_tables, result$plots, result$plots_len)
+  result <-
+    gen_combined_spline_plots(all_combos_top_tables, result$plots, 
+                              result$plots_len)
   
   return(list(plots = result$plots, plots_len = result$plots_len))
 }
