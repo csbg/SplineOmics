@@ -40,8 +40,8 @@ pthresholds <- c(0.05, 0.1)
 
 ## hyperparams screen limma ----
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas, metas, designs, modes, factors, DoFs, 
-                                   feature_names, pthresholds)
+# result <- limma_hyperparams_screen(datas, metas, designs, modes, 
+#                                    factors, DoFs, feature_names, pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)

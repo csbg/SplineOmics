@@ -4,30 +4,40 @@ library(splines)
 
 
 
-# Internal functions level 2 ----------------------------------------------
+# Internal functions level 2 ---------------------------------------------------
 
 
-modify_limma_top_table <- function(top_table, feature_names) {
+#' Converts top_table to a tibble and adds new column feature_names
+modify_limma_top_table <- function(top_table, 
+                                   feature_names) {
   top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
-    select(-feature_index, everything(), feature_index) %>%
-    mutate(feature_index = as.numeric(feature_index))
+    relocate(feature_index, .after = last_col()) %>%
+    mutate(feature_index = as.integer(feature_index))
   
   sorted_feature_names <- feature_names[top_table$feature_index]
   top_table <- top_table %>%
     mutate(feature_names = sorted_feature_names)
   
-  return(top_table)
+  top_table
 }
 
 
 # Internal functions level 1 ---------------------------------------------------
 
 
-control_inputs_run_limma <- function(data, meta, design, DoFs, factors, 
-                                     feature_names, mode) {
-  # Check if data is a dataframe and not a matrix, then convert to matrix
-  if (is.data.frame(data) && !is.matrix(data)) {
+#' Controls the function input and raises an error if not in expected format
+control_inputs_run_limma <- function(data, 
+                                     meta, 
+                                     design, 
+                                     DoFs, 
+                                     condition, 
+                                     feature_names, 
+                                     mode, 
+                                     padjust_method) {
+  if (is.data.frame(data)) {
     data <- as.matrix(data)
+  } else if (!is.matrix(data)) {
+    stop("data must be a dataframe or a matrix")
   }
   
   # Ensure meta is a dataframe with a 'Time' column
@@ -41,8 +51,9 @@ control_inputs_run_limma <- function(data, meta, design, DoFs, factors,
   }
   
   # Validate DoFs as an integer vector
-  if (!is.integer(DoFs)) {
-    stop("DoFs must be an integer vector.")
+  if (!is.integer(DoFs) || length(DoFs) != length(unique(meta[[condition]]))) {
+    stop("DoFs must be an integer vector and its length must match the number of 
+         levels in meta$condition")
   }
   
   # Ensure factors is a non-empty character vector
@@ -59,33 +70,59 @@ control_inputs_run_limma <- function(data, meta, design, DoFs, factors,
   if (!(mode == "integrated" || mode == "isolated")) {
     stop("mode must be either 'integrated' or 'isolated'.")
   }
+  
+  supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", 
+                         "fdr", "none")
+  if (!(is.character(padjust_method) && padjust_method %in% supported_methods)) 
+    {
+    stop("padjust_method must be a character and one of the supported methods (
+         holm, hochberg, hommel, bonferroni, BH, BY, fdr, none).")
+  }
 }
 
 
-between_level <- function(data, meta, design, DoF, factor, level2,
-                          padjust_method, feature_names) {
-  meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+#' Performs limma spline analysis and gets the top_table for the level 
+#' comparison: Both for factor and for factor:time
+between_level <- function(data, 
+                          meta, 
+                          design, 
+                          DoF, 
+                          condition, 
+                          compared_levels,
+                          padjust_method, 
+                          feature_names) {
+  samples <- which(meta[[condition]] %in% compared_levels)
+  data <- data[, samples]
+  meta <- subset(meta, meta[[condition]] %in% compared_levels)
+  
+  meta$X <- ns(meta$Time, df = DoF, intercept = FALSE)
   design_matrix <- model.matrix(as.formula(design), data = meta)
 
   fit <- lmFit(data, design_matrix)
   fit <- eBayes(fit)
 
-  factor_only_contrast_coeff <- paste0(factor, level2)
-  ttlc_factor_only <- topTable(fit, coef=factor_only_contrast_coeff,
-                                   adjust.method=padjust_method, number=Inf)
+  factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
+  ttlc_factor_only <- topTable(fit, coef = factor_only_contrast_coeff,
+                               adjust.method = padjust_method, number = Inf)
   ttlc_factor_only <- modify_limma_top_table(ttlc_factor_only, feature_names)
   
-  factor_time_contrast_coeffs <- paste0(factor, level2, ":X", seq_len(DoF))
-  ttlc_factor_time <- topTable(fit, coef=factor_time_contrast_coeffs,
-                               adjust.method=padjust_method, number=Inf)
+  factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
+                                        seq_len(DoF))
+  ttlc_factor_time <- topTable(fit, coef = factor_time_contrast_coeffs,
+                               adjust.method = padjust_method, number = Inf)
   ttlc_factor_time <- modify_limma_top_table(ttlc_factor_time, feature_names)
   
-  return(list(ttlc_factor_only = ttlc_factor_only, 
-              ttlc_factor_time = ttlc_factor_time))
+  list(ttlc_factor_only = ttlc_factor_only, ttlc_factor_time = ttlc_factor_time)
 }
 
 
-within_level <- function(data, meta, design, factor, level, DoF, 
+#' Performs the limma spline analysis for a selected level of a factor
+within_level <- function(data, 
+                         meta, 
+                         design, 
+                         factor, 
+                         level, 
+                         DoF, 
                          padjust_method) {
   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
   design_matrix <- model.matrix(as.formula(design), data = meta)
@@ -93,16 +130,21 @@ within_level <- function(data, meta, design, factor, level, DoF,
   fit <- lmFit(data, design_matrix)
   fit <- eBayes(fit)
   
-  coef_names <- paste0("X", seq_len(DoF))
+  coeffs <- paste0("X", seq_len(DoF))
 
-  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coef_names)
+  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
   
-  return(list(top_table = top_table, fit = fit))
+  list(top_table = top_table, fit = fit)
 }
 
 
-process_top_table <- function(top_table, top_tables, feature_names, fit, factor, 
-                              level) {
+#' Converts top_table to a tibble and adds the columns feature_names and 
+#' (Intercept) and appends it to the top_table list.
+process_top_table <- function(top_table_and_fit, 
+                              feature_names) {
+  top_table <- top_table_and_fit$top_table
+  fit <- top_table_and_fit$fit
+  
   top_table <- modify_limma_top_table(top_table, feature_names)
   
   intercepts <- as.data.frame(coef(fit)[, "(Intercept)", drop = FALSE])
@@ -111,10 +153,7 @@ process_top_table <- function(top_table, top_tables, feature_names, fit, factor,
                                    drop = FALSE]
   top_table$intercept <- intercepts_ordered[, 1]
   
-  results_name <- paste(factor, level, sep = "_")
-  top_tables[[results_name]] <- top_table
-  
-  return(top_tables)
+  top_table
 }
 
 
@@ -163,70 +202,70 @@ process_top_table <- function(top_table, top_tables, feature_names, fit, factor,
 #'
 #' @export
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom dplyr %>%
+#' people should use R 4.1, so that they can use the native pipe
 #' @importFrom stats setNames
 #' 
-run_limma_splines <- function(data, meta, design, DoFs, factors, 
-                              feature_names, mode, padjust_method = "BH") {
+run_limma_splines <- function(data,
+                              meta,
+                              design,
+                              DoFs,
+                              condition, 
+                              feature_names,
+                              mode = c("isolated", "integrated"),
+                              padjust_method = "BH") {
+  mode <- match.arg(mode)
+  control_inputs_run_limma(data, meta, design, DoFs, condition, feature_names, 
+                           mode, padjust_method)
   
-  control_inputs_run_limma(data, meta, design, DoFs, factors, feature_names, 
-                           mode)
+  meta[[condition]] <- factor(meta[[condition]])
+  levels <- levels(meta[[condition]])
   
+  # These lists will contain the different limma top_tables, based on coeffs
   top_tables <- list()
+  
+  for (i in 1:(length(levels))) { 
+    level <- levels[i]  # level is for example exponential or stationary phase
+    DoF <- DoFs[i]
+    
+    if (mode == "isolated") {
+      samples <- which(meta[[condition]] == level)
+      data_copy <- data[, samples]
+      meta_copy <- subset(meta, meta[[condition]] == level)
+    } else { # mode == "integrated"
+      data_copy <- data   # just to rename, so that data_copy is fun input
+      meta_copy <- meta
+      meta_copy[[condition]] <- relevel(meta_copy[[condition]], ref = level)
+    }
+    
+    result <- within_level(data_copy, meta_copy, design, condition, level, DoF, 
+                           padjust_method)
+
+    top_table <- process_top_table(result, feature_names)
+    
+    results_name <- paste(condition, level, sep = "_")
+    top_tables[[results_name]] <- top_table
+  }
+  
   ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
   ttslc_factor_time <- list()        # Factor AND time
   
-  for (factor in factors) {             # for example fermentation phase
-    meta[[factor]] <- factor(meta[[factor]])
-    levels <- levels(meta[[factor]])
-    
-    # Within level analysis ----------------------------------------------------
-    for (i in 1:(length(levels))) { 
-      level <- levels[i]  # level is for example exponential or stationary phase
-      
-      DoF <- DoFs[i]
-      if (is.na(DoF)) {
-        DoF <- DoFs[1]
-      }
-      
-      if (mode == "isolated") {
-        samples <- which(meta[[factor]] == level)
-        data_copy <- data[, samples]
-        meta_copy <- subset(meta, meta[[factor]] == level)
-      } else if (mode == "integrated") {
-        data_copy <- data
-        meta_copy <- meta
-        meta_copy[[factor]] <- relevel(meta_copy[[factor]], ref = level)
-        
-        level2 <- levels[i + 1]
-        if (!is.na(level2)) {
-          result <- between_level(data, meta, design, DoF, factor, level2, 
-                          padjust_method, feature_names)
-          
-          ttslc_factor_only[[paste0(level, "_vs_", level2)]] <- 
-            result$ttlc_factor_only
-          ttslc_factor_time[[paste0(level, "_vs_", level2)]] <- 
-            result$ttlc_factor_time
-        }
-      }
-      
-      result <- within_level(data_copy, meta_copy, design, factor, level, DoF, 
-                             padjust_method)
-      top_table <- result$top_table
-      fit <- result$fit
-      
-      top_tables <- process_top_table(top_table, top_tables, feature_names,
-                                      fit, factor, level)
+  if (mode == "integrated") {
+    level_combinations <- combn(levels, 2, simplify = FALSE)
+    for (lev in level_combinations) {
+      result <- between_level(data, meta, design, DoF, condition, lev, 
+                              padjust_method, feature_names)
+      ttslc_factor_only[[paste0(lev[1], "_vs_", lev[2])]] <- 
+        result$ttlc_factor_only
+      ttslc_factor_time[[paste0(lev[1], "_vs_", lev[2])]] <- 
+        result$ttlc_factor_time
     }
-  }
-  
-  if (mode == "isolated") {
+  } else { # mode == "isolated"
     print("mode == 'integrated' necessary for between level comparison. 
-          Returning emtpy list for ttslc_factor_only and ttslc_factor_time
-          (ttslc = top_tables_level_comparison).")
+          Returning emtpy lists for ttslc_factor_only and ttslc_factor_time
+          (ttslc means top tables level comparison).")
   }
   
-  return(list(top_tables = top_tables, 
-              ttslc_factor_only = ttslc_factor_only,
-              ttslc_factor_time = ttslc_factor_time))
+  list(top_tables = top_tables, 
+       ttslc_factor_only = ttslc_factor_only,
+       ttslc_factor_time = ttslc_factor_time)
 }
