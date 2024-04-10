@@ -1,6 +1,7 @@
 # Import libraries -------------------------------------------------------------
 library(limma)
 library(splines)
+library(purrr)
 
 
 
@@ -20,6 +21,29 @@ modify_limma_top_table <- function(top_table,
   
   top_table
 }
+
+
+#' Performs the limma spline analysis for a selected level of a factor
+within_level <- function(data, 
+                         meta, 
+                         design, 
+                         factor, 
+                         level, 
+                         DoF, 
+                         padjust_method) {
+  meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+  design_matrix <- model.matrix(as.formula(design), data = meta)
+  
+  fit <- lmFit(data, design_matrix)
+  fit <- eBayes(fit)
+  
+  coeffs <- paste0("X", seq_len(DoF))
+  
+  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
+  
+  list(top_table = top_table, fit = fit)
+}
+
 
 
 # Internal functions level 1 ---------------------------------------------------
@@ -86,7 +110,7 @@ control_inputs_run_limma <- function(data,
 between_level <- function(data, 
                           meta, 
                           design, 
-                          DoF, 
+                          DoFs, 
                           condition, 
                           compared_levels,
                           padjust_method, 
@@ -95,7 +119,7 @@ between_level <- function(data,
   data <- data[, samples]
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
   
-  meta$X <- ns(meta$Time, df = DoF, intercept = FALSE)
+  meta$X <- ns(meta$Time, df = DoFs[1], intercept = FALSE)
   design_matrix <- model.matrix(as.formula(design), data = meta)
 
   fit <- lmFit(data, design_matrix)
@@ -107,34 +131,12 @@ between_level <- function(data,
   ttlc_factor_only <- modify_limma_top_table(ttlc_factor_only, feature_names)
   
   factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
-                                        seq_len(DoF))
+                                        seq_len(DoFs[2]))
   ttlc_factor_time <- topTable(fit, coef = factor_time_contrast_coeffs,
                                adjust.method = padjust_method, number = Inf)
   ttlc_factor_time <- modify_limma_top_table(ttlc_factor_time, feature_names)
   
   list(ttlc_factor_only = ttlc_factor_only, ttlc_factor_time = ttlc_factor_time)
-}
-
-
-#' Performs the limma spline analysis for a selected level of a factor
-within_level <- function(data, 
-                         meta, 
-                         design, 
-                         factor, 
-                         level, 
-                         DoF, 
-                         padjust_method) {
-  meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
-  design_matrix <- model.matrix(as.formula(design), data = meta)
-  
-  fit <- lmFit(data, design_matrix)
-  fit <- eBayes(fit)
-  
-  coeffs <- paste0("X", seq_len(DoF))
-
-  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
-  
-  list(top_table = top_table, fit = fit)
 }
 
 
@@ -154,6 +156,39 @@ process_top_table <- function(top_table_and_fit,
   top_table$intercept <- intercepts_ordered[, 1]
   
   top_table
+}
+
+
+process_level <- function(level, 
+                          DoF, 
+                          data, 
+                          meta, 
+                          design, 
+                          condition, 
+                          feature_names, 
+                          padjust_method, 
+                          mode) {
+  if (mode == "isolated") {
+    samples <- which(meta[[condition]] == level)
+    data_copy <- data[, samples]
+    meta_copy <- subset(meta, meta[[condition]] == level)
+  } else { # mode == "integrated"
+    data_copy <- data
+    meta_copy <- meta
+    meta_copy[[condition]] <- relevel(meta_copy[[condition]], ref = level)
+  }
+  
+  result <- within_level(data_copy, 
+                         meta_copy, 
+                         design, 
+                         condition, 
+                         level, 
+                         DoF, 
+                         padjust_method)
+  top_table <- process_top_table(result, feature_names)
+  
+  results_name <- paste(condition, level, sep = "_")
+  list(name = results_name, top_table = top_table)
 }
 
 
@@ -202,7 +237,7 @@ process_top_table <- function(top_table_and_fit,
 #'
 #' @export
 #' @importFrom limma lmFit eBayes topTable
-#' people should use R 4.1, so that they can use the native pipe
+#' people should use R 4.1, so that they can use the native pipe ( %>% )
 #' @importFrom stats setNames
 #' 
 run_limma_splines <- function(data,
@@ -220,39 +255,30 @@ run_limma_splines <- function(data,
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
   
-  # These lists will contain the different limma top_tables, based on coeffs
-  top_tables <- list()
+  # Get hits for level (within level analysis) ---------------------------------
+  process_with_data_meta <- purrr::partial(process_level, 
+                                           data = data, 
+                                           meta = meta, 
+                                           design = design, 
+                                           condition = condition, 
+                                           feature_names = feature_names, 
+                                           padjust_method = padjust_method, 
+                                           mode = mode)
   
-  for (i in 1:(length(levels))) { 
-    level <- levels[i]  # level is for example exponential or stationary phase
-    DoF <- DoFs[i]
-    
-    if (mode == "isolated") {
-      samples <- which(meta[[condition]] == level)
-      data_copy <- data[, samples]
-      meta_copy <- subset(meta, meta[[condition]] == level)
-    } else { # mode == "integrated"
-      data_copy <- data   # just to rename, so that data_copy is fun input
-      meta_copy <- meta
-      meta_copy[[condition]] <- relevel(meta_copy[[condition]], ref = level)
-    }
-    
-    result <- within_level(data_copy, meta_copy, design, condition, level, DoF, 
-                           padjust_method)
-
-    top_table <- process_top_table(result, feature_names)
-    
-    results_name <- paste(condition, level, sep = "_")
-    top_tables[[results_name]] <- top_table
-  }
+  results_list <- map2(levels, DoFs, process_with_data_meta)
+  top_tables <- setNames(map(results_list, "top_table"), 
+                         map_chr(results_list, "name"))
   
+  
+  # Factor and Factor:Time comparisons between levels --------------------------
   ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
   ttslc_factor_time <- list()        # Factor AND time
   
   if (mode == "integrated") {
     level_combinations <- combn(levels, 2, simplify = FALSE)
     for (lev in level_combinations) {
-      result <- between_level(data, meta, design, DoF, condition, lev, 
+      lev_DoFs <- DoFs[match(lev, unique(meta[[condition]]))]
+      result <- between_level(data, meta, design, lev_DoFs, condition, lev, 
                               padjust_method, feature_names)
       ttslc_factor_only[[paste0(lev[1], "_vs_", lev[2])]] <- 
         result$ttlc_factor_only
