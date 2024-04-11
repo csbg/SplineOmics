@@ -3,10 +3,12 @@ library(pheatmap)
 library(ggplot2)
 library(stats)
 library(purrr)
+library(furrr)
 library(dplyr)
 library(patchwork)
+library(stringr)
 
-
+plan(multisession)
 
 # Internal functions level 3 ----------------------------------------------
 
@@ -31,9 +33,12 @@ store_hits <- function(condition) {
 }
 
 
-plot_composite_splines <- function(data, meta, top_table, top_table_name, 
-                                   indices) {
-
+plot_composite_splines <- function(data, 
+                                   meta, 
+                                   top_table, 
+                                   top_table_name, 
+                                   indices,
+                                   type) {
   plot_list <- list()
   DoF <- as.integer(sub(".*DoF_([0-9]+)_.*", "\\1", top_table_name)) 
   
@@ -44,32 +49,33 @@ plot_composite_splines <- function(data, meta, top_table, top_table_name,
     X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
     
     spline_coeffs <- 
-      top_table[top_table$feature_index == index, paste0("X", 1:DoF)]
+      as.numeric(top_table[top_table$feature_index == 
+                             index, paste0("X", 1:DoF)])
     
-    intercept_value <- top_table$intercept[top_table$feature_index == index]
+    intercept <- 
+      as.numeric(top_table$intercept[top_table$feature_index == index])
     
     fitted_values <- X %*% spline_coeffs + intercept
     
     plot_data <- data.frame(Time = meta$Time, 
-                            Y = data[index, ])
+                            Intensity = as.vector(t(data[index, ])))
     
-    plot_spline <- data.frame(Time = smooth_timepoints,
-                              Fitted = fitted_values)
+    plot_spline <- data.frame(Time = smooth_timepoints, Fitted = fitted_values)
     
     # Calculate the extension for the x-axis
     x_max <- max(meta$Time)
     x_extension <- x_max * 0.05  # Extend the x-axis by 5% of its maximum value
     
     p <- ggplot() +
-      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
+      geom_point(data = plot_data, aes(x = Time, y = Intensity), 
+                 color = 'blue') +
       geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
                 color = 'red') +
       theme_minimal() +
-      scale_x_continuous(limits = c(min(timePoints), x_max + x_extension))
+      scale_x_continuous(limits = c(min(meta$Time), x_max + x_extension))
     labs(x = "Time [min]", y = "Intensity")
     
-
-    title <- top_table$feature_name[index]  
+    title <- top_table$feature_names[index]  
     if (is.na(title)) {
       title <- paste("Feature:", index)
     }
@@ -83,7 +89,7 @@ plot_composite_splines <- function(data, meta, top_table, top_table_name,
                  max(fitted_values, na.rm = TRUE),
                label = "",
                hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
-    
+
     plot_list[[length(plot_list) + 1]] <- p
   }
   
@@ -91,16 +97,15 @@ plot_composite_splines <- function(data, meta, top_table, top_table_name,
     # Generate the combined plot
     num_plots <- length(plot_list)
     ncol <- 3
-    nrow <- ceiling(num_plots / ncol)
+    composite_plot_len <- ceiling(num_plots / ncol)
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      plot_annotation(title = paste(data_descriptor, "| DoF:", 
-                                    DoF, 
-                                    "| p-value threshold:", 
-                                    p_value_threshold), 
+      plot_annotation(title = paste(top_table_name, type, sep = " | "), 
                       theme = theme(plot.title = element_text(hjust = 0.5, 
                                                               size = 14)))
-    return(list(composite_plot = composite_plot, composite_plot_len = nrow))
+    
+    return(list(composite_plot = composite_plot, 
+                composite_plot_len = composite_plot_len))
   } else {
     return(FALSE)
   }
@@ -111,7 +116,8 @@ plot_composite_splines <- function(data, meta, top_table, top_table_name,
 # Internal functions level 2 ----------------------------------------------
 
 
-hc_new <- function(cond1name = "Condition 1", cond2name = "Condition 2") {
+hc_new <- function(cond1name = "Condition 1", 
+                   cond2name = "Condition 2") {
   
   if (!is.character(cond1name) || nchar(cond1name) > 25) 
     stop("cond1name max len = 25")
@@ -130,7 +136,10 @@ hc_new <- function(cond1name = "Condition 1", cond2name = "Condition 2") {
 }
 
 
-hc_add <- function(hc_obj, top_table, params_id, condition = 1, threshold = 0.05){
+hc_add <- function(hc_obj, 
+                   top_table, 
+                   params_id, condition = 1, 
+                   threshold = 0.05){
   # Validate input
   if (!is.data.frame(top_table)) stop("top_table must be a dataframe.")
   if (!is.character(params_id) || nchar(params_id) > 50) stop("max len = 25")
@@ -249,23 +258,26 @@ hc_barplot <- function(hc_obj) {
 }
 
 
-gen_hitcomp_plots <- function(all_combos_top_tables, plots, plots_len) {
-  hitcomp <- hc_new("combined", "individual")
+gen_hitcomp_plots <- function(combo_pair) {
   
-  combo_names <- sapply(names(all_combos_top_tables), function(name) {
+  combo_pair_combined <- c(combo_pair[[1]], combo_pair[[2]])
+  
+  hitcomp <- hc_new(names(combo_pair)[1], names(combo_pair)[2])
+  
+  combo_names <- sapply(names(combo_pair_combined), function(name) {
     # Using sub to extract everything from 'DoF' onwards
     match <- sub(".*(DoF.*)$", "\\1", name)
     return(match)
   })
   
   condition_nr <- 1L
-  for (i in 1:length(all_combos_top_tables)) {
-    combo_top_tables <- all_combos_top_tables[[i]]
+  for (i in 1:length(combo_pair_combined)) {
+    combo_top_tables <- combo_pair_combined[[i]]
     combo_name <- combo_names[i]
     # Extract the part where DoF and p-value threshold are written.
     pthreshold <- as.numeric(sub(".*_([^_]+)$", "\\1", combo_name))
     
-    if (i == length(all_combos_top_tables)/2 + 1) {
+    if (i == length(combo_pair_combined)/2 + 1) {
       condition_nr <- 2L
     }
     
@@ -277,37 +289,38 @@ gen_hitcomp_plots <- function(all_combos_top_tables, plots, plots_len) {
   }
   
   result <- hc_vennheatmap(hitcomp)
-
-  plots[[length(plots) + 1]] <- result$vennheatmap
-  plots_len[[length(plots_len) + 1]] <- result$nrhits
-  
-  
   barplot <- hc_barplot(hitcomp)
   
-  plots[[length(plots) + 1]] <- barplot
-  plots_len[[length(plots_len) + 1]] <- 2
-  
-  return(list(plots = plots, plots_len = plots_len))
+  list(vennheatmap = result$vennheatmap, 
+       vennheatmap_len = result$nrhits,
+       barplot = barplot,
+       barplot_len = 2)
 }
 
 
-gen_composite_spline_plots <- function(all_combos_top_tables, datas, metas, 
-                                      plots, plots_len) {
-  for (combo_name in names(all_combos_top_tables)) {
-    top_tables_levels <- all_combos_top_tables[[combo_name]]
+gen_composite_spline_plots <- function(internal_combos, 
+                                       datas, 
+                                       metas) {
+  
+  plots <- list()
+  plots_len <- list()
+
+  for (combo_name in names(internal_combos)) {
+    top_tables_levels <- internal_combos[[combo_name]]
     
     data <- datas[[as.integer(strsplit(combo_name, "_")[[1]][2])]]
     meta <- metas[[as.integer(strsplit(combo_name, "_")[[1]][2])]]
     
-    ptresh <- as.numeric(tail(strsplit(combo_name, "_")[[1]], 1)) 
+    pthresh <- as.numeric(tail(strsplit(combo_name, "_")[[1]], 1)) 
     
     for (top_table_name in names(top_tables_levels)) {
       top_table <- top_tables_levels[[top_table_name]]
       
       parts <- strsplit(top_table_name, "_")[[1]]
-      factor <- parts[1]
+      condition <- parts[1]
       level <- parts[2]
-      meta_level <- meta[meta[[column_name]] == level, ]
+      meta_level <- meta[meta[[condition]] == level, ]
+      data_level <- data[, which(meta[[condition]] == level)]
       
       for(type in c('significant', 'not_significant')) {
         
@@ -328,9 +341,13 @@ gen_composite_spline_plots <- function(all_combos_top_tables, datas, metas,
           }
           indices <- as.integer(selected_rows$feature_index)
         }
-         
-        result <- plot_composite_splines(data, meta_level, top_table, 
-                                         combo_name, indices)
+        
+        result <- plot_composite_splines(data_level, 
+                                         meta_level, 
+                                         top_table, 
+                                         combo_name, 
+                                         indices,
+                                         type)
         
         if (is.list(result)) {
           plots[[length(plots) + 1]] <- result$composite_plot
@@ -340,7 +357,8 @@ gen_composite_spline_plots <- function(all_combos_top_tables, datas, metas,
     }
   }
   
-  return(list(plots = plots, plots_len = plots_len))
+  list(composite_plots = plots, 
+       composite_plots_len = plots_len)
 }
 
 
@@ -348,9 +366,15 @@ gen_composite_spline_plots <- function(all_combos_top_tables, datas, metas,
 # Internal functions level 1 ----------------------------------------------
 
 
-control_inputs_hyperpara_screen <- function(datas, metas, designs, modes, 
-                                            factors, DoFs, feature_names, 
-                                            pthresholds, padjust_method) {
+control_inputs_hyperpara_screen <- function(datas, 
+                                            metas, 
+                                            designs, 
+                                            modes, 
+                                            condition, 
+                                            DoFs, 
+                                            feature_names, 
+                                            pthresholds, 
+                                            padjust_method) {
   
   if (!is.list(datas) || any(!sapply(datas, is.data.frame))) {
     stop("'datas' must be a list of dataframes.")
@@ -368,8 +392,8 @@ control_inputs_hyperpara_screen <- function(datas, metas, designs, modes,
     stop("'modes' must be a character vector.")
   }
   
-  if (!is.character(factors)) {
-    stop("'factors' must be a character vector.")
+  if (!is.character(condition) && !(length(condition) == 1)) {
+    stop("'condition' must be a single character")
   }
   
   if (!is.integer(DoFs)) {
@@ -390,13 +414,19 @@ control_inputs_hyperpara_screen <- function(datas, metas, designs, modes,
   
   # Ensure that datas and metas have the same length, as well as designs and modes
   if(length(datas) != length(metas) || length(designs) != length(modes)) {
-    stop("Datas and Metas, Designs and Modes must have the same length.")
+    stop("datas and metas, designs and modes must have the same length.")
   }
 }
 
 
-get_limma_combos_results <- function (datas, metas, designs, modes, factors,
-                                      DoFs, feature_names, pthresholds,
+get_limma_combos_results <- function (datas, 
+                                      metas, 
+                                      designs, 
+                                      modes, 
+                                      condition,
+                                      DoFs, 
+                                      feature_names, 
+                                      pthresholds,
                                       padjust_method) {
   top_tables_combos <- list()
   
@@ -409,12 +439,19 @@ get_limma_combos_results <- function (datas, metas, designs, modes, factors,
       mode <- modes[[j]]
       
       for(DoF in DoFs) {
+        DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
         for(pthreshold in pthresholds) {
-          result <- run_limma_splines(data, meta, design, DoF, factors,
-                                      feature_names, mode, padjust_method)
+          result <- run_limma_splines(data, 
+                                      meta, 
+                                      design, 
+                                      DoFs_levels, 
+                                      condition,
+                                      feature_names, 
+                                      mode, 
+                                      padjust_method)
           
           # Construct a unique id for the current combination of hyperparameters
-          id <- paste0("DataMeta_", i, "_DesignMode_", j, "_DoF_", DoF, 
+          id <- paste0("Data_", i, "_Design_", j, "_DoF_", DoF, 
                        "_PThresh_", pthreshold)
           
           top_tables_combos[[id]] <- result$top_tables
@@ -427,18 +464,37 @@ get_limma_combos_results <- function (datas, metas, designs, modes, factors,
 }
 
 
-plot_limma_combos_results <- function(all_combos_top_tables, datas, metas, 
+plot_limma_combos_results <- function(all_combos_top_tables, 
+                                      datas, 
+                                      metas, 
                                       annotation) {
-  plots <- list()
-  plots_len <- list()
   
-  result <- gen_hitcomp_plots(all_combos_top_tables, plots, plots_len)
+  names_extracted <- str_extract(names(all_combos_top_tables), 
+                                 "Data_\\d+_Design_\\d+")
 
-  result <-
-    gen_composite_spline_plots(all_combos_top_tables, datas, metas, 
-                               result$plots, result$plots_len)
+  combos_separated <- lapply(unique(names_extracted), function(id) {
+    all_combos_top_tables[names_extracted == id]
+  })
+
+  names(combos_separated) <- unique(names_extracted)
   
-  return(list(plots = result$plots, plots_len = result$plots_len))
+  combos <- names(combos_separated)
+  combo_pairs <- combn(combos, 2, simplify = FALSE)
+  
+  # future_map for parallelisation
+  combo_pair_results <- set_names(map(combo_pairs, function(pair) {
+    combo_pair <- combos_separated[pair]
+    
+    hitcomp <- gen_hitcomp_plots(combo_pair)
+
+    composites <- map(combo_pair, function(combo) {
+      composite <- gen_composite_spline_plots(combo,
+                                              datas,
+                                              metas)
+    })
+    
+    list(hitcomp = hitcomp, composites = composites)
+  }), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2], sep = "_")))
 }
 
 
@@ -477,25 +533,41 @@ plot_limma_combos_results <- function(all_combos_top_tables, datas, metas,
 #' @importFrom magrittr "%>%"
 #' @importFrom limma lmFit eBayes topTable
 #'
-limma_hyperparams_screen <- function(datas, metas, designs, modes, 
-                                     factors, DoFs = c(2L), feature_names, 
+limma_hyperparams_screen <- function(datas, 
+                                     metas, 
+                                     designs, 
+                                     modes, 
+                                     condition, 
+                                     DoFs = c(2L), 
+                                     feature_names, 
                                      pthresholds = c(0.05),
                                      padjust_method = "BH") {
   
-  control_inputs_hyperpara_screen(datas, metas, designs, modes, factors, DoFs, 
-                                  feature_names, pthresholds, padjust_method)
+  control_inputs_hyperpara_screen(datas, 
+                                  metas, 
+                                  designs, 
+                                  modes, 
+                                  condition, 
+                                  DoFs, 
+                                  feature_names, 
+                                  pthresholds, 
+                                  padjust_method)
   
-  top_tables_combos <- get_limma_combos_results(datas, metas, designs, modes, 
-                                                factors, DoFs, feature_names, 
-                                                pthresholds, padjust_method)
+  top_tables_combos <- get_limma_combos_results(datas, 
+                                                metas, 
+                                                designs, 
+                                                modes, 
+                                                condition, 
+                                                DoFs, 
+                                                feature_names, 
+                                                pthresholds, 
+                                                padjust_method)
   
   # debug(plot_limma_combos_results)
-  result <- plot_limma_combos_results(top_tables_combos, datas, metas)
+  combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
+                                                datas, 
+                                                metas)
   
-  for (plot in result) {
-    print(plot)
-  }
-  
+  save(combo_pair_plots, file = "combo_pair_plots.RData")
   # generate_report()
-  
 }

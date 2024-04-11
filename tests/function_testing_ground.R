@@ -28,20 +28,25 @@ load(input_file_path)
 
 
 # Run limma splines and cluster hits -------------------------------------------
+data1 <- data
+meta1 <- meta
 
-datas <- list(data)
-metas <- list(meta)
+data2 <- data
+meta2 <- meta
+
+datas <- list(data1, data2)
+metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 modes <- c("integrated", "isolated")
-factors <- c("Phase")
+condition <- "Phase"
 DoFs <- c(2L, 3L, 4L, 5L)
 feature_names <- annotation$First.Protein.Description
 pthresholds <- c(0.05, 0.1)
 
-## hyperparams screen limma ----
+## hyperparams screen limma ----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas, metas, designs, modes, 
-#                                    factors, DoFs, feature_names, pthresholds)
+result <- limma_hyperparams_screen(datas, metas, designs, modes,
+                                   condition, DoFs, feature_names, pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)
@@ -50,7 +55,7 @@ design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
 # debug(run_limma_splines)
-result <- run_limma_splines(data, meta, design, DoFs, factors,
+result <- run_limma_splines(data, meta, design, DoFs, condition,
                                 feature_names, "integrated")
 
 top_tables <- result$top_tables

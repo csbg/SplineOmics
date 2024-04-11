@@ -8,7 +8,7 @@ library(purrr)
 # Internal functions level 2 ---------------------------------------------------
 
 
-#' Converts top_table to a tibble and adds new column feature_names
+#' Converts top_table to a tibble and adds new column feature_name
 modify_limma_top_table <- function(top_table, 
                                    feature_names) {
   top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
@@ -16,8 +16,7 @@ modify_limma_top_table <- function(top_table,
     mutate(feature_index = as.integer(feature_index))
   
   sorted_feature_names <- feature_names[top_table$feature_index]
-  top_table <- top_table %>%
-    mutate(feature_names = sorted_feature_names)
+  top_table <- top_table %>% mutate(feature_names = sorted_feature_names)
   
   top_table
 }
@@ -81,7 +80,7 @@ control_inputs_run_limma <- function(data,
   }
   
   # Ensure factors is a non-empty character vector
-  if (!is.character(factors) || length(factors) == 0) {
+  if (!is.character(condition) && !(length(condition) == 1)) {
     stop("factors must be a non-empty character vector.")
   }
   
@@ -185,7 +184,8 @@ process_level <- function(level,
                          level, 
                          DoF, 
                          padjust_method)
-  top_table <- process_top_table(result, feature_names)
+  top_table <- process_top_table(result, 
+                                 feature_names)
   
   results_name <- paste(condition, level, sep = "_")
   list(name = results_name, top_table = top_table)
@@ -249,8 +249,14 @@ run_limma_splines <- function(data,
                               mode = c("isolated", "integrated"),
                               padjust_method = "BH") {
   mode <- match.arg(mode)
-  control_inputs_run_limma(data, meta, design, DoFs, condition, feature_names, 
-                           mode, padjust_method)
+  control_inputs_run_limma(data, 
+                           meta, 
+                           design, 
+                           DoFs, 
+                           condition, 
+                           feature_names, 
+                           mode, 
+                           padjust_method)
   
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
@@ -278,8 +284,16 @@ run_limma_splines <- function(data,
     level_combinations <- combn(levels, 2, simplify = FALSE)
     for (lev in level_combinations) {
       lev_DoFs <- DoFs[match(lev, unique(meta[[condition]]))]
-      result <- between_level(data, meta, design, lev_DoFs, condition, lev, 
-                              padjust_method, feature_names)
+      
+      result <- between_level(data, 
+                              meta, 
+                              design, 
+                              lev_DoFs, 
+                              condition, 
+                              lev, 
+                              padjust_method, 
+                              feature_names)
+      
       ttslc_factor_only[[paste0(lev[1], "_vs_", lev[2])]] <- 
         result$ttlc_factor_only
       ttslc_factor_time[[paste0(lev[1], "_vs_", lev[2])]] <- 
