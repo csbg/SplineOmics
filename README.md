@@ -28,7 +28,7 @@ splinetime
 -   [License](#license)
 -   [Citation](#citation)
 
-# splinetime: Streamlining Time-Series Analysis with Splines and limma
+# Introduction
 
 Welcome to `splinetime`, an R package designed to streamline the analysis of time-series data by leveraging the power of splines—piecewise polynomial functions—and the robust statistical framework of `limma` for hypothesis testing. This package simplifies the complex process of time-series analysis, making it accessible and efficient for researchers and data analysts alike.
 
@@ -42,7 +42,7 @@ With `splinetime`, users can:
 
 `splinetime` is here to support your journey through the intricate landscape of time-series analysis, offering a clear path through the selection of hyperparameters to the final report. Embrace the power of splines and `limma` with `splinetime`, and unlock the full potential of your data.
 
-## Installation Guide for `splinetime`
+## Installation 
 
 Follow these steps to install the `splinetime` package from its GitHub repository into your R environment.
 
@@ -91,11 +91,11 @@ If you encounter errors related to dependencies or package versions during insta
 
 For issues specifically related to the splinetime package, check the Issues section of the GitHub repository for similar problems or to post a new issue.
 
-## Usage {#usage}
+## Usage
 
 The `splinetime` package provides comprehensive tools for analyzing time-course data, focusing on differential expression analysis and clustering. This section covers detailed instructions for utilizing each of the package's main functions.
 
-### limma_hyperparams_screen {#limma_hyperparams_screen}
+### limma_hyperparams_screen
 
 Conducts a hyperparameter screening using the `limma` package to identify optimal parameters for differential expression analysis across multiple datasets.
 
@@ -127,7 +127,7 @@ result <- limma_hyperparams_screen(datas,
                                   pthresholds)
 ```
 
-### run_limma_splines {#run_limma_splines}
+### run_limma_splines
 
 This function performs differential expression analysis tailored for time-course data using spline models via the `limma` package. It's designed to handle complex experimental designs and time as a continuous variable.
 
@@ -159,7 +159,7 @@ result <- run_limma_splines(data = data,
                             mode = "integrated")
 ```
 
-### cluster_hits {#cluster_hits}
+### cluster_hits
 
 Clusters significant features based on their expression profiles, following differential expression analysis. This function helps identify groups of features (e.g., genes, proteins) that exhibit similar expression patterns across different conditions or time points.
 
@@ -191,7 +191,7 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    report_dir = "path/to/results")
 ```
 
-## Dependencies {#dependencies}
+## Dependencies
 
 The `splinetime` package relies on several other R packages for its functionality. Below is a list of dependencies that will be installed along with `splinetime`. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.
 
@@ -216,7 +216,7 @@ The `splinetime` package relies on several other R packages for its functionalit
 
 To ensure a smooth installation and functionality of `splinetime`, these dependencies will be automatically checked and, if necessary, installed upon installing `splinetime`.
 
-## Getting Help {#getting-help}
+## Getting Help 
 
 If you encounter a bug or have a suggestion for improving the `splinetime` package, we encourage you to [open an issue](https://github.com/csbg/splinetime/issues) on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.
 
@@ -251,6 +251,6 @@ Thank you for considering contributing to `splinetime`. Your efforts are what ma
 
 `splinetime` is open-sourced software licensed under the [MIT license](LICENSE).
 
-## Citation {#citation}
+## Citation
 
 The `splinetime` package is currently not published in a peer-reviewed scientific journal or similar outlet, and as such, there is no formal citation requirement associated with its use. You are free to use `splinetime` without citing it. However, we appreciate acknowledgements in your projects or publications that benefit from this package. Your support helps us in the continued development and improvement of `splinetime`. Thank you for using our package!
