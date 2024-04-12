@@ -14,6 +14,9 @@ source(run_limma_splines_fun_path)
 cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
 source(cluster_hits_fun_path)
 
+general_fun_path <- here::here("R", "splinetime_general_fun.R")
+source(general_fun_path)
+
 
 
 # Data loading and processing --------------------------------------------------
@@ -35,18 +38,28 @@ data2 <- data
 meta2 <- meta
 
 datas <- list(data1, data2)
+datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 modes <- c("integrated", "isolated")
 condition <- "Phase"
 DoFs <- c(2L, 3L, 4L, 5L)
 feature_names <- annotation$First.Protein.Description
+report_dir <- here::here("results", "jungfernflug")
 pthresholds <- c(0.05, 0.1)
 
 ## hyperparams screen limma ----------------------------------------------------
 debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas, metas, designs, modes,
-                                   condition, DoFs, feature_names, pthresholds)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   DoFs,
+                                   feature_names,
+                                   report_dir,
+                                   pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)

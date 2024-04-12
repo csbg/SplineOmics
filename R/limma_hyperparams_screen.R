@@ -1,4 +1,4 @@
-# Library imports ---------------------------------------------------------
+# Library imports --------------------------------------------------------------
 library(pheatmap)
 library(ggplot2)
 library(stats)
@@ -14,7 +14,7 @@ library(kableExtra)
 
 
 
-# Internal functions level 3 ----------------------------------------------
+# Internal functions level 3 ---------------------------------------------------
 
 
 store_hits <- function(condition) {
@@ -378,6 +378,45 @@ gen_composite_spline_plots <- function(internal_combos,
 }
 
 
+process_combo_pair <- function(combo_pair, 
+                               combo_pair_name, 
+                               report_dir,
+                               timestamp) {
+  plots <- list()
+  plots_len <- integer(0)
+  
+  hitcomp <- combo_pair$hitcomp
+  
+  plots[[1]] <- hitcomp$vennheatmap
+  plots[[2]] <- hitcomp$vennheatmap
+  plots[[3]] <- hitcomp$barplot
+  
+  plots_len <- c(plots_len, 
+                 2, 
+                 hitcomp$vennheatmap_len, 
+                 hitcomp$barplot_len)
+  
+  composites <- combo_pair$composites
+  
+  for (composite in composites) {
+    for (plot in composite$composite_plots) {
+      plots[[length(plots) + 1]] <- plot
+    }
+    
+    for (len in composite$composite_plots_len) {
+      plots_len <- c(plots_len, len)
+    }
+  }
+  
+  # Function is in splinetime_general_fun.R
+  generate_report_html_new(plots, 
+                           plots_len, 
+                           report_dir, 
+                           combo_pair_name,
+                           timestamp)
+}
+
+
 
 # Internal functions level 1 ----------------------------------------------
 
@@ -553,6 +592,7 @@ plot_limma_combos_results <- function(all_combos_top_tables,
   combos <- names(combos_separated)
   combo_pairs <- combn(combos, 2, simplify = FALSE)
   
+  print("Generating the plots for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pairs)
   pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
   pb$tick(0)
@@ -574,6 +614,75 @@ plot_limma_combos_results <- function(all_combos_top_tables,
     ), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2], 
                                               sep = "_"))
   )
+}
+
+
+generate_reports <- function(combo_pair_plots, 
+                             report_dir,
+                             timestamp) {
+  print("Building .html reports for all pairwise hyperparams-combo comparisons")
+  progress_ticks <- length(combo_pair_plots)
+  pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
+
+  # result <- imap(combo_pair_plots, ~process_combo_pair(.x, 
+  #                                                      .y, 
+  #                                                      report_dir, 
+  #                                                      timestamp))
+  # pb$tick()
+  result <- imap(combo_pair_plots, ~{
+    process_combo_pair(.x, .y, report_dir, timestamp)
+    pb$tick()  
+  })
+}
+
+
+generate_reports_meta <- function(datas_descr, 
+                                  designs, 
+                                  modes, 
+                                  report_dir,
+                                  timestamp) {
+  
+  # Combine the hyperparameters and their descriptions into two vectors
+  hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
+                       paste0("Design_", seq_along(designs)))
+  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"))
+  
+  table_df <- data.frame(hyperparameter = hyperparameters, 
+                         description = descriptions, 
+                         stringsAsFactors = FALSE)
+  
+  filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
+  file_path <- here::here(report_dir, filename)
+  
+  custom_css <- "
+  <style>
+  table {
+    font-size: 32px; /* Significantly larger font size */
+    margin-left: auto; /* Center table horizontally */
+    margin-right: auto;
+  }
+  th, td {
+    border: 1px solid #cccccc;
+    padding: 12px; /* Increased padding for more space between table cells */
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  </style>
+  "
+  
+  # Generate the HTML table with custom CSS for larger font size and save it
+  html_table <- 
+    paste0(custom_css, knitr::kable(table_df, format = "html", 
+                                    escape = FALSE) %>% 
+             kableExtra::kable_styling(
+               bootstrap_options = c("striped", "hover")))
+  
+  writeLines(html_table, con = file_path)
+  
+  cat("Meta table for the limma hyperparameter screen reports saved to:",
+      file_path, "\n")
 }
 
 
@@ -609,8 +718,8 @@ plot_limma_combos_results <- function(all_combos_top_tables,
 #' }
 #'
 #' @export
-#' @importFrom magrittr "%>%"
-#' @importFrom limma lmFit eBayes topTable
+#' @importFrom 
+#' @importFrom 
 #'
 limma_hyperparams_screen <- function(datas, 
                                      datas_descr,
@@ -649,7 +758,15 @@ limma_hyperparams_screen <- function(datas,
                                                 datas, 
                                                 metas)
   
-  # generate_reports(combo_pair_plots, report_dir)
+  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
-  # generate_reports_meta(datas_descr, designs, modes, report_dir)
+  generate_reports(combo_pair_plots, 
+                   report_dir,
+                   timestamp)
+  
+  generate_reports_meta(datas_descr, 
+                        designs, 
+                        modes, 
+                        report_dir,
+                        timestamp)
 }

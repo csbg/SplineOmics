@@ -56,7 +56,7 @@ data2 <- data
 meta2 <- meta
 
 datas <- list(data1, data2)
-datas_descr <- c("full_data", "outliers_removed______________________________________________________________________________")
+datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 modes <- c("integrated", "isolated")
@@ -258,19 +258,6 @@ generate_reports_meta <- function(datas_descr,
   filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
   file_path <- here::here(report_dir, filename)
 
-  # html_table <- knitr::kable(table_df, format = "html") %>%
-  #   kableExtra::kable_styling()
-  
-  # html_table <- knitr::kable(table_df, format = "html") %>%
-  #   kableExtra::kable_styling(
-  #     full_width = FALSE, 
-  #     font_size = 16, # Adjust this value to increase or decrease the font size
-  #     position = "left"
-  #   ) %>%
-  #   kableExtra::column_spec(1, width = "450px") %>% # Adjust column width as needed
-  #   kableExtra::column_spec(2, width = "1200px") %>%
-  #   kableExtra::scroll_box(width = "100%", height = "500px")
-  
   custom_css <- "
   <style>
   table {
