@@ -56,6 +56,7 @@ data2 <- data
 meta2 <- meta
 
 datas <- list(data1, data2)
+datas_descr <- c("full_data", "outliers_removed______________________________________________________________________________")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 modes <- c("integrated", "isolated")
@@ -127,10 +128,10 @@ convertPlotToBase64ImgTag <- function(plot, plot_nrows, width = 7,
 }
 
 
-build_plot_report_html <- function(header_section, plots, rowcounts, path) {
-  
-  
-  
+build_plot_report_html <- function(header_section, 
+                                   plots, 
+                                   rowcounts, 
+                                   path) {
   index <- 1
   for (plot in plots) {
     plot_nrows <- rowcounts[[index]]
@@ -139,10 +140,8 @@ build_plot_report_html <- function(header_section, plots, rowcounts, path) {
     header_section <- paste(header_section, img_tag, sep="\n")
   }
   
-  
   # Close the HTML document
   html_content <- paste(header_section, "</body></html>", sep="\n")
-  
   
   dir_path <- dirname(path)
   
@@ -154,37 +153,25 @@ build_plot_report_html <- function(header_section, plots, rowcounts, path) {
 }
 
 
-generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
-  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
+generate_report_html <- function(plot_list, 
+                                 plot_list_nrows, 
+                                 report_dir,
+                                 combo_pair_name, 
+                                 timestamp) {
+  header_text <- paste("limma hyperparams screen", timestamp, sep=" | ")
   
-  omics_data_type <- "PTX"
-  header_text <- paste("limma clustered hits", 
-                       omics_data_type, timestamp, sep=" | ")
-  
-  if (omics_data_type == "PTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: E12_TP05_Exponential & 
-      E10_TP10_Stationary removed<br>(Note: batch-corrected data used for 
-      plotting
-      individual blue datapoints (plots with the red spline, below))"
-  } else if (omics_data_type == "PPTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: all<br>(Note: batch-corrected data used 
-      for plotting
-      individual blue datapoints (plots with the red spline, below))"
-  }
-  
+  design_text <- ""
+ 
   html_content <- paste(
     "<html><head><title>My Plots</title></head><body>",
     "<h1 style='color:red;'>", header_text, "</h1>",
-    "<h2>Design</h2>",
+    "<h2></h2>",
     "<p>", design_text, "</p>",
     "</body></html>",
     sep=""
   )
   
-  file_name <- sprintf("limma_hyperparams_screen_report_%s_%s.html",
-                       omics_data_type, timestamp)
+  file_name <- sprintf("%s_%s.html", combo_pair_name, timestamp)
   
   output_file_path <- here::here(report_dir, file_name)
   
@@ -195,8 +182,10 @@ generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
 }
 
 
-process_combo_pair <- function(combo_pair) {
-  
+process_combo_pair <- function(combo_pair, 
+                               combo_pair_name, 
+                               report_dir,
+                               timestamp) {
   plots <- list()
   plots_len <- integer(0)
   
@@ -226,10 +215,92 @@ process_combo_pair <- function(combo_pair) {
     }
   }
   
-  generate_report_html(plots, plots_len, report_dir)
+  generate_report_html(plots, 
+                       plots_len, 
+                       report_dir, 
+                       combo_pair_name,
+                       timestamp)
+  pb$tick()
 }
 
 report_dir <- here::here("results", "hyperparams_screen_reports")
+timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
 
-debugonce(process_combo_pair)
-result <- map(combo_pair_plots, process_combo_pair)
+progress_ticks <- length(combo_pair_plots)
+pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
+pb$tick(0)
+
+# debugonce(process_combo_pair)
+result <- imap(combo_pair_plots, ~process_combo_pair(.x, 
+                                                     .y, 
+                                                     report_dir, 
+                                                     timestamp))
+
+library(here)
+library(knitr)
+library(kableExtra)
+
+generate_reports_meta <- function(datas_descr, 
+                                  designs, 
+                                  modes, 
+                                  report_dir,
+                                  timestamp) {
+
+  # Combine the hyperparameters and their descriptions into two vectors
+  hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
+                       paste0("Design_", seq_along(designs)))
+  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"))
+  
+  table_df <- data.frame(hyperparameter = hyperparameters, 
+                         description = descriptions, 
+                         stringsAsFactors = FALSE)
+  
+  filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
+  file_path <- here::here(report_dir, filename)
+
+  # html_table <- knitr::kable(table_df, format = "html") %>%
+  #   kableExtra::kable_styling()
+  
+  # html_table <- knitr::kable(table_df, format = "html") %>%
+  #   kableExtra::kable_styling(
+  #     full_width = FALSE, 
+  #     font_size = 16, # Adjust this value to increase or decrease the font size
+  #     position = "left"
+  #   ) %>%
+  #   kableExtra::column_spec(1, width = "450px") %>% # Adjust column width as needed
+  #   kableExtra::column_spec(2, width = "1200px") %>%
+  #   kableExtra::scroll_box(width = "100%", height = "500px")
+  
+  custom_css <- "
+  <style>
+  table {
+    font-size: 32px; /* Significantly larger font size */
+    margin-left: auto; /* Center table horizontally */
+    margin-right: auto;
+  }
+  th, td {
+    border: 1px solid #cccccc;
+    padding: 12px; /* Increased padding for more space between table cells */
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  </style>
+  "
+  
+  # Generate the HTML table with custom CSS for larger font size and save it
+  html_table <- 
+    paste0(custom_css, knitr::kable(table_df, format = "html", 
+                                    escape = FALSE) %>% 
+                                    kableExtra::kable_styling(
+                                     bootstrap_options = c("striped", "hover")))
+  
+  writeLines(html_table, con = file_path)
+  
+  cat("Meta table for the limma hyperparameter screen reports saved to:",
+      file_path, "\n")
+}
+
+
+generate_reports_meta(datas_descr, designs, modes, report_dir)

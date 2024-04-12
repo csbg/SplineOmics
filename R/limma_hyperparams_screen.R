@@ -8,6 +8,9 @@ library(dplyr)
 library(patchwork)
 library(stringr)
 library(progress)
+library(here)
+library(knitr)
+library(kableExtra)
 
 
 
@@ -380,6 +383,7 @@ gen_composite_spline_plots <- function(internal_combos,
 
 
 control_inputs_hyperpara_screen <- function(datas, 
+                                            datas_descr,
                                             metas, 
                                             designs, 
                                             modes, 
@@ -393,12 +397,62 @@ control_inputs_hyperpara_screen <- function(datas,
     stop("'datas' must be a list of dataframes.")
   }
   
+  if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
+    long_elements_indices <- which(nchar(datas_descr) > 80)
+    long_elements <- datas_descr[long_elements_indices]
+    error_message <- sprintf(
+      "'datas_descr' must be a character vector with no element over 80 
+      characters. Offending element(s) at indices %s: '%s'. Please shorten
+      the description.",
+      paste(long_elements_indices, collapse=", "),
+      paste(long_elements, collapse="', '")
+    )
+    stop(error_message)
+  }
+  
   if (!is.list(metas) || any(!sapply(metas, is.data.frame))) {
     stop("'metas' must be a list of dataframes.")
   }
   
-  if (!is.character(designs)) {
-    stop("'designs' must be a character vector.")
+  if (!is.character(designs) || 
+      any(nchar(designs) > 75) || 
+      all(grepl("X", designs) == FALSE)) {
+    
+    long_or_missing_x_indices <- 
+      which(nchar(designs) > 75 | grepl("X", designs) == FALSE)
+    long_elements <- 
+      designs[long_or_missing_x_indices[nchar(
+        designs[long_or_missing_x_indices]) > 75]]
+    missing_x_elements <- 
+      designs[long_or_missing_x_indices[grepl(
+        "X", designs[long_or_missing_x_indices]) == FALSE]]
+    
+    error_message_parts <- character()
+    if (length(long_elements) > 0) {
+      error_message_parts <- c(error_message_parts, sprintf(
+        "Some 'designs' elements exceed 75 characters. Offending element(s) at 
+        indices %s: '%s'.",
+        paste(which(nchar(designs) > 75), collapse=", "),
+        paste(long_elements, collapse="', '")
+      ))
+    }
+    if (length(missing_x_elements) > 0) {
+      error_message_parts <- c(error_message_parts, sprintf(
+        "Some 'designs' elements do not contain 'X', which is the required
+        time component for the splinetime package. 
+        Offending element(s) at indices %s: '%s'.",
+        paste(which(grepl("X", designs) == FALSE), collapse=", "),
+        paste(missing_x_elements, collapse="', '")
+      ))
+    }
+    
+    error_message <- paste(
+      "'designs' must be a character vector with no element over 75 characters 
+      and each must contain 'X'.",
+      paste(error_message_parts, collapse=" Please shorten the variable names 
+            or ensure 'X' is included.")
+    )
+    stop(error_message)
   }
   
   if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
@@ -559,23 +613,26 @@ plot_limma_combos_results <- function(all_combos_top_tables,
 #' @importFrom limma lmFit eBayes topTable
 #'
 limma_hyperparams_screen <- function(datas, 
+                                     datas_descr,
                                      metas, 
                                      designs, 
                                      modes, 
                                      condition, 
-                                     DoFs = c(2L), 
+                                     DoFs, 
                                      feature_names, 
-                                     pthresholds = c(0.05),
+                                     report_dir = here::here(),
+                                     adj_pthresh = c(0.05),
                                      padjust_method = "BH") {
   
-  control_inputs_hyperpara_screen(datas, 
+  control_inputs_hyperpara_screen(datas,
+                                  datas_descr,
                                   metas, 
                                   designs, 
                                   modes, 
                                   condition, 
                                   DoFs, 
                                   feature_names, 
-                                  pthresholds, 
+                                  adj_pthresh, 
                                   padjust_method)
   
   top_tables_combos <- get_limma_combos_results(datas, 
@@ -585,12 +642,14 @@ limma_hyperparams_screen <- function(datas,
                                                 condition, 
                                                 DoFs, 
                                                 feature_names, 
-                                                pthresholds, 
+                                                adj_pthresh, 
                                                 padjust_method)
   
   combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
                                                 datas, 
                                                 metas)
   
-  # generate_report(combo_pair_plots)
+  # generate_reports(combo_pair_plots, report_dir)
+  
+  # generate_reports_meta(datas_descr, designs, modes, report_dir)
 }
