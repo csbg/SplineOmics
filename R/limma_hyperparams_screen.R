@@ -7,8 +7,9 @@ library(furrr)
 library(dplyr)
 library(patchwork)
 library(stringr)
+library(progress)
 
-plan(multisession)
+
 
 # Internal functions level 3 ----------------------------------------------
 
@@ -97,7 +98,7 @@ plot_composite_splines <- function(data,
     # Generate the combined plot
     num_plots <- length(plot_list)
     ncol <- 3
-    composite_plot_len <- ceiling(num_plots / ncol)
+    composite_plot_len <- as.integer(ceiling(num_plots / ncol))
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
       plot_annotation(title = paste(top_table_name, type, sep = " | "), 
@@ -216,7 +217,8 @@ hc_vennheatmap <- function(hc_obj) {
                                          show_rownames = TRUE,
                                          show_colnames = TRUE,
                                          border_color = NA,
-                                         main = plot_title)
+                                         main = plot_title,
+                                         silent = TRUE)
   
   return(list(vennheatmap = vennheatmap_plot, 
               nrhits = nrow(venn_matrix)))
@@ -292,19 +294,22 @@ gen_hitcomp_plots <- function(combo_pair) {
   barplot <- hc_barplot(hitcomp)
   
   list(vennheatmap = result$vennheatmap, 
-       vennheatmap_len = result$nrhits,
+       vennheatmap_len = c(as.integer(result$nrhits/16)),
        barplot = barplot,
-       barplot_len = 2)
+       barplot_len = c(2L)
+       )
 }
 
 
+#' One half of one condition comparison HTML 
+#' (composite spline plots for one 'condition' inside one condition comparison)
 gen_composite_spline_plots <- function(internal_combos, 
                                        datas, 
                                        metas) {
-  
   plots <- list()
-  plots_len <- list()
-
+  plots_len <- integer(0)
+  
+  # all the combos of DoF and adj. p-value threshold for one condition
   for (combo_name in names(internal_combos)) {
     top_tables_levels <- internal_combos[[combo_name]]
     
@@ -313,6 +318,8 @@ gen_composite_spline_plots <- function(internal_combos,
     
     pthresh <- as.numeric(tail(strsplit(combo_name, "_")[[1]], 1)) 
     
+    # for one given combo of DoF and adj. p-value threshold, within one 
+    # condition, there are multiple levels (for example exp and stat)
     for (top_table_name in names(top_tables_levels)) {
       top_table <- top_tables_levels[[top_table_name]]
       
@@ -322,26 +329,31 @@ gen_composite_spline_plots <- function(internal_combos,
       meta_level <- meta[meta[[condition]] == level, ]
       data_level <- data[, which(meta[[condition]] == level)]
       
+      # Show 6 significant and 6 non significant splines, each within a 
+      # composite plot (the 6 individual plots combined with patchwork)
       for(type in c('significant', 'not_significant')) {
         
         if (type == "significant") {
           filtered_rows <- top_table[top_table$adj.P.Val < pthresh, ]
-          selected_rows <- if(nrow(filtered_rows) > 30) {
-            filtered_rows[sample(nrow(filtered_rows), 30), ]
+          selected_rows <- if(nrow(filtered_rows) > 6) {
+            filtered_rows[sample(nrow(filtered_rows), 6), ]
           } else {
             filtered_rows
           }
           indices <- as.integer(selected_rows$feature_index)
         } else if (type == "not_significant") {
           filtered_rows <- top_table[top_table$adj.P.Val >= pthresh, ]
-          selected_rows <- if(nrow(filtered_rows) > 30) {
-            filtered_rows[sample(nrow(filtered_rows), 30), ]
+          selected_rows <- if(nrow(filtered_rows) > 6) {
+            filtered_rows[sample(nrow(filtered_rows), 6), ]
           } else {
             filtered_rows
           }
           indices <- as.integer(selected_rows$feature_index)
         }
         
+        # One composite spline plot for each unique combo between DoF and 
+        # adj. p-value threshold (for one level within one condition)
+        # This fun just generates a single composite plot
         result <- plot_composite_splines(data_level, 
                                          meta_level, 
                                          top_table, 
@@ -350,8 +362,9 @@ gen_composite_spline_plots <- function(internal_combos,
                                          type)
         
         if (is.list(result)) {
-          plots[[length(plots) + 1]] <- result$composite_plot
-          plots_len[[length(plots_len) + 1]] <- result$composite_plot_len
+          plot_name <- paste(combo_name, top_table_name, type, sep = "_")
+          plots[[plot_name]] <- result$composite_plot
+          plots_len <- c(plots_len, result$composite_plot_len)
         }
       }
     }
@@ -388,8 +401,9 @@ control_inputs_hyperpara_screen <- function(datas,
     stop("'designs' must be a character vector.")
   }
   
-  if (!is.character(modes)) {
-    stop("'modes' must be a character vector.")
+  if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
+    stop("'modes' must be a character vector containing only 'isolated' or 
+         'integrated'.")
   }
   
   if (!is.character(condition) && !(length(condition) == 1)) {
@@ -404,9 +418,13 @@ control_inputs_hyperpara_screen <- function(datas,
     stop("'feature_names' must be a character vector.")
   }
   
-  if (!is.numeric(pthresholds)) {
-    stop("'pthresholds' must be a numeric vector.")
+  if (!is.numeric(pthresholds) || 
+      any(pthresholds <= 0) || 
+      any(pthresholds >= 1)) {
+    stop("'pthresholds' must be a numeric vector with 
+         all elements > 0 and < 1.")
   }
+  
   
   if (!is.character(padjust_method) || length(padjust_method) != 1) {
     stop("'padjust_method' must be a single character string.")
@@ -481,20 +499,27 @@ plot_limma_combos_results <- function(all_combos_top_tables,
   combos <- names(combos_separated)
   combo_pairs <- combn(combos, 2, simplify = FALSE)
   
-  # future_map for parallelisation
-  combo_pair_results <- set_names(map(combo_pairs, function(pair) {
-    combo_pair <- combos_separated[pair]
-    
-    hitcomp <- gen_hitcomp_plots(combo_pair)
-
-    composites <- map(combo_pair, function(combo) {
-      composite <- gen_composite_spline_plots(combo,
-                                              datas,
-                                              metas)
-    })
-    
-    list(hitcomp = hitcomp, composites = composites)
-  }), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2], sep = "_")))
+  progress_ticks <- length(combo_pairs)
+  pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
+  pb$tick(0)
+  
+  combo_pair_results <- set_names(
+    map(combo_pairs, function(pair) {
+      combo_pair <- combos_separated[pair]
+      
+      hitcomp <- gen_hitcomp_plots(combo_pair)
+  
+      composites <- map(combo_pair, function(combo) {
+        composite <- gen_composite_spline_plots(combo,
+                                                datas,
+                                                metas)
+      })
+      pb$tick()
+      list(hitcomp = hitcomp, composites = composites)
+    }
+    ), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2], 
+                                              sep = "_"))
+  )
 }
 
 
@@ -563,11 +588,9 @@ limma_hyperparams_screen <- function(datas,
                                                 pthresholds, 
                                                 padjust_method)
   
-  # debug(plot_limma_combos_results)
   combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
                                                 datas, 
                                                 metas)
   
-  save(combo_pair_plots, file = "combo_pair_plots.RData")
-  # generate_report()
+  # generate_report(combo_pair_plots)
 }
