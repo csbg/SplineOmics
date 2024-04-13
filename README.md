@@ -23,6 +23,7 @@ splinetime
     -   [run_limma_splines](#run_limma_splines)
     -   [cluster_hits](#cluster_hits)
 -   [Dependencies](#dependencies)
+-   [System Requirements](#system-requirements)
 -   [Getting Help](#getting-help)
 -   [Contributing](#contributing)
 -   [License](#license)
@@ -216,6 +217,22 @@ The `splinetime` package relies on several other R packages for its functionalit
 
 To ensure a smooth installation and functionality of `splinetime`, these dependencies will be automatically checked and, if necessary, installed upon installing `splinetime`.
 
+
+## System Requirements
+
+### Operating System
+- Recommended: Ubuntu 20.04 LTS (or compatible)
+- The project should also run on other Unix-like systems, including macOS and other Linux distributions.
+- Windows 10 or later (with appropriate adjustments, if necessary)
+
+### R Version
+- Required: R 4.3.3 or higher
+  - Note: This project was developed using R 4.3.3. While it should be compatible with newer versions, this is the version guaranteed to work as tested.
+
+### R Environment
+- This project uses `renv` for managing R package dependencies. The `renv.lock` file in the repository ensures you can set up an exact copy of the project's R package environment.
+
+
 ## Getting Help 
 
 If you encounter a bug or have a suggestion for improving the `splinetime` package, we encourage you to [open an issue](https://github.com/csbg/splinetime/issues) on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.
@@ -224,7 +241,7 @@ For more detailed questions, discussions, or contributions regarding the package
 
 Thank you for using and contributing to the development of `splinetime`!
 
-## Contributing {#contributing}
+## Contributing
 
 We welcome contributions to the `splinetime` package! Whether you're interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.
 
