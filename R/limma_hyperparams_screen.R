@@ -4,6 +4,7 @@ library(ggplot2)
 library(stats)
 library(purrr)
 library(furrr)
+library(tidyr)
 library(dplyr)
 library(patchwork)
 library(stringr)
@@ -417,6 +418,20 @@ process_combo_pair <- function(combo_pair,
 }
 
 
+process_hyperparams_combo <- function(data, meta, design, mode, DoF, pthreshold, condition, feature_names, padjust_method) {
+  DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
+  
+  result <- run_limma_splines(data, meta, design, DoFs_levels, condition,
+                              feature_names, mode, padjust_method)
+  
+  # Construct a unique id for the current combination of hyperparameters
+  id <- paste0("Data_", data, "_Design_", design,
+               "_DoF_", DoF, "_PThresh_", pthreshold)
+  
+  list(id = id, top_tables = result$top_tables)
+}
+
+
 
 # Internal functions level 1 ----------------------------------------------
 
@@ -530,57 +545,57 @@ control_inputs_hyperpara_screen <- function(datas,
 }
 
 
-get_limma_combos_results <- function (datas, 
-                                      metas, 
-                                      designs, 
-                                      modes, 
-                                      condition,
-                                      DoFs, 
-                                      feature_names, 
-                                      pthresholds,
-                                      padjust_method) {
-  top_tables_combos <- list()
+get_limma_combos_results <- function(datas, 
+                                     metas, 
+                                     designs, 
+                                     modes, 
+                                     condition, 
+                                     DoFs, 
+                                     feature_names, 
+                                     pthresholds, 
+                                     padjust_method) {
+  # Generate all combinations of indices and parameters
+  combos <- tidyr::expand_grid(
+    data_index = seq_along(datas),
+    design_index = seq_along(designs),
+    DoF = DoFs,
+    pthreshold = pthresholds
+  )
   
-  for(i in seq_along(datas)) {
-    data <- datas[[i]]
-    meta <- metas[[i]]
+  # Define the function to process each combination
+  process_combo <- function(data_index, design_index, DoF, pthreshold) {
+    data <- datas[[data_index]]
+    meta <- metas[[data_index]]
+    design <- designs[[design_index]]
+    mode <- modes[[design_index]]
+    DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
     
-    for(j in seq_along(designs)) {
-      design <- designs[[j]]
-      mode <- modes[[j]]
-      
-      for(DoF in DoFs) {
-        DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
-        for(pthreshold in pthresholds) {
-          result <- run_limma_splines(data, 
-                                      meta, 
-                                      design, 
-                                      DoFs_levels, 
-                                      condition,
-                                      feature_names, 
-                                      mode, 
-                                      padjust_method)
-          
-          # Construct a unique id for the current combination of hyperparameters
-          id <- paste0("Data_", i, "_Design_", j, "_DoF_", DoF, 
-                       "_PThresh_", pthreshold)
-          
-          top_tables_combos[[id]] <- result$top_tables
-        }
-      }
-    }
+    result <- run_limma_splines(data, meta, design, DoFs_levels, condition,
+                                feature_names, mode, padjust_method)
+    
+    # Construct a unique id for the current combination of hyperparameters
+    id <- paste0("Data_", data_index, "_Design_", design_index, 
+                 "_DoF_", DoF, "_PThresh_", pthreshold)
+    
+    list(id = id, top_tables = result$top_tables)
   }
   
-  return(top_tables_combos)
+  results <- purrr::pmap(combos, process_combo)
+  
+  # Construct the results list with unique IDs as names
+  top_tables_combos <- setNames(
+    lapply(results, `[[`, "top_tables"),
+    sapply(results, `[[`, "id")
+  )
 }
 
 
-plot_limma_combos_results <- function(all_combos_top_tables, 
-                                      datas, 
-                                      metas, 
+plot_limma_combos_results <- function(all_combos_top_tables,
+                                      datas,
+                                      metas,
                                       annotation) {
-  
-  names_extracted <- str_extract(names(all_combos_top_tables), 
+
+  names_extracted <- str_extract(names(all_combos_top_tables),
                                  "Data_\\d+_Design_\\d+")
 
   combos_separated <- lapply(unique(names_extracted), function(id) {
@@ -588,21 +603,21 @@ plot_limma_combos_results <- function(all_combos_top_tables,
   })
 
   names(combos_separated) <- unique(names_extracted)
-  
+
   combos <- names(combos_separated)
   combo_pairs <- combn(combos, 2, simplify = FALSE)
-  
+
   print("Generating the plots for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pairs)
   pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
   pb$tick(0)
-  
+
   combo_pair_results <- set_names(
     map(combo_pairs, function(pair) {
       combo_pair <- combos_separated[pair]
-      
+
       hitcomp <- gen_hitcomp_plots(combo_pair)
-  
+
       composites <- map(combo_pair, function(combo) {
         composite <- gen_composite_spline_plots(combo,
                                                 datas,
@@ -611,7 +626,7 @@ plot_limma_combos_results <- function(all_combos_top_tables,
       pb$tick()
       list(hitcomp = hitcomp, composites = composites)
     }
-    ), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2], 
+    ), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
                                               sep = "_"))
   )
 }
@@ -624,11 +639,6 @@ generate_reports <- function(combo_pair_plots,
   progress_ticks <- length(combo_pair_plots)
   pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
 
-  # result <- imap(combo_pair_plots, ~process_combo_pair(.x, 
-  #                                                      .y, 
-  #                                                      report_dir, 
-  #                                                      timestamp))
-  # pb$tick()
   result <- imap(combo_pair_plots, ~{
     process_combo_pair(.x, .y, report_dir, timestamp)
     pb$tick()  

@@ -229,9 +229,6 @@ To ensure a smooth installation and functionality of `splinetime`, these depende
 - Required: R 4.3.3 or higher
   - Note: This project was developed using R 4.3.3. While it should be compatible with newer versions, this is the version guaranteed to work as tested.
 
-### R Environment
-- This project uses `renv` for managing R package dependencies. The `renv.lock` file in the repository ensures you can set up an exact copy of the project's R package environment.
-
 
 ## Getting Help 
 
