@@ -50,16 +50,16 @@ pthresholds <- c(0.05, 0.1)
 
 ## hyperparams screen limma ----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   DoFs,
-                                   feature_names,
-                                   report_dir,
-                                   pthresholds)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    DoFs,
+#                                    feature_names,
+#                                    report_dir,
+#                                    pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)
@@ -81,7 +81,7 @@ clusters <- c(6L, 3L)
 report_dir <- here::here("results")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
-clustering_results <- cluster_hits(top_tables, data, meta, group_factors, 
+clustering_results <- cluster_hits(top_tables, data, meta, condition, 
                                    p_values, clusters, report_dir)
 
 clustering_results[[2]]$clustered_hits

@@ -11,70 +11,14 @@ library(patchwork)
 
 
 
-# Internal functions level 4 ----------------------------------------------
-
-
-convertPlotToBase64ImgTag <- function(plot, fn5_plot_nrows, width = 7, 
-                                      base_height_per_row = 2.5, units = "in", 
-                                      html_img_width="100%") {
-  
-  additional_height_per_row <- 2.1
-  height <- base_height_per_row + (fn5_plot_nrows - 1) * 
-    additional_height_per_row
-  
-  # Temporarily save the plot as an image
-  img_file <- tempfile(fileext = ".png")
-  ggsave(img_file, plot=plot, width = width, height = height, units = units, 
-         limitsize = FALSE)
-  
-  # Convert the image to a Base64 string
-  img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
-  
-  # Delete the temporary image file
-  unlink(img_file)
-  
-  # Return the HTML img tag with the Base64 string and a fixed width
-  return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
-                 img_base64, html_img_width))
-}
-
-# Internal functions level 3 ---------------------------
-
-
-buildPlotReportHtml <- function(header_section, plots, rowcounts, path) {
-  
-
-  
-  index <- 1
-  for (plot in plots) {
-    plot_nrows <- rowcounts[[index]]
-    index <- index + 1
-    img_tag <- convertPlotToBase64ImgTag(plot, plot_nrows)
-    header_section <- paste(header_section, img_tag, sep="\n")
-  }
-  
-  
-  # Close the HTML document
-  html_content <- paste(header_section, "</body></html>", sep="\n")
-  
-  
-  dir_path <- dirname(path)
-  
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  writeLines(html_content, path)
-}
-
-
-
-# Internal functions level 2 ---------------------------
+# Internal functions level 2 ---------------------------------------------------
 
 
 # Veronikas function space
 
-plot_dendrogram <- function(hc, k, title) {
+plot_dendrogram <- function(hc, 
+                            k, 
+                            title) {
   dend <- as.dendrogram(hc)
   
   clusters <- cutree(hc, k)
@@ -99,7 +43,8 @@ plot_dendrogram <- function(hc, k, title) {
 }
 
 
-plot_all_shapes <- function(curve_values, title) {
+plot_all_shapes <- function(curve_values, 
+                            title) {
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   
   clusters <- unique(curve_values$cluster)
@@ -138,7 +83,9 @@ plot_all_shapes <- function(curve_values, title) {
 
 
 # Veronika
-plot_single_and_consensus_splines <- function(time_series_data, title) {
+
+plot_single_and_consensus_splines <- function(time_series_data, 
+                                              title) {
   # Transform the dataframe to a long format for ggplot2
   df_long <- as.data.frame(t(time_series_data)) %>%
     rownames_to_column(var = "time") %>%
@@ -170,7 +117,8 @@ plot_single_and_consensus_splines <- function(time_series_data, title) {
 }
 
 
-plot_consensus_shapes <- function(curve_values, title) {
+plot_consensus_shapes <- function(curve_values, 
+                                  title) {
   clusters <- sort(unique(curve_values$cluster))
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   
@@ -187,7 +135,10 @@ plot_consensus_shapes <- function(curve_values, title) {
 }
 
 
-plot_splines <- function(top_table, data, meta, main_title) {
+plot_splines <- function(top_table, 
+                         data, 
+                         meta, 
+                         main_title) {
   
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
@@ -266,7 +217,9 @@ plot_splines <- function(top_table, data, meta, main_title) {
 }
 
 
-generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
+generate_report_html <- function(plot_list, 
+                                 plot_list_nrows, 
+                                 report_dir) {
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   omics_data_type <- "PTX"
@@ -300,8 +253,8 @@ generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
   
   output_file_path <- here::here(report_dir, file_name)
   
-  buildPlotReportHtml(html_content, plot_list, plot_list_nrows, 
-                      output_file_path)
+  build_plot_report_html(html_content, plot_list, plot_list_nrows, 
+                         output_file_path)
 }
 
 
@@ -309,8 +262,13 @@ generate_report_html <- function(plot_list, plot_list_nrows, report_dir) {
 # Internal functions level 1 ---------------------------
 
 
-control_inputs_cluster_hits <- function(top_tables, data, meta, group_factors, 
-                                        p_values, clusters, report_dir) {
+control_inputs_cluster_hits <- function(top_tables, 
+                                        data, 
+                                        meta, 
+                                        condition, 
+                                        p_values, 
+                                        clusters, 
+                                        report_dir) {
   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
     stop("top_tables must be a list of dataframes")
   }
@@ -323,8 +281,8 @@ control_inputs_cluster_hits <- function(top_tables, data, meta, group_factors,
     stop("meta must be a dataframe")
   }
   
-  if (!(is.character(group_factors))) {
-    stop("group_factors must be a character vector")
+  if (!(is.character(condition)) || length(condition) != 1) {
+    stop("condition must be a character vector with length 1")
   }
   
   if (!is.numeric(p_values)) {
@@ -341,72 +299,75 @@ control_inputs_cluster_hits <- function(top_tables, data, meta, group_factors,
 }
 
 
-make_clustering_report <- function(all_groups_clustering, group_factors, data, 
-                                   meta, p_values, report_dir) {
+make_clustering_report <- function(all_groups_clustering, 
+                                   condition, 
+                                   data, 
+                                   meta, p_values, 
+                                   report_dir) {
   
   plot_list <- list()
   plot_list_nrows <- list()
   
-  for (group_factor in group_factors) {
-    i <- 0
-    for (group_clustering in all_groups_clustering) {
-      i <- i + 1
+  i <- 0
+  for (group_clustering in all_groups_clustering) {
+    i <- i + 1
+    
+    curve_values <- group_clustering$curve_values
+    
+    # For Veronika
+    # heatmap <- plot_heatmap()
+    
+    title <- 
+      "Exponential phase\n\nHierarchical Clustering Dendrogram 
+       (colors = clusters)"
+    dendrogram <- plot_dendrogram(group_clustering$hc, clusters[i], title)
+    
+    title <- 
+      "Average Curves by Cluster (colors not matching with plot above!)"
+    p_curves <- plot_all_shapes(curve_values, title)
+    
+    title <- paste("min-max normalized shapes | ", "cluster", sep = " ")
+    consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
+    
+    main_title <- paste(",cluster:", 1, sep = " ")
+    titles <- annotation$First.Protein.Description
+    
+    top_table <- group_clustering$top_table
+    p_value <- p_values[i]
+    levels <- as.character(unique(meta[[condition]]))
+    meta_level <- meta %>% filter(.data[[condition]] == levels[i])
+    sample_names <- as.character(meta_level$Sample)
+    data_level <- data[, colnames(data) %in% sample_names]
+    
+    composite_plots <- list()
+    nrows <- list()
+    
+    for (nr_cluster in unique(na.omit(top_table$cluster))) {
+      main_title <- paste(",cluster:", nr_cluster, sep = " ")
       
-      curve_values <- group_clustering$curve_values
+      top_table_filt <- top_table %>%
+        dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
       
-      # For Veronika
-      # heatmap <- plot_heatmap()
+      plot_splines_result <- plot_splines(top_table_filt, data_level, 
+                                          meta_level, main_title)
       
-      title <- 
-        "Exponential phase\n\nHierarchical Clustering Dendrogram 
-         (colors = clusters)"
-      dendrogram <- plot_dendrogram(group_clustering$hc, clusters[i], title)
+      composite_plots[[length(composite_plots) + 1]] <- 
+        plot_splines_result$composite_plot 
       
-      title <- 
-        "Average Curves by Cluster (colors not matching with plot above!)"
-      p_curves <- plot_all_shapes(curve_values, title)
-      
-      title <- paste("min-max normalized shapes | ", "cluster", sep = " ")
-      consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
-      
-      main_title <- paste(",cluster:", 1, sep = " ")
-      titles <- annotation$First.Protein.Description
-      
-      top_table <- group_clustering$top_table
-      p_value <- p_values[i]
-      levels <- as.character(unique(meta[[group_factor]]))
-      meta_level <- meta %>% filter(.data[[group_factor]] == levels[i])
-      sample_names <- as.character(meta_level$Sample)
-      data_level <- data[, colnames(data) %in% sample_names]
-      
-      composite_plots <- list()
-      nrows <- list()
-      
-      for (nr_cluster in unique(na.omit(top_table$cluster))) {
-        main_title <- paste(",cluster:", nr_cluster, sep = " ")
-        
-        top_table_filt <- top_table %>%
-          dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
-        
-        plot_splines_result <- plot_splines(top_table_filt, data_level, 
-                                            meta_level, main_title)
-        
-        composite_plots[[length(composite_plots) + 1]] <- 
-          plot_splines_result$composite_plot 
-        
-        nrows[[length(nrows) + 1]] <- plot_splines_result$nrows 
-      }
-      
-      plot_list <- c(plot_list, list(dendrogram, p_curves), 
-                     consensus_shape_plots, composite_plots)
-      
-      plot_list_nrows <- c(plot_list_nrows, 2, 2, 
-                           rep(1, length(consensus_shape_plots)), unlist(nrows))
-      
+      nrows[[length(nrows) + 1]] <- plot_splines_result$nrows 
     }
+    
+    plot_list <- c(plot_list, list(dendrogram, p_curves), 
+                   consensus_shape_plots, composite_plots)
+    
+    plot_list_nrows <- c(plot_list_nrows, 2, 2, 
+                         rep(1, length(consensus_shape_plots)), unlist(nrows))
+    
   }
   
-  generate_report_html(plot_list, plot_list_nrows, report_dir)
+  generate_report_html(plot_list, 
+                       plot_list_nrows, 
+                       report_dir)
   
 }
 
@@ -427,8 +388,8 @@ make_clustering_report <- function(all_groups_clustering, group_factors, data,
 #'        analysis, containing at least 'adj.P.Val' and expression data columns.
 #' @param data The original expression dataset used for differential expression analysis.
 #' @param meta Metadata dataframe corresponding to the `data`, must include a 'Time' column and any columns
-#'        specified by `group_factors`.
-#' @param group_factors Character vector specifying the column names in `meta` used to define groups for
+#'        specified by `conditions`.
+#' @param conditions Character vector specifying the column names in `meta` used to define groups for
 #'        analysis.
 #' @param p_values Numeric vector of p-value thresholds for filtering hits in each top table.
 #' @param clusters Integer vector specifying the number of clusters to cut the dendrogram into, for each
@@ -452,17 +413,27 @@ make_clustering_report <- function(all_groups_clustering, group_factors, data,
 #' @importFrom utils write.table
 #' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
 #' 
-cluster_hits <- function(top_tables, data, meta, group_factors, p_values, 
-                         clusters, report_dir) {
+cluster_hits <- function(top_tables, 
+                         data, 
+                         meta, 
+                         condition, 
+                         p_values, 
+                         clusters, 
+                         report_dir) {
   
-  control_inputs_cluster_hits(top_tables, data, meta, group_factors, p_values, 
-                              clusters, report_dir)
+  control_inputs_cluster_hits(top_tables, 
+                              data, 
+                              meta, 
+                              condition, 
+                              p_values, 
+                              clusters, 
+                              report_dir)
   
   if (!dir.exists(report_dir)) {
     dir.create(report_dir)
   }
   
-  groups <- unique(meta[group_factors])
+  groups <- unique(meta[condition])
   all_groups_clustering <- list()
   
   for (i in seq_along(top_tables)) {
@@ -481,7 +452,7 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
     
     # Get smooth curves 
     selected_group <- groups[i, ]
-    subset_meta <- meta[apply(meta[, group_factors], 1, function(row) {
+    subset_meta <- meta[apply(meta[, condition], 1, function(row) {
       all(row == unlist(selected_group))
     }), ]
     
@@ -550,8 +521,12 @@ cluster_hits <- function(top_tables, data, meta, group_factors, p_values,
   }
   
   # Generate HTML report with the clustering results
-  make_clustering_report(all_groups_clustering, group_factors, data, meta, 
-                         p_values, report_dir)
+  make_clustering_report(all_groups_clustering, 
+                         condition, 
+                         data, 
+                         meta, 
+                         p_values, 
+                         report_dir)
   
   return(all_groups_clustering)
 }
