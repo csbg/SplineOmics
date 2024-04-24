@@ -48,18 +48,18 @@ feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "jungfernflug2")
 pthresholds <- c(0.05, 0.1)
 
-## hyperparams screen limma ----------------------------------------------------
+# hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    DoFs,
-#                                    feature_names,
-#                                    report_dir,
-#                                    pthresholds)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   DoFs,
+                                   feature_names,
+                                   report_dir,
+                                   pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)

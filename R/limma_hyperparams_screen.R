@@ -560,40 +560,38 @@ get_limma_combos_results <- function(datas,
     design_index = seq_along(designs),
     DoF = DoFs,
     pthreshold = pthresholds
-  )
+  ) %>% 
+    mutate(id = paste0("Data_", data_index, "_Design_", design_index, 
+                        "_DoF_", DoF, "_PThresh_", pthreshold))
   
   # Define the function to process each combination
-  process_combo <- function(data_index, design_index, DoF, pthreshold) {
+  process_combo <- function(data_index, design_index, DoF, pthreshold, ...) {
     data <- datas[[data_index]]
     meta <- metas[[data_index]]
     design <- designs[[design_index]]
     mode <- modes[[design_index]]
-    DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
+    DoFs_levels <- rep(DoF, times = n_distinct(meta[[condition]]))
     
-    result <- run_limma_splines(data, meta, design, DoFs_levels, condition,
-                                feature_names, mode, padjust_method)
+    result <- run_limma_splines(data, 
+                                meta, 
+                                design, 
+                                DoFs_levels, 
+                                condition,
+                                feature_names, 
+                                mode, 
+                                padjust_method)
     
-    # Construct a unique id for the current combination of hyperparameters
-    id <- paste0("Data_", data_index, "_Design_", design_index, 
-                 "_DoF_", DoF, "_PThresh_", pthreshold)
-    
-    list(id = id, top_tables = result$top_tables)
+    result$top_tables
   }
   
-  results <- purrr::pmap(combos, process_combo)
-  
-  # Construct the results list with unique IDs as names
-  top_tables_combos <- setNames(
-    lapply(results, `[[`, "top_tables"),
-    sapply(results, `[[`, "id")
-  )
+  purrr::pmap(combos, process_combo) %>% 
+    set_names(combos$id)
 }
 
 
 plot_limma_combos_results <- function(all_combos_top_tables,
                                       datas,
-                                      metas,
-                                      annotation) {
+                                      metas) {
 
   names_extracted <- str_extract(names(all_combos_top_tables),
                                  "Data_\\d+_Design_\\d+")
