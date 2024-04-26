@@ -447,8 +447,8 @@ control_inputs_hyperpara_screen <- function(datas,
                                             pthresholds, 
                                             padjust_method) {
   
-  if (!is.list(datas) || any(!sapply(datas, is.data.frame))) {
-    stop("'datas' must be a list of dataframes.")
+  if (!is.list(datas) || any(!sapply(datas, is.matrix))) {
+    stop("'datas' must be a list of matrices.")
   }
   
   if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {

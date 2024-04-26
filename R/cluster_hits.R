@@ -8,13 +8,164 @@ library(tibble)
 library(dendextend)
 library(RColorBrewer)
 library(patchwork)
+library(ComplexHeatmap)
+library(circlize)
+library(grid)
 
+
+# Internal functions level 3 ---------------------------------------------------
+
+
+get_curve_values <- function(top_table, 
+                             p_value, 
+                             k, 
+                             level, 
+                             meta, 
+                             condition) {
+  spline_results_hits <- subset(top_table, adj.P.Val < p_value)
+  
+  DoF <- which(names(top_table) == "AveExpr") - 1
+  
+  subset_meta <- meta[meta[[condition]] == level, ]
+  
+  smooth_timepoints <- seq(subset_meta$Time[1],
+                           subset_meta$Time[length(subset_meta$Time)],
+                           length.out = 100)
+  
+  X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
+  
+  columns_to_select <- 1:DoF
+  
+  splineCoeffs <- spline_results_hits %>%
+    select(all_of(1:DoF)) %>%
+    as.matrix()
+  
+  curve_values <- matrix(nrow = nrow(splineCoeffs),
+                         ncol = length(smooth_timepoints))
+  
+  for(i in 1:nrow(splineCoeffs)) {
+    current_coeffs <- matrix(splineCoeffs[i, ], ncol = ncol(splineCoeffs),
+                             byrow = TRUE)
+    
+    curve_values[i, ] <- current_coeffs %*% t(X)
+  }
+  
+  curve_values <- as.data.frame(curve_values)
+  rownames(curve_values) <- rownames(splineCoeffs)
+  list(curve_values = curve_values, smooth_timepoints = smooth_timepoints)
+}
+
+
+normalize_curves <- function(curve_values) {
+  normalized_curves <- apply(curve_values, 1, function(row) {
+    (row - min(row)) / (max(row) - min(row))
+  })
+  
+  normalized_curves <- t(normalized_curves)
+  curve_values[,] <- normalized_curves
+  curve_values
+}
+
+
+hierarchical_clustering <- function(curve_values, 
+                                    k, 
+                                    smooth_timepoints,
+                                    top_table) {
+  distance_matrix <- dist(curve_values, method = "euclidean")
+  hc <- hclust(distance_matrix, method = "complete")
+  cluster_assignments <- cutree(hc, k = k)
+  
+  clustered_hits <- data.frame(cluster = cluster_assignments)
+  clustered_hits$feature <- rownames(clustered_hits)
+  clustered_hits <- clustered_hits[, c("feature", "cluster")]
+  
+  colnames(curve_values) <- smooth_timepoints
+  curve_values$cluster <- cluster_assignments
+  
+  top_table$cluster <- NA
+  top_table$cluster[1:nrow(clustered_hits)] <-
+    as.integer(clustered_hits$cluster)
+  
+  
+  group_clustering <- list(clustered_hits = clustered_hits,
+                           hc = hc,
+                           curve_values = curve_values,
+                           top_table = top_table)
+}
 
 
 # Internal functions level 2 ---------------------------------------------------
 
 
-# Veronikas function space
+process_level_cluster <- function(top_table, 
+                                  p_value, 
+                                  cluster_size, 
+                                  level, 
+                                  meta, 
+                                  condition) {
+  if (is.na(p_value)) {
+    p_value <- p_values[1]  
+  }
+  
+  result <- get_curve_values(top_table, 
+                             p_value, 
+                             cluster_size, 
+                             level, 
+                             meta, 
+                             condition)
+  
+  normalized_curves <- normalize_curves(result$curve_values)
+  
+  clustering_result <- hierarchical_clustering(normalized_curves, 
+                                               cluster_size, 
+                                               result$smooth_timepoints, 
+                                               top_table)
+}
+
+
+plot_heatmap <- function(data,
+                         meta,
+                         feature_names) {
+  z_score <- t(scale(t(data)))
+  rownames(z_score) <- NULL
+  
+  BASE_TEXT_SIZE_PT <- 5
+  
+  my_theme <- HeatmapTheme(
+    simple_anno_size = unit(1.5, "mm"),
+    column_anno_padding = unit(1, "pt"),
+    dendrogram_padding = unit(1, "pt"),
+    heatmap_legend_padding = unit(1, "mm"),
+    row_anno_padding = unit(1, "pt"),
+    title_padding = unit(2, "mm"),
+    row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_border = FALSE
+  )
+
+  ht <- Heatmap(z_score, 
+                name = "Z-Score",
+                top_annotation = 
+                  HeatmapAnnotation(df = meta, gp = gpar(fontsize = 12)),
+                right_annotation = 
+                  rowAnnotation(df = feature_names, gp = gpar(fontsize = 12)),
+                cluster_columns = FALSE,
+                cluster_rows = FALSE,
+                show_row_names = TRUE,
+                show_column_names = TRUE,
+                heatmap_legend_param = list(title = "z-score of log2 intensity", 
+                                            title_position = "lefttop-rot"),
+                width = unit(100, "mm"), height = unit(80, "mm"),
+                heatmap_theme = my_theme) # Applying the theme
+  
+  draw(ht, heatmap_legend_side = "right")
+  return(ht)
+}
+
 
 plot_dendrogram <- function(hc, 
                             k, 
@@ -81,8 +232,6 @@ plot_all_shapes <- function(curve_values,
     theme_minimal()
 }
 
-
-# Veronika
 
 plot_single_and_consensus_splines <- function(time_series_data, 
                                               title) {
@@ -273,8 +422,8 @@ control_inputs_cluster_hits <- function(top_tables,
     stop("top_tables must be a list of dataframes")
   }
   
-  if ((is.data.frame(data)) && (!is.matrix(data))) {
-    data <- as.matrix(data)
+  if (!is.matrix(data)) {
+    stop("data must be a matrix")
   }
   
   if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
@@ -293,17 +442,38 @@ control_inputs_cluster_hits <- function(top_tables,
     stop("clusters must be an integer vector")
   }
   
-  if (!is.character(report_dir)) {
-    stop("report_dir must be a character string")
+  if (!is.character(report_dir) || length(report_dir) != 1) {
+    stop("report_dir must be a character vector with length 1")
   }
+}
+
+
+perform_clustering <- function(top_tables,
+                               p_values,
+                               clusters,
+                               meta,
+                               condition) {
+  levels <- unique(meta[[condition]])
+  all_groups_clustering <- list()
+  
+  all_groups_clustering <- mapply(process_level_cluster, 
+                                  top_tables, 
+                                  p_values, 
+                                  clusters, 
+                                  levels, 
+                                  MoreArgs = list(meta = meta, 
+                                                  condition = condition),
+                                  SIMPLIFY = FALSE)  # Return a list
 }
 
 
 make_clustering_report <- function(all_groups_clustering, 
                                    condition, 
                                    data, 
-                                   meta, p_values, 
-                                   report_dir) {
+                                   meta, 
+                                   p_values, 
+                                   report_dir,
+                                   feature_names) {
   
   plot_list <- list()
   plot_list_nrows <- list()
@@ -314,8 +484,8 @@ make_clustering_report <- function(all_groups_clustering,
     
     curve_values <- group_clustering$curve_values
     
-    # For Veronika
-    # heatmap <- plot_heatmap()
+    # debug(plot_heatmap)
+    # heatmap <- plot_heatmap(data, meta, feature_names)
     
     title <- 
       "Exponential phase\n\nHierarchical Clustering Dendrogram 
@@ -330,7 +500,7 @@ make_clustering_report <- function(all_groups_clustering,
     consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
     
     main_title <- paste(",cluster:", 1, sep = " ")
-    titles <- annotation$First.Protein.Description
+    # titles <- annotation$First.Protein.Description
     
     top_table <- group_clustering$top_table
     p_value <- p_values[i]
@@ -378,32 +548,47 @@ make_clustering_report <- function(all_groups_clustering,
 
 #' Cluster Hits from Top Tables
 #'
-#' Performs clustering on hits from top tables generated by differential expression analysis.
-#' This function filters hits based on adjusted p-value thresholds, extracts spline coefficients for 
-#' significant features, normalizes these coefficients, and applies hierarchical clustering. The results,
-#' including clustering assignments and normalized spline curves, are saved in a specified directory and
+#' Performs clustering on hits from top tables generated by differential 
+#' expression analysis.
+#' This function filters hits based on adjusted p-value thresholds, extracts 
+#' spline coefficients for 
+#' significant features, normalizes these coefficients, and applies hierarchical 
+#' clustering. The results,
+#' including clustering assignments and normalized spline curves, are saved in a 
+#' specified directory and
 #' compiled into an HTML report.
 #'
-#' @param top_tables A list of data frames, each representing a top table from differential expression
+#' @param top_tables A list of data frames, each representing a top table from 
+#' differential expression
 #'        analysis, containing at least 'adj.P.Val' and expression data columns.
-#' @param data The original expression dataset used for differential expression analysis.
-#' @param meta Metadata dataframe corresponding to the `data`, must include a 'Time' column and any columns
+#' @param data The original expression dataset used for differential expression 
+#' analysis.
+#' @param meta Metadata dataframe corresponding to the `data`, must include a 
+#' 'Time' column and any columns
 #'        specified by `conditions`.
-#' @param conditions Character vector specifying the column names in `meta` used to define groups for
+#' @param conditions Character vector specifying the column names in `meta` used 
+#' to define groups for
 #'        analysis.
-#' @param p_values Numeric vector of p-value thresholds for filtering hits in each top table.
-#' @param clusters Integer vector specifying the number of clusters to cut the dendrogram into, for each
+#' @param p_values Numeric vector of p-value thresholds for filtering hits in 
+#' each top table.
+#' @param clusters Integer vector specifying the number of clusters to cut the 
+#' dendrogram into, for each
 #'        group factor.
-#' @param report_dir Character string specifying the directory path where the HTML report and any
+#' @param report_dir Character string specifying the directory path where the 
+#' HTML report and any
 #'        other output files should be saved.
 #'
-#' @return A list where each element corresponds to a group factor and contains the clustering results,
-#'         including `clustered_hits` data frame, hierarchical clustering object `hc`, `curve_values`
-#'         data frame with normalized spline curves, and `top_table` with cluster assignments.
+#' @return A list where each element corresponds to a group factor and contains 
+#' the clustering results,
+#'         including `clustered_hits` data frame, hierarchical clustering object 
+#'         `hc`, `curve_values`
+#'         data frame with normalized spline curves, and `top_table` with 
+#'         cluster assignments.
 #'
 #' @examples
 #' \dontrun{
-#'   cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"), c(0.05),
+#'   cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"), 
+#'                                   c(0.05),
 #'                                   c(3), "path/to/report/dir")
 #' }
 #'
@@ -429,104 +614,25 @@ cluster_hits <- function(top_tables,
                               clusters, 
                               report_dir)
   
+  all_groups_clustering <- perform_clustering(top_tables,
+                                              p_values,
+                                              clusters,
+                                              meta,
+                                              condition)
+  
+  
   if (!dir.exists(report_dir)) {
     dir.create(report_dir)
   }
   
-  groups <- unique(meta[condition])
-  all_groups_clustering <- list()
-  
-  for (i in seq_along(top_tables)) {
-    top_table <- top_tables[[i]]
-    
-    p_value <- p_values[i]
-    if (is.na(p_value)) {
-      p_value <- p_values[1]
-    }
-    
-    k <- clusters[i]
-    
-    spline_results_hits <- subset(top_table, adj.P.Val < p_value)
-    
-    DoF <- which(names(top_table) == "AveExpr") - 1
-    
-    # Get smooth curves 
-    selected_group <- groups[i, ]
-    subset_meta <- meta[apply(meta[, condition], 1, function(row) {
-      all(row == unlist(selected_group))
-    }), ]
-    
-    
-    smooth_timepoints <- seq(subset_meta$Time[1], 
-                             subset_meta$Time[length(subset_meta$Time)], 
-                             length.out = 100)
-    
-    X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
-    
-    columns_to_select <- 1:DoF
-    
-    splineCoeffs <- spline_results_hits %>% 
-      select(all_of(1:DoF)) %>%
-      as.matrix()
-    
-    curve_values <- matrix(nrow = nrow(splineCoeffs), 
-                           ncol = length(smooth_timepoints))
-    
-    for(i in 1:nrow(splineCoeffs)) {
-      current_coeffs <- matrix(splineCoeffs[i, ], ncol = ncol(splineCoeffs), 
-                               byrow = TRUE)
-      
-      curve_values[i, ] <- current_coeffs %*% t(X)
-    }
-    
-    curve_values <- as.data.frame(curve_values)
-    rownames(curve_values) <- rownames(splineCoeffs)
-    
-    ## Normalize smooth curves between 0 and 1 --------------------------------- 
-    # Apply min-max normalization to each row (curve)
-    normalized_curves <- apply(curve_values, 1, function(row) {
-      (row - min(row)) / (max(row) - min(row))
-    })
-    
-    # Transpose the result to match the original dataframe structure
-    normalized_curves <- t(normalized_curves)
-    
-    # Replace the original dataframe with the normalized values
-    curve_values[,] <- normalized_curves
-    
-    ## Hierarchical clustering -------------------------------------------------
-    distance_matrix <- dist(curve_values, method = "euclidean")
-    hc <- hclust(distance_matrix, method = "complete")
-    cluster_assignments <- cutree(hc, k = k)
-    
-    clustered_hits <- data.frame(cluster = cluster_assignments)
-    clustered_hits$feature <- rownames(clustered_hits)
-    clustered_hits <- clustered_hits[, c("feature", "cluster")]
-    
-    colnames(curve_values) <- smooth_timepoints
-    curve_values$cluster <- cluster_assignments
-    
-    top_table$cluster <- NA
-    top_table$cluster[1:nrow(clustered_hits)] <- 
-      as.integer(clustered_hits$cluster)
-    
-    
-    group_clustering <- list(clustered_hits = clustered_hits, 
-                             hc = hc, 
-                             curve_values = curve_values,
-                             top_table = top_table)
-    
-    all_groups_clustering[[length(all_groups_clustering) + 1]] <- 
-      group_clustering 
-  }
-  
-  # Generate HTML report with the clustering results
+  # debug(make_clustering_report)
   make_clustering_report(all_groups_clustering, 
                          condition, 
                          data, 
                          meta, 
                          p_values, 
-                         report_dir)
+                         report_dir,
+                         feature_names)
   
   return(all_groups_clustering)
 }

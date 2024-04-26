@@ -31,6 +31,7 @@ load(input_file_path)
 
 
 # Run limma splines and cluster hits -------------------------------------------
+data <- as.matrix(data)
 data1 <- data
 meta1 <- meta
 
@@ -50,16 +51,16 @@ pthresholds <- c(0.05, 0.1)
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   DoFs,
-                                   feature_names,
-                                   report_dir,
-                                   pthresholds)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    DoFs,
+#                                    feature_names,
+#                                    report_dir,
+#                                    pthresholds)
 
 ## Run limma splines ----
 DoFs <- c(2L, 2L)
@@ -68,8 +69,13 @@ design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
 # debug(run_limma_splines)
-result <- run_limma_splines(data, meta, design, DoFs, condition,
-                                feature_names, "integrated")
+result <- run_limma_splines(data, 
+                            meta, 
+                            design, 
+                            DoFs, 
+                            condition,
+                            feature_names, 
+                            "integrated")
 
 top_tables <- result$top_tables
 ttslc_factor_only <- result$ttslc_factor_only
@@ -81,8 +87,14 @@ clusters <- c(6L, 3L)
 report_dir <- here::here("results")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
-clustering_results <- cluster_hits(top_tables, data, meta, condition, 
-                                   p_values, clusters, report_dir)
+# debug(cluster_hits)
+clustering_results <- cluster_hits(top_tables, 
+                                   data, 
+                                   meta, 
+                                   condition, 
+                                   p_values, 
+                                   clusters, 
+                                   report_dir)
 
 clustering_results[[2]]$clustered_hits
 

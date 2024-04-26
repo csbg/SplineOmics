@@ -57,15 +57,16 @@ control_inputs_run_limma <- function(data,
                                      feature_names, 
                                      mode, 
                                      padjust_method) {
-  if (is.data.frame(data)) {
-    data <- as.matrix(data)
-  } else if (!is.matrix(data)) {
-    stop("data must be a dataframe or a matrix")
+  if (!is.matrix(data)) {
+    stop("data must be a matrix")
   }
   
   # Ensure meta is a dataframe with a 'Time' column
-  if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
-    stop("meta must be a dataframe and contain the column 'Time'.")
+  if (!is.data.frame(meta) || 
+      !"Time" %in% names(meta) || 
+      !is.numeric(meta$Time)) {
+    stop("meta must be a dataframe and contain the column 'Time' 
+         with numeric values.")
   }
   
   # Check that design is a single string
