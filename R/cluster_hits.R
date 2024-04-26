@@ -125,44 +125,100 @@ process_level_cluster <- function(top_table,
 
 plot_heatmap <- function(data,
                          meta,
-                         feature_names) {
+                         feature_names,
+                         clustered_hits) {
   z_score <- t(scale(t(data)))
   rownames(z_score) <- NULL
   
   BASE_TEXT_SIZE_PT <- 5
   
-  my_theme <- HeatmapTheme(
+  ht_opt(
     simple_anno_size = unit(1.5, "mm"),
-    column_anno_padding = unit(1, "pt"),
-    dendrogram_padding = unit(1, "pt"),
-    heatmap_legend_padding = unit(1, "mm"),
-    row_anno_padding = unit(1, "pt"),
-    title_padding = unit(2, "mm"),
-    row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    COLUMN_ANNO_PADDING = unit(1, "pt"),
+    DENDROGRAM_PADDING = unit(1, "pt"),
+    HEATMAP_LEGEND_PADDING = unit(1, "mm"),
+    ROW_ANNO_PADDING = unit(1, "pt"),
+    TITLE_PADDING = unit(2, "mm"),
+    heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
     legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
     legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
     legend_border = FALSE
   )
-
-  ht <- Heatmap(z_score, 
-                name = "Z-Score",
-                top_annotation = 
-                  HeatmapAnnotation(df = meta, gp = gpar(fontsize = 12)),
-                right_annotation = 
-                  rowAnnotation(df = feature_names, gp = gpar(fontsize = 12)),
-                cluster_columns = FALSE,
-                cluster_rows = FALSE,
-                show_row_names = TRUE,
-                show_column_names = TRUE,
-                heatmap_legend_param = list(title = "z-score of log2 intensity", 
-                                            title_position = "lefttop-rot"),
-                width = unit(100, "mm"), height = unit(80, "mm"),
-                heatmap_theme = my_theme) # Applying the theme
   
-  draw(ht, heatmap_legend_side = "right")
+  clusters <- clustered_hits %>% arrange(cluster)
+  
+  ht <- Heatmap(z_score,
+                column_split = meta$Time,
+                cluster_columns = FALSE,
+                row_split = clusters$cluster,
+                cluster_rows = FALSE,
+                heatmap_legend_param = list(title = "z-score of log2 intensity",
+                                            title_position = "lefttop-rot"),
+                row_gap = unit(2, "pt"),
+                column_gap = unit(2, "pt"),
+                width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
+                height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
+                show_row_names = TRUE
+  )
+  
+  
+  data_to_plot <- data.frame(first_protein_description = 
+                               rownames(data.matrix.batch.filt.sig), 
+                             data.matrix.batch.filt.sig) %>%
+    mutate(cluster_number = clusters_exp$cluster) %>%
+    pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
+                 names_to = "sample_name",
+                 values_to = "log2_intensity") %>%
+    separate(sample_name, 
+             into = c("reactor", "time_point", "phase_of_fermentation"),
+             sep = "_") %>%
+    mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
+                              length(clusters_exp$feature))) %>%
+    group_by(first_protein_description) %>%
+    mutate(log2_intensity = rescale(log2_intensity))
+  
+  
+  data_to_plot_mean_protein  <- data_to_plot %>%
+    group_by(first_protein_description, time_to_feed) %>%
+    mutate(mean_intensity_protein = mean(log2_intensity)) %>%
+    ungroup()
+  
+  data_to_plot_mean_tp <- data_to_plot %>%
+    group_by(cluster_number, time_to_feed) %>%
+    summarise(mean_intensity_tp = mean(log2_intensity)) 
+  
+  #count number of genes in each cluster
+  clusters_exp %>%
+    count(cluster)
+  
+  ggplot(data = data_to_plot_mean_protein) +
+    geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
+                  color = first_protein_description), alpha = 0.5) +
+    geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
+                                              y = mean_intensity_tp), 
+              linewidth = 0.8) +
+    facet_wrap(~cluster_number, ncol = 2, 
+               labeller = labeller(cluster_number =  
+                                     c("1" = "Cluster 1: 32 proteins",
+                                       "2" = "Cluster 2: 48 proteins",
+                                      "3" = "Cluster 3: 68 proteins",
+                                      "4" = "Cluster 4: 29 proteins",
+                                      "5" = "Cluster 5: 17 proteins",
+                                      "6" = "Cluster 6: 13 proteins")))  +
+    geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
+               linewidth = 0.5) +  
+    ylab("normalized log2 intensity") +
+    theme_bw() +
+    theme(legend.position = "none",
+          panel.grid.minor = element_blank()) +
+    scale_x_continuous(breaks = data_to_plot$time_to_feed)
+  
+  
+  ht= draw(ht, heatmap_legend_side = "right")
+  ht
   return(ht)
 }
 
@@ -454,9 +510,9 @@ perform_clustering <- function(top_tables,
                                meta,
                                condition) {
   levels <- unique(meta[[condition]])
-  all_groups_clustering <- list()
+  # all_levels_clustering <- list()
   
-  all_groups_clustering <- mapply(process_level_cluster, 
+  all_levels_clustering <- mapply(process_level_cluster, 
                                   top_tables, 
                                   p_values, 
                                   clusters, 
@@ -467,7 +523,7 @@ perform_clustering <- function(top_tables,
 }
 
 
-make_clustering_report <- function(all_groups_clustering, 
+make_clustering_report <- function(all_levels_clustering, 
                                    condition, 
                                    data, 
                                    meta, 
@@ -475,22 +531,29 @@ make_clustering_report <- function(all_groups_clustering,
                                    report_dir,
                                    feature_names) {
   
+  if (!dir.exists(report_dir)) {
+    dir.create(report_dir)
+  }
+  
   plot_list <- list()
   plot_list_nrows <- list()
   
   i <- 0
-  for (group_clustering in all_groups_clustering) {
+  for (level_clustering in all_levels_clustering) {
     i <- i + 1
     
-    curve_values <- group_clustering$curve_values
+    curve_values <- level_clustering$curve_values
     
     # debug(plot_heatmap)
-    # heatmap <- plot_heatmap(data, meta, feature_names)
+    # heatmap <- plot_heatmap(data, 
+    #                         meta, 
+    #                         feature_names, 
+    #                         level_clustering$clustered_hits)
     
     title <- 
       "Exponential phase\n\nHierarchical Clustering Dendrogram 
        (colors = clusters)"
-    dendrogram <- plot_dendrogram(group_clustering$hc, clusters[i], title)
+    dendrogram <- plot_dendrogram(level_clustering$hc, clusters[i], title)
     
     title <- 
       "Average Curves by Cluster (colors not matching with plot above!)"
@@ -502,7 +565,7 @@ make_clustering_report <- function(all_groups_clustering,
     main_title <- paste(",cluster:", 1, sep = " ")
     # titles <- annotation$First.Protein.Description
     
-    top_table <- group_clustering$top_table
+    top_table <- level_clustering$top_table
     p_value <- p_values[i]
     levels <- as.character(unique(meta[[condition]]))
     meta_level <- meta %>% filter(.data[[condition]] == levels[i])
@@ -614,19 +677,15 @@ cluster_hits <- function(top_tables,
                               clusters, 
                               report_dir)
   
-  all_groups_clustering <- perform_clustering(top_tables,
+  all_levels_clustering <- perform_clustering(top_tables,
                                               p_values,
                                               clusters,
                                               meta,
                                               condition)
   
   
-  if (!dir.exists(report_dir)) {
-    dir.create(report_dir)
-  }
-  
-  # debug(make_clustering_report)
-  make_clustering_report(all_groups_clustering, 
+  debug(make_clustering_report)
+  make_clustering_report(all_levels_clustering, 
                          condition, 
                          data, 
                          meta, 
