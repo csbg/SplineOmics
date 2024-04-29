@@ -109,7 +109,6 @@ result <- run_limma_splines(data,
                             meta, 
                             design, 
                             spline_params,
-                            DoFs, 
                             condition,
                             feature_names, 
                             "integrated")
