@@ -121,8 +121,6 @@ control_inputs_run_limma <- function(data,
     if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
       stop("DoFs must be an integer vector.")
     }
-  } else {
-    stop("DoFs is missing.")
   }
   
   # Check if knots exists and is a list of numeric vectors
@@ -131,6 +129,14 @@ control_inputs_run_limma <- function(data,
         any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
       stop("knots must be a list of numeric vectors.")
     }
+  }
+  
+  if (("DoFs" %in% names(spline_params)) && 
+      ("knots" %in% names(spline_params))) {
+    stop("Either DoFs or knots must be present, but not both.")
+  } else if (!("DoFs" %in% names(spline_params)) && 
+              !("knots" %in% names(spline_params))) {
+    stop("At least one of DoFs or knots must be present.")
   }
   
   # Check if bknots exists and is a list of numeric vectors
@@ -151,17 +157,39 @@ control_inputs_run_limma <- function(data,
     
     # Additional check for 'knots' and 'bknots' if they exist
     if ("knots" %in% names(spline_params)) {
-      if (any(sapply(spline_params$knots, length) != 1)) {
+      if (length(spline_params$knots) != 1) {
         stop("All elements in 'knots' must have length 1 when mode is 
              'integrated'. Different spline parameters for the different levels 
              is not supported for this mode")
       }
     }
     if ("bknots" %in% names(spline_params)) {
-      if (any(sapply(spline_params$bknots, length) != 1)) {
+      if (length(spline_params$bknots) != 1) {
         stop("All elements in 'bknots' must have length 1 when mode is 
              'integrated'. Different spline parameters for the different levels 
              is not supported for this mode")
+      }
+    }
+  } else if (mode == "isolated") {
+    num_levels <- length(unique(meta[[condition]]))
+    # Checks for 'isolated' mode
+    if (any(sapply(spline_params, length) != num_levels)) {
+      stop("Each vector or list in spline_params must have as many elements as 
+           there are unique elements in the ",
+           condition, " column of meta when mode is 'isolated'.")
+    }
+    if ("knots" %in% names(spline_params)) {
+      if (length(spline_params$knots) != num_levels) {
+        stop("'knots' must have the same number of elements as 
+             there are unique elements in the ",
+             condition, " column of meta when mode is 'isolated'.")
+      }
+    }
+    if ("bknots" %in% names(spline_params)) {
+      if (length(spline_params$bknots) != num_levels) {
+        stop("'bknots' must have the same number of elements as
+             there are unique elements in the ",
+             condition, " column of meta when mode is 'isolated'.")
       }
     }
   }

@@ -75,31 +75,35 @@ feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "jungfernflug2")
 pthresholds <- c(0.05, 0.1)
 
+spline_configs = list(spline_type = c("b", "b", "b"), 
+                     degrees = c(3L, 3L, 3L),
+                     DoFs = c(2L, 3L, 4L, 5L))
+
+
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    DoFs,
-#                                    feature_names,
-#                                    report_dir,
-#                                    pthresholds)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   # DoFs,
+                                   spline_configs,
+                                   feature_names,
+                                   report_dir,
+                                   pthresholds)
 
-## Run limma splines ----
+## Run limma splines -----------------------------------------------------------
 DoFs <- c(2L, 2L)
 
 design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
-spline_params = list(spline_type = c("b", "b"), 
-                     degrees = c(3L, 3L),
-                     DoFs = c(2L, 2L))
 
-# spline_params = list(spline_type = c("n", "n"),
-#                      DoFs = c(2L, 2L))
+spline_params = list(spline_type = c("b"), 
+                      degrees = c(3L),
+                      DoFs = c(2L))
 # 
 # spline_params = list(spline_type = c("n", "n"),
 #                      knots = list(c(0), c(0)))
@@ -117,7 +121,7 @@ top_tables <- result$top_tables
 ttslc_factor_only <- result$ttslc_factor_only
 ttslc_factor_time <- result$ttslc_factor_time
 
-## Cluster hits ----
+## Cluster hits ----------------------------------------------------------------
 p_values <- c(0.05, 0.05)
 clusters <- c(6L, 3L)
 report_dir <- here::here("results")
