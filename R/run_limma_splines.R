@@ -23,20 +23,64 @@ modify_limma_top_table <- function(top_table,
 
 
 #' Performs the limma spline analysis for a selected level of a factor
-within_level <- function(data, 
-                         meta, 
-                         design, 
-                         factor, 
-                         level, 
-                         DoF, 
+# within_level <- function(data,
+#                          meta,
+#                          design,
+#                          factor,
+#                          level,
+#                          DoF,
+#                          padjust_method) {
+#   meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+#   design_matrix <- model.matrix(as.formula(design), data = meta)
+# 
+#   fit <- lmFit(data, design_matrix)
+#   fit <- eBayes(fit)
+# 
+#   coeffs <- paste0("X", seq_len(DoF))
+# 
+#   top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
+# 
+#   list(top_table = top_table, fit = fit)
+# }
+
+
+within_level <- function(data,
+                         meta,
+                         design,
+                         factor,
+                         level,
+                         spline_params,
+                         level_index,
                          padjust_method) {
-  meta$X <- ns(meta$Time, df=DoF, intercept = FALSE)
+  
+  args <- list(x = meta$Time, intercept = FALSE)
+  
+  if (!is.null(spline_params$DoFs)) {
+    args$df <- spline_params$DoFs[level_index]
+  } else {
+    args$knots <- spline_params$knots[[level_index]]
+  }
+  
+  if (!is.null(spline_params$bknots)) {
+    args$Boundary.knots <- spline_params$bknots[[level_index]]
+  }
+  
+  
+  if (spline_params$spline_type[level_index] == "b") {
+    args$degree <- spline_params$degrees[level_index]
+    meta$X <- do.call(bs, args)
+  } else {                                          # natural cubic splines
+    meta$X <- do.call(ns, args)
+  }
+  
   design_matrix <- model.matrix(as.formula(design), data = meta)
   
   fit <- lmFit(data, design_matrix)
   fit <- eBayes(fit)
-  
-  coeffs <- paste0("X", seq_len(DoF))
+
+  column_names <- colnames(design_matrix)
+  num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
+  coeffs <- paste0("X", seq_len(num_matching_columns))
   
   top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
   
@@ -160,7 +204,8 @@ process_top_table <- function(top_table_and_fit,
 
 
 process_level <- function(level, 
-                          DoF, 
+                          level_index,
+                          spline_params,
                           data, 
                           meta, 
                           design, 
@@ -182,9 +227,11 @@ process_level <- function(level,
                          meta_copy, 
                          design, 
                          condition, 
-                         level, 
-                         DoF, 
+                         level,
+                         spline_params,
+                         level_index, 
                          padjust_method)
+  
   top_table <- process_top_table(result, 
                                  feature_names)
   
@@ -244,6 +291,7 @@ process_level <- function(level,
 run_limma_splines <- function(data,
                               meta,
                               design,
+                              spline_params,
                               DoFs,
                               condition, 
                               feature_names,
@@ -263,16 +311,18 @@ run_limma_splines <- function(data,
   levels <- levels(meta[[condition]])
   
   # Get hits for level (within level analysis) ---------------------------------
-  process_with_data_meta <- purrr::partial(process_level, 
-                                           data = data, 
-                                           meta = meta, 
-                                           design = design, 
-                                           condition = condition, 
-                                           feature_names = feature_names, 
-                                           padjust_method = padjust_method, 
-                                           mode = mode)
+  # Prespecify most parameters
+  process_level_with_params <- purrr::partial(process_level, 
+                                              spline_params = spline_params,
+                                              data = data, 
+                                              meta = meta, 
+                                              design = design, 
+                                              condition = condition, 
+                                              feature_names = feature_names, 
+                                              padjust_method = padjust_method, 
+                                              mode = mode)
   
-  results_list <- map2(levels, DoFs, process_with_data_meta)
+  results_list <- map2(levels, seq_along(levels), process_level_with_params)
   top_tables <- setNames(map(results_list, "top_table"), 
                          map_chr(results_list, "name"))
   

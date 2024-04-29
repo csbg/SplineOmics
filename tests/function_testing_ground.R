@@ -1,6 +1,32 @@
 rm(list = ls(all.names = TRUE))
 # options(error = recover)
 
+
+
+
+# x <- 0:100  # Example data
+# 
+# 
+# knots <- c(10, 25)
+# degree <- 3
+# df <- 5  # Ensures enough flexibility: 3 + 3 + 1 = 7
+# 
+# b_spline_knots <- bs(x, degree = degree, knots = knots, intercept = FALSE)
+# b_spline_df <- bs(x, degree = degree, df = df, intercept = FALSE)
+# knots <- attr(b_spline_df, "knots")
+# print(knots)
+# 
+# 
+# 
+# df <- 4
+# knots <- c(25, 50)
+# basis_functions_knots <- ns(x, knots = knots)
+# basis_functions_df <- ns(x, df = df)
+# knots <- attr(basis_functions_df, "knots")
+# print(knots)
+
+
+
 # Setup ------------------------------------------------------------------------
 
 ## Source functions ---------------------------------
@@ -68,10 +94,21 @@ DoFs <- c(2L, 2L)
 design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
-# debug(run_limma_splines)
+spline_params = list(spline_type = c("b", "b"), 
+                     degrees = c(3L, 3L),
+                     DoFs = c(2L, 2L))
+
+# spline_params = list(spline_type = c("n", "n"),
+#                      DoFs = c(2L, 2L))
+# 
+# spline_params = list(spline_type = c("n", "n"),
+#                      knots = list(c(0), c(0)))
+
+debug(run_limma_splines)
 result <- run_limma_splines(data, 
                             meta, 
                             design, 
+                            spline_params,
                             DoFs, 
                             condition,
                             feature_names, 
