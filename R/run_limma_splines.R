@@ -112,7 +112,7 @@ control_inputs_run_limma <- function(data,
     if (!all(spline_params$degrees == as.integer(spline_params$degrees))) {
       stop("degrees must be an integer vector.")
     }
-  } else {
+  } else if (!all(spline_params$spline_type %in% c("n"))) {
     stop("degrees is missing.")
   }
   

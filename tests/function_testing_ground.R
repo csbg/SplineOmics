@@ -31,7 +31,7 @@ load(input_file_path)
 
 
 
-# Run limma splines and cluster hits -------------------------------------------
+# Prep input to hyperparams screen function ------------------------------------
 data <- as.matrix(data)
 data1 <- data
 meta1 <- meta
@@ -56,17 +56,18 @@ spline_configs = list(spline_type = c("n", "n", "n"),
 
 
 # hyperparams screen limma -----------------------------------------------------
-debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   spline_configs,
-                                   feature_names,
-                                   report_dir,
-                                   pthresholds)
+# debug(limma_hyperparams_screen)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    spline_configs,
+#                                    feature_names,
+#                                    report_dir,
+#                                    pthresholds)
+
 
 ## Run limma splines -----------------------------------------------------------
 DoFs <- c(2L, 2L)
@@ -75,14 +76,10 @@ design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
 
-spline_params = list(spline_type = c("b"), 
-                      degrees = c(3L),
+spline_params = list(spline_type = c("n"),
                       DoFs = c(2L))
-# 
-# spline_params = list(spline_type = c("n", "n"),
-#                      knots = list(c(0), c(0)))
 
-debug(run_limma_splines)
+# debug(run_limma_splines)
 result <- run_limma_splines(data, 
                             meta, 
                             design, 
@@ -95,13 +92,14 @@ top_tables <- result$top_tables
 ttslc_factor_only <- result$ttslc_factor_only
 ttslc_factor_time <- result$ttslc_factor_time
 
+
 ## Cluster hits ----------------------------------------------------------------
 p_values <- c(0.05, 0.05)
-clusters <- c(6L, 3L)
+clusters <- list("auto", "auto")
 report_dir <- here::here("results")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
-# debug(cluster_hits)
+debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables, 
                                    data, 
                                    meta, 

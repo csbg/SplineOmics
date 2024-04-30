@@ -434,27 +434,6 @@ process_combo_pair <- function(combo_pair,
 }
 
 
-# process_hyperparams_combo <- function(data, meta, design, mode, DoF, 
-# pthreshold, condition, feature_names, padjust_method) {
-#   DoFs_levels <- rep(DoF, times = length(unique(meta[[condition]])))
-#   
-#   result <- run_limma_splines(data, 
-#                               meta, 
-#                               design, 
-#                               DoFs_levels, 
-#                               condition,
-#                               feature_names, 
-#                               mode, 
-#                               padjust_method)
-#   
-#   # Construct a unique id for the current combination of hyperparameters
-#   id <- paste0("Data_", data, "_Design_", design,
-#                "_DoF_", DoF, "_PThresh_", pthreshold)
-#   
-#   list(id = id, top_tables = result$top_tables)
-# }
-
-
 create_spline_params <- function(config_list, 
                                  index, 
                                  meta, 
@@ -834,7 +813,7 @@ generate_reports_meta <- function(datas_descr,
 
 
 
-# Exported functions ----------------------------------------
+# Exported functions -----------------------------------------------------------
 
 
 #' Limma Hyperparameters Screening

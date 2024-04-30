@@ -1,4 +1,4 @@
-# Import libraries ---------------------------------------------
+# Import libraries -------------------------------------------------------------
 library(limma)
 library(splines)
 library(ggplot2)
@@ -11,6 +11,7 @@ library(patchwork)
 library(ComplexHeatmap)
 library(circlize)
 library(grid)
+library(cluster)
 
 
 # Internal functions level 3 ---------------------------------------------------
@@ -18,7 +19,6 @@ library(grid)
 
 get_curve_values <- function(top_table, 
                              p_value, 
-                             k, 
                              level, 
                              meta, 
                              condition) {
@@ -73,7 +73,29 @@ hierarchical_clustering <- function(curve_values,
                                     top_table) {
   distance_matrix <- dist(curve_values, method = "euclidean")
   hc <- hclust(distance_matrix, method = "complete")
-  cluster_assignments <- cutree(hc, k = k)
+  
+  if (is.character(k) && k == "auto") {
+    # Calculate silhouette width for a range of clusters
+    max_clusters <- 8
+    sil_widths <- numeric(max_clusters - 1)
+    for (i in 2:max_clusters) {
+      temp_clusters <- cutree(hc, k = i)
+      silhouette_score <- 
+        mean(silhouette(temp_clusters, distance_matrix)[, "sil_width"])
+      
+      adjusted_score <- silhouette_score + (0.02 * log(i)) # scaling factor
+      sil_widths[i - 1] <- adjusted_score
+    }
+    
+    # Find the index of the maximum adjusted silhouette score
+    best_k_index <- which.max(sil_widths)
+    k <- best_k_index + 1  # because index shift due to starting at 2 clusters
+    
+    cluster_assignments <- cutree(hc, k = k)
+  } else if (is.numeric(k)) {
+    cluster_assignments <- cutree(hc, k = k)
+  }
+  
   
   clustered_hits <- data.frame(cluster = cluster_assignments)
   clustered_hits$feature <- rownames(clustered_hits)
@@ -90,7 +112,8 @@ hierarchical_clustering <- function(curve_values,
   group_clustering <- list(clustered_hits = clustered_hits,
                            hc = hc,
                            curve_values = curve_values,
-                           top_table = top_table)
+                           top_table = top_table,
+                           clusters = k)
 }
 
 
@@ -109,7 +132,6 @@ process_level_cluster <- function(top_table,
   
   result <- get_curve_values(top_table, 
                              p_value, 
-                             cluster_size, 
                              level, 
                              meta, 
                              condition)
@@ -267,7 +289,8 @@ plot_all_shapes <- function(curve_values,
     
     average_curve <- colMeans(subset_hits[,1:last_timepoint])
     
-    # Create a data frame for the average curve with an additional 'Cluster' column
+    # Create a data frame for the average curve with an additional 'Cluster' 
+    # column
     curve_df <- data.frame(Time = time, Value = average_curve, 
                            cluster = as.factor(current_cluster))
     
@@ -494,8 +517,9 @@ control_inputs_cluster_hits <- function(top_tables,
     stop("p_values must be a numeric vector")
   }
   
-  if (!is.integer(clusters)) {
-    stop("clusters must be an integer vector")
+  if (!is.list(clusters) || 
+      !all(sapply(clusters, function(x) is.character(x) || is.numeric(x)))) {
+    stop("clusters must be a list containing only character or numeric types.")
   }
   
   if (!is.character(report_dir) || length(report_dir) != 1) {
@@ -510,7 +534,6 @@ perform_clustering <- function(top_tables,
                                meta,
                                condition) {
   levels <- unique(meta[[condition]])
-  # all_levels_clustering <- list()
   
   all_levels_clustering <- mapply(process_level_cluster, 
                                   top_tables, 
@@ -530,6 +553,13 @@ make_clustering_report <- function(all_levels_clustering,
                                    p_values, 
                                    report_dir,
                                    feature_names) {
+  
+  # To extract the stored value for the potential auto cluster decision.
+  clusters <- c()
+  for (i in seq_along(all_levels_clustering)) {
+    clusters <- c(clusters, as.integer(all_levels_clustering[[i]]$clusters))
+    all_levels_clustering[[i]]$clusters <- NULL
+  }
   
   if (!dir.exists(report_dir)) {
     dir.create(report_dir)
@@ -563,7 +593,6 @@ make_clustering_report <- function(all_levels_clustering,
     consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
     
     main_title <- paste(",cluster:", 1, sep = " ")
-    # titles <- annotation$First.Protein.Description
     
     top_table <- level_clustering$top_table
     p_value <- p_values[i]
@@ -669,29 +698,27 @@ cluster_hits <- function(top_tables,
                          clusters, 
                          report_dir) {
   
-  control_inputs_cluster_hits(top_tables, 
-                              data, 
-                              meta, 
-                              condition, 
-                              p_values, 
-                              clusters, 
-                              report_dir)
+  control_inputs_cluster_hits(top_tables = top_tables, 
+                              data = data, 
+                              meta = meta, 
+                              condition = condition, 
+                              p_values = p_values, 
+                              clusters = clusters, 
+                              report_dir = report_dir)
   
-  all_levels_clustering <- perform_clustering(top_tables,
-                                              p_values,
-                                              clusters,
-                                              meta,
-                                              condition)
+  all_levels_clustering <- perform_clustering(top_tables = top_tables,
+                                              p_values = p_values,
+                                              clusters = clusters,
+                                              meta = meta,
+                                              condition = condition)
   
-  
-  debug(make_clustering_report)
-  make_clustering_report(all_levels_clustering, 
-                         condition, 
-                         data, 
-                         meta, 
-                         p_values, 
-                         report_dir,
-                         feature_names)
+  make_clustering_report(all_levels_clustering = all_levels_clustering, 
+                         condition = condition, 
+                         data = data, 
+                         meta = meta, 
+                         p_values = p_values, 
+                         report_dir = report_dir,
+                         feature_names = feature_names)
   
   return(all_groups_clustering)
 }
