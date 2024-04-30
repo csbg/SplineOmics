@@ -2,31 +2,6 @@ rm(list = ls(all.names = TRUE))
 # options(error = recover)
 
 
-
-
-# x <- 0:100  # Example data
-# 
-# 
-# knots <- c(10, 25)
-# degree <- 3
-# df <- 5  # Ensures enough flexibility: 3 + 3 + 1 = 7
-# 
-# b_spline_knots <- bs(x, degree = degree, knots = knots, intercept = FALSE)
-# b_spline_df <- bs(x, degree = degree, df = df, intercept = FALSE)
-# knots <- attr(b_spline_df, "knots")
-# print(knots)
-# 
-# 
-# 
-# df <- 4
-# knots <- c(25, 50)
-# basis_functions_knots <- ns(x, knots = knots)
-# basis_functions_df <- ns(x, df = df)
-# knots <- attr(basis_functions_df, "knots")
-# print(knots)
-
-
-
 # Setup ------------------------------------------------------------------------
 
 ## Source functions ---------------------------------
@@ -75,20 +50,19 @@ feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "jungfernflug2")
 pthresholds <- c(0.05, 0.1)
 
-spline_configs = list(spline_type = c("b", "b", "b"), 
+spline_configs = list(spline_type = c("n", "n", "n"), 
                      degrees = c(3L, 3L, 3L),
-                     DoFs = c(2L, 3L, 4L, 5L))
+                     knots = list(c(0), c(0, 60), c(0, 60, 120)))
 
 
 # hyperparams screen limma -----------------------------------------------------
-# debug(limma_hyperparams_screen)
+debug(limma_hyperparams_screen)
 result <- limma_hyperparams_screen(datas,
                                    datas_descr,
                                    metas,
                                    designs,
                                    modes,
                                    condition,
-                                   # DoFs,
                                    spline_configs,
                                    feature_names,
                                    report_dir,

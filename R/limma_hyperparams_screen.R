@@ -121,6 +121,19 @@ plot_composite_splines <- function(data,
 # Internal functions level 2 ---------------------------------------------------
 
 
+check_spline_configs_element_len <- function(spline_configs) {
+  expected_length <- length(spline_configs$spline_type)
+  
+  # Check if all elements have the correct length
+  for (element in names(spline_configs)) {
+    if (length(spline_configs[[element]]) != expected_length) {
+      stop(paste("Error:", element, "length does not match 'spline_type' 
+                 length."))
+    }
+  }
+}
+
+
 hc_new <- function(cond1name = "Condition 1", 
                    cond2name = "Condition 2") {
   
@@ -469,6 +482,30 @@ create_spline_params <- function(config_list,
 }
 
 
+flatten_spline_configs <- function(spline_configs) {
+  formatted_layers <- list()
+  
+  names_of_spline_configs <- names(spline_configs)
+  for (i in 1:length(spline_configs$spline_type)) {
+    ith_elements <- lapply(spline_configs, function(x) x[[i]])
+    
+    formatted_strings <- list()
+    
+    Map(function(name, element) {
+      formatted_strings <<- 
+        c(formatted_strings, paste0(name, " = ", 
+                                    paste(element, collapse = ", ")))
+      
+    }, names_of_spline_configs, ith_elements)
+    
+    final_string <- paste(formatted_strings, collapse = ", ")
+    formatted_layers[[length(formatted_layers) + 1]] <- final_string 
+    
+  }
+  formatted_layers
+}
+
+
 
 # Internal functions level 1 ---------------------------------------------------
 
@@ -479,7 +516,6 @@ control_inputs_hyperpara_screen <- function(datas,
                                             designs, 
                                             modes, 
                                             condition, 
-                                            # DoFs, 
                                             spline_params,
                                             feature_names, 
                                             pthresholds, 
@@ -580,8 +616,6 @@ control_inputs_hyperpara_screen <- function(datas,
     if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
       stop("DoFs must be an integer vector.")
     }
-  } else {
-    stop("DoFs is missing.")
   }
   
   # Check if knots exists and is a list of numeric vectors
@@ -592,6 +626,14 @@ control_inputs_hyperpara_screen <- function(datas,
     }
   }
   
+  if (("DoFs" %in% names(spline_params)) && 
+      ("knots" %in% names(spline_params))) {
+    stop("Either DoFs or knots must be present, but not both.")
+  } else if (!("DoFs" %in% names(spline_params)) && 
+             !("knots" %in% names(spline_params))) {
+    stop("At least one of DoFs or knots must be present.")
+  }
+  
   # Check if bknots exists and is a list of numeric vectors
   if ("bknots" %in% names(spline_params)) {
     if (!is.list(spline_params$bknots) || 
@@ -600,31 +642,7 @@ control_inputs_hyperpara_screen <- function(datas,
     }
   }
   
-  if (mode == "integrated") {
-    # Check that each vector in the main parameters has exactly one element
-    if (any(sapply(spline_params, function(x) length(x) != 1))) {
-      stop("All parameters must have exactly one element when mode is 
-           'integrated'. Different spline parameters for the different levels is
-           not supported for this mode")
-    }
-    
-    # Additional check for 'knots' and 'bknots' if they exist
-    if ("knots" %in% names(spline_params)) {
-      if (any(sapply(spline_params$knots, length) != 1)) {
-        stop("All elements in 'knots' must have length 1 when mode is 
-             'integrated'. Different spline parameters for the different levels 
-             is not supported for this mode")
-      }
-    }
-    if ("bknots" %in% names(spline_params)) {
-      if (any(sapply(spline_params$bknots, length) != 1)) {
-        stop("All elements in 'bknots' must have length 1 when mode is 
-             'integrated'. Different spline parameters for the different levels 
-             is not supported for this mode")
-      }
-    }
-  }
-  
+  check_spline_configs_element_len(spline_configs)
   
   
   if (!is.character(feature_names)) {
@@ -689,8 +707,6 @@ get_limma_combos_results <- function(datas,
                                           condition = condition, 
                                           mode = mode)
     
-    # browser()
-    # debug(run_limma_splines)
     result <- run_limma_splines(data = data, 
                                 meta = meta, 
                                 design = design, 
@@ -729,7 +745,6 @@ plot_limma_combos_results <- function(all_combos_top_tables,
   pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
   pb$tick(0)
   
-  browser()
   combo_pair_results <- set_names(
     map(combo_pairs, function(pair) {
       combo_pair <- combos_separated[pair]
@@ -767,13 +782,17 @@ generate_reports <- function(combo_pair_plots,
 generate_reports_meta <- function(datas_descr, 
                                   designs, 
                                   modes, 
+                                  spline_configs,
                                   report_dir,
                                   timestamp) {
+  formatted_spline_configs <- flatten_spline_configs(spline_configs)
   
   # Combine the hyperparameters and their descriptions into two vectors
   hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
-                       paste0("Design_", seq_along(designs)))
-  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"))
+                       paste0("Design_", seq_along(designs)),
+                       paste0("SConfig_", seq_along(formatted_spline_configs)))
+  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"), 
+                    unlist(formatted_spline_configs))
   
   table_df <- data.frame(hyperparameter = hyperparameters, 
                          description = descriptions, 
@@ -802,8 +821,8 @@ generate_reports_meta <- function(datas_descr,
   
   # Generate the HTML table with custom CSS for larger font size and save it
   html_table <- 
-    paste0(custom_css, knitr::kable(table_df, format = "html", 
-                                    escape = FALSE) %>% 
+    paste0(custom_css, 
+           knitr::kable(table_df, format = "html", escape = FALSE) %>% 
              kableExtra::kable_styling(
                bootstrap_options = c("striped", "hover")))
   
@@ -834,7 +853,8 @@ generate_reports_meta <- function(datas_descr,
 #' @param designs A character vector of design formulas for the limma analysis.
 #' @param modes A character vector indicating the mode of analysis for each 
 #' design.
-#' @param factors A character vector of factors to be considered in the analysis.
+#' @param factors A character vector of factors to be considered in the 
+#' analysis.
 #' @param DoFs An integer vector of degrees of freedom to be used for each 
 #' factor in `factors`.
 #' @param feature_names A character vector of feature names to be analyzed.
@@ -863,38 +883,33 @@ limma_hyperparams_screen <- function(datas,
                                      designs, 
                                      modes, 
                                      condition, 
-                                     # DoFs, 
                                      spline_configs,
                                      feature_names, 
                                      report_dir = here::here(),
                                      adj_pthresh = c(0.05),
                                      padjust_method = "BH") {
   
-  # control_inputs_hyperpara_screen(datas,
-  #                                 datas_descr,
-  #                                 metas, 
-  #                                 designs, 
-  #                                 modes, 
-  #                                 condition, 
-  #                                 # DoFs, 
-  #                                 spline_configs,
-  #                                 feature_names, 
-  #                                 adj_pthresh, 
-  #                                 padjust_method)
+  control_inputs_hyperpara_screen(datas,
+                                  datas_descr,
+                                  metas,
+                                  designs,
+                                  modes,
+                                  condition,
+                                  spline_configs,
+                                  feature_names,
+                                  adj_pthresh,
+                                  padjust_method)
   
-  # debug(get_limma_combos_results)
   top_tables_combos <- get_limma_combos_results(datas, 
                                                 metas, 
                                                 designs, 
                                                 modes, 
                                                 condition, 
-                                                # DoFs, 
                                                 spline_configs,
                                                 feature_names, 
                                                 adj_pthresh, 
                                                 padjust_method)
   
-  # debug(plot_limma_combos_results)
   combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
                                                 datas, 
                                                 metas)
@@ -904,10 +919,11 @@ limma_hyperparams_screen <- function(datas,
   generate_reports(combo_pair_plots, 
                    report_dir,
                    timestamp)
-  
+
   generate_reports_meta(datas_descr, 
                         designs, 
                         modes, 
+                        spline_configs,
                         report_dir,
                         timestamp)
 }
