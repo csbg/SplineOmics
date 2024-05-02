@@ -14,480 +14,112 @@ library(grid)
 library(cluster)
 
 
-# Internal functions level 3 ---------------------------------------------------
+# Exported function: cluster_hits() --------------------------------------------
 
-
-get_curve_values <- function(top_table, 
-                             p_value, 
-                             level, 
-                             meta, 
-                             condition) {
-  spline_results_hits <- subset(top_table, adj.P.Val < p_value)
-  
-  DoF <- which(names(top_table) == "AveExpr") - 1
-  
-  subset_meta <- meta[meta[[condition]] == level, ]
-  
-  smooth_timepoints <- seq(subset_meta$Time[1],
-                           subset_meta$Time[length(subset_meta$Time)],
-                           length.out = 100)
-  
-  X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
-  
-  columns_to_select <- 1:DoF
-  
-  splineCoeffs <- spline_results_hits %>%
-    select(all_of(1:DoF)) %>%
-    as.matrix()
-  
-  curve_values <- matrix(nrow = nrow(splineCoeffs),
-                         ncol = length(smooth_timepoints))
-  
-  for(i in 1:nrow(splineCoeffs)) {
-    current_coeffs <- matrix(splineCoeffs[i, ], ncol = ncol(splineCoeffs),
-                             byrow = TRUE)
-    
-    curve_values[i, ] <- current_coeffs %*% t(X)
-  }
-  
-  curve_values <- as.data.frame(curve_values)
-  rownames(curve_values) <- rownames(splineCoeffs)
-  list(curve_values = curve_values, smooth_timepoints = smooth_timepoints)
-}
-
-
-normalize_curves <- function(curve_values) {
-  normalized_curves <- apply(curve_values, 1, function(row) {
-    (row - min(row)) / (max(row) - min(row))
-  })
-  
-  normalized_curves <- t(normalized_curves)
-  curve_values[,] <- normalized_curves
-  curve_values
-}
-
-
-hierarchical_clustering <- function(curve_values, 
-                                    k, 
-                                    smooth_timepoints,
-                                    top_table) {
-  distance_matrix <- dist(curve_values, method = "euclidean")
-  hc <- hclust(distance_matrix, method = "complete")
-  
-  if (is.character(k) && k == "auto") {
-    # Calculate silhouette width for a range of clusters
-    max_clusters <- 8
-    sil_widths <- numeric(max_clusters - 1)
-    for (i in 2:max_clusters) {
-      temp_clusters <- cutree(hc, k = i)
-      silhouette_score <- 
-        mean(silhouette(temp_clusters, distance_matrix)[, "sil_width"])
-      
-      adjusted_score <- silhouette_score + (0.02 * log(i)) # scaling factor
-      sil_widths[i - 1] <- adjusted_score
-    }
-    
-    # Find the index of the maximum adjusted silhouette score
-    best_k_index <- which.max(sil_widths)
-    k <- best_k_index + 1  # because index shift due to starting at 2 clusters
-    
-    cluster_assignments <- cutree(hc, k = k)
-  } else if (is.numeric(k)) {
-    cluster_assignments <- cutree(hc, k = k)
-  }
-  
-  
-  clustered_hits <- data.frame(cluster = cluster_assignments)
-  clustered_hits$feature <- rownames(clustered_hits)
-  clustered_hits <- clustered_hits[, c("feature", "cluster")]
-  
-  colnames(curve_values) <- smooth_timepoints
-  curve_values$cluster <- cluster_assignments
-  
-  top_table$cluster <- NA
-  top_table$cluster[1:nrow(clustered_hits)] <-
-    as.integer(clustered_hits$cluster)
-  
-  
-  group_clustering <- list(clustered_hits = clustered_hits,
-                           hc = hc,
-                           curve_values = curve_values,
-                           top_table = top_table,
-                           clusters = k)
-}
-
-
-# Internal functions level 2 ---------------------------------------------------
-
-
-process_level_cluster <- function(top_table, 
-                                  p_value, 
-                                  cluster_size, 
-                                  level, 
-                                  meta, 
-                                  condition) {
-  if (is.na(p_value)) {
-    p_value <- p_values[1]  
-  }
-  
-  result <- get_curve_values(top_table, 
-                             p_value, 
-                             level, 
-                             meta, 
-                             condition)
-  
-  normalized_curves <- normalize_curves(result$curve_values)
-  
-  clustering_result <- hierarchical_clustering(normalized_curves, 
-                                               cluster_size, 
-                                               result$smooth_timepoints, 
-                                               top_table)
-}
-
-
-plot_heatmap <- function(data,
-                         meta,
-                         feature_names,
-                         clustered_hits) {
-  z_score <- t(scale(t(data)))
-  rownames(z_score) <- NULL
-  
-  BASE_TEXT_SIZE_PT <- 5
-  
-  ht_opt(
-    simple_anno_size = unit(1.5, "mm"),
-    COLUMN_ANNO_PADDING = unit(1, "pt"),
-    DENDROGRAM_PADDING = unit(1, "pt"),
-    HEATMAP_LEGEND_PADDING = unit(1, "mm"),
-    ROW_ANNO_PADDING = unit(1, "pt"),
-    TITLE_PADDING = unit(2, "mm"),
-    heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_border = FALSE
-  )
-  
-  clusters <- clustered_hits %>% arrange(cluster)
-  
-  ht <- Heatmap(z_score,
-                column_split = meta$Time,
-                cluster_columns = FALSE,
-                row_split = clusters$cluster,
-                cluster_rows = FALSE,
-                heatmap_legend_param = list(title = "z-score of log2 intensity",
-                                            title_position = "lefttop-rot"),
-                row_gap = unit(2, "pt"),
-                column_gap = unit(2, "pt"),
-                width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
-                height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
-                show_row_names = TRUE
-  )
-  
-  
-  data_to_plot <- data.frame(first_protein_description = 
-                               rownames(data.matrix.batch.filt.sig), 
-                             data.matrix.batch.filt.sig) %>%
-    mutate(cluster_number = clusters_exp$cluster) %>%
-    pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
-                 names_to = "sample_name",
-                 values_to = "log2_intensity") %>%
-    separate(sample_name, 
-             into = c("reactor", "time_point", "phase_of_fermentation"),
-             sep = "_") %>%
-    mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
-                              length(clusters_exp$feature))) %>%
-    group_by(first_protein_description) %>%
-    mutate(log2_intensity = rescale(log2_intensity))
-  
-  
-  data_to_plot_mean_protein  <- data_to_plot %>%
-    group_by(first_protein_description, time_to_feed) %>%
-    mutate(mean_intensity_protein = mean(log2_intensity)) %>%
-    ungroup()
-  
-  data_to_plot_mean_tp <- data_to_plot %>%
-    group_by(cluster_number, time_to_feed) %>%
-    summarise(mean_intensity_tp = mean(log2_intensity)) 
-  
-  #count number of genes in each cluster
-  clusters_exp %>%
-    count(cluster)
-  
-  ggplot(data = data_to_plot_mean_protein) +
-    geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
-                  color = first_protein_description), alpha = 0.5) +
-    geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
-                                              y = mean_intensity_tp), 
-              linewidth = 0.8) +
-    facet_wrap(~cluster_number, ncol = 2, 
-               labeller = labeller(cluster_number =  
-                                     c("1" = "Cluster 1: 32 proteins",
-                                       "2" = "Cluster 2: 48 proteins",
-                                      "3" = "Cluster 3: 68 proteins",
-                                      "4" = "Cluster 4: 29 proteins",
-                                      "5" = "Cluster 5: 17 proteins",
-                                      "6" = "Cluster 6: 13 proteins")))  +
-    geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
-               linewidth = 0.5) +  
-    ylab("normalized log2 intensity") +
-    theme_bw() +
-    theme(legend.position = "none",
-          panel.grid.minor = element_blank()) +
-    scale_x_continuous(breaks = data_to_plot$time_to_feed)
-  
-  
-  ht= draw(ht, heatmap_legend_side = "right")
-  ht
-  return(ht)
-}
-
-
-plot_dendrogram <- function(hc, 
-                            k, 
-                            title) {
-  dend <- as.dendrogram(hc)
-  
-  clusters <- cutree(hc, k)
-  
-  palette_name <- "Set3" # This can be changed to another palette if desired
-  max_colors_in_palette <- brewer.pal.info[palette_name, "maxcolors"]
-  colors <- brewer.pal(min(max_colors_in_palette, k), palette_name)
-  if (k > max_colors_in_palette) {
-    colors <- rep(colors, length.out = k)
-  }
-  
-  dend_colored <- color_branches(dend, k = k, labels_colors = colors)
-  dend_colored <- set(dend_colored, "labels", value = NULL)
-  
-  ggdend <- as.ggdend(dend_colored)
-  p_dend <- ggplot(ggdend) + 
-    labs(title = title, 
-         x = "", y = "") +
-    theme_minimal() +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-          axis.text.y = element_blank(), axis.ticks.y = element_blank())
-}
-
-
-plot_all_shapes <- function(curve_values, 
-                            title) {
-  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
-  
-  clusters <- unique(curve_values$cluster)
-  average_curves <- data.frame()
-  
-  # Loop through each unique cluster value to calculate the average curve
-  for (current_cluster in clusters) {
-    # Filter rows for the current cluster
-    subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
-    
-    
-    last_timepoint <- (which(names(curve_values) == "cluster")) - 1
-    
-    average_curve <- colMeans(subset_hits[,1:last_timepoint])
-    
-    # Create a data frame for the average curve with an additional 'Cluster' 
-    # column
-    curve_df <- data.frame(Time = time, Value = average_curve, 
-                           cluster = as.factor(current_cluster))
-    
-    # Bind the curve data frame to the cumulative data frame
-    average_curves <- rbind(average_curves, curve_df)
-  }
-  
-  average_curves$cluster <- 
-    factor(average_curves$cluster, 
-           levels = sort(unique(as.numeric(average_curves$cluster))))
-  
-  p_curves <- ggplot(average_curves, aes(x = Time, y = Value, color = 
-                                           factor(cluster))) +
-    geom_line() + 
-    ggtitle(title) +
-    xlab("Timepoints") + ylab("Values") +
-    scale_color_brewer(palette = "Dark2", name = "Cluster") + 
-    theme_minimal()
-}
-
-
-plot_single_and_consensus_splines <- function(time_series_data, 
-                                              title) {
-  # Transform the dataframe to a long format for ggplot2
-  df_long <- as.data.frame(t(time_series_data)) %>%
-    rownames_to_column(var = "time") %>%
-    pivot_longer(cols = -time, names_to = "feature", 
-                 values_to = "intensity") %>%
-    arrange(feature) %>%
-    mutate(time = as.numeric(time))
-  
-  # Compute consensus (mean of each column)
-  consensus <- colMeans(time_series_data, na.rm = TRUE)
-  consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)), 
-                             consensus = consensus)
-  
-  p <- ggplot() +
-    geom_line(data = df_long, aes(x = time, y = intensity, group = feature,
-                                  colour = "Single Shapes"),
-              alpha = 0.3, linewidth = 0.5) +
-    geom_line(data = consensus_df, aes(x = time, y = consensus,
-                                       colour = "Consensus Shape"),
-              linewidth = 1.5) +
-    scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
-                                       "Single Shapes" = "#6495ED")) +
-    theme_minimal() +
-    ggtitle(title) +
-    xlab("time to feeding [min]") +
-    ylab("Y")
-
-  return(p)
-}
-
-
-plot_consensus_shapes <- function(curve_values, 
-                                  title) {
-  clusters <- sort(unique(curve_values$cluster))
-  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
-  
-  plots <- list()
-  for (current_cluster in clusters) {
-    current_title <- paste(title, current_cluster, sep = "_")
-    subset_df <- subset(curve_values, cluster == current_cluster)
-    subset_df$cluster <- NULL 
-    
-    plots[[length(plots) + 1]] <- plot_single_and_consensus_splines(
-      subset_df, current_title)
-  }
-  return(plots)
-}
-
-
-plot_splines <- function(top_table, 
+#' Cluster Hits from Top Tables
+#'
+#' Performs clustering on hits from top tables generated by differential 
+#' expression analysis.
+#' This function filters hits based on adjusted p-value thresholds, extracts 
+#' spline coefficients for 
+#' significant features, normalizes these coefficients, and applies hierarchical 
+#' clustering. The results,
+#' including clustering assignments and normalized spline curves, are saved in a 
+#' specified directory and
+#' compiled into an HTML report.
+#'
+#' @param top_tables A list of data frames, each representing a top table from 
+#' differential expression
+#'        analysis, containing at least 'adj.P.Val' and expression data columns.
+#' @param data The original expression dataset used for differential expression 
+#' analysis.
+#' @param meta Metadata dataframe corresponding to the `data`, must include a 
+#' 'Time' column and any columns
+#'        specified by `conditions`.
+#' @param conditions Character vector specifying the column names in `meta` used 
+#' to define groups for
+#'        analysis.
+#' @param p_values Numeric vector of p-value thresholds for filtering hits in 
+#' each top table.
+#' @param clusters Integer vector specifying the number of clusters to cut the 
+#' dendrogram into, for each
+#'        group factor.
+#' @param report_dir Character string specifying the directory path where the 
+#' HTML report and any
+#'        other output files should be saved.
+#'
+#' @return A list where each element corresponds to a group factor and contains 
+#' the clustering results,
+#'         including `clustered_hits` data frame, hierarchical clustering object 
+#'         `hc`, `curve_values`
+#'         data frame with normalized spline curves, and `top_table` with 
+#'         cluster assignments.
+#'
+#' @examples
+#' \dontrun{
+#'   cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"), 
+#'                                   c(0.05),
+#'                                   c(3), "path/to/report/dir")
+#' }
+#'
+#' @export
+#' @importFrom stats 
+#' @importFrom dist 
+#' @importFrom hclust cutree
+#' @importFrom dplyr select filter
+#' @importFrom utils write.table
+#' @import limma
+#' @import splines
+#' @import ggplot2
+#' @import tidyr
+#' @import dplyr
+#' @import tibble
+#' @import dendextend
+#' @import RColorBrewer
+#' @import patchwork
+#' @import ComplexHeatmap
+#' @import circlize
+#' @import grid
+#' @import cluster
+#' 
+#' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
+#' 
+cluster_hits <- function(top_tables, 
                          data, 
                          meta, 
-                         main_title) {
+                         condition, 
+                         p_values, 
+                         clusters, 
+                         report_dir) {
   
-  DoF <- which(names(top_table) == "AveExpr") - 1
-  time_points <- meta$Time
+  control_inputs_cluster_hits(top_tables = top_tables, 
+                              data = data, 
+                              meta = meta, 
+                              condition = condition, 
+                              p_values = p_values, 
+                              clusters = clusters, 
+                              report_dir = report_dir)
   
-  titles <- data.frame(
-    FeatureID = top_table$feature_index,
-    feature_names = top_table$feature_names
-  )
+  all_levels_clustering <- perform_clustering(top_tables = top_tables,
+                                              p_values = p_values,
+                                              clusters = clusters,
+                                              meta = meta,
+                                              condition = condition)
   
-  plot_list <- list()
+  make_clustering_report(all_levels_clustering = all_levels_clustering, 
+                         condition = condition, 
+                         data = data, 
+                         meta = meta, 
+                         p_values = p_values, 
+                         report_dir = report_dir,
+                         feature_names = feature_names)
   
-  ## Generate individual plots ----
-  for (hit in 1:nrow(top_table)) {
-    hit_index <- as.numeric(top_table$feature_index[hit])
-    y_values <- data[hit_index, ]
-    
-    intercept <- top_table$intercept[hit]
-    
-    spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
-    
-    Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
-    X <- ns(Time, df = DoF, intercept = FALSE)
-    
-    fitted_values <- X %*% spline_coeffs + intercept
-    
-    plot_data <- data.frame(Time = time_points, 
-                            Y = y_values)
-    
-    plot_spline <- data.frame(Time = Time,
-                              Fitted = fitted_values)
-    
-    x_max <- as.numeric(max(time_points))
-    x_extension <- x_max * 0.05 
-    
-    p <- ggplot() +
-      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
-      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
-                color = 'red') +
-      theme_minimal() +
-      scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
-      labs(x = "Time [min]", y = "Intensity")
-    
-    matched_row <- subset(titles, FeatureID == hit_index)
-    title <- as.character(matched_row$feature_name)
-    if (is.na(title)) {
-      title <- paste("feature:", hit_index)
-    }
-    
-    p <- p + labs(title = title, 
-                  x = "Time [min]", y = "Intensity") +
-      theme(plot.title = element_text(size = 4),
-            axis.title.x = element_text(size = 8), 
-            axis.title.y = element_text(size = 8)) +
-      annotate("text", x = x_max + (x_extension / 2), y = 
-                 max(fitted_values, na.rm = TRUE),
-               label = "",
-               hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
-    
-    plot_list[[length(plot_list) + 1]] <- p
-  }
-  
-  ## Generate the combined plot ----
-  if(length(plot_list) > 0) {           
-    num_plots <- length(plot_list)
-    ncol <- 3
-    nrows <- ceiling(num_plots / ncol)
-    
-    composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      plot_annotation(title = paste(main_title, "| DoF:", DoF),
-                      theme = theme(plot.title = element_text(hjust = 0.5, 
-                                                              size = 14)))
-    return(list(composite_plot = composite_plot, nrows = nrows))
-  } else {
-    stop("plot_list in function plot_splines splinetime package has length 0!")
-  }
-}
-
-
-generate_report_html <- function(plot_list, 
-                                 plot_list_nrows, 
-                                 report_dir) {
-  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
-  
-  omics_data_type <- "PTX"
-  header_text <- paste("limma clustered hits", 
-                       omics_data_type, timestamp, sep=" | ")
-  
-  if (omics_data_type == "PTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: E12_TP05_Exponential & 
-      E10_TP10_Stationary removed<br>(Note: batch-corrected data used for 
-      plotting
-      individual blue datapoints (plots with the red spline, below))"
-  } else if (omics_data_type == "PPTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: all<br>(Note: batch-corrected data used 
-      for plotting
-      individual blue datapoints (plots with the red spline, below))"
-  }
-  
-  html_content <- paste(
-    "<html><head><title>My Plots</title></head><body>",
-    "<h1 style='color:red;'>", header_text, "</h1>",
-    "<h2>Design</h2>",
-    "<p>", design_text, "</p>",
-    "</body></html>",
-    sep=""
-  )
-  
-  file_name <- sprintf("report_clustered_splines_%s_%s.html",
-                       omics_data_type, timestamp)
-  
-  output_file_path <- here::here(report_dir, file_name)
-  
-  build_plot_report_html(html_content, plot_list, plot_list_nrows, 
-                         output_file_path)
+  return(all_levels_clustering)
 }
 
 
 
-# Internal functions level 1 ---------------------------
+# Level 1 internal functions ---------------------------------------------------
 
 
 control_inputs_cluster_hits <- function(top_tables, 
@@ -635,90 +267,474 @@ make_clustering_report <- function(all_levels_clustering,
 
 
 
-# Export functions -------------------------------------------------------------
+# Level 2 internal functions ---------------------------------------------------
 
 
-#' Cluster Hits from Top Tables
-#'
-#' Performs clustering on hits from top tables generated by differential 
-#' expression analysis.
-#' This function filters hits based on adjusted p-value thresholds, extracts 
-#' spline coefficients for 
-#' significant features, normalizes these coefficients, and applies hierarchical 
-#' clustering. The results,
-#' including clustering assignments and normalized spline curves, are saved in a 
-#' specified directory and
-#' compiled into an HTML report.
-#'
-#' @param top_tables A list of data frames, each representing a top table from 
-#' differential expression
-#'        analysis, containing at least 'adj.P.Val' and expression data columns.
-#' @param data The original expression dataset used for differential expression 
-#' analysis.
-#' @param meta Metadata dataframe corresponding to the `data`, must include a 
-#' 'Time' column and any columns
-#'        specified by `conditions`.
-#' @param conditions Character vector specifying the column names in `meta` used 
-#' to define groups for
-#'        analysis.
-#' @param p_values Numeric vector of p-value thresholds for filtering hits in 
-#' each top table.
-#' @param clusters Integer vector specifying the number of clusters to cut the 
-#' dendrogram into, for each
-#'        group factor.
-#' @param report_dir Character string specifying the directory path where the 
-#' HTML report and any
-#'        other output files should be saved.
-#'
-#' @return A list where each element corresponds to a group factor and contains 
-#' the clustering results,
-#'         including `clustered_hits` data frame, hierarchical clustering object 
-#'         `hc`, `curve_values`
-#'         data frame with normalized spline curves, and `top_table` with 
-#'         cluster assignments.
-#'
-#' @examples
-#' \dontrun{
-#'   cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"), 
-#'                                   c(0.05),
-#'                                   c(3), "path/to/report/dir")
-#' }
-#'
-#' @export
-#' @importFrom stats dist hclust cutree
-#' @importFrom dplyr select filter
-#' @importFrom utils write.table
-#' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
-#' 
-cluster_hits <- function(top_tables, 
+process_level_cluster <- function(top_table, 
+                                  p_value, 
+                                  cluster_size, 
+                                  level, 
+                                  meta, 
+                                  condition) {
+  if (is.na(p_value)) {
+    p_value <- p_values[1]  
+  }
+  
+  result <- get_curve_values(top_table, 
+                             p_value, 
+                             level, 
+                             meta, 
+                             condition)
+  
+  normalized_curves <- normalize_curves(result$curve_values)
+  
+  clustering_result <- hierarchical_clustering(normalized_curves, 
+                                               cluster_size, 
+                                               result$smooth_timepoints, 
+                                               top_table)
+}
+
+
+plot_heatmap <- function(data,
+                         meta,
+                         feature_names,
+                         clustered_hits) {
+  z_score <- t(scale(t(data)))
+  rownames(z_score) <- NULL
+  
+  BASE_TEXT_SIZE_PT <- 5
+  
+  ht_opt(
+    simple_anno_size = unit(1.5, "mm"),
+    COLUMN_ANNO_PADDING = unit(1, "pt"),
+    DENDROGRAM_PADDING = unit(1, "pt"),
+    HEATMAP_LEGEND_PADDING = unit(1, "mm"),
+    ROW_ANNO_PADDING = unit(1, "pt"),
+    TITLE_PADDING = unit(2, "mm"),
+    heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+    legend_border = FALSE
+  )
+  
+  clusters <- clustered_hits %>% arrange(cluster)
+  
+  ht <- Heatmap(z_score,
+                column_split = meta$Time,
+                cluster_columns = FALSE,
+                row_split = clusters$cluster,
+                cluster_rows = FALSE,
+                heatmap_legend_param = list(title = "z-score of log2 intensity",
+                                            title_position = "lefttop-rot"),
+                row_gap = unit(2, "pt"),
+                column_gap = unit(2, "pt"),
+                width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
+                height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
+                show_row_names = TRUE
+  )
+  
+  
+  data_to_plot <- data.frame(first_protein_description = 
+                               rownames(data.matrix.batch.filt.sig), 
+                             data.matrix.batch.filt.sig) %>%
+    mutate(cluster_number = clusters_exp$cluster) %>%
+    pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
+                 names_to = "sample_name",
+                 values_to = "log2_intensity") %>%
+    separate(sample_name, 
+             into = c("reactor", "time_point", "phase_of_fermentation"),
+             sep = "_") %>%
+    mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
+                              length(clusters_exp$feature))) %>%
+    group_by(first_protein_description) %>%
+    mutate(log2_intensity = rescale(log2_intensity))
+  
+  
+  data_to_plot_mean_protein  <- data_to_plot %>%
+    group_by(first_protein_description, time_to_feed) %>%
+    mutate(mean_intensity_protein = mean(log2_intensity)) %>%
+    ungroup()
+  
+  data_to_plot_mean_tp <- data_to_plot %>%
+    group_by(cluster_number, time_to_feed) %>%
+    summarise(mean_intensity_tp = mean(log2_intensity)) 
+  
+  #count number of genes in each cluster
+  clusters_exp %>%
+    count(cluster)
+  
+  ggplot(data = data_to_plot_mean_protein) +
+    geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
+                  color = first_protein_description), alpha = 0.5) +
+    geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
+                                              y = mean_intensity_tp), 
+              linewidth = 0.8) +
+    facet_wrap(~cluster_number, ncol = 2, 
+               labeller = labeller(cluster_number =  
+                                     c("1" = "Cluster 1: 32 proteins",
+                                       "2" = "Cluster 2: 48 proteins",
+                                       "3" = "Cluster 3: 68 proteins",
+                                       "4" = "Cluster 4: 29 proteins",
+                                       "5" = "Cluster 5: 17 proteins",
+                                       "6" = "Cluster 6: 13 proteins")))  +
+    geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
+               linewidth = 0.5) +  
+    ylab("normalized log2 intensity") +
+    theme_bw() +
+    theme(legend.position = "none",
+          panel.grid.minor = element_blank()) +
+    scale_x_continuous(breaks = data_to_plot$time_to_feed)
+  
+  
+  ht= draw(ht, heatmap_legend_side = "right")
+  ht
+  return(ht)
+}
+
+
+plot_dendrogram <- function(hc, 
+                            k, 
+                            title) {
+  dend <- as.dendrogram(hc)
+  
+  clusters <- cutree(hc, k)
+  
+  palette_name <- "Set3" # This can be changed to another palette if desired
+  max_colors_in_palette <- brewer.pal.info[palette_name, "maxcolors"]
+  colors <- brewer.pal(min(max_colors_in_palette, k), palette_name)
+  if (k > max_colors_in_palette) {
+    colors <- rep(colors, length.out = k)
+  }
+  
+  dend_colored <- color_branches(dend, k = k, labels_colors = colors)
+  dend_colored <- set(dend_colored, "labels", value = NULL)
+  
+  ggdend <- as.ggdend(dend_colored)
+  p_dend <- ggplot(ggdend) + 
+    labs(title = title, 
+         x = "", y = "") +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+          axis.text.y = element_blank(), axis.ticks.y = element_blank())
+}
+
+
+plot_all_shapes <- function(curve_values, 
+                            title) {
+  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
+  
+  clusters <- unique(curve_values$cluster)
+  average_curves <- data.frame()
+  
+  # Loop through each unique cluster value to calculate the average curve
+  for (current_cluster in clusters) {
+    # Filter rows for the current cluster
+    subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
+    
+    
+    last_timepoint <- (which(names(curve_values) == "cluster")) - 1
+    
+    average_curve <- colMeans(subset_hits[,1:last_timepoint])
+    
+    # Create a data frame for the average curve with an additional 'Cluster' 
+    # column
+    curve_df <- data.frame(Time = time, Value = average_curve, 
+                           cluster = as.factor(current_cluster))
+    
+    # Bind the curve data frame to the cumulative data frame
+    average_curves <- rbind(average_curves, curve_df)
+  }
+  
+  average_curves$cluster <- 
+    factor(average_curves$cluster, 
+           levels = sort(unique(as.numeric(average_curves$cluster))))
+  
+  p_curves <- ggplot(average_curves, aes(x = Time, y = Value, color = 
+                                           factor(cluster))) +
+    geom_line() + 
+    ggtitle(title) +
+    xlab("Timepoints") + ylab("Values") +
+    scale_color_brewer(palette = "Dark2", name = "Cluster") + 
+    theme_minimal()
+}
+
+
+plot_single_and_consensus_splines <- function(time_series_data, 
+                                              title) {
+  # Transform the dataframe to a long format for ggplot2
+  df_long <- as.data.frame(t(time_series_data)) %>%
+    rownames_to_column(var = "time") %>%
+    pivot_longer(cols = -time, names_to = "feature", 
+                 values_to = "intensity") %>%
+    arrange(feature) %>%
+    mutate(time = as.numeric(time))
+  
+  # Compute consensus (mean of each column)
+  consensus <- colMeans(time_series_data, na.rm = TRUE)
+  consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)), 
+                             consensus = consensus)
+  
+  p <- ggplot() +
+    geom_line(data = df_long, aes(x = time, y = intensity, group = feature,
+                                  colour = "Single Shapes"),
+              alpha = 0.3, linewidth = 0.5) +
+    geom_line(data = consensus_df, aes(x = time, y = consensus,
+                                       colour = "Consensus Shape"),
+              linewidth = 1.5) +
+    scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
+                                       "Single Shapes" = "#6495ED")) +
+    theme_minimal() +
+    ggtitle(title) +
+    xlab("time to feeding [min]") +
+    ylab("Y")
+  
+  return(p)
+}
+
+
+plot_consensus_shapes <- function(curve_values, 
+                                  title) {
+  clusters <- sort(unique(curve_values$cluster))
+  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
+  
+  plots <- list()
+  for (current_cluster in clusters) {
+    current_title <- paste(title, current_cluster, sep = "_")
+    subset_df <- subset(curve_values, cluster == current_cluster)
+    subset_df$cluster <- NULL 
+    
+    plots[[length(plots) + 1]] <- plot_single_and_consensus_splines(
+      subset_df, current_title)
+  }
+  return(plots)
+}
+
+
+plot_splines <- function(top_table, 
                          data, 
                          meta, 
-                         condition, 
-                         p_values, 
-                         clusters, 
-                         report_dir) {
+                         main_title) {
   
-  control_inputs_cluster_hits(top_tables = top_tables, 
-                              data = data, 
-                              meta = meta, 
-                              condition = condition, 
-                              p_values = p_values, 
-                              clusters = clusters, 
-                              report_dir = report_dir)
+  DoF <- which(names(top_table) == "AveExpr") - 1
+  time_points <- meta$Time
   
-  all_levels_clustering <- perform_clustering(top_tables = top_tables,
-                                              p_values = p_values,
-                                              clusters = clusters,
-                                              meta = meta,
-                                              condition = condition)
+  titles <- data.frame(
+    FeatureID = top_table$feature_index,
+    feature_names = top_table$feature_names
+  )
   
-  make_clustering_report(all_levels_clustering = all_levels_clustering, 
-                         condition = condition, 
-                         data = data, 
-                         meta = meta, 
-                         p_values = p_values, 
-                         report_dir = report_dir,
-                         feature_names = feature_names)
+  plot_list <- list()
   
-  return(all_groups_clustering)
+  ## Generate individual plots ----
+  for (hit in 1:nrow(top_table)) {
+    hit_index <- as.numeric(top_table$feature_index[hit])
+    y_values <- data[hit_index, ]
+    
+    intercept <- top_table$intercept[hit]
+    
+    spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
+    
+    Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
+    X <- ns(Time, df = DoF, intercept = FALSE)
+    
+    fitted_values <- X %*% spline_coeffs + intercept
+    
+    plot_data <- data.frame(Time = time_points, 
+                            Y = y_values)
+    
+    plot_spline <- data.frame(Time = Time,
+                              Fitted = fitted_values)
+    
+    x_max <- as.numeric(max(time_points))
+    x_extension <- x_max * 0.05 
+    
+    p <- ggplot() +
+      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
+      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
+                color = 'red') +
+      theme_minimal() +
+      scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
+      labs(x = "Time [min]", y = "Intensity")
+    
+    matched_row <- subset(titles, FeatureID == hit_index)
+    title <- as.character(matched_row$feature_name)
+    if (is.na(title)) {
+      title <- paste("feature:", hit_index)
+    }
+    
+    p <- p + labs(title = title, 
+                  x = "Time [min]", y = "Intensity") +
+      theme(plot.title = element_text(size = 4),
+            axis.title.x = element_text(size = 8), 
+            axis.title.y = element_text(size = 8)) +
+      annotate("text", x = x_max + (x_extension / 2), y = 
+                 max(fitted_values, na.rm = TRUE),
+               label = "",
+               hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
+    
+    plot_list[[length(plot_list) + 1]] <- p
+  }
+  
+  ## Generate the combined plot ----
+  if(length(plot_list) > 0) {           
+    num_plots <- length(plot_list)
+    ncol <- 3
+    nrows <- ceiling(num_plots / ncol)
+    
+    composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
+      plot_annotation(title = paste(main_title, "| DoF:", DoF),
+                      theme = theme(plot.title = element_text(hjust = 0.5, 
+                                                              size = 14)))
+    return(list(composite_plot = composite_plot, nrows = nrows))
+  } else {
+    stop("plot_list in function plot_splines splinetime package has length 0!")
+  }
 }
+
+
+generate_report_html <- function(plot_list, 
+                                 plot_list_nrows, 
+                                 report_dir) {
+  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
+  
+  omics_data_type <- "PTX"
+  header_text <- paste("limma clustered hits", 
+                       omics_data_type, timestamp, sep=" | ")
+  
+  if (omics_data_type == "PTX") {
+    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
+      Phase*X + Reactor | timepoints: E12_TP05_Exponential & 
+      E10_TP10_Stationary removed<br>(Note: batch-corrected data used for 
+      plotting
+      individual blue datapoints (plots with the red spline, below))"
+  } else if (omics_data_type == "PPTX") {
+    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
+      Phase*X + Reactor | timepoints: all<br>(Note: batch-corrected data used 
+      for plotting
+      individual blue datapoints (plots with the red spline, below))"
+  }
+  
+  html_content <- paste(
+    "<html><head><title>My Plots</title></head><body>",
+    "<h1 style='color:red;'>", header_text, "</h1>",
+    "<h2>Design</h2>",
+    "<p>", design_text, "</p>",
+    "</body></html>",
+    sep=""
+  )
+  
+  file_name <- sprintf("report_clustered_splines_%s_%s.html",
+                       omics_data_type, timestamp)
+  
+  output_file_path <- here::here(report_dir, file_name)
+  
+  build_plot_report_html(html_content, plot_list, plot_list_nrows, 
+                         output_file_path)
+}
+
+
+# Level 3 internal functions ---------------------------------------------------
+
+
+get_curve_values <- function(top_table, 
+                             p_value, 
+                             level, 
+                             meta, 
+                             condition) {
+  spline_results_hits <- subset(top_table, adj.P.Val < p_value)
+  
+  DoF <- which(names(top_table) == "AveExpr") - 1
+  
+  subset_meta <- meta[meta[[condition]] == level, ]
+  
+  smooth_timepoints <- seq(subset_meta$Time[1],
+                           subset_meta$Time[length(subset_meta$Time)],
+                           length.out = 100)
+  
+  X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
+  
+  columns_to_select <- 1:DoF
+  
+  splineCoeffs <- spline_results_hits %>%
+    select(all_of(1:DoF)) %>%
+    as.matrix()
+  
+  curve_values <- matrix(nrow = nrow(splineCoeffs),
+                         ncol = length(smooth_timepoints))
+  
+  for(i in 1:nrow(splineCoeffs)) {
+    current_coeffs <- matrix(splineCoeffs[i, ], ncol = ncol(splineCoeffs),
+                             byrow = TRUE)
+    
+    curve_values[i, ] <- current_coeffs %*% t(X)
+  }
+  
+  curve_values <- as.data.frame(curve_values)
+  rownames(curve_values) <- rownames(splineCoeffs)
+  list(curve_values = curve_values, smooth_timepoints = smooth_timepoints)
+}
+
+
+normalize_curves <- function(curve_values) {
+  normalized_curves <- apply(curve_values, 1, function(row) {
+    (row - min(row)) / (max(row) - min(row))
+  })
+  
+  normalized_curves <- t(normalized_curves)
+  curve_values[,] <- normalized_curves
+  curve_values
+}
+
+
+hierarchical_clustering <- function(curve_values, 
+                                    k, 
+                                    smooth_timepoints,
+                                    top_table) {
+  distance_matrix <- dist(curve_values, method = "euclidean")
+  hc <- hclust(distance_matrix, method = "complete")
+  
+  if (is.character(k) && k == "auto") {
+    # Calculate silhouette width for a range of clusters
+    max_clusters <- 8
+    sil_widths <- numeric(max_clusters - 1)
+    for (i in 2:max_clusters) {
+      temp_clusters <- cutree(hc, k = i)
+      silhouette_score <- 
+        mean(silhouette(temp_clusters, distance_matrix)[, "sil_width"])
+      
+      adjusted_score <- silhouette_score + (0.02 * log(i)) # scaling factor
+      sil_widths[i - 1] <- adjusted_score
+    }
+    
+    # Find the index of the maximum adjusted silhouette score
+    best_k_index <- which.max(sil_widths)
+    k <- best_k_index + 1  # because index shift due to starting at 2 clusters
+    
+    cluster_assignments <- cutree(hc, k = k)
+  } else if (is.numeric(k)) {
+    cluster_assignments <- cutree(hc, k = k)
+  }
+  
+  
+  clustered_hits <- data.frame(cluster = cluster_assignments)
+  clustered_hits$feature <- rownames(clustered_hits)
+  clustered_hits <- clustered_hits[, c("feature", "cluster")]
+  
+  colnames(curve_values) <- smooth_timepoints
+  curve_values$cluster <- cluster_assignments
+  
+  top_table$cluster <- NA
+  top_table$cluster[1:nrow(clustered_hits)] <-
+    as.integer(clustered_hits$cluster)
+  
+  
+  group_clustering <- list(clustered_hits = clustered_hits,
+                           hc = hc,
+                           curve_values = curve_values,
+                           top_table = top_table,
+                           clusters = k)
+}
+

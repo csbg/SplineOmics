@@ -4,71 +4,142 @@ library(splines)
 library(purrr)
 
 
+# Exported function: run_limma_splines() ---------------------------------------
 
-# Internal functions level 2 ---------------------------------------------------
-
-
-#' Converts top_table to a tibble and adds new column feature_name
-modify_limma_top_table <- function(top_table, 
-                                   feature_names) {
-  top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
-    relocate(feature_index, .after = last_col()) %>%
-    mutate(feature_index = as.integer(feature_index))
+#' Run Limma Analysis with Spline Interpolation for Hyperparameter Screening
+#'
+#' This function conducts differential expression analysis using the Limma 
+#' package, 
+#' incorporating spline interpolation to model the effect of various 
+#' experimental 
+#' factors across different levels. It supports both isolated and integrated 
+#' modes 
+#' for within-level analysis and between-level comparison, adjusting for 
+#' multiple 
+#' degrees of freedom corresponding to the factors under investigation.
+#'
+#' @param data A matrix or dataframe containing the expression data, 
+#'             where rows represent features (e.g., genes) and columns represent 
+#'             samples.
+#' @param meta A dataframe containing the metadata for the samples, 
+#'             must include a column for each factor in `factors`.
+#' @param design A character string specifying the design formula for the Limma 
+#' model.
+#' @param DoFs An integer vector specifying the degrees of freedom for spline 
+#' interpolation 
+#'             for each factor; length should match that of `factors`.
+#' @param factors A character vector specifying the names of experimental 
+#' factors 
+#'                to be analyzed, as represented in `meta`.
+#' @param feature_names A character vector of feature names (e.g., gene names) 
+#' corresponding 
+#'                      to the rows in `data`.
+#' @param mode A character string specifying the analysis mode: 'isolated' for 
+#' analyzing 
+#'             each level of a factor separately, or 'integrated' for comparing 
+#'             levels 
+#'             within a factor.
+#' @param padjust_method A character string specifying the method for adjusting 
+#'                       p-values for multiple testing. Defaults to "BH" 
+#'                       (Benjamini-Hochberg).
+#'
+#' @return A list containing three elements: 
+#'         - `top_tables`: A list of top tables generated from within-level 
+#'         analysis 
+#'                         for each factor and level.
+#'         - `ttslc_factor_only`: A list of top tables from between-level 
+#'         comparisons 
+#'                                for each factor, excluding time effects.
+#'         - `ttslc_factor_time`: A list of top tables from between-level 
+#'         comparisons 
+#'                                for each factor, including time effects.
+#'
+#' @examples
+#' \dontrun{
+#'   results <- run_limma_splines(data, meta, "~ 1 + Factor*X + Time", c(2L), 
+#'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
+#' }
+#'
+#' @export
+#' @import limma
+#' @import splines
+#' @import purrr
+#' 
+#' @importFrom stats setNames
+#' 
+run_limma_splines <- function(data,
+                              meta,
+                              design,
+                              spline_params,
+                              condition, 
+                              feature_names,
+                              mode = c("isolated", "integrated"),
+                              padjust_method = "BH") {
+  mode <- match.arg(mode)
+  control_inputs_run_limma(data = data, 
+                           meta = meta, 
+                           design = design, 
+                           spline_params = spline_params, 
+                           condition = condition, 
+                           feature_names = feature_names, 
+                           mode = mode, 
+                           padjust_method = padjust_method)
   
-  sorted_feature_names <- feature_names[top_table$feature_index]
-  top_table <- top_table %>% mutate(feature_names = sorted_feature_names)
+  meta[[condition]] <- factor(meta[[condition]])
+  levels <- levels(meta[[condition]])
   
-  top_table
+  # Get hits for level (within level analysis) ---------------------------------
+  # Prespecify most parameters
+  process_level_with_params <- purrr::partial(process_level, 
+                                              spline_params = spline_params,
+                                              data = data, 
+                                              meta = meta, 
+                                              design = design, 
+                                              condition = condition, 
+                                              feature_names = feature_names, 
+                                              padjust_method = padjust_method, 
+                                              mode = mode)
+  
+  results_list <- map2(levels, seq_along(levels), process_level_with_params)
+  top_tables <- setNames(map(results_list, "top_table"), 
+                         map_chr(results_list, "name"))
+  
+  
+  # Factor and Factor:Time comparisons between levels --------------------------
+  ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
+  ttslc_factor_time <- list()        # Factor AND time
+  
+  if (mode == "integrated") {
+    level_combinations <- combn(levels, 2, simplify = FALSE)
+    for (lev_combo in level_combinations) {
+      result <- between_level(data = data, 
+                              meta = meta, 
+                              design = design, 
+                              spline_params = spline_params,
+                              condition = condition, 
+                              compared_levels = lev_combo, 
+                              padjust_method = padjust_method, 
+                              feature_names = feature_names)
+      
+      ttslc_factor_only[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
+        result$ttlc_factor_only
+      ttslc_factor_time[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
+        result$ttlc_factor_time
+    }
+  } else { # mode == "isolated"
+    print("mode == 'integrated' necessary for between level comparisons. 
+          Returning emtpy lists for ttslc_factor_only and ttslc_factor_time
+          (ttslc means 'top tables level comparison').")
+  }
+  
+  list(top_tables = top_tables, 
+       ttslc_factor_only = ttslc_factor_only,
+       ttslc_factor_time = ttslc_factor_time)
 }
 
 
-#' Performs the limma spline analysis for a selected level of a factor
-within_level <- function(data,
-                         meta,
-                         design,
-                         factor,
-                         level,
-                         spline_params,
-                         level_index,
-                         padjust_method) {
-  
-  args <- list(x = meta$Time, intercept = FALSE)
-  
-  if (!is.null(spline_params$DoFs)) {
-    args$df <- spline_params$DoFs[level_index]
-  } else {
-    args$knots <- spline_params$knots[[level_index]]
-  }
-  
-  if (!is.null(spline_params$bknots)) {
-    args$Boundary.knots <- spline_params$bknots[[level_index]]
-  }
-  
-  
-  if (spline_params$spline_type[level_index] == "b") {
-    args$degree <- spline_params$degrees[level_index]
-    meta$X <- do.call(bs, args)
-  } else {                                          # natural cubic splines
-    meta$X <- do.call(ns, args)
-  }
-  
-  design_matrix <- model.matrix(as.formula(design), data = meta)
-  
-  fit <- lmFit(data, design_matrix)
-  fit <- eBayes(fit)
 
-  column_names <- colnames(design_matrix)
-  num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
-  coeffs <- paste0("X", seq_len(num_matching_columns))
-  
-  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
-  
-  list(top_table = top_table, fit = fit)
-}
-
-
-
-# Internal functions level 1 ---------------------------------------------------
+# Level 1 internal functions ---------------------------------------------------
 
 
 #' Controls the function input and raises an error if not in expected format
@@ -135,7 +206,7 @@ control_inputs_run_limma <- function(data,
       ("knots" %in% names(spline_params))) {
     stop("Either DoFs or knots must be present, but not both.")
   } else if (!("DoFs" %in% names(spline_params)) && 
-              !("knots" %in% names(spline_params))) {
+             !("knots" %in% names(spline_params))) {
     stop("At least one of DoFs or knots must be present.")
   }
   
@@ -213,7 +284,7 @@ control_inputs_run_limma <- function(data,
   supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", 
                          "fdr", "none")
   if (!(is.character(padjust_method) && padjust_method %in% supported_methods)) 
-    {
+  {
     stop("padjust_method must be a character and one of the supported methods (
          holm, hochberg, hommel, bonferroni, BH, BY, fdr, none).")
   }
@@ -233,7 +304,7 @@ between_level <- function(data,
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
-
+  
   args <- list(x = meta$Time, intercept = FALSE)
   
   if (!is.null(spline_params$DoFs)) {
@@ -255,10 +326,10 @@ between_level <- function(data,
   }
   
   design_matrix <- model.matrix(as.formula(design), data = meta)
-
+  
   fit <- lmFit(data, design_matrix)
   fit <- eBayes(fit)
-
+  
   factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
   ttlc_factor_only <- topTable(fit, coef = factor_only_contrast_coeff,
                                adjust.method = padjust_method, number = Inf)
@@ -313,7 +384,7 @@ process_level <- function(level,
     meta_copy <- meta
     meta_copy[[condition]] <- relevel(meta_copy[[condition]], ref = level)
     level_index <- 1L   # spline_params must be uniform across all levels for
-                        # integrated mode.
+    # integrated mode.
   }
   
   result <- within_level(data_copy, 
@@ -333,135 +404,63 @@ process_level <- function(level,
 }
 
 
+# Level 2 internal functions ---------------------------------------------------
 
-# Export functions -------------------------------------------------------------
+
+#' Converts top_table to a tibble and adds new column feature_name
+modify_limma_top_table <- function(top_table, 
+                                   feature_names) {
+  top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
+    relocate(feature_index, .after = last_col()) %>%
+    mutate(feature_index = as.integer(feature_index))
+  
+  sorted_feature_names <- feature_names[top_table$feature_index]
+  top_table <- top_table %>% mutate(feature_names = sorted_feature_names)
+  
+  top_table
+}
 
 
-#' Run Limma Analysis with Spline Interpolation for Hyperparameter Screening
-#'
-#' This function conducts differential expression analysis using the Limma 
-#' package, 
-#' incorporating spline interpolation to model the effect of various 
-#' experimental 
-#' factors across different levels. It supports both isolated and integrated 
-#' modes 
-#' for within-level analysis and between-level comparison, adjusting for 
-#' multiple 
-#' degrees of freedom corresponding to the factors under investigation.
-#'
-#' @param data A matrix or dataframe containing the expression data, 
-#'             where rows represent features (e.g., genes) and columns represent 
-#'             samples.
-#' @param meta A dataframe containing the metadata for the samples, 
-#'             must include a column for each factor in `factors`.
-#' @param design A character string specifying the design formula for the Limma 
-#' model.
-#' @param DoFs An integer vector specifying the degrees of freedom for spline 
-#' interpolation 
-#'             for each factor; length should match that of `factors`.
-#' @param factors A character vector specifying the names of experimental 
-#' factors 
-#'                to be analyzed, as represented in `meta`.
-#' @param feature_names A character vector of feature names (e.g., gene names) 
-#' corresponding 
-#'                      to the rows in `data`.
-#' @param mode A character string specifying the analysis mode: 'isolated' for 
-#' analyzing 
-#'             each level of a factor separately, or 'integrated' for comparing 
-#'             levels 
-#'             within a factor.
-#' @param padjust_method A character string specifying the method for adjusting 
-#'                       p-values for multiple testing. Defaults to "BH" 
-#'                       (Benjamini-Hochberg).
-#'
-#' @return A list containing three elements: 
-#'         - `top_tables`: A list of top tables generated from within-level 
-#'         analysis 
-#'                         for each factor and level.
-#'         - `ttslc_factor_only`: A list of top tables from between-level 
-#'         comparisons 
-#'                                for each factor, excluding time effects.
-#'         - `ttslc_factor_time`: A list of top tables from between-level 
-#'         comparisons 
-#'                                for each factor, including time effects.
-#'
-#' @examples
-#' \dontrun{
-#'   results <- run_limma_splines(data, meta, "~ 1 + Factor*X + Time", c(2L), 
-#'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
-#' }
-#'
-#' @export
-#' @importFrom limma lmFit eBayes topTable
-#' people should use R 4.1, so that they can use the native pipe ( %>% )
-#' @importFrom stats setNames
-#' 
-run_limma_splines <- function(data,
-                              meta,
-                              design,
-                              spline_params,
-                              condition, 
-                              feature_names,
-                              mode = c("isolated", "integrated"),
-                              padjust_method = "BH") {
-  mode <- match.arg(mode)
-  control_inputs_run_limma(data = data, 
-                           meta = meta, 
-                           design = design, 
-                           spline_params = spline_params, 
-                           condition = condition, 
-                           feature_names = feature_names, 
-                           mode = mode, 
-                           padjust_method = padjust_method)
+#' Performs the limma spline analysis for a selected level of a factor
+within_level <- function(data,
+                         meta,
+                         design,
+                         factor,
+                         level,
+                         spline_params,
+                         level_index,
+                         padjust_method) {
   
-  meta[[condition]] <- factor(meta[[condition]])
-  levels <- levels(meta[[condition]])
+  args <- list(x = meta$Time, intercept = FALSE)
   
-  # Get hits for level (within level analysis) ---------------------------------
-  # Prespecify most parameters
-  process_level_with_params <- purrr::partial(process_level, 
-                                              spline_params = spline_params,
-                                              data = data, 
-                                              meta = meta, 
-                                              design = design, 
-                                              condition = condition, 
-                                              feature_names = feature_names, 
-                                              padjust_method = padjust_method, 
-                                              mode = mode)
-  
-  results_list <- map2(levels, seq_along(levels), process_level_with_params)
-  top_tables <- setNames(map(results_list, "top_table"), 
-                         map_chr(results_list, "name"))
-  
-  
-  # Factor and Factor:Time comparisons between levels --------------------------
-  ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
-  ttslc_factor_time <- list()        # Factor AND time
-  
-  if (mode == "integrated") {
-    level_combinations <- combn(levels, 2, simplify = FALSE)
-    for (lev_combo in level_combinations) {
-      result <- between_level(data = data, 
-                              meta = meta, 
-                              design = design, 
-                              spline_params = spline_params,
-                              condition = condition, 
-                              compared_levels = lev_combo, 
-                              padjust_method = padjust_method, 
-                              feature_names = feature_names)
-      
-      ttslc_factor_only[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
-        result$ttlc_factor_only
-      ttslc_factor_time[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
-        result$ttlc_factor_time
-    }
-  } else { # mode == "isolated"
-    print("mode == 'integrated' necessary for between level comparisons. 
-          Returning emtpy lists for ttslc_factor_only and ttslc_factor_time
-          (ttslc means 'top tables level comparison').")
+  if (!is.null(spline_params$DoFs)) {
+    args$df <- spline_params$DoFs[level_index]
+  } else {
+    args$knots <- spline_params$knots[[level_index]]
   }
   
-  list(top_tables = top_tables, 
-       ttslc_factor_only = ttslc_factor_only,
-       ttslc_factor_time = ttslc_factor_time)
+  if (!is.null(spline_params$bknots)) {
+    args$Boundary.knots <- spline_params$bknots[[level_index]]
+  }
+  
+  
+  if (spline_params$spline_type[level_index] == "b") {
+    args$degree <- spline_params$degrees[level_index]
+    meta$X <- do.call(bs, args)
+  } else {                                          # natural cubic splines
+    meta$X <- do.call(ns, args)
+  }
+  
+  design_matrix <- model.matrix(as.formula(design), data = meta)
+  
+  fit <- lmFit(data, design_matrix)
+  fit <- eBayes(fit)
+
+  column_names <- colnames(design_matrix)
+  num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
+  coeffs <- paste0("X", seq_len(num_matching_columns))
+  
+  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
+  
+  list(top_table = top_table, fit = fit)
 }
