@@ -1,9 +1,3 @@
-# Import libraries -------------------------------------------------------------
-library(limma)
-library(splines)
-library(purrr)
-
-
 # Exported function: run_limma_splines() ---------------------------------------
 
 #' Run Limma Analysis with Spline Interpolation for Hyperparameter Screening

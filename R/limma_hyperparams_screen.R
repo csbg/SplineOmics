@@ -1,21 +1,4 @@
-# Library imports --------------------------------------------------------------
-library(pheatmap)
-library(ggplot2)
-library(stats)
-library(purrr)
-library(furrr)
-library(tidyr)
-library(dplyr)
-library(patchwork)
-library(stringr)
-library(progress)
-library(here)
-library(knitr)
-library(kableExtra)
-
-
-
-## Exported function: limma_hyperparams_screen() -------------------------------
+# Exported function: limma_hyperparams_screen() --------------------------------
 
 #' Limma Hyperparameters Screening
 #'

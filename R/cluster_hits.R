@@ -1,19 +1,3 @@
-# Import libraries -------------------------------------------------------------
-library(limma)
-library(splines)
-library(ggplot2)
-library(tidyr)
-library(dplyr)
-library(tibble)
-library(dendextend)
-library(RColorBrewer)
-library(patchwork)
-library(ComplexHeatmap)
-library(circlize)
-library(grid)
-library(cluster)
-
-
 # Exported function: cluster_hits() --------------------------------------------
 
 #' Cluster Hits from Top Tables
@@ -70,6 +54,7 @@ library(cluster)
 cluster_hits <- function(top_tables, 
                          data, 
                          meta, 
+                         spline_params,
                          condition, 
                          p_values, 
                          clusters, 
@@ -78,6 +63,7 @@ cluster_hits <- function(top_tables,
   control_inputs_cluster_hits(top_tables = top_tables, 
                               data = data, 
                               meta = meta, 
+                              spline_params = spline_params,
                               condition = condition, 
                               p_values = p_values, 
                               clusters = clusters, 
@@ -108,6 +94,7 @@ cluster_hits <- function(top_tables,
 control_inputs_cluster_hits <- function(top_tables, 
                                         data, 
                                         meta, 
+                                        spline_params,
                                         condition, 
                                         p_values, 
                                         clusters, 
@@ -123,6 +110,57 @@ control_inputs_cluster_hits <- function(top_tables,
   if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
     stop("meta must be a dataframe")
   }
+  
+  
+  if ("spline_type" %in% names(spline_params)) {
+    if (!all(spline_params$spline_type %in% c("b", "n"))) {
+      stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
+           natural cubic splines")
+    }
+  } else {
+    stop("spline_type is missing.")
+  }
+  
+  # Check if degrees exists and is an integer vector
+  if ("degrees" %in% names(spline_params)) {
+    if (!all(spline_params$degrees == as.integer(spline_params$degrees))) {
+      stop("degrees must be an integer vector.")
+    }
+  } else if (!all(spline_params$spline_type %in% c("n"))) {
+    stop("degrees is missing.")
+  }
+  
+  # Check if DoFs exists and is an integer vector
+  if ("DoFs" %in% names(spline_params)) {
+    if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
+      stop("DoFs must be an integer vector.")
+    }
+  }
+  
+  # Check if knots exists and is a list of numeric vectors
+  if ("knots" %in% names(spline_params)) {
+    if (!is.list(spline_params$knots) || 
+        any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
+      stop("knots must be a list of numeric vectors.")
+    }
+  }
+  
+  if (("DoFs" %in% names(spline_params)) && 
+      ("knots" %in% names(spline_params))) {
+    stop("Either DoFs or knots must be present, but not both.")
+  } else if (!("DoFs" %in% names(spline_params)) && 
+             !("knots" %in% names(spline_params))) {
+    stop("At least one of DoFs or knots must be present.")
+  }
+  
+  # Check if bknots exists and is a list of numeric vectors
+  if ("bknots" %in% names(spline_params)) {
+    if (!is.list(spline_params$bknots) || 
+        any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
+      stop("bknots must be a list of numeric vectors.")
+    }
+  }
+  
   
   if (!(is.character(condition)) || length(condition) != 1) {
     stop("condition must be a character vector with length 1")
@@ -787,16 +825,35 @@ get_curve_values <- function(top_table,
                              condition) {
   spline_results_hits <- subset(top_table, adj.P.Val < p_value)
   
-  DoF <- which(names(top_table) == "AveExpr") - 1
-  
   subset_meta <- meta[meta[[condition]] == level, ]
   
   smooth_timepoints <- seq(subset_meta$Time[1],
                            subset_meta$Time[length(subset_meta$Time)],
                            length.out = 100)
   
-  X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
   
+  args <- list(x = smooth_timepoints, intercept = FALSE)
+  
+  if (!is.null(spline_params$DoFs)) {
+    args$df <- spline_params$DoFs[1]
+  } else {
+    args$knots <- spline_params$knots[[1]]
+  }
+  
+  if (!is.null(spline_params$bknots)) {
+    args$Boundary.knots <- spline_params$bknots[[1]]
+  }
+  
+  
+  if (spline_params$spline_type[1] == "b") {
+    args$degree <- spline_params$degrees[1]
+    X <- do.call(splines::bs, args)
+  } else {                                          # natural cubic splines
+    X <- do.call(splines::ns, args)
+  }
+  
+  DoF <- which(names(top_table) == "AveExpr") - 1
+
   columns_to_select <- 1:DoF
   
   splineCoeffs <- spline_results_hits %>%
@@ -891,11 +948,12 @@ hierarchical_clustering <- function(curve_values,
     
     cluster_assignments <- stats::cutree(hc, k = k)
   } else if (is.numeric(k)) {
-    cluster_assignments <- stas::cutree(hc, k = k)
+    cluster_assignments <- stats::cutree(hc, k = k)
   }
-  
+
   clustered_hits <- data.frame(cluster = cluster_assignments)
-  clustered_hits$feature <- rownames(clustered_hits)
+  top_table_hits <- dplyr::filter(top_table, adj.P.Val < 0.05)
+  clustered_hits$feature <- top_table_hits$feature_index
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
   
   colnames(curve_values) <- smooth_timepoints

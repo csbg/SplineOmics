@@ -3,22 +3,43 @@ rm(list = ls(all.names = TRUE))
 
 
 # Setup ------------------------------------------------------------------------
+# Import libraries
 
-library(splinetime)
+# run_limma_splines()
+library(limma)
+library(splines)
+library(purrr)
+
+# cluster_hits()
+library(limma)
+library(splines)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(tibble)
+library(dendextend)
+library(RColorBrewer)
+library(patchwork)
+library(ComplexHeatmap)
+library(circlize)
+library(grid)
+library(cluster)
+
+# library(splinetime)
 
 ## Source functions ---------------------------------
-# limma_hyperparams_screen_fun_path <-
-#   here::here("R", "limma_hyperparams_screen.R")
-# source(limma_hyperparams_screen_fun_path)
-# 
-# run_limma_splines_fun_path <- here::here("R", "run_limma_splines.R")
-# source(run_limma_splines_fun_path)
-# 
-# cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
-# source(cluster_hits_fun_path)
-# 
-# general_fun_path <- here::here("R", "splinetime_general_fun.R")
-# source(general_fun_path)
+limma_hyperparams_screen_fun_path <-
+  here::here("R", "limma_hyperparams_screen.R")
+source(limma_hyperparams_screen_fun_path)
+
+run_limma_splines_fun_path <- here::here("R", "run_limma_splines.R")
+source(run_limma_splines_fun_path)
+
+cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
+source(cluster_hits_fun_path)
+
+general_fun_path <- here::here("R", "splinetime_general_fun.R")
+source(general_fun_path)
 
 
 
@@ -28,7 +49,8 @@ library(splinetime)
 # annotation. data contains the raw data, meta the column descriptions of data
 # (the sample descriptions), and annotation the row descriptions (the feature
 # descriptions)
-input_file_path <- here::here("data", "PTX_input_data.RData")
+input_file_path <- here::here("data", "PhosphoPlusProteomics_data",
+                              "PTX_input_data.RData")
 load(input_file_path) 
 
 
@@ -59,16 +81,16 @@ spline_configs = list(spline_type = c("n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   spline_configs,
-                                   feature_names,
-                                   report_dir,
-                                   pthresholds)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    spline_configs,
+#                                    feature_names,
+#                                    report_dir,
+#                                    pthresholds)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -97,7 +119,7 @@ ttslc_factor_time <- result$ttslc_factor_time
 
 ## Cluster hits ----------------------------------------------------------------
 p_values <- c(0.05, 0.05)
-clusters <- list("auto", "auto")
+clusters <- list(6L, 3L)
 report_dir <- here::here("results")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
@@ -105,6 +127,7 @@ data <- removeBatchEffect(x = data, batch = meta$Reactor)
 clustering_results <- cluster_hits(top_tables, 
                                    data, 
                                    meta, 
+                                   spline_params,
                                    condition, 
                                    p_values, 
                                    clusters, 
