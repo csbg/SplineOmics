@@ -4,22 +4,21 @@ rm(list = ls(all.names = TRUE))
 
 # Setup ------------------------------------------------------------------------
 
-# library(splinetime)
-# library(MyPackage)
+library(splinetime)
 
 ## Source functions ---------------------------------
-limma_hyperparams_screen_fun_path <-
-  here::here("R", "limma_hyperparams_screen.R")
-source(limma_hyperparams_screen_fun_path)
-
-run_limma_splines_fun_path <- here::here("R", "run_limma_splines.R")
-source(run_limma_splines_fun_path)
-
-cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
-source(cluster_hits_fun_path)
-
-general_fun_path <- here::here("R", "splinetime_general_fun.R")
-source(general_fun_path)
+# limma_hyperparams_screen_fun_path <-
+#   here::here("R", "limma_hyperparams_screen.R")
+# source(limma_hyperparams_screen_fun_path)
+# 
+# run_limma_splines_fun_path <- here::here("R", "run_limma_splines.R")
+# source(run_limma_splines_fun_path)
+# 
+# cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
+# source(cluster_hits_fun_path)
+# 
+# general_fun_path <- here::here("R", "splinetime_general_fun.R")
+# source(general_fun_path)
 
 
 
