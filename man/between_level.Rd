@@ -2,21 +2,42 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{between_level}
 \alias{between_level}
-\title{Performs limma spline analysis and gets the top_table for the level 
-comparison: Both for factor and for factor:time}
+\title{Calculate Differential Expression Between Levels}
 \usage{
 between_level(
   data,
   meta,
   design,
-  DoFs,
+  spline_params,
   condition,
   compared_levels,
   padjust_method,
   feature_names
 )
 }
+\arguments{
+\item{data}{A matrix of expression values.}
+
+\item{meta}{Metadata containing experimental design information.}
+
+\item{design}{A formula specifying the linear model design.}
+
+\item{spline_params}{Parameters for spline generation.}
+
+\item{condition}{The name of the condition column in the metadata.}
+
+\item{compared_levels}{The levels of the condition to compare.}
+
+\item{padjust_method}{The method for adjusting p-values.}
+
+\item{feature_names}{Names of the features in the data matrix.}
+}
+\value{
+A list containing top tables for contrasts between factors only 
+        and factors with time interactions.
+}
 \description{
-Performs limma spline analysis and gets the top_table for the level 
-comparison: Both for factor and for factor:time
+Calculates differential expression between specified levels of a condition
+using linear models and limma analysis. Returns top table results for 
+contrasts between factors only and factors with time interactions.
 }

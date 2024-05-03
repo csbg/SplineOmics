@@ -8,7 +8,7 @@ run_limma_splines(
   data,
   meta,
   design,
-  DoFs,
+  spline_params,
   condition,
   feature_names,
   mode = c("isolated", "integrated"),
@@ -17,43 +17,58 @@ run_limma_splines(
 }
 \arguments{
 \item{data}{A matrix or dataframe containing the expression data, 
-where rows represent features (e.g., genes) and columns represent samples.}
+where rows represent features (e.g., genes) and columns represent 
+samples.}
 
 \item{meta}{A dataframe containing the metadata for the samples, 
 must include a column for each factor in `factors`.}
 
-\item{design}{A character string specifying the design formula for the Limma model.}
+\item{design}{A character string specifying the design formula for the Limma 
+model.}
 
-\item{DoFs}{An integer vector specifying the degrees of freedom for spline interpolation 
-for each factor; length should match that of `factors`.}
+\item{feature_names}{A character vector of feature names (e.g., gene names) 
+corresponding 
+                     to the rows in `data`.}
 
-\item{feature_names}{A character vector of feature names (e.g., gene names) corresponding 
-to the rows in `data`.}
-
-\item{mode}{A character string specifying the analysis mode: 'isolated' for analyzing 
-each level of a factor separately, or 'integrated' for comparing levels 
-within a factor.}
+\item{mode}{A character string specifying the analysis mode: 'isolated' for 
+analyzing 
+            each level of a factor separately, or 'integrated' for comparing 
+            levels 
+            within a factor.}
 
 \item{padjust_method}{A character string specifying the method for adjusting 
-p-values for multiple testing. Defaults to "BH" (Benjamini-Hochberg).}
+p-values for multiple testing. Defaults to "BH" 
+(Benjamini-Hochberg).}
 
-\item{factors}{A character vector specifying the names of experimental factors 
-to be analyzed, as represented in `meta`.}
+\item{DoFs}{An integer vector specifying the degrees of freedom for spline 
+interpolation 
+            for each factor; length should match that of `factors`.}
+
+\item{factors}{A character vector specifying the names of experimental 
+factors 
+               to be analyzed, as represented in `meta`.}
 }
 \value{
 A list containing three elements: 
-        - `top_tables`: A list of top tables generated from within-level analysis 
+        - `top_tables`: A list of top tables generated from within-level 
+        analysis 
                         for each factor and level.
-        - `ttslc_factor_only`: A list of top tables from between-level comparisons 
+        - `ttslc_factor_only`: A list of top tables from between-level 
+        comparisons 
                                for each factor, excluding time effects.
-        - `ttslc_factor_time`: A list of top tables from between-level comparisons 
+        - `ttslc_factor_time`: A list of top tables from between-level 
+        comparisons 
                                for each factor, including time effects.
 }
 \description{
-This function conducts differential expression analysis using the Limma package, 
-incorporating spline interpolation to model the effect of various experimental 
-factors across different levels. It supports both isolated and integrated modes 
-for within-level analysis and between-level comparison, adjusting for multiple 
+This function conducts differential expression analysis using the Limma 
+package, 
+incorporating spline interpolation to model the effect of various 
+experimental 
+factors across different levels. It supports both isolated and integrated 
+modes 
+for within-level analysis and between-level comparison, adjusting for 
+multiple 
 degrees of freedom corresponding to the factors under investigation.
 }
 \examples{

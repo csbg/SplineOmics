@@ -54,20 +54,8 @@ library(kableExtra)
 #'                                       pthresholds = c(0.05),
 #'                                       padjust_method = "BH")
 #' }
-#'
-#' @import pheatmap
-#' @import ggplot2
-#' @import stats
-#' @import purrr
-#' @import furrr
-#' @import tidyr
-#' @import dplyr
-#' @import patchwork
-#' @import stringr
-#' @import progress
-#' @import here
-#' @import knitr
-#' @import kableExtra
+#' 
+#' @importFrom here here
 #'
 #' @export
 #'
@@ -148,14 +136,31 @@ control_inputs_hyperpara_screen <- function(datas,
       "'datas_descr' must be a character vector with no element over 80 
       characters. Offending element(s) at indices %s: '%s'. Please shorten
       the description.",
-      paste(long_elements_indices, collapse=", "),
-      paste(long_elements, collapse="', '")
+      paste(long_elements_indices, collapse = ", "),
+      paste(long_elements, collapse = "', '")
     )
     stop(error_message)
   }
   
   if (!is.list(metas) || any(!sapply(metas, is.data.frame))) {
     stop("'metas' must be a list of dataframes.")
+  }
+  
+  if (length(metas) != length(datas)) {
+    stop("The lists 'metas' and 'datas' must have the same number of elements.")
+  }
+  
+  for (i in seq_along(metas)) {
+    # Extract the current meta dataframe and data matrix
+    meta <- metas[[i]]
+    data <- datas[[i]]
+    
+    # Check if the number of rows in meta equals the number of columns in data
+    if (!(nrow(meta) == ncol(data))) {
+      stop(paste("Mismatch found for pair", i, ": The number of rows in meta 
+                 does not match the number of columns in data. This is 
+                 required."))
+    }
   }
   
   if (!is.character(designs) || 
@@ -185,8 +190,8 @@ control_inputs_hyperpara_screen <- function(datas,
         "Some 'designs' elements do not contain 'X', which is the required
         time component for the splinetime package. 
         Offending element(s) at indices %s: '%s'.",
-        paste(which(grepl("X", designs) == FALSE), collapse=", "),
-        paste(missing_x_elements, collapse="', '")
+        paste(which(grepl("X", designs) == FALSE), collapse = ", "),
+        paste(missing_x_elements, collapse = "', '")
       ))
     }
     
@@ -285,12 +290,16 @@ control_inputs_hyperpara_screen <- function(datas,
 }
 
 
+#' @importFrom tidyr expand_grid
+#' @importFrom dplyr mutate
+#' @importFrom purrr pmap
+#' @importFrom purrr set_names
+#' 
 get_limma_combos_results <- function(datas, 
                                      metas, 
                                      designs, 
                                      modes, 
                                      condition, 
-                                     # DoFs, 
                                      spline_configs,
                                      feature_names, 
                                      pthresholds, 
@@ -301,7 +310,7 @@ get_limma_combos_results <- function(datas,
     spline_config_index = seq_along(spline_configs$spline_type),
     pthreshold = pthresholds
   ) %>% 
-    mutate(id = paste0("Data_", data_index, 
+    dplyr::mutate(id = paste0("Data_", data_index, 
                        "_Design_", design_index, 
                        "_SConfig_", spline_config_index, 
                        "_PThresh_", pthreshold))
@@ -336,16 +345,21 @@ get_limma_combos_results <- function(datas,
   }
   
   purrr::pmap(combos, process_combo) %>% 
-    set_names(combos$id)
+    purrr::set_names(combos$id)
 }
 
 
+#' @importFrom stringr str_extract
+#' @importFrom progress progress_bar
+#' @importFrom purrr set_names
+#' @importFrom purrr map
+#' 
 plot_limma_combos_results <- function(all_combos_top_tables,
                                       datas,
                                       metas) {
   
-  names_extracted <- str_extract(names(all_combos_top_tables),
-                                 "Data_\\d+_Design_\\d+")
+  names_extracted <- stringr::str_extract(names(all_combos_top_tables),
+                                          "Data_\\d+_Design_\\d+")
   
   combos_separated <- lapply(unique(names_extracted), function(id) {
     all_combos_top_tables[names_extracted == id]
@@ -358,16 +372,17 @@ plot_limma_combos_results <- function(all_combos_top_tables,
   
   print("Generating the plots for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pairs)
-  pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
+  pb <- progress::progress_bar$new(total = progress_ticks, 
+                                   format = "[:bar] :percent")
   pb$tick(0)
   
-  combo_pair_results <- set_names(
-    map(combo_pairs, function(pair) {
+  combo_pair_results <- purrr::set_names(
+    purrr::map(combo_pairs, function(pair) {
       combo_pair <- combos_separated[pair]
       
       hitcomp <- gen_hitcomp_plots(combo_pair)
       
-      composites <- map(combo_pair, function(combo) {
+      composites <- purrr::map(combo_pair, function(combo) {
         composite <- gen_composite_spline_plots(combo,
                                                 datas,
                                                 metas)
@@ -375,26 +390,34 @@ plot_limma_combos_results <- function(all_combos_top_tables,
       pb$tick()
       list(hitcomp = hitcomp, composites = composites)
     }
-    ), map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
+    ), purrr::map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
                                              sep = "_"))
   )
 }
 
 
+#' @importFrom progress progress_bar
+#' @importFrom purrr imap
+#' 
 generate_reports <- function(combo_pair_plots, 
                              report_dir,
                              timestamp) {
   print("Building .html reports for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pair_plots)
-  pb <- progress_bar$new(total = progress_ticks, format = "[:bar] :percent")
+  pb <- progress::progress_bar$new(total = progress_ticks, 
+                                   format = "[:bar] :percent")
   
-  result <- imap(combo_pair_plots, ~{
+  result <- purrr::imap(combo_pair_plots, ~{
     process_combo_pair(.x, .y, report_dir, timestamp)
     pb$tick()  
   })
 }
 
 
+#' @importFrom here here
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' 
 generate_reports_meta <- function(datas_descr, 
                                   designs, 
                                   modes, 
@@ -514,11 +537,16 @@ hc_add <- function(hc_obj,
 }
 
 
+#' @importFrom tidyr expand_grid unnest_longer replace_na pivot_wider
+#' @importFrom tibble enframe column_to_rownames
+#' @importFrom dplyr mutate select left_join
+#' @importFrom pheatmap pheatmap
+#' 
 hc_vennheatmap <- function(hc_obj) {
   hits_1 <- store_hits(hc_obj$data[[1]])
   hits_2 <- store_hits(hc_obj$data[[2]])
   
-  df <- expand_grid(
+  df <- tidyr::expand_grid(
     features = union(
       flatten_chr(hits_1),
       flatten_chr(hits_2)
@@ -531,25 +559,25 @@ hc_vennheatmap <- function(hc_obj) {
   
   df_1 <-
     hits_1 %>% 
-    enframe("params", "features") %>% 
-    unnest_longer(features) %>%
-    mutate(x1 = 1)
+    tibble::enframe("params", "features") %>% 
+    tidyr::unnest_longer(features) %>%
+    dplyr::mutate(x1 = 1)
   
   df_2 <-
     hits_2 %>% 
-    enframe("params", "features") %>% 
-    unnest_longer(features) %>%
-    mutate(x2 = 2)
+    tibble::enframe("params", "features") %>% 
+    tidyr::unnest_longer(features) %>%
+    dplyr::mutate(x2 = 2)
   
   venn_matrix <- 
     df %>% 
-    left_join(df_1, by = c("features", "params")) %>% 
-    left_join(df_2, by = c("features", "params")) %>% 
-    replace_na(list(x1 = 0, x2 = 0)) %>% 
-    mutate(x = x1 + x2) %>% 
-    select(!c(x1, x2)) %>%
-    pivot_wider(names_from = params, values_from = x) %>% 
-    column_to_rownames("features") %>% 
+    dplyr::left_join(df_1, by = c("features", "params")) %>% 
+    dplyr::left_join(df_2, by = c("features", "params")) %>% 
+    tidyr::replace_na(list(x1 = 0, x2 = 0)) %>% 
+    dplyr::mutate(x = x1 + x2) %>% 
+    dplyr::select(!c(x1, x2)) %>%
+    tidyr::pivot_wider(names_from = params, values_from = x) %>% 
+    tibble::column_to_rownames("features") %>% 
     as.matrix()
   
   venn_matrix <- venn_matrix[, order(colnames(venn_matrix))]
@@ -561,7 +589,6 @@ hc_vennheatmap <- function(hc_obj) {
                         hc_obj$condition_names[[1]],
                         hc_obj$condition_names[[2]])
   
-  # Generating the heatmap plot
   vennheatmap_plot <- pheatmap::pheatmap(venn_matrix, color = color_palette,
                                          breaks = breaks,
                                          cluster_cols = FALSE,
@@ -577,20 +604,27 @@ hc_vennheatmap <- function(hc_obj) {
 }
 
 
+#' @importFrom ggplot2 geom_col geom_text facet_wrap scale_y_continuous 
+#' @importFrom ggplot2 theme_minimal element_text element_blank expansion xlab
+#' @importFrom ggplot2 theme
+#' @importFrom purrr map_int set_names 
+#' @importFrom tibble enframe
+#' @importFrom dplyr bind_rows
+#' 
 hc_barplot <- function(hc_obj) {
   plot_data <- 
     list(
       store_hits(hc_obj$data[[1]]) %>% 
-        map_int(length) %>% 
-        enframe("params", "n_hits"),
+        purrr::map_int(length) %>% 
+        tibble::enframe("params", "n_hits"),
       store_hits(hc_obj$data[[2]]) %>% 
-        map_int(length) %>% 
-        enframe("params", "n_hits")
+        purrr::map_int(length) %>% 
+        tibble::enframe("params", "n_hits")
     ) %>% 
-    set_names(hc_obj$condition_names) %>% 
-    bind_rows(.id = "condition")
+    purrr::set_names(hc_obj$condition_names) %>% 
+    dplyr::bind_rows(.id = "condition")
   
-  ggplot(plot_data, aes(x = params, y = n_hits)) +
+  ggplot2::ggplot(plot_data, aes(x = params, y = n_hits)) +
     geom_col() +
     geom_text(
       aes(label = n_hits),
@@ -655,6 +689,8 @@ gen_hitcomp_plots <- function(combo_pair) {
 
 #' One half of one condition comparison HTML 
 #' (composite spline plots for one 'condition' inside one condition comparison)
+#' @importFrom utils tail
+#' 
 gen_composite_spline_plots <- function(internal_combos, 
                                        datas, 
                                        metas) {
@@ -668,7 +704,7 @@ gen_composite_spline_plots <- function(internal_combos,
     data <- datas[[as.integer(strsplit(combo_name, "_")[[1]][2])]]
     meta <- metas[[as.integer(strsplit(combo_name, "_")[[1]][2])]]
     
-    pthresh <- as.numeric(tail(strsplit(combo_name, "_")[[1]], 1)) 
+    pthresh <- as.numeric(utils::tail(strsplit(combo_name, "_")[[1]], 1)) 
     
     # for one given combo of DoF and adj. p-value threshold, within one 
     # condition, there are multiple levels (for example exp and stat)
@@ -820,6 +856,7 @@ flatten_spline_configs <- function(spline_configs) {
 # Level 3 internal functions  ---------------------------------------------------
 
 
+#' @importFrom dplyr pull
 store_hits <- function(condition) {
   hits_cond <- list()
   
@@ -832,7 +869,7 @@ store_hits <- function(condition) {
     hits_cond[[key_name]] <-
       df %>%
       subset(adj.P.Val < adj_p_value_treshold) %>% 
-      pull(feature_index) %>% 
+      dplyr::pull(feature_index) %>% 
       as.character()
   }
   
@@ -840,6 +877,11 @@ store_hits <- function(condition) {
 }
 
 
+#' @importFrom splines ns
+#' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal 
+#' @importFrom ggplot2 scale_x_continuous labs annotate theme
+#' @importFrom patchwork wrap_plots plot_annotation
+#' 
 plot_composite_splines <- function(data, 
                                    meta, 
                                    top_table, 
@@ -853,7 +895,7 @@ plot_composite_splines <- function(data,
   for(index in indices) {
     smooth_timepoints <- seq(meta$Time[1], meta$Time[length(meta$Time)], 
                              length.out = 100)
-    X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
+    X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
     
     spline_coeffs <- 
       as.numeric(top_table[top_table$feature_index == 
@@ -873,7 +915,7 @@ plot_composite_splines <- function(data,
     x_max <- max(meta$Time)
     x_extension <- x_max * 0.05  # Extend the x-axis by 5% of its maximum value
     
-    p <- ggplot() +
+    p <- ggplot2::ggplot() +
       geom_point(data = plot_data, aes(x = Time, y = Intensity), 
                  color = 'blue') +
       geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
@@ -907,7 +949,8 @@ plot_composite_splines <- function(data,
     composite_plot_len <- as.integer(ceiling(num_plots / ncol))
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      plot_annotation(title = paste(top_table_name, type, sep = " | "), 
+      patchwork::plot_annotation(title = paste(top_table_name, type, 
+                                               sep = " | "), 
                       theme = theme(plot.title = element_text(hjust = 0.5, 
                                                               size = 14)))
     

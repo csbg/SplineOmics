@@ -8,7 +8,7 @@ control_inputs_run_limma(
   data,
   meta,
   design,
-  DoFs,
+  spline_params,
   condition,
   feature_names,
   mode,

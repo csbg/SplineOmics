@@ -62,27 +62,10 @@ library(cluster)
 #'                                   c(3), "path/to/report/dir")
 #' }
 #'
-#' @export
-#' @importFrom stats 
-#' @importFrom dist 
-#' @importFrom hclust cutree
-#' @importFrom dplyr select filter
-#' @importFrom utils write.table
-#' @import limma
-#' @import splines
-#' @import ggplot2
-#' @import tidyr
-#' @import dplyr
-#' @import tibble
-#' @import dendextend
-#' @import RColorBrewer
-#' @import patchwork
-#' @import ComplexHeatmap
-#' @import circlize
-#' @import grid
-#' @import cluster
 #' 
 #' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
+#' 
+#' @export
 #' 
 cluster_hits <- function(top_tables, 
                          data, 
@@ -178,6 +161,9 @@ perform_clustering <- function(top_tables,
 }
 
 
+
+#' @importFrom dplyr filter
+#'
 make_clustering_report <- function(all_levels_clustering, 
                                    condition, 
                                    data, 
@@ -207,9 +193,10 @@ make_clustering_report <- function(all_levels_clustering,
     curve_values <- level_clustering$curve_values
     
     # debug(plot_heatmap)
-    # heatmap <- plot_heatmap(data, 
-    #                         meta, 
-    #                         feature_names, 
+    # heatmap <- plot_heatmap(data,
+    #                         meta,
+    #                         condition,
+    #                         feature_names,
     #                         level_clustering$clustered_hits)
     
     title <- 
@@ -229,7 +216,7 @@ make_clustering_report <- function(all_levels_clustering,
     top_table <- level_clustering$top_table
     p_value <- p_values[i]
     levels <- as.character(unique(meta[[condition]]))
-    meta_level <- meta %>% filter(.data[[condition]] == levels[i])
+    meta_level <- meta %>% dplyr::filter(.data[[condition]] == levels[i])
     sample_names <- as.character(meta_level$Sample)
     data_level <- data[, colnames(data) %in% sample_names]
     
@@ -242,8 +229,10 @@ make_clustering_report <- function(all_levels_clustering,
       top_table_filt <- top_table %>%
         dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
       
-      plot_splines_result <- plot_splines(top_table_filt, data_level, 
-                                          meta_level, main_title)
+      plot_splines_result <- plot_splines(top_table_filt, 
+                                          data_level, 
+                                          meta_level, 
+                                          main_title)
       
       composite_plots[[length(composite_plots) + 1]] <- 
         plot_splines_result$composite_plot 
@@ -295,12 +284,40 @@ process_level_cluster <- function(top_table,
 }
 
 
+#' @importFrom dplyr arrange mutate group_by summarize
+#' @importFrom tidyr pivot_longer separate
+#' @importFrom ComplexHeatmap Heatmap draw
+#' @importFrom ggplot2 ggplot geom_line facet_wrap geom_vline ylab theme
+#' @importFrom ggplot2 theme_bw scale_x_continuous
+#' 
 plot_heatmap <- function(data,
                          meta,
+                         condition,
                          feature_names,
                          clustered_hits) {
-  z_score <- t(scale(t(data)))
-  rownames(z_score) <- NULL
+  clusters <- clustered_hits %>% dplyr::arrange(cluster)
+  data <- data[as.numeric(clusters$feature),]
+  
+  unique_elements <- unique(meta[[condition]])
+  
+  # Step 2 & 3: Get indices and subset the dataframe, then store results in a 
+  # list
+  metas_levels <- lapply(unique_elements, function(element) {
+    # Get indices where the column matches the element
+    indices <- which(meta[[condition]] == element)
+    
+    # Subset the dataframe using these indices
+    meta[indices, ]
+  })
+  
+  datas_levels <- lapply(unique_elements, function(element) {
+    # Get indices where the column matches the element
+    indices <- which(meta[[condition]] == element)
+    
+    # Subset the dataframe using these indices
+    data[, indices]
+  })
+  
   
   BASE_TEXT_SIZE_PT <- 5
   
@@ -320,100 +337,119 @@ plot_heatmap <- function(data,
     legend_border = FALSE
   )
   
-  clusters <- clustered_hits %>% arrange(cluster)
-  
-  ht <- Heatmap(z_score,
-                column_split = meta$Time,
-                cluster_columns = FALSE,
-                row_split = clusters$cluster,
-                cluster_rows = FALSE,
-                heatmap_legend_param = list(title = "z-score of log2 intensity",
-                                            title_position = "lefttop-rot"),
-                row_gap = unit(2, "pt"),
-                column_gap = unit(2, "pt"),
-                width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
-                height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
-                show_row_names = TRUE
-  )
-  
-  
-  data_to_plot <- data.frame(first_protein_description = 
-                               rownames(data.matrix.batch.filt.sig), 
-                             data.matrix.batch.filt.sig) %>%
-    mutate(cluster_number = clusters_exp$cluster) %>%
-    pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
-                 names_to = "sample_name",
-                 values_to = "log2_intensity") %>%
-    separate(sample_name, 
-             into = c("reactor", "time_point", "phase_of_fermentation"),
-             sep = "_") %>%
-    mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
-                              length(clusters_exp$feature))) %>%
-    group_by(first_protein_description) %>%
-    mutate(log2_intensity = rescale(log2_intensity))
-  
-  
-  data_to_plot_mean_protein  <- data_to_plot %>%
-    group_by(first_protein_description, time_to_feed) %>%
-    mutate(mean_intensity_protein = mean(log2_intensity)) %>%
-    ungroup()
-  
-  data_to_plot_mean_tp <- data_to_plot %>%
-    group_by(cluster_number, time_to_feed) %>%
-    summarise(mean_intensity_tp = mean(log2_intensity)) 
-  
-  #count number of genes in each cluster
-  clusters_exp %>%
-    count(cluster)
-  
-  ggplot(data = data_to_plot_mean_protein) +
-    geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
-                  color = first_protein_description), alpha = 0.5) +
-    geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
-                                              y = mean_intensity_tp), 
-              linewidth = 0.8) +
-    facet_wrap(~cluster_number, ncol = 2, 
-               labeller = labeller(cluster_number =  
-                                     c("1" = "Cluster 1: 32 proteins",
-                                       "2" = "Cluster 2: 48 proteins",
-                                       "3" = "Cluster 3: 68 proteins",
-                                       "4" = "Cluster 4: 29 proteins",
-                                       "5" = "Cluster 5: 17 proteins",
-                                       "6" = "Cluster 6: 13 proteins")))  +
-    geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
-               linewidth = 0.5) +  
-    ylab("normalized log2 intensity") +
-    theme_bw() +
-    theme(legend.position = "none",
-          panel.grid.minor = element_blank()) +
-    scale_x_continuous(breaks = data_to_plot$time_to_feed)
-  
-  
-  ht= draw(ht, heatmap_legend_side = "right")
-  ht
+  for (i in seq_along(datas_levels)) {
+    data <- datas_levels[[i]]
+    meta <- metas_levels[[i]]
+    z_score <- t(scale(t(data)))
+    
+    ht <- ComplexHeatmap::Heatmap(z_score,
+                         column_split = meta$Time,
+                         cluster_columns = FALSE,
+                         row_split = clusters$cluster,
+                         cluster_rows = FALSE,
+                         heatmap_legend_param = list(title = "z-score of 
+                                                    log2 intensity",
+                                                    title_position = 
+                                                      "lefttop-rot"),
+                  # row_gap = unit(2, "pt"),
+                  # column_gap = unit(2, "pt"),
+                  # width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
+                  # height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
+                  show_row_names = TRUE)
+    
+    print(ht)
+    
+    data_to_plot <- data.frame(first_protein_description = 
+                                 rownames(data.matrix.batch.filt.sig), 
+                               data.matrix.batch.filt.sig) %>%
+      dplyr::mutate(cluster_number = clusters_exp$cluster) %>%
+      tidyr::pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
+                   names_to = "sample_name",
+                   values_to = "log2_intensity") %>%
+      tidyr::separate(sample_name, 
+               into = c("reactor", "time_point", "phase_of_fermentation"),
+               sep = "_") %>%
+      dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
+                                length(clusters_exp$feature))) %>%
+      dplyr::group_by(first_protein_description) %>%
+      dplyr::mutate(log2_intensity = rescale(log2_intensity))
+    
+    
+    data_to_plot_mean_protein  <- data_to_plot %>%
+      dplyr::group_by(first_protein_description, time_to_feed) %>%
+      dplyr::mutate(mean_intensity_protein = mean(log2_intensity)) %>%
+      ungroup()
+    
+    data_to_plot_mean_tp <- data_to_plot %>%
+      dplyr::group_by(cluster_number, time_to_feed) %>%
+      dplyr::summarise(mean_intensity_tp = mean(log2_intensity)) 
+    
+    clusters_exp %>%
+      count(cluster)
+    
+    ggplot2::ggplot(data = data_to_plot_mean_protein) +
+      geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
+                    color = first_protein_description), alpha = 0.5) +
+      geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
+                                                y = mean_intensity_tp), 
+                linewidth = 0.8) +
+      facet_wrap(~cluster_number, ncol = 2, 
+                 labeller = labeller(cluster_number =  
+                                       c("1" = "Cluster 1: 32 proteins",
+                                         "2" = "Cluster 2: 48 proteins",
+                                         "3" = "Cluster 3: 68 proteins",
+                                         "4" = "Cluster 4: 29 proteins",
+                                         "5" = "Cluster 5: 17 proteins",
+                                         "6" = "Cluster 6: 13 proteins")))  +
+      geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
+                 linewidth = 0.5) +  
+      ylab("normalized log2 intensity") +
+      theme_bw() +
+      theme(legend.position = "none",
+            panel.grid.minor = element_blank()) +
+      scale_x_continuous(breaks = data_to_plot$time_to_feed)
+    
+    
+    ht= ComplexHeatmap::draw(ht, heatmap_legend_side = "right")
+    
+    print(ht)
+  }
   return(ht)
 }
 
 
+#' @importFrom stats as.dendrogram
+#' @importFrom stats cutree
+#' @importFrom RColorBrewer brewer.pal.info
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom dendextend color_branches
+#' @importFrom dendextend as.ggdend
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 theme
+#' 
 plot_dendrogram <- function(hc, 
                             k, 
                             title) {
-  dend <- as.dendrogram(hc)
+  dend <- stats::as.dendrogram(hc)
+  clusters <- stats::cutree(hc, k)
   
-  clusters <- cutree(hc, k)
-  
-  palette_name <- "Set3" # This can be changed to another palette if desired
-  max_colors_in_palette <- brewer.pal.info[palette_name, "maxcolors"]
-  colors <- brewer.pal(min(max_colors_in_palette, k), palette_name)
+  palette_name <- "Set3" 
+  max_colors_in_palette <- 
+    RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
+  colors <- 
+    RColorBrewer::brewer.pal(min(max_colors_in_palette, k), palette_name)
   if (k > max_colors_in_palette) {
     colors <- rep(colors, length.out = k)
   }
   
-  dend_colored <- color_branches(dend, k = k, labels_colors = colors)
+  dend_colored <- dendextend::color_branches(dend, k = k, 
+                                             labels_colors = colors)
   dend_colored <- set(dend_colored, "labels", value = NULL)
   
-  ggdend <- as.ggdend(dend_colored)
-  p_dend <- ggplot(ggdend) + 
+  ggdend <- dendextend::as.ggdend(dend_colored)
+  p_dend <- ggplot2::ggplot(ggdend) + 
     labs(title = title, 
          x = "", y = "") +
     theme_minimal() +
@@ -422,6 +458,14 @@ plot_dendrogram <- function(hc,
 }
 
 
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 xlab
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 scale_color_brewer
+#' @importFrom ggplot2 theme_minimal
+#' 
 plot_all_shapes <- function(curve_values, 
                             title) {
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
@@ -433,10 +477,7 @@ plot_all_shapes <- function(curve_values,
   for (current_cluster in clusters) {
     # Filter rows for the current cluster
     subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
-    
-    
     last_timepoint <- (which(names(curve_values) == "cluster")) - 1
-    
     average_curve <- colMeans(subset_hits[,1:last_timepoint])
     
     # Create a data frame for the average curve with an additional 'Cluster' 
@@ -452,32 +493,47 @@ plot_all_shapes <- function(curve_values,
     factor(average_curves$cluster, 
            levels = sort(unique(as.numeric(average_curves$cluster))))
   
-  p_curves <- ggplot(average_curves, aes(x = Time, y = Value, color = 
+  p_curves <- ggplot2::ggplot(average_curves, aes(x = Time, y = Value, color = 
                                            factor(cluster))) +
-    geom_line() + 
-    ggtitle(title) +
-    xlab("Timepoints") + ylab("Values") +
-    scale_color_brewer(palette = "Dark2", name = "Cluster") + 
-    theme_minimal()
+                              geom_line() + 
+                              ggtitle(title) +
+                              xlab("Timepoints") + ylab("Values") +
+                              scale_color_brewer(palette = "Dark2", 
+                                                 name = "Cluster") + 
+                              theme_minimal()
 }
 
 
+#' Plot Single and Consensus Splines
+#'
+#' This function takes a time series data frame, transforms it, and plots both
+#' individual time series and their consensus using ggplot2.
+#'
+#' @param time_series_data A data frame of time series data.
+#' @param title The title of the plot.
+#' @return A ggplot object representing the plot.
+#' @importFrom dplyr arrange mutate
+#' @importFrom tibble rownames_to_column
+#' @importFrom tidyr pivot_longer
+#' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
+#' @importFrom ggplot2 ggtitle xlab ylab
+#' 
 plot_single_and_consensus_splines <- function(time_series_data, 
                                               title) {
   # Transform the dataframe to a long format for ggplot2
   df_long <- as.data.frame(t(time_series_data)) %>%
-    rownames_to_column(var = "time") %>%
-    pivot_longer(cols = -time, names_to = "feature", 
-                 values_to = "intensity") %>%
-    arrange(feature) %>%
-    mutate(time = as.numeric(time))
+    tibble::rownames_to_column(var = "time") %>%
+    tidyr::pivot_longer(cols = -time, names_to = "feature", 
+                        values_to = "intensity") %>%
+    dplyr::arrange(feature) %>%
+    dplyr::mutate(time = as.numeric(time))
   
   # Compute consensus (mean of each column)
   consensus <- colMeans(time_series_data, na.rm = TRUE)
   consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)), 
                              consensus = consensus)
   
-  p <- ggplot() +
+  p <- ggplot2::ggplot() +
     geom_line(data = df_long, aes(x = time, y = intensity, group = feature,
                                   colour = "Single Shapes"),
               alpha = 0.3, linewidth = 0.5) +
@@ -495,6 +551,22 @@ plot_single_and_consensus_splines <- function(time_series_data,
 }
 
 
+#' Plot Consensus Shapes for Each Cluster
+#'
+#' This function takes a dataframe containing curve values and their associated 
+#' clusters,
+#' and generates a plot for each cluster using the 
+#' plot_single_and_consensus_splines function.
+#' Each plot represents both the individual curves and their consensus within 
+#' the cluster.
+#'
+#' @param curve_values A dataframe containing the curve values and a cluster 
+#' identifier.
+#'                     The last column is assumed to be the cluster column.
+#' @param title The base title for the plots, which will be modified by 
+#' appending the cluster number.
+#' @return A list of ggplot objects, each representing a plot for a cluster.
+#' 
 plot_consensus_shapes <- function(curve_values, 
                                   title) {
   clusters <- sort(unique(curve_values$cluster))
@@ -513,6 +585,31 @@ plot_consensus_shapes <- function(curve_values,
 }
 
 
+#' Plot Splines for Features Based on Top Table Information
+#'
+#' This function generates plots for each feature listed in the top table using 
+#' spline 
+#' interpolation for fitted values. It creates individual plots for each feature 
+#' and combines 
+#' them into a single composite plot. The function is internal and not exported.
+#'
+#' @param top_table A dataframe containing the indices and names of features, 
+#' along with their 
+#'                  statistical metrics such as intercepts and spline 
+#'                  coefficients.
+#' @param data A matrix or dataframe containing the raw data values for each 
+#' feature.
+#' @param meta A dataframe containing metadata for the data, including time 
+#' points.
+#' @param main_title The main title to be used for the composite plot of all 
+#' features.
+#' @return A list containing the composite plot and the number of rows used in 
+#' the plot layout.
+#' @importFrom splines ns
+#' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal labs theme
+#' @importFrom ggplot2 scale_x_continuous annotate
+#' @importFrom patchwork wrap_plots plot_annotation
+#' 
 plot_splines <- function(top_table, 
                          data, 
                          meta, 
@@ -538,20 +635,18 @@ plot_splines <- function(top_table,
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
     
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
-    X <- ns(Time, df = DoF, intercept = FALSE)
+    X <- splines::ns(Time, df = DoF, intercept = FALSE)
     
     fitted_values <- X %*% spline_coeffs + intercept
     
-    plot_data <- data.frame(Time = time_points, 
-                            Y = y_values)
+    plot_data <- data.frame(Time = time_points, Y = y_values)
     
-    plot_spline <- data.frame(Time = Time,
-                              Fitted = fitted_values)
+    plot_spline <- data.frame(Time = Time, Fitted = fitted_values)
     
     x_max <- as.numeric(max(time_points))
     x_extension <- x_max * 0.05 
     
-    p <- ggplot() +
+    p <- ggplot2::ggplot() +
       geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
       geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
                 color = 'red') +
@@ -585,7 +680,7 @@ plot_splines <- function(top_table,
     nrows <- ceiling(num_plots / ncol)
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      plot_annotation(title = paste(main_title, "| DoF:", DoF),
+      patchwork::plot_annotation(title = paste(main_title, "| DoF:", DoF),
                       theme = theme(plot.title = element_text(hjust = 0.5, 
                                                               size = 14)))
     return(list(composite_plot = composite_plot, nrows = nrows))
@@ -595,6 +690,23 @@ plot_splines <- function(top_table,
 }
 
 
+#' Generate HTML Report with Plot List
+#'
+#' This function generates an HTML report for a given list of plots. It 
+#' includes
+#' headers and design details specific to the data type being analyzed, and 
+#' saves
+#' the report in the specified directory. The function is internal and not 
+#' exported.
+#'
+#' @param plot_list A list of ggplot objects to be included in the report.
+#' @param plot_list_nrows The number of rows to arrange the plots in the report.
+#' @param report_dir The directory where the report HTML file will be saved.
+#' @importFrom here here
+#' @importFrom tools file_path_sans_ext
+#' @importFrom grDevices dev.off
+#' @importFrom htmltools save_html
+#' 
 generate_report_html <- function(plot_list, 
                                  plot_list_nrows, 
                                  report_dir) {
@@ -631,7 +743,9 @@ generate_report_html <- function(plot_list,
   
   output_file_path <- here::here(report_dir, file_name)
   
-  build_plot_report_html(html_content, plot_list, plot_list_nrows, 
+  build_plot_report_html(html_content, 
+                         plot_list, 
+                         plot_list_nrows, 
                          output_file_path)
 }
 
@@ -639,6 +753,33 @@ generate_report_html <- function(plot_list,
 # Level 3 internal functions ---------------------------------------------------
 
 
+#' Calculate Curve Values Based on Top Table Filter
+#'
+#' This function filters entries from a given top table based on an adjusted 
+#' p-value threshold,
+#' performs spline interpolation using specified degrees of freedom, and 
+#' calculates curve values 
+#' for the selected entries at predefined time points. The function is 
+#' internal and not exported.
+#'
+#' @param top_table A data frame containing data with a column for adjusted 
+#' p-values and 
+#'                  expression averages which indicate the number of degrees 
+#'                  of freedom.
+#' @param p_value The threshold for filtering entries based on adjusted
+#' p-values.
+#' @param level The specific level of the condition to filter on in the 
+#' metadata.
+#' @param meta Metadata containing time points and conditions.
+#' @param condition The name of the condition column in the metadata to filter 
+#' on.
+#' @return A list containing two elements: `curve_values`, a data frame of 
+#' curve values for each filtered entry, and `smooth_timepoints`, the time
+#' points at which curves were evaluated.
+#' 
+#' @importFrom dplyr select all_of
+#' @importFrom splines ns
+#' 
 get_curve_values <- function(top_table, 
                              p_value, 
                              level, 
@@ -654,12 +795,12 @@ get_curve_values <- function(top_table,
                            subset_meta$Time[length(subset_meta$Time)],
                            length.out = 100)
   
-  X <- ns(smooth_timepoints, df = DoF, intercept = FALSE)
+  X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
   
   columns_to_select <- 1:DoF
   
   splineCoeffs <- spline_results_hits %>%
-    select(all_of(1:DoF)) %>%
+    dplyr::select(all_of(1:DoF)) %>%
     as.matrix()
   
   curve_values <- matrix(nrow = nrow(splineCoeffs),
@@ -678,6 +819,23 @@ get_curve_values <- function(top_table,
 }
 
 
+#' Normalize Curve Values
+#'
+#' This function normalizes each row in a data frame or matrix of curve values. 
+#' Normalization is performed so that each row's values range from 0 
+#' (corresponding to the 
+#' minimum value of the row) to 1 
+#' (corresponding to the maximum value of the row).
+#'
+#' @param curve_values A data frame or matrix of curve values where each row 
+#' represents 
+#'        a curve and each column a time point.
+#' @return A data frame or matrix with the same dimensions as the input, where
+#'  each row 
+#'         has been normalized.
+#' @examples
+#' data <- matrix(runif(100), nrow=10)
+#' normalized_data <- normalize_curves(data)
 normalize_curves <- function(curve_values) {
   normalized_curves <- apply(curve_values, 1, function(row) {
     (row - min(row)) / (max(row) - min(row))
@@ -689,21 +847,39 @@ normalize_curves <- function(curve_values) {
 }
 
 
+#' Hierarchical Clustering of Curve Values
+#'
+#' Performs hierarchical clustering on given curve values. It can automatically 
+#' determine the optimal number of clusters using silhouette analysis or use a 
+#' specified number. The function adjusts the provided top_table with cluster 
+#' assignments.
+#'
+#' @param curve_values A matrix or data frame of curve values to cluster.
+#' @param k The number of clusters to use or "auto" to automatically determine 
+#'          the optimal number using silhouette width analysis.
+#' @param smooth_timepoints Numeric vector of time points corresponding to 
+#'                          columns in curve_values.
+#' @param top_table Data frame to be updated with cluster assignments.
+#' @return A list containing clustering results and the modified top_table.
+#' 
+#' @importFrom stats dist hclust cutree
+#' @importFrom cluster silhouette
+#' 
 hierarchical_clustering <- function(curve_values, 
                                     k, 
                                     smooth_timepoints,
                                     top_table) {
-  distance_matrix <- dist(curve_values, method = "euclidean")
-  hc <- hclust(distance_matrix, method = "complete")
+  distance_matrix <- stats::dist(curve_values, method = "euclidean")
+  hc <- stats::hclust(distance_matrix, method = "complete")
   
   if (is.character(k) && k == "auto") {
     # Calculate silhouette width for a range of clusters
     max_clusters <- 8
     sil_widths <- numeric(max_clusters - 1)
     for (i in 2:max_clusters) {
-      temp_clusters <- cutree(hc, k = i)
+      temp_clusters <- stats::cutree(hc, k = i)
       silhouette_score <- 
-        mean(silhouette(temp_clusters, distance_matrix)[, "sil_width"])
+        mean(cluster::silhouette(temp_clusters, distance_matrix)[, "sil_width"])
       
       adjusted_score <- silhouette_score + (0.02 * log(i)) # scaling factor
       sil_widths[i - 1] <- adjusted_score
@@ -713,11 +889,10 @@ hierarchical_clustering <- function(curve_values,
     best_k_index <- which.max(sil_widths)
     k <- best_k_index + 1  # because index shift due to starting at 2 clusters
     
-    cluster_assignments <- cutree(hc, k = k)
+    cluster_assignments <- stats::cutree(hc, k = k)
   } else if (is.numeric(k)) {
-    cluster_assignments <- cutree(hc, k = k)
+    cluster_assignments <- stas::cutree(hc, k = k)
   }
-  
   
   clustered_hits <- data.frame(cluster = cluster_assignments)
   clustered_hits$feature <- rownames(clustered_hits)
@@ -729,7 +904,6 @@ hierarchical_clustering <- function(curve_values,
   top_table$cluster <- NA
   top_table$cluster[1:nrow(clustered_hits)] <-
     as.integer(clustered_hits$cluster)
-  
   
   group_clustering <- list(clustered_hits = clustered_hits,
                            hc = hc,

@@ -11,7 +11,7 @@ limma_hyperparams_screen(
   designs,
   modes,
   condition,
-  DoFs,
+  spline_configs,
   feature_names,
   report_dir = here::here(),
   adj_pthresh = c(0.05),
@@ -21,36 +21,47 @@ limma_hyperparams_screen(
 \arguments{
 \item{datas}{A list of data frames containing the datasets to be analyzed.}
 
-\item{metas}{A list of data frames containing metadata for each dataset in `datas`.}
+\item{metas}{A list of data frames containing metadata for each dataset in 
+`datas`.}
 
 \item{designs}{A character vector of design formulas for the limma analysis.}
 
-\item{modes}{A character vector indicating the mode of analysis for each design.}
-
-\item{DoFs}{An integer vector of degrees of freedom to be used for each factor in `factors`.}
+\item{modes}{A character vector indicating the mode of analysis for each 
+design.}
 
 \item{feature_names}{A character vector of feature names to be analyzed.}
 
-\item{padjust_method}{A character string specifying the method for p-value adjustment.}
+\item{padjust_method}{A character string specifying the method for p-value 
+adjustment.}
 
-\item{factors}{A character vector of factors to be considered in the analysis.}
+\item{factors}{A character vector of factors to be considered in the 
+analysis.}
 
-\item{pthresholds}{A numeric vector of p-value thresholds for significance determination.}
+\item{DoFs}{An integer vector of degrees of freedom to be used for each 
+factor in `factors`.}
+
+\item{pthresholds}{A numeric vector of p-value thresholds for significance 
+determination.}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.
-        Each element in the list corresponds to a different combination of hyperparameters.
+        Each element in the list corresponds to a different combination of 
+        hyperparameters.
 }
 \description{
-This function screens through various combinations of hyperparameters for limma analysis,
-including designs, modes, and degrees of freedom. It validates inputs, generates results for all
-combinations, and plots the outcomes. Finally, it may also be involved in generating an HTML report
+This function screens through various combinations of hyperparameters for 
+limma analysis,
+including designs, modes, and degrees of freedom. It validates inputs, 
+generates results for all
+combinations, and plots the outcomes. Finally, it may also be involved in 
+generating an HTML report
 as part of a larger analysis workflow.
 }
 \examples{
 \dontrun{
   results <- limma_hyperparams_screen(datas, metas, designs, modes, factors,
-                                      DoFs = c(2L), feature_names, pthresholds = c(0.05),
+                                      DoFs = c(2L), feature_names, 
+                                      pthresholds = c(0.05),
                                       padjust_method = "BH")
 }
 

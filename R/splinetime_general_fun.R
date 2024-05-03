@@ -1,5 +1,9 @@
 
 
+#'
+#' @importFrom ggplot2 ggsave
+#' @importFrom base64enc dataURI
+#' 
 plot2base64 <- function(plot, 
                         plot_nrows, 
                         width = 7, 
@@ -12,8 +16,8 @@ plot2base64 <- function(plot,
   
   # Temporarily save the plot as an image
   img_file <- tempfile(fileext = ".png")
-  ggsave(img_file, plot=plot, width = width, height = height, units = units, 
-         limitsize = FALSE)
+  ggplot2::ggsave(img_file, plot=plot, width = width, height = height, units = units, 
+                  limitsize = FALSE)
   
   # Convert the image to a Base64 string
   img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
@@ -54,6 +58,9 @@ build_plot_report_html <- function(header_section,
 
 #' Make dynamic HTML text descriptions, such as header- and design_text.
 #' Future task
+#' 
+#' @importFrom here here
+#' 
 generate_report_html_new <- function(plots, 
                                  plot_len, 
                                  report_dir,

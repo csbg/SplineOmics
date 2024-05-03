@@ -60,12 +60,14 @@ library(purrr)
 #'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
 #' }
 #'
-#' @export
-#' @import limma
-#' @import splines
-#' @import purrr
-#' 
+#' @importFrom purrr partial
+#' @importFrom purrr map
+#' @importFrom purrr map_chr
+#' @importFrom purrr map2
 #' @importFrom stats setNames
+#' @importFrom utils combn
+#' 
+#' @export
 #' 
 run_limma_splines <- function(data,
                               meta,
@@ -89,7 +91,6 @@ run_limma_splines <- function(data,
   levels <- levels(meta[[condition]])
   
   # Get hits for level (within level analysis) ---------------------------------
-  # Prespecify most parameters
   process_level_with_params <- purrr::partial(process_level, 
                                               spline_params = spline_params,
                                               data = data, 
@@ -100,9 +101,10 @@ run_limma_splines <- function(data,
                                               padjust_method = padjust_method, 
                                               mode = mode)
   
-  results_list <- map2(levels, seq_along(levels), process_level_with_params)
-  top_tables <- setNames(map(results_list, "top_table"), 
-                         map_chr(results_list, "name"))
+  results_list <- purrr::map2(levels, seq_along(levels), 
+                              process_level_with_params)
+  top_tables <- stats::setNames(purrr::map(results_list, "top_table"), 
+                                purrr::map_chr(results_list, "name"))
   
   
   # Factor and Factor:Time comparisons between levels --------------------------
@@ -110,7 +112,7 @@ run_limma_splines <- function(data,
   ttslc_factor_time <- list()        # Factor AND time
   
   if (mode == "integrated") {
-    level_combinations <- combn(levels, 2, simplify = FALSE)
+    level_combinations <- utils::combn(levels, 2, simplify = FALSE)
     for (lev_combo in level_combinations) {
       result <- between_level(data = data, 
                               meta = meta, 
@@ -161,6 +163,11 @@ control_inputs_run_limma <- function(data,
       !is.numeric(meta$Time)) {
     stop("meta must be a dataframe and contain the column 'Time' 
          with numeric values.")
+  }
+  
+  if (!(nrow(meta) == ncol(data))) {
+    stop("The number of rows in meta does not match the number of columns in 
+        data. This is required.\n")
   }
   
   # Check that design is a single string
@@ -243,7 +250,6 @@ control_inputs_run_limma <- function(data,
     }
   } else if (mode == "isolated") {
     num_levels <- length(unique(meta[[condition]]))
-    # Checks for 'isolated' mode
     if (any(sapply(spline_params, length) != num_levels)) {
       stop("Each vector or list in spline_params must have as many elements as 
            there are unique elements in the ",
@@ -291,8 +297,31 @@ control_inputs_run_limma <- function(data,
 }
 
 
-#' Performs limma spline analysis and gets the top_table for the level 
-#' comparison: Both for factor and for factor:time
+#' Calculate Differential Expression Between Levels
+#'
+#' Calculates differential expression between specified levels of a condition
+#' using linear models and limma analysis. Returns top table results for 
+#' contrasts between factors only and factors with time interactions.
+#'
+#' @param data A matrix of expression values.
+#' @param meta Metadata containing experimental design information.
+#' @param design A formula specifying the linear model design.
+#' @param spline_params Parameters for spline generation.
+#' @param condition The name of the condition column in the metadata.
+#' @param compared_levels The levels of the condition to compare.
+#' @param padjust_method The method for adjusting p-values.
+#' @param feature_names Names of the features in the data matrix.
+#' @return A list containing top tables for contrasts between factors only 
+#'         and factors with time interactions.
+#'         
+#' @importFrom splines bs
+#' @importFrom splines ns
+#' @importFrom stats as.formula
+#' @importFrom stats model.matrix
+#' @importFrom limma lmFit
+#' @importFrom limma eBayes
+#' @importFrom limma topTable
+#' 
 between_level <- function(data, 
                           meta, 
                           design, 
@@ -320,25 +349,25 @@ between_level <- function(data,
   
   if (spline_params$spline_type[1] == "b") {
     args$degree <- spline_params$degrees[1]
-    meta$X <- do.call(bs, args)
+    meta$X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
-    meta$X <- do.call(ns, args)
+    meta$X <- do.call(splines::ns, args)
   }
   
-  design_matrix <- model.matrix(as.formula(design), data = meta)
+  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
   
-  fit <- lmFit(data, design_matrix)
-  fit <- eBayes(fit)
+  fit <- limma::lmFit(data, design_matrix)
+  fit <- limma::eBayes(fit)
   
   factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
-  ttlc_factor_only <- topTable(fit, coef = factor_only_contrast_coeff,
+  ttlc_factor_only <- limma::topTable(fit, coef = factor_only_contrast_coeff,
                                adjust.method = padjust_method, number = Inf)
   ttlc_factor_only <- modify_limma_top_table(ttlc_factor_only, feature_names)
   
   num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
   factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
                                         seq_len(num_matching_columns))
-  ttlc_factor_time <- topTable(fit, coef = factor_time_contrast_coeffs,
+  ttlc_factor_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
                                adjust.method = padjust_method, number = Inf)
   ttlc_factor_time <- modify_limma_top_table(ttlc_factor_time, feature_names)
   
@@ -348,6 +377,8 @@ between_level <- function(data,
 
 #' Converts top_table to a tibble and adds the columns feature_names and 
 #' (Intercept) and appends it to the top_table list.
+#' 
+#' @importFrom stats coef
 process_top_table <- function(top_table_and_fit, 
                               feature_names) {
   top_table <- top_table_and_fit$top_table
@@ -355,7 +386,7 @@ process_top_table <- function(top_table_and_fit,
   
   top_table <- modify_limma_top_table(top_table, feature_names)
   
-  intercepts <- as.data.frame(coef(fit)[, "(Intercept)", drop = FALSE])
+  intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
   intercepts_ordered <- intercepts[match(top_table$feature_index, 
                                          rownames(intercepts)), , 
                                    drop = FALSE]
@@ -364,7 +395,7 @@ process_top_table <- function(top_table_and_fit,
   top_table
 }
 
-
+#' @importFrom stats relevel
 process_level <- function(level, 
                           level_index,
                           spline_params,
@@ -382,7 +413,8 @@ process_level <- function(level,
   } else { # mode == "integrated"
     data_copy <- data
     meta_copy <- meta
-    meta_copy[[condition]] <- relevel(meta_copy[[condition]], ref = level)
+    meta_copy[[condition]] <- stats::relevel(meta_copy[[condition]], 
+                                             ref = level)
     level_index <- 1L   # spline_params must be uniform across all levels for
     # integrated mode.
   }
@@ -408,20 +440,31 @@ process_level <- function(level,
 
 
 #' Converts top_table to a tibble and adds new column feature_name
+#' @importFrom tidyr as_tibble
+#' @importFrom dplyr relocate
+#' @importFrom dplyr mutate
 modify_limma_top_table <- function(top_table, 
                                    feature_names) {
-  top_table <- as_tibble(top_table, rownames = "feature_index") %>% 
-    relocate(feature_index, .after = last_col()) %>%
-    mutate(feature_index = as.integer(feature_index))
+  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index") %>% 
+    dplyr::relocate(feature_index, .after = last_col()) %>%
+    dplyr::mutate(feature_index = as.integer(feature_index))
   
   sorted_feature_names <- feature_names[top_table$feature_index]
-  top_table <- top_table %>% mutate(feature_names = sorted_feature_names)
+  top_table <- top_table %>% dplyr::mutate(feature_names = sorted_feature_names)
   
   top_table
 }
 
 
 #' Performs the limma spline analysis for a selected level of a factor
+#' @importFrom splines bs
+#' @importFrom splines ns
+#' @importFrom stats as.formula
+#' @importFrom stats model.matrix
+#' @importFrom limma lmFit
+#' @importFrom limma eBayes
+#' @importFrom limma topTable
+#' 
 within_level <- function(data,
                          meta,
                          design,
@@ -446,21 +489,22 @@ within_level <- function(data,
   
   if (spline_params$spline_type[level_index] == "b") {
     args$degree <- spline_params$degrees[level_index]
-    meta$X <- do.call(bs, args)
+    meta$X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
-    meta$X <- do.call(ns, args)
+    meta$X <- do.call(splines::ns, args)
   }
   
-  design_matrix <- model.matrix(as.formula(design), data = meta)
+  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
   
-  fit <- lmFit(data, design_matrix)
-  fit <- eBayes(fit)
+  fit <- limma::lmFit(data, design_matrix)
+  fit <- limma::eBayes(fit)
 
   column_names <- colnames(design_matrix)
   num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
   coeffs <- paste0("X", seq_len(num_matching_columns))
   
-  top_table <- topTable(fit, adjust=padjust_method, number=Inf, coef=coeffs)
+  top_table <- limma::topTable(fit, adjust=padjust_method, number=Inf, 
+                               coef=coeffs)
   
   list(top_table = top_table, fit = fit)
 }

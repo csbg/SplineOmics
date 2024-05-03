@@ -4,8 +4,11 @@ rm(list = ls(all.names = TRUE))
 
 # Setup ------------------------------------------------------------------------
 
+# library(splinetime)
+# library(MyPackage)
+
 ## Source functions ---------------------------------
-limma_hyperparams_screen_fun_path <- 
+limma_hyperparams_screen_fun_path <-
   here::here("R", "limma_hyperparams_screen.R")
 source(limma_hyperparams_screen_fun_path)
 
@@ -57,16 +60,16 @@ spline_configs = list(spline_type = c("n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    spline_configs,
-#                                    feature_names,
-#                                    report_dir,
-#                                    pthresholds)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   spline_configs,
+                                   feature_names,
+                                   report_dir,
+                                   pthresholds)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -99,7 +102,7 @@ clusters <- list("auto", "auto")
 report_dir <- here::here("results")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
-debug(cluster_hits)
+# debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables, 
                                    data, 
                                    meta, 

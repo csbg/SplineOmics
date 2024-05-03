@@ -4,7 +4,16 @@
 \alias{within_level}
 \title{Performs the limma spline analysis for a selected level of a factor}
 \usage{
-within_level(data, meta, design, factor, level, DoF, padjust_method)
+within_level(
+  data,
+  meta,
+  design,
+  factor,
+  level,
+  spline_params,
+  level_index,
+  padjust_method
+)
 }
 \description{
 Performs the limma spline analysis for a selected level of a factor
