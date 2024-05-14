@@ -48,7 +48,7 @@ limma_hyperparams_screen <- function(datas,
                                      designs, 
                                      modes, 
                                      condition, 
-                                     spline_configs,
+                                     spline_test_configs,
                                      feature_names, 
                                      report_dir = here::here(),
                                      adj_pthresh = c(0.05),
@@ -60,7 +60,7 @@ limma_hyperparams_screen <- function(datas,
                                   designs,
                                   modes,
                                   condition,
-                                  spline_configs,
+                                  spline_test_configs,
                                   feature_names,
                                   adj_pthresh,
                                   padjust_method)
@@ -70,14 +70,15 @@ limma_hyperparams_screen <- function(datas,
                                                 designs, 
                                                 modes, 
                                                 condition, 
-                                                spline_configs,
+                                                spline_test_configs,
                                                 feature_names, 
                                                 adj_pthresh, 
                                                 padjust_method)
   
   combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
                                                 datas, 
-                                                metas)
+                                                metas,
+                                                spline_test_configs)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
@@ -88,7 +89,7 @@ limma_hyperparams_screen <- function(datas,
   generate_reports_meta(datas_descr, 
                         designs, 
                         modes, 
-                        spline_configs,
+                        spline_test_configs,
                         report_dir,
                         timestamp)
 }
@@ -103,7 +104,7 @@ control_inputs_hyperpara_screen <- function(datas,
                                             designs, 
                                             modes, 
                                             condition, 
-                                            spline_params,
+                                            spline_test_configs,
                                             feature_names, 
                                             pthresholds, 
                                             padjust_method) {
@@ -197,8 +198,8 @@ control_inputs_hyperpara_screen <- function(datas,
   }
   
   
-  if ("spline_type" %in% names(spline_params)) {
-    if (!all(spline_params$spline_type %in% c("b", "n"))) {
+  if ("spline_type" %in% names(spline_test_configs)) {
+    if (!all(spline_test_configs$spline_type %in% c("b", "n"))) {
       stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
            natural cubic splines")
     }
@@ -207,46 +208,66 @@ control_inputs_hyperpara_screen <- function(datas,
   }
   
   # Check if degrees exists and is an integer vector
-  if ("degrees" %in% names(spline_params)) {
-    if (!all(spline_params$degrees == as.integer(spline_params$degrees))) {
+  if ("degrees" %in% names(spline_test_configs)) {
+    if (!all(spline_test_configs$degrees == 
+             as.integer(spline_test_configs$degrees))) {
       stop("degrees must be an integer vector.")
     }
   } else {
     stop("degrees is missing.")
   }
   
-  # Check if DoFs exists and is an integer vector
-  if ("DoFs" %in% names(spline_params)) {
-    if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
-      stop("DoFs must be an integer vector.")
+  # Check if DoFs exists and is an integer vector or a vector of all NA values
+  if ("DoFs" %in% names(spline_test_configs)) {
+    # Check if DoFs is either all integers or all NAs
+    if (!all(is.na(spline_test_configs$DoFs)) && 
+        !all(spline_test_configs$DoFs == as.integer(spline_test_configs$DoFs), 
+             na.rm = TRUE)) {
+      stop("DoFs must be an integer vector or a vector of NA values.")
     }
+  } else {
+    stop("DoFs is missing.")
   }
   
   # Check if knots exists and is a list of numeric vectors
-  if ("knots" %in% names(spline_params)) {
-    if (!is.list(spline_params$knots) || 
-        any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
-      stop("knots must be a list of numeric vectors.")
+  if ("knots" %in% names(spline_test_configs)) {
+    # Check if knots is a list and all elements are numeric vectors or if all 
+    # are NA
+    if (!is.list(spline_test_configs$knots) ||
+        any(!sapply(spline_test_configs$knots, function(x) is.numeric(x) || 
+                    all(is.na(x))))) {
+      stop("knots must be a list of numeric vectors or a vector of NA values.")
     }
+  } else {
+    stop("knots is missing.")
   }
   
-  if (("DoFs" %in% names(spline_params)) && 
-      ("knots" %in% names(spline_params))) {
-    stop("Either DoFs or knots must be present, but not both.")
-  } else if (!("DoFs" %in% names(spline_params)) && 
-             !("knots" %in% names(spline_params))) {
-    stop("At least one of DoFs or knots must be present.")
+  if (all(is.na(spline_test_configs$DoFs)) == 
+      all(is.na(spline_test_configs$knots))) {
+    stop("Exactly one of DoFs or knots must contain only NA values.")
   }
   
   # Check if bknots exists and is a list of numeric vectors
-  if ("bknots" %in% names(spline_params)) {
-    if (!is.list(spline_params$bknots) || 
-        any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
-      stop("bknots must be a list of numeric vectors.")
+  if ("bknots" %in% names(spline_test_configs)) {
+    # Check if bknots is either a list of numeric vectors or all elements are NA
+    if (is.list(spline_test_configs$bknots)) {
+      valid_bknots <- sapply(spline_test_configs$bknots, function(x) is.numeric(x) && !any(is.na(x)))
+      if (any(!valid_bknots)) {
+        stop("bknots must be a list of numeric vectors or a vector of NA values.")
+      }
+    } else if (all(is.na(spline_test_configs$bknots))) {
+      # This is fine, as it's a vector of NA values
+    } else {
+      stop("bknots must be a list of numeric vectors or a vector of NA values.")
     }
+  } else {
+    stop("bknots is missing.")
   }
   
-  check_spline_configs_element_len(spline_configs)
+  
+  check_spline_configs_element_len(spline_test_configs)
+  
+  check_max_and_min_dof(spline_test_configs, metas)
   
   
   if (!is.character(feature_names)) {
@@ -283,14 +304,14 @@ get_limma_combos_results <- function(datas,
                                      designs, 
                                      modes, 
                                      condition, 
-                                     spline_configs,
+                                     spline_test_configs,
                                      feature_names, 
                                      pthresholds, 
                                      padjust_method) {
   combos <- tidyr::expand_grid(
     data_index = seq_along(datas),
     design_index = seq_along(designs),
-    spline_config_index = seq_along(spline_configs$spline_type),
+    spline_config_index = seq_along(spline_test_configs$spline_type),
     pthreshold = pthresholds
   ) %>% 
     dplyr::mutate(id = paste0("Data_", data_index, 
@@ -309,11 +330,23 @@ get_limma_combos_results <- function(datas,
     design <- designs[[design_index]]
     mode <- modes[[design_index]]
     
-    spline_params <- create_spline_params(config_list = spline_configs, 
+    spline_params <- create_spline_params(spline_test_configs = 
+                                            spline_test_configs, 
                                           index = spline_config_index, 
                                           meta = meta, 
                                           condition = condition, 
                                           mode = mode)
+    
+    # Because either DoF or knots are specified, and only optionally bknots
+    # If they are not specified, their value is NA.
+    is_not_na <- function(x) {
+      if (is.atomic(x)) {
+        return(!all(is.na(x)))
+      } else {
+        return(TRUE)
+      }
+    }
+    spline_params <- Filter(is_not_na, spline_params)
     
     result <- run_limma_splines(data = data, 
                                 meta = meta, 
@@ -339,7 +372,8 @@ get_limma_combos_results <- function(datas,
 #' 
 plot_limma_combos_results <- function(all_combos_top_tables,
                                       datas,
-                                      metas) {
+                                      metas,
+                                      spline_test_configs) {
   
   names_extracted <- stringr::str_extract(names(all_combos_top_tables),
                                           "Data_\\d+_Design_\\d+")
@@ -368,7 +402,8 @@ plot_limma_combos_results <- function(all_combos_top_tables,
       composites <- purrr::map(combo_pair, function(combo) {
         composite <- gen_composite_spline_plots(combo,
                                                 datas,
-                                                metas)
+                                                metas,
+                                                spline_test_configs)
       })
       pb$tick()
       list(hitcomp = hitcomp, composites = composites)
@@ -467,6 +502,51 @@ check_spline_configs_element_len <- function(spline_configs) {
     if (length(spline_configs[[element]]) != expected_length) {
       stop(paste("Error:", element, "length does not match 'spline_type' 
                  length."))
+    }
+  }
+}
+
+
+check_max_and_min_dof <- function(spline_test_configs,
+                                  metas) {
+  process_row <- function(row) {
+    if (!is.na(row["DoFs"])) {
+      return(as.integer(row["DoFs"]))
+    } else {
+      k <- length(row[["knots"]])
+      if (row["spline_type"] == "b") {
+        return(k + as.integer(row["degrees"]))
+      } else if (row["spline_type"] == "n") {
+        return(k + 1)
+      } else {
+        stop("Unknown spline type")
+      }
+    }
+  }
+  
+  DoFs <- apply(spline_test_configs, 1, function(row) {
+    row <- as.list(row)
+    process_row(row)
+  })
+  
+  DoFs <- as.numeric(DoFs)
+  
+  min_DoF <- min(DoFs)
+  if (min_DoF == 1) {
+    stop("The minimum amount of DoF for all splines must be 2. Formula for 
+          b-splines: DoF = k + degree; Formula for n-splines: DoF = k + 1; 
+          with k = nr of internal knots.")
+  }
+  
+  max_DoF <- max(DoFs)
+  for (meta in metas) {
+    nr_timepoints <- length(unique(meta$Time))
+    
+    if (max_DoF > nr_timepoints) {
+      stop(paste("The DoF (", max_DoF, ") is larger than the number of unique 
+               elements in Time (", nr_timepoints, "). Formula for b-splines:
+               DoF = k + degree; Formula for n-splines: DoF = k + 1; with k = 
+               nr of internal knots.", sep = ""))
     }
   }
 }
@@ -676,7 +756,8 @@ gen_hitcomp_plots <- function(combo_pair) {
 #' 
 gen_composite_spline_plots <- function(internal_combos, 
                                        datas, 
-                                       metas) {
+                                       metas,
+                                       spline_test_configs) {
   plots <- list()
   plots_len <- integer(0)
   
@@ -726,7 +807,8 @@ gen_composite_spline_plots <- function(internal_combos,
         # adj. p-value threshold (for one level within one condition)
         # This fun just generates a single composite plot
         result <- plot_composite_splines(data_level, 
-                                         meta_level, 
+                                         meta_level,
+                                         spline_test_configs,
                                          top_table, 
                                          combo_name, 
                                          indices,
@@ -785,30 +867,29 @@ process_combo_pair <- function(combo_pair,
 }
 
 
-create_spline_params <- function(config_list, 
+create_spline_params <- function(spline_test_configs, 
                                  index, 
                                  meta, 
                                  condition, 
                                  mode) {
   num_levels <- length(unique(meta[[condition]]))  
   
-  process_item <- function(item, index, num_levels, mode) {
+  process_item <- function(config_column, index, num_levels, mode) {
     if (mode == "integrated") {
-      # Just take the index element from each item or sub-item
-      if (is.list(item)) {
-        list(item[[index]])
+      if (is.list(config_column)) {
+        list(config_column[[index]])
       } else {
-        item[index]
+        config_column[index]
       }
     } else {     # mode = 'isolated'
-      if (is.list(item)) {
-        rep(list(item[[index]]), num_levels)
+      if (is.list(config_column)) {
+        rep(list(config_column[[index]]), num_levels)
       } else {
-        rep(item[index], num_levels)
+        rep(config_column[index], num_levels)
       }
     } 
   }
-  result <- lapply(config_list, process_item, index, num_levels, mode)
+  result <- lapply(spline_test_configs, process_item, index, num_levels, mode)
 }
 
 
@@ -867,19 +948,51 @@ store_hits <- function(condition) {
 #' 
 plot_composite_splines <- function(data, 
                                    meta, 
+                                   spline_test_configs,
                                    top_table, 
                                    top_table_name, 
                                    indices,
                                    type) {
   plot_list <- list()
-  DoF <- as.integer(sub(".*SConfig_([0-9]+)_.*", "\\1", top_table_name)) 
+  config_index <- 
+    as.integer(sub(".*SConfig_([0-9]+)_.*", "\\1", top_table_name)) 
+  
+  # if (mode == "isolated") {
+  #   level_index <- match(level, unique(meta[[condition]]))
+  # }
+  # else if (mode == "integrated") {
+  #   level_index <- 1   # Different spline params not supported for this mode
+  # }
+
+  smooth_timepoints <- seq(meta$Time[1], 
+                           meta$Time[length(meta$Time)], 
+                           length.out = 100)
+  
+  args <- list(x = smooth_timepoints, intercept = FALSE)
+  
+  if (!is.na(spline_test_configs$DoFs[[config_index]])) {
+    args$df <- spline_test_configs$DoFs[[config_index]]
+  } else {
+    args$knots <- spline_test_configs$knots[[config_index]]
+  }
+  
+  if (!is.na(spline_test_configs$bknots[[config_index]])) {
+    args$Boundary.knots <- spline_test_configs$bknots[[config_index]]
+  }
+  
+  
+  if (spline_test_configs$spline_type[config_index] == "b") {
+    args$degree <- spline_test_configs$degrees[[config_index]]
+    X <- do.call(splines::bs, args)
+  } else {                                          # natural cubic splines
+    X <- do.call(splines::ns, args)
+  }
   
   # Generate all the individual plots
   for(index in indices) {
-    smooth_timepoints <- seq(meta$Time[1], meta$Time[length(meta$Time)], 
-                             length.out = 100)
-    X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
+    # X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
     
+    DoF <- which(names(top_table) == "AveExpr") - 1
     spline_coeffs <- 
       as.numeric(top_table[top_table$feature_index == 
                              index, paste0("X", 1:DoF)])

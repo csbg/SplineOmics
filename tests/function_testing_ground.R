@@ -87,26 +87,33 @@ modes <- c("integrated", "isolated")
 condition <- "Phase"
 DoFs <- c(2L, 3L, 4L, 5L)
 feature_names <- annotation$First.Protein.Description
-report_dir <- here::here("results", "jungfernflug2")
+report_dir <- here::here("results", "hyperparams_screen_reports")
 pthresholds <- c(0.05, 0.1)
 
-spline_configs = list(spline_type = c("n", "n", "n"), 
-                     degrees = c(3L, 3L, 3L),
-                     knots = list(c(0), c(0, 60), c(0, 60, 120)))
+# spline_configs = list(spline_type = c("n", "n", "n"),
+#                      degrees = c(3L, 3L, 3L),
+#                      knots = list(c(0), c(0, 60), c(0, 60, 120)))
+
+# Every row a combo to test.
+spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
+                                  degrees = c(3L, 3L, 2L),
+                                  DoFs = c(NA, NA, NA),
+                                  knots = I(list(c(0), c(0, 60), c(0, 60, 120))),
+                                  bknots = c(NA, NA, NA))
 
 
 # hyperparams screen limma -----------------------------------------------------
-# debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    spline_configs,
-#                                    feature_names,
-#                                    report_dir,
-#                                    pthresholds)
+debug(limma_hyperparams_screen)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   spline_test_configs,
+                                   feature_names,
+                                   report_dir,
+                                   pthresholds)
 
 
 ## Run limma splines -----------------------------------------------------------

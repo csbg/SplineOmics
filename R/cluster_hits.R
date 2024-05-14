@@ -1,3 +1,4 @@
+
 # Exported function: cluster_hits() --------------------------------------------
 
 #' Cluster Hits from Top Tables
@@ -399,19 +400,19 @@ plot_heatmap <- function(data,
     z_score <- t(scale(t(data)))
     
     ht <- ComplexHeatmap::Heatmap(z_score,
-                         column_split = meta$Time,
-                         cluster_columns = FALSE,
-                         row_split = clusters$cluster,
-                         cluster_rows = FALSE,
-                         heatmap_legend_param = list(title = "z-score of 
+                                  column_split = meta$Time,
+                                  cluster_columns = FALSE,
+                                  row_split = clusters$cluster,
+                                  cluster_rows = FALSE,
+                                  heatmap_legend_param = list(title = "z-score of 
                                                     log2 intensity",
-                                                    title_position = 
-                                                      "lefttop-rot"),
-                  # row_gap = unit(2, "pt"),
-                  # column_gap = unit(2, "pt"),
-                  # width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
-                  # height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
-                  show_row_names = TRUE)
+                                                              title_position = 
+                                                                "lefttop-rot"),
+                                  # row_gap = unit(2, "pt"),
+                                  # column_gap = unit(2, "pt"),
+                                  # width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
+                                  # height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
+                                  show_row_names = TRUE)
     
     print(ht)
     
@@ -420,13 +421,13 @@ plot_heatmap <- function(data,
                                data.matrix.batch.filt.sig) %>%
       dplyr::mutate(cluster_number = clusters_exp$cluster) %>%
       tidyr::pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
-                   names_to = "sample_name",
-                   values_to = "log2_intensity") %>%
+                          names_to = "sample_name",
+                          values_to = "log2_intensity") %>%
       tidyr::separate(sample_name, 
-               into = c("reactor", "time_point", "phase_of_fermentation"),
-               sep = "_") %>%
+                      into = c("reactor", "time_point", "phase_of_fermentation"),
+                      sep = "_") %>%
       dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
-                                length(clusters_exp$feature))) %>%
+                                       length(clusters_exp$feature))) %>%
       dplyr::group_by(first_protein_description) %>%
       dplyr::mutate(log2_intensity = rescale(log2_intensity))
     
@@ -550,13 +551,13 @@ plot_all_shapes <- function(curve_values,
            levels = sort(unique(as.numeric(average_curves$cluster))))
   
   p_curves <- ggplot2::ggplot(average_curves, aes(x = Time, y = Value, color = 
-                                           factor(cluster))) +
-                              geom_line() + 
-                              ggtitle(title) +
-                              xlab("Timepoints") + ylab("Values") +
-                              scale_color_brewer(palette = "Dark2", 
-                                                 name = "Cluster") + 
-                              theme_minimal()
+                                                    factor(cluster))) +
+    geom_line() + 
+    ggtitle(title) +
+    xlab("Timepoints") + ylab("Values") +
+    scale_color_brewer(palette = "Dark2", 
+                       name = "Cluster") + 
+    theme_minimal()
 }
 
 
@@ -693,7 +694,7 @@ plot_splines <- function(top_table,
     
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
     # X <- splines::ns(Time, df = DoF, intercept = FALSE)
-
+    
     fitted_values <- X %*% spline_coeffs + intercept
     
     plot_data <- data.frame(Time = time_points, Y = y_values)
@@ -738,8 +739,8 @@ plot_splines <- function(top_table,
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
       patchwork::plot_annotation(title = paste(main_title, "| DoF:", DoF),
-                      theme = theme(plot.title = element_text(hjust = 0.5, 
-                                                              size = 14)))
+                                 theme = theme(plot.title = element_text(hjust = 0.5, 
+                                                                         size = 14)))
     return(list(composite_plot = composite_plot, nrows = nrows))
   } else {
     stop("plot_list in function plot_splines splinetime package has length 0!")
@@ -880,7 +881,7 @@ get_curve_values <- function(top_table,
   }
   
   DoF <- which(names(top_table) == "AveExpr") - 1
-
+  
   columns_to_select <- 1:DoF
   
   splineCoeffs <- spline_results_hits %>%
@@ -979,7 +980,7 @@ hierarchical_clustering <- function(curve_values,
   } else if (is.numeric(k)) {
     cluster_assignments <- stats::cutree(hc, k = k)
   }
-
+  
   clustered_hits <- data.frame(cluster = cluster_assignments)
   top_table_hits <- dplyr::filter(top_table, adj.P.Val < 0.05)
   clustered_hits$feature <- top_table_hits$feature_index
@@ -998,4 +999,3 @@ hierarchical_clustering <- function(curve_values,
                            top_table = top_table,
                            clusters = k)
 }
-
