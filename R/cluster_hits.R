@@ -60,7 +60,8 @@ cluster_hits <- function(top_tables,
                          mode = c("isolated", "integrated"),
                          p_values, 
                          clusters, 
-                         report_dir) {
+                         meta_batch_column = NA,
+                         report_dir = here::here()) {
   
   mode <- match.arg(mode)
   control_inputs_cluster_hits(top_tables = top_tables, 
@@ -69,7 +70,8 @@ cluster_hits <- function(top_tables,
                               condition = condition, 
                               spline_params = spline_params,
                               p_values = p_values, 
-                              clusters = clusters, 
+                              clusters = clusters,
+                              meta_batch_column = meta_batch_column,
                               report_dir = report_dir)
   
   all_levels_clustering <- perform_clustering(top_tables = top_tables,
@@ -86,7 +88,8 @@ cluster_hits <- function(top_tables,
                          meta = meta, 
                          p_values = p_values, 
                          report_dir = report_dir,
-                         feature_names = feature_names)
+                         feature_names = feature_names,
+                         meta_batch_column = meta_batch_column)
   
   return(all_levels_clustering)
 }
@@ -103,6 +106,7 @@ control_inputs_cluster_hits <- function(top_tables,
                                         condition, 
                                         p_values, 
                                         clusters, 
+                                        meta_batch_column,
                                         report_dir) {
   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
     stop("top_tables must be a list of dataframes")
@@ -114,6 +118,16 @@ control_inputs_cluster_hits <- function(top_tables,
   
   if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
     stop("meta must be a dataframe")
+  }
+  
+  if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
+    stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
+    
+  } else if (!is.na(meta_batch_column)) {
+    print(paste0("Column ", meta_batch_column, " will be used to remove the",
+                 "batch effect for plotting only."))
+  } else {
+    print("Batch effect will not be removed for plotting!")
   }
   
   
@@ -219,8 +233,13 @@ make_clustering_report <- function(all_levels_clustering,
                                    meta, 
                                    p_values, 
                                    report_dir,
-                                   feature_names) {
+                                   feature_names,
+                                   meta_batch_column) {
   
+  if (!is.na(meta_batch_column)) {
+    data <- removeBatchEffect(x = data, batch = meta[[meta_batch_column]])
+  }
+    
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
   for (i in seq_along(all_levels_clustering)) {

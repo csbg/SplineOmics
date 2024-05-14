@@ -52,46 +52,52 @@ limma_hyperparams_screen <- function(datas,
                                      feature_names, 
                                      report_dir = here::here(),
                                      adj_pthresh = c(0.05),
+                                     meta_batch_column = NA,
                                      padjust_method = "BH") {
   
-  control_inputs_hyperpara_screen(datas,
-                                  datas_descr,
-                                  metas,
-                                  designs,
-                                  modes,
-                                  condition,
-                                  spline_test_configs,
-                                  feature_names,
-                                  adj_pthresh,
-                                  padjust_method)
+  control_inputs_hyperpara_screen(datas = datas,
+                                  datas_descr = datas_descr,
+                                  metas = metas,
+                                  designs = designs,
+                                  modes = modes,
+                                  condition = condition,
+                                  spline_test_configs = spline_test_configs,
+                                  feature_names = feature_names,
+                                  report_dir = report_dir,
+                                  adj_pthresh = adj_pthresh,
+                                  meta_batch_column = meta_batch_column,
+                                  padjust_method = padjust_method)
   
-  top_tables_combos <- get_limma_combos_results(datas, 
-                                                metas, 
-                                                designs, 
-                                                modes, 
-                                                condition, 
-                                                spline_test_configs,
-                                                feature_names, 
-                                                adj_pthresh, 
-                                                padjust_method)
+  top_tables_combos <- 
+    get_limma_combos_results(datas = datas, 
+                             metas = metas, 
+                             designs = designs, 
+                             modes = modes, 
+                             condition = condition, 
+                             spline_test_configs = spline_test_configs,
+                             feature_names = feature_names, 
+                             adj_pthresh = adj_pthresh, 
+                             padjust_method = padjust_method)
   
-  combo_pair_plots <- plot_limma_combos_results(top_tables_combos, 
-                                                datas, 
-                                                metas,
-                                                spline_test_configs)
+  combo_pair_plots <- 
+    plot_limma_combos_results(top_tables_combos = top_tables_combos, 
+                              datas = datas, 
+                              metas = metas,
+                              spline_test_configs = spline_test_configs,
+                              meta_batch_column = meta_batch_column)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
-  generate_reports(combo_pair_plots, 
-                   report_dir,
-                   timestamp)
+  generate_reports(combo_pair_plots = combo_pair_plots, 
+                   report_dir = report_dir,
+                   timestamp = timestamp)
   
-  generate_reports_meta(datas_descr, 
-                        designs, 
-                        modes, 
-                        spline_test_configs,
-                        report_dir,
-                        timestamp)
+  generate_reports_meta(datas_descr = datas_descr, 
+                        designs = designs, 
+                        modes = modes, 
+                        spline_test_configs = spline_test_configs,
+                        report_dir = report_dir,
+                        timestamp = timestamp)
 }
 
 
@@ -106,13 +112,233 @@ control_inputs_hyperpara_screen <- function(datas,
                                             condition, 
                                             spline_test_configs,
                                             feature_names, 
-                                            pthresholds, 
+                                            report_dir,
+                                            adj_pthresh, 
+                                            meta_batch_column,
                                             padjust_method) {
   
   if (!is.list(datas) || any(!sapply(datas, is.matrix))) {
     stop("'datas' must be a list of matrices.")
   }
   
+  check_datas_descr(datas_descr)
+  
+  check_metas(metas, datas, meta_batch_column)
+  
+  check_designs(designs)
+    
+  if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
+    stop("'modes' must be a character vector containing only 'isolated' or 
+         'integrated'.")
+  }
+  
+  # Ensure that datas and metas have the same length, as well as designs and 
+  # modes
+  if(length(datas) != length(metas) || length(designs) != length(modes)) {
+    stop("datas and metas, designs and modes must have the same length.")
+  }
+  
+  if (!is.character(condition) && !(length(condition) == 1)) {
+    stop("'condition' must be a single character")
+  }
+  
+  check_spline_test_configs(spline_test_configs, metas)
+  
+  if (!is.character(feature_names)) {
+    stop("'feature_names' must be a character vector.")
+  }
+  
+  # Check if report_dir is a non-empty string
+  if (!is.character(report_dir) || nchar(report_dir) == 0) {
+    stop("report_dir must be a non-empty string.")
+  }
+  
+  if (!is.numeric(adj_pthresh) || 
+      any(adj_pthresh <= 0) || 
+      any(adj_pthresh >= 1)) {
+    stop("'adj_pthresh' must be a numeric vector with 
+         all elements > 0 and < 1.")
+  }
+  
+  if (!is.character(padjust_method) || length(padjust_method) != 1) {
+    stop("'padjust_method' must be a single character string.")
+  }
+}
+
+
+#' @importFrom tidyr expand_grid
+#' @importFrom dplyr mutate
+#' @importFrom purrr pmap
+#' @importFrom purrr set_names
+#' 
+get_limma_combos_results <- function(datas, 
+                                     metas, 
+                                     designs, 
+                                     modes, 
+                                     condition, 
+                                     spline_test_configs,
+                                     feature_names, 
+                                     adj_pthresh, 
+                                     padjust_method) {
+  combos <- tidyr::expand_grid(
+    data_index = seq_along(datas),
+    design_index = seq_along(designs),
+    spline_config_index = seq_along(spline_test_configs$spline_type),
+    pthreshold = adj_pthresh
+  ) %>% 
+    dplyr::mutate(id = paste0("Data_", data_index, 
+                       "_Design_", design_index, 
+                       "_SConfig_", spline_config_index, 
+                       "_PThresh_", pthreshold))
+  
+    purrr::pmap(combos, 
+                process_combo,
+                metas = metas,
+                designs = designs,
+                modes = modes,
+                condition = condition, 
+                spline_test_configs = spline_test_configs,
+                feature_names = feature_names, 
+                padjust_method = padjust_method) %>% 
+    purrr::set_names(combos$id)
+}
+
+
+#' @importFrom stringr str_extract
+#' @importFrom progress progress_bar
+#' @importFrom purrr set_names
+#' @importFrom purrr map
+#' 
+plot_limma_combos_results <- function(top_tables_combos,
+                                      datas,
+                                      metas,
+                                      spline_test_configs,
+                                      meta_batch_column) {
+  
+  names_extracted <- stringr::str_extract(names(top_tables_combos),
+                                          "Data_\\d+_Design_\\d+")
+  
+  combos_separated <- lapply(unique(names_extracted), function(id) {
+    top_tables_combos[names_extracted == id]
+  })
+  
+  names(combos_separated) <- unique(names_extracted)
+  
+  combos <- names(combos_separated)
+  combo_pairs <- combn(combos, 2, simplify = FALSE)
+  
+  print("Generating the plots for all pairwise hyperparams-combo comparisons")
+  progress_ticks <- length(combo_pairs)
+  pb <- progress::progress_bar$new(total = progress_ticks, 
+                                   format = "[:bar] :percent")
+  pb$tick(0)
+  
+  combo_pair_results <- purrr::set_names(
+    purrr::map(combo_pairs, function(pair) {
+      combo_pair <- combos_separated[pair]
+      
+      hitcomp <- gen_hitcomp_plots(combo_pair)
+      
+      datas <- remove_batch_effect(datas = datas, 
+                                   metas = metas,
+                                   meta_batch_column = meta_batch_column)
+      
+      composites <- purrr::map(combo_pair, function(combo) {
+        composite <- gen_composite_spline_plots(combo,
+                                                datas,
+                                                metas,
+                                                spline_test_configs)
+      })
+      pb$tick()
+      list(hitcomp = hitcomp, composites = composites)
+    }
+    ), purrr::map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
+                                             sep = "_"))
+  )
+}
+
+
+#' @importFrom progress progress_bar
+#' @importFrom purrr imap
+#' 
+generate_reports <- function(combo_pair_plots, 
+                             report_dir,
+                             timestamp) {
+  print("Building .html reports for all pairwise hyperparams-combo comparisons")
+  progress_ticks <- length(combo_pair_plots)
+  pb <- progress::progress_bar$new(total = progress_ticks, 
+                                   format = "[:bar] :percent")
+  
+  result <- purrr::imap(combo_pair_plots, ~{
+    process_combo_pair(.x, .y, report_dir, timestamp)
+    pb$tick()  
+  })
+}
+
+
+#' @importFrom here here
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' 
+generate_reports_meta <- function(datas_descr, 
+                                  designs, 
+                                  modes, 
+                                  spline_test_configs,
+                                  report_dir,
+                                  timestamp) {
+  formatted_spline_configs <- flatten_spline_configs(spline_test_configs)
+  
+  # Combine the hyperparameters and their descriptions into two vectors
+  hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
+                       paste0("Design_", seq_along(designs)),
+                       paste0("SConfig_", seq_along(formatted_spline_configs)))
+  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"), 
+                    unlist(formatted_spline_configs))
+  
+  table_df <- data.frame(hyperparameter = hyperparameters, 
+                         description = descriptions, 
+                         stringsAsFactors = FALSE)
+  
+  filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
+  file_path <- here::here(report_dir, filename)
+  
+  custom_css <- "
+  <style>
+  table {
+    font-size: 32px; /* Significantly larger font size */
+    margin-left: auto; /* Center table horizontally */
+    margin-right: auto;
+  }
+  th, td {
+    border: 1px solid #cccccc;
+    padding: 12px; /* Increased padding for more space between table cells */
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  </style>
+  "
+  
+  # Generate the HTML table with custom CSS for larger font size and save it
+  html_table <- 
+    paste0(custom_css, 
+           knitr::kable(table_df, format = "html", escape = FALSE) %>% 
+             kableExtra::kable_styling(
+               bootstrap_options = c("striped", "hover")))
+  
+  writeLines(html_table, con = file_path)
+  
+  cat("Meta table for the limma hyperparameter screen reports saved to:",
+      file_path, "\n")
+}
+
+
+
+# Level 2 internal functions ---------------------------------------------------
+
+
+check_datas_descr <- function(datas_descr) {
   if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
     long_elements_indices <- which(nchar(datas_descr) > 80)
     long_elements <- datas_descr[long_elements_indices]
@@ -125,7 +351,10 @@ control_inputs_hyperpara_screen <- function(datas,
     )
     stop(error_message)
   }
-  
+}
+
+
+check_metas <- function(metas, datas, meta_batch_column) {
   if (!is.list(metas) || any(!sapply(metas, is.data.frame))) {
     stop("'metas' must be a list of dataframes.")
   }
@@ -142,11 +371,25 @@ control_inputs_hyperpara_screen <- function(datas,
     # Check if the number of rows in meta equals the number of columns in data
     if (!(nrow(meta) == ncol(data))) {
       stop(paste("Mismatch found for pair", i, ": The number of rows in meta 
-                 does not match the number of columns in data. This is 
-                 required."))
+                   does not match the number of columns in data. This is 
+                   required."))
+    }
+    
+    if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
+      stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
     }
   }
+  if (!is.na(meta_batch_column)) {
+    print(paste0("Column ", meta_batch_column, " will be used to remove the
+               batch effect for plotting only."))
+  } else {
+    print("Batch effect will not be removed for plotting!")
+  }
   
+}
+
+
+check_designs <- function(designs) {
   if (!is.character(designs) || 
       any(nchar(designs) > 75) || 
       all(grepl("X", designs) == FALSE)) {
@@ -164,7 +407,7 @@ control_inputs_hyperpara_screen <- function(datas,
     if (length(long_elements) > 0) {
       error_message_parts <- c(error_message_parts, sprintf(
         "Some 'designs' elements exceed 75 characters. Offending element(s) at 
-        indices %s: '%s'.",
+      indices %s: '%s'.",
         paste(which(nchar(designs) > 75), collapse=", "),
         paste(long_elements, collapse="', '")
       ))
@@ -172,32 +415,24 @@ control_inputs_hyperpara_screen <- function(datas,
     if (length(missing_x_elements) > 0) {
       error_message_parts <- c(error_message_parts, sprintf(
         "Some 'designs' elements do not contain 'X', which is the required
-        time component for the splinetime package. 
-        Offending element(s) at indices %s: '%s'.",
+      time component for the splinetime package. 
+      Offending element(s) at indices %s: '%s'.",
         paste(which(grepl("X", designs) == FALSE), collapse = ", "),
         paste(missing_x_elements, collapse = "', '")
       ))
-    }
-    
+    } 
     error_message <- paste(
-      "'designs' must be a character vector with no element over 75 characters 
-      and each must contain 'X'.",
-      paste(error_message_parts, collapse=" Please shorten the variable names 
-            or ensure 'X' is included.")
+      "'designs' must be a character vector with no element over 75 
+        characters and each must contain 'X'.",
+      paste(error_message_parts, collapse="Please shorten the variable names 
+                                             or ensure 'X' is included.")
     )
     stop(error_message)
   }
-  
-  if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
-    stop("'modes' must be a character vector containing only 'isolated' or 
-         'integrated'.")
-  }
-  
-  if (!is.character(condition) && !(length(condition) == 1)) {
-    stop("'condition' must be a single character")
-  }
-  
-  
+}
+
+
+check_spline_test_configs <- function(spline_test_configs, metas) {
   if ("spline_type" %in% names(spline_test_configs)) {
     if (!all(spline_test_configs$spline_type %in% c("b", "n"))) {
       stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
@@ -251,9 +486,11 @@ control_inputs_hyperpara_screen <- function(datas,
   if ("bknots" %in% names(spline_test_configs)) {
     # Check if bknots is either a list of numeric vectors or all elements are NA
     if (is.list(spline_test_configs$bknots)) {
-      valid_bknots <- sapply(spline_test_configs$bknots, function(x) is.numeric(x) && !any(is.na(x)))
+      valid_bknots <- sapply(spline_test_configs$bknots, 
+                             function(x) is.numeric(x) && !any(is.na(x)))
       if (any(!valid_bknots)) {
-        stop("bknots must be a list of numeric vectors or a vector of NA values.")
+        stop("bknots must be a list of numeric vectors or a vector of 
+             NA values.")
       }
     } else if (all(is.na(spline_test_configs$bknots))) {
       # This is fine, as it's a vector of NA values
@@ -268,287 +505,67 @@ control_inputs_hyperpara_screen <- function(datas,
   check_spline_configs_element_len(spline_test_configs)
   
   check_max_and_min_dof(spline_test_configs, metas)
-  
-  
-  if (!is.character(feature_names)) {
-    stop("'feature_names' must be a character vector.")
-  }
-  
-  if (!is.numeric(pthresholds) || 
-      any(pthresholds <= 0) || 
-      any(pthresholds >= 1)) {
-    stop("'pthresholds' must be a numeric vector with 
-         all elements > 0 and < 1.")
-  }
-  
-  
-  if (!is.character(padjust_method) || length(padjust_method) != 1) {
-    stop("'padjust_method' must be a single character string.")
-  }
-  
-  # Ensure that datas and metas have the same length, as well as designs and 
-  # modes
-  if(length(datas) != length(metas) || length(designs) != length(modes)) {
-    stop("datas and metas, designs and modes must have the same length.")
-  }
 }
 
 
-#' @importFrom tidyr expand_grid
-#' @importFrom dplyr mutate
-#' @importFrom purrr pmap
-#' @importFrom purrr set_names
-#' 
-get_limma_combos_results <- function(datas, 
-                                     metas, 
-                                     designs, 
-                                     modes, 
-                                     condition, 
-                                     spline_test_configs,
-                                     feature_names, 
-                                     pthresholds, 
-                                     padjust_method) {
-  combos <- tidyr::expand_grid(
-    data_index = seq_along(datas),
-    design_index = seq_along(designs),
-    spline_config_index = seq_along(spline_test_configs$spline_type),
-    pthreshold = pthresholds
-  ) %>% 
-    dplyr::mutate(id = paste0("Data_", data_index, 
-                       "_Design_", design_index, 
-                       "_SConfig_", spline_config_index, 
-                       "_PThresh_", pthreshold))
+process_combo <- function(data_index, 
+                          design_index, 
+                          spline_config_index, 
+                          pthreshold, 
+                          metas,
+                          designs,
+                          modes,
+                          condition,
+                          spline_test_configs,
+                          feature_names,
+                          padjust_method,
+                          ...) {
+  data <- datas[[data_index]]
+  meta <- metas[[data_index]]
+  design <- designs[[design_index]]
+  mode <- modes[[design_index]]
   
-  # Define the function to process each combination
-  process_combo <- function(data_index, 
-                            design_index, 
-                            spline_config_index, 
-                            pthreshold, 
-                            ...) {
-    data <- datas[[data_index]]
-    meta <- metas[[data_index]]
-    design <- designs[[design_index]]
-    mode <- modes[[design_index]]
+  spline_params <- create_spline_params(spline_test_configs = 
+                                          spline_test_configs, 
+                                        index = spline_config_index, 
+                                        meta = meta, 
+                                        condition = condition, 
+                                        mode = mode)
+  
+  # Because either DoF or knots are specified, and only optionally bknots
+  # If they are not specified, their value is NA.
+  spline_params <- Filter(is_not_na, spline_params)
+  
+  result <- run_limma_splines(data = data, 
+                              meta = meta, 
+                              design = design, 
+                              spline_params = spline_params, 
+                              condition = condition,
+                              feature_names = feature_names, 
+                              mode = mode, 
+                              padjust_method = padjust_method)
+  
+  result$top_tables
+}
+
+
+remove_batch_effect <- function(datas, 
+                                metas,
+                                meta_batch_column) {
+  results <- list()
+  for (i in seq_along(datas)) {
+    data <- datas[[i]]
+    meta <- metas[[i]]
     
-    spline_params <- create_spline_params(spline_test_configs = 
-                                            spline_test_configs, 
-                                          index = spline_config_index, 
-                                          meta = meta, 
-                                          condition = condition, 
-                                          mode = mode)
-    
-    # Because either DoF or knots are specified, and only optionally bknots
-    # If they are not specified, their value is NA.
-    is_not_na <- function(x) {
-      if (is.atomic(x)) {
-        return(!all(is.na(x)))
-      } else {
-        return(TRUE)
-      }
-    }
-    spline_params <- Filter(is_not_na, spline_params)
-    
-    result <- run_limma_splines(data = data, 
-                                meta = meta, 
-                                design = design, 
-                                spline_params = spline_params, 
-                                condition = condition,
-                                feature_names = feature_names, 
-                                mode = mode, 
-                                padjust_method = padjust_method)
-    
-    result$top_tables
-  }
-  
-  purrr::pmap(combos, process_combo) %>% 
-    purrr::set_names(combos$id)
-}
-
-
-#' @importFrom stringr str_extract
-#' @importFrom progress progress_bar
-#' @importFrom purrr set_names
-#' @importFrom purrr map
-#' 
-plot_limma_combos_results <- function(all_combos_top_tables,
-                                      datas,
-                                      metas,
-                                      spline_test_configs) {
-  
-  names_extracted <- stringr::str_extract(names(all_combos_top_tables),
-                                          "Data_\\d+_Design_\\d+")
-  
-  combos_separated <- lapply(unique(names_extracted), function(id) {
-    all_combos_top_tables[names_extracted == id]
-  })
-  
-  names(combos_separated) <- unique(names_extracted)
-  
-  combos <- names(combos_separated)
-  combo_pairs <- combn(combos, 2, simplify = FALSE)
-  
-  print("Generating the plots for all pairwise hyperparams-combo comparisons")
-  progress_ticks <- length(combo_pairs)
-  pb <- progress::progress_bar$new(total = progress_ticks, 
-                                   format = "[:bar] :percent")
-  pb$tick(0)
-  
-  combo_pair_results <- purrr::set_names(
-    purrr::map(combo_pairs, function(pair) {
-      combo_pair <- combos_separated[pair]
-      
-      hitcomp <- gen_hitcomp_plots(combo_pair)
-      
-      composites <- purrr::map(combo_pair, function(combo) {
-        composite <- gen_composite_spline_plots(combo,
-                                                datas,
-                                                metas,
-                                                spline_test_configs)
-      })
-      pb$tick()
-      list(hitcomp = hitcomp, composites = composites)
-    }
-    ), purrr::map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
-                                             sep = "_"))
-  )
-}
-
-
-#' @importFrom progress progress_bar
-#' @importFrom purrr imap
-#' 
-generate_reports <- function(combo_pair_plots, 
-                             report_dir,
-                             timestamp) {
-  print("Building .html reports for all pairwise hyperparams-combo comparisons")
-  progress_ticks <- length(combo_pair_plots)
-  pb <- progress::progress_bar$new(total = progress_ticks, 
-                                   format = "[:bar] :percent")
-  
-  result <- purrr::imap(combo_pair_plots, ~{
-    process_combo_pair(.x, .y, report_dir, timestamp)
-    pb$tick()  
-  })
-}
-
-
-#' @importFrom here here
-#' @importFrom knitr kable
-#' @importFrom kableExtra kable_styling
-#' 
-generate_reports_meta <- function(datas_descr, 
-                                  designs, 
-                                  modes, 
-                                  spline_configs,
-                                  report_dir,
-                                  timestamp) {
-  formatted_spline_configs <- flatten_spline_configs(spline_configs)
-  
-  # Combine the hyperparameters and their descriptions into two vectors
-  hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
-                       paste0("Design_", seq_along(designs)),
-                       paste0("SConfig_", seq_along(formatted_spline_configs)))
-  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"), 
-                    unlist(formatted_spline_configs))
-  
-  table_df <- data.frame(hyperparameter = hyperparameters, 
-                         description = descriptions, 
-                         stringsAsFactors = FALSE)
-  
-  filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
-  file_path <- here::here(report_dir, filename)
-  
-  custom_css <- "
-  <style>
-  table {
-    font-size: 32px; /* Significantly larger font size */
-    margin-left: auto; /* Center table horizontally */
-    margin-right: auto;
-  }
-  th, td {
-    border: 1px solid #cccccc;
-    padding: 12px; /* Increased padding for more space between table cells */
-    text-align: left;
-  }
-  th {
-    background-color: #f2f2f2;
-  }
-  </style>
-  "
-  
-  # Generate the HTML table with custom CSS for larger font size and save it
-  html_table <- 
-    paste0(custom_css, 
-           knitr::kable(table_df, format = "html", escape = FALSE) %>% 
-             kableExtra::kable_styling(
-               bootstrap_options = c("striped", "hover")))
-  
-  writeLines(html_table, con = file_path)
-  
-  cat("Meta table for the limma hyperparameter screen reports saved to:",
-      file_path, "\n")
-}
-
-
-
-# Level 2 internal functions ---------------------------------------------------
-
-
-check_spline_configs_element_len <- function(spline_configs) {
-  expected_length <- length(spline_configs$spline_type)
-  
-  # Check if all elements have the correct length
-  for (element in names(spline_configs)) {
-    if (length(spline_configs[[element]]) != expected_length) {
-      stop(paste("Error:", element, "length does not match 'spline_type' 
-                 length."))
+    if (meta_batch_column %in% names(meta)) {
+      data_corrected <- removeBatchEffect(x = data, 
+                                          batch = meta[[meta_batch_column]])
+      results[[i]] <- data_corrected
+    } else {                            # Store the original data
+      results[[i]] <- data  
     }
   }
-}
-
-
-check_max_and_min_dof <- function(spline_test_configs,
-                                  metas) {
-  process_row <- function(row) {
-    if (!is.na(row["DoFs"])) {
-      return(as.integer(row["DoFs"]))
-    } else {
-      k <- length(row[["knots"]])
-      if (row["spline_type"] == "b") {
-        return(k + as.integer(row["degrees"]))
-      } else if (row["spline_type"] == "n") {
-        return(k + 1)
-      } else {
-        stop("Unknown spline type")
-      }
-    }
-  }
-  
-  DoFs <- apply(spline_test_configs, 1, function(row) {
-    row <- as.list(row)
-    process_row(row)
-  })
-  
-  DoFs <- as.numeric(DoFs)
-  
-  min_DoF <- min(DoFs)
-  if (min_DoF == 1) {
-    stop("The minimum amount of DoF for all splines must be 2. Formula for 
-          b-splines: DoF = k + degree; Formula for n-splines: DoF = k + 1; 
-          with k = nr of internal knots.")
-  }
-  
-  max_DoF <- max(DoFs)
-  for (meta in metas) {
-    nr_timepoints <- length(unique(meta$Time))
-    
-    if (max_DoF > nr_timepoints) {
-      stop(paste("The DoF (", max_DoF, ") is larger than the number of unique 
-               elements in Time (", nr_timepoints, "). Formula for b-splines:
-               DoF = k + degree; Formula for n-splines: DoF = k + 1; with k = 
-               nr of internal knots.", sep = ""))
-    }
-  }
+  return(results)
 }
 
 
@@ -874,22 +891,11 @@ create_spline_params <- function(spline_test_configs,
                                  mode) {
   num_levels <- length(unique(meta[[condition]]))  
   
-  process_item <- function(config_column, index, num_levels, mode) {
-    if (mode == "integrated") {
-      if (is.list(config_column)) {
-        list(config_column[[index]])
-      } else {
-        config_column[index]
-      }
-    } else {     # mode = 'isolated'
-      if (is.list(config_column)) {
-        rep(list(config_column[[index]]), num_levels)
-      } else {
-        rep(config_column[index], num_levels)
-      }
-    } 
-  }
-  result <- lapply(spline_test_configs, process_item, index, num_levels, mode)
+  result <- lapply(spline_test_configs, 
+                   process_config_column, 
+                   index, 
+                   num_levels, 
+                   mode)
 }
 
 
@@ -918,6 +924,92 @@ flatten_spline_configs <- function(spline_configs) {
 
 
 # Level 3 internal functions  ---------------------------------------------------
+
+
+check_spline_configs_element_len <- function(spline_configs) {
+  expected_length <- length(spline_configs$spline_type)
+  
+  # Check if all elements have the correct length
+  for (element in names(spline_configs)) {
+    if (length(spline_configs[[element]]) != expected_length) {
+      stop(paste("Error:", element, "length does not match 'spline_type' 
+                 length."))
+    }
+  }
+}
+
+
+check_max_and_min_dof <- function(spline_test_configs,
+                                  metas) {
+  DoFs <- apply(spline_test_configs, 1, function(row) {
+    row <- as.list(row)
+    process_row(row)
+  })
+  
+  DoFs <- as.numeric(DoFs)
+  
+  min_DoF <- min(DoFs)
+  if (min_DoF == 1) {
+    stop("The minimum amount of DoF for all splines must be 2. Formula for 
+          b-splines: DoF = k + degree; Formula for n-splines: DoF = k + 1; 
+          with k = nr of internal knots.")
+  }
+  
+  max_DoF <- max(DoFs)
+  for (meta in metas) {
+    nr_timepoints <- length(unique(meta$Time))
+    
+    if (max_DoF > nr_timepoints) {
+      stop(paste("The DoF (", max_DoF, ") is larger than the number of unique 
+               elements in Time (", nr_timepoints, "). Formula for b-splines:
+               DoF = k + degree; Formula for n-splines: DoF = k + 1; with k = 
+               nr of internal knots.", sep = ""))
+    }
+  }
+}
+
+
+is_not_na <- function(x) {
+  if (is.atomic(x)) {
+    return(!all(is.na(x)))
+  } else {
+    return(TRUE)
+  }
+}
+
+
+process_row <- function(row) {
+  if (!is.na(row["DoFs"])) {
+    return(as.integer(row["DoFs"]))
+  } else {
+    k <- length(row[["knots"]])
+    if (row["spline_type"] == "b") {
+      return(k + as.integer(row["degrees"]))
+    } else if (row["spline_type"] == "n") {
+      return(k + 1)
+    } else {
+      stop("Unknown spline type. Must be either b for B-splines or n for 
+           natural cubic splines")
+    }
+  }
+}
+
+
+process_config_column <- function(config_column, index, num_levels, mode) {
+  if (mode == "integrated") {
+    if (is.list(config_column)) {
+      list(config_column[[index]])
+    } else {
+      config_column[index]
+    }
+  } else {     # mode = 'isolated'
+    if (is.list(config_column)) {
+      rep(list(config_column[[index]]), num_levels)
+    } else {
+      rep(config_column[index], num_levels)
+    }
+  } 
+}
 
 
 #' @importFrom dplyr pull

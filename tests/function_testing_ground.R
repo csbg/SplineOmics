@@ -69,8 +69,6 @@ input_file_path <- here::here("data", "PhosphoPlusProteomics_data",
                               "PTX_input_data.RData")
 load(input_file_path) 
 
-
-
 # Prep input to hyperparams screen function ------------------------------------
 data <- as.matrix(data)
 data1 <- data
@@ -88,11 +86,8 @@ condition <- "Phase"
 DoFs <- c(2L, 3L, 4L, 5L)
 feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "hyperparams_screen_reports")
+meta_batch_column = "Reactor"
 pthresholds <- c(0.05, 0.1)
-
-# spline_configs = list(spline_type = c("n", "n", "n"),
-#                      degrees = c(3L, 3L, 3L),
-#                      knots = list(c(0), c(0, 60), c(0, 60, 120)))
 
 # Every row a combo to test.
 spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
@@ -103,17 +98,18 @@ spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
 
 
 # hyperparams screen limma -----------------------------------------------------
-debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   spline_test_configs,
-                                   feature_names,
-                                   report_dir,
-                                   pthresholds)
+# debug(limma_hyperparams_screen)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    spline_test_configs,
+#                                    feature_names,
+#                                    report_dir,
+#                                    pthresholds,
+#                                    meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -145,7 +141,6 @@ ttslc_factor_time <- result$ttslc_factor_time
 p_values <- c(0.05, 0.05)
 clusters <- list(6L, 3L)
 report_dir <- here::here("results", "clustering_reports")
-data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
 # debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables, 
@@ -156,6 +151,7 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    mode = "integrated",
                                    p_values = p_values, 
                                    clusters = clusters, 
+                                   meta_batch_column,
                                    report_dir = report_dir)
 
 clustering_results[[2]]$clustered_hits

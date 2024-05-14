@@ -95,8 +95,10 @@ run_limma_splines <- function(data,
                                               padjust_method = padjust_method, 
                                               mode = mode)
   
-  results_list <- purrr::map2(levels, seq_along(levels), 
+  results_list <- purrr::map2(levels, 
+                              seq_along(levels), 
                               process_level_with_params)
+  
   top_tables <- stats::setNames(purrr::map(results_list, "top_table"), 
                                 purrr::map_chr(results_list, "name"))
   
