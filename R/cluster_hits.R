@@ -54,17 +54,19 @@
 cluster_hits <- function(top_tables, 
                          data, 
                          meta, 
-                         spline_params,
                          condition, 
+                         spline_params,
+                         mode = c("isolated", "integrated"),
                          p_values, 
                          clusters, 
                          report_dir) {
   
+  mode <- match.arg(mode)
   control_inputs_cluster_hits(top_tables = top_tables, 
                               data = data, 
                               meta = meta, 
-                              spline_params = spline_params,
                               condition = condition, 
+                              spline_params = spline_params,
                               p_values = p_values, 
                               clusters = clusters, 
                               report_dir = report_dir)
@@ -73,7 +75,9 @@ cluster_hits <- function(top_tables,
                                               p_values = p_values,
                                               clusters = clusters,
                                               meta = meta,
-                                              condition = condition)
+                                              condition = condition,
+                                              spline_params = spline_params,
+                                              mode = mode)
   
   make_clustering_report(all_levels_clustering = all_levels_clustering, 
                          condition = condition, 
@@ -162,6 +166,8 @@ control_inputs_cluster_hits <- function(top_tables,
   }
   
   
+  
+  
   if (!(is.character(condition)) || length(condition) != 1) {
     stop("condition must be a character vector with length 1")
   }
@@ -185,7 +191,9 @@ perform_clustering <- function(top_tables,
                                p_values,
                                clusters,
                                meta,
-                               condition) {
+                               condition,
+                               spline_params,
+                               mode) {
   levels <- unique(meta[[condition]])
   
   all_levels_clustering <- mapply(process_level_cluster, 
@@ -194,7 +202,9 @@ perform_clustering <- function(top_tables,
                                   clusters, 
                                   levels, 
                                   MoreArgs = list(meta = meta, 
-                                                  condition = condition),
+                                                  condition = condition,
+                                                  spline_params = spline_params,
+                                                  mode = mode),
                                   SIMPLIFY = FALSE)  # Return a list
 }
 
@@ -267,9 +277,11 @@ make_clustering_report <- function(all_levels_clustering,
       top_table_filt <- top_table %>%
         dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
       
+      X <- level_clustering$X
       plot_splines_result <- plot_splines(top_table_filt, 
                                           data_level, 
-                                          meta_level, 
+                                          meta_level,
+                                          X,
                                           main_title)
       
       composite_plots[[length(composite_plots) + 1]] <- 
@@ -297,28 +309,34 @@ make_clustering_report <- function(all_levels_clustering,
 # Level 2 internal functions ---------------------------------------------------
 
 
-process_level_cluster <- function(top_table, 
+process_level_cluster <- function(top_table,
                                   p_value, 
                                   cluster_size, 
                                   level, 
                                   meta, 
-                                  condition) {
+                                  condition,
+                                  spline_params,
+                                  mode) {
   if (is.na(p_value)) {
     p_value <- p_values[1]  
   }
   
-  result <- get_curve_values(top_table, 
-                             p_value, 
-                             level, 
-                             meta, 
-                             condition)
+  curve_results <- get_curve_values(top_table = top_table,
+                                    p_value = p_value, 
+                                    level = level, 
+                                    meta = meta, 
+                                    condition = condition,
+                                    spline_params = spline_params,
+                                    mode = mode)
   
-  normalized_curves <- normalize_curves(result$curve_values)
+  normalized_curves <- normalize_curves(curve_results$curve_values)
   
   clustering_result <- hierarchical_clustering(normalized_curves, 
                                                cluster_size, 
-                                               result$smooth_timepoints, 
+                                               curve_results$smooth_timepoints, 
                                                top_table)
+  clustering_result$X <- curve_results$X
+  return(clustering_result)
 }
 
 
@@ -651,6 +669,7 @@ plot_consensus_shapes <- function(curve_values,
 plot_splines <- function(top_table, 
                          data, 
                          meta, 
+                         X,   # Was already created from spline_params before
                          main_title) {
   
   DoF <- which(names(top_table) == "AveExpr") - 1
@@ -663,7 +682,7 @@ plot_splines <- function(top_table,
   
   plot_list <- list()
   
-  ## Generate individual plots ----
+  ## Generate individual plots -------------------------------------------------
   for (hit in 1:nrow(top_table)) {
     hit_index <- as.numeric(top_table$feature_index[hit])
     y_values <- data[hit_index, ]
@@ -673,8 +692,8 @@ plot_splines <- function(top_table,
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
     
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
-    X <- splines::ns(Time, df = DoF, intercept = FALSE)
-    
+    # X <- splines::ns(Time, df = DoF, intercept = FALSE)
+
     fitted_values <- X %*% spline_coeffs + intercept
     
     plot_data <- data.frame(Time = time_points, Y = y_values)
@@ -711,7 +730,7 @@ plot_splines <- function(top_table,
     plot_list[[length(plot_list) + 1]] <- p
   }
   
-  ## Generate the combined plot ----
+  ## Generate the combined plot ------------------------------------------------
   if(length(plot_list) > 0) {           
     num_plots <- length(plot_list)
     ncol <- 3
@@ -818,35 +837,43 @@ generate_report_html <- function(plot_list,
 #' @importFrom dplyr select all_of
 #' @importFrom splines ns
 #' 
-get_curve_values <- function(top_table, 
+get_curve_values <- function(top_table,
                              p_value, 
                              level, 
                              meta, 
-                             condition) {
+                             condition,
+                             spline_params,
+                             mode) {
   spline_results_hits <- subset(top_table, adj.P.Val < p_value)
   
   subset_meta <- meta[meta[[condition]] == level, ]
+  
+  if (mode == "isolated") {
+    level_index <- match(level, unique(meta[[condition]]))
+  }
+  else if (mode == "integrated") {
+    level_index <- 1   # Different spline params not supported for this mode
+  }
   
   smooth_timepoints <- seq(subset_meta$Time[1],
                            subset_meta$Time[length(subset_meta$Time)],
                            length.out = 100)
   
-  
   args <- list(x = smooth_timepoints, intercept = FALSE)
   
   if (!is.null(spline_params$DoFs)) {
-    args$df <- spline_params$DoFs[1]
+    args$df <- spline_params$DoFs[level_index]
   } else {
-    args$knots <- spline_params$knots[[1]]
+    args$knots <- spline_params$knots[[level_index]]
   }
   
   if (!is.null(spline_params$bknots)) {
-    args$Boundary.knots <- spline_params$bknots[[1]]
+    args$Boundary.knots <- spline_params$bknots[[level_index]]
   }
   
   
-  if (spline_params$spline_type[1] == "b") {
-    args$degree <- spline_params$degrees[1]
+  if (spline_params$spline_type[level_index] == "b") {
+    args$degree <- spline_params$degrees[level_index]
     X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
     X <- do.call(splines::ns, args)
@@ -872,7 +899,9 @@ get_curve_values <- function(top_table,
   
   curve_values <- as.data.frame(curve_values)
   rownames(curve_values) <- rownames(splineCoeffs)
-  list(curve_values = curve_values, smooth_timepoints = smooth_timepoints)
+  list(curve_values = curve_values, 
+       smooth_timepoints = smooth_timepoints,
+       X = X)
 }
 
 

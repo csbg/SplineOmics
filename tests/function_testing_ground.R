@@ -5,8 +5,24 @@ rm(list = ls(all.names = TRUE))
 # Setup ------------------------------------------------------------------------
 # Import libraries
 
+# limma_hyperparams_screen()
+# library(pheatmap)
+library(ggplot2)
+library(stats)
+library(purrr)
+library(furrr)
+library(tidyr)
+library(dplyr)
+library(patchwork)
+library(stringr)
+library(progress)
+library(here)
+library(knitr)
+library(kableExtra)
+
+
 # run_limma_splines()
-library(limma)
+# library(limma)
 library(splines)
 library(purrr)
 
@@ -38,7 +54,7 @@ source(run_limma_splines_fun_path)
 cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
 source(cluster_hits_fun_path)
 
-general_fun_path <- here::here("R", "splinetime_general_fun.R")
+general_fun_path <- here::here("R", "utils.R")
 source(general_fun_path)
 
 
@@ -100,8 +116,9 @@ design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
 
-spline_params = list(spline_type = c("n"),
-                      DoFs = c(2L))
+spline_params = list(spline_type = c("b"),
+                     degrees = c(3L),
+                     DoFs = c(2L))
 
 # debug(run_limma_splines)
 result <- run_limma_splines(data, 
@@ -120,18 +137,19 @@ ttslc_factor_time <- result$ttslc_factor_time
 ## Cluster hits ----------------------------------------------------------------
 p_values <- c(0.05, 0.05)
 clusters <- list(6L, 3L)
-report_dir <- here::here("results")
+report_dir <- here::here("results", "clustering_reports")
 data <- removeBatchEffect(x = data, batch = meta$Reactor)
 
 # debug(cluster_hits)
-clustering_results <- cluster_hits(top_tables, 
-                                   data, 
-                                   meta, 
-                                   spline_params,
-                                   condition, 
-                                   p_values, 
-                                   clusters, 
-                                   report_dir)
+clustering_results <- cluster_hits(top_tables = top_tables, 
+                                   data = data, 
+                                   meta = meta, 
+                                   condition = condition, 
+                                   spline_params = spline_params,
+                                   mode = "integrated",
+                                   p_values = p_values, 
+                                   clusters = clusters, 
+                                   report_dir = report_dir)
 
 clustering_results[[2]]$clustered_hits
 

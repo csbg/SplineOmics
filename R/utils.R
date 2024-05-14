@@ -1,6 +1,3 @@
-
-
-#'
 #' @importFrom ggplot2 ggsave
 #' @importFrom base64enc dataURI
 #' 
