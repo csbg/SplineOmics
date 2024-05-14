@@ -121,7 +121,7 @@ design <- "~ 1 + Phase*X + Reactor"
 
 spline_params = list(spline_type = c("b"),
                      degrees = c(3L),
-                     DoFs = c(2L))
+                     DoFs = c(3L))
 
 # debug(run_limma_splines)
 result <- run_limma_splines(data, 

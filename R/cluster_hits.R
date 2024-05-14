@@ -69,6 +69,7 @@ cluster_hits <- function(top_tables,
                               meta = meta, 
                               condition = condition, 
                               spline_params = spline_params,
+                              mode = mode,
                               p_values = p_values, 
                               clusters = clusters,
                               meta_batch_column = meta_batch_column,
@@ -103,6 +104,7 @@ control_inputs_cluster_hits <- function(top_tables,
                                         data, 
                                         meta, 
                                         spline_params,
+                                        mode,
                                         condition, 
                                         p_values, 
                                         clusters, 
@@ -116,72 +118,9 @@ control_inputs_cluster_hits <- function(top_tables,
     stop("data must be a matrix")
   }
   
-  if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
-    stop("meta must be a dataframe")
-  }
-  
-  if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
-    stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
-    
-  } else if (!is.na(meta_batch_column)) {
-    print(paste0("Column ", meta_batch_column, " will be used to remove the",
-                 "batch effect for plotting only."))
-  } else {
-    print("Batch effect will not be removed for plotting!")
-  }
-  
-  
-  if ("spline_type" %in% names(spline_params)) {
-    if (!all(spline_params$spline_type %in% c("b", "n"))) {
-      stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
-           natural cubic splines")
-    }
-  } else {
-    stop("spline_type is missing.")
-  }
-  
-  # Check if degrees exists and is an integer vector
-  if ("degrees" %in% names(spline_params)) {
-    if (!all(spline_params$degrees == as.integer(spline_params$degrees))) {
-      stop("degrees must be an integer vector.")
-    }
-  } else if (!all(spline_params$spline_type %in% c("n"))) {
-    stop("degrees is missing.")
-  }
-  
-  # Check if DoFs exists and is an integer vector
-  if ("DoFs" %in% names(spline_params)) {
-    if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
-      stop("DoFs must be an integer vector.")
-    }
-  }
-  
-  # Check if knots exists and is a list of numeric vectors
-  if ("knots" %in% names(spline_params)) {
-    if (!is.list(spline_params$knots) || 
-        any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
-      stop("knots must be a list of numeric vectors.")
-    }
-  }
-  
-  if (("DoFs" %in% names(spline_params)) && 
-      ("knots" %in% names(spline_params))) {
-    stop("Either DoFs or knots must be present, but not both.")
-  } else if (!("DoFs" %in% names(spline_params)) && 
-             !("knots" %in% names(spline_params))) {
-    stop("At least one of DoFs or knots must be present.")
-  }
-  
-  # Check if bknots exists and is a list of numeric vectors
-  if ("bknots" %in% names(spline_params)) {
-    if (!is.list(spline_params$bknots) || 
-        any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
-      stop("bknots must be a list of numeric vectors.")
-    }
-  }
-  
-  
-  
+  check_meta(meta, meta_batch_column)
+
+  check_spline_params(spline_params, mode)
   
   if (!(is.character(condition)) || length(condition) != 1) {
     stop("condition must be a character vector with length 1")
@@ -327,6 +266,23 @@ make_clustering_report <- function(all_levels_clustering,
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+check_meta <- function(meta, meta_batch_column) {
+  if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
+    stop("meta must be a dataframe containing the column Time")
+  }
+  
+  if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
+    stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
+    
+  } else if (!is.na(meta_batch_column)) {
+    print(paste0("Column ", meta_batch_column, " will be used to remove the ",
+                 "batch effect for the plotting"))
+  } else {
+    print("Batch effect will not be removed for plotting!")
+  }
+}
 
 
 process_level_cluster <- function(top_table,
@@ -505,28 +461,31 @@ plot_heatmap <- function(data,
 #' @importFrom ggplot2 theme_minimal
 #' @importFrom ggplot2 theme
 #' 
-plot_dendrogram <- function(hc, 
-                            k, 
+plot_dendrogram <- function(hc,
+                            k,
                             title) {
   dend <- stats::as.dendrogram(hc)
   clusters <- stats::cutree(hc, k)
-  
-  palette_name <- "Set3" 
-  max_colors_in_palette <- 
+
+  palette_name <- "Set3"
+  max_colors_in_palette <-
     RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
-  colors <- 
+  colors <-
     RColorBrewer::brewer.pal(min(max_colors_in_palette, k), palette_name)
   if (k > max_colors_in_palette) {
     colors <- rep(colors, length.out = k)
   }
-  
-  dend_colored <- dendextend::color_branches(dend, k = k, 
+
+  dend_colored <- dendextend::color_branches(dend, k = k,
                                              labels_colors = colors)
-  dend_colored <- set(dend_colored, "labels", value = NULL)
   
+  if (!is.null(dend_colored$labels)) {
+    dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
+  }
+
   ggdend <- dendextend::as.ggdend(dend_colored)
-  p_dend <- ggplot2::ggplot(ggdend) + 
-    labs(title = title, 
+  p_dend <- ggplot2::ggplot(ggdend) +
+    labs(title = title,
          x = "", y = "") +
     theme_minimal() +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
@@ -712,7 +671,6 @@ plot_splines <- function(top_table,
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
     
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
-    # X <- splines::ns(Time, df = DoF, intercept = FALSE)
     
     fitted_values <- X %*% spline_coeffs + intercept
     
