@@ -946,6 +946,18 @@ check_max_and_min_dof <- function(spline_test_configs,
     process_row(row)
   })
   
+  for (i in seq_along(DoFs)) {
+    DoF <- DoFs[i]
+    spline_type <- spline_test_configs$spline_type[[i]]
+    
+    if (spline_type == "b") {
+      if (DoF < 3) {
+        stop(paste0("B-splines require DoF > 2, for spline_params spline_type ", 
+                    "row index ", i))
+      }
+    }
+  }
+  
   DoFs <- as.numeric(DoFs)
   
   min_DoF <- min(DoFs)
