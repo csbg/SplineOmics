@@ -60,6 +60,7 @@ cluster_hits <- function(top_tables,
                          mode = c("isolated", "integrated"),
                          p_values, 
                          clusters, 
+                         report_info,
                          meta_batch_column = NA,
                          report_dir = here::here()) {
   
@@ -72,6 +73,7 @@ cluster_hits <- function(top_tables,
                               mode = mode,
                               p_values = p_values, 
                               clusters = clusters,
+                              report_info = report_info,
                               meta_batch_column = meta_batch_column,
                               report_dir = report_dir)
   
@@ -90,6 +92,7 @@ cluster_hits <- function(top_tables,
                          p_values = p_values, 
                          report_dir = report_dir,
                          feature_names = feature_names,
+                         report_info = report_info,
                          meta_batch_column = meta_batch_column)
   
   return(all_levels_clustering)
@@ -108,8 +111,10 @@ control_inputs_cluster_hits <- function(top_tables,
                                         condition, 
                                         p_values, 
                                         clusters, 
+                                        report_info,
                                         meta_batch_column,
                                         report_dir) {
+  
   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
     stop("top_tables must be a list of dataframes")
   }
@@ -134,6 +139,8 @@ control_inputs_cluster_hits <- function(top_tables,
       !all(sapply(clusters, function(x) is.character(x) || is.numeric(x)))) {
     stop("clusters must be a list containing only character or numeric types.")
   }
+  
+  validate_report_info(report_info)
   
   if (!is.character(report_dir) || length(report_dir) != 1) {
     stop("report_dir must be a character vector with length 1")
@@ -173,6 +180,7 @@ make_clustering_report <- function(all_levels_clustering,
                                    p_values, 
                                    report_dir,
                                    feature_names,
+                                   report_info,
                                    meta_batch_column) {
   
   if (!is.na(meta_batch_column)) {
@@ -206,14 +214,9 @@ make_clustering_report <- function(all_levels_clustering,
     
     curve_values <- level_clustering$curve_values
     
-    title <- 
-      "Exponential phase\n\nHierarchical Clustering Dendrogram 
-       (colors = clusters)"
-    dendrogram <- plot_dendrogram(level_clustering$hc, clusters[i], title)
+    dendrogram <- plot_dendrogram(level_clustering$hc, clusters[i])
     
-    title <- 
-      "Average Curves by Cluster (colors not matching with plot above!)"
-    p_curves <- plot_all_shapes(curve_values, title)
+    p_curves <- plot_all_shapes(curve_values)
     
     title <- paste("min-max normalized shapes | ", "cluster", sep = " ")
     consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
@@ -263,9 +266,10 @@ make_clustering_report <- function(all_levels_clustering,
                      1.5,
                      unlist(nrows))
   }
-  generate_report_html(plots, 
-                       plots_sizes, 
-                       report_dir)
+  generate_report_html(plots = plots, 
+                       plots_sizes = plots_sizes, 
+                       report_info = report_info,
+                       report_dir =report_dir)
 }
 
 
@@ -282,8 +286,8 @@ check_meta <- function(meta, meta_batch_column) {
     stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
     
   } else if (!is.na(meta_batch_column)) {
-    print(paste0("Column ", meta_batch_column, " will be used to remove the ",
-                 "batch effect for the plotting"))
+    print(paste0("Column ", meta_batch_column, " of meta will be used to ",
+                 "remove the batch effect for the plotting"))
   } else {
     print("Batch effect will not be removed for plotting!")
   }
@@ -480,9 +484,8 @@ plot_log2_intensity_shapes <- function() {
 #' @importFrom ggplot2 theme_minimal
 #' @importFrom ggplot2 theme
 #' 
-plot_dendrogram <- function(hc,
-                            k,
-                            title) {
+plot_dendrogram <- function(hc, k) {
+  
   dend <- stats::as.dendrogram(hc)
   clusters <- stats::cutree(hc, k)
 
@@ -504,7 +507,7 @@ plot_dendrogram <- function(hc,
 
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
-    labs(title = title,
+    labs(title = "Hierarchical Clustering Dendrogram (colors = clusters)",
          x = "", y = "") +
     theme_minimal() +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
@@ -520,8 +523,8 @@ plot_dendrogram <- function(hc,
 #' @importFrom ggplot2 scale_color_brewer
 #' @importFrom ggplot2 theme_minimal
 #' 
-plot_all_shapes <- function(curve_values, 
-                            title) {
+plot_all_shapes <- function(curve_values) {
+  
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   
   clusters <- unique(curve_values$cluster)
@@ -550,8 +553,8 @@ plot_all_shapes <- function(curve_values,
   p_curves <- ggplot2::ggplot(average_curves, aes(x = Time, y = Value, color = 
                                                     factor(cluster))) +
     geom_line() + 
-    ggtitle(title) +
-    xlab("Timepoints") + ylab("Values") +
+    ggtitle("Average Curves by Cluster") +
+    xlab("Time") + ylab("min-max normalized intensities") +
     scale_color_brewer(palette = "Dark2", 
                        name = "Cluster") + 
     theme_minimal()
@@ -764,44 +767,84 @@ plot_splines <- function(top_table,
 #' 
 generate_report_html <- function(plots, 
                                  plots_sizes, 
+                                 omics_data_type,
+                                 report_info,
                                  report_dir) {
+  
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
-  omics_data_type <- "PTX"
-  header_text <- paste("limma clustered hits", 
-                       omics_data_type, timestamp, sep=" | ")
-  
-  if (omics_data_type == "PTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: E12_TP05_Exponential & 
-      E10_TP10_Stationary removed<br>(Note: batch-corrected data used for 
-      plotting
-      individual blue datapoints (plots with the red spline, below))"
-  } else if (omics_data_type == "PPTX") {
-    design_text <- "splines | X,data = exp AND stat | limma design: 1 + 
-      Phase*X + Reactor | timepoints: all<br>(Note: batch-corrected data used 
-      for plotting
-      individual blue datapoints (plots with the red spline, below))"
-  }
-  
-  html_content <- paste(
-    "<html><head><title>My Plots</title></head><body>",
-    "<h1 style='color:red;'>", header_text, "</h1>",
-    "<h2>Design</h2>",
-    "<p>", design_text, "</p>",
-    "</body></html>",
+  header_text <- paste("clustered hits", 
+                       report_info$omics_data_type, 
+                       timestamp, sep=" | ")
+
+  header_section <- paste(
+    "<html><head><title>clustered_hits</title>",
+    "<style>",
+    "table {",
+    "  font-size: 30px;", 
+    "}",
+    "td {",
+    "  padding: 8px;",  # Adds padding to table cells for better readability
+    "  text-align: left;",  # Ensures text in cells is left-aligned
+    "}",
+    "td:first-child {",
+    "  text-align: right;",  # Right aligns the first column
+    "  color: blue;",        # Sets the color of the first column to blue
+    "}",
+    "h1 {",
+    "  color: #333333;",  # Dark gray color for the title
+    "}",
+    "hr {",
+    "  margin-top: 20px;",  # Space above the line
+    "  margin-bottom: 20px;",  # Space below the line
+    "}",
+    "</style>",
+    "</head><body>",
+    "<h1>", header_text, "</h1>",
+    "<table>",
     sep=""
   )
   
-  file_name <- sprintf("report_clustered_splines_%s_%s.html",
-                       omics_data_type, timestamp)
+  all_fields <- c("omics_data_type",
+                  "data_description", 
+                  "data_collection_date",
+                  "analyst_name", 
+                  "project_name",
+                  "dataset_name", 
+                  "limma_design",
+                  "method_description",
+                  "results_summary", 
+                  "conclusions",
+                  "contact_info")
+  
+  max_field_length <- max(nchar(gsub("_", " ", all_fields)))
+
+  # Add information from the report_info list to the header section
+  for (field in all_fields) {
+    value <- ifelse(is.null(report_info[[field]]), "NA", report_info[[field]])
+    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
+    header_section <- paste(header_section,
+                            sprintf('<tr><td style="text-align: right; 
+                                    color:blue; padding-right: 5px;">%s 
+                                    :</td><td>%s</td></tr>',
+                                    field_display, value),
+                            sep = "\n")
+  }
+  
+  # Close the table
+  header_section <- paste(header_section, "</table>", sep = "\n")
+  
+
+  file_name <- sprintf("report_clustered_hits_%s_%s.html",
+                       report_info$omics_data_type, 
+                       timestamp)
   
   output_file_path <- here::here(report_dir, file_name)
   
-  build_plot_report_html(html_content, 
-                         plots, 
-                         plots_sizes, 
-                         output_file_path)
+  build_plot_report_html(header_section = header_section, 
+                         plots = plots, 
+                         plots_sizes = plots_sizes, 
+                         output_file_path = output_file_path)
 }
 
 

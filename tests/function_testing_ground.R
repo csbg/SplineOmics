@@ -144,6 +144,20 @@ p_values <- c(0.05, 0.05)
 clusters <- list(6L, 3L)
 report_dir <- here::here("results", "clustering_reports")
 
+report_info <- list(
+  omics_data_type = "PTX",
+  data_description = "Gene expression levels over time.",
+  data_collection_date = "2024-05-15",
+  analyst_name = "Thomas Rauter",
+  project_name = "DGTX",
+  dataset_name = "CHO Cell Study",
+  limma_design = design,
+  method_description = "Spline analysis for time-series data.",
+  results_summary = "Identified significant changes in gene expression.",
+  conclusions = "Potential biomarkers identified for further validation.",
+  contact_info = "rauterthomas0@gmail.com"
+)
+
 # debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables, 
                                    data = data, 
@@ -153,6 +167,7 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    mode = "integrated",
                                    p_values = p_values, 
                                    clusters = clusters, 
+                                   report_info = report_info,
                                    meta_batch_column,
                                    report_dir = report_dir)
 

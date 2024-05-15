@@ -2,8 +2,51 @@
 
 
 check_spline_params <- function(spline_params, mode) {
+  
   check_spline_params_generally(spline_params)
   check_spline_params_mode_dependent(spline_params, mode)
+}
+
+
+validate_report_info <- function(report_info) {
+  
+  mandatory_fields <- c("omics_data_type", "data_description", 
+                        "data_collection_date", "analyst_name", 
+                        "project_name", "dataset_name", "limma_design")
+  
+  # Check if report_info is a named list
+  if (!is.list(report_info) || is.null(names(report_info))) {
+    stop("report_info must be a named list.")
+  }
+  
+  # Check if all values in report_info are strings
+  non_string_fields <- sapply(report_info, function(x) !is.character(x))
+  if (any(non_string_fields)) {
+    invalid_fields <- names(report_info)[non_string_fields]
+    stop(paste("The following fields must be strings:", paste(invalid_fields, 
+                                                              collapse = ", ")))
+  }
+  
+  # Check if all mandatory fields are present
+  missing_fields <- setdiff(mandatory_fields, names(report_info))
+  if (length(missing_fields) > 0) {
+    stop(paste("Missing mandatory fields:", paste(missing_fields, 
+                                                  collapse = ", ")))
+  }
+  
+  if (!grepl("^[a-zA-Z_]+$", report_info[["omics_data_type"]])) {
+    stop("The 'omics_data_type' field must contain only alphabetic letters 
+         and underscores.")
+  }
+  
+  long_fields <- sapply(report_info, function(x) any(nchar(x) > 110))
+  if (any(long_fields)) {
+    too_long_fields <- names(report_info)[long_fields]
+    stop(paste("The following fields have strings exceeding 110 characters:", 
+               paste(too_long_fields, collapse = ", ")))
+  }
+
+  return(TRUE)
 }
 
 
@@ -157,7 +200,12 @@ check_spline_params_mode_dependent <- function(spline_params, mode) {
 build_plot_report_html <- function(header_section, 
                                    plots, 
                                    plots_sizes, 
-                                   path) {
+                                   output_file_path) {
+
+  header_section <- paste(header_section,
+                          "<div style='margin-top: 30px; margin-bottom: 30px;
+                          '><hr></div>",
+                          sep="\n")
 
   for (index in seq_along(plots)) {
     plot <- plots[[index]]
@@ -165,16 +213,16 @@ build_plot_report_html <- function(header_section,
     img_tag <- plot2base64(plot, plot_size)
     header_section <- paste(header_section, img_tag, sep="\n")
   }
-  
+
   html_content <- paste(header_section, "</body></html>", sep="\n")
   
-  dir_path <- dirname(path)
+  dir_path <- dirname(output_file_path)
   
   if (!dir.exists(dir_path)) {
     dir.create(dir_path, recursive = TRUE)
   }
   
-  writeLines(html_content, path)
+  writeLines(html_content, output_file_path)
 }
 
 
