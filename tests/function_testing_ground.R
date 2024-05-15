@@ -41,6 +41,9 @@ library(circlize)
 library(grid)
 library(cluster)
 
+# utils
+library(ragg)
+
 # library(splinetime)
 
 ## Source functions ---------------------------------
@@ -119,9 +122,8 @@ design <- "~ 1 + Phase*X + Reactor"
 # design <- "~ 1 + X + Reactor"
 
 
-spline_params = list(spline_type = c("b"),
-                     degrees = c(3L),
-                     DoFs = c(3L))
+spline_params = list(spline_type = c("n"),
+                     DoFs = c(2L))
 
 # debug(run_limma_splines)
 result <- run_limma_splines(data, 

@@ -1,55 +1,9 @@
-#' @importFrom ggplot2 ggsave
-#' @importFrom base64enc dataURI
-#' 
-plot2base64 <- function(plot, 
-                        plot_nrows, 
-                        width = 7, 
-                        base_height_per_row = 2.5, 
-                        units = "in", 
-                        html_img_width="100%") {
-  additional_height_per_row <- 2.1
-  height <- base_height_per_row + (plot_nrows - 1) * 
-    additional_height_per_row
-  
-  # Temporarily save the plot as an image
-  img_file <- tempfile(fileext = ".png")
-  ggplot2::ggsave(img_file, plot=plot, width = width, height = height, units = units, 
-                  limitsize = FALSE)
-  
-  # Convert the image to a Base64 string
-  img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
-  
-  # Delete the temporary image file
-  unlink(img_file)
-  
-  # Return the HTML img tag with the Base64 string and a fixed width
-  return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
-                 img_base64, html_img_width))
-}
+# Level 1 internal functions ---------------------------------------------------
 
 
-build_plot_report_html <- function(header_section, 
-                                   plots, 
-                                   rowcounts, 
-                                   path) {
-  index <- 1
-  for (plot in plots) {
-    plot_nrows <- rowcounts[[index]]
-    index <- index + 1
-    img_tag <- plot2base64(plot, plot_nrows)
-    header_section <- paste(header_section, img_tag, sep="\n")
-  }
-  
-  # Close the HTML document
-  html_content <- paste(header_section, "</body></html>", sep="\n")
-  
-  dir_path <- dirname(path)
-  
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  writeLines(html_content, path)
+check_spline_params <- function(spline_params, mode) {
+  check_spline_params_generally(spline_params)
+  check_spline_params_mode_dependent(spline_params, mode)
 }
 
 
@@ -86,12 +40,15 @@ generate_report_html_new <- function(plots,
 }
 
 
+# Level 2 internal functions ---------------------------------------------------
+
+
 check_spline_params_generally <- function(spline_params) {
-  
+
   if ("spline_type" %in% names(spline_params)) {
     if (!all(spline_params$spline_type %in% c("b", "n"))) {
       stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
-           natural cubic splines, in spline_params")
+             natural cubic splines, in spline_params")
     }
   } else {
     stop("spline_type is missing in spline_params.")
@@ -116,7 +73,7 @@ check_spline_params_generally <- function(spline_params) {
     for (i in seq_along(spline_params$spline_type)) {
       if (spline_params$spline_type[i] == "b" && spline_params$DoFs[i] < 3) {
         stop(paste0("B-splines require DoF > 2, for spline_params spline_type ", 
-                     "index ", i))
+                    "index ", i))
       }
     }
   }
@@ -197,8 +154,69 @@ check_spline_params_mode_dependent <- function(spline_params, mode) {
 }
 
 
-check_spline_params <- function(spline_params, mode) {
-  check_spline_params_generally(spline_params)
-  check_spline_params_mode_dependent(spline_params, mode)
+build_plot_report_html <- function(header_section, 
+                                   plots, 
+                                   plots_sizes, 
+                                   path) {
+
+  for (index in seq_along(plots)) {
+    plot <- plots[[index]]
+    plot_size <- plots_sizes[[index]]
+    img_tag <- plot2base64(plot, plot_size)
+    header_section <- paste(header_section, img_tag, sep="\n")
+  }
+  
+  html_content <- paste(header_section, "</body></html>", sep="\n")
+  
+  dir_path <- dirname(path)
+  
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  writeLines(html_content, path)
 }
 
+
+
+# Level 2 internal functions ---------------------------------------------------
+
+
+#' @importFrom ggplot2 ggsave
+#' @importFrom base64enc dataURI
+#' @importFrom ragg agg_png
+plot2base64 <- function(plot, 
+                        plot_nrows, 
+                        width = 7, 
+                        base_height_per_row = 2.5, 
+                        units = "in", 
+                        html_img_width = "100%") {
+  
+  additional_height_per_row <- 2.1
+  height <- base_height_per_row + (plot_nrows - 1) * 
+    additional_height_per_row
+  
+  # Create a graphical device in memory using ragg
+  img_file <- tempfile(fileext = ".png")
+  ragg::agg_png(filename = img_file, 
+                width = width, 
+                height = height, 
+                units = units, 
+                res = 300)
+  
+  # Draw the plot
+  print(plot)
+  
+  # Turn off the device
+  dev.off()
+  
+  # Convert the image to a Base64 string
+  img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
+  
+  # Delete the temporary image file
+  unlink(img_file)
+  
+  # Return the HTML img tag with the Base64 string and a fixed width
+  return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
+                 img_base64, html_img_width))
+}

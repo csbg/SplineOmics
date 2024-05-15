@@ -190,21 +190,21 @@ make_clustering_report <- function(all_levels_clustering,
     dir.create(report_dir)
   }
   
-  plot_list <- list()
-  plot_list_nrows <- list()
+  heatmaps <- plot_heatmap(data,
+                           meta,
+                           condition,
+                           feature_names,
+                           all_levels_clustering)
   
-  i <- 0
-  for (level_clustering in all_levels_clustering) {
-    i <- i + 1
+  # log2_intensity_shape <- plot_log2_intensity_shapes()
+
+  plots <- list()
+  plots_sizes <- list()
+  
+  for (i in seq_along(all_levels_clustering)) {
+    level_clustering <- all_levels_clustering[[i]]
     
     curve_values <- level_clustering$curve_values
-    
-    # debug(plot_heatmap)
-    # heatmap <- plot_heatmap(data,
-    #                         meta,
-    #                         condition,
-    #                         feature_names,
-    #                         level_clustering$clustered_hits)
     
     title <- 
       "Exponential phase\n\nHierarchical Clustering Dendrogram 
@@ -249,18 +249,23 @@ make_clustering_report <- function(all_levels_clustering,
       nrows[[length(nrows) + 1]] <- plot_splines_result$nrows 
     }
     
-    plot_list <- c(plot_list, list(dendrogram, p_curves), 
-                   consensus_shape_plots, composite_plots)
+    plots <- c(plots, 
+               list(dendrogram, p_curves), 
+               consensus_shape_plots, 
+               heatmaps[[i]], 
+               composite_plots)
     
-    plot_list_nrows <- c(plot_list_nrows, 2, 2, 
-                         rep(1, length(consensus_shape_plots)), unlist(nrows))
-    
+    # For every plot in plots, this determines the size in the HTML
+    plots_sizes <- c(plots_sizes, 
+                     1.5, 
+                     1.5, 
+                     rep(1, length(consensus_shape_plots)), 
+                     1.5,
+                     unlist(nrows))
   }
-  
-  generate_report_html(plot_list, 
-                       plot_list_nrows, 
+  generate_report_html(plots, 
+                       plots_sizes, 
                        report_dir)
-  
 }
 
 
@@ -326,30 +331,20 @@ plot_heatmap <- function(data,
                          meta,
                          condition,
                          feature_names,
-                         clustered_hits) {
-  clusters <- clustered_hits %>% dplyr::arrange(cluster)
-  data <- data[as.numeric(clusters$feature),]
+                         all_levels_clustering) {
   
-  unique_elements <- unique(meta[[condition]])
   
-  # Step 2 & 3: Get indices and subset the dataframe, then store results in a 
-  # list
-  metas_levels <- lapply(unique_elements, function(element) {
-    # Get indices where the column matches the element
-    indices <- which(meta[[condition]] == element)
-    
-    # Subset the dataframe using these indices
-    meta[indices, ]
-  })
+  # data <- data[as.numeric(clusters$feature),]
   
-  datas_levels <- lapply(unique_elements, function(element) {
-    # Get indices where the column matches the element
-    indices <- which(meta[[condition]] == element)
-    
-    # Subset the dataframe using these indices
-    data[, indices]
-  })
-  
+  # metas_levels <- lapply(unique_elements, function(element) {
+  #   indices <- which(meta[[condition]] == element)
+  #   meta[indices, ]
+  # })
+  # 
+  # datas_levels <- lapply(unique_elements, function(element) {
+  #   indices <- which(meta[[condition]] == element)
+  #   data[, indices]
+  # })
   
   BASE_TEXT_SIZE_PT <- 5
   
@@ -369,84 +364,108 @@ plot_heatmap <- function(data,
     legend_border = FALSE
   )
   
-  for (i in seq_along(datas_levels)) {
-    data <- datas_levels[[i]]
-    meta <- metas_levels[[i]]
-    z_score <- t(scale(t(data)))
+  levels <- unique(meta[[condition]])
+  heatmaps <- list()
+  
+  # Generate a heatmap for every level
+  for (i in seq_along(all_levels_clustering)) {
     
-    ht <- ComplexHeatmap::Heatmap(z_score,
-                                  column_split = meta$Time,
-                                  cluster_columns = FALSE,
-                                  row_split = clusters$cluster,
-                                  cluster_rows = FALSE,
-                                  heatmap_legend_param = list(title = "z-score of 
-                                                    log2 intensity",
-                                                              title_position = 
-                                                                "lefttop-rot"),
-                                  # row_gap = unit(2, "pt"),
-                                  # column_gap = unit(2, "pt"),
-                                  # width = unit(2, "mm") * ncol(z_score) + 5 * unit(2, "pt"), 
-                                  # height = unit(2, "mm") * nrow(z_score) + 5 * unit(2, "pt"), 
-                                  show_row_names = TRUE)
+    level_clustering <- all_levels_clustering[[i]]
     
-    print(ht)
+    clustered_hits <- level_clustering$clustered_hits
+    clusters <- clustered_hits %>% dplyr::arrange(cluster)
     
-    data_to_plot <- data.frame(first_protein_description = 
-                                 rownames(data.matrix.batch.filt.sig), 
-                               data.matrix.batch.filt.sig) %>%
-      dplyr::mutate(cluster_number = clusters_exp$cluster) %>%
-      tidyr::pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
-                          names_to = "sample_name",
-                          values_to = "log2_intensity") %>%
-      tidyr::separate(sample_name, 
-                      into = c("reactor", "time_point", "phase_of_fermentation"),
-                      sep = "_") %>%
-      dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
-                                       length(clusters_exp$feature))) %>%
-      dplyr::group_by(first_protein_description) %>%
-      dplyr::mutate(log2_intensity = rescale(log2_intensity))
+    level <- levels[[i]]
+    level_indices <- which(meta[[condition]] == level)
     
+    data_level <- data[, level_indices]
+    data_level <- data_level[as.numeric(clusters$feature),]
+    z_score <- t(scale(t(data_level)))
     
-    data_to_plot_mean_protein  <- data_to_plot %>%
-      dplyr::group_by(first_protein_description, time_to_feed) %>%
-      dplyr::mutate(mean_intensity_protein = mean(log2_intensity)) %>%
-      ungroup()
+    meta_level <- meta[level_indices, ]
     
-    data_to_plot_mean_tp <- data_to_plot %>%
-      dplyr::group_by(cluster_number, time_to_feed) %>%
-      dplyr::summarise(mean_intensity_tp = mean(log2_intensity)) 
+    ht <- 
+      ComplexHeatmap::Heatmap(z_score,
+                              column_split = meta_level$Time,
+                              cluster_columns = FALSE,
+                              row_split = clusters$cluster,
+                              cluster_rows = FALSE,
+                              heatmap_legend_param = list(title = "z-score of 
+                                                log2 intensity",
+                                                          title_position = 
+                                                            "lefttop-rot"),
+                              row_gap = unit(2, "pt"),
+                              column_gap = unit(2, "pt"),
+                              # width = unit(2, "mm") * ncol(z_score) + 
+                              #   5 * unit(2, "pt"),
+                              # height = unit(2, "mm") * nrow(z_score) + 
+                              #   5 * unit(2, "pt"),
+                              show_row_names = TRUE)
     
-    clusters_exp %>%
-      count(cluster)
-    
-    ggplot2::ggplot(data = data_to_plot_mean_protein) +
-      geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
-                    color = first_protein_description), alpha = 0.5) +
-      geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
-                                                y = mean_intensity_tp), 
-                linewidth = 0.8) +
-      facet_wrap(~cluster_number, ncol = 2, 
-                 labeller = labeller(cluster_number =  
-                                       c("1" = "Cluster 1: 32 proteins",
-                                         "2" = "Cluster 2: 48 proteins",
-                                         "3" = "Cluster 3: 68 proteins",
-                                         "4" = "Cluster 4: 29 proteins",
-                                         "5" = "Cluster 5: 17 proteins",
-                                         "6" = "Cluster 6: 13 proteins")))  +
-      geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
-                 linewidth = 0.5) +  
-      ylab("normalized log2 intensity") +
-      theme_bw() +
-      theme(legend.position = "none",
-            panel.grid.minor = element_blank()) +
-      scale_x_continuous(breaks = data_to_plot$time_to_feed)
-    
-    
-    ht= ComplexHeatmap::draw(ht, heatmap_legend_side = "right")
-    
-    print(ht)
+    heatmaps[[length(heatmaps) + 1]] <- ht
   }
-  return(ht)
+  return(heatmaps)
+}
+
+
+plot_log2_intensity_shapes <- function() {
+  # data_to_plot <- data.frame(first_protein_description = 
+  #                              rownames(data.matrix.batch.filt.sig), 
+  #                            data.matrix.batch.filt.sig) %>%
+  
+  
+  data_to_plot <- data %>%
+    dplyr::mutate(cluster_number = clusters$cluster) %>%
+    tidyr::pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
+                        names_to = "sample_name",
+                        values_to = "log2_intensity") %>%
+    tidyr::separate(sample_name, 
+                    into = c("reactor", "time_point", "phase_of_fermentation"),
+                    sep = "_") %>%
+    dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
+                                     length(clusters_exp$feature))) %>%
+    dplyr::group_by(first_protein_description) %>%
+    dplyr::mutate(log2_intensity = rescale(log2_intensity))
+  
+  
+  data_to_plot_mean_protein  <- data_to_plot %>%
+    dplyr::group_by(first_protein_description, time_to_feed) %>%
+    dplyr::mutate(mean_intensity_protein = mean(log2_intensity)) %>%
+    ungroup()
+  
+  data_to_plot_mean_tp <- data_to_plot %>%
+    dplyr::group_by(cluster_number, time_to_feed) %>%
+    dplyr::summarise(mean_intensity_tp = mean(log2_intensity)) 
+  
+  clusters_exp %>%
+    count(cluster)
+  
+  ggplot2::ggplot(data = data_to_plot_mean_protein) +
+    geom_line(aes(x = time_to_feed, y = mean_intensity_protein, 
+                  color = first_protein_description), alpha = 0.5) +
+    geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed, 
+                                              y = mean_intensity_tp), 
+              linewidth = 0.8) +
+    facet_wrap(~cluster_number, ncol = 2, 
+               labeller = labeller(cluster_number =  
+                                     c("1" = "Cluster 1: 32 proteins",
+                                       "2" = "Cluster 2: 48 proteins",
+                                       "3" = "Cluster 3: 68 proteins",
+                                       "4" = "Cluster 4: 29 proteins",
+                                       "5" = "Cluster 5: 17 proteins",
+                                       "6" = "Cluster 6: 13 proteins")))  +
+    geom_vline(xintercept = 0, linetype = 'dashed', color = 'red', 
+               linewidth = 0.5) +  
+    ylab("normalized log2 intensity") +
+    theme_bw() +
+    theme(legend.position = "none",
+          panel.grid.minor = element_blank()) +
+    scale_x_continuous(breaks = data_to_plot$time_to_feed)
+  
+  # 
+  # ht= ComplexHeatmap::draw(ht, heatmap_legend_side = "right")
+  # 
+  # print(ht)
 }
 
 
@@ -716,8 +735,9 @@ plot_splines <- function(top_table,
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
       patchwork::plot_annotation(title = paste(main_title, "| DoF:", DoF),
-                                 theme = theme(plot.title = element_text(hjust = 0.5, 
-                                                                         size = 14)))
+                                 theme = theme(plot.title = 
+                                                 element_text(hjust = 0.5, 
+                                                              size = 14)))
     return(list(composite_plot = composite_plot, nrows = nrows))
   } else {
     stop("plot_list in function plot_splines splinetime package has length 0!")
@@ -734,16 +754,16 @@ plot_splines <- function(top_table,
 #' the report in the specified directory. The function is internal and not 
 #' exported.
 #'
-#' @param plot_list A list of ggplot objects to be included in the report.
-#' @param plot_list_nrows The number of rows to arrange the plots in the report.
+#' @param plots A list of ggplot objects to be included in the report.
+#' @param plots_sizes The number of rows to arrange the plots in the report.
 #' @param report_dir The directory where the report HTML file will be saved.
 #' @importFrom here here
 #' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices dev.off
 #' @importFrom htmltools save_html
 #' 
-generate_report_html <- function(plot_list, 
-                                 plot_list_nrows, 
+generate_report_html <- function(plots, 
+                                 plots_sizes, 
                                  report_dir) {
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
@@ -779,8 +799,8 @@ generate_report_html <- function(plot_list,
   output_file_path <- here::here(report_dir, file_name)
   
   build_plot_report_html(html_content, 
-                         plot_list, 
-                         plot_list_nrows, 
+                         plots, 
+                         plots_sizes, 
                          output_file_path)
 }
 
