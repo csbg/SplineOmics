@@ -89,8 +89,10 @@ cluster_hits <- function(top_tables,
                          condition = condition, 
                          data = data, 
                          meta = meta, 
+                         spline_params = spline_params,
                          p_values = p_values, 
                          report_dir = report_dir,
+                         mode = mode,
                          feature_names = feature_names,
                          report_info = report_info,
                          meta_batch_column = meta_batch_column)
@@ -177,8 +179,10 @@ make_clustering_report <- function(all_levels_clustering,
                                    condition, 
                                    data, 
                                    meta, 
+                                   spline_params,
                                    p_values, 
                                    report_dir,
+                                   mode,
                                    feature_names,
                                    report_info,
                                    meta_batch_column) {
@@ -205,12 +209,34 @@ make_clustering_report <- function(all_levels_clustering,
                            all_levels_clustering)
   
   # log2_intensity_shape <- plot_log2_intensity_shapes()
-
+  
+  level_headers_info <- list()
   plots <- list()
   plots_sizes <- list()
   
   for (i in seq_along(all_levels_clustering)) {
     level_clustering <- all_levels_clustering[[i]]
+    
+    
+    levels <- unique(meta[[condition]])
+    
+    if (length(levels) >= i) {
+      # ith unique value from the 'condition' column of 'meta'
+      ith_unique_value <- levels[i]
+      
+      # Construct header name
+      header_name <- sprintf("Level: %s", ith_unique_value)
+      
+      # Determine the number of plots after which the header should be placed
+      header_placement <- if (i == 1) 0 else 4 + clusters[i-1]
+      
+      header_info <- list(header_name = header_name, 
+                          header_placement = header_placement)
+      
+      level_headers_info[[i]] <- header_info
+    }
+    
+    
     
     curve_values <- level_clustering$curve_values
     
@@ -218,10 +244,9 @@ make_clustering_report <- function(all_levels_clustering,
     
     p_curves <- plot_all_shapes(curve_values)
     
-    title <- paste("min-max normalized shapes | ", "cluster", sep = " ")
-    consensus_shape_plots <- plot_consensus_shapes(curve_values, title)
+    consensus_shapes <- plot_consensus_shapes(curve_values)
     
-    main_title <- paste(",cluster:", 1, sep = " ")
+    # main_title <- paste("Cluster", 1, sep = " ")
     
     top_table <- level_clustering$top_table
     p_value <- p_values[i]
@@ -234,7 +259,7 @@ make_clustering_report <- function(all_levels_clustering,
     nrows <- list()
     
     for (nr_cluster in unique(na.omit(top_table$cluster))) {
-      main_title <- paste(",cluster:", nr_cluster, sep = " ")
+      main_title <- paste("Cluster", nr_cluster, sep = " ")
       
       top_table_filt <- top_table %>%
         dplyr::filter(adj.P.Val < p_value, .data$cluster == nr_cluster)
@@ -254,7 +279,7 @@ make_clustering_report <- function(all_levels_clustering,
     
     plots <- c(plots, 
                list(dendrogram, p_curves), 
-               consensus_shape_plots, 
+               list(consensus_shapes$plot), 
                heatmaps[[i]], 
                composite_plots)
     
@@ -262,14 +287,18 @@ make_clustering_report <- function(all_levels_clustering,
     plots_sizes <- c(plots_sizes, 
                      1.5, 
                      1.5, 
-                     rep(1, length(consensus_shape_plots)), 
+                     consensus_shapes$size, 
                      1.5,
                      unlist(nrows))
   }
   generate_report_html(plots = plots, 
-                       plots_sizes = plots_sizes, 
+                       plots_sizes = plots_sizes,
+                       level_headers_info = level_headers_info,
+                       spline_params,
                        report_info = report_info,
-                       report_dir =report_dir)
+                       mode = mode,
+                       filename = "report_clustered_hits",
+                       report_dir = report_dir)
 }
 
 
@@ -501,9 +530,7 @@ plot_dendrogram <- function(hc, k) {
   dend_colored <- dendextend::color_branches(dend, k = k,
                                              labels_colors = colors)
   
-  if (!is.null(dend_colored$labels)) {
-    dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
-  }
+  dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
 
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
@@ -577,6 +604,7 @@ plot_all_shapes <- function(curve_values) {
 #' 
 plot_single_and_consensus_splines <- function(time_series_data, 
                                               title) {
+  
   # Transform the dataframe to a long format for ggplot2
   df_long <- as.data.frame(t(time_series_data)) %>%
     tibble::rownames_to_column(var = "time") %>%
@@ -600,9 +628,7 @@ plot_single_and_consensus_splines <- function(time_series_data,
     scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
                                        "Single Shapes" = "#6495ED")) +
     theme_minimal() +
-    ggtitle(title) +
-    xlab("time to feeding [min]") +
-    ylab("Y")
+    ggtitle(title)
   
   return(p)
 }
@@ -624,21 +650,30 @@ plot_single_and_consensus_splines <- function(time_series_data,
 #' appending the cluster number.
 #' @return A list of ggplot objects, each representing a plot for a cluster.
 #' 
-plot_consensus_shapes <- function(curve_values, 
-                                  title) {
+plot_consensus_shapes <- function(curve_values) {
+  
   clusters <- sort(unique(curve_values$cluster))
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   
   plots <- list()
   for (current_cluster in clusters) {
-    current_title <- paste(title, current_cluster, sep = "_")
+    current_title <- paste("Cluster", current_cluster, sep = " ")
     subset_df <- subset(curve_values, cluster == current_cluster)
     subset_df$cluster <- NULL 
     
-    plots[[length(plots) + 1]] <- plot_single_and_consensus_splines(
-      subset_df, current_title)
+    plots[[length(plots) + 1]] <- 
+      plot_single_and_consensus_splines(subset_df, current_title)
   }
-  return(plots)
+  
+  composite_consensus_shapes_plot <- 
+    patchwork::wrap_plots(plots, ncol = 2) + 
+    patchwork::plot_annotation(
+      title = "min-max normalized single and consensus shapes",
+      theme = ggplot2::theme(plot.title = element_text(hjust = 0.5, size = 14))
+    )
+
+  list(plot = composite_consensus_shapes_plot, 
+       size = length(plots)/2)
 }
 
 
@@ -737,7 +772,7 @@ plot_splines <- function(top_table,
     nrows <- ceiling(num_plots / ncol)
     
     composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) + 
-      patchwork::plot_annotation(title = paste(main_title, "| DoF:", DoF),
+      patchwork::plot_annotation(title = main_title,
                                  theme = theme(plot.title = 
                                                  element_text(hjust = 0.5, 
                                                               size = 14)))
@@ -745,106 +780,6 @@ plot_splines <- function(top_table,
   } else {
     stop("plot_list in function plot_splines splinetime package has length 0!")
   }
-}
-
-
-#' Generate HTML Report with Plot List
-#'
-#' This function generates an HTML report for a given list of plots. It 
-#' includes
-#' headers and design details specific to the data type being analyzed, and 
-#' saves
-#' the report in the specified directory. The function is internal and not 
-#' exported.
-#'
-#' @param plots A list of ggplot objects to be included in the report.
-#' @param plots_sizes The number of rows to arrange the plots in the report.
-#' @param report_dir The directory where the report HTML file will be saved.
-#' @importFrom here here
-#' @importFrom tools file_path_sans_ext
-#' @importFrom grDevices dev.off
-#' @importFrom htmltools save_html
-#' 
-generate_report_html <- function(plots, 
-                                 plots_sizes, 
-                                 omics_data_type,
-                                 report_info,
-                                 report_dir) {
-  
-  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
-  
-  header_text <- paste("clustered hits", 
-                       report_info$omics_data_type, 
-                       timestamp, sep=" | ")
-
-  header_section <- paste(
-    "<html><head><title>clustered_hits</title>",
-    "<style>",
-    "table {",
-    "  font-size: 30px;", 
-    "}",
-    "td {",
-    "  padding: 8px;",  # Adds padding to table cells for better readability
-    "  text-align: left;",  # Ensures text in cells is left-aligned
-    "}",
-    "td:first-child {",
-    "  text-align: right;",  # Right aligns the first column
-    "  color: blue;",        # Sets the color of the first column to blue
-    "}",
-    "h1 {",
-    "  color: #333333;",  # Dark gray color for the title
-    "}",
-    "hr {",
-    "  margin-top: 20px;",  # Space above the line
-    "  margin-bottom: 20px;",  # Space below the line
-    "}",
-    "</style>",
-    "</head><body>",
-    "<h1>", header_text, "</h1>",
-    "<table>",
-    sep=""
-  )
-  
-  all_fields <- c("omics_data_type",
-                  "data_description", 
-                  "data_collection_date",
-                  "analyst_name", 
-                  "project_name",
-                  "dataset_name", 
-                  "limma_design",
-                  "method_description",
-                  "results_summary", 
-                  "conclusions",
-                  "contact_info")
-  
-  max_field_length <- max(nchar(gsub("_", " ", all_fields)))
-
-  # Add information from the report_info list to the header section
-  for (field in all_fields) {
-    value <- ifelse(is.null(report_info[[field]]), "NA", report_info[[field]])
-    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
-    header_section <- paste(header_section,
-                            sprintf('<tr><td style="text-align: right; 
-                                    color:blue; padding-right: 5px;">%s 
-                                    :</td><td>%s</td></tr>',
-                                    field_display, value),
-                            sep = "\n")
-  }
-  
-  # Close the table
-  header_section <- paste(header_section, "</table>", sep = "\n")
-  
-
-  file_name <- sprintf("report_clustered_hits_%s_%s.html",
-                       report_info$omics_data_type, 
-                       timestamp)
-  
-  output_file_path <- here::here(report_dir, file_name)
-  
-  build_plot_report_html(header_section = header_section, 
-                         plots = plots, 
-                         plots_sizes = plots_sizes, 
-                         output_file_path = output_file_path)
 }
 
 

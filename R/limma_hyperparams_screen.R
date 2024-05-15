@@ -50,6 +50,7 @@ limma_hyperparams_screen <- function(datas,
                                      condition, 
                                      spline_test_configs,
                                      feature_names, 
+                                     report_info,
                                      report_dir = here::here(),
                                      adj_pthresh = c(0.05),
                                      meta_batch_column = NA,
@@ -63,6 +64,7 @@ limma_hyperparams_screen <- function(datas,
                                   condition = condition,
                                   spline_test_configs = spline_test_configs,
                                   feature_names = feature_names,
+                                  report_info = report_info,
                                   report_dir = report_dir,
                                   adj_pthresh = adj_pthresh,
                                   meta_batch_column = meta_batch_column,
@@ -89,6 +91,7 @@ limma_hyperparams_screen <- function(datas,
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   generate_reports(combo_pair_plots = combo_pair_plots, 
+                   report_info = report_info,
                    report_dir = report_dir,
                    timestamp = timestamp)
   
@@ -112,6 +115,7 @@ control_inputs_hyperpara_screen <- function(datas,
                                             condition, 
                                             spline_test_configs,
                                             feature_names, 
+                                            report_info,
                                             report_dir,
                                             adj_pthresh, 
                                             meta_batch_column,
@@ -147,6 +151,8 @@ control_inputs_hyperpara_screen <- function(datas,
   if (!is.character(feature_names)) {
     stop("'feature_names' must be a character vector.")
   }
+  
+  validate_report_info(report_info)
   
   # Check if report_dir is a non-empty string
   if (!is.character(report_dir) || nchar(report_dir) == 0) {
@@ -262,15 +268,17 @@ plot_limma_combos_results <- function(top_tables_combos,
 #' @importFrom purrr imap
 #' 
 generate_reports <- function(combo_pair_plots, 
+                             report_info,
                              report_dir,
                              timestamp) {
+  
   print("Building .html reports for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pair_plots)
   pb <- progress::progress_bar$new(total = progress_ticks, 
                                    format = "[:bar] :percent")
   
   result <- purrr::imap(combo_pair_plots, ~{
-    process_combo_pair(.x, .y, report_dir, timestamp)
+    process_combo_pair(.x, .y, report_info, report_dir, timestamp)
     pb$tick()  
   })
 }
@@ -847,6 +855,7 @@ gen_composite_spline_plots <- function(internal_combos,
 
 process_combo_pair <- function(combo_pair, 
                                combo_pair_name, 
+                               report_info,
                                report_dir,
                                timestamp) {
   plots <- list()
@@ -876,11 +885,13 @@ process_combo_pair <- function(combo_pair,
   }
   
   # Function is in splinetime_general_fun.R
-  generate_report_html_new(plots, 
-                           plots_len, 
-                           report_dir, 
-                           combo_pair_name,
-                           timestamp)
+  generate_report_html(plots = plots, 
+                       plots_sizes = plots_len, 
+                       level_headers_info = level_headers_info,
+                       report_info = report_info,
+                       filename = combo_pair_name,
+                       timestamp = timestamp,
+                       report_dir = report_dir, )
 }
 
 

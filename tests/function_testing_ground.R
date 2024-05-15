@@ -99,6 +99,15 @@ spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
                                   knots = I(list(c(0), c(0, 60), c(0, 60, 120))),
                                   bknots = c(NA, NA, NA))
 
+report_info <- list(
+  omics_data_type = "PTX",
+  data_description = "Gene expression levels over time.",
+  data_collection_date = "2024-05-15",
+  analyst_name = "Thomas Rauter",
+  project_name = "DGTX",
+  contact_info = "rauterthomas0@gmail.com"
+)
+
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
@@ -110,6 +119,7 @@ spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
 #                                    condition,
 #                                    spline_test_configs,
 #                                    feature_names,
+#                                    report_info,
 #                                    report_dir,
 #                                    pthresholds,
 #                                    meta_batch_column)
