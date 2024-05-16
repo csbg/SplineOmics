@@ -1,3 +1,14 @@
+#' limma_hyperparams_screen.R contains the exported package function 
+#' limma_hyperparams_screen  and all the functions that make up the 
+#' functionality of limma_hyperparams_screen. limma_hyperparams_screen runs the 
+#' other package function, run_limma_splines, for a time series omics dataset,
+#' for different hyperparameters. Such are for example degree of freedom of the
+#' spline, type of spline, limma design formula, and different versions of the 
+#' data (full data vs. outliers removed). This can result in several 
+#' combinations, and it is tedious analyzing the combination in an organised 
+#' and structured manner. Therefore, this function streamlines that process.
+
+
 # Exported function: limma_hyperparams_screen() --------------------------------
 
 #' Limma Hyperparameters Screening
@@ -544,14 +555,25 @@ process_combo <- function(data_index,
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
   
-  result <- run_limma_splines(data = data, 
-                              meta = meta, 
-                              design = design, 
-                              spline_params = spline_params, 
-                              condition = condition,
-                              feature_names = feature_names, 
-                              mode = mode, 
-                              padjust_method = padjust_method)
+  # result <- run_limma_splines(data = data, 
+  #                             meta = meta, 
+  #                             design = design, 
+  #                             spline_params = spline_params, 
+  #                             condition = condition,
+  #                             feature_names = feature_names, 
+  #                             mode = mode, 
+  #                             padjust_method = padjust_method)
+  
+  # This will not affect warnings and error messages!
+  result <- suppressMessages(run_limma_splines(data = data, 
+                                               meta = meta, 
+                                               design = design, 
+                                               spline_params = spline_params, 
+                                               condition = condition,
+                                               feature_names = feature_names, 
+                                               mode = mode, 
+                                               padjust_method = padjust_method))
+  
   
   result$top_tables
 }
@@ -888,6 +910,7 @@ process_combo_pair <- function(combo_pair,
   generate_report_html(plots = plots, 
                        plots_sizes = plots_len, 
                        level_headers_info = level_headers_info,
+                       spline_params = spline_params,
                        report_info = report_info,
                        filename = combo_pair_name,
                        timestamp = timestamp,

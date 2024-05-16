@@ -1,3 +1,9 @@
+#' cluster_hits.R contains the exported package function cluster_hits and all
+#' the functions that make up the functionality of cluster_hits. cluster_hits
+#' clusters the hits of a time series omics datasets (the features that were 
+#' significantly changed over the time course) with hierarchical clustering of
+#' the spline shape.
+
 
 # Exported function: cluster_hits() --------------------------------------------
 
@@ -47,24 +53,24 @@
 #'                                   c(3), "path/to/report/dir")
 #' }
 #'
-#' 
 #' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
 #' 
 #' @export
 #' 
-cluster_hits <- function(top_tables, 
+cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          data, 
                          meta, 
-                         condition, 
-                         spline_params,
-                         mode = c("isolated", "integrated"),
-                         p_values, 
-                         clusters, 
-                         report_info,
-                         meta_batch_column = NA,
+                         condition,   # meta factor column
+                         report_info,   # Gets printed on top of the report
+                         mode = "integrated",  # dependent on limma design
+                         spline_params = list(spline_type = c("n"),
+                                              DoFs = c(2L)),
+                         p_values = c(0.05),
+                         clusters = c("auto"),
+                         meta_batch_column = NA,   # to remove batch effect
+                         time_unit = "m",    # For the plot labels
                          report_dir = here::here()) {
-  
-  mode <- match.arg(mode)
+
   control_inputs_cluster_hits(top_tables = top_tables, 
                               data = data, 
                               meta = meta, 
@@ -75,7 +81,14 @@ cluster_hits <- function(top_tables,
                               clusters = clusters,
                               report_info = report_info,
                               meta_batch_column = meta_batch_column,
+                              time_unit = time_unit,
                               report_dir = report_dir)
+  
+  # To set the default p-value threshold for ALL levels.
+  if (is.numeric(p_values) && length(p_values) == 1 && p_values[1] == 0.05) {
+    levels <- unique(meta[[condition]])
+    p_values <- rep(p_values[1], length(levels))
+  }
   
   all_levels_clustering <- perform_clustering(top_tables = top_tables,
                                               p_values = p_values,
@@ -95,7 +108,8 @@ cluster_hits <- function(top_tables,
                          mode = mode,
                          feature_names = feature_names,
                          report_info = report_info,
-                         meta_batch_column = meta_batch_column)
+                         meta_batch_column = meta_batch_column,
+                         time_unit = time_unit)
   
   return(all_levels_clustering)
 }
@@ -108,25 +122,26 @@ cluster_hits <- function(top_tables,
 control_inputs_cluster_hits <- function(top_tables, 
                                         data, 
                                         meta, 
-                                        spline_params,
                                         mode,
+                                        spline_params,
                                         condition, 
                                         p_values, 
                                         clusters, 
                                         report_info,
                                         meta_batch_column,
+                                        time_unit,
                                         report_dir) {
   
-  if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
-    stop("top_tables must be a list of dataframes")
-  }
-  
+  check_top_tables(top_tables)
+
   if (!is.matrix(data)) {
     stop("data must be a matrix")
   }
   
   check_meta(meta, meta_batch_column)
-
+  
+  check_mode(mode)
+  
   check_spline_params(spline_params, mode)
   
   if (!(is.character(condition)) || length(condition) != 1) {
@@ -137,12 +152,25 @@ control_inputs_cluster_hits <- function(top_tables,
     stop("p_values must be a numeric vector")
   }
   
-  if (!is.list(clusters) || 
+  if (is.character(clusters) && length(clusters) == 1 && clusters[1] == "auto") 
+    {
+    print(paste0("No cluster amounts were specified as arguments. Default ", 
+                 "argument is automatic cluster estimation."))
+    
+  } else if (!is.list(clusters) || 
       !all(sapply(clusters, function(x) is.character(x) || is.numeric(x)))) {
     stop("clusters must be a list containing only character or numeric types.")
-  }
+  } 
   
   validate_report_info(report_info)
+  
+  if (!(time_unit == "s" || 
+        time_unit == "m" ||
+        time_unit == "h" ||
+        time_unit == "d")) {
+    stop(paste0("time_unit must be one of s for seconds, m for minutes, h for ", 
+                "hours, or d for days. Default is minutes."))
+  }
   
   if (!is.character(report_dir) || length(report_dir) != 1) {
     stop("report_dir must be a character vector with length 1")
@@ -158,6 +186,12 @@ perform_clustering <- function(top_tables,
                                spline_params,
                                mode) {
   levels <- unique(meta[[condition]])
+  
+  if (is.character(clusters) && length(clusters) == 1 && clusters[1] == "auto") 
+  {
+    clusters <- rep(clusters[1], length(levels))
+    
+  }
   
   all_levels_clustering <- mapply(process_level_cluster, 
                                   top_tables, 
@@ -185,7 +219,8 @@ make_clustering_report <- function(all_levels_clustering,
                                    mode,
                                    feature_names,
                                    report_info,
-                                   meta_batch_column) {
+                                   meta_batch_column,
+                                   time_unit = time_unit) {
   
   if (!is.na(meta_batch_column)) {
     data <- removeBatchEffect(x = data, batch = meta[[meta_batch_column]])
@@ -202,11 +237,22 @@ make_clustering_report <- function(all_levels_clustering,
     dir.create(report_dir)
   }
   
+  if (time_unit == "s") {
+    time_unit_label = "[sec]"
+  } else if (time_unit == "m") {
+    time_unit_label = "[min]"
+  } else if (time_unit == "h") {    
+    time_unit_label = "[hours]"
+  } else {                        # time-unit == "d"
+    time_unit_label = "[days]"
+  }
+  
   heatmaps <- plot_heatmap(data,
                            meta,
                            condition,
                            feature_names,
-                           all_levels_clustering)
+                           all_levels_clustering,
+                           time_unit_label)
   
   # log2_intensity_shape <- plot_log2_intensity_shapes()
   
@@ -236,17 +282,13 @@ make_clustering_report <- function(all_levels_clustering,
       level_headers_info[[i]] <- header_info
     }
     
-    
-    
     curve_values <- level_clustering$curve_values
     
     dendrogram <- plot_dendrogram(level_clustering$hc, clusters[i])
     
-    p_curves <- plot_all_shapes(curve_values)
+    p_curves <- plot_all_shapes(curve_values, time_unit_label)
     
-    consensus_shapes <- plot_consensus_shapes(curve_values)
-    
-    # main_title <- paste("Cluster", 1, sep = " ")
+    consensus_shapes <- plot_consensus_shapes(curve_values, time_unit_label)
     
     top_table <- level_clustering$top_table
     p_value <- p_values[i]
@@ -269,7 +311,8 @@ make_clustering_report <- function(all_levels_clustering,
                                           data_level, 
                                           meta_level,
                                           X,
-                                          main_title)
+                                          main_title,
+                                          time_unit_label)
       
       composite_plots[[length(composite_plots) + 1]] <- 
         plot_splines_result$composite_plot 
@@ -291,11 +334,13 @@ make_clustering_report <- function(all_levels_clustering,
                      1.5,
                      unlist(nrows))
   }
+  print("Generating report. This takes a few seconds.")
   generate_report_html(plots = plots, 
                        plots_sizes = plots_sizes,
                        level_headers_info = level_headers_info,
                        spline_params,
                        report_info = report_info,
+                       report_type = "cluster_hits",
                        mode = mode,
                        filename = "report_clustered_hits",
                        report_dir = report_dir)
@@ -304,6 +349,17 @@ make_clustering_report <- function(all_levels_clustering,
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+check_top_tables <- function(top_tables) {
+  if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
+    stop("top_tables must be a list of dataframes")
+  } else {
+    for (top_table in top_tables) {
+      check_dataframe(top_table)
+    }
+  }
+}
 
 
 check_meta <- function(meta, meta_batch_column) {
@@ -345,10 +401,12 @@ process_level_cluster <- function(top_table,
   
   normalized_curves <- normalize_curves(curve_results$curve_values)
   
-  clustering_result <- hierarchical_clustering(normalized_curves, 
-                                               cluster_size, 
-                                               curve_results$smooth_timepoints, 
-                                               top_table)
+  clustering_result <- 
+    hierarchical_clustering(curve_values = normalized_curves, 
+                            k = cluster_size, 
+                            smooth_timepoints = curve_results$smooth_timepoints, 
+                            top_table = top_table)
+  
   clustering_result$X <- curve_results$X
   return(clustering_result)
 }
@@ -364,21 +422,9 @@ plot_heatmap <- function(data,
                          meta,
                          condition,
                          feature_names,
-                         all_levels_clustering) {
-  
-  
-  # data <- data[as.numeric(clusters$feature),]
-  
-  # metas_levels <- lapply(unique_elements, function(element) {
-  #   indices <- which(meta[[condition]] == element)
-  #   meta[indices, ]
-  # })
-  # 
-  # datas_levels <- lapply(unique_elements, function(element) {
-  #   indices <- which(meta[[condition]] == element)
-  #   data[, indices]
-  # })
-  
+                         all_levels_clustering,
+                         time_unit_label) {
+
   BASE_TEXT_SIZE_PT <- 5
   
   ht_opt(
@@ -424,7 +470,7 @@ plot_heatmap <- function(data,
                               row_split = clusters$cluster,
                               cluster_rows = FALSE,
                               heatmap_legend_param = list(title = "z-score of 
-                                                log2 intensity",
+                                                                log2 intensity",
                                                           title_position = 
                                                             "lefttop-rot"),
                               row_gap = unit(2, "pt"),
@@ -433,8 +479,9 @@ plot_heatmap <- function(data,
                               #   5 * unit(2, "pt"),
                               # height = unit(2, "mm") * nrow(z_score) + 
                               #   5 * unit(2, "pt"),
-                              show_row_names = TRUE)
-    
+                              show_row_names = TRUE,
+                              show_column_names = TRUE)
+
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
   return(heatmaps)
@@ -550,7 +597,8 @@ plot_dendrogram <- function(hc, k) {
 #' @importFrom ggplot2 scale_color_brewer
 #' @importFrom ggplot2 theme_minimal
 #' 
-plot_all_shapes <- function(curve_values) {
+plot_all_shapes <- function(curve_values,
+                            time_unit_label) {
   
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   
@@ -581,7 +629,8 @@ plot_all_shapes <- function(curve_values) {
                                                     factor(cluster))) +
     geom_line() + 
     ggtitle("Average Curves by Cluster") +
-    xlab("Time") + ylab("min-max normalized intensities") +
+    xlab(paste0("Time ", time_unit_label)) + 
+    ylab("min-max normalized intensities") +
     scale_color_brewer(palette = "Dark2", 
                        name = "Cluster") + 
     theme_minimal()
@@ -603,7 +652,8 @@ plot_all_shapes <- function(curve_values) {
 #' @importFrom ggplot2 ggtitle xlab ylab
 #' 
 plot_single_and_consensus_splines <- function(time_series_data, 
-                                              title) {
+                                              title,
+                                              time_unit_label) {
   
   # Transform the dataframe to a long format for ggplot2
   df_long <- as.data.frame(t(time_series_data)) %>%
@@ -628,7 +678,12 @@ plot_single_and_consensus_splines <- function(time_series_data,
     scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
                                        "Single Shapes" = "#6495ED")) +
     theme_minimal() +
-    ggtitle(title)
+    labs(
+      title = title,
+      x = paste("Time ", time_unit_label),     
+      y = "Intensity") +
+    # ggtitle(title) +
+    theme(legend.position = "none")
   
   return(p)
 }
@@ -650,7 +705,7 @@ plot_single_and_consensus_splines <- function(time_series_data,
 #' appending the cluster number.
 #' @return A list of ggplot objects, each representing a plot for a cluster.
 #' 
-plot_consensus_shapes <- function(curve_values) {
+plot_consensus_shapes <- function(curve_values, time_unit_label) {
   
   clusters <- sort(unique(curve_values$cluster))
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
@@ -662,11 +717,13 @@ plot_consensus_shapes <- function(curve_values) {
     subset_df$cluster <- NULL 
     
     plots[[length(plots) + 1]] <- 
-      plot_single_and_consensus_splines(subset_df, current_title)
+      plot_single_and_consensus_splines(subset_df, 
+                                        current_title,
+                                        time_unit_label)
   }
   
-  composite_consensus_shapes_plot <- 
-    patchwork::wrap_plots(plots, ncol = 2) + 
+  composite_consensus_shapes_plot <-
+    patchwork::wrap_plots(plots, ncol = 2) +
     patchwork::plot_annotation(
       title = "min-max normalized single and consensus shapes",
       theme = ggplot2::theme(plot.title = element_text(hjust = 0.5, size = 14))
@@ -706,7 +763,8 @@ plot_splines <- function(top_table,
                          data, 
                          meta, 
                          X,   # Was already created from spline_params before
-                         main_title) {
+                         main_title,
+                         time_unit_label) {
   
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
@@ -744,7 +802,7 @@ plot_splines <- function(top_table,
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
-      labs(x = "Time [min]", y = "Intensity")
+      labs(x = paste0("Time ", time_unit_label), y = "Intensity")
     
     matched_row <- subset(titles, FeatureID == hit_index)
     title <- as.character(matched_row$feature_name)
@@ -753,7 +811,7 @@ plot_splines <- function(top_table,
     }
     
     p <- p + labs(title = title, 
-                  x = "Time [min]", y = "Intensity") +
+                  x = paste0("Time ", time_unit_label), y = "Intensity") +
       theme(plot.title = element_text(size = 4),
             axis.title.x = element_text(size = 8), 
             axis.title.y = element_text(size = 8)) +
@@ -784,6 +842,35 @@ plot_splines <- function(top_table,
 
 
 # Level 3 internal functions ---------------------------------------------------
+
+
+check_dataframe <- function(df) {
+  # Define the required columns and their expected types
+  required_columns <- list(
+    AveExpr = "numeric",
+    F = "numeric",
+    P.Value = "numeric",
+    adj.P.Val = "numeric",
+    feature_index = "integer",
+    feature_names = "character",
+    intercept = "numeric"
+  )
+  
+  # Check if all required columns are present
+  missing_columns <- setdiff(names(required_columns), names(df))
+  if (length(missing_columns) > 0) {
+    stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
+  }
+  
+  # Check if columns have the correct type
+  for (col in names(required_columns)) {
+    if (!inherits(df[[col]], required_columns[[col]])) {
+      stop(paste("Column", col, "must be of type", required_columns[[col]]))
+    }
+  }
+  
+  return(TRUE)
+}
 
 
 #' Calculate Curve Values Based on Top Table Filter
@@ -931,6 +1018,7 @@ hierarchical_clustering <- function(curve_values,
                                     k, 
                                     smooth_timepoints,
                                     top_table) {
+  
   distance_matrix <- stats::dist(curve_values, method = "euclidean")
   hc <- stats::hclust(distance_matrix, method = "complete")
   

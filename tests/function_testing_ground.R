@@ -111,18 +111,18 @@ report_info <- list(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    spline_test_configs,
-#                                    feature_names,
-#                                    report_info,
-#                                    report_dir,
-#                                    pthresholds,
-#                                    meta_batch_column)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   spline_test_configs,
+                                   feature_names,
+                                   report_info,
+                                   report_dir,
+                                   pthresholds,
+                                   meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -139,10 +139,10 @@ spline_params = list(spline_type = c("n"),
 result <- run_limma_splines(data, 
                             meta, 
                             design, 
-                            spline_params,
+                            spline_params = spline_params,
                             condition,
                             feature_names, 
-                            "integrated")
+                            mode = "integrated")
 
 top_tables <- result$top_tables
 ttslc_factor_only <- result$ttslc_factor_only
@@ -173,13 +173,14 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    data = data, 
                                    meta = meta, 
                                    condition = condition, 
-                                   spline_params = spline_params,
-                                   mode = "integrated",
-                                   p_values = p_values, 
-                                   clusters = clusters, 
+                                   # spline_params = spline_params,
+                                   # mode = "integrated",
+                                   # p_values = p_values, 
+                                   # clusters = clusters, 
                                    report_info = report_info,
-                                   meta_batch_column,
-                                   report_dir = report_dir)
+                                   meta_batch_column = meta_batch_column,
+                                   report_dir = report_dir
+                                   )
 
 clustering_results[[2]]$clustered_hits
 

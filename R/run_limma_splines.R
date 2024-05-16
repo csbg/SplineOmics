@@ -1,3 +1,10 @@
+#' run_limma_splines.R contains the exported package function run_limma_splines  
+#' and all the functions that make up the functionality of run_limma_splines.
+#' run_limma_splines performs a limma analysis, using splines, to assign a 
+#' p-value to every feature of a time series omics dataset, to find out which
+#' features are significantly changed over the time course.
+
+
 # Exported function: run_limma_splines() ---------------------------------------
 
 #' Run Limma Analysis with Spline Interpolation for Hyperparameter Screening
@@ -66,18 +73,19 @@
 run_limma_splines <- function(data,
                               meta,
                               design,
-                              spline_params,
                               condition, 
                               feature_names,
-                              mode = c("isolated", "integrated"),
+                              mode = "integrated",
+                              spline_params = list(spline_type = c("n"),
+                                                   DoFs = c(2L)),
                               padjust_method = "BH") {
-  mode <- match.arg(mode)
+  
   control_inputs_run_limma(data = data, 
                            meta = meta, 
                            design = design, 
-                           spline_params = spline_params, 
                            condition = condition, 
                            feature_names = feature_names, 
+                           spline_params = spline_params, 
                            mode = mode, 
                            padjust_method = padjust_method)
   
@@ -125,9 +133,10 @@ run_limma_splines <- function(data,
         result$ttlc_factor_time
     }
   } else { # mode == "isolated"
-    print("mode == 'integrated' necessary for between level comparisons. 
-          Returning emtpy lists for ttslc_factor_only and ttslc_factor_time
-          (ttslc means 'top tables level comparison').")
+    message(paste0("mode == 'integrated' necessary for between level ",
+                 "comparisons. Returning emtpy lists for ttslc_factor_only ",
+                 "and ttslc_factor_time (ttslc means 'top tables level ",
+                 "comparison')."))
   }
   
   list(top_tables = top_tables, 
@@ -166,12 +175,7 @@ control_inputs_run_limma <- function(data,
         data. This is required.\n")
   }
   
-  # Check that design is a single string
-  if (!is.character(design) || length(design) != 1) {
-    stop("design must be a single string.")
-  }
-  
-  check_spline_params(spline_params, mode)
+  check_design_formula(design, meta)
   
   # Ensure factors is a non-empty character vector
   if (!is.character(condition) && !(length(condition) == 1)) {
@@ -182,7 +186,11 @@ control_inputs_run_limma <- function(data,
   if (!is.character(feature_names) || length(feature_names) == 0) {
     stop("feature_names must be a non-empty character vector.")
   }
-
+  
+  check_mode(mode)
+  
+  check_spline_params(spline_params, mode)
+  
   supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", 
                          "fdr", "none")
   if (!(is.character(padjust_method) && padjust_method %in% supported_methods)) 
@@ -333,6 +341,41 @@ process_level <- function(level,
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+check_design_formula <- function(formula, meta) {
+  # Check if the formula is a valid character string
+  if (!is.character(formula) || length(formula) != 1) {
+    stop("The design formula must be a valid character string.")
+  }
+  
+  # Ensure the formula contains allowed characters only
+  allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-]*$"
+  if (!grepl(allowed_chars, formula)) {
+    stop("The design formula contains invalid characters.")
+  }
+  
+  # Ensure the formula contains the intercept term 'X'
+  if (!grepl("\\bX\\b", formula)) {
+    stop("The design formula must include the term 'X'.")
+  }
+  
+  # Extract terms from the formula (removing interactions and functions)
+  formula_terms <- unlist(strsplit(gsub("[~+*:()]", " ", formula), " "))
+  formula_terms <- formula_terms[formula_terms != ""]
+  
+  # Remove '1' and 'X' from terms since they are not columns
+  formula_terms <- setdiff(formula_terms, c("1", "X"))
+  
+  # Check if the terms are present in the dataframe
+  missing_columns <- setdiff(formula_terms, names(meta))
+  if (length(missing_columns) > 0) {
+    stop(paste("The following columns are missing in the dataframe:", 
+               paste(missing_columns, collapse = ", ")))
+  }
+  
+  return(TRUE)
+}
 
 
 #' Converts top_table to a tibble and adds new column feature_name

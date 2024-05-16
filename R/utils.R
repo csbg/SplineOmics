@@ -1,4 +1,19 @@
+#' utils.R contains shared functions that are used by at least two package 
+#' functions of the splinetime package.
+
 # Level 1 internal functions ---------------------------------------------------
+
+
+check_mode <- function(mode) {
+  if (!((mode == "integrated") || (mode == "isolated"))) {
+    stop("mode must be either integrated or isolated. This is dependent on the
+         used limma design formula. For example, this formula: 
+         ~ 1 + Phase*X + Reactor would require mode = integrated, whereas this
+         formula: ~ 1 + X + Reactor would require mode = isolated.")
+  } else {
+    sprintf("Mode %s choosen.", mode)
+  }
+}
 
 
 check_spline_params <- function(spline_params, mode) {
@@ -72,18 +87,27 @@ generate_report_html <- function(plots,
                                  level_headers_info,
                                  spline_params,
                                  report_info,
+                                 report_type = "limma_hyperparams_screen",
                                  mode = NA,
                                  filename = "report",
                                  timestamp = format(Sys.time(), 
                                                     "%d_%m_%Y-%H_%M_%S"),
                                  report_dir = here::here()) {
   
-  header_text <- paste("clustered hits", 
+  if (report_type == "limma_hyperparams_screen") {
+    title <- "hyperparams screen"
+  } else if (report_type == "cluster_hits") {                         
+    title <- "clustered hits"
+  } else {
+    stop("report_type must be either limma_hyperparams_screen or cluster_hits")
+  }
+  
+  header_text <- paste(title, 
                        report_info$omics_data_type, 
                        timestamp, sep=" | ")
   
   header_section <- paste(
-    "<html><head><title>clustered_hits</title>",
+    "<html><head><title>", title, "</title>",
     "<style>",
     "table {",
     "  font-size: 30px;", 
@@ -147,13 +171,22 @@ generate_report_html <- function(plots,
   
   output_file_path <- here::here(report_dir, file_name)
   
-  build_plot_report_html(header_section = header_section, 
-                         plots = plots, 
-                         plots_sizes = plots_sizes,
-                         level_headers_info = level_headers_info,
-                         spline_params = spline_params,
-                         mode = mode,
-                         output_file_path = output_file_path)
+  if (report_type == "limma_hyperparams_screen") {
+    build_hyperparams_screen_report(header_section = header_section, 
+                                    plots = plots, 
+                                    plots_sizes = plots_sizes, 
+                                    output_file_path = output_file_path)
+  } else {           # report_type == "cluster_hits"
+    build_cluster_hits_report(header_section = header_section, 
+                              plots = plots, 
+                              plots_sizes = plots_sizes,
+                              level_headers_info = level_headers_info,
+                              spline_params = spline_params,
+                              mode = mode,
+                              output_file_path = output_file_path)
+  }
+  
+
 }
 
 
@@ -271,26 +304,52 @@ check_spline_params_mode_dependent <- function(spline_params, mode) {
 }
 
 
-build_plot_report_html <- function(header_section, 
-                                   plots, 
-                                   plots_sizes, 
-                                   level_headers_info = level_headers_info,
-                                   spline_params = spline_params,
-                                   mode,
-                                   output_file_path) {  
+build_hyperparams_screen_report <- function(header_section, 
+                                            plots, 
+                                            plots_sizes, 
+                                            output_file_path) {
+  index <- 1
+  for (plot in plots) {
+    plot_nrows <- plots_sizes[[index]]
+    index <- index + 1
+    img_tag <- plot2base64(plot, plot_nrows)
+    header_section <- paste(header_section, img_tag, sep="\n")
+  }
+  
+  # Close the HTML document
+  html_content <- paste(header_section, "</body></html>", sep="\n")
+  
+  dir_path <- dirname(output_file_path)
+  
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  writeLines(html_content, output_file_path)
+}
+
+
+build_cluster_hits_report <- function(header_section, 
+                                      plots, 
+                                      plots_sizes, 
+                                      level_headers_info = level_headers_info,
+                                      spline_params = spline_params,
+                                      mode,
+                                      output_file_path) {  
   
   content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
   
-  # toc <- "<div id='toc'><h2 style='font-size: 40px;'>Table of Contents</h2><ul>"
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto; 
-          width: 80%;'> <h2 style='font-size: 40px;'>Table of Contents</h2><ul>"
-  
+  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
+          width: 80%;'> 
+        <h2 style='font-size: 40px;'>Table of Contents</h2>
+        <ul style='display: inline-block; text-align: left;'>"
   
   section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
   toc_style <- "font-size: 30px;"
   
   current_header_index <- 1
   
+  pb <- create_progress_bar(plots)
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     if (current_header_index <= length(level_headers_info)) {
@@ -384,6 +443,7 @@ build_plot_report_html <- function(header_section,
     plot_size <- plots_sizes[[index]]
     img_tag <- plot2base64(plot, plot_size)
     content_with_plots <- paste(content_with_plots, img_tag, sep="\n")
+    pb$tick()
   }
   
   # Close the Table of Contents
@@ -448,4 +508,18 @@ plot2base64 <- function(plot,
   # Return the HTML img tag with the Base64 string and a fixed width
   return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
                  img_base64, html_img_width))
+}
+
+
+create_progress_bar <- function(iterable) {
+  library(progress)
+  
+  # Create and return the progress bar
+  pb <- progress_bar$new(
+    format = "  Processing [:bar] :percent :elapsed",
+    total = length(iterable),
+    width = 60
+  )
+  
+  return(pb)
 }
