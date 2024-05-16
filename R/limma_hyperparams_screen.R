@@ -1194,3 +1194,28 @@ plot_composite_splines <- function(data,
     return(FALSE)
   }
 }
+
+
+build_hyperparams_screen_report <- function(header_section, 
+                                            plots, 
+                                            plots_sizes, 
+                                            output_file_path) {
+  index <- 1
+  for (plot in plots) {
+    plot_nrows <- plots_sizes[[index]]
+    index <- index + 1
+    img_tag <- plot2base64(plot, plot_nrows)
+    header_section <- paste(header_section, img_tag, sep="\n")
+  }
+  
+  # Close the HTML document
+  html_content <- paste(header_section, "</body></html>", sep="\n")
+  
+  dir_path <- dirname(output_file_path)
+  
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  writeLines(html_content, output_file_path)
+}

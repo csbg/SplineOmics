@@ -1,0 +1,4 @@
+# Convert README.Rmd to README.md
+# Run in RStudio (in the project root dir)
+library(rmarkdown)
+render("README.Rmd", output_format = "md_document", output_file = "README.md")

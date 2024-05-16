@@ -841,6 +841,143 @@ plot_splines <- function(top_table,
 }
 
 
+build_cluster_hits_report <- function(header_section, 
+                                      plots, 
+                                      plots_sizes, 
+                                      level_headers_info = level_headers_info,
+                                      spline_params = spline_params,
+                                      mode,
+                                      output_file_path) {  
+  
+  content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
+  
+  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
+          width: 80%;'> 
+        <h2 style='font-size: 40px;'>Table of Contents</h2>
+        <ul style='display: inline-block; text-align: left;'>"
+  
+  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
+  toc_style <- "font-size: 30px;"
+  
+  current_header_index <- 1
+  
+  pb <- create_progress_bar(plots)
+  # Generate the sections and plots
+  for (index in seq_along(plots)) {
+    if (current_header_index <= length(level_headers_info)) {
+      header_info <- level_headers_info[[current_header_index]]
+      header_placement <- header_info[[2]]
+      
+      if (index - 1 == header_placement) {
+        section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>", 
+                                  section_header_style, index, header_info[[1]])
+        content_with_plots <- paste(content_with_plots, section_header, 
+                                    sep="\n")
+        
+        if (mode == "integrated") {
+          j <- 1
+        } else {      # mode == "isolated" or mode == NA
+          j <- index
+        }
+        
+        if (!is.null(spline_params$spline_type) && 
+            length(spline_params$spline_type) >= j) {
+          spline_params$spline_type[j] <- spline_params$spline_type[j]
+        } else {
+          spline_params$spline_type[j] <- NA
+        }
+        
+        if (!is.null(spline_params$degrees) && 
+            length(spline_params$degrees) >= j) {
+          spline_params$degrees[j] <- spline_params$degrees[j]
+        } else {
+          spline_params$degrees[j] <- NA
+        }
+        
+        if (!is.null(spline_params$DoFs) && 
+            length(spline_params$DoFs) >= j) {
+          spline_params$DoFs[j] <- spline_params$DoFs[j]
+        } else {
+          spline_params$DoFs[j] <- NA
+        }
+        
+        if (!is.null(spline_params$knots) && 
+            length(spline_params$knots) >= j) {
+          spline_params$knots[j] <- spline_params$knots[j]
+        } else {
+          spline_params$knots[j] <- NA
+        }
+        
+        if (!is.null(spline_params$bknots) && 
+            length(spline_params$bknots) >= j) {
+          spline_params$bknots[j] <- spline_params$bknots[j]
+        } else {
+          spline_params$bknots[j] <- NA
+        }
+        
+        
+        if (spline_params$spline_type[j] == "b") {
+          spline_params_info <- 
+            sprintf("<p style='text-align: center; font-size: 30px;'>
+                    <span style='color: blue;'>Spline-type:</span> B-spline<br>
+                    <span style='color: blue;'>Degree:</span> %s<br>
+                    <span style='color: blue;'>DoF:</span> %s<br>
+                    <span style='color: blue;'>Knots:</span> %s<br>
+                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
+                    spline_params$degrees[j], spline_params$DoFs[j], 
+                    spline_params$knots[j], spline_params$bknots[j])
+        } else {    # == "n"
+          spline_params_info <- 
+            sprintf("<p style='text-align: center; font-size: 30px;'>
+                    <span style='color: blue;'>Spline-type:</span> Natural cubic
+                    spline<br>
+                    <span style='color: blue;'>DoF:</span> %s<br>
+                    <span style='color: blue;'>Knots:</span> %s<br>
+                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
+                    spline_params$DoFs[j], spline_params$knots[j], 
+                    spline_params$bknots[j])
+          
+        }
+        
+        content_with_plots <- paste(content_with_plots, spline_params_info, 
+                                    sep="\n")
+        
+        toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>", 
+                             toc_style, index, header_info[[1]])
+        toc <- paste(toc, toc_entry, sep="\n")
+        
+        current_header_index <- current_header_index + 1
+      }
+    }
+    
+    # Process each plot
+    plot <- plots[[index]]
+    plot_size <- plots_sizes[[index]]
+    img_tag <- plot2base64(plot, plot_size)
+    content_with_plots <- paste(content_with_plots, img_tag, sep="\n")
+    pb$tick()
+  }
+  
+  # Close the Table of Contents
+  toc <- paste(toc, "</ul></div>", sep="\n")
+  
+  # Insert the Table of Contents at the placeholder
+  content_with_plots <- gsub("<!--TOC-->", toc, content_with_plots)
+  
+  # Append the final closing tags for the HTML body and document
+  content_with_plots <- paste(content_with_plots, "</body></html>", sep="\n")
+  
+  # Ensure the directory exists
+  dir_path <- dirname(output_file_path)
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  # Write the HTML content to file
+  writeLines(content_with_plots, output_file_path)
+}
+
+
 # Level 3 internal functions ---------------------------------------------------
 
 

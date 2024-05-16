@@ -1,8 +1,3 @@
----
-title: "splinetime"
-output: html_document
----
-
 # splinetime
 
 <img src="readme/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"/>
@@ -49,21 +44,21 @@ Follow these steps to install the `splinetime` package from its GitHub repositor
 
 1.  **Open RStudio** or your R console.
 
-2.  Install the `devtools` package if you haven't already. You can do this by running the following command in the R console:
+2.  Install the `devtools` package if you haven’t already. You can do this by running the following command in the R console:
 
-    ``` r
+    ```         
     install.packages("devtools")
     ```
 
 3.  Load the devtools package into your R session with the following command:
 
-    ``` r
+    ```         
     library(devtools)
     ```
 
 4.  To install the splinetime package, run the following command:
 
-    ``` r
+    ```         
     devtools::install_github("csbg/splinetime")
     ```
 
@@ -73,11 +68,11 @@ Follow these steps to install the `splinetime` package from its GitHub repositor
 
 6.  Once installation is complete, load the splinetime package into your R session to start using it. Run:
 
-    ``` r
+    ```         
     library(splinetime)
     ```
 
-7.  Congratulations! You have successfully installed the splinetime package from GitHub. You're now ready to use its functions in your R projects.
+7.  Congratulations! You have successfully installed the splinetime package from GitHub. You’re now ready to use its functions in your R projects.
 
 #### Troubleshooting
 
@@ -87,7 +82,7 @@ For issues specifically related to the splinetime package, check the Issues sect
 
 ### Usage {#usage}
 
-The `splinetime` package provides comprehensive tools for analyzing time-course data, focusing on differential expression analysis and clustering. This section covers detailed instructions for utilizing each of the package's main functions.
+The `splinetime` package provides comprehensive tools for analyzing time-course data, focusing on differential expression analysis and clustering. This section covers detailed instructions for utilizing each of the package’s main functions.
 
 #### limma_hyperparams_screen {#limma_hyperparams_screen}
 
@@ -121,7 +116,7 @@ Conducts a hyperparameter screening using the `limma` package to identify optima
 
 ##### Example Usage
 
-```r
+```         
 result <- limma_hyperparams_screen(
   datas = datas,
   datas_descr = datas_descr,
@@ -140,7 +135,7 @@ result <- limma_hyperparams_screen(
 
 ### run_limma_splines {#run_limma_splines}
 
-This function performs differential expression analysis tailored for time-course data using spline models via the `limma` package. It's designed to handle complex experimental designs and time as a continuous variable.
+This function performs differential expression analysis tailored for time-course data using spline models via the `limma` package. It’s designed to handle complex experimental designs and time as a continuous variable.
 
 #### Arguments
 
@@ -154,15 +149,15 @@ This function performs differential expression analysis tailored for time-course
 
 -   **feature_names**: A character vector containing the names of the features (e.g., gene names, protein IDs) for annotation purposes.
 
--   **mode**: A character string specifying the mode of analysis, which can be either "integrated" for a comprehensive model including all factors or "isolated" to focus on specific factors or interactions.
+-   **mode**: A character string specifying the mode of analysis, which can be either “integrated” for a comprehensive model including all factors or “isolated” to focus on specific factors or interactions.
 
 -   **spline_params**: A list specifying the spline parameters, including `spline_type` (type of spline) and `DoFs` (degrees of freedom).
 
--   **padjust_method**: A character string specifying the method for p-value adjustment. Default is "BH" (Benjamini-Hochberg).
+-   **padjust_method**: A character string specifying the method for p-value adjustment. Default is “BH” (Benjamini-Hochberg).
 
 #### Example Usage
 
-```r
+```         
 result <- run_limma_splines(
   data = data, 
   meta = meta, 
@@ -183,7 +178,7 @@ Clusters significant features based on their expression profiles, following diff
 
 -   **top_tables**: A list containing the top tables from limma. Each top table should be a data frame with significant features identified by the analysis, including their p-values and other statistics.
 
--   **data**: An matrix (data frame or matrix) with rows representing features and columns representing samples. 
+-   **data**: An matrix (data frame or matrix) with rows representing features and columns representing samples.
 
 -   **meta**: Metadata frame corresponding to the samples in the `data` matrix. This frame should include variables that describe the experimental conditions, batches, or other grouping factors relevant to the analysis.
 
@@ -207,20 +202,7 @@ Clusters significant features based on their expression profiles, following diff
 
 #### Example Usage
 
-```r
-clustering_results <- cluster_hits(
-  top_tables = top_tables, 
-  data = data, 
-  meta = meta, 
-  condition = condition, 
-  spline_params = spline_params,
-  mode = "integrated",
-  p_values = p_values,
-  clusters = clusters,
-  report_info = report_info,
-  meta_batch_column = meta_batch_column,
-  report_dir = report_dir
-)
+\`\`\`r clustering_results \<- cluster_hits( top_tables = top_tables, data = data, meta = meta, condition = condition, spline_params = spline_params, mode = “integrated”, p_values = p_values, clusters = clusters, report_info = report_info, meta_batch_column = meta_batch_column, report_dir = report_dir )
 
 ## Dependencies {#dependencies}
 
@@ -244,7 +226,7 @@ The `splinetime` package relies on several other R packages for its functionalit
 -   **furrr**: Provides tools for applying functions to elements of a list concurrently.
 -   **stringr**: Simplifies the manipulation of strings.
 -   **progress**: For adding progress bars to your loops and apply functions.
--   **here**: For constructing paths to your project's files.
+-   **here**: For constructing paths to your project’s files.
 -   **knitr**: For dynamic report generation in R.
 -   **kableExtra**: For producing beautiful tables in R Markdown documents.
 -   **ragg**: For creating high-quality images for graphics devices.
@@ -268,19 +250,19 @@ To ensure a smooth installation and functionality of `splinetime`, these depende
 
 If you encounter a bug or have a suggestion for improving the `splinetime` package, we encourage you to [open an issue](https://github.com/csbg/splinetime/issues) on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.
 
-For more detailed questions, discussions, or contributions regarding the package's use and development, please refer to the [GitHub Discussions](https://github.com/csbg/splinetime/discussions) page for `splinetime`. This forum is a great place to ask for help, share your experiences, and connect with the community.
+For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the [GitHub Discussions](https://github.com/csbg/splinetime/discussions) page for `splinetime`. This forum is a great place to ask for help, share your experiences, and connect with the community.
 
 Thank you for using and contributing to the development of `splinetime`!
 
 ## Contributing {#contributing}
 
-We welcome contributions to the `splinetime` package! Whether you're interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.
+We welcome contributions to the `splinetime` package! Whether you’re interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.
 
-Here's how you can contribute:
+Here’s how you can contribute:
 
 1.  **Report a Bug or Request a Feature:** If you encounter a bug or have an idea for a new feature, please [open an issue](https://github.com/csbg/splinetime/issues) on our GitHub repository. Before opening a new issue, check to see if the issue has already been reported or the feature requested by another user.
 
-2.  **Submit a Pull Request:** If you've developed a bug fix or a new feature that you'd like to share, submit a pull request. Here are the steps:
+2.  **Submit a Pull Request:** If you’ve developed a bug fix or a new feature that you’d like to share, submit a pull request. Here are the steps:
 
     -   Fork the repository.
     -   Create a new branch in your fork for your contributions.
