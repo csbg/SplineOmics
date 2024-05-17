@@ -206,7 +206,7 @@ perform_clustering <- function(top_tables,
 }
 
 
-
+#' @importFrom limma removeBatchEffect
 #' @importFrom dplyr filter
 #'
 make_clustering_report <- function(all_levels_clustering, 
@@ -414,9 +414,10 @@ process_level_cluster <- function(top_table,
 
 #' @importFrom dplyr arrange mutate group_by summarize
 #' @importFrom tidyr pivot_longer separate
-#' @importFrom ComplexHeatmap Heatmap draw
-#' @importFrom ggplot2 ggplot geom_line facet_wrap geom_vline ylab theme
+#' @importFrom ComplexHeatmap Heatmap draw ht_opt
+#' @importFrom ggplot2 ggplot geom_line facet_wrap geom_vline ylab theme unit
 #' @importFrom ggplot2 theme_bw scale_x_continuous
+#' @importFrom grid gpar
 #' 
 plot_heatmap <- function(data,
                          meta,

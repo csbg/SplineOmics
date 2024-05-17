@@ -555,16 +555,7 @@ process_combo <- function(data_index,
   # Because either DoF or knots are specified, and only optionally bknots
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
-  
-  # result <- run_limma_splines(data = data, 
-  #                             meta = meta, 
-  #                             design = design, 
-  #                             spline_params = spline_params, 
-  #                             condition = condition,
-  #                             feature_names = feature_names, 
-  #                             mode = mode, 
-  #                             padjust_method = padjust_method)
-  
+
   # This will not affect warnings and error messages!
   result <- suppressMessages(run_limma_splines(data = data, 
                                                meta = meta, 
@@ -579,7 +570,8 @@ process_combo <- function(data_index,
   result$top_tables
 }
 
-
+#' @importFrom limma removeBatchEffect
+#'
 remove_batch_effect <- function(datas, 
                                 metas,
                                 meta_batch_column) {
