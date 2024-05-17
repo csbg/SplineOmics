@@ -2,6 +2,7 @@ library(magick)
 
 # Function to draw a simple, more stylized clock
 draw_clock <- function(time) {
+  par(mar = c(2, 2, 2, 2))  # Set margins to be minimal
   plot.new()
   plot.window(xlim = c(-1, 1), ylim = c(-1, 1))
   
@@ -37,7 +38,7 @@ draw_clock <- function(time) {
   points(0, 0, pch = 16, cex = 1.5, col = "black")
   
   # Add static text below the clock
-  text(0, -1.2, "Good Heavens, just look at the time", cex = 1.5, 
+  text(0, -1.2, "Good Heavens, just look at the time!", cex = 1.5, 
        col = "black", xpd = TRUE)
 }
 

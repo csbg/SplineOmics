@@ -1,11 +1,7 @@
 
 # splinetime
 
-<figure>
-<img src="readme/splinetime_clock_animation.gif"
-alt="Spline Time Clock" />
-<figcaption aria-hidden="true">Spline Time Clock</figcaption>
-</figure>
+![](readme/splinetime_clock_animation.gif)
 
 ## Table of Contents
 

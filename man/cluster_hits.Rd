@@ -16,7 +16,7 @@ cluster_hits(
   condition,
   report_info,
   mode = "integrated",
-  spline_params = list(spline_type = c("n"), DoFs = c(2L)),
+  spline_params = list(spline_type = c("n"), dof = c(2L)),
   p_values = c(0.05),
   clusters = c("auto"),
   meta_batch_column = NA,
