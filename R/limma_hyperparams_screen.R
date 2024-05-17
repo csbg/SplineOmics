@@ -721,7 +721,7 @@ hc_vennheatmap <- function(hc_obj) {
 #' @importFrom ggplot2 theme
 #' @importFrom purrr map_int set_names 
 #' @importFrom tibble enframe
-#' @importFrom dplyr bind_rows
+#' @importFrom dplyr bind_rows vars
 #' 
 hc_barplot <- function(hc_obj) {
   plot_data <- 
