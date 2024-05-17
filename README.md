@@ -1,7 +1,7 @@
 
 # splinetime
 
-![](readme/splinetime_clock_animation.gif)
+![](readme/splinetime_clock.gif)
 
 ## Table of Contents
 
