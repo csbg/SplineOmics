@@ -45,8 +45,7 @@ Note: Understanding what this package does requires being familiar at least to s
 If you have a data matrix from a time-series omics experiment (e.g. proteomics metabolomics, transcriptomics, etc.) that looks like this (this is an example of a time-series proteomics dataset, coming from a CHO cell cultivation, carried out in three reactors (three replicated per timepoint). E9, E10, E12 describes the ID of the reactor, TP01, TP02, etc., the timepoint of the measurement):
 
 ```{r data example, echo=FALSE, include=TRUE}
-library(here)
-options(here.quiet = TRUE)
+suppressMessages(library(here))
 library(readxl)
 library(knitr)
 library(ggplot2)

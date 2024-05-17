@@ -1,3 +1,8 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 ![](readme/SplineOmics_logo.png)
 
@@ -5,20 +10,20 @@
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [limma_hyperparams_screen](#limma_hyperparams_screen)
-  - [run_limma_splines](#run_limma_splines)
-  - [cluster_hits](#cluster_hits)
-- [Dependencies](#dependencies)
-- [System Requirements](#system-requirements)
-- [Getting Help](#getting-help)
-- [Contributing](#contributing)
-- [License](#license)
-- [Citation](#citation)
+-   [Introduction](#introduction)
+-   [Installation](#installation)
+-   [Usage](#usage)
+    -   [limma_hyperparams_screen](#limma_hyperparams_screen)
+    -   [run_limma_splines](#run_limma_splines)
+    -   [cluster_hits](#cluster_hits)
+-   [Dependencies](#dependencies)
+-   [System Requirements](#system-requirements)
+-   [Getting Help](#getting-help)
+-   [Contributing](#contributing)
+-   [License](#license)
+-   [Citation](#citation)
 
-## Introduction
+## Introduction {#introduction}
 
 Welcome to `SplineOmics`, an R package designed to streamline the
 analysis of omics time-series data, followed by automated HTML report
@@ -27,11 +32,11 @@ generation.
 Note: Understanding what this package does requires being familiar at
 least to some extent with the following topics:
 
-- The R package `limma` (DOI:
-  [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007)). This
-  package uses `limma` for hypothesis testing.
+-   The R package `limma` (DOI:
+    [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007)). This
+    package uses `limma` for hypothesis testing.
 
-- Splines. The time-series omics data will be analysed with them.
+-   Splines. The time-series omics data will be analysed with them.
 
 ### Is the SplineOmics package of use for me?
 
@@ -42,9 +47,7 @@ from a CHO cell cultivation, carried out in three reactors (three
 replicated per timepoint). E9, E10, E12 describes the ID of the reactor,
 TP01, TP02, etc., the timepoint of the measurement):
 
-    #> here() starts at /home/thomas/Documents/PhD/projects/DGTX/R_packages/SplineOmics
-
-<img src="man/figures/README-data example-1.png" width="100%" />
+<img src="man/figures/README-data example-1.png" width="100%"/>
 
 where every row is a feature (protein, metabolite, gene) and every
 column is a sample, taken at a specific time, and the values are the
@@ -53,7 +56,7 @@ measurement values (e.g. intensities, etc.).
 And if you further have a dataframe, containing the meta information,
 that looks like this:
 
-<img src="man/figures/README-meta example-1.png" width="100%" />
+<img src="man/figures/README-meta example-1.png" width="100%"/>
 
 where every row describes a sample (column of the data matrix), and the
 columns contain the different meta information, such as as Time.Point
@@ -62,25 +65,25 @@ feeding of the CHO cells in the bioreactor).
 
 And if you want to achieve one or more of the following things:
 
-- Find out which of the features (rows of the data matrix) (e.g. which
-  of the proteins, metabolites, etc.) are changed significantly over the
-  time and get a p-value for them.
+-   Find out which of the features (rows of the data matrix) (e.g. which
+    of the proteins, metabolites, etc.) are changed significantly over
+    the time and get a p-value for them.
 
-- Cluster the hits (the significant features) based on their temporal
-  pattern. For example, some hits may continually decrease in value
-  (e.g. intensity) over the time, while others may increase. Each of the
-  unique temporal pattern would be put into one cluster, which sets the
-  stage for example for gene set enrichment analysis (check the
-  enrichment terms for each cluster. For example, when one cluster
-  contains proteins that increase in abundance over the time, the
-  enrichment could tell you which processes got activated.)
+-   Cluster the hits (the significant features) based on their temporal
+    pattern. For example, some hits may continually decrease in value
+    (e.g. intensity) over the time, while others may increase. Each of
+    the unique temporal pattern would be put into one cluster, which
+    sets the stage for example for gene set enrichment analysis (check
+    the enrichment terms for each cluster. For example, when one cluster
+    contains proteins that increase in abundance over the time, the
+    enrichment could tell you which processes got activated.)
 
-- Automatically generate a report, that shows the temporal pattern of
-  every hit and the resulting clusters, along with other plots such as a
-  dendrogram, showing the hierarchical clustering employed, and a
-  heatmap showing the logfold changes. You can view an example report
-  here: [HTML
-  report](https://csbg.github.io/SplineOmics/example_report.html)
+-   Automatically generate a report, that shows the temporal pattern of
+    every hit and the resulting clusters, along with other plots such as
+    a dendrogram, showing the hierarchical clustering employed, and a
+    heatmap showing the logfold changes. You can view an example report
+    here: [HTML
+    report](https://csbg.github.io/SplineOmics/example_report.html)
 
 Then the `SplineOmics` package could be of interest to you. This package
 finds the hits by applying splines (piece wise polynomial curves) to the
@@ -132,35 +135,35 @@ a series of automatically generated HTML reports.
 
 With `SplineOmics`, you can:
 
-- **Explore Various Hyperparameters:** The `limma_hyperparams_screen()`
-  function offers a comprehensive way to test combinations of
-  hyperparameters, such as different datasets, `limma` design formulas,
-  degrees of freedom, and p-value thresholds. This enables users to
-  evaluate the impact of various settings on their analysis results
-  systematically.
+-   **Explore Various Hyperparameters:** The
+    `limma_hyperparams_screen()` function offers a comprehensive way to
+    test combinations of hyperparameters, such as different datasets,
+    `limma` design formulas, degrees of freedom, and p-value thresholds.
+    This enables users to evaluate the impact of various settings on
+    their analysis results systematically.
 
-- **Perform Limma Spline Analysis:** Once the optimal hyperparameters
-  are identified, `run_limma_splines()` performs the limma analysis
-  using splines.
+-   **Perform Limma Spline Analysis:** Once the optimal hyperparameters
+    are identified, `run_limma_splines()` performs the limma analysis
+    using splines.
 
-- **Cluster Significant Features:** The `cluster_hits()` function goes a
-  step further by clustering the significant features (hits) identified
-  in the spline analysis. It organizes these features into meaningful
-  groups (clusters) and generates a comprehensive report, facilitating
-  the interpretation and communication of the results.
+-   **Cluster Significant Features:** The `cluster_hits()` function goes
+    a step further by clustering the significant features (hits)
+    identified in the spline analysis. It organizes these features into
+    meaningful groups (clusters) and generates a comprehensive report,
+    facilitating the interpretation and communication of the results.
 
-## Installation
+## Installation {#installation}
 
 Follow these steps to install the `SplineOmics` package from its GitHub
 repository into your R environment.
 
 #### Prerequisites
 
-- Ensure **R** is installed on your system. If not, download and install
-  it from [CRAN](https://cran.r-project.org/).
-- **RStudio** is recommended for a more user-friendly experience with R.
-  Download and install RStudio from
-  [rstudio.com](https://www.rstudio.com/products/rstudio/download/).
+-   Ensure **R** is installed on your system. If not, download and
+    install it from [CRAN](https://cran.r-project.org/).
+-   **RStudio** is recommended for a more user-friendly experience
+    with R. Download and install RStudio from
+    [rstudio.com](https://www.rstudio.com/products/rstudio/download/).
 
 #### Installation Steps
 
@@ -203,14 +206,14 @@ For issues specifically related to the SplineOmics package, check the
 Issues section of the GitHub repository for similar problems or to post
 a new issue.
 
-### Usage
+### Usage {#usage}
 
 The `SplineOmics` package provides comprehensive tools for analyzing
 time-course data, focusing on differential expression analysis and
 clustering. This section covers detailed instructions for utilizing each
 of the package’s main functions.
 
-#### limma_hyperparams_screen
+#### limma_hyperparams_screen {#limma_hyperparams_screen}
 
 Conducts a hyperparameter screening using the `limma` package to
 identify optimal parameters for differential expression analysis across
@@ -218,49 +221,49 @@ multiple datasets.
 
 ##### Arguments
 
-- **datas**: A list of expression matrices (data frames or matrices),
-  each representing a distinct dataset.
+-   **datas**: A list of expression matrices (data frames or matrices),
+    each representing a distinct dataset.
 
-- **datas_descr**: A character vector describing each dataset in
-  `datas`. Example: `c("full_data", "outliers_removed")`.
+-   **datas_descr**: A character vector describing each dataset in
+    `datas`. Example: `c("full_data", "outliers_removed")`.
 
-- **metas**: A list of metadata data frames corresponding to each
-  dataset in `datas`. Each metadata frame should contain experimental
-  conditions and batch information.
+-   **metas**: A list of metadata data frames corresponding to each
+    dataset in `datas`. Each metadata frame should contain experimental
+    conditions and batch information.
 
-- **designs**: A character vector of model design formulas for
-  differential expression analysis.
+-   **designs**: A character vector of model design formulas for
+    differential expression analysis.
 
-- **modes**: A string indicating the mode of analysis for each design.
-  Example: `"integrated"`.
+-   **modes**: A string indicating the mode of analysis for each design.
+    Example: `"integrated"`.
 
-- **condition**: The column name of the dataframe meta that contains the
-  levels of the factor of the experiment. A factor is a variable that
-  categorizes the data into different groups that are important for the
-  analysis. A level is a specific value a factor can take.
+-   **condition**: The column name of the dataframe meta that contains
+    the levels of the factor of the experiment. A factor is a variable
+    that categorizes the data into different groups that are important
+    for the analysis. A level is a specific value a factor can take.
 
-- **spline_test_configs**: A list of configurations for testing
-  different spline parameters, including degrees of freedom and spline
-  types.
+-   **spline_test_configs**: A list of configurations for testing
+    different spline parameters, including degrees of freedom and spline
+    types.
 
-- **feature_names**: A character vector of feature names (e.g., gene or
-  protein names).
+-   **feature_names**: A character vector of feature names (e.g., gene
+    or protein names).
 
-- **report_info**: Information that gets printed on top of the report,
-  providing context or additional details about the analysis.
+-   **report_info**: Information that gets printed on top of the report,
+    providing context or additional details about the analysis.
 
-- **report_dir**: Directory path for saving the output reports. Default
-  is the current working dir.
+-   **report_dir**: Directory path for saving the output reports.
+    Default is the current working dir.
 
-- **pthresholds**: A numeric vector of p-value thresholds for
-  determining statistical significance.
+-   **pthresholds**: A numeric vector of p-value thresholds for
+    determining statistical significance.
 
-- **meta_batch_column**: A character string specifying the column in
-  `meta` used to remove batch effects. Default is `NA`, which will not
-  remove the batch effect with the help of the removeBatchEffect
-  function from the `limma` package. The batch effect removed data would
-  only be used to generate the plots, because in the limma analysis,
-  limma accounts for the batch effect.
+-   **meta_batch_column**: A character string specifying the column in
+    `meta` used to remove batch effects. Default is `NA`, which will not
+    remove the batch effect with the help of the removeBatchEffect
+    function from the `limma` package. The batch effect removed data
+    would only be used to generate the plots, because in the limma
+    analysis, limma accounts for the batch effect.
 
 ##### Example Usage
 
@@ -281,7 +284,7 @@ result <- limma_hyperparams_screen(
 )
 ```
 
-### run_limma_splines
+### run_limma_splines {#run_limma_splines}
 
 This function performs differential expression analysis tailored for
 time-course data using spline models via the `limma` package. It’s
@@ -290,34 +293,36 @@ variable.
 
 #### Arguments
 
-- **data**: Expression matrix (either a data frame or matrix)
-  representing gene expression levels where rows correspond to features
-  (e.g., genes, proteins) and columns correspond to samples.
+-   **data**: Expression matrix (either a data frame or matrix)
+    representing gene expression levels where rows correspond to
+    features (e.g., genes, proteins) and columns correspond to samples.
 
-- **meta**: Metadata frame corresponding to the samples in the `data`
-  matrix. This should include at least the experimental condition and
-  the batch information if any batch effect removal is intended.
+-   **meta**: Metadata frame corresponding to the samples in the `data`
+    matrix. This should include at least the experimental condition and
+    the batch information if any batch effect removal is intended.
 
-- **design**: A character string specifying the model design formula for
-  the differential expression analysis. The design should incorporate
-  the experimental conditions and may also include interaction terms.
+-   **design**: A character string specifying the model design formula
+    for the differential expression analysis. The design should
+    incorporate the experimental conditions and may also include
+    interaction terms.
 
-- **condition**: The name of the experimental condition factor within
-  the `meta` data frame. This specifies the main variable of interest
-  for differential expression analysis.
+-   **condition**: The name of the experimental condition factor within
+    the `meta` data frame. This specifies the main variable of interest
+    for differential expression analysis.
 
-- **feature_names**: A character vector containing the names of the
-  features (e.g., gene names, protein IDs) for annotation purposes.
+-   **feature_names**: A character vector containing the names of the
+    features (e.g., gene names, protein IDs) for annotation purposes.
 
-- **mode**: A character string specifying the mode of analysis, which
-  can be either “integrated” for a comprehensive model including all
-  factors or “isolated” to focus on specific factors or interactions.
+-   **mode**: A character string specifying the mode of analysis, which
+    can be either “integrated” for a comprehensive model including all
+    factors or “isolated” to focus on specific factors or interactions.
 
-- **spline_params**: A list specifying the spline parameters, including
-  `spline_type` (type of spline) and `DoFs` (degrees of freedom).
+-   **spline_params**: A list specifying the spline parameters,
+    including `spline_type` (type of spline) and `DoFs` (degrees of
+    freedom).
 
-- **padjust_method**: A character string specifying the method for
-  p-value adjustment. Default is “BH” (Benjamini-Hochberg).
+-   **padjust_method**: A character string specifying the method for
+    p-value adjustment. Default is “BH” (Benjamini-Hochberg).
 
 #### Example Usage
 
@@ -334,7 +339,7 @@ result <- run_limma_splines(
 )
 ```
 
-### cluster_hits
+### cluster_hits {#cluster_hits}
 
 Clusters significant features based on their expression profiles,
 following differential expression analysis. This function helps identify
@@ -343,50 +348,52 @@ expression patterns across different conditions or time points.
 
 #### Arguments
 
-- **top_tables**: A list containing the top tables from limma. Each top
-  table should be a data frame with significant features identified by
-  the analysis, including their p-values and other statistics.
+-   **top_tables**: A list containing the top tables from limma. Each
+    top table should be a data frame with significant features
+    identified by the analysis, including their p-values and other
+    statistics.
 
-- **data**: An matrix (data frame or matrix) with rows representing
-  features and columns representing samples.
+-   **data**: An matrix (data frame or matrix) with rows representing
+    features and columns representing samples.
 
-- **meta**: Metadata frame corresponding to the samples in the `data`
-  matrix. This frame should include variables that describe the
-  experimental conditions, batches, or other grouping factors relevant
-  to the analysis.
+-   **meta**: Metadata frame corresponding to the samples in the `data`
+    matrix. This frame should include variables that describe the
+    experimental conditions, batches, or other grouping factors relevant
+    to the analysis.
 
-- **condition**: A character string specifying the column in `meta` that
-  contains the experimental conditions or groupings used for the
-  analysis.
+-   **condition**: A character string specifying the column in `meta`
+    that contains the experimental conditions or groupings used for the
+    analysis.
 
-- **report_info**: Information that gets printed on top of the report,
-  providing context or additional details about the analysis.
+-   **report_info**: Information that gets printed on top of the report,
+    providing context or additional details about the analysis.
 
-- **mode**: A character string specifying the mode of the analysis.
-  Default is `"integrated"`, depending on the limma design.
+-   **mode**: A character string specifying the mode of the analysis.
+    Default is `"integrated"`, depending on the limma design.
 
-- **spline_params**: A list specifying the spline parameters, including
-  `spline_type` (type of spline) and `DoFs` (degrees of freedom).
+-   **spline_params**: A list specifying the spline parameters,
+    including `spline_type` (type of spline) and `DoFs` (degrees of
+    freedom).
 
-- **p_values**: A numeric vector specifying the p-value thresholds for
-  features to be included in the clustering analysis. Only features with
-  p-values below these thresholds in the differential expression
-  analysis will be considered.
+-   **p_values**: A numeric vector specifying the p-value thresholds for
+    features to be included in the clustering analysis. Only features
+    with p-values below these thresholds in the differential expression
+    analysis will be considered.
 
-- **clusters**: An integer vector or `"auto"` specifying the number of
-  clusters to generate. This allows for different levels of granularity
-  in the clustering analysis, depending on the desired number of feature
-  groups.
+-   **clusters**: An integer vector or `"auto"` specifying the number of
+    clusters to generate. This allows for different levels of
+    granularity in the clustering analysis, depending on the desired
+    number of feature groups.
 
-- **meta_batch_column**: A character string specifying the column in
-  `meta` used to remove batch effects. Default is `NA`.
+-   **meta_batch_column**: A character string specifying the column in
+    `meta` used to remove batch effects. Default is `NA`.
 
-- **time_unit**: A character string specifying the time unit for the
-  plot labels. Default is `"m"` (minutes).
+-   **time_unit**: A character string specifying the time unit for the
+    plot labels. Default is `"m"` (minutes).
 
-- **report_dir**: The directory path where clustering results, including
-  any plots or summary tables, will be saved. This allows for easy
-  access and review of the clustering outputs.
+-   **report_dir**: The directory path where clustering results,
+    including any plots or summary tables, will be saved. This allows
+    for easy access and review of the clustering outputs.
 
 #### Example Usage
 
@@ -406,45 +413,47 @@ clustering_results <- cluster_hits(
 )
 ```
 
-## Dependencies
+## Dependencies {#dependencies}
 
 The `SplineOmics` package relies on several other R packages for its
 functionality. Below is a list of dependencies that will be installed
 along with `SplineOmics`. If you already have these packages installed,
 ensure they are up to date to avoid any compatibility issues.
 
-- **limma**: For linear models for microarray data.
-- **splines**: Provides functions for regression spline fitting and
-  extraction.
-- **purrr**: For functional programming tools.
-- **ggplot2**: For creating elegant data visualizations using the
-  grammar of graphics.
-- **tidyr**: For tidying your data.
-- **dplyr**: For data manipulation.
-- **tibble**: For creating tidy data frames that are easy to work with.
-- **dendextend**: For extending `dendrogram` objects in R, allowing for
-  easier manipulation of dendrograms.
-- **RColorBrewer**: For providing color palettes for data visualization.
-- **patchwork**: For combining multiple ggplot objects into a single
-  plot.
-- **ComplexHeatmap**: For creating complex heatmaps with advanced
-  features.
-- **circlize**: For circular visualization of data.
-- **grid**: For low-level graphics functions and utilities.
-- **cluster**: For clustering algorithms such as hierarchical
-  clustering.
-- **stats**: Provides functions for statistical calculations and random
-  number generation (included with base R).
-- **furrr**: Provides tools for applying functions to elements of a list
-  concurrently.
-- **stringr**: Simplifies the manipulation of strings.
-- **progress**: For adding progress bars to your loops and apply
-  functions.
-- **here**: For constructing paths to your project’s files.
-- **knitr**: For dynamic report generation in R.
-- **kableExtra**: For producing beautiful tables in R Markdown
-  documents.
-- **ragg**: For creating high-quality images for graphics devices.
+-   **limma**: For linear models for microarray data.
+-   **splines**: Provides functions for regression spline fitting and
+    extraction.
+-   **purrr**: For functional programming tools.
+-   **ggplot2**: For creating elegant data visualizations using the
+    grammar of graphics.
+-   **tidyr**: For tidying your data.
+-   **dplyr**: For data manipulation.
+-   **tibble**: For creating tidy data frames that are easy to work
+    with.
+-   **dendextend**: For extending `dendrogram` objects in R, allowing
+    for easier manipulation of dendrograms.
+-   **RColorBrewer**: For providing color palettes for data
+    visualization.
+-   **patchwork**: For combining multiple ggplot objects into a single
+    plot.
+-   **ComplexHeatmap**: For creating complex heatmaps with advanced
+    features.
+-   **circlize**: For circular visualization of data.
+-   **grid**: For low-level graphics functions and utilities.
+-   **cluster**: For clustering algorithms such as hierarchical
+    clustering.
+-   **stats**: Provides functions for statistical calculations and
+    random number generation (included with base R).
+-   **furrr**: Provides tools for applying functions to elements of a
+    list concurrently.
+-   **stringr**: Simplifies the manipulation of strings.
+-   **progress**: For adding progress bars to your loops and apply
+    functions.
+-   **here**: For constructing paths to your project’s files.
+-   **knitr**: For dynamic report generation in R.
+-   **kableExtra**: For producing beautiful tables in R Markdown
+    documents.
+-   **ragg**: For creating high-quality images for graphics devices.
 
 To ensure a smooth installation and functionality of `SplineOmics`,
 these dependencies will be automatically checked and, if necessary,
@@ -452,12 +461,12 @@ installed upon installing `SplineOmics`.
 
 ### R Version
 
-- Required: R 4.3.3 or higher
-  - Note: This project was developed using R 4.3.3. While it should be
-    compatible with newer versions, this is the version guaranteed to
-    work as tested.
+-   Required: R 4.3.3 or higher
+    -   Note: This project was developed using R 4.3.3. While it should
+        be compatible with newer versions, this is the version
+        guaranteed to work as tested.
 
-## Getting Help
+## Getting Help {#getting-help}
 
 If you encounter a bug or have a suggestion for improving the
 `SplineOmics` package, we encourage you to [open an
@@ -476,7 +485,7 @@ experiences, and connect with the community.
 Thank you for using and contributing to the development of
 `SplineOmics`!
 
-## Contributing
+## Contributing {#contributing}
 
 We welcome contributions to the `SplineOmics` package! Whether you’re
 interested in fixing bugs, adding new features, or improving
@@ -494,14 +503,14 @@ Here’s how you can contribute:
     feature that you’d like to share, submit a pull request. Here are
     the steps:
 
-    - Fork the repository.
-    - Create a new branch in your fork for your contributions.
-    - Commit your changes to the branch.
-    - Push the branch to your fork.
-    - Submit a pull request to the `SplineOmics` repository from your
-      fork and branch.
-    - Please describe your changes clearly in the pull request
-      description and reference any related issues.
+    -   Fork the repository.
+    -   Create a new branch in your fork for your contributions.
+    -   Commit your changes to the branch.
+    -   Push the branch to your fork.
+    -   Submit a pull request to the `SplineOmics` repository from your
+        fork and branch.
+    -   Please describe your changes clearly in the pull request
+        description and reference any related issues.
 
 3.  **Improve Documentation:** Good documentation is crucial for any
     project. If you notice missing or incorrect documentation, please
@@ -514,7 +523,7 @@ Thank you for considering contributing to `SplineOmics`. Your efforts
 are what make the open-source community a fantastic place to learn,
 inspire, and create.
 
-## License
+## License {#license}
 
 This package is licensed under the MIT License with additional terms.
 Please see the [LICENSE](./docs/LICENSE) file for full terms and
@@ -522,7 +531,7 @@ conditions.
 
 © 2024 Thomas Rauter. All rights reserved.
 
-## Citation
+## Citation {#citation}
 
 The `SplineOmics` package is currently not published in a peer-reviewed
 scientific journal or similar outlet, and as such, there is no formal
@@ -535,32 +544,33 @@ support helps us in the continued development and improvement of
 The `SplineOmics` relies substantially on following R libraries in
 particular, which should be cited in your publication:
 
-- limma –\> Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W., Shi,
-  W., and Smyth, G.K. (2015). limma powers differential expression
-  analyses for RNA-sequencing and microarray studies. Nucleic Acids
-  Research 43(7), e47. (DOI:
-  [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007))
+-   limma –\> Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W.,
+    Shi, W., and Smyth, G.K. (2015). limma powers differential
+    expression analyses for RNA-sequencing and microarray studies.
+    Nucleic Acids Research 43(7), e47. (DOI:
+    [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007))
 
-- ggplot2 –\> H. Wickham. ggplot2: Elegant Graphics for Data Analysis.
-  Springer-Verlag New York, 2016.
+-   ggplot2 –\> H. Wickham. ggplot2: Elegant Graphics for Data Analysis.
+    Springer-Verlag New York, 2016.
 
-- dplyr –\> Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
-  *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4,
-  <https://CRAN.R-project.org/package=dplyr>.
+-   dplyr –\> Wickham H, François R, Henry L, Müller K, Vaughan D
+    (2023). *dplyr: A Grammar of Data Manipulation*. R package version
+    1.1.4, <https://CRAN.R-project.org/package=dplyr>.
 
-- tidyr –\> Wickham H, Vaughan D, Girlich M (2024). *tidyr: Tidy Messy
-  Data*. R package version 1.3.1,
-  <https://CRAN.R-project.org/package=tidyr>.
+-   tidyr –\> Wickham H, Vaughan D, Girlich M (2024). *tidyr: Tidy Messy
+    Data*. R package version 1.3.1,
+    <https://CRAN.R-project.org/package=tidyr>.
 
-- ComplexHeatmap –\> Gu, Z. (2016) Complex heatmaps reveal patterns and
-  correlations in multidimensional genomic data. Bioinformatics.
+-   ComplexHeatmap –\> Gu, Z. (2016) Complex heatmaps reveal patterns
+    and correlations in multidimensional genomic data. Bioinformatics.
 
-- pheatmap –\> Kolde R (2019). *pheatmap: Pretty Heatmaps*. R package
-  version 1.0.12, <https://CRAN.R-project.org/package=pheatmap>.
+-   pheatmap –\> Kolde R (2019). *pheatmap: Pretty Heatmaps*. R package
+    version 1.0.12, <https://CRAN.R-project.org/package=pheatmap>.
 
-- purrr –\> Wickham H, Henry L (2023). *purrr: Functional Programming
-  Tools*. R package version 1.0.2,
-  <https://CRAN.R-project.org/package=purrr>.
+-   purrr –\> Wickham H, Henry L (2023). *purrr: Functional Programming
+    Tools*. R package version 1.0.2,
+    <https://CRAN.R-project.org/package=purrr>.
 
-- tibble –\> Müller K, Wickham H (2023). *tibble: Simple Data Frames*. R
-  package version 3.2.1, <https://CRAN.R-project.org/package=tibble>.
+-   tibble –\> Müller K, Wickham H (2023). *tibble: Simple Data Frames*.
+    R package version 3.2.1,
+    <https://CRAN.R-project.org/package=tibble>.
