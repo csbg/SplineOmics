@@ -716,7 +716,7 @@ hc_vennheatmap <- function(hc_obj) {
 }
 
 
-#' @importFrom ggplot2 geom_col geom_text facet_wrap scale_y_continuous 
+#' @importFrom ggplot2 geom_col geom_text facet_wrap scale_y_continuous aes
 #' @importFrom ggplot2 theme_minimal element_text element_blank expansion xlab
 #' @importFrom ggplot2 theme
 #' @importFrom purrr map_int set_names 
