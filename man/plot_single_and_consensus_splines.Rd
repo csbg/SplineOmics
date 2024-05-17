@@ -4,7 +4,7 @@
 \alias{plot_single_and_consensus_splines}
 \title{Plot Single and Consensus Splines}
 \usage{
-plot_single_and_consensus_splines(time_series_data, title)
+plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
 }
 \arguments{
 \item{time_series_data}{A data frame of time series data.}

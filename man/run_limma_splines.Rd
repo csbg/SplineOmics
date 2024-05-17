@@ -2,16 +2,21 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{run_limma_splines}
 \alias{run_limma_splines}
-\title{Run Limma Analysis with Spline Interpolation for Hyperparameter Screening}
+\title{run_limma_splines.R contains the exported package function run_limma_splines  
+and all the functions that make up the functionality of run_limma_splines.
+run_limma_splines performs a limma analysis, using splines, to assign a 
+p-value to every feature of a time series omics dataset, to find out which
+features are significantly changed over the time course.
+Run Limma Analysis with Spline Interpolation for Hyperparameter Screening}
 \usage{
 run_limma_splines(
   data,
   meta,
   design,
-  spline_params,
   condition,
   feature_names,
-  mode = c("isolated", "integrated"),
+  mode = "integrated",
+  spline_params = list(spline_type = c("n"), DoFs = c(2L)),
   padjust_method = "BH"
 )
 }

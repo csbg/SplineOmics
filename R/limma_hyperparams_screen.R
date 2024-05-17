@@ -183,6 +183,7 @@ control_inputs_hyperpara_screen <- function(datas,
 }
 
 
+#' @importFrom magrittr %>%
 #' @importFrom tidyr expand_grid
 #' @importFrom dplyr mutate
 #' @importFrom purrr pmap
@@ -399,8 +400,8 @@ check_metas <- function(metas, datas, meta_batch_column) {
     }
   }
   if (!is.na(meta_batch_column)) {
-    print(paste0("Column ", meta_batch_column, " will be used to remove the
-               batch effect for plotting only."))
+    print(paste0("Column ", meta_batch_column, " will be used to remove the ",
+                 "batch effect for plotting only."))
   } else {
     print("Batch effect will not be removed for plotting!")
   }

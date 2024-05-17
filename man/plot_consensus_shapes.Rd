@@ -4,7 +4,7 @@
 \alias{plot_consensus_shapes}
 \title{Plot Consensus Shapes for Each Cluster}
 \usage{
-plot_consensus_shapes(curve_values, title)
+plot_consensus_shapes(curve_values, time_unit_label)
 }
 \arguments{
 \item{curve_values}{A dataframe containing the curve values and a cluster 

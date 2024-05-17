@@ -4,7 +4,15 @@
 \alias{get_curve_values}
 \title{Calculate Curve Values Based on Top Table Filter}
 \usage{
-get_curve_values(top_table, p_value, level, meta, condition)
+get_curve_values(
+  top_table,
+  p_value,
+  level,
+  meta,
+  condition,
+  spline_params,
+  mode
+)
 }
 \arguments{
 \item{top_table}{A data frame containing data with a column for adjusted 

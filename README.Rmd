@@ -58,6 +58,10 @@ colnames(data_head) <- sub("_[^_]+$", "", colnames(data_head))
 
 table_plot1 <- tableGrob(data_head)
 
+# Adjust the grobs within the tableGrob to reduce margins
+table_plot1$heights <- unit(rep(1, nrow(data_head) + 1), "null")
+table_plot1$widths <- unit(rep(1, ncol(data_head) + 1), "null")
+
 grid.newpage()
 grid.draw(table_plot1)
 ```
@@ -79,14 +83,17 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 input_file_path <- here::here("data", "timeseries_proteomics_example.RData")
 load(input_file_path) 
 meta_head <- head(meta[, 1:5], 10)
+meta_head$Sample <- sub("_[^_]+$", "", meta_head$Sample)
 
 table_plot2 <- tableGrob(meta_head)
+table_plot2$heights <- unit(rep(1, nrow(meta_head) + 1), "null")
+table_plot2$widths <- unit(rep(1, ncol(meta_head) + 1), "null")
 
 grid.newpage()
 grid.draw(table_plot2)
 ```
 
-where every row describes a sample (column of the data matrix), and the columns contain the different meta information, such as as Time.Point and Time.
+where every row describes a sample (column of the data matrix), and the columns contain the different meta information, such as as Time.Point (the ID of the time point) and Time (here describing the time to the feeding of the CHO cells in the bioreactor).
 
 And if you want to achieve one or more of the following things:
 
@@ -94,7 +101,7 @@ And if you want to achieve one or more of the following things:
 
 -   Cluster the hits (the significant features) based on their temporal pattern. For example, some hits may continually decrease in value (e.g. intensity) over the time, while others may increase. Each of the unique temporal pattern would be put into one cluster, which sets the stage for example for gene set enrichment analysis.
 
--   Generate a report, that shows the temporal pattern of every hit and the resulting clusters, along with other plots such as a dendrogram, showing the hierarchical clustering employed, and a heatmap showing the logfold changes. You can view an example report here: [HTML report](example_report.html)
+-   Generate a report, that shows the temporal pattern of every hit and the resulting clusters, along with other plots such as a dendrogram, showing the hierarchical clustering employed, and a heatmap showing the logfold changes. You can view an example report here: [HTML report](https://csbg.github.io/splinetime/example_report.html)
 
 Then the `splinetime` package could be of interest to you. This package finds the hits by applying splines (piece wise polynomial curves) to the time-series omics data and using the R package `limma` to find out, in a nutshell, which of the features have splines that are significantly different from horizontal (which would mean that nothing happens over the time, therefore no significant change).
 
@@ -143,29 +150,25 @@ Follow these steps to install the `splinetime` package from its GitHub repositor
     install.packages("devtools")
     ```
 
-3.  Load the devtools package into your R session with the following command:
+3.  Load the `devtools` package into your R session, and run the install_github function to install the splinetime package into your RProject:
 
     ``` r
     library(devtools)
-    ```
-
-4.  To install the splinetime package, run the following command:
-
-    ``` r
+    Sys.setenv(GITHUB_PAT = "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")
     devtools::install_github("csbg/splinetime")
     ```
 
-    This command downloads and installs the splinetime package from the specified GitHub repository.
+    This command downloads and installs the splinetime package from the GitHub repository.
 
-5.  Wait for the installation to complete. This process may take a few moments as it involves downloading the package and its dependencies. You might see messages in the console regarding the installation progress or be prompted to update other packages.
+4.  Wait for the installation to complete. This process may take a few moments as it involves downloading the package and its dependencies. You might see messages in the console regarding the installation progress or be prompted to update other packages.
 
-6.  Once installation is complete, load the splinetime package into your R session to start using it. Run:
+5.  Once installation is complete, load the splinetime package into your R session to start using it. Run:
 
     ``` r
     library(splinetime)
     ```
 
-7.  Congratulations! You have successfully installed the splinetime package from GitHub. You're now ready to use its functions in your R projects.
+6.  Congratulations! You have successfully installed the splinetime package from GitHub. You're now ready to use its functions in your R projects.
 
 #### Troubleshooting
 

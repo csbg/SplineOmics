@@ -2,9 +2,27 @@
 % Please edit documentation in R/cluster_hits.R
 \name{cluster_hits}
 \alias{cluster_hits}
-\title{Cluster Hits from Top Tables}
+\title{cluster_hits.R contains the exported package function cluster_hits and all
+the functions that make up the functionality of cluster_hits. cluster_hits
+clusters the hits of a time series omics datasets (the features that were 
+significantly changed over the time course) with hierarchical clustering of
+the spline shape.
+Cluster Hits from Top Tables}
 \usage{
-cluster_hits(top_tables, data, meta, condition, p_values, clusters, report_dir)
+cluster_hits(
+  top_tables,
+  data,
+  meta,
+  condition,
+  report_info,
+  mode = "integrated",
+  spline_params = list(spline_type = c("n"), DoFs = c(2L)),
+  p_values = c(0.05),
+  clusters = c("auto"),
+  meta_batch_column = NA,
+  time_unit = "m",
+  report_dir = here::here()
+)
 }
 \arguments{
 \item{top_tables}{A list of data frames, each representing a top table from 
@@ -58,7 +76,6 @@ compiled into an HTML report.
                                   c(0.05),
                                   c(3), "path/to/report/dir")
 }
-
 
 }
 \seealso{

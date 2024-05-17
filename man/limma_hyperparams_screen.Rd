@@ -2,7 +2,16 @@
 % Please edit documentation in R/limma_hyperparams_screen.R
 \name{limma_hyperparams_screen}
 \alias{limma_hyperparams_screen}
-\title{Limma Hyperparameters Screening}
+\title{limma_hyperparams_screen.R contains the exported package function 
+limma_hyperparams_screen  and all the functions that make up the 
+functionality of limma_hyperparams_screen. limma_hyperparams_screen runs the 
+other package function, run_limma_splines, for a time series omics dataset,
+for different hyperparameters. Such are for example degree of freedom of the
+spline, type of spline, limma design formula, and different versions of the 
+data (full data vs. outliers removed). This can result in several 
+combinations, and it is tedious analyzing the combination in an organised 
+and structured manner. Therefore, this function streamlines that process.
+Limma Hyperparameters Screening}
 \usage{
 limma_hyperparams_screen(
   datas,
@@ -11,10 +20,12 @@ limma_hyperparams_screen(
   designs,
   modes,
   condition,
-  spline_configs,
+  spline_test_configs,
   feature_names,
+  report_info,
   report_dir = here::here(),
   adj_pthresh = c(0.05),
+  meta_batch_column = NA,
   padjust_method = "BH"
 )
 }

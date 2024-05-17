@@ -5,7 +5,7 @@
 \title{One half of one condition comparison HTML 
 (composite spline plots for one 'condition' inside one condition comparison)}
 \usage{
-gen_composite_spline_plots(internal_combos, datas, metas)
+gen_composite_spline_plots(internal_combos, datas, metas, spline_test_configs)
 }
 \description{
 One half of one condition comparison HTML 
