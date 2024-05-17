@@ -166,8 +166,7 @@ source(general_fun_path)
 # annotation. data contains the raw data, meta the column descriptions of data
 # (the sample descriptions), and annotation the row descriptions (the feature
 # descriptions)
-input_file_path <- here::here("data", "PhosphoPlusProteomics_data",
-                              "PTX_input_data.RData")
+input_file_path <- here::here("data", "timeseries_proteomics_example.RData")
 load(input_file_path) 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -184,18 +183,17 @@ metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 modes <- c("integrated", "isolated")
 condition <- "Phase"
-DoFs <- c(2L, 3L, 4L, 5L)
 feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "hyperparams_screen_reports")
 meta_batch_column = "Reactor"
 pthresholds <- c(0.05, 0.1)
 
 # Every row a combo to test.
-spline_test_configs <- data.frame(spline_type = c("b", "b", "b"),
-                                  degrees = c(3L, 3L, 2L),
-                                  DoFs = c(NA, NA, NA),
-                                  knots = I(list(c(0), c(0, 60), c(0, 60, 120))),
-                                  bknots = c(NA, NA, NA))
+spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
+                                  degree = c(NA, NA, NA, NA),
+                                  dof = c(2L, 3L, 4L, 5L),
+                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
+                                  bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
 
 report_info <- list(
   omics_data_type = "PTX",
@@ -209,18 +207,18 @@ report_info <- list(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    spline_test_configs,
-#                                    feature_names,
-#                                    report_info,
-#                                    report_dir,
-#                                    pthresholds,
-#                                    meta_batch_column)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   spline_test_configs,
+                                   feature_names,
+                                   report_info,
+                                   report_dir,
+                                   pthresholds,
+                                   meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -231,7 +229,7 @@ design <- "~ 1 + Phase*X + Reactor"
 
 
 spline_params = list(spline_type = c("n"),
-                     DoFs = c(2L))
+                     dof = c(2L))
 
 # debug(run_limma_splines)
 result <- run_limma_splines(data, 

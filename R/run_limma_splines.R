@@ -77,7 +77,7 @@ run_limma_splines <- function(data,
                               feature_names,
                               mode = "integrated",
                               spline_params = list(spline_type = c("n"),
-                                                   DoFs = c(2L)),
+                                                   dof = c(2L)),
                               padjust_method = "BH") {
   
   control_inputs_run_limma(data = data, 
@@ -240,8 +240,8 @@ between_level <- function(data,
   
   args <- list(x = meta$Time, intercept = FALSE)
   
-  if (!is.null(spline_params$DoFs)) {
-    args$df <- spline_params$DoFs[1]
+  if (!is.null(spline_params$dof)) {
+    args$df <- spline_params$dof[1]
   } else {
     args$knots <- spline_params$knots[[1]]
   }
@@ -252,7 +252,7 @@ between_level <- function(data,
   
   
   if (spline_params$spline_type[1] == "b") {
-    args$degree <- spline_params$degrees[1]
+    args$degree <- spline_params$degree[1]
     meta$X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
     meta$X <- do.call(splines::ns, args)
@@ -415,8 +415,8 @@ within_level <- function(data,
   
   args <- list(x = meta$Time, intercept = FALSE)
   
-  if (!is.null(spline_params$DoFs)) {
-    args$df <- spline_params$DoFs[level_index]
+  if (!is.null(spline_params$dof)) {
+    args$df <- spline_params$dof[level_index]
   } else {
     args$knots <- spline_params$knots[[level_index]]
   }
@@ -427,7 +427,7 @@ within_level <- function(data,
   
   
   if (spline_params$spline_type[level_index] == "b") {
-    args$degree <- spline_params$degrees[level_index]
+    args$degree <- spline_params$degree[level_index]
     meta$X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
     meta$X <- do.call(splines::ns, args)

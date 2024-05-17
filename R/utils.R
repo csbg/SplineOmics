@@ -204,24 +204,30 @@ check_spline_params_generally <- function(spline_params) {
     stop("spline_type is missing in spline_params.")
   }
   
-  # Check if degrees exists and is an integer vector
-  if ("degrees" %in% names(spline_params)) {
-    if (!all(spline_params$degrees == as.integer(spline_params$degrees))) {
-      stop("degrees must be an integer vector in spline_params.")
+  # Check if degree exists and is an integer vector
+  if ("degree" %in% names(spline_params)) {
+    if (!all(spline_params$degree == as.integer(spline_params$degree))) {
+      stop("degree must be an integer vector in spline_params.")
     }
   } else if (!all(spline_params$spline_type %in% c("n"))) {
-    stop("degrees is missing in spline_params.")
+    stop("degree is missing in spline_params.")
   }
   
-  # Check if DoFs exists and is an integer vector
-  if ("DoFs" %in% names(spline_params)) {
-    if (!all(spline_params$DoFs == as.integer(spline_params$DoFs))) {
-      stop("DoFs must be an integer vector in spline_params.")
+  if (("dof" %in% names(spline_params)) && 
+      ("knots" %in% names(spline_params))) {
+    stop("Either dof or knots must be present, but not both,in spline_params.")
+  } else if (!("dof" %in% names(spline_params)) && 
+             !("knots" %in% names(spline_params))) {
+    stop("At least one of dof or knots must be present, in spline_params.")
+  }
+  
+  # Check if dof exists and is an integer vector
+  if ("dof" %in% names(spline_params)) {
+    if (!all(spline_params$dof == as.integer(spline_params$dof))) {
+      stop("dof must be an integer vector in spline_params.")
     }
-    
-    
     for (i in seq_along(spline_params$spline_type)) {
-      if (spline_params$spline_type[i] == "b" && spline_params$DoFs[i] < 3) {
+      if (spline_params$spline_type[i] == "b" && spline_params$dof[i] < 3) {
         stop(paste0("B-splines require DoF > 2, for spline_params spline_type ", 
                     "index ", i))
       }
@@ -234,14 +240,6 @@ check_spline_params_generally <- function(spline_params) {
         any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
       stop("knots must be a list of numeric vectors in spline_params.")
     }
-  }
-  
-  if (("DoFs" %in% names(spline_params)) && 
-      ("knots" %in% names(spline_params))) {
-    stop("Either DoFs or knots must be present, but not both,in spline_params.")
-  } else if (!("DoFs" %in% names(spline_params)) && 
-             !("knots" %in% names(spline_params))) {
-    stop("At least one of DoFs or knots must be present, in spline_params.")
   }
   
   # Check if bknots exists and is a list of numeric vectors

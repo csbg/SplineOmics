@@ -452,77 +452,14 @@ check_designs <- function(designs) {
 }
 
 
-check_spline_test_configs <- function(spline_test_configs, metas) {
-  if ("spline_type" %in% names(spline_test_configs)) {
-    if (!all(spline_test_configs$spline_type %in% c("b", "n"))) {
-      stop("Elements of spline_type must be either 'b' for B-splines or 'n'. for
-           natural cubic splines")
-    }
-  } else {
-    stop("spline_type is missing.")
-  }
+check_spline_test_configs <- function(spline_test_configs, 
+                                      metas) {
   
-  # Check if degrees exists and is an integer vector
-  if ("degrees" %in% names(spline_test_configs)) {
-    if (!all(spline_test_configs$degrees == 
-             as.integer(spline_test_configs$degrees))) {
-      stop("degrees must be an integer vector.")
-    }
-  } else {
-    stop("degrees is missing.")
-  }
+  check_colums_spline_test_configs(spline_test_configs)
   
-  # Check if DoFs exists and is an integer vector or a vector of all NA values
-  if ("DoFs" %in% names(spline_test_configs)) {
-    # Check if DoFs is either all integers or all NAs
-    if (!all(is.na(spline_test_configs$DoFs)) && 
-        !all(spline_test_configs$DoFs == as.integer(spline_test_configs$DoFs), 
-             na.rm = TRUE)) {
-      stop("DoFs must be an integer vector or a vector of NA values.")
-    }
-  } else {
-    stop("DoFs is missing.")
-  }
+  check_spline_type_column(spline_test_configs)
   
-  # Check if knots exists and is a list of numeric vectors
-  if ("knots" %in% names(spline_test_configs)) {
-    # Check if knots is a list and all elements are numeric vectors or if all 
-    # are NA
-    if (!is.list(spline_test_configs$knots) ||
-        any(!sapply(spline_test_configs$knots, function(x) is.numeric(x) || 
-                    all(is.na(x))))) {
-      stop("knots must be a list of numeric vectors or a vector of NA values.")
-    }
-  } else {
-    stop("knots is missing.")
-  }
-  
-  if (all(is.na(spline_test_configs$DoFs)) == 
-      all(is.na(spline_test_configs$knots))) {
-    stop("Exactly one of DoFs or knots must contain only NA values.")
-  }
-  
-  # Check if bknots exists and is a list of numeric vectors
-  if ("bknots" %in% names(spline_test_configs)) {
-    # Check if bknots is either a list of numeric vectors or all elements are NA
-    if (is.list(spline_test_configs$bknots)) {
-      valid_bknots <- sapply(spline_test_configs$bknots, 
-                             function(x) is.numeric(x) && !any(is.na(x)))
-      if (any(!valid_bknots)) {
-        stop("bknots must be a list of numeric vectors or a vector of 
-             NA values.")
-      }
-    } else if (all(is.na(spline_test_configs$bknots))) {
-      # This is fine, as it's a vector of NA values
-    } else {
-      stop("bknots must be a list of numeric vectors or a vector of NA values.")
-    }
-  } else {
-    stop("bknots is missing.")
-  }
-  
-  
-  check_spline_configs_element_len(spline_test_configs)
+  check_spline_type_params(spline_test_configs)
   
   check_max_and_min_dof(spline_test_configs, metas)
 }
@@ -555,7 +492,7 @@ process_combo <- function(data_index,
   # Because either DoF or knots are specified, and only optionally bknots
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
-
+  
   # This will not affect warnings and error messages!
   result <- suppressMessages(run_limma_splines(data = data, 
                                                meta = meta, 
@@ -917,6 +854,7 @@ create_spline_params <- function(spline_test_configs,
                                  meta, 
                                  condition, 
                                  mode) {
+  
   num_levels <- length(unique(meta[[condition]]))  
   
   result <- lapply(spline_test_configs, 
@@ -954,59 +892,169 @@ flatten_spline_configs <- function(spline_configs) {
 # Level 3 internal functions  ---------------------------------------------------
 
 
-check_spline_configs_element_len <- function(spline_configs) {
-  expected_length <- length(spline_configs$spline_type)
+check_colums_spline_test_configs <- function(spline_test_configs) {
   
-  # Check if all elements have the correct length
-  for (element in names(spline_configs)) {
-    if (length(spline_configs[[element]]) != expected_length) {
-      stop(paste("Error:", element, "length does not match 'spline_type' 
-                 length."))
+  required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
+  
+  # Check for exact match of column names and order
+  if (!identical(names(spline_test_configs), required_columns)) {
+    # Find the missing or extra columns
+    missing_columns <- setdiff(required_columns, names(spline_test_configs))
+    extra_columns <- setdiff(names(spline_test_configs), required_columns)
+    error_message <- "Error: Incorrect columns in dataframe. "
+    
+    # Append specific issues to the error message
+    if (length(missing_columns) > 0) {
+      error_message <- paste0(error_message, "Missing columns: ",
+                              paste(missing_columns, collapse=", "), ". ")
     }
+    if (length(extra_columns) > 0) {
+      error_message <- paste0(error_message, "Extra columns: ",
+                              paste(extra_columns, collapse=", "), ". ")
+    }
+    error_message <- paste0(error_message,
+                            "Expected columns in order: ",
+                            paste(required_columns, collapse=", "), ".")
+    
+    stop(error_message)
   }
 }
 
 
-check_max_and_min_dof <- function(spline_test_configs,
-                                  metas) {
-  DoFs <- apply(spline_test_configs, 1, function(row) {
-    row <- as.list(row)
-    process_row(row)
-  })
-  
-  for (i in seq_along(DoFs)) {
-    DoF <- DoFs[i]
-    spline_type <- spline_test_configs$spline_type[[i]]
+check_spline_type_column <- function(spline_test_configs) {
+  if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
+    # Identify invalid entries
+    invalid_entries <- spline_test_configs$spline_type[
+      !spline_test_configs$spline_type %in% c("n", "b")
+    ]
+    error_message <- sprintf(
+      "Error: 'spline_type' contains invalid entries. 
+        Only 'n' or 'b' are allowed. Invalid entries found: %s",
+      paste(unique(invalid_entries), collapse=", ")
+    )
     
-    if (spline_type == "b") {
-      if (DoF < 3) {
-        stop(paste0("B-splines require DoF > 2, for spline_params spline_type ", 
-                    "row index ", i))
+    stop(error_message)
+  }
+}
+
+
+#' Check constraints on spline configuration based on spline_type
+#'
+#' This function verifies the conditions in the spline_test_configs dataframe.
+#' It checks the 'spline_type' column to dictate rules for 'degree', 'dof',
+#' 'knots', and 'bknots'.
+#'
+#' @param spline_test_configs A dataframe with columns 'spline_type', 'degree',
+#'        'dof', 'knots', 'bknots'.
+#' @return logical TRUE if all conditions are met, otherwise stops with an error.
+#' @export
+check_spline_type_params <- function(spline_test_configs) {
+  for (i in seq_len(nrow(spline_test_configs))) {
+    row <- spline_test_configs[i,]
+    switch(as.character(row$spline_type),
+           "n" = {
+             if (!is.na(row$degree)) stop("degree must be NA for spline_type n")
+             if (!((is.na(row$dof) && !is.na(row$knots)) ||
+                   (!is.na(row$dof) && is.na(row$knots)))) {
+               stop("Either dof or knots must be NA, but not both, for 
+                    spline_type n")
+             }
+             if (!is.na(row$dof) && !is.integer(row$dof)) {
+               stop("dof must be an integer when it is not NA for 
+                    spline_type n")
+             }
+             if (!is.na(row$knots) && !is.numeric(row$knots)) {
+               stop("knots must be a numeric vector when it is not NA for 
+                    spline_type n")
+             }
+             if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+                                        length(row$bknots) != 2)) {
+               stop("bknots must be a numeric vector of exactly two elements 
+                    or NA for spline_type n")
+             }
+           },
+           "b" = {
+             if (!is.integer(row$degree)) stop("degree must be an integer for 
+                                               spline_type b")
+             if (!is.na(row$dof) && (!is.integer(row$dof) || 
+                                     row$dof < row$degree)) {
+               stop("dof must be an integer at least as big as degree for 
+                    spline_type b")
+             }
+             if (!is.na(row$knots) && !is.numeric(row$knots)) {
+               stop("knots must be a numeric vector when it is not NA for 
+                    spline_type b")
+             }
+             if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+                                        length(row$bknots) != 2)) {
+               stop("bknots must be a numeric vector of exactly two elements 
+                    or NA for spline_type b")
+             }
+           },
+           stop("spline_type must be either 'n' or 'b'")
+    )
+  }
+  return(TRUE)
+}
+
+
+#' Calculate degrees of freedom for spline configurations
+#'
+#' This function calculates and checks degrees of freedom for each spline 
+#' configuration
+#' based on the spline type. It validates DoF against constraints given in the 
+#' meta dataframe.
+#'
+#' @param spline_test_configs A dataframe with columns including 'spline_type',
+#'  'dof', 'degree', and 'knots'.
+#' @param meta A dataframe with a 'Time' column used to validate the maximum 
+#' allowable DoF.
+#' @return NULL The function stops if any DoF condition is not met, with an 
+#' error message.
+#' @importFrom stats setNames
+check_max_and_min_dof <- function(spline_test_configs, 
+                                  metas) {
+
+  for (i in seq_len(nrow(spline_test_configs))) {
+    row <- spline_test_configs[i, ]
+    spline_type <- row[["spline_type"]]
+    dof <- row[["dof"]]
+    degree <- row[["degree"]]
+    knots <- row[["knots"]]
+    
+    # Calculate k and DoF if dof is NA
+    if (is.na(dof)) {
+      k <- length(knots)
+      if (spline_type == "b") {
+        dof <- k + degree
+      } else if (spline_type == "n") {
+        dof <- k + 1
+      } else {
+        stop("Unknown spline type '", spline_type, "' at row ", i)
       }
     }
-  }
-  
-  DoFs <- as.numeric(DoFs)
-  
-  min_DoF <- min(DoFs)
-  if (min_DoF == 1) {
-    stop("The minimum amount of DoF for all splines must be 2. Formula for 
-          b-splines: DoF = k + degree; Formula for n-splines: DoF = k + 1; 
-          with k = nr of internal knots.")
-  }
-  
-  max_DoF <- max(DoFs)
-  for (meta in metas) {
-    nr_timepoints <- length(unique(meta$Time))
     
-    if (max_DoF > nr_timepoints) {
-      stop(paste("The DoF (", max_DoF, ") is larger than the number of unique 
-               elements in Time (", nr_timepoints, "). Formula for b-splines:
-               DoF = k + degree; Formula for n-splines: DoF = k + 1; with k = 
-               nr of internal knots.", sep = ""))
+    # Check if calculated or provided DoF is valid
+    if (dof < 2) {
+      stop("DoF must be at least 2, found DoF of ", dof, " at row ", i)
     }
+    
+    for (j in seq_along(metas)) {
+      meta <- metas[[j]]
+      nr_timepoints <- length(unique(meta$Time))
+      if (dof > nr_timepoints) {
+        stop("DoF (", dof, ") cannot exceed the number of unique time points 
+           (", nr_timepoints, ") in meta", j, " at row ", i)
+      }
+    }
+
   }
+  
+  invisible(NULL)
 }
+
+
+
 
 
 is_not_na <- function(x) {
@@ -1018,33 +1066,20 @@ is_not_na <- function(x) {
 }
 
 
-process_row <- function(row) {
-  if (!is.na(row["DoFs"])) {
-    return(as.integer(row["DoFs"]))
-  } else {
-    k <- length(row[["knots"]])
-    if (row["spline_type"] == "b") {
-      return(k + as.integer(row["degrees"]))
-    } else if (row["spline_type"] == "n") {
-      return(k + 1)
-    } else {
-      stop("Unknown spline type. Must be either b for B-splines or n for 
-           natural cubic splines")
-    }
-  }
-}
-
-
-process_config_column <- function(config_column, index, num_levels, mode) {
+process_config_column <- function(config_column, 
+                                  index, 
+                                  num_levels, 
+                                  mode) {
+  
   if (mode == "integrated") {
     if (is.list(config_column)) {
-      list(config_column[[index]])
+      config_column[[index]]
     } else {
       config_column[index]
     }
   } else {     # mode = 'isolated'
     if (is.list(config_column)) {
-      rep(list(config_column[[index]]), num_levels)
+      rep(config_column[[index]], num_levels)
     } else {
       rep(config_column[index], num_levels)
     }
@@ -1102,8 +1137,8 @@ plot_composite_splines <- function(data,
   
   args <- list(x = smooth_timepoints, intercept = FALSE)
   
-  if (!is.na(spline_test_configs$DoFs[[config_index]])) {
-    args$df <- spline_test_configs$DoFs[[config_index]]
+  if (!is.na(spline_test_configs$dof[[config_index]])) {
+    args$df <- spline_test_configs$dof[[config_index]]
   } else {
     args$knots <- spline_test_configs$knots[[config_index]]
   }
@@ -1114,7 +1149,7 @@ plot_composite_splines <- function(data,
   
   
   if (spline_test_configs$spline_type[config_index] == "b") {
-    args$degree <- spline_test_configs$degrees[[config_index]]
+    args$degree <- spline_test_configs$degree[[config_index]]
     X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
     X <- do.call(splines::ns, args)

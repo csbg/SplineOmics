@@ -1,7 +1,11 @@
-splinetime
-================
+
+# splinetime
+
+<div style="text-align: center;">
 
 <img src="readme/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"/>
+
+</div>
 
 ## Table of Contents
 
@@ -23,6 +27,15 @@ splinetime
 Welcome to `splinetime`, an R package designed to streamline the
 analysis of omics time-series data, followed by automated HTML report
 generation.
+
+Note: Understanding what this package does requires being familiar at
+least to some extent with the following topics:
+
+- The R package `limma`. limma is used for hypothesis testing here.
+
+- Splines. The timeseries omics data will be analysed with splines.
+
+### Is this package of use for me?
 
 If you have a data matrix from a time-series omics experiment
 (e.g. proteomics metabolomics, transcriptomics, etc.) that looks like
@@ -59,7 +72,10 @@ And if you want to achieve one or more of the following things:
   pattern. For example, some hits may continually decrease in value
   (e.g. intensity) over the time, while others may increase. Each of the
   unique temporal pattern would be put into one cluster, which sets the
-  stage for example for gene set enrichment analysis.
+  stage for example for gene set enrichment analysis (check the
+  enrichment terms for each cluster. For example, when one cluster
+  contains proteins that increase in abundance over the time, the
+  enrichment could tell you which processes got activated.)
 
 - Generate a report, that shows the temporal pattern of every hit and
   the resulting clusters, along with other plots such as a dendrogram,
@@ -114,7 +130,7 @@ a series of automatically generated HTML reports.
 
 ### Summary
 
-With `splinetime`, users can:
+With `splinetime`, you can:
 
 - **Explore Various Hyperparameters:** The `limma_hyperparams_screen()`
   function offers a comprehensive way to test combinations of
@@ -435,15 +451,6 @@ ensure they are up to date to avoid any compatibility issues.
 To ensure a smooth installation and functionality of `splinetime`, these
 dependencies will be automatically checked and, if necessary, installed
 upon installing `splinetime`.
-
-## System Requirements
-
-### Operating System
-
-- Recommended: Ubuntu 20.04 LTS (or compatible)
-- The project should also run on other Unix-like systems, including
-  macOS and other Linux distributions.
-- Windows 10 or later (with appropriate adjustments, if necessary)
 
 ### R Version
 
