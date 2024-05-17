@@ -163,7 +163,7 @@ repository into your R environment.
 
     ``` r
     library(devtools)
-    Sys.setenv(GITHUB_PAT = "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")
+    Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
     devtools::install_github("csbg/splinetime")
     ```
 
