@@ -13,9 +13,7 @@ knitr::opts_chunk$set(
 
 # splinetime
 
-::: {style="text-align: center;"}
-<img src="readme/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"/>
-:::
+![Spline Time Clock](readme/splinetime_clock_animation.gif)
 
 ## Table of Contents
 

@@ -207,18 +207,18 @@ report_info <- list(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   spline_test_configs,
-                                   feature_names,
-                                   report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    spline_test_configs,
+#                                    feature_names,
+#                                    report_info,
+#                                    report_dir,
+#                                    pthresholds,
+#                                    meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------

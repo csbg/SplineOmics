@@ -1,11 +1,11 @@
 
 # splinetime
 
-<div style="text-align: center;">
-
-<img src="readme/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"/>
-
-</div>
+<figure>
+<img src="readme/splinetime_clock_animation.gif"
+alt="Spline Time Clock" />
+<figcaption aria-hidden="true">Spline Time Clock</figcaption>
+</figure>
 
 ## Table of Contents
 

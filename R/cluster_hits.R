@@ -64,7 +64,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          report_info,   # Gets printed on top of the report
                          mode = "integrated",  # dependent on limma design
                          spline_params = list(spline_type = c("n"),
-                                              DoFs = c(2L)),
+                                              dof = c(2L)),
                          p_values = c(0.05),
                          clusters = c("auto"),
                          meta_batch_column = NA,   # to remove batch effect
@@ -338,7 +338,7 @@ make_clustering_report <- function(all_levels_clustering,
   generate_report_html(plots = plots, 
                        plots_sizes = plots_sizes,
                        level_headers_info = level_headers_info,
-                       spline_params,
+                       spline_params = spline_params,
                        report_info = report_info,
                        report_type = "cluster_hits",
                        mode = mode,
@@ -888,18 +888,18 @@ build_cluster_hits_report <- function(header_section,
           spline_params$spline_type[j] <- NA
         }
         
-        if (!is.null(spline_params$degrees) && 
-            length(spline_params$degrees) >= j) {
-          spline_params$degrees[j] <- spline_params$degrees[j]
+        if (!is.null(spline_params$degree) && 
+            length(spline_params$degree) >= j) {
+          spline_params$degree[j] <- spline_params$degree[j]
         } else {
-          spline_params$degrees[j] <- NA
+          spline_params$degree[j] <- NA
         }
         
-        if (!is.null(spline_params$DoFs) && 
-            length(spline_params$DoFs) >= j) {
-          spline_params$DoFs[j] <- spline_params$DoFs[j]
+        if (!is.null(spline_params$dof) && 
+            length(spline_params$dof) >= j) {
+          spline_params$dof[j] <- spline_params$dof[j]
         } else {
-          spline_params$DoFs[j] <- NA
+          spline_params$dof[j] <- NA
         }
         
         if (!is.null(spline_params$knots) && 
@@ -925,7 +925,7 @@ build_cluster_hits_report <- function(header_section,
                     <span style='color: blue;'>DoF:</span> %s<br>
                     <span style='color: blue;'>Knots:</span> %s<br>
                     <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
-                    spline_params$degrees[j], spline_params$DoFs[j], 
+                    spline_params$degree[j], spline_params$dof[j], 
                     spline_params$knots[j], spline_params$bknots[j])
         } else {    # == "n"
           spline_params_info <- 
@@ -935,7 +935,7 @@ build_cluster_hits_report <- function(header_section,
                     <span style='color: blue;'>DoF:</span> %s<br>
                     <span style='color: blue;'>Knots:</span> %s<br>
                     <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
-                    spline_params$DoFs[j], spline_params$knots[j], 
+                    spline_params$dof[j], spline_params$knots[j], 
                     spline_params$bknots[j])
           
         }
@@ -1062,8 +1062,8 @@ get_curve_values <- function(top_table,
   
   args <- list(x = smooth_timepoints, intercept = FALSE)
   
-  if (!is.null(spline_params$DoFs)) {
-    args$df <- spline_params$DoFs[level_index]
+  if (!is.null(spline_params$dof)) {
+    args$df <- spline_params$dof[level_index]
   } else {
     args$knots <- spline_params$knots[[level_index]]
   }
@@ -1074,7 +1074,7 @@ get_curve_values <- function(top_table,
   
   
   if (spline_params$spline_type[level_index] == "b") {
-    args$degree <- spline_params$degrees[level_index]
+    args$degree <- spline_params$degree[level_index]
     X <- do.call(splines::bs, args)
   } else {                                          # natural cubic splines
     X <- do.call(splines::ns, args)
