@@ -1,9 +1,16 @@
 ---
 title: "splinetime"
-output: html_document
+output: github_document
 ---
 
-# splinetime
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 <img src="readme/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"/>
 
@@ -24,17 +31,98 @@ output: html_document
 
 ## Introduction {#introduction}
 
-Welcome to `splinetime`, an R package designed to streamline the analysis of time-series data by leveraging the power of splines—piecewise polynomial functions—and the robust statistical framework of `limma` for hypothesis testing. This package simplifies the complex process of time-series analysis, making it accessible and efficient for researchers and data analysts alike.
+Welcome to `splinetime`, an R package designed to streamline the analysis of omics time-series data, followed by automated HTML report generation.
+
+If you have a data matrix from a time-series omics experiment (e.g. proteomics metabolomics, transcriptomics, etc.) that looks like this (this is an example of a time-series proteomics dataset, coming from a CHO cell cultivation, carried out in three reactors (three replicated per timepoint). E9, E10, E12 describes the ID of the reactor, TP01, TP02, etc., the timepoint of the measurement):
+
+```{r data example, echo=FALSE, include=TRUE}
+library(here)
+library(readxl)
+library(knitr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+input_file_path <- here::here("data", "timeseries_proteomics_example.RData")
+load(input_file_path) 
+data <- as.matrix(data)
+data_head <- head(data[, 1:7], 10)
+
+# Format numbers to two decimal places
+data_head <- apply(data_head, 2, function(x) format(round(x, 2), nsmall = 2))
+
+# Truncate column headers
+colnames(data_head) <- sub("_[^_]+$", "", colnames(data_head))
+
+table_plot1 <- tableGrob(data_head)
+
+grid.newpage()
+grid.draw(table_plot1)
+```
+
+where every row is a feature (protein, metabolite, gene) and every column is a sample, taken at a specific time, and the values are the measurement values (e.g intensities, etc.).
+
+And if you further have a dataframe, containing the meta information, that looks like this:
+
+```{r meta example, echo=FALSE, include=TRUE}
+library(here)
+library(readxl)
+library(knitr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+input_file_path <- here::here("data", "timeseries_proteomics_example.RData")
+load(input_file_path) 
+meta_head <- head(meta[, 1:5], 10)
+
+table_plot2 <- tableGrob(meta_head)
+
+grid.newpage()
+grid.draw(table_plot2)
+```
+
+where every row describes a sample (column of the data matrix), and the columns contain the different meta information, such as as Time.Point and Time.
+
+And if you want to achieve one or more of the following things:
+
+-   Find out which of the features (rows of the data matrix) (e.g. which of the proteins, metabolites, etc.) are changed significantly over the time and get a p-value for them.
+
+-   Cluster the hits (the significant features) based on their temporal pattern. For example, some hits may continually decrease in value (e.g. intensity) over the time, while others may increase. Each of the unique temporal pattern would be put into one cluster, which sets the stage for example for gene set enrichment analysis.
+
+-   Generate a report, that shows the temporal pattern of every hit and the resulting clusters, along with other plots such as a dendrogram, showing the hierarchical clustering employed, and a heatmap showing the logfold changes. You can view an example report here: [HTML report](example_report.html)
+
+Then the `splinetime` package could be of interest to you. This package finds the hits by applying splines (piece wise polynomial curves) to the time-series omics data and using the R package `limma` to find out, in a nutshell, which of the features have splines that are significantly different from horizontal (which would mean that nothing happens over the time, therefore no significant change).
+
+Here an example of a hit (significant feature):
+
+<img src="readme/significant_feature.png" width="200" height="200"/>
+
+The datapoints of the triplicates are close together and there is a clear temporal pattern. This is from a proteomics example, so this protein here would decrease in abundance over the timecourse.
+
+Here an example of a feature, that is not significant (no hit):
+
+<img src="readme/non_significant_feature.png" width="200" height="200"/>
+
+The datapoints are scattered and there is no clear temporal pattern. The conclusion for this protein would be that there is no significant change in abundance over the timecourse.
+
+### Finding the right parameters for the limma spline analysis
+
+Above you have seen that you can fit splines to your timeseries omics data and determine which features are significantly changed over the timecourse. However, should you use B-splines or natural cubic splines for your dataset, and with which degree of freedom? Should you remove outliers of your dataset? Which limma design formula should you use? Here, we call these decisions hyperparameters. We believe it is not straightforward answering these questions without testing their impact on the actual analysis. That is why the `splinetime` package contains a function to streamline the exploration of the different combination of these hyperparameters. With that function, you can very quickly and systematically explore which effect your hyperparameter choices have on your analysis. For example, you are not sure if you should use a degree of freedom for natural cubic splines of 2, 3, 4, or 5, and whether to remove the two potential outliers of your dataset, or just one, or just the other. This already results in a lot of different combinations of your decisions. With the function `limma_hyperparams_screen()` you can just easily plug in all the desired degrees of freedoms and version of your data (outliers removed vs. not removed, etc.) and see the impact in a series of automatically generated HTML reports.
+
+### Summary
 
 With `splinetime`, users can:
 
 -   **Explore Various Hyperparameters:** The `limma_hyperparams_screen()` function offers a comprehensive way to test combinations of hyperparameters, such as different datasets, `limma` design formulas, degrees of freedom, and p-value thresholds. This enables users to evaluate the impact of various settings on their analysis results systematically.
 
--   **Perform Limma Spline Analysis:** Once the optimal hyperparameters are identified, `run_limma_splines()` performs the differential expression analysis using splines.
+-   **Perform Limma Spline Analysis:** Once the optimal hyperparameters are identified, `run_limma_splines()` performs the limma analysis using splines.
 
--   **Cluster Significant Features:** The `cluster_hits()` function goes a step further by clustering the significant features identified in the spline analysis. It organizes these features into meaningful groups and generates a comprehensive report, facilitating the interpretation and communication of the results.
-
-`splinetime` is here to support your journey through the intricate landscape of time-series analysis, offering a clear path through the selection of hyperparameters to the final report. Embrace the power of splines and `limma` with `splinetime`, and unlock the full potential of your data.
+-   **Cluster Significant Features:** The `cluster_hits()` function goes a step further by clustering the significant features (hits) identified in the spline analysis. It organizes these features into meaningful groups and generates a comprehensive report, facilitating the interpretation and communication of the results.
 
 ## Installation {#installation}
 
@@ -121,7 +209,7 @@ Conducts a hyperparameter screening using the `limma` package to identify optima
 
 ##### Example Usage
 
-```r
+``` r
 result <- limma_hyperparams_screen(
   datas = datas,
   datas_descr = datas_descr,
@@ -162,7 +250,7 @@ This function performs differential expression analysis tailored for time-course
 
 #### Example Usage
 
-```r
+``` r
 result <- run_limma_splines(
   data = data, 
   meta = meta, 
@@ -183,7 +271,7 @@ Clusters significant features based on their expression profiles, following diff
 
 -   **top_tables**: A list containing the top tables from limma. Each top table should be a data frame with significant features identified by the analysis, including their p-values and other statistics.
 
--   **data**: An matrix (data frame or matrix) with rows representing features and columns representing samples. 
+-   **data**: An matrix (data frame or matrix) with rows representing features and columns representing samples.
 
 -   **meta**: Metadata frame corresponding to the samples in the `data` matrix. This frame should include variables that describe the experimental conditions, batches, or other grouping factors relevant to the analysis.
 
@@ -207,7 +295,7 @@ Clusters significant features based on their expression profiles, following diff
 
 #### Example Usage
 
-```r
+``` r
 clustering_results <- cluster_hits(
   top_tables = top_tables, 
   data = data, 
@@ -221,6 +309,7 @@ clustering_results <- cluster_hits(
   meta_batch_column = meta_batch_column,
   report_dir = report_dir
 )
+```
 
 ## Dependencies {#dependencies}
 
