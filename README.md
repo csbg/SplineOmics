@@ -1,7 +1,7 @@
 
-# splinetime
+![](readme/SplineOmics_logo.png)
 
-![](readme/splinetime_clock.gif)
+![](readme/SplineOmics_clock.gif)
 
 ## Table of Contents
 
@@ -20,18 +20,20 @@
 
 ## Introduction
 
-Welcome to `splinetime`, an R package designed to streamline the
+Welcome to `SplineOmics`, an R package designed to streamline the
 analysis of omics time-series data, followed by automated HTML report
 generation.
 
 Note: Understanding what this package does requires being familiar at
 least to some extent with the following topics:
 
-- The R package `limma`. limma is used for hypothesis testing here.
+- The R package `limma` (DOI:
+  [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007)). This
+  package uses `limma` for hypothesis testing.
 
-- Splines. The timeseries omics data will be analysed with splines.
+- Splines. The time-series omics data will be analysed with them.
 
-### Is this package of use for me?
+### Is the SplineOmics package of use for me?
 
 If you have a data matrix from a time-series omics experiment
 (e.g. proteomics metabolomics, transcriptomics, etc.) that looks like
@@ -40,13 +42,13 @@ from a CHO cell cultivation, carried out in three reactors (three
 replicated per timepoint). E9, E10, E12 describes the ID of the reactor,
 TP01, TP02, etc., the timepoint of the measurement):
 
-    #> here() starts at /home/thomas/Documents/PhD/projects/DGTX/R_packages/splinetime
+    #> here() starts at /home/thomas/Documents/PhD/projects/DGTX/R_packages/SplineOmics
 
 <img src="man/figures/README-data example-1.png" width="100%" />
 
 where every row is a feature (protein, metabolite, gene) and every
 column is a sample, taken at a specific time, and the values are the
-measurement values (e.g intensities, etc.).
+measurement values (e.g. intensities, etc.).
 
 And if you further have a dataframe, containing the meta information,
 that looks like this:
@@ -73,20 +75,22 @@ And if you want to achieve one or more of the following things:
   contains proteins that increase in abundance over the time, the
   enrichment could tell you which processes got activated.)
 
-- Generate a report, that shows the temporal pattern of every hit and
-  the resulting clusters, along with other plots such as a dendrogram,
-  showing the hierarchical clustering employed, and a heatmap showing
-  the logfold changes. You can view an example report here: [HTML
-  report](https://csbg.github.io/splinetime/example_report.html)
+- Automatically generate a report, that shows the temporal pattern of
+  every hit and the resulting clusters, along with other plots such as a
+  dendrogram, showing the hierarchical clustering employed, and a
+  heatmap showing the logfold changes. You can view an example report
+  here: [HTML
+  report](https://csbg.github.io/SplineOmics/example_report.html)
 
-Then the `splinetime` package could be of interest to you. This package
+Then the `SplineOmics` package could be of interest to you. This package
 finds the hits by applying splines (piece wise polynomial curves) to the
 time-series omics data and using the R package `limma` to find out, in a
 nutshell, which of the features have splines that are significantly
 different from horizontal (which would mean that nothing happens over
 the time, therefore no significant change).
 
-Here an example of a hit (significant feature):
+Here an example of a hit (significant feature) with the datapoints in
+blue and the applied natural cubic spline in red:
 
 <img src="readme/significant_feature.png" width="200" height="200"/>
 
@@ -111,7 +115,7 @@ for your dataset, and with which degree of freedom? Should you remove
 outliers of your dataset? Which limma design formula should you use?
 Here, we call these decisions hyperparameters. We believe it is not
 straightforward answering these questions without testing their impact
-on the actual analysis. That is why the `splinetime` package contains a
+on the actual analysis. That is why the `SplineOmics` package contains a
 function to streamline the exploration of the different combination of
 these hyperparameters. With that function, you can very quickly and
 systematically explore which effect your hyperparameter choices have on
@@ -126,7 +130,7 @@ a series of automatically generated HTML reports.
 
 ### Summary
 
-With `splinetime`, you can:
+With `SplineOmics`, you can:
 
 - **Explore Various Hyperparameters:** The `limma_hyperparams_screen()`
   function offers a comprehensive way to test combinations of
@@ -142,12 +146,12 @@ With `splinetime`, you can:
 - **Cluster Significant Features:** The `cluster_hits()` function goes a
   step further by clustering the significant features (hits) identified
   in the spline analysis. It organizes these features into meaningful
-  groups and generates a comprehensive report, facilitating the
-  interpretation and communication of the results.
+  groups (clusters) and generates a comprehensive report, facilitating
+  the interpretation and communication of the results.
 
 ## Installation
 
-Follow these steps to install the `splinetime` package from its GitHub
+Follow these steps to install the `SplineOmics` package from its GitHub
 repository into your R environment.
 
 #### Prerequisites
@@ -170,33 +174,24 @@ repository into your R environment.
     ```
 
 3.  Load the `devtools` package into your R session, and run the
-    install_github function to install the splinetime package into your
-    RProject:
+    install_github function to install the `SplineOmics` package into
+    your R Project:
 
     ``` r
     library(devtools)
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
-    devtools::install_github("csbg/splinetime")
+    devtools::install_github("csbg/SplineOmics")
     ```
 
-    This command downloads and installs the splinetime package from the
+    This command downloads and installs the SplineOmics package from the
     GitHub repository.
 
-4.  Wait for the installation to complete. This process may take a few
-    moments as it involves downloading the package and its dependencies.
-    You might see messages in the console regarding the installation
-    progress or be prompted to update other packages.
-
-5.  Once installation is complete, load the splinetime package into your
-    R session to start using it. Run:
+4.  Once installation is complete, load the SplineOmics package into
+    your R session to start using it:
 
     ``` r
-    library(splinetime)
+    library(SplineOmics)
     ```
-
-6.  Congratulations! You have successfully installed the splinetime
-    package from GitHub. You’re now ready to use its functions in your R
-    projects.
 
 #### Troubleshooting
 
@@ -204,13 +199,13 @@ If you encounter errors related to dependencies or package versions
 during installation, try updating your R and RStudio to the latest
 versions and repeat the installation steps.
 
-For issues specifically related to the splinetime package, check the
+For issues specifically related to the SplineOmics package, check the
 Issues section of the GitHub repository for similar problems or to post
 a new issue.
 
 ### Usage
 
-The `splinetime` package provides comprehensive tools for analyzing
+The `SplineOmics` package provides comprehensive tools for analyzing
 time-course data, focusing on differential expression analysis and
 clustering. This section covers detailed instructions for utilizing each
 of the package’s main functions.
@@ -236,29 +231,36 @@ multiple datasets.
 - **designs**: A character vector of model design formulas for
   differential expression analysis.
 
-- **modes**: A character vector indicating the mode of analysis for each
-  design. Example: `c("integrated", "isolated")`.
+- **modes**: A string indicating the mode of analysis for each design.
+  Example: `"integrated"`.
 
-- **condition**: The name of the experimental condition factor in the
-  metadata.
+- **condition**: The column name of the dataframe meta that contains the
+  levels of the factor of the experiment. A factor is a variable that
+  categorizes the data into different groups that are important for the
+  analysis. A level is a specific value a factor can take.
 
 - **spline_test_configs**: A list of configurations for testing
   different spline parameters, including degrees of freedom and spline
   types.
 
 - **feature_names**: A character vector of feature names (e.g., gene or
-  protein names) for annotation.
+  protein names).
 
 - **report_info**: Information that gets printed on top of the report,
   providing context or additional details about the analysis.
 
-- **report_dir**: Directory path for saving the output reports.
+- **report_dir**: Directory path for saving the output reports. Default
+  is the current working dir.
 
 - **pthresholds**: A numeric vector of p-value thresholds for
   determining statistical significance.
 
 - **meta_batch_column**: A character string specifying the column in
-  `meta` used to remove batch effects. Default is `NA`.
+  `meta` used to remove batch effects. Default is `NA`, which will not
+  remove the batch effect with the help of the removeBatchEffect
+  function from the `limma` package. The batch effect removed data would
+  only be used to generate the plots, because in the limma analysis,
+  limma accounts for the batch effect.
 
 ##### Example Usage
 
@@ -406,9 +408,9 @@ clustering_results <- cluster_hits(
 
 ## Dependencies
 
-The `splinetime` package relies on several other R packages for its
+The `SplineOmics` package relies on several other R packages for its
 functionality. Below is a list of dependencies that will be installed
-along with `splinetime`. If you already have these packages installed,
+along with `SplineOmics`. If you already have these packages installed,
 ensure they are up to date to avoid any compatibility issues.
 
 - **limma**: For linear models for microarray data.
@@ -444,9 +446,9 @@ ensure they are up to date to avoid any compatibility issues.
   documents.
 - **ragg**: For creating high-quality images for graphics devices.
 
-To ensure a smooth installation and functionality of `splinetime`, these
-dependencies will be automatically checked and, if necessary, installed
-upon installing `splinetime`.
+To ensure a smooth installation and functionality of `SplineOmics`,
+these dependencies will be automatically checked and, if necessary,
+installed upon installing `SplineOmics`.
 
 ### R Version
 
@@ -458,8 +460,8 @@ upon installing `splinetime`.
 ## Getting Help
 
 If you encounter a bug or have a suggestion for improving the
-`splinetime` package, we encourage you to [open an
-issue](https://github.com/csbg/splinetime/issues) on our GitHub
+`SplineOmics` package, we encourage you to [open an
+issue](https://github.com/csbg/SplineOmics/issues) on our GitHub
 repository. Before opening a new issue, please check to see if your
 question or bug has already been reported by another user. This helps
 avoid duplicate reports and ensures that we can address problems
@@ -467,15 +469,16 @@ efficiently.
 
 For more detailed questions, discussions, or contributions regarding the
 package’s use and development, please refer to the [GitHub
-Discussions](https://github.com/csbg/splinetime/discussions) page for
-`splinetime`. This forum is a great place to ask for help, share your
+Discussions](https://github.com/csbg/SplineOmics/discussions) page for
+`SplineOmics`. This forum is a great place to ask for help, share your
 experiences, and connect with the community.
 
-Thank you for using and contributing to the development of `splinetime`!
+Thank you for using and contributing to the development of
+`SplineOmics`!
 
 ## Contributing
 
-We welcome contributions to the `splinetime` package! Whether you’re
+We welcome contributions to the `SplineOmics` package! Whether you’re
 interested in fixing bugs, adding new features, or improving
 documentation, your help is greatly appreciated.
 
@@ -483,7 +486,7 @@ Here’s how you can contribute:
 
 1.  **Report a Bug or Request a Feature:** If you encounter a bug or
     have an idea for a new feature, please [open an
-    issue](https://github.com/csbg/splinetime/issues) on our GitHub
+    issue](https://github.com/csbg/SplineOmics/issues) on our GitHub
     repository. Before opening a new issue, check to see if the issue
     has already been reported or the feature requested by another user.
 
@@ -495,7 +498,7 @@ Here’s how you can contribute:
     - Create a new branch in your fork for your contributions.
     - Commit your changes to the branch.
     - Push the branch to your fork.
-    - Submit a pull request to the `splinetime` repository from your
+    - Submit a pull request to the `SplineOmics` repository from your
       fork and branch.
     - Please describe your changes clearly in the pull request
       description and reference any related issues.
@@ -507,21 +510,57 @@ Here’s how you can contribute:
 Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all your
 interactions with the project.
 
-Thank you for considering contributing to `splinetime`. Your efforts are
-what make the open-source community a fantastic place to learn, inspire,
-and create.
+Thank you for considering contributing to `SplineOmics`. Your efforts
+are what make the open-source community a fantastic place to learn,
+inspire, and create.
 
-## Licence
+## License
 
-`splinetime` is open-sourced software licensed under the [MIT
-license](LICENSE).
+This package is licensed under the MIT License with additional terms.
+Please see the [LICENSE](./docs/LICENSE) file for full terms and
+conditions.
+
+© 2024 Thomas Rauter. All rights reserved.
 
 ## Citation
 
-The `splinetime` package is currently not published in a peer-reviewed
+The `SplineOmics` package is currently not published in a peer-reviewed
 scientific journal or similar outlet, and as such, there is no formal
 citation requirement associated with its use. You are free to use
-`splinetime` without citing it. However, we appreciate acknowledgements
+`SplineOmics` without citing it. However, we appreciate acknowledgements
 in your projects or publications that benefit from this package. Your
 support helps us in the continued development and improvement of
-`splinetime`. Thank you for using our package!
+`SplineOmics`. Thank you for using our package!
+
+The `SplineOmics` relies substantially on following R libraries in
+particular, which should be cited in your publication:
+
+- limma –\> Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W., Shi,
+  W., and Smyth, G.K. (2015). limma powers differential expression
+  analyses for RNA-sequencing and microarray studies. Nucleic Acids
+  Research 43(7), e47. (DOI:
+  [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007))
+
+- ggplot2 –\> H. Wickham. ggplot2: Elegant Graphics for Data Analysis.
+  Springer-Verlag New York, 2016.
+
+- dplyr –\> Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
+  *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4,
+  <https://CRAN.R-project.org/package=dplyr>.
+
+- tidyr –\> Wickham H, Vaughan D, Girlich M (2024). *tidyr: Tidy Messy
+  Data*. R package version 1.3.1,
+  <https://CRAN.R-project.org/package=tidyr>.
+
+- ComplexHeatmap –\> Gu, Z. (2016) Complex heatmaps reveal patterns and
+  correlations in multidimensional genomic data. Bioinformatics.
+
+- pheatmap –\> Kolde R (2019). *pheatmap: Pretty Heatmaps*. R package
+  version 1.0.12, <https://CRAN.R-project.org/package=pheatmap>.
+
+- purrr –\> Wickham H, Henry L (2023). *purrr: Functional Programming
+  Tools*. R package version 1.0.2,
+  <https://CRAN.R-project.org/package=purrr>.
+
+- tibble –\> Müller K, Wickham H (2023). *tibble: Simple Data Frames*. R
+  package version 3.2.1, <https://CRAN.R-project.org/package=tibble>.

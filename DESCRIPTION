@@ -1,4 +1,4 @@
-Package: splinetime
+Package: SplineOmics
 Type: Package
 Title: Streamlines the process of analysing omics timeseries data with splines
 Version: 0.1.0
