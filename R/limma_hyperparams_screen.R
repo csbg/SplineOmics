@@ -652,6 +652,7 @@ hc_add <- function(hc_obj,
 #' @importFrom tibble enframe column_to_rownames
 #' @importFrom dplyr mutate select left_join
 #' @importFrom pheatmap pheatmap
+#' @importFrom purrr flatten_chr
 #' 
 hc_vennheatmap <- function(hc_obj) {
   hits_1 <- store_hits(hc_obj$data[[1]])
