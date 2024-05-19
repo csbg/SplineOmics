@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{generate_report_html}
 \alias{generate_report_html}
-\title{Generate HTML Report with Plot List}
+\title{Generate Report HTML}
 \usage{
 generate_report_html(
   plots,
@@ -18,17 +18,57 @@ generate_report_html(
 )
 }
 \arguments{
-\item{plots}{A list of ggplot objects to be included in the report.}
+\item{plots}{A list of ggplot2 plot objects.}
 
-\item{plots_sizes}{The number of rows to arrange the plots in the report.}
+\item{plots_sizes}{A list of integers specifying the size of each plot.}
 
-\item{report_dir}{The directory where the report HTML file will be saved.}
+\item{level_headers_info}{A list of header information for each level.}
+
+\item{spline_params}{A list of spline parameters.}
+
+\item{report_info}{A named list containing report information.}
+
+\item{report_type}{A character string specifying the report type 
+('limma_hyperparams_screen' or 'cluster_hits').}
+
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
+
+\item{filename}{A character string specifying the filename for the report.}
+
+\item{timestamp}{A timestamp to include in the report filename.}
+
+\item{report_dir}{A character string specifying the report directory.}
+}
+\value{
+No return value, called for side effects.
 }
 \description{
-This function generates an HTML report for a given list of plots. It 
-includes
-headers and design details specific to the data type being analyzed, and 
-saves
-the report in the specified directory. The function is internal and not 
-exported.
+Generates an HTML report with the provided plots, spline parameters, and 
+report information.
+}
+\examples{
+plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
+                              ggplot2::geom_point())
+plots_sizes <- list(2)
+level_headers_info <- list(list("Level 1", 0))
+spline_params <- list(spline_type = "n", dof = 3)
+report_info <- list(
+  omics_data_type = "genomics",
+  data_description = "Sample description",
+  data_collection_date = "2023-01-01",
+  analyst_name = "John Doe",
+  project_name = "Project XYZ"
+)
+generate_report_html(plots, plots_sizes, level_headers_info, spline_params,
+                     report_info, 
+                     report_type = "limma_hyperparams_screen", mode = NA, 
+                     filename = "report", 
+                     timestamp = format(Sys.time(), "\%d_\%m_\%Y-\%H_\%M_\%S"), 
+                     report_dir = here::here())
+
+}
+\seealso{
+\code{\link{build_hyperparams_screen_report}}, 
+\code{\link{build_cluster_hits_report}}
 }

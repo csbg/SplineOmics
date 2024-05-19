@@ -7,6 +7,7 @@
 
 # Exported function: run_limma_splines() ---------------------------------------
 
+ 
 #' Run Limma Analysis with Spline Interpolation for Hyperparameter Screening
 #'
 #' This function conducts differential expression analysis using the Limma 
@@ -60,7 +61,7 @@
 #'   results <- run_limma_splines(data, meta, "~ 1 + Factor*X + Time", c(2L), 
 #'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
 #' }
-#'
+#' 
 #' @importFrom purrr partial
 #' @importFrom purrr map
 #' @importFrom purrr map_chr
@@ -149,7 +150,41 @@ run_limma_splines <- function(data,
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Controls the function input and raises an error if not in expected format
+#' Control Inputs for Running LIMMA
+#'
+#' @description
+#' Validates the inputs for running LIMMA analysis, ensuring all required 
+#' structures and parameters are correctly formatted.
+#'
+#' @param data A matrix of data values.
+#' @param meta A dataframe containing metadata, including a 'Time' column with 
+#' numeric values.
+#' @param design A design formula or matrix for the LIMMA analysis.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param condition A character string specifying the condition.
+#' @param feature_names A non-empty character vector of feature names.
+#' @param mode A character string specifying the mode 
+#'            ('isolated' or 'integrated').
+#' @param padjust_method A character string specifying the p-adjustment method.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' data <- matrix(runif(100), nrow = 10)
+#' meta <- data.frame(Time = seq(1, 10))
+#' design <- ~ 1
+#' spline_params <- list(df = 3)
+#' condition <- "example_condition"
+#' feature_names <- c("feature1", "feature2")
+#' mode <- "isolated"
+#' padjust_method <- "BH"
+#' control_inputs_run_limma(data, meta, design, spline_params, condition, 
+#'                          feature_names, mode, padjust_method)
+#'
+#' @seealso
+#' \code{\link{check_design_formula}}, \code{\link{check_mode}}, 
+#' \code{\link{check_spline_params}}
+#' 
 control_inputs_run_limma <- function(data, 
                                      meta, 
                                      design, 
@@ -158,6 +193,7 @@ control_inputs_run_limma <- function(data,
                                      feature_names, 
                                      mode, 
                                      padjust_method) {
+  
   if (!is.matrix(data)) {
     stop("data must be a matrix")
   }
@@ -177,10 +213,7 @@ control_inputs_run_limma <- function(data,
   
   check_design_formula(design, meta)
   
-  # Ensure factors is a non-empty character vector
-  if (!is.character(condition) && !(length(condition) == 1)) {
-    stop("factors must be a non-empty character vector.")
-  }
+  check_condition(condition, meta)
   
   # Check that feature_names is a non-empty character vector
   if (!is.character(feature_names) || length(feature_names) == 0) {
@@ -191,33 +224,45 @@ control_inputs_run_limma <- function(data,
   
   check_spline_params(spline_params, mode)
   
-  supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", 
-                         "fdr", "none")
-  if (!(is.character(padjust_method) && padjust_method %in% supported_methods)) 
-  {
-    stop("padjust_method must be a character and one of the supported methods (
-         holm, hochberg, hommel, bonferroni, BH, BY, fdr, none).")
-  }
+  check_padjust_method(padjust_method)
 }
 
 
-#' Calculate Differential Expression Between Levels
+#' Between Level Analysis
 #'
-#' Calculates differential expression between specified levels of a condition
-#' using linear models and limma analysis. Returns top table results for 
-#' contrasts between factors only and factors with time interactions.
+#' @description
+#' Performs a between-level analysis using LIMMA to compare specified levels 
+#' within a condition.
 #'
-#' @param data A matrix of expression values.
-#' @param meta Metadata containing experimental design information.
-#' @param design A formula specifying the linear model design.
-#' @param spline_params Parameters for spline generation.
-#' @param condition The name of the condition column in the metadata.
-#' @param compared_levels The levels of the condition to compare.
-#' @param padjust_method The method for adjusting p-values.
-#' @param feature_names Names of the features in the data matrix.
-#' @return A list containing top tables for contrasts between factors only 
-#'         and factors with time interactions.
-#'         
+#' @param data A matrix of data values.
+#' @param meta A dataframe containing metadata, including a 'Time' column.
+#' @param design A design formula or matrix for the LIMMA analysis.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param condition A character string specifying the condition.
+#' @param compared_levels A vector of levels within the condition to compare.
+#' @param padjust_method A character string specifying the p-adjustment method.
+#' @param feature_names A non-empty character vector of feature names.
+#'
+#' @return A list containing top tables for the factor only and factor-time 
+#' contrast.
+#'
+#' @examples
+#' data <- matrix(runif(100), nrow = 10)
+#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
+#' design <- "~ 1"
+#' spline_params <- list(spline_type = c("n"), dof = list(3))
+#' condition <- "condition"
+#' compared_levels <- c("A", "B")
+#' padjust_method <- "BH"
+#' feature_names <- c("feature1", "feature2")
+#' between_level(data, meta, design, spline_params, condition, compared_levels, 
+#'               padjust_method, feature_names)
+#'
+#' @seealso
+#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
+#' \code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
+#' \code{\link{limma::topTable}}, \code{\link{modify_limma_top_table}}
+#' 
 #' @importFrom splines bs
 #' @importFrom splines ns
 #' @importFrom stats as.formula
@@ -234,6 +279,7 @@ between_level <- function(data,
                           compared_levels,
                           padjust_method, 
                           feature_names) {
+  
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
@@ -279,12 +325,35 @@ between_level <- function(data,
 }
 
 
-#' Converts top_table to a tibble and adds the columns feature_names and 
-#' (Intercept) and appends it to the top_table list.
+#' Process Top Table
+#'
+#' @description
+#' Processes the top table from a LIMMA analysis, adding feature names and 
+#' intercepts.
+#'
+#' @param top_table_and_fit A list containing the top table and the fit object 
+#' from LIMMA.
+#' @param feature_names A non-empty character vector of feature names.
+#'
+#' @return A dataframe containing the processed top table with added intercepts.
+#'
+#' @examples
+#' top_table_and_fit <- list(
+#'   top_table = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
+#'   fit = limma::lmFit(matrix(runif(100), nrow = 10), 
+#'                      model.matrix(~1, data = data.frame(Time = seq(1, 10))))
+#' )
+#' feature_names <- c("feature1", "feature2")
+#' process_top_table(top_table_and_fit, feature_names)
+#'
+#' @seealso
+#' \code{\link{modify_limma_top_table}}, \code{\link{limma::lmFit}}
 #' 
 #' @importFrom stats coef
+#' 
 process_top_table <- function(top_table_and_fit, 
                               feature_names) {
+  
   top_table <- top_table_and_fit$top_table
   fit <- top_table_and_fit$fit
   
@@ -299,7 +368,47 @@ process_top_table <- function(top_table_and_fit,
   top_table
 }
 
+ 
+#' Process Level
+#'
+#' @description
+#' Processes a single level within a condition, performing LIMMA analysis 
+#' and generating the top table of results.
+#'
+#' @param level The level within the condition to process.
+#' @param level_index The index of the level within the condition.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param data A matrix of data values.
+#' @param meta A dataframe containing metadata.
+#' @param design A design formula or matrix for the LIMMA analysis.
+#' @param condition A character string specifying the condition.
+#' @param feature_names A non-empty character vector of feature names.
+#' @param padjust_method A character string specifying the p-adjustment method.
+#' @param mode A character string specifying the mode 
+#'            ('isolated' or 'integrated').
+#'
+#' @return A list containing the name of the results and the top table of 
+#'          results.
+#'
+#' @examples
+#' data <- matrix(runif(100), nrow = 10)
+#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
+#' design <- "~ 1"
+#' spline_params <- list(spline_type = c("n"), dof = list(3))
+#' level <- "A"
+#' level_index <- 1
+#' condition <- "condition"
+#' feature_names <- c("feature1", "feature2")
+#' padjust_method <- "BH"
+#' mode <- "isolated"
+#' process_level(level, level_index, spline_params, data, meta, design, 
+#'               condition, feature_names, padjust_method, mode)
+#'
+#' @seealso
+#' \code{\link{within_level}}, \code{\link{process_top_table}}
+#' 
 #' @importFrom stats relevel
+#' 
 process_level <- function(level, 
                           level_index,
                           spline_params,
@@ -310,6 +419,7 @@ process_level <- function(level,
                           feature_names, 
                           padjust_method, 
                           mode) {
+  
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
     data_copy <- data[, samples]
@@ -343,7 +453,28 @@ process_level <- function(level,
 # Level 2 internal functions ---------------------------------------------------
 
 
-check_design_formula <- function(formula, meta) {
+#' Check Design Formula
+#'
+#' @description
+#' Validates the design formula ensuring it is a valid character string, 
+#' contains allowed characters, includes the intercept term 'X', and references 
+#' columns present in the metadata.
+#'
+#' @param formula A character string representing the design formula.
+#' @param meta A dataframe containing metadata.
+#'
+#' @return TRUE if the design formula is valid, otherwise an error is thrown.
+#'
+#' @examples
+#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
+#' check_design_formula("~ Time + condition * X", meta)
+#'
+#' @seealso
+#' \code{\link{stats::model.matrix}}
+#' 
+check_design_formula <- function(formula, 
+                                 meta) {
+  
   # Check if the formula is a valid character string
   if (!is.character(formula) || length(formula) != 1) {
     stop("The design formula must be a valid character string.")
@@ -377,13 +508,39 @@ check_design_formula <- function(formula, meta) {
   return(TRUE)
 }
 
-
-#' Converts top_table to a tibble and adds new column feature_name
+ 
+#' Modify limma Top Table
+#'
+#' @description
+#' Modifies the limma top table to include feature indices and names.
+#'
+#' @param top_table A dataframe containing the top table results from limma
+#' @param feature_names A character vector of feature names.
+#'
+#' @return A tibble with feature indices and names included.
+#'
+#' @examples
+#' top_table <- data.frame(
+#'   logFC = rnorm(10), 
+#'   AveExpr = rnorm(10), 
+#'   t = rnorm(10), 
+#'   P.Value = runif(10), 
+#'   adj.P.Val = runif(10)
+#' )
+#' feature_names <- paste0("Feature_", 1:10)
+#' modify_limma_top_table(top_table, feature_names)
+#'
+#' @seealso
+#' \code{\link{tidyr::as_tibble}}, \code{\link{dplyr::relocate}}, 
+#' \code{\link{dplyr::mutate}}
+#' 
 #' @importFrom tidyr as_tibble
 #' @importFrom dplyr relocate
 #' @importFrom dplyr mutate
+#' 
 modify_limma_top_table <- function(top_table, 
                                    feature_names) {
+  
   top_table <- tidyr::as_tibble(top_table, rownames = "feature_index") %>% 
     dplyr::relocate(feature_index, .after = last_col()) %>%
     dplyr::mutate(feature_index = as.integer(feature_index))
@@ -395,7 +552,41 @@ modify_limma_top_table <- function(top_table,
 }
 
 
-#' Performs the limma spline analysis for a selected level of a factor
+#' Within Level Analysis
+#'
+#' @description
+#' Performs a within-level analysis using limma to generate top tables and fit 
+#' objects based on the specified spline parameters. Performs the limma spline 
+#' analysis for a selected level of a factor
+#'
+#' @param data A matrix of data values.
+#' @param meta A dataframe containing metadata, including a 'Time' column.
+#' @param design A design formula or matrix for the limma analysis.
+#' @param factor A character string specifying the factor.
+#' @param level The level within the factor to process.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param level_index The index of the level within the factor.
+#' @param padjust_method A character string specifying the p-adjustment method.
+#'
+#' @return A list containing the top table and the fit object from the limma 
+#' analysis.
+#'
+#' @examples
+#' data <- matrix(runif(100), nrow = 10)
+#' meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
+#' design <- "~ 1"
+#' spline_params <- list(spline_type = c("n"), dof = list(3))
+#' level <- "A"
+#' level_index <- 1
+#' padjust_method <- "BH"
+#' within_level(data, meta, design, "factor", level, spline_params, 
+#'              level_index, padjust_method)
+#'
+#' @seealso
+#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
+#' \code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
+#' \code{\link{limma::topTable}}
+#' 
 #' @importFrom splines bs
 #' @importFrom splines ns
 #' @importFrom stats as.formula

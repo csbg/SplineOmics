@@ -11,6 +11,7 @@
 
 # Exported function: limma_hyperparams_screen() --------------------------------
 
+
 #' Limma Hyperparameters Screening
 #'
 #' This function screens through various combinations of hyperparameters for 
@@ -32,8 +33,8 @@
 #' @param DoFs An integer vector of degrees of freedom to be used for each 
 #' factor in `factors`.
 #' @param feature_names A character vector of feature names to be analyzed.
-#' @param pthresholds A numeric vector of p-value thresholds for significance 
-#' determination.
+#' @param adj_pthresholds A numeric vector of p-value thresholds for 
+#' significance determination.
 #' @param padjust_method A character string specifying the method for p-value 
 #' adjustment.
 #'
@@ -45,7 +46,7 @@
 #' \dontrun{
 #'   results <- limma_hyperparams_screen(datas, metas, designs, modes, factors,
 #'                                       DoFs = c(2L), feature_names, 
-#'                                       pthresholds = c(0.05),
+#'                                       adj_pthresholds = c(0.05),
 #'                                       padjust_method = "BH")
 #' }
 #' 
@@ -63,8 +64,9 @@ limma_hyperparams_screen <- function(datas,
                                      feature_names, 
                                      report_info,
                                      report_dir = here::here(),
-                                     adj_pthresh = c(0.05),
+                                     adj_pthresholds = c(0.05),
                                      meta_batch_column = NA,
+                                     time_unit = "m",    # For the plot labels
                                      padjust_method = "BH") {
   
   control_inputs_hyperpara_screen(datas = datas,
@@ -77,8 +79,9 @@ limma_hyperparams_screen <- function(datas,
                                   feature_names = feature_names,
                                   report_info = report_info,
                                   report_dir = report_dir,
-                                  adj_pthresh = adj_pthresh,
+                                  adj_pthresholds = adj_pthresholds,
                                   meta_batch_column = meta_batch_column,
+                                  time_unit = time_unit,
                                   padjust_method = padjust_method)
   
   top_tables_combos <- 
@@ -89,7 +92,7 @@ limma_hyperparams_screen <- function(datas,
                              condition = condition, 
                              spline_test_configs = spline_test_configs,
                              feature_names = feature_names, 
-                             adj_pthresh = adj_pthresh, 
+                             adj_pthresholds = adj_pthresholds, 
                              padjust_method = padjust_method)
   
   combo_pair_plots <- 
@@ -97,7 +100,8 @@ limma_hyperparams_screen <- function(datas,
                               datas = datas, 
                               metas = metas,
                               spline_test_configs = spline_test_configs,
-                              meta_batch_column = meta_batch_column)
+                              meta_batch_column = meta_batch_column,
+                              time_unit)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
@@ -118,6 +122,44 @@ limma_hyperparams_screen <- function(datas,
 # Level 1 internal functions ---------------------------------------------------
 
 
+#' Control Inputs for Hyperparameter Screening
+#'
+#' @description
+#' Validates and checks the inputs for hyperparameter screening. Ensures all 
+#' provided data structures meet the required format and criteria.
+#'
+#' @param datas A list of matrices.
+#' @param datas_descr A description object for the data.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param designs A list of design matrices.
+#' @param modes A character vector containing 'isolated' or 'integrated'.
+#' @param condition A single character string specifying the condition.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param feature_names A character vector of feature names.
+#' @param report_info An object containing report information.
+#' @param report_dir A non-empty string specifying the report directory.
+#' @param adj_pthresholds A numeric vector with elements > 0 and < 1.
+#' @param meta_batch_column A character string specifying the meta batch column.
+#' @param padjust_method A single character string specifying the p-adjustment 
+#' method.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' control_inputs_hyperpara_screen(datas = list(matrix(1:4, 2, 2)), 
+#'                                 datas_descr = "example_descr", 
+#'                                 metas = list(data.frame(batch = 1:2)), 
+#'                                 designs = list(matrix(1:4, 2, 2)), 
+#'                                 modes = c("isolated"), 
+#'                                 condition = "example_condition", 
+#'                                 spline_test_configs = "example_config", 
+#'                                 feature_names = c("feature1", "feature2"), 
+#'                                 report_info = "example_info", 
+#'                                 report_dir = "example_dir", 
+#'                                 adj_pthresholds = c(0.05), 
+#'                                 meta_batch_column = "batch", 
+#'                                 padjust_method = "BH")
+#'
 control_inputs_hyperpara_screen <- function(datas, 
                                             datas_descr,
                                             metas, 
@@ -128,12 +170,18 @@ control_inputs_hyperpara_screen <- function(datas,
                                             feature_names, 
                                             report_info,
                                             report_dir,
-                                            adj_pthresh, 
+                                            adj_pthresholds, 
                                             meta_batch_column,
+                                            time_unit,
                                             padjust_method) {
   
   if (!is.list(datas) || any(!sapply(datas, is.matrix))) {
     stop("'datas' must be a list of matrices.")
+  }
+  
+  # Check that all matrices contain only numeric values
+  if (any(!sapply(datas, function(mat) all(is.numeric(mat))))) {
+    stop("All matrices in 'datas' must contain only numeric values.")
   }
   
   check_datas_descr(datas_descr)
@@ -153,9 +201,7 @@ control_inputs_hyperpara_screen <- function(datas,
     stop("datas and metas, designs and modes must have the same length.")
   }
   
-  if (!is.character(condition) && !(length(condition) == 1)) {
-    stop("'condition' must be a single character")
-  }
+  check_condition(condition, meta)
   
   check_spline_test_configs(spline_test_configs, metas)
   
@@ -163,32 +209,56 @@ control_inputs_hyperpara_screen <- function(datas,
     stop("'feature_names' must be a character vector.")
   }
   
-  validate_report_info(report_info)
+  check_report_info(report_info)
   
-  # Check if report_dir is a non-empty string
-  if (!is.character(report_dir) || nchar(report_dir) == 0) {
-    stop("report_dir must be a non-empty string.")
-  }
+  check_and_create_report_dir(report_dir)
   
-  if (!is.numeric(adj_pthresh) || 
-      any(adj_pthresh <= 0) || 
-      any(adj_pthresh >= 1)) {
-    stop("'adj_pthresh' must be a numeric vector with 
-         all elements > 0 and < 1.")
-  }
+  check_adj_pthresholds(adj_pthresholds)
   
-  if (!is.character(padjust_method) || length(padjust_method) != 1) {
-    stop("'padjust_method' must be a single character string.")
-  }
+  check_time_unit(time_unit)
+
+  check_padjust_method(padjust_method)
 }
 
 
+#' Generate LIMMA Combination Results
+#'
+#' @description
+#' Computes results for various combinations of data, design matrices, and 
+#' spline configurations using the LIMMA method.
+#'
+#' @param datas A list of matrices.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param designs A list of design matrices.
+#' @param modes A character vector containing 'isolated' or 'integrated'.
+#' @param condition A single character string specifying the condition.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param feature_names A character vector of feature names.
+#' @param adj_pthresholds A numeric vector with elements > 0 and < 1.
+#' @param padjust_method A single character string specifying the p-adjustment 
+#' method.
+#'
+#' @return A list of results for each combination of data, design, and spline 
+#' configuration.
+#'
+#' @examples
+#' get_limma_combos_results(datas = list(matrix(1:4, 2, 2)), 
+#'                          metas = list(data.frame(batch = 1:2)), 
+#'                          designs = list(matrix(1:4, 2, 2)), 
+#'                          modes = c("isolated"), 
+#'                          condition = "example_condition", 
+#'                          spline_test_configs = 
+#'                             list(spline_type = c("type1")), 
+#'                          feature_names = c("feature1", "feature2"), 
+#'                          adj_pthresholds = c(0.05), 
+#'                          padjust_method = "BH")
+#'                          
 #' @importFrom magrittr %>%
 #' @importFrom tidyr expand_grid
 #' @importFrom dplyr mutate
 #' @importFrom purrr pmap
 #' @importFrom purrr set_names
-#' 
+#'                          
 get_limma_combos_results <- function(datas, 
                                      metas, 
                                      designs, 
@@ -196,13 +266,14 @@ get_limma_combos_results <- function(datas,
                                      condition, 
                                      spline_test_configs,
                                      feature_names, 
-                                     adj_pthresh, 
+                                     adj_pthresholds, 
                                      padjust_method) {
+  
   combos <- tidyr::expand_grid(
     data_index = seq_along(datas),
     design_index = seq_along(designs),
     spline_config_index = seq_along(spline_test_configs$spline_type),
-    pthreshold = adj_pthresh
+    pthreshold = adj_pthresholds
   ) %>% 
     dplyr::mutate(id = paste0("Data_", data_index, 
                        "_Design_", design_index, 
@@ -222,11 +293,34 @@ get_limma_combos_results <- function(datas,
 }
 
 
+#' Plot limma Combination Results
+#'
+#' @description
+#' Generates plots for pairwise comparisons of hyperparameter combinations 
+#' using limma results.
+#'
+#' @param top_tables_combos A list of top tables for each combination.
+#' @param datas A list of matrices.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param meta_batch_column A character string specifying the meta batch column.
+#'
+#' @return A list of results including hit comparison plots and composite 
+#' spline plots for each pair of combinations.
+#'
+#' @examples
+#' plot_limma_combos_results(top_tables_combos = list(table1, table2),
+#'                           datas = list(matrix(1:4, 2, 2)), 
+#'                           metas = list(data.frame(batch = 1:2)), 
+#'                           spline_test_configs = 
+#'                               list(spline_type = c("type1")), 
+#'                           meta_batch_column = "batch")
+#'                           
 #' @importFrom stringr str_extract
 #' @importFrom progress progress_bar
 #' @importFrom purrr set_names
 #' @importFrom purrr map
-#' 
+#'                           
 plot_limma_combos_results <- function(top_tables_combos,
                                       datas,
                                       metas,
@@ -276,9 +370,27 @@ plot_limma_combos_results <- function(top_tables_combos,
 }
 
 
+#' Generate Reports
+#'
+#' @description
+#' Builds HTML reports for all pairwise hyperparameter combination comparisons.
+#'
+#' @param combo_pair_plots A list of plots for each pair of combinations.
+#' @param report_info An object containing report information.
+#' @param report_dir A non-empty string specifying the report directory.
+#' @param timestamp A timestamp to include in the reports.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' generate_reports(combo_pair_plots = list(plot1, plot2),
+#'                  report_info = "example_info", 
+#'                  report_dir = "example_dir", 
+#'                  timestamp = Sys.time())
+#'                  
 #' @importFrom progress progress_bar
 #' @importFrom purrr imap
-#' 
+#'                  
 generate_reports <- function(combo_pair_plots, 
                              report_info,
                              report_dir,
@@ -296,16 +408,40 @@ generate_reports <- function(combo_pair_plots,
 }
 
 
+#' Generate Reports Metadata
+#'
+#' @description
+#' Generates a metadata table for the LIMMA hyperparameter screen reports and 
+#' saves it as an HTML file with custom styling.
+#'
+#' @param datas_descr A description object for the data.
+#' @param designs A list of design matrices.
+#' @param modes A character vector containing 'isolated' or 'integrated'.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param report_dir A non-empty string specifying the report directory.
+#' @param timestamp A timestamp to include in the report filename.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' generate_reports_meta(datas_descr = "example_descr", 
+#'                       designs = list(matrix(1:4, 2, 2)), 
+#'                       modes = c("isolated"), 
+#'                       spline_test_configs = list(spline_type = c("type1")), 
+#'                       report_dir = "example_dir", 
+#'                       timestamp = Sys.time())
+#'                       
 #' @importFrom here here
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling
-#' 
+#'                       
 generate_reports_meta <- function(datas_descr, 
                                   designs, 
                                   modes, 
                                   spline_test_configs,
                                   report_dir,
                                   timestamp) {
+  
   formatted_spline_configs <- flatten_spline_configs(spline_test_configs)
   
   # Combine the hyperparameters and their descriptions into two vectors
@@ -358,7 +494,25 @@ generate_reports_meta <- function(datas_descr,
 # Level 2 internal functions ---------------------------------------------------
 
 
+#' Check Data Descriptions
+#'
+#' @description
+#' Validates that the data descriptions are character vectors with each element 
+#' not exceeding 80 characters in length.
+#'
+#' @param datas_descr A character vector of data descriptions.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' check_datas_descr(datas_descr = c("Short description", 
+#'                                   "Another short description"))
+#'
+#' @seealso
+#' \code{\link{stop}} for error handling.
+#' 
 check_datas_descr <- function(datas_descr) {
+  
   if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
     long_elements_indices <- which(nchar(datas_descr) > 80)
     long_elements <- datas_descr[long_elements_indices]
@@ -374,7 +528,31 @@ check_datas_descr <- function(datas_descr) {
 }
 
 
-check_metas <- function(metas, datas, meta_batch_column) {
+#' Check Metadata
+#'
+#' @description
+#' Validates that the metadata list contains dataframes, matches the length of 
+#' the data list, and that each metadata dataframe has the correct number of 
+#' rows matching the corresponding data matrix columns.
+#'
+#' @param metas A list of dataframes.
+#' @param datas A list of matrices.
+#' @param meta_batch_column A character string specifying the meta batch column.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' check_metas(metas = list(data.frame(batch = 1:2)), 
+#'             datas = list(matrix(1:4, 2, 2)), 
+#'             meta_batch_column = "batch")
+#'
+#' @seealso
+#' \code{\link{stop}} for error handling.
+#' 
+check_metas <- function(metas, 
+                        datas, 
+                        meta_batch_column) {
+  
   if (!is.list(metas) || any(!sapply(metas, is.data.frame))) {
     stop("'metas' must be a list of dataframes.")
   }
@@ -390,9 +568,9 @@ check_metas <- function(metas, datas, meta_batch_column) {
     
     # Check if the number of rows in meta equals the number of columns in data
     if (!(nrow(meta) == ncol(data))) {
-      stop(paste("Mismatch found for pair", i, ": The number of rows in meta 
-                   does not match the number of columns in data. This is 
-                   required."))
+      stop(paste0("Mismatch found for pair ", i, ": The number of rows in ", 
+                  "meta does not match the number of columns in data. This is ",
+                  "required."))
     }
     
     if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
@@ -405,11 +583,27 @@ check_metas <- function(metas, datas, meta_batch_column) {
   } else {
     print("Batch effect will not be removed for plotting!")
   }
-  
 }
 
 
+#' Check Designs
+#'
+#' @description
+#' Validates that the design descriptions are character vectors with each 
+#' element not exceeding 75 characters in length and containing 'X'.
+#'
+#' @param designs A character vector of design descriptions.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' check_designs(designs = c("X_variable1", "X_variable2"))
+#'
+#' @seealso
+#' \code{\link{stop}} for error handling.
+#' 
 check_designs <- function(designs) {
+  
   if (!is.character(designs) || 
       any(nchar(designs) > 75) || 
       all(grepl("X", designs) == FALSE)) {
@@ -452,6 +646,29 @@ check_designs <- function(designs) {
 }
 
 
+#' Check Spline Test Configurations
+#'
+#' @description
+#' Validates the spline test configurations by checking required columns, 
+#' spline type column, spline type parameters, and maximum and minimum degrees 
+#' of freedom against the metadata.
+#'
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param metas A list of metadata corresponding to the data matrices.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' check_spline_test_configs(spline_test_configs = 
+#'                                       list(spline_type = c("type1")), 
+#'                           metas = list(data.frame(batch = 1:2)))
+#'
+#' @seealso
+#' \code{\link{check_colums_spline_test_configs}}, 
+#' \code{\link{check_spline_type_column}}, 
+#' \code{\link{check_spline_type_params}}, 
+#' \code{\link{check_max_and_min_dof}}
+#' 
 check_spline_test_configs <- function(spline_test_configs, 
                                       metas) {
   
@@ -465,6 +682,46 @@ check_spline_test_configs <- function(spline_test_configs,
 }
 
 
+#' Process Combination
+#'
+#' @description
+#' Processes a single combination of data, design, spline configuration, and 
+#' p-threshold to generate LIMMA spline results.
+#'
+#' @param data_index Index of the data in the datas list.
+#' @param design_index Index of the design in the designs list.
+#' @param spline_config_index Index of the spline configuration in the 
+#' spline_test_configs list.
+#' @param pthreshold The p-value threshold for significance.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param designs A list of design matrices.
+#' @param modes A character vector containing 'isolated' or 'integrated'.
+#' @param condition A single character string specifying the condition.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param feature_names A character vector of feature names.
+#' @param padjust_method A single character string specifying the p-adjustment 
+#' method.
+#' @param ... Additional arguments.
+#'
+#' @return A list of top tables from the LIMMA spline analysis.
+#'
+#' @examples
+#' process_combo(data_index = 1, 
+#'               design_index = 1, 
+#'               spline_config_index = 1, 
+#'               pthreshold = 0.05, 
+#'               metas = list(data.frame(batch = 1:2)), 
+#'               designs = list(matrix(1:4, 2, 2)), 
+#'               modes = c("isolated"), 
+#'               condition = "example_condition", 
+#'               spline_test_configs = list(spline_type = c("type1")), 
+#'               feature_names = c("feature1", "feature2"), 
+#'               padjust_method = "BH")
+#'
+#' @seealso
+#' \code{\link{create_spline_params}}, 
+#' \code{\link{run_limma_splines}}
+#' 
 process_combo <- function(data_index, 
                           design_index, 
                           spline_config_index, 
@@ -477,6 +734,7 @@ process_combo <- function(data_index,
                           feature_names,
                           padjust_method,
                           ...) {
+  
   data <- datas[[data_index]]
   meta <- metas[[data_index]]
   design <- designs[[design_index]]
@@ -493,7 +751,7 @@ process_combo <- function(data_index,
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
   
-  # This will not affect warnings and error messages!
+  # suppressMessages will not affect warnings and error messages!
   result <- suppressMessages(run_limma_splines(data = data, 
                                                meta = meta, 
                                                design = design, 
@@ -507,11 +765,33 @@ process_combo <- function(data_index,
   result$top_tables
 }
 
+
+#' Remove Batch Effect
+#'
+#' @description
+#' Removes batch effects from the data matrices using the specified batch 
+#' column in the metadata.
+#'
+#' @param datas A list of matrices.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param meta_batch_column A character string specifying the meta batch column.
+#'
+#' @return A list of matrices with batch effects removed where applicable.
+#'
+#' @examples
+#' remove_batch_effect(datas = list(matrix(1:4, 2, 2)), 
+#'                     metas = list(data.frame(batch = 1:2)), 
+#'                     meta_batch_column = "batch")
+#'
+#' @seealso
+#' \code{\link{limma::removeBatchEffect}}
+#' 
 #' @importFrom limma removeBatchEffect
 #'
 remove_batch_effect <- function(datas, 
                                 metas,
                                 meta_batch_column) {
+  
   results <- list()
   for (i in seq_along(datas)) {
     data <- datas[[i]]
@@ -529,6 +809,22 @@ remove_batch_effect <- function(datas,
 }
 
 
+#' Create New Hit Comparison Object
+#'
+#' @description
+#' Creates a new hit comparison object with specified condition names.
+#'
+#' @param cond1name A character string for the first condition name 
+#' (max length 25).
+#' @param cond2name A character string for the second condition name 
+#' (max length 25).
+#'
+#' @return An object of class "hitcomp" containing empty data lists 
+#' and condition names.
+#'
+#' @examples
+#' hc <- hc_new(cond1name = "Treatment", cond2name = "Control")
+#' 
 hc_new <- function(cond1name = "Condition 1", 
                    cond2name = "Condition 2") {
   
@@ -549,10 +845,35 @@ hc_new <- function(cond1name = "Condition 1",
 }
 
 
+#' Add Data to Hit Comparison Object
+#'
+#' @description
+#' Adds a new entry to the hit comparison object for a specified condition.
+#'
+#' @param hc_obj An object of class "hitcomp".
+#' @param top_table A dataframe containing the top table data.
+#' @param params_id A character string identifying the parameters 
+#' (max length 70).
+#' @param condition An integer (1 or 2) specifying the condition to which the 
+#' data belongs.
+#' @param threshold A numeric value specifying the adjusted p-value threshold.
+#'
+#' @return The updated hit comparison object.
+#'
+#' @examples
+#' hc <- hc_new()
+#' hc <- hc_add(hc_obj = hc, 
+#'              top_table = data.frame(Gene = c("Gene1", "Gene2"), 
+#'                                     p_value = c(0.01, 0.04)), 
+#'              params_id = "example_params", 
+#'              condition = 1, 
+#'              threshold = 0.05)
+#'              
 hc_add <- function(hc_obj, 
                    top_table, 
                    params_id, condition = 1, 
                    threshold = 0.05){
+  
   # Validate input
   if (!is.data.frame(top_table)) stop("top_table must be a dataframe.")
   if (!is.character(params_id) || nchar(params_id) > 70) {
@@ -577,6 +898,30 @@ hc_add <- function(hc_obj,
 }
 
 
+#' Generate Venn Heatmap
+#'
+#' @description
+#' Creates a Venn heatmap to visualize the overlap of hits between two 
+#' conditions stored in a hit comparison object.
+#'
+#' @param hc_obj An object of class "hitcomp" containing hit data for two 
+#' conditions.
+#'
+#' @return A list containing the Venn heatmap plot and the number of hits.
+#'
+#' @examples
+#' hc <- hc_new()
+#' hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene1", "Gene2"), 
+#'                                         p_value = c(0.01, 0.04)), 
+#'              params_id = "example_params", condition = 1, threshold = 0.05)
+#' hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene3", "Gene2"), 
+#'                                         p_value = c(0.03, 0.02)), 
+#'              params_id = "example_params2", condition = 2, threshold = 0.05)
+#' venn_heatmap <- hc_vennheatmap(hc)
+#'
+#' @seealso
+#' \code{\link{store_hits}}, \code{\link{pheatmap::pheatmap}}
+#' 
 #' @importFrom tidyr expand_grid unnest_longer replace_na pivot_wider
 #' @importFrom tibble enframe column_to_rownames
 #' @importFrom dplyr mutate select left_join
@@ -584,6 +929,7 @@ hc_add <- function(hc_obj,
 #' @importFrom purrr flatten_chr
 #' 
 hc_vennheatmap <- function(hc_obj) {
+  
   hits_1 <- store_hits(hc_obj$data[[1]])
   hits_2 <- store_hits(hc_obj$data[[2]])
   
@@ -645,6 +991,30 @@ hc_vennheatmap <- function(hc_obj) {
 }
 
 
+#' Generate Barplot for Hit Comparison Object
+#'
+#' @description
+#' Creates a barplot to visualize the number of significant features for each 
+#' parameter set in the hit comparison object.
+#'
+#' @param hc_obj An object of class "hitcomp" containing hit data for two 
+#' conditions.
+#'
+#' @return A ggplot2 object representing the barplot.
+#'
+#' @examples
+#' hc <- hc_new()
+#' hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene1", "Gene2"), 
+#'                                         p_value = c(0.01, 0.04)), 
+#'              params_id = "example_params", condition = 1, threshold = 0.05)
+#' hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene3", "Gene2"), 
+#'                                         p_value = c(0.03, 0.02)), 
+#'              params_id = "example_params2", condition = 2, threshold = 0.05)
+#' hc_barplot(hc)
+#'
+#' @seealso
+#' \code{\link{store_hits}}, \code{\link{ggplot2}}
+#' 
 #' @importFrom ggplot2 geom_col geom_text facet_wrap scale_y_continuous aes
 #' @importFrom ggplot2 theme_minimal element_text element_blank expansion xlab
 #' @importFrom ggplot2 theme
@@ -653,6 +1023,7 @@ hc_vennheatmap <- function(hc_obj) {
 #' @importFrom dplyr bind_rows vars
 #' 
 hc_barplot <- function(hc_obj) {
+  
   plot_data <- 
     list(
       store_hits(hc_obj$data[[1]]) %>% 
@@ -687,6 +1058,30 @@ hc_barplot <- function(hc_obj) {
 }
 
 
+#' Generate Hit Comparison Plots
+#'
+#' @description
+#' Generates Venn heatmap and barplot for a given combination pair of top 
+#' tables.
+#'
+#' @param combo_pair A list containing two combinations of top tables.
+#'
+#' @return A list containing the Venn heatmap plot, the number of hits divided 
+#' by 16, the barplot, and a length indicator for the barplot.
+#'
+#' @examples
+#' combo_pair <- list(
+#'   list(TopTable1 = data.frame(Gene = c("Gene1", "Gene2"), 
+#'   p_value = c(0.01, 0.04))),
+#'   list(TopTable2 = data.frame(Gene = c("Gene3", "Gene2"), 
+#'   p_value = c(0.03, 0.02)))
+#' )
+#' gen_hitcomp_plots(combo_pair)
+#'
+#' @seealso
+#' \code{\link{hc_new}}, \code{\link{hc_add}}, \code{\link{hc_vennheatmap}}, 
+#' \code{\link{hc_barplot}}
+#' 
 gen_hitcomp_plots <- function(combo_pair) {
   
   combo_pair_combined <- c(combo_pair[[1]], combo_pair[[2]])
@@ -727,15 +1122,44 @@ gen_hitcomp_plots <- function(combo_pair) {
   )
 }
 
-
+ 
+#' Generate Composite Spline Plots
+#'
+#' @description
+#' Creates composite spline plots for significant and non-significant features 
+#' across multiple levels within a condition.
 #' One half of one condition comparison HTML 
 #' (composite spline plots for one 'condition' inside one condition comparison)
+#'
+#' @param internal_combos A list containing combinations of top tables.
+#' @param datas A list of matrices.
+#' @param metas A list of metadata corresponding to the data matrices.
+#' @param spline_test_configs A configuration object for spline tests.
+#'
+#' @return A list containing the composite spline plots and their lengths.
+#'
+#' @examples
+#' internal_combos <- list("Data_1_SConfig_1_PThresh_0.05" = list(
+#'   "Condition1_exp" = data.frame(feature_index = 1:10, adj.P.Val = runif(10)),
+#'   "Condition1_stat" = 
+#'       data.frame(feature_index = 11:20, adj.P.Val = runif(10))
+#' ))
+#' datas <- list(matrix(runif(100), nrow = 10))
+#' metas <- list(data.frame(Condition1 = rep(c("exp", "stat"), each = 5)))
+#' spline_test_configs <- list(spline_type = c("type1"))
+#' gen_composite_spline_plots(internal_combos, 
+#'                            datas, metas, spline_test_configs)
+#'
+#' @seealso
+#' \code{\link{plot_composite_splines}}
+#' 
 #' @importFrom utils tail
 #' 
 gen_composite_spline_plots <- function(internal_combos, 
                                        datas, 
                                        metas,
                                        spline_test_configs) {
+  
   plots <- list()
   plots_len <- integer(0)
   
@@ -806,11 +1230,46 @@ gen_composite_spline_plots <- function(internal_combos,
 }
 
 
+#' Process Combination Pair
+#'
+#' @description
+#' Processes a combination pair to generate plots and compile them into an 
+#' HTML report.
+#'
+#' @param combo_pair A list containing hit comparison and composite spline 
+#' plots.
+#' @param combo_pair_name A character string for naming the combination pair.
+#' @param report_info An object containing report information.
+#' @param report_dir A non-empty string specifying the report directory.
+#' @param timestamp A timestamp to include in the report filename.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' combo_pair <- list(
+#'   hitcomp = list(vennheatmap = "vennheatmap_plot", 
+#'                  vennheatmap_len = 2, 
+#'                  barplot = "barplot"),
+#'   composites = list(
+#'     list(composite_plots = list("composite_plot1"), 
+#'          composite_plots_len = 1)
+#'   )
+#' )
+#' process_combo_pair(combo_pair, 
+#'                    combo_pair_name = "example_combo", 
+#'                    report_info = "example_info", 
+#'                    report_dir = "example_dir", 
+#'                    timestamp = Sys.time())
+#'
+#' @seealso
+#' \code{\link{generate_report_html}}
+#' 
 process_combo_pair <- function(combo_pair, 
                                combo_pair_name, 
                                report_info,
                                report_dir,
                                timestamp) {
+  
   plots <- list()
   plots_len <- integer(0)
   
@@ -849,6 +1308,32 @@ process_combo_pair <- function(combo_pair,
 }
 
 
+#' Create Spline Parameters
+#'
+#' @description
+#' Generates spline parameters based on the configuration, metadata, condition, 
+#' and mode.
+#'
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param index Index of the spline configuration to process.
+#' @param meta A dataframe containing metadata.
+#' @param condition A character string specifying the condition.
+#' @param mode A character string specifying the mode.
+#'
+#' @return A list of processed spline parameters.
+#'
+#' @examples
+#' spline_test_configs <- list(spline_type = c("type1", "type2"))
+#' meta <- data.frame(condition = rep(c("A", "B"), each = 5))
+#' create_spline_params(spline_test_configs, 
+#'                      index = 1, 
+#'                      meta = meta, 
+#'                      condition = "condition", 
+#'                      mode = "isolated")
+#'
+#' @seealso
+#' \code{\link{process_config_column}}
+#' 
 create_spline_params <- function(spline_test_configs, 
                                  index, 
                                  meta, 
@@ -865,7 +1350,24 @@ create_spline_params <- function(spline_test_configs,
 }
 
 
+#' Flatten Spline Configurations
+#'
+#' @description
+#' Flattens and formats spline configurations into a list of formatted strings.
+#'
+#' @param spline_configs A list of spline configuration objects.
+#'
+#' @return A list of formatted strings representing each spline configuration.
+#'
+#' @examples
+#' spline_configs <- list(
+#'   spline_type = c("type1", "type2"), 
+#'   degrees_of_freedom = list(c(3, 4), c(5, 6))
+#' )
+#' flatten_spline_configs(spline_configs)
+#' 
 flatten_spline_configs <- function(spline_configs) {
+  
   formatted_layers <- list()
   
   names_of_spline_configs <- names(spline_configs)
@@ -889,9 +1391,29 @@ flatten_spline_configs <- function(spline_configs) {
 }
 
 
-# Level 3 internal functions  ---------------------------------------------------
+# Level 3 internal functions  --------------------------------------------------
 
 
+#' Check Columns in Spline Test Configurations
+#'
+#' @description
+#' Validates that the spline test configurations contain the required columns 
+#' in the correct order.
+#'
+#' @param spline_test_configs A dataframe containing spline test configurations.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' spline_test_configs <- data.frame(
+#'   spline_type = c("type1", "type2"), 
+#'   degree = c(3, 4), 
+#'   dof = c(5, 6), 
+#'   knots = c(1, 2), 
+#'   bknots = c(0.5, 1.5)
+#' )
+#' check_colums_spline_test_configs(spline_test_configs)
+#' 
 check_colums_spline_test_configs <- function(spline_test_configs) {
   
   required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
@@ -921,7 +1443,28 @@ check_colums_spline_test_configs <- function(spline_test_configs) {
 }
 
 
+#' Check Spline Type Column
+#'
+#' @description
+#' Validates that the 'spline_type' column in the spline test configurations 
+#' contains only 'n' or 'b'.
+#'
+#' @param spline_test_configs A dataframe containing spline test configurations.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' spline_test_configs <- data.frame(
+#'   spline_type = c("n", "b", "n", "b"), 
+#'   degree = c(3, 4, 5, 6), 
+#'   dof = c(5, 6, 7, 8), 
+#'   knots = c(1, 2, 3, 4), 
+#'   bknots = c(0.5, 1.5, 2.5, 3.5)
+#' )
+#' check_spline_type_column(spline_test_configs)
+#' 
 check_spline_type_column <- function(spline_test_configs) {
+  
   if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
     # Identify invalid entries
     invalid_entries <- spline_test_configs$spline_type[
@@ -938,17 +1481,28 @@ check_spline_type_column <- function(spline_test_configs) {
 }
 
 
-#' Check constraints on spline configuration based on spline_type
+#' Check Spline Type Parameters
 #'
-#' This function verifies the conditions in the spline_test_configs dataframe.
-#' It checks the 'spline_type' column to dictate rules for 'degree', 'dof',
-#' 'knots', and 'bknots'.
+#' @description
+#' Validates the parameters for each row in the spline test configurations 
+#' based on the spline type.
 #'
-#' @param spline_test_configs A dataframe with columns 'spline_type', 'degree',
-#'        'dof', 'knots', 'bknots'.
-#' @return logical TRUE if all conditions are met, otherwise stops with an error.
-#' @export
+#' @param spline_test_configs A dataframe containing spline test configurations.
+#'
+#' @return TRUE if all checks pass, otherwise an error is thrown.
+#'
+#' @examples
+#' spline_test_configs <- data.frame(
+#'   spline_type = c("n", "b"), 
+#'   degree = c(NA, 3), 
+#'   dof = c(5, 4), 
+#'   knots = c(NA, 1), 
+#'   bknots = c(NA, c(0.5, 1.5))
+#' )
+#' check_spline_type_params(spline_test_configs)
+#' 
 check_spline_type_params <- function(spline_test_configs) {
+  
   for (i in seq_len(nrow(spline_test_configs))) {
     row <- spline_test_configs[i,]
     switch(as.character(row$spline_type),
@@ -998,20 +1552,31 @@ check_spline_type_params <- function(spline_test_configs) {
 }
 
 
-#' Calculate degrees of freedom for spline configurations
+#' Check Maximum and Minimum Degrees of Freedom
 #'
-#' This function calculates and checks degrees of freedom for each spline 
-#' configuration
-#' based on the spline type. It validates DoF against constraints given in the 
-#' meta dataframe.
+#' @description
+#' Validates the degrees of freedom (DoF) for each row in the spline test 
+#' configurations based on the metadata.
 #'
-#' @param spline_test_configs A dataframe with columns including 'spline_type',
-#'  'dof', 'degree', and 'knots'.
-#' @param meta A dataframe with a 'Time' column used to validate the maximum 
-#' allowable DoF.
-#' @return NULL The function stops if any DoF condition is not met, with an 
-#' error message.
+#' @param spline_test_configs A dataframe containing spline test configurations.
+#' @param metas A list of metadata corresponding to the data matrices.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' spline_test_configs <- data.frame(
+#'   spline_type = c("n", "b"), 
+#'   degree = c(NA, 3), 
+#'   dof = c(5, NA), 
+#'   knots = list(NA, c(1, 2, 3)), 
+#'   bknots = list(NA, c(0.5, 1.5))
+#' )
+#' metas <- list(data.frame(Time = c(1, 2, 3)), 
+#'               data.frame(Time = c(1, 2, 3, 4)))
+#' check_max_and_min_dof(spline_test_configs, metas)
+#' 
 #' @importFrom stats setNames
+#' 
 check_max_and_min_dof <- function(spline_test_configs, 
                                   metas) {
 
@@ -1054,10 +1619,23 @@ check_max_and_min_dof <- function(spline_test_configs,
 }
 
 
-
-
-
+#' Check if Not All Values are NA
+#'
+#' @description
+#' Determines if a given atomic vector contains at least one non-NA value.
+#'
+#' @param x An atomic vector or any other object.
+#'
+#' @return TRUE if the vector contains at least one non-NA value or if the 
+#' object is not atomic; FALSE otherwise.
+#'
+#' @examples
+#' is_not_na(c(NA, NA, 3)) # returns TRUE
+#' is_not_na(c(NA, NA, NA)) # returns FALSE
+#' is_not_na(list(NA, 1, NA)) # returns TRUE
+#' 
 is_not_na <- function(x) {
+  
   if (is.atomic(x)) {
     return(!all(is.na(x)))
   } else {
@@ -1066,6 +1644,28 @@ is_not_na <- function(x) {
 }
 
 
+#' Process Configuration Column
+#'
+#' @description
+#' Processes a configuration column based on the given mode and number of 
+#' levels.
+#'
+#' @param config_column A configuration column from the spline test 
+#' configurations.
+#' @param index Index of the configuration to process.
+#' @param num_levels Number of unique levels in the metadata condition.
+#' @param mode A character string specifying the mode 
+#' ('integrated' or 'isolated').
+#'
+#' @return A vector or list with the processed configuration values.
+#'
+#' @examples
+#' config_column <- list(c(1, 2, 3), c(4, 5, 6))
+#' process_config_column(config_column, index = 1, num_levels = 3, 
+#'                       mode = "isolated")
+#' process_config_column(config_column, index = 2, num_levels = 2, 
+#'                       mode = "integrated")
+#' 
 process_config_column <- function(config_column, 
                                   index, 
                                   num_levels, 
@@ -1087,8 +1687,31 @@ process_config_column <- function(config_column,
 }
 
 
+#' Store Hits
+#'
+#' @description
+#' Stores the feature indices for significant hits based on the adjusted p-value 
+#' threshold for each condition.
+#'
+#' @param condition A list containing dataframes and parameters for each 
+#' condition.
+#'
+#' @return A list where each element is a vector of feature indices that meet 
+#' the significance threshold.
+#'
+#' @examples
+#' condition <- list(
+#'   list(
+#'     DataFrame = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
+#'     Parameters = list(params_id = "param1", adj_p_value_threshold = 0.05)
+#'   )
+#' )
+#' store_hits(condition)
+#' 
 #' @importFrom dplyr pull
+#' 
 store_hits <- function(condition) {
+  
   hits_cond <- list()
   
   for (item in condition) {
@@ -1108,6 +1731,40 @@ store_hits <- function(condition) {
 }
 
 
+#' Plot Composite Splines
+#'
+#' @description
+#' Generates composite spline plots for significant and non-significant 
+#' features based on the specified indices.
+#'
+#' @param data A matrix of data values.
+#' @param meta A dataframe containing metadata.
+#' @param spline_test_configs A configuration object for spline tests.
+#' @param top_table A dataframe containing the top table results.
+#' @param top_table_name A character string specifying the name of the 
+#' top table.
+#' @param indices A vector of indices specifying which features to plot.
+#' @param type A character string specifying the type of features ('significant' 
+#' or 'not_significant').
+#'
+#' @return A list containing the composite plot and its length if plots are 
+#' generated, FALSE otherwise.
+#'
+#' @examples
+#' data <- matrix(runif(100), nrow = 10)
+#' meta <- data.frame(Time = seq(1, 10))
+#' spline_test_configs <- list(spline_type = c("n"), dof = list(3), 
+#'                             knots = list(NA), bknots = list(NA))
+#' top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10), 
+#'                         AveExpr = runif(10))
+#' indices <- 1:5
+#' plot_composite_splines(data, meta, spline_test_configs, top_table, 
+#'                        "TopTable1", indices, "significant")
+#'
+#' @seealso
+#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
+#' \code{\link{ggplot2}}, \code{\link{patchwork}}
+#' 
 #' @importFrom splines ns
 #' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal 
 #' @importFrom ggplot2 scale_x_continuous labs annotate theme
@@ -1120,16 +1777,10 @@ plot_composite_splines <- function(data,
                                    top_table_name, 
                                    indices,
                                    type) {
+  
   plot_list <- list()
   config_index <- 
     as.integer(sub(".*SConfig_([0-9]+)_.*", "\\1", top_table_name)) 
-  
-  # if (mode == "isolated") {
-  #   level_index <- match(level, unique(meta[[condition]]))
-  # }
-  # else if (mode == "integrated") {
-  #   level_index <- 1   # Different spline params not supported for this mode
-  # }
 
   smooth_timepoints <- seq(meta$Time[1], 
                            meta$Time[length(meta$Time)], 
@@ -1225,10 +1876,37 @@ plot_composite_splines <- function(data,
 }
 
 
+#' Build Hyperparameters Screening Report
+#'
+#' @description
+#' Constructs an HTML report for hyperparameter screening by embedding plots 
+#' and their respective sizes into the provided header section.
+#'
+#' @param header_section A character string containing the HTML header section.
+#' @param plots A list of ggplot2 plot objects.
+#' @param plots_sizes A list of integers specifying the number of rows for each 
+#' plot.
+#' @param output_file_path A character string specifying the path to save the 
+#' HTML report.
+#'
+#' @return No return value, called for side effects.
+#'
+#' @examples
+#' header <- "<html><head></head><body>"
+#' plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
+#' ggplot2::geom_point())
+#' plot_sizes <- list(2)
+#' output_path <- "report.html"
+#' build_hyperparams_screen_report(header, plots, plot_sizes, output_path)
+#'
+#' @seealso
+#' \code{\link{plot2base64}}
+#' 
 build_hyperparams_screen_report <- function(header_section, 
                                             plots, 
                                             plots_sizes, 
                                             output_file_path) {
+  
   index <- 1
   for (plot in plots) {
     plot_nrows <- plots_sizes[[index]]

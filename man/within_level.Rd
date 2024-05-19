@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{within_level}
 \alias{within_level}
-\title{Performs the limma spline analysis for a selected level of a factor}
+\title{Within Level Analysis}
 \usage{
 within_level(
   data,
@@ -15,6 +15,46 @@ within_level(
   padjust_method
 )
 }
+\arguments{
+\item{data}{A matrix of data values.}
+
+\item{meta}{A dataframe containing metadata, including a 'Time' column.}
+
+\item{design}{A design formula or matrix for the limma analysis.}
+
+\item{factor}{A character string specifying the factor.}
+
+\item{level}{The level within the factor to process.}
+
+\item{spline_params}{A list of spline parameters for the analysis.}
+
+\item{level_index}{The index of the level within the factor.}
+
+\item{padjust_method}{A character string specifying the p-adjustment method.}
+}
+\value{
+A list containing the top table and the fit object from the limma 
+analysis.
+}
 \description{
-Performs the limma spline analysis for a selected level of a factor
+Performs a within-level analysis using limma to generate top tables and fit 
+objects based on the specified spline parameters. Performs the limma spline 
+analysis for a selected level of a factor
+}
+\examples{
+data <- matrix(runif(100), nrow = 10)
+meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
+design <- "~ 1"
+spline_params <- list(spline_type = c("n"), dof = list(3))
+level <- "A"
+level_index <- 1
+padjust_method <- "BH"
+within_level(data, meta, design, "factor", level, spline_params, 
+             level_index, padjust_method)
+
+}
+\seealso{
+\code{\link{splines::bs}}, \code{\link{splines::ns}}, 
+\code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
+\code{\link{limma::topTable}}
 }

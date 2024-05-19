@@ -2,26 +2,31 @@
 % Please edit documentation in R/cluster_hits.R
 \name{plot_consensus_shapes}
 \alias{plot_consensus_shapes}
-\title{Plot Consensus Shapes for Each Cluster}
+\title{Plot Consensus Shapes}
 \usage{
 plot_consensus_shapes(curve_values, time_unit_label)
 }
 \arguments{
-\item{curve_values}{A dataframe containing the curve values and a cluster 
-identifier.
-                    The last column is assumed to be the cluster column.}
+\item{curve_values}{A dataframe containing curve values and cluster assignments.}
 
-\item{title}{The base title for the plots, which will be modified by 
-appending the cluster number.}
+\item{time_unit_label}{A character string specifying the time unit label.}
 }
 \value{
-A list of ggplot objects, each representing a plot for a cluster.
+A list containing the composite plot of consensus shapes and its size.
 }
 \description{
-This function takes a dataframe containing curve values and their associated 
-clusters,
-and generates a plot for each cluster using the 
-plot_single_and_consensus_splines function.
-Each plot represents both the individual curves and their consensus within 
-the cluster.
+Generates composite plots of single and consensus shapes for each cluster 
+of curve values.
+}
+\examples{
+curve_values <- data.frame(
+  Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
+  cluster = rep(1:2, each = 5)
+)
+time_unit_label <- "[min]"
+plot_consensus_shapes(curve_values, time_unit_label)
+
+}
+\seealso{
+\code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
 }

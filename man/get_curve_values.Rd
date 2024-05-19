@@ -37,8 +37,8 @@ curve values for each filtered entry, and `smooth_timepoints`, the time
 points at which curves were evaluated.
 }
 \description{
-This function filters entries from a given top table based on an adjusted 
-p-value threshold,
+This function filters entries from a given top table based on 
+an adjusted p-value threshold,
 performs spline interpolation using specified degrees of freedom, and 
 calculates curve values 
 for the selected entries at predefined time points. The function is 

@@ -7,14 +7,27 @@
 plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
 }
 \arguments{
-\item{time_series_data}{A data frame of time series data.}
+\item{time_series_data}{A dataframe or matrix with time series data.}
 
-\item{title}{The title of the plot.}
+\item{title}{A character string specifying the title of the plot.}
+
+\item{time_unit_label}{A character string specifying the time unit label.}
 }
 \value{
-A ggplot object representing the plot.
+A ggplot object representing the single and consensus shapes.
 }
 \description{
-This function takes a time series data frame, transforms it, and plots both
-individual time series and their consensus using ggplot2.
+Generates a plot showing individual time series shapes and their consensus 
+(mean) shape.
+}
+\examples{
+time_series_data <- matrix(runif(100), nrow = 10, 
+                           dimnames = list(NULL, seq(1, 10)))
+title <- "Single and Consensus Shapes"
+time_unit_label <- "[min]"
+plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
+
+}
+\seealso{
+\code{\link{ggplot2}}
 }

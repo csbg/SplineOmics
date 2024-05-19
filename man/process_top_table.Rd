@@ -2,12 +2,33 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{process_top_table}
 \alias{process_top_table}
-\title{Converts top_table to a tibble and adds the columns feature_names and 
-(Intercept) and appends it to the top_table list.}
+\title{Process Top Table}
 \usage{
 process_top_table(top_table_and_fit, feature_names)
 }
+\arguments{
+\item{top_table_and_fit}{A list containing the top table and the fit object 
+from LIMMA.}
+
+\item{feature_names}{A non-empty character vector of feature names.}
+}
+\value{
+A dataframe containing the processed top table with added intercepts.
+}
 \description{
-Converts top_table to a tibble and adds the columns feature_names and 
-(Intercept) and appends it to the top_table list.
+Processes the top table from a LIMMA analysis, adding feature names and 
+intercepts.
+}
+\examples{
+top_table_and_fit <- list(
+  top_table = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
+  fit = limma::lmFit(matrix(runif(100), nrow = 10), 
+                     model.matrix(~1, data = data.frame(Time = seq(1, 10))))
+)
+feature_names <- c("feature1", "feature2")
+process_top_table(top_table_and_fit, feature_names)
+
+}
+\seealso{
+\code{\link{modify_limma_top_table}}, \code{\link{limma::lmFit}}
 }

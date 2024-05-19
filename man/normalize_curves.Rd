@@ -17,7 +17,8 @@ A data frame or matrix with the same dimensions as the input, where
         has been normalized.
 }
 \description{
-This function normalizes each row in a data frame or matrix of curve values. 
+This function normalizes each row in a data frame or matrix 
+of curve values. 
 Normalization is performed so that each row's values range from 0 
 (corresponding to the 
 minimum value of the row) to 1 
@@ -26,4 +27,5 @@ minimum value of the row) to 1
 \examples{
 data <- matrix(runif(100), nrow=10)
 normalized_data <- normalize_curves(data)
+
 }

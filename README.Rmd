@@ -347,11 +347,9 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **kableExtra**: For producing beautiful tables in R Markdown documents.
 -   **ragg**: For creating high-quality images for graphics devices.
 
-To ensure a smooth installation and functionality of `SplineOmics`, these dependencies will be automatically checked and, if necessary, installed upon installing `SplineOmics`.
-
 ### R Version
 
--   Required: R 4.3.3 or higher
+-   Recommended: R 4.3.3 or higher
     -   Note: This project was developed using R 4.3.3. While it should be compatible with newer versions, this is the version guaranteed to work as tested.
 
 ## Getting Help {#getting-help}
@@ -393,7 +391,7 @@ This package is licensed under the MIT License with additional terms. Please see
 
 ## Citation {#citation}
 
-The `SplineOmics` package is currently not published in a peer-reviewed scientific journal or similar outlet, and as such, there is no formal citation requirement associated with its use. You are free to use `SplineOmics` without citing it. However, we appreciate acknowledgements in your projects or publications that benefit from this package. Your support helps us in the continued development and improvement of `SplineOmics`. Thank you for using our package!
+The `SplineOmics` package is currently not published in a peer-reviewed scientific journal or similar outlet, and as such, there is no formal citation requirement associated with its use. You are free to use `SplineOmics` without citing it. However, we appreciate acknowledgements in your projects or publications that benefit from this package. Also, if you like the package, consider giving the GitHub Repository a star. Your support helps us in the continued development and improvement of `SplineOmics`. Thank you for using our package!
 
 The `SplineOmics` relies substantially on following R libraries in particular, which should be cited in your publication:
 

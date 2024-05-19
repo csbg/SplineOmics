@@ -155,8 +155,14 @@ source(run_limma_splines_fun_path)
 cluster_hits_fun_path <- here::here("R", "cluster_hits.R")
 source(cluster_hits_fun_path)
 
-general_fun_path <- here::here("R", "utils.R")
-source(general_fun_path)
+general_utils_path <- here::here("R", "utils_general.R")
+source(general_utils_path)
+
+utils_input_validation_path <- here::here("R", "utils_input_validation.R")
+source(utils_input_validation_path)
+
+utils_report_generation_path <- here::here("R", "utils_report_generation.R")
+source(utils_report_generation_path)
 
 
 
@@ -207,18 +213,18 @@ report_info <- list(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    modes,
-#                                    condition,
-#                                    spline_test_configs,
-#                                    feature_names,
-#                                    report_info,
-#                                    report_dir,
-#                                    pthresholds,
-#                                    meta_batch_column)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   modes,
+                                   condition,
+                                   spline_test_configs,
+                                   feature_names,
+                                   report_info,
+                                   report_dir,
+                                   pthresholds,
+                                   meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -246,7 +252,7 @@ ttslc_factor_time <- result$ttslc_factor_time
 
 
 ## Cluster hits ----------------------------------------------------------------
-p_values <- c(0.05, 0.05)
+adj_pthresholds <- c(0.05, 0.05)
 clusters <- list(6L, 3L)
 report_dir <- here::here("results", "clustering_reports")
 
@@ -271,12 +277,11 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    condition = condition, 
                                    spline_params = spline_params,
                                    mode = "integrated",
-                                   p_values = p_values,
+                                   adj_pthresholds = adj_pthresholds,
                                    clusters = clusters,
                                    report_info = report_info,
                                    meta_batch_column = meta_batch_column,
-                                   report_dir = report_dir
-                                   )
+                                   report_dir = report_dir)
 
 clustering_results[[2]]$clustered_hits
 

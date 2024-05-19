@@ -3,11 +3,27 @@
 \name{check_mode}
 \alias{check_mode}
 \title{utils.R contains shared functions that are used by at least two package 
-functions of the splinetime package.}
+functions of the splinetime package.
+Check Mode}
 \usage{
 check_mode(mode)
 }
+\arguments{
+\item{mode}{A character string specifying the mode.}
+}
+\value{
+A message indicating the chosen mode if valid; otherwise, an error 
+is thrown.
+}
 \description{
-utils.R contains shared functions that are used by at least two package 
-functions of the splinetime package.
+Validates that the mode is either 'integrated' or 'isolated', which depends 
+on the design formula used in limma.
+}
+\examples{
+check_mode("integrated")
+check_mode("isolated")
+
+}
+\seealso{
+\code{\link{limma}}
 }

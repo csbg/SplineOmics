@@ -26,8 +26,8 @@ A list containing the composite plot and the number of rows used in
 the plot layout.
 }
 \description{
-This function generates plots for each feature listed in the top table using 
-spline 
+This function generates plots for each feature listed in the
+top table using spline 
 interpolation for fitted values. It creates individual plots for each feature 
 and combines 
 them into a single composite plot. The function is internal and not exported.

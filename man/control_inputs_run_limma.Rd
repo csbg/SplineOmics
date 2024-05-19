@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{control_inputs_run_limma}
 \alias{control_inputs_run_limma}
-\title{Controls the function input and raises an error if not in expected format}
+\title{Control Inputs for Running LIMMA}
 \usage{
 control_inputs_run_limma(
   data,
@@ -15,6 +15,46 @@ control_inputs_run_limma(
   padjust_method
 )
 }
+\arguments{
+\item{data}{A matrix of data values.}
+
+\item{meta}{A dataframe containing metadata, including a 'Time' column with 
+numeric values.}
+
+\item{design}{A design formula or matrix for the LIMMA analysis.}
+
+\item{spline_params}{A list of spline parameters for the analysis.}
+
+\item{condition}{A character string specifying the condition.}
+
+\item{feature_names}{A non-empty character vector of feature names.}
+
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
+
+\item{padjust_method}{A character string specifying the p-adjustment method.}
+}
+\value{
+No return value, called for side effects.
+}
 \description{
-Controls the function input and raises an error if not in expected format
+Validates the inputs for running LIMMA analysis, ensuring all required 
+structures and parameters are correctly formatted.
+}
+\examples{
+data <- matrix(runif(100), nrow = 10)
+meta <- data.frame(Time = seq(1, 10))
+design <- ~ 1
+spline_params <- list(df = 3)
+condition <- "example_condition"
+feature_names <- c("feature1", "feature2")
+mode <- "isolated"
+padjust_method <- "BH"
+control_inputs_run_limma(data, meta, design, spline_params, condition, 
+                         feature_names, mode, padjust_method)
+
+}
+\seealso{
+\code{\link{check_design_formula}}, \code{\link{check_mode}}, 
+\code{\link{check_spline_params}}
 }

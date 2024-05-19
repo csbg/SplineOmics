@@ -2,19 +2,28 @@
 % Please edit documentation in R/limma_hyperparams_screen.R
 \name{check_spline_type_params}
 \alias{check_spline_type_params}
-\title{Check constraints on spline configuration based on spline_type}
+\title{Check Spline Type Parameters}
 \usage{
 check_spline_type_params(spline_test_configs)
 }
 \arguments{
-\item{spline_test_configs}{A dataframe with columns 'spline_type', 'degree',
-'dof', 'knots', 'bknots'.}
+\item{spline_test_configs}{A dataframe containing spline test configurations.}
 }
 \value{
-logical TRUE if all conditions are met, otherwise stops with an error.
+TRUE if all checks pass, otherwise an error is thrown.
 }
 \description{
-This function verifies the conditions in the spline_test_configs dataframe.
-It checks the 'spline_type' column to dictate rules for 'degree', 'dof',
-'knots', and 'bknots'.
+Validates the parameters for each row in the spline test configurations 
+based on the spline type.
+}
+\examples{
+spline_test_configs <- data.frame(
+  spline_type = c("n", "b"), 
+  degree = c(NA, 3), 
+  dof = c(5, 4), 
+  knots = c(NA, 1), 
+  bknots = c(NA, c(0.5, 1.5))
+)
+check_spline_type_params(spline_test_configs)
+
 }

@@ -2,10 +2,34 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{modify_limma_top_table}
 \alias{modify_limma_top_table}
-\title{Converts top_table to a tibble and adds new column feature_name}
+\title{Modify limma Top Table}
 \usage{
 modify_limma_top_table(top_table, feature_names)
 }
+\arguments{
+\item{top_table}{A dataframe containing the top table results from limma}
+
+\item{feature_names}{A character vector of feature names.}
+}
+\value{
+A tibble with feature indices and names included.
+}
 \description{
-Converts top_table to a tibble and adds new column feature_name
+Modifies the limma top table to include feature indices and names.
+}
+\examples{
+top_table <- data.frame(
+  logFC = rnorm(10), 
+  AveExpr = rnorm(10), 
+  t = rnorm(10), 
+  P.Value = runif(10), 
+  adj.P.Val = runif(10)
+)
+feature_names <- paste0("Feature_", 1:10)
+modify_limma_top_table(top_table, feature_names)
+
+}
+\seealso{
+\code{\link{tidyr::as_tibble}}, \code{\link{dplyr::relocate}}, 
+\code{\link{dplyr::mutate}}
 }

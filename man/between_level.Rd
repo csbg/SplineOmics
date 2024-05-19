@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{between_level}
 \alias{between_level}
-\title{Calculate Differential Expression Between Levels}
+\title{Between Level Analysis}
 \usage{
 between_level(
   data,
@@ -16,28 +16,45 @@ between_level(
 )
 }
 \arguments{
-\item{data}{A matrix of expression values.}
+\item{data}{A matrix of data values.}
 
-\item{meta}{Metadata containing experimental design information.}
+\item{meta}{A dataframe containing metadata, including a 'Time' column.}
 
-\item{design}{A formula specifying the linear model design.}
+\item{design}{A design formula or matrix for the LIMMA analysis.}
 
-\item{spline_params}{Parameters for spline generation.}
+\item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{condition}{The name of the condition column in the metadata.}
+\item{condition}{A character string specifying the condition.}
 
-\item{compared_levels}{The levels of the condition to compare.}
+\item{compared_levels}{A vector of levels within the condition to compare.}
 
-\item{padjust_method}{The method for adjusting p-values.}
+\item{padjust_method}{A character string specifying the p-adjustment method.}
 
-\item{feature_names}{Names of the features in the data matrix.}
+\item{feature_names}{A non-empty character vector of feature names.}
 }
 \value{
-A list containing top tables for contrasts between factors only 
-        and factors with time interactions.
+A list containing top tables for the factor only and factor-time 
+contrast.
 }
 \description{
-Calculates differential expression between specified levels of a condition
-using linear models and limma analysis. Returns top table results for 
-contrasts between factors only and factors with time interactions.
+Performs a between-level analysis using LIMMA to compare specified levels 
+within a condition.
+}
+\examples{
+data <- matrix(runif(100), nrow = 10)
+meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
+design <- "~ 1"
+spline_params <- list(spline_type = c("n"), dof = list(3))
+condition <- "condition"
+compared_levels <- c("A", "B")
+padjust_method <- "BH"
+feature_names <- c("feature1", "feature2")
+between_level(data, meta, design, spline_params, condition, compared_levels, 
+              padjust_method, feature_names)
+
+}
+\seealso{
+\code{\link{splines::bs}}, \code{\link{splines::ns}}, 
+\code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
+\code{\link{limma::topTable}}, \code{\link{modify_limma_top_table}}
 }
