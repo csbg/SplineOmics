@@ -10,7 +10,7 @@ make_clustering_report(
   data,
   meta,
   spline_params,
-  p_values,
+  adj_pthresholds,
   report_dir,
   mode,
   feature_names,
@@ -31,7 +31,7 @@ level within a condition.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{p_values}{A numeric vector of p-values.}
+\item{adj_pthresholds}{A numeric vector of p-values.}
 
 \item{report_dir}{A character string specifying the report directory.}
 
@@ -60,7 +60,7 @@ condition <- "condition"
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 spline_params <- list(spline_type = c("n"), dof = list(3))
-p_values <- runif(10)
+adj_pthresholds <- runif(10)
 report_dir <- "example_dir"
 mode <- "isolated"
 feature_names <- paste0("feature", 1:10)
@@ -68,7 +68,7 @@ report_info <- "example_info"
 meta_batch_column <- "batch"
 time_unit <- "m"
 make_clustering_report(all_levels_clustering, condition, data, meta, 
-                       spline_params, p_values, report_dir, mode, 
+                       spline_params, adj_pthresholds, report_dir, mode, 
                        feature_names, report_info, meta_batch_column, time_unit)
 
 }

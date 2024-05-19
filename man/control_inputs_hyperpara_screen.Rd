@@ -15,8 +15,9 @@ control_inputs_hyperpara_screen(
   feature_names,
   report_info,
   report_dir,
-  adj_pthresh,
+  adj_pthresholds,
   meta_batch_column,
+  time_unit,
   padjust_method
 )
 }
@@ -41,7 +42,7 @@ control_inputs_hyperpara_screen(
 
 \item{report_dir}{A non-empty string specifying the report directory.}
 
-\item{adj_pthresh}{A numeric vector with elements > 0 and < 1.}
+\item{adj_pthresholds}{A numeric vector with elements > 0 and < 1.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
@@ -66,7 +67,7 @@ control_inputs_hyperpara_screen(datas = list(matrix(1:4, 2, 2)),
                                 feature_names = c("feature1", "feature2"), 
                                 report_info = "example_info", 
                                 report_dir = "example_dir", 
-                                adj_pthresh = c(0.05), 
+                                adj_pthresholds = c(0.05), 
                                 meta_batch_column = "batch", 
                                 padjust_method = "BH")
 

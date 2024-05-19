@@ -11,7 +11,8 @@ plot_composite_splines(
   top_table,
   top_table_name,
   indices,
-  type
+  type,
+  time_unit_label
 )
 }
 \arguments{

@@ -194,30 +194,16 @@ control_inputs_run_limma <- function(data,
                                      mode, 
                                      padjust_method) {
   
-  if (!is.matrix(data)) {
-    stop("data must be a matrix")
-  }
-  
-  # Ensure meta is a dataframe with a 'Time' column
-  if (!is.data.frame(meta) || 
-      !"Time" %in% names(meta) || 
-      !is.numeric(meta$Time)) {
-    stop("meta must be a dataframe and contain the column 'Time' 
-         with numeric values.")
-  }
-  
-  if (!(nrow(meta) == ncol(data))) {
-    stop("The number of rows in meta does not match the number of columns in 
-        data. This is required.\n")
-  }
+  check_data_and_meta(data = data, 
+                      meta = meta, 
+                      condition = condition)
   
   check_design_formula(design, meta)
   
-  check_condition(condition, meta)
-  
   # Check that feature_names is a non-empty character vector
   if (!is.character(feature_names) || length(feature_names) == 0) {
-    stop("feature_names must be a non-empty character vector.")
+    stop("feature_names must be a non-empty character vector.",
+         call. = FALSE)
   }
   
   check_mode(mode)
@@ -453,62 +439,6 @@ process_level <- function(level,
 # Level 2 internal functions ---------------------------------------------------
 
 
-#' Check Design Formula
-#'
-#' @description
-#' Validates the design formula ensuring it is a valid character string, 
-#' contains allowed characters, includes the intercept term 'X', and references 
-#' columns present in the metadata.
-#'
-#' @param formula A character string representing the design formula.
-#' @param meta A dataframe containing metadata.
-#'
-#' @return TRUE if the design formula is valid, otherwise an error is thrown.
-#'
-#' @examples
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' check_design_formula("~ Time + condition * X", meta)
-#'
-#' @seealso
-#' \code{\link{stats::model.matrix}}
-#' 
-check_design_formula <- function(formula, 
-                                 meta) {
-  
-  # Check if the formula is a valid character string
-  if (!is.character(formula) || length(formula) != 1) {
-    stop("The design formula must be a valid character string.")
-  }
-  
-  # Ensure the formula contains allowed characters only
-  allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-]*$"
-  if (!grepl(allowed_chars, formula)) {
-    stop("The design formula contains invalid characters.")
-  }
-  
-  # Ensure the formula contains the intercept term 'X'
-  if (!grepl("\\bX\\b", formula)) {
-    stop("The design formula must include the term 'X'.")
-  }
-  
-  # Extract terms from the formula (removing interactions and functions)
-  formula_terms <- unlist(strsplit(gsub("[~+*:()]", " ", formula), " "))
-  formula_terms <- formula_terms[formula_terms != ""]
-  
-  # Remove '1' and 'X' from terms since they are not columns
-  formula_terms <- setdiff(formula_terms, c("1", "X"))
-  
-  # Check if the terms are present in the dataframe
-  missing_columns <- setdiff(formula_terms, names(meta))
-  if (length(missing_columns) > 0) {
-    stop(paste("The following columns are missing in the dataframe:", 
-               paste(missing_columns, collapse = ", ")))
-  }
-  
-  return(TRUE)
-}
-
- 
 #' Modify limma Top Table
 #'
 #' @description

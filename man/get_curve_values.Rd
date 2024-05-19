@@ -6,7 +6,7 @@
 \usage{
 get_curve_values(
   top_table,
-  p_value,
+  adj_pthreshold,
   level,
   meta,
   condition,
@@ -20,7 +20,7 @@ p-values and
                  expression averages which indicate the number of degrees 
                  of freedom.}
 
-\item{p_value}{The threshold for filtering entries based on adjusted
+\item{adj_pthreshold}{The threshold for filtering entries based on adjusted
 p-values.}
 
 \item{level}{The specific level of the condition to filter on in the 

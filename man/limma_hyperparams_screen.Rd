@@ -24,8 +24,9 @@ limma_hyperparams_screen(
   feature_names,
   report_info,
   report_dir = here::here(),
-  adj_pthresh = c(0.05),
+  adj_pthresholds = c(0.05),
   meta_batch_column = NA,
+  time_unit = "m",
   padjust_method = "BH"
 )
 }
@@ -42,6 +43,9 @@ design.}
 
 \item{feature_names}{A character vector of feature names to be analyzed.}
 
+\item{adj_pthresholds}{A numeric vector of p-value thresholds for 
+significance determination.}
+
 \item{padjust_method}{A character string specifying the method for p-value 
 adjustment.}
 
@@ -50,9 +54,6 @@ analysis.}
 
 \item{DoFs}{An integer vector of degrees of freedom to be used for each 
 factor in `factors`.}
-
-\item{pthresholds}{A numeric vector of p-value thresholds for significance 
-determination.}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.
@@ -72,7 +73,7 @@ as part of a larger analysis workflow.
 \dontrun{
   results <- limma_hyperparams_screen(datas, metas, designs, modes, factors,
                                       DoFs = c(2L), feature_names, 
-                                      pthresholds = c(0.05),
+                                      adj_pthresholds = c(0.05),
                                       padjust_method = "BH")
 }
 

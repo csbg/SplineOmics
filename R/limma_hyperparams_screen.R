@@ -101,7 +101,7 @@ limma_hyperparams_screen <- function(datas,
                               metas = metas,
                               spline_test_configs = spline_test_configs,
                               meta_batch_column = meta_batch_column,
-                              time_unit)
+                              time_unit = time_unit)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
@@ -175,38 +175,42 @@ control_inputs_hyperpara_screen <- function(datas,
                                             time_unit,
                                             padjust_method) {
   
-  if (!is.list(datas) || any(!sapply(datas, is.matrix))) {
-    stop("'datas' must be a list of matrices.")
+  if(length(datas) != length(metas) || length(designs) != length(modes)) {
+    stop(paste0("datas and metas, as well as designs and modes must have the ", 
+         "same length."),
+         call. = FALSE)
   }
   
-  # Check that all matrices contain only numeric values
-  if (any(!sapply(datas, function(mat) all(is.numeric(mat))))) {
-    stop("All matrices in 'datas' must contain only numeric values.")
+  for (i in seq_along(datas)) {
+    check_data_and_meta(data = datas[[i]], 
+                        meta = metas[[i]], 
+                        condition = condition, 
+                        meta_batch_column = meta_batch_column,
+                        data_meta_index = i)
   }
-  
+
   check_datas_descr(datas_descr)
   
-  check_metas(metas, datas, meta_batch_column)
-  
-  check_designs(designs)
+  for (design in designs) {
+    for (j in seq_along(metas)) {
+      meta <- metas[[j]]
+      check_design_formula(formula = design, 
+                           meta = meta,
+                           meta_index = j)
+    }
+  }
     
   if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
     stop("'modes' must be a character vector containing only 'isolated' or 
-         'integrated'.")
+         'integrated'.",
+         call. = FALSE)
   }
-  
-  # Ensure that datas and metas have the same length, as well as designs and 
-  # modes
-  if(length(datas) != length(metas) || length(designs) != length(modes)) {
-    stop("datas and metas, designs and modes must have the same length.")
-  }
-  
-  check_condition(condition, meta)
   
   check_spline_test_configs(spline_test_configs, metas)
   
   if (!is.character(feature_names)) {
-    stop("'feature_names' must be a character vector.")
+    stop("'feature_names' must be a character vector.",
+         call. = FALSE)
   }
   
   check_report_info(report_info)
@@ -325,7 +329,8 @@ plot_limma_combos_results <- function(top_tables_combos,
                                       datas,
                                       metas,
                                       spline_test_configs,
-                                      meta_batch_column) {
+                                      meta_batch_column,
+                                      time_unit = time_unit) {
   
   names_extracted <- stringr::str_extract(names(top_tables_combos),
                                           "Data_\\d+_Design_\\d+")
@@ -345,6 +350,10 @@ plot_limma_combos_results <- function(top_tables_combos,
                                    format = "[:bar] :percent")
   pb$tick(0)
   
+  time_unit_labels <- c("s" = "[sec]", "m" = "[min]", "h" = "[hours]", 
+                        "d" = "[days]")
+  time_unit_label <- time_unit_labels[time_unit]
+  
   combo_pair_results <- purrr::set_names(
     purrr::map(combo_pairs, function(pair) {
       combo_pair <- combos_separated[pair]
@@ -359,7 +368,8 @@ plot_limma_combos_results <- function(top_tables_combos,
         composite <- gen_composite_spline_plots(combo,
                                                 datas,
                                                 metas,
-                                                spline_test_configs)
+                                                spline_test_configs,
+                                                time_unit_label)
       })
       pb$tick()
       list(hitcomp = hitcomp, composites = composites)
@@ -522,124 +532,6 @@ check_datas_descr <- function(datas_descr) {
       the description.",
       paste(long_elements_indices, collapse = ", "),
       paste(long_elements, collapse = "', '")
-    )
-    stop(error_message)
-  }
-}
-
-
-#' Check Metadata
-#'
-#' @description
-#' Validates that the metadata list contains dataframes, matches the length of 
-#' the data list, and that each metadata dataframe has the correct number of 
-#' rows matching the corresponding data matrix columns.
-#'
-#' @param metas A list of dataframes.
-#' @param datas A list of matrices.
-#' @param meta_batch_column A character string specifying the meta batch column.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' check_metas(metas = list(data.frame(batch = 1:2)), 
-#'             datas = list(matrix(1:4, 2, 2)), 
-#'             meta_batch_column = "batch")
-#'
-#' @seealso
-#' \code{\link{stop}} for error handling.
-#' 
-check_metas <- function(metas, 
-                        datas, 
-                        meta_batch_column) {
-  
-  if (!is.list(metas) || any(!sapply(metas, is.data.frame))) {
-    stop("'metas' must be a list of dataframes.")
-  }
-  
-  if (length(metas) != length(datas)) {
-    stop("The lists 'metas' and 'datas' must have the same number of elements.")
-  }
-  
-  for (i in seq_along(metas)) {
-    # Extract the current meta dataframe and data matrix
-    meta <- metas[[i]]
-    data <- datas[[i]]
-    
-    # Check if the number of rows in meta equals the number of columns in data
-    if (!(nrow(meta) == ncol(data))) {
-      stop(paste0("Mismatch found for pair ", i, ": The number of rows in ", 
-                  "meta does not match the number of columns in data. This is ",
-                  "required."))
-    }
-    
-    if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
-      stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
-    }
-  }
-  if (!is.na(meta_batch_column)) {
-    print(paste0("Column ", meta_batch_column, " will be used to remove the ",
-                 "batch effect for plotting only."))
-  } else {
-    print("Batch effect will not be removed for plotting!")
-  }
-}
-
-
-#' Check Designs
-#'
-#' @description
-#' Validates that the design descriptions are character vectors with each 
-#' element not exceeding 75 characters in length and containing 'X'.
-#'
-#' @param designs A character vector of design descriptions.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' check_designs(designs = c("X_variable1", "X_variable2"))
-#'
-#' @seealso
-#' \code{\link{stop}} for error handling.
-#' 
-check_designs <- function(designs) {
-  
-  if (!is.character(designs) || 
-      any(nchar(designs) > 75) || 
-      all(grepl("X", designs) == FALSE)) {
-    
-    long_or_missing_x_indices <- 
-      which(nchar(designs) > 75 | grepl("X", designs) == FALSE)
-    long_elements <- 
-      designs[long_or_missing_x_indices[nchar(
-        designs[long_or_missing_x_indices]) > 75]]
-    missing_x_elements <- 
-      designs[long_or_missing_x_indices[grepl(
-        "X", designs[long_or_missing_x_indices]) == FALSE]]
-    
-    error_message_parts <- character()
-    if (length(long_elements) > 0) {
-      error_message_parts <- c(error_message_parts, sprintf(
-        "Some 'designs' elements exceed 75 characters. Offending element(s) at 
-      indices %s: '%s'.",
-        paste(which(nchar(designs) > 75), collapse=", "),
-        paste(long_elements, collapse="', '")
-      ))
-    }
-    if (length(missing_x_elements) > 0) {
-      error_message_parts <- c(error_message_parts, sprintf(
-        "Some 'designs' elements do not contain 'X', which is the required
-      time component for the splinetime package. 
-      Offending element(s) at indices %s: '%s'.",
-        paste(which(grepl("X", designs) == FALSE), collapse = ", "),
-        paste(missing_x_elements, collapse = "', '")
-      ))
-    } 
-    error_message <- paste(
-      "'designs' must be a character vector with no element over 75 
-        characters and each must contain 'X'.",
-      paste(error_message_parts, collapse="Please shorten the variable names 
-                                             or ensure 'X' is included.")
     )
     stop(error_message)
   }
@@ -1158,7 +1050,8 @@ gen_hitcomp_plots <- function(combo_pair) {
 gen_composite_spline_plots <- function(internal_combos, 
                                        datas, 
                                        metas,
-                                       spline_test_configs) {
+                                       spline_test_configs,
+                                       time_unit_label) {
   
   plots <- list()
   plots_len <- integer(0)
@@ -1214,7 +1107,8 @@ gen_composite_spline_plots <- function(internal_combos,
                                          top_table, 
                                          combo_name, 
                                          indices,
-                                         type)
+                                         type,
+                                         time_unit_label)
         
         if (is.list(result)) {
           plot_name <- paste(combo_name, top_table_name, type, sep = "_")
@@ -1776,7 +1670,8 @@ plot_composite_splines <- function(data,
                                    top_table, 
                                    top_table_name, 
                                    indices,
-                                   type) {
+                                   type,
+                                   time_unit_label) {
   
   plot_list <- list()
   config_index <- 
@@ -1836,7 +1731,7 @@ plot_composite_splines <- function(data,
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(meta$Time), x_max + x_extension))
-    labs(x = "Time [min]", y = "Intensity")
+    labs(x = paste0("Time ", time_unit_label), y = "Intensity")
     
     title <- top_table$feature_names[index]  
     if (is.na(title)) {
@@ -1844,7 +1739,7 @@ plot_composite_splines <- function(data,
     }
     
     p <- p + labs(title = title, 
-                  x = "Time [min]", y = "Intensity") +
+                  x = paste0("Time ", time_unit_label), y = "Intensity") +
       theme(plot.title = element_text(size = 4),
             axis.title.x = element_text(size = 8), 
             axis.title.y = element_text(size = 8)) +

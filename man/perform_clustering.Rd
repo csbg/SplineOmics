@@ -6,7 +6,7 @@
 \usage{
 perform_clustering(
   top_tables,
-  p_values,
+  adj_pthresholds,
   clusters,
   meta,
   condition,
@@ -17,7 +17,7 @@ perform_clustering(
 \arguments{
 \item{top_tables}{A list of top tables from limma analysis.}
 
-\item{p_values}{A numeric vector of p-values.}
+\item{adj_pthresholds}{A numeric vector of p-values.}
 
 \item{clusters}{A list specifying clusters or "auto" for automatic estimation.}
 
@@ -38,13 +38,13 @@ for each level within a condition.
 }
 \examples{
 top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-p_values <- runif(10)
+adj_pthresholds <- runif(10)
 clusters <- list("auto")
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 condition <- "condition"
 spline_params <- list(spline_type = c("n"), dof = list(3))
 mode <- "isolated"
-perform_clustering(top_tables, p_values, clusters, meta, condition, 
+perform_clustering(top_tables, adj_pthresholds, clusters, meta, condition, 
                    spline_params, mode)
 
 }

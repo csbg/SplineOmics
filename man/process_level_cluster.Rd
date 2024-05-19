@@ -6,7 +6,7 @@
 \usage{
 process_level_cluster(
   top_table,
-  p_value,
+  adj_pthreshold,
   cluster_size,
   level,
   meta,
@@ -18,7 +18,7 @@ process_level_cluster(
 \arguments{
 \item{top_table}{A dataframe containing the top table results from limma.}
 
-\item{p_value}{A numeric value specifying the p-value threshold.}
+\item{adj_pthreshold}{A numeric value specifying the p-value threshold.}
 
 \item{cluster_size}{The size of clusters to generate.}
 
@@ -43,14 +43,14 @@ provided top table and spline parameters.
 }
 \examples{
 top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10))
-p_value <- 0.05
+adj_pthreshold <- 0.05
 cluster_size <- 3
 level <- "A"
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 condition <- "condition"
 spline_params <- list(spline_type = c("n"), dof = list(3))
 mode <- "isolated"
-process_level_cluster(top_table, p_value, cluster_size, level, meta, 
+process_level_cluster(top_table, adj_pthreshold, cluster_size, level, meta, 
                       condition, spline_params, mode)
 
 }

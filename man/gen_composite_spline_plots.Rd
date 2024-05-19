@@ -4,7 +4,13 @@
 \alias{gen_composite_spline_plots}
 \title{Generate Composite Spline Plots}
 \usage{
-gen_composite_spline_plots(internal_combos, datas, metas, spline_test_configs)
+gen_composite_spline_plots(
+  internal_combos,
+  datas,
+  metas,
+  spline_test_configs,
+  time_unit_label
+)
 }
 \arguments{
 \item{internal_combos}{A list containing combinations of top tables.}
