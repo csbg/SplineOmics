@@ -9,7 +9,8 @@ plot_limma_combos_results(
   datas,
   metas,
   spline_test_configs,
-  meta_batch_column
+  meta_batch_column,
+  time_unit = time_unit
 )
 }
 \arguments{

@@ -12,7 +12,7 @@ get_limma_combos_results(
   condition,
   spline_test_configs,
   feature_names,
-  adj_pthresh,
+  adj_pthresholds,
   padjust_method
 )
 }
@@ -31,7 +31,7 @@ get_limma_combos_results(
 
 \item{feature_names}{A character vector of feature names.}
 
-\item{adj_pthresh}{A numeric vector with elements > 0 and < 1.}
+\item{adj_pthresholds}{A numeric vector with elements > 0 and < 1.}
 
 \item{padjust_method}{A single character string specifying the p-adjustment 
 method.}
@@ -53,7 +53,7 @@ get_limma_combos_results(datas = list(matrix(1:4, 2, 2)),
                          spline_test_configs = 
                             list(spline_type = c("type1")), 
                          feature_names = c("feature1", "feature2"), 
-                         adj_pthresh = c(0.05), 
+                         adj_pthresholds = c(0.05), 
                          padjust_method = "BH")
                          
 }

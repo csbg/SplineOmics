@@ -17,7 +17,7 @@ cluster_hits(
   report_info,
   mode = "integrated",
   spline_params = list(spline_type = c("n"), dof = c(2L)),
-  p_values = c(0.05),
+  adj_pthresholds = c(0.05),
   clusters = c("auto"),
   meta_batch_column = NA,
   time_unit = "m",
@@ -36,9 +36,6 @@ analysis.}
 'Time' column and any columns
        specified by `conditions`.}
 
-\item{p_values}{Numeric vector of p-value thresholds for filtering hits in 
-each top table.}
-
 \item{clusters}{Integer vector specifying the number of clusters to cut the 
 dendrogram into, for each
        group factor.}
@@ -50,6 +47,9 @@ HTML report and any
 \item{conditions}{Character vector specifying the column names in `meta` used 
 to define groups for
        analysis.}
+
+\item{adj_pthresh}{Numeric vector of p-value thresholds for filtering hits in 
+each top table.}
 }
 \value{
 A list where each element corresponds to a group factor and contains 

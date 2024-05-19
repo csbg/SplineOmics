@@ -179,20 +179,15 @@ control_inputs_cluster_hits <- function(top_tables,
   
   check_top_tables(top_tables)
 
-  if (!is.matrix(data)) {
-    stop("data must be a matrix")
-  }
-  
-  check_meta(meta, meta_batch_column)
+  check_data_and_meta(data = data, 
+                      meta = meta, 
+                      condition = condition, 
+                      meta_batch_column = meta_batch_column)
   
   check_mode(mode)
   
   check_spline_params(spline_params, mode)
-  
-  if (!(is.character(condition)) || length(condition) != 1) {
-    stop("condition must be a character vector with length 1")
-  }
-  
+
   check_adj_pthresholds(adj_pthresholds)
   
   if (is.character(clusters) && length(clusters) == 1 && clusters[1] == "auto") 
@@ -202,7 +197,8 @@ control_inputs_cluster_hits <- function(top_tables,
     
   } else if (!is.list(clusters) || 
       !all(sapply(clusters, function(x) is.character(x) || is.numeric(x)))) {
-    stop("clusters must be a list containing only character or numeric types.")
+    stop("clusters must be a list containing only character or numeric types.",
+         call. = FALSE)
   } 
   
   check_report_info(report_info)
@@ -350,22 +346,16 @@ make_clustering_report <- function(all_levels_clustering,
     dir.create(report_dir)
   }
   
-  if (time_unit == "s") {
-    time_unit_label = "[sec]"
-  } else if (time_unit == "m") {
-    time_unit_label = "[min]"
-  } else if (time_unit == "h") {    
-    time_unit_label = "[hours]"
-  } else {                        # time-unit == "d"
-    time_unit_label = "[days]"
-  }
+  time_unit_labels <- c("s" = "[sec]", "m" = "[min]", "h" = "[hours]", 
+                        "d" = "[days]")
+  time_unit_label <- time_unit_labels[time_unit]
   
-  heatmaps <- plot_heatmap(data,
-                           meta,
-                           condition,
-                           feature_names,
-                           all_levels_clustering,
-                           time_unit_label)
+  heatmaps <- plot_heatmap(data = data,
+                           meta = meta,
+                           condition = condition,
+                           feature_names = feature_names,
+                           all_levels_clustering = all_levels_clustering,
+                           time_unit_label = time_unit_label)
   
   # log2_intensity_shape <- plot_log2_intensity_shapes()
   
@@ -489,43 +479,6 @@ check_top_tables <- function(top_tables) {
     for (top_table in top_tables) {
       check_dataframe(top_table)
     }
-  }
-}
-
-
-#' Check Meta
-#'
-#' @description
-#' Validates the metadata dataframe ensuring it contains the required 'Time' 
-#' column and checks the presence of the specified batch column if provided.
-#'
-#' @param meta A dataframe containing metadata.
-#' @param meta_batch_column A character string specifying the meta batch column.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
-#' check_meta(meta, "batch")
-#'
-#' @seealso
-#' \code{\link{removeBatchEffect}}
-#' 
-check_meta <- function(meta, 
-                       meta_batch_column) {
-  
-  if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
-    stop("meta must be a dataframe containing the column Time")
-  }
-  
-  if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
-    stop(paste0("Column ", meta_batch_column, " not found in meta nr ", i))
-    
-  } else if (!is.na(meta_batch_column)) {
-    print(paste0("Column ", meta_batch_column, " of meta will be used to ",
-                 "remove the batch effect for the plotting"))
-  } else {
-    print("Batch effect will not be removed for plotting!")
   }
 }
 

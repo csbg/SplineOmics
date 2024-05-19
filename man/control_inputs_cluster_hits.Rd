@@ -11,7 +11,7 @@ control_inputs_cluster_hits(
   mode,
   spline_params,
   condition,
-  p_values,
+  adj_pthresholds,
   clusters,
   report_info,
   meta_batch_column,
@@ -32,7 +32,7 @@ control_inputs_cluster_hits(
 
 \item{condition}{A character string specifying the condition.}
 
-\item{p_values}{A numeric vector of p-values.}
+\item{adj_pthresholds}{A numeric vector of p-values.}
 
 \item{clusters}{A list specifying clusters or "auto" for automatic estimation.}
 
@@ -58,14 +58,14 @@ meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
 mode <- "isolated"
 spline_params <- list(spline_type = c("n"), dof = list(3))
 condition <- "example_condition"
-p_values <- runif(10)
+adj_pthresholds <- runif(10)
 clusters <- list("auto")
 report_info <- "example_info"
 meta_batch_column <- "batch"
 time_unit <- "m"
 report_dir <- "example_dir"
 control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params, 
-                            condition, p_values, clusters, report_info, 
+                            condition, adj_pthresholds, clusters, report_info, 
                             meta_batch_column, time_unit, report_dir)
 
 }
