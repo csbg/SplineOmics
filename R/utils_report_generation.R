@@ -57,21 +57,25 @@
 generate_report_html <- function(plots, 
                                  plots_sizes, 
                                  level_headers_info,
-                                 spline_params,
                                  report_info,
-                                 report_type = "limma_hyperparams_screen",
+                                 spline_params = NA,
+                                 report_type = "explore_data",
                                  mode = NA,
                                  filename = "report",
                                  timestamp = format(Sys.time(), 
                                                     "%d_%m_%Y-%H_%M_%S"),
                                  report_dir = here::here()) {
   
-  if (report_type == "limma_hyperparams_screen") {
+  if (report_type == "explore_data") {    
+    title <- "explore data"
+  } else if (report_type == "limma_hyperparams_screen") {
     title <- "hyperparams screen"
   } else if (report_type == "cluster_hits") {                         
     title <- "clustered hits"
   } else {
-    stop("report_type must be either limma_hyperparams_screen or cluster_hits")
+    stop(paste("report_type must be explore_hits, limma_hyperparams_screen,", 
+               "or cluster_hits"),
+         call. = FALSE)
   }
   
   header_text <- paste(title, 
@@ -143,12 +147,22 @@ generate_report_html <- function(plots,
   
   output_file_path <- here::here(report_dir, file_name)
   
-  if (report_type == "limma_hyperparams_screen") {
+  if (report_type == "explore_data") {
+    
+    build_explore_data_report(header_section = header_section, 
+                              plots = plots, 
+                              plots_sizes = plots_sizes, 
+                              output_file_path = output_file_path)
+    
+  } else if (report_type == "limma_hyperparams_screen") {
+    
     build_hyperparams_screen_report(header_section = header_section, 
                                     plots = plots, 
                                     plots_sizes = plots_sizes, 
                                     output_file_path = output_file_path)
-  } else {           # report_type == "cluster_hits"
+    
+  }
+  else {           # report_type == "cluster_hits"
     build_cluster_hits_report(header_section = header_section, 
                               plots = plots, 
                               plots_sizes = plots_sizes,

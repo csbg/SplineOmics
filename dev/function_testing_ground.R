@@ -8,9 +8,37 @@ devtools::load_all()
 # Load the data ----------------------------------------------------------------
 load(here::here("data", "timeseries_proteomics_example.RData")) 
 
+library(tidyverse)
+library(readxl)
+data_excel <- read_excel(here::here("data", "PTX_processed_table.xlsx"))
+
+
+# Automatically extract data matrix from excel/csv table
+
+data_matrix <- extract_data(data)
+
+
+# Explore data -----------------------------------------------------------------
+data <- as.matrix(data)
+
+report_info <- list(
+  omics_data_type = "PTX",
+  data_description = "Gene expression levels over time.",
+  data_collection_date = "2024-05-15",
+  analyst_name = "Thomas Rauter",
+  project_name = "DGTX",
+  contact_info = "rauterthomas0@gmail.com"
+)
+
+plots <- explore_data(data = data,
+                      meta = meta,
+                      condition = "Phase",
+                      report_info = report_info,
+                      meta_batch_column = "Reactor",
+                      report_dir = here::here("results", "explore_data"))
+
 
 # Prep input to hyperparams screen function ------------------------------------
-data <- as.matrix(data)
 data1 <- data
 meta1 <- meta
 
@@ -35,30 +63,21 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
                                   knots = I(list(c(NA), c(NA), c(NA), c(NA))),
                                   bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
 
-report_info <- list(
-  omics_data_type = "PTX",
-  data_description = "Gene expression levels over time.",
-  data_collection_date = "2024-05-15",
-  analyst_name = "Thomas Rauter",
-  project_name = "DGTX",
-  contact_info = "rauterthomas0@gmail.com"
-)
-
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   modes,
-                                   condition,
-                                   spline_test_configs,
-                                   feature_names,
-                                   report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    modes,
+#                                    condition,
+#                                    spline_test_configs,
+#                                    feature_names,
+#                                    report_info,
+#                                    report_dir,
+#                                    pthresholds,
+#                                    meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
