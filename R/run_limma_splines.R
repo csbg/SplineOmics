@@ -565,6 +565,7 @@ within_level <- function(data,
   
   top_table <- limma::topTable(fit, adjust=padjust_method, number=Inf, 
                                coef=coeffs)
+  attr(top_table, "adjust.method") <- padjust_method
   
   list(top_table = top_table, fit = fit)
 }
