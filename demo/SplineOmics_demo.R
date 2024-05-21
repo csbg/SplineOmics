@@ -1,4 +1,4 @@
-library(splinetime)
+library(SplineOmics)
 
 # Proteomics example
 input_file_path <- here::here("data", "timeseries_proteomics_example.RData")

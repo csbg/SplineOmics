@@ -113,18 +113,22 @@ explore_data <- function(data,
 make_density_plots <- function(data, 
                                meta, 
                                condition) {
-
+  
+  density_plots <- list()
+  
   # Melt the data to long format
   data_long <- reshape2::melt(as.data.frame(data), id.vars = NULL)
   
-  # Create the overall density plot for all data
-  overall_plot <- ggplot2::ggplot(data_long, 
-                                  ggplot2::aes(x = value)) +
-    ggplot2::geom_density(fill = "blue", alpha = 0.5) +
-    ggplot2::ggtitle("All Levels")
-  
-  # Initialize the list of plots with the overall plot
-  density_plots <- list(overall_plot)
+  if (length(unique(meta[[condition]])) > 1) {    # Only when > 2 levels
+    # Create the overall density plot for all data
+    overall_plot <- ggplot2::ggplot(data_long, 
+                                    ggplot2::aes(x = value)) +
+      ggplot2::geom_density(fill = "blue", alpha = 0.5) +
+      ggplot2::ggtitle("All Levels")
+    
+    density_plots <- c(density_plots, list(overall_plot))
+  }
+
   
   # Create density plots for each level of the condition
   levels <- unique(meta[[condition]])
@@ -358,8 +362,7 @@ make_pca_variance_explained_plot <- function(data) {
     ggplot2::xlab("Principal Component") +
     ggplot2::ylab("Variance Explained (%)") +
     ggplot2::theme_minimal() +
-    ggplot2::ggtitle("Variance Explained by Principal Components") +
-    ggplot2::ylim(0, max(var_explained$Variance) + 5)  # Add some space above the highest bar
+    ggplot2::ylim(0, max(var_explained$Variance) + 5)  # Space above highest bar
   
   return(variance_plot)
 }
@@ -440,35 +443,37 @@ make_correlation_heatmaps <- function(data,
 
   heatmaps <- list()
   
-  # Create combined correlation heatmap
-  corr_all <- cor(data, method = "spearman", use = "pairwise.complete.obs")
-  # Remove perfect correlations for better visualization
-  diag(corr_all) <- NA
-
-  # Define the color function for the heatmap based on the range of corr_all
-  breaks <- seq(min(corr_all, na.rm = TRUE), 
-                max(corr_all, na.rm = TRUE), length.out = 100)
-  col_fun <- 
-    circlize::colorRamp2(breaks, 
-                         colorRampPalette(c("blue", "white", "red")
-                                          )(length(breaks)))
+  if (length(unique(meta[[condition]])) > 1) {    # Only when > 2 levels
+    # Create combined correlation heatmap
+    corr_all <- cor(data, method = "spearman", use = "pairwise.complete.obs")
+    # Remove perfect correlations for better visualization
+    diag(corr_all) <- NA
   
-  heatmap_all <- ComplexHeatmap::Heatmap(
-    corr_all,
-    col = col_fun,
-    name = "Correlation",
-    column_title = "All Levels",
-    heatmap_legend_param = list(
-      title = "Spearman Correlation",
-      title_gp = gpar(fontsize = 6),  
-      labels_gp = gpar(fontsize = 6),  
-      title_position = "leftcenter-rot" 
-    ),
-    na_col = "grey",
-    row_names_gp = gpar(fontsize = 6),
-    column_names_gp = gpar(fontsize = 6)
-  )
-  heatmaps <- c(heatmaps, list(heatmap_all))
+    # Define the color function for the heatmap based on the range of corr_all
+    breaks <- seq(min(corr_all, na.rm = TRUE), 
+                  max(corr_all, na.rm = TRUE), length.out = 100)
+    col_fun <- 
+      circlize::colorRamp2(breaks, 
+                           colorRampPalette(c("blue", "white", "red")
+                                            )(length(breaks)))
+    
+    heatmap_all <- ComplexHeatmap::Heatmap(
+      corr_all,
+      col = col_fun,
+      name = "Correlation",
+      column_title = "All Levels",
+      heatmap_legend_param = list(
+        title = "Spearman Correlation",
+        title_gp = gpar(fontsize = 6),  
+        labels_gp = gpar(fontsize = 6),  
+        title_position = "leftcenter-rot" 
+      ),
+      na_col = "grey",
+      row_names_gp = gpar(fontsize = 6),
+      column_names_gp = gpar(fontsize = 6)
+    )
+    heatmaps <- c(heatmaps, list(heatmap_all))
+  }
   
   # Create correlation heatmaps for each level of the condition
   levels <- unique(meta[[condition]])
@@ -506,7 +511,7 @@ make_correlation_heatmaps <- function(data,
       ),
       na_col = "grey",
       row_names_gp = gpar(fontsize = 6),
-      column_names_gp = gpar(fontsize = 6)
+      column_names_gp = gpar(fontsize = 6),
     )
 
     heatmaps <- c(heatmaps, list(heatmap_level))
@@ -569,43 +574,30 @@ build_explore_data_report <- function(header_section,
                   "PCA Plot", 
                   "PCA Plot Variance explained",
                   "Correlation Heatmaps")
-  
-  # for (index in seq_along(plots)) {
-  #   section_id <- paste0("section_", index)
-  #   toc <- paste(toc, 
-  #                sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-  #                        toc_style, 
-  #                        section_id,
-  #                        plot_names[index]), 
-  #                sep = "\n")
-  #   
-  #   # Process each plot
-  #   plot <- plots[[index]]
-  #   plot_size <- plots_sizes[[index]]
-  #   img_tag <- plot2base64(plot, plot_size)
-  #   section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>', 
-  #                             section_id, 
-  #                             section_header_style, 
-  #                             plot_names[index])
-  #   
-  #   content_with_plots <- paste(content_with_plots, 
-  #                               section_header, 
-  #                               img_tag, 
-  #                               sep = "\n")
-  #   pb$tick()
-  # }
-  
-  toc_index <- 1
+
+  toc_index <- 0
+  toc_index_memory <- toc_index
   
   # Generate the sections and plots
   for (index in seq_along(plots)) {
+    
     # Determine when to place headers based on the provided logic
-    if (index == 1 || 
-        index == 2 + level_count || 
-        index == 2 + 2 * level_count || 
-        index == 2 + 3 * level_count || 
-        index == 3 + 3 * level_count || 
-        index == 4 + 3 * level_count) {
+    if (length(plots) == 6) {     # Just one level exists
+      
+      toc_index <- toc_index + 1
+      
+    } else if (index == 1 || 
+               index == 2 + level_count || 
+               index == 2 + 2 * level_count || 
+               index == 2 + 3 * level_count || 
+               index == 3 + 3 * level_count || 
+               index == 4 + 3 * level_count) {    # More than just one level
+    
+      toc_index <- toc_index + 1
+    }
+    
+    
+    if (toc_index != toc_index_memory) {
       
       section_id <- paste0("section_", toc_index)
       toc <- paste(toc, 
@@ -620,10 +612,12 @@ build_explore_data_report <- function(header_section,
                                 section_header_style, 
                                 plot_names[toc_index])
       
-      content_with_plots <- paste(content_with_plots, section_header, sep = "\n")
+      content_with_plots <- paste(content_with_plots, section_header, 
+                                  sep = "\n")
       
-      toc_index <- toc_index + 1
+      toc_index_memory <- toc_index
     }
+    
     
     # Process each plot
     plot <- plots[[index]]

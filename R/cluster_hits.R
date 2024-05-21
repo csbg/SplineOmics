@@ -130,14 +130,17 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #' @param top_tables A list of top tables from limma analysis.
 #' @param data A matrix of data values.
 #' @param meta A dataframe containing metadata.
-#' @param mode A character string specifying the mode ('isolated' or 'integrated').
+#' @param mode A character string specifying the mode 
+#' ('isolated' or 'integrated').
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param condition A character string specifying the condition.
 #' @param adj_pthresholds A numeric vector of p-values.
-#' @param clusters A list specifying clusters or "auto" for automatic estimation.
+#' @param clusters A list specifying clusters or "auto" for automatic 
+#' estimation.
 #' @param report_info An object containing report information.
 #' @param meta_batch_column A character string specifying the meta batch column.
-#' @param time_unit A character string specifying the time unit ('s', 'm', 'h', 'd').
+#' @param time_unit A character string specifying the time unit 
+#' ('s', 'm', 'h', 'd').
 #' @param report_dir A character string specifying the report directory.
 #'
 #' @return No return value, called for side effects.
@@ -156,7 +159,8 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #' time_unit <- "m"
 #' report_dir <- "example_dir"
 #' control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params, 
-#'                             condition, adj_pthresholds, clusters, report_info, 
+#'                             condition, adj_pthresholds, clusters, 
+#'                             report_info, 
 #'                             meta_batch_column, time_unit, report_dir)
 #'
 #' @seealso
@@ -217,11 +221,13 @@ control_inputs_cluster_hits <- function(top_tables,
 #'
 #' @param top_tables A list of top tables from limma analysis.
 #' @param adj_pthresholds A numeric vector of p-values.
-#' @param clusters A list specifying clusters or "auto" for automatic estimation.
+#' @param clusters A list specifying clusters or "auto" for automatic 
+#' estimation.
 #' @param meta A dataframe containing metadata.
 #' @param condition A character string specifying the condition.
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param mode A character string specifying the mode ('isolated' or 'integrated').
+#' @param mode A character string specifying the mode 
+#' ('isolated' or 'integrated').
 #'
 #' @return A list of clustering results for each level within the condition.
 #'
@@ -282,17 +288,20 @@ perform_clustering <- function(top_tables,
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param adj_pthresholds A numeric vector of p-values.
 #' @param report_dir A character string specifying the report directory.
-#' @param mode A character string specifying the mode ('isolated' or 'integrated').
+#' @param mode A character string specifying the mode 
+#' ('isolated' or 'integrated').
 #' @param feature_names A character vector of feature names.
 #' @param report_info An object containing report information.
 #' @param meta_batch_column A character string specifying the meta batch column.
-#' @param time_unit A character string specifying the time unit ('s', 'm', 'h', 'd').
+#' @param time_unit A character string specifying the time unit 
+#' ('s', 'm', 'h', 'd').
 #'
 #' @return No return value, called for side effects.
 #'
 #' @examples
 #' all_levels_clustering <- list(
-#'   list(clusters = 3, curve_values = data.frame(), hc = list(), top_table = data.frame())
+#'   list(clusters = 3, curve_values = data.frame(), hc = list(), 
+#'   top_table = data.frame())
 #' )
 #' condition <- "condition"
 #' data <- matrix(runif(100), nrow = 10)
@@ -307,7 +316,8 @@ perform_clustering <- function(top_tables,
 #' time_unit <- "m"
 #' make_clustering_report(all_levels_clustering, condition, data, meta, 
 #'                        spline_params, adj_pthresholds, report_dir, mode, 
-#'                        feature_names, report_info, meta_batch_column, time_unit)
+#'                        feature_names, report_info, meta_batch_column, 
+#'                        time_unit)
 #'
 #' @seealso
 #' \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}}, 
@@ -668,7 +678,8 @@ plot_heatmap <- function(data,
 #                         names_to = "sample_name",
 #                         values_to = "log2_intensity") %>%
 #     tidyr::separate(sample_name, 
-#                     into = c("reactor", "time_point", "phase_of_fermentation"),
+#                     into = c("reactor", "time_point", 
+#                              "phase_of_fermentation"),
 #                     sep = "_") %>%
 #     dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
 #                                      length(clusters_exp$feature))) %>%
@@ -720,7 +731,8 @@ plot_heatmap <- function(data,
 #' Plot Dendrogram
 #'
 #' @description
-#' Generates a dendrogram plot for hierarchical clustering results, colored by clusters.
+#' Generates a dendrogram plot for hierarchical clustering results, 
+#' colored by clusters.
 #'
 #' @param hc A hierarchical clustering object.
 #' @param k An integer specifying the number of clusters.
@@ -733,7 +745,8 @@ plot_heatmap <- function(data,
 #' plot_dendrogram(hc, k)
 #'
 #' @seealso
-#' \code{\link{dendextend::color_branches}}, \code{\link{dendextend::as.ggdend}}, 
+#' \code{\link{dendextend::color_branches}}, 
+#' \code{\link{dendextend::as.ggdend}}, 
 #' \code{\link{ggplot2}}
 #' 
 #' @importFrom stats as.dendrogram
@@ -913,10 +926,12 @@ plot_single_and_consensus_splines <- function(time_series_data,
 #' Generates composite plots of single and consensus shapes for each cluster 
 #' of curve values.
 #'
-#' @param curve_values A dataframe containing curve values and cluster assignments.
+#' @param curve_values A dataframe containing curve values and cluster
+#'  assignments.
 #' @param time_unit_label A character string specifying the time unit label.
 #'
-#' @return A list containing the composite plot of consensus shapes and its size.
+#' @return A list containing the composite plot of consensus shapes and its 
+#' size.
 #'
 #' @examples
 #' curve_values <- data.frame(
