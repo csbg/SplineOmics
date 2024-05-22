@@ -15,11 +15,3 @@ A list of formatted strings representing each spline configuration.
 \description{
 Flattens and formats spline configurations into a list of formatted strings.
 }
-\examples{
-spline_configs <- list(
-  spline_type = c("type1", "type2"), 
-  degrees_of_freedom = list(c(3, 4), c(5, 6))
-)
-flatten_spline_configs(spline_configs)
-
-}

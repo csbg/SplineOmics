@@ -20,12 +20,6 @@ A list of matrices with batch effects removed where applicable.
 Removes batch effects from the data matrices using the specified batch 
 column in the metadata.
 }
-\examples{
-remove_batch_effect(datas = list(matrix(1:4, 2, 2)), 
-                    metas = list(data.frame(batch = 1:2)), 
-                    meta_batch_column = "batch")
-
-}
 \seealso{
 \code{\link{limma::removeBatchEffect}}
 }

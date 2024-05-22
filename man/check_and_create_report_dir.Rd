@@ -25,8 +25,9 @@ errors during directory creation, the function stops execution and returns
 an error message.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 report_dir <- "path/to/report_dir"
-check_and_create_report_dir(report_dir)
+check_and_create_report_dir(report_dir)}
 
 }

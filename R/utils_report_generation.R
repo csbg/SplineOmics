@@ -26,6 +26,7 @@
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
 #'                               ggplot2::geom_point())
 #' plots_sizes <- list(2)
@@ -43,7 +44,7 @@
 #'                      report_type = "limma_hyperparams_screen", mode = NA, 
 #'                      filename = "report", 
 #'                      timestamp = format(Sys.time(), "%d_%m_%Y-%H_%M_%S"), 
-#'                      report_dir = here::here())
+#'                      report_dir = here::here())}
 #'
 #' @seealso
 #' \code{\link{build_hyperparams_screen_report}}, 
@@ -142,7 +143,7 @@ generate_report_html <- function(plots,
   
   file_name <- sprintf("%s_%s_%s.html",
                        filename,
-                       report_info$omics_data_type, 
+                       report_info$omics_data_type,
                        timestamp)
   
   output_file_path <- here::here(report_dir, file_name)
@@ -197,9 +198,10 @@ generate_report_html <- function(plots,
 #'  plot.
 #'
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
 #' plot <- ggplot(mtcars, aes(mpg, cyl)) + geom_point()
-#' plot2base64(plot, plot_nrows = 1)
+#' plot2base64(plot, plot_nrows = 1)}
 #'
 #' @seealso
 #' \code{\link{ragg::agg_png}}, \code{\link{base64enc::dataURI}}

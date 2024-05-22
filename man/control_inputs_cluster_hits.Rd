@@ -26,7 +26,8 @@ control_inputs_cluster_hits(
 
 \item{meta}{A dataframe containing metadata.}
 
-\item{mode}{A character string specifying the mode ('isolated' or 'integrated').}
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
@@ -34,13 +35,15 @@ control_inputs_cluster_hits(
 
 \item{adj_pthresholds}{A numeric vector of p-values.}
 
-\item{clusters}{A list specifying clusters or "auto" for automatic estimation.}
+\item{clusters}{A list specifying clusters or "auto" for automatic 
+estimation.}
 
 \item{report_info}{An object containing report information.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
-\item{time_unit}{A character string specifying the time unit ('s', 'm', 'h', 'd').}
+\item{time_unit}{A character string specifying the time unit 
+('s', 'm', 'h', 'd').}
 
 \item{report_dir}{A character string specifying the report directory.}
 }
@@ -52,6 +55,7 @@ Validates the inputs for clustering hits, ensuring all required structures
 and parameters are correctly formatted.
 }
 \examples{
+\dontrun{
 top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
@@ -65,8 +69,10 @@ meta_batch_column <- "batch"
 time_unit <- "m"
 report_dir <- "example_dir"
 control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params, 
-                            condition, adj_pthresholds, clusters, report_info, 
+                            condition, adj_pthresholds, clusters, 
+                            report_info, 
                             meta_batch_column, time_unit, report_dir)
+}
 
 }
 \seealso{

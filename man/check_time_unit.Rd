@@ -24,9 +24,10 @@ is not one of these, the function stops execution and returns an error
 message.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 check_time_unit("m")  # Should pass without error
 
-try(check_time_unit("x"))  # Should raise an error
+try(check_time_unit("x"))  # Should raise an error}
 
 }

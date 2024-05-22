@@ -16,6 +16,7 @@ No return value, called for side effects.
 Validates the general structure and contents of spline parameters.
 }
 \examples{
+\dontrun{
 spline_params <- list(
   spline_type = c("b", "n"),
   degree = c(3, NA),
@@ -23,7 +24,7 @@ spline_params <- list(
   knots = list(NA, c(1, 2, 3)),
   bknots = list(NA, c(0.5, 1.5))
 )
-check_spline_params_generally(spline_params)
+check_spline_params_generally(spline_params)}
 
 }
 \seealso{

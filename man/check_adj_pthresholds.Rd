@@ -23,11 +23,12 @@ indicating the
 offending elements.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 valid_thresholds <- c(0.01, 0.05, 0.1)
 check_adj_pthresholds(valid_thresholds)
 
 invalid_thresholds <- c(0.01, -0.05, 1.1)
-try(check_adj_pthresholds(invalid_thresholds))  # Should raise an error
+try(check_adj_pthresholds(invalid_thresholds))  # Should raise an error}
 
 }

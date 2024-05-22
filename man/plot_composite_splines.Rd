@@ -40,18 +40,6 @@ generated, FALSE otherwise.
 Generates composite spline plots for significant and non-significant 
 features based on the specified indices.
 }
-\examples{
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10))
-spline_test_configs <- list(spline_type = c("n"), dof = list(3), 
-                            knots = list(NA), bknots = list(NA))
-top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10), 
-                        AveExpr = runif(10))
-indices <- 1:5
-plot_composite_splines(data, meta, spline_test_configs, top_table, 
-                       "TopTable1", indices, "significant")
-
-}
 \seealso{
 \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
 \code{\link{ggplot2}}, \code{\link{patchwork}}

@@ -20,10 +20,13 @@
 #' with rows containing NA values removed.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' data <- read.csv("path_to_your_file.csv")
 #' result_matrix <- extract_numeric_matrix(data)
-#' print(result_matrix)
+#' print(result_matrix)}
+#'
+#' @importFrom stats complete.cases
 #'
 #' @export
 #' 
@@ -68,7 +71,7 @@ extract_data <- function(data) {
                                  nrow(numeric_data)]
   
   # Remove rows with any NA values
-  clean_data <- numeric_data[complete.cases(numeric_data), ]
+  clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
   
   result_matrix <- as.matrix(clean_data)
 }
@@ -85,22 +88,23 @@ extract_data <- function(data) {
 #' @return A progress bar object from the 'progress' package.
 #'
 #' @examples
+#' \dontrun{
 #' items <- 1:10
 #' pb <- create_progress_bar(items)
 #' for (i in items) {
 #'   pb$tick()
 #'   Sys.sleep(0.1)
-#' }
+#' }}
+#'
+#' @importFrom progress progress_bar
 #'
 #' @seealso
 #' \code{\link{progress_bar}}
 #' 
 create_progress_bar <- function(iterable) {
-  
-  library(progress)
-  
+
   # Create and return the progress bar
-  pb <- progress_bar$new(
+  pb <- progress::progress_bar$new(
     format = "  Processing [:bar] :percent :elapsed",
     total = length(iterable),
     width = 60

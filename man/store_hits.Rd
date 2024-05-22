@@ -18,13 +18,3 @@ the significance threshold.
 Stores the feature indices for significant hits based on the adjusted p-value 
 threshold for each condition.
 }
-\examples{
-condition <- list(
-  list(
-    DataFrame = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
-    Parameters = list(params_id = "param1", adj_p_value_threshold = 0.05)
-  )
-)
-store_hits(condition)
-
-}

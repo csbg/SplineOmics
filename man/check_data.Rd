@@ -24,11 +24,12 @@ has no missing values, and all elements are non-negative. Additionally, it
 entirely zeros.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 data <- matrix(runif(9), nrow = 3, ncol = 3)
 check_data(data)
 
 invalid_data <- matrix(c(1, 2, NA, 4, 5, 6, 7, 8, 9), nrow = 3, ncol = 3)
-try(check_data(invalid_data))  # Should raise an error
+try(check_data(invalid_data))  # Should raise an error}
 
 }

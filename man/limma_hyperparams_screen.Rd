@@ -69,12 +69,3 @@ combinations, and plots the outcomes. Finally, it may also be involved in
 generating an HTML report
 as part of a larger analysis workflow.
 }
-\examples{
-\dontrun{
-  results <- limma_hyperparams_screen(datas, metas, designs, modes, factors,
-                                      DoFs = c(2L), feature_names, 
-                                      adj_pthresholds = c(0.05),
-                                      padjust_method = "BH")
-}
-
-}

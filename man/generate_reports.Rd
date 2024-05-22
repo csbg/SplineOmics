@@ -21,10 +21,3 @@ No return value, called for side effects.
 \description{
 Builds HTML reports for all pairwise hyperparameter combination comparisons.
 }
-\examples{
-generate_reports(combo_pair_plots = list(plot1, plot2),
-                 report_info = "example_info", 
-                 report_dir = "example_dir", 
-                 timestamp = Sys.time())
-                 
-}

@@ -22,9 +22,10 @@ the data/meta pair if provided.
 If no index is provided, it returns the message as is.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 message <- "data must be a matrix."
 create_error_message(message, 1)
-create_error_message(message)
+create_error_message(message)}
 
 }

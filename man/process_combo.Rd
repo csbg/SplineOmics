@@ -53,20 +53,6 @@ A list of top tables from the LIMMA spline analysis.
 Processes a single combination of data, design, spline configuration, and 
 p-threshold to generate LIMMA spline results.
 }
-\examples{
-process_combo(data_index = 1, 
-              design_index = 1, 
-              spline_config_index = 1, 
-              pthreshold = 0.05, 
-              metas = list(data.frame(batch = 1:2)), 
-              designs = list(matrix(1:4, 2, 2)), 
-              modes = c("isolated"), 
-              condition = "example_condition", 
-              spline_test_configs = list(spline_type = c("type1")), 
-              feature_names = c("feature1", "feature2"), 
-              padjust_method = "BH")
-
-}
 \seealso{
 \code{\link{create_spline_params}}, 
 \code{\link{run_limma_splines}}

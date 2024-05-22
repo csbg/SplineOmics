@@ -16,14 +16,3 @@ No return value, called for side effects.
 Validates that the spline test configurations contain the required columns 
 in the correct order.
 }
-\examples{
-spline_test_configs <- data.frame(
-  spline_type = c("type1", "type2"), 
-  degree = c(3, 4), 
-  dof = c(5, 6), 
-  knots = c(1, 2), 
-  bknots = c(0.5, 1.5)
-)
-check_colums_spline_test_configs(spline_test_configs)
-
-}

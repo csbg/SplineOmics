@@ -30,19 +30,6 @@ across multiple levels within a condition.
 One half of one condition comparison HTML 
 (composite spline plots for one 'condition' inside one condition comparison)
 }
-\examples{
-internal_combos <- list("Data_1_SConfig_1_PThresh_0.05" = list(
-  "Condition1_exp" = data.frame(feature_index = 1:10, adj.P.Val = runif(10)),
-  "Condition1_stat" = 
-      data.frame(feature_index = 11:20, adj.P.Val = runif(10))
-))
-datas <- list(matrix(runif(100), nrow = 10))
-metas <- list(data.frame(Condition1 = rep(c("exp", "stat"), each = 5)))
-spline_test_configs <- list(spline_type = c("type1"))
-gen_composite_spline_plots(internal_combos, 
-                           datas, metas, spline_test_configs)
-
-}
 \seealso{
 \code{\link{plot_composite_splines}}
 }

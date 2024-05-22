@@ -38,20 +38,6 @@ No return value, called for side effects.
 Generates an HTML report for clustered hits, including plots and 
 spline parameter details, with a table of contents.
 }
-\examples{
-header_section <- "<html><head></head><body>"
-plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
-ggplot2::geom_point())
-plots_sizes <- list(2)
-level_headers_info <- list(list("Level 1", 0))
-spline_params <- list(spline_type = "n", dof = 3)
-mode <- "isolated"
-output_file_path <- "report.html"
-build_cluster_hits_report(header_section, plots, plots_sizes, 
-level_headers_info, 
-                         spline_params, mode, output_file_path)
-
-}
 \seealso{
 \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 }

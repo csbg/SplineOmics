@@ -7,24 +7,27 @@
 plot_consensus_shapes(curve_values, time_unit_label)
 }
 \arguments{
-\item{curve_values}{A dataframe containing curve values and cluster assignments.}
+\item{curve_values}{A dataframe containing curve values and cluster
+assignments.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
 }
 \value{
-A list containing the composite plot of consensus shapes and its size.
+A list containing the composite plot of consensus shapes and its 
+size.
 }
 \description{
 Generates composite plots of single and consensus shapes for each cluster 
 of curve values.
 }
 \examples{
+\dontrun{
 curve_values <- data.frame(
   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
   cluster = rep(1:2, each = 5)
 )
 time_unit_label <- "[min]"
-plot_consensus_shapes(curve_values, time_unit_label)
+plot_consensus_shapes(curve_values, time_unit_label)}
 
 }
 \seealso{

@@ -31,11 +31,12 @@ Additionally, it checks for an optional batch effect column and prints
 messages regarding its use.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
 check_meta(meta, "Condition")
 
 invalid_meta <- data.frame(Time = c(1, NA, 3), Condition = c("A", "B", "C"))
-try(check_meta(invalid_meta, "Condition"))  # Should raise an error
+try(check_meta(invalid_meta, "Condition"))  # Should raise an error}
 
 }

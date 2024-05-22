@@ -24,11 +24,3 @@ A vector or list with the processed configuration values.
 Processes a configuration column based on the given mode and number of 
 levels.
 }
-\examples{
-config_column <- list(c(1, 2, 3), c(4, 5, 6))
-process_config_column(config_column, index = 1, num_levels = 3, 
-                      mode = "isolated")
-process_config_column(config_column, index = 2, num_levels = 2, 
-                      mode = "integrated")
-
-}

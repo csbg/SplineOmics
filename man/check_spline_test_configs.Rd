@@ -19,12 +19,6 @@ Validates the spline test configurations by checking required columns,
 spline type column, spline type parameters, and maximum and minimum degrees 
 of freedom against the metadata.
 }
-\examples{
-check_spline_test_configs(spline_test_configs = 
-                                      list(spline_type = c("type1")), 
-                          metas = list(data.frame(batch = 1:2)))
-
-}
 \seealso{
 \code{\link{check_colums_spline_test_configs}}, 
 \code{\link{check_spline_type_column}}, 

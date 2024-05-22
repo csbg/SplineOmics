@@ -17,17 +17,6 @@ A ggplot2 object representing the barplot.
 Creates a barplot to visualize the number of significant features for each 
 parameter set in the hit comparison object.
 }
-\examples{
-hc <- hc_new()
-hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene1", "Gene2"), 
-                                        p_value = c(0.01, 0.04)), 
-             params_id = "example_params", condition = 1, threshold = 0.05)
-hc <- hc_add(hc, top_table = data.frame(Gene = c("Gene3", "Gene2"), 
-                                        p_value = c(0.03, 0.02)), 
-             params_id = "example_params2", condition = 2, threshold = 0.05)
-hc_barplot(hc)
-
-}
 \seealso{
 \code{\link{store_hits}}, \code{\link{ggplot2}}
 }

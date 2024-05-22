@@ -1,7 +1,7 @@
 
-![](readme/SplineOmics_logo.png)
+![](inst/extdata/SplineOmics_logo.png)
 
-![](readme/SplineOmics_clock.gif)
+![](inst/extdata/SplineOmics_clock.gif)
 
 ## Table of Contents
 
@@ -42,7 +42,7 @@ from a CHO cell cultivation, carried out in three reactors (three
 replicated per timepoint). E9, E10, E12 describes the ID of the reactor,
 TP01, TP02, etc., the timepoint of the measurement):
 
-<img src="man/figures/README-data example-1.png" width="100%" />
+<img src="inst/extdata/data_table.png" width="650" height="600"/>
 
 where every row is a feature (protein, metabolite, gene) and every
 column is a sample, taken at a specific time, and the values are the
@@ -51,7 +51,7 @@ measurement values (e.g. intensities, etc.).
 And if you further have a dataframe, containing the meta information,
 that looks like this:
 
-<img src="man/figures/README-meta example-1.png" width="100%" />
+<img src="inst/extdata/meta_table.png" width="650" height="600"/>
 
 where every row describes a sample (column of the data matrix), and the
 columns contain the different meta information, such as as Time.Point
@@ -77,8 +77,9 @@ And if you want to achieve one or more of the following things:
   every hit and the resulting clusters, along with other plots such as a
   dendrogram, showing the hierarchical clustering employed, and a
   heatmap showing the logfold changes. You can view an example report
-  here: [HTML
-  report](https://csbg.github.io/SplineOmics/example_report.html)
+  here:
+
+[HTML report](https://csbg.github.io/SplineOmics/example_report.html)
 
 Then the `SplineOmics` package could be of interest to you. This package
 finds the hits by applying splines (piece wise polynomial curves) to the
@@ -90,7 +91,7 @@ the time, therefore no significant change).
 Here an example of a hit (significant feature) with the datapoints in
 blue and the applied natural cubic spline in red:
 
-<img src="readme/significant_feature.png" width="200" height="200"/>
+<img src="inst/extdata/significant_feature.png" width="200" height="200"/>
 
 The datapoints of the triplicates are close together and there is a
 clear temporal pattern. This is from a proteomics example, so this
@@ -98,7 +99,7 @@ protein here would decrease in abundance over the timecourse.
 
 Here an example of a feature, that is not significant (no hit):
 
-<img src="readme/non_significant_feature.png" width="200" height="200"/>
+<img src="inst/extdata/non_significant_feature.png" width="200" height="200"/>
 
 The datapoints are scattered and there is no clear temporal pattern. The
 conclusion for this protein would be that there is no significant change

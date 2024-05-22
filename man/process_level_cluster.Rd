@@ -42,6 +42,7 @@ Processes clustering for a specific level within a condition using the
 provided top table and spline parameters.
 }
 \examples{
+\dontrun{
 top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10))
 adj_pthreshold <- 0.05
 cluster_size <- 3
@@ -51,7 +52,7 @@ condition <- "condition"
 spline_params <- list(spline_type = c("n"), dof = list(3))
 mode <- "isolated"
 process_level_cluster(top_table, adj_pthreshold, cluster_size, level, meta, 
-                      condition, spline_params, mode)
+                      condition, spline_params, mode)}
 
 }
 \seealso{

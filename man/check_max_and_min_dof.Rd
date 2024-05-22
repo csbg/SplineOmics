@@ -18,16 +18,3 @@ No return value, called for side effects.
 Validates the degrees of freedom (DoF) for each row in the spline test 
 configurations based on the metadata.
 }
-\examples{
-spline_test_configs <- data.frame(
-  spline_type = c("n", "b"), 
-  degree = c(NA, 3), 
-  dof = c(5, NA), 
-  knots = list(NA, c(1, 2, 3)), 
-  bknots = list(NA, c(0.5, 1.5))
-)
-metas <- list(data.frame(Time = c(1, 2, 3)), 
-              data.frame(Time = c(1, 2, 3, 4)))
-check_max_and_min_dof(spline_test_configs, metas)
-
-}

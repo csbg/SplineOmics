@@ -33,12 +33,3 @@ No return value, called for side effects.
 Generates a metadata table for the LIMMA hyperparameter screen reports and 
 saves it as an HTML file with custom styling.
 }
-\examples{
-generate_reports_meta(datas_descr = "example_descr", 
-                      designs = list(matrix(1:4, 2, 2)), 
-                      modes = c("isolated"), 
-                      spline_test_configs = list(spline_type = c("type1")), 
-                      report_dir = "example_dir", 
-                      timestamp = Sys.time())
-                      
-}

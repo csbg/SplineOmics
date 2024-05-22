@@ -22,10 +22,11 @@ contains allowed characters, includes the intercept term 'X', and references
 columns present in the metadata.
 }
 \examples{
+\dontrun{
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-check_design_formula("~ Time + condition * X", meta)
+check_design_formula("~ Time + condition * X", meta)}
 
 }
 \seealso{
-\code{\link{stats::model.matrix}}
+\code{\link[stats]{model.matrix}}
 }

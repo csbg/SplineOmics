@@ -25,7 +25,8 @@ minimum value of the row) to 1
 (corresponding to the maximum value of the row).
 }
 \examples{
+\dontrun{
 data <- matrix(runif(100), nrow=10)
-normalized_data <- normalize_curves(data)
+normalized_data <- normalize_curves(data)}
 
 }

@@ -24,16 +24,6 @@ A list of processed spline parameters.
 Generates spline parameters based on the configuration, metadata, condition, 
 and mode.
 }
-\examples{
-spline_test_configs <- list(spline_type = c("type1", "type2"))
-meta <- data.frame(condition = rep(c("A", "B"), each = 5))
-create_spline_params(spline_test_configs, 
-                     index = 1, 
-                     meta = meta, 
-                     condition = "condition", 
-                     mode = "isolated")
-
-}
 \seealso{
 \code{\link{process_config_column}}
 }

@@ -42,6 +42,7 @@ objects based on the specified spline parameters. Performs the limma spline
 analysis for a selected level of a factor
 }
 \examples{
+\dontrun{
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
 design <- "~ 1"
@@ -50,7 +51,7 @@ level <- "A"
 level_index <- 1
 padjust_method <- "BH"
 within_level(data, meta, design, "factor", level, spline_params, 
-             level_index, padjust_method)
+             level_index, padjust_method)}
 
 }
 \seealso{

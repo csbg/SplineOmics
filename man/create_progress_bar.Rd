@@ -2,9 +2,7 @@
 % Please edit documentation in R/utils_general.R
 \name{create_progress_bar}
 \alias{create_progress_bar}
-\title{utils scripts contains shared functions that are used by at least two package 
-functions of the SplineOmics package.
-Create Progress Bar}
+\title{Create Progress Bar}
 \usage{
 create_progress_bar(iterable)
 }
@@ -19,12 +17,13 @@ A progress bar object from the 'progress' package.
 Creates a progress bar for tracking the progress of an iterable task.
 }
 \examples{
+\dontrun{
 items <- 1:10
 pb <- create_progress_bar(items)
 for (i in items) {
   pb$tick()
   Sys.sleep(0.1)
-}
+}}
 
 }
 \seealso{

@@ -25,9 +25,10 @@ is not one of these, the function stops execution and returns an error
  message.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 check_padjust_method("BH")  # Should pass without error
 
-try(check_padjust_method("invalid_method"))  # Should raise an error
+try(check_padjust_method("invalid_method"))  # Should raise an error}
 
 }
