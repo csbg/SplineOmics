@@ -31,23 +31,6 @@ No return value, called for side effects.
 Processes a combination pair to generate plots and compile them into an 
 HTML report.
 }
-\examples{
-combo_pair <- list(
-  hitcomp = list(vennheatmap = "vennheatmap_plot", 
-                 vennheatmap_len = 2, 
-                 barplot = "barplot"),
-  composites = list(
-    list(composite_plots = list("composite_plot1"), 
-         composite_plots_len = 1)
-  )
-)
-process_combo_pair(combo_pair, 
-                   combo_pair_name = "example_combo", 
-                   report_info = "example_info", 
-                   report_dir = "example_dir", 
-                   timestamp = Sys.time())
-
-}
 \seealso{
 \code{\link{generate_report_html}}
 }

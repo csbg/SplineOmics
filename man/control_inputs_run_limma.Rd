@@ -42,6 +42,7 @@ Validates the inputs for running LIMMA analysis, ensuring all required
 structures and parameters are correctly formatted.
 }
 \examples{
+\dontrun{
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10))
 design <- ~ 1
@@ -51,7 +52,7 @@ feature_names <- c("feature1", "feature2")
 mode <- "isolated"
 padjust_method <- "BH"
 control_inputs_run_limma(data, meta, design, spline_params, condition, 
-                         feature_names, mode, padjust_method)
+                         feature_names, mode, padjust_method)}
 
 }
 \seealso{

@@ -32,12 +32,3 @@ spline plots for each pair of combinations.
 Generates plots for pairwise comparisons of hyperparameter combinations 
 using limma results.
 }
-\examples{
-plot_limma_combos_results(top_tables_combos = list(table1, table2),
-                          datas = list(matrix(1:4, 2, 2)), 
-                          metas = list(data.frame(batch = 1:2)), 
-                          spline_test_configs = 
-                              list(spline_type = c("type1")), 
-                          meta_batch_column = "batch")
-                          
-}

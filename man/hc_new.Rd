@@ -20,7 +20,3 @@ and condition names.
 \description{
 Creates a new hit comparison object with specified condition names.
 }
-\examples{
-hc <- hc_new(cond1name = "Treatment", cond2name = "Control")
-
-}

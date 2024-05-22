@@ -56,19 +56,3 @@ No return value, called for side effects.
 Validates and checks the inputs for hyperparameter screening. Ensures all 
 provided data structures meet the required format and criteria.
 }
-\examples{
-control_inputs_hyperpara_screen(datas = list(matrix(1:4, 2, 2)), 
-                                datas_descr = "example_descr", 
-                                metas = list(data.frame(batch = 1:2)), 
-                                designs = list(matrix(1:4, 2, 2)), 
-                                modes = c("isolated"), 
-                                condition = "example_condition", 
-                                spline_test_configs = "example_config", 
-                                feature_names = c("feature1", "feature2"), 
-                                report_info = "example_info", 
-                                report_dir = "example_dir", 
-                                adj_pthresholds = c(0.05), 
-                                meta_batch_column = "batch", 
-                                padjust_method = "BH")
-
-}

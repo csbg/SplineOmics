@@ -29,15 +29,6 @@ No return value, called for side effects.
 Constructs an HTML report for hyperparameter screening by embedding plots 
 and their respective sizes into the provided header section.
 }
-\examples{
-header <- "<html><head></head><body>"
-plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
-ggplot2::geom_point())
-plot_sizes <- list(2)
-output_path <- "report.html"
-build_hyperparams_screen_report(header, plots, plot_sizes, output_path)
-
-}
 \seealso{
 \code{\link{plot2base64}}
 }

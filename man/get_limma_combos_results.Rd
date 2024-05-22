@@ -44,16 +44,3 @@ configuration.
 Computes results for various combinations of data, design matrices, and 
 spline configurations using the LIMMA method.
 }
-\examples{
-get_limma_combos_results(datas = list(matrix(1:4, 2, 2)), 
-                         metas = list(data.frame(batch = 1:2)), 
-                         designs = list(matrix(1:4, 2, 2)), 
-                         modes = c("isolated"), 
-                         condition = "example_condition", 
-                         spline_test_configs = 
-                            list(spline_type = c("type1")), 
-                         feature_names = c("feature1", "feature2"), 
-                         adj_pthresholds = c(0.05), 
-                         padjust_method = "BH")
-                         
-}

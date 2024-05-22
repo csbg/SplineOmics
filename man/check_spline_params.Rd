@@ -4,7 +4,7 @@
 \alias{check_spline_params}
 \title{Check Spline Parameters}
 \usage{
-check_spline_params(spline_params, mode)
+check_spline_params(spline_params, mode, meta, condition)
 }
 \arguments{
 \item{spline_params}{A list of spline parameters.}
@@ -20,9 +20,10 @@ Validates the spline parameters both generally and depending on the
 specified mode.
 }
 \examples{
+\dontrun{
 spline_params <- list(spline_type = c("n"), dof = list(3))
 mode <- "integrated"
-check_spline_params(spline_params, mode)
+check_spline_params(spline_params, mode)}
 
 }
 \seealso{

@@ -4,7 +4,7 @@
 \alias{check_spline_params_mode_dependent}
 \title{Check Spline Parameters Mode Dependent}
 \usage{
-check_spline_params_mode_dependent(spline_params, mode)
+check_spline_params_mode_dependent(spline_params, mode, meta, condition)
 }
 \arguments{
 \item{spline_params}{A list of spline parameters.}
@@ -19,6 +19,7 @@ No return value, called for side effects.
 Validates the spline parameters depending on the specified mode.
 }
 \examples{
+\dontrun{
 spline_params <- list(
   spline_type = "b",
   degree = 3,
@@ -26,7 +27,7 @@ spline_params <- list(
   knots = list(c(1, 2, 3)),
   bknots = list(c(0.5, 1.5))
 )
-check_spline_params_mode_dependent(spline_params, "integrated")
+check_spline_params_mode_dependent(spline_params, "integrated")}
 
 }
 \seealso{

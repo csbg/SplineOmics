@@ -15,15 +15,18 @@ plot_dendrogram(hc, k)
 A ggplot object representing the dendrogram.
 }
 \description{
-Generates a dendrogram plot for hierarchical clustering results, colored by clusters.
+Generates a dendrogram plot for hierarchical clustering results, 
+colored by clusters.
 }
 \examples{
+\dontrun{
 hc <- hclust(dist(matrix(runif(100), nrow = 10)))
 k <- 3
-plot_dendrogram(hc, k)
+plot_dendrogram(hc, k)}
 
 }
 \seealso{
-\code{\link{dendextend::color_branches}}, \code{\link{dendextend::as.ggdend}}, 
+\code{\link{dendextend::color_branches}}, 
+\code{\link{dendextend::as.ggdend}}, 
 \code{\link{ggplot2}}
 }

@@ -20,13 +20,14 @@ Processes the top table from a LIMMA analysis, adding feature names and
 intercepts.
 }
 \examples{
+\dontrun{
 top_table_and_fit <- list(
   top_table = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
   fit = limma::lmFit(matrix(runif(100), nrow = 10), 
                      model.matrix(~1, data = data.frame(Time = seq(1, 10))))
 )
 feature_names <- c("feature1", "feature2")
-process_top_table(top_table_and_fit, feature_names)
+process_top_table(top_table_and_fit, feature_names)}
 
 }
 \seealso{

@@ -19,7 +19,8 @@ perform_clustering(
 
 \item{adj_pthresholds}{A numeric vector of p-values.}
 
-\item{clusters}{A list specifying clusters or "auto" for automatic estimation.}
+\item{clusters}{A list specifying clusters or "auto" for automatic 
+estimation.}
 
 \item{meta}{A dataframe containing metadata.}
 
@@ -27,7 +28,8 @@ perform_clustering(
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{mode}{A character string specifying the mode ('isolated' or 'integrated').}
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
 }
 \value{
 A list of clustering results for each level within the condition.
@@ -37,6 +39,7 @@ Performs clustering on top tables using specified p-values and clusters
 for each level within a condition.
 }
 \examples{
+\dontrun{
 top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
 adj_pthresholds <- runif(10)
 clusters <- list("auto")
@@ -45,7 +48,7 @@ condition <- "condition"
 spline_params <- list(spline_type = c("n"), dof = list(3))
 mode <- "isolated"
 perform_clustering(top_tables, adj_pthresholds, clusters, meta, condition, 
-                   spline_params, mode)
+                   spline_params, mode)}
 
 }
 \seealso{

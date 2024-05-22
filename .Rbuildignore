@@ -3,3 +3,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^data$
+^inst/docs$
+^inst/extdata$
+^results$
+^dev$
+^tools$

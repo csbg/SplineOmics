@@ -16,14 +16,3 @@ TRUE if all checks pass, otherwise an error is thrown.
 Validates the parameters for each row in the spline test configurations 
 based on the spline type.
 }
-\examples{
-spline_test_configs <- data.frame(
-  spline_type = c("n", "b"), 
-  degree = c(NA, 3), 
-  dof = c(5, 4), 
-  knots = c(NA, 1), 
-  bknots = c(NA, c(0.5, 1.5))
-)
-check_spline_type_params(spline_test_configs)
-
-}

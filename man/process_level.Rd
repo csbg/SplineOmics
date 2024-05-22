@@ -48,6 +48,7 @@ Processes a single level within a condition, performing LIMMA analysis
 and generating the top table of results.
 }
 \examples{
+\dontrun{
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 design <- "~ 1"
@@ -59,7 +60,7 @@ feature_names <- c("feature1", "feature2")
 padjust_method <- "BH"
 mode <- "isolated"
 process_level(level, level_index, spline_params, data, meta, design, 
-              condition, feature_names, padjust_method, mode)
+              condition, feature_names, padjust_method, mode)}
 
 }
 \seealso{

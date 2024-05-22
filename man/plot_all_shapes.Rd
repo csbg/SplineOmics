@@ -20,12 +20,13 @@ Generates a plot of average curves for each cluster, showing min-max
 normalized intensities over time.
 }
 \examples{
+\dontrun{
 curve_values <- data.frame(
   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
   cluster = rep(1:2, each = 5)
 )
 time_unit_label <- "[min]"
-plot_all_shapes(curve_values, time_unit_label)
+plot_all_shapes(curve_values, time_unit_label)}
 
 }
 \seealso{

@@ -16,11 +16,6 @@ No return value, called for side effects.
 Validates that the data descriptions are character vectors with each element 
 not exceeding 80 characters in length.
 }
-\examples{
-check_datas_descr(datas_descr = c("Short description", 
-                                  "Another short description"))
-
-}
 \seealso{
 \code{\link{stop}} for error handling.
 }

@@ -40,21 +40,8 @@ contrast.
 Performs a between-level analysis using LIMMA to compare specified levels 
 within a condition.
 }
-\examples{
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-design <- "~ 1"
-spline_params <- list(spline_type = c("n"), dof = list(3))
-condition <- "condition"
-compared_levels <- c("A", "B")
-padjust_method <- "BH"
-feature_names <- c("feature1", "feature2")
-between_level(data, meta, design, spline_params, condition, compared_levels, 
-              padjust_method, feature_names)
-
-}
 \seealso{
-\code{\link{splines::bs}}, \code{\link{splines::ns}}, 
-\code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
-\code{\link{limma::topTable}}, \code{\link{modify_limma_top_table}}
+\code{\link[splines]{bs}}, \code{\link[splines]{ns}}, 
+\code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}}, 
+\code{\link[limma]{topTable}}, \code{\link{modify_limma_top_table}}
 }

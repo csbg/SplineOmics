@@ -13,12 +13,13 @@
 #' @return A list of ggplot objects representing various exploratory plots.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' plots <- generate_plots(data)
 #' for (plot in plots) {
 #'   print(plot)
-#' }
+#' }}
 #'
 #' @export
 #' 
@@ -102,10 +103,11 @@ explore_data <- function(data,
 #' @return A ggplot object representing the density plot.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' density_plot <- make_density_plot(data)
-#' print(density_plot)
+#' print(density_plot)}
 #'
 #' @importFrom ggplot2 ggplot geom_density ggtitle aes
 #' @importFrom reshape2 melt
@@ -164,10 +166,11 @@ make_density_plots <- function(data,
 #' @return A ggplot object representing the boxplot.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' boxplot <- make_boxplot(data)
-#' print(boxplot)
+#' print(boxplot)}
 #'
 #' @importFrom ggplot2 ggplot aes geom_boxplot labs theme element_text
 #' @importFrom reshape2 melt
@@ -215,10 +218,11 @@ make_box_plots <- function(data,
 #' @return A ggplot object representing the violin plot.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' violin_plot <- make_violin_plot(data)
-#' print(violin_plot)
+#' print(violin_plot)}
 #' 
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_violin theme labs
@@ -270,12 +274,13 @@ make_violin_plots <- function(data,
 #' @return A ggplot object representing the PCA plot.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' meta <- data.frame(Sample = colnames(data), Condition = rep(c("A", "B"), 
 #' each = 5))
 #' plots <- make_pca_plot(data, meta, "Condition")
-#' print(plots)
+#' print(plots)}
 #' 
 #' @importFrom ggplot2 ggplot geom_point xlim xlab ylab ggtitle theme_minimal
 #' theme
@@ -330,10 +335,11 @@ make_pca_plot <- function(data,
 #' components.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' variance_plot <- make_pca_variance_explained_plot(data)
-#' print(variance_plot)
+#' print(variance_plot)}
 #' 
 #' @importFrom limma plotMDS
 #' @importFrom ggplot2 ggplot aes geom_col geom_text xlab ylab ggtitle 
@@ -380,10 +386,11 @@ make_pca_variance_explained_plot <- function(data) {
 #' @return A ggplot object representing the MDS plot.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' mds_plot <- make_mds_plot(data)
-#' print(mds_plot)
+#' print(mds_plot)}
 #' 
 #' @importFrom limma plotMDS
 #' @importFrom ggplot2 ggplot geom_point ggtitle theme_minimal
@@ -423,6 +430,7 @@ make_mds_plot <- function(data) {
 #' heatmaps.
 #'
 #' @examples
+#' \dontrun{
 #' # Example usage
 #' data <- matrix(rnorm(1000), ncol = 10)
 #' colnames(data) <- paste0("Sample", 1:10)
@@ -431,11 +439,11 @@ make_mds_plot <- function(data) {
 #' heatmaps <- make_correlation_heatmaps(data, meta, "Condition")
 #' for (heatmap in heatmaps) {
 #'   draw(heatmap, heatmap_legend_side = "right")
-#' }
+#' }}
 #'
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap
-#' @importFrom RcolorBrewer
+#' @importFrom grDevices colorRampPalette
 #' 
 make_correlation_heatmaps <- function(data, 
                                       meta, 
@@ -540,15 +548,6 @@ make_correlation_heatmaps <- function(data,
 #' report will be saved.
 #'
 #' @return None. This function writes the HTML content to the specified file.
-#'
-#' @examples
-#' # Example usage
-#' header_section <- "<h1>Exploratory Data Analysis Report</h1>"
-#' plots <- list(make_density_plot(data), make_boxplot(data))
-#' plots_sizes <- list(c(800, 600), c(800, 600))
-#' output_file_path <- "report.html"
-#' build_explore_data_report(header_section, plots, plots_sizes, 
-#' output_file_path)
 #' 
 build_explore_data_report <- function(header_section, 
                                       plots, 

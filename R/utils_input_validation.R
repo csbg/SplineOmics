@@ -26,10 +26,11 @@
 #' error message if any check fails.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' data <- matrix(runif(9), nrow = 3, ncol = 3)
 #' meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
-#' check_data_and_meta(data, meta, "Condition")
+#' check_data_and_meta(data, meta, "Condition")}
 #'
 #' @export
 #' 
@@ -48,8 +49,9 @@ check_data_and_meta <- function(data,
              data_meta_index)
   
   if (!(nrow(meta) == ncol(data))) {
-    if (!is.na(index)) {
-      stop(paste0("For index ", index, "data column number must be equal to ",
+    if (!is.na(data_meta_index)) {
+      stop(paste0("For index ", data_meta_index, 
+                  "data column number must be equal to ",
                   "meta row number"),
            call. = FALSE)
     } else {
@@ -72,8 +74,9 @@ check_data_and_meta <- function(data,
 #' is thrown.
 #'
 #' @examples
+#' \dontrun{
 #' check_mode("integrated")
-#' check_mode("isolated")
+#' check_mode("isolated")}
 #'
 #' @seealso
 #' \code{\link{limma}}
@@ -106,11 +109,11 @@ check_mode <- function(mode) {
 #' @return TRUE if the design formula is valid, otherwise an error is thrown.
 #'
 #' @examples
+#' \dontrun{
 #' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' check_design_formula("~ Time + condition * X", meta)
+#' check_design_formula("~ Time + condition * X", meta)}
 #'
-#' @seealso
-#' \code{\link{stats::model.matrix}}
+#' @seealso \code{\link[stats]{model.matrix}}
 #' 
 check_design_formula <- function(formula, 
                                  meta,
@@ -176,19 +179,25 @@ check_design_formula <- function(formula,
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' spline_params <- list(spline_type = c("n"), dof = list(3))
 #' mode <- "integrated"
-#' check_spline_params(spline_params, mode)
+#' check_spline_params(spline_params, mode)}
 #'
 #' @seealso
 #' \code{\link{check_spline_params_generally}}, 
 #' \code{\link{check_spline_params_mode_dependent}}
 #' 
 check_spline_params <- function(spline_params, 
-                                mode) {
+                                mode,
+                                meta,
+                                condition) {
   
   check_spline_params_generally(spline_params)
-  check_spline_params_mode_dependent(spline_params, mode)
+  check_spline_params_mode_dependent(spline_params, 
+                                     mode,
+                                     meta,
+                                     condition)
 }
 
 
@@ -209,12 +218,13 @@ check_spline_params <- function(spline_params,
 #' error message if any check fails.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' valid_thresholds <- c(0.01, 0.05, 0.1)
 #' check_adj_pthresholds(valid_thresholds)
 #'
 #' invalid_thresholds <- c(0.01, -0.05, 1.1)
-#' try(check_adj_pthresholds(invalid_thresholds))  # Should raise an error
+#' try(check_adj_pthresholds(invalid_thresholds))  # Should raise an error}
 #'
 #' @export
 #' 
@@ -271,10 +281,11 @@ check_adj_pthresholds <- function(adj_pthresholds) {
 #' an error message if the time unit is invalid.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' check_time_unit("m")  # Should pass without error
 #' 
-#' try(check_time_unit("x"))  # Should raise an error
+#' try(check_time_unit("x"))  # Should raise an error}
 #'
 #' @export
 #' 
@@ -307,9 +318,10 @@ check_time_unit <- function(time_unit) {
 #' valid.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' report_dir <- "path/to/report_dir"
-#' check_and_create_report_dir(report_dir)
+#' check_and_create_report_dir(report_dir)}
 #'
 #' @export
 #' 
@@ -360,10 +372,11 @@ check_and_create_report_dir <- function(report_dir) {
 #' returns an error message if the method is invalid.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' check_padjust_method("BH")  # Should pass without error
 #' 
-#' try(check_padjust_method("invalid_method"))  # Should raise an error
+#' try(check_padjust_method("invalid_method"))  # Should raise an error}
 #'
 #' @export
 #' 
@@ -394,6 +407,7 @@ check_padjust_method <- function(padjust_method) {
 #' thrown.
 #'
 #' @examples
+#' \dontrun{
 #' report_info <- list(
 #'   omics_data_type = "genomics",
 #'   data_description = "Sample description",
@@ -401,7 +415,7 @@ check_padjust_method <- function(padjust_method) {
 #'   analyst_name = "John Doe",
 #'   project_name = "Project XYZ"
 #' )
-#' check_report_info(report_info)
+#' check_report_info(report_info)}
 #' 
 check_report_info <- function(report_info) {
   
@@ -470,12 +484,13 @@ check_report_info <- function(report_info) {
 #'  message if any check fails.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' data <- matrix(runif(9), nrow = 3, ncol = 3)
 #' check_data(data)
 #' 
 #' invalid_data <- matrix(c(1, 2, NA, 4, 5, 6, 7, 8, 9), nrow = 3, ncol = 3)
-#' try(check_data(invalid_data))  # Should raise an error
+#' try(check_data(invalid_data))  # Should raise an error}
 #'
 #' @export
 #' 
@@ -547,12 +562,13 @@ check_data <- function(data,
 #' error message if any check fails.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
 #' check_meta(meta, "Condition")
 #' 
 #' invalid_meta <- data.frame(Time = c(1, NA, 3), Condition = c("A", "B", "C"))
-#' try(check_meta(invalid_meta, "Condition"))  # Should raise an error
+#' try(check_meta(invalid_meta, "Condition"))  # Should raise an error}
 #'
 #' @export
 #' 
@@ -642,6 +658,7 @@ check_meta <- function(meta,
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' spline_params <- list(
 #'   spline_type = c("b", "n"),
 #'   degree = c(3, NA),
@@ -649,7 +666,7 @@ check_meta <- function(meta,
 #'   knots = list(NA, c(1, 2, 3)),
 #'   bknots = list(NA, c(0.5, 1.5))
 #' )
-#' check_spline_params_generally(spline_params)
+#' check_spline_params_generally(spline_params)}
 #'
 #' @seealso
 #' \code{\link{check_spline_params_mode_dependent}}
@@ -735,6 +752,7 @@ check_spline_params_generally <- function(spline_params) {
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' spline_params <- list(
 #'   spline_type = "b",
 #'   degree = 3,
@@ -742,13 +760,15 @@ check_spline_params_generally <- function(spline_params) {
 #'   knots = list(c(1, 2, 3)),
 #'   bknots = list(c(0.5, 1.5))
 #' )
-#' check_spline_params_mode_dependent(spline_params, "integrated")
+#' check_spline_params_mode_dependent(spline_params, "integrated")}
 #'
 #' @seealso
 #' \code{\link{check_spline_params_generally}}
 #' 
 check_spline_params_mode_dependent <- function(spline_params, 
-                                               mode) {
+                                               mode,
+                                               meta,
+                                               condition) {
   
   if (mode == "integrated") {
     # Check that each vector in the main parameters has exactly one element
@@ -823,10 +843,11 @@ check_spline_params_mode_dependent <- function(spline_params,
 #' the message includes the index; otherwise, it returns the message as is.
 #'
 #' @examples
+#' \dontrun{
 #' # Example of how to use the function
 #' message <- "data must be a matrix."
 #' create_error_message(message, 1)
-#' create_error_message(message)
+#' create_error_message(message)}
 #'
 #' @export
 #' 

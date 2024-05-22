@@ -25,13 +25,3 @@ The updated hit comparison object.
 \description{
 Adds a new entry to the hit comparison object for a specified condition.
 }
-\examples{
-hc <- hc_new()
-hc <- hc_add(hc_obj = hc, 
-             top_table = data.frame(Gene = c("Gene1", "Gene2"), 
-                                    p_value = c(0.01, 0.04)), 
-             params_id = "example_params", 
-             condition = 1, 
-             threshold = 0.05)
-             
-}

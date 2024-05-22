@@ -18,8 +18,9 @@ Validates that the mode is either 'integrated' or 'isolated', which depends
 on the design formula used in limma.
 }
 \examples{
+\dontrun{
 check_mode("integrated")
-check_mode("isolated")
+check_mode("isolated")}
 
 }
 \seealso{

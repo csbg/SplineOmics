@@ -13,7 +13,6 @@ make_clustering_report(
   adj_pthresholds,
   report_dir,
   mode,
-  feature_names,
   report_info,
   meta_batch_column,
   time_unit = time_unit
@@ -35,15 +34,17 @@ level within a condition.}
 
 \item{report_dir}{A character string specifying the report directory.}
 
-\item{mode}{A character string specifying the mode ('isolated' or 'integrated').}
-
-\item{feature_names}{A character vector of feature names.}
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
 
 \item{report_info}{An object containing report information.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
-\item{time_unit}{A character string specifying the time unit ('s', 'm', 'h', 'd').}
+\item{time_unit}{A character string specifying the time unit 
+('s', 'm', 'h', 'd').}
+
+\item{feature_names}{A character vector of feature names.}
 }
 \value{
 No return value, called for side effects.
@@ -53,8 +54,10 @@ Generates a detailed clustering report including heatmaps, dendrograms,
 curve plots, and consensus shapes for each level within a condition.
 }
 \examples{
+\dontrun{
 all_levels_clustering <- list(
-  list(clusters = 3, curve_values = data.frame(), hc = list(), top_table = data.frame())
+  list(clusters = 3, curve_values = data.frame(), hc = list(), 
+  top_table = data.frame())
 )
 condition <- "condition"
 data <- matrix(runif(100), nrow = 10)
@@ -69,7 +72,8 @@ meta_batch_column <- "batch"
 time_unit <- "m"
 make_clustering_report(all_levels_clustering, condition, data, meta, 
                        spline_params, adj_pthresholds, report_dir, mode, 
-                       feature_names, report_info, meta_batch_column, time_unit)
+                       feature_names, report_info, meta_batch_column, 
+                       time_unit)}
 
 }
 \seealso{

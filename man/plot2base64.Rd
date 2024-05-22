@@ -38,9 +38,10 @@ Converts a ggplot2 plot to a Base64-encoded PNG image and returns an HTML
 img tag for embedding in a report.
 }
 \examples{
+\dontrun{
 library(ggplot2)
 plot <- ggplot(mtcars, aes(mpg, cyl)) + geom_point()
-plot2base64(plot, plot_nrows = 1)
+plot2base64(plot, plot_nrows = 1)}
 
 }
 \seealso{

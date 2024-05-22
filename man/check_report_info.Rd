@@ -18,6 +18,7 @@ Validates the report information to ensure it contains all mandatory fields
 and adheres to the required formats.
 }
 \examples{
+\dontrun{
 report_info <- list(
   omics_data_type = "genomics",
   data_description = "Sample description",
@@ -25,6 +26,6 @@ report_info <- list(
   analyst_name = "John Doe",
   project_name = "Project XYZ"
 )
-check_report_info(report_info)
+check_report_info(report_info)}
 
 }

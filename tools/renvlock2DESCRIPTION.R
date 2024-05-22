@@ -1,3 +1,9 @@
+# This script allows to automatically generate the Import field in the 
+# DESCRIPTION file for package development. It takes all the packages and their
+# versions from the renv.lock file and includes those that are mentioned in the
+# NAMESPACE file in the DESCRIPTION file.
+
+
 library(jsonlite)
 
 # Load the renv.lock file

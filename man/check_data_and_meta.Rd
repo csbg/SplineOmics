@@ -40,9 +40,10 @@ the specified condition column. Additionally, it verifies that the number of
 columns in the data matrix matches the number of rows in the meta dataframe.
 }
 \examples{
+\dontrun{
 # Example of how to use the function
 data <- matrix(runif(9), nrow = 3, ncol = 3)
 meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
-check_data_and_meta(data, meta, "Condition")
+check_data_and_meta(data, meta, "Condition")}
 
 }

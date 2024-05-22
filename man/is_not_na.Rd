@@ -16,9 +16,3 @@ object is not atomic; FALSE otherwise.
 \description{
 Determines if a given atomic vector contains at least one non-NA value.
 }
-\examples{
-is_not_na(c(NA, NA, 3)) # returns TRUE
-is_not_na(c(NA, NA, NA)) # returns FALSE
-is_not_na(list(NA, 1, NA)) # returns TRUE
-
-}

@@ -108,7 +108,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          adj_pthresholds = adj_pthresholds, 
                          report_dir = report_dir,
                          mode = mode,
-                         feature_names = feature_names,
                          report_info = report_info,
                          meta_batch_column = meta_batch_column,
                          time_unit = time_unit)
@@ -146,6 +145,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
 #' data <- matrix(runif(100), nrow = 10)
 #' meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
@@ -162,6 +162,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #'                             condition, adj_pthresholds, clusters, 
 #'                             report_info, 
 #'                             meta_batch_column, time_unit, report_dir)
+#' }
 #'
 #' @seealso
 #' \code{\link{check_top_tables}}, \code{\link{check_meta}}, 
@@ -190,7 +191,10 @@ control_inputs_cluster_hits <- function(top_tables,
   
   check_mode(mode)
   
-  check_spline_params(spline_params, mode)
+  check_spline_params(spline_params, 
+                      mode,
+                      meta,
+                      condition)
 
   check_adj_pthresholds(adj_pthresholds)
   
@@ -232,6 +236,7 @@ control_inputs_cluster_hits <- function(top_tables,
 #' @return A list of clustering results for each level within the condition.
 #'
 #' @examples
+#' \dontrun{
 #' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
 #' adj_pthresholds <- runif(10)
 #' clusters <- list("auto")
@@ -240,7 +245,7 @@ control_inputs_cluster_hits <- function(top_tables,
 #' spline_params <- list(spline_type = c("n"), dof = list(3))
 #' mode <- "isolated"
 #' perform_clustering(top_tables, adj_pthresholds, clusters, meta, condition, 
-#'                    spline_params, mode)
+#'                    spline_params, mode)}
 #'
 #' @seealso
 #' \code{\link{process_level_cluster}}
@@ -299,6 +304,7 @@ perform_clustering <- function(top_tables,
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' all_levels_clustering <- list(
 #'   list(clusters = 3, curve_values = data.frame(), hc = list(), 
 #'   top_table = data.frame())
@@ -317,7 +323,7 @@ perform_clustering <- function(top_tables,
 #' make_clustering_report(all_levels_clustering, condition, data, meta, 
 #'                        spline_params, adj_pthresholds, report_dir, mode, 
 #'                        feature_names, report_info, meta_batch_column, 
-#'                        time_unit)
+#'                        time_unit)}
 #'
 #' @seealso
 #' \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}}, 
@@ -336,7 +342,6 @@ make_clustering_report <- function(all_levels_clustering,
                                    adj_pthresholds, 
                                    report_dir,
                                    mode,
-                                   feature_names,
                                    report_info,
                                    meta_batch_column,
                                    time_unit = time_unit) {
@@ -363,7 +368,6 @@ make_clustering_report <- function(all_levels_clustering,
   heatmaps <- plot_heatmap(data = data,
                            meta = meta,
                            condition = condition,
-                           feature_names = feature_names,
                            all_levels_clustering = all_levels_clustering,
                            time_unit_label = time_unit_label)
   
@@ -475,8 +479,9 @@ make_clustering_report <- function(all_levels_clustering,
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-#' check_top_tables(top_tables)
+#' check_top_tables(top_tables)}
 #'
 #' @seealso
 #' \code{\link{check_dataframe}}
@@ -513,6 +518,7 @@ check_top_tables <- function(top_tables) {
 #'         the design matrix.
 #'
 #' @examples
+#' \dontrun{
 #' top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10))
 #' adj_pthreshold <- 0.05
 #' cluster_size <- 3
@@ -522,7 +528,7 @@ check_top_tables <- function(top_tables) {
 #' spline_params <- list(spline_type = c("n"), dof = list(3))
 #' mode <- "isolated"
 #' process_level_cluster(top_table, adj_pthreshold, cluster_size, level, meta, 
-#'                       condition, spline_params, mode)
+#'                       condition, spline_params, mode)}
 #'
 #' @seealso
 #' \code{\link{get_curve_values}}, \code{\link{normalize_curves}}, 
@@ -575,6 +581,7 @@ process_level_cluster <- function(top_table,
 #' @return A list of ComplexHeatmap heatmap objects for each level.
 #'
 #' @examples
+#' \dontrun{
 #' data <- matrix(runif(100), nrow = 10)
 #' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 #' condition <- "condition"
@@ -584,7 +591,7 @@ process_level_cluster <- function(top_table,
 #' )
 #' time_unit_label <- "[min]"
 #' plot_heatmap(data, meta, condition, feature_names, all_levels_clustering, 
-#'              time_unit_label)
+#'              time_unit_label)}
 #'
 #' @seealso
 #' \code{\link{ComplexHeatmap::Heatmap}}, \code{\link{dplyr::arrange}}
@@ -599,7 +606,6 @@ process_level_cluster <- function(top_table,
 plot_heatmap <- function(data,
                          meta,
                          condition,
-                         feature_names,
                          all_levels_clustering,
                          time_unit_label) {
 
@@ -740,9 +746,10 @@ plot_heatmap <- function(data,
 #' @return A ggplot object representing the dendrogram.
 #'
 #' @examples
+#' \dontrun{
 #' hc <- hclust(dist(matrix(runif(100), nrow = 10)))
 #' k <- 3
-#' plot_dendrogram(hc, k)
+#' plot_dendrogram(hc, k)}
 #'
 #' @seealso
 #' \code{\link{dendextend::color_branches}}, 
@@ -803,12 +810,13 @@ plot_dendrogram <- function(hc,
 #' @return A ggplot object representing the average curves by cluster.
 #'
 #' @examples
+#' \dontrun{
 #' curve_values <- data.frame(
 #'   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
 #'   cluster = rep(1:2, each = 5)
 #' )
 #' time_unit_label <- "[min]"
-#' plot_all_shapes(curve_values, time_unit_label)
+#' plot_all_shapes(curve_values, time_unit_label)}
 #'
 #' @seealso
 #' \code{\link{ggplot2}}
@@ -869,11 +877,12 @@ plot_all_shapes <- function(curve_values,
 #' @return A ggplot object representing the single and consensus shapes.
 #'
 #' @examples
+#' \dontrun{
 #' time_series_data <- matrix(runif(100), nrow = 10, 
 #'                            dimnames = list(NULL, seq(1, 10)))
 #' title <- "Single and Consensus Shapes"
 #' time_unit_label <- "[min]"
-#' plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
+#' plot_single_and_consensus_splines(time_series_data, title, time_unit_label)}
 #'
 #' @seealso
 #' \code{\link{ggplot2}}
@@ -934,12 +943,13 @@ plot_single_and_consensus_splines <- function(time_series_data,
 #' size.
 #'
 #' @examples
+#' \dontrun{
 #' curve_values <- data.frame(
 #'   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
 #'   cluster = rep(1:2, each = 5)
 #' )
 #' time_unit_label <- "[min]"
-#' plot_consensus_shapes(curve_values, time_unit_label)
+#' plot_consensus_shapes(curve_values, time_unit_label)}
 #'
 #' @seealso
 #' \code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
@@ -1100,19 +1110,6 @@ plot_splines <- function(top_table,
 #'
 #' @return No return value, called for side effects.
 #'
-#' @examples
-#' header_section <- "<html><head></head><body>"
-#' plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
-#' ggplot2::geom_point())
-#' plots_sizes <- list(2)
-#' level_headers_info <- list(list("Level 1", 0))
-#' spline_params <- list(spline_type = "n", dof = 3)
-#' mode <- "isolated"
-#' output_file_path <- "report.html"
-#' build_cluster_hits_report(header_section, plots, plots_sizes, 
-#' level_headers_info, 
-#'                          spline_params, mode, output_file_path)
-#'
 #' @seealso
 #' \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 #' 
@@ -1267,6 +1264,7 @@ build_cluster_hits_report <- function(header_section,
 #' @return TRUE if the dataframe is valid, otherwise an error is thrown.
 #'
 #' @examples
+#' \dontrun{
 #' df <- data.frame(
 #'   AveExpr = runif(10),
 #'   F = runif(10),
@@ -1276,7 +1274,7 @@ build_cluster_hits_report <- function(header_section,
 #'   feature_names = letters[1:10],
 #'   intercept = runif(10)
 #' )
-#' check_dataframe(df)
+#' check_dataframe(df)}
 #' 
 check_dataframe <- function(df) {
   
@@ -1343,7 +1341,7 @@ get_curve_values <- function(top_table,
                              spline_params,
                              mode) {
   
-  spline_results_hits <- subset(top_table, adj.P.Val < adj_pthreshold)
+  spline_results_hits <- top_table[top_table[["adj.P.Val"]] < adj_pthreshold, ]
   
   subset_meta <- meta[meta[[condition]] == level, ]
   
@@ -1420,8 +1418,9 @@ get_curve_values <- function(top_table,
 #'  each row 
 #'         has been normalized.
 #' @examples
+#' \dontrun{
 #' data <- matrix(runif(100), nrow=10)
-#' normalized_data <- normalize_curves(data)
+#' normalized_data <- normalize_curves(data)}
 #' 
 normalize_curves <- function(curve_values) {
   

@@ -170,6 +170,7 @@ run_limma_splines <- function(data,
 #' @return No return value, called for side effects.
 #'
 #' @examples
+#' \dontrun{
 #' data <- matrix(runif(100), nrow = 10)
 #' meta <- data.frame(Time = seq(1, 10))
 #' design <- ~ 1
@@ -179,7 +180,7 @@ run_limma_splines <- function(data,
 #' mode <- "isolated"
 #' padjust_method <- "BH"
 #' control_inputs_run_limma(data, meta, design, spline_params, condition, 
-#'                          feature_names, mode, padjust_method)
+#'                          feature_names, mode, padjust_method)}
 #'
 #' @seealso
 #' \code{\link{check_design_formula}}, \code{\link{check_mode}}, 
@@ -208,7 +209,10 @@ control_inputs_run_limma <- function(data,
   
   check_mode(mode)
   
-  check_spline_params(spline_params, mode)
+  check_spline_params(spline_params, 
+                      mode,
+                      meta,
+                      condition)
   
   check_padjust_method(padjust_method)
 }
@@ -232,22 +236,10 @@ control_inputs_run_limma <- function(data,
 #' @return A list containing top tables for the factor only and factor-time 
 #' contrast.
 #'
-#' @examples
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' design <- "~ 1"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' condition <- "condition"
-#' compared_levels <- c("A", "B")
-#' padjust_method <- "BH"
-#' feature_names <- c("feature1", "feature2")
-#' between_level(data, meta, design, spline_params, condition, compared_levels, 
-#'               padjust_method, feature_names)
-#'
 #' @seealso
-#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
-#' \code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
-#' \code{\link{limma::topTable}}, \code{\link{modify_limma_top_table}}
+#' \code{\link[splines]{bs}}, \code{\link[splines]{ns}}, 
+#' \code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}}, 
+#' \code{\link[limma]{topTable}}, \code{\link{modify_limma_top_table}}
 #' 
 #' @importFrom splines bs
 #' @importFrom splines ns
@@ -324,13 +316,14 @@ between_level <- function(data,
 #' @return A dataframe containing the processed top table with added intercepts.
 #'
 #' @examples
+#' \dontrun{
 #' top_table_and_fit <- list(
 #'   top_table = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
 #'   fit = limma::lmFit(matrix(runif(100), nrow = 10), 
 #'                      model.matrix(~1, data = data.frame(Time = seq(1, 10))))
 #' )
 #' feature_names <- c("feature1", "feature2")
-#' process_top_table(top_table_and_fit, feature_names)
+#' process_top_table(top_table_and_fit, feature_names)}
 #'
 #' @seealso
 #' \code{\link{modify_limma_top_table}}, \code{\link{limma::lmFit}}
@@ -377,6 +370,7 @@ process_top_table <- function(top_table_and_fit,
 #'          results.
 #'
 #' @examples
+#' \dontrun{
 #' data <- matrix(runif(100), nrow = 10)
 #' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 #' design <- "~ 1"
@@ -388,7 +382,7 @@ process_top_table <- function(top_table_and_fit,
 #' padjust_method <- "BH"
 #' mode <- "isolated"
 #' process_level(level, level_index, spline_params, data, meta, design, 
-#'               condition, feature_names, padjust_method, mode)
+#'               condition, feature_names, padjust_method, mode)}
 #'
 #' @seealso
 #' \code{\link{within_level}}, \code{\link{process_top_table}}
@@ -450,6 +444,7 @@ process_level <- function(level,
 #' @return A tibble with feature indices and names included.
 #'
 #' @examples
+#' \dontrun{
 #' top_table <- data.frame(
 #'   logFC = rnorm(10), 
 #'   AveExpr = rnorm(10), 
@@ -458,7 +453,7 @@ process_level <- function(level,
 #'   adj.P.Val = runif(10)
 #' )
 #' feature_names <- paste0("Feature_", 1:10)
-#' modify_limma_top_table(top_table, feature_names)
+#' modify_limma_top_table(top_table, feature_names)}
 #'
 #' @seealso
 #' \code{\link{tidyr::as_tibble}}, \code{\link{dplyr::relocate}}, 
@@ -502,6 +497,7 @@ modify_limma_top_table <- function(top_table,
 #' analysis.
 #'
 #' @examples
+#' \dontrun{
 #' data <- matrix(runif(100), nrow = 10)
 #' meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
 #' design <- "~ 1"
@@ -510,7 +506,7 @@ modify_limma_top_table <- function(top_table,
 #' level_index <- 1
 #' padjust_method <- "BH"
 #' within_level(data, meta, design, "factor", level, spline_params, 
-#'              level_index, padjust_method)
+#'              level_index, padjust_method)}
 #'
 #' @seealso
 #' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 

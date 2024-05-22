@@ -16,14 +16,3 @@ No return value, called for side effects.
 Validates that the 'spline_type' column in the spline test configurations 
 contains only 'n' or 'b'.
 }
-\examples{
-spline_test_configs <- data.frame(
-  spline_type = c("n", "b", "n", "b"), 
-  degree = c(3, 4, 5, 6), 
-  dof = c(5, 6, 7, 8), 
-  knots = c(1, 2, 3, 4), 
-  bknots = c(0.5, 1.5, 2.5, 3.5)
-)
-check_spline_type_column(spline_test_configs)
-
-}

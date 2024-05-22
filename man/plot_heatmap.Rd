@@ -4,14 +4,7 @@
 \alias{plot_heatmap}
 \title{Plot Heatmap}
 \usage{
-plot_heatmap(
-  data,
-  meta,
-  condition,
-  feature_names,
-  all_levels_clustering,
-  time_unit_label
-)
+plot_heatmap(data, meta, condition, all_levels_clustering, time_unit_label)
 }
 \arguments{
 \item{data}{A matrix of data values.}
@@ -20,12 +13,12 @@ plot_heatmap(
 
 \item{condition}{A character string specifying the condition.}
 
-\item{feature_names}{A character vector of feature names.}
-
 \item{all_levels_clustering}{A list containing clustering results for each 
 level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
+
+\item{feature_names}{A character vector of feature names.}
 }
 \value{
 A list of ComplexHeatmap heatmap objects for each level.
@@ -35,6 +28,7 @@ Generates heatmaps for each level within a condition, showing z-scores of
 log2 intensity values, split by clusters.
 }
 \examples{
+\dontrun{
 data <- matrix(runif(100), nrow = 10)
 meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
 condition <- "condition"
@@ -44,7 +38,7 @@ all_levels_clustering <- list(
 )
 time_unit_label <- "[min]"
 plot_heatmap(data, meta, condition, feature_names, all_levels_clustering, 
-             time_unit_label)
+             time_unit_label)}
 
 }
 \seealso{

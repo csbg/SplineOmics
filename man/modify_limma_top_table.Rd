@@ -18,6 +18,7 @@ A tibble with feature indices and names included.
 Modifies the limma top table to include feature indices and names.
 }
 \examples{
+\dontrun{
 top_table <- data.frame(
   logFC = rnorm(10), 
   AveExpr = rnorm(10), 
@@ -26,7 +27,7 @@ top_table <- data.frame(
   adj.P.Val = runif(10)
 )
 feature_names <- paste0("Feature_", 1:10)
-modify_limma_top_table(top_table, feature_names)
+modify_limma_top_table(top_table, feature_names)}
 
 }
 \seealso{

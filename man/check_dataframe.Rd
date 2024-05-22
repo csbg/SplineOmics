@@ -17,6 +17,7 @@ Validates that the dataframe contains all required columns with the correct
 data types.
 }
 \examples{
+\dontrun{
 df <- data.frame(
   AveExpr = runif(10),
   F = runif(10),
@@ -26,6 +27,6 @@ df <- data.frame(
   feature_names = letters[1:10],
   intercept = runif(10)
 )
-check_dataframe(df)
+check_dataframe(df)}
 
 }

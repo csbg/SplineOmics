@@ -21,11 +21,12 @@ Generates a plot showing individual time series shapes and their consensus
 (mean) shape.
 }
 \examples{
+\dontrun{
 time_series_data <- matrix(runif(100), nrow = 10, 
                            dimnames = list(NULL, seq(1, 10)))
 title <- "Single and Consensus Shapes"
 time_unit_label <- "[min]"
-plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
+plot_single_and_consensus_splines(time_series_data, title, time_unit_label)}
 
 }
 \seealso{

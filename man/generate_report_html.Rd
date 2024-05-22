@@ -10,9 +10,9 @@ generate_report_html(
   plots,
   plots_sizes,
   level_headers_info,
-  spline_params,
   report_info,
-  report_type = "limma_hyperparams_screen",
+  spline_params = NA,
+  report_type = "explore_data",
   mode = NA,
   filename = "report",
   timestamp = format(Sys.time(), "\%d_\%m_\%Y-\%H_\%M_\%S"),
@@ -26,9 +26,9 @@ generate_report_html(
 
 \item{level_headers_info}{A list of header information for each level.}
 
-\item{spline_params}{A list of spline parameters.}
-
 \item{report_info}{A named list containing report information.}
+
+\item{spline_params}{A list of spline parameters.}
 
 \item{report_type}{A character string specifying the report type 
 ('limma_hyperparams_screen' or 'cluster_hits').}
@@ -50,6 +50,7 @@ Generates an HTML report with the provided plots, spline parameters, and
 report information.
 }
 \examples{
+\dontrun{
 plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
                               ggplot2::geom_point())
 plots_sizes <- list(2)
@@ -67,7 +68,7 @@ generate_report_html(plots, plots_sizes, level_headers_info, spline_params,
                      report_type = "limma_hyperparams_screen", mode = NA, 
                      filename = "report", 
                      timestamp = format(Sys.time(), "\%d_\%m_\%Y-\%H_\%M_\%S"), 
-                     report_dir = here::here())
+                     report_dir = here::here())}
 
 }
 \seealso{
