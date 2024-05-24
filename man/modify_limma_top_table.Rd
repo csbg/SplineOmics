@@ -17,20 +17,6 @@ A tibble with feature indices and names included.
 \description{
 Modifies the limma top table to include feature indices and names.
 }
-\examples{
-\dontrun{
-top_table <- data.frame(
-  logFC = rnorm(10), 
-  AveExpr = rnorm(10), 
-  t = rnorm(10), 
-  P.Value = runif(10), 
-  adj.P.Val = runif(10)
-)
-feature_names <- paste0("Feature_", 1:10)
-modify_limma_top_table(top_table, feature_names)}
-
-}
 \seealso{
-\code{\link{tidyr::as_tibble}}, \code{\link{dplyr::relocate}}, 
-\code{\link{dplyr::mutate}}
+\link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
 }

@@ -1,5 +1,6 @@
 rm(list = ls(all.names = TRUE))
 
+
 # Setup ------------------------------------------------------------------------
 library(devtools)
 devtools::load_all()
@@ -18,11 +19,12 @@ data_excel <- read_excel(here::here("inst", "extdata",
 
 # Automatically extract data matrix from excel/csv table
 
-data_matrix <- extract_data(data)
+# debug(extract_data)
+data <- extract_data(data_excel,
+                     "First.Protein.Description")
 
 
 # Explore data -----------------------------------------------------------------
-data <- as.matrix(data)
 
 report_info <- list(
   omics_data_type = "PTX",
@@ -33,6 +35,7 @@ report_info <- list(
   contact_info = "rauterthomas0@gmail.com"
 )
 
+# debug(explore_data)
 # plots <- explore_data(data = data,
 #                       meta = meta,
 #                       condition = "Phase",
@@ -45,14 +48,13 @@ report_info <- list(
 data1 <- data
 meta1 <- meta
 
-data2 <- data
-meta2 <- meta
+data2 <- data[, -c(1, 2)]
+meta2 <- meta[-c(1, 2),]
 
 datas <- list(data1, data2)
 datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
-modes <- c("integrated", "isolated")
 condition <- "Phase"
 feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "hyperparams_screen_reports")
@@ -73,10 +75,8 @@ result <- limma_hyperparams_screen(datas,
                                    datas_descr,
                                    metas,
                                    designs,
-                                   modes,
                                    condition,
                                    spline_test_configs,
-                                   feature_names,
                                    report_info,
                                    report_dir,
                                    pthresholds,
@@ -98,9 +98,7 @@ result <- run_limma_splines(data,
                             meta, 
                             design, 
                             spline_params = spline_params,
-                            condition,
-                            feature_names, 
-                            mode = "integrated")
+                            condition)
 
 top_tables <- result$top_tables
 ttslc_factor_only <- result$ttslc_factor_only
@@ -129,9 +127,9 @@ report_info <- list(
 clustering_results <- cluster_hits(top_tables = top_tables, 
                                    data = data, 
                                    meta = meta, 
+                                   design = design,
                                    condition = condition, 
                                    spline_params = spline_params,
-                                   mode = "integrated",
                                    adj_pthresholds = adj_pthresholds,
                                    clusters = clusters,
                                    report_info = report_info,

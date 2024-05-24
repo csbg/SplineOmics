@@ -30,6 +30,11 @@ metadata.}
 
 \item{condition}{The name of the condition column in the metadata to filter 
 on.}
+
+\item{spline_params}{A list of spline parameters for the analysis.}
+
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
 }
 \value{
 A list containing two elements: `curve_values`, a data frame of 

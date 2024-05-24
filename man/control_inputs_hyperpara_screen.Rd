@@ -46,6 +46,8 @@ control_inputs_hyperpara_screen(
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
+\item{time_unit}{A character string specifying the time unit label for plots.}
+
 \item{padjust_method}{A single character string specifying the p-adjustment 
 method.}
 }

@@ -11,6 +11,10 @@ check_spline_params(spline_params, mode, meta, condition)
 
 \item{mode}{A character string specifying the mode
 ('integrated' or 'isolated').}
+
+\item{meta}{A dataframe containing metadata.}
+
+\item{condition}{A character string specifying the condition.}
 }
 \value{
 No return value, called for side effects.

@@ -4,7 +4,7 @@
 \alias{remove_batch_effect}
 \title{Remove Batch Effect}
 \usage{
-remove_batch_effect(datas, metas, meta_batch_column)
+remove_batch_effect(datas, metas, meta_batch_column, condition)
 }
 \arguments{
 \item{datas}{A list of matrices.}
@@ -21,5 +21,5 @@ Removes batch effects from the data matrices using the specified batch
 column in the metadata.
 }
 \seealso{
-\code{\link{limma::removeBatchEffect}}
+\link[limma]{removeBatchEffect}
 }

@@ -18,10 +18,8 @@ limma_hyperparams_screen(
   datas_descr,
   metas,
   designs,
-  modes,
   condition,
   spline_test_configs,
-  feature_names,
   report_info,
   report_dir = here::here(),
   adj_pthresholds = c(0.05),
@@ -33,27 +31,35 @@ limma_hyperparams_screen(
 \arguments{
 \item{datas}{A list of data frames containing the datasets to be analyzed.}
 
+\item{datas_descr}{A description object for the data.}
+
 \item{metas}{A list of data frames containing metadata for each dataset in 
 `datas`.}
 
 \item{designs}{A character vector of design formulas for the limma analysis.}
 
-\item{modes}{A character vector indicating the mode of analysis for each 
-design.}
+\item{condition}{A single character string specifying the condition.}
 
-\item{feature_names}{A character vector of feature names to be analyzed.}
+\item{spline_test_configs}{A configuration object for spline tests.}
+
+\item{report_info}{An object containing report information.}
+
+\item{report_dir}{A non-empty string specifying the report directory.}
 
 \item{adj_pthresholds}{A numeric vector of p-value thresholds for 
 significance determination.}
 
+\item{meta_batch_column}{A character string specifying the meta batch column.}
+
+\item{time_unit}{A character string specifying the time unit label for plots.}
+
 \item{padjust_method}{A character string specifying the method for p-value 
 adjustment.}
 
-\item{factors}{A character vector of factors to be considered in the 
-analysis.}
+\item{modes}{A character vector indicating the mode of analysis for each 
+design.}
 
-\item{DoFs}{An integer vector of degrees of freedom to be used for each 
-factor in `factors`.}
+\item{feature_names}{A character vector of feature names to be analyzed.}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.

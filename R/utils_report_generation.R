@@ -57,8 +57,8 @@
 #' 
 generate_report_html <- function(plots, 
                                  plots_sizes, 
-                                 level_headers_info,
                                  report_info,
+                                 level_headers_info = NA,
                                  spline_params = NA,
                                  report_type = "explore_data",
                                  mode = NA,
@@ -67,10 +67,14 @@ generate_report_html <- function(plots,
                                                     "%d_%m_%Y-%H_%M_%S"),
                                  report_dir = here::here()) {
   
-  if (report_type == "explore_data") {    
-    title <- "explore data"
+  if (report_type == "explore_data") {
+    if (filename == "explore_data") {
+      title <- "explore data"
+    } else {
+      title <- "explore batch-corrected data"
+    }
   } else if (report_type == "limma_hyperparams_screen") {
-    title <- "hyperparams screen"
+    title <- paste("hyperparams screen |", filename)
   } else if (report_type == "cluster_hits") {                         
     title <- "clustered hits"
   } else {
@@ -204,7 +208,7 @@ generate_report_html <- function(plots,
 #' plot2base64(plot, plot_nrows = 1)}
 #'
 #' @seealso
-#' \code{\link{ragg::agg_png}}, \code{\link{base64enc::dataURI}}
+#' \link[ragg]{agg_png}, \link[base64enc]{dataURI}
 #' 
 #' @importFrom ggplot2 ggsave
 #' @importFrom base64enc dataURI

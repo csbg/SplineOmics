@@ -4,11 +4,16 @@
 \alias{plot_heatmap}
 \title{Plot Heatmap}
 \usage{
-plot_heatmap(data, meta, condition, all_levels_clustering, time_unit_label)
+plot_heatmap(
+  datas,
+  meta,
+  condition,
+  design,
+  all_levels_clustering,
+  time_unit_label
+)
 }
 \arguments{
-\item{data}{A matrix of data values.}
-
 \item{meta}{A dataframe containing metadata.}
 
 \item{condition}{A character string specifying the condition.}
@@ -18,7 +23,7 @@ level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
 
-\item{feature_names}{A character vector of feature names.}
+\item{data}{A matrix of data values.}
 }
 \value{
 A list of ComplexHeatmap heatmap objects for each level.
@@ -42,5 +47,5 @@ plot_heatmap(data, meta, condition, feature_names, all_levels_clustering,
 
 }
 \seealso{
-\code{\link{ComplexHeatmap::Heatmap}}, \code{\link{dplyr::arrange}}
+\link[ComplexHeatmap]{Heatmap}, \link[dplyr]{arrange}
 }

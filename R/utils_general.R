@@ -4,76 +4,21 @@
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Extract Numeric Matrix from Dataframe
-#'
-#' @description
-#' This function takes a dataframe and identifies a rectangular or quadratic 
-#' area containing numeric data, starting from the first occurrence of a 
-#' 6x6 block of numeric values. It then extracts this area into a matrix, 
-#' ensuring that each row contains only numeric values. Rows with any NA values 
-#' are removed from the resulting matrix.
-#'
-#' @param data A dataframe loaded from a csv file, potentially containing a 
-#' rectangular or quadratic area with numeric data amidst other values.
-#'
-#' @return A matrix containing only the numeric data from the identified area, 
-#' with rows containing NA values removed.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' data <- read.csv("path_to_your_file.csv")
-#' result_matrix <- extract_numeric_matrix(data)
-#' print(result_matrix)}
-#'
-#' @importFrom stats complete.cases
-#'
-#' @export
-#' 
-extract_data <- function(data) {
+process_data <- function(data) {
   
-  # Convert data to character to handle mixed data types
-  data_char <- as.data.frame(lapply(data, as.character), 
-                             stringsAsFactors = FALSE)
-  
-  # Identify the starting point of the numeric data block
-  start_row <- NA
-  start_col <- NA
-  num_rows <- nrow(data_char)
-  num_cols <- ncol(data_char)
-  
-  for (i in 1:(num_rows - 5)) {
-    for (j in 1:(num_cols - 5)) {
-      block <- data_char[i:(i+5), j:(j+5)]
-      block_num <- suppressWarnings(as.numeric(as.matrix(block)))
-      if (all(!is.na(block_num))) {
-        start_row <- i
-        start_col <- j
-        break
-      }
-    }
-    if (!is.na(start_row)) break
+  if (is.null(rownames(data)) || all(rownames(data) == "")) {
+    # If no row names, create feature names based on row indices
+    feature_names <- paste0("Row", seq_len(nrow(data)))
+  } else {
+    # If row names exist, extract them
+    feature_names <- rownames(data)
   }
   
-  if (is.na(start_row) || is.na(start_col)) {
-    stop("No at least6x6 block of numeric values found.", call. = FALSE)
-  }
+  feature_names <- rownames(data)
+  data <- as.matrix(data)
+  data <- apply(data, 2, as.numeric)
   
-  # Extract the numeric data block
-  numeric_data <- data_char[start_row:num_rows, start_col:num_cols]
-  numeric_data <- suppressWarnings(as.data.frame(lapply(numeric_data, 
-                                                        as.numeric)))
-  
-  # Remove rows and columns that are entirely NA
-  numeric_data <- numeric_data[rowSums(is.na(numeric_data)) != 
-                                 ncol(numeric_data), ]
-  numeric_data <- numeric_data[, colSums(is.na(numeric_data)) != 
-                                 nrow(numeric_data)]
-  
-  # Remove rows with any NA values
-  clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
-  
-  result_matrix <- as.matrix(clean_data)
+  list(data = data, feature_names = feature_names)
 }
 
 
@@ -113,4 +58,97 @@ create_progress_bar <- function(iterable) {
   return(pb)
 }
 
+
+#' Create Design Matrix for Splines
+#'
+#' @description
+#' This function generates a design matrix using spline parameters and metadata. 
+#' It accommodates both B-splines and natural cubic splines based on the provided 
+#' spline type and parameters.
+#'
+#' @param meta A dataframe containing the metadata, including the time column.
+#' @param spline_params A list containing the spline parameters. This list can 
+#' include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots), 
+#' `spline_type`, and `degree`.
+#' @param level_index An integer representing the current level index for which 
+#' the design matrix is being generated.
+#' @param design A character string representing the design formula to be used 
+#' for generating the model matrix.
+#'
+#' @return A design matrix constructed using the specified spline parameters and 
+#' design formula.
+#'
+#' @importFrom splines bs ns
+#' @importFrom stats model.matrix as.formula
+#'
+design2design_matrix <- function(meta,
+                                 spline_params,
+                                 level_index,
+                                 design) {
+
+  args <- list(x = meta$Time, intercept = FALSE)   # Time column is mandatory
+  
+  if (!is.null(spline_params$dof)) {
+    args$df <- spline_params$dof[level_index]
+  } else {
+    args$knots <- spline_params$knots[[level_index]]
+  }
+  
+  if (!is.null(spline_params$bknots)) {
+    args$Boundary.knots <- spline_params$bknots[[level_index]]
+  }
+
+  if (spline_params$spline_type[level_index] == "b") {
+    args$degree <- spline_params$degree[level_index]
+    meta$X <- do.call(splines::bs, args)
+  } else {                                          # natural cubic splines
+    meta$X <- do.call(splines::ns, args)
+  }
+  
+  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
+}
+
+
+#' Determine Analysis Mode Based on Design Formula
+#'
+#' @description
+#' This function determines whether each level should be analyzed in isolation 
+#' or together based on the design formula. If the design formula includes 
+#' interaction terms involving the factor of the experiment, the analysis 
+#' mode is considered integrated (together). Otherwise, it is considered isolated.
+#'
+#' @param design A character string representing the design formula to be used 
+#' for generating the model matrix.
+#' @param factor_column A character string representing the column name of the 
+#' factor of the experiment in the metadata.
+#'
+#' @return A character string indicating the analysis mode, either "integrated" 
+#' if the design formula involves interaction terms with the factor of the 
+#' experiment, or "isolated" otherwise.
+#'
+#' @keywords internal
+#' 
+determine_analysis_mode <- function(design, 
+                                    factor_column) {
+  
+  # Extract terms from the design formula
+  design_terms <- all.vars(stats::as.formula(design))
+  
+  # Check if the factor_column is part of any interaction term
+  integrated <- any(grepl(paste0(factor_column, ":"), 
+                          design) | grepl(paste0(":", factor_column), design))
+  
+  # If the factor_column is present without interactions, check if it's included
+  if (!integrated && factor_column %in% design_terms) {
+    # Check if the factor_column is part of any interaction term
+    integrated <- any(grepl(paste0(factor_column, "*"), design))
+  }
+  
+  # Return the mode
+  if (integrated) {
+    return("integrated")
+  } else {
+    return("isolated")
+  }
+}
 

@@ -14,14 +14,12 @@ run_limma_splines(
   meta,
   design,
   condition,
-  feature_names,
-  mode = "integrated",
   spline_params = list(spline_type = c("n"), dof = c(2L)),
   padjust_method = "BH"
 )
 }
 \arguments{
-\item{data}{A matrix or dataframe containing the expression data, 
+\item{data}{A dataframe containing the expression data, 
 where rows represent features (e.g., genes) and columns represent 
 samples.}
 
@@ -31,27 +29,19 @@ must include a column for each factor in `factors`.}
 \item{design}{A character string specifying the design formula for the Limma 
 model.}
 
-\item{feature_names}{A character vector of feature names (e.g., gene names) 
-corresponding 
-                     to the rows in `data`.}
+\item{condition}{The name of the factor column of meta. The factor divides
+the experiment into different levels (unique elements of the factor column).}
 
-\item{mode}{A character string specifying the analysis mode: 'isolated' for 
-analyzing 
-            each level of a factor separately, or 'integrated' for comparing 
-            levels 
-            within a factor.}
+\item{spline_params}{A named list, specifying the parameters for the splines,
+such as type (ns or B-splines, dof, knots, etc).}
 
 \item{padjust_method}{A character string specifying the method for adjusting 
 p-values for multiple testing. Defaults to "BH" 
 (Benjamini-Hochberg).}
 
-\item{DoFs}{An integer vector specifying the degrees of freedom for spline 
-interpolation 
-            for each factor; length should match that of `factors`.}
-
-\item{factors}{A character vector specifying the names of experimental 
-factors 
-               to be analyzed, as represented in `meta`.}
+\item{mode}{A character string specifying the analysis mode: 'isolated' for 
+analyzing each level of a factor separately, or 'integrated' for comparing 
+levels within a factor.}
 }
 \value{
 A list containing three elements: 

@@ -45,5 +45,5 @@ plot2base64(plot, plot_nrows = 1)}
 
 }
 \seealso{
-\code{\link{ragg::agg_png}}, \code{\link{base64enc::dataURI}}
+\link[ragg]{agg_png}, \link[base64enc]{dataURI}
 }

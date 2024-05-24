@@ -175,6 +175,8 @@ check_design_formula <- function(formula,
 #' @param spline_params A list of spline parameters.
 #' @param mode A character string specifying the mode
 #'             ('integrated' or 'isolated').
+#' @param meta A dataframe containing metadata.
+#' @param condition A character string specifying the condition.
 #'
 #' @return No return value, called for side effects.
 #'
@@ -748,6 +750,8 @@ check_spline_params_generally <- function(spline_params) {
 #' @param spline_params A list of spline parameters.
 #' @param mode A character string specifying the mode 
 #'            ('integrated' or 'isolated').
+#' @param meta A dataframe containing metadata.
+#' @param condition A character string specifying the condition.
 #'
 #' @return No return value, called for side effects.
 #'

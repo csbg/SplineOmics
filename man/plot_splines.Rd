@@ -18,8 +18,13 @@ feature.}
 \item{meta}{A dataframe containing metadata for the data, including time 
 points.}
 
+\item{X}{The limma design matrix that defines the experimental conditions.}
+
 \item{main_title}{The main title to be used for the composite plot of all 
 features.}
+
+\item{time_unit_label}{A string shown in the plots as the unit for the time,
+such as min or hours.}
 }
 \value{
 A list containing the composite plot and the number of rows used in 

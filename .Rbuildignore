@@ -4,8 +4,8 @@
 ^\.Rproj\.user$
 ^README\.Rmd$
 ^data$
-^inst/docs$
-^inst/extdata$
+^inst$
 ^results$
 ^dev$
+^docs$
 ^tools$

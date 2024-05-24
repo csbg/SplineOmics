@@ -14,6 +14,7 @@ control_inputs_cluster_hits(
   adj_pthresholds,
   clusters,
   report_info,
+  design,
   meta_batch_column,
   time_unit,
   report_dir
@@ -39,6 +40,8 @@ control_inputs_cluster_hits(
 estimation.}
 
 \item{report_info}{An object containing report information.}
+
+\item{design}{A string representing the limma design formula}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
@@ -77,6 +80,5 @@ control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params,
 }
 \seealso{
 \code{\link{check_top_tables}}, \code{\link{check_meta}}, 
-\code{\link{check_mode}}, \code{\link{check_spline_params}}, 
-\code{\link{validate_report_info}}
+\code{\link{check_mode}}, \code{\link{check_spline_params}},
 }

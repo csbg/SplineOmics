@@ -55,7 +55,6 @@ within_level(data, meta, design, "factor", level, spline_params,
 
 }
 \seealso{
-\code{\link{splines::bs}}, \code{\link{splines::ns}}, 
-\code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
-\code{\link{limma::topTable}}
+\link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
+\link[limma]{eBayes}, \link[limma]{topTable}
 }

@@ -13,9 +13,9 @@ cluster_hits(
   top_tables,
   data,
   meta,
+  design,
   condition,
   report_info,
-  mode = "integrated",
   spline_params = list(spline_type = c("n"), dof = c(2L)),
   adj_pthresholds = c(0.05),
   clusters = c("auto"),
@@ -26,30 +26,41 @@ cluster_hits(
 }
 \arguments{
 \item{top_tables}{A list of data frames, each representing a top table from 
-differential expression
-       analysis, containing at least 'adj.P.Val' and expression data columns.}
+differential expression analysis, containing at least 'adj.P.Val' and 
+expression data columns.}
 
 \item{data}{The original expression dataset used for differential expression 
 analysis.}
 
-\item{meta}{Metadata dataframe corresponding to the `data`, must include a 
-'Time' column and any columns
-       specified by `conditions`.}
+\item{meta}{A dataframe containing metadata corresponding to the `data`, 
+must include a 'Time' column and any columns specified by `conditions`.}
 
-\item{clusters}{Integer vector specifying the number of clusters to cut the 
-dendrogram into, for each
-       group factor.}
+\item{design}{A string representing the limma design formula}
+
+\item{condition}{Character vector specifying the column names in `meta` 
+used to define groups for analysis.}
+
+\item{report_info}{A character string to be printed at the top of the report.}
+
+\item{spline_params}{A list of spline parameters for the analysis.}
+
+\item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering 
+hits in each top table.}
+
+\item{clusters}{Character or integer vector specifying the number of 
+clusters or 'auto' for automatic estimation.}
+
+\item{meta_batch_column}{A character string specifying the column name in 
+the metadata used for batch effect removal.}
+
+\item{time_unit}{A character string specifying the time unit label for plots 
+(e.g., 'm' for minutes).}
 
 \item{report_dir}{Character string specifying the directory path where the 
-HTML report and any
-       other output files should be saved.}
+HTML report and any other output files should be saved.}
 
-\item{conditions}{Character vector specifying the column names in `meta` used 
-to define groups for
-       analysis.}
-
-\item{adj_pthresh}{Numeric vector of p-value thresholds for filtering hits in 
-each top table.}
+\item{mode}{A character string specifying the mode ('integrated' or 
+'isolated').}
 }
 \value{
 A list where each element corresponds to a group factor and contains 
