@@ -41,20 +41,6 @@ A list containing the clustering results, including curve values and
 Processes clustering for a specific level within a condition using the 
 provided top table and spline parameters.
 }
-\examples{
-\dontrun{
-top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10))
-adj_pthreshold <- 0.05
-cluster_size <- 3
-level <- "A"
-meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-condition <- "condition"
-spline_params <- list(spline_type = c("n"), dof = list(3))
-mode <- "isolated"
-process_level_cluster(top_table, adj_pthreshold, cluster_size, level, meta, 
-                      condition, spline_params, mode)}
-
-}
 \seealso{
 \code{\link{get_curve_values}}, \code{\link{normalize_curves}}, 
 \code{\link{hierarchical_clustering}}

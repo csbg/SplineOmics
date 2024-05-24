@@ -18,5 +18,5 @@ Creates a Venn heatmap to visualize the overlap of hits between two
 conditions stored in a hit comparison object.
 }
 \seealso{
-\code{\link{store_hits}}, \code{\link{pheatmap::pheatmap}}
+\code{\link{store_hits}}, \link[pheatmap]{pheatmap}
 }

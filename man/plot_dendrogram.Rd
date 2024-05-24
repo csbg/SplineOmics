@@ -26,7 +26,6 @@ plot_dendrogram(hc, k)}
 
 }
 \seealso{
-\code{\link{dendextend::color_branches}}, 
-\code{\link{dendextend::as.ggdend}}, 
-\code{\link{ggplot2}}
+\link[dendextend]{color_branches}, \link[dendextend]{as.ggdend}, 
+\link[ggplot2]{ggplot2}
 }

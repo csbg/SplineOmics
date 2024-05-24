@@ -8,6 +8,10 @@ make_violin_plots(data, meta, condition)
 }
 \arguments{
 \item{data}{A numeric matrix containing the data.}
+
+\item{meta}{A dataframe containing the column meta data of data}
+
+\item{condition}{The name of the factor column of meta for the experiment}
 }
 \value{
 A ggplot object representing the violin plot.

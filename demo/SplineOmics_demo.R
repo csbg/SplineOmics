@@ -10,11 +10,29 @@ input_file_path <- here::here("data", "timeseries_proteomics_example.RData")
 load(input_file_path) 
 
 
+# Explore data -----------------------------------------------------------------
+data <- as.matrix(data)
+
+report_info <- list(
+  omics_data_type = "PTX",
+  data_description = "Gene expression levels over time.",
+  data_collection_date = "2024-05-15",
+  analyst_name = "Thomas Rauter",
+  project_name = "DGTX",
+  contact_info = "rauterthomas0@gmail.com"
+)
+
+plots <- explore_data(data = data,
+                      meta = meta,
+                      condition = "Phase",
+                      report_info = report_info,
+                      meta_batch_column = "Reactor",
+                      report_dir = here::here("results", "explore_data"))
+
 
 # hyperparams screen limma -----------------------------------------------------
 # data must contain only the numeric values of the timeseries omics experiment.
 # No other things, such as columns with feature descriptions are allowed.
-data <- as.matrix(data)     
 data1 <- data
 meta1 <- meta
 

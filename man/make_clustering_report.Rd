@@ -14,6 +14,7 @@ make_clustering_report(
   report_dir,
   mode,
   report_info,
+  design,
   meta_batch_column,
   time_unit = time_unit
 )
@@ -39,12 +40,12 @@ level within a condition.}
 
 \item{report_info}{An object containing report information.}
 
+\item{design}{A string representing the limma design formula}
+
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
 \item{time_unit}{A character string specifying the time unit 
 ('s', 'm', 'h', 'd').}
-
-\item{feature_names}{A character vector of feature names.}
 }
 \value{
 No return value, called for side effects.
@@ -52,29 +53,6 @@ No return value, called for side effects.
 \description{
 Generates a detailed clustering report including heatmaps, dendrograms, 
 curve plots, and consensus shapes for each level within a condition.
-}
-\examples{
-\dontrun{
-all_levels_clustering <- list(
-  list(clusters = 3, curve_values = data.frame(), hc = list(), 
-  top_table = data.frame())
-)
-condition <- "condition"
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-spline_params <- list(spline_type = c("n"), dof = list(3))
-adj_pthresholds <- runif(10)
-report_dir <- "example_dir"
-mode <- "isolated"
-feature_names <- paste0("feature", 1:10)
-report_info <- "example_info"
-meta_batch_column <- "batch"
-time_unit <- "m"
-make_clustering_report(all_levels_clustering, condition, data, meta, 
-                       spline_params, adj_pthresholds, report_dir, mode, 
-                       feature_names, report_info, meta_batch_column, 
-                       time_unit)}
-
 }
 \seealso{
 \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}}, 

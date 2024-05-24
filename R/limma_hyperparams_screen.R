@@ -23,18 +23,21 @@
 #' as part of a larger analysis workflow.
 #'
 #' @param datas A list of data frames containing the datasets to be analyzed.
+#' @param datas_descr A description object for the data.
 #' @param metas A list of data frames containing metadata for each dataset in 
 #' `datas`.
 #' @param designs A character vector of design formulas for the limma analysis.
 #' @param modes A character vector indicating the mode of analysis for each 
 #' design.
-#' @param factors A character vector of factors to be considered in the 
-#' analysis.
-#' @param DoFs An integer vector of degrees of freedom to be used for each 
-#' factor in `factors`.
+#' @param condition A single character string specifying the condition.
+#' @param spline_test_configs A configuration object for spline tests.
 #' @param feature_names A character vector of feature names to be analyzed.
+#' @param report_info An object containing report information.
+#' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector of p-value thresholds for 
 #' significance determination.
+#' @param meta_batch_column A character string specifying the meta batch column.
+#' @param time_unit A character string specifying the time unit label for plots.
 #' @param padjust_method A character string specifying the method for p-value 
 #' adjustment.
 #'
@@ -50,16 +53,30 @@ limma_hyperparams_screen <- function(datas,
                                      datas_descr,
                                      metas, 
                                      designs, 
-                                     modes, 
                                      condition, 
                                      spline_test_configs,
-                                     feature_names, 
                                      report_info,
                                      report_dir = here::here(),
                                      adj_pthresholds = c(0.05),
-                                     meta_batch_column = NA,
+                                     meta_batch_column = NA,  # batch-effect
                                      time_unit = "m",    # For the plot labels
                                      padjust_method = "BH") {
+
+  data_matrices <- list()
+  for (data in datas) {
+    matrix_and_feature_names <- process_data(data)
+    data <- matrix_and_feature_names$data
+    data_matrices <- c(data_matrices, list(data))
+    feature_names <- matrix_and_feature_names$feature_names
+  }
+  datas <- data_matrices
+
+  modes <- c()
+  for (design in designs) {
+    mode <- determine_analysis_mode(design,
+                                    condition)
+    modes <- c(modes, mode)
+  }
   
   control_inputs_hyperpara_screen(datas = datas,
                                   datas_descr = datas_descr,
@@ -93,6 +110,7 @@ limma_hyperparams_screen <- function(datas,
                               metas = metas,
                               spline_test_configs = spline_test_configs,
                               meta_batch_column = meta_batch_column,
+                              designs,
                               time_unit = time_unit)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
@@ -132,6 +150,7 @@ limma_hyperparams_screen <- function(datas,
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector with elements > 0 and < 1.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param time_unit A character string specifying the time unit label for plots.
 #' @param padjust_method A single character string specifying the p-adjustment 
 #' method.
 #'
@@ -227,6 +246,7 @@ control_inputs_hyperpara_screen <- function(datas,
 #' @importFrom dplyr mutate
 #' @importFrom purrr pmap
 #' @importFrom purrr set_names
+#' @importFrom rlang sym
 #'                          
 get_limma_combos_results <- function(datas, 
                                      metas, 
@@ -244,13 +264,14 @@ get_limma_combos_results <- function(datas,
     spline_config_index = seq_along(spline_test_configs$spline_type),
     pthreshold = adj_pthresholds
   ) %>% 
-    dplyr::mutate(id = paste0("Data_", data_index, 
-                       "_Design_", design_index, 
-                       "_SConfig_", spline_config_index, 
-                       "_PThresh_", pthreshold))
+    dplyr::mutate(id = paste0("Data_", !!rlang::sym("data_index"), 
+                              "_Design_", !!rlang::sym("design_index"), 
+                              "_SConfig_", !!rlang::sym("spline_config_index"), 
+                              "_PThresh_", !!rlang::sym("pthreshold")))
   
     purrr::pmap(combos, 
                 process_combo,
+                datas = datas,
                 metas = metas,
                 designs = designs,
                 modes = modes,
@@ -273,6 +294,10 @@ get_limma_combos_results <- function(datas,
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param spline_test_configs A configuration object for spline tests.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param time_unit A single character, such as s, m, h, or d, specifying the
+#' time_unit that should be used for the plots (s = seconds, m = minutes,
+#' h = hours, d = days). This single character will be converted to a string 
+#' that is a little bit more verbose, such as sec in square brackets for s.
 #'
 #' @return A list of results including hit comparison plots and composite 
 #' spline plots for each pair of combinations.
@@ -287,6 +312,7 @@ plot_limma_combos_results <- function(top_tables_combos,
                                       metas,
                                       spline_test_configs,
                                       meta_batch_column,
+                                      designs,
                                       time_unit = time_unit) {
   
   names_extracted <- stringr::str_extract(names(top_tables_combos),
@@ -311,15 +337,22 @@ plot_limma_combos_results <- function(top_tables_combos,
                         "d" = "[days]")
   time_unit_label <- time_unit_labels[time_unit]
   
+  if (!is.na(meta_batch_column)) {
+    
+    # Takes the shortcut approach without the specific design_matrix
+    datas <- remove_batch_effect(datas = datas, 
+                                 metas = metas,
+                                 condition = condition,
+                                 meta_batch_column = meta_batch_column)
+  }
+  
+  
   combo_pair_results <- purrr::set_names(
     purrr::map(combo_pairs, function(pair) {
+      
       combo_pair <- combos_separated[pair]
       
       hitcomp <- gen_hitcomp_plots(combo_pair)
-      
-      datas <- remove_batch_effect(datas = datas, 
-                                   metas = metas,
-                                   meta_batch_column = meta_batch_column)
       
       composites <- purrr::map(combo_pair, function(combo) {
         composite <- gen_composite_spline_plots(combo,
@@ -519,6 +552,7 @@ check_spline_test_configs <- function(spline_test_configs,
 #' @param spline_config_index Index of the spline configuration in the 
 #' spline_test_configs list.
 #' @param pthreshold The p-value threshold for significance.
+#' @param datas A list of data matrices
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param designs A list of design matrices.
 #' @param modes A character vector containing 'isolated' or 'integrated'.
@@ -539,6 +573,7 @@ process_combo <- function(data_index,
                           design_index, 
                           spline_config_index, 
                           pthreshold, 
+                          datas,
                           metas,
                           designs,
                           modes,
@@ -564,14 +599,15 @@ process_combo <- function(data_index,
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
   
+  data <- as.data.frame(data)
+  rownames(data) <- feature_names
+  
   # suppressMessages will not affect warnings and error messages!
   result <- suppressMessages(run_limma_splines(data = data, 
                                                meta = meta, 
                                                design = design, 
                                                spline_params = spline_params, 
                                                condition = condition,
-                                               feature_names = feature_names, 
-                                               mode = mode, 
                                                padjust_method = padjust_method))
   
   
@@ -592,26 +628,26 @@ process_combo <- function(data_index,
 #' @return A list of matrices with batch effects removed where applicable.
 #'
 #' @seealso
-#' \code{\link{limma::removeBatchEffect}}
+#' \link[limma]{removeBatchEffect}
 #' 
 #' @importFrom limma removeBatchEffect
 #'
 remove_batch_effect <- function(datas, 
                                 metas,
-                                meta_batch_column) {
+                                meta_batch_column,
+                                condition) {
   
   results <- list()
   for (i in seq_along(datas)) {
     data <- datas[[i]]
     meta <- metas[[i]]
     
-    if (meta_batch_column %in% names(meta)) {
-      data_corrected <- removeBatchEffect(x = data, 
-                                          batch = meta[[meta_batch_column]])
-      results[[i]] <- data_corrected
-    } else {                            # Store the original data
-      results[[i]] <- data  
-    }
+    # This is the shortcut approach. It would be better to remove the batch
+    # effect using the design_matrix, but it is challenging to program this here
+    data_corrected <- removeBatchEffect(x = data, 
+                                        batch = meta[[meta_batch_column]],
+                                        group = meta[[condition]])
+    results[[i]] <- data_corrected
   }
   return(results)
 }
@@ -706,7 +742,7 @@ hc_add <- function(hc_obj,
 #' @return A list containing the Venn heatmap plot and the number of hits.
 #'
 #' @seealso
-#' \code{\link{store_hits}}, \code{\link{pheatmap::pheatmap}}
+#' \code{\link{store_hits}}, \link[pheatmap]{pheatmap}
 #' 
 #' @importFrom tidyr expand_grid unnest_longer replace_na pivot_wider
 #' @importFrom tibble enframe column_to_rownames
@@ -733,13 +769,13 @@ hc_vennheatmap <- function(hc_obj) {
   df_1 <-
     hits_1 %>% 
     tibble::enframe("params", "features") %>% 
-    tidyr::unnest_longer(features) %>%
+    tidyr::unnest_longer(!!rlang::sym("features")) %>%
     dplyr::mutate(x1 = 1)
   
   df_2 <-
     hits_2 %>% 
     tibble::enframe("params", "features") %>% 
-    tidyr::unnest_longer(features) %>%
+    tidyr::unnest_longer(!!rlang::sym("features")) %>%
     dplyr::mutate(x2 = 2)
   
   venn_matrix <- 
@@ -747,9 +783,10 @@ hc_vennheatmap <- function(hc_obj) {
     dplyr::left_join(df_1, by = c("features", "params")) %>% 
     dplyr::left_join(df_2, by = c("features", "params")) %>% 
     tidyr::replace_na(list(x1 = 0, x2 = 0)) %>% 
-    dplyr::mutate(x = x1 + x2) %>% 
-    dplyr::select(!c(x1, x2)) %>%
-    tidyr::pivot_wider(names_from = params, values_from = x) %>% 
+    dplyr::mutate(x = !!rlang::sym("x1") + !!rlang::sym("x2")) %>% 
+    dplyr::select(!c(!!rlang::sym("x1"), !!rlang::sym("x2"))) %>%
+    tidyr::pivot_wider(names_from = !!rlang::sym("params"), 
+                       values_from = !!rlang::sym("x")) %>% 
     tibble::column_to_rownames("features") %>% 
     as.matrix()
   
@@ -812,10 +849,11 @@ hc_barplot <- function(hc_obj) {
     purrr::set_names(hc_obj$condition_names) %>% 
     dplyr::bind_rows(.id = "condition")
   
-  ggplot2::ggplot(plot_data, aes(x = .data$params, y = .data$n_hits)) +
+  ggplot2::ggplot(plot_data, aes(x = !!rlang::sym("params"), 
+                                 y = !!rlang::sym("n_hits"))) +
     geom_col() +
     geom_text(
-      aes(label = n_hits),
+      aes(label = !!rlang::sym("n_hits")),
       vjust = -0.5,
       
     ) +
@@ -824,7 +862,7 @@ hc_barplot <- function(hc_obj) {
       "number of significant features",
       expand = expansion(mult = c(0, .2))
     ) +
-    facet_wrap(vars(condition), ncol = 1) +
+    facet_wrap(vars(!!rlang::sym("condition")), ncol = 1) +
     theme_minimal() +
     theme(
       axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
@@ -902,6 +940,8 @@ gen_hitcomp_plots <- function(combo_pair) {
 #' @param datas A list of matrices.
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param spline_test_configs A configuration object for spline tests.
+#' @param time_unit_label A character string specifying the time unit label 
+#' for plots.
 #'
 #' @return A list containing the composite spline plots and their lengths.
 #'
@@ -1040,7 +1080,6 @@ process_combo_pair <- function(combo_pair,
   # Function is in splinetime_general_fun.R
   generate_report_html(plots = plots, 
                        plots_sizes = plots_len, 
-                       level_headers_info = level_headers_info,
                        report_info = report_info,
                        report_type = "limma_hyperparams_screen",
                        filename = combo_pair_name,
@@ -1382,8 +1421,8 @@ store_hits <- function(condition) {
     key_name <- item$Parameters$params_id
 
     hits_cond[[key_name]] <- df %>%
-      filter(.data$adj.P.Val < adj_p_value_treshold) %>%
-      pull(.data$feature_index) %>%
+      filter(df[["adj.P.Val"]] < adj_p_value_treshold) %>%
+      pull(!!sym("feature_index")) %>%
       as.character()
   }
   
@@ -1406,13 +1445,15 @@ store_hits <- function(condition) {
 #' @param indices A vector of indices specifying which features to plot.
 #' @param type A character string specifying the type of features ('significant' 
 #' or 'not_significant').
+#' @param time_unit_label A string shown in the plots as the unit for the time,
+#' such as min or hours.
 #'
 #' @return A list containing the composite plot and its length if plots are 
 #' generated, FALSE otherwise.
 #'
 #' @seealso
-#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
-#' \code{\link{ggplot2}}, \code{\link{patchwork}}
+#' \link[splines]{bs}, \link[splines]{ns}, \link[ggplot2]{ggplot2}, 
+#' \link[patchwork]{wrap_plots}
 #' 
 #' @importFrom splines ns
 #' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal 
@@ -1480,9 +1521,11 @@ plot_composite_splines <- function(data,
     x_extension <- x_max * 0.05  # Extend the x-axis by 5% of its maximum value
     
     p <- ggplot2::ggplot() +
-      geom_point(data = plot_data, aes(x = Time, y = Intensity), 
+      geom_point(data = plot_data, aes(x = !!rlang::sym("Time"),
+                                       y = !!rlang::sym("Intensity")), 
                  color = 'blue') +
-      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
+      geom_line(data = plot_spline, aes(x = !!rlang::sym("Time"),
+                                        y = !!rlang::sym("Fitted")), 
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(meta$Time), x_max + x_extension))

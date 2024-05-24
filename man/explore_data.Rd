@@ -14,7 +14,17 @@ explore_data(
 )
 }
 \arguments{
-\item{data}{A numeric matrix containing the data.}
+\item{data}{A dataframe containing the data.}
+
+\item{meta}{A dataframe containing metadata corresponding to the `data`.}
+
+\item{condition}{A character string specifying the condition.}
+
+\item{report_info}{An object containing report information.}
+
+\item{meta_batch_column}{A character string specifying the meta batch column.}
+
+\item{report_dir}{A non-empty string specifying the report directory.}
 }
 \value{
 A list of ggplot objects representing various exploratory plots.

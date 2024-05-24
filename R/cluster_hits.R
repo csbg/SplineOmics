@@ -21,24 +21,29 @@
 #' compiled into an HTML report.
 #'
 #' @param top_tables A list of data frames, each representing a top table from 
-#' differential expression
-#'        analysis, containing at least 'adj.P.Val' and expression data columns.
+#' differential expression analysis, containing at least 'adj.P.Val' and 
+#' expression data columns.
 #' @param data The original expression dataset used for differential expression 
 #' analysis.
-#' @param meta Metadata dataframe corresponding to the `data`, must include a 
-#' 'Time' column and any columns
-#'        specified by `conditions`.
-#' @param conditions Character vector specifying the column names in `meta` used 
-#' to define groups for
-#'        analysis.
-#' @param adj_pthresh Numeric vector of p-value thresholds for filtering hits in 
-#' each top table.
-#' @param clusters Integer vector specifying the number of clusters to cut the 
-#' dendrogram into, for each
-#'        group factor.
+#' @param meta A dataframe containing metadata corresponding to the `data`, 
+#' must include a 'Time' column and any columns specified by `conditions`.
+#' @param condition Character vector specifying the column names in `meta` 
+#' used to define groups for analysis.
+#' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
+#' hits in each top table.
+#' @param clusters Character or integer vector specifying the number of 
+#' clusters or 'auto' for automatic estimation.
 #' @param report_dir Character string specifying the directory path where the 
-#' HTML report and any
-#'        other output files should be saved.
+#' HTML report and any other output files should be saved.
+#' @param report_info A character string to be printed at the top of the report.
+#' @param mode A character string specifying the mode ('integrated' or 
+#' 'isolated').
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param design A string representing the limma design formula
+#' @param meta_batch_column A character string specifying the column name in 
+#' the metadata used for batch effect removal.
+#' @param time_unit A character string specifying the time unit label for plots 
+#' (e.g., 'm' for minutes).
 #'
 #' @return A list where each element corresponds to a group factor and contains 
 #' the clustering results,
@@ -61,9 +66,9 @@
 cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          data, 
                          meta, 
+                         design,      # limma design formula
                          condition,   # meta factor column
                          report_info,   # Gets printed on top of the report
-                         mode = "integrated",  # dependent on limma design
                          spline_params = list(spline_type = c("n"),
                                               dof = c(2L)),
                          adj_pthresholds = c(0.05),
@@ -71,7 +76,14 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          meta_batch_column = NA,   # to remove batch effect
                          time_unit = "m",    # For the plot labels
                          report_dir = here::here()) {
-
+  
+  # feature_names are in top_tables
+  matrix_and_feature_names <- process_data(data) 
+  data <- matrix_and_feature_names$data
+  
+  mode <- determine_analysis_mode(design,
+                                  condition)
+  
   control_inputs_cluster_hits(top_tables = top_tables, 
                               data = data, 
                               meta = meta, 
@@ -81,6 +93,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                               adj_pthresholds = adj_pthresholds, 
                               clusters = clusters,
                               report_info = report_info,
+                              design = design,
                               meta_batch_column = meta_batch_column,
                               time_unit = time_unit,
                               report_dir = report_dir)
@@ -100,19 +113,21 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                                               spline_params = spline_params,
                                               mode = mode)
   
-  make_clustering_report(all_levels_clustering = all_levels_clustering, 
-                         condition = condition, 
-                         data = data, 
-                         meta = meta, 
-                         spline_params = spline_params,
-                         adj_pthresholds = adj_pthresholds, 
-                         report_dir = report_dir,
-                         mode = mode,
-                         report_info = report_info,
-                         meta_batch_column = meta_batch_column,
-                         time_unit = time_unit)
-  
-  return(all_levels_clustering)
+  plots <- make_clustering_report(all_levels_clustering = all_levels_clustering, 
+                                  condition = condition, 
+                                  data = data, 
+                                  meta = meta, 
+                                  spline_params = spline_params,
+                                  adj_pthresholds = adj_pthresholds, 
+                                  report_dir = report_dir,
+                                  mode = mode,
+                                  report_info = report_info,
+                                  design = design,
+                                  meta_batch_column = meta_batch_column,
+                                  time_unit = time_unit)
+
+  list(all_levels_clustering = all_levels_clustering,
+       plots= plots)
 }
 
 
@@ -137,6 +152,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #' @param clusters A list specifying clusters or "auto" for automatic 
 #' estimation.
 #' @param report_info An object containing report information.
+#' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param time_unit A character string specifying the time unit 
 #' ('s', 'm', 'h', 'd').
@@ -167,7 +183,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 #' @seealso
 #' \code{\link{check_top_tables}}, \code{\link{check_meta}}, 
 #' \code{\link{check_mode}}, \code{\link{check_spline_params}}, 
-#' \code{\link{validate_report_info}}
 #' 
 control_inputs_cluster_hits <- function(top_tables, 
                                         data, 
@@ -178,6 +193,7 @@ control_inputs_cluster_hits <- function(top_tables,
                                         adj_pthresholds, 
                                         clusters, 
                                         report_info,
+                                        design,
                                         meta_batch_column,
                                         time_unit,
                                         report_dir) {
@@ -210,6 +226,9 @@ control_inputs_cluster_hits <- function(top_tables,
   } 
   
   check_report_info(report_info)
+
+  check_design_formula(design,
+                       meta)
   
   check_time_unit(time_unit)
   
@@ -295,35 +314,13 @@ perform_clustering <- function(top_tables,
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode 
 #' ('isolated' or 'integrated').
-#' @param feature_names A character vector of feature names.
 #' @param report_info An object containing report information.
+#' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param time_unit A character string specifying the time unit 
 #' ('s', 'm', 'h', 'd').
 #'
 #' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' all_levels_clustering <- list(
-#'   list(clusters = 3, curve_values = data.frame(), hc = list(), 
-#'   top_table = data.frame())
-#' )
-#' condition <- "condition"
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' adj_pthresholds <- runif(10)
-#' report_dir <- "example_dir"
-#' mode <- "isolated"
-#' feature_names <- paste0("feature", 1:10)
-#' report_info <- "example_info"
-#' meta_batch_column <- "batch"
-#' time_unit <- "m"
-#' make_clustering_report(all_levels_clustering, condition, data, meta, 
-#'                        spline_params, adj_pthresholds, report_dir, mode, 
-#'                        feature_names, report_info, meta_batch_column, 
-#'                        time_unit)}
 #'
 #' @seealso
 #' \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}}, 
@@ -333,6 +330,7 @@ perform_clustering <- function(top_tables,
 #' 
 #' @importFrom limma removeBatchEffect
 #' @importFrom dplyr filter
+#' @importFrom stats na.omit
 #' 
 make_clustering_report <- function(all_levels_clustering, 
                                    condition, 
@@ -343,13 +341,55 @@ make_clustering_report <- function(all_levels_clustering,
                                    report_dir,
                                    mode,
                                    report_info,
+                                   design,
                                    meta_batch_column,
                                    time_unit = time_unit) {
   
+  # Optionally remove the batch-effect with the batch column and design matrix
+  # For mode == "integrated", the batch-effect is removed from the whole data
+  # For mode == "isolated", the batch-effect is removed for every level 
   if (!is.na(meta_batch_column)) {
-    data <- removeBatchEffect(x = data, batch = meta[[meta_batch_column]])
-  }
     
+    datas <- list()
+    
+    n <- length(unique(meta[[condition]]))
+    level_indices <- as.integer(1:n)
+
+    for (level_index in level_indices) {
+      
+      # Take only the data from the level for mode == "isolated"
+      if (mode == "isolated") {
+        unique_levels <- unique(meta[[condition]])
+        level <- unique_levels[level_index]
+        level_columns <- which(meta[[condition]] == level)
+        data_copy <- data[, level_columns]
+        meta_copy <- subset(meta, meta[[condition]] == level)
+      } else {
+        data_copy <- data   # Take the full data for mode == "integrated"
+        meta_copy <- meta
+        level_index <- 1L   # spline_params here has only one set of params
+      }
+      
+      design_matrix <- design2design_matrix(meta = meta_copy,
+                                            spline_params = spline_params,
+                                            level_index = level_index,
+                                            design = design)
+      
+      # The batch columns are not allowed to be in the design_matrix for 
+      # removeBatchEffect. Instead the batch column is specified with batch =
+      batch_columns <- grep(paste0("^", meta_batch_column), 
+                            colnames(design_matrix))
+      design_matrix <- design_matrix[, -batch_columns]
+      
+      data_copy <- removeBatchEffect(data_copy,
+                                     batch = meta_copy[[meta_batch_column]],
+                                     design = design_matrix)
+      
+      # For mode == "integrated", all elements are identical
+      datas <- c(datas, list(data_copy))   
+    }
+  }
+
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
   for (i in seq_along(all_levels_clustering)) {
@@ -365,7 +405,7 @@ make_clustering_report <- function(all_levels_clustering,
                         "d" = "[days]")
   time_unit_label <- time_unit_labels[time_unit]
   
-  heatmaps <- plot_heatmap(data = data,
+  heatmaps <- plot_heatmap(datas = datas,
                            meta = meta,
                            condition = condition,
                            all_levels_clustering = all_levels_clustering,
@@ -410,20 +450,22 @@ make_clustering_report <- function(all_levels_clustering,
     top_table <- level_clustering$top_table
     adj_pthreshold <- adj_pthresholds[i]
     levels <- as.character(unique(meta[[condition]]))
-    meta_level <- meta %>% dplyr::filter(.data[[condition]] == levels[i])
+    meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
     sample_names <- as.character(meta_level$Sample)
-    data_level <- data[, colnames(data) %in% sample_names]
+    data_level <- datas[[i]][, colnames(datas[[i]]) %in% sample_names]
     
     composite_plots <- list()
     nrows <- list()
     
-    for (nr_cluster in unique(na.omit(top_table$cluster))) {
+    for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
       main_title <- paste("Cluster", nr_cluster, sep = " ")
       
       top_table_filt <- top_table %>%
-        dplyr::filter(adj.P.Val < adj_pthreshold, .data$cluster == nr_cluster)
+        dplyr::filter(top_table[["adj.P.Val"]] < adj_pthreshold,
+                      !!rlang::sym("cluster") == nr_cluster)
       
       X <- level_clustering$X
+
       plot_splines_result <- plot_splines(top_table_filt, 
                                           data_level, 
                                           meta_level,
@@ -461,6 +503,8 @@ make_clustering_report <- function(all_levels_clustering,
                        mode = mode,
                        filename = "report_clustered_hits",
                        report_dir = report_dir)
+  
+  return(plots)
 }
 
 
@@ -517,19 +561,6 @@ check_top_tables <- function(top_tables) {
 #' @return A list containing the clustering results, including curve values and
 #'         the design matrix.
 #'
-#' @examples
-#' \dontrun{
-#' top_table <- data.frame(feature_index = 1:10, adj.P.Val = runif(10))
-#' adj_pthreshold <- 0.05
-#' cluster_size <- 3
-#' level <- "A"
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' condition <- "condition"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' mode <- "isolated"
-#' process_level_cluster(top_table, adj_pthreshold, cluster_size, level, meta, 
-#'                       condition, spline_params, mode)}
-#'
 #' @seealso
 #' \code{\link{get_curve_values}}, \code{\link{normalize_curves}}, 
 #' \code{\link{hierarchical_clustering}}
@@ -573,7 +604,6 @@ process_level_cluster <- function(top_table,
 #' @param data A matrix of data values.
 #' @param meta A dataframe containing metadata.
 #' @param condition A character string specifying the condition.
-#' @param feature_names A character vector of feature names.
 #' @param all_levels_clustering A list containing clustering results for each 
 #' level within the condition.
 #' @param time_unit_label A character string specifying the time unit label.
@@ -594,7 +624,7 @@ process_level_cluster <- function(top_table,
 #'              time_unit_label)}
 #'
 #' @seealso
-#' \code{\link{ComplexHeatmap::Heatmap}}, \code{\link{dplyr::arrange}}
+#' \link[ComplexHeatmap]{Heatmap}, \link[dplyr]{arrange}
 #' 
 #' @importFrom dplyr arrange mutate group_by summarize
 #' @importFrom tidyr pivot_longer separate
@@ -603,9 +633,10 @@ process_level_cluster <- function(top_table,
 #' @importFrom ggplot2 theme_bw scale_x_continuous
 #' @importFrom grid gpar
 #' 
-plot_heatmap <- function(data,
+plot_heatmap <- function(datas,
                          meta,
                          condition,
+                         design,
                          all_levels_clustering,
                          time_unit_label) {
 
@@ -636,12 +667,13 @@ plot_heatmap <- function(data,
     level_clustering <- all_levels_clustering[[i]]
     
     clustered_hits <- level_clustering$clustered_hits
-    clusters <- clustered_hits %>% dplyr::arrange(cluster)
+    clusters <- clustered_hits %>% dplyr::arrange(!!rlang::sym("cluster"))
     
     level <- levels[[i]]
     level_indices <- which(meta[[condition]] == level)
     
-    data_level <- data[, level_indices]
+    data_level <- datas[[i]][, level_indices]
+    
     data_level <- data_level[as.numeric(clusters$feature),]
     z_score <- t(scale(t(data_level)))
     
@@ -752,9 +784,8 @@ plot_heatmap <- function(data,
 #' plot_dendrogram(hc, k)}
 #'
 #' @seealso
-#' \code{\link{dendextend::color_branches}}, 
-#' \code{\link{dendextend::as.ggdend}}, 
-#' \code{\link{ggplot2}}
+#' \link[dendextend]{color_branches}, \link[dendextend]{as.ggdend}, 
+#' \link[ggplot2]{ggplot2}
 #' 
 #' @importFrom stats as.dendrogram
 #' @importFrom stats cutree
@@ -762,7 +793,7 @@ plot_heatmap <- function(data,
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom dendextend color_branches
 #' @importFrom dendextend as.ggdend
-#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 ggplot element_blank
 #' @importFrom ggplot2 labs
 #' @importFrom ggplot2 theme_minimal
 #' @importFrom ggplot2 theme
@@ -785,15 +816,24 @@ plot_dendrogram <- function(hc,
   dend_colored <- dendextend::color_branches(dend, k = k,
                                              labels_colors = colors)
   
-  dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
+  # dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
+  dend_colored <- 
+    dendextend::set(dend_colored, "labels", 
+                    value = rep("", 
+                                length(dendextend::get_leaves_attr(dend_colored,
+                                                                   "label"))))
+  
 
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
-    labs(title = "Hierarchical Clustering Dendrogram (colors = clusters)",
+    ggplot2::labs(title = 
+                    "Hierarchical Clustering Dendrogram (colors = clusters)",
          x = "", y = "") +
-    theme_minimal() +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-          axis.text.y = element_blank(), axis.ticks.y = element_blank())
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_blank(), 
+                   axis.ticks.x = ggplot2::element_blank(),
+          axis.text.y = ggplot2::element_blank(), 
+          axis.ticks.y = ggplot2::element_blank())
 }
 
 
@@ -808,15 +848,6 @@ plot_dendrogram <- function(hc,
 #' @param time_unit_label A character string specifying the time unit label.
 #'
 #' @return A ggplot object representing the average curves by cluster.
-#'
-#' @examples
-#' \dontrun{
-#' curve_values <- data.frame(
-#'   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
-#'   cluster = rep(1:2, each = 5)
-#' )
-#' time_unit_label <- "[min]"
-#' plot_all_shapes(curve_values, time_unit_label)}
 #'
 #' @seealso
 #' \code{\link{ggplot2}}
@@ -852,8 +883,11 @@ plot_all_shapes <- function(curve_values,
     factor(average_curves$cluster, 
            levels = sort(unique(as.numeric(average_curves$cluster))))
   
-  p_curves <- ggplot2::ggplot(average_curves, aes(x = Time, y = Value, color = 
-                                                    factor(cluster))) +
+  p_curves <- ggplot2::ggplot(average_curves, 
+                              aes(x = !!rlang::sym("Time"),
+                                  y = !!rlang::sym("Value"), 
+                                  color = 
+                                    factor(!!rlang::sym("cluster")))) +
     geom_line() + 
     ggtitle("Average Curves by Cluster") +
     xlab(paste0("Time ", time_unit_label)) + 
@@ -876,14 +910,6 @@ plot_all_shapes <- function(curve_values,
 #'
 #' @return A ggplot object representing the single and consensus shapes.
 #'
-#' @examples
-#' \dontrun{
-#' time_series_data <- matrix(runif(100), nrow = 10, 
-#'                            dimnames = list(NULL, seq(1, 10)))
-#' title <- "Single and Consensus Shapes"
-#' time_unit_label <- "[min]"
-#' plot_single_and_consensus_splines(time_series_data, title, time_unit_label)}
-#'
 #' @seealso
 #' \code{\link{ggplot2}}
 #' 
@@ -892,18 +918,30 @@ plot_all_shapes <- function(curve_values,
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal 
 #' ggtitle xlab ylab
+#' @importFrom rlang sym
+#' @importFrom data.table :=
 #' 
 plot_single_and_consensus_splines <- function(time_series_data, 
                                               title,
                                               time_unit_label) {
   
   # Transform the dataframe to a long format for ggplot2
+  # df_long <- as.data.frame(t(time_series_data)) %>%
+  #   tibble::rownames_to_column(var = "time") %>%
+  #   tidyr::pivot_longer(cols = -time, names_to = "feature", 
+  #                       values_to = "intensity") %>%
+  #   dplyr::arrange(feature) %>%
+  #   dplyr::mutate(time = as.numeric(time))
+  
+  time_col <- sym("time")
+  feature_col <- sym("feature")
+  
+  # Convert data to long format with appropriate column names
   df_long <- as.data.frame(t(time_series_data)) %>%
-    tibble::rownames_to_column(var = "time") %>%
-    tidyr::pivot_longer(cols = -time, names_to = "feature", 
-                        values_to = "intensity") %>%
-    dplyr::arrange(feature) %>%
-    dplyr::mutate(time = as.numeric(time))
+    rownames_to_column(var = "time") %>%
+    pivot_longer(cols = -!!time_col, names_to = "feature", values_to = "intensity") %>%
+    arrange(!!feature_col) %>%
+    mutate(!!time_col := as.numeric(!!time_col))
   
   # Compute consensus (mean of each column)
   consensus <- colMeans(time_series_data, na.rm = TRUE)
@@ -911,10 +949,12 @@ plot_single_and_consensus_splines <- function(time_series_data,
                              consensus = consensus)
   
   p <- ggplot2::ggplot() +
-    geom_line(data = df_long, aes(x = time, y = intensity, group = feature,
+    geom_line(data = df_long, aes(x = !!rlang::sym("time"),
+                                  y = !!rlang::sym("intensity"),
+                                  group = !!rlang::sym("feature"),
                                   colour = "Single Shapes"),
               alpha = 0.3, linewidth = 0.5) +
-    geom_line(data = consensus_df, aes(x = time, y = consensus,
+    geom_line(data = consensus_df, aes(x = !!rlang::sym("time"), y = consensus,
                                        colour = "Consensus Shape"),
               linewidth = 1.5) +
     scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
@@ -942,15 +982,6 @@ plot_single_and_consensus_splines <- function(time_series_data,
 #' @return A list containing the composite plot of consensus shapes and its 
 #' size.
 #'
-#' @examples
-#' \dontrun{
-#' curve_values <- data.frame(
-#'   Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
-#'   cluster = rep(1:2, each = 5)
-#' )
-#' time_unit_label <- "[min]"
-#' plot_consensus_shapes(curve_values, time_unit_label)}
-#'
 #' @seealso
 #' \code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
 #' 
@@ -963,8 +994,8 @@ plot_consensus_shapes <- function(curve_values,
   plots <- list()
   for (current_cluster in clusters) {
     current_title <- paste("Cluster", current_cluster, sep = " ")
-    subset_df <- subset(curve_values, cluster == current_cluster)
-    subset_df$cluster <- NULL 
+    subset_df <- subset(curve_values, curve_values$cluster == current_cluster)
+    subset_df$cluster <- NULL
     
     plots[[length(plots) + 1]] <- 
       plot_single_and_consensus_splines(subset_df, 
@@ -1000,8 +1031,12 @@ plot_consensus_shapes <- function(curve_values,
 #' feature.
 #' @param meta A dataframe containing metadata for the data, including time 
 #' points.
+#' @param X The limma design matrix that defines the experimental conditions.
 #' @param main_title The main title to be used for the composite plot of all 
 #' features.
+#' @param time_unit_label A string shown in the plots as the unit for the time,
+#' such as min or hours.
+#' 
 #' @return A list containing the composite plot and the number of rows used in 
 #' the plot layout.
 #' 
@@ -1035,7 +1070,7 @@ plot_splines <- function(top_table,
     intercept <- top_table$intercept[hit]
     
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
-    
+
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
     
     fitted_values <- X %*% spline_coeffs + intercept
@@ -1048,14 +1083,21 @@ plot_splines <- function(top_table,
     x_extension <- x_max * 0.05 
     
     p <- ggplot2::ggplot() +
-      geom_point(data = plot_data, aes(x = Time, y = Y), color = 'blue') +
-      geom_line(data = plot_spline, aes(x = Time, y = Fitted), 
+      geom_point(data = plot_data, aes(x = Time, 
+                                       y = !!rlang::sym("Y")), 
+                 color = 'blue') +
+      geom_line(data = plot_spline, aes(x = Time, y = !!rlang::sym("Fitted")), 
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
       labs(x = paste0("Time ", time_unit_label), y = "Intensity")
     
-    matched_row <- subset(titles, FeatureID == hit_index)
+    # matched_row <- subset(titles, titles$FeatureID == hit_index)
+    # matched_row <- titles %>%
+    #   filter(FeatureID == hit_index)
+    matched_row <- titles %>%
+      filter(!!sym("FeatureID") == hit_index)
+    
     title <- as.character(matched_row$feature_name)
     if (is.na(title)) {
       title <- paste("feature:", hit_index)
@@ -1326,6 +1368,10 @@ check_dataframe <- function(df) {
 #' @param meta Metadata containing time points and conditions.
 #' @param condition The name of the condition column in the metadata to filter 
 #' on.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param mode A character string specifying the mode 
+#' ('isolated' or 'integrated').
+#' 
 #' @return A list containing two elements: `curve_values`, a data frame of 
 #' curve values for each filtered entry, and `smooth_timepoints`, the time
 #' points at which curves were evaluated.
@@ -1484,7 +1530,7 @@ hierarchical_clustering <- function(curve_values,
   }
   
   clustered_hits <- data.frame(cluster = cluster_assignments)
-  top_table_hits <- dplyr::filter(top_table, adj.P.Val < 0.05)
+  top_table_hits <- dplyr::filter(top_table, top_table[["adj.P.Val"]] < 0.05)
   clustered_hits$feature <- top_table_hits$feature_index
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
   

@@ -9,8 +9,8 @@ Generate Report HTML}
 generate_report_html(
   plots,
   plots_sizes,
-  level_headers_info,
   report_info,
+  level_headers_info = NA,
   spline_params = NA,
   report_type = "explore_data",
   mode = NA,
@@ -24,9 +24,9 @@ generate_report_html(
 
 \item{plots_sizes}{A list of integers specifying the size of each plot.}
 
-\item{level_headers_info}{A list of header information for each level.}
-
 \item{report_info}{A named list containing report information.}
+
+\item{level_headers_info}{A list of header information for each level.}
 
 \item{spline_params}{A list of spline parameters.}
 

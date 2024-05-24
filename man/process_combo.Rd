@@ -9,6 +9,7 @@ process_combo(
   design_index,
   spline_config_index,
   pthreshold,
+  datas,
   metas,
   designs,
   modes,
@@ -28,6 +29,8 @@ process_combo(
 spline_test_configs list.}
 
 \item{pthreshold}{The p-value threshold for significance.}
+
+\item{datas}{A list of data matrices}
 
 \item{metas}{A list of metadata corresponding to the data matrices.}
 

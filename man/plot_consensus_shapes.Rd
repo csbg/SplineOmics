@@ -20,16 +20,6 @@ size.
 Generates composite plots of single and consensus shapes for each cluster 
 of curve values.
 }
-\examples{
-\dontrun{
-curve_values <- data.frame(
-  Time1 = runif(10), Time2 = runif(10), Time3 = runif(10), 
-  cluster = rep(1:2, each = 5)
-)
-time_unit_label <- "[min]"
-plot_consensus_shapes(curve_values, time_unit_label)}
-
-}
 \seealso{
 \code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
 }

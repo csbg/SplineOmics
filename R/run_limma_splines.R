@@ -20,27 +20,20 @@
 #' multiple 
 #' degrees of freedom corresponding to the factors under investigation.
 #'
-#' @param data A matrix or dataframe containing the expression data, 
+#' @param data A dataframe containing the expression data, 
 #'             where rows represent features (e.g., genes) and columns represent 
-#'             samples.
+#'             samples. 
 #' @param meta A dataframe containing the metadata for the samples, 
 #'             must include a column for each factor in `factors`.
 #' @param design A character string specifying the design formula for the Limma 
 #' model.
-#' @param DoFs An integer vector specifying the degrees of freedom for spline 
-#' interpolation 
-#'             for each factor; length should match that of `factors`.
-#' @param factors A character vector specifying the names of experimental 
-#' factors 
-#'                to be analyzed, as represented in `meta`.
-#' @param feature_names A character vector of feature names (e.g., gene names) 
-#' corresponding 
-#'                      to the rows in `data`.
+#' @param condition The name of the factor column of meta. The factor divides
+#' the experiment into different levels (unique elements of the factor column). 
 #' @param mode A character string specifying the analysis mode: 'isolated' for 
-#' analyzing 
-#'             each level of a factor separately, or 'integrated' for comparing 
-#'             levels 
-#'             within a factor.
+#' analyzing each level of a factor separately, or 'integrated' for comparing 
+#' levels within a factor.
+#' @param spline_params A named list, specifying the parameters for the splines,
+#' such as type (ns or B-splines, dof, knots, etc).
 #' @param padjust_method A character string specifying the method for adjusting 
 #'                       p-values for multiple testing. Defaults to "BH" 
 #'                       (Benjamini-Hochberg).
@@ -75,11 +68,16 @@ run_limma_splines <- function(data,
                               meta,
                               design,
                               condition, 
-                              feature_names,
-                              mode = "integrated",
                               spline_params = list(spline_type = c("n"),
                                                    dof = c(2L)),
                               padjust_method = "BH") {
+  
+  matrix_and_feature_names <- process_data(data)
+  data <- matrix_and_feature_names$data
+  feature_names <- matrix_and_feature_names$feature_names
+  
+  mode <- determine_analysis_mode(design,
+                                  condition)
   
   control_inputs_run_limma(data = data, 
                            meta = meta, 
@@ -195,9 +193,9 @@ control_inputs_run_limma <- function(data,
                                      mode, 
                                      padjust_method) {
   
-  check_data_and_meta(data = data, 
-                      meta = meta, 
-                      condition = condition)
+  suppressMessages(check_data_and_meta(data = data, 
+                                       meta = meta, 
+                                       condition = condition))
   
   check_design_formula(design, meta)
   
@@ -315,18 +313,8 @@ between_level <- function(data,
 #'
 #' @return A dataframe containing the processed top table with added intercepts.
 #'
-#' @examples
-#' \dontrun{
-#' top_table_and_fit <- list(
-#'   top_table = data.frame(feature_index = 1:10, adj.P.Val = runif(10)), 
-#'   fit = limma::lmFit(matrix(runif(100), nrow = 10), 
-#'                      model.matrix(~1, data = data.frame(Time = seq(1, 10))))
-#' )
-#' feature_names <- c("feature1", "feature2")
-#' process_top_table(top_table_and_fit, feature_names)}
-#'
 #' @seealso
-#' \code{\link{modify_limma_top_table}}, \code{\link{limma::lmFit}}
+#' \link{modify_limma_top_table}, \link[limma]{lmFit}
 #' 
 #' @importFrom stats coef
 #' 
@@ -443,31 +431,25 @@ process_level <- function(level,
 #'
 #' @return A tibble with feature indices and names included.
 #'
-#' @examples
-#' \dontrun{
-#' top_table <- data.frame(
-#'   logFC = rnorm(10), 
-#'   AveExpr = rnorm(10), 
-#'   t = rnorm(10), 
-#'   P.Value = runif(10), 
-#'   adj.P.Val = runif(10)
-#' )
-#' feature_names <- paste0("Feature_", 1:10)
-#' modify_limma_top_table(top_table, feature_names)}
-#'
 #' @seealso
-#' \code{\link{tidyr::as_tibble}}, \code{\link{dplyr::relocate}}, 
-#' \code{\link{dplyr::mutate}}
+#' \link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
 #' 
 #' @importFrom tidyr as_tibble
-#' @importFrom dplyr relocate
-#' @importFrom dplyr mutate
+#' @importFrom dplyr relocate last_col mutate
 #' 
 modify_limma_top_table <- function(top_table, 
                                    feature_names) {
   
-  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index") %>% 
-    dplyr::relocate(feature_index, .after = last_col()) %>%
+  feature_index <- dplyr::sym("feature_index")
+  
+  # top_table <- tidyr::as_tibble(top_table, rownames = "feature_index") %>% 
+  #   dplyr::relocate(!!feature_index, .after = dplyr::last_col()) %>%
+  #   dplyr::mutate(!!feature_index := as.integer(feature_index))
+  
+  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index")
+  
+  top_table <- top_table %>% 
+    dplyr::relocate(feature_index, .after = dplyr::last_col()) %>%
     dplyr::mutate(feature_index = as.integer(feature_index))
   
   sorted_feature_names <- feature_names[top_table$feature_index]
@@ -509,9 +491,8 @@ modify_limma_top_table <- function(top_table,
 #'              level_index, padjust_method)}
 #'
 #' @seealso
-#' \code{\link{splines::bs}}, \code{\link{splines::ns}}, 
-#' \code{\link{limma::lmFit}}, \code{\link{limma::eBayes}}, 
-#' \code{\link{limma::topTable}}
+#' \link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
+#' \link[limma]{eBayes}, \link[limma]{topTable}
 #' 
 #' @importFrom splines bs
 #' @importFrom splines ns
@@ -529,28 +510,11 @@ within_level <- function(data,
                          spline_params,
                          level_index,
                          padjust_method) {
-  
-  args <- list(x = meta$Time, intercept = FALSE)
-  
-  if (!is.null(spline_params$dof)) {
-    args$df <- spline_params$dof[level_index]
-  } else {
-    args$knots <- spline_params$knots[[level_index]]
-  }
-  
-  if (!is.null(spline_params$bknots)) {
-    args$Boundary.knots <- spline_params$bknots[[level_index]]
-  }
-  
-  
-  if (spline_params$spline_type[level_index] == "b") {
-    args$degree <- spline_params$degree[level_index]
-    meta$X <- do.call(splines::bs, args)
-  } else {                                          # natural cubic splines
-    meta$X <- do.call(splines::ns, args)
-  }
-  
-  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
+
+  design_matrix <- design2design_matrix(meta,
+                                        spline_params,
+                                        level_index,
+                                        design)
   
   fit <- limma::lmFit(data, design_matrix)
   fit <- limma::eBayes(fit)
