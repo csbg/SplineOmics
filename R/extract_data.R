@@ -30,21 +30,38 @@
 #'
 #' @export
 #' 
-extract_data <- function(data,
-                         feature_name_column) {
+extract_data <- function(data, feature_name_column) {
+  
+  if (!is.data.frame(data)) {
+    stop("Input data must be a dataframe.", call. = FALSE)
+  }
+  
+  if (!is.character(feature_name_column) || length(feature_name_column) != 1) {
+    stop("Feature name column must be a single string.", call. = FALSE)
+  }
   
   if (!(feature_name_column %in% colnames(data))) {
     stop(paste("Column", feature_name_column, "not found in the data."), 
          call. = FALSE)
   }
   
+  if (all(is.na(data[[feature_name_column]]))) {
+    stop(paste("Column '", feature_name_column,
+               "' contains only NA values.", sep = ""),
+         call. = FALSE)
+  }
+  
+  if (nrow(data) == 0) {
+    stop("Input dataframe is empty.", call. = FALSE)
+  }
+  
   # Convert data to character to handle mixed data types
   data_char <- as.data.frame(lapply(data, as.character), 
                              stringsAsFactors = FALSE)
-  
+
   # Identify the starting point of the numeric data block
-  start_row <- NA
-  start_col <- NA
+  upper_left_row <- NA
+  upper_left_col <- NA
   num_rows <- nrow(data_char)
   num_cols <- ncol(data_char)
   
@@ -52,21 +69,41 @@ extract_data <- function(data,
     for (j in 1:(num_cols - 5)) {
       block <- data_char[i:(i+5), j:(j+5)]
       block_num <- suppressWarnings(as.numeric(as.matrix(block)))
-      if (all(!is.na(block_num))) {
-        start_row <- i
-        start_col <- j
+      if (all(!is.na(block_num)) && (all(is.numeric((block_num))))) {
+        upper_left_row <- i
+        upper_left_col <- j
         break
       }
     }
-    if (!is.na(start_row)) break
+    if (!is.na(upper_left_row)) break
   }
   
-  if (is.na(start_row) || is.na(start_col)) {
-    stop("No at least6x6 block of numeric values found.", call. = FALSE)
+  if (is.na(upper_left_row) || is.na(upper_left_col)) {
+    stop("No at least 6x6 block of numeric values found.", call. = FALSE)
   }
   
+  # Expand the block vertically
+  lower_right_row <- upper_left_row
+  for (i in (upper_left_row+1):num_rows) {
+    if (is.na(data_char[i, upper_left_col])) {
+      break
+    }
+    lower_right_row <- i
+  }
+  
+  # Expand the block horizontally
+  lower_right_col <- upper_left_col
+  for (j in (upper_left_col+1):num_cols) {
+    if (is.na(data_char[upper_left_row, j])) {
+      break
+    }
+    lower_right_col <- j
+  }
+
   # Extract the numeric data block
-  numeric_data <- data_char[start_row:num_rows, start_col:num_cols]
+  numeric_data <- data_char[upper_left_row:lower_right_row, 
+                            upper_left_col:lower_right_col]
+  
   numeric_data <- suppressWarnings(as.data.frame(lapply(numeric_data, 
                                                         as.numeric)))
   
@@ -79,8 +116,22 @@ extract_data <- function(data,
   # Remove rows with any NA values
   clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
   
+  # Extract headers for each column above the identified block
+  headers <- sapply(upper_left_col:lower_right_col, function(col_idx) {
+    header_values <- data_char[1:(upper_left_row-1), col_idx]
+    header_values <- header_values[!is.na(header_values)]
+    paste(header_values, collapse = "_")
+  })
+  
+  colnames(clean_data) <- headers
+  
   feature_names <- as.character(data[[feature_name_column]])
   feature_names <- feature_names[!is.na(feature_names)]
+  
+  if (length(feature_names) != length(unique(feature_names))) {
+    stop("Feature names in the column must be unique, ignoring NA values.",
+         call. = FALSE)
+  }
   
   if (length(feature_names) != nrow(clean_data)) {
     stop(paste("Length of feature names does not match the number of rows in",
