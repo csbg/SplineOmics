@@ -809,8 +809,15 @@ plot_dendrogram <- function(hc,
   palette_name <- "Set3"
   max_colors_in_palette <-
     RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
-  colors <-
-    RColorBrewer::brewer.pal(min(max_colors_in_palette, k), palette_name)
+  
+  # Handle cases where k is less than 3 to avoid warnings
+  if (k < 3) {
+    colors <- RColorBrewer::brewer.pal(3, palette_name)[1:k]
+  } else {
+    colors <- RColorBrewer::brewer.pal(min(max_colors_in_palette, k), 
+                                       palette_name)
+  }
+  
   if (k > max_colors_in_palette) {
     colors <- rep(colors, length.out = k)
   }
@@ -818,7 +825,6 @@ plot_dendrogram <- function(hc,
   dend_colored <- dendextend::color_branches(dend, k = k,
                                              labels_colors = colors)
   
-  # dend_colored <- dendextend::set(dend_colored, "labels", value = NULL)
   dend_colored <- 
     dendextend::set(dend_colored, "labels", 
                     value = rep("", 
