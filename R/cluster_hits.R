@@ -450,9 +450,11 @@ make_clustering_report <- function(all_levels_clustering,
     top_table <- level_clustering$top_table
     adj_pthreshold <- adj_pthresholds[i]
     levels <- as.character(unique(meta[[condition]]))
+
+    col_indices <- which(meta[[condition]] == levels[i])
+    data_level <- datas[[i]][, col_indices]
+    
     meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
-    sample_names <- as.character(meta_level$Sample)
-    data_level <- datas[[i]][, colnames(datas[[i]]) %in% sample_names]
     
     composite_plots <- list()
     nrows <- list()

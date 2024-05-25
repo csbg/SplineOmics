@@ -36,12 +36,12 @@ report_info <- list(
 )
 
 # debug(explore_data)
-plots <- explore_data(data = data,
-                      meta = meta,
-                      condition = "Phase",
-                      report_info = report_info,
-                      meta_batch_column = "Reactor",
-                      report_dir = here::here("results", "explore_data"))
+# plots <- explore_data(data = data,
+#                       meta = meta,
+#                       condition = "Phase",
+#                       report_info = report_info,
+#                       meta_batch_column = "Reactor",
+#                       report_dir = here::here("results", "explore_data"))
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -71,16 +71,16 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   condition,
-                                   spline_test_configs,
-                                   report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    condition,
+#                                    spline_test_configs,
+#                                    report_info,
+#                                    report_dir,
+#                                    pthresholds,
+#                                    meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
