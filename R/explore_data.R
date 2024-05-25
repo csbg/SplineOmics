@@ -127,9 +127,11 @@ generate_explore_plots <- function(data,
                             condition)
   
   pca_variance_explained_plot <- make_pca_variance_explained_plot(data)
-  
-  # mds_plot <- make_mds_plot(data)
-  
+
+  mds_plot <- make_mds_plot(data,
+                            meta,
+                            condition)
+
   corr_heatmaps_result <- make_correlation_heatmaps(data, 
                                                     meta, 
                                                     condition)
@@ -137,12 +139,13 @@ generate_explore_plots <- function(data,
   plots <- c(density_plots, 
              box_plots, 
              violin_plots,
-             list(pca_plot, pca_variance_explained_plot),
+             list(pca_plot, pca_variance_explained_plot, mds_plot),
              corr_heatmaps_result$heatmaps)
   
   plots_sizes <- c(rep(1, length(density_plots)),
                    rep(1.5, length(box_plots)),
                    rep(1.5, length(violin_plots)),
+                   1.5,
                    1.5,
                    1.5,
                    corr_heatmaps_result$heatmaps_sizes)
@@ -175,7 +178,7 @@ build_explore_data_report <- function(header_section,
                                       plots_sizes, 
                                       output_file_path) {  
   
-  level_count = (length(plots)-4)/4
+  level_count = (length(plots)-5)/4
   
   content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
   
@@ -193,16 +196,17 @@ build_explore_data_report <- function(header_section,
                   "Violin Plots",
                   "PCA Plot", 
                   "PCA Plot Variance explained",
+                  "MDS Plot",
                   "Correlation Heatmaps")
 
   toc_index <- 0
   toc_index_memory <- toc_index
-  
+
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     
     # Determine when to place headers based on the provided logic
-    if (length(plots) == 6) {     # Just one level exists
+    if (length(plots) == 7) {     # Just one level exists
       
       toc_index <- toc_index + 1
       
@@ -211,7 +215,8 @@ build_explore_data_report <- function(header_section,
                index == 2 + 2 * level_count || 
                index == 2 + 3 * level_count || 
                index == 3 + 3 * level_count || 
-               index == 4 + 3 * level_count) {    # More than just one level
+               index == 4 + 3 * level_count ||
+               index == 5 + 3 * level_count) {    # More than just one level
     
       toc_index <- toc_index + 1
     }
@@ -508,6 +513,7 @@ make_pca_plot <- function(data,
     ggplot2::xlim(x_range[1], extended_x_max) +
     ggplot2::xlab(paste("PC1 -", percent_variance_explained[1], "% variance")) +
     ggplot2::ylab(paste("PC2 -", percent_variance_explained[2], "% variance")) +
+    ggplot2::labs(color = "Level") +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = element_text(hjust = 0.5))
 }
@@ -564,6 +570,59 @@ make_pca_variance_explained_plot <- function(data) {
     ggplot2::ylim(0, max(var_explained$Variance) + 5)  # Space above highest bar
   
   return(variance_plot)
+}
+
+
+#' Generate MDS Plot
+#'
+#' @description
+#' This function generates a multidimensional scaling (MDS) plot for a given 
+#' data matrix. The MDS plot visualizes the similarities or dissimilarities 
+#' between samples in the data matrix.
+#'
+#' @param data A numeric matrix containing the data.
+#'
+#' @return A ggplot object representing the MDS plot.
+#'
+#' @examples
+#' # Example usage
+#' data <- matrix(rnorm(1000), ncol = 10)
+#' mds_plot <- make_mds_plot(data)
+#' print(mds_plot)
+#' 
+#' @importFrom limma plotMDS
+#' @importFrom ggplot2 ggplot geom_point ggtitle theme_minimal
+#' @importFrom ggrepel geom_text_repel
+#' 
+make_mds_plot <- function(data,
+                          meta,
+                          condition) {
+
+  mds <- limma::plotMDS(x = data, plot = FALSE)
+  
+  # Extract MDS coordinates
+  mds_df <- data.frame(Dim1 = mds$x, 
+                       Dim2 = mds$y, 
+                       Labels = colnames(data))
+  
+  mds_df$Levels <- meta[[condition]]
+  
+  # Generate the MDS plot using ggplot2 and ggrepel
+  mds_plot <- ggplot2::ggplot(mds_df, 
+                              ggplot2::aes(x = Dim1, 
+                                           y = Dim2, 
+                                           label = Labels,
+                                           color = Levels)) +
+    ggplot2::geom_point() +
+    ggrepel::geom_text_repel(box.padding = 0.35, 
+                             point.padding = 0.5, 
+                             max.overlaps = Inf,
+                             size = 2) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(x = "Dimension 1",
+                  y = "Dimension 2",
+                  color = "Level") +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 }
 
 

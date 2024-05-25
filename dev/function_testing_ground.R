@@ -14,14 +14,14 @@ load(here::here("data", "timeseries_proteomics_example.RData"))
 library(tidyverse)
 library(readxl)
 data_excel <- read_excel(here::here("inst", "extdata",
-                                    "PTX_processed_table.xlsx"))
+                                    "PPTX_processed_with_imputation.xlsx"))
 
 
 # Automatically extract data matrix from excel/csv table
 
 # debug(extract_data)
-data <- extract_data(data_excel,
-                     "First.Protein.Description")
+data_extract <- extract_data(data_excel,
+                             "Unique identifier")
 
 
 # Explore data -----------------------------------------------------------------
@@ -36,12 +36,12 @@ report_info <- list(
 )
 
 # debug(explore_data)
-# plots <- explore_data(data = data,
-#                       meta = meta,
-#                       condition = "Phase",
-#                       report_info = report_info,
-#                       meta_batch_column = "Reactor",
-#                       report_dir = here::here("results", "explore_data"))
+plots <- explore_data(data = data,
+                      meta = meta,
+                      condition = "Phase",
+                      report_info = report_info,
+                      meta_batch_column = "Reactor",
+                      report_dir = here::here("results", "explore_data"))
 
 
 # Prep input to hyperparams screen function ------------------------------------
