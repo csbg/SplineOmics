@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 results/
+inst/doc
+/doc/
+/Meta/
