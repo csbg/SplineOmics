@@ -9,3 +9,5 @@
 ^dev$
 ^docs$
 ^tools$
+^doc$
+^Meta$

@@ -92,7 +92,7 @@ run_limma_splines <- function(data,
   levels <- levels(meta[[condition]])
   
   # Get hits for level (within level analysis) ---------------------------------
-  process_level_with_params <- purrr::partial(process_level, 
+  process_level_with_params <- purrr::partial(within_level, 
                                               spline_params = spline_params,
                                               data = data, 
                                               meta = meta, 
@@ -106,13 +106,13 @@ run_limma_splines <- function(data,
                               seq_along(levels), 
                               process_level_with_params)
   
-  top_tables <- stats::setNames(purrr::map(results_list, "top_table"), 
+  within_level <- stats::setNames(purrr::map(results_list, "top_table"), 
                                 purrr::map_chr(results_list, "name"))
   
   
   # Factor and Factor:Time comparisons between levels --------------------------
-  ttslc_factor_only <- list()        # ttslc = top_tables_level_comparison
-  ttslc_factor_time <- list()        # Factor AND time
+  between_level_condition_only <- list()        
+  between_level_condition_time <- list()        # Factor AND time
   
   if (mode == "integrated") {
     level_combinations <- utils::combn(levels, 2, simplify = FALSE)
@@ -126,10 +126,12 @@ run_limma_splines <- function(data,
                               padjust_method = padjust_method, 
                               feature_names = feature_names)
       
-      ttslc_factor_only[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
-        result$ttlc_factor_only
-      ttslc_factor_time[[paste0(lev_combo[1], "_vs_", lev_combo[2])]] <- 
-        result$ttlc_factor_time
+      between_level_condition_only[[paste0(lev_combo[1],
+                                           "_vs_", lev_combo[2])]] <- 
+        result$condition_only
+      between_level_condition_time[[paste0(lev_combo[1],
+                                           "_vs_", lev_combo[2])]] <- 
+        result$condition_time
     }
   } else { # mode == "isolated"
     message(paste0("mode == 'integrated' necessary for between level ",
@@ -138,9 +140,9 @@ run_limma_splines <- function(data,
                  "comparison')."))
   }
   
-  list(top_tables = top_tables, 
-       ttslc_factor_only = ttslc_factor_only,
-       ttslc_factor_time = ttslc_factor_time)
+  list(within_level_temporal_pattern = within_level, 
+       between_level_mean_diff = between_level_condition_only,
+       between_level_mean_and_temporal_diff = between_level_condition_time)
 }
 
 
@@ -260,83 +262,43 @@ between_level <- function(data,
   data <- data[, samples]
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
   
-  args <- list(x = meta$Time, intercept = FALSE)
-  
-  if (!is.null(spline_params$dof)) {
-    args$df <- spline_params$dof[1]
-  } else {
-    args$knots <- spline_params$knots[[1]]
-  }
-  
-  if (!is.null(spline_params$bknots)) {
-    args$Boundary.knots <- spline_params$bknots[[1]]
-  }
-  
-  
-  if (spline_params$spline_type[1] == "b") {
-    args$degree <- spline_params$degree[1]
-    meta$X <- do.call(splines::bs, args)
-  } else {                                          # natural cubic splines
-    meta$X <- do.call(splines::ns, args)
-  }
-  
-  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
+  design_matrix <- design2design_matrix(meta = meta,
+                                        spline_params = spline_params,
+                                        level_index = 1,
+                                        design = design)
   
   fit <- limma::lmFit(data, design_matrix)
   fit <- limma::eBayes(fit)
-  
+
   factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
-  ttlc_factor_only <- limma::topTable(fit, coef = factor_only_contrast_coeff,
+  condition_only <- limma::topTable(fit, coef = factor_only_contrast_coeff,
                                adjust.method = padjust_method, number = Inf)
-  ttlc_factor_only <- modify_limma_top_table(ttlc_factor_only, feature_names)
+  # condition_only <- modify_limma_top_table(condition_only, feature_names)
+  
+  condition_only_resuls <- list(top_table = condition_only,
+                                fit = fit)
+  top_table_condition_only <- process_top_table(condition_only_resuls, 
+                                                feature_names)
+  
   
   num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
   factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
                                         seq_len(num_matching_columns))
-  ttlc_factor_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
+  condition_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
                                adjust.method = padjust_method, number = Inf)
-  ttlc_factor_time <- modify_limma_top_table(ttlc_factor_time, feature_names)
+  # condition_time <- modify_limma_top_table(condition_time, feature_names)
   
-  list(ttlc_factor_only = ttlc_factor_only, ttlc_factor_time = ttlc_factor_time)
+  condition_and_time_results <- list(top_table = condition_time,
+                                     fit = fit)
+  top_table_condition_and_time <- process_top_table(condition_and_time_results, 
+                                                    feature_names)
+  
+  list(condition_only = top_table_condition_only,
+       condition_time = top_table_condition_and_time)
 }
 
 
-#' Process Top Table
-#'
-#' @description
-#' Processes the top table from a LIMMA analysis, adding feature names and 
-#' intercepts.
-#'
-#' @param top_table_and_fit A list containing the top table and the fit object 
-#' from LIMMA.
-#' @param feature_names A non-empty character vector of feature names.
-#'
-#' @return A dataframe containing the processed top table with added intercepts.
-#'
-#' @seealso
-#' \link{modify_limma_top_table}, \link[limma]{lmFit}
-#' 
-#' @importFrom stats coef
-#' 
-process_top_table <- function(top_table_and_fit, 
-                              feature_names) {
-  
-  top_table <- top_table_and_fit$top_table
-  fit <- top_table_and_fit$fit
-  
-  top_table <- modify_limma_top_table(top_table, feature_names)
-  
-  intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
-  intercepts_ordered <- intercepts[match(top_table$feature_index, 
-                                         rownames(intercepts)), , 
-                                   drop = FALSE]
-  top_table$intercept <- intercepts_ordered[, 1]
-  
-  top_table
-}
-
- 
-#' Process Level
+#' Within level analysis
 #'
 #' @description
 #' Processes a single level within a condition, performing LIMMA analysis 
@@ -377,16 +339,16 @@ process_top_table <- function(top_table_and_fit,
 #' 
 #' @importFrom stats relevel
 #' 
-process_level <- function(level, 
-                          level_index,
-                          spline_params,
-                          data, 
-                          meta, 
-                          design, 
-                          condition, 
-                          feature_names, 
-                          padjust_method, 
-                          mode) {
+within_level <- function(level, 
+                         level_index,
+                         spline_params,
+                         data, 
+                         meta, 
+                         design, 
+                         condition, 
+                         feature_names, 
+                         padjust_method, 
+                         mode) {
   
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
@@ -401,15 +363,15 @@ process_level <- function(level,
     # integrated mode.
   }
   
-  result <- within_level(data_copy, 
-                         meta_copy, 
-                         design, 
-                         condition, 
-                         level,
-                         spline_params,
-                         level_index, 
-                         padjust_method)
-  
+  result <- process_within_level(data_copy, 
+                                 meta_copy, 
+                                 design, 
+                                 condition, 
+                                 level,
+                                 spline_params,
+                                 level_index, 
+                                 padjust_method)
+
   top_table <- process_top_table(result, 
                                  feature_names)
   
@@ -421,45 +383,42 @@ process_level <- function(level,
 # Level 2 internal functions ---------------------------------------------------
 
 
-#' Modify limma Top Table
+#' Process Top Table
 #'
 #' @description
-#' Modifies the limma top table to include feature indices and names.
+#' Processes the top table from a LIMMA analysis, adding feature names and 
+#' intercepts.
 #'
-#' @param top_table A dataframe containing the top table results from limma
-#' @param feature_names A character vector of feature names.
+#' @param top_table_and_fit A list containing the top table and the fit object 
+#' from LIMMA.
+#' @param feature_names A non-empty character vector of feature names.
 #'
-#' @return A tibble with feature indices and names included.
+#' @return A dataframe containing the processed top table with added intercepts.
 #'
 #' @seealso
-#' \link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
+#' \link{modify_limma_top_table}, \link[limma]{lmFit}
 #' 
-#' @importFrom tidyr as_tibble
-#' @importFrom dplyr relocate last_col mutate
+#' @importFrom stats coef
 #' 
-modify_limma_top_table <- function(top_table, 
-                                   feature_names) {
+process_top_table <- function(top_table_and_fit, 
+                              feature_names) {
   
-  feature_index <- dplyr::sym("feature_index")
+  top_table <- top_table_and_fit$top_table
+  fit <- top_table_and_fit$fit
   
-  # top_table <- tidyr::as_tibble(top_table, rownames = "feature_index") %>% 
-  #   dplyr::relocate(!!feature_index, .after = dplyr::last_col()) %>%
-  #   dplyr::mutate(!!feature_index := as.integer(feature_index))
+  top_table <- modify_limma_top_table(top_table, feature_names)
   
-  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index")
-  
-  top_table <- top_table %>% 
-    dplyr::relocate(feature_index, .after = dplyr::last_col()) %>%
-    dplyr::mutate(feature_index = as.integer(feature_index))
-  
-  sorted_feature_names <- feature_names[top_table$feature_index]
-  top_table <- top_table %>% dplyr::mutate(feature_names = sorted_feature_names)
+  intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
+  intercepts_ordered <- intercepts[match(top_table$feature_index, 
+                                         rownames(intercepts)), , 
+                                   drop = FALSE]
+  top_table$intercept <- intercepts_ordered[, 1]
   
   top_table
 }
 
 
-#' Within Level Analysis
+#' Process Within Level
 #'
 #' @description
 #' Performs a within-level analysis using limma to generate top tables and fit 
@@ -502,14 +461,14 @@ modify_limma_top_table <- function(top_table,
 #' @importFrom limma eBayes
 #' @importFrom limma topTable
 #' 
-within_level <- function(data,
-                         meta,
-                         design,
-                         factor,
-                         level,
-                         spline_params,
-                         level_index,
-                         padjust_method) {
+process_within_level <- function(data,
+                                 meta,
+                                 design,
+                                 factor,
+                                 level,
+                                 spline_params,
+                                 level_index,
+                                 padjust_method) {
 
   design_matrix <- design2design_matrix(meta,
                                         spline_params,
@@ -525,7 +484,46 @@ within_level <- function(data,
   
   top_table <- limma::topTable(fit, adjust=padjust_method, number=Inf, 
                                coef=coeffs)
+
   attr(top_table, "adjust.method") <- padjust_method
   
   list(top_table = top_table, fit = fit)
+}
+
+
+
+# Level 3 internal functions ---------------------------------------------------
+
+
+#' Modify limma Top Table
+#'
+#' @description
+#' Modifies the limma top table to include feature indices and names.
+#'
+#' @param top_table A dataframe containing the top table results from limma
+#' @param feature_names A character vector of feature names.
+#'
+#' @return A tibble with feature indices and names included.
+#'
+#' @seealso
+#' \link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
+#' 
+#' @importFrom tidyr as_tibble
+#' @importFrom dplyr relocate last_col mutate
+#' 
+modify_limma_top_table <- function(top_table, 
+                                   feature_names) {
+  
+  feature_index <- dplyr::sym("feature_index")
+  
+  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index")
+  
+  top_table <- top_table %>% 
+    dplyr::relocate(feature_index, .after = dplyr::last_col()) %>%
+    dplyr::mutate(feature_index = as.integer(feature_index))
+  
+  sorted_feature_names <- feature_names[top_table$feature_index]
+  top_table <- top_table %>% dplyr::mutate(feature_names = sorted_feature_names)
+  
+  top_table
 }

@@ -100,14 +100,14 @@ result <- run_limma_splines(data,
                             spline_params = spline_params,
                             condition)
 
-top_tables <- result$top_tables
-ttslc_factor_only <- result$ttslc_factor_only
-ttslc_factor_time <- result$ttslc_factor_time
+within_level_top_tables <- result$within_level_temporal_pattern
+between_level_condition_top_tables <- result$between_level_mean_diff
+between_level_condition_time_top_tables <- result$between_level_mean_and_temporal_diff
 
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)
-clusters <- list(6L, 3L)
+clusters <- list(6L, 6L)
 report_dir <- here::here("results", "clustering_reports")
 
 report_info <- list(
@@ -124,6 +124,10 @@ report_info <- list(
   contact_info = "rauterthomas0@gmail.com"
 )
 
+# top_tables <- list(within_level_top_tables, between_level_condition_top_tables)
+top_tables <- within_level_top_tables
+
+# debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables, 
                                    data = data, 
                                    meta = meta, 

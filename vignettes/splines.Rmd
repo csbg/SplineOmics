@@ -1,0 +1,31 @@
+---
+title: "splines"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{splines}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SplineOmics)
+```
+
+Here an example of a hit (significant feature) with the datapoints in blue and the applied natural cubic spline in red:
+
+<img src="inst/extdata/significant_feature.png" width="200" height="200"/>
+
+The datapoints of the triplicates are close together and there is a clear temporal pattern. This is from a proteomics example, so this protein here would decrease in abundance over the timecourse.
+
+Here an example of a feature, that is not significant (no hit):
+
+<img src="inst/extdata/non_significant_feature.png" width="200" height="200"/>
+
+The datapoints are scattered and there is no clear temporal pattern. The conclusion for this protein would be that there is no significant change in abundance over the timecourse.

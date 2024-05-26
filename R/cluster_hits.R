@@ -105,20 +105,26 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
     adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
   }
   
-  all_levels_clustering <- perform_clustering(top_tables = top_tables,
-                                              adj_pthresholds = adj_pthresholds,
-                                              clusters = clusters,
-                                              meta = meta,
-                                              condition = condition,
-                                              spline_params = spline_params,
-                                              mode = mode)
+
+  within_level_top_tables <- 
+    filter_top_tables(top_tables = top_tables,
+                      adj_pthresholds = adj_pthresholds,
+                      meta = meta,
+                      condition = condition)
+  
+  all_levels_clustering <- 
+    perform_clustering(top_tables = within_level_top_tables,
+                       clusters = clusters,
+                       meta = meta,
+                       condition = condition,
+                       spline_params = spline_params,
+                       mode = mode)
   
   plots <- make_clustering_report(all_levels_clustering = all_levels_clustering, 
                                   condition = condition, 
                                   data = data, 
                                   meta = meta, 
                                   spline_params = spline_params,
-                                  adj_pthresholds = adj_pthresholds, 
                                   report_dir = report_dir,
                                   mode = mode,
                                   report_info = report_info,
@@ -197,7 +203,7 @@ control_inputs_cluster_hits <- function(top_tables,
                                         meta_batch_column,
                                         time_unit,
                                         report_dir) {
-  
+
   check_top_tables(top_tables)
 
   check_data_and_meta(data = data, 
@@ -236,6 +242,60 @@ control_inputs_cluster_hits <- function(top_tables,
 }
 
 
+filter_top_tables <- function(top_tables,
+                              adj_pthresholds,
+                              meta,
+                              condition) {
+  
+  result <- check_between_level_pattern(top_tables)
+  
+  if (result$between_levels) {                     # between_level analysis
+    if (result$index_with_pattern == 1) {
+      within_level_top_tables_index <- 2
+      between_level_top_tables_index <- 1
+    } else {                        # between level top_tables are at index 2
+      within_level_top_tables_index <- 1
+      between_level_top_tables_index <- 2
+    }
+    
+    within_level_top_tables <- top_tables[[within_level_top_tables_index]] 
+    between_level_top_tables <- top_tables[[between_level_top_tables_index]]
+    
+  } else {                                  # no between level analysis
+    within_level_top_tables <- top_tables
+  }
+  
+  
+  for (i in seq_along(within_level_top_tables)) {
+    
+    within_level_top_table <- within_level_top_tables[[i]]
+    level <- unique(meta[[condition]])[i]
+    
+    if (result$between_levels) {
+      hit_indices <- get_level_hit_indices(between_level_top_tables,
+                                           level,
+                                           adj_pthresholds)
+    } else {    # within level
+      hit_indices <- within_level_top_table[["feature_index"]][
+        within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
+      ]
+    }
+    
+    if (length(hit_indices) == 0) {
+      stop(paste("No features in level", level ,"have an adj.P.Val <",
+                 adj_pthresholds[i]),
+           call. = FALSE)
+    }
+    
+    top_table_filtered <- 
+      within_level_top_table[within_level_top_table[["feature_index"]] 
+                             %in% hit_indices, ]
+    within_level_top_tables[[i]] <- top_table_filtered
+  }
+  return(within_level_top_tables)
+}
+
+
 #' Perform Clustering
 #'
 #' @description
@@ -270,7 +330,6 @@ control_inputs_cluster_hits <- function(top_tables,
 #' \code{\link{process_level_cluster}}
 #' 
 perform_clustering <- function(top_tables,
-                               adj_pthresholds,
                                clusters,
                                meta,
                                condition,
@@ -287,7 +346,6 @@ perform_clustering <- function(top_tables,
   
   all_levels_clustering <- mapply(process_level_cluster, 
                                   top_tables, 
-                                  adj_pthresholds, 
                                   clusters, 
                                   levels, 
                                   MoreArgs = list(meta = meta, 
@@ -337,7 +395,6 @@ make_clustering_report <- function(all_levels_clustering,
                                    data, 
                                    meta, 
                                    spline_params,
-                                   adj_pthresholds, 
                                    report_dir,
                                    mode,
                                    report_info,
@@ -448,7 +505,6 @@ make_clustering_report <- function(all_levels_clustering,
     consensus_shapes <- plot_consensus_shapes(curve_values, time_unit_label)
     
     top_table <- level_clustering$top_table
-    adj_pthreshold <- adj_pthresholds[i]
     levels <- as.character(unique(meta[[condition]]))
 
     col_indices <- which(meta[[condition]] == levels[i])
@@ -462,13 +518,12 @@ make_clustering_report <- function(all_levels_clustering,
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
       main_title <- paste("Cluster", nr_cluster, sep = " ")
       
-      top_table_filt <- top_table %>%
-        dplyr::filter(top_table[["adj.P.Val"]] < adj_pthreshold,
-                      !!rlang::sym("cluster") == nr_cluster)
+      top_table_cluster <- top_table %>%
+        dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
       
       X <- level_clustering$X
 
-      plot_splines_result <- plot_splines(top_table_filt, 
+      plot_splines_result <- plot_splines(top_table_cluster, 
                                           data_level, 
                                           meta_level,
                                           X,
@@ -524,23 +579,114 @@ make_clustering_report <- function(all_levels_clustering,
 #'
 #' @return No return value, called for side effects.
 #'
-#' @examples
-#' \dontrun{
-#' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-#' check_top_tables(top_tables)}
-#'
 #' @seealso
 #' \code{\link{check_dataframe}}
 #' 
+# check_top_tables <- function(top_tables) {
+#   
+#   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
+#     stop("top_tables must be a list of dataframes")
+#   } else {
+#     for (top_table in top_tables) {
+#       check_dataframe(top_table)
+#     }
+#   }
+# }
 check_top_tables <- function(top_tables) {
   
-  if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
-    stop("top_tables must be a list of dataframes")
-  } else {
-    for (top_table in top_tables) {
-      check_dataframe(top_table)
+  # Helper function to check data frames in a list
+  check_list_of_dataframes <- function(df_list) {
+    if (!is.list(df_list) || !all(sapply(df_list, is.data.frame))) {
+      stop("Expected a list of dataframes", call. = FALSE)
+    } else {
+      for (df in df_list) {
+        check_dataframe(df)
+      }
     }
   }
+  
+  # Check if top_tables is a list
+  if (!is.list(top_tables)) {
+    stop("top_tables must be a list", call. = FALSE)
+  }
+
+  for (element in top_tables) {
+    if (!tibble::is_tibble(element) && is.list(element)) {
+      check_list_of_dataframes(element)
+    } else if (tibble::is_tibble(element)) {
+      check_dataframe(element)
+    } else {
+      stop("top_tables must contain either data frames or lists of data frames",
+           call. = FALSE)
+    }
+  }
+}
+
+
+check_between_level_pattern <- function(top_tables) {
+  
+  # Initialize variables
+  between_levels <- FALSE
+  index_with_pattern <- NA
+  
+  # Define the regular expression pattern
+  pattern <- ".+_vs_.+"
+  
+  # Check if top_tables is a list
+  if (is.list(top_tables)) {
+    # Iterate over each element in top_tables
+    for (i in seq_along(top_tables)) {
+      # Check if the element is a list
+      if (is.list(top_tables[[i]])) {
+        # Get the names of the elements in the inner list
+        element_names <- names(top_tables[[i]])
+        # Check if all names in the inner list match the pattern
+        if (all(grepl(pattern, element_names))) {
+          between_levels <- TRUE
+          index_with_pattern <- i
+          break
+        }
+      }
+    }
+  }
+  
+  # Return the result as a list
+  return(list(between_levels = between_levels, 
+              index_with_pattern = index_with_pattern))
+}
+
+
+get_level_hit_indices <- function(between_level_top_tables,
+                                  level,
+                                  adj_pthresholds) {
+
+  # Initialize a vector to store unique feature indices
+  unique_hit_indices <- c()
+
+  # Loop through the elements of the list
+  for (i in seq_along(between_level_top_tables)) {
+    # Get the name of the current data frame
+    df_name <- names(between_level_top_tables)[i]
+    
+    # Check if the name contains the level string case insensitively
+    if (grepl(level, df_name, ignore.case = TRUE)) {
+      # Get the current data frame
+      within_level_top_table <- between_level_top_tables[[i]]
+      
+      # Find the row indices that meet the condition
+      hit_indices <- 
+        which(within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i])
+      
+      # Extract the feature indices from the identified rows
+      feature_indices <- within_level_top_table[hit_indices, "feature_index"]
+      feature_indices <- within_level_top_table[hit_indices, 
+                                                "feature_index", drop = TRUE]
+      unique_hit_indices <- c(unique_hit_indices, feature_indices)
+    }
+  }
+
+  # Get unique feature indices
+  unique_hit_indices <- unique(unique_hit_indices)
 }
 
 
@@ -568,7 +714,6 @@ check_top_tables <- function(top_tables) {
 #' \code{\link{hierarchical_clustering}}
 #' 
 process_level_cluster <- function(top_table,
-                                  adj_pthreshold, 
                                   cluster_size, 
                                   level, 
                                   meta, 
@@ -577,7 +722,6 @@ process_level_cluster <- function(top_table,
                                   mode) {
   
   curve_results <- get_curve_values(top_table = top_table,
-                                    adj_pthreshold = adj_pthreshold, 
                                     level = level, 
                                     meta = meta, 
                                     condition = condition,
@@ -683,6 +827,7 @@ plot_heatmap <- function(datas,
     
     ht <- 
       ComplexHeatmap::Heatmap(z_score,
+                              use_raster = TRUE,
                               column_split = meta_level$Time,
                               cluster_columns = FALSE,
                               row_split = clusters$cluster,
@@ -947,7 +1092,8 @@ plot_single_and_consensus_splines <- function(time_series_data,
   # Convert data to long format with appropriate column names
   df_long <- as.data.frame(t(time_series_data)) %>%
     rownames_to_column(var = "time") %>%
-    pivot_longer(cols = -!!time_col, names_to = "feature", values_to = "intensity") %>%
+    pivot_longer(cols = -!!time_col, names_to = "feature", 
+                 values_to = "intensity") %>%
     arrange(!!feature_col) %>%
     mutate(!!time_col := as.numeric(!!time_col))
   
@@ -1312,19 +1458,6 @@ build_cluster_hits_report <- function(header_section,
 #' @param df A dataframe to check.
 #'
 #' @return TRUE if the dataframe is valid, otherwise an error is thrown.
-#'
-#' @examples
-#' \dontrun{
-#' df <- data.frame(
-#'   AveExpr = runif(10),
-#'   F = runif(10),
-#'   P.Value = runif(10),
-#'   adj.P.Val = runif(10),
-#'   feature_index = as.integer(1:10),
-#'   feature_names = letters[1:10],
-#'   intercept = runif(10)
-#' )
-#' check_dataframe(df)}
 #' 
 check_dataframe <- function(df) {
   
@@ -1388,14 +1521,11 @@ check_dataframe <- function(df) {
 #' @importFrom splines ns
 #' 
 get_curve_values <- function(top_table,
-                             adj_pthreshold, 
                              level, 
                              meta, 
                              condition,
                              spline_params,
                              mode) {
-  
-  spline_results_hits <- top_table[top_table[["adj.P.Val"]] < adj_pthreshold, ]
   
   subset_meta <- meta[meta[[condition]] == level, ]
   
@@ -1434,7 +1564,7 @@ get_curve_values <- function(top_table,
   
   columns_to_select <- 1:DoF
   
-  splineCoeffs <- spline_results_hits %>%
+  splineCoeffs <- top_table %>%
     dplyr::select(all_of(1:DoF)) %>%
     as.matrix()
   
@@ -1538,8 +1668,8 @@ hierarchical_clustering <- function(curve_values,
   }
   
   clustered_hits <- data.frame(cluster = cluster_assignments)
-  top_table_hits <- dplyr::filter(top_table, top_table[["adj.P.Val"]] < 0.05)
-  clustered_hits$feature <- top_table_hits$feature_index
+  # top_table_hits <- dplyr::filter(top_table, top_table[["adj.P.Val"]] < 0.05)
+  clustered_hits$feature <- top_table$feature_index
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
   
   colnames(curve_values) <- smooth_timepoints
