@@ -33,8 +33,6 @@
 #' hits in each top table.
 #' @param clusters Character or integer vector specifying the number of 
 #' clusters or 'auto' for automatic estimation.
-#' @param report_dir Character string specifying the directory path where the 
-#' HTML report and any other output files should be saved.
 #' @param report_info A character string to be printed at the top of the report.
 #' @param mode A character string specifying the mode ('integrated' or 
 #' 'isolated').
@@ -44,6 +42,10 @@
 #' the metadata used for batch effect removal.
 #' @param time_unit A character string specifying the time unit label for plots 
 #' (e.g., 'm' for minutes).
+#' @param report_dir Character string specifying the directory path where the 
+#' HTML report and any other output files should be saved.
+#' @param report Boolean TRUE or FALSE value specifing if a report should be 
+#' generated.
 #'
 #' @return A list where each element corresponds to a group factor and contains 
 #' the clustering results,
@@ -75,8 +77,9 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          clusters = c("auto"),
                          meta_batch_column = NA,   # to remove batch effect
                          time_unit = "m",    # For the plot labels
-                         report_dir = here::here()) {
-  
+                         report_dir = here::here(),
+                         report = TRUE) {
+
   # feature_names are in top_tables
   matrix_and_feature_names <- process_data(data) 
   data <- matrix_and_feature_names$data
@@ -96,7 +99,8 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                               design = design,
                               meta_batch_column = meta_batch_column,
                               time_unit = time_unit,
-                              report_dir = report_dir)
+                              report_dir = report_dir,
+                              report = report)
   
   # To set the default p-value threshold for ALL levels.
   if (is.numeric(adj_pthresholds) && 
@@ -104,7 +108,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
     levels <- unique(meta[[condition]])
     adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
   }
-  
 
   within_level_top_tables <- 
     filter_top_tables(top_tables = top_tables,
@@ -119,21 +122,36 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                        condition = condition,
                        spline_params = spline_params,
                        mode = mode)
+  # debug(make_clustering_report)
+  if (report) {
+    plots <- 
+      make_clustering_report(all_levels_clustering = all_levels_clustering,
+                             top_tables = top_tables,
+                             condition = condition, 
+                             data = data, 
+                             meta = meta, 
+                             spline_params = spline_params,
+                             report_dir = report_dir,
+                             mode = mode,
+                             report_info = report_info,
+                             design = design,
+                             meta_batch_column = meta_batch_column,
+                             time_unit = time_unit)
+  } else {
+    plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
+  }
   
-  plots <- make_clustering_report(all_levels_clustering = all_levels_clustering, 
-                                  condition = condition, 
-                                  data = data, 
-                                  meta = meta, 
-                                  spline_params = spline_params,
-                                  report_dir = report_dir,
-                                  mode = mode,
-                                  report_info = report_info,
-                                  design = design,
-                                  meta_batch_column = meta_batch_column,
-                                  time_unit = time_unit)
-
+  # Leave a message for the user instead of just NA.
+  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
+    if (is.logical(x)) {
+      return("No result for this level, because the top_table had < 2 hits")
+    } else {
+      return(x)
+    }
+  })
+  
   list(all_levels_clustering = all_levels_clustering,
-       plots= plots)
+       plots = plots)
 }
 
 
@@ -202,7 +220,8 @@ control_inputs_cluster_hits <- function(top_tables,
                                         design,
                                         meta_batch_column,
                                         time_unit,
-                                        report_dir) {
+                                        report_dir,
+                                        report) {
 
   check_top_tables(top_tables)
 
@@ -239,6 +258,23 @@ control_inputs_cluster_hits <- function(top_tables,
   check_time_unit(time_unit)
   
   check_and_create_report_dir(report_dir)
+  
+  if (report != TRUE && report != FALSE) {
+    stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
+  }
+}
+
+
+create_f_stat_plot <- function(top_table) {
+  
+  ggplot(top_table, aes(x = F, y = -log10(adj.P.Val))) +
+    geom_point(alpha = 0.5) +
+    theme_minimal() +
+    ggplot2::geom_hline(yintercept = -log10(0.05), 
+                        linetype = "dashed", color = "red") +
+    labs(title = "F-statistic",
+         x = "F-statistic",
+         y = "-Log10 Adjusted P-value")
 }
 
 
@@ -290,8 +326,21 @@ filter_top_tables <- function(top_tables,
     top_table_filtered <- 
       within_level_top_table[within_level_top_table[["feature_index"]] 
                              %in% hit_indices, ]
-    within_level_top_tables[[i]] <- top_table_filtered
+    
+    if (nrow(top_table_filtered) < 2) {
+      message(paste("Level", level, "has < 2 hits. Skipping clustering for",
+                    "this level"))
+      within_level_top_tables[[i]] <- NA
+    } else {
+      within_level_top_tables[[i]] <- top_table_filtered
+    }
+    
   }
+
+  if (all(is.na(within_level_top_tables))) {
+    stop("All levels have < 2 hits. Cannot run clustering.", call. = FALSE)
+  } 
+  
   return(within_level_top_tables)
 }
 
@@ -391,6 +440,7 @@ perform_clustering <- function(top_tables,
 #' @importFrom stats na.omit
 #' 
 make_clustering_report <- function(all_levels_clustering, 
+                                   top_tables,
                                    condition, 
                                    data, 
                                    meta, 
@@ -401,7 +451,7 @@ make_clustering_report <- function(all_levels_clustering,
                                    design,
                                    meta_batch_column,
                                    time_unit = time_unit) {
-  
+
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level 
@@ -450,6 +500,12 @@ make_clustering_report <- function(all_levels_clustering,
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
   for (i in seq_along(all_levels_clustering)) {
+    
+    if (is.null(all_levels_clustering[[i]]) || 
+        all(is.na(all_levels_clustering[[i]]))) { 
+      next
+    }
+    
     clusters <- c(clusters, as.integer(all_levels_clustering[[i]]$clusters))
     all_levels_clustering[[i]]$clusters <- NULL
   }
@@ -464,6 +520,7 @@ make_clustering_report <- function(all_levels_clustering,
   
   heatmaps <- plot_heatmap(datas = datas,
                            meta = meta,
+                           mode = mode,
                            condition = condition,
                            all_levels_clustering = all_levels_clustering,
                            time_unit_label = time_unit_label)
@@ -473,10 +530,19 @@ make_clustering_report <- function(all_levels_clustering,
   level_headers_info <- list()
   plots <- list()
   plots_sizes <- list()
+  q <- 0
   
   for (i in seq_along(all_levels_clustering)) {
-    level_clustering <- all_levels_clustering[[i]]
     
+    # When a level has < 2 hits
+    if (is.null(all_levels_clustering[[i]]) ||
+        all(is.na(all_levels_clustering[[i]]))) {
+      next
+    } else {
+      q <- q + 1
+    }
+    
+    level_clustering <- all_levels_clustering[[i]]
     
     levels <- unique(meta[[condition]])
     
@@ -488,17 +554,23 @@ make_clustering_report <- function(all_levels_clustering,
       header_name <- sprintf("Level: %s", ith_unique_value)
       
       # Determine the number of plots after which the header should be placed
-      header_placement <- if (i == 1) 0 else 4 + clusters[i-1]
+      header_placement <- if (q == 1) 0 else 4 + clusters[q-1]
       
+      nr_hits <- nrow(level_clustering$clustered_hits)
+
       header_info <- list(header_name = header_name, 
-                          header_placement = header_placement)
+                          header_placement = header_placement,
+                          nr_hits = nr_hits)
       
       level_headers_info[[i]] <- header_info
     }
+
+    f_stat_plot <- create_f_stat_plot(top_tables[[i]], levels[[i]])
     
     curve_values <- level_clustering$curve_values
-    
-    dendrogram <- plot_dendrogram(level_clustering$hc, clusters[i])
+
+    dendrogram <- plot_dendrogram(level_clustering$hc,
+                                  clusters[q])
     
     p_curves <- plot_all_shapes(curve_values, time_unit_label)
     
@@ -508,7 +580,12 @@ make_clustering_report <- function(all_levels_clustering,
     levels <- as.character(unique(meta[[condition]]))
 
     col_indices <- which(meta[[condition]] == levels[i])
-    data_level <- datas[[i]][, col_indices]
+    
+    if (mode == "integrated") {
+      data_level <- datas[[i]][, col_indices]
+    } else {                                    # mode == "isolated"
+      data_level <- datas[[i]]
+    }
     
     meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
     
@@ -537,13 +614,14 @@ make_clustering_report <- function(all_levels_clustering,
     }
     
     plots <- c(plots, 
-               list(dendrogram, p_curves), 
+               list(f_stat_plot, dendrogram, p_curves), 
                list(consensus_shapes$plot), 
                heatmaps[[i]], 
                composite_plots)
     
     # For every plot in plots, this determines the size in the HTML
     plots_sizes <- c(plots_sizes, 
+                     1,
                      1.5, 
                      1.5, 
                      consensus_shapes$size, 
@@ -720,6 +798,11 @@ process_level_cluster <- function(top_table,
                                   condition,
                                   spline_params,
                                   mode) {
+
+  # means that it had < 2 hits.
+  if (is.null(top_table) || all(is.na(top_table))) {   
+    return(NA)
+  }
   
   curve_results <- get_curve_values(top_table = top_table,
                                     level = level, 
@@ -781,8 +864,8 @@ process_level_cluster <- function(top_table,
 #' 
 plot_heatmap <- function(datas,
                          meta,
+                         mode,
                          condition,
-                         design,
                          all_levels_clustering,
                          time_unit_label) {
 
@@ -810,6 +893,13 @@ plot_heatmap <- function(datas,
   # Generate a heatmap for every level
   for (i in seq_along(all_levels_clustering)) {
     
+    # When a level has < 2 hits
+    if (is.null(all_levels_clustering[[i]]) || 
+        all(is.na(all_levels_clustering[[i]]))) { 
+      heatmaps[[length(heatmaps) + 1]] <- NA
+      next
+    }
+    
     level_clustering <- all_levels_clustering[[i]]
     
     clustered_hits <- level_clustering$clustered_hits
@@ -818,7 +908,11 @@ plot_heatmap <- function(datas,
     level <- levels[[i]]
     level_indices <- which(meta[[condition]] == level)
     
-    data_level <- datas[[i]][, level_indices]
+    if (mode == "integrated") {
+      data_level <- datas[[i]][, level_indices]
+    } else {                                    # mode == "isolated"
+      data_level <- datas[[i]]
+    }
     
     data_level <- data_level[as.numeric(clusters$feature),]
     z_score <- t(scale(t(data_level)))
@@ -843,7 +937,9 @@ plot_heatmap <- function(datas,
                               # height = unit(2, "mm") * nrow(z_score) + 
                               #   5 * unit(2, "pt"),
                               show_row_names = TRUE,
-                              show_column_names = TRUE)
+                              show_column_names = TRUE,
+                              column_names_rot = 60,
+                              column_names_gp = gpar(fontsize = 5))
 
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
@@ -950,7 +1046,7 @@ plot_dendrogram <- function(hc,
   
   dend <- stats::as.dendrogram(hc)
   clusters <- stats::cutree(hc, k)
-
+  
   palette_name <- "Set3"
   max_colors_in_palette <-
     RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
@@ -966,7 +1062,7 @@ plot_dendrogram <- function(hc,
   if (k > max_colors_in_palette) {
     colors <- rep(colors, length.out = k)
   }
-
+  
   dend_colored <- dendextend::color_branches(dend, k = k,
                                              labels_colors = colors)
   
@@ -976,18 +1072,19 @@ plot_dendrogram <- function(hc,
                                 length(dendextend::get_leaves_attr(dend_colored,
                                                                    "label"))))
   
-
+  
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
     ggplot2::labs(title = 
                     "Hierarchical Clustering Dendrogram (colors = clusters)",
-         x = "", y = "") +
+                  x = "", y = "") +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text.x = ggplot2::element_blank(), 
                    axis.ticks.x = ggplot2::element_blank(),
-          axis.text.y = ggplot2::element_blank(), 
-          axis.ticks.y = ggplot2::element_blank())
+                   axis.text.y = ggplot2::element_blank(), 
+                   axis.ticks.y = ggplot2::element_blank())
 }
+
 
 
 #' Plot All Shapes
@@ -1206,6 +1303,9 @@ plot_splines <- function(top_table,
                          main_title,
                          time_unit_label) {
   
+  # Sort so that HTML reports are easier to read and comparisons are easier.
+  top_table <- top_table %>% dplyr::arrange(feature_names)
+  
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
   
@@ -1312,8 +1412,8 @@ plot_splines <- function(top_table,
 build_cluster_hits_report <- function(header_section, 
                                       plots, 
                                       plots_sizes, 
-                                      level_headers_info = level_headers_info,
-                                      spline_params = spline_params,
+                                      level_headers_info,
+                                      spline_params,
                                       mode,
                                       output_file_path) {  
   
@@ -1328,94 +1428,58 @@ build_cluster_hits_report <- function(header_section,
   toc_style <- "font-size: 30px;"
   
   current_header_index <- 1
-  
+  j <- 0
+  level_headers_info <- Filter(Negate(is.null), level_headers_info)
+
   pb <- create_progress_bar(plots)
   # Generate the sections and plots
   for (index in seq_along(plots)) {
+    
     if (current_header_index <= length(level_headers_info)) {
       header_info <- level_headers_info[[current_header_index]]
-      header_placement <- header_info[[2]]
-      
+      header_placement <- header_info$header_placement
+      nr_hits <- header_info$nr_hits
+
       if (index - 1 == header_placement) {
+        
         section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>", 
-                                  section_header_style, index, header_info[[1]])
+                                  section_header_style, 
+                                  index, 
+                                  header_info$header_name)
+        
         content_with_plots <- paste(content_with_plots, section_header, 
                                     sep="\n")
         
         if (mode == "integrated") {
           j <- 1
         } else {      # mode == "isolated" or mode == NA
-          j <- index
+          j <- j + 1
         }
         
-        if (!is.null(spline_params$spline_type) && 
-            length(spline_params$spline_type) >= j) {
-          spline_params$spline_type[j] <- spline_params$spline_type[j]
-        } else {
-          spline_params$spline_type[j] <- NA
-        }
-        
-        if (!is.null(spline_params$degree) && 
-            length(spline_params$degree) >= j) {
-          spline_params$degree[j] <- spline_params$degree[j]
-        } else {
-          spline_params$degree[j] <- NA
-        }
-        
-        if (!is.null(spline_params$dof) && 
-            length(spline_params$dof) >= j) {
-          spline_params$dof[j] <- spline_params$dof[j]
-        } else {
-          spline_params$dof[j] <- NA
-        }
-        
-        if (!is.null(spline_params$knots) && 
-            length(spline_params$knots) >= j) {
-          spline_params$knots[j] <- spline_params$knots[j]
-        } else {
-          spline_params$knots[j] <- NA
-        }
-        
-        if (!is.null(spline_params$bknots) && 
-            length(spline_params$bknots) >= j) {
-          spline_params$bknots[j] <- spline_params$bknots[j]
-        } else {
-          spline_params$bknots[j] <- NA
-        }
-        
-        
-        if (spline_params$spline_type[j] == "b") {
-          spline_params_info <- 
-            sprintf("<p style='text-align: center; font-size: 30px;'>
-                    <span style='color: blue;'>Spline-type:</span> B-spline<br>
-                    <span style='color: blue;'>Degree:</span> %s<br>
-                    <span style='color: blue;'>DoF:</span> %s<br>
-                    <span style='color: blue;'>Knots:</span> %s<br>
-                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
-                    spline_params$degree[j], spline_params$dof[j], 
-                    spline_params$knots[j], spline_params$bknots[j])
-        } else {    # == "n"
-          spline_params_info <- 
-            sprintf("<p style='text-align: center; font-size: 30px;'>
-                    <span style='color: blue;'>Spline-type:</span> Natural cubic
-                    spline<br>
-                    <span style='color: blue;'>DoF:</span> %s<br>
-                    <span style='color: blue;'>Knots:</span> %s<br>
-                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
-                    spline_params$dof[j], spline_params$knots[j], 
-                    spline_params$bknots[j])
-          
-        }
+        spline_params_info <- 
+          get_spline_params_info(spline_params = spline_params,
+                                 j = j)
         
         content_with_plots <- paste(content_with_plots, spline_params_info, 
                                     sep="\n")
+        
+        hits_info <- sprintf(
+          paste0(
+            "<p style='text-align: center; font-size: 30px;'>",
+            "Number of hits: %d</p>"
+          ),
+          nr_hits
+        )
+        
+        content_with_plots <- paste(content_with_plots, hits_info, sep="\n")
         
         toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>", 
                              toc_style, index, header_info[[1]])
         toc <- paste(toc, toc_entry, sep="\n")
         
         current_header_index <- current_header_index + 1
-      }
+        
+      } 
     }
     
     # Process each plot
@@ -1684,4 +1748,92 @@ hierarchical_clustering <- function(curve_values,
                            curve_values = curve_values,
                            top_table = top_table,
                            clusters = k)
+}
+
+
+#' Get Spline Parameters Info
+#'
+#' @description
+#' This function retrieves the spline parameters information for a given index.
+#' It ensures the spline parameters are valid and constructs an HTML string
+#' describing the spline parameters.
+#'
+#' @param spline_params A list containing the spline parameters. The list should
+#'                      include elements: `spline_type`, `degree`, `dof`,
+#'                      `knots`, and `bknots`.
+#' @param j An integer specifying the index of the spline parameters to 
+#' retrieve.
+#'
+#' @details
+#' The function checks if the spline parameters are not `NULL` and have a length
+#' greater than or equal to the specified index `j`. If a parameter is 
+#' invalid or
+#' missing, it sets the parameter to `NA`. It then constructs an HTML string 
+#' describing the spline parameters, including spline type, degree, degrees of 
+#' freedom (DoF), knots, and boundary knots.
+#'
+#' @return A character string containing HTML-formatted information about the 
+#'         spline parameters at the specified index.
+#'         
+get_spline_params_info <- function(spline_params,
+                                   j) {
+  
+  if (!is.null(spline_params$spline_type) && 
+      length(spline_params$spline_type) >= j) {
+    spline_params$spline_type[j] <- spline_params$spline_type[j]
+  } else {
+    spline_params$spline_type[j] <- NA
+  }
+  
+  if (!is.null(spline_params$degree) && 
+      length(spline_params$degree) >= j) {
+    spline_params$degree[j] <- spline_params$degree[j]
+  } else {
+    spline_params$degree[j] <- NA
+  }
+  
+  if (!is.null(spline_params$dof) && 
+      length(spline_params$dof) >= j) {
+    spline_params$dof[j] <- spline_params$dof[j]
+  } else {
+    spline_params$dof[j] <- NA
+  }
+  
+  if (!is.null(spline_params$knots) && 
+      length(spline_params$knots) >= j) {
+    spline_params$knots[j] <- spline_params$knots[j]
+  } else {
+    spline_params$knots[j] <- NA
+  }
+  
+  if (!is.null(spline_params$bknots) && 
+      length(spline_params$bknots) >= j) {
+    spline_params$bknots[j] <- spline_params$bknots[j]
+  } else {
+    spline_params$bknots[j] <- NA
+  }
+  
+  if (spline_params$spline_type[j] == "b") {
+    spline_params_info <- 
+      sprintf("<p style='text-align: center; font-size: 30px;'>
+                    <span style='color: blue;'>Spline-type:</span> B-spline<br>
+                    <span style='color: blue;'>Degree:</span> %s<br>
+                    <span style='color: blue;'>DoF:</span> %s<br>
+                    <span style='color: blue;'>Knots:</span> %s<br>
+                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
+              spline_params$degree[j], spline_params$dof[j], 
+              spline_params$knots[j], spline_params$bknots[j])
+  } else {    # == "n"
+    spline_params_info <- 
+      sprintf("<p style='text-align: center; font-size: 30px;'>
+                    <span style='color: blue;'>Spline-type:</span> Natural cubic
+                    spline<br>
+                    <span style='color: blue;'>DoF:</span> %s<br>
+                    <span style='color: blue;'>Knots:</span> %s<br>
+                    <span style='color: blue;'>Boundary-knots:</span> %s</p>", 
+              spline_params$dof[j], spline_params$knots[j], 
+              spline_params$bknots[j])
+    
+  }
+  return(spline_params_info)
 }
