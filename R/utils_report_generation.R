@@ -104,7 +104,7 @@ generate_report_html <- function(plots,
     "<html><head><title>", title, "</title>",
     "<style>",
     "table {",
-    "  font-size: 30px;", 
+    "  font-size: 30px;",
     "}",
     "td {",
     "  padding: 8px;",  # Adds padding to table cells for better readability
@@ -121,6 +121,9 @@ generate_report_html <- function(plots,
     "  justify-content: space-between;", # Ensures the logo is on the far right
     "}",
     ".logo {",
+    "  position: absolute;",  # Position the logo absolutely
+    "  top: 0;",              # Align with the top of the h1
+    "  right: 0;",            # Align with the right of the h1
     "  width: 400px;",  # Adjust the width to make the logo smaller
     "  height: auto;",  # Maintain aspect ratio
     "}",
@@ -130,12 +133,12 @@ generate_report_html <- function(plots,
     "}",
     "</style>",
     "</head><body>",
-    "<h1>", header_text, "<img src='", 
+    "<h1>", header_text, "<img src='",
     logo_base64, "' alt='Logo' class='logo'></h1>",
     "<table>",
     sep=""
   )
-  
+
   all_fields <- c("omics_data_type",
                   "data_description", 
                   "data_collection_date",
@@ -194,8 +197,8 @@ generate_report_html <- function(plots,
                        plots_sizes = plots_sizes,
                        level_headers_info = level_headers_info,
                        output_file_path = output_file_path)
-  }
-  else {           # report_type == "cluster_hits"
+    
+  } else {           # report_type == "cluster_hits"
     build_cluster_hits_report(header_section = header_section, 
                               plots = plots, 
                               plots_sizes = plots_sizes,

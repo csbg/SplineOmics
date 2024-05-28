@@ -110,49 +110,46 @@ generate_explore_plots <- function(data,
   
   meta[[condition]] <- as.factor(meta[[condition]])
   
-  density_plots <- make_density_plots(data,
-                                      meta,
-                                      condition)
+  # Generate all the plots
+  density_plots <- make_density_plots(data, meta, condition)
   
-  box_plots <- make_box_plots(data,
-                              meta,
-                              condition)
+  box_plots <- make_box_plots(data, meta, condition)
   
-  violin_plots <- make_violin_plots(data,
-                                    meta,
-                                    condition) 
+  violin_plots <- make_violin_plots(data, meta, condition) 
   
-  time_corr_plots <- plot_mean_correlation_with_time(data,
-                                                     meta,
-                                                     condition)
+  time_corr_plots <- plot_mean_correlation_with_time(data, meta, condition)
+
+  lag1_diff_plots <- plot_lag1_differences(data, meta, condition)
   
-  for (plot in time_corr_plots) {
-    print(plot)
-  }
-  browser()
-  pca_plot <- make_pca_plot(data, 
-                            meta,
-                            condition)
+  first_lag_plots <- plot_first_lag_autocorrelation(data, meta, condition)
+  
+  cv_plots <- plot_cv(data, meta, condition)
+  
+  pca_plot <- make_pca_plot(data, meta, condition)
   
   pca_variance_explained_plot <- make_pca_variance_explained_plot(data)
-
-  mds_plot <- make_mds_plot(data,
-                            meta,
-                            condition)
-
-  corr_heatmaps_result <- make_correlation_heatmaps(data, 
-                                                    meta, 
-                                                    condition)
+  
+  mds_plot <- make_mds_plot(data, meta, condition)
+  
+  corr_heatmaps_result <- make_correlation_heatmaps(data, meta, condition)
   
   plots <- c(density_plots, 
              box_plots, 
              violin_plots,
+             time_corr_plots,
+             lag1_diff_plots,
+             first_lag_plots,
+             cv_plots,
              list(pca_plot, pca_variance_explained_plot, mds_plot),
              corr_heatmaps_result$heatmaps)
-  
+
   plots_sizes <- c(rep(1, length(density_plots)),
                    rep(1.5, length(box_plots)),
                    rep(1.5, length(violin_plots)),
+                   rep(1.5, length(time_corr_plots)),
+                   rep(1.5, length(lag1_diff_plots)),
+                   rep(1.5, length(first_lag_plots)),
+                   rep(1.5, length(cv_plots)),
                    1.5,
                    1.5,
                    1.5,
@@ -186,8 +183,8 @@ build_explore_data_report <- function(header_section,
                                       plots_sizes, 
                                       output_file_path) {  
   
-  level_count = (length(plots)-5)/4
-  
+  level_count = (length(plots)-5)/8
+
   content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
   
   toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
@@ -202,10 +199,87 @@ build_explore_data_report <- function(header_section,
   plot_names <- c("Density Plots", 
                   "Boxplots", 
                   "Violin Plots",
-                  "PCA Plot", 
-                  "PCA Plot Variance explained",
-                  "MDS Plot",
+                  "Mean Time Correlation",
+                  "Lag1 Differences",
+                  "First Lag Autocorrelation",
+                  "Coefficient of Variation",
+                  "PCA ", 
+                  "PCA Variance explained",
+                  "MDS",
                   "Correlation Heatmaps")
+  
+  plot_explanations <- c(
+    "Density plots show the distribution of intensities or abundances across 
+  samples. Peaks in the plot indicate common values, while the spread 
+  indicates variability. Use this plot to identify the range and most 
+  frequent values in your data.",
+    
+    "Boxplots display the spread and outliers of values for each sample. The 
+  box represents the interquartile range (IQR), the line inside the box is 
+  the median, and the whiskers extend to 1.5 * IQR from the quartiles. 
+  Points outside this range are considered outliers. Use boxplots to 
+  compare distributions and identify outliers.",
+    
+    "Violin plots combine boxplots and density plots to show the distribution 
+  of values. They provide a summary of the data's range, central tendency, 
+  and distribution shape. Use violin plots to understand the full 
+  distribution and compare between groups.",
+    
+    "Mean Time Correlation plots summarize the correlation of each feature 
+  with time, highlighting time-dependent trends. Positive correlations 
+  indicate increasing trends, negative correlations indicate decreasing 
+  trends. Use this plot to identify features that change over time.",
+  
+  "Purpose: Lag-1 Differences plots illustrate the changes in feature values 
+  between successive time points. What It Shows: This plot helps identify 
+  the variability and consistency in the changes of feature values over time.
+  The mean lag-1 difference indicates the average change between time points.
+  The standard deviation of the lag-1 differences indicates the variability 
+  in these changes. How to Use It: Use this plot to understand the magnitude 
+  and variability of changes in feature values over time. Identify features 
+  with consistent increases or decreases and those with high variability 
+  between time points.",  
+  
+    "First Lag Autocorrelation plots illustrate the temporal dependencies 
+  within each feature by calculating the autocorrelation of the feature 
+  with itself at a lag of one time point. This plot helps identify 
+  features that have consistent patterns over time. A high positive 
+  autocorrelation indicates that the feature values are similar to their 
+  previous values, suggesting a trend or periodicity. A high negative 
+  autocorrelation suggests an alternating pattern over time. Use this 
+  plot to understand the persistence and cyclic behavior of the features 
+  across time points, and to identify features that exhibit stable or 
+  periodic patterns.",
+  
+  "Purpose: Coefficient of Variation (CV) plots illustrate the relative 
+  variability of each feature by calculating the CV for each feature. 
+  What It Shows: This plot helps identify features with high or low 
+  relative variability. The mean CV indicates the average relative 
+  variability across features. The standard deviation of CV indicates the 
+  variability in the relative variability across features. How to Use It:
+  Use this plot to understand the consistency and variability of feature 
+  values. Identify features with consistently high or low variability 
+  relative to their mean.",
+    
+  "PCA plots visualize the major trends and patterns in high-dimensional 
+  data by reducing it to a few principal components. Points close to each 
+  other are similar. Use PCA plots to identify clustering and variance 
+  explained by the principal components.",
+  
+  "PCA Variance Explained plots show the amount of variance explained by 
+  each principal component. The y-axis represents the percentage of total 
+  variance explained, and the x-axis represents the principal components. 
+  Use this plot to determine the number of components to consider.",
+  
+  "MDS plots display similarities or dissimilarities between samples in a 
+  reduced dimension space. Points close to each other are more similar. 
+  Use MDS plots to visualize the distance or similarity between samples.",
+  
+  "Correlation Heatmaps illustrate the pairwise correlation between all 
+  samples. Colors represent the strength of correlation, with a color 
+  gradient indicating positive or negative correlations. Use this plot to 
+  identify highly correlated samples or groups."
+  )
 
   toc_index <- 0
   toc_index_memory <- toc_index
@@ -221,10 +295,14 @@ build_explore_data_report <- function(header_section,
     } else if (index == 1 || 
                index == 2 + level_count || 
                index == 2 + 2 * level_count || 
-               index == 2 + 3 * level_count || 
-               index == 3 + 3 * level_count || 
-               index == 4 + 3 * level_count ||
-               index == 5 + 3 * level_count) {    # More than just one level
+               index == 2 + 3 * level_count ||
+               index == 2 + 4 * level_count ||
+               index == 2 + 5 * level_count ||
+               index == 2 + 6 * level_count ||
+               index == 2 + 7 * level_count || 
+               index == 3 + 7 * level_count || 
+               index == 4 + 7 * level_count ||
+               index == 5 + 7 * level_count) {    # More than just one level
     
       toc_index <- toc_index + 1
     }
@@ -245,7 +323,13 @@ build_explore_data_report <- function(header_section,
                                 section_header_style, 
                                 plot_names[toc_index])
       
-      content_with_plots <- paste(content_with_plots, section_header, 
+      plot_description <- sprintf('<p style="font-size: 2em;">%s</p>',
+                                  plot_explanations[toc_index])
+      
+      
+      content_with_plots <- paste(content_with_plots, 
+                                  section_header, 
+                                  plot_description, 
                                   sep = "\n")
       
       toc_index_memory <- toc_index
@@ -390,7 +474,7 @@ make_box_plots <- function(data,
     level_plot <- ggplot2::ggplot(data_level_long, 
                                   ggplot2::aes(x = !!rlang::sym("variable"),
                                                y = !!rlang::sym("value"))) +
-      ggplot2::geom_boxplot() +
+      ggplot2::geom_boxplot(fill = "#AEC6CF", color = "black") +
       ggplot2::labs(x = "Variables", y = "log2 intensity", 
                     title = paste("Level:", level)) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1,
@@ -446,14 +530,14 @@ make_violin_plots <- function(data,
     level_plot <- ggplot2::ggplot(data_level_long, 
                                   ggplot2::aes(x = !!rlang::sym("variable"),
                                                y = !!rlang::sym("value"))) +
-      ggplot2::geom_violin(trim = FALSE) +
+      ggplot2::geom_violin(trim = FALSE, fill = "#77DD77", 
+                           color = "black") +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1,
                                                          size = 6),
                      plot.margin = grid::unit(c(0, 0, 0, 0), "cm")) +
       ggplot2::labs(x = "Timepoint", y = "Value", 
                     title = paste("Level:", level))
     
-    # Add the level plot to the list
     violin_plots <- c(violin_plots, list(level_plot))
   }
   
@@ -475,14 +559,7 @@ make_violin_plots <- function(data,
 #'
 #' @return A ggplot2 object showing the distribution of mean correlations
 #'  with time.
-#'
-#' @examples
-#' # Example usage
-#' data <- matrix(rnorm(1000), nrow=100, ncol=10)
-#' meta <- data.frame(Time=rep(1:5, each=2))
-#' rownames(data) <- paste0("Feature", 1:100)
-#' plot_mean_correlation_with_time(data, meta)
-#'
+#'  
 plot_mean_correlation_with_time <- function(data,
                                             meta,
                                             condition) {
@@ -501,18 +578,238 @@ plot_mean_correlation_with_time <- function(data,
       cor(feature, time_subset, use = "complete.obs")
     })
     
-    # Create a data frame for plotting
+    # Create a data frame for plotting, ensuring row names are set
+    if (is.null(rownames(data))) {
+      rownames(data) <- paste0("Feature", 1:nrow(data))
+    }
+    
     cor_data <- data.frame(Feature = rownames(data), Correlation = correlations)
     
     # Generate the plot
-    p <- ggplot(cor_data, aes(x = Correlation)) +
-      geom_histogram(binwidth = 0.05, fill = "blue", color = "black") +
-      theme_minimal() +
-      labs(title = paste("Distribution of Correlations with Time - Condition", cond),
+    p <- ggplot2::ggplot(cor_data, aes(x = Correlation)) +
+      ggplot2::geom_histogram(binwidth = 0.05, fill = "#bcbd22", 
+                              color = "black") +
+      ggplot2::theme_minimal() +
+      ggplot2::labs(title = paste("Level:", cond),
            x = "Correlation with Time",
            y = "Count of Features")
     
     # Add the plot to the list
+    plot_list[[cond]] <- p
+  }
+  
+  return(plot_list)
+}
+
+
+#' First Lag Autocorrelation Coefficients Plot
+#'
+#' @description
+#' This function takes a data frame with time series data 
+#' (rows as features and columns as samples),
+#' a meta table with sample information including time points and conditions, 
+#' computes the first lag
+#' autocorrelation for each feature for each condition level, and plots the 
+#' distribution of these
+#' autocorrelation coefficients.
+#'
+#' @param data A data frame where rows are features and columns are samples.
+#' @param meta A data frame with sample metadata. Must contain a column "Time" 
+#' and the condition column.
+#' @param condition The name of the column in the meta table that contains the 
+#' condition information.
+#'
+#' @return A list of ggplot2 objects, each showing the distribution of first 
+#' lag autocorrelation coefficients for one condition.
+#'
+plot_first_lag_autocorrelation <- function(data,
+                                           meta, 
+                                           condition) {
+  
+  # Initialize a list to store the plots
+  plot_list <- list()
+  
+  # Loop through each level of the condition
+  for (cond in unique(meta[[condition]])) {
+    # Subset the data and meta for the current condition
+    condition_indices <- which(meta[[condition]] == cond)
+    data_subset <- data[, condition_indices]
+    time_subset <- meta$Time[condition_indices]
+    
+    # Compute first lag autocorrelation of each feature
+    autocorrelations <- apply(data_subset, 1, function(feature) {
+      # Compute first lag difference
+      lag_diff <- diff(feature)
+      # Compute autocorrelation
+      acf(lag_diff, plot = FALSE)$acf[2]
+    })
+    
+    # Calculate mean and standard deviation of autocorrelations
+    mean_autocorrelation <- mean(autocorrelations, na.rm = TRUE)
+    std_autocorrelation <- sd(autocorrelations, na.rm = TRUE)
+    
+    # Create a data frame for plotting
+    cor_data <- data.frame(Feature = 1:nrow(data),
+                           Autocorrelation = autocorrelations)
+    
+    # Generate the plot
+    p <- ggplot(cor_data, aes(x = Autocorrelation)) +
+      geom_histogram(binwidth = 0.05, fill = "#9467bd", color = "black") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 13),         # Title text size
+        axis.title.x = element_text(size = 10),       # X-axis title text size
+        axis.title.y = element_text(size = 10),       # Y-axis title text size
+        axis.text.x = element_text(size = 7),        # X-axis text size
+        axis.text.y = element_text(size = 7)         # Y-axis text size
+      ) +
+      labs(title = paste("Level:", cond),
+           x = "Autocorrelation Coefficient",
+           y = "Count of Features",
+           subtitle = paste("Mean:", round(mean_autocorrelation, 3), 
+                            "SD:", round(std_autocorrelation, 3)))
+    
+    # Add the plot to the list
+    plot_list[[cond]] <- p
+  }
+  
+  return(plot_list)
+}
+
+
+#' Lag-1 Differences Plot
+#'
+#' @description
+#' This function takes a data frame with time series data 
+#' (rows as features and columns as samples),
+#' a meta table with sample information including time points and conditions, 
+#' computes the lag-1
+#' differences for each feature for each condition level, and plots the 
+#' distribution of these
+#' differences.
+#'
+#' @param data A data frame where rows are features and columns are samples.
+#' @param meta A data frame with sample metadata. Must contain a column "Time" 
+#' and the condition column.
+#' @param condition The name of the column in the meta table that contains the 
+#' condition information.
+#'
+#' @return A list of ggplot2 objects, each showing the distribution of lag-1 
+#' differences for one condition.
+#'
+plot_lag1_differences <- function(data, 
+                                  meta, 
+                                  condition) {
+
+  plot_list <- list()
+  
+  # Loop through each level of the condition
+  for (cond in unique(meta[[condition]])) {
+    # Subset the data and meta for the current condition
+    condition_indices <- which(meta[[condition]] == cond)
+    data_subset <- data[, condition_indices]
+    
+    # Compute lag-1 differences of each feature
+    lag1_differences <- t(apply(data_subset, 1, 
+                                function(feature) {diff(feature)}))
+    
+    # Calculate mean and stdev of lag-1 differences for each feature
+    mean_lag1_diff <- apply(lag1_differences, 1, mean, na.rm = TRUE)
+    std_lag1_diff <- apply(lag1_differences, 1, sd, na.rm = TRUE)
+
+    # Create a data frame for plotting
+    diff_data <- data.frame(
+      Feature = 1:nrow(data),
+      Mean_Lag1_Difference = mean_lag1_diff,
+      Std_Lag1_Difference = std_lag1_diff
+    )
+    
+    # Generate the plot
+    p <- ggplot(diff_data, aes(x = Mean_Lag1_Difference)) +
+      geom_histogram(binwidth = 0.05, fill = "#ff7f0e", color = "black") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 13),         # Title text size
+        axis.title.x = element_text(size = 10),       # X-axis title text size
+        axis.title.y = element_text(size = 10),       # Y-axis title text size
+        axis.text.x = element_text(size = 7),        # X-axis text size
+        axis.text.y = element_text(size = 7)         # Y-axis text size
+      ) +
+      labs(title = paste("Level:", cond),
+           x = "Mean Lag-1 Difference",
+           y = "Count of Features",
+           subtitle = paste("Mean:", 
+                            round(mean(mean_lag1_diff, na.rm = TRUE), 3), 
+                            "SD:", round(sd(mean_lag1_diff, na.rm = TRUE), 3)))
+    
+    plot_list[[cond]] <- p
+  }
+  
+  return(plot_list)
+}
+
+
+#' Coefficient of Variation (CV) Plot
+#'
+#' @description
+#' This function takes a data frame with time series data 
+#' (rows as features and columns as samples),
+#' a meta table with sample information including time points and conditions, 
+#' computes the coefficient
+#' of variation (CV) for each feature for each condition level, and plots the 
+#' distribution of these
+#' CVs.
+#'
+#' @param data A data frame where rows are features and columns are samples.
+#' @param meta A data frame with sample metadata. Must contain a column "Time"
+#'  and the condition column.
+#' @param condition The name of the column in the meta table that contains the 
+#' condition information.
+#'
+#' @return A list of ggplot2 objects, each showing the distribution of CVs for
+#'  one condition.
+#'
+plot_cv <- function(data, 
+                    meta, 
+                    condition) {
+  
+  plot_list <- list()
+  
+  for (cond in unique(meta[[condition]])) {
+    condition_indices <- which(meta[[condition]] == cond)
+    data_subset <- data[, condition_indices]
+    
+    # Compute CV of each feature
+    cvs <- apply(data_subset, 1, function(feature) {
+      sd(feature) / mean(feature)
+    })
+    
+    # Calculate mean and standard deviation of CVs
+    mean_cv <- mean(cvs, na.rm = TRUE)
+    std_cv <- sd(cvs, na.rm = TRUE)
+    
+    # Create a data frame for plotting
+    cv_data <- data.frame(
+      Feature = 1:nrow(data),
+      CV = cvs
+    )
+    
+    p <- ggplot(cv_data, aes(x = CV)) +
+      geom_histogram(binwidth = 0.05, fill = "#e377c2", color = "black") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 13),         
+        axis.title.x = element_text(size = 10),       
+        axis.title.y = element_text(size = 10),       
+        axis.text.x = element_text(size = 7),        
+        axis.text.y = element_text(size = 7)        
+      ) +
+      labs(title = paste("Level:", cond),
+           x = "Coefficient of Variation (CV)",
+           y = "Count of Features",
+           subtitle = paste("Mean CV:", round(mean_cv, 3), 
+                            "SD CV:", round(std_cv, 3)))
+    
     plot_list[[cond]] <- p
   }
   
@@ -628,7 +925,7 @@ make_pca_variance_explained_plot <- function(data) {
   variance_plot <- ggplot2::ggplot(var_explained, 
                                    ggplot2::aes(x = !!rlang::sym("PC"), 
                                                 y = !!rlang::sym("Variance"))) +
-    ggplot2::geom_col() +
+    ggplot2::geom_col(fill = "#AEC6CF", color = "black") +
     ggplot2::geom_text(aes(label = round(!!rlang::sym("Variance"), digits = 2)), 
                        vjust = -0.2) +
     ggplot2::xlab("Principal Component") +
