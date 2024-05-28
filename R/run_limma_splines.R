@@ -55,12 +55,10 @@
 #'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
 #' }
 #' 
-#' @importFrom purrr partial
-#' @importFrom purrr map
-#' @importFrom purrr map_chr
-#' @importFrom purrr map2
+#' @importFrom purrr partial map map_chr map2
 #' @importFrom stats setNames
 #' @importFrom utils combn
+#' @importFrom stringr str_split
 #' 
 #' @export
 #' 
@@ -273,7 +271,6 @@ between_level <- function(data,
   factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
   condition_only <- limma::topTable(fit, coef = factor_only_contrast_coeff,
                                adjust.method = padjust_method, number = Inf)
-  # condition_only <- modify_limma_top_table(condition_only, feature_names)
   
   condition_only_resuls <- list(top_table = condition_only,
                                 fit = fit)
@@ -286,7 +283,6 @@ between_level <- function(data,
                                         seq_len(num_matching_columns))
   condition_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
                                adjust.method = padjust_method, number = Inf)
-  # condition_time <- modify_limma_top_table(condition_time, feature_names)
   
   condition_and_time_results <- list(top_table = condition_time,
                                      fit = fit)

@@ -126,7 +126,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
   if (report) {
     plots <- 
       make_clustering_report(all_levels_clustering = all_levels_clustering,
-                             top_tables = top_tables,
                              condition = condition, 
                              data = data, 
                              meta = meta, 
@@ -262,19 +261,6 @@ control_inputs_cluster_hits <- function(top_tables,
   if (report != TRUE && report != FALSE) {
     stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
   }
-}
-
-
-create_f_stat_plot <- function(top_table) {
-  
-  ggplot(top_table, aes(x = F, y = -log10(adj.P.Val))) +
-    geom_point(alpha = 0.5) +
-    theme_minimal() +
-    ggplot2::geom_hline(yintercept = -log10(0.05), 
-                        linetype = "dashed", color = "red") +
-    labs(title = "F-statistic",
-         x = "F-statistic",
-         y = "-Log10 Adjusted P-value")
 }
 
 
@@ -440,7 +426,6 @@ perform_clustering <- function(top_tables,
 #' @importFrom stats na.omit
 #' 
 make_clustering_report <- function(all_levels_clustering, 
-                                   top_tables,
                                    condition, 
                                    data, 
                                    meta, 
@@ -450,53 +435,21 @@ make_clustering_report <- function(all_levels_clustering,
                                    report_info,
                                    design,
                                    meta_batch_column,
-                                   time_unit = time_unit) {
+                                   time_unit) {
 
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level 
-  if (!is.na(meta_batch_column)) {
-    
-    datas <- list()
-    
-    n <- length(unique(meta[[condition]]))
-    level_indices <- as.integer(1:n)
-
-    for (level_index in level_indices) {
-      
-      # Take only the data from the level for mode == "isolated"
-      if (mode == "isolated") {
-        unique_levels <- unique(meta[[condition]])
-        level <- unique_levels[level_index]
-        level_columns <- which(meta[[condition]] == level)
-        data_copy <- data[, level_columns]
-        meta_copy <- subset(meta, meta[[condition]] == level)
-      } else {
-        data_copy <- data   # Take the full data for mode == "integrated"
-        meta_copy <- meta
-        level_index <- 1L   # spline_params here has only one set of params
-      }
-      
-      design_matrix <- design2design_matrix(meta = meta_copy,
-                                            spline_params = spline_params,
-                                            level_index = level_index,
-                                            design = design)
-      
-      # The batch columns are not allowed to be in the design_matrix for 
-      # removeBatchEffect. Instead the batch column is specified with batch =
-      batch_columns <- grep(paste0("^", meta_batch_column), 
-                            colnames(design_matrix))
-      design_matrix <- design_matrix[, -batch_columns]
-      
-      data_copy <- removeBatchEffect(data_copy,
-                                     batch = meta_copy[[meta_batch_column]],
-                                     design = design_matrix)
-      
-      # For mode == "integrated", all elements are identical
-      datas <- c(datas, list(data_copy))   
-    }
-  }
-
+  datas <- 
+    remove_batch_effect_cluster_hits(data = data,
+                                     meta = meta,
+                                     condition = condition,
+                                     meta_batch_column = meta_batch_column,
+                                     design = design,
+                                     mode = mode,
+                                     spline_params = spline_params)
+  
+  
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
   for (i in seq_along(all_levels_clustering)) {
@@ -547,26 +500,20 @@ make_clustering_report <- function(all_levels_clustering,
     levels <- unique(meta[[condition]])
     
     if (length(levels) >= i) {
-      # ith unique value from the 'condition' column of 'meta'
+      
       ith_unique_value <- levels[i]
       
       # Construct header name
       header_name <- sprintf("Level: %s", ith_unique_value)
       
-      # Determine the number of plots after which the header should be placed
-      header_placement <- if (q == 1) 0 else 4 + clusters[q-1]
-      
       nr_hits <- nrow(level_clustering$clustered_hits)
 
       header_info <- list(header_name = header_name, 
-                          header_placement = header_placement,
                           nr_hits = nr_hits)
       
       level_headers_info[[i]] <- header_info
     }
 
-    f_stat_plot <- create_f_stat_plot(top_tables[[i]], levels[[i]])
-    
     curve_values <- level_clustering$curve_values
 
     dendrogram <- plot_dendrogram(level_clustering$hc,
@@ -614,19 +561,20 @@ make_clustering_report <- function(all_levels_clustering,
     }
     
     plots <- c(plots, 
-               list(f_stat_plot, dendrogram, p_curves), 
+               "level_header",    # is the signal for the plotting code
+               list(dendrogram, p_curves), 
                list(consensus_shapes$plot), 
                heatmaps[[i]], 
-               composite_plots)
+               composite_plots)       
     
     # For every plot in plots, this determines the size in the HTML
     plots_sizes <- c(plots_sizes, 
-                     1,
+                     999,               # dummy size for "next_level" signal
                      1.5, 
                      1.5, 
                      consensus_shapes$size, 
                      1.5,
-                     unlist(nrows))
+                     unlist(nrows))             
   }
   print("Generating report. This takes a few seconds.")
   generate_report_html(plots = plots, 
@@ -821,6 +769,74 @@ process_level_cluster <- function(top_table,
   
   clustering_result$X <- curve_results$X
   return(clustering_result)
+}
+
+
+remove_batch_effect_cluster_hits <- function(data,
+                                             meta,
+                                             condition,
+                                             meta_batch_column,
+                                             design,
+                                             mode,
+                                             spline_params) {
+
+  datas <- list()
+  n <- length(unique(meta[[condition]]))
+  level_indices <- as.integer(1:n)
+  unique_levels <- unique(meta[[condition]])
+  
+  if (!is.na(meta_batch_column)) {
+    
+    for (level_index in level_indices) {
+      
+      # Take only the data from the level for mode == "isolated"
+      if (mode == "isolated") {
+        level <- unique_levels[level_index]
+        level_columns <- which(meta[[condition]] == level)
+        data_copy <- data[, level_columns]
+        meta_copy <- subset(meta, meta[[condition]] == level)
+      } else {
+        data_copy <- data   # Take the full data for mode == "integrated"
+        meta_copy <- meta
+        level_index <- 1L   # spline_params here has only one set of params
+      }
+      
+      design_matrix <- design2design_matrix(meta = meta_copy,
+                                            spline_params = spline_params,
+                                            level_index = level_index,
+                                            design = design)
+      
+      # The batch columns are not allowed to be in the design_matrix for 
+      # removeBatchEffect. Instead the batch column is specified with batch =
+      batch_columns <- grep(paste0("^", meta_batch_column), 
+                            colnames(design_matrix))
+      design_matrix <- design_matrix[, -batch_columns]
+      
+      data_copy <- removeBatchEffect(data_copy,
+                                     batch = meta_copy[[meta_batch_column]],
+                                     design = design_matrix)
+      
+      # For mode == "integrated", all elements are identical
+      datas <- c(datas, list(data_copy))   
+    }
+    
+  } else {          # no meta batch column specified, just return right data
+    
+    for (level_index in level_indices) {
+      
+      # Take only the data from the level for mode == "isolated"
+      if (mode == "isolated") {
+        level <- unique_levels[level_index]
+        level_columns <- which(meta[[condition]] == level)
+        data_copy <- data[, level_columns]
+      } else {
+        data_copy <- data   # Take the full data for mode == "integrated"
+      }
+      
+      datas <- c(datas, list(data_copy)) 
+    }
+  }
+  return(datas)
 }
 
  
@@ -1437,10 +1453,10 @@ build_cluster_hits_report <- function(header_section,
     
     if (current_header_index <= length(level_headers_info)) {
       header_info <- level_headers_info[[current_header_index]]
-      header_placement <- header_info$header_placement
       nr_hits <- header_info$nr_hits
-
-      if (index - 1 == header_placement) {
+      
+      # means jump to next level
+      if (any(class(plots[[index]]) == "character")) {  
         
         section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>", 
                                   section_header_style, 
@@ -1479,6 +1495,8 @@ build_cluster_hits_report <- function(header_section,
         
         current_header_index <- current_header_index + 1
         
+        pb$tick()
+        next
       } 
     }
     
