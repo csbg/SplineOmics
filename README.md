@@ -1,5 +1,5 @@
 
-# SplineOmics
+# SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
 The R package SplineOmics gets the significant features (hits) of
 time-series omics data by using splines and limma for hypothesis testing
