@@ -1,5 +1,7 @@
 #' utils scripts contains shared functions that are used by at least two package 
-#' functions of the SplineOmics package.
+#' functions of the SplineOmics package. The level separation is only valid
+#' internally in this script, and has no connection to the script level of the
+#' respective exported functions scripts.
 
 # Level 1 internal functions ---------------------------------------------------
 
@@ -75,11 +77,13 @@ generate_report_html <- function(plots,
     }
   } else if (report_type == "limma_hyperparams_screen") {
     title <- paste("hyperparams screen |", filename)
+  } else if (report_type == "limma_report") {
+    title <- "limma report"
   } else if (report_type == "cluster_hits") {                         
-    title <- "clustered hits"
+    title <- "clustered hits | within level"
   } else {
     stop(paste("report_type must be explore_hits, limma_hyperparams_screen,", 
-               "or cluster_hits"),
+               "limma_report, or cluster_hits"),
          call. = FALSE)
   }
   
@@ -87,6 +91,15 @@ generate_report_html <- function(plots,
                        report_info$omics_data_type, 
                        timestamp, sep=" | ")
   
+  if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
+    logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
+  } else {
+    logo_path <- system.file("extdata", "SplineOmics_logo.png",
+                             package = "SplineOmics")
+  }
+  
+  logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
+
   header_section <- paste(
     "<html><head><title>", title, "</title>",
     "<style>",
@@ -103,6 +116,13 @@ generate_report_html <- function(plots,
     "}",
     "h1 {",
     "  color: #333333;",  # Dark gray color for the title
+    "  display: flex;",
+    "  align-items: center;",  # Aligns items vertically in the center
+    "  justify-content: space-between;", # Ensures the logo is on the far right
+    "}",
+    ".logo {",
+    "  width: 400px;",  # Adjust the width to make the logo smaller
+    "  height: auto;",  # Maintain aspect ratio
     "}",
     "hr {",
     "  margin-top: 20px;",  # Space above the line
@@ -110,7 +130,8 @@ generate_report_html <- function(plots,
     "}",
     "</style>",
     "</head><body>",
-    "<h1>", header_text, "</h1>",
+    "<h1>", header_text, "<img src='", 
+    logo_base64, "' alt='Logo' class='logo'></h1>",
     "<table>",
     sep=""
   )
@@ -166,6 +187,13 @@ generate_report_html <- function(plots,
                                     plots_sizes = plots_sizes, 
                                     output_file_path = output_file_path)
     
+  } else if (report_type == "limma_report") {
+    
+    build_limma_report(header_section = header_section,
+                       plots = plots,
+                       plots_sizes = plots_sizes,
+                       level_headers_info = level_headers_info,
+                       output_file_path = output_file_path)
   }
   else {           # report_type == "cluster_hits"
     build_cluster_hits_report(header_section = header_section, 
@@ -220,7 +248,7 @@ plot2base64 <- function(plot,
                         base_height_per_row = 2.5, 
                         units = "in", 
                         html_img_width = "100%") {
-  
+
   additional_height_per_row <- 2.1
   height <- base_height_per_row + (plot_nrows - 1) * 
     additional_height_per_row

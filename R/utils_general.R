@@ -52,7 +52,8 @@ create_progress_bar <- function(iterable) {
   pb <- progress::progress_bar$new(
     format = "  Processing [:bar] :percent :elapsed",
     total = length(iterable),
-    width = 60
+    width = 60,
+    clear = FALSE
   )
   
   return(pb)
