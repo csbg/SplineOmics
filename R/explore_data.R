@@ -122,6 +122,14 @@ generate_explore_plots <- function(data,
                                     meta,
                                     condition) 
   
+  time_corr_plots <- plot_mean_correlation_with_time(data,
+                                                     meta,
+                                                     condition)
+  
+  for (plot in time_corr_plots) {
+    print(plot)
+  }
+  browser()
   pca_plot <- make_pca_plot(data, 
                             meta,
                             condition)
@@ -450,6 +458,65 @@ make_violin_plots <- function(data,
   }
   
   return(violin_plots)
+}
+
+
+#' Mean Correlation with Time Plot
+#'
+#' @description
+#' This function takes a data frame with time series data 
+#' (rows as features and columns as samples) 
+#' and a meta table with sample information including time points, computes 
+#' the correlation of each 
+#' feature with time, and plots the distribution of these correlations.
+#'
+#' @param data A data frame where rows are features and columns are samples.
+#' @param meta A data frame with sample metadata. Must contain a column "Time".
+#'
+#' @return A ggplot2 object showing the distribution of mean correlations
+#'  with time.
+#'
+#' @examples
+#' # Example usage
+#' data <- matrix(rnorm(1000), nrow=100, ncol=10)
+#' meta <- data.frame(Time=rep(1:5, each=2))
+#' rownames(data) <- paste0("Feature", 1:100)
+#' plot_mean_correlation_with_time(data, meta)
+#'
+plot_mean_correlation_with_time <- function(data,
+                                            meta,
+                                            condition) {
+
+  plot_list <- list()
+  
+  # Loop through each level of the condition
+  for (cond in unique(meta[[condition]])) {
+    # Subset the data and meta for the current condition
+    condition_indices <- which(meta[[condition]] == cond)
+    data_subset <- data[, condition_indices]
+    time_subset <- meta$Time[condition_indices]
+    
+    # Compute correlation of each feature with time
+    correlations <- apply(data_subset, 1, function(feature) {
+      cor(feature, time_subset, use = "complete.obs")
+    })
+    
+    # Create a data frame for plotting
+    cor_data <- data.frame(Feature = rownames(data), Correlation = correlations)
+    
+    # Generate the plot
+    p <- ggplot(cor_data, aes(x = Correlation)) +
+      geom_histogram(binwidth = 0.05, fill = "blue", color = "black") +
+      theme_minimal() +
+      labs(title = paste("Distribution of Correlations with Time - Condition", cond),
+           x = "Correlation with Time",
+           y = "Count of Features")
+    
+    # Add the plot to the list
+    plot_list[[cond]] <- p
+  }
+  
+  return(plot_list)
 }
 
 

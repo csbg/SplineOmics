@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# SplineOmics
+# SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
 The R package SplineOmics gets the significant features (hits) of time-series omics data by using splines and limma for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.
 
@@ -114,7 +114,7 @@ data <- extract_data(excel_table,
                      "Unique identifier")
 ```
 
-### explore_data() 
+### explore_data()
 
 Generate an HTML with the exploratory data analysis (and additionally return the plots in R):
 
@@ -127,7 +127,7 @@ plots <- explore_data(data,
                       report_dir)
 ```
 
-### limma_hyperparams_screen() 
+### limma_hyperparams_screen() {#limma_hyperparams_screen}
 
 Allows to systematically test different hyperparameters for the subsequent timeseries analysis with limma and splines. Test different spline parameters, limma design formulas, verions of data (outliers removed vs. not removed), etc. in a semi-combinatorial fashion.
 
@@ -144,7 +144,7 @@ result <- limma_hyperparams_screen(datas,
                                    meta_batch_column)
 ```
 
-### run_limma_splines() 
+### run_limma_splines() {#run_limma_splines}
 
 Get the limma topTable, with the adjusted p-values for each feature, by analysing the time-series data with splines and limma:
 
@@ -156,7 +156,8 @@ top_tables <- run_limma_splines(data,
                             condition)
 ```
 
-### cluster_hits()
+### cluster_hits() {#cluster_hits}
+
 Cluster the significant features (hits) via hierarchical clustering:
 
 ``` r
