@@ -60,6 +60,8 @@
 generate_report_html <- function(plots, 
                                  plots_sizes, 
                                  report_info,
+                                 data,
+                                 meta = NA,
                                  level_headers_info = NA,
                                  spline_params = NA,
                                  report_type = "explore_data",
@@ -68,7 +70,7 @@ generate_report_html <- function(plots,
                                  timestamp = format(Sys.time(), 
                                                     "%d_%m_%Y-%H_%M_%S"),
                                  report_dir = here::here()) {
-  
+
   if (report_type == "explore_data") {
     if (filename == "explore_data") {
       title <- "explore data"
@@ -142,20 +144,37 @@ generate_report_html <- function(plots,
   all_fields <- c("omics_data_type",
                   "data_description", 
                   "data_collection_date",
-                  "analyst_name", 
-                  "project_name",
-                  "dataset_name", 
+                  "data",
+                  "meta",
+                  "meta_condition",
+                  "meta_batch",
                   "limma_design",
+                  "analyst_name", 
+                  "contact_info",
+                  "project_name",
                   "method_description",
                   "results_summary", 
-                  "conclusions",
-                  "contact_info")
+                  "conclusions")
   
   max_field_length <- max(nchar(gsub("_", " ", all_fields)))
-  
-  # Add information from the report_info list to the header section
+
   for (field in all_fields) {
-    value <- ifelse(is.null(report_info[[field]]), "NA", report_info[[field]])
+    if (field == "data") {
+      value <- sprintf('<a href="%s" download="data.xlsx">
+                        <button>Download data.xlsx</button></a>', 
+                       encode_df_to_base64(data))
+      
+    } else if (field == "meta" &&
+               !is.null(meta) &&
+               is.data.frame(meta) &&
+               !any(is.na(meta))) {
+      
+      value <- sprintf('<a href="%s" download="meta.xlsx">
+                        <button>Download meta.xlsx</button></a>', 
+                       encode_df_to_base64(meta))
+    } else {
+      value <- ifelse(is.null(report_info[[field]]), "NA", report_info[[field]])
+    }
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
     header_section <- paste(header_section,
                             sprintf('<tr><td style="text-align: right; 
@@ -211,6 +230,76 @@ generate_report_html <- function(plots,
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+#' Encode DataFrame to Base64 for HTML Embedding
+#'
+#' @description
+#' This function takes a dataframe as input and returns a base64 encoded 
+#' CSV object. The encoded object can be embedded into an HTML document 
+#' directly, with a button to download the file without pointing to a 
+#' local file.
+#'
+#' @param df A dataframe to be encoded.
+#' 
+#' @return A character string containing the base64 encoded CSV data.
+#' 
+# encode_df_to_base64 <- function(df) {
+#   # Convert dataframe to CSV
+#   temp_file <- tempfile(fileext = ".csv")
+#   write.csv(df, temp_file, row.names = FALSE)
+#   
+#   # Read the CSV and encode to base64
+#   csv_content <- readBin(temp_file, "raw", file.info(temp_file)$size)
+#   base64_csv <- base64enc::base64encode(csv_content)
+#   
+#   # Create the data URI scheme
+#   data_uri <- paste0("data:text/csv;base64,", base64_csv)
+#   
+#   # Remove the temporary file
+#   unlink(temp_file)
+#   
+#   return(data_uri)
+# }
+encode_df_to_base64 <- function(df) {
+  
+  temp_file <- tempfile(fileext = ".xlsx")
+  wb <- openxlsx::createWorkbook()
+  
+  if (is.data.frame(df)) {
+    # Convert single dataframe to Excel with one sheet
+    sheet_name <- "Sheet1"
+    openxlsx::addWorksheet(wb, sheet_name)
+    openxlsx::writeData(wb, sheet = sheet_name, df)
+  } else if (is.list(df) && all(sapply(df, is.data.frame))) {
+    # Convert list of dataframes to Excel with multiple sheets
+    sheet_names <- make.unique(names(df))
+    
+    for (i in seq_along(sheet_names)) {
+      openxlsx::addWorksheet(wb, sheet_names[i])
+      openxlsx::writeData(wb, sheet = sheet_names[i], df[[i]])
+    }
+  } else {
+    stop("Input must be a dataframe or a list of dataframes.")
+  }
+  
+  openxlsx::saveWorkbook(wb, temp_file, overwrite = TRUE)
+  
+  # Read the file and encode to base64
+  file_content <- readBin(temp_file, "raw", file.info(temp_file)$size)
+  base64_file <- base64enc::base64encode(file_content)
+  
+  # Determine MIME type
+  mime_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  
+  # Create the data URI scheme
+  data_uri <- paste0("data:", mime_type, ";base64,", base64_file)
+  
+  # Remove the temporary file
+  unlink(temp_file)
+  
+  return(data_uri)
+}
 
 
 #' Convert Plot to Base64

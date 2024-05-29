@@ -33,10 +33,10 @@
 #' @export
 #' 
 extract_data <- function(data,
-                         feature_name_column = NA) {
+                         feature_name_columns = NA) {
   
   control_inputs_extract_data(data = data,
-                              feature_name_column = feature_name_column)
+                              feature_name_columns = feature_name_columns)
   
   data <- as.data.frame(data)
 
@@ -90,7 +90,7 @@ extract_data <- function(data,
   
   clean_data <- add_feature_names(data = data,
                                   clean_data = clean_data,
-                                  feature_name_column = feature_name_column)
+                                  feature_name_columns = feature_name_columns)
 }
 
 
@@ -123,28 +123,29 @@ extract_data <- function(data,
 #' If any of these checks fail, the function stops with an error message.
 #' 
 control_inputs_extract_data <- function(data,
-                                        feature_name_column) {
+                                        feature_name_columns) {
   
   if (!is.data.frame(data)) {
     stop("Input data must be a dataframe.", call. = FALSE)
   }
   
-  if (!is.na(feature_name_column)) {
+  if (!any(is.na(feature_name_columns))) {
     
-    if (!is.character(feature_name_column) || 
-        length(feature_name_column) != 1) {
-      stop("Feature name column must be a single string.", call. = FALSE)
+    if (!is.character(feature_name_columns)) {
+      stop("feature_name_columns should be a character vector.", call. = FALSE)
     }
     
-    if (!(feature_name_column %in% colnames(data))) {
-      stop(paste("Column", feature_name_column, "not found in the data."), 
+    if (!all(feature_name_columns %in% colnames(data))) {
+      stop("Not all feature_name_columns are present in the data.", 
            call. = FALSE)
     }
     
-    if (all(is.na(data[[feature_name_column]]))) {
-      stop(paste("Column '", feature_name_column,
-                 "' contains only NA values.", sep = ""),
-           call. = FALSE)
+    if (!any(is.na(feature_name_columns))) {
+      if (all(is.na(data[feature_name_columns]))) {
+        stop(paste("Columns '", paste(feature_name_columns, collapse = ", "),
+                   "' contain only NA values.", sep = ""),
+             call. = FALSE)
+      }
     }
   }
   
@@ -293,33 +294,47 @@ find_lower_right_cell <- function(data,
 #'         \item{the length of feature names does not match the number of rows 
 #'         in `clean_data`.}
 #'         
-add_feature_names <- function(data,
-                              clean_data,
-                              feature_name_column) {
+add_feature_names <- function(data, 
+                              clean_data, 
+                              feature_name_columns) {
   
-  if (!is.na(feature_name_column)) {
+  if (!any(is.na(feature_name_columns))) {
     
-    feature_names <- as.character(data[[feature_name_column]])
+    non_na_index <- which(apply(data[feature_name_columns], 1, 
+                                function(row) all(!is.na(row))))[1]
+    data_filtered <- data[non_na_index:nrow(data), , drop = FALSE]
+    clean_data_filtered <- clean_data[non_na_index:nrow(clean_data), ,
+                                      drop = FALSE]
+    
+    # Extract and combine the feature names from specified columns
+    feature_names <- apply(data_filtered[feature_name_columns], 1, 
+                           function(row) paste(row, collapse = "_"))
+    
+    # Check for NA values in combined feature names
+    feature_names <- as.character(feature_names)
     feature_names <- feature_names[!is.na(feature_names)]
-    
+
+    # Ensure unique feature names
     if (length(feature_names) != length(unique(feature_names))) {
-      stop("Feature names in the column must be unique, ignoring NA values.",
+      stop("Combined feature names must be unique, ignoring NA values.", 
            call. = FALSE)
     }
     
+    # Ensure the length matches the number of rows in clean_data
     if (length(feature_names) != nrow(clean_data)) {
-      stop(paste("Length of feature names does not match the number of rows in",
-                 "clean_data."), 
+      stop(paste("Length of combined feature names does not match the number of",
+                 "rows in clean_data."), 
            call. = FALSE)
     }
     
+    # Assign combined feature names as row names
     rownames(clean_data) <- feature_names
     
   } else {
+    
     rownames(clean_data) <- as.character(seq_len(nrow(clean_data)))
     message(paste("No feature_name column specified. Setting numbers 1, 2, 3,", 
                   "etc. as the feature names"))
   }
-  
   return(clean_data)
 }

@@ -76,14 +76,11 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          adj_pthresholds = c(0.05),
                          clusters = c("auto"),
                          meta_batch_column = NA,   # to remove batch effect
+                         meta_batch2_column = NA,   # second batch effect
                          time_unit = "m",    # For the plot labels
                          report_dir = here::here(),
                          report = TRUE) {
 
-  # feature_names are in top_tables
-  matrix_and_feature_names <- process_data(data) 
-  data <- matrix_and_feature_names$data
-  
   mode <- determine_analysis_mode(design,
                                   condition)
   
@@ -98,9 +95,17 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                               report_info = report_info,
                               design = design,
                               meta_batch_column = meta_batch_column,
+                              meta_batch2_column = meta_batch2_column,
                               time_unit = time_unit,
                               report_dir = report_dir,
                               report = report)
+  
+  
+  data_report <- rownames_to_column(data, var = "Feature_name")
+  
+  # feature_names are in top_tables
+  matrix_and_feature_names <- process_data(data) 
+  data <- matrix_and_feature_names$data
   
   # To set the default p-value threshold for ALL levels.
   if (is.numeric(adj_pthresholds) && 
@@ -122,7 +127,13 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                        condition = condition,
                        spline_params = spline_params,
                        mode = mode)
-  # debug(make_clustering_report)
+  
+  report_info$limma_design <- c(design)
+  report_info$meta_condition <- c(condition)
+  report_info$meta_batch <- paste(meta_batch_column, 
+                                  meta_batch2_column,
+                                  sep = ", ")
+  
   if (report) {
     plots <- 
       make_clustering_report(all_levels_clustering = all_levels_clustering,
@@ -133,8 +144,10 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                              report_dir = report_dir,
                              mode = mode,
                              report_info = report_info,
+                             data_report = data_report,
                              design = design,
                              meta_batch_column = meta_batch_column,
+                             meta_batch2_column = meta_batch2_column,
                              time_unit = time_unit)
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
@@ -210,14 +223,15 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 control_inputs_cluster_hits <- function(top_tables, 
                                         data, 
                                         meta, 
-                                        mode,
                                         spline_params,
+                                        mode,
                                         condition, 
                                         adj_pthresholds, 
                                         clusters, 
                                         report_info,
                                         design,
                                         meta_batch_column,
+                                        meta_batch2_column,
                                         time_unit,
                                         report_dir,
                                         report) {
@@ -227,7 +241,8 @@ control_inputs_cluster_hits <- function(top_tables,
   check_data_and_meta(data = data, 
                       meta = meta, 
                       condition = condition, 
-                      meta_batch_column = meta_batch_column)
+                      meta_batch_column = meta_batch_column,
+                      meta_batch2_column = meta_batch2_column)
   
   check_mode(mode)
   
@@ -433,10 +448,12 @@ make_clustering_report <- function(all_levels_clustering,
                                    report_dir,
                                    mode,
                                    report_info,
+                                   data_report,
                                    design,
                                    meta_batch_column,
+                                   meta_batch2_column,
                                    time_unit) {
-
+  
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level 
@@ -445,6 +462,7 @@ make_clustering_report <- function(all_levels_clustering,
                                      meta = meta,
                                      condition = condition,
                                      meta_batch_column = meta_batch_column,
+                                     meta_batch2_column = meta_batch2_column,
                                      design = design,
                                      mode = mode,
                                      spline_params = spline_params)
@@ -582,6 +600,8 @@ make_clustering_report <- function(all_levels_clustering,
                        level_headers_info = level_headers_info,
                        spline_params = spline_params,
                        report_info = report_info,
+                       data = data_report,
+                       meta = meta,
                        report_type = "cluster_hits",
                        mode = mode,
                        filename = "report_clustered_hits",
@@ -776,6 +796,7 @@ remove_batch_effect_cluster_hits <- function(data,
                                              meta,
                                              condition,
                                              meta_batch_column,
+                                             meta_batch2_column,
                                              design,
                                              mode,
                                              spline_params) {
@@ -812,9 +833,17 @@ remove_batch_effect_cluster_hits <- function(data,
                             colnames(design_matrix))
       design_matrix <- design_matrix[, -batch_columns]
       
-      data_copy <- removeBatchEffect(data_copy,
-                                     batch = meta_copy[[meta_batch_column]],
-                                     design = design_matrix)
+      args <- list(
+        x = data_copy,
+        batch = meta_copy[[meta_batch_column]],
+        design = design_matrix
+      )
+      
+      if (!is.null(meta_batch2_column)) {
+        args$batch2 <- meta_copy[[meta_batch2_column]]
+      }
+      
+      data_copy <- do.call(removeBatchEffect, args)
       
       # For mode == "integrated", all elements are identical
       datas <- c(datas, list(data_copy))   

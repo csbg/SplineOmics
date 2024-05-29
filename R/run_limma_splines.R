@@ -70,10 +70,6 @@ run_limma_splines <- function(data,
                                                    dof = c(2L)),
                               padjust_method = "BH") {
   
-  matrix_and_feature_names <- process_data(data)
-  data <- matrix_and_feature_names$data
-  feature_names <- matrix_and_feature_names$feature_names
-  
   mode <- determine_analysis_mode(design,
                                   condition)
   
@@ -81,10 +77,13 @@ run_limma_splines <- function(data,
                            meta = meta, 
                            design = design, 
                            condition = condition, 
-                           feature_names = feature_names, 
                            spline_params = spline_params, 
                            mode = mode, 
                            padjust_method = padjust_method)
+  
+  matrix_and_feature_names <- process_data(data)
+  data <- matrix_and_feature_names$data
+  feature_names <- matrix_and_feature_names$feature_names
   
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
@@ -189,7 +188,6 @@ control_inputs_run_limma <- function(data,
                                      design, 
                                      spline_params, 
                                      condition, 
-                                     feature_names, 
                                      mode, 
                                      padjust_method) {
   
@@ -198,13 +196,7 @@ control_inputs_run_limma <- function(data,
                                        condition = condition))
   
   check_design_formula(design, meta)
-  
-  # Check that feature_names is a non-empty character vector
-  if (!is.character(feature_names) || length(feature_names) == 0) {
-    stop("feature_names must be a non-empty character vector.",
-         call. = FALSE)
-  }
-  
+
   check_mode(mode)
   
   check_spline_params(spline_params, 

@@ -147,8 +147,14 @@ determine_analysis_mode <- function(design,
   
   # Return the mode
   if (integrated) {
+    message(paste("Interaction terms identified in limma design formula.",
+                  "Selecting mode == integrated. This means that all levels",
+                  "are analysed using the full data."))
     return("integrated")
   } else {
+    message(paste("No interaction terms identified in limma design formula.",
+                  "Selecting mode == isolated. This means that every level",
+                  "is analysed using the level specific data."))
     return("isolated")
   }
 }
