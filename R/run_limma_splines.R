@@ -123,10 +123,11 @@ run_limma_splines <- function(data,
                               padjust_method = padjust_method, 
                               feature_names = feature_names)
       
-      between_level_condition_only[[paste0(lev_combo[1],
+      between_level_condition_only[[paste0("avrg_diff_" ,lev_combo[1],
                                            "_vs_", lev_combo[2])]] <- 
         result$condition_only
-      between_level_condition_time[[paste0(lev_combo[1],
+      between_level_condition_time[[paste0("time_interaction_" ,
+                                           lev_combo[1],
                                            "_vs_", lev_combo[2])]] <- 
         result$condition_time
     }
@@ -137,9 +138,9 @@ run_limma_splines <- function(data,
                  "comparison')."))
   }
   
-  list(within_level_temporal_pattern = within_level, 
-       between_level_mean_diff = between_level_condition_only,
-       between_level_mean_and_temporal_diff = between_level_condition_time)
+  list(time_effect = within_level, 
+       avrg_diff_conditions = between_level_condition_only,
+       interaction_condition_time = between_level_condition_time)
 }
 
 

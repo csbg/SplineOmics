@@ -160,9 +160,16 @@ generate_report_html <- function(plots,
 
   for (field in all_fields) {
     if (field == "data") {
-      value <- sprintf('<a href="%s" download="data.xlsx">
+      if (report_type == "limma_report") {
+        value <- sprintf('<a href="%s" download="top_tables.xlsx">
+                        <button>Download top_tables.xlsx</button></a>', 
+                         encode_df_to_base64(data))
+      } else {
+        value <- sprintf('<a href="%s" download="data.xlsx">
                         <button>Download data.xlsx</button></a>', 
-                       encode_df_to_base64(data))
+                         encode_df_to_base64(data))
+      }
+
       
     } else if (field == "meta" &&
                !is.null(meta) &&

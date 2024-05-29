@@ -7,10 +7,10 @@ limma_report <- function(run_limma_splines_result,
                          report_dir = here::here()) {
   
   # Get the top_tables of the three limma analysis categories
-  within_level <- run_limma_splines_result$within_level_temporal_pattern
-  between_level_mean_diff <- run_limma_splines_result$between_level_mean_diff
-  between_level_mean_and_temporal_diff <- 
-    run_limma_splines_result$between_level_mean_and_temporal_diff
+  time_effect <- run_limma_splines_result$time_effect
+  avrg_diff_conditions <- run_limma_splines_result$avrg_diff_conditions
+  interaction_condition_time <- 
+    run_limma_splines_result$interaction_condition_time
   
   plots <- list()
   plots_sizes <- list()
@@ -18,71 +18,89 @@ limma_report <- function(run_limma_splines_result,
   ###
   
   
-  plots <- c(plots, list("Within Level"))
+  plots <- c(plots, list("Time Effect"))
   plots_sizes <- c(plots_sizes, 999)
   
-  header_info <- list(header_name = "Within Level")
+  header_info <- list(header_name = "Time Effect")
   section_headers_info <- c(section_headers_info, list(header_info))
   
-  for (i in seq_along(within_level)) {
-    element_name <- names(within_level)[i]
-    title <- paste(element_name, ": Adj. p-value vs. F-statistic")
-    top_table <- within_level[[i]]
+  for (i in seq_along(time_effect)) {
+    element_name <- names(time_effect)[i]
+    top_table <- time_effect[[i]]
     
-    f_stat_plot <- create_f_stat_plot(top_table,
-                                      adj_pthresh = 0.05,
-                                      title = title)
+    title <- paste("P-Value Histogram:", element_name)
     
-    plots <- c(plots, list(f_stat_plot))
+    p_value_hist <- create_p_value_histogram(top_table = top_table,
+                                             adj_pthresh = adj_pthresh,
+                                             title = title)
+    
+    plots <- c(plots, list(p_value_hist))
     plots_sizes <- c(plots_sizes, 1)
   }
   ###
   
   
-  plots <- c(plots, list("Between Level Condition Only"))
+  plots <- c(plots, list("Average Difference Conditions"))
   plots_sizes <- c(plots_sizes, 999)
   
-  header_info <- list(header_name = "Between Level Condition Only")
+  header_info <- list(header_name = "Average Difference Conditions")
   section_headers_info <- c(section_headers_info, list(header_info))
   
-  for (i in seq_along(between_level_mean_diff)) {
-    element_name <- names(between_level_mean_diff)[i]
-    top_table <- between_level_mean_diff[[i]]
-    compared_levels <- stringr::str_split(element_name, "_vs_")[[1]]
+  for (i in seq_along(avrg_diff_conditions)) {
+    element_name <- names(avrg_diff_conditions)[i]
+    top_table <- avrg_diff_conditions[[i]]
     
-    volcano_plot <- create_volcano_plot(top_table,
-                                        adj_pthresh = 0.05,
+    comparison <- remove_prefix(element_name, "avrg_diff_")
+    title <- paste("P-Value Histogram:", comparison)
+    
+    p_value_hist <- create_p_value_histogram(top_table = top_table,
+                                             adj_pthresh = adj_pthresh,
+                                             title = title)
+    
+    compared_levels <- stringr::str_split(comparison, "_vs_")[[1]]
+    
+    volcano_plot <- create_volcano_plot(top_table = top_table,
+                                        adj_pthresh = adj_pthresh,
                                         compared_levels)
     
-    plots <- c(plots, list(volcano_plot))
-    plots_sizes <- c(plots_sizes, 1.5)
+    plots <- c(plots, list(p_value_hist), list(volcano_plot))
+    plots_sizes <- c(plots_sizes, 1, 1.5)
   }
   ###
   
   
-  plots <- c(plots, list("Between Level Condition & Time"))
+  plots <- c(plots, list("Interaction of Condition and Time"))
   plots_sizes <- c(plots_sizes, 999)
   
-  header_info <- list(header_name = "Between Level Condition & Time")
+  header_info <- list(header_name = "Interaction of Condition and Time")
   section_headers_info <- c(section_headers_info, list(header_info))
   
-  for (i in seq_along(between_level_mean_and_temporal_diff)) {
-    element_name <- names(between_level_mean_and_temporal_diff)[i]
+  for (i in seq_along(interaction_condition_time)) {
+    element_name <- names(interaction_condition_time)[i]
     title <- paste(element_name, ": Adj. p-value vs. F-statistic")
-    top_table <- between_level_mean_and_temporal_diff[[i]]
+    top_table <- interaction_condition_time[[i]]
     
-    f_stat_plot <- create_f_stat_plot(top_table,
-                                      adj_pthresh = 0.05,
-                                      title = title)
+    comparison <- remove_prefix(element_name, "time_interaction_")
+    title <- paste("P-Value Histogram:", comparison)
     
-    plots <- c(plots, list(f_stat_plot))
+    p_value_hist <- create_p_value_histogram(top_table = top_table,
+                                             adj_pthresh = adj_pthresh,
+                                             title = title)
+    
+    plots <- c(plots, list(p_value_hist))
     plots_sizes <- c(plots_sizes, 1)
   }
   ###
   
-  all_top_tables <- c(within_level,
-                      between_level_mean_diff,
-                      between_level_mean_and_temporal_diff)
+  all_top_tables <- c(time_effect,
+                      avrg_diff_conditions,
+                      interaction_condition_time)
+  
+  unique_values <- unique(meta[[condition]])
+  new_names <- sapply(names(all_top_tables),
+                      shorten_names,
+                      unique_values = unique_values)
+  names(all_top_tables) <- new_names
   
   generate_report_html(plots, 
                        plots_sizes, 
@@ -99,6 +117,43 @@ limma_report <- function(run_limma_splines_result,
 
 
 # Level 1 internal function definitions ----------------------------------------
+
+
+#' Create a p-value histogram from a limma top_table
+#'
+#' @description
+#' This function generates a histogram of the unadjusted p-values from a
+#' limma top_table.
+#'
+#' @param top_table A data frame containing the limma top_table with
+#'                  a column named `P.Value` for unadjusted p-values.
+#' @param adj_pthresh A numeric value for the adjusted p-value threshold
+#'                    (not used in this function, included for consistency).
+#' @param title A character string for the title of the histogram.
+#'
+#' @return A ggplot2 object representing the histogram of unadjusted p-values.
+#'
+#' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal
+#'
+create_p_value_histogram <- function(top_table,
+                                     adj_pthresh = 0.05,
+                                     title = "P-Value Histogram") {
+  
+  # Check if the top_table has a P.Value column
+  if (!"P.Value" %in% colnames(top_table)) {
+    stop("The top_table must contain a column named 'P.Value'.")
+  }
+  
+  # Create the histogram
+  p <- ggplot2::ggplot(top_table, aes(x = P.Value)) +
+    ggplot2::geom_histogram(binwidth = 0.05,
+                   fill = "orange",
+                   color = "black", alpha = 0.7) +
+    ggplot2::labs(title = title, x = "Unadjusted P-Value", y = "Frequency") +
+    ggplot2::theme_minimal()
+  
+  return(p)
+}
 
 
 #' Create a Volcano Plot
@@ -163,45 +218,22 @@ create_volcano_plot <- function(top_table,
 }
 
 
-#' Create an F-statistic plot
-#'
-#' @description
-#' This function creates a scatter plot of F-statistics against the 
-#' -log10 adjusted p-values and includes a horizontal dashed line indicating 
-#' the adjusted p-value threshold.
-#'
-#' @param top_table A data frame containing F-statistics and adjusted p-values.
-#' @param adj_pthresh A numeric value for the adjusted p-value threshold.
-#' @param title A character string for the plot title.
-#'
-#' @return A ggplot object.
-#'
-#' @importFrom ggplot2 ggplot aes geom_point theme_minimal geom_hline labs 
-#'             annotate
-#'             
-create_f_stat_plot <- function(top_table, 
-                               adj_pthresh, 
-                               title) {
+remove_prefix <- function(string, 
+                          prefix) {
   
-  num_hits <- sum(top_table$adj.P.Val < adj_pthresh)
+  pattern <- paste0("^", prefix)
+  result <- sub(pattern, "", string)
+}
+
+
+shorten_names <- function(name,
+                          unique_values) {
   
-  y_max <- max(-log10(top_table$adj.P.Val))
-  y_hits_position <- y_max * 0.9  
-  
-  ggplot2::ggplot(top_table, aes(x = F, y = -log10(adj.P.Val))) +
-    ggplot2::geom_point(color = "darkgrey", alpha = 0.5) +
-    ggplot2::theme_minimal() +
-    ggplot2::geom_hline(yintercept = -log10(adj_pthresh), 
-                        linetype = "dashed", color = "red") +
-    ggplot2::labs(title = title,
-                  x = "F-statistic",
-                  y = "-Log10 Adjusted P-value") +
-    ggplot2::annotate("text", x = Inf, y = -log10(adj_pthresh), 
-                      label = paste("Adj.P.Val:", adj_pthresh),
-                      hjust = 1.1, vjust = 1.5, color = "red") +
-    ggplot2::annotate("text", x = min(top_table$F), y = y_hits_position,
-                      label = paste("Hits:", num_hits), 
-                      hjust = -0.05, vjust = 1.1, color = "black", size = 3)
+  for (val in unique_values) {
+    short_val <- substr(val, 1, 3)
+    name <- gsub(val, short_val, name, fixed = TRUE)
+  }
+  return(name)
 }
 
 
