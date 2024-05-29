@@ -585,24 +585,13 @@ check_data <- function(data,
 #'
 #' @return Returns TRUE if all checks pass. Stops execution and returns an 
 #' error message if any check fails.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
-#' check_meta(meta, "Condition")
-#' 
-#' invalid_meta <- data.frame(Time = c(1, NA, 3), Condition = c("A", "B", "C"))
-#' try(check_meta(invalid_meta, "Condition"))  # Should raise an error}
-#'
-#' @export
 #' 
 check_meta <- function(meta, 
                        condition,
                        meta_batch_column = NA,
                        meta_batch2_column = NA,
                        data_meta_index = NA) {
-  
+
   if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
     stop(create_error_message("meta must be a dataframe with the column Time",
                               data_meta_index), 
@@ -648,9 +637,11 @@ check_meta <- function(meta,
   check_batch_column(meta_batch_column,
                      data_meta_index)
   
-  check_batch_column(meta_batch2_column,
-                     data_meta_index)
-  
+  if (!is.na(meta_batch2_column)) {
+    check_batch_column(meta_batch2_column,
+                       data_meta_index)
+  }
+
   return(TRUE)
 }
 

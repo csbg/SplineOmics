@@ -63,8 +63,8 @@ explore_data <- function(data,
       batch = meta[[meta_batch_column]],
       group = meta[[condition]]
     )
-    
-    if (!is.null(meta_batch2_column)) {
+
+    if (!is.na(meta_batch2_column)) {
       args$batch2 <- meta[[meta_batch2_column]]
     }
 
