@@ -33,32 +33,51 @@ explore_data <- function(data,
                          condition,
                          report_info,
                          meta_batch_column = NA,
+                         meta_batch2_column = NA,
                          report_dir = here::here()) {
-  
-  matrix_and_feature_names <- process_data(data)
-  data <- matrix_and_feature_names$data
-  
+
   # Validate inputs
   check_data_and_meta(data, 
                       meta, 
                       condition, 
-                      meta_batch_column)
-  check_report_info(report_info)
-  check_and_create_report_dir(report_dir)
+                      meta_batch_column,
+                      meta_batch2_column)
   
+  check_report_info(report_info)
+  
+  check_and_create_report_dir(report_dir)
+  ###
+  
+  data_report <- rownames_to_column(data, var = "Feature_name")
+  
+  matrix_and_feature_names <- process_data(data)
+  data <- matrix_and_feature_names$data
+
   
   data_list <- list(data = data)
   
   if (!is.na(meta_batch_column)) {
     
-    batch_corrected_data <- removeBatchEffect(data, 
-                                              batch = meta[[meta_batch_column]], 
-                                              group = meta[[condition]])
+    args <- list(
+      x = data,
+      batch = meta[[meta_batch_column]],
+      group = meta[[condition]]
+    )
+    
+    if (!is.null(meta_batch2_column)) {
+      args$batch2 <- meta[[meta_batch2_column]]
+    }
+
+    batch_corrected_data <- do.call(removeBatchEffect, args)
     
     data_list$batch_corrected_data <- batch_corrected_data
   }
   
   all_plots <- list()
+  report_info$meta_condition <- c(condition)
+  report_info$meta_batch <- paste(meta_batch_column, 
+                                  meta_batch2_column,
+                                  sep = ", ")
   timestamp = format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   for (data_name in names(data_list)) {
@@ -71,6 +90,8 @@ explore_data <- function(data,
     generate_report_html(plots = plots_and_plots_sizes$plots,
                          plots_sizes = plots_and_plots_sizes$plots_sizes,
                          report_info = report_info,
+                         data = data_report,
+                         meta = meta,
                          filename = paste0("explore_", data_name),
                          timestamp = timestamp,
                          report_dir = report_dir)
@@ -110,53 +131,50 @@ generate_explore_plots <- function(data,
   
   meta[[condition]] <- as.factor(meta[[condition]])
   
-  # Generate all the plots
-  density_plots <- make_density_plots(data, meta, condition)
+  plot_functions_and_sizes <- list(
+    list(func = make_density_plots, size = 1),
+    list(func = make_box_plots, size = 1.5),
+    list(func = make_violin_plots, size = 1.5),
+    list(func = plot_mean_correlation_with_time, size = 1.5),
+    list(func = plot_lag1_differences, size = 1.5),
+    list(func = plot_first_lag_autocorrelation, size = 1.5),
+    list(func = plot_cv, size = 1.5),
+    list(func = make_pca_plot, size = 1.5, flatten = FALSE),
+    list(func = make_pca_variance_explained_plot, size = 1.5, flatten = FALSE),
+    list(func = make_mds_plot, size = 1.5, flatten = FALSE),
+    list(func = make_correlation_heatmaps, size = NULL)
+  )
   
-  box_plots <- make_box_plots(data, meta, condition)
+  apply_plot_function <- function(entry) {
+    plot_result <- entry$func(data, meta, condition)
+    list(plots = plot_result, size = entry$size, 
+         flatten = if ("flatten" %in% names(entry)) entry$flatten else TRUE)
+  }
   
-  violin_plots <- make_violin_plots(data, meta, condition) 
-  
-  time_corr_plots <- plot_mean_correlation_with_time(data, meta, condition)
+  plot_results <- lapply(plot_functions_and_sizes, apply_plot_function)
 
-  lag1_diff_plots <- plot_lag1_differences(data, meta, condition)
+  all_plots <- list()
+  all_plots_sizes <- c()
   
-  first_lag_plots <- plot_first_lag_autocorrelation(data, meta, condition)
+  # Flatten the results and sizes conditionally
+  for (result in plot_results) {
+    if (is.null(result$size)) {
+      # Special handling for make_correlation_heatmaps
+      all_plots <- c(all_plots, result$plots$heatmaps)
+      all_plots_sizes <- c(all_plots_sizes, result$plots$heatmaps_sizes)
+    } else if (!is.null(result$flatten) && result$flatten == FALSE) {
+      # Do not flatten the result, add it as a sublist
+      all_plots <- c(all_plots, list(result$plots))
+      all_plots_sizes <- c(all_plots_sizes, result$size)
+    } else {
+      # Flatten the result
+      all_plots <- c(all_plots, result$plots)
+      all_plots_sizes <- c(all_plots_sizes, rep(result$size, length(result$plots)))
+    }
+  }
   
-  cv_plots <- plot_cv(data, meta, condition)
-  
-  pca_plot <- make_pca_plot(data, meta, condition)
-  
-  pca_variance_explained_plot <- make_pca_variance_explained_plot(data)
-  
-  mds_plot <- make_mds_plot(data, meta, condition)
-  
-  corr_heatmaps_result <- make_correlation_heatmaps(data, meta, condition)
-  
-  plots <- c(density_plots, 
-             box_plots, 
-             violin_plots,
-             time_corr_plots,
-             lag1_diff_plots,
-             first_lag_plots,
-             cv_plots,
-             list(pca_plot, pca_variance_explained_plot, mds_plot),
-             corr_heatmaps_result$heatmaps)
-
-  plots_sizes <- c(rep(1, length(density_plots)),
-                   rep(1.5, length(box_plots)),
-                   rep(1.5, length(violin_plots)),
-                   rep(1.5, length(time_corr_plots)),
-                   rep(1.5, length(lag1_diff_plots)),
-                   rep(1.5, length(first_lag_plots)),
-                   rep(1.5, length(cv_plots)),
-                   1.5,
-                   1.5,
-                   1.5,
-                   corr_heatmaps_result$heatmaps_sizes)
-  
-  list(plots = plots, 
-       plots_sizes = plots_sizes)
+  list(plots = all_plots, 
+       plots_sizes = all_plots_sizes)
 }
 
 
@@ -653,17 +671,18 @@ plot_first_lag_autocorrelation <- function(data,
                            Autocorrelation = autocorrelations)
     
     # Generate the plot
-    p <- ggplot(cor_data, aes(x = Autocorrelation)) +
-      geom_histogram(binwidth = 0.05, fill = "#9467bd", color = "black") +
-      theme_minimal() +
-      theme(
+    p <- ggplot2::ggplot(cor_data, aes(x = Autocorrelation)) +
+      ggplot2::geom_histogram(binwidth = 0.05, fill = "#9467bd",
+                              color = "black") +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
         plot.title = element_text(size = 13),         # Title text size
         axis.title.x = element_text(size = 10),       # X-axis title text size
         axis.title.y = element_text(size = 10),       # Y-axis title text size
         axis.text.x = element_text(size = 7),        # X-axis text size
         axis.text.y = element_text(size = 7)         # Y-axis text size
       ) +
-      labs(title = paste("Level:", cond),
+      ggplot2::labs(title = paste("Level:", cond),
            x = "Autocorrelation Coefficient",
            y = "Count of Features",
            subtitle = paste("Mean:", round(mean_autocorrelation, 3), 
@@ -725,17 +744,18 @@ plot_lag1_differences <- function(data,
     )
     
     # Generate the plot
-    p <- ggplot(diff_data, aes(x = Mean_Lag1_Difference)) +
-      geom_histogram(binwidth = 0.05, fill = "#ff7f0e", color = "black") +
-      theme_minimal() +
-      theme(
+    p <- ggplot2::ggplot(diff_data, aes(x = Mean_Lag1_Difference)) +
+      ggplot2::geom_histogram(binwidth = 0.05, fill = "#ff7f0e",
+                              color = "black") +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
         plot.title = element_text(size = 13),         # Title text size
         axis.title.x = element_text(size = 10),       # X-axis title text size
         axis.title.y = element_text(size = 10),       # Y-axis title text size
         axis.text.x = element_text(size = 7),        # X-axis text size
         axis.text.y = element_text(size = 7)         # Y-axis text size
       ) +
-      labs(title = paste("Level:", cond),
+      ggplot2::labs(title = paste("Level:", cond),
            x = "Mean Lag-1 Difference",
            y = "Count of Features",
            subtitle = paste("Mean:", 
@@ -794,17 +814,18 @@ plot_cv <- function(data,
       CV = cvs
     )
     
-    p <- ggplot(cv_data, aes(x = CV)) +
-      geom_histogram(binwidth = 0.05, fill = "#e377c2", color = "black") +
-      theme_minimal() +
-      theme(
+    p <- ggplot2::ggplot(cv_data, aes(x = CV)) +
+      ggplot2::geom_histogram(binwidth = 0.05, fill = "#e377c2",
+                              color = "black") +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
         plot.title = element_text(size = 13),         
         axis.title.x = element_text(size = 10),       
         axis.title.y = element_text(size = 10),       
         axis.text.x = element_text(size = 7),        
         axis.text.y = element_text(size = 7)        
       ) +
-      labs(title = paste("Level:", cond),
+      ggplot2::labs(title = paste("Level:", cond),
            x = "Coefficient of Variation (CV)",
            y = "Count of Features",
            subtitle = paste("Mean CV:", round(mean_cv, 3), 
@@ -906,7 +927,12 @@ make_pca_plot <- function(data,
 #' @importFrom ggplot2 ggplot aes geom_col geom_text xlab ylab ggtitle 
 #' theme_minimal
 #' 
-make_pca_variance_explained_plot <- function(data) {
+make_pca_variance_explained_plot <- function(data,
+                                             meta,
+                                             condition) {
+  
+  # meta and condition are not used, just taken because the functions are 
+  # called from another function that passes these arguments.
   
   # Perform PCA
   pc <- stats::prcomp(t(data))

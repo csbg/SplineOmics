@@ -80,10 +80,14 @@ limma_report <- function(run_limma_splines_result,
   }
   ###
   
+  all_top_tables <- c(within_level,
+                      between_level_mean_diff,
+                      between_level_mean_and_temporal_diff)
   
   generate_report_html(plots, 
                        plots_sizes, 
                        report_info,
+                       data = all_top_tables,
                        level_headers_info = section_headers_info,
                        report_type = "limma_report",
                        filename = "limma_report",

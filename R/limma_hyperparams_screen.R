@@ -59,17 +59,9 @@ limma_hyperparams_screen <- function(datas,
                                      report_dir = here::here(),
                                      adj_pthresholds = c(0.05),
                                      meta_batch_column = NA,  # batch-effect
+                                     meta_batch_2_column = NA,
                                      time_unit = "m",    # For the plot labels
                                      padjust_method = "BH") {
-
-  data_matrices <- list()
-  for (data in datas) {
-    matrix_and_feature_names <- process_data(data)
-    data <- matrix_and_feature_names$data
-    data_matrices <- c(data_matrices, list(data))
-    feature_names <- matrix_and_feature_names$feature_names
-  }
-  datas <- data_matrices
 
   modes <- c()
   for (design in designs) {
@@ -85,13 +77,23 @@ limma_hyperparams_screen <- function(datas,
                                   modes = modes,
                                   condition = condition,
                                   spline_test_configs = spline_test_configs,
-                                  feature_names = feature_names,
                                   report_info = report_info,
                                   report_dir = report_dir,
                                   adj_pthresholds = adj_pthresholds,
                                   meta_batch_column = meta_batch_column,
+                                  meta_batch_2_column = meta_batch_2_column,
                                   time_unit = time_unit,
                                   padjust_method = padjust_method)
+  
+  # Convert the data dataframe to a matrix and extract the feature names
+  data_matrices <- list()
+  for (data in datas) {
+    matrix_and_feature_names <- process_data(data)
+    data <- matrix_and_feature_names$data
+    data_matrices <- c(data_matrices, list(data))
+    feature_names <- matrix_and_feature_names$feature_names
+  }
+  datas <- data_matrices
   
   top_tables_combos <- 
     get_limma_combos_results(datas = datas, 
@@ -110,10 +112,16 @@ limma_hyperparams_screen <- function(datas,
                               metas = metas,
                               spline_test_configs = spline_test_configs,
                               meta_batch_column = meta_batch_column,
+                              meta_batch2_column = meta_batch2_column,
                               designs,
                               time_unit = time_unit)
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
+  
+  report_info$meta_condition <- c(condition)
+  report_info$meta_batch <- paste(meta_batch_column, 
+                                  meta_batch2_column,
+                                  sep = ", ")
   
   generate_reports(combo_pair_plots = combo_pair_plots, 
                    report_info = report_info,
@@ -163,11 +171,11 @@ control_inputs_hyperpara_screen <- function(datas,
                                             modes, 
                                             condition, 
                                             spline_test_configs,
-                                            feature_names, 
                                             report_info,
                                             report_dir,
                                             adj_pthresholds, 
                                             meta_batch_column,
+                                            meta_batch2_column,
                                             time_unit,
                                             padjust_method) {
   
@@ -182,6 +190,7 @@ control_inputs_hyperpara_screen <- function(datas,
                         meta = metas[[i]], 
                         condition = condition, 
                         meta_batch_column = meta_batch_column,
+                        meta_batch2_column = meta_batch2_column,
                         data_meta_index = i)
   }
 
@@ -203,12 +212,7 @@ control_inputs_hyperpara_screen <- function(datas,
   }
   
   check_spline_test_configs(spline_test_configs, metas)
-  
-  if (!is.character(feature_names)) {
-    stop("'feature_names' must be a character vector.",
-         call. = FALSE)
-  }
-  
+
   check_report_info(report_info)
   
   check_and_create_report_dir(report_dir)
@@ -312,6 +316,7 @@ plot_limma_combos_results <- function(top_tables_combos,
                                       metas,
                                       spline_test_configs,
                                       meta_batch_column,
+                                      meta_batch2_column,
                                       designs,
                                       time_unit = time_unit) {
   
@@ -635,6 +640,7 @@ process_combo <- function(data_index,
 remove_batch_effect <- function(datas, 
                                 metas,
                                 meta_batch_column,
+                                meta_batch2_column,
                                 condition) {
   
   results <- list()
@@ -644,9 +650,23 @@ remove_batch_effect <- function(datas,
     
     # This is the shortcut approach. It would be better to remove the batch
     # effect using the design_matrix, but it is challenging to program this here
-    data_corrected <- removeBatchEffect(x = data, 
-                                        batch = meta[[meta_batch_column]],
-                                        group = meta[[condition]])
+    
+    args <- list(
+      x = data,
+      batch = meta[[meta_batch_column]],
+      group = meta[[condition]]
+    )
+    
+    if (!is.null(meta_batch2_column)) {
+      args$batch2 <- meta[[meta_batch2_column]]
+    }
+    
+    batch_corrected_data <- do.call(removeBatchEffect, args)
+    
+
+    # data_corrected <- removeBatchEffect(x = data, 
+    #                                     batch = meta[[meta_batch_column]],
+    #                                     group = meta[[condition]])
     results[[i]] <- data_corrected
   }
   return(results)

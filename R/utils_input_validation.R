@@ -38,15 +38,17 @@ check_data_and_meta <- function(data,
                                 meta,
                                 condition,
                                 meta_batch_column = NA,
+                                meta_batch2_column = NA,
                                 data_meta_index = NA) {
   
   check_data(data,
              data_meta_index)
   
-  check_meta(meta,
-             condition,
-             meta_batch_column,
-             data_meta_index)
+  check_meta(meta = meta,
+             condition = condition,
+             meta_batch_column = meta_batch_column,
+             meta_batch2_column = meta_batch2_column,
+             data_meta_index = data_meta_index)
   
   if (!(nrow(meta) == ncol(data))) {
     if (!is.na(data_meta_index)) {
@@ -421,9 +423,17 @@ check_padjust_method <- function(padjust_method) {
 #' 
 check_report_info <- function(report_info) {
   
-  mandatory_fields <- c("omics_data_type", "data_description", 
-                        "data_collection_date", "analyst_name", 
+  mandatory_fields <- c("omics_data_type",
+                        "data_description", 
+                        "data_collection_date",
+                        "analyst_name", 
+                        "contact_info",
                         "project_name")
+  
+  all_fields <- c(mandatory_fields,
+                  "method_description",
+                  "results_summary",
+                  "conclusions")
   
   # Check if report_info is a named list
   if (!is.list(report_info) || is.null(names(report_info))) {
@@ -448,16 +458,26 @@ check_report_info <- function(report_info) {
          call. = FALSE)
   }
   
+  # Check if there are any extra fields not in all_fields
+  extra_fields <- setdiff(names(report_info), all_fields)
+  if (length(extra_fields) > 0) {
+    stop(paste("The following fields are not recognized:", 
+               paste(extra_fields, collapse = ", ")),
+         call. = FALSE)
+  }
+  
+  # Check omics_data_type format
   if (!grepl("^[a-zA-Z_]+$", report_info[["omics_data_type"]])) {
     stop(paste("The 'omics_data_type' field must contain only alphabetic",  
                "letters and underscores."),
          call. = FALSE)
   }
   
-  long_fields <- sapply(report_info, function(x) any(nchar(x) > 110))
+  # Check if any field exceeds 80 characters
+  long_fields <- sapply(report_info, function(x) any(nchar(x) > 80))
   if (any(long_fields)) {
     too_long_fields <- names(report_info)[long_fields]
-    stop(paste("The following fields have strings exceeding 110 characters:", 
+    stop(paste("The following fields have strings exceeding 80 characters:", 
                paste(too_long_fields, collapse = ", ")),
          call. = FALSE)
   }
@@ -478,62 +498,65 @@ check_report_info <- function(report_info) {
 #'  verifies that no rows or columns are 
 #' entirely zeros.
 #'
-#' @param data A matrix containing numeric values.
+#' @param data A dataframe containing numeric values.
 #' @param data_meta_index An optional parameter specifying the index of the data 
 #' for error messages. Default is NA.
 #'
 #' @return Returns TRUE if all checks pass. Stops execution and returns an error
 #'  message if any check fails.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' data <- matrix(runif(9), nrow = 3, ncol = 3)
-#' check_data(data)
-#' 
-#' invalid_data <- matrix(c(1, 2, NA, 4, 5, 6, 7, 8, 9), nrow = 3, ncol = 3)
-#' try(check_data(invalid_data))  # Should raise an error}
-#'
-#' @export
 #' 
 check_data <- function(data,
                        data_meta_index = NA) {
   
-  if (!is.matrix(data)) {
-    stop(create_error_message("data must be a matrix.", 
-                         data_meta_index),
+  # Check if the input is a dataframe
+  if (!is.data.frame(data)) {
+    stop(create_error_message("data must be a dataframe.", data_meta_index),
          call. = FALSE)
   }
   
-  if (!all(is.numeric(data))) {
+  # Check if all elements in the dataframe are numeric
+  if (!all(sapply(data, is.numeric))) {
     stop(create_error_message("data must contain only numeric values.", 
                               data_meta_index),
          call. = FALSE)
   }
   
+  # Check for missing values
   if (any(is.na(data))) {
     stop(create_error_message("data must not contain missing values.", 
                               data_meta_index),
          call. = FALSE)
   }
   
+  # Check for non-negative values
   if (any(data < 0)) {
-    stop(create_error_message(paste("All elements of data must be non-negative.
-                               The elements should represent concentrations, 
-                               abudances, or intensities (which are inherently 
-                               non-negative", 
-                              data_meta_index)),
+    stop(create_error_message(paste("All elements of data must be ",
+                                    "non-negative. The elements should", 
+                                    "represent concentrations, abundances, or",
+                                    "intensities (which are inherently", 
+                                    "non-negative)."), 
+                              data_meta_index),
          call. = FALSE)
   }
   
+  # Check for rows with all zeros
   if (any(rowSums(data) == 0)) {
     stop(create_error_message("data must not contain rows with all zeros.", 
                               data_meta_index),
          call. = FALSE)
   }
   
+  # Check for columns with all zeros
   if (any(colSums(data) == 0)) {
     stop(create_error_message("data must not contain columns with all zeros.", 
+                              data_meta_index),
+         call. = FALSE)
+  }
+  
+  # Check if row headers (rownames) are all strings
+  row_headers <- rownames(data)
+  if (is.null(row_headers) || !all(sapply(row_headers, is.character))) {
+    stop(create_error_message("All row headers must be strings.", 
                               data_meta_index),
          call. = FALSE)
   }
@@ -577,6 +600,7 @@ check_data <- function(data,
 check_meta <- function(meta, 
                        condition,
                        meta_batch_column = NA,
+                       meta_batch2_column = NA,
                        data_meta_index = NA) {
   
   if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
@@ -616,35 +640,16 @@ check_meta <- function(meta,
          call. = FALSE)
   }
   
-  if (!is.na(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
-    stop(create_error_message(sprintf("Batch effect column '%s' %s", 
-                                 meta_batch_column, "not found in meta"),
-                              data_meta_index),
-         call. = FALSE)
-  } else if (!is.na(meta_batch_column)) {
-    if (!is.na(data_meta_index)) {
-      message(sprintf("Index: %s. %s", 
-                      data_meta_index, 
-                      paste("Column", meta_batch_column, "of meta will be used", 
-                            "to remove the batch effect for the plotting")))
-      
-    } else {
-      message(sprintf("Column '%s' of meta will be used to %s", 
-                      meta_batch_column, 
-                      paste("remove the batch effect for the plotting")))
-    }
-    
-    
-
-  } else {
-    if (!is.na(data_meta_index)) {
-      message(sprintf("Index: %s. Batch effect will not be removed for 
-                      plotting!", 
-                      data_meta_index))
-    } else {
-      message("Batch effect will not be removed for plotting!")
-    }
+  if (is.na(meta_batch_column) && !is.na(meta_batch2_column)) {
+    stop(paste("For removing the batch effect, batch2 can only be used when",
+               "batch is used!"), call. = FALSE)
   }
+  
+  check_batch_column(meta_batch_column,
+                     data_meta_index)
+  
+  check_batch_column(meta_batch2_column,
+                     data_meta_index)
   
   return(TRUE)
 }
@@ -862,5 +867,37 @@ create_error_message <- function(message,
     return(sprintf("data/meta pair index %d: %s", data_meta_index, message))
   } else {
     return(message)
+  }
+}
+
+
+check_batch_column <- function(meta_column,
+                               data_meta_index) {
+  
+  if (!is.na(meta_column) && !(meta_column %in% names(meta))) {
+    stop(create_error_message(sprintf("Batch effect column '%s' %s", 
+                                      meta_column, "not found in meta"),
+                              data_meta_index),
+         call. = FALSE)
+  } else if (!is.na(meta_column)) {
+    if (!is.na(data_meta_index)) {
+      message(sprintf("Index: %s. %s", 
+                      data_meta_index, 
+                      paste("Column", meta_column, "of meta will be used", 
+                            "to remove the batch effect for the plotting")))
+      
+    } else {
+      message(sprintf("Column '%s' of meta will be used to %s", 
+                      meta_column, 
+                      paste("remove the batch effect for the plotting")))
+    }
+  } else {
+    if (!is.na(data_meta_index)) {
+      message(sprintf(
+        "Index: %s. Batch effect will NOT be removed for plotting!", 
+        data_meta_index))
+    } else {
+      message("Batch effect will NOT be removed for plotting!")
+    }
   }
 }
