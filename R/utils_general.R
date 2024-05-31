@@ -132,6 +132,16 @@ design2design_matrix <- function(meta,
 determine_analysis_mode <- function(design, 
                                     factor_column) {
   
+  if (!is.character(design) || length(design) != 1) {
+    stop(paste("design must be a character of length 1"),
+         call. = FALSE)
+  }
+  
+  if (!is.character(factor_column) || length(factor_column) != 1) {
+    stop(paste("factor_column must be a character of length 1"),
+         call. = FALSE)
+  }
+  
   # Extract terms from the design formula
   design_terms <- all.vars(stats::as.formula(design))
   
