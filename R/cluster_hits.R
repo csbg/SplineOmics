@@ -27,7 +27,7 @@
 #' analysis.
 #' @param meta A dataframe containing metadata corresponding to the `data`,
 #' must include a 'Time' column and any columns specified by `conditions`.
-#' @param condition Character vector specifying the column names in `meta`
+#' @param condition Character of length 1 specifying the column name in `meta`
 #' used to define groups for analysis.
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
@@ -37,7 +37,7 @@
 #' @param mode A character string specifying the mode ('integrated' or
 #' 'isolated').
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param design A string representing the limma design formula
+#' @param design A character of length 1 representing the limma design formula
 #' @param meta_batch_column A character string specifying the column name in
 #' the metadata used for batch effect removal.
 #' @param time_unit A character string specifying the time unit label for plots
@@ -77,28 +77,35 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          clusters = c("auto"),
                          meta_batch_column = NA,   # to remove batch effect
                          meta_batch2_column = NA,   # second batch effect
-                         time_unit = "m",    # For the plot labels
+                         time_unit = "min",    # For the plot labels
                          report_dir = here::here(),
                          report = TRUE) {
 
   mode <- determine_analysis_mode(design,
                                   condition)
+  
+  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  args$mode <- mode
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
 
-  control_inputs_cluster_hits(top_tables = top_tables,
-                              data = data,
-                              meta = meta,
-                              condition = condition,
-                              spline_params = spline_params,
-                              mode = mode,
-                              adj_pthresholds = adj_pthresholds,
-                              clusters = clusters,
-                              report_info = report_info,
-                              design = design,
-                              meta_batch_column = meta_batch_column,
-                              meta_batch2_column = meta_batch2_column,
-                              time_unit = time_unit,
-                              report_dir = report_dir,
-                              report = report)
+  
+
+  # control_inputs_cluster_hits(top_tables = top_tables,
+  #                             data = data,
+  #                             meta = meta,
+  #                             condition = condition,
+  #                             spline_params = spline_params,
+  #                             mode = mode,
+  #                             adj_pthresholds = adj_pthresholds,
+  #                             clusters = clusters,
+  #                             report_info = report_info,
+  #                             design = design,
+  #                             meta_batch_column = meta_batch_column,
+  #                             meta_batch2_column = meta_batch2_column,
+  #                             time_unit = time_unit,
+  #                             report_dir = report_dir,
+  #                             report = report)
 
 
   data_report <- rownames_to_column(data, var = "Feature_name")
@@ -171,112 +178,100 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Control Inputs for Cluster Hits
-#'
-#' @description
-#' Validates the inputs for clustering hits, ensuring all required structures
-#' and parameters are correctly formatted.
-#'
-#' @param top_tables A list of top tables from limma analysis.
-#' @param data A matrix of data values.
-#' @param meta A dataframe containing metadata.
-#' @param mode A character string specifying the mode
-#' ('isolated' or 'integrated').
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param condition A character string specifying the condition.
-#' @param adj_pthresholds A numeric vector of p-values.
-#' @param clusters A list specifying clusters or "auto" for automatic
-#' estimation.
-#' @param report_info An object containing report information.
-#' @param design A string representing the limma design formula
-#' @param meta_batch_column A character string specifying the meta batch column.
-#' @param time_unit A character string specifying the time unit
-#' ('s', 'm', 'h', 'd').
-#' @param report_dir A character string specifying the report directory.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
-#' mode <- "isolated"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' condition <- "example_condition"
-#' adj_pthresholds <- runif(10)
-#' clusters <- list("auto")
-#' report_info <- "example_info"
-#' meta_batch_column <- "batch"
-#' time_unit <- "m"
-#' report_dir <- "example_dir"
-#' control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params,
-#'                             condition, adj_pthresholds, clusters,
-#'                             report_info,
-#'                             meta_batch_column, time_unit, report_dir)
+#' #' Control Inputs for Cluster Hits
+#' #'
+#' #' @description
+#' #' Validates the inputs for clustering hits, ensuring all required structures
+#' #' and parameters are correctly formatted.
+#' #'
+#' #' @param top_tables A list of top tables from limma analysis.
+#' #' @param data A matrix of data values.
+#' #' @param meta A dataframe containing metadata.
+#' #' @param mode A character string specifying the mode
+#' #' ('isolated' or 'integrated').
+#' #' @param spline_params A list of spline parameters for the analysis.
+#' #' @param condition A character string specifying the condition.
+#' #' @param adj_pthresholds A numeric vector of p-values.
+#' #' @param clusters A list specifying clusters or "auto" for automatic
+#' #' estimation.
+#' #' @param report_info An object containing report information.
+#' #' @param design A string representing the limma design formula
+#' #' @param meta_batch_column A character string specifying the meta batch column.
+#' #' @param time_unit A character string specifying the time unit
+#' #' ('s', 'm', 'h', 'd').
+#' #' @param report_dir A character string specifying the report directory.
+#' #'
+#' #' @return No return value, called for side effects.
+#' #'
+#' #' @examples
+#' #' \dontrun{
+#' #' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
+#' #' data <- matrix(runif(100), nrow = 10)
+#' #' meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
+#' #' mode <- "isolated"
+#' #' spline_params <- list(spline_type = c("n"), dof = list(3))
+#' #' condition <- "example_condition"
+#' #' adj_pthresholds <- runif(10)
+#' #' clusters <- list("auto")
+#' #' report_info <- "example_info"
+#' #' meta_batch_column <- "batch"
+#' #' time_unit <- "m"
+#' #' report_dir <- "example_dir"
+#' #' control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params,
+#' #'                             condition, adj_pthresholds, clusters,
+#' #'                             report_info,
+#' #'                             meta_batch_column, time_unit, report_dir)
+#' #' }
+#' #'
+#' #' @seealso
+#' #' \code{\link{check_top_tables}}, \code{\link{check_meta}},
+#' #' \code{\link{check_mode}}, \code{\link{check_spline_params}},
+#' #'
+#' control_inputs_cluster_hits <- function(top_tables,
+#'                                         data,
+#'                                         meta,
+#'                                         spline_params,
+#'                                         mode,
+#'                                         condition,
+#'                                         adj_pthresholds,
+#'                                         clusters,
+#'                                         report_info,
+#'                                         design,
+#'                                         meta_batch_column,
+#'                                         meta_batch2_column,
+#'                                         time_unit,
+#'                                         report_dir,
+#'                                         report) {
+#' 
+#'   check_top_tables(top_tables)
+#' 
+#'   check_data_and_meta(data = data,
+#'                       meta = meta,
+#'                       condition = condition,
+#'                       meta_batch_column = meta_batch_column,
+#'                       meta_batch2_column = meta_batch2_column)
+#' 
+#'   check_mode(mode)
+#' 
+#'   check_spline_params(spline_params,
+#'                       mode,
+#'                       meta,
+#'                       condition)
+#' 
+#'   check_adj_pthresholds(adj_pthresholds)
+#'   
+#' 
+#'   check_report_info(report_info)
+#' 
+#'   check_design_formula(design,
+#'                        meta)
+#' 
+#'   check_time_unit(time_unit)
+#' 
+#'   check_and_create_report_dir(report_dir)
+#'   
+#' 
 #' }
-#'
-#' @seealso
-#' \code{\link{check_top_tables}}, \code{\link{check_meta}},
-#' \code{\link{check_mode}}, \code{\link{check_spline_params}},
-#'
-control_inputs_cluster_hits <- function(top_tables,
-                                        data,
-                                        meta,
-                                        spline_params,
-                                        mode,
-                                        condition,
-                                        adj_pthresholds,
-                                        clusters,
-                                        report_info,
-                                        design,
-                                        meta_batch_column,
-                                        meta_batch2_column,
-                                        time_unit,
-                                        report_dir,
-                                        report) {
-
-  check_top_tables(top_tables)
-
-  check_data_and_meta(data = data,
-                      meta = meta,
-                      condition = condition,
-                      meta_batch_column = meta_batch_column,
-                      meta_batch2_column = meta_batch2_column)
-
-  check_mode(mode)
-
-  check_spline_params(spline_params,
-                      mode,
-                      meta,
-                      condition)
-
-  check_adj_pthresholds(adj_pthresholds)
-
-  if (is.character(clusters) && length(clusters) == 1 && clusters[1] == "auto")
-    {
-    print(paste0("No cluster amounts were specified as arguments. Default ",
-                 "argument is automatic cluster estimation."))
-
-  } else if (!is.list(clusters) ||
-      !all(sapply(clusters, function(x) is.character(x) || is.numeric(x)))) {
-    stop("clusters must be a list containing only character or numeric types.",
-         call. = FALSE)
-  }
-
-  check_report_info(report_info)
-
-  check_design_formula(design,
-                       meta)
-
-  check_time_unit(time_unit)
-
-  check_and_create_report_dir(report_dir)
-
-  if (report != TRUE && report != FALSE) {
-    stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
-  }
-}
 
 
 filter_top_tables <- function(top_tables,
@@ -485,9 +480,7 @@ make_clustering_report <- function(all_levels_clustering,
     dir.create(report_dir)
   }
 
-  time_unit_labels <- c("s" = "[sec]", "m" = "[min]", "h" = "[hours]",
-                        "d" = "[days]")
-  time_unit_label <- time_unit_labels[time_unit]
+  time_unit_label <- paste0("[", time_unit, "]")
 
   heatmaps <- plot_heatmap(datas = datas,
                            meta = meta,
@@ -628,16 +621,6 @@ make_clustering_report <- function(all_levels_clustering,
 #' @seealso
 #' \code{\link{check_dataframe}}
 #'
-# check_top_tables <- function(top_tables) {
-#
-#   if (!is.list(top_tables) || !all(sapply(top_tables, is.data.frame))) {
-#     stop("top_tables must be a list of dataframes")
-#   } else {
-#     for (top_table in top_tables) {
-#       check_dataframe(top_table)
-#     }
-#   }
-# }
 check_top_tables <- function(top_tables) {
 
   # Helper function to check data frames in a list

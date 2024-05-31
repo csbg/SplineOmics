@@ -9,11 +9,11 @@ library(conflicted)
 
 
 # Load the data ----------------------------------------------------------------
-load(here::here("data", "timeseries_proteomics_example.RData")) 
+load(here::here("test_data", "timeseries_proteomics_example.RData")) 
 
 library(tidyverse)
 library(readxl)
-data_excel <- read_excel(here::here("inst", "extdata",
+data_excel <- read_excel(here::here("inst", "README_data",
                                     "PPTX_processed_with_imputation.xlsx"))
 
 
@@ -56,7 +56,6 @@ datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
 condition <- "Phase"
-feature_names <- annotation$First.Protein.Description
 report_dir <- here::here("results", "hyperparams_screen_reports")
 meta_batch_column = "Reactor"
 pthresholds <- c(0.05, 0.1)
@@ -71,16 +70,16 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-# result <- limma_hyperparams_screen(datas,
-#                                    datas_descr,
-#                                    metas,
-#                                    designs,
-#                                    condition,
-#                                    spline_test_configs,
-#                                    report_info,
-#                                    report_dir,
-#                                    pthresholds,
-#                                    meta_batch_column)
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   condition,
+                                   spline_test_configs,
+                                   report_info,
+                                   report_dir,
+                                   pthresholds,
+                                   meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------

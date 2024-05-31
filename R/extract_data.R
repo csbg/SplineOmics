@@ -39,28 +39,26 @@ extract_data <- function(data,
                               feature_name_columns = feature_name_columns)
   
   data <- as.data.frame(data)
-
-  # Identify the starting point of the numeric data block
-  upper_left_cell <- find_upper_left_cell(data = data)
+  
+  numeric_block_finder <- NumericBlockFinder$new(data)
+  upper_left_cell <- numeric_block_finder$find_upper_left_cell()
+  lower_right_cell <- numeric_block_finder$find_lower_right_cell()
+  
   upper_left_row <- upper_left_cell$upper_left_row
   upper_left_col <- upper_left_cell$upper_left_col
   
-
-  lower_right_cell <- find_lower_right_cell(data = data,
-                                            upper_left_row = upper_left_row,
-                                            upper_left_col = upper_left_col)
   lower_right_row <- lower_right_cell$lower_right_row
   lower_right_col <- lower_right_cell$lower_right_col
-  
+
   
   # Extract the numeric data block
-  numeric_data <- data[upper_left_row:lower_right_row, 
+  numeric_data <- data[upper_left_row:lower_right_row,
                        upper_left_col:lower_right_col]
-  
-  numeric_data[] <- 
+
+  numeric_data[] <-
     lapply(numeric_data, function(col) suppressWarnings(
       as.numeric(as.character(col))))
-  
+
   # Check if every element of numeric_data is numeric
   if (any(sapply(numeric_data, function(col) all(is.na(col))))) {
     stop(paste("All elements of the numeric data must be numeric. Please",
@@ -69,13 +67,13 @@ extract_data <- function(data,
                "right of the numeric data, not on the left."),
                call. = FALSE)
   }
-  
+
   # Remove rows and columns that are entirely NA
-  numeric_data <- numeric_data[rowSums(is.na(numeric_data)) != 
+  numeric_data <- numeric_data[rowSums(is.na(numeric_data)) !=
                                  ncol(numeric_data), ]
-  numeric_data <- numeric_data[, colSums(is.na(numeric_data)) != 
+  numeric_data <- numeric_data[, colSums(is.na(numeric_data)) !=
                                  nrow(numeric_data)]
-  
+
   # Remove rows with any NA values
   clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
   
@@ -93,6 +91,124 @@ extract_data <- function(data,
                                   feature_name_columns = feature_name_columns)
 }
 
+
+
+# Class NumericBlockFinder -----------------------------------------------------
+
+
+#' NumericBlockFinder: A class for finding numeric blocks in data
+#'
+#' This class provides methods to identify the upper-left and lower-right 
+#' cells of a numeric block within a dataframe.
+#'
+#' @field data A dataframe containing the input data.
+#' @field upper_left_cell A list containing the row and column indices of the
+#'                        upper-left cell.
+#'
+NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
+  public = list(
+    data = NULL,
+    upper_left_cell = NULL,
+    
+    
+    #' Initialize a NumericBlockFinder object
+    #'
+    #' @param data A dataframe containing the input data.
+    #' @return A new instance of the NumericBlockFinder class.
+    #' @examples
+    #' data <- read.csv("path_to_your_file.csv")
+    #' processor <- NumericBlockFinder$new(data)
+    initialize = function(data) {
+      
+      self$data <- as.data.frame(data)
+    },
+    
+    
+    #' Find the upper-left cell of the first 6x6 block of numeric values
+    #'
+    #' This method identifies the upper-left cell of the first 6x6 block of 
+    #' numeric values in the dataframe.
+    #'
+    #' @return A list containing the row and column indices of the upper-left 
+    #'         cell.
+    #' @examples
+    #' upper_left <- processor$find_upper_left_cell()
+    find_upper_left_cell = function() {
+      
+      upper_left_row <- NA
+      upper_left_col <- NA
+      num_rows <- nrow(self$data)
+      num_cols <- ncol(self$data)
+      
+      for (i in 1:(num_rows - 5)) {
+        for (j in 1:(num_cols - 5)) {
+          block <- self$data[i:(i+5), j:(j+5)]
+          block_num <- suppressWarnings(as.numeric(as.matrix(block)))
+          if (all(!is.na(block_num)) && (all(is.numeric(block_num)))) {
+            upper_left_row <- i
+            upper_left_col <- j
+            break
+          }
+        }
+        if (!is.na(upper_left_row)) break
+      }
+      
+      if (is.na(upper_left_row) || is.na(upper_left_col)) {
+        stop("No at least 6x6 block of numeric values found.",
+             call. = FALSE)
+      }
+      
+      self$upper_left_cell <- list(upper_left_row = upper_left_row,
+                                   upper_left_col = upper_left_col)
+      return(self$upper_left_cell)
+    },
+    
+    
+    #' Find the lower-right cell of a block of contiguous non-NA values
+    #'
+    #' This method identifies the lower-right cell of a block of contiguous
+    #' non-NA values starting from a given upper-left cell in the dataframe.
+    #'
+    #' @return A list containing the row and column indices of the lower-right
+    #'         cell.
+    #' @examples
+    #' lower_right <- processor$find_lower_right_cell()
+    #' 
+    find_lower_right_cell = function() {
+      
+      if (is.null(self$upper_left_cell)) {
+        stop(paste("Upper-left cell has not been identified.", 
+                   "Call find_upper_left_cell first."), call. = FALSE)
+      }
+      
+      upper_left_row <- self$upper_left_cell$upper_left_row
+      upper_left_col <- self$upper_left_cell$upper_left_col
+      num_rows <- nrow(self$data)
+      num_cols <- ncol(self$data)
+      
+      # Expand the block vertically
+      lower_right_row <- upper_left_row
+      for (i in (upper_left_row+1):num_rows) {
+        if (is.na(self$data[i, upper_left_col])) {
+          break
+        }
+        lower_right_row <- i
+      }
+      
+      # Expand the block horizontally
+      lower_right_col <- upper_left_col
+      for (j in (upper_left_col+1):num_cols) {
+        if (is.na(self$data[upper_left_row, j])) {
+          break
+        }
+        lower_right_col <- j
+      }
+      
+      list(lower_right_row = lower_right_row,
+           lower_right_col = lower_right_col)
+    }
+  )
+)
 
 
 # Level 1 internal functions ---------------------------------------------------
@@ -152,113 +268,6 @@ control_inputs_extract_data <- function(data,
   if (nrow(data) == 0) {
     stop("Input dataframe is empty.", call. = FALSE)
   }
-}
-
-
-#' Find Upper Left Cell of Numeric Block
-#'
-#' @description
-#' This function identifies the upper-left cell of the first 6x6 block 
-#' of numeric values in a given dataframe.
-#'
-#' @param data A dataframe containing the input data.
-#'
-#' @details
-#' The function searches for the first 6x6 block within the dataframe where 
-#' all values are numeric. It iterates through the dataframe and checks each 
-#' possible 6x6 block. If a valid block is found, it returns the row and 
-#' column indices of the upper-left cell of the block.
-#'
-#' If no such block is found, the function stops with an error message.
-#'
-#' @return A list containing the row and column indices of the upper-left cell 
-#'         of the identified numeric block. The list has two elements:
-#'         \item{upper_left_row}{The row index of the upper-left cell.}
-#'         \item{upper_left_col}{The column index of the upper-left cell.}
-#'
-#' @throws An error if no 6x6 block of numeric values is found.
-#' 
-find_upper_left_cell <- function(data) {
-  
-  upper_left_row <- NA
-  upper_left_col <- NA
-  num_rows <- nrow(data)
-  num_cols <- ncol(data)
-  
-  for (i in 1:(num_rows - 5)) {
-    for (j in 1:(num_cols - 5)) {
-      block <- data[i:(i+5), j:(j+5)]
-      block_num <- suppressWarnings(as.numeric(as.matrix(block)))
-      if (all(!is.na(block_num)) && (all(is.numeric((block_num))))) {
-        upper_left_row <- i
-        upper_left_col <- j
-        break
-      }
-    }
-    if (!is.na(upper_left_row)) break
-  }
-  
-  if (is.na(upper_left_row) || is.na(upper_left_col)) {
-    stop("No at least 6x6 block of numeric values found.", call. = FALSE)
-  }
-  
-  list(upper_left_row = upper_left_row,
-       upper_left_col = upper_left_col)
-}
-
-
-#' Find Lower Right Cell of a Block
-#'
-#' @description
-#' This function identifies the lower-right cell of a block of contiguous 
-#' non-NA values starting from a given upper-left cell in a dataframe.
-#'
-#' @param data A dataframe containing the input data.
-#' @param upper_left_row An integer specifying the row index of the upper-left 
-#'                       cell of the block.
-#' @param upper_left_col An integer specifying the column index of the 
-#'                       upper-left 
-#'                       cell of the block.
-#'
-#' @details
-#' The function expands the block of contiguous non-NA values vertically and 
-#' horizontally from the specified upper-left cell to identify the lower-right 
-#' cell.
-#' It iterates through the dataframe, expanding the block until it encounters NA 
-#' values.
-#'
-#' @return A list containing the row and column indices of the lower-right cell 
-#'         of the identified block. The list has two elements:
-#'         \item{lower_right_row}{The row index of the lower-right cell.}
-#'         \item{lower_right_col}{The column index of the lower-right cell.}
-#'         
-find_lower_right_cell <- function(data,
-                                  upper_left_row,
-                                  upper_left_col) {
-  
-  num_rows <- nrow(data)
-  num_cols <- ncol(data)
-  
-  # Expand the block vertically
-  lower_right_row <- upper_left_row
-  for (i in (upper_left_row+1):num_rows) {
-    if (is.na(data[i, upper_left_col])) {
-      break
-    }
-    lower_right_row <- i
-  }
-  
-  # Expand the block horizontally
-  lower_right_col <- upper_left_col
-  for (j in (upper_left_col+1):num_cols) {
-    if (is.na(data[upper_left_row, j])) {
-      break
-    }
-    lower_right_col <- j
-  }
-  
-  list(lower_right_row = lower_right_row,
-       lower_right_col = lower_right_col)
 }
 
 

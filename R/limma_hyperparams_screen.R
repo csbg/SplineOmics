@@ -59,7 +59,7 @@ limma_hyperparams_screen <- function(datas,
                                      report_dir = here::here(),
                                      adj_pthresholds = c(0.05),
                                      meta_batch_column = NA,  # batch-effect
-                                     meta_batch_2_column = NA,
+                                     meta_batch2_column = NA,
                                      time_unit = "m",    # For the plot labels
                                      padjust_method = "BH") {
 
@@ -69,21 +69,26 @@ limma_hyperparams_screen <- function(datas,
                                     condition)
     modes <- c(modes, mode)
   }
+
+  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  args$modes <- modes
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
   
-  control_inputs_hyperpara_screen(datas = datas,
-                                  datas_descr = datas_descr,
-                                  metas = metas,
-                                  designs = designs,
-                                  modes = modes,
-                                  condition = condition,
-                                  spline_test_configs = spline_test_configs,
-                                  report_info = report_info,
-                                  report_dir = report_dir,
-                                  adj_pthresholds = adj_pthresholds,
-                                  meta_batch_column = meta_batch_column,
-                                  meta_batch_2_column = meta_batch_2_column,
-                                  time_unit = time_unit,
-                                  padjust_method = padjust_method)
+  # control_inputs_hyperpara_screen(datas = datas,
+  #                                 datas_descr = datas_descr,
+  #                                 metas = metas,
+  #                                 designs = designs,
+  #                                 modes = modes,
+  #                                 condition = condition,
+  #                                 spline_test_configs = spline_test_configs,
+  #                                 report_info = report_info,
+  #                                 report_dir = report_dir,
+  #                                 adj_pthresholds = adj_pthresholds,
+  #                                 meta_batch_column = meta_batch_column,
+  #                                 meta_batch_2_column = meta_batch_2_column,
+  #                                 time_unit = time_unit,
+  #                                 padjust_method = padjust_method)
   
   # Convert the data dataframe to a matrix and extract the feature names
   data_matrices <- list()
@@ -105,7 +110,7 @@ limma_hyperparams_screen <- function(datas,
                              feature_names = feature_names, 
                              adj_pthresholds = adj_pthresholds, 
                              padjust_method = padjust_method)
-  
+
   combo_pair_plots <- 
     plot_limma_combos_results(top_tables_combos = top_tables_combos, 
                               datas = datas, 
@@ -115,7 +120,7 @@ limma_hyperparams_screen <- function(datas,
                               meta_batch2_column = meta_batch2_column,
                               designs,
                               time_unit = time_unit)
-  
+
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   report_info$meta_condition <- c(condition)
@@ -140,89 +145,89 @@ limma_hyperparams_screen <- function(datas,
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Control Inputs for Hyperparameter Screening
-#'
-#' @description
-#' Validates and checks the inputs for hyperparameter screening. Ensures all 
-#' provided data structures meet the required format and criteria.
-#'
-#' @param datas A list of matrices.
-#' @param datas_descr A description object for the data.
-#' @param metas A list of metadata corresponding to the data matrices.
-#' @param designs A list of design matrices.
-#' @param modes A character vector containing 'isolated' or 'integrated'.
-#' @param condition A single character string specifying the condition.
-#' @param spline_test_configs A configuration object for spline tests.
-#' @param feature_names A character vector of feature names.
-#' @param report_info An object containing report information.
-#' @param report_dir A non-empty string specifying the report directory.
-#' @param adj_pthresholds A numeric vector with elements > 0 and < 1.
-#' @param meta_batch_column A character string specifying the meta batch column.
-#' @param time_unit A character string specifying the time unit label for plots.
-#' @param padjust_method A single character string specifying the p-adjustment 
-#' method.
-#'
-#' @return No return value, called for side effects.
-#'
-control_inputs_hyperpara_screen <- function(datas, 
-                                            datas_descr,
-                                            metas, 
-                                            designs, 
-                                            modes, 
-                                            condition, 
-                                            spline_test_configs,
-                                            report_info,
-                                            report_dir,
-                                            adj_pthresholds, 
-                                            meta_batch_column,
-                                            meta_batch2_column,
-                                            time_unit,
-                                            padjust_method) {
-  
-  if(length(datas) != length(metas) || length(designs) != length(modes)) {
-    stop(paste0("datas and metas, as well as designs and modes must have the ", 
-         "same length."),
-         call. = FALSE)
-  }
-  
-  for (i in seq_along(datas)) {
-    check_data_and_meta(data = datas[[i]], 
-                        meta = metas[[i]], 
-                        condition = condition, 
-                        meta_batch_column = meta_batch_column,
-                        meta_batch2_column = meta_batch2_column,
-                        data_meta_index = i)
-  }
-
-  check_datas_descr(datas_descr)
-  
-  for (design in designs) {
-    for (j in seq_along(metas)) {
-      meta <- metas[[j]]
-      check_design_formula(formula = design, 
-                           meta = meta,
-                           meta_index = j)
-    }
-  }
-    
-  if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
-    stop("'modes' must be a character vector containing only 'isolated' or 
-         'integrated'.",
-         call. = FALSE)
-  }
-  
-  check_spline_test_configs(spline_test_configs, metas)
-
-  check_report_info(report_info)
-  
-  check_and_create_report_dir(report_dir)
-  
-  check_adj_pthresholds(adj_pthresholds)
-  
-  check_time_unit(time_unit)
-
-  check_padjust_method(padjust_method)
-}
+#' #' Control Inputs for Hyperparameter Screening
+#' #'
+#' #' @description
+#' #' Validates and checks the inputs for hyperparameter screening. Ensures all 
+#' #' provided data structures meet the required format and criteria.
+#' #'
+#' #' @param datas A list of matrices.
+#' #' @param datas_descr A description object for the data.
+#' #' @param metas A list of metadata corresponding to the data matrices.
+#' #' @param designs A list of design matrices.
+#' #' @param modes A character vector containing 'isolated' or 'integrated'.
+#' #' @param condition A single character string specifying the condition.
+#' #' @param spline_test_configs A configuration object for spline tests.
+#' #' @param feature_names A character vector of feature names.
+#' #' @param report_info An object containing report information.
+#' #' @param report_dir A non-empty string specifying the report directory.
+#' #' @param adj_pthresholds A numeric vector with elements > 0 and < 1.
+#' #' @param meta_batch_column A character string specifying the meta batch column.
+#' #' @param time_unit A character string specifying the time unit label for plots.
+#' #' @param padjust_method A single character string specifying the p-adjustment 
+#' #' method.
+#' #'
+#' #' @return No return value, called for side effects.
+#' #'
+#' control_inputs_hyperpara_screen <- function(datas, 
+#'                                             datas_descr,
+#'                                             metas, 
+#'                                             designs, 
+#'                                             modes, 
+#'                                             condition, 
+#'                                             spline_test_configs,
+#'                                             report_info,
+#'                                             report_dir,
+#'                                             adj_pthresholds, 
+#'                                             meta_batch_column,
+#'                                             meta_batch2_column,
+#'                                             time_unit,
+#'                                             padjust_method) {
+#'   
+#'   if(length(datas) != length(metas) || length(designs) != length(modes)) {
+#'     stop(paste0("datas and metas, as well as designs and modes must have the ", 
+#'          "same length."),
+#'          call. = FALSE)
+#'   }
+#'   
+#'   for (i in seq_along(datas)) {
+#'     check_data_and_meta(data = datas[[i]],
+#'                         meta = metas[[i]],
+#'                         condition = condition,
+#'                         meta_batch_column = meta_batch_column,
+#'                         meta_batch2_column = meta_batch2_column,
+#'                         data_meta_index = i)
+#'   }
+#' 
+#'   check_datas_descr(datas_descr)
+#' 
+#'   for (design in designs) {
+#'     for (j in seq_along(metas)) {
+#'       meta <- metas[[j]]
+#'       check_design_formula(formula = design,
+#'                            meta = meta,
+#'                            meta_index = j)
+#'     }
+#'   }
+#' 
+#'   if (!is.character(modes) || !all(modes %in% c("isolated", "integrated"))) {
+#'     stop("'modes' must be a character vector containing only 'isolated' or
+#'          'integrated'.",
+#'          call. = FALSE)
+#'   }
+#' 
+#'   check_spline_test_configs(spline_test_configs, metas)
+#' 
+#'   check_report_info(report_info)
+#' 
+#'   check_and_create_report_dir(report_dir)
+#' 
+#'   check_adj_pthresholds(adj_pthresholds)
+#' 
+#'   check_time_unit(time_unit)
+#' 
+#'   check_padjust_method(padjust_method)
+#' }
 
 
 #' Generate LIMMA Combination Results
@@ -261,7 +266,7 @@ get_limma_combos_results <- function(datas,
                                      feature_names, 
                                      adj_pthresholds, 
                                      padjust_method) {
-  
+
   combos <- tidyr::expand_grid(
     data_index = seq_along(datas),
     design_index = seq_along(designs),
@@ -348,13 +353,14 @@ plot_limma_combos_results <- function(top_tables_combos,
     datas <- remove_batch_effect(datas = datas, 
                                  metas = metas,
                                  condition = condition,
-                                 meta_batch_column = meta_batch_column)
+                                 meta_batch_column = meta_batch_column,
+                                 meta_batch2_column = meta_batch2_column)
   }
   
   
   combo_pair_results <- purrr::set_names(
     purrr::map(combo_pairs, function(pair) {
-      
+
       combo_pair <- combos_separated[pair]
       
       hitcomp <- gen_hitcomp_plots(combo_pair)
@@ -587,7 +593,7 @@ process_combo <- function(data_index,
                           feature_names,
                           padjust_method,
                           ...) {
-  
+
   data <- datas[[data_index]]
   meta <- metas[[data_index]]
   design <- designs[[design_index]]
@@ -616,7 +622,7 @@ process_combo <- function(data_index,
                                                padjust_method = padjust_method))
   
   
-  result$top_tables
+  result$time_effect
 }
 
 
@@ -657,7 +663,7 @@ remove_batch_effect <- function(datas,
       group = meta[[condition]]
     )
     
-    if (!is.null(meta_batch2_column)) {
+    if (!is.na(meta_batch2_column)) {
       args$batch2 <- meta[[meta_batch2_column]]
     }
     
@@ -667,7 +673,7 @@ remove_batch_effect <- function(datas,
     # data_corrected <- removeBatchEffect(x = data, 
     #                                     batch = meta[[meta_batch_column]],
     #                                     group = meta[[condition]])
-    results[[i]] <- data_corrected
+    results[[i]] <- batch_corrected_data
   }
   return(results)
 }
@@ -936,7 +942,7 @@ gen_hitcomp_plots <- function(combo_pair) {
       hitcomp <- hc_add(hitcomp, top_table, id, condition_nr, pthreshold)
     }
   }
-  
+
   result <- hc_vennheatmap(hitcomp)
   barplot <- hc_barplot(hitcomp)
   
@@ -1070,7 +1076,7 @@ process_combo_pair <- function(combo_pair,
                                report_info,
                                report_dir,
                                timestamp) {
-  
+
   plots <- list()
   plots_len <- integer(0)
   
@@ -1178,187 +1184,187 @@ flatten_spline_configs <- function(spline_configs) {
 # Level 3 internal functions  --------------------------------------------------
 
 
-#' Check Columns in Spline Test Configurations
-#'
-#' @description
-#' Validates that the spline test configurations contain the required columns 
-#' in the correct order.
-#'
-#' @param spline_test_configs A dataframe containing spline test configurations.
-#'
-#' @return No return value, called for side effects.
+#' #' Check Columns in Spline Test Configurations
+#' #'
+#' #' @description
+#' #' Validates that the spline test configurations contain the required columns 
+#' #' in the correct order.
+#' #'
+#' #' @param spline_test_configs A dataframe containing spline test configurations.
+#' #'
+#' #' @return No return value, called for side effects.
+#' #' 
+#' check_colums_spline_test_configs <- function(spline_test_configs) {
+#'   
+#'   required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
+#'   
+#'   # Check for exact match of column names and order
+#'   if (!identical(names(spline_test_configs), required_columns)) {
+#'     # Find the missing or extra columns
+#'     missing_columns <- setdiff(required_columns, names(spline_test_configs))
+#'     extra_columns <- setdiff(names(spline_test_configs), required_columns)
+#'     error_message <- "Error: Incorrect columns in dataframe. "
+#'     
+#'     # Append specific issues to the error message
+#'     if (length(missing_columns) > 0) {
+#'       error_message <- paste0(error_message, "Missing columns: ",
+#'                               paste(missing_columns, collapse=", "), ". ")
+#'     }
+#'     if (length(extra_columns) > 0) {
+#'       error_message <- paste0(error_message, "Extra columns: ",
+#'                               paste(extra_columns, collapse=", "), ". ")
+#'     }
+#'     error_message <- paste0(error_message,
+#'                             "Expected columns in order: ",
+#'                             paste(required_columns, collapse=", "), ".")
+#'     
+#'     stop(error_message)
+#'   }
+#' }
 #' 
-check_colums_spline_test_configs <- function(spline_test_configs) {
-  
-  required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
-  
-  # Check for exact match of column names and order
-  if (!identical(names(spline_test_configs), required_columns)) {
-    # Find the missing or extra columns
-    missing_columns <- setdiff(required_columns, names(spline_test_configs))
-    extra_columns <- setdiff(names(spline_test_configs), required_columns)
-    error_message <- "Error: Incorrect columns in dataframe. "
-    
-    # Append specific issues to the error message
-    if (length(missing_columns) > 0) {
-      error_message <- paste0(error_message, "Missing columns: ",
-                              paste(missing_columns, collapse=", "), ". ")
-    }
-    if (length(extra_columns) > 0) {
-      error_message <- paste0(error_message, "Extra columns: ",
-                              paste(extra_columns, collapse=", "), ". ")
-    }
-    error_message <- paste0(error_message,
-                            "Expected columns in order: ",
-                            paste(required_columns, collapse=", "), ".")
-    
-    stop(error_message)
-  }
-}
-
-
-#' Check Spline Type Column
-#'
-#' @description
-#' Validates that the 'spline_type' column in the spline test configurations 
-#' contains only 'n' or 'b'.
-#'
-#' @param spline_test_configs A dataframe containing spline test configurations.
-#'
-#' @return No return value, called for side effects.
 #' 
-check_spline_type_column <- function(spline_test_configs) {
-  
-  if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
-    # Identify invalid entries
-    invalid_entries <- spline_test_configs$spline_type[
-      !spline_test_configs$spline_type %in% c("n", "b")
-    ]
-    error_message <- sprintf(
-      "Error: 'spline_type' contains invalid entries. 
-        Only 'n' or 'b' are allowed. Invalid entries found: %s",
-      paste(unique(invalid_entries), collapse=", ")
-    )
-    
-    stop(error_message)
-  }
-}
-
-
-#' Check Spline Type Parameters
-#'
-#' @description
-#' Validates the parameters for each row in the spline test configurations 
-#' based on the spline type.
-#'
-#' @param spline_test_configs A dataframe containing spline test configurations.
-#'
-#' @return TRUE if all checks pass, otherwise an error is thrown.
+#' #' Check Spline Type Column
+#' #'
+#' #' @description
+#' #' Validates that the 'spline_type' column in the spline test configurations 
+#' #' contains only 'n' or 'b'.
+#' #'
+#' #' @param spline_test_configs A dataframe containing spline test configurations.
+#' #'
+#' #' @return No return value, called for side effects.
+#' #' 
+#' check_spline_type_column <- function(spline_test_configs) {
+#'   
+#'   if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
+#'     # Identify invalid entries
+#'     invalid_entries <- spline_test_configs$spline_type[
+#'       !spline_test_configs$spline_type %in% c("n", "b")
+#'     ]
+#'     error_message <- sprintf(
+#'       "Error: 'spline_type' contains invalid entries. 
+#'         Only 'n' or 'b' are allowed. Invalid entries found: %s",
+#'       paste(unique(invalid_entries), collapse=", ")
+#'     )
+#'     
+#'     stop(error_message)
+#'   }
+#' }
 #' 
-check_spline_type_params <- function(spline_test_configs) {
-  
-  for (i in seq_len(nrow(spline_test_configs))) {
-    row <- spline_test_configs[i,]
-    switch(as.character(row$spline_type),
-           "n" = {
-             if (!is.na(row$degree)) stop("degree must be NA for spline_type n")
-             if (!((is.na(row$dof) && !is.na(row$knots)) ||
-                   (!is.na(row$dof) && is.na(row$knots)))) {
-               stop("Either dof or knots must be NA, but not both, for 
-                    spline_type n")
-             }
-             if (!is.na(row$dof) && !is.integer(row$dof)) {
-               stop("dof must be an integer when it is not NA for 
-                    spline_type n")
-             }
-             if (!is.na(row$knots) && !is.numeric(row$knots)) {
-               stop("knots must be a numeric vector when it is not NA for 
-                    spline_type n")
-             }
-             if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
-                                        length(row$bknots) != 2)) {
-               stop("bknots must be a numeric vector of exactly two elements 
-                    or NA for spline_type n")
-             }
-           },
-           "b" = {
-             if (!is.integer(row$degree)) stop("degree must be an integer for 
-                                               spline_type b")
-             if (!is.na(row$dof) && (!is.integer(row$dof) || 
-                                     row$dof < row$degree)) {
-               stop("dof must be an integer at least as big as degree for 
-                    spline_type b")
-             }
-             if (!is.na(row$knots) && !is.numeric(row$knots)) {
-               stop("knots must be a numeric vector when it is not NA for 
-                    spline_type b")
-             }
-             if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
-                                        length(row$bknots) != 2)) {
-               stop("bknots must be a numeric vector of exactly two elements 
-                    or NA for spline_type b")
-             }
-           },
-           stop("spline_type must be either 'n' or 'b'")
-    )
-  }
-  return(TRUE)
-}
-
-
-#' Check Maximum and Minimum Degrees of Freedom
-#'
-#' @description
-#' Validates the degrees of freedom (DoF) for each row in the spline test 
-#' configurations based on the metadata.
-#'
-#' @param spline_test_configs A dataframe containing spline test configurations.
-#' @param metas A list of metadata corresponding to the data matrices.
-#'
-#' @return No return value, called for side effects.
 #' 
-#' @importFrom stats setNames
+#' #' Check Spline Type Parameters
+#' #'
+#' #' @description
+#' #' Validates the parameters for each row in the spline test configurations 
+#' #' based on the spline type.
+#' #'
+#' #' @param spline_test_configs A dataframe containing spline test configurations.
+#' #'
+#' #' @return TRUE if all checks pass, otherwise an error is thrown.
+#' #' 
+#' check_spline_type_params <- function(spline_test_configs) {
+#'   
+#'   for (i in seq_len(nrow(spline_test_configs))) {
+#'     row <- spline_test_configs[i,]
+#'     switch(as.character(row$spline_type),
+#'            "n" = {
+#'              if (!is.na(row$degree)) stop("degree must be NA for spline_type n")
+#'              if (!((is.na(row$dof) && !is.na(row$knots)) ||
+#'                    (!is.na(row$dof) && is.na(row$knots)))) {
+#'                stop("Either dof or knots must be NA, but not both, for 
+#'                     spline_type n")
+#'              }
+#'              if (!is.na(row$dof) && !is.integer(row$dof)) {
+#'                stop("dof must be an integer when it is not NA for 
+#'                     spline_type n")
+#'              }
+#'              if (!is.na(row$knots) && !is.numeric(row$knots)) {
+#'                stop("knots must be a numeric vector when it is not NA for 
+#'                     spline_type n")
+#'              }
+#'              if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+#'                                         length(row$bknots) != 2)) {
+#'                stop("bknots must be a numeric vector of exactly two elements 
+#'                     or NA for spline_type n")
+#'              }
+#'            },
+#'            "b" = {
+#'              if (!is.integer(row$degree)) stop("degree must be an integer for 
+#'                                                spline_type b")
+#'              if (!is.na(row$dof) && (!is.integer(row$dof) || 
+#'                                      row$dof < row$degree)) {
+#'                stop("dof must be an integer at least as big as degree for 
+#'                     spline_type b")
+#'              }
+#'              if (!is.na(row$knots) && !is.numeric(row$knots)) {
+#'                stop("knots must be a numeric vector when it is not NA for 
+#'                     spline_type b")
+#'              }
+#'              if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+#'                                         length(row$bknots) != 2)) {
+#'                stop("bknots must be a numeric vector of exactly two elements 
+#'                     or NA for spline_type b")
+#'              }
+#'            },
+#'            stop("spline_type must be either 'n' or 'b'")
+#'     )
+#'   }
+#'   return(TRUE)
+#' }
 #' 
-check_max_and_min_dof <- function(spline_test_configs, 
-                                  metas) {
-
-  for (i in seq_len(nrow(spline_test_configs))) {
-    row <- spline_test_configs[i, ]
-    spline_type <- row[["spline_type"]]
-    dof <- row[["dof"]]
-    degree <- row[["degree"]]
-    knots <- row[["knots"]]
-    
-    # Calculate k and DoF if dof is NA
-    if (is.na(dof)) {
-      k <- length(knots)
-      if (spline_type == "b") {
-        dof <- k + degree
-      } else if (spline_type == "n") {
-        dof <- k + 1
-      } else {
-        stop("Unknown spline type '", spline_type, "' at row ", i)
-      }
-    }
-    
-    # Check if calculated or provided DoF is valid
-    if (dof < 2) {
-      stop("DoF must be at least 2, found DoF of ", dof, " at row ", i)
-    }
-    
-    for (j in seq_along(metas)) {
-      meta <- metas[[j]]
-      nr_timepoints <- length(unique(meta$Time))
-      if (dof > nr_timepoints) {
-        stop("DoF (", dof, ") cannot exceed the number of unique time points 
-           (", nr_timepoints, ") in meta", j, " at row ", i)
-      }
-    }
-
-  }
-  
-  invisible(NULL)
-}
+#' 
+#' #' Check Maximum and Minimum Degrees of Freedom
+#' #'
+#' #' @description
+#' #' Validates the degrees of freedom (DoF) for each row in the spline test 
+#' #' configurations based on the metadata.
+#' #'
+#' #' @param spline_test_configs A dataframe containing spline test configurations.
+#' #' @param metas A list of metadata corresponding to the data matrices.
+#' #'
+#' #' @return No return value, called for side effects.
+#' #' 
+#' #' @importFrom stats setNames
+#' #' 
+#' check_max_and_min_dof <- function(spline_test_configs, 
+#'                                   metas) {
+#' 
+#'   for (i in seq_len(nrow(spline_test_configs))) {
+#'     row <- spline_test_configs[i, ]
+#'     spline_type <- row[["spline_type"]]
+#'     dof <- row[["dof"]]
+#'     degree <- row[["degree"]]
+#'     knots <- row[["knots"]]
+#'     
+#'     # Calculate k and DoF if dof is NA
+#'     if (is.na(dof)) {
+#'       k <- length(knots)
+#'       if (spline_type == "b") {
+#'         dof <- k + degree
+#'       } else if (spline_type == "n") {
+#'         dof <- k + 1
+#'       } else {
+#'         stop("Unknown spline type '", spline_type, "' at row ", i)
+#'       }
+#'     }
+#'     
+#'     # Check if calculated or provided DoF is valid
+#'     if (dof < 2) {
+#'       stop("DoF must be at least 2, found DoF of ", dof, " at row ", i)
+#'     }
+#'     
+#'     for (j in seq_along(metas)) {
+#'       meta <- metas[[j]]
+#'       nr_timepoints <- length(unique(meta$Time))
+#'       if (dof > nr_timepoints) {
+#'         stop("DoF (", dof, ") cannot exceed the number of unique time points 
+#'            (", nr_timepoints, ") in meta", j, " at row ", i)
+#'       }
+#'     }
+#' 
+#'   }
+#'   
+#'   invisible(NULL)
+#' }
 
 
 #' Check if Not All Values are NA

@@ -1,6 +1,8 @@
 #' utils scripts contains shared functions that are used by at least two package 
 #' functions of the SplineOmics package.
 
+
+
 # Level 1 internal functions ---------------------------------------------------
 
 
@@ -295,9 +297,10 @@ check_adj_pthresholds <- function(adj_pthresholds) {
 #' 
 check_time_unit <- function(time_unit) {
   
-  if (!time_unit %in% c("s", "m", "h", "d")) {
-    stop(paste0("time_unit must be one of s for seconds, m for minutes, h ", 
-                "for hours, or d for days. Default is minutes."),
+  if (!is.character(time_unit) || 
+      length(time_unit) != 1 ||
+      nchar(time_unit) > 15) {
+    stop(paste0("time_unit must be a single character with < 16 letters"),
          call. = FALSE)
   }
 }

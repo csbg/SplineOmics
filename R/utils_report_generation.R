@@ -60,7 +60,7 @@
 generate_report_html <- function(plots, 
                                  plots_sizes, 
                                  report_info,
-                                 data,
+                                 data = NA,
                                  meta = NA,
                                  level_headers_info = NA,
                                  spline_params = NA,
@@ -159,7 +159,12 @@ generate_report_html <- function(plots,
   max_field_length <- max(nchar(gsub("_", " ", all_fields)))
 
   for (field in all_fields) {
-    if (field == "data") {
+    
+    if (field == "data" &&
+        !is.null(data) &&
+        is.data.frame(data) &&
+        !any(is.na(data)))  {
+      
       if (report_type == "limma_report") {
         value <- sprintf('<a href="%s" download="top_tables.xlsx">
                         <button>Download top_tables.xlsx</button></a>', 
