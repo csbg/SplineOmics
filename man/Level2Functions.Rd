@@ -273,6 +273,11 @@ configurations.}
 }
 \subsection{Returns}{
 No return value, called for side effects.
+
+Check Dataframe Columns
+
+This function checks if the columns of a dataframe match the expected 
+column names and their respective data types.
 }
 }
 \if{html}{\out{<hr>}}
