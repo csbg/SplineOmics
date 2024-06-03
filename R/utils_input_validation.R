@@ -1,897 +1,1623 @@
-#' utils scripts contains shared functions that are used by at least two package 
-#' functions of the SplineOmics package.
 
 
-
-# Level 1 internal functions ---------------------------------------------------
-
-
-#' Check Data and Meta
-#'
-#' @description
-#' This function checks the validity of the data and meta objects, ensuring that 
-#' data is a matrix with numeric values and that meta is a dataframe containing 
-#' the specified condition column. Additionally, it verifies that the number of 
-#' columns in the data matrix matches the number of rows in the meta dataframe.
-#'
-#' @param data A matrix containing numeric values. 
-#' @param meta A dataframe containing the metadata, including the 'Time' column 
-#' and the specified condition column.
-#' @param condition A single character string specifying the column name in 
-#' the meta dataframe to be checked.
-#' @param meta_batch_column An optional parameter specifying the column name 
-#' in the meta dataframe used to remove the batch effect. Default is NA.
-#' @param data_meta_index An optional parameter specifying the index of the 
-#' data/meta pair for error messages. Default is NA.
-#'
-#' @return Returns TRUE if all checks pass. Stops execution and returns an 
-#' error message if any check fails.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' data <- matrix(runif(9), nrow = 3, ncol = 3)
-#' meta <- data.frame(Time = 1:3, Condition = c("A", "B", "C"))
-#' check_data_and_meta(data, meta, "Condition")}
-#'
-#' @export
-#' 
-check_data_and_meta <- function(data,
-                                meta,
-                                condition,
-                                meta_batch_column = NA,
-                                meta_batch2_column = NA,
-                                data_meta_index = NA) {
-  
-  check_data(data,
-             data_meta_index)
-  
-  check_meta(meta = meta,
-             condition = condition,
-             meta_batch_column = meta_batch_column,
-             meta_batch2_column = meta_batch2_column,
-             data_meta_index = data_meta_index)
-  
-  if (!(nrow(meta) == ncol(data))) {
-    if (!is.na(data_meta_index)) {
-      stop(paste0("For index ", data_meta_index, 
-                  "data column number must be equal to ",
-                  "meta row number"),
-           call. = FALSE)
-    } else {
-      stop(paste0("data column number must be equal to meta row number"),
-           call. = FALSE)
-    }
-  }
-}
+# InputControl class -----------------------------------------------------------
 
 
-#' Check Mode
+#' InputControl: A class for controlling and validating inputs
 #'
-#' @description
-#' Validates that the mode is either 'integrated' or 'isolated', which depends 
-#' on the design formula used in limma.
+#' This class provides methods to validate the inputs of a function.
 #'
-#' @param mode A character string specifying the mode.
+#' @field args A list of arguments to be validated.
 #'
-#' @return A message indicating the chosen mode if valid; otherwise, an error 
-#' is thrown.
-#'
-#' @examples
-#' \dontrun{
-#' check_mode("integrated")
-#' check_mode("isolated")}
-#'
-#' @seealso
-#' \code{\link{limma}}
-#' 
-check_mode <- function(mode) {
+InputControl <- R6::R6Class("InputControl",
+  inherit = Level2Functions,
   
-  if (!((mode == "integrated") || (mode == "isolated"))) {
-    stop("mode must be either integrated or isolated. This is dependent on the
-         used limma design formula. For example, this formula: 
-         ~ 1 + Phase*X + Reactor would require mode = integrated, whereas this
-         formula: ~ 1 + X + Reactor would require mode = isolated.",
-         call. = FALSE)
-  } else {
-    sprintf("Mode %s choosen.", mode)
-  }
-}
-
-
-#' Check Design Formula
-#'
-#' @description
-#' Validates the design formula ensuring it is a valid character string, 
-#' contains allowed characters, includes the intercept term 'X', and references 
-#' columns present in the metadata.
-#'
-#' @param formula A character string representing the design formula.
-#' @param meta A data frame containing metadata.
-#' @param meta_index An optional index for the data/meta pair.
-#'
-#' @return TRUE if the design formula is valid, otherwise an error is thrown.
-#'
-#' @examples
-#' \dontrun{
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' check_design_formula("~ Time + condition * X", meta)}
-#'
-#' @seealso \code{\link[stats]{model.matrix}}
-#' 
-check_design_formula <- function(formula, 
-                                 meta,
-                                 meta_index = NA) {
-  
-  # Check if the formula is a valid character string
-  if (!is.character(formula) || length(formula) != 1) {
-    stop("The design formula must be a valid character string.",
-         call. = FALSE)
-  }
-  
-  # Ensure the formula contains allowed characters only
-  allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-]*$"
-  if (!grepl(allowed_chars, formula)) {
-    stop("The design formula contains invalid characters.",
-         call. = FALSE)
-  }
-  
-  # Ensure the formula contains the intercept term 'X'
-  if (!grepl("\\bX\\b", formula)) {
-    stop("The design formula must include the term 'X'.",
-         call. = FALSE)
-  }
-  
-  # Extract terms from the formula (removing interactions and functions)
-  formula_terms <- unlist(strsplit(gsub("[~+*:()]", " ", formula), " "))
-  formula_terms <- formula_terms[formula_terms != ""]
-  
-  # Remove '1' and 'X' from terms since they are not columns
-  formula_terms <- setdiff(formula_terms, c("1", "X"))
-  
-  # Check if the terms are present in the dataframe
-  missing_columns <- setdiff(formula_terms, names(meta))
-  if (length(missing_columns) > 0) {
-    if (!is.na(meta_index)) {
-      stop(sprintf("%s (data/meta pair index: %s): %s",
-                   "The following design columns are missing in meta",
-                   meta_index, 
-                   paste(missing_columns, collapse = ", ")),
-           call. = FALSE)
-      
-    } else {
-      stop(paste("The following design columns are missing in meta:", 
-                 paste(missing_columns, collapse = ", ")),
-           call. = FALSE)
-    }
-  }
-  
-  return(TRUE)
-}
-
-
-#' Check Spline Parameters
-#'
-#' @description
-#' Validates the spline parameters both generally and depending on the 
-#' specified mode.
-#'
-#' @param spline_params A list of spline parameters.
-#' @param mode A character string specifying the mode
-#'             ('integrated' or 'isolated').
-#' @param meta A dataframe containing metadata.
-#' @param condition A character string specifying the condition.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' mode <- "integrated"
-#' check_spline_params(spline_params, mode)}
-#'
-#' @seealso
-#' \code{\link{check_spline_params_generally}}, 
-#' \code{\link{check_spline_params_mode_dependent}}
-#' 
-check_spline_params <- function(spline_params, 
-                                mode,
-                                meta,
-                                condition) {
-  
-  check_spline_params_generally(spline_params)
-  check_spline_params_mode_dependent(spline_params, 
-                                     mode,
-                                     meta,
-                                     condition)
-}
-
-
-#' Check Adjusted p-Thresholds
-#'
-#' @description
-#' This function checks the validity of the adjusted p-thresholds vector, 
-#' ensuring that 
-#' all elements are numeric, greater than 0, and less than 1. If any of these 
-#' conditions 
-#' are not met, the function stops execution and returns an error message 
-#' indicating the 
-#' offending elements.
-#'
-#' @param adj_pthresholds A numeric vector of adjusted p-thresholds.
-#'
-#' @return Returns TRUE if all checks pass. Stops execution and returns an 
-#' error message if any check fails.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' valid_thresholds <- c(0.01, 0.05, 0.1)
-#' check_adj_pthresholds(valid_thresholds)
-#'
-#' invalid_thresholds <- c(0.01, -0.05, 1.1)
-#' try(check_adj_pthresholds(invalid_thresholds))  # Should raise an error}
-#'
-#' @export
-#' 
-check_adj_pthresholds <- function(adj_pthresholds) {
-  
-  if (!is.numeric(adj_pthresholds)) {
-    stop("'adj_pthresholds' must be a numeric vector.",
-         call. = FALSE)
-  }
-  
-  # Check for elements <= 0
-  if (any(adj_pthresholds <= 0)) {
-    offending_elements <- which(adj_pthresholds <= 0)
-    stop(paste0("'adj_pthresholds' must have all elements > 0. ",
-                "Offending elements at indices: ",
-                paste(offending_elements, collapse = ", "), 
-                ". Values: ",
-                paste(adj_pthresholds[offending_elements], collapse = ", "), 
-                "."),
-         call. = FALSE)
-  }
-  
-  # Check for elements >= 1
-  if (any(adj_pthresholds >= 1)) {
-    offending_elements <- which(adj_pthresholds >= 1)
-    stop(paste0("'adj_pthresholds' must have all elements < 1. ",
-                "Offending elements at indices: ",
-                paste(offending_elements, collapse = ", "), 
-                ". Values: ",
-                paste(adj_pthresholds[offending_elements], collapse = ", "), 
-                "."),
-         call. = FALSE)
-  }
-  
-  return(TRUE)
-}
-
-
-#' Check Time Unit
-#'
-#' @description
-#' This function checks if the provided time unit is valid. The valid time 
-#' units are:
-#' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. If the 
-#' time unit 
-#' is not one of these, the function stops execution and returns an error 
-#' message.
-#'
-#' @param time_unit A character string specifying the time unit. Valid options 
-#' are 
-#' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.
-#'
-#' @return Returns TRUE if the time unit is valid. Stops execution and returns 
-#' an error message if the time unit is invalid.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' check_time_unit("m")  # Should pass without error
-#' 
-#' try(check_time_unit("x"))  # Should raise an error}
-#'
-#' @export
-#' 
-check_time_unit <- function(time_unit) {
-  
-  if (!is.character(time_unit) || 
-      length(time_unit) != 1 ||
-      nchar(time_unit) > 15) {
-    stop(paste0("time_unit must be a single character with < 16 letters"),
-         call. = FALSE)
-  }
-}
-
-
-#' Check and Create Report Directory
-#'
-#' @description
-#' This function checks if the specified report directory exists and is a 
-#' valid directory. 
-#' If the directory does not exist, it attempts to create it. If there are any 
-#' warnings or 
-#' errors during directory creation, the function stops execution and returns 
-#' an error message.
-#'
-#' @param report_dir A character string specifying the path to the report 
-#' directory.
-#'
-#' @return Returns TRUE if the directory exists or is successfully created. 
-#' Stops execution 
-#' and returns an error message if the directory cannot be created or is not 
-#' valid.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' report_dir <- "path/to/report_dir"
-#' check_and_create_report_dir(report_dir)}
-#'
-#' @export
-#' 
-check_and_create_report_dir <- function(report_dir) {
-  
-  # Attempt to create the directory if it does not exist
-  if (!file.exists(report_dir)) {
-    tryCatch({
-      dir.create(report_dir, recursive = TRUE)
-    }, warning = function(w) {
-      stop(sprintf("Warning occurred while creating the directory: %s", 
-                   w$message),
-           call. = FALSE)
-    }, error = function(e) {
-      stop(sprintf("Error occurred while creating the directory: %s", 
-                   e$message),
-           call. = FALSE)
-    })
-  }
-  
-  # Verify that the directory exists and is a directory
-  if (!file.exists(report_dir) || !file.info(report_dir)$isdir) {
-    stop(sprintf("The specified path is not a valid directory: %s", 
-                 report_dir),
-         call. = FALSE)
-  }
-  
-  return(TRUE)
-}
-
-
-#' Check p-Adjustment Method
-#'
-#' @description
-#' This function checks if the provided p-adjustment method is valid. The valid 
-#' methods are:
-#' "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and "none". 
-#' If the method
-#' is not one of these, the function stops execution and returns an error
-#'  message.
-#'
-#' @param padjust_method A character string specifying the p-adjustment method. 
-#' Valid options 
-#' are "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and 
-#' "none".
-#'
-#' @return Returns TRUE if the p-adjustment method is valid. Stops execution and 
-#' returns an error message if the method is invalid.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' check_padjust_method("BH")  # Should pass without error
-#' 
-#' try(check_padjust_method("invalid_method"))  # Should raise an error}
-#'
-#' @export
-#' 
-check_padjust_method <- function(padjust_method) {
-  
-  supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH", 
-                         "BY", "fdr", "none")
-  if (!(is.character(padjust_method) && 
-        padjust_method %in% supported_methods)) 
-  {
-    stop(sprintf("padjust_method must be a character and one of the 
-                   supported methods (%s).",
-                 paste(supported_methods, collapse = ", ")),
-         call. = FALSE)
-  }
-}
-
-
-#' Check Report Information
-#'
-#' @description
-#' Validates the report information to ensure it contains all mandatory fields 
-#' and adheres to the required formats.
-#'
-#' @param report_info A named list containing report information.
-#'
-#' @return TRUE if the report information is valid; otherwise, an error is 
-#' thrown.
-#'
-#' @examples
-#' \dontrun{
-#' report_info <- list(
-#'   omics_data_type = "genomics",
-#'   data_description = "Sample description",
-#'   data_collection_date = "2023-01-01",
-#'   analyst_name = "John Doe",
-#'   project_name = "Project XYZ"
-#' )
-#' check_report_info(report_info)}
-#' 
-check_report_info <- function(report_info) {
-  
-  mandatory_fields <- c("omics_data_type",
-                        "data_description", 
-                        "data_collection_date",
-                        "analyst_name", 
-                        "contact_info",
-                        "project_name")
-  
-  all_fields <- c(mandatory_fields,
-                  "method_description",
-                  "results_summary",
-                  "conclusions")
-  
-  # Check if report_info is a named list
-  if (!is.list(report_info) || is.null(names(report_info))) {
-    stop("report_info must be a named list.",
-         call. = FALSE)
-  }
-  
-  # Check if all values in report_info are strings
-  non_string_fields <- sapply(report_info, function(x) !is.character(x))
-  if (any(non_string_fields)) {
-    invalid_fields <- names(report_info)[non_string_fields]
-    stop(paste("The following fields must be strings:", paste(invalid_fields, 
-                                                              collapse = ", ")),
-         call. = FALSE)
-  }
-  
-  # Check if all mandatory fields are present
-  missing_fields <- setdiff(mandatory_fields, names(report_info))
-  if (length(missing_fields) > 0) {
-    stop(paste("Missing mandatory fields:", paste(missing_fields, 
-                                                  collapse = ", ")),
-         call. = FALSE)
-  }
-  
-  # Check if there are any extra fields not in all_fields
-  extra_fields <- setdiff(names(report_info), all_fields)
-  if (length(extra_fields) > 0) {
-    stop(paste("The following fields are not recognized:", 
-               paste(extra_fields, collapse = ", ")),
-         call. = FALSE)
-  }
-  
-  # Check omics_data_type format
-  if (!grepl("^[a-zA-Z_]+$", report_info[["omics_data_type"]])) {
-    stop(paste("The 'omics_data_type' field must contain only alphabetic",  
-               "letters and underscores."),
-         call. = FALSE)
-  }
-  
-  # Check if any field exceeds 80 characters
-  long_fields <- sapply(report_info, function(x) any(nchar(x) > 80))
-  if (any(long_fields)) {
-    too_long_fields <- names(report_info)[long_fields]
-    stop(paste("The following fields have strings exceeding 80 characters:", 
-               paste(too_long_fields, collapse = ", ")),
-         call. = FALSE)
-  }
-  
-  return(TRUE)
-}
-
-
-# Level 2 internal functions ---------------------------------------------------
-
-
-#' Check Data Matrix
-#'
-#' @description
-#' This function checks the validity of the data matrix, ensuring that it is a 
-#' matrix, contains only numeric values, 
-#' has no missing values, and all elements are non-negative. Additionally, it
-#'  verifies that no rows or columns are 
-#' entirely zeros.
-#'
-#' @param data A dataframe containing numeric values.
-#' @param data_meta_index An optional parameter specifying the index of the data 
-#' for error messages. Default is NA.
-#'
-#' @return Returns TRUE if all checks pass. Stops execution and returns an error
-#'  message if any check fails.
-#' 
-check_data <- function(data,
-                       data_meta_index = NA) {
-  
-  # Check if the input is a dataframe
-  if (!is.data.frame(data)) {
-    stop(create_error_message("data must be a dataframe.", data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check if all elements in the dataframe are numeric
-  if (!all(sapply(data, is.numeric))) {
-    stop(create_error_message("data must contain only numeric values.", 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check for missing values
-  if (any(is.na(data))) {
-    stop(create_error_message("data must not contain missing values.", 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check for non-negative values
-  if (any(data < 0)) {
-    stop(create_error_message(paste("All elements of data must be ",
-                                    "non-negative. The elements should", 
-                                    "represent concentrations, abundances, or",
-                                    "intensities (which are inherently", 
-                                    "non-negative)."), 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check for rows with all zeros
-  if (any(rowSums(data) == 0)) {
-    stop(create_error_message("data must not contain rows with all zeros.", 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check for columns with all zeros
-  if (any(colSums(data) == 0)) {
-    stop(create_error_message("data must not contain columns with all zeros.", 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  # Check if row headers (rownames) are all strings
-  row_headers <- rownames(data)
-  if (is.null(row_headers) || !all(sapply(row_headers, is.character))) {
-    stop(create_error_message("All row headers must be strings.", 
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  return(TRUE)
-}
-
-
-#' Check Metadata
-#'
-#' @description
-#' This function checks the validity of the metadata dataframe, ensuring it 
-#' contains the 'Time' column, 
-#' does not contain missing values, and that the specified condition column is 
-#' valid and of the appropriate type.
-#' Additionally, it checks for an optional batch effect column and prints 
-#' messages regarding its use.
-#'
-#' @param meta A dataframe containing the metadata, including the 'Time' column.
-#' @param condition A single character string specifying the column name in the 
-#' meta dataframe to be checked.
-#' @param meta_batch_column An optional parameter specifying the column name in
-#'  the meta dataframe used to remove the batch effect. Default is NA.
-#' @param data_meta_index An optional parameter specifying the index of the 
-#' data/meta pair for error messages. Default is NA.
-#'
-#' @return Returns TRUE if all checks pass. Stops execution and returns an 
-#' error message if any check fails.
-#' 
-check_meta <- function(meta, 
-                       condition,
-                       meta_batch_column = NA,
-                       meta_batch2_column = NA,
-                       data_meta_index = NA) {
-
-  if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
-    stop(create_error_message("meta must be a dataframe with the column Time",
-                              data_meta_index), 
-         call. = FALSE)
-  }
-  
-  if (any(is.na(meta))) {
-    stop(create_error_message("meta must not contain missing values.",
-                              data_meta_index), 
-         call. = FALSE)
-  }
-  
-  # Check if condition is a single character
-  if (!is.character(condition) || length(condition) != 1) {
-    stop("'condition' must be a single character",
-         call. = FALSE)
-  }
-  
-  # Check if condition is a column in the meta dataframe
-  if (!condition %in% colnames(meta)) {
-    stop(create_error_message(sprintf("The condition '%s' is not a %s", 
-                                      condition, 
-                                      paste("column in meta")),
-                              data_meta_index), 
-         call. = FALSE)
-  }
-  
-  # Check if the factor column is of appropriate type
-  if (!is.factor(meta[[condition]]) && 
-      !is.character(meta[[condition]])) {
+  public = list(
+    args = NULL,
     
-    stop(create_error_message(sprintf("The factor column '%s' must be of type 
-                                      factor or character.", condition),
-                              data_meta_index),
-         call. = FALSE)
-  }
-  
-  if (is.na(meta_batch_column) && !is.na(meta_batch2_column)) {
-    stop(paste("For removing the batch effect, batch2 can only be used when",
-               "batch is used!"), call. = FALSE)
-  }
-  
-  check_batch_column(meta_batch_column,
-                     data_meta_index)
-  
-  if (!is.na(meta_batch2_column)) {
-    check_batch_column(meta_batch2_column,
-                       data_meta_index)
-  }
+    #' Initialize an InputControl object
+    #'
+    #' @param args A list of arguments to be validated.
+    #' @return A new instance of the InputControl class.
+    initialize = function(args) {
+      self$args <- args
+    },
+    
+    
+    #' Automatically Validate All Arguments
+    #'
+    #' This method automatically validates all arguments by sequentially 
+    #' calling
+    #' various validation methods defined within the class. Each validation 
+    #' method
+    #' checks specific aspects of the input arguments and raises an error if the
+    #' validation fails.
+    #'
+    #' The following validation methods are called in sequence:
+    #' - \code{self$check_data_and_meta()}
+    #' - \code{self$check_datas_and_metas()}
+    #' - \code{self$check_datas_descr()}
+    #' - \code{self$check_mode()}
+    #' - \code{self$check_modes()}
+    #' - \code{self$check_design_formula()}
+    #' - \code{self$check_designs_and_metas()}
+    #' - \code{self$check_spline_params()}
+    #' - \code{self$check_spline_test_configs()}
+    #' - \code{self$check_adj_pthresholds()}
+    #' - \code{self$check_clusters()}
+    #' - \code{self$check_time_unit()}
+    #' - \code{self$check_report_dir()}
+    #' - \code{self$check_padjust_method()}
+    #' - \code{self$check_report_info()}
+    #' - \code{self$check_report()}
+    #'
+    #' @return NULL. The function is used for its side effects of validating 
+    #' input
+    #' arguments and raising errors if any validation fails.
+    #'
+    auto_validate = function() {
+      self$check_data_and_meta()
+      self$check_datas_and_metas()
+      self$check_datas_descr()
+      self$check_mode()
+      self$check_modes()
+      self$check_design_formula()
+      self$check_designs_and_metas()
+      self$check_spline_params()
+      self$check_spline_test_configs()
+      self$check_adj_pthresholds()
+      self$check_clusters()
+      self$check_time_unit()
+      self$check_report_dir()
+      self$check_padjust_method()
+      self$check_report_info()
+      self$check_report()
+    },
+    
 
-  return(TRUE)
-}
+    #' Check Data and Meta
+    #'
+    #' @description
+    #' This function checks the validity of the data and meta objects, 
+    #' ensuring that
+    #' data is a matrix with numeric values and that meta is a dataframe 
+    #' containing
+    #' the specified condition column. Additionally, it verifies that the 
+    #' number of
+    #' columns in the data matrix matches the number of rows in the meta 
+    #' dataframe.
+    #'
+    #' @param data A matrix containing numeric values.
+    #' @param meta A dataframe containing the metadata, including the 'Time' 
+    #' column
+    #' and the specified condition column.
+    #' @param condition A single character string specifying the column name in
+    #' the meta dataframe to be checked.
+    #' @param meta_batch_column An optional parameter specifying the column name
+    #' in the meta dataframe used to remove the batch effect. Default is NA.
+    #' @param data_meta_index An optional parameter specifying the index of the
+    #' data/meta pair for error messages. Default is NA.
+    #'
+    #' @return Returns TRUE if all checks pass. Stops execution and returns an
+    #' error message if any check fails.
+    #'
+    check_data_and_meta = function() {
+      
+      data <- self$args[["data"]]
+      meta <- self$args[["meta"]]
+      condition <- self$args[["condition"]]
+      meta_batch_column <- self$args[["meta_batch_column"]]
+      meta_batch2_column <- self$args[["meta_batch2_column"]]
+      data_meta_index <- self$args[["data_meta_index"]]
 
-
-#' Check Spline Parameters Generally
-#'
-#' @description
-#' Validates the general structure and contents of spline parameters.
-#'
-#' @param spline_params A list of spline parameters.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' spline_params <- list(
-#'   spline_type = c("b", "n"),
-#'   degree = c(3, NA),
-#'   dof = c(4, NA),
-#'   knots = list(NA, c(1, 2, 3)),
-#'   bknots = list(NA, c(0.5, 1.5))
-#' )
-#' check_spline_params_generally(spline_params)}
-#'
-#' @seealso
-#' \code{\link{check_spline_params_mode_dependent}}
-#' 
-check_spline_params_generally <- function(spline_params) {
-  
-  if ("spline_type" %in% names(spline_params)) {
-    if (!all(spline_params$spline_type %in% c("b", "n"))) {
-      stop(paste("Elements of spline_type must be either 'b' for B-splines or",
-                 "'n'. for natural cubic splines, in spline_params"),
-           call. = FALSE)
-    }
-  } else {
-    stop("spline_type is missing in spline_params.",
-         call. = FALSE)
-  }
-  
-  # Check if degree exists and is an integer vector
-  if ("degree" %in% names(spline_params)) {
-    if (!all(spline_params$degree == as.integer(spline_params$degree))) {
-      stop("degree must be an integer vector in spline_params.",
-           call. = FALSE)
-    }
-  } else if (!all(spline_params$spline_type %in% c("n"))) {
-    stop("degree is missing in spline_params.",
-         call. = FALSE)
-  }
-  
-  if (("dof" %in% names(spline_params)) && 
-      ("knots" %in% names(spline_params))) {
-    stop("Either dof or knots must be present, but not both,in spline_params.",
-         call. = FALSE)
-  } else if (!("dof" %in% names(spline_params)) && 
-             !("knots" %in% names(spline_params))) {
-    stop("At least one of dof or knots must be present, in spline_params.",
-         call. = FALSE)
-  }
-  
-  # Check if dof exists and is an integer vector
-  if ("dof" %in% names(spline_params)) {
-    if (!all(spline_params$dof == as.integer(spline_params$dof))) {
-      stop("dof must be an integer vector in spline_params.",
-           call. = FALSE)
-    }
-    for (i in seq_along(spline_params$spline_type)) {
-      if (spline_params$spline_type[i] == "b" && spline_params$dof[i] < 3) {
-        stop(paste("B-splines require DoF > 2, for spline_params spline_type", 
-                    "index", i),
+      required_args <- list(data, meta, condition)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      self$check_data(data,
+                      data_meta_index)
+      
+      self$check_meta(meta = meta,
+                      condition = condition,
+                      meta_batch_column = meta_batch_column,
+                      meta_batch2_column = meta_batch2_column,
+                      data_meta_index = data_meta_index)
+      
+      if (!(nrow(meta) == ncol(data))) {
+        if (!is.null(data_meta_index)) {
+          stop(paste0("For index ", data_meta_index,
+                      "data column number must be equal to ",
+                      "meta row number"),
+               call. = FALSE)
+        } else {
+          stop(paste0("data column number must be equal to meta row number"),
+               call. = FALSE)
+        }
+      }
+    },
+    
+    
+    #' Check Multiple Data and Meta Pairs
+    #'
+    #' @description
+    #' Iterates over multiple data and meta pairs to validate each pair using 
+    #' the `check_data_and_meta` function.
+    #'
+    #' @param datas A list of matrices containing numeric values.
+    #' @param metas A list of data frames containing metadata.
+    #' @param condition A character string specifying the column name in the 
+    #' meta dataframe to be checked.
+    #' @param meta_batch_column An optional parameter specifying the column name 
+    #' in the meta dataframe used to remove the batch effect. Default is NA.
+    #' @param meta_batch2_column An optional parameter specifying the column
+    #'  name 
+    #' in the meta dataframe used to remove the second batch effect. Default 
+    #' is NA.
+    #'
+    #' @return NULL if any check fails, otherwise returns TRUE.
+    #'
+    check_datas_and_metas = function() {
+      
+      datas <- self$args$datas
+      metas <- self$args$metas
+      condition <- self$args$condition
+      meta_batch_column <- self$args$meta_batch_column
+      meta_batch2_column <- self$args$meta_batch2_column
+      
+      required_args <- list(datas, metas, condition)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (length(datas) != length(metas)) {
+        stop(paste0("datas and metas must have the same length."),
              call. = FALSE)
       }
-    }
-  }
-  
-  # Check if knots exists and is a list of numeric vectors
-  if ("knots" %in% names(spline_params)) {
-    if (!is.list(spline_params$knots) || 
-        any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
-      stop("knots must be a list of numeric vectors in spline_params.",
-           call. = FALSE)
-    }
-  }
-  
-  # Check if bknots exists and is a list of numeric vectors
-  if ("bknots" %in% names(spline_params)) {
-    if (!is.list(spline_params$bknots) || 
-        any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
-      stop("bknots must be a list of numeric vectors, in spline_params.",
-           call. = FALSE)
-    }
-  }
-}
-
-
-#' Check Spline Parameters Mode Dependent
-#'
-#' @description
-#' Validates the spline parameters depending on the specified mode.
-#'
-#' @param spline_params A list of spline parameters.
-#' @param mode A character string specifying the mode 
-#'            ('integrated' or 'isolated').
-#' @param meta A dataframe containing metadata.
-#' @param condition A character string specifying the condition.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' spline_params <- list(
-#'   spline_type = "b",
-#'   degree = 3,
-#'   dof = 4,
-#'   knots = list(c(1, 2, 3)),
-#'   bknots = list(c(0.5, 1.5))
-#' )
-#' check_spline_params_mode_dependent(spline_params, "integrated")}
-#'
-#' @seealso
-#' \code{\link{check_spline_params_generally}}
-#' 
-check_spline_params_mode_dependent <- function(spline_params, 
-                                               mode,
-                                               meta,
-                                               condition) {
-  
-  if (mode == "integrated") {
-    # Check that each vector in the main parameters has exactly one element
-    if (any(sapply(spline_params, function(x) length(x) != 1))) {
-      stop(paste("All parameters in spline_params must have exactly one",
-                 "element when mode is 'integrated'. Different spline", 
-                 "parameters for the different levels is not supported for",
-                 "this mode"),
-           call. = FALSE)
-    }
+      
+      data_storage <- self$args$data
+      meta_storage <- self$args$meta
+      
+      for (i in seq_along(datas)) {
+        self$args$data <- datas[[i]]
+        self$args$meta <- metas[[i]]
+        self$args$data_meta_index <- i
+        self$args$condition <- condition
+        self$args$meta_batch_column <- meta_batch_column
+        self$args$meta_batch2_column <- meta_batch2_column
+        
+        self$check_data_and_meta()
+      }
+      
+      self$args$data <- data_storage
+      self$args$meta <- meta_storage
+      
+      return(TRUE)
+    },
     
-    # Additional check for 'knots' and 'bknots' if they exist
-    if ("knots" %in% names(spline_params)) {
-      if (length(spline_params$knots) != 1) {
-        stop(paste("All elements in 'knots' in spline_params must have length",
+    
+    #' Check Data Descriptions
+    #'
+    #' @description
+    #' Validates that the data descriptions are character vectors with each 
+    #' element 
+    #' not exceeding 80 characters in length.
+    #'
+    #' @param datas_descr A character vector of data descriptions.
+    #'
+    #' @return No return value, called for side effects.
+    #'
+    #' @seealso
+    #' \code{\link{stop}} for error handling.
+    #' 
+    check_datas_descr = function() {
+      
+      datas_descr <- self$args$datas_descr
+      
+      required_args <- list(datas_descr)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
+        long_elements_indices <- which(nchar(datas_descr) > 80)
+        long_elements <- datas_descr[long_elements_indices]
+        error_message <- sprintf(
+          "'datas_descr' must be a character vector with no element over 80 
+      characters. Offending element(s) at indices %s: '%s'. Please shorten
+      the description.",
+          paste(long_elements_indices, collapse = ", "),
+          paste(long_elements, collapse = "', '")
+        )
+        stop(error_message)
+      }
+    },
+    
+    
+    #' Check Mode
+    #'
+    #' @description
+    #' Validates that the mode is either 'integrated' or 'isolated', which 
+    #' depends
+    #' on the design formula used in limma.
+    #'
+    #' @param mode A character string specifying the mode.
+    #'
+    #' @return A message indicating the chosen mode if valid; otherwise, an 
+    #' error
+    #' is thrown.
+    #'
+    #' @seealso
+    #' \code{\link{limma}}
+    #'
+    check_mode = function() {
+
+      mode <- self$args[["mode"]]
+      
+      required_args <- list(mode)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+
+      if (!((mode == "integrated") || (mode == "isolated"))) {
+        stop(paste("mode must be either integrated or isolated. This is", 
+                   "dependent on the used limma design formula. For example,", 
+                   "this formula: ~ 1 + Phase*X + Reactor would require", 
+                   "mode = integrated, whereas this formula:", 
+                   "~ 1 + X + Reactor would require mode = isolated."),
+             call. = FALSE)
+      } else {
+        sprintf("Mode %s chosen.", mode)
+      }
+    },
+    
+    
+    #' Check Modes
+    #'
+    #' This method validates multiple modes by ensuring that the lengths of the 
+    #' modes and designs are the same. It then iterates through each mode, 
+    #' sets it 
+    #' in the class arguments, and calls \code{self$check_mode()} to perform 
+    #' the validation for each mode.
+    #'
+    #' @details
+    #' - The method first checks if the lengths of \code{designs} and 
+    #' \code{modes} 
+    #'   are equal. If not, it raises an error.
+    #' - It then checks if \code{modes} is \code{NULL}, and if so, the method
+    #'  returns 
+    #'   without performing any further checks.
+    #' - For each mode in \code{modes}, the method sets \code{self$args$mode} 
+    #' to the 
+    #'   current mode and calls \code{self$check_mode()}.
+    #'
+    #' @return NULL. The function is used for its side effects of validating 
+    #' each 
+    #' mode and raising errors if any validation fails.
+    #' 
+    check_modes = function() {
+      
+      modes <- self$args$modes
+      designs <- self$args$designs
+      
+      if (is.null(modes) || is.null(designs)) {
+        return(NULL)
+      }
+      
+      if (length(designs) != length(modes)) {
+        stop(paste("designs and modes must have the same length."),
+             call. = FALSE)
+      }
+      
+      storage <- self$args$mode
+      
+      for (mode in modes) {
+        self$args$mode <- mode
+        self$check_mode()
+      }
+      self$args$mode <- storage
+    },
+    
+    
+    #' Check Design Formula
+    #'
+    #' @description
+    #' Validates the design formula ensuring it is a valid character string,
+    #' contains allowed characters, includes the intercept term 'X', and 
+    #' references
+    #' columns present in the metadata.
+    #'
+    #' @param formula A character string representing the design formula.
+    #' @param meta A data frame containing metadata.
+    #' @param meta_index An optional index for the data/meta pair.
+    #'
+    #' @return TRUE if the design formula is valid, otherwise an error is 
+    #' thrown.
+    #'
+    #' @seealso \code{\link[stats]{model.matrix}}
+    #'
+    check_design_formula = function() {
+      
+      formula <- self$args[["design"]]
+      meta <- self$args$meta
+      meta_index <- self$args$meta_index
+      
+      required_args <- list(formula, meta)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+
+      # Check if the formula is a valid character string
+      if (!is.character(formula) || length(formula) != 1) {
+        stop("The design formula must be a valid character string.",
+             call. = FALSE)
+      }
+      
+      # Ensure the formula contains allowed characters only
+      allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-]*$"
+      if (!grepl(allowed_chars, formula)) {
+        stop("The design formula contains invalid characters.",
+             call. = FALSE)
+      }
+      
+      # Ensure the formula contains the intercept term 'X'
+      if (!grepl("\\bX\\b", formula)) {
+        stop("The design formula must include the term 'X'.",
+             call. = FALSE)
+      }
+      
+      # Extract terms from the formula (removing interactions and functions)
+      formula_terms <- unlist(strsplit(gsub("[~+*:()]", " ", formula), " "))
+      formula_terms <- formula_terms[formula_terms != ""]
+      
+      # Remove '1' and 'X' from terms since they are not columns
+      formula_terms <- setdiff(formula_terms, c("1", "X"))
+      
+      # Check if the terms are present in the dataframe
+      missing_columns <- setdiff(formula_terms, names(meta))
+      if (length(missing_columns) > 0) {
+        if (!is.null(meta_index)) {
+          stop(sprintf("%s (data/meta pair index: %s): %s",
+                       "The following design columns are missing in meta",
+                       meta_index,
+                       paste(missing_columns, collapse = ", ")),
+               call. = FALSE)
+          
+        } else {
+          stop(paste("The following design columns are missing in meta:",
+                     paste(missing_columns, collapse = ", ")),
+               call. = FALSE)
+        }
+      }
+      
+      return(TRUE)
+    },
+    
+    
+    #' Check Multiple Designs and Metas
+    #'
+    #' @description
+    #' Iterates over multiple design formulas and corresponding metadata
+    #' to validate each pair using the `check_design_formula` function.
+    #'
+    #' @param designs A vector of character strings representing design 
+    #' formulas.
+    #' @param metas A list of data frames containing metadata.
+    #' @param meta_indices A vector of optional indices for the data/meta pairs.
+    #'
+    #' @return NULL if any check fails, otherwise returns TRUE.
+    #'
+    check_designs_and_metas = function() {
+      
+      designs <- self$args$designs
+      metas <- self$args$metas
+      meta_indices <- self$args$meta_indices
+      
+      if (is.null(designs) || is.null(metas)) {
+        return(NULL)
+      }
+      
+      for (i in seq_along(designs)) {
+        self$args$design <- designs[i]
+        self$args$meta <- metas[[i]]
+        self$args$meta_index <- 
+          ifelse(!is.null(meta_indices), meta_indices[i], NA)
+        self$check_design_formula()
+      }
+      
+      return(TRUE)
+    },
+    
+    
+    #' Check Spline Parameters
+    #'
+    #' @description
+    #' Validates the spline parameters both generally and depending on the
+    #' specified mode.
+    #'
+    #' @param spline_params A list of spline parameters.
+    #' @param mode A character string specifying the mode
+    #'             ('integrated' or 'isolated').
+    #' @param meta A dataframe containing metadata.
+    #' @param condition A character string specifying the condition.
+    #'
+    #' @return No return value, called for side effects.
+    #'
+    #' @seealso
+    #' \code{\link{self$check_spline_params_generally}},
+    #' \code{\link{self$check_spline_params_mode_dependent}}
+    #'
+    check_spline_params = function() {
+      
+      spline_params <- self$args$spline_params
+      mode <- self$args[["mode"]]
+      meta <- self$args$meta
+      condition <- self$args$condition
+      
+      required_args <- list(spline_params, mode, meta, condition)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      self$check_spline_params_generally(spline_params)
+      self$check_spline_params_mode_dependent(spline_params,
+                                              mode,
+                                              meta,
+                                              condition)
+    },
+    
+    
+    #' Check Spline Test Configurations
+    #'
+    #' @description
+    #' This function verifies the spline test configurations and associated 
+    #' metadata
+    #' within the object's arguments. It performs a series of checks on the 
+    #' configurations, including column verification, spline type validation, 
+    #' and ensuring that the degrees of freedom (dof) are within acceptable 
+    #' ranges.
+    #'
+    #' @return
+    #' Returns `NULL` if any required arguments 
+    #' (`spline_test_configs` or `metas`) 
+    #' are missing. Otherwise, it performs a series of validation checks.
+    #'
+    #' @details
+    #' The function checks the following:
+    #' - Whether the required arguments (`spline_test_configs` and `metas`) 
+    #' are present.
+    #' - Validity of the columns in the spline test configurations.
+    #' - Validity of the spline type column in the configurations.
+    #' - Validity of the spline type parameters.
+    #' - Ensures that the maximum and minimum degrees of freedom are within the 
+    #'   acceptable ranges specified by the metadata.
+    #'
+    check_spline_test_configs = function() {
+      
+      spline_test_configs <- self$args$spline_test_configs
+      metas <- self$args$metas
+      
+      required_args <- list(spline_test_configs, metas)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      self$check_colums_spline_test_configs(spline_test_configs)
+      
+      self$check_spline_type_column(spline_test_configs)
+      
+      self$check_spline_type_params(spline_test_configs)
+      
+      self$check_max_and_min_dof(spline_test_configs, metas)
+    },
+    
+    
+    #' Check Limma Top Tables Structure
+    #'
+    #' This function checks if the provided limma top tables data structure 
+    #' is correctly formatted. It ensures that the data structure contains 
+    #' exactly three named elements ('time_effect', 'avrg_diff_conditions', 
+    #' and 'interaction_condition_time') and that each element contains 
+    #' dataframes with the correct columns and data types.
+    #'
+    #' @param self An object containing the data structure to check.
+    #'
+    #' @return This function does not return a value. It stops execution 
+    #' if the data structure does not match the expected format.
+    #' 
+    check_limma_top_tables = function() {
+      
+      top_tables <- self$args$run_limma_splines_result
+      
+      required_names <- c("time_effect",
+                          "avrg_diff_conditions", 
+                          "interaction_condition_time")
+      
+      if (!all(names(top_tables) %in% required_names) ||
+          length(top_tables) != 3) {
+        stop("The list must contain exactly three named elements: 
+         'time_effect', 'avrg_diff_conditions', 
+         'interaction_condition_time'", call. = FALSE)
+      }
+      
+      expected_cols1_3 <- c("X1", "X2", "AveExpr", "F", "P.Value", "adj.P.Val",
+                            "feature_index", "feature_names", "intercept")
+      
+      expected_cols2 <- c("logFC", "AveExpr", "t", "P.Value", "adj.P.Val",
+                          "B", "feature_index", "feature_names", "intercept")
+      
+      for (df in top_tables$time_effect) {
+        check_columns(df, expected_cols1_3)
+      }
+      
+      for (df in top_tables$avrg_diff_conditions) {
+        check_columns(df, expected_cols2)
+      }
+      
+      for (df in top_tables$interaction_condition_time) {
+        check_columns(df, expected_cols1_3)
+      }
+    },
+
+    
+    #' Check Adjusted p-Thresholds
+    #'
+    #' @description
+    #' This function checks the validity of the adjusted p-thresholds vector,
+    #' ensuring that
+    #' all elements are numeric, greater than 0, and less than 1. If any of 
+    #' these
+    #' conditions
+    #' are not met, the function stops execution and returns an error message
+    #' indicating the
+    #' offending elements.
+    #'
+    #' @param adj_pthresholds A numeric vector of adjusted p-thresholds.
+    #'
+    #' @return Returns TRUE if all checks pass. Stops execution and returns an
+    #' error message if any check fails.
+    #'
+    check_adj_pthresholds = function() {
+      
+      # Exploited argument slicing.
+      adj_pthresholds <- self$args$adj_pthresh
+
+      required_args <- list(adj_pthresholds)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.numeric(adj_pthresholds)) {
+        stop("'adj_pthresholds' must be a numeric vector.",
+             call. = FALSE)
+      }
+      
+      # Check for elements <= 0
+      if (any(adj_pthresholds <= 0)) {
+        offending_elements <- which(adj_pthresholds <= 0)
+        stop(paste0("'adj_pthresholds' must have all elements > 0. ",
+                    "Offending elements at indices: ",
+                    paste(offending_elements, collapse = ", "),
+                    ". Values: ",
+                    paste(adj_pthresholds[offending_elements], collapse = ", "),
+                    "."),
+             call. = FALSE)
+      }
+      
+      # Check for elements >= 1
+      if (any(adj_pthresholds >= 1)) {
+        offending_elements <- which(adj_pthresholds >= 1)
+        stop(paste0("'adj_pthresholds' must have all elements < 1. ",
+                    "Offending elements at indices: ",
+                    paste(offending_elements, collapse = ", "),
+                    ". Values: ",
+                    paste(adj_pthresholds[offending_elements], collapse = ", "),
+                    "."),
+             call. = FALSE)
+      }
+      
+      return(TRUE)
+    },
+    
+    
+    #' Check Clusters
+    #'
+    #' @description
+    #' This function verifies the cluster configurations within the object's 
+    #' arguments.
+    #' It checks if the clusters argument is present and performs validation 
+    #' on its 
+    #' content. If no clusters are specified, it defaults to automatic cluster 
+    #' estimation.
+    #'
+    #' @details
+    #' The function performs the following checks:
+    #' - Whether the `clusters` argument is present.
+    #' - If `clusters` is a single character string "auto", it defaults to 
+    #' automatic 
+    #'   cluster estimation and prints a message.
+    #' - If `clusters` is not a list or if the list contains non-character and 
+    #'   non-numeric types, it throws an error.
+    #'
+    check_clusters = function() {
+      
+      clusters <- self$args$clusters
+      
+      required_args <- list(clusters)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (is.character(clusters) && 
+          length(clusters) == 1 && clusters[1] == "auto") {
+        
+        print(paste0("No cluster amounts were specified as arguments. Default ",
+                     "argument is automatic cluster estimation."))
+        
+      } else if (!is.list(clusters) ||
+                 !all(sapply(clusters, function(x) is.character(x) ||
+                             is.numeric(x)))) {
+        stop(paste("clusters must be a list containing only character", 
+                   "or numeric types."),
+             call. = FALSE)
+      }
+    },
+    
+    
+    #' Check Time Unit
+    #'
+    #' @description
+    #' This function checks if the provided time unit is valid. The valid time
+    #' units are:
+    #' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. If the
+    #' time unit
+    #' is not one of these, the function stops execution and returns an error
+    #' message.
+    #'
+    #' @param time_unit A character string specifying the time unit. Valid 
+    #' options
+    #' are
+    #' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.
+    #'
+    #' @return Returns TRUE if the time unit is valid. Stops execution and 
+    #' returns
+    #' an error message if the time unit is invalid.
+    #'
+    check_time_unit = function() {
+      
+      time_unit <- self$args$time_unit
+      
+      required_args <- list(time_unit)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.character(time_unit) ||
+           length(time_unit) != 1 ||
+           nchar(time_unit) > 15) {
+        stop(paste0("time_unit must be a single character with < 16 letters"),
+             call. = FALSE)
+      }
+    },
+    
+    
+    #' Check and Create Report Directory
+    #'
+    #' @description
+    #' This function checks if the specified report directory exists and is a
+    #' valid directory.
+    #' If the directory does not exist, it attempts to create it. If there are
+    #'  any
+    #' warnings or
+    #' errors during directory creation, the function stops execution and 
+    #' returns
+    #' an error message.
+    #'
+    #' @param report_dir A character string specifying the path to the report
+    #' directory.
+    #'
+    #' @return Returns TRUE if the directory exists or is successfully created.
+    #' Stops execution
+    #' and returns an error message if the directory cannot be created or is not
+    #' valid.
+    #'
+    check_report_dir = function() {
+      
+      report_dir <- self$args$report_dir
+      
+      required_args <- list(report_dir)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      # Attempt to create the directory if it does not exist
+      if (!file.exists(report_dir)) {
+        tryCatch({
+          dir.create(report_dir, recursive = TRUE)
+        }, warning = function(w) {
+          stop(sprintf("Warning occurred while creating the directory: %s",
+                       w$message),
+               call. = FALSE)
+        }, error = function(e) {
+          stop(sprintf("Error occurred while creating the directory: %s",
+                       e$message),
+               call. = FALSE)
+        })
+      }
+      
+      # Verify that the directory exists and is a directory
+      if (!file.exists(report_dir) || !file.info(report_dir)$isdir) {
+        stop(sprintf("The specified path is not a valid directory: %s",
+                     report_dir),
+             call. = FALSE)
+      }
+      
+      return(TRUE)
+    },
+    
+    
+    #' Check p-Adjustment Method
+    #'
+    #' @description
+    #' This function checks if the provided p-adjustment method is valid. The 
+    #' valid
+    #' methods are:
+    #' "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and 
+    #' "none".
+    #' If the method
+    #' is not one of these, the function stops execution and returns an error
+    #'  message.
+    #'
+    #' @param padjust_method A character string specifying the p-adjustment 
+    #' method.
+    #' Valid options
+    #' are "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and
+    #' "none".
+    #'
+    #' @return Returns TRUE if the p-adjustment method is valid. Stops execution
+    #'  and
+    #' returns an error message if the method is invalid.
+    #'
+    check_padjust_method = function() {
+      
+      padjust_method <- self$args$padjust_method
+      
+      required_args <- list(padjust_method)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH",
+                             "BY", "fdr", "none")
+      if (!(is.character(padjust_method) &&
+            padjust_method %in% supported_methods)) {
+        stop(sprintf(paste("padjust_method must be a character and one of the",
+                           "supported methods (%s).",
+                           paste(supported_methods, collapse = ", "))),
+             call. = FALSE)
+      }
+    },
+    
+    
+    #' Check Report Information
+    #'
+    #' @description
+    #' Validates the report information to ensure it contains all mandatory 
+    #' fields
+    #' and adheres to the required formats.
+    #'
+    #' @param report_info A named list containing report information.
+    #'
+    #' @return TRUE if the report information is valid; otherwise, an error is
+    #' thrown.
+    #'
+    check_report_info = function() {
+      
+      report_info <- self$args$report_info
+      
+      required_args <- list(report_info)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      mandatory_fields <- c("omics_data_type",
+                            "data_description",
+                            "data_collection_date",
+                            "analyst_name",
+                            "contact_info",
+                            "project_name")
+      
+      all_fields <- c(mandatory_fields,
+                      "method_description",
+                      "results_summary",
+                      "conclusions")
+      
+      # Check if report_info is a named list
+      if (!is.list(report_info) || is.null(names(report_info))) {
+        stop("report_info must be a named list.",
+             call. = FALSE)
+      }
+      
+      # Check if all values in report_info are strings
+      non_string_fields <- sapply(report_info, function(x) !is.character(x))
+      if (any(non_string_fields)) {
+        invalid_fields <- names(report_info)[non_string_fields]
+        stop(paste("The following fields must be strings:", 
+                   paste(invalid_fields, collapse = ", ")),
+             call. = FALSE)
+      }
+      
+      # Check if all mandatory fields are present
+      missing_fields <- setdiff(mandatory_fields, names(report_info))
+      if (length(missing_fields) > 0) {
+        stop(paste("Missing mandatory fields:", paste(missing_fields,
+                                                      collapse = ", ")),
+             call. = FALSE)
+      }
+      
+      # Check if there are any extra fields not in all_fields
+      extra_fields <- setdiff(names(report_info), all_fields)
+      if (length(extra_fields) > 0) {
+        stop(paste("The following fields are not recognized:",
+                   paste(extra_fields, collapse = ", ")),
+             call. = FALSE)
+      }
+      
+      # Check omics_data_type format
+      if (!grepl("^[a-zA-Z_]+$", report_info[["omics_data_type"]])) {
+        stop(paste("The 'omics_data_type' field must contain only alphabetic",
+                   "letters and underscores."),
+             call. = FALSE)
+      }
+      
+      # Check if any field exceeds 80 characters
+      long_fields <- sapply(report_info, function(x) any(nchar(x) > 80))
+      if (any(long_fields)) {
+        too_long_fields <- names(report_info)[long_fields]
+        stop(paste("The following fields have strings exceeding 80 characters:",
+                   paste(too_long_fields, collapse = ", ")),
+             call. = FALSE)
+      }
+      
+      return(TRUE)
+    },
+    
+    
+    #' Check Report
+    #'
+    #' @description
+    #' This function verifies the `report` argument within the object's 
+    #' arguments.
+    #' It checks if the `report` argument is present and validates its 
+    #' Boolean value.
+    #'
+    #' @details
+    #' The function performs the following checks:
+    #' - Whether the `report` argument is present.
+    #' - If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws 
+    #' an error.
+    #'
+    check_report = function() {
+      
+      report <- self$args$report
+      
+      required_args <- list(report)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (report != TRUE && report != FALSE) {
+        stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
+      }
+    }
+  )
+)
+
+
+
+# Level2Functions class --------------------------------------------------------
+
+
+Level2Functions <- R6::R6Class("Level2Functions",
+ inherit = Level3Functions,
+ 
+ public = list(
+   
+   #' Check Data Matrix
+   #'
+   #' @description
+   #' This function checks the validity of the data matrix, ensuring that it 
+   #' is a
+   #' matrix, contains only numeric values,
+   #' has no missing values, and all elements are non-negative. Additionally, it
+   #' verifies that no rows or columns are
+   #' entirely zeros.
+   #'
+   #' @param data A dataframe containing numeric values.
+   #' @param data_meta_index An optional parameter specifying the index of the
+   #'  data
+   #' for error messages. Default is NA.
+   #'
+   #' @return Returns TRUE if all checks pass. Stops execution and returns an 
+   #' error
+   #' message if any check fails.
+   #'
+   check_data = function(data, 
+                         data_meta_index = NULL) {
+     
+     # Check if the input is a dataframe
+     if (!is.data.frame(data)) {
+       stop(self$create_error_message("data must be a dataframe.", 
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check if all elements in the dataframe are numeric
+     if (!all(sapply(data, is.numeric))) {
+       stop(self$create_error_message("data must contain only numeric values.",
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check for missing values
+     if (any(is.na(data))) {
+       stop(self$create_error_message("data must not contain missing values.",
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check for non-negative values
+     if (any(data < 0)) {
+       stop(
+         self$create_error_message(
+           paste("All elements of data must be ",
+                 "non-negative. The elements should",
+                 "represent concentrations, abundances, or",
+                 "intensities (which are inherently",
+                 "non-negative)."),
+            data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check for rows with all zeros
+     if (any(rowSums(data) == 0)) {
+       stop(
+         self$create_error_message("data must not contain rows with all zeros.",
+                                    data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check for columns with all zeros
+     if (any(colSums(data) == 0)) {
+       stop(self$create_error_message(paste("data must not contain columns", 
+                                            "with all zeros."),
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check if row headers (rownames) are all strings
+     row_headers <- rownames(data)
+     if (is.null(row_headers) || !all(sapply(row_headers, is.character))) {
+       stop(self$create_error_message("All row headers must be strings.",
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     return(TRUE)
+   },
+   
+   
+   #' Check Metadata
+   #'
+   #' @description
+   #' This function checks the validity of the metadata dataframe, ensuring it
+   #' contains the 'Time' column,
+   #' does not contain missing values, and that the specified condition column
+   #'  is
+   #' valid and of the appropriate type.
+   #' Additionally, it checks for an optional batch effect column and prints
+   #' messages regarding its use.
+   #'
+   #' @param meta A dataframe containing the metadata, including the 'Time' 
+   #' column.
+   #' @param condition A single character string specifying the column name 
+   #' in the
+   #' meta dataframe to be checked.
+   #' @param meta_batch_column An optional parameter specifying the column 
+   #' name in
+   #'  the meta dataframe used to remove the batch effect. Default is NA.
+   #' @param meta_batch2_column An optional parameter specifying the column
+   #'  name in
+   #'  the meta dataframe used to remove the batch effect. Default is NA.
+   #' @param data_meta_index An optional parameter specifying the index of the
+   #' data/meta pair for error messages. Default is NA.
+   #'
+   #' @return Returns TRUE if all checks pass. Stops execution and returns an
+   #' error message if any check fails.
+   #'
+   check_meta = function(meta,
+                         condition,
+                         meta_batch_column = NULL,
+                         meta_batch2_column = NULL,
+                         data_meta_index = NULL) {
+     
+     if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
+       stop(self$create_error_message(paste("meta must be a dataframe with", 
+                                            "the column Time"),
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     if (any(is.na(meta))) {
+       stop(self$create_error_message("meta must not contain missing values.",
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check if condition is a single character
+     if (!is.character(condition) || length(condition) != 1) {
+       stop("'condition' must be a single character",
+            call. = FALSE)
+     }
+     
+     # Check if condition is a column in the meta dataframe
+     if (!condition %in% colnames(meta)) {
+       stop(self$create_error_message(sprintf("The condition '%s' is not a %s",
+                                              condition,
+                                              paste("column in meta")),
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     # Check if the factor column is of appropriate type
+     if (!is.factor(meta[[condition]]) &&
+         !is.character(meta[[condition]])) {
+       stop(self$create_error_message(
+       sprintf("The factor column '%s' must be of type
+                 factor or character.", condition),
+                                      data_meta_index),
+            call. = FALSE)
+     }
+     
+     if (is.null(meta_batch_column) && !is.null(meta_batch2_column)) {
+       stop(paste("For removing the batch effect, batch2 can only be used when",
+                  "batch is used!"), call. = FALSE)
+     }
+
+     self$check_batch_column(meta,
+                             meta_batch_column,
+                             data_meta_index)
+     
+     if (!is.null(meta_batch2_column)) {
+       self$check_batch_column(meta,
+                               meta_batch2_column,
+                               data_meta_index)
+     }
+     
+     return(TRUE)
+   },
+   
+   
+   #' Check Spline Parameters Generally
+   #'
+   #' @description
+   #' Validates the general structure and contents of spline parameters.
+   #'
+   #' @param spline_params A list of spline parameters.
+   #'
+   #' @return No return value, called for side effects.
+   #'
+   #' @seealso
+   #' \code{\link{self$check_spline_params_mode_dependent}}
+   #'
+   check_spline_params_generally = function(spline_params) {
+     if ("spline_type" %in% names(spline_params)) {
+       if (!all(spline_params$spline_type %in% c("b", "n"))) {
+         stop(
+           paste("Elements of spline_type must be either 'b' for B-splines or",
+                    "'n'. for natural cubic splines, in spline_params"),
+              call. = FALSE)
+       }
+     } else {
+       stop("spline_type is missing in spline_params.",
+            call. = FALSE)
+     }
+     
+     # Check if degree exists and is an integer vector
+     if ("degree" %in% names(spline_params)) {
+       if (!all(spline_params$degree == as.integer(spline_params$degree))) {
+         stop("degree must be an integer vector in spline_params.",
+              call. = FALSE)
+       }
+     } else if (!all(spline_params$spline_type %in% c("n"))) {
+       stop("degree is missing in spline_params.",
+            call. = FALSE)
+     }
+     
+     if (("dof" %in% names(spline_params)) &&
+         ("knots" %in% names(spline_params))) {
+       stop(
+         "Either dof or knots must be present, but not both,in spline_params.",
+            call. = FALSE)
+     } else if (!("dof" %in% names(spline_params)) &&
+                !("knots" %in% names(spline_params))) {
+       stop("At least one of dof or knots must be present, in spline_params.",
+            call. = FALSE)
+     }
+     
+     # Check if dof exists and is an integer vector
+     if ("dof" %in% names(spline_params)) {
+       if (!all(spline_params$dof == as.integer(spline_params$dof))) {
+         stop("dof must be an integer vector in spline_params.",
+              call. = FALSE)
+       }
+       for (i in seq_along(spline_params$spline_type)) {
+         if (spline_params$spline_type[i] == "b" && spline_params$dof[i] < 3) {
+           stop(
+             paste("B-splines require DoF > 2, for spline_params spline_type",
+                      "index", i),
+                call. = FALSE)
+         }
+       }
+     }
+     
+     # Check if knots exists and is a list of numeric vectors
+     if ("knots" %in% names(spline_params)) {
+       if (!is.list(spline_params$knots) ||
+           any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
+         stop("knots must be a list of numeric vectors in spline_params.",
+              call. = FALSE)
+       }
+     }
+     
+     # Check if bknots exists and is a list of numeric vectors
+     if ("bknots" %in% names(spline_params)) {
+       if (!is.list(spline_params$bknots) ||
+           any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
+         stop("bknots must be a list of numeric vectors, in spline_params.",
+              call. = FALSE)
+       }
+     }
+   },
+   
+   
+   #' Check Spline Parameters Mode Dependent
+   #'
+   #' @description
+   #' Validates the spline parameters depending on the specified mode.
+   #'
+   #' @param spline_params A list of spline parameters.
+   #' @param mode A character string specifying the mode
+   #'            ('integrated' or 'isolated').
+   #' @param meta A dataframe containing metadata.
+   #' @param condition A character string specifying the condition.
+   #'
+   #' @return No return value, called for side effects.
+   #'
+   #' @seealso
+   #' \code{\link{self$check_spline_params_generally}}
+   #'
+   check_spline_params_mode_dependent = function(spline_params,
+                                                 mode,
+                                                 meta,
+                                                 condition) {
+     if (mode == "integrated") {
+       # Check that each vector in the main parameters has exactly one element
+       if (any(sapply(spline_params, function(x) length(x) != 1))) {
+         stop(paste("All parameters in spline_params must have exactly one",
+                    "element when mode is 'integrated'. Different spline",
+                    "parameters for the different levels is not supported for",
+                    "this mode"),
+              call. = FALSE)
+       }
+       
+       # Additional check for 'knots' and 'bknots' if they exist
+       if ("knots" %in% names(spline_params)) {
+         if (length(spline_params$knots) != 1) {
+           stop(
+             paste("All elements in 'knots' in spline_params must have length",
                    "1 when mode is 'integrated'. Different spline parameters",
                    "for the different levels is not supported for this mode"),
-             call. = FALSE)
-      }
-    }
-    if ("bknots" %in% names(spline_params)) {
-      if (length(spline_params$bknots) != 1) {
-        stop(paste("All elements in 'bknots' in spline_params must have length",
+                call. = FALSE)
+         }
+       }
+       if ("bknots" %in% names(spline_params)) {
+         if (length(spline_params$bknots) != 1) {
+           stop(
+             paste("All elements in 'bknots' in spline_params must have length",
                    "1 when mode is 'integrated'. Different spline parameters",
                    "for the different levels is not supported for this mode"),
-             call. = FALSE)
-      }
-    }
-  } else if (mode == "isolated") {
-    num_levels <- length(unique(meta[[condition]]))
-    if (any(sapply(spline_params, length) != num_levels)) {
-      stop(paste("Each vector or list in spline_params must have as many", 
-                 "elements as there are unique elements in the ", condition,
-                 "column of meta when mode is 'isolated'."),
+                call. = FALSE)
+         }
+       }
+     } else if (mode == "isolated") {
+       num_levels <- length(unique(meta[[condition]]))
+       if (any(sapply(spline_params, length) != num_levels)) {
+         stop(paste("Each vector or list in spline_params must have as many",
+                    "elements as there are unique elements in the ", condition,
+                    "column of meta when mode is 'isolated'."),
+              call. = FALSE)
+       }
+       if ("knots" %in% names(spline_params)) {
+         if (length(spline_params$knots) != num_levels) {
+           stop(
+             paste("'knots' in spline_params must have the same number of",
+                   "elements as there are unique elements in the ", condition,
+                   "column of meta when mode is 'isolated'."),
+                call. = FALSE)
+         }
+       }
+       if ("bknots" %in% names(spline_params)) {
+         if (length(spline_params$bknots) != num_levels) {
+           stop(
+             paste("'bknots' in spline_params must have the same number of",
+                   "elements as there are unique elements in the ", condition,
+                   "column of meta when mode is 'isolated'."),
+                call. = FALSE)
+         }
+       }
+     }
+   },
+   
+   
+   #' Check Columns in Spline Test Configurations
+   #'
+   #' @description
+   #' Validates that the spline test configurations contain the required columns 
+   #' in the correct order.
+   #'
+   #' @param spline_test_configs A dataframe containing spline test
+   #'  configurations.
+   #'
+   #' @return No return value, called for side effects.
+   #' 
+   check_colums_spline_test_configs = function(spline_test_configs) {
+     
+     required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
+     
+     # Check for exact match of column names and order
+     if (!identical(names(spline_test_configs), required_columns)) {
+       # Find the missing or extra columns
+       missing_columns <- setdiff(required_columns, names(spline_test_configs))
+       extra_columns <- setdiff(names(spline_test_configs), required_columns)
+       error_message <- "Error: Incorrect columns in dataframe. "
+       
+       # Append specific issues to the error message
+       if (length(missing_columns) > 0) {
+         error_message <- paste0(error_message, "Missing columns: ",
+                                 paste(missing_columns, collapse=", "), ". ")
+       }
+       if (length(extra_columns) > 0) {
+         error_message <- paste0(error_message, "Extra columns: ",
+                                 paste(extra_columns, collapse=", "), ". ")
+       }
+       error_message <- paste0(error_message,
+                               "Expected columns in order: ",
+                               paste(required_columns, collapse=", "), ".")
+       
+       stop(error_message)
+     }
+   },
+   
+   
+   #' Check Spline Type Column
+   #'
+   #' @description
+   #' Validates that the 'spline_type' column in the spline test configurations 
+   #' contains only 'n' or 'b'.
+   #'
+   #' @param spline_test_configs A dataframe containing spline test 
+   #' configurations.
+   #'
+   #' @return No return value, called for side effects.
+   #' 
+   check_spline_type_column = function(spline_test_configs) {
+     
+     if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
+       # Identify invalid entries
+       invalid_entries <- spline_test_configs$spline_type[
+         !spline_test_configs$spline_type %in% c("n", "b")
+       ]
+       error_message <- sprintf(
+         "Error: 'spline_type' contains invalid entries. 
+        Only 'n' or 'b' are allowed. Invalid entries found: %s",
+         paste(unique(invalid_entries), collapse=", ")
+       )
+       
+       stop(error_message)
+     }
+   },
+   
+   
+   #' Check Spline Type Parameters
+   #'
+   #' @description
+   #' Validates the parameters for each row in the spline test configurations 
+   #' based on the spline type.
+   #'
+   #' @param spline_test_configs A dataframe containing spline test 
+   #' configurations.
+   #'
+   #' @return TRUE if all checks pass, otherwise an error is thrown.
+   #' 
+   check_spline_type_params = function(spline_test_configs) {
+     
+     for (i in seq_len(nrow(spline_test_configs))) {
+       row <- spline_test_configs[i,]
+       switch(as.character(row$spline_type),
+              "n" = {
+                if (!is.na(row$degree)) 
+                  stop("degree must be NA for spline_type n")
+                if (!((is.na(row$dof) && !is.na(row$knots)) ||
+                      (!is.na(row$dof) && is.na(row$knots)))) {
+                  stop("Either dof or knots must be NA, but not both, for 
+                    spline_type n")
+                }
+                if (!is.na(row$dof) && !is.integer(row$dof)) {
+                  stop("dof must be an integer when it is not NA for 
+                    spline_type n")
+                }
+                if (!is.na(row$knots) && !is.numeric(row$knots)) {
+                  stop("knots must be a numeric vector when it is not NA for 
+                    spline_type n")
+                }
+                if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+                                           length(row$bknots) != 2)) {
+                  stop("bknots must be a numeric vector of exactly two elements 
+                    or NA for spline_type n")
+                }
+              },
+              "b" = {
+                if (!is.integer(row$degree)) stop("degree must be an integer for 
+                                               spline_type b")
+                if (!is.na(row$dof) && (!is.integer(row$dof) || 
+                                        row$dof < row$degree)) {
+                  stop("dof must be an integer at least as big as degree for 
+                    spline_type b")
+                }
+                if (!is.na(row$knots) && !is.numeric(row$knots)) {
+                  stop("knots must be a numeric vector when it is not NA for 
+                    spline_type b")
+                }
+                if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
+                                           length(row$bknots) != 2)) {
+                  stop("bknots must be a numeric vector of exactly two elements 
+                    or NA for spline_type b")
+                }
+              },
+              stop("spline_type must be either 'n' or 'b'")
+       )
+     }
+     return(TRUE)
+   },
+   
+   
+   #' Check Maximum and Minimum Degrees of Freedom
+   #'
+   #' @description
+   #' Validates the degrees of freedom (DoF) for each row in the spline test 
+   #' configurations based on the metadata.
+   #'
+   #' @param spline_test_configs A dataframe containing spline test 
+   #' configurations.
+   #' @param metas A list of metadata corresponding to the data matrices.
+   #'
+   #' @return No return value, called for side effects.
+   #' 
+   #' @importFrom stats setNames
+   #' 
+   check_max_and_min_dof = function(spline_test_configs, 
+                                     metas) {
+     
+     for (i in seq_len(nrow(spline_test_configs))) {
+       row <- spline_test_configs[i, ]
+       spline_type <- row[["spline_type"]]
+       dof <- row[["dof"]]
+       degree <- row[["degree"]]
+       knots <- row[["knots"]]
+       
+       # Calculate k and DoF if dof is NA
+       if (is.na(dof)) {
+         k <- length(knots)
+         if (spline_type == "b") {
+           dof <- k + degree
+         } else if (spline_type == "n") {
+           dof <- k + 1
+         } else {
+           stop("Unknown spline type '", spline_type, "' at row ", i)
+         }
+       }
+       
+       # Check if calculated or provided DoF is valid
+       if (dof < 2) {
+         stop("DoF must be at least 2, found DoF of ", dof, " at row ", i)
+       }
+       
+       for (j in seq_along(metas)) {
+         meta <- metas[[j]]
+         nr_timepoints <- length(unique(meta$Time))
+         if (dof > nr_timepoints) {
+           stop("DoF (", dof, ") cannot exceed the number of unique time points 
+           (", nr_timepoints, ") in meta", j, " at row ", i)
+         }
+       }
+       
+     }
+     
+     invisible(NULL)
+  },
+  
+  
+  #' Check Dataframe Columns
+  #'
+  #' This function checks if the columns of a dataframe match the expected 
+  #' column names and their respective data types.
+  #'
+  #' @param df A dataframe to check.
+  #' @param expected_cols A character vector of expected column names.
+  #'
+  #' @return This function does not return a value. It stops execution if the
+  #' dataframe columns or their classes do not match the expected structure.
+  #' 
+  check_columns = function(df, 
+                           expected_cols) {
+    
+    actual_cols <- names(df)
+    if (!all(expected_cols %in% actual_cols)) {
+      stop("Dataframe columns do not match expected structure",
            call. = FALSE)
     }
-    if ("knots" %in% names(spline_params)) {
-      if (length(spline_params$knots) != num_levels) {
-        stop(paste("'knots' in spline_params must have the same number of",
-                   "elements as there are unique elements in the ", condition,
-                   "column of meta when mode is 'isolated'."),
-             call. = FALSE)
-      }
-    }
-    if ("bknots" %in% names(spline_params)) {
-      if (length(spline_params$bknots) != num_levels) {
-        stop(paste("'bknots' in spline_params must have the same number of", 
-                   "elements as there are unique elements in the ", condition,
-                   "column of meta when mode is 'isolated'."),
-             call. = FALSE)
-      }
+    expected_classes <- c("numeric", "numeric", "numeric", "numeric",
+                          "numeric", "numeric", "integer", "character",
+                          "numeric")
+    actual_classes <- sapply(df, class)
+    if (!all(actual_classes == expected_classes)) {
+      stop("Dataframe column classes do not match expected classes",
+           call. = FALSE)
     }
   }
-}
+ )
+)
 
 
-# Level 3 internal functions ---------------------------------------------------
+
+# Level3Functions class --------------------------------------------------------
+
+#' Level3Functions: A class for level 3 utility functions
+#'
+#' This class provides methods for creating error messages and checking
+#' batch columns.
+#'
+Level3Functions <- R6::R6Class("Level3Functions",
+
+ inherit = Level4Functions,
+
+ public = list(
 
 
-#' Create Error Message
+   #' Check Batch Column
+   #'
+   #' @description
+   #' This method checks the batch column in the metadata and provides 
+   #' appropriate messages.
+   #'
+   #' @param meta A dataframe containing metadata.
+   #' @param meta_batch_column A character string specifying the batch column
+   #'  in the metadata.
+   #' @param data_meta_index An optional parameter specifying the index of the
+   #'  data/meta pair. Default is NA.
+   #'
+   #' @return NULL. The method is used for its side effects of throwing errors 
+   #' or printing messages.
+   #'
+   check_batch_column = function(meta,
+                                 meta_batch_column,
+                                 data_meta_index) {
+
+     if (!is.null(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
+       stop(self$create_error_message(sprintf("Batch effect column '%s' %s",
+                                              meta_batch_column,
+                                              "not found in meta"),
+                                      data_meta_index),
+            call. = FALSE)
+     } else if (!is.null(meta_batch_column)) {
+       if (!is.null(data_meta_index)) {
+         message(sprintf("Index: %s. %s",
+                         data_meta_index,
+                         paste("Column", meta_batch_column,
+                               "of meta will be used",
+                               "to remove the batch effect for the plotting")))
+       } else {
+         message(sprintf("Column '%s' of meta will be used to %s",
+                         meta_batch_column,
+                         paste("remove the batch effect for the plotting")))
+       }
+     } else {
+       if (!is.null(data_meta_index)) {
+         message(sprintf(
+           "Index: %s. Batch effect will NOT be removed for plotting!",
+           data_meta_index))
+       } else {
+         message("Batch effect will NOT be removed for plotting!")
+       }
+     }
+   }
+ )
+)
+
+
+
+# Level4Functions class --------------------------------------------------------
+
+#' Level4Functions: A class for level 3 utility functions
 #'
-#' @description
-#' This function creates a formatted error message that includes the index of 
-#' the data/meta pair if provided. 
-#' If no index is provided, it returns the message as is.
+#' This class provides methods for creating error messages and checking
+#' batch columns.
 #'
-#' @param message A character string specifying the error message.
-#' @param data_meta_index An optional parameter specifying the index of the 
-#' data/meta pair for the error message. Default is NA.
+Level4Functions <- R6::R6Class("Level4Functions",
+ public = list(
+
+   #' Create Error Message
+   #'
+   #' @description
+   #' This method creates a formatted error message that includes the index of
+   #' the data/meta pair if provided.
+   #' If no index is provided, it returns the message as is.
+   #'
+   #' @param message A character string specifying the error message.
+   #' @param data_meta_index An optional parameter specifying the index of the
+   #' data/meta pair for the error message. Default is NA.
+   #'
+   #' @return Returns a formatted error message string. If an index is provided,
+   #' the message includes the index; otherwise, it returns the message as is.
+   #'
+   create_error_message = function(message,
+                                   data_meta_index = NULL) {
+
+     if (!is.null(data_meta_index)) {
+       return(sprintf("data/meta pair index %d: %s", data_meta_index, message))
+     } else {
+       return(message)
+     }
+   }
+ )
+)
+
+
+
+# Utility input control functions ----------------------------------------------
+
+
+#' Check for NULL Elements in Arguments
 #'
-#' @return Returns a formatted error message string. If an index is provided, 
-#' the message includes the index; otherwise, it returns the message as is.
+#' This function checks if any elements in the provided list of arguments 
+#' are `NULL`.
+#' If any `NULL` elements are found, it stops the execution and returns 
+#' an informative error message.
 #'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' message <- "data must be a matrix."
-#' create_error_message(message, 1)
-#' create_error_message(message)}
+#' @param args A list of arguments to check for `NULL` elements.
 #'
-#' @export
-#' 
-create_error_message <- function(message,
-                                 data_meta_index = NA) {
+#' @return This function does not return a value. It stops execution if 
+#' any `NULL` elements are found in the input list.
+#'
+check_null_elements <- function(args) {
   
-  if (!is.na(data_meta_index)) {
-    return(sprintf("data/meta pair index %d: %s", data_meta_index, message))
-  } else {
-    return(message)
-  }
-}
-
-
-check_batch_column <- function(meta_column,
-                               data_meta_index) {
-  
-  if (!is.na(meta_column) && !(meta_column %in% names(meta))) {
-    stop(create_error_message(sprintf("Batch effect column '%s' %s", 
-                                      meta_column, "not found in meta"),
-                              data_meta_index),
+  if (any(sapply(args, is.null))) {
+    stop("One or more function arguments are NULL.",
          call. = FALSE)
-  } else if (!is.na(meta_column)) {
-    if (!is.na(data_meta_index)) {
-      message(sprintf("Index: %s. %s", 
-                      data_meta_index, 
-                      paste("Column", meta_column, "of meta will be used", 
-                            "to remove the batch effect for the plotting")))
-      
-    } else {
-      message(sprintf("Column '%s' of meta will be used to %s", 
-                      meta_column, 
-                      paste("remove the batch effect for the plotting")))
-    }
-  } else {
-    if (!is.na(data_meta_index)) {
-      message(sprintf(
-        "Index: %s. Batch effect will NOT be removed for plotting!", 
-        data_meta_index))
-    } else {
-      message("Batch effect will NOT be removed for plotting!")
-    }
   }
 }

@@ -7,33 +7,33 @@
 plot_splines(top_table, data, meta, X, main_title, time_unit_label)
 }
 \arguments{
-\item{top_table}{A dataframe containing the indices and names of features, 
-along with their 
-                 statistical metrics such as intercepts and spline 
+\item{top_table}{A dataframe containing the indices and names of features,
+along with their
+                 statistical metrics such as intercepts and spline
                  coefficients.}
 
-\item{data}{A matrix or dataframe containing the raw data values for each 
+\item{data}{A matrix or dataframe containing the raw data values for each
 feature.}
 
-\item{meta}{A dataframe containing metadata for the data, including time 
+\item{meta}{A dataframe containing metadata for the data, including time
 points.}
 
 \item{X}{The limma design matrix that defines the experimental conditions.}
 
-\item{main_title}{The main title to be used for the composite plot of all 
+\item{main_title}{The main title to be used for the composite plot of all
 features.}
 
 \item{time_unit_label}{A string shown in the plots as the unit for the time,
 such as min or hours.}
 }
 \value{
-A list containing the composite plot and the number of rows used in 
+A list containing the composite plot and the number of rows used in
 the plot layout.
 }
 \description{
 This function generates plots for each feature listed in the
-top table using spline 
-interpolation for fitted values. It creates individual plots for each feature 
-and combines 
+top table using spline
+interpolation for fitted values. It creates individual plots for each feature
+and combines
 them into a single composite plot. The function is internal and not exported.
 }

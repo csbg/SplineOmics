@@ -7,8 +7,8 @@
 plot_heatmap(
   datas,
   meta,
+  mode,
   condition,
-  design,
   all_levels_clustering,
   time_unit_label
 )
@@ -18,7 +18,7 @@ plot_heatmap(
 
 \item{condition}{A character string specifying the condition.}
 
-\item{all_levels_clustering}{A list containing clustering results for each 
+\item{all_levels_clustering}{A list containing clustering results for each
 level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
@@ -29,7 +29,7 @@ level within the condition.}
 A list of ComplexHeatmap heatmap objects for each level.
 }
 \description{
-Generates heatmaps for each level within a condition, showing z-scores of 
+Generates heatmaps for each level within a condition, showing z-scores of
 log2 intensity values, split by clusters.
 }
 \examples{
@@ -42,7 +42,7 @@ all_levels_clustering <- list(
   list(clustered_hits = data.frame(feature = 1:10, cluster = rep(1:2, 5)))
 )
 time_unit_label <- "[min]"
-plot_heatmap(data, meta, condition, feature_names, all_levels_clustering, 
+plot_heatmap(data, meta, condition, feature_names, all_levels_clustering,
              time_unit_label)}
 
 }

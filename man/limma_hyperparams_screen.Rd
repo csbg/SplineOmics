@@ -24,6 +24,7 @@ limma_hyperparams_screen(
   report_dir = here::here(),
   adj_pthresholds = c(0.05),
   meta_batch_column = NA,
+  meta_batch2_column = NA,
   time_unit = "m",
   padjust_method = "BH"
 )

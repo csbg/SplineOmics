@@ -13,14 +13,8 @@ check_top_tables(top_tables)
 No return value, called for side effects.
 }
 \description{
-Validates that the top tables are a list of dataframes and checks each 
+Validates that the top tables are a list of dataframes and checks each
 dataframe using the `check_dataframe` function.
-}
-\examples{
-\dontrun{
-top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-check_top_tables(top_tables)}
-
 }
 \seealso{
 \code{\link{check_dataframe}}

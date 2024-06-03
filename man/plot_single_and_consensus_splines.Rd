@@ -17,7 +17,7 @@ plot_single_and_consensus_splines(time_series_data, title, time_unit_label)
 A ggplot object representing the single and consensus shapes.
 }
 \description{
-Generates a plot showing individual time series shapes and their consensus 
+Generates a plot showing individual time series shapes and their consensus
 (mean) shape.
 }
 \seealso{

@@ -2,7 +2,56 @@
 % Please edit documentation in R/explore_data.R
 \name{generate_explore_plots}
 \alias{generate_explore_plots}
-\title{Generate exploratory plots}
+\title{#' Control Input Parameters for Data Exploration Functions
+#'
+#' @description
+#' This function validates the input parameters for data exploration functions.
+#' It checks the structure and data types of `data`, `meta`, `condition`,
+#' `report_info`, `meta_batch_column`, `meta_batch2_column`, `report_dir`, 
+#' and `report`. If any condition is not met, the function stops the script 
+#' and produces an informative error message.
+#'
+#' @param data A dataframe containing the data to be explored.
+#' @param meta A dataframe containing metadata associated with the data.
+#' @param condition A character string specifying the condition to be explored.
+#' @param report_info A list containing information for generating the report.
+#' @param meta_batch_column A character string specifying the batch column in 
+#'        the metadata.
+#' @param meta_batch2_column A character string specifying the second batch 
+#'        column in the metadata.
+#' @param report_dir A character string specifying the directory where the 
+#'        report will be saved.
+#' @param report A Boolean indicating whether to generate a report (TRUE) or 
+#'        not (FALSE).
+#'
+#' @return This function does not return a value. It stops with an error message 
+#'         if the conditions are not met.
+#'
+control_inputs_explore_data <- function(data,
+                                        meta,
+                                        condition,
+                                        report_info,
+                                        meta_batch_column,
+                                        meta_batch2_column,
+                                        report_dir,
+                                        report) {
+  
+  check_data_and_meta(data, 
+                      meta, 
+                      condition, 
+                      meta_batch_column,
+                      meta_batch2_column)
+  
+  check_report_info(report_info)
+  
+  check_and_create_report_dir(report_dir)
+  
+  
+  if (report != TRUE && report != FALSE) {
+    stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
+  }
+}
+Generate exploratory plots}
 \usage{
 generate_explore_plots(data, meta, condition)
 }

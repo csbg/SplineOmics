@@ -8,8 +8,8 @@ build_cluster_hits_report(
   header_section,
   plots,
   plots_sizes,
-  level_headers_info = level_headers_info,
-  spline_params = spline_params,
+  level_headers_info,
+  spline_params,
   mode,
   output_file_path
 )
@@ -25,17 +25,17 @@ build_cluster_hits_report(
 
 \item{spline_params}{A list of spline parameters.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
 
-\item{output_file_path}{A character string specifying the path to save the 
+\item{output_file_path}{A character string specifying the path to save the
 HTML report.}
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-Generates an HTML report for clustered hits, including plots and 
+Generates an HTML report for clustered hits, including plots and
 spline parameter details, with a table of contents.
 }
 \seealso{

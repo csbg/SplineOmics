@@ -27,13 +27,15 @@ data_extract <- extract_data(data_excel,
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
-  omics_data_type = "PTX",
-  data_description = "Gene expression levels over time.",
-  data_collection_date = "2024-05-15",
+  omics_data_type = "PPTX",
+  data_description = "Old phosphoproteomics data with the missing two samples",
+  data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
-  project_name = "DGTX",
-  contact_info = "rauterthomas0@gmail.com"
-)
+  contact_info = "thomas.rauter@plus.ac.at",
+  project_name = "DGTX")
+
+condition <- "Phase"
+meta_batch_column <- "Reactor"
 
 # debug(explore_data)
 # plots <- explore_data(data = data,
@@ -41,6 +43,7 @@ report_info <- list(
 #                       condition = "Phase",
 #                       report_info = report_info,
 #                       meta_batch_column = "Reactor",
+#                       # meta_batch2_column = NULL,
 #                       report_dir = here::here("results", "explore_data"))
 
 
@@ -70,61 +73,44 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   condition,
-                                   spline_test_configs,
-                                   report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+# result <- limma_hyperparams_screen(datas,
+#                                    datas_descr,
+#                                    metas,
+#                                    designs,
+#                                    condition,
+#                                    spline_test_configs,
+#                                    report_info,
+#                                    report_dir,
+#                                    pthresholds,
+#                                    meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
-DoFs <- c(2L, 2L)
-
-design <- "~ 1 + Phase*X + Reactor"
+design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
 # design <- "~ 1 + X + Reactor"
 
-
-spline_params = list(spline_type = c("n"),
+spline_params = list(spline_type = c("n"),   # Chosen spline parameters
                      dof = c(2L))
 
-# debug(run_limma_splines)
+# Run the limma spline analysis
 result <- run_limma_splines(data, 
                             meta, 
                             design, 
                             spline_params = spline_params,
                             condition)
 
-within_level_top_tables <- result$within_level_temporal_pattern
-between_level_condition_top_tables <- result$between_level_mean_diff
-between_level_condition_time_top_tables <- result$between_level_mean_and_temporal_diff
+top_tables <- result$avrg_diff_conditions 
 
+report_dir <- here::here("results", "limma_reports")
+
+limma_report(run_limma_splines_result = result,
+             report_info = report_info,
+             report_dir = report_dir)
 
 ## Cluster hits ----------------------------------------------------------------
-adj_pthresholds <- c(0.05, 0.05)
-clusters <- list(6L, 6L)
+adj_pthresholds <- c(0.05, 0.05)   
+clusters <- list(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")
-
-report_info <- list(
-  omics_data_type = "PTX",
-  data_description = "Gene expression levels over time.",
-  data_collection_date = "2024-05-15",
-  analyst_name = "Thomas Rauter",
-  project_name = "DGTX",
-  dataset_name = "CHO Cell Study",
-  limma_design = design,
-  method_description = "Spline analysis for time-series data.",
-  results_summary = "Identified significant changes in gene expression.",
-  conclusions = "Potential biomarkers identified for further validation.",
-  contact_info = "rauterthomas0@gmail.com"
-)
-
-# top_tables <- list(within_level_top_tables, between_level_condition_top_tables)
-top_tables <- within_level_top_tables
 
 # debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables, 
@@ -137,9 +123,11 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    clusters = clusters,
                                    report_info = report_info,
                                    meta_batch_column = meta_batch_column,
-                                   report_dir = report_dir)
+                                   # meta_batch2_column = meta_batch2_column,
+                                   report_dir = report_dir,
+                                   report = TRUE)
 
-clustering_results[[2]]$clustered_hits
+clustering_results$all_levels_clustering[[2]]$clustered_hits
 
 
 

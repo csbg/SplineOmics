@@ -9,10 +9,10 @@ hierarchical_clustering(curve_values, k, smooth_timepoints, top_table)
 \arguments{
 \item{curve_values}{A matrix or data frame of curve values to cluster.}
 
-\item{k}{The number of clusters to use or "auto" to automatically determine 
+\item{k}{The number of clusters to use or "auto" to automatically determine
 the optimal number using silhouette width analysis.}
 
-\item{smooth_timepoints}{Numeric vector of time points corresponding to 
+\item{smooth_timepoints}{Numeric vector of time points corresponding to
 columns in curve_values.}
 
 \item{top_table}{Data frame to be updated with cluster assignments.}
@@ -21,9 +21,9 @@ columns in curve_values.}
 A list containing clustering results and the modified top_table.
 }
 \description{
-Performs hierarchical clustering on given curve values. 
-It can automatically 
-determine the optimal number of clusters using silhouette analysis or use a 
-specified number. The function adjusts the provided top_table with cluster 
+Performs hierarchical clustering on given curve values.
+It can automatically
+determine the optimal number of clusters using silhouette analysis or use a
+specified number. The function adjusts the provided top_table with cluster
 assignments.
 }

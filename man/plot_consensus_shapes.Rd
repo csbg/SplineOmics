@@ -13,11 +13,11 @@ assignments.}
 \item{time_unit_label}{A character string specifying the time unit label.}
 }
 \value{
-A list containing the composite plot of consensus shapes and its 
+A list containing the composite plot of consensus shapes and its
 size.
 }
 \description{
-Generates composite plots of single and consensus shapes for each cluster 
+Generates composite plots of single and consensus shapes for each cluster
 of curve values.
 }
 \seealso{

@@ -160,10 +160,7 @@ generate_report_html <- function(plots,
 
   for (field in all_fields) {
     
-    if (field == "data" &&
-        !is.null(data) &&
-        is.data.frame(data) &&
-        !any(is.na(data)))  {
+    if (field == "data" && !any(is.na(data)))  {
       
       if (report_type == "limma_report") {
         value <- sprintf('<a href="%s" download="top_tables.xlsx">

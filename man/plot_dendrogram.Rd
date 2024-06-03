@@ -15,7 +15,7 @@ plot_dendrogram(hc, k)
 A ggplot object representing the dendrogram.
 }
 \description{
-Generates a dendrogram plot for hierarchical clustering results, 
+Generates a dendrogram plot for hierarchical clustering results,
 colored by clusters.
 }
 \examples{
@@ -26,6 +26,6 @@ plot_dendrogram(hc, k)}
 
 }
 \seealso{
-\link[dendextend]{color_branches}, \link[dendextend]{as.ggdend}, 
+\link[dendextend]{color_branches}, \link[dendextend]{as.ggdend},
 \link[ggplot2]{ggplot2}
 }

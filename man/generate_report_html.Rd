@@ -3,13 +3,17 @@
 \name{generate_report_html}
 \alias{generate_report_html}
 \title{utils scripts contains shared functions that are used by at least two package 
-functions of the SplineOmics package.
+functions of the SplineOmics package. The level separation is only valid
+internally in this script, and has no connection to the script level of the
+respective exported functions scripts.
 Generate Report HTML}
 \usage{
 generate_report_html(
   plots,
   plots_sizes,
   report_info,
+  data = NA,
+  meta = NA,
   level_headers_info = NA,
   spline_params = NA,
   report_type = "explore_data",
