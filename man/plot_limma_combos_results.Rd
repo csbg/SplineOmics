@@ -10,6 +10,7 @@ plot_limma_combos_results(
   metas,
   spline_test_configs,
   meta_batch_column,
+  meta_batch2_column,
   designs,
   time_unit = time_unit
 )

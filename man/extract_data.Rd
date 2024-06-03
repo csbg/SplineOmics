@@ -8,7 +8,7 @@ data matrix, that serves as input for the other functions of this package.
 This is for convenience only.
 Extract Numeric Matrix from Dataframe}
 \usage{
-extract_data(data, feature_name_column)
+extract_data(data, feature_name_columns = NA)
 }
 \arguments{
 \item{data}{A dataframe loaded from a csv file, potentially containing a 

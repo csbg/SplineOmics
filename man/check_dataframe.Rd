@@ -13,20 +13,6 @@ check_dataframe(df)
 TRUE if the dataframe is valid, otherwise an error is thrown.
 }
 \description{
-Validates that the dataframe contains all required columns with the correct 
+Validates that the dataframe contains all required columns with the correct
 data types.
-}
-\examples{
-\dontrun{
-df <- data.frame(
-  AveExpr = runif(10),
-  F = runif(10),
-  P.Value = runif(10),
-  adj.P.Val = runif(10),
-  feature_index = as.integer(1:10),
-  feature_names = letters[1:10],
-  intercept = runif(10)
-)
-check_dataframe(df)}
-
 }

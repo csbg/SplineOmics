@@ -7,26 +7,20 @@
 normalize_curves(curve_values)
 }
 \arguments{
-\item{curve_values}{A data frame or matrix of curve values where each row 
-represents 
+\item{curve_values}{A data frame or matrix of curve values where each row
+represents
        a curve and each column a time point.}
 }
 \value{
 A data frame or matrix with the same dimensions as the input, where
- each row 
+ each row
         has been normalized.
 }
 \description{
-This function normalizes each row in a data frame or matrix 
-of curve values. 
-Normalization is performed so that each row's values range from 0 
-(corresponding to the 
-minimum value of the row) to 1 
+This function normalizes each row in a data frame or matrix
+of curve values.
+Normalization is performed so that each row's values range from 0
+(corresponding to the
+minimum value of the row) to 1
 (corresponding to the maximum value of the row).
-}
-\examples{
-\dontrun{
-data <- matrix(runif(100), nrow=10)
-normalized_data <- normalize_curves(data)}
-
 }

@@ -1,3 +1,10 @@
+# This function of the SplineOmics package automates the process of exploratory
+# data analysis. Mandatory inputs are only data, meta, condition, and a list
+# with report infos, that will be placed on top of the HTML reports with the 
+# exploratory figures.
+
+
+
 # Exported function: explore_data () -------------------------------------------
 
 
@@ -37,15 +44,12 @@ explore_data <- function(data,
                          report_dir = here::here(),
                          report = TRUE) {
   
-  control_inputs_explore_data(data = data,
-                              meta = meta,
-                              condition = condition,
-                              report_info = report_info,
-                              meta_batch_column = meta_batch_column,
-                              meta_batch2_column = meta_batch2_column,
-                              report_dir = report_dir,
-                              report = report)
-  
+  # Control the function arguments
+  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  check_null_elements(args)
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
+
   data_report <- rownames_to_column(data, var = "Feature_name")
   
   matrix_and_feature_names <- process_data(data)
@@ -106,55 +110,55 @@ explore_data <- function(data,
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Control Input Parameters for Data Exploration Functions
-#'
-#' @description
-#' This function validates the input parameters for data exploration functions.
-#' It checks the structure and data types of `data`, `meta`, `condition`,
-#' `report_info`, `meta_batch_column`, `meta_batch2_column`, `report_dir`, 
-#' and `report`. If any condition is not met, the function stops the script 
-#' and produces an informative error message.
-#'
-#' @param data A dataframe containing the data to be explored.
-#' @param meta A dataframe containing metadata associated with the data.
-#' @param condition A character string specifying the condition to be explored.
-#' @param report_info A list containing information for generating the report.
-#' @param meta_batch_column A character string specifying the batch column in 
-#'        the metadata.
-#' @param meta_batch2_column A character string specifying the second batch 
-#'        column in the metadata.
-#' @param report_dir A character string specifying the directory where the 
-#'        report will be saved.
-#' @param report A Boolean indicating whether to generate a report (TRUE) or 
-#'        not (FALSE).
-#'
-#' @return This function does not return a value. It stops with an error message 
-#'         if the conditions are not met.
-#'
-control_inputs_explore_data <- function(data,
-                                        meta,
-                                        condition,
-                                        report_info,
-                                        meta_batch_column,
-                                        meta_batch2_column,
-                                        report_dir,
-                                        report) {
-  
-  check_data_and_meta(data, 
-                      meta, 
-                      condition, 
-                      meta_batch_column,
-                      meta_batch2_column)
-  
-  check_report_info(report_info)
-  
-  check_and_create_report_dir(report_dir)
-  
-  
-  if (report != TRUE && report != FALSE) {
-    stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
-  }
-}
+#' #' Control Input Parameters for Data Exploration Functions
+#' #'
+#' #' @description
+#' #' This function validates the input parameters for data exploration functions.
+#' #' It checks the structure and data types of `data`, `meta`, `condition`,
+#' #' `report_info`, `meta_batch_column`, `meta_batch2_column`, `report_dir`, 
+#' #' and `report`. If any condition is not met, the function stops the script 
+#' #' and produces an informative error message.
+#' #'
+#' #' @param data A dataframe containing the data to be explored.
+#' #' @param meta A dataframe containing metadata associated with the data.
+#' #' @param condition A character string specifying the condition to be explored.
+#' #' @param report_info A list containing information for generating the report.
+#' #' @param meta_batch_column A character string specifying the batch column in 
+#' #'        the metadata.
+#' #' @param meta_batch2_column A character string specifying the second batch 
+#' #'        column in the metadata.
+#' #' @param report_dir A character string specifying the directory where the 
+#' #'        report will be saved.
+#' #' @param report A Boolean indicating whether to generate a report (TRUE) or 
+#' #'        not (FALSE).
+#' #'
+#' #' @return This function does not return a value. It stops with an error message 
+#' #'         if the conditions are not met.
+#' #'
+#' control_inputs_explore_data <- function(data,
+#'                                         meta,
+#'                                         condition,
+#'                                         report_info,
+#'                                         meta_batch_column,
+#'                                         meta_batch2_column,
+#'                                         report_dir,
+#'                                         report) {
+#'   
+#'   check_data_and_meta(data, 
+#'                       meta, 
+#'                       condition, 
+#'                       meta_batch_column,
+#'                       meta_batch2_column)
+#'   
+#'   check_report_info(report_info)
+#'   
+#'   check_and_create_report_dir(report_dir)
+#'   
+#'   
+#'   if (report != TRUE && report != FALSE) {
+#'     stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
+#'   }
+#' }
 
 
 #' Generate exploratory plots
@@ -861,11 +865,11 @@ plot_cv <- function(data,
     
     # Create a data frame for plotting
     cv_data <- data.frame(
-      Feature = 1:nrow(data),
+      Feature = seq_len(nrow(data)),
       CV = cvs
     )
     
-    p <- ggplot2::ggplot(cv_data, aes(x = CV)) +
+    p <- ggplot2::ggplot(cv_data, aes(x = .data$CV)) +
       ggplot2::geom_histogram(binwidth = 0.05, fill = "#e377c2",
                               color = "black") +
       ggplot2::theme_minimal() +
@@ -1050,10 +1054,10 @@ make_mds_plot <- function(data,
   
   # Generate the MDS plot using ggplot2 and ggrepel
   mds_plot <- ggplot2::ggplot(mds_df, 
-                              ggplot2::aes(x = Dim1, 
-                                           y = Dim2, 
-                                           label = Labels,
-                                           color = Levels)) +
+                              ggplot2::aes(x = .data$Dim1, 
+                                           y = .data$Dim2, 
+                                           label = .data$Labels,
+                                           color = .data$Levels)) +
     ggplot2::geom_point() +
     ggrepel::geom_text_repel(box.padding = 0.35, 
                              point.padding = 0.5, 

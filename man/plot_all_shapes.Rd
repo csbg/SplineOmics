@@ -7,7 +7,7 @@
 plot_all_shapes(curve_values, time_unit_label)
 }
 \arguments{
-\item{curve_values}{A dataframe containing curve values and cluster 
+\item{curve_values}{A dataframe containing curve values and cluster
 assignments.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
@@ -16,7 +16,7 @@ assignments.}
 A ggplot object representing the average curves by cluster.
 }
 \description{
-Generates a plot of average curves for each cluster, showing min-max 
+Generates a plot of average curves for each cluster, showing min-max
 normalized intensities over time.
 }
 \seealso{

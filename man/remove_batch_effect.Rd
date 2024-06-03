@@ -4,7 +4,13 @@
 \alias{remove_batch_effect}
 \title{Remove Batch Effect}
 \usage{
-remove_batch_effect(datas, metas, meta_batch_column, condition)
+remove_batch_effect(
+  datas,
+  metas,
+  meta_batch_column,
+  meta_batch2_column,
+  condition
+)
 }
 \arguments{
 \item{datas}{A list of matrices.}

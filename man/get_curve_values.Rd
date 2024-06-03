@@ -4,48 +4,40 @@
 \alias{get_curve_values}
 \title{Calculate Curve Values Based on Top Table Filter}
 \usage{
-get_curve_values(
-  top_table,
-  adj_pthreshold,
-  level,
-  meta,
-  condition,
-  spline_params,
-  mode
-)
+get_curve_values(top_table, level, meta, condition, spline_params, mode)
 }
 \arguments{
-\item{top_table}{A data frame containing data with a column for adjusted 
-p-values and 
-                 expression averages which indicate the number of degrees 
+\item{top_table}{A data frame containing data with a column for adjusted
+p-values and
+                 expression averages which indicate the number of degrees
                  of freedom.}
 
-\item{adj_pthreshold}{The threshold for filtering entries based on adjusted
-p-values.}
-
-\item{level}{The specific level of the condition to filter on in the 
+\item{level}{The specific level of the condition to filter on in the
 metadata.}
 
 \item{meta}{Metadata containing time points and conditions.}
 
-\item{condition}{The name of the condition column in the metadata to filter 
+\item{condition}{The name of the condition column in the metadata to filter
 on.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
+
+\item{adj_pthreshold}{The threshold for filtering entries based on adjusted
+p-values.}
 }
 \value{
-A list containing two elements: `curve_values`, a data frame of 
+A list containing two elements: `curve_values`, a data frame of
 curve values for each filtered entry, and `smooth_timepoints`, the time
 points at which curves were evaluated.
 }
 \description{
-This function filters entries from a given top table based on 
+This function filters entries from a given top table based on
 an adjusted p-value threshold,
-performs spline interpolation using specified degrees of freedom, and 
-calculates curve values 
-for the selected entries at predefined time points. The function is 
+performs spline interpolation using specified degrees of freedom, and
+calculates curve values
+for the selected entries at predefined time points. The function is
 internal and not exported.
 }

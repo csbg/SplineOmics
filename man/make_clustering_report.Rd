@@ -10,17 +10,18 @@ make_clustering_report(
   data,
   meta,
   spline_params,
-  adj_pthresholds,
   report_dir,
   mode,
   report_info,
+  data_report,
   design,
   meta_batch_column,
-  time_unit = time_unit
+  meta_batch2_column,
+  time_unit
 )
 }
 \arguments{
-\item{all_levels_clustering}{A list containing clustering results for each 
+\item{all_levels_clustering}{A list containing clustering results for each
 level within a condition.}
 
 \item{condition}{A character string specifying the condition.}
@@ -31,11 +32,9 @@ level within a condition.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{adj_pthresholds}{A numeric vector of p-values.}
-
 \item{report_dir}{A character string specifying the report directory.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
 
 \item{report_info}{An object containing report information.}
@@ -44,19 +43,21 @@ level within a condition.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
-\item{time_unit}{A character string specifying the time unit 
+\item{time_unit}{A character string specifying the time unit
 ('s', 'm', 'h', 'd').}
+
+\item{adj_pthresholds}{A numeric vector of p-values.}
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-Generates a detailed clustering report including heatmaps, dendrograms, 
+Generates a detailed clustering report including heatmaps, dendrograms,
 curve plots, and consensus shapes for each level within a condition.
 }
 \seealso{
-\code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}}, 
-\code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}}, 
-\code{\link{plot_consensus_shapes}}, \code{\link{plot_splines}}, 
+\code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}},
+\code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}},
+\code{\link{plot_consensus_shapes}}, \code{\link{plot_splines}},
 \code{\link{generate_report_html}}
 }

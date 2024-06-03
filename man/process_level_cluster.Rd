@@ -6,7 +6,6 @@
 \usage{
 process_level_cluster(
   top_table,
-  adj_pthreshold,
   cluster_size,
   level,
   meta,
@@ -18,8 +17,6 @@ process_level_cluster(
 \arguments{
 \item{top_table}{A dataframe containing the top table results from limma.}
 
-\item{adj_pthreshold}{A numeric value specifying the p-value threshold.}
-
 \item{cluster_size}{The size of clusters to generate.}
 
 \item{level}{The level within the condition to process.}
@@ -30,18 +27,20 @@ process_level_cluster(
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
+
+\item{adj_pthreshold}{A numeric value specifying the p-value threshold.}
 }
 \value{
 A list containing the clustering results, including curve values and
         the design matrix.
 }
 \description{
-Processes clustering for a specific level within a condition using the 
+Processes clustering for a specific level within a condition using the
 provided top table and spline parameters.
 }
 \seealso{
-\code{\link{get_curve_values}}, \code{\link{normalize_curves}}, 
+\code{\link{get_curve_values}}, \code{\link{normalize_curves}},
 \code{\link{hierarchical_clustering}}
 }

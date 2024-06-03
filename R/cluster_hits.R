@@ -86,27 +86,9 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
   
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   args$mode <- mode
+  check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-
-  
-
-  # control_inputs_cluster_hits(top_tables = top_tables,
-  #                             data = data,
-  #                             meta = meta,
-  #                             condition = condition,
-  #                             spline_params = spline_params,
-  #                             mode = mode,
-  #                             adj_pthresholds = adj_pthresholds,
-  #                             clusters = clusters,
-  #                             report_info = report_info,
-  #                             design = design,
-  #                             meta_batch_column = meta_batch_column,
-  #                             meta_batch2_column = meta_batch2_column,
-  #                             time_unit = time_unit,
-  #                             report_dir = report_dir,
-  #                             report = report)
-
 
   data_report <- rownames_to_column(data, var = "Feature_name")
 
@@ -176,102 +158,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 
 
 # Level 1 internal functions ---------------------------------------------------
-
-
-#' #' Control Inputs for Cluster Hits
-#' #'
-#' #' @description
-#' #' Validates the inputs for clustering hits, ensuring all required structures
-#' #' and parameters are correctly formatted.
-#' #'
-#' #' @param top_tables A list of top tables from limma analysis.
-#' #' @param data A matrix of data values.
-#' #' @param meta A dataframe containing metadata.
-#' #' @param mode A character string specifying the mode
-#' #' ('isolated' or 'integrated').
-#' #' @param spline_params A list of spline parameters for the analysis.
-#' #' @param condition A character string specifying the condition.
-#' #' @param adj_pthresholds A numeric vector of p-values.
-#' #' @param clusters A list specifying clusters or "auto" for automatic
-#' #' estimation.
-#' #' @param report_info An object containing report information.
-#' #' @param design A string representing the limma design formula
-#' #' @param meta_batch_column A character string specifying the meta batch column.
-#' #' @param time_unit A character string specifying the time unit
-#' #' ('s', 'm', 'h', 'd').
-#' #' @param report_dir A character string specifying the report directory.
-#' #'
-#' #' @return No return value, called for side effects.
-#' #'
-#' #' @examples
-#' #' \dontrun{
-#' #' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-#' #' data <- matrix(runif(100), nrow = 10)
-#' #' meta <- data.frame(Time = seq(1, 10), batch = rep(c("A", "B"), each = 5))
-#' #' mode <- "isolated"
-#' #' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' #' condition <- "example_condition"
-#' #' adj_pthresholds <- runif(10)
-#' #' clusters <- list("auto")
-#' #' report_info <- "example_info"
-#' #' meta_batch_column <- "batch"
-#' #' time_unit <- "m"
-#' #' report_dir <- "example_dir"
-#' #' control_inputs_cluster_hits(top_tables, data, meta, mode, spline_params,
-#' #'                             condition, adj_pthresholds, clusters,
-#' #'                             report_info,
-#' #'                             meta_batch_column, time_unit, report_dir)
-#' #' }
-#' #'
-#' #' @seealso
-#' #' \code{\link{check_top_tables}}, \code{\link{check_meta}},
-#' #' \code{\link{check_mode}}, \code{\link{check_spline_params}},
-#' #'
-#' control_inputs_cluster_hits <- function(top_tables,
-#'                                         data,
-#'                                         meta,
-#'                                         spline_params,
-#'                                         mode,
-#'                                         condition,
-#'                                         adj_pthresholds,
-#'                                         clusters,
-#'                                         report_info,
-#'                                         design,
-#'                                         meta_batch_column,
-#'                                         meta_batch2_column,
-#'                                         time_unit,
-#'                                         report_dir,
-#'                                         report) {
-#' 
-#'   check_top_tables(top_tables)
-#' 
-#'   check_data_and_meta(data = data,
-#'                       meta = meta,
-#'                       condition = condition,
-#'                       meta_batch_column = meta_batch_column,
-#'                       meta_batch2_column = meta_batch2_column)
-#' 
-#'   check_mode(mode)
-#' 
-#'   check_spline_params(spline_params,
-#'                       mode,
-#'                       meta,
-#'                       condition)
-#' 
-#'   check_adj_pthresholds(adj_pthresholds)
-#'   
-#' 
-#'   check_report_info(report_info)
-#' 
-#'   check_design_formula(design,
-#'                        meta)
-#' 
-#'   check_time_unit(time_unit)
-#' 
-#'   check_and_create_report_dir(report_dir)
-#'   
-#' 
-#' }
 
 
 filter_top_tables <- function(top_tables,
@@ -358,18 +244,6 @@ filter_top_tables <- function(top_tables,
 #' ('isolated' or 'integrated').
 #'
 #' @return A list of clustering results for each level within the condition.
-#'
-#' @examples
-#' \dontrun{
-#' top_tables <- list(data.frame(feature_index = 1:10, adj.P.Val = runif(10)))
-#' adj_pthresholds <- runif(10)
-#' clusters <- list("auto")
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' condition <- "condition"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' mode <- "isolated"
-#' perform_clustering(top_tables, adj_pthresholds, clusters, meta, condition,
-#'                    spline_params, mode)}
 #'
 #' @seealso
 #' \code{\link{process_level_cluster}}
@@ -1695,10 +1569,6 @@ get_curve_values <- function(top_table,
 #' @return A data frame or matrix with the same dimensions as the input, where
 #'  each row
 #'         has been normalized.
-#' @examples
-#' \dontrun{
-#' data <- matrix(runif(100), nrow=10)
-#' normalized_data <- normalize_curves(data)}
 #'
 normalize_curves <- function(curve_values) {
 

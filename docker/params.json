@@ -1,0 +1,25 @@
+{	  
+  "feature_names_columns_old": [
+    "Gene Names",
+    "Positions within proteins",
+    "Unique identifier"
+  ],
+  "report_info": {
+    "omics_data_type": "PPTX",
+    "data_description": "Old phosphoproteomics data with the missing two samples",
+    "data_collection_date": "February 2024",
+    "analyst_name": "Thomas Rauter",
+    "contact_info": "thomas.rauter@plus.ac.at",
+    "project_name": "DGTX"
+  },
+  "condition": "Phase",
+  "meta_batch_column": "Reactor",
+  "design": "~ 1 + Phase*X + Reactor",
+  "spline_params": {
+    "spline_type": ["n"],
+    "dof": [2]
+  },
+  "adj_pthresholds": [0.05, 0.05],
+  "clusters": [2, 2],
+}
+

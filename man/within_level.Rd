@@ -2,59 +2,51 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{within_level}
 \alias{within_level}
-\title{Within Level Analysis}
+\title{Within level analysis}
 \usage{
 within_level(
+  level,
+  level_index,
+  spline_params,
   data,
   meta,
   design,
-  factor,
-  level,
-  spline_params,
-  level_index,
-  padjust_method
+  condition,
+  feature_names,
+  padjust_method,
+  mode
 )
 }
 \arguments{
-\item{data}{A matrix of data values.}
+\item{level}{The level within the condition to process.}
 
-\item{meta}{A dataframe containing metadata, including a 'Time' column.}
-
-\item{design}{A design formula or matrix for the limma analysis.}
-
-\item{factor}{A character string specifying the factor.}
-
-\item{level}{The level within the factor to process.}
+\item{level_index}{The index of the level within the condition.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{level_index}{The index of the level within the factor.}
+\item{data}{A matrix of data values.}
+
+\item{meta}{A dataframe containing metadata.}
+
+\item{design}{A design formula or matrix for the LIMMA analysis.}
+
+\item{condition}{A character string specifying the condition.}
+
+\item{feature_names}{A non-empty character vector of feature names.}
 
 \item{padjust_method}{A character string specifying the p-adjustment method.}
+
+\item{mode}{A character string specifying the mode 
+('isolated' or 'integrated').}
 }
 \value{
-A list containing the top table and the fit object from the limma 
-analysis.
+A list containing the name of the results and the top table of 
+         results.
 }
 \description{
-Performs a within-level analysis using limma to generate top tables and fit 
-objects based on the specified spline parameters. Performs the limma spline 
-analysis for a selected level of a factor
-}
-\examples{
-\dontrun{
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
-design <- "~ 1"
-spline_params <- list(spline_type = c("n"), dof = list(3))
-level <- "A"
-level_index <- 1
-padjust_method <- "BH"
-within_level(data, meta, design, "factor", level, spline_params, 
-             level_index, padjust_method)}
-
+Processes a single level within a condition, performing LIMMA analysis 
+and generating the top table of results.
 }
 \seealso{
-\link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
-\link[limma]{eBayes}, \link[limma]{topTable}
+\code{\link{within_level}}, \code{\link{process_top_table}}
 }

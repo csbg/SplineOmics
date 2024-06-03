@@ -4,7 +4,7 @@
 \alias{make_pca_variance_explained_plot}
 \title{Generate PCA Variance Explained Plot}
 \usage{
-make_pca_variance_explained_plot(data)
+make_pca_variance_explained_plot(data, meta, condition)
 }
 \arguments{
 \item{data}{A numeric matrix containing the data.}

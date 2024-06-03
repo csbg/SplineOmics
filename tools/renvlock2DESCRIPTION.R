@@ -16,8 +16,9 @@ packages <- lockfile$Packages
 namespace <- readLines("NAMESPACE")
 
 # Extract package names from the NAMESPACE file
-namespace_packages <- unique(gsub("importFrom\\(([^,]+),.*", "\\1", 
-                                  grep("importFrom|import", namespace, value = TRUE)))
+namespace_packages <- 
+  unique(gsub("importFrom\\(([^,]+),.*", "\\1", 
+         grep("importFrom|import", namespace, value = TRUE)))
 
 # Filter packages based on NAMESPACE file
 namespace_packages <- gsub("import\\((.*)\\)", "\\1", namespace_packages)
@@ -42,18 +43,32 @@ depends <- paste(package_versions, collapse = ",\n    ")
 # Write to DESCRIPTION file
 description <- readLines("DESCRIPTION")
 
-# Insert dependencies under the Imports field
-start <- grep("^Imports:", description)
-if (length(start) == 0) {
-  description <- c(description, "Imports:")
-  start <- length(description)
+# Find the Imports field
+imports_line <- grep("^Imports:", description)
+
+# If Imports field exists, replace it; otherwise, add it
+if (length(imports_line) > 0) {
+  # Find the end of the Imports field
+  end_line <- imports_line
+  while (end_line < length(description) && 
+         grepl("^[[:space:]]{4}", description[end_line + 1])) {
+    end_line <- end_line + 1
+  }
+  
+  # Replace the old Imports field
+  description <- c(
+    description[1:imports_line],
+    paste("    ", depends, sep = ""),
+    description[(end_line + 1):length(description)]
+  )
+} else {
+  # Add Imports field if it doesn't exist
+  description <- c(
+    description,
+    "Imports:",
+    paste("    ", depends, sep = "")
+  )
 }
 
-end <- start + 1
-while (end <= length(description) && grepl("^[[:space:]]{4}", description[end])) {
-  end <- end + 1
-}
-
-description <- c(description[1:start], paste("    ", depends, sep = ""), description[end:length(description)])
-
+# Write the updated DESCRIPTION file back
 writeLines(description, "DESCRIPTION")

@@ -174,6 +174,67 @@ clustering_results <- cluster_hits(top_tables,
                                    report_dir)
 ```
 
+## Docker Container {#docker-container}
+
+To facilitate reproducible analysis, we provide a Docker container that encapsulates the necessary environment and dependencies. Follow the instructions below to pull the Docker container and run your analysis.
+
+### Pulling the Docker Container
+
+You can pull the Docker container of the desired version of the `SplineOmics` 
+package from Docker Hub using the following command (here it downloads version
+0.1.0):
+
+``` sh
+docker pull thomasrauter/splineomics:0.1.0
+```
+
+### Running the Analysis Script
+
+To run the analysis script, you need to mount your data files and the parameter file into the container. Ensure that you have the following files prepared:
+
+data.xlsx: Your data file. meta.xlsx: Your metadata file. params.json: A JSON file with the analysis parameters.
+
+Here is the bash command to run the analysis script:
+
+``` sh
+docker run -it --rm \
+    -v /path/to/data.xlsx:/workspace/data.xlsx \
+    -v /path/to/meta.xlsx:/workspace/meta.xlsx \
+    -v /path/to/params.json:/workspace/params.json \
+    -v /path/to/output:/output \
+    thomasrauter/splineomics Rscript /workspace/run_analysis.R
+```
+
+### Example params.json File
+
+Below is an example of the params.json file that you need to provide:
+
+``` json
+{
+  "report_info": {
+    "omics_data_type": "PPTX",
+    "data_description": "Old phosphoproteomics data with the missing two samples",
+    "data_collection_date": "February 2024",
+    "analyst_name": "Thomas Rauter",
+    "contact_info": "thomas.rauter@plus.ac.at",
+    "project_name": "DGTX"
+  },
+  "condition": "Phase",
+  "meta_batch_column": "Reactor",
+  "design": "~ 1 + Phase*X + Reactor",
+  "spline_params": {
+    "spline_type": ["n"],
+    "dof": [2]
+  },
+  "adj_pthresholds": [0.05, 0.05],
+  "clusters": [2, 2]
+}
+```
+
+### Running the Analysis
+
+Ensure you replace /path/to/ with the actual paths to your files. The analysis results will be saved in the /path/to/output directory.
+
 ## Dependencies {#dependencies}
 
 The `SplineOmics` package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with `SplineOmics`. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.

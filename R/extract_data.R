@@ -297,11 +297,6 @@ control_inputs_extract_data <- function(data,
 #'   as feature names and issues a message.
 #'
 #' @return The `clean_data` dataframe with updated row names.
-#'
-#' @throws An error if:
-#'         \item{feature names are not unique.}
-#'         \item{the length of feature names does not match the number of rows 
-#'         in `clean_data`.}
 #'         
 add_feature_names <- function(data, 
                               clean_data, 

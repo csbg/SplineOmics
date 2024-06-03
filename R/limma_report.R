@@ -6,6 +6,12 @@ limma_report <- function(run_limma_splines_result,
                          adj_pthresh = 0.05,
                          report_dir = here::here()) {
   
+  # Control the function arguments
+  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  check_null_elements(args)
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
+  
   # Get the top_tables of the three limma analysis categories
   time_effect <- run_limma_splines_result$time_effect
   avrg_diff_conditions <- run_limma_splines_result$avrg_diff_conditions

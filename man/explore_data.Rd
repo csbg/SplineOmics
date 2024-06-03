@@ -10,7 +10,9 @@ explore_data(
   condition,
   report_info,
   meta_batch_column = NA,
-  report_dir = here::here()
+  meta_batch2_column = NA,
+  report_dir = here::here(),
+  report = TRUE
 )
 }
 \arguments{

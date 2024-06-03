@@ -75,17 +75,10 @@ run_limma_splines <- function(data,
   
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   args$mode <- mode
+  check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-  
-  # control_inputs_run_limma(data = data, 
-  #                          meta = meta, 
-  #                          design = design, 
-  #                          condition = condition, 
-  #                          spline_params = spline_params, 
-  #                          mode = mode, 
-  #                          padjust_method = padjust_method)
-  
+
   matrix_and_feature_names <- process_data(data)
   data <- matrix_and_feature_names$data
   feature_names <- matrix_and_feature_names$feature_names
@@ -108,8 +101,9 @@ run_limma_splines <- function(data,
                               seq_along(levels), 
                               process_level_with_params)
   
-  within_level <- stats::setNames(purrr::map(results_list, "top_table"), 
-                                purrr::map_chr(results_list, "name"))
+  within_level_top_table <- 
+    stats::setNames(purrr::map(results_list, "top_table"), 
+                    purrr::map_chr(results_list, "name"))
   
   
   # Factor and Factor:Time comparisons between levels --------------------------
@@ -143,7 +137,7 @@ run_limma_splines <- function(data,
                  "comparison')."))
   }
   
-  list(time_effect = within_level, 
+  list(time_effect = within_level_top_table, 
        avrg_diff_conditions = between_level_condition_only,
        interaction_condition_time = between_level_condition_time)
 }
@@ -151,67 +145,6 @@ run_limma_splines <- function(data,
 
 
 # Level 1 internal functions ---------------------------------------------------
-
-
-#' #' Control Inputs for Running LIMMA
-#' #'
-#' #' @description
-#' #' Validates the inputs for running LIMMA analysis, ensuring all required 
-#' #' structures and parameters are correctly formatted.
-#' #'
-#' #' @param data A matrix of data values.
-#' #' @param meta A dataframe containing metadata, including a 'Time' column with 
-#' #' numeric values.
-#' #' @param design A design formula or matrix for the LIMMA analysis.
-#' #' @param spline_params A list of spline parameters for the analysis.
-#' #' @param condition A character string specifying the condition.
-#' #' @param feature_names A non-empty character vector of feature names.
-#' #' @param mode A character string specifying the mode 
-#' #'            ('isolated' or 'integrated').
-#' #' @param padjust_method A character string specifying the p-adjustment method.
-#' #'
-#' #' @return No return value, called for side effects.
-#' #'
-#' #' @examples
-#' #' \dontrun{
-#' #' data <- matrix(runif(100), nrow = 10)
-#' #' meta <- data.frame(Time = seq(1, 10))
-#' #' design <- ~ 1
-#' #' spline_params <- list(df = 3)
-#' #' condition <- "example_condition"
-#' #' feature_names <- c("feature1", "feature2")
-#' #' mode <- "isolated"
-#' #' padjust_method <- "BH"
-#' #' control_inputs_run_limma(data, meta, design, spline_params, condition, 
-#' #'                          feature_names, mode, padjust_method)}
-#' #'
-#' #' @seealso
-#' #' \code{\link{check_design_formula}}, \code{\link{check_mode}}, 
-#' #' \code{\link{check_spline_params}}
-#' #' 
-#' control_inputs_run_limma <- function(data, 
-#'                                      meta, 
-#'                                      design, 
-#'                                      spline_params, 
-#'                                      condition, 
-#'                                      mode, 
-#'                                      padjust_method) {
-#'   
-#'   suppressMessages(check_data_and_meta(data = data, 
-#'                                        meta = meta, 
-#'                                        condition = condition))
-#'   
-#'   check_design_formula(design, meta)
-#' 
-#'   check_mode(mode)
-#'   
-#'   check_spline_params(spline_params, 
-#'                       mode,
-#'                       meta,
-#'                       condition)
-#'   
-#'   check_padjust_method(padjust_method)
-#' }
 
 
 #' Between Level Analysis
@@ -280,7 +213,8 @@ between_level <- function(data,
   factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
                                         seq_len(num_matching_columns))
   condition_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
-                               adjust.method = padjust_method, number = Inf)
+                                    adjust.method = padjust_method,
+                                    number = Inf)
   
   condition_and_time_results <- list(top_table = condition_time,
                                      fit = fit)
@@ -312,21 +246,6 @@ between_level <- function(data,
 #'
 #' @return A list containing the name of the results and the top table of 
 #'          results.
-#'
-#' @examples
-#' \dontrun{
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' design <- "~ 1"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' level <- "A"
-#' level_index <- 1
-#' condition <- "condition"
-#' feature_names <- c("feature1", "feature2")
-#' padjust_method <- "BH"
-#' mode <- "isolated"
-#' process_level(level, level_index, spline_params, data, meta, design, 
-#'               condition, feature_names, padjust_method, mode)}
 #'
 #' @seealso
 #' \code{\link{within_level}}, \code{\link{process_top_table}}
@@ -472,12 +391,11 @@ process_within_level <- function(data,
   fit <- limma::lmFit(data, design_matrix)
   fit <- limma::eBayes(fit)
 
-  column_names <- colnames(design_matrix)
   num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
   coeffs <- paste0("X", seq_len(num_matching_columns))
   
-  top_table <- limma::topTable(fit, adjust=padjust_method, number=Inf, 
-                               coef=coeffs)
+  top_table <- limma::topTable(fit, adjust.method = padjust_method, 
+                               number = Inf, coef = coeffs)
 
   attr(top_table, "adjust.method") <- padjust_method
   
