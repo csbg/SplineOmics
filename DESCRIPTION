@@ -18,7 +18,7 @@ Imports:
     dendextend(>= 1.17.1),
     dplyr(>= 1.1.4),
     fs(>= 1.6.4),
-    ggplot2(>= 3.5.0),
+    ggplot2(>= 3.5.1),
     ggrepel(>= 0.9.5),
     here(>= 1.0.1),
     htmltools(>= 0.5.8.1),

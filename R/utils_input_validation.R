@@ -1418,8 +1418,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'
    #' @return No return value, called for side effects.
    #' 
-   #' @importFrom stats setNames
-   #' 
    check_max_and_min_dof = function(spline_test_configs, 
                                      metas) {
      
