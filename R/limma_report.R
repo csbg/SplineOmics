@@ -1,4 +1,11 @@
-# Exported function: limma_report() ---------------------------------------
+# The function limma_report() takes the top_tables of the three different 
+# categories (within level time diff, between level average diff, and 
+# between level average and time diff) and makes histogram and vulcano plots 
+# and places them into a nice HTML report.
+
+
+
+# Exported function: limma_report() --------------------------------------------
 
 
 limma_report <- function(run_limma_splines_result,

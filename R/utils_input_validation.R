@@ -1055,12 +1055,16 @@ Level2Functions <- R6::R6Class("Level2Functions",
                          meta_batch2_column = NULL,
                          data_meta_index = NULL) {
      
-     if (!is.data.frame(meta) || !"Time" %in% names(meta)) {
+     if (!is.data.frame(meta) || 
+         !"Time" %in% names(meta) ||
+         !is.numeric(meta[["Time"]])) {
        stop(self$create_error_message(paste("meta must be a dataframe with", 
-                                            "the column Time"),
+                                            "the numeric column Time"),
                                       data_meta_index),
             call. = FALSE)
      }
+     
+     self$check_time_column_pattern(meta)
      
      if (any(is.na(meta))) {
        stop(self$create_error_message("meta must not contain missing values.",
@@ -1092,6 +1096,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
                                       data_meta_index),
             call. = FALSE)
      }
+     
+     # Check condition and time pattern consistency
+     self$check_condition_time_consistency(meta, condition)
      
      if (is.null(meta_batch_column) && !is.null(meta_batch2_column)) {
        stop(paste("For removing the batch effect, batch2 can only be used when",
@@ -1553,6 +1560,129 @@ Level3Functions <- R6::R6Class("Level3Functions",
          message("Batch effect will NOT be removed for plotting!")
        }
      }
+   },
+   
+   
+   check_time_column_pattern = function(meta) {
+     time_values <- meta[["Time"]]
+     
+     # Find the number of replicates
+     replicate_count <- 1
+     for (i in 2:length(time_values)) {
+       if (time_values[i] != time_values[1]) {
+         replicate_count <- i - 1
+         break
+       }
+     }
+
+     # Check that the value changes after the replicate_count consistently
+     for (i in seq(replicate_count + 1, length(time_values), 
+                   by = replicate_count)) {
+       if (i + replicate_count - 1 > length(time_values)) break
+       current_block <- time_values[i:(i + replicate_count - 1)]
+       previous_value <- time_values[i - 1]
+       if (!all(current_block == current_block[1]) ||
+           current_block[1] <= previous_value) {
+         message(paste("The time values do not change consistently", 
+                       "after the replicates."))
+         break
+       }
+     }
+     
+     # Find the pattern
+     pattern_end <- 1
+     for (i in (replicate_count + 1):length(time_values)) {
+       if (time_values[i] < time_values[i - 1]) {
+         pattern_end <- i - 1
+         break
+       }
+     }
+     
+     pattern <- time_values[1:pattern_end]
+     pattern_length <- length(pattern)
+     
+     # Check if the pattern is fully repeated
+     for (i in seq(pattern_length + 1, length(time_values),
+                   by = pattern_length)) {
+       if (i + pattern_length - 1 > length(time_values)) break
+       if (!all(time_values[i:(i + pattern_length - 1)] == pattern)) {
+         message("The time pattern is not fully repeated.")
+         break
+       }
+     }
+     
+     # Check if there are leftover values
+     if (length(time_values) %% pattern_length != 0) {
+       message(paste("The time pattern is not fully repeated.", 
+                     "There are leftover values."))
+     }
+     
+     return(TRUE)
+   },
+   
+   
+   #' Check Condition Time Consistency
+   #'
+   #' @description
+   #' This function checks whether the values in the `condition` column
+   #' have unique values for each block of identical `Time` values in the 
+   #' `meta` dataframe.
+   #' Additionally, it ensures that every new block of a given time has a 
+   #' new value
+   #' in the `condition` column.
+   #'
+   #' @param meta A dataframe containing the metadata, including the `Time`
+   #'  column.
+   #' @param condition A character string specifying the column name in `meta`
+   #'                  used to define groups for analysis.
+   #'
+   #' @return Logical TRUE if the condition values are consistent with the
+   #'  time series pattern.
+   #'
+   check_condition_time_consistency = function(meta,
+                                               condition) {
+     
+     # Get the unique times in the order they appear
+     unique_times <- unique(meta[["Time"]])
+     
+     # Initialize a list to store previously seen conditions for each time
+     # segment
+     seen_conditions <- list()
+     
+     # Iterate through each block of unique times
+     for (time in unique_times) {
+       # Get the indices for the current time segment
+       current_indices <- which(meta[["Time"]] == time)
+       
+       # Get the condition values for the current time segment
+       current_conditions <- meta[current_indices, condition, drop = TRUE]
+       
+       # Ensure that all conditions in the current segment are the same
+       if (length(unique(current_conditions)) != 2) {
+         stop(paste("Every block of identical time values in meta must",
+                    "have unique values in the column", condition),
+              call. = FALSE)
+       }
+       
+       # Check if the condition value has been seen before for this time segment
+       if (!is.null(seen_conditions[[as.character(time)]])) {
+         if (current_conditions[1] %in% seen_conditions[[as.character(time)]]) {
+           stop(sprintf("Condition '%s' for time '%s' has been seen before.",
+                        current_conditions[1], time), call. = FALSE)
+         }
+       }
+       
+       # Update the seen conditions for the current time segment
+       if (is.null(seen_conditions[[as.character(time)]])) {
+         seen_conditions[[as.character(time)]] <- character(0)
+       }
+       seen_conditions[[as.character(time)]] <- c(
+         seen_conditions[[as.character(time)]],
+         current_conditions[1]
+       )
+     }
+     
+     return(TRUE)
    }
  )
 )
