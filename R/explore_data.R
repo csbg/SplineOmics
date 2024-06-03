@@ -17,21 +17,14 @@
 #'
 #' @param data A dataframe containing the data.
 #' @param meta A dataframe containing metadata corresponding to the `data`.
-#' @param condition A character string specifying the condition.
-#' @param report_info An object containing report information.
+#' @param condition A character string specifying the condition (column of meta)
+#' @param report_info A named list containing report information.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param meta_batch2_column A character string specifying the meta batch2
+#'                           column.
 #' @param report_dir A non-empty string specifying the report directory.
 #'
 #' @return A list of ggplot objects representing various exploratory plots.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' plots <- generate_plots(data)
-#' for (plot in plots) {
-#'   print(plot)
-#' }}
 #'
 #' @export
 #' 
