@@ -6,6 +6,8 @@ library(devtools)
 devtools::load_all()
 
 library(conflicted)
+library(strict)
+
 
 
 # Load the data ----------------------------------------------------------------
@@ -37,15 +39,23 @@ report_info <- list(
 # condition <- "Phase"
 condition <- "Phase"
 meta_batch_column <- "Reactor"
+# meta_batch2_column <- "Reactor"
 report_dir <- here::here("results", "explore_data")
 
+data_with_errors <- data
+meta_with_errors <- meta
+
+data_with_errors$new_col <- rep(1, nrow(data))
+meta_with_errors <- rbind(meta_with_errors, data.frame(Sample = 10, Reactor = "R3", Time.Point = "TP13",
+                                                       Phase = "Stationary", Time = 240))
+
 # debug(explore_data)
-plots <- explore_data(data = data,
-                      meta = meta,
+plots <- explore_data(data = data_with_errors,
+                      meta = meta_with_errors,
                       condition = condition,
                       report_info = report_info,
                       meta_batch_column = meta_batch_column,
-                      # meta_batch2_column = NULL,
+                      # meta_batch2_column = meta_batch2_column,
                       report_dir = report_dir)
 
 

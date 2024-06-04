@@ -59,6 +59,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_data_and_meta()
       self$check_datas_and_metas()
       self$check_datas_descr()
+      self$check_top_tables()
       self$check_mode()
       self$check_modes()
       self$check_design_formula()
@@ -233,6 +234,106 @@ InputControl <- R6::R6Class("InputControl",
           paste(long_elements, collapse = "', '")
         )
         stop(error_message)
+      }
+    },
+    
+    
+    #' Check Top Tables
+    #'
+    #' @description
+    #' Validates that the top tables are a list of dataframes and checks each
+    #' dataframe using the `check_dataframe` function.
+    #'
+    #' @param top_tables A list of top tables from limma analysis.
+    #'
+    #' @return No return value, called for side effects.
+    #'
+    #' @seealso
+    #' \code{\link{check_dataframe}}
+    #'
+    check_top_tables = function() {
+      
+      top_tables <- self$args$top_tables
+
+      required_args <- list(top_tables)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      # Helper function to check data frames in a list
+      check_list_of_dataframes <- function(df_list) {
+        
+        if (!is.list(df_list) || !all(sapply(df_list, is.data.frame))) {
+          
+          stop("Expected a list of dataframes", call. = FALSE)
+          
+        } else {
+          
+          if (length(df_list) != 2) {
+            stop(paste("top_tables must be a list of two lists if you want", 
+                       "to cluster the hits of the limma results of", 
+                       "avrg_diff_conditions or interaction_condition_time.", 
+                       "The list must contain one of those two plus", 
+                       "the time_effect limma result, in any order"),
+                 call. = FALSE)
+          }
+          
+          underscore_count <- sapply(names(df_list), 
+                                     function(name) sum(grepl("_", name)))
+          if (sum(underscore_count == 1) != 1 ||
+              sum(underscore_count == 4) != 1) {
+            stop(paste("top_tables must be a list of two lists if you want", 
+                       "to cluster the hits of the limma results of", 
+                       "avrg_diff_conditions or interaction_condition_time.", 
+                       "The list must contain one of those two plus", 
+                       "the time_effect limma result, in any order"),
+                 call. = FALSE)
+          }
+          
+          for (df in df_list) {
+            self$check_dataframe(df)
+          }
+        }
+      }
+      
+      # Check if top_tables is a list
+      if (!is.list(top_tables)) {
+        stop("top_tables must be a list", call. = FALSE)
+      }
+      
+      for (i in seq_along(top_tables)) {
+        
+        element <- top_tables[[i]]
+        element_name <- names(top_tables)[i]
+        
+        # Means it is a list of lists (so the user wants to cluster the hits of 
+        # avrg_diff_conditions or interaction_condition_time with the help of 
+        # the spline coeffs in time_effect)
+        if (!tibble::is_tibble(element) && is.list(element)) {
+          
+          check_list_of_dataframes(element)
+          
+        } else if (tibble::is_tibble(element)) {
+
+          underscore_count <- str_count(element_name, "_")
+          if (underscore_count != 1) {
+            stop(paste("Very likely you did not pass the time_effect result", 
+                 "of limma but rather one of avrg_diff_conditions or", 
+                 "interaction_condition_time, which cannot be passed alone", 
+                 "(to cluster the hits of one of those, put only one of them", 
+                 "at a time into a list with the time_effect result. Further", 
+                 "note: Please do not edit those list element names by hand."),
+                 call. = FALSE)
+          }
+          
+          self$check_dataframe(element)
+          
+        } else {
+          stop(paste("top_tables must contain either data frames or lists of", 
+                     "data frames"),
+               call. = FALSE)
+        }
       }
     },
     
@@ -733,7 +834,12 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_report_dir = function() {
       
+      
       report_dir <- self$args$report_dir
+      if (is.null(report_dir)) {
+        # some functions just have a different name.
+        report_dir <- self$args$output_dir  
+      }
       
       required_args <- list(report_dir)
       
@@ -855,7 +961,7 @@ InputControl <- R6::R6Class("InputControl",
       non_string_fields <- sapply(report_info, function(x) !is.character(x))
       if (any(non_string_fields)) {
         invalid_fields <- names(report_info)[non_string_fields]
-        stop(paste("The following fields must be strings:", 
+        stop(paste("The following fields in report_info must be strings:", 
                    paste(invalid_fields, collapse = ", ")),
              call. = FALSE)
       }
@@ -863,15 +969,15 @@ InputControl <- R6::R6Class("InputControl",
       # Check if all mandatory fields are present
       missing_fields <- setdiff(mandatory_fields, names(report_info))
       if (length(missing_fields) > 0) {
-        stop(paste("Missing mandatory fields:", paste(missing_fields,
-                                                      collapse = ", ")),
+        stop(paste("Missing mandatory fields in report_info:",
+                   paste(missing_fields, collapse = ", ")),
              call. = FALSE)
       }
       
       # Check if there are any extra fields not in all_fields
       extra_fields <- setdiff(names(report_info), all_fields)
       if (length(extra_fields) > 0) {
-        stop(paste("The following fields are not recognized:",
+        stop(paste("The following fields in report_info are not recognized:",
                    paste(extra_fields, collapse = ", ")),
              call. = FALSE)
       }
@@ -1104,15 +1210,80 @@ Level2Functions <- R6::R6Class("Level2Functions",
        stop(paste("For removing the batch effect, batch2 can only be used when",
                   "batch is used!"), call. = FALSE)
      }
+     
+     if (!is.null(meta_batch_column)) {
+       
+       if (meta_batch_column == "Time" || meta_batch_column == condition) {
+         stop(paste("meta_batch_column must not be == 'Time' or", condition),
+              call. = FALSE)
+       }
 
-     self$check_batch_column(meta,
-                             meta_batch_column,
-                             data_meta_index)
+       self$check_batch_column(meta,
+                               meta_batch_column,
+                               data_meta_index)
+     }
      
      if (!is.null(meta_batch2_column)) {
+       
+       if (meta_batch2_column == "Time" || meta_batch2_column == condition) {
+         stop(paste("meta_batch2_column must not be == 'Time' or", condition),
+              call. = FALSE)
+       }
+       
+       if (meta_batch_column == meta_batch2_column) {
+         stop(paste("meta_batch_column must not be equal to",
+                    "meta_batch2_column"),
+              call. = FALSE)
+       }
+       
        self$check_batch_column(meta,
                                meta_batch2_column,
                                data_meta_index)
+     }
+     
+     return(TRUE)
+   },
+   
+   
+   #' Check Dataframe
+   #'
+   #' @description
+   #' Validates that the dataframe contains all required columns with the 
+   #' correct data types.
+   #'
+   #' @param df A dataframe to check.
+   #'
+   #' @return TRUE if the dataframe is valid, otherwise an error is thrown.
+   #'
+   check_dataframe = function(df) {
+     
+     # Define the required columns and their expected types
+     required_columns <- list(
+       AveExpr = "numeric",
+       P.Value = "numeric",
+       adj.P.Val = "numeric",
+       feature_index = "integer",
+       feature_names = "character",
+       intercept = "numeric"
+     )
+     
+     
+     
+     # Check if all required columns are present
+     missing_columns <- setdiff(names(required_columns), names(df))
+     if (length(missing_columns) > 0) {
+       stop(paste("Missing columns in top_table:", 
+                  paste(missing_columns, collapse = ", ")),
+            call. = FALSE)
+     }
+     
+     # Check if columns have the correct type
+     for (col in names(required_columns)) {
+       if (!inherits(df[[col]], required_columns[[col]])) {
+         stop(paste("top_table column", col, "must be of type",
+                    required_columns[[col]]),
+              call. = FALSE)
+       }
      }
      
      return(TRUE)

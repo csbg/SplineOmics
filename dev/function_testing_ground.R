@@ -39,13 +39,13 @@ meta_batch_column <- "Reactor"
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-plots <- explore_data(data = data,
-                      meta = meta,
-                      condition = condition,
-                      report_info = report_info,
-                      meta_batch_column = meta_batch_column,
-                      # meta_batch2_column = NULL,
-                      report_dir = report_dir)
+# plots <- explore_data(data = data,
+#                       meta = meta,
+#                       condition = condition,
+#                       report_info = report_info,
+#                       meta_batch_column = meta_batch_column,
+#                       # meta_batch2_column = NULL,
+#                       report_dir = report_dir)
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -100,21 +100,25 @@ result <- run_limma_splines(data,
                             spline_params = spline_params,
                             condition)
 
-top_tables <- result$avrg_diff_conditions 
+top_tables1 <- result$time_effect
+top_tables2 <- result$avrg_diff_conditions 
+top_tables3 <- result$interaction_condition_time
 
 report_dir <- here::here("results", "limma_reports")
 
-limma_report(run_limma_splines_result = result,
-             report_info = report_info,
-             report_dir = report_dir)
+# limma_report(run_limma_splines_result = result,
+#              report_info = report_info,
+#              report_dir = report_dir)
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
 clusters <- list(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")
 
-# debug(cluster_hits)
-clustering_results <- cluster_hits(top_tables = top_tables, 
+combo_list <- list(top_tables1, top_tables1)
+
+#debug(cluster_hits)
+clustering_results <- cluster_hits(top_tables = top_tables2, 
                                    data = data, 
                                    meta = meta, 
                                    design = design,
@@ -128,13 +132,41 @@ clustering_results <- cluster_hits(top_tables = top_tables,
                                    report_dir = report_dir,
                                    report = TRUE)
 
-clustering_results$all_levels_clustering[[2]]$clustered_hits
+clustered_genes_exp <- 
+  clustering_results$all_levels_clustering[[1]]$clustered_hits
 
 
 
+# Perform gsea -----------------------------------------------------------------
 
+gene_set_lib <- c("WikiPathways_2019_Human",
+                  "NCI-Nature_2016",
+                  "TRRUST_Transcription_Factors_2019",
+                  "MSigDB_Hallmark_2020",
+                  "GO_Cellular_Component_2018",
+                  "CORUM",
+                  "KEGG_2019_Human",
+                  "TRANSFAC_and_JASPAR_PWMs",
+                  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+                  "GO_Biological_Process_2018",
+                  "GO_Molecular_Function_2018",
+                  "Human_Gene_Atlas"
+)
 
+download_enrichr_databases(gene_set_lib)
 
+downloaded_dbs_filepath <- 
+  here::here("data", "all_databases_08_04_2024-12_41_50.tsv")
+
+clusterProfiler_params <- list(adj_p_value = 0.05,
+                               pAdjustMethod = "BH",
+                               minGSSize = 10,
+                               maxGSSize = 500,
+                               qvalueCutoff = 0.2)
+
+result <- run_gsea(clustered_genes = clustered_genes_exp,
+                   downloaded_dbs_filepath = downloaded_dbs_filepath,
+                   params = clusterProfiler_params,)
 
 
 

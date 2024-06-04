@@ -428,6 +428,7 @@ build_explore_data_report <- function(header_section,
   
   # Write the HTML content to file
   writeLines(content_with_plots, output_file_path)
+  cat("Report written to:", normalizePath(output_file_path), "\n")
 }
 
 
