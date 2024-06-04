@@ -14,6 +14,7 @@ HTML reports.
   - [limma_hyperparams_screen](#limma_hyperparams_screen)
   - [run_limma_splines](#run_limma_splines)
   - [cluster_hits](#cluster_hits)
+- [Docker Container](#docker-container)
 - [Dependencies](#dependencies)
 - [System Requirements](#system-requirements)
 - [Getting Help](#getting-help)

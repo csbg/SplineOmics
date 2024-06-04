@@ -5,15 +5,15 @@ library(jsonlite)
 library(SplineOmics)
 
 # Load and process the data and meta -------------------------------------------
-data_excel <- read_excel("/data/data.xlsx")
-meta <- read_excel("/data/meta.xlsx")
+data_excel <- read_excel("/input/data.xlsx")
+meta <- read_excel("/input/meta.xlsx")
 
 data <- extract_data(data_excel, feature_names_columns_old)
 
 
 # Read parameters from JSON file -----------------------------------------------
 
-params <- fromJSON("/workspace/params.json")
+params <- fromJSON("/input/params.json")
 
 # Extract parameters
 report_info <- params$report_info
@@ -34,7 +34,7 @@ plots <- explore_data(data = data,
                       condition = condition,
                       report_info = report_info,
                       meta_batch_column = meta_batch_column,
-                      report_dir = report_dir
+                      report_dir = report_dir)
 
 
 # Run limma splines -----------------------------------------------------------

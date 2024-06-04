@@ -83,7 +83,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 
   mode <- determine_analysis_mode(design,
                                   condition)
-  
+
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   args$mode <- mode
   check_null_elements(args)
@@ -108,7 +108,9 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                       adj_pthresholds = adj_pthresholds,
                       meta = meta,
                       condition = condition)
-
+  
+  huge_table_user_prompter(within_level_top_tables)
+  
   all_levels_clustering <-
     perform_clustering(top_tables = within_level_top_tables,
                        clusters = clusters,
@@ -224,6 +226,46 @@ filter_top_tables <- function(top_tables,
   }
 
   return(within_level_top_tables)
+}
+
+
+#' Check if any table in a list has more than 300 rows and prompt user for 
+#' input.
+#'
+#' This function iterates over a list of tables and checks if any table has
+#'  more than 300 rows.
+#' If such a table is found, it prompts the user to proceed or stop.
+#'
+#' @param tables A list of data frames.
+#' @return NULL. This function is used for its side effects (prompting the 
+#' user and potentially stopping the script).
+#' 
+huge_table_user_prompter <- function(tables) {
+  
+  for (i in seq_along(tables)) {
+    if (nrow(tables[[i]]) > 300) {
+      # Prompt the user for input
+      while (TRUE) {
+        user_input <- readline(prompt = paste("The table", names(tables)[i], 
+                                              "has more than 300 rows. Do you", 
+                                              "want to proceed? (y/n): "))
+        user_input <- tolower(user_input)
+        
+        # Check user input
+        if (user_input == 'y') {
+          # Proceed
+          print("Proceeding...")
+          break  
+        } else if (user_input == 'n') {
+          stop("Script stopped. User chose not to proceed.", call. = FALSE)
+        } else {
+          # Invalid input, ask the user again
+          cat(paste("Invalid input. Please type 'y' to proceed or 'n' to stop", 
+                    "the script.\n"))
+        }
+      }
+    }
+  }
 }
 
 
@@ -482,50 +524,6 @@ make_clustering_report <- function(all_levels_clustering,
 # Level 2 internal functions ---------------------------------------------------
 
 
-#' Check Top Tables
-#'
-#' @description
-#' Validates that the top tables are a list of dataframes and checks each
-#' dataframe using the `check_dataframe` function.
-#'
-#' @param top_tables A list of top tables from limma analysis.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @seealso
-#' \code{\link{check_dataframe}}
-#'
-check_top_tables <- function(top_tables) {
-
-  # Helper function to check data frames in a list
-  check_list_of_dataframes <- function(df_list) {
-    if (!is.list(df_list) || !all(sapply(df_list, is.data.frame))) {
-      stop("Expected a list of dataframes", call. = FALSE)
-    } else {
-      for (df in df_list) {
-        check_dataframe(df)
-      }
-    }
-  }
-
-  # Check if top_tables is a list
-  if (!is.list(top_tables)) {
-    stop("top_tables must be a list", call. = FALSE)
-  }
-
-  for (element in top_tables) {
-    if (!tibble::is_tibble(element) && is.list(element)) {
-      check_list_of_dataframes(element)
-    } else if (tibble::is_tibble(element)) {
-      check_dataframe(element)
-    } else {
-      stop("top_tables must contain either data frames or lists of data frames",
-           call. = FALSE)
-    }
-  }
-}
-
-
 check_between_level_pattern <- function(top_tables) {
 
   # Initialize variables
@@ -628,7 +626,7 @@ process_level_cluster <- function(top_table,
   if (is.null(top_table) || all(is.na(top_table))) {
     return(NA)
   }
-
+  
   curve_results <- get_curve_values(top_table = top_table,
                                     level = level,
                                     meta = meta,
@@ -1319,7 +1317,7 @@ build_cluster_hits_report <- function(header_section,
                                       mode,
                                       output_file_path) {
 
-  content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
+  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
 
   toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
           width: 80%;'>
@@ -1349,8 +1347,8 @@ build_cluster_hits_report <- function(header_section,
                                   index,
                                   header_info$header_name)
 
-        content_with_plots <- paste(content_with_plots, section_header,
-                                    sep="\n")
+        html_content <- paste(html_content, section_header,
+                                    sep = "\n")
 
         if (mode == "integrated") {
           j <- 1
@@ -1362,8 +1360,8 @@ build_cluster_hits_report <- function(header_section,
           get_spline_params_info(spline_params = spline_params,
                                  j = j)
 
-        content_with_plots <- paste(content_with_plots, spline_params_info,
-                                    sep="\n")
+        html_content <- paste(html_content, spline_params_info,
+                                    sep = "\n")
 
         hits_info <- sprintf(
           paste0(
@@ -1373,11 +1371,11 @@ build_cluster_hits_report <- function(header_section,
           nr_hits
         )
 
-        content_with_plots <- paste(content_with_plots, hits_info, sep="\n")
+        html_content <- paste(html_content, hits_info, sep = "\n")
 
         toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
                              toc_style, index, header_info[[1]])
-        toc <- paste(toc, toc_entry, sep="\n")
+        toc <- paste(toc, toc_entry, sep = "\n")
 
         current_header_index <- current_header_index + 1
 
@@ -1390,7 +1388,7 @@ build_cluster_hits_report <- function(header_section,
     plot <- plots[[index]]
     plot_size <- plots_sizes[[index]]
     img_tag <- plot2base64(plot, plot_size)
-    content_with_plots <- paste(content_with_plots, img_tag, sep="\n")
+    html_content <- paste(html_content, img_tag, sep = "\n")
     pb$tick()
   }
 
@@ -1398,10 +1396,10 @@ build_cluster_hits_report <- function(header_section,
   toc <- paste(toc, "</ul></div>", sep="\n")
 
   # Insert the Table of Contents at the placeholder
-  content_with_plots <- gsub("<!--TOC-->", toc, content_with_plots)
+  html_content <- gsub("<!--TOC-->", toc, html_content)
 
   # Append the final closing tags for the HTML body and document
-  content_with_plots <- paste(content_with_plots, "</body></html>", sep="\n")
+  html_content <- paste(html_content, "</body></html>", sep = "\n")
 
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
@@ -1410,51 +1408,11 @@ build_cluster_hits_report <- function(header_section,
   }
 
   # Write the HTML content to file
-  writeLines(content_with_plots, output_file_path)
+  writeLines(html_content, output_file_path)
 }
 
 
 # Level 3 internal functions ---------------------------------------------------
-
-
-#' Check Dataframe
-#'
-#' @description
-#' Validates that the dataframe contains all required columns with the correct
-#' data types.
-#'
-#' @param df A dataframe to check.
-#'
-#' @return TRUE if the dataframe is valid, otherwise an error is thrown.
-#'
-check_dataframe <- function(df) {
-
-  # Define the required columns and their expected types
-  required_columns <- list(
-    AveExpr = "numeric",
-    F = "numeric",
-    P.Value = "numeric",
-    adj.P.Val = "numeric",
-    feature_index = "integer",
-    feature_names = "character",
-    intercept = "numeric"
-  )
-
-  # Check if all required columns are present
-  missing_columns <- setdiff(names(required_columns), names(df))
-  if (length(missing_columns) > 0) {
-    stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
-  }
-
-  # Check if columns have the correct type
-  for (col in names(required_columns)) {
-    if (!inherits(df[[col]], required_columns[[col]])) {
-      stop(paste("Column", col, "must be of type", required_columns[[col]]))
-    }
-  }
-
-  return(TRUE)
-}
 
 
 #' Calculate Curve Values Based on Top Table Filter

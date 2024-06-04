@@ -40,8 +40,12 @@ download_enrichr_databases <- function(gene_set_lib,
     stop(paste("gene_set_lib must be a character vector with length > 0"))
   }
   
-  check_and_create_report_dir(output_dir)
-  ##
+  # Control the inputs
+  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  check_null_elements(args)
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
+
   
   debug(enrichr_get_genesets)
   genesets <- enrichr_get_genesets(databases = gene_set_lib)

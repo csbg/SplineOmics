@@ -75,22 +75,7 @@ limma_hyperparams_screen <- function(datas,
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-  
-  # control_inputs_hyperpara_screen(datas = datas,
-  #                                 datas_descr = datas_descr,
-  #                                 metas = metas,
-  #                                 designs = designs,
-  #                                 modes = modes,
-  #                                 condition = condition,
-  #                                 spline_test_configs = spline_test_configs,
-  #                                 report_info = report_info,
-  #                                 report_dir = report_dir,
-  #                                 adj_pthresholds = adj_pthresholds,
-  #                                 meta_batch_column = meta_batch_column,
-  #                                 meta_batch_2_column = meta_batch_2_column,
-  #                                 time_unit = time_unit,
-  #                                 padjust_method = padjust_method)
-  
+
   # Convert the data dataframe to a matrix and extract the feature names
   data_matrices <- list()
   for (data in datas) {
@@ -749,7 +734,8 @@ hc_vennheatmap <- function(hc_obj) {
                                          show_colnames = TRUE,
                                          border_color = NA,
                                          main = plot_title,
-                                         silent = TRUE)
+                                         silent = TRUE,
+                                         fontsize = 6)
   
   return(list(vennheatmap = vennheatmap_plot, 
               nrhits = nrow(venn_matrix)))
@@ -801,13 +787,13 @@ hc_barplot <- function(hc_obj) {
     ) +
     xlab("Parameters") +
     scale_y_continuous(
-      "number of significant features",
+      "Nr. of hits",
       expand = expansion(mult = c(0, .2))
     ) +
     facet_wrap(vars(!!rlang::sym("condition")), ncol = 1) +
     theme_minimal() +
     theme(
-      axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+      axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1, size = 5),
       panel.grid.major.x = element_blank()
     ) +
     NULL
@@ -1350,17 +1336,93 @@ build_hyperparams_screen_report <- function(header_section,
                                             plots, 
                                             plots_sizes, 
                                             output_file_path) {
+
+  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
-  index <- 1
-  for (plot in plots) {
+  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
+          width: 80%;'> 
+        <h2 style='font-size: 40px;'>Table of Contents</h2>
+        <ul style='display: inline-block; text-align: left;'>"
+  
+  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
+  toc_style <- "font-size: 30px;"
+  
+  headers <- c("Venn-Heatmap", "Venn-Heatmap long", "Nr. Hits Barplots",
+               "Spline Curves")
+  
+  section_texts <- c("The 'Venn-Heatmap' is inspired from a Venn-diagram, in
+                     the sense two results are shown in distinct colors and
+                     the overlaps between the results are shown with the mix of
+                     the two colors. Every row in the 'Venn-Heatmap' is a 
+                     feature that is a hit for at least one combination of 
+                     hyperparameters. Every column is a combination of the
+                     'internal' hyperparameters. By looking at this, one can
+                     see how many and which hits each 'internal' hyperparameter
+                     combo delivered for the two combinations of 'outer' 
+                     hyperparameters.",
+                     
+                     "The 'Venn-Heatmap' is inspired from a Venn-diagram, in
+                     the sense two results are shown in distinct colors and
+                     the overlaps between the results are shown with the mix of
+                     the two colors. Every row in the 'Venn-Heatmap' is a 
+                     feature that is a hit for at least one combination of 
+                     hyperparameters. Every column is a combination of the
+                     'internal' hyperparameters. By looking at this, one can
+                     see how many and which hits each 'internal' hyperparameter
+                     combo delivered for the two combinations of 'outer' 
+                     hyperparameters.",
+                     
+                     "The barplots show how many hits each 'internal' 
+                     hyperparameter combo delivered for the two combinations of
+                     'outer' hyperparameters.",
+                     
+                     "In this section, the spline curves with the data points
+                     for maximally 6 hits and 6 random non-significant features
+                     are shown for each combo of hyperparameters. This maily
+                     allows to identify the spline parameters that lead to nice
+                     fits (not overfitting == curves too wiggly) and not 
+                     underfitting (curves not matching pattern complexity)")
+  
+  nr_of_sections <- length(headers)
+  
+  for (index in seq_along(plots)) {
+    
+    if (index <= nr_of_sections) {
+      
+      section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
+                                section_header_style,
+                                index,
+                                headers[index])
+      
+      section_text <- sprintf('<p style="font-size: 2em;">%s</p>',
+                                  section_texts[index])
+      
+      html_content <- paste(html_content,
+                            section_header,
+                            section_text,
+                            sep = "\n")
+      
+      toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
+                           toc_style, index, headers[index])
+      toc <- paste(toc, toc_entry, sep = "\n")
+    }
+
     plot_nrows <- plots_sizes[[index]]
-    index <- index + 1
-    img_tag <- plot2base64(plot, plot_nrows)
-    header_section <- paste(header_section, img_tag, sep="\n")
+    img_tag <- plot2base64(plots[[index]], plot_nrows)
+    html_content <- paste(html_content, img_tag, sep = "\n")
   }
   
   # Close the HTML document
-  html_content <- paste(header_section, "</body></html>", sep="\n")
+  # html_content <- paste(header_section, "</body></html>", sep = "\n")
+  
+  # Close the Table of Contents
+  toc <- paste(toc, "</ul></div>", sep="\n")
+  
+  # Insert the Table of Contents at the placeholder
+  html_content <- gsub("<!--TOC-->", toc, html_content)
+  
+  # Append the final closing tags for the HTML body and document
+  html_content <- paste(html_content, "</body></html>", sep = "\n")
   
   dir_path <- dirname(output_file_path)
   

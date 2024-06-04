@@ -137,9 +137,9 @@ run_limma_splines <- function(data,
                  "comparison')."))
   }
   
-  list(time_effect = within_level_top_table, 
-       avrg_diff_conditions = between_level_condition_only,
-       interaction_condition_time = between_level_condition_time)
+ list(time_effect = within_level_top_table, 
+      avrg_diff_conditions = between_level_condition_only,
+      interaction_condition_time = between_level_condition_time)
 }
 
 

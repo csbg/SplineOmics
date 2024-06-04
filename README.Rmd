@@ -23,6 +23,7 @@ The R package SplineOmics gets the significant features (hits) of time-series om
     -   [limma_hyperparams_screen](#limma_hyperparams_screen)
     -   [run_limma_splines](#run_limma_splines)
     -   [cluster_hits](#cluster_hits)
+-   [Docker Container](#docker-container)
 -   [Dependencies](#dependencies)
 -   [System Requirements](#system-requirements)
 -   [Getting Help](#getting-help)
@@ -180,9 +181,7 @@ To facilitate reproducible analysis, we provide a Docker container that encapsul
 
 ### Pulling the Docker Container
 
-You can pull the Docker container of the desired version of the `SplineOmics` 
-package from Docker Hub using the following command (here it downloads version
-0.1.0):
+You can pull the Docker container of the desired version of the `SplineOmics` package from Docker Hub using the following command (here it downloads version 0.1.0):
 
 ``` sh
 docker pull thomasrauter/splineomics:0.1.0
