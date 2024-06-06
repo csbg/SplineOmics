@@ -834,7 +834,6 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_report_dir = function() {
       
-      
       report_dir <- self$args$report_dir
       if (is.null(report_dir)) {
         # some functions just have a different name.

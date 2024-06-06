@@ -83,6 +83,9 @@ generate_report_html <- function(plots,
     title <- "limma report"
   } else if (report_type == "cluster_hits") {                         
     title <- "clustered hits | within level"
+  } else if (report_type == "gsea_report") {                         
+    title <- "gsea"
+    
   } else {
     stop(paste("report_type must be explore_hits, limma_hyperparams_screen,", 
                "limma_report, or cluster_hits"),
@@ -91,7 +94,7 @@ generate_report_html <- function(plots,
   
   header_text <- paste(title, 
                        report_info$omics_data_type, 
-                       timestamp, sep=" | ")
+                       timestamp, sep = " | ")
   
   if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
     logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
@@ -138,7 +141,7 @@ generate_report_html <- function(plots,
     "<h1>", header_text, "<img src='",
     logo_base64, "' alt='Logo' class='logo'></h1>",
     "<table>",
-    sep=""
+    sep = ""
   )
 
   all_fields <- c("omics_data_type",
@@ -163,13 +166,13 @@ generate_report_html <- function(plots,
     if (field == "data" && !any(is.na(data)))  {
       
       if (report_type == "limma_report") {
-        value <- sprintf('<a href="%s" download="top_tables.xlsx">
-                        <button>Download top_tables.xlsx</button></a>', 
-                         encode_df_to_base64(data))
+        base64_df <- sprintf('<a href="%s" download="top_tables.xlsx">
+                            <button>Download top_tables.xlsx</button></a>', 
+                            encode_df_to_base64(data))
       } else {
-        value <- sprintf('<a href="%s" download="data.xlsx">
-                        <button>Download data.xlsx</button></a>', 
-                         encode_df_to_base64(data))
+        base64_df <- sprintf('<a href="%s" download="data.xlsx">
+                             <button>Download data.xlsx</button></a>', 
+                             encode_df_to_base64(data))
       }
 
       
@@ -178,24 +181,33 @@ generate_report_html <- function(plots,
                is.data.frame(meta) &&
                !any(is.na(meta))) {
       
-      value <- sprintf('<a href="%s" download="meta.xlsx">
-                        <button>Download meta.xlsx</button></a>', 
-                       encode_df_to_base64(meta))
+      base64_df <- sprintf('<a href="%s" download="meta.xlsx">
+                           <button>Download meta.xlsx</button></a>', 
+                           encode_df_to_base64(meta))
     } else {
-      value <- ifelse(is.null(report_info[[field]]), "NA", report_info[[field]])
+      base64_df <- ifelse(is.null(report_info[[field]]),
+                          "NA", report_info[[field]])
     }
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
     header_section <- paste(header_section,
                             sprintf('<tr><td style="text-align: right; 
                                     color:blue; padding-right: 5px;">%s 
                                     :</td><td>%s</td></tr>',
-                                    field_display, value),
+                                    field_display, base64_df),
                             sep = "\n")
   }
   
   # Close the table
   header_section <- paste(header_section, "</table>", sep = "\n")
   
+  if (report_type == "gsea_report") {
+    databases_text <- paste(report_info$databases, collapse = ", ")
+    header_section <- paste(header_section, 
+                            "<p style='font-size: 20px;'>Databases used: ", 
+                            databases_text, 
+                            "</p>", 
+                            sep = "\n")
+  }
   
   file_name <- sprintf("%s_%s_%s.html",
                        filename,
@@ -225,6 +237,14 @@ generate_report_html <- function(plots,
                        plots_sizes = plots_sizes,
                        level_headers_info = level_headers_info,
                        output_file_path = output_file_path)
+    
+  } else if (report_type == "gsea_report") {
+    
+    build_gsea_report(header_section = header_section,
+                      plots = plots,
+                      plots_sizes = plots_sizes,
+                      level_headers_info = level_headers_info,
+                      output_file_path = output_file_path)
     
   } else {           # report_type == "cluster_hits"
     build_cluster_hits_report(header_section = header_section, 
@@ -270,7 +290,8 @@ generate_report_html <- function(plots,
 #   
 #   return(data_uri)
 # }
-encode_df_to_base64 <- function(df) {
+encode_df_to_base64 <- function(df,
+                                report_type = NA) {
   
   temp_file <- tempfile(fileext = ".xlsx")
   wb <- openxlsx::createWorkbook()
@@ -282,7 +303,16 @@ encode_df_to_base64 <- function(df) {
     openxlsx::writeData(wb, sheet = sheet_name, df)
   } else if (is.list(df) && all(sapply(df, is.data.frame))) {
     # Convert list of dataframes to Excel with multiple sheets
-    sheet_names <- make.unique(names(df))
+    
+    if (!is.na(report_type)) {
+      if (report_type == "gsea_report") {
+        all_names <- names(df)
+        sheet_names <- sapply(all_names, extract_and_combine)
+      }
+    } else {
+      sheet_names <- make.unique(names(df))
+    }
+    
     
     for (i in seq_along(sheet_names)) {
       openxlsx::addWorksheet(wb, sheet_names[i])
@@ -377,6 +407,29 @@ plot2base64 <- function(plot,
   # Return the HTML img tag with the Base64 string and a fixed width
   return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
                  img_base64, html_img_width))
+}
+
+
+
+# Level 3 internal functions ---------------------------------------------------
+
+
+extract_and_combine <- function(input) {
+  
+  # Extract substring after 'cluster:' and before the next ','
+  cluster_match <- str_extract(input, "(?<=cluster: )[^,]+")
+  # Extract substring after 'database:'
+  database_match <- str_extract(input, "(?<=database: )[^,]+")
+  
+  # Combine the substrings with a whitespace in between
+  combined <- paste(cluster_match, database_match, sep = " ")
+  
+  # Truncate the combined string to 30 characters if necessary
+  if (nchar(combined) > 30) {
+    combined <- substr(combined, 1, 30)
+  }
+  
+  return(combined)
 }
 
 
