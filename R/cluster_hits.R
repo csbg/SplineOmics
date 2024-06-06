@@ -152,9 +152,22 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
       return(x)
     }
   })
-
+  
+  
+  clustered_hits_levels <- list()
+  
+  for (i in seq_along(all_levels_clustering)) {
+    clustering_level <- all_levels_clustering[[i]]
+    element_name <- names(all_levels_clustering)[i]
+    
+    clustered_hits_levels[[element_name]] <- 
+      clustering_level$clustered_hits
+  }
+  
+  
   list(all_levels_clustering = all_levels_clustering,
-       plots = plots)
+       plots = plots,
+       clustered_hits_levels = clustered_hits_levels)
 }
 
 
