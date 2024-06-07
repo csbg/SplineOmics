@@ -27,16 +27,16 @@
 #' @param metas A list of data frames containing metadata for each dataset in 
 #' `datas`.
 #' @param designs A character vector of design formulas for the limma analysis.
-#' @param modes A character vector indicating the mode of analysis for each 
-#' design.
 #' @param condition A single character string specifying the condition.
 #' @param spline_test_configs A configuration object for spline tests.
-#' @param feature_names A character vector of feature names to be analyzed.
 #' @param report_info An object containing report information.
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector of p-value thresholds for 
 #' significance determination.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param meta_batch2_column A character string specifying the second meta 
+#'                           batch column (the limma function removeBatchEffect
+#'                           supports a maximum of two batch columns.)
 #' @param time_unit A character string specifying the time unit label for plots.
 #' @param padjust_method A character string specifying the method for p-value 
 #' adjustment.
@@ -104,7 +104,7 @@ limma_hyperparams_screen <- function(datas,
                               spline_test_configs = spline_test_configs,
                               meta_batch_column = meta_batch_column,
                               meta_batch2_column = meta_batch2_column,
-                              designs,
+                              # designs,
                               time_unit = time_unit)
 
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
@@ -204,6 +204,8 @@ get_limma_combos_results <- function(datas,
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param spline_test_configs A configuration object for spline tests.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param meta_batch2_column A character string specifying the second meta batch
+#'                           column.
 #' @param time_unit A single character, such as s, m, h, or d, specifying the
 #' time_unit that should be used for the plots (s = seconds, m = minutes,
 #' h = hours, d = days). This single character will be converted to a string 
@@ -223,7 +225,7 @@ plot_limma_combos_results <- function(top_tables_combos,
                                       spline_test_configs,
                                       meta_batch_column,
                                       meta_batch2_column,
-                                      designs,
+                                      # designs,
                                       time_unit = time_unit) {
   
   names_extracted <- stringr::str_extract(names(top_tables_combos),
@@ -536,6 +538,11 @@ process_combo <- function(data_index,
 #' @param datas A list of matrices.
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param meta_batch2_column A character string specifying the second meta batch
+#'                           column.
+#' @param condition A character vector of length 1, specifying the column name
+#'                  of the meta dataframe, that contains the levels that 
+#'                  separate the experiment.
 #'
 #' @return A list of matrices with batch effects removed where applicable.
 #'
@@ -793,7 +800,7 @@ hc_barplot <- function(hc_obj) {
     facet_wrap(vars(!!rlang::sym("condition")), ncol = 1) +
     theme_minimal() +
     theme(
-      axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1, size = 5),
+      axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1, size = 4),
       panel.grid.major.x = element_blank()
     ) +
     NULL
@@ -1339,16 +1346,75 @@ build_hyperparams_screen_report <- function(header_section,
 
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
-          width: 80%;'> 
-        <h2 style='font-size: 40px;'>Table of Contents</h2>
-        <ul style='display: inline-block; text-align: left;'>"
+  toc <- create_toc()
   
-  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
-  toc_style <- "font-size: 30px;"
+  styles <- define_html_styles()
+  section_header_style <- styles$section_header_style
+  toc_style <- styles$toc_style
   
-  headers <- c("Venn-Heatmap", "Venn-Heatmap long", "Nr. Hits Barplots",
+  headers <- c("Venn-Heatmap",
+               "Venn-Heatmap long",
+               "Nr. Hits Barplots",
                "Spline Curves")
+  
+  section_texts <- get_hyperparams_screen_plots_explanations()
+  
+  nr_of_sections <- length(headers)
+  
+  for (index in seq_along(plots)) {
+    
+    if (index <= nr_of_sections) {
+      
+      section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
+                                section_header_style,
+                                index,
+                                headers[index])
+      
+      section_text <- sprintf('<p style="font-size: 2em;">%s</p>',
+                                  section_texts[index])
+      
+      html_content <- paste(html_content,
+                            section_header,
+                            section_text,
+                            sep = "\n")
+      
+      toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
+                           toc_style, index, headers[index])
+      toc <- paste(toc, toc_entry, sep = "\n")
+    }
+
+    html_content <- process_plots(plots = plots,
+                                  plots_sizes = plots_sizes,
+                                  index = index,
+                                  html_content = html_content)
+  }
+  
+  # Close the HTML document
+  # html_content <- paste(header_section, "</body></html>", sep = "\n")
+  
+  # Close the Table of Contents
+  toc <- paste(toc, "</ul></div>", sep="\n")
+  
+  # Insert the Table of Contents at the placeholder
+  html_content <- gsub("<!--TOC-->", toc, html_content)
+  
+  # Append the final closing tags for the HTML body and document
+  html_content <- paste(html_content, "</body></html>", sep = "\n")
+  
+  dir_path <- dirname(output_file_path)
+  
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  writeLines(html_content, output_file_path)
+}
+
+
+# Level 4 internal functions ---------------------------------------------------
+
+
+get_hyperparams_screen_plots_explanations <- function() {
   
   section_texts <- c("The 'Venn-Heatmap' is inspired from a Venn-diagram, in
                      the sense two results are shown in distinct colors and
@@ -1382,53 +1448,4 @@ build_hyperparams_screen_report <- function(header_section,
                      allows to identify the spline parameters that lead to nice
                      fits (not overfitting == curves too wiggly) and not 
                      underfitting (curves not matching pattern complexity)")
-  
-  nr_of_sections <- length(headers)
-  
-  for (index in seq_along(plots)) {
-    
-    if (index <= nr_of_sections) {
-      
-      section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
-                                section_header_style,
-                                index,
-                                headers[index])
-      
-      section_text <- sprintf('<p style="font-size: 2em;">%s</p>',
-                                  section_texts[index])
-      
-      html_content <- paste(html_content,
-                            section_header,
-                            section_text,
-                            sep = "\n")
-      
-      toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
-                           toc_style, index, headers[index])
-      toc <- paste(toc, toc_entry, sep = "\n")
-    }
-
-    plot_nrows <- plots_sizes[[index]]
-    img_tag <- plot2base64(plots[[index]], plot_nrows)
-    html_content <- paste(html_content, img_tag, sep = "\n")
-  }
-  
-  # Close the HTML document
-  # html_content <- paste(header_section, "</body></html>", sep = "\n")
-  
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-  
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-  
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
-  
-  dir_path <- dirname(output_file_path)
-  
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  writeLines(html_content, output_file_path)
 }

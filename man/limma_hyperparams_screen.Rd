@@ -52,15 +52,14 @@ significance determination.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
+\item{meta_batch2_column}{A character string specifying the second meta 
+batch column (the limma function removeBatchEffect
+supports a maximum of two batch columns.)}
+
 \item{time_unit}{A character string specifying the time unit label for plots.}
 
 \item{padjust_method}{A character string specifying the method for p-value 
 adjustment.}
-
-\item{modes}{A character vector indicating the mode of analysis for each 
-design.}
-
-\item{feature_names}{A character vector of feature names to be analyzed.}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.

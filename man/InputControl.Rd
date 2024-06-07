@@ -33,14 +33,6 @@ are present.
 - Ensures that the maximum and minimum degrees of freedom are within the 
   acceptable ranges specified by the metadata.
 
-Check Limma Top Tables Structure
-
-This function checks if the provided limma top tables data structure 
-is correctly formatted. It ensures that the data structure contains 
-exactly three named elements ('time_effect', 'avrg_diff_conditions', 
-and 'interaction_condition_time') and that each element contains 
-dataframes with the correct columns and data types.
-
 
 
 The function performs the following checks:
@@ -63,6 +55,10 @@ an error.
 \seealso{
 \code{\link{stop}} for error handling.
 
+Check Top Tables
+
+\code{\link{check_dataframe}}
+
 Check Mode
 
 \code{\link{limma}}
@@ -83,6 +79,19 @@ Check Multiple Designs and Metas
 \code{\link{self$check_spline_params_mode_dependent}}
 
 Check Spline Test Configurations
+
+\code{\link{self$check_colums_spline_test_configs}},
+\code{\link{self$check_spline_type_column}}
+\code{\link{self$check_spline_type_params}}
+\code{\link{self$check_max_and_min_dof}}
+
+Check Limma Top Tables Structure
+
+This function checks if the provided limma top tables data structure 
+is correctly formatted. It ensures that the data structure contains 
+exactly three named elements ('time_effect', 'avrg_diff_conditions', 
+and 'interaction_condition_time') and that each element contains 
+dataframes with the correct columns and data types.
 }
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{\link[SplineOmics:Level2Functions]{SplineOmics::Level2Functions}} -> \code{InputControl}
@@ -104,6 +113,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_data_and_meta}{\code{InputControl$check_data_and_meta()}}
 \item \href{#method-InputControl-check_datas_and_metas}{\code{InputControl$check_datas_and_metas()}}
 \item \href{#method-InputControl-check_datas_descr}{\code{InputControl$check_datas_descr()}}
+\item \href{#method-InputControl-check_top_tables}{\code{InputControl$check_top_tables()}}
 \item \href{#method-InputControl-check_mode}{\code{InputControl$check_mode()}}
 \item \href{#method-InputControl-check_modes}{\code{InputControl$check_modes()}}
 \item \href{#method-InputControl-check_design_formula}{\code{InputControl$check_design_formula()}}
@@ -126,9 +136,12 @@ Initialize an InputControl object}
 <ul>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level4Functions" data-id="create_error_message"><a href='../../SplineOmics/html/Level4Functions.html#method-Level4Functions-create_error_message'><code>SplineOmics::Level4Functions$create_error_message()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_batch_column"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_batch_column'><code>SplineOmics::Level3Functions$check_batch_column()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_condition_time_consistency"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_condition_time_consistency'><code>SplineOmics::Level3Functions$check_condition_time_consistency()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_time_column_pattern"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_time_column_pattern'><code>SplineOmics::Level3Functions$check_time_column_pattern()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_columns"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_columns'><code>SplineOmics::Level2Functions$check_columns()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_colums_spline_test_configs"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_colums_spline_test_configs'><code>SplineOmics::Level2Functions$check_colums_spline_test_configs()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_data"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_data'><code>SplineOmics::Level2Functions$check_data()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_dataframe"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_dataframe'><code>SplineOmics::Level2Functions$check_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_max_and_min_dof"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_max_and_min_dof'><code>SplineOmics::Level2Functions$check_max_and_min_dof()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_meta"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_meta'><code>SplineOmics::Level2Functions$check_meta()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_spline_params_generally"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_spline_params_generally'><code>SplineOmics::Level2Functions$check_spline_params_generally()</code></a></span></li>
@@ -293,6 +306,27 @@ not exceeding 80 characters in length.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{datas_descr}}{A character vector of data descriptions.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value, called for side effects.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_top_tables"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_top_tables}{}}}
+\subsection{Method \code{check_top_tables()}}{
+Validates that the top tables are a list of dataframes and checks each
+dataframe using the `check_dataframe` function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_top_tables()}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{top_tables}}{A list of top tables from limma analysis.}
 }
 \if{html}{\out{</div>}}
 }

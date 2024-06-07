@@ -599,6 +599,12 @@ InputControl <- R6::R6Class("InputControl",
     #' - Ensures that the maximum and minimum degrees of freedom are within the 
     #'   acceptable ranges specified by the metadata.
     #'
+    #' @seealso
+    #' \code{\link{self$check_colums_spline_test_configs}},
+    #' \code{\link{self$check_spline_type_column}}
+    #' \code{\link{self$check_spline_type_params}}
+    #' \code{\link{self$check_max_and_min_dof}}
+    #'
     check_spline_test_configs = function() {
       
       spline_test_configs <- self$args$spline_test_configs
@@ -1037,6 +1043,13 @@ InputControl <- R6::R6Class("InputControl",
 # Level2Functions class --------------------------------------------------------
 
 
+#' Level2Functions: A class providing level 2 functionalities
+#'
+#' This class provides various level 2 functionalities, including
+#' methods to check dataframes and spline parameters.
+#'
+#' @seealso \code{\link{InputControl}}
+#'
 Level2Functions <- R6::R6Class("Level2Functions",
  inherit = Level3Functions,
  
@@ -1265,8 +1278,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
        feature_names = "character",
        intercept = "numeric"
      )
-     
-     
      
      # Check if all required columns are present
      missing_columns <- setdiff(names(required_columns), names(df))
@@ -1672,10 +1683,13 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 # Level3Functions class --------------------------------------------------------
 
+
 #' Level3Functions: A class for level 3 utility functions
 #'
 #' This class provides methods for creating error messages and checking
 #' batch columns.
+#' 
+#' @seealso \code{\link{Level2Functions}}
 #'
 Level3Functions <- R6::R6Class("Level3Functions",
 
@@ -1733,6 +1747,21 @@ Level3Functions <- R6::R6Class("Level3Functions",
    },
    
    
+   #' Check Time Column Pattern
+   #'
+   #' @description
+   #' This function checks if the time values in the metadata follow a 
+   #' consistent 
+   #' pattern with a fixed number of replicates. It ensures that the time values 
+   #' change consistently after each block of replicates and identifies the 
+   #' repeating pattern.
+   #'
+   #' @param meta A data frame containing a column named "Time" with time 
+   #'             values.
+   #'
+   #' @return Returns TRUE if the time values follow a consistent pattern. It 
+   #'         also outputs messages if inconsistencies are found.
+   #'
    check_time_column_pattern = function(meta) {
      time_values <- meta[["Time"]]
      
@@ -1865,6 +1894,8 @@ Level3Functions <- R6::R6Class("Level3Functions",
 #'
 #' This class provides methods for creating error messages and checking
 #' batch columns.
+#'
+#' @seealso \code{\link{Level3Functions}}
 #'
 Level4Functions <- R6::R6Class("Level4Functions",
  public = list(

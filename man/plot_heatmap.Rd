@@ -14,7 +14,14 @@ plot_heatmap(
 )
 }
 \arguments{
+\item{datas}{A matrix of data values.}
+
 \item{meta}{A dataframe containing metadata.}
+
+\item{mode}{A character vector with length 1, specifying the type of limma
+design formula (integrated for formulas with interaction effects
+between the levels, isolated for formulas where each level is 
+analysed in isolation (no interaction effects))}
 
 \item{condition}{A character string specifying the condition.}
 
@@ -22,8 +29,6 @@ plot_heatmap(
 level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
-
-\item{data}{A matrix of data values.}
 }
 \value{
 A list of ComplexHeatmap heatmap objects for each level.
@@ -31,20 +36,6 @@ A list of ComplexHeatmap heatmap objects for each level.
 \description{
 Generates heatmaps for each level within a condition, showing z-scores of
 log2 intensity values, split by clusters.
-}
-\examples{
-\dontrun{
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-condition <- "condition"
-feature_names <- paste0("feature", 1:10)
-all_levels_clustering <- list(
-  list(clustered_hits = data.frame(feature = 1:10, cluster = rep(1:2, 5)))
-)
-time_unit_label <- "[min]"
-plot_heatmap(data, meta, condition, feature_names, all_levels_clustering,
-             time_unit_label)}
-
 }
 \seealso{
 \link[ComplexHeatmap]{Heatmap}, \link[dplyr]{arrange}

@@ -41,19 +41,6 @@ Performs a within-level analysis using limma to generate top tables and fit
 objects based on the specified spline parameters. Performs the limma spline 
 analysis for a selected level of a factor
 }
-\examples{
-\dontrun{
-data <- matrix(runif(100), nrow = 10)
-meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
-design <- "~ 1"
-spline_params <- list(spline_type = c("n"), dof = list(3))
-level <- "A"
-level_index <- 1
-padjust_method <- "BH"
-within_level(data, meta, design, "factor", level, spline_params, 
-             level_index, padjust_method)}
-
-}
 \seealso{
 \link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
 \link[limma]{eBayes}, \link[limma]{topTable}

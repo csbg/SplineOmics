@@ -25,16 +25,3 @@ a given data matrix. It creates a combined heatmap for all levels and
 individual heatmaps for each level specified in the condition column of the 
 metadata.
 }
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-colnames(data) <- paste0("Sample", 1:10)
-meta <- data.frame(Sample = colnames(data), Condition = rep(c("A", "B"), 
-each = 5))
-heatmaps <- make_correlation_heatmaps(data, meta, "Condition")
-for (heatmap in heatmaps) {
-  draw(heatmap, heatmap_legend_side = "right")
-}}
-
-}

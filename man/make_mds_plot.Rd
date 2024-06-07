@@ -8,6 +8,11 @@ make_mds_plot(data, meta, condition)
 }
 \arguments{
 \item{data}{A numeric matrix containing the data.}
+
+\item{meta}{A dataframe, containign the meta information of data.}
+
+\item{condition}{The column of the meta dataframe containign the levels that 
+separate the experiment.}
 }
 \value{
 A ggplot object representing the MDS plot.
@@ -16,11 +21,4 @@ A ggplot object representing the MDS plot.
 This function generates a multidimensional scaling (MDS) plot for a given 
 data matrix. The MDS plot visualizes the similarities or dissimilarities 
 between samples in the data matrix.
-}
-\examples{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-mds_plot <- make_mds_plot(data)
-print(mds_plot)
-
 }

@@ -11,10 +11,9 @@ add_feature_names(data, clean_data, feature_name_columns)
 
 \item{clean_data}{A dataframe to which the feature names will be added.}
 
-\item{feature_name_column}{A string specifying the name of the feature column 
-in `data`. If `NA`, sequential numbers will be
- used 
-as feature names.}
+\item{feature_name_columns}{A string specifying the name of the feature 
+columns in `data`. If `NA`, sequential numbers 
+will be used as feature names.}
 }
 \value{
 The `clean_data` dataframe with updated row names.

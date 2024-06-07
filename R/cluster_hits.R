@@ -34,12 +34,12 @@
 #' @param clusters Character or integer vector specifying the number of
 #' clusters or 'auto' for automatic estimation.
 #' @param report_info A character string to be printed at the top of the report.
-#' @param mode A character string specifying the mode ('integrated' or
-#' 'isolated').
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param design A character of length 1 representing the limma design formula
 #' @param meta_batch_column A character string specifying the column name in
 #' the metadata used for batch effect removal.
+#' @param meta_batch2_column A character string specifying the second column 
+#'                           name in the metadata used for batch effect removal.
 #' @param time_unit A character string specifying the time unit label for plots
 #' (e.g., 'm' for minutes).
 #' @param report_dir Character string specifying the directory path where the
@@ -289,7 +289,6 @@ huge_table_user_prompter <- function(tables) {
 #' for each level within a condition.
 #'
 #' @param top_tables A list of top tables from limma analysis.
-#' @param adj_pthresholds A numeric vector of p-values.
 #' @param clusters A list specifying clusters or "auto" for automatic
 #' estimation.
 #' @param meta A dataframe containing metadata.
@@ -342,13 +341,17 @@ perform_clustering <- function(top_tables,
 #' @param data A matrix of data values.
 #' @param meta A dataframe containing metadata.
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param adj_pthresholds A numeric vector of p-values.
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
 #' ('isolated' or 'integrated').
 #' @param report_info An object containing report information.
+#' @param data_report A dataframe containing the data used in the limma splines
+#'                    analysis. This data will be embedded in the HTML report,
+#'                    so that it can be downloaded from there.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
+#' @param meta_batch2_column A character string specifying the second meta 
+#'                           batch column.
 #' @param time_unit A character string specifying the time unit
 #' ('s', 'm', 'h', 'd').
 #'
@@ -611,7 +614,6 @@ get_level_hit_indices <- function(between_level_top_tables,
 #' provided top table and spline parameters.
 #'
 #' @param top_table A dataframe containing the top table results from limma.
-#' @param adj_pthreshold A numeric value specifying the p-value threshold.
 #' @param cluster_size The size of clusters to generate.
 #' @param level The level within the condition to process.
 #' @param meta A dataframe containing metadata.
@@ -743,27 +745,18 @@ remove_batch_effect_cluster_hits <- function(data,
 #' Generates heatmaps for each level within a condition, showing z-scores of
 #' log2 intensity values, split by clusters.
 #'
-#' @param data A matrix of data values.
+#' @param datas A matrix of data values.
 #' @param meta A dataframe containing metadata.
+#' @param mode A character vector with length 1, specifying the type of limma
+#'             design formula (integrated for formulas with interaction effects
+#'             between the levels, isolated for formulas where each level is 
+#'             analysed in isolation (no interaction effects))
 #' @param condition A character string specifying the condition.
 #' @param all_levels_clustering A list containing clustering results for each
 #' level within the condition.
 #' @param time_unit_label A character string specifying the time unit label.
 #'
 #' @return A list of ComplexHeatmap heatmap objects for each level.
-#'
-#' @examples
-#' \dontrun{
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), condition = rep(c("A", "B"), each = 5))
-#' condition <- "condition"
-#' feature_names <- paste0("feature", 1:10)
-#' all_levels_clustering <- list(
-#'   list(clustered_hits = data.frame(feature = 1:10, cluster = rep(1:2, 5)))
-#' )
-#' time_unit_label <- "[min]"
-#' plot_heatmap(data, meta, condition, feature_names, all_levels_clustering,
-#'              time_unit_label)}
 #'
 #' @seealso
 #' \link[ComplexHeatmap]{Heatmap}, \link[dplyr]{arrange}
@@ -932,12 +925,6 @@ plot_heatmap <- function(datas,
 #' @param k An integer specifying the number of clusters.
 #'
 #' @return A ggplot object representing the dendrogram.
-#'
-#' @examples
-#' \dontrun{
-#' hc <- hclust(dist(matrix(runif(100), nrow = 10)))
-#' k <- 3
-#' plot_dendrogram(hc, k)}
 #'
 #' @seealso
 #' \link[dendextend]{color_branches}, \link[dendextend]{as.ggdend},
@@ -1331,14 +1318,12 @@ build_cluster_hits_report <- function(header_section,
                                       output_file_path) {
 
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
-
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
-          width: 80%;'>
-        <h2 style='font-size: 40px;'>Table of Contents</h2>
-        <ul style='display: inline-block; text-align: left;'>"
-
-  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
-  toc_style <- "font-size: 30px;"
+  
+  toc <- create_toc()
+  
+  styles <- define_html_styles()
+  section_header_style <- styles$section_header_style
+  toc_style <- styles$toc_style
 
   current_header_index <- 1
   j <- 0
@@ -1398,10 +1383,16 @@ build_cluster_hits_report <- function(header_section,
     }
 
     # Process each plot
-    plot <- plots[[index]]
-    plot_size <- plots_sizes[[index]]
-    img_tag <- plot2base64(plot, plot_size)
-    html_content <- paste(html_content, img_tag, sep = "\n")
+    # plot <- plots[[index]]
+    # plot_size <- plots_sizes[[index]]
+    # img_tag <- plot2base64(plot, plot_size)
+    # html_content <- paste(html_content, img_tag, sep = "\n")
+    
+    html_content <- process_plots(plots = plots,
+                                  plots_sizes = plots_sizes,
+                                  index = index,
+                                  html_content = html_content)
+    
     pb$tick()
   }
 
@@ -1441,8 +1432,6 @@ build_cluster_hits_report <- function(header_section,
 #' p-values and
 #'                  expression averages which indicate the number of degrees
 #'                  of freedom.
-#' @param adj_pthreshold The threshold for filtering entries based on adjusted
-#' p-values.
 #' @param level The specific level of the condition to filter on in the
 #' metadata.
 #' @param meta Metadata containing time points and conditions.

@@ -38,10 +38,6 @@ such as type (ns or B-splines, dof, knots, etc).}
 \item{padjust_method}{A character string specifying the method for adjusting 
 p-values for multiple testing. Defaults to "BH" 
 (Benjamini-Hochberg).}
-
-\item{mode}{A character string specifying the analysis mode: 'isolated' for 
-analyzing each level of a factor separately, or 'integrated' for comparing 
-levels within a factor.}
 }
 \value{
 A list containing three elements: 

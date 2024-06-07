@@ -55,6 +55,9 @@ clusters or 'auto' for automatic estimation.}
 \item{meta_batch_column}{A character string specifying the column name in
 the metadata used for batch effect removal.}
 
+\item{meta_batch2_column}{A character string specifying the second column 
+name in the metadata used for batch effect removal.}
+
 \item{time_unit}{A character string specifying the time unit label for plots
 (e.g., 'm' for minutes).}
 
@@ -63,9 +66,6 @@ HTML report and any other output files should be saved.}
 
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}
-
-\item{mode}{A character string specifying the mode ('integrated' or
-'isolated').}
 }
 \value{
 A list where each element corresponds to a group factor and contains

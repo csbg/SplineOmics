@@ -10,6 +10,9 @@ plot_mean_correlation_with_time(data, meta, condition)
 \item{data}{A data frame where rows are features and columns are samples.}
 
 \item{meta}{A data frame with sample metadata. Must contain a column "Time".}
+
+\item{condition}{The column of the meta dataframe containign the levels that 
+separate the experiment.}
 }
 \value{
 A ggplot2 object showing the distribution of mean correlations

@@ -7,38 +7,6 @@
 This class provides methods to identify the upper-left and lower-right 
 cells of a numeric block within a dataframe.
 }
-\examples{
-
-## ------------------------------------------------
-## Method `NumericBlockFinder$new`
-## ------------------------------------------------
-
-data <- read.csv("path_to_your_file.csv")
-processor <- NumericBlockFinder$new(data)
-Find the upper-left cell of the first 6x6 block of numeric values
-
-This method identifies the upper-left cell of the first 6x6 block of 
-numeric values in the dataframe.
-
-
-## ------------------------------------------------
-## Method `NumericBlockFinder$find_upper_left_cell`
-## ------------------------------------------------
-
-upper_left <- processor$find_upper_left_cell()
-Find the lower-right cell of a block of contiguous non-NA values
-
-This method identifies the lower-right cell of a block of contiguous
-non-NA values starting from a given upper-left cell in the dataframe.
-
-
-## ------------------------------------------------
-## Method `NumericBlockFinder$find_lower_right_cell`
-## ------------------------------------------------
-
-lower_right <- processor$find_lower_right_cell()
-
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -77,21 +45,12 @@ Initialize a NumericBlockFinder object}
 }
 \subsection{Returns}{
 A new instance of the NumericBlockFinder class.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data <- read.csv("path_to_your_file.csv")
-processor <- NumericBlockFinder$new(data)
+
 Find the upper-left cell of the first 6x6 block of numeric values
 
 This method identifies the upper-left cell of the first 6x6 block of 
 numeric values in the dataframe.
-
 }
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NumericBlockFinder-find_upper_left_cell"></a>}}
@@ -104,20 +63,12 @@ numeric values in the dataframe.
 \subsection{Returns}{
 A list containing the row and column indices of the upper-left 
         cell.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{upper_left <- processor$find_upper_left_cell()
+        
 Find the lower-right cell of a block of contiguous non-NA values
 
 This method identifies the lower-right cell of a block of contiguous
 non-NA values starting from a given upper-left cell in the dataframe.
-
 }
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NumericBlockFinder-find_lower_right_cell"></a>}}
@@ -131,15 +82,6 @@ non-NA values starting from a given upper-left cell in the dataframe.
 A list containing the row and column indices of the lower-right
         cell.
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{lower_right <- processor$find_lower_right_cell()
-
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NumericBlockFinder-clone"></a>}}

@@ -11,6 +11,9 @@ Level4Functions: A class for level 3 utility functions
 \details{
 This class provides methods for creating error messages and checking
 batch columns.
+}
+\seealso{
+\code{\link{Level3Functions}}
 
 Create Error Message
 }

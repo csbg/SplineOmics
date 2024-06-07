@@ -21,11 +21,3 @@ This function generates a boxplot for a given data matrix. The boxplot shows
 the distribution of the values in the data matrix across different variables, 
 with log2 intensity on the y-axis.
 }
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-boxplot <- make_boxplot(data)
-print(boxplot)}
-
-}

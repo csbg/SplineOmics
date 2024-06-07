@@ -260,9 +260,6 @@ shorten_names <- function(name,
 #' @param plots A list of ggplot2 plot objects.
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param level_headers_info A list of header information for each level.
-#' @param spline_params A list of spline parameters.
-#' @param mode A character string specifying the mode 
-#'            ('isolated' or 'integrated').
 #' @param output_file_path A character string specifying the path to save the 
 #'                         HTML report.
 #'
@@ -277,15 +274,13 @@ build_limma_report <- function(header_section,
                                level_headers_info,
                                output_file_path) {  
   
-  content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
+  html_content <- paste(header_section, "<!--TOC-->", sep="\n")
   
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
-          width: 80%;'> 
-        <h2 style='font-size: 40px;'>Table of Contents</h2>
-        <ul style='display: inline-block; text-align: left;'>"
+  toc <- create_toc()
   
-  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
-  toc_style <- "font-size: 30px;"
+  styles <- define_html_styles()
+  section_header_style <- styles$section_header_style
+  toc_style <- styles$toc_style
   
   current_header_index <- 1
   level_headers_info <- Filter(Negate(is.null), level_headers_info)
@@ -305,14 +300,14 @@ build_limma_report <- function(header_section,
                                   index, 
                                   header_info$header_name)
         
-        content_with_plots <- paste(content_with_plots, section_header, 
+        html_content <- paste(html_content, section_header, 
                                     sep="\n")
 
         hits_info <- sprintf(
             "<p style='text-align: center; font-size: 30px;'>"
         )
         
-        content_with_plots <- paste(content_with_plots, hits_info, sep="\n")
+        html_content <- paste(html_content, hits_info, sep="\n")
         
         toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>", 
                              toc_style, index, header_info[[1]])
@@ -326,10 +321,16 @@ build_limma_report <- function(header_section,
     }
     
     # Process each plot
-    plot <- plots[[index]]
-    plot_size <- plots_sizes[[index]]
-    img_tag <- plot2base64(plot, plot_size)
-    content_with_plots <- paste(content_with_plots, img_tag, sep="\n")
+    # plot <- plots[[index]]
+    # plot_size <- plots_sizes[[index]]
+    # img_tag <- plot2base64(plot, plot_size)
+    # html_content <- paste(html_content, img_tag, sep="\n")
+    
+    html_content <- process_plots(plots = plots,
+                                  plots_sizes = plots_sizes,
+                                  index = index,
+                                  html_content = html_content)
+    
     pb$tick()
   }
   
@@ -337,10 +338,10 @@ build_limma_report <- function(header_section,
   toc <- paste(toc, "</ul></div>", sep="\n")
   
   # Insert the Table of Contents at the placeholder
-  content_with_plots <- gsub("<!--TOC-->", toc, content_with_plots)
+  html_content <- gsub("<!--TOC-->", toc, html_content)
   
   # Append the final closing tags for the HTML body and document
-  content_with_plots <- paste(content_with_plots, "</body></html>", sep="\n")
+  html_content <- paste(html_content, "</body></html>", sep="\n")
   
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
@@ -349,8 +350,5 @@ build_limma_report <- function(header_section,
   }
 
   # Write the HTML content to file
-  writeLines(content_with_plots, output_file_path)
+  writeLines(html_content, output_file_path)
 }
-
-
-

@@ -8,6 +8,11 @@ make_pca_variance_explained_plot(data, meta, condition)
 }
 \arguments{
 \item{data}{A numeric matrix containing the data.}
+
+\item{meta}{A dataframe, containign the meta information of data.}
+
+\item{condition}{The column of the meta dataframe containign the levels that 
+separate the experiment.}
 }
 \value{
 A ggplot object representing the variance explained by the principal 
@@ -16,12 +21,4 @@ components.
 \description{
 This function generates a bar plot showing the variance explained by the 
 first seven principal components of a given data matrix.
-}
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-variance_plot <- make_pca_variance_explained_plot(data)
-print(variance_plot)}
-
 }

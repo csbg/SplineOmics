@@ -13,6 +13,12 @@ extract_data(data, feature_name_columns = NA)
 \arguments{
 \item{data}{A dataframe loaded from a csv file, potentially containing a 
 rectangular or quadratic area with numeric data amidst other values.}
+
+\item{feature_name_columns}{(Optional) A character vector, specifying the
+columns of the dataframe data, that should be 
+used to construct the feature names. If ommited,
+the feature names are just numbers (stored as
+characters) starting from 1 (1, 2, 3, etc.)}
 }
 \value{
 A matrix containing only the numeric data from the identified area, 

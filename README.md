@@ -11,12 +11,13 @@ HTML reports.
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [limma_hyperparams_screen](#limma_hyperparams_screen)
+  - [extract_data](#extract_data)
+  - [explore_data](#explore_data)
   - [run_limma_splines](#run_limma_splines)
   - [cluster_hits](#cluster_hits)
+  - [run_gsea](#run_gsea)
 - [Docker Container](#docker-container)
 - [Dependencies](#dependencies)
-- [System Requirements](#system-requirements)
 - [Getting Help](#getting-help)
 - [Contributing](#contributing)
 - [License](#license)
@@ -46,25 +47,19 @@ as the time when the sample was taken.
 
 If you want to achieve one or more of the following things:
 
+- Find out which hyperparameters, such as degree of freedom, are needed
+  for the limma spline analysis
+
 - Find out which of the features (rows of the data matrix) (e.g. which
   of the proteins, metabolites, etc.) are changed significantly over the
   time and get a p-value for them.
 
 - Cluster the hits (the significant features) based on their temporal
-  pattern. For example, some hits may continually decrease in value
-  (e.g. intensity) over the time, while others may increase. Each of the
-  unique temporal pattern would be put into one cluster, which sets the
-  stage for example for gene set enrichment analysis (check the
-  enrichment terms for each cluster. For example, when one cluster
-  contains proteins that increase in abundance over the time, the
-  enrichment could tell you which processes got activated.)
+  pattern.
 
-- Automatically generate a report, that shows the temporal pattern of
-  every hit and the resulting clusters, along with other plots such as a
-  dendrogram, showing the hierarchical clustering employed, and a
-  heatmap showing the logfold changes. You can view an example report
-  here:
-  [HTMLreport](https://csbg.github.io/SplineOmics/example_report.html)
+- Run GSEA (gene set enrichment analysis) with the clustered hits.
+
+- Automatically generate a reports, showing all results
 
 Then the `SplineOmics` package could be of interest to you. This package
 finds the hits by applying splines (piece wise polynomial curves) to the
@@ -94,6 +89,10 @@ With `SplineOmics`, you can:
   groups (clusters) and generates a comprehensive report, facilitating
   the interpretation and communication of the results.
 
+- **Run GSEA with the clustered hits:** The `gsea_report()` function
+  takes the clustered hits and performs a gene set enrichment analysis,
+  using clusterProfiler, with them.
+
 ## Installation
 
 Follow these steps to install the `SplineOmics` package from its GitHub
@@ -111,25 +110,33 @@ repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  Install the `devtools` package if you haven’t already. You can do
-    this by running the following command in the R console:
+2.  **Install and load `devtools`, and install `SplineOmics` from
+    GitHub**:
+
+    Copy and paste the following code block into your R console. This
+    will check if the `devtools` package is installed, install it if it
+    is not, then use it to install the `SplineOmics` package from
+    GitHub.
 
     ``` r
-    install.packages("devtools")
-    ```
+    # Check if devtools is installed; if not, install it
+    if (!requireNamespace("devtools", quietly = TRUE)) {
+      install.packages("devtools")
+    }
 
-3.  Load the `devtools` package into your R session, and run the
-    install_github function to install the `SplineOmics` package into
-    your R Project:
-
-    ``` r
+    # Load devtools package
     library(devtools)
+
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
+
+    # Install the SplineOmics package from GitHub
     devtools::install_github("csbg/SplineOmics")
     ```
 
-4.  Once installation is complete, load the SplineOmics package into
-    your R session to start using it:
+3.  **Load the `SplineOmics` package**:
+
+    Once the installation is complete, load the `SplineOmics` package
+    into your R session or script to start using it:
 
     ``` r
     library(SplineOmics)
@@ -225,6 +232,22 @@ clustering_results <- cluster_hits(top_tables,
                                    report_dir)
 ```
 
+### run_gsea()
+
+Perform a gene set enrichment analysis (gsea), using clusterProfiler,
+with the clustered hits:
+
+``` r
+run_gsea <- function(levels_clustered_hits,
+                     genes,
+                     databases,
+                     report_info,
+                     params = NA,
+                     plot_titles = NA,
+                     background = NULL,
+                     report_dir = here::here()) {
+```
+
 ## Docker Container
 
 To facilitate reproducible analysis, we provide a Docker container that
@@ -300,38 +323,46 @@ be installed along with `SplineOmics`. If you already have these
 packages installed, ensure they are up to date to avoid any
 compatibility issues.
 
-- **limma**: For linear models for microarray data.
-- **splines**: Provides functions for regression spline fitting and
-  extraction.
-- **purrr**: For functional programming tools.
-- **ggplot2**: For creating elegant data visualizations using the
-  grammar of graphics.
-- **tidyr**: For tidying your data.
-- **dplyr**: For data manipulation.
-- **tibble**: For creating tidy data frames that are easy to work with.
-- **dendextend**: For extending `dendrogram` objects in R, allowing for
-  easier manipulation of dendrograms.
-- **RColorBrewer**: For providing color palettes for data visualization.
-- **patchwork**: For combining multiple ggplot objects into a single
-  plot.
 - **ComplexHeatmap**: For creating complex heatmaps with advanced
   features.
+- **RColorBrewer**: For providing color palettes for data visualization.
+- **base64enc**: For encoding/decoding base64.
 - **circlize**: For circular visualization of data.
-- **grid**: For low-level graphics functions and utilities.
 - **cluster**: For clustering algorithms such as hierarchical
   clustering.
-- **stats**: Provides functions for statistical calculations and random
-  number generation (included with base R).
-- **furrr**: Provides tools for applying functions to elements of a list
-  concurrently.
-- **stringr**: Simplifies the manipulation of strings.
-- **progress**: For adding progress bars to your loops and apply
-  functions.
+- **clusterProfiler**: For functional enrichment analysis.
+- **data.table**: For high-performance data manipulation.
+- **dendextend**: For extending `dendrogram` objects in R, allowing for
+  easier manipulation of dendrograms.
+- **dplyr**: For data manipulation.
+- **fs**: For file system operations.
+- **ggplot2**: For creating elegant data visualizations using the
+  grammar of graphics.
+- **ggrepel**: For better label placement in ggplot2.
 - **here**: For constructing paths to your project’s files.
-- **knitr**: For dynamic report generation in R.
+- **htmltools**: For HTML rendering and output.
 - **kableExtra**: For producing beautiful tables in R Markdown
   documents.
+- **knitr**: For dynamic report generation in R.
+- **limma**: For linear models for microarray data.
+- **magrittr**: For piping operators.
+- **openxlsx**: For reading, writing, and editing xlsx files.
+- **patchwork**: For combining multiple ggplot objects into a single
+  plot.
+- **pheatmap**: For creating pretty heatmaps.
+- **progress**: For adding progress bars to your loops and apply
+  functions.
+- **purrr**: For functional programming tools.
 - **ragg**: For creating high-quality images for graphics devices.
+- **readr**: For reading rectangular data.
+- **reshape2**: For flexible reshaping of data.
+- **rlang**: For tools to work with core language features of R and R’s
+  base types.
+- **scales**: For scale functions for visualization.
+- **stringr**: For simplifying the manipulation of strings.
+- **tibble**: For creating tidy data frames that are easy to work with.
+- **tidyr**: For tidying your data.
+- **viridis**: For colorblind-friendly color maps.
 
 ### R Version
 

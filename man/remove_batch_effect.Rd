@@ -18,6 +18,13 @@ remove_batch_effect(
 \item{metas}{A list of metadata corresponding to the data matrices.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
+
+\item{meta_batch2_column}{A character string specifying the second meta batch
+column.}
+
+\item{condition}{A character vector of length 1, specifying the column name
+of the meta dataframe, that contains the levels that 
+separate the experiment.}
 }
 \value{
 A list of matrices with batch effects removed where applicable.

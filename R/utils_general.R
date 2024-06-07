@@ -4,6 +4,19 @@
 # Level 1 internal functions ---------------------------------------------------
 
 
+#' Process Data
+#'
+#' @description
+#' Converts a dataframe to a numeric matrix and extracts or generates 
+#' feature names based on row names.
+#'
+#' @param data A dataframe to be processed.
+#'
+#' @return A list with two elements: 
+#' \item{data}{A numeric matrix of the input dataframe.}
+#' \item{feature_names}{A character vector of feature names derived from 
+#' the row names or generated based on row indices.}
+#'
 process_data <- function(data) {
   
   if (is.null(rownames(data)) || all(rownames(data) == "")) {
@@ -168,4 +181,3 @@ determine_analysis_mode <- function(design,
     return("isolated")
   }
 }
-

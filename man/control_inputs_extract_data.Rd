@@ -9,10 +9,10 @@ control_inputs_extract_data(data, feature_name_columns)
 \arguments{
 \item{data}{A dataframe containing the input data.}
 
-\item{feature_name_column}{A string specifying the name of the feature 
-column.
-It must be a single string that matches a column 
-name in the data. If `NA`, no column is checked.}
+\item{feature_name_columns}{A character vector specifying the names of the 
+feature name columns. The columns must be present
+in the dataframe data. If `NA`, no column is 
+checked.}
 }
 \description{
 This function checks the validity of input data and the feature name column.

@@ -23,11 +23,6 @@ build_limma_report(
 
 \item{output_file_path}{A character string specifying the path to save the 
 HTML report.}
-
-\item{spline_params}{A list of spline parameters.}
-
-\item{mode}{A character string specifying the mode 
-('isolated' or 'integrated').}
 }
 \value{
 No return value, called for side effects.

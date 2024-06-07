@@ -11,6 +11,9 @@ Level3Functions: A class for level 3 utility functions
 \details{
 This class provides methods for creating error messages and checking
 batch columns.
+}
+\seealso{
+\code{\link{Level2Functions}}
 
 Check Batch Column
 }
@@ -21,6 +24,8 @@ Check Batch Column
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-Level3Functions-check_batch_column}{\code{Level3Functions$check_batch_column()}}
+\item \href{#method-Level3Functions-check_time_column_pattern}{\code{Level3Functions$check_time_column_pattern()}}
+\item \href{#method-Level3Functions-check_condition_time_consistency}{\code{Level3Functions$check_condition_time_consistency()}}
 \item \href{#method-Level3Functions-clone}{\code{Level3Functions$clone()}}
 }
 }
@@ -57,6 +62,66 @@ data/meta pair. Default is NA.}
 \subsection{Returns}{
 NULL. The method is used for its side effects of throwing errors 
 or printing messages.
+
+Check Time Column Pattern
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Level3Functions-check_time_column_pattern"></a>}}
+\if{latex}{\out{\hypertarget{method-Level3Functions-check_time_column_pattern}{}}}
+\subsection{Method \code{check_time_column_pattern()}}{
+This function checks if the time values in the metadata follow a 
+consistent 
+pattern with a fixed number of replicates. It ensures that the time values 
+change consistently after each block of replicates and identifies the 
+repeating pattern.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_time_column_pattern(meta)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{meta}}{A data frame containing a column named "Time" with time 
+values.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns TRUE if the time values follow a consistent pattern. It 
+        also outputs messages if inconsistencies are found.
+
+Check Condition Time Consistency
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Level3Functions-check_condition_time_consistency"></a>}}
+\if{latex}{\out{\hypertarget{method-Level3Functions-check_condition_time_consistency}{}}}
+\subsection{Method \code{check_condition_time_consistency()}}{
+This function checks whether the values in the `condition` column
+have unique values for each block of identical `Time` values in the 
+`meta` dataframe.
+Additionally, it ensures that every new block of a given time has a 
+new value
+in the `condition` column.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_condition_time_consistency(meta, condition)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{meta}}{A dataframe containing the metadata, including the `Time`
+column.}
+
+\item{\code{condition}}{A character string specifying the column name in `meta`
+used to define groups for analysis.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Logical TRUE if the condition values are consistent with the
+ time series pattern.
 }
 }
 \if{html}{\out{<hr>}}

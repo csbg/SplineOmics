@@ -4,10 +4,14 @@
 \alias{encode_df_to_base64}
 \title{Encode DataFrame to Base64 for HTML Embedding}
 \usage{
-encode_df_to_base64(df)
+encode_df_to_base64(df, report_type = NA)
 }
 \arguments{
 \item{df}{A dataframe to be encoded.}
+
+\item{report_type}{(Optional) A string specifying for which report generation
+this function is called. Generates different Excel sheet
+names based on the report_type.}
 }
 \value{
 A character string containing the base64 encoded CSV data.

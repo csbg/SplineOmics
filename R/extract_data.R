@@ -17,6 +17,11 @@
 #'
 #' @param data A dataframe loaded from a csv file, potentially containing a 
 #' rectangular or quadratic area with numeric data amidst other values.
+#' @param feature_name_columns (Optional) A character vector, specifying the
+#'                             columns of the dataframe data, that should be 
+#'                             used to construct the feature names. If ommited,
+#'                             the feature names are just numbers (stored as
+#'                             characters) starting from 1 (1, 2, 3, etc.)
 #'
 #' @return A matrix containing only the numeric data from the identified area, 
 #' with rows containing NA values removed.
@@ -115,9 +120,7 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
     #'
     #' @param data A dataframe containing the input data.
     #' @return A new instance of the NumericBlockFinder class.
-    #' @examples
-    #' data <- read.csv("path_to_your_file.csv")
-    #' processor <- NumericBlockFinder$new(data)
+    #' 
     initialize = function(data) {
       
       self$data <- as.data.frame(data)
@@ -131,8 +134,7 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
     #'
     #' @return A list containing the row and column indices of the upper-left 
     #'         cell.
-    #' @examples
-    #' upper_left <- processor$find_upper_left_cell()
+    #'         
     find_upper_left_cell = function() {
       
       upper_left_row <- NA
@@ -171,8 +173,6 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
     #'
     #' @return A list containing the row and column indices of the lower-right
     #'         cell.
-    #' @examples
-    #' lower_right <- processor$find_lower_right_cell()
     #' 
     find_lower_right_cell = function() {
       
@@ -222,10 +222,10 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
 #' specified correctly, and contains valid data.
 #'
 #' @param data A dataframe containing the input data.
-#' @param feature_name_column A string specifying the name of the feature 
-#'                            column.
-#'                            It must be a single string that matches a column 
-#'                            name in the data. If `NA`, no column is checked.
+#' @param feature_name_columns A character vector specifying the names of the 
+#'                             feature name columns. The columns must be present
+#'                             in the dataframe data. If `NA`, no column is 
+#'                             checked.
 #'
 #' @details
 #' The function performs the following checks:
@@ -280,10 +280,9 @@ control_inputs_extract_data <- function(data,
 #'
 #' @param data A dataframe containing the original data with feature names.
 #' @param clean_data A dataframe to which the feature names will be added.
-#' @param feature_name_column A string specifying the name of the feature column 
-#'                            in `data`. If `NA`, sequential numbers will be
-#'                             used 
-#'                            as feature names.
+#' @param feature_name_columns A string specifying the name of the feature 
+#'                             columns in `data`. If `NA`, sequential numbers 
+#'                             will be used as feature names.
 #'
 #' @details
 #' The function performs the following operations:
