@@ -20,11 +20,3 @@ A ggplot object representing the density plot.
 This function generates a density plot for a given data matrix. The density
 plot shows the distribution of the values in the data matrix.
 }
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-density_plot <- make_density_plot(data)
-print(density_plot)}
-
-}

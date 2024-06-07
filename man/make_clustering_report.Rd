@@ -39,14 +39,19 @@ level within a condition.}
 
 \item{report_info}{An object containing report information.}
 
+\item{data_report}{A dataframe containing the data used in the limma splines
+analysis. This data will be embedded in the HTML report,
+so that it can be downloaded from there.}
+
 \item{design}{A string representing the limma design formula}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
+\item{meta_batch2_column}{A character string specifying the second meta 
+batch column.}
+
 \item{time_unit}{A character string specifying the time unit
 ('s', 'm', 'h', 'd').}
-
-\item{adj_pthresholds}{A numeric vector of p-values.}
 }
 \value{
 No return value, called for side effects.

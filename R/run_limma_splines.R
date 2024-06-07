@@ -29,9 +29,6 @@
 #' model.
 #' @param condition The name of the factor column of meta. The factor divides
 #' the experiment into different levels (unique elements of the factor column). 
-#' @param mode A character string specifying the analysis mode: 'isolated' for 
-#' analyzing each level of a factor separately, or 'integrated' for comparing 
-#' levels within a factor.
 #' @param spline_params A named list, specifying the parameters for the splines,
 #' such as type (ns or B-splines, dof, knots, etc).
 #' @param padjust_method A character string specifying the method for adjusting 
@@ -349,18 +346,6 @@ process_top_table <- function(top_table_and_fit,
 #'
 #' @return A list containing the top table and the fit object from the limma 
 #' analysis.
-#'
-#' @examples
-#' \dontrun{
-#' data <- matrix(runif(100), nrow = 10)
-#' meta <- data.frame(Time = seq(1, 10), factor = rep(c("A", "B"), each = 5))
-#' design <- "~ 1"
-#' spline_params <- list(spline_type = c("n"), dof = list(3))
-#' level <- "A"
-#' level_index <- 1
-#' padjust_method <- "BH"
-#' within_level(data, meta, design, "factor", level, spline_params, 
-#'              level_index, padjust_method)}
 #'
 #' @seealso
 #' \link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 

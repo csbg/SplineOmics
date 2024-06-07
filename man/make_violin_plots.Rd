@@ -21,11 +21,3 @@ This function generates a violin plot for a given data matrix. The violin
 plot shows the distribution of the values in the data matrix across different 
 variables, with each variable's distribution displayed as a separate violin.
 }
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-violin_plot <- make_violin_plot(data)
-print(violin_plot)}
-
-}

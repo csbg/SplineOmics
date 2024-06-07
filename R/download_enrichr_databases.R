@@ -23,14 +23,12 @@
 #'         specified directory containing the gene sets from the specified 
 #'         Enrichr databases.
 #'
-#' @examples
-#' gene_set_lib <- c("KEGG_2016", "GO_Biological_Process_2018")
-#' download_enrichr_databases(gene_set_lib)
-#'
 #' @importFrom data.table data.table
 #' @importFrom fs dir_create
 #' @importFrom here here
 #' @importFrom readr write_tsv
+#' 
+#' @export
 #'
 download_enrichr_databases <- function(gene_set_lib,
                                        output_dir = here::here()) {

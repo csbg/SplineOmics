@@ -11,7 +11,6 @@ plot_limma_combos_results(
   spline_test_configs,
   meta_batch_column,
   meta_batch2_column,
-  designs,
   time_unit = time_unit
 )
 }
@@ -25,6 +24,9 @@ plot_limma_combos_results(
 \item{spline_test_configs}{A configuration object for spline tests.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
+
+\item{meta_batch2_column}{A character string specifying the second meta batch
+column.}
 
 \item{time_unit}{A single character, such as s, m, h, or d, specifying the
 time_unit that should be used for the plots (s = seconds, m = minutes,

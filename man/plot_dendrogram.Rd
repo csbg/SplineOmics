@@ -18,13 +18,6 @@ A ggplot object representing the dendrogram.
 Generates a dendrogram plot for hierarchical clustering results,
 colored by clusters.
 }
-\examples{
-\dontrun{
-hc <- hclust(dist(matrix(runif(100), nrow = 10)))
-k <- 3
-plot_dendrogram(hc, k)}
-
-}
 \seealso{
 \link[dendextend]{color_branches}, \link[dendextend]{as.ggdend},
 \link[ggplot2]{ggplot2}

@@ -24,9 +24,6 @@ on.}
 
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
-
-\item{adj_pthreshold}{The threshold for filtering entries based on adjusted
-p-values.}
 }
 \value{
 A list containing two elements: `curve_values`, a data frame of

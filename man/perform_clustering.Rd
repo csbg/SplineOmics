@@ -20,8 +20,6 @@ estimation.}
 
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
-
-\item{adj_pthresholds}{A numeric vector of p-values.}
 }
 \value{
 A list of clustering results for each level within the condition.

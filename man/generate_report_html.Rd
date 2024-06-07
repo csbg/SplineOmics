@@ -30,6 +30,12 @@ generate_report_html(
 
 \item{report_info}{A named list containing report information.}
 
+\item{data}{A dataframe or a list of dataframes, containing data that should
+be directly embedded in the HTML report for downloading.}
+
+\item{meta}{A dataframe, containing metadata that should
+be directly embedded in the HTML report for downloading.}
+
 \item{level_headers_info}{A list of header information for each level.}
 
 \item{spline_params}{A list of spline parameters.}
@@ -52,28 +58,6 @@ No return value, called for side effects.
 \description{
 Generates an HTML report with the provided plots, spline parameters, and 
 report information.
-}
-\examples{
-\dontrun{
-plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
-                              ggplot2::geom_point())
-plots_sizes <- list(2)
-level_headers_info <- list(list("Level 1", 0))
-spline_params <- list(spline_type = "n", dof = 3)
-report_info <- list(
-  omics_data_type = "genomics",
-  data_description = "Sample description",
-  data_collection_date = "2023-01-01",
-  analyst_name = "John Doe",
-  project_name = "Project XYZ"
-)
-generate_report_html(plots, plots_sizes, level_headers_info, spline_params,
-                     report_info, 
-                     report_type = "limma_hyperparams_screen", mode = NA, 
-                     filename = "report", 
-                     timestamp = format(Sys.time(), "\%d_\%m_\%Y-\%H_\%M_\%S"), 
-                     report_dir = here::here())}
-
 }
 \seealso{
 \code{\link{build_hyperparams_screen_report}}, 

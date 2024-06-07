@@ -21,13 +21,3 @@ A ggplot object representing the PCA plot.
 This function generates a PCA plot from a data matrix, dynamically coloring
 the points based on the levels of a specified factor in the metadata.
 }
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-meta <- data.frame(Sample = colnames(data), Condition = rep(c("A", "B"), 
-each = 5))
-plots <- make_pca_plot(data, meta, "Condition")
-print(plots)}
-
-}

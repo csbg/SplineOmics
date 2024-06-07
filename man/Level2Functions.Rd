@@ -2,13 +2,21 @@
 % Please edit documentation in R/utils_input_validation.R
 \name{Level2Functions}
 \alias{Level2Functions}
-\title{Check Data Matrix}
+\title{Level2Functions: A class providing level 2 functionalities}
 \description{
-Check Data Matrix
+Level2Functions: A class providing level 2 functionalities
 
-Check Data Matrix
+Level2Functions: A class providing level 2 functionalities
+}
+\details{
+This class provides various level 2 functionalities, including
+methods to check dataframes and spline parameters.
 }
 \seealso{
+\code{\link{InputControl}}
+
+Check Data Matrix
+
 \code{\link{self$check_spline_params_mode_dependent}}
 
 Check Spline Parameters Mode Dependent
@@ -25,6 +33,7 @@ Check Columns in Spline Test Configurations
 \itemize{
 \item \href{#method-Level2Functions-check_data}{\code{Level2Functions$check_data()}}
 \item \href{#method-Level2Functions-check_meta}{\code{Level2Functions$check_meta()}}
+\item \href{#method-Level2Functions-check_dataframe}{\code{Level2Functions$check_dataframe()}}
 \item \href{#method-Level2Functions-check_spline_params_generally}{\code{Level2Functions$check_spline_params_generally()}}
 \item \href{#method-Level2Functions-check_spline_params_mode_dependent}{\code{Level2Functions$check_spline_params_mode_dependent()}}
 \item \href{#method-Level2Functions-check_colums_spline_test_configs}{\code{Level2Functions$check_colums_spline_test_configs()}}
@@ -40,6 +49,8 @@ Check Columns in Spline Test Configurations
 <ul>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level4Functions" data-id="create_error_message"><a href='../../SplineOmics/html/Level4Functions.html#method-Level4Functions-create_error_message'><code>SplineOmics::Level4Functions$create_error_message()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_batch_column"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_batch_column'><code>SplineOmics::Level3Functions$check_batch_column()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_condition_time_consistency"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_condition_time_consistency'><code>SplineOmics::Level3Functions$check_condition_time_consistency()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_time_column_pattern"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_time_column_pattern'><code>SplineOmics::Level3Functions$check_time_column_pattern()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -123,6 +134,29 @@ data/meta pair for error messages. Default is NA.}
 \subsection{Returns}{
 Returns TRUE if all checks pass. Stops execution and returns an
 error message if any check fails.
+
+Check Dataframe
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Level2Functions-check_dataframe"></a>}}
+\if{latex}{\out{\hypertarget{method-Level2Functions-check_dataframe}{}}}
+\subsection{Method \code{check_dataframe()}}{
+Validates that the dataframe contains all required columns with the 
+correct data types.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_dataframe(df)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{df}}{A dataframe to check.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+TRUE if the dataframe is valid, otherwise an error is thrown.
 
 Check Spline Parameters Generally
 }

@@ -17,6 +17,10 @@
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
 #' @param report_info A named list containing report information.
+#' @param data A dataframe or a list of dataframes, containing data that should
+#'             be directly embedded in the HTML report for downloading.
+#' @param meta A dataframe, containing metadata that should
+#'             be directly embedded in the HTML report for downloading.
 #' @param report_type A character string specifying the report type 
 #'                    ('limma_hyperparams_screen' or 'cluster_hits').
 #' @param mode A character string specifying the mode 
@@ -26,27 +30,6 @@
 #' @param report_dir A character string specifying the report directory.
 #'
 #' @return No return value, called for side effects.
-#'
-#' @examples
-#' \dontrun{
-#' plots <- list(ggplot2::ggplot(mtcars, ggplot2::aes(mpg, cyl)) + 
-#'                               ggplot2::geom_point())
-#' plots_sizes <- list(2)
-#' level_headers_info <- list(list("Level 1", 0))
-#' spline_params <- list(spline_type = "n", dof = 3)
-#' report_info <- list(
-#'   omics_data_type = "genomics",
-#'   data_description = "Sample description",
-#'   data_collection_date = "2023-01-01",
-#'   analyst_name = "John Doe",
-#'   project_name = "Project XYZ"
-#' )
-#' generate_report_html(plots, plots_sizes, level_headers_info, spline_params,
-#'                      report_info, 
-#'                      report_type = "limma_hyperparams_screen", mode = NA, 
-#'                      filename = "report", 
-#'                      timestamp = format(Sys.time(), "%d_%m_%Y-%H_%M_%S"), 
-#'                      report_dir = here::here())}
 #'
 #' @seealso
 #' \code{\link{build_hyperparams_screen_report}}, 
@@ -96,53 +79,8 @@ generate_report_html <- function(plots,
                        report_info$omics_data_type, 
                        timestamp, sep = " | ")
   
-  if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
-    logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
-  } else {
-    logo_path <- system.file("extdata", "SplineOmics_logo.png",
-                             package = "SplineOmics")
-  }
-  
-  logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
-
-  header_section <- paste(
-    "<html><head><title>", title, "</title>",
-    "<style>",
-    "table {",
-    "  font-size: 30px;",
-    "}",
-    "td {",
-    "  padding: 8px;",  # Adds padding to table cells for better readability
-    "  text-align: left;",  # Ensures text in cells is left-aligned
-    "}",
-    "td:first-child {",
-    "  text-align: right;",  # Right aligns the first column
-    "  color: blue;",        # Sets the color of the first column to blue
-    "}",
-    "h1 {",
-    "  color: #333333;",  # Dark gray color for the title
-    "  display: flex;",
-    "  align-items: center;",  # Aligns items vertically in the center
-    "  justify-content: space-between;", # Ensures the logo is on the far right
-    "}",
-    ".logo {",
-    "  position: absolute;",  # Position the logo absolutely
-    "  top: 0;",              # Align with the top of the h1
-    "  right: 0;",            # Align with the right of the h1
-    "  width: 400px;",  # Adjust the width to make the logo smaller
-    "  height: auto;",  # Maintain aspect ratio
-    "}",
-    "hr {",
-    "  margin-top: 20px;",  # Space above the line
-    "  margin-bottom: 20px;",  # Space below the line
-    "}",
-    "</style>",
-    "</head><body>",
-    "<h1>", header_text, "<img src='",
-    logo_base64, "' alt='Logo' class='logo'></h1>",
-    "<table>",
-    sep = ""
-  )
+  header_section <- get_header_section(title = title,
+                                       header_text = header_text)
 
   all_fields <- c("omics_data_type",
                   "data_description", 
@@ -261,6 +199,81 @@ generate_report_html <- function(plots,
 # Level 2 internal functions ---------------------------------------------------
 
 
+#' Get Header Section
+#'
+#' @description
+#' Generates the HTML header section for a report, including the title, header 
+#' text, and logo. This section also includes the styling for the table and 
+#' other HTML elements.
+#'
+#' @param title A string specifying the title of the HTML document.
+#' @param header_text A string specifying the text to be displayed in the 
+#' header of the report.
+#'
+#' @return A string containing the HTML header section.
+#'
+#' @details
+#' The function checks the `DEVTOOLS_LOAD` environment variable to determine 
+#' the path to the logo image. The logo image is then converted to a base64 
+#' data URI and included in the HTML. The header section includes styles for 
+#' tables, table cells, and header elements to ensure proper formatting and 
+#' alignment.
+#'
+#' @importFrom base64enc dataURI
+#' 
+get_header_section <- function(title,
+                               header_text) {
+  
+  if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
+    logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
+  } else {
+    logo_path <- system.file("extdata", "SplineOmics_logo.png",
+                             package = "SplineOmics")
+  }
+  
+  logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
+  
+  header_section <- paste(
+    "<html><head><title>", title, "</title>",
+    "<style>",
+    "table {",
+    "  font-size: 30px;",
+    "}",
+    "td {",
+    "  padding: 8px;",  # Adds padding to table cells for better readability
+    "  text-align: left;",  # Ensures text in cells is left-aligned
+    "}",
+    "td:first-child {",
+    "  text-align: right;",  # Right aligns the first column
+    "  color: blue;",        # Sets the color of the first column to blue
+    "}",
+    "h1 {",
+    "  color: #333333;",  # Dark gray color for the title
+    "  display: flex;",
+    "  align-items: center;",  # Aligns items vertically in the center
+    "  justify-content: space-between;", # Ensures the logo is on the far right
+    "}",
+    ".logo {",
+    "  position: absolute;",  # Position the logo absolutely
+    "  top: 0;",              # Align with the top of the h1
+    "  right: 0;",            # Align with the right of the h1
+    "  width: 400px;",  # Adjust the width to make the logo smaller
+    "  height: auto;",  # Maintain aspect ratio
+    "}",
+    "hr {",
+    "  margin-top: 20px;",  # Space above the line
+    "  margin-bottom: 20px;",  # Space below the line
+    "}",
+    "</style>",
+    "</head><body>",
+    "<h1>", header_text, "<img src='",
+    logo_base64, "' alt='Logo' class='logo'></h1>",
+    "<table>",
+    sep = ""
+  )
+}
+
+
 #' Encode DataFrame to Base64 for HTML Embedding
 #'
 #' @description
@@ -270,26 +283,14 @@ generate_report_html <- function(plots,
 #' local file.
 #'
 #' @param df A dataframe to be encoded.
+#' @param report_type (Optional) A string specifying for which report generation
+#'                    this function is called. Generates different Excel sheet
+#'                    names based on the report_type.
 #' 
 #' @return A character string containing the base64 encoded CSV data.
 #' 
-# encode_df_to_base64 <- function(df) {
-#   # Convert dataframe to CSV
-#   temp_file <- tempfile(fileext = ".csv")
-#   write.csv(df, temp_file, row.names = FALSE)
-#   
-#   # Read the CSV and encode to base64
-#   csv_content <- readBin(temp_file, "raw", file.info(temp_file)$size)
-#   base64_csv <- base64enc::base64encode(csv_content)
-#   
-#   # Create the data URI scheme
-#   data_uri <- paste0("data:text/csv;base64,", base64_csv)
-#   
-#   # Remove the temporary file
-#   unlink(temp_file)
-#   
-#   return(data_uri)
-# }
+#' @importFrom openxlsx createWorkbook addWorksheet writeData saveWorkbook
+#' 
 encode_df_to_base64 <- function(df,
                                 report_type = NA) {
   
@@ -407,6 +408,65 @@ plot2base64 <- function(plot,
   # Return the HTML img tag with the Base64 string and a fixed width
   return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
                  img_base64, html_img_width))
+}
+
+
+#' Create Table of Contents
+#'
+#' @description
+#' Creates the HTML content for the Table of Contents.
+#'
+#' @return A string containing the HTML for the Table of Contents.
+#' 
+create_toc <- function() {
+  
+  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
+          width: 80%;'>
+        <h2 style='font-size: 40px;'>Table of Contents</h2>
+        <ul style='display: inline-block; text-align: left;'>"
+}
+
+
+#' Define HTML Styles
+#'
+#' @description
+#' Defines the CSS styles for section headers and Table of Contents (TOC) 
+#' entries used in the GSEA report generation.
+#'
+#' @return A list containing the styles for section headers and TOC entries.
+#' 
+define_html_styles <- function() {
+  
+  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
+  toc_style <- "font-size: 30px;"
+  
+  styles <- list(
+    section_header_style = section_header_style,
+    toc_style = toc_style
+  )
+}
+
+
+#' Process Plots
+#'
+#' @description
+#' Converts plots to base64 and appends them to the HTML content.
+#'
+#' @param plots A list of plots to be processed.
+#' @param plots_sizes A list of sizes for the plots.
+#' @param index An integer, specifying which element index to take of plots and
+#'              plots_sizes.
+#' @param html_content The current state of the HTML content.
+#'
+#' @return Updated HTML content with the plots included.
+#' 
+process_plots <- function(plots,
+                          plots_sizes,
+                          index,
+                          html_content) {
+
+  img_tag <- plot2base64(plots[[index]], plots_sizes[[index]])
+  html_content <- paste(html_content, img_tag, sep = "\n")
 }
 
 

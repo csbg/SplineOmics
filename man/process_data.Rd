@@ -3,11 +3,21 @@
 \name{process_data}
 \alias{process_data}
 \title{utils scripts contains shared functions that are used by at least two package 
-functions of the SplineOmics package.}
+functions of the SplineOmics package.
+Process Data}
 \usage{
 process_data(data)
 }
+\arguments{
+\item{data}{A dataframe to be processed.}
+}
+\value{
+A list with two elements: 
+\item{data}{A numeric matrix of the input dataframe.}
+\item{feature_names}{A character vector of feature names derived from 
+the row names or generated based on row indices.}
+}
 \description{
-utils scripts contains shared functions that are used by at least two package 
-functions of the SplineOmics package.
+Converts a dataframe to a numeric matrix and extracts or generates 
+feature names based on row names.
 }

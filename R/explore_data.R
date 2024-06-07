@@ -23,6 +23,10 @@
 #' @param meta_batch2_column A character string specifying the meta batch2
 #'                           column.
 #' @param report_dir A non-empty string specifying the report directory.
+#' @param report A Boolean TRUE or FALSE value, specifying if a report should
+#'               be generated or not. A report is generated per default, but
+#'               when only the plots as plot objects inside R are desired, this
+#'               argument can be set to FALSE.
 #'
 #' @return A list of ggplot objects representing various exploratory plots.
 #'
@@ -103,57 +107,6 @@ explore_data <- function(data,
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' #' Control Input Parameters for Data Exploration Functions
-#' #'
-#' #' @description
-#' #' This function validates the input parameters for data exploration functions.
-#' #' It checks the structure and data types of `data`, `meta`, `condition`,
-#' #' `report_info`, `meta_batch_column`, `meta_batch2_column`, `report_dir`, 
-#' #' and `report`. If any condition is not met, the function stops the script 
-#' #' and produces an informative error message.
-#' #'
-#' #' @param data A dataframe containing the data to be explored.
-#' #' @param meta A dataframe containing metadata associated with the data.
-#' #' @param condition A character string specifying the condition to be explored.
-#' #' @param report_info A list containing information for generating the report.
-#' #' @param meta_batch_column A character string specifying the batch column in 
-#' #'        the metadata.
-#' #' @param meta_batch2_column A character string specifying the second batch 
-#' #'        column in the metadata.
-#' #' @param report_dir A character string specifying the directory where the 
-#' #'        report will be saved.
-#' #' @param report A Boolean indicating whether to generate a report (TRUE) or 
-#' #'        not (FALSE).
-#' #'
-#' #' @return This function does not return a value. It stops with an error message 
-#' #'         if the conditions are not met.
-#' #'
-#' control_inputs_explore_data <- function(data,
-#'                                         meta,
-#'                                         condition,
-#'                                         report_info,
-#'                                         meta_batch_column,
-#'                                         meta_batch2_column,
-#'                                         report_dir,
-#'                                         report) {
-#'   
-#'   check_data_and_meta(data, 
-#'                       meta, 
-#'                       condition, 
-#'                       meta_batch_column,
-#'                       meta_batch2_column)
-#'   
-#'   check_report_info(report_info)
-#'   
-#'   check_and_create_report_dir(report_dir)
-#'   
-#'   
-#'   if (report != TRUE && report != FALSE) {
-#'     stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
-#'   }
-#' }
-
-
 #' Generate exploratory plots
 #'
 #' @description
@@ -217,7 +170,8 @@ generate_explore_plots <- function(data,
     } else {
       # Flatten the result
       all_plots <- c(all_plots, result$plots)
-      all_plots_sizes <- c(all_plots_sizes, rep(result$size, length(result$plots)))
+      all_plots_sizes <- c(all_plots_sizes, rep(result$size,
+                                                length(result$plots)))
     }
   }
   
@@ -249,17 +203,15 @@ build_explore_data_report <- function(header_section,
                                       plots_sizes, 
                                       output_file_path) {  
   
-  level_count = (length(plots)-5)/8
+  level_count = (length(plots) - 5)/8
 
-  content_with_plots <- paste(header_section, "<!--TOC-->", sep="\n")
+  html_content <- paste(header_section, "<!--TOC-->", sep="\n")
   
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
-          width: 80%;'> 
-        <h2 style='font-size: 40px;'>Table of Contents</h2>
-        <ul style='display: inline-block; text-align: left;'>"
+  toc <- create_toc()
   
-  section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
-  toc_style <- "font-size: 30px;"
+  styles <- define_html_styles()
+  section_header_style <- styles$section_header_style
+  toc_style <- styles$toc_style
 
   pb <- create_progress_bar(plots)
   plot_names <- c("Density Plots", 
@@ -274,78 +226,7 @@ build_explore_data_report <- function(header_section,
                   "MDS",
                   "Correlation Heatmaps")
   
-  plot_explanations <- c(
-    "Density plots show the distribution of intensities or abundances across 
-  samples. Peaks in the plot indicate common values, while the spread 
-  indicates variability. Use this plot to identify the range and most 
-  frequent values in your data.",
-    
-    "Boxplots display the spread and outliers of values for each sample. The 
-  box represents the interquartile range (IQR), the line inside the box is 
-  the median, and the whiskers extend to 1.5 * IQR from the quartiles. 
-  Points outside this range are considered outliers. Use boxplots to 
-  compare distributions and identify outliers.",
-    
-    "Violin plots combine boxplots and density plots to show the distribution 
-  of values. They provide a summary of the data's range, central tendency, 
-  and distribution shape. Use violin plots to understand the full 
-  distribution and compare between groups.",
-    
-    "Mean Time Correlation plots summarize the correlation of each feature 
-  with time, highlighting time-dependent trends. Positive correlations 
-  indicate increasing trends, negative correlations indicate decreasing 
-  trends. Use this plot to identify features that change over time.",
-  
-  "Purpose: Lag-1 Differences plots illustrate the changes in feature values 
-  between successive time points. What It Shows: This plot helps identify 
-  the variability and consistency in the changes of feature values over time.
-  The mean lag-1 difference indicates the average change between time points.
-  The standard deviation of the lag-1 differences indicates the variability 
-  in these changes. How to Use It: Use this plot to understand the magnitude 
-  and variability of changes in feature values over time. Identify features 
-  with consistent increases or decreases and those with high variability 
-  between time points.",  
-  
-    "First Lag Autocorrelation plots illustrate the temporal dependencies 
-  within each feature by calculating the autocorrelation of the feature 
-  with itself at a lag of one time point. This plot helps identify 
-  features that have consistent patterns over time. A high positive 
-  autocorrelation indicates that the feature values are similar to their 
-  previous values, suggesting a trend or periodicity. A high negative 
-  autocorrelation suggests an alternating pattern over time. Use this 
-  plot to understand the persistence and cyclic behavior of the features 
-  across time points, and to identify features that exhibit stable or 
-  periodic patterns.",
-  
-  "Purpose: Coefficient of Variation (CV) plots illustrate the relative 
-  variability of each feature by calculating the CV for each feature. 
-  What It Shows: This plot helps identify features with high or low 
-  relative variability. The mean CV indicates the average relative 
-  variability across features. The standard deviation of CV indicates the 
-  variability in the relative variability across features. How to Use It:
-  Use this plot to understand the consistency and variability of feature 
-  values. Identify features with consistently high or low variability 
-  relative to their mean.",
-    
-  "PCA plots visualize the major trends and patterns in high-dimensional 
-  data by reducing it to a few principal components. Points close to each 
-  other are similar. Use PCA plots to identify clustering and variance 
-  explained by the principal components.",
-  
-  "PCA Variance Explained plots show the amount of variance explained by 
-  each principal component. The y-axis represents the percentage of total 
-  variance explained, and the x-axis represents the principal components. 
-  Use this plot to determine the number of components to consider.",
-  
-  "MDS plots display similarities or dissimilarities between samples in a 
-  reduced dimension space. Points close to each other are more similar. 
-  Use MDS plots to visualize the distance or similarity between samples.",
-  
-  "Correlation Heatmaps illustrate the pairwise correlation between all 
-  samples. Colors represent the strength of correlation, with a color 
-  gradient indicating positive or negative correlations. Use this plot to 
-  identify highly correlated samples or groups."
-  )
+  plot_explanations <- get_explore_plots_explanations()
 
   toc_index <- 0
   toc_index_memory <- toc_index
@@ -393,7 +274,7 @@ build_explore_data_report <- function(header_section,
                                   plot_explanations[toc_index])
       
       
-      content_with_plots <- paste(content_with_plots, 
+      html_content <- paste(html_content, 
                                   section_header, 
                                   plot_description, 
                                   sep = "\n")
@@ -407,7 +288,7 @@ build_explore_data_report <- function(header_section,
     plot_size <- plots_sizes[[index]]
     img_tag <- plot2base64(plot, plot_size)
     
-    content_with_plots <- paste(content_with_plots, img_tag, sep = "\n")
+    html_content <- paste(html_content, img_tag, sep = "\n")
     pb$tick()
   }
   
@@ -415,10 +296,10 @@ build_explore_data_report <- function(header_section,
   toc <- paste(toc, "</ul></div>", sep="\n")
   
   # Insert the Table of Contents at the placeholder
-  content_with_plots <- gsub("<!--TOC-->", toc, content_with_plots)
+  html_content <- gsub("<!--TOC-->", toc, html_content)
   
   # Append the final closing tags for the HTML body and document
-  content_with_plots <- paste(content_with_plots, "</body></html>", sep="\n")
+  html_content <- paste(html_content, "</body></html>", sep="\n")
   
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
@@ -427,7 +308,7 @@ build_explore_data_report <- function(header_section,
   }
   
   # Write the HTML content to file
-  writeLines(content_with_plots, output_file_path)
+  writeLines(html_content, output_file_path)
   cat("Report written to:", normalizePath(output_file_path), "\n")
 }
 
@@ -447,13 +328,6 @@ build_explore_data_report <- function(header_section,
 #' @param condition The name of the factor column of meta for the experiment
 #'
 #' @return A ggplot object representing the density plot.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' density_plot <- make_density_plot(data)
-#' print(density_plot)}
 #'
 #' @importFrom ggplot2 ggplot geom_density ggtitle aes
 #' @importFrom reshape2 melt
@@ -513,13 +387,6 @@ make_density_plots <- function(data,
 #'
 #' @return A ggplot object representing the boxplot.
 #'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' boxplot <- make_boxplot(data)
-#' print(boxplot)}
-#'
 #' @importFrom ggplot2 ggplot aes geom_boxplot labs theme element_text
 #' @importFrom reshape2 melt
 #'
@@ -567,13 +434,6 @@ make_box_plots <- function(data,
 #' @param condition The name of the factor column of meta for the experiment
 #'
 #' @return A ggplot object representing the violin plot.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' violin_plot <- make_violin_plot(data)
-#' print(violin_plot)}
 #' 
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_violin theme labs
@@ -623,6 +483,8 @@ make_violin_plots <- function(data,
 #'
 #' @param data A data frame where rows are features and columns are samples.
 #' @param meta A data frame with sample metadata. Must contain a column "Time".
+#' @param condition The column of the meta dataframe containign the levels that 
+#'                  separate the experiment.
 #'
 #' @return A ggplot2 object showing the distribution of mean correlations
 #'  with time.
@@ -899,15 +761,6 @@ plot_cv <- function(data,
 #' factor levels for coloring the PCA plot.
 #'
 #' @return A ggplot object representing the PCA plot.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' meta <- data.frame(Sample = colnames(data), Condition = rep(c("A", "B"), 
-#' each = 5))
-#' plots <- make_pca_plot(data, meta, "Condition")
-#' print(plots)}
 #' 
 #' @importFrom stats prcomp
 #' @importFrom ggplot2 ggplot geom_point xlim xlab ylab ggtitle theme_minimal
@@ -960,16 +813,12 @@ make_pca_plot <- function(data,
 #' first seven principal components of a given data matrix.
 #'
 #' @param data A numeric matrix containing the data.
+#' @param meta A dataframe, containign the meta information of data.
+#' @param condition The column of the meta dataframe containign the levels that 
+#'                  separate the experiment.
 #'
 #' @return A ggplot object representing the variance explained by the principal 
 #' components.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' variance_plot <- make_pca_variance_explained_plot(data)
-#' print(variance_plot)}
 #'
 #' @importFrom stats prcomp
 #' @importFrom limma plotMDS
@@ -1020,14 +869,11 @@ make_pca_variance_explained_plot <- function(data,
 #' between samples in the data matrix.
 #'
 #' @param data A numeric matrix containing the data.
+#' @param meta A dataframe, containign the meta information of data.
+#' @param condition The column of the meta dataframe containign the levels that 
+#'                  separate the experiment.
 #'
 #' @return A ggplot object representing the MDS plot.
-#'
-#' @examples
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' mds_plot <- make_mds_plot(data)
-#' print(mds_plot)
 #' 
 #' @importFrom limma plotMDS
 #' @importFrom ggplot2 ggplot geom_point ggtitle theme_minimal
@@ -1081,18 +927,6 @@ make_mds_plot <- function(data,
 #' @return A list of `ComplexHeatmap` heatmap objects representing the 
 #' correlation 
 #' heatmaps.
-#'
-#' @examples
-#' \dontrun{
-#' # Example usage
-#' data <- matrix(rnorm(1000), ncol = 10)
-#' colnames(data) <- paste0("Sample", 1:10)
-#' meta <- data.frame(Sample = colnames(data), Condition = rep(c("A", "B"), 
-#' each = 5))
-#' heatmaps <- make_correlation_heatmaps(data, meta, "Condition")
-#' for (heatmap in heatmaps) {
-#'   draw(heatmap, heatmap_legend_side = "right")
-#' }}
 #'
 #' @importFrom stats cor
 #' @importFrom circlize colorRamp2
@@ -1196,4 +1030,95 @@ make_correlation_heatmaps <- function(data,
   
   list(heatmaps = heatmaps,
        heatmaps_sizes = heatmaps_sizes)
+}
+
+
+#' Get Plot Explanations
+#'
+#' @description
+#' This function returns a vector of text explanations for various types of
+#' plots. These explanations are used in HTML reports to describe the plots.
+#'
+#' @return A character vector containing explanations for different plot types.
+#'
+#' @details
+#' The explanations cover a variety of plots, including density plots, boxplots,
+#' violin plots, mean time correlation plots, lag-1 differences plots, first lag
+#' autocorrelation plots, coefficient of variation (CV) plots, PCA plots, PCA
+#' variance explained plots, MDS plots, and correlation heatmaps. Each
+#' explanation provides insights on what the plot shows and how to interpret it.
+#' 
+get_explore_plots_explanations <- function() {
+  
+  plot_explanations <- c(
+    "Density plots show the distribution of intensities or abundances across 
+  samples. Peaks in the plot indicate common values, while the spread 
+  indicates variability. Use this plot to identify the range and most 
+  frequent values in your data.",
+    
+    "Boxplots display the spread and outliers of values for each sample. The 
+  box represents the interquartile range (IQR), the line inside the box is 
+  the median, and the whiskers extend to 1.5 * IQR from the quartiles. 
+  Points outside this range are considered outliers. Use boxplots to 
+  compare distributions and identify outliers.",
+    
+    "Violin plots combine boxplots and density plots to show the distribution 
+  of values. They provide a summary of the data's range, central tendency, 
+  and distribution shape. Use violin plots to understand the full 
+  distribution and compare between groups.",
+    
+    "Mean Time Correlation plots summarize the correlation of each feature 
+  with time, highlighting time-dependent trends. Positive correlations 
+  indicate increasing trends, negative correlations indicate decreasing 
+  trends. Use this plot to identify features that change over time.",
+    
+    "Purpose: Lag-1 Differences plots illustrate the changes in feature values 
+  between successive time points. What It Shows: This plot helps identify 
+  the variability and consistency in the changes of feature values over time.
+  The mean lag-1 difference indicates the average change between time points.
+  The standard deviation of the lag-1 differences indicates the variability 
+  in these changes. How to Use It: Use this plot to understand the magnitude 
+  and variability of changes in feature values over time. Identify features 
+  with consistent increases or decreases and those with high variability 
+  between time points.",  
+    
+    "First Lag Autocorrelation plots illustrate the temporal dependencies 
+  within each feature by calculating the autocorrelation of the feature 
+  with itself at a lag of one time point. This plot helps identify 
+  features that have consistent patterns over time. A high positive 
+  autocorrelation indicates that the feature values are similar to their 
+  previous values, suggesting a trend or periodicity. A high negative 
+  autocorrelation suggests an alternating pattern over time. Use this 
+  plot to understand the persistence and cyclic behavior of the features 
+  across time points, and to identify features that exhibit stable or 
+  periodic patterns.",
+    
+    "Purpose: Coefficient of Variation (CV) plots illustrate the relative 
+  variability of each feature by calculating the CV for each feature. 
+  What It Shows: This plot helps identify features with high or low 
+  relative variability. The mean CV indicates the average relative 
+  variability across features. The standard deviation of CV indicates the 
+  variability in the relative variability across features. How to Use It:
+  Use this plot to understand the consistency and variability of feature 
+  values. Identify features with consistently high or low variability 
+  relative to their mean.",
+    
+    "PCA plots visualize the major trends and patterns in high-dimensional 
+  data by reducing it to a few principal components. Points close to each 
+  other are similar. Use PCA plots to identify clustering and variance 
+  explained by the principal components.",
+    
+    "PCA Variance Explained plots show the amount of variance explained by 
+  each principal component. The y-axis represents the percentage of total 
+  variance explained, and the x-axis represents the principal components. 
+  Use this plot to determine the number of components to consider.",
+    
+    "MDS plots display similarities or dissimilarities between samples in a 
+  reduced dimension space. Points close to each other are more similar. 
+  Use MDS plots to visualize the distance or similarity between samples.",
+    
+    "Correlation Heatmaps illustrate the pairwise correlation between all 
+  samples. Colors represent the strength of correlation, with a color 
+  gradient indicating positive or negative correlations. Use this plot to 
+  identify highly correlated samples or groups.")
 }

@@ -20,13 +20,21 @@ explore_data(
 
 \item{meta}{A dataframe containing metadata corresponding to the `data`.}
 
-\item{condition}{A character string specifying the condition.}
+\item{condition}{A character string specifying the condition (column of meta)}
 
-\item{report_info}{An object containing report information.}
+\item{report_info}{A named list containing report information.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
+\item{meta_batch2_column}{A character string specifying the meta batch2
+column.}
+
 \item{report_dir}{A non-empty string specifying the report directory.}
+
+\item{report}{A Boolean TRUE or FALSE value, specifying if a report should
+be generated or not. A report is generated per default, but
+when only the plots as plot objects inside R are desired, this
+argument can be set to FALSE.}
 }
 \value{
 A list of ggplot objects representing various exploratory plots.
@@ -35,14 +43,4 @@ A list of ggplot objects representing various exploratory plots.
 This function takes a data matrix, checks its validity, and generates a list 
 of exploratory plots including density plots, boxplots, PCA plots, MDS plots, 
 variance explained plots, and violin plots.
-}
-\examples{
-\dontrun{
-# Example usage
-data <- matrix(rnorm(1000), ncol = 10)
-plots <- generate_plots(data)
-for (plot in plots) {
-  print(plot)
-}}
-
 }

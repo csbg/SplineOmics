@@ -29,8 +29,6 @@ process_level_cluster(
 
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
-
-\item{adj_pthreshold}{A numeric value specifying the p-value threshold.}
 }
 \value{
 A list containing the clustering results, including curve values and
