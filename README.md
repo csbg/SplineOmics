@@ -149,8 +149,8 @@ a new issue.
 ### Tutorial
 
 For a tutorial of the `SplineOmics` package, that covers a real
-proteomics example from start to the end, click here - [SplineOmics
-Tutorial](doc/SplineOmics-Tutorial.html)
+proteomics example from start to the end, click here - - [SplineOmics
+Tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/SplineOmics-Tutorial.html)
 
 ### Overview
 
