@@ -196,19 +196,19 @@ spline parameters, limma design formulas, verions of data (outliers
 removed vs. not removed), etc. in a semi-combinatorial fashion.
 
 ``` r
-result <- limma_hyperparams_screen(datas, 
-                                   datas_descr,
-                                   metas, 
-                                   designs, 
-                                   condition, 
-                                   spline_test_configs,
-                                   report_info,
-                                   report_dir = here::here(),
-                                   adj_pthresholds = c(0.05),
-                                   meta_batch_column = NA,  # batch-effect
-                                   meta_batch2_column = NA,
-                                   time_unit = "m",    # For the plot labels
-                                   padjust_method = "BH")
+limma_hyperparams_screen(datas, 
+                         datas_descr,
+                         metas, 
+                         designs, 
+                         condition, 
+                         spline_test_configs,
+                         report_info,
+                         report_dir = here::here(),
+                         adj_pthresholds = c(0.05),
+                         meta_batch_column = NA,  # batch-effect
+                         meta_batch2_column = NA,
+                         time_unit = "m",    # For the plot labels
+                         padjust_method = "BH")
 ```
 
 #### ⚙️ run_limma_splines()
@@ -221,8 +221,9 @@ top_tables <- run_limma_splines(data,
                                 meta,
                                 design,
                                 condition, 
-                                spline_params = list(spline_type = c("n"),
-                                                     dof = c(2L)),
+                                spline_params = 
+                                  list(spline_type = c("n"),
+                                       dof = c(2L)),
                                 padjust_method = "BH")
 ```
 
@@ -250,8 +251,9 @@ clustering_results <- cluster_hits(top_tables,
                                    design,      
                                    condition,   
                                    report_info,   
-                                   spline_params = list(spline_type = c("n"),
-                                                        dof = c(2L)),
+                                   spline_params = 
+                                    list(spline_type = c("n"),
+                                         dof = c(2L)),
                                    adj_pthresholds = c(0.05),
                                    clusters = c("auto"),
                                    meta_batch_column = NA,   
