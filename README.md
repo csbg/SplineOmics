@@ -155,8 +155,8 @@ during installation, try updating your R and RStudio to the latest
 versions and repeat the installation steps.
 
 For issues specifically related to the `SplineOmics` package, check the
-Issues section of the GitHub repository for similar problems or to post
-a new issue.
+[Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the
+GitHub repository for similar problems or to post a new issue.
 
 ## 📂 Usage
 

@@ -20,11 +20,8 @@ The R package `SplineOmics` gets the significant features (hits) of time-series 
 ## Table of Contents
 
 -   [📘 Introduction](#introduction)
-
 -   [🔧 Installation](#installation)
-
 -   [📂 Usage](#usage)
-
     -   [📖 Tutorial](#tutorial)
     -   [📊 Overview](#overview)
         -   [📄 extract_data](#extract_data)
@@ -35,17 +32,11 @@ The R package `SplineOmics` gets the significant features (hits) of time-series 
         -   [🌐 cluster_hits](#cluster_hits)
         -   [🔬 run_gsea](#run_gsea)
     -   [🛠️ Functions in Depth](#functions-in-depth)
-
 -   [🐳 Docker Container](#docker-container)
-
 -   [📦 Dependencies](#dependencies)
-
 -   [❓ Getting Help](#getting-help)
-
 -   [🤝 Contributing](#contributing)
-
 -   [📜 License](#license)
-
 -   [🎓 Citation](#citation)
 
 ## 📘 Introduction {#introduction}
@@ -136,9 +127,7 @@ Follow these steps to install the `SplineOmics` package from its GitHub reposito
 
 If you encounter errors related to dependencies or package versions during installation, try updating your R and RStudio to the latest versions and repeat the installation steps.
 
-For issues specifically related to the `SplineOmics` package, check the 
-[Issues section](https://github.com/<user>/<repo>/issues) of the GitHub repository 
-for similar problems or to post a new issue.
+For issues specifically related to the `SplineOmics` package, check the [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the GitHub repository for similar problems or to post a new issue.
 
 ## 📂 Usage {#usage}
 
@@ -395,7 +384,7 @@ Thank you for considering contributing to `SplineOmics`. Your efforts are what m
 
 ## 📜 License {#license}
 
-This package is licensed under the MIT License with additional terms. Please see the [LICENSE](./docs/LICENSE) file for full terms and conditions.
+This package is licensed under the MIT License with additional terms. Please see the [LICENSE](./LICENSE) file for full terms and conditions.
 
 © 2024 Thomas Rauter. All rights reserved.
 
