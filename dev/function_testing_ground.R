@@ -184,8 +184,8 @@ clusterProfiler_params <- list(adj_p_value = 0.05,
 
 report_dir <- here::here("results", "gsea_reports")
 
-# debug(gsea_report)
-result <- gsea_report(levels_clustered_hits = 
+# debug(run_gsea)
+result <- run_gsea(levels_clustered_hits = 
                         clustering_results$clustered_hits_levels,
                       genes = genes,
                       databases = databases,

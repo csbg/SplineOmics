@@ -1,9 +1,4 @@
-
 docker build -t splineomics:0.1.0 .
 
-docker run -it splineomics:0.1.0 /bin/bash
-
-ls /log/install_log.txt
-cat /log/install_log.txt
 
 

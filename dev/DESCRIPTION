@@ -1,0 +1,55 @@
+Package: SplineOmics
+Type: Package
+Title: Streamlines the process of analysing omics timeseries data with splines
+Version: 0.1.0
+Date: 2024-05-17
+Author: Thomas Rauter
+Maintainer: Thomas Rauter <thomas.rauter@plus.ac.at>
+Description: Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.
+Depends: R (>= 4.1.0)
+License: MIT + file LICENSE
+Imports: 
+    ComplexHeatmap(>= 2.18.0),
+    RColorBrewer(>= 1.1-3),
+    Rtsne(>= 0.17),
+    base64enc(>= 0.1-3),
+    circlize(>= 0.4.16),
+    cluster(>= 2.1.6),
+    clusterProfiler(>= 4.10.1),
+    data.table(>= 1.15.4),
+    dendextend(>= 1.17.1),
+    dplyr(>= 1.1.4),
+    fs(>= 1.6.4),
+    ggplot2(>= 3.5.1),
+    ggrepel(>= 0.9.5),
+    here(>= 1.0.1),
+    htmltools(>= 0.5.8.1),
+    kableExtra(>= 1.4.0),
+    knitr(>= 1.47),
+    limma(>= 3.58.1),
+    magrittr(>= 2.0.3),
+    openxlsx(>= 4.2.5.2),
+    patchwork(>= 1.2.0),
+    pheatmap(>= 1.0.12),
+    progress(>= 1.2.3),
+    purrr(>= 1.0.2),
+    ragg(>= 1.3.2),
+    readr(>= 2.1.5),
+    reshape2(>= 1.4.4),
+    rlang(>= 1.1.3),
+    scales(>= 1.3.0),
+    stringr(>= 1.5.1),
+    tibble(>= 3.2.1),
+    tidyr(>= 1.3.1),
+    viridis(>= 0.6.5)
+Suggests:
+    testthat (>= 3.0.0),
+    rmarkdown (>= 2.7),
+    devtools,
+    roxygen2,
+    conflicted (>= 1.2.0)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.1
+Config/testthat/edition: 3
+VignetteBuilder: knitr
