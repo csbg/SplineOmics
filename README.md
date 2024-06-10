@@ -21,7 +21,7 @@ HTML reports.
     - [🔍 explore_data](#explore_data)
     - [🧮️ limma_hyperparams_screen](#limma_hyperparams_screen)
     - [⚙️ run_limma_splines](#run_limma_splines)
-    - [📈 build_limma_report](#build_limma_report)
+    - [📈 limma_report](#limma_report)
     - [🌐 cluster_hits](#cluster_hits)
     - [🔬 run_gsea](#run_gsea)
   - [🛠️ Functions in Depth](#functions-in-depth)
@@ -205,9 +205,9 @@ limma_hyperparams_screen(datas,
                          report_info,
                          report_dir = here::here(),
                          adj_pthresholds = c(0.05),
-                         meta_batch_column = NA,  # batch-effect
+                         meta_batch_column = NA,  
                          meta_batch2_column = NA,
-                         time_unit = "m",    # For the plot labels
+                         time_unit = "m",    
                          padjust_method = "BH")
 ```
 
@@ -227,17 +227,17 @@ top_tables <- run_limma_splines(data,
                                 padjust_method = "BH")
 ```
 
-#### 📈 build_limma_report()
+#### 📈 limma_report()
 
 Show the limma spline results with p-value histograms and volcano plots
 in an HTML report.
 
 ``` r
-build_limma_report(header_section, 
-                   plots, 
-                   plots_sizes, 
-                   level_headers_info,
-                   output_file_path = here::here())
+limma_report(header_section, 
+             plots, 
+             plots_sizes, 
+             level_headers_info,
+             output_file_path = here::here())
 ```
 
 #### 🌐 cluster_hits()
@@ -245,22 +245,22 @@ build_limma_report(header_section,
 Cluster the significant features (hits) via hierarchical clustering:
 
 ``` r
-clustering_results <- cluster_hits(top_tables,
-                                   data,
-                                   meta,
-                                   design,      
-                                   condition,   
-                                   report_info,   
-                                   spline_params = 
-                                    list(spline_type = c("n"),
-                                         dof = c(2L)),
-                                   adj_pthresholds = c(0.05),
-                                   clusters = c("auto"),
-                                   meta_batch_column = NA,   
-                                   meta_batch2_column = NA,   
-                                   time_unit = "min",    
-                                   report_dir = here::here(),
-                                   report = TRUE)
+clustering <- cluster_hits(top_tables,
+                           data,
+                           meta,
+                           design,      
+                           condition,   
+                           report_info,   
+                           spline_params = 
+                            list(spline_type = c("n"),
+                                 dof = c(2L)),
+                           adj_pthresholds = c(0.05),
+                           clusters = c("auto"),
+                           meta_batch_column = NA,   
+                           meta_batch2_column = NA,   
+                           time_unit = "min",    
+                           report_dir = here::here(),
+                           report = TRUE)
 ```
 
 #### 🔬 run_gsea()
@@ -301,56 +301,25 @@ it downloads version 0.1.0):
 docker pull thomasrauter/splineomics:0.1.0
 ```
 
-### Running the Analysis Script
+### Running the Docker Container in Interactive Mode
 
-To run the analysis script, you need to mount your data files and the
-parameter file into the container. Ensure that you have the following
-files prepared:
-
-data.xlsx: Your data file. meta.xlsx: Your metadata file. params.json: A
-JSON file with the analysis parameters.
-
-Here is the bash command to run the analysis script:
+To run the Docker container in interactive mode, you can use the
+following command. This will start a container and open a bash shell,
+allowing you to run your analysis interactively within the container.
 
 ``` sh
-docker run -it --rm \
-    -v /path/to/data.xlsx:/workspace/data.xlsx \
-    -v /path/to/meta.xlsx:/workspace/meta.xlsx \
-    -v /path/to/params.json:/workspace/params.json \
-    -v /path/to/output:/output \
-    thomasrauter/splineomics Rscript /workspace/run_analysis.R
+docker run -it -d \
+    -v $(pwd)/data.xlsx:/input/data.xlsx \
+    -v $(pwd)/meta.xlsx:/input/meta.xlsx \
+    -v $(pwd)/output:/output \
+    -p 8888:8787 \
+    -e PASSWORD=password \
+    thomasrauter/splineomics:0.1.0
 ```
 
-### Example params.json File
-
-Below is an example of the params.json file that you need to provide:
-
-``` json
-{
-  "report_info": {
-    "omics_data_type": "PPTX",
-    "data_description": "Old phosphoproteomics data with the missing two samples",
-    "data_collection_date": "February 2024",
-    "analyst_name": "Thomas Rauter",
-    "contact_info": "thomas.rauter@plus.ac.at",
-    "project_name": "DGTX"
-  },
-  "condition": "Phase",
-  "meta_batch_column": "Reactor",
-  "design": "~ 1 + Phase*X + Reactor",
-  "spline_params": {
-    "spline_type": ["n"],
-    "dof": [2]
-  },
-  "adj_pthresholds": [0.05, 0.05],
-  "clusters": [2, 2]
-}
-```
-
-### Running the Analysis
-
-Ensure you replace /path/to/ with the actual paths to your files. The
-analysis results will be saved in the /path/to/output directory.
+Once the container is running, open a web browser and navigate to
+<http://localhost:8888>. Use rstudio as the username and the password
+you set with the -e PASSWORD=password option.
 
 ## 📦 Dependencies
 

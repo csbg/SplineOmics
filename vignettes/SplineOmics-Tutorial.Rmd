@@ -18,9 +18,7 @@ knitr::opts_chunk$set(
 
 # About this tutorial
 
-This tutorial intends to showcase and explain the capabilities of the SplineOmics
-package by walking through a real and complete example, from start to the end.
-The example is a time-series proteomics experiment, in which CHO cells were cultivated in three bioreactors (three biological replicates). Both in the exponential and stationary growth phase, samples were taken from each reactor in triplicates at defined timepoints relative to a feeding of the cells (60 min before feeding, and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to find out which of the 7162 cellular proteins show a significant change over time after the CHO cells were fed. Further, the hits (proteins with a significant change over time) are clustered based on their temporal pattern, and a gene set enrichment analysis is performed with each cluster to see if there are processes which are up- or downregulated over time after the feeding. 
+This tutorial intends to showcase and explain the capabilities of the SplineOmics package by walking through a real and complete example, from start to the end. The example is a time-series proteomics experiment, in which CHO cells were cultivated in three bioreactors (three biological replicates). Both in the exponential and stationary growth phase, samples were taken from each reactor in triplicates at defined timepoints relative to a feeding of the cells (60 min before feeding, and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to find out which of the 7162 cellular proteins show a significant change over time after the CHO cells were fed. Further, the hits (proteins with a significant change over time) are clustered based on their temporal pattern, and a gene set enrichment analysis is performed with each cluster to see if there are processes which are up- or downregulated over time after the feeding.
 
 # Load the packages
 
@@ -43,10 +41,7 @@ print(meta)
 
 # Perform EDA (exploratory data analysis)
 
-The first step in analysing data is usually EDA. EDA involves summarizing the 
-main characteristics of the data, often using plots. This can involve densitiy 
-distributions, boxplots, PCA, correlation heatmaps, and more. This process can
-be carried out by using the package function explore_data(). The necessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are meta_batch_column and meta_batch2_column, that allow to specify the column name that contain batch effect 1 and 2. These columns will be used to run the removeBatchEffect function of limma to remove the batch effect of the data for plotting. When at least one batch column is provided like this, the function will not just generate one EDA HTML report, but two. One for the uncorrected data, and one for the batch corrected data. These reports are written either in the current working dir as default location, or to a location specified with the optional argument report_dir. The function also returns all plots generated. Lastly, if it is desired that no report should be generated, the optional argument report can be set to FALSE.
+The first step in analysing data is usually EDA. EDA involves summarizing the main characteristics of the data, often using plots. This can involve densitiy distributions, boxplots, PCA, correlation heatmaps, and more. This process can be carried out by using the package function explore_data(). The necessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are meta_batch_column and meta_batch2_column, that allow to specify the column name that contain batch effect 1 and 2. These columns will be used to run the removeBatchEffect function of limma to remove the batch effect of the data for plotting. When at least one batch column is provided like this, the function will not just generate one EDA HTML report, but two. One for the uncorrected data, and one for the batch corrected data. These reports are written either in the current working dir as default location, or to a location specified with the optional argument report_dir. The function also returns all plots generated. Lastly, if it is desired that no report should be generated, the optional argument report can be set to FALSE.
 
 ```{r Perform EDA}
 report_info <- list(
@@ -70,46 +65,185 @@ plots <- explore_data(data = data,
 
 ```
 
-You can view the generated analysis report of the not-batch-corrected-data here: [here](../inst/reports/report.html).
+You can view the generated analysis report of the not-batch-corrected-data here: [here](../inst/reports/report.html)
 
-The EDA plots can tell you a range of things. The plots in the HTML report are grouped into three categories: Distribution and Variability Analysis, Time Series Analysis, and Dimensionality Reduction and Clustering. 
+The EDA plots can tell you a range of things. The plots in the HTML report are grouped into three categories: Distribution and Variability Analysis, Time Series Analysis, and Dimensionality Reduction and Clustering.
 
 # Find the best hyperparameters
 
+Before we can run the limma spline analysis, we have to find out which "hyperparameters" are the best. Hyperparameters in this context are for example degree of freedom, different versions of the data (outlier removed vs. not removed), different limma design formulas, etc. Rationally thinking about which combination of hyperparameters to use is very challenging. Instead, it is often better to just try out a bunch of combinations and choose the best. The function limma_hyperparams_screen() does this for you. For each hyperparameter, you can just specify all the values that you would like to try, and the function then runs the limma spline analysis with the combinations that can be formed with the hyperparameters that you specified. Not every single combo is generated, but instead there are "inner" and "outer" hyperparameters, and only for all "outer" hyperparameters, all combos are generated. The "inner" hyperparameters are the adj. p-value thresholds and the spline parameters. For example, if you have two different versions of one dataset (one time the full dataset, and one time the dataset with some potential outliers removed), these are considered "outer" hyperparameters in this context. The function would generate all possible comparisons for the "outer" hyperparameters, which is just a single comparison. Then, for both versions of the data, every "inner" hyperparameter combo is generated. Lets say you specified natural cubic splines for both, with a degree of freedom of either 2 or 3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each version of data, it would test out all combinations of the spline parameters and the adj. p-value threshold. In this case, this is DoF = 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3, tresh = 0.1.
 
-
-```r{hyperparameter-screening} 
-data1 <- data
+```{r hyperparameter-screening}
+data1 <- data 
 meta1 <- meta
 
 # (These are not outliers, just removed to showcase this functionality)
 data2 <- data[, -c(1, 2)]
 meta2 <- meta[-c(1, 2),]
 
-datas <- list(data1, data2)
-datas_descr <- c("full_data", "outliers_removed")
-metas <- list(meta1, meta2)
-designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
-condition <- "Phase"
-report_dir <- here::here("results", "hyperparams_screen_reports")
-meta_batch_column = "Reactor"
+datas <- list(data1, data2) 
+datas_descr <- c("full_data", "outliers_removed") 
+
+metas <- list(meta1, meta2) 
+designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor") 
+condition <- "Phase" 
+report_dir <- here::here("results", "hyperparams_screen_reports") 
+meta_batch_column = "Reactor" 
 pthresholds <- c(0.05, 0.1)
 
 # Every row a combo to test.
 spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
                                   degree = c(NA, NA, NA, NA),
                                   dof = c(2L, 3L, 4L, 5L),
-                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
-                                  bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
+                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),                                     bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
 
-result <- limma_hyperparams_screen(datas,
-                                   datas_descr,
-                                   metas,
-                                   designs,
-                                   condition,
-                                   spline_test_configs,
-                                   report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+limma_hyperparams_screen(datas,
+                         datas_descr,
+                         metas,
+                         designs,
+                         condition,
+                         spline_test_configs,
+                         report_info,
+                         report_dir,
+                         pthresholds,
+                         meta_batch_column)
+
 ```
+
+To see the output HTML report, click here: [here](../inst/reports/hyperparams_screen_report.html)
+
+# Run limma spline analysis
+
+Once we identified the hyperparameters, that are likely the best ones, we can run the limma spline analysis with them and get the results.
+
+```{rlimma spline analysis} 
+
+design <- "~ 1 + Phase*X + Reactor"     # Chosen limma design
+
+spline_params = list(spline_type = c("n"),  # Chosen spline parameters
+                     dof = c(2L))
+
+# Run the limma spline analysis
+result <- run_limma_splines(data1,   # Chosen version of the data
+                            meta1,
+                            design,
+                            spline_params = spline_params,
+                            condition)
+
+top_tables1 <- result$time_effect print(top_tables1)
+
+top_tables2 <- result$avrg_diff_conditions print(top_tables2)
+
+top_tables3 <- result$interaction_condition_time print(top_tables3) 
+```
+
+The output of the function run_limma_splines() is a named list, where each element is a specific "category" of results. Each of those elements is a list, containing as elements the respective limma topTables, either for each level or each comparison between two levels.
+
+The element "time_effect" is a list, where each element is the topTable where the p-value for each feature for the respective level are reported.
+
+The element "avrg_diff_conditions" is a list that contains as elements the topTables, that represent the comparison of the average differences of the levels.
+
+The element "interaction_condition_time" is a list that contains as elements the topTables, that represent the interaction between the levels (which includes both time and the average differences)
+
+# Build limma report
+
+The topTables of all three categories can be used to generate p-value histograms an volcano plots.
+
+```{r build limma report}
+report_dir <- here::here("results", "limma_reports")
+
+limma_report(run_limma_splines_result = result,
+             report_info = report_info,
+             report_dir = report_dir)
+```
+
+You can view the generated analysis report of the limma_report function here: [here](../inst/reports/limma_report.html)
+
+# Cluster the hits (significant features)
+
+After we obtained the limma spline results, we can cluster the hits based on their temporal pattern (their spline shape). We define what a hit is by setting an adj. p-value threshold for every level. Then, hierarchical clustering is used to place every hit in one of as many clusters as we have specified for that specific level. 
+
+```{r cluster the hits}
+
+adj_pthresholds <- c(0.05, 0.05)   
+clusters <- list(2L, 2L)   
+report_dir <- here::here("results", "clustering_reports")
+
+clustering_results <- cluster_hits(top_tables = top_tables1, 
+                                   data = data, 
+                                   meta = meta, 
+                                   design = design,
+                                   condition = condition, 
+                                   spline_params = spline_params,
+                                   adj_pthresholds = adj_pthresholds,
+                                   clusters = clusters,
+                                   report_info = report_info,
+                                   meta_batch_column = meta_batch_column,
+                                   report_dir = report_dir,
+                                   report = TRUE)
+
+print(clustering_results)
+```
+
+To see the output HTML report, click here: [here](../inst/reports/clustering_report.html)
+
+# Perform gene set enrichment analysis (GSEA)
+
+To each clustered hit, the respective gene can be assigned and GSEA performed.
+For this, the Enrichr databases of choice have to be downloaded:
+
+```{r download Enrichr databases}
+gene_set_lib <- c("WikiPathways_2019_Human",
+                  "NCI-Nature_2016",
+                  "TRRUST_Transcription_Factors_2019",
+                  "MSigDB_Hallmark_2020",
+                  "GO_Cellular_Component_2018",
+                  "CORUM",
+                  "KEGG_2019_Human",
+                  "TRANSFAC_and_JASPAR_PWMs",
+                  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+                  "GO_Biological_Process_2018",
+                  "GO_Molecular_Function_2018",
+                  "Human_Gene_Atlas")
+
+download_enrichr_databases(gene_set_lib)
+```
+
+Per default the file is placed in the current working directory, which is the root dir of the R project. 
+
+To run GSEA, a genes vector has to be created, containing all the underlying genes of the features. The downloaded database file has to be loaded as a dataframe. Further, optionally, the clusterProfiler parameters and the report dir can be specified. The function  run_gsea() runs GSEA using clusterProfiler, generates an HTML report and returns the GSEA dotplots in R.
+
+```{r run GSEA}
+# Get gene vector
+annotation <- as.data.frame(annotation)
+gene_column_name <- "Gene Names"
+genes <- data[[gene_column_name]][1:nrow(annotation)]
+genes <- sub(" .*", "", genes)
+genes <- sub(";.*", "", genes)
+genes <- sub("_.*", "", genes)
+
+
+downloaded_dbs_filepath <- 
+  here::here("all_databases_08_04_2024-12_41_50.tsv")
+databases <- readr::read_tsv(downloaded_dbs_filepath, col_types = readr::cols())
+
+clusterProfiler_params <- list(adj_p_value = 0.05,
+                               pAdjustMethod = "BH",
+                               minGSSize = 10,
+                               maxGSSize = 500,
+                               qvalueCutoff = 0.2)
+
+report_dir <- here::here("results", "gsea_reports")
+
+result <- run_gsea(levels_clustered_hits = 
+                        clustering_results$clustered_hits_levels,
+                   genes = genes,
+                   databases = databases,
+                   params = clusterProfiler_params,
+                   report_info = report_info,
+                   report_dir = report_dir)
+
+print(result)
+```
+
+To see the output HTML report, click here: [here](../inst/reports/gsea_report.html)
