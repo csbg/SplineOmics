@@ -272,9 +272,9 @@ build_limma_report <- function(header_section,
                                plots, 
                                plots_sizes, 
                                level_headers_info,
-                               output_file_path) {  
+                               output_file_path = here::here()) {  
   
-  html_content <- paste(header_section, "<!--TOC-->", sep="\n")
+  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
   toc <- create_toc()
   

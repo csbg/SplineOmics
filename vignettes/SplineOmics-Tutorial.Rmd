@@ -46,7 +46,7 @@ print(meta)
 The first step in analysing data is usually EDA. EDA involves summarizing the 
 main characteristics of the data, often using plots. This can involve densitiy 
 distributions, boxplots, PCA, correlation heatmaps, and more. This process can
-be carried out by using the package function explore_data(). The neccessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are 
+be carried out by using the package function explore_data(). The necessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are meta_batch_column and meta_batch2_column, that allow to specify the column name that contain batch effect 1 and 2. These columns will be used to run the removeBatchEffect function of limma to remove the batch effect of the data for plotting. When at least one batch column is provided like this, the function will not just generate one EDA HTML report, but two. One for the uncorrected data, and one for the batch corrected data. These reports are written either in the current working dir as default location, or to a location specified with the optional argument report_dir. The function also returns all plots generated. Lastly, if it is desired that no report should be generated, the optional argument report can be set to FALSE.
 
 ```{r Perform EDA}
 report_info <- list(
@@ -70,4 +70,46 @@ plots <- explore_data(data = data,
 
 ```
 
-You can view the detailed analysis report [here](../inst/reports/report.html).
+You can view the generated analysis report of the not-batch-corrected-data here: [here](../inst/reports/report.html).
+
+The EDA plots can tell you a range of things. The plots in the HTML report are grouped into three categories: Distribution and Variability Analysis, Time Series Analysis, and Dimensionality Reduction and Clustering. 
+
+# Find the best hyperparameters
+
+
+
+```r{hyperparameter-screening} 
+data1 <- data
+meta1 <- meta
+
+# (These are not outliers, just removed to showcase this functionality)
+data2 <- data[, -c(1, 2)]
+meta2 <- meta[-c(1, 2),]
+
+datas <- list(data1, data2)
+datas_descr <- c("full_data", "outliers_removed")
+metas <- list(meta1, meta2)
+designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
+condition <- "Phase"
+report_dir <- here::here("results", "hyperparams_screen_reports")
+meta_batch_column = "Reactor"
+pthresholds <- c(0.05, 0.1)
+
+# Every row a combo to test.
+spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
+                                  degree = c(NA, NA, NA, NA),
+                                  dof = c(2L, 3L, 4L, 5L),
+                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
+                                  bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
+
+result <- limma_hyperparams_screen(datas,
+                                   datas_descr,
+                                   metas,
+                                   designs,
+                                   condition,
+                                   spline_test_configs,
+                                   report_info,
+                                   report_dir,
+                                   pthresholds,
+                                   meta_batch_column)
+```

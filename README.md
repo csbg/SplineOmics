@@ -12,22 +12,36 @@ HTML reports.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [extract_data](#extract_data)
-  - [explore_data](#explore_data)
-  - [run_limma_splines](#run_limma_splines)
-  - [cluster_hits](#cluster_hits)
-  - [run_gsea](#run_gsea)
-- [Docker Container](#docker-container)
-- [Dependencies](#dependencies)
-- [Getting Help](#getting-help)
-- [Contributing](#contributing)
-- [License](#license)
-- [Citation](#citation)
+- [📘 Introduction](#introduction)
 
-## Introduction
+- [🔧 Installation](#installation)
+
+- [📂 Usage](#usage)
+
+  - [📖 Tutorial](#tutorial)
+  - [📊 Overview](#overview)
+    - [📄 extract_data](#extract_data)
+    - [🔍 explore_data](#explore_data)
+    - [🧮️ limma_hyperparams_screen](#limma_hyperparams_screen)
+    - [⚙️ run_limma_splines](#run_limma_splines)
+    - [📈 build_limma_report](#build_limma_report)
+    - [🌐 cluster_hits](#cluster_hits)
+    - [🔬 run_gsea](#run_gsea)
+  - [🛠️ Functions in Depth](#functions-in-depth)
+
+- [🐳 Docker Container](#docker-container)
+
+- [📦 Dependencies](#dependencies)
+
+- [❓ Getting Help](#getting-help)
+
+- [🤝 Contributing](#contributing)
+
+- [📜 License](#license)
+
+- [🎓 Citation](#citation)
+
+## 📘 Introduction
 
 Welcome to `SplineOmics`, an R package designed to streamline the
 analysis of omics time-series data, followed by automated HTML report
@@ -85,7 +99,7 @@ With `SplineOmics`, you can:
 
   Automatically generate reports to showcase all results.
 
-## Installation
+## 🔧 Installation
 
 Follow these steps to install the `SplineOmics` package from its GitHub
 repository into your R environment.
@@ -144,29 +158,30 @@ For issues specifically related to the `SplineOmics` package, check the
 Issues section of the GitHub repository for similar problems or to post
 a new issue.
 
-## Usage
+## 📂 Usage
 
-### Tutorial
+### 📖 Tutorial
 
-For a tutorial of the `SplineOmics` package, that covers a real
-proteomics example from start to the end, click here - - [SplineOmics
+For a tutorial of the `SplineOmics` package, that covers a real CHO cell
+time-series proteomics example from start to the end, click here -
+[SplineOmics
 Tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/SplineOmics-Tutorial.html)
 
-### Overview
+### 📊 Overview
 
-The `SplineOmics` has following functions available:
+The `SplineOmics` package has following functions available:
 
-### extract_data()
+#### 📄 extract_data()
 
 Extract the data section and the feature description out of an initial
 Excel file:
 
 ``` r
-data <- extract_data(excel_table,
-                     "Unique identifier")
+data <- extract_data(data,
+                     feature_name_columns = NA)
 ```
 
-### explore_data()
+#### 🔍 explore_data()
 
 Generate an HTML with the exploratory data analysis (and additionally
 return the plots in R):
@@ -176,11 +191,13 @@ plots <- explore_data(data,
                       meta,
                       condition,
                       report_info,
-                      meta_batch_column,
-                      report_dir)
+                      meta_batch_column = NA,
+                      meta_batch2_column = NA,
+                      report_dir = here::here(),
+                      report = TRUE)
 ```
 
-### limma_hyperparams_screen()
+#### 🧮 limma_hyperparams_screen()
 
 Allows to systematically test different hyperparameters for the
 subsequent timeseries analysis with limma and splines. Test different
@@ -188,50 +205,72 @@ spline parameters, limma design formulas, verions of data (outliers
 removed vs. not removed), etc. in a semi-combinatorial fashion.
 
 ``` r
-result <- limma_hyperparams_screen(datas,
+result <- limma_hyperparams_screen(datas, 
                                    datas_descr,
-                                   metas,
-                                   designs,
-                                   condition,
+                                   metas, 
+                                   designs, 
+                                   condition, 
                                    spline_test_configs,
                                    report_info,
-                                   report_dir,
-                                   pthresholds,
-                                   meta_batch_column)
+                                   report_dir = here::here(),
+                                   adj_pthresholds = c(0.05),
+                                   meta_batch_column = NA,  # batch-effect
+                                   meta_batch2_column = NA,
+                                   time_unit = "m",    # For the plot labels
+                                   padjust_method = "BH")
 ```
 
-### run_limma_splines()
+#### ⚙️ run_limma_splines()
 
 Get the limma topTable, with the adjusted p-values for each feature, by
 analysing the time-series data with splines and limma:
 
 ``` r
-top_tables <- run_limma_splines(data, 
-                            meta, 
-                            design, 
-                            spline_params,
-                            condition)
+top_tables <- run_limma_splines(data,
+                                meta,
+                                design,
+                                condition, 
+                                spline_params = list(spline_type = c("n"),
+                                                     dof = c(2L)),
+                                padjust_method = "BH")
 ```
 
-### cluster_hits()
+#### 📈 build_limma_report()
+
+Show the limma spline results with p-value histograms and volcano plots
+in an HTML report.
+
+``` r
+build_limma_report(header_section, 
+                   plots, 
+                   plots_sizes, 
+                   level_headers_info,
+                   output_file_path = here::here())
+```
+
+#### 🌐 cluster_hits()
 
 Cluster the significant features (hits) via hierarchical clustering:
 
 ``` r
-clustering_results <- cluster_hits(top_tables, 
-                                   data, 
-                                   meta, 
-                                   design,
-                                   condition, 
-                                   spline_params,
-                                   adj_pthresholds,
-                                   clusters,
-                                   report_info,
-                                   meta_batch_column,
-                                   report_dir)
+clustering_results <- cluster_hits(top_tables,
+                                   data,
+                                   meta,
+                                   design,      
+                                   condition,   
+                                   report_info,   
+                                   spline_params = list(spline_type = c("n"),
+                                                        dof = c(2L)),
+                                   adj_pthresholds = c(0.05),
+                                   clusters = c("auto"),
+                                   meta_batch_column = NA,   
+                                   meta_batch2_column = NA,   
+                                   time_unit = "min",    
+                                   report_dir = here::here(),
+                                   report = TRUE)
 ```
 
-### run_gsea()
+#### 🔬 run_gsea()
 
 Perform a gene set enrichment analysis (gsea), using clusterProfiler,
 with the clustered hits:
@@ -244,10 +283,16 @@ run_gsea <- function(levels_clustered_hits,
                      params = NA,
                      plot_titles = NA,
                      background = NULL,
-                     report_dir = here::here()) {
+                     report_dir = here::here())
 ```
 
-## Docker Container
+### 🛠 Functions in Depth
+
+For a detailed description of all arguments and outputs of all the
+available package functions, click here - [SplineOmics
+Tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html)
+
+## 🐳 Docker Container
 
 To facilitate reproducible analysis, we provide a Docker container that
 encapsulates the necessary environment and dependencies. Follow the
@@ -314,7 +359,7 @@ Below is an example of the params.json file that you need to provide:
 Ensure you replace /path/to/ with the actual paths to your files. The
 analysis results will be saved in the /path/to/output directory.
 
-## Dependencies
+## 📦 Dependencies
 
 The `SplineOmics` package relies on several other R packages for its
 functionality. Below is a list of dependencies that will automatically
@@ -370,7 +415,7 @@ compatibility issues.
     compatible with newer versions, this is the version guaranteed to
     work as tested.
 
-## Getting Help
+## ❓ Getting Help
 
 If you encounter a bug or have a suggestion for improving the
 `SplineOmics` package, we encourage you to [open an
@@ -389,7 +434,7 @@ experiences, and connect with the community.
 Thank you for using and contributing to the development of
 `SplineOmics`!
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions to the `SplineOmics` package! Whether you’re
 interested in fixing bugs, adding new features, or improving
@@ -427,7 +472,7 @@ Thank you for considering contributing to `SplineOmics`. Your efforts
 are what make the open-source community a fantastic place to learn,
 inspire, and create.
 
-## License
+## 📜 License
 
 This package is licensed under the MIT License with additional terms.
 Please see the [LICENSE](./docs/LICENSE) file for full terms and
@@ -435,14 +480,14 @@ conditions.
 
 © 2024 Thomas Rauter. All rights reserved.
 
-## Citation
+## 🎓 Citation
 
 The `SplineOmics` package is currently not published in a peer-reviewed
 scientific journal or similar outlet, and as such, there is no formal
 citation requirement associated with its use. You are free to use
 `SplineOmics` without citing it. However, we appreciate acknowledgements
 in your projects or publications that benefit from this package. Also,
-if you like the package, consider giving the GitHub Repository a star.
+if you like the package, consider giving the GitHub repository a star.
 Your support helps us in the continued development and improvement of
 `SplineOmics`. Thank you for using our package!
 
