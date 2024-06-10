@@ -13,11 +13,8 @@ HTML reports.
 ## Table of Contents
 
 - [📘 Introduction](#introduction)
-
 - [🔧 Installation](#installation)
-
 - [📂 Usage](#usage)
-
   - [📖 Tutorial](#tutorial)
   - [📊 Overview](#overview)
     - [📄 extract_data](#extract_data)
@@ -28,17 +25,11 @@ HTML reports.
     - [🌐 cluster_hits](#cluster_hits)
     - [🔬 run_gsea](#run_gsea)
   - [🛠️ Functions in Depth](#functions-in-depth)
-
 - [🐳 Docker Container](#docker-container)
-
 - [📦 Dependencies](#dependencies)
-
 - [❓ Getting Help](#getting-help)
-
 - [🤝 Contributing](#contributing)
-
 - [📜 License](#license)
-
 - [🎓 Citation](#citation)
 
 ## 📘 Introduction
@@ -475,8 +466,7 @@ inspire, and create.
 ## 📜 License
 
 This package is licensed under the MIT License with additional terms.
-Please see the [LICENSE](./docs/LICENSE) file for full terms and
-conditions.
+Please see the [LICENSE](./LICENSE) file for full terms and conditions.
 
 © 2024 Thomas Rauter. All rights reserved.
 
