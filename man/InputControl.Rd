@@ -24,17 +24,6 @@ to the
 
 
 
-The function checks the following:
-- Whether the required arguments (`spline_test_configs` and `metas`) 
-are present.
-- Validity of the columns in the spline test configurations.
-- Validity of the spline type column in the configurations.
-- Validity of the spline type parameters.
-- Ensures that the maximum and minimum degrees of freedom are within the 
-  acceptable ranges specified by the metadata.
-
-
-
 The function performs the following checks:
 - Whether the `clusters` argument is present.
 - If `clusters` is a single character string "auto", it defaults to 
@@ -57,10 +46,6 @@ an error.
 
 Check Top Tables
 
-\code{\link{check_dataframe}}
-
-Check Mode
-
 \code{\link{limma}}
 
 Check Modes
@@ -74,24 +59,6 @@ the validation for each mode.
 \code{\link[stats]{model.matrix}}
 
 Check Multiple Designs and Metas
-
-\code{\link{self$check_spline_params_generally}},
-\code{\link{self$check_spline_params_mode_dependent}}
-
-Check Spline Test Configurations
-
-\code{\link{self$check_colums_spline_test_configs}},
-\code{\link{self$check_spline_type_column}}
-\code{\link{self$check_spline_type_params}}
-\code{\link{self$check_max_and_min_dof}}
-
-Check Limma Top Tables Structure
-
-This function checks if the provided limma top tables data structure 
-is correctly formatted. It ensures that the data structure contains 
-exactly three named elements ('time_effect', 'avrg_diff_conditions', 
-and 'interaction_condition_time') and that each element contains 
-dataframes with the correct columns and data types.
 }
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{\link[SplineOmics:Level2Functions]{SplineOmics::Level2Functions}} -> \code{InputControl}
@@ -168,6 +135,7 @@ Initialize an InputControl object}
 }
 \subsection{Returns}{
 A new instance of the InputControl class.
+
 Automatically Validate All Arguments
 
 This method automatically validates all arguments by sequentially 
@@ -332,6 +300,8 @@ dataframe using the `check_dataframe` function.
 }
 \subsection{Returns}{
 No return value, called for side effects.
+
+Check Mode
 }
 }
 \if{html}{\out{<hr>}}
@@ -456,6 +426,8 @@ specified mode.
 }
 \subsection{Returns}{
 No return value, called for side effects.
+
+Check Spline Test Configurations
 }
 }
 \if{html}{\out{<hr>}}
@@ -476,6 +448,14 @@ ranges.
 Returns `NULL` if any required arguments 
 (`spline_test_configs` or `metas`) 
 are missing. Otherwise, it performs a series of validation checks.
+
+Check Limma Top Tables Structure
+
+This function checks if the provided limma top tables data structure 
+is correctly formatted. It ensures that the data structure contains 
+exactly three named elements ('time_effect', 'avrg_diff_conditions', 
+and 'interaction_condition_time') and that each element contains 
+dataframes with the correct columns and data types.
 }
 }
 \if{html}{\out{<hr>}}

@@ -1,7 +1,14 @@
 
 # SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
-The R package SplineOmics gets the significant features (hits) of
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Maintained?
+Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)
+![R-CMD-check](https://github.com/csbg/SplineOmics/workflows/R-CMD-check/badge.svg)
+![Last
+Updated](https://img.shields.io/github/last-commit/csbg/SplineOmics)
+
+The R package `SplineOmics` gets the significant features (hits) of
 time-series omics data by using splines and limma for hypothesis testing
 and clusters the hits based on the spline shape, showing all results in
 HTML reports.
@@ -31,67 +38,55 @@ generation.
 
 ### Is the SplineOmics package of use for me?
 
-If you have omics data over time, the package will help you to run limma
-with splines, decide on which parameters to use and how to cluster and
-plot results.
+If you have omics data over time, the package will help you to run
+`limma` with splines, decide on which parameters to use, perform the
+clustering, run GSEA and show result plots in HTML reports.
 
-You need to have a data matrix and a meta table from a time-series omics
-experiment (e.g. proteomics metabolomics, transcriptomics, etc.). In the
-data matrix, every row is a feature (protein, metabolite, gene) and
-every column is a sample, taken at a specific time, and the values are
-the measurement values (e.g. intensities, etc.).
+### What do I need precicely?
 
-In the meta table, every row describes a sample (column of the data
-matrix), and the columns contain the different meta information, such as
-as the time when the sample was taken.
+1.  A data matrix where each row is a feature (e.g., protein,
+    metabolite, etc.) and each column is a sample taken at a specific
+    time.
 
-If you want to achieve one or more of the following things:
+2.  A table describing the features (e.g. gene and protein name, etc.)
 
-- Find out which hyperparameters, such as degree of freedom, are needed
-  for the limma spline analysis
+3.  A meta table where each row corresponds to a sample and each column
+    to specific meta information, for example reactor, time point, etc.
 
-- Find out which of the features (rows of the data matrix) (e.g. which
-  of the proteins, metabolites, etc.) are changed significantly over the
-  time and get a p-value for them.
-
-- Cluster the hits (the significant features) based on their temporal
-  pattern.
-
-- Run GSEA (gene set enrichment analysis) with the clustered hits.
-
-- Automatically generate a reports, showing all results
-
-Then the `SplineOmics` package could be of interest to you. This package
-finds the hits by applying splines (piece wise polynomial curves) to the
-time-series omics data and using the R package `limma` to find out, in a
-nutshell, which of the features have splines that are significantly
-different from horizontal (which would mean that nothing happens over
-the time, therefore no significant change).
-
-### Summary
+### Capabilities
 
 With `SplineOmics`, you can:
 
-- **Explore Various Hyperparameters:** The `limma_hyperparams_screen()`
-  function offers a comprehensive way to test combinations of
-  hyperparameters, such as different datasets, `limma` design formulas,
-  degrees of freedom, and p-value thresholds. This enables users to
-  evaluate the impact of various settings on their analysis results
-  systematically.
+- **Automatically perform exploratory data analysis (EDA):**
 
-- **Perform Limma Spline Analysis:** Once the optimal hyperparameters
-  are identified, `run_limma_splines()` performs the limma analysis
-  using splines.
+  The `explore_data()` function generates an HTML report, containing
+  various EDA plots, such as densitiy, PCA, and correlation heatmap
+  plots.
 
-- **Cluster Significant Features:** The `cluster_hits()` function goes a
-  step further by clustering the significant features (hits) identified
-  in the spline analysis. It organizes these features into meaningful
-  groups (clusters) and generates a comprehensive report, facilitating
-  the interpretation and communication of the results.
+- **Explore various limma splines hyperparameters:**
 
-- **Run GSEA with the clustered hits:** The `gsea_report()` function
-  takes the clustered hits and performs a gene set enrichment analysis,
-  using clusterProfiler, with them.
+  Test combinations of hyperparameters, such as different datasets,
+  `limma` design formulas, degrees of freedom, and p-value thresholds
+  using the `limma_hyperparams_screen()` function.
+
+- **Perform limma spline analysis:**
+
+  Use the `run_limma_splines()` function to perform the `limma` analysis
+  with splines once the optimal hyperparameters are identified.
+
+- **Cluster significant features:**
+
+  Cluster the significant features (hits) identified in the spline
+  analysis with the `cluster_hits()` function.
+
+- **Run GSEA with clustered hits:**
+
+  Perform gene set enrichment analysis using the clustered hits with the
+  `gsea_report()` function.
+
+- **Generate reports:**
+
+  Automatically generate reports to showcase all results.
 
 ## Installation
 
@@ -154,8 +149,15 @@ a new issue.
 
 ## Usage
 
-The `SplineOmics` has following functions available (for a more detailed
-description, see the usage vignette):
+### Tutorial
+
+For a tutorial of the `SplineOmics` package, that covers a real
+proteomics example from start to the end, click here - [SplineOmics
+Tutorial](doc/SplineOmics-Tutorial.html)
+
+### Overview
+
+The `SplineOmics` has following functions available:
 
 ### extract_data()
 

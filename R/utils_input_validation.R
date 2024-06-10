@@ -19,6 +19,7 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @param args A list of arguments to be validated.
     #' @return A new instance of the InputControl class.
+    #' 
     initialize = function(args) {
       self$args <- args
     },
@@ -247,9 +248,6 @@ InputControl <- R6::R6Class("InputControl",
     #' @param top_tables A list of top tables from limma analysis.
     #'
     #' @return No return value, called for side effects.
-    #'
-    #' @seealso
-    #' \code{\link{check_dataframe}}
     #'
     check_top_tables = function() {
       
@@ -549,10 +547,6 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @return No return value, called for side effects.
     #'
-    #' @seealso
-    #' \code{\link{self$check_spline_params_generally}},
-    #' \code{\link{self$check_spline_params_mode_dependent}}
-    #'
     check_spline_params = function() {
       
       spline_params <- self$args$spline_params
@@ -588,22 +582,6 @@ InputControl <- R6::R6Class("InputControl",
     #' Returns `NULL` if any required arguments 
     #' (`spline_test_configs` or `metas`) 
     #' are missing. Otherwise, it performs a series of validation checks.
-    #'
-    #' @details
-    #' The function checks the following:
-    #' - Whether the required arguments (`spline_test_configs` and `metas`) 
-    #' are present.
-    #' - Validity of the columns in the spline test configurations.
-    #' - Validity of the spline type column in the configurations.
-    #' - Validity of the spline type parameters.
-    #' - Ensures that the maximum and minimum degrees of freedom are within the 
-    #'   acceptable ranges specified by the metadata.
-    #'
-    #' @seealso
-    #' \code{\link{self$check_colums_spline_test_configs}},
-    #' \code{\link{self$check_spline_type_column}}
-    #' \code{\link{self$check_spline_type_params}}
-    #' \code{\link{self$check_max_and_min_dof}}
     #'
     check_spline_test_configs = function() {
       
@@ -1309,9 +1287,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'
    #' @return No return value, called for side effects.
    #'
-   #' @seealso
-   #' \code{\link{self$check_spline_params_mode_dependent}}
-   #'
    check_spline_params_generally = function(spline_params) {
      if ("spline_type" %in% names(spline_params)) {
        if (!all(spline_params$spline_type %in% c("b", "n"))) {
@@ -1396,8 +1371,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'
    #' @return No return value, called for side effects.
    #'
-   #' @seealso
-   #' \code{\link{self$check_spline_params_generally}}
    #'
    check_spline_params_mode_dependent = function(spline_params,
                                                  mode,

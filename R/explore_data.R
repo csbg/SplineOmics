@@ -141,9 +141,10 @@ generate_explore_plots <- function(data,
     list(func = plot_first_lag_autocorrelation, size = 1.5),
     list(func = plot_cv, size = 1.5),
     list(func = make_pca_plot, size = 1.5, flatten = FALSE),
-    list(func = make_pca_variance_explained_plot, size = 1.5, flatten = FALSE),
+    list(func = make_scree_plot, size = 1.5, flatten = FALSE),
     list(func = make_mds_plot, size = 1.5, flatten = FALSE),
-    list(func = make_correlation_heatmaps, size = NULL)
+    list(func = make_correlation_heatmaps, size = NULL),
+    list(func = make_tsne_plot, size = 1.5, flatten = FALSE)
   )
   
   apply_plot_function <- function(entry) {
@@ -174,7 +175,7 @@ generate_explore_plots <- function(data,
                                                 length(result$plots)))
     }
   }
-  
+
   list(plots = all_plots, 
        plots_sizes = all_plots_sizes)
 }
@@ -198,13 +199,128 @@ generate_explore_plots <- function(data,
 #'
 #' @return None. This function writes the HTML content to the specified file.
 #' 
+# build_explore_data_report <- function(header_section,
+#                                       plots,
+#                                       plots_sizes,
+#                                       output_file_path) {
+# 
+#   level_count = (length(plots) - 6)/8
+# 
+#   html_content <- paste(header_section, "<!--TOC-->", sep="\n")
+# 
+#   toc <- create_toc()
+# 
+#   styles <- define_html_styles()
+#   section_header_style <- styles$section_header_style
+#   toc_style <- styles$toc_style
+# 
+#   pb <- create_progress_bar(plots)
+#   plot_names <- c("Density Plots",
+#                   "Boxplots",
+#                   "Violin Plots",
+#                   "Mean Time Correlation",
+#                   "Lag1 Differences",
+#                   "First Lag Autocorrelation",
+#                   "Coefficient of Variation",
+#                   "PCA",
+#                   "Scree Plot",
+#                   "MDS",
+#                   "Correlation Heatmaps",
+#                   "t-SNE Plot")
+# 
+#   plot_explanations <- get_explore_plots_explanations()
+# 
+#   toc_index <- 0
+#   toc_index_memory <- toc_index
+# 
+#   # Generate the sections and plots
+#   for (index in seq_along(plots)) {
+# 
+#     # Determine when to place headers based on the provided logic
+#     if (length(plots) == 7) {     # Just one level exists
+# 
+#       toc_index <- toc_index + 1
+# 
+#     } else if (index == 1 ||
+#                index == 2 + level_count ||
+#                index == 2 + 2 * level_count ||
+#                index == 2 + 3 * level_count ||
+#                index == 2 + 4 * level_count ||
+#                index == 2 + 5 * level_count ||
+#                index == 2 + 6 * level_count ||
+#                index == 2 + 7 * level_count ||
+#                index == 3 + 7 * level_count ||
+#                index == 4 + 7 * level_count ||
+#                index == 5 + 7 * level_count ||
+#                index == 6 + 8 * level_count) {    # More than just one level
+# 
+#       toc_index <- toc_index + 1
+#     }
+# 
+# 
+#     if (toc_index != toc_index_memory) {
+# 
+#       section_id <- paste0("section_", toc_index)
+#       toc <- paste(toc,
+#                    sprintf('<li style="%s"><a href="#%s">%s</a></li>',
+#                            toc_style,
+#                            section_id,
+#                            plot_names[toc_index]),
+#                    sep = "\n")
+# 
+#       section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>',
+#                                 section_id,
+#                                 section_header_style,
+#                                 plot_names[toc_index])
+# 
+#       plot_description <- sprintf('<p style="font-size: 2em;">%s</p>',
+#                                   plot_explanations[toc_index])
+# 
+# 
+#       html_content <- paste(html_content,
+#                                   section_header,
+#                                   plot_description,
+#                                   sep = "\n")
+# 
+#       toc_index_memory <- toc_index
+#     }
+# 
+# 
+#     # Process each plot
+#     plot <- plots[[index]]
+#     plot_size <- plots_sizes[[index]]
+#     img_tag <- plot2base64(plot, plot_size)
+# 
+#     html_content <- paste(html_content, img_tag, sep = "\n")
+#     pb$tick()
+#   }
+# 
+#   # Close the Table of Contents
+#   toc <- paste(toc, "</ul></div>", sep="\n")
+# 
+#   # Insert the Table of Contents at the placeholder
+#   html_content <- gsub("<!--TOC-->", toc, html_content)
+# 
+#   # Append the final closing tags for the HTML body and document
+#   html_content <- paste(html_content, "</body></html>", sep="\n")
+# 
+#   # Ensure the directory exists
+#   dir_path <- dirname(output_file_path)
+#   if (!dir.exists(dir_path)) {
+#     dir.create(dir_path, recursive = TRUE)
+#   }
+# 
+#   # Write the HTML content to file
+#   writeLines(html_content, output_file_path)
+#   cat("Report written to:", normalizePath(output_file_path), "\n")
+# }
 build_explore_data_report <- function(header_section, 
                                       plots, 
                                       plots_sizes, 
                                       output_file_path) {  
   
-  level_count = (length(plots) - 5)/8
-
+  level_count = (length(plots) - 6) / 8
+  
   html_content <- paste(header_section, "<!--TOC-->", sep="\n")
   
   toc <- create_toc()
@@ -212,7 +328,7 @@ build_explore_data_report <- function(header_section,
   styles <- define_html_styles()
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
-
+  
   pb <- create_progress_bar(plots)
   plot_names <- c("Density Plots", 
                   "Boxplots", 
@@ -222,20 +338,84 @@ build_explore_data_report <- function(header_section,
                   "First Lag Autocorrelation",
                   "Coefficient of Variation",
                   "PCA ", 
-                  "PCA Variance explained",
+                  "Scree Plot",
                   "MDS",
-                  "Correlation Heatmaps")
+                  "Correlation Heatmaps",
+                  "t-SNE Plot")
   
   plot_explanations <- get_explore_plots_explanations()
-
+  
   toc_index <- 0
   toc_index_memory <- toc_index
-
+  major_headers <- c("Distribution and Variability Analysis", 
+                     "Time Series Analysis", 
+                     "Dimensionality Reduction and Clustering")
+  major_header_added <- c(FALSE, FALSE, FALSE)
+  
+  # CSS for major headers
+  major_header_style <- 
+    "font-size: 6em; font-family: Arial, sans-serif; text-align: center;"
+  
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     
+    # Add major headers at the specified positions
+    if (index == 1 && !major_header_added[1]) {
+      major_header_added[1] <- TRUE
+      section_id <- paste0("section_major_", 1)
+      toc <- paste(toc, 
+                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
+                           toc_style, 
+                           section_id,
+                           major_headers[1]), 
+                   sep = "\n")
+      
+      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
+                              section_id, 
+                              major_header_style, 
+                              major_headers[1])
+      
+      html_content <- paste(html_content, group_header, sep = "\n")
+      
+    } else if (index == (2 + 3 * level_count) && !major_header_added[2]) {
+      
+      major_header_added[2] <- TRUE
+      section_id <- paste0("section_major_", 2)
+      toc <- paste(toc, 
+                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
+                           toc_style, 
+                           section_id,
+                           major_headers[2]), 
+                   sep = "\n")
+      
+      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
+                              section_id, 
+                              major_header_style, 
+                              major_headers[2])
+      
+      html_content <- paste(html_content, group_header, sep = "\n")
+      
+    } else if (index == (2 + 7 * level_count) && !major_header_added[3]) {
+      
+      major_header_added[3] <- TRUE
+      section_id <- paste0("section_major_", 3)
+      toc <- paste(toc, 
+                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
+                           toc_style, 
+                           section_id,
+                           major_headers[3]), 
+                   sep = "\n")
+      
+      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
+                              section_id, 
+                              major_header_style, 
+                              major_headers[3])
+      
+      html_content <- paste(html_content, group_header, sep = "\n")
+    }
+    
     # Determine when to place headers based on the provided logic
-    if (length(plots) == 7) {     # Just one level exists
+    if (length(plots) == 12) {     # Just one level exists
       
       toc_index <- toc_index + 1
       
@@ -249,21 +429,23 @@ build_explore_data_report <- function(header_section,
                index == 2 + 7 * level_count || 
                index == 3 + 7 * level_count || 
                index == 4 + 7 * level_count ||
-               index == 5 + 7 * level_count) {    # More than just one level
-    
+               index == 5 + 7 * level_count ||
+               index == 6 + 8 * level_count) {    # More than just one level
+      
       toc_index <- toc_index + 1
     }
-    
     
     if (toc_index != toc_index_memory) {
       
       section_id <- paste0("section_", toc_index)
-      toc <- paste(toc, 
-                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-                           toc_style, 
-                           section_id,
-                           plot_names[toc_index]), 
-                   sep = "\n")
+      toc <- 
+        paste(toc, 
+              sprintf(
+                '<li style="margin-left: 20px;%s"><a href="#%s">%s</a></li>', 
+                toc_style, 
+                section_id,
+                plot_names[toc_index]), 
+              sep = "\n")
       
       section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>', 
                                 section_id, 
@@ -273,15 +455,13 @@ build_explore_data_report <- function(header_section,
       plot_description <- sprintf('<p style="font-size: 2em;">%s</p>',
                                   plot_explanations[toc_index])
       
-      
       html_content <- paste(html_content, 
-                                  section_header, 
-                                  plot_description, 
-                                  sep = "\n")
+                            section_header, 
+                            plot_description, 
+                            sep = "\n")
       
       toc_index_memory <- toc_index
     }
-    
     
     # Process each plot
     plot <- plots[[index]]
@@ -299,7 +479,7 @@ build_explore_data_report <- function(header_section,
   html_content <- gsub("<!--TOC-->", toc, html_content)
   
   # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep="\n")
+  html_content <- paste(html_content, "</body></html>", sep = "\n")
   
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
@@ -311,6 +491,12 @@ build_explore_data_report <- function(header_section,
   writeLines(html_content, output_file_path)
   cat("Report written to:", normalizePath(output_file_path), "\n")
 }
+
+
+
+
+
+
 
 
 
@@ -800,7 +986,7 @@ make_pca_plot <- function(data,
     ggplot2::xlim(x_range[1], extended_x_max) +
     ggplot2::xlab(paste("PC1 -", percent_variance_explained[1], "% variance")) +
     ggplot2::ylab(paste("PC2 -", percent_variance_explained[2], "% variance")) +
-    ggplot2::labs(color = "Level") +
+    ggplot2::labs(color = condition) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = element_text(hjust = 0.5))
 }
@@ -825,9 +1011,9 @@ make_pca_plot <- function(data,
 #' @importFrom ggplot2 ggplot aes geom_col geom_text xlab ylab ggtitle 
 #' theme_minimal
 #' 
-make_pca_variance_explained_plot <- function(data,
-                                             meta,
-                                             condition) {
+make_scree_plot <- function(data,
+                            meta,
+                            condition) {
   
   # meta and condition are not used, just taken because the functions are 
   # called from another function that passes these arguments.
@@ -906,7 +1092,7 @@ make_mds_plot <- function(data,
     ggplot2::theme_minimal() +
     ggplot2::labs(x = "Dimension 1",
                   y = "Dimension 2",
-                  color = "Level") +
+                  color = condition) +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 }
 
@@ -1033,6 +1219,64 @@ make_correlation_heatmaps <- function(data,
 }
 
 
+#' Generate a t-SNE Plot
+#'
+#' @description
+#' This function performs t-SNE on a given data matrix and creates a ggplot2 
+#' scatter plot where points are colored based on a specified condition from 
+#' the metadata.
+#'
+#' @param data A matrix where rows represent features and columns represent 
+#' samples.
+#' @param meta A data frame containing metadata for the samples, with rows 
+#' corresponding to columns in the data matrix.
+#' @param condition The name of the column in the metadata data frame that 
+#' contains the condition labels for coloring the plot.
+#'
+#' @return A ggplot2 object representing the t-SNE plot.
+#'
+#' @importFrom Rtsne Rtsne
+#' @importFrom ggplot2 ggplot aes geom_point xlab ylab theme_minimal theme
+#'                     element_line labs
+#'
+make_tsne_plot <- function(data,
+                           meta,
+                           condition) {
+  
+  # Transpose the matrix so that rows are samples
+  data_t <- t(data)
+  
+  # perplexity should be less than number of samples divides by three
+  perplexity <- min(30, nrow(meta) / 3 - 1)
+  
+  message(paste("Making t-SNE plot\n"))
+  
+  # Run t-SNE
+  tsne_result <- Rtsne::Rtsne(data_t,
+                              dims = 2,
+                              perplexity = perplexity,
+                              verbose = TRUE,
+                              max_iter = 1000)
+  
+  # Create a data frame with t-SNE results for ggplot2
+  tsne_df <- data.frame(tSNE1 = tsne_result$Y[, 1],
+                        tSNE2 = tsne_result$Y[, 2],
+                        condition = meta[[condition]])
+  
+  tsne_plot <- ggplot2::ggplot(tsne_df,
+                               ggplot2::aes(x = tSNE1,
+                                            y = tSNE2,
+                                            color = condition)) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::xlab("t-SNE1") +
+    ggplot2::ylab("t-SNE2") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.grid.major = ggplot2::element_line(color = "grey80"),
+                   panel.grid.minor = ggplot2::element_line(color = "grey90")) +
+    ggplot2::labs(color = condition)
+}
+
+
 #' Get Plot Explanations
 #'
 #' @description
@@ -1105,10 +1349,10 @@ get_explore_plots_explanations <- function() {
     
     "PCA plots visualize the major trends and patterns in high-dimensional 
   data by reducing it to a few principal components. Points close to each 
-  other are similar. Use PCA plots to identify clustering and variance 
-  explained by the principal components.",
+  other are similar, they are correlated and clustered. Use PCA plots to 
+  identify clustering and variance explained by the principal components.",
     
-    "PCA Variance Explained plots show the amount of variance explained by 
+    "Scree plots show the amount of variance explained by 
   each principal component. The y-axis represents the percentage of total 
   variance explained, and the x-axis represents the principal components. 
   Use this plot to determine the number of components to consider.",
@@ -1120,5 +1364,14 @@ get_explore_plots_explanations <- function() {
     "Correlation Heatmaps illustrate the pairwise correlation between all 
   samples. Colors represent the strength of correlation, with a color 
   gradient indicating positive or negative correlations. Use this plot to 
-  identify highly correlated samples or groups.")
+  identify highly correlated samples or groups.",
+    
+  "t-SNE plots visualize high-dimensional data by reducing it to two or three
+  dimensions, making complex patterns and relationships easier to see. 
+  Points close to each other in the plot represent samples with similar 
+  characteristics. Use t-SNE plots to identify clusters and subgroups within
+  your data, revealing how samples relate to each other based on their
+  features. This helps in understanding the structure and similarities within
+  the dataset, especially for discovering hidden patterns and groups." 
+    )
 }
