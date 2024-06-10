@@ -39,7 +39,7 @@ The R package `SplineOmics` gets the significant features (hits) of time-series 
 -   [📜 License](#license)
 -   [🎓 Citation](#citation)
 
-## 📘 Introduction {#introduction}
+## 📘 Introduction
 
 Welcome to `SplineOmics`, an R package designed to streamline the analysis of omics time-series data, followed by automated HTML report generation.
 
