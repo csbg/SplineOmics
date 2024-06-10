@@ -16,14 +16,6 @@ methods to check dataframes and spline parameters.
 \code{\link{InputControl}}
 
 Check Data Matrix
-
-\code{\link{self$check_spline_params_mode_dependent}}
-
-Check Spline Parameters Mode Dependent
-
-\code{\link{self$check_spline_params_generally}}
-
-Check Columns in Spline Test Configurations
 }
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{Level2Functions}
@@ -179,6 +171,8 @@ Validates the general structure and contents of spline parameters.
 }
 \subsection{Returns}{
 No return value, called for side effects.
+
+Check Spline Parameters Mode Dependent
 }
 }
 \if{html}{\out{<hr>}}
@@ -211,6 +205,9 @@ Validates the spline parameters depending on the specified mode.
 }
 \subsection{Returns}{
 No return value, called for side effects.
+
+
+Check Columns in Spline Test Configurations
 }
 }
 \if{html}{\out{<hr>}}

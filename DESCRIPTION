@@ -11,6 +11,7 @@ License: MIT + file LICENSE
 Imports: 
     ComplexHeatmap(>= 2.18.0),
     RColorBrewer(>= 1.1-3),
+    Rtsne(>= 0.17),
     base64enc(>= 0.1-3),
     circlize(>= 0.4.16),
     cluster(>= 2.1.6),
