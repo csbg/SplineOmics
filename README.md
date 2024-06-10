@@ -4,9 +4,6 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Maintained?
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)
-![R-CMD-check](https://github.com/csbg/SplineOmics/workflows/R-CMD-check/badge.svg)
-![Last
-Updated](https://img.shields.io/github/last-commit/csbg/SplineOmics)
 
 The R package `SplineOmics` gets the significant features (hits) of
 time-series omics data by using splines and limma for hypothesis testing

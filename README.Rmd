@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 
 # SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R-CMD-check](https://github.com/csbg/SplineOmics/workflows/R-CMD-check/badge.svg) ![Last Updated](https://img.shields.io/github/last-commit/csbg/SplineOmics)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) 
 
 The R package `SplineOmics` gets the significant features (hits) of time-series omics data by using splines and limma for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.
 
