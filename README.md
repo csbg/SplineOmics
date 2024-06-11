@@ -1,8 +1,9 @@
 
 # SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue) ![License:
-MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Maintained?
+![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License:
+MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+![Maintained?
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
 CMD
 Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
@@ -122,6 +123,7 @@ repository into your R environment.
     # Load devtools package
     library(devtools)
 
+    # This line will be deleted once the repo is public
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
     # Install the SplineOmics package from GitHub
@@ -178,14 +180,12 @@ downloads version 0.1.0):
 docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
 ```
 
-### Running the Docker Container in Interactive Mode
+### Running the Docker Container
 
-To run the Docker container in interactive mode, you can use the
-following command. This will start a container and open a bash shell,
-allowing you to run your analysis interactively within the container.
-This command needs to be run in a dir where the subdirs input and output
-exist. Place your data and meta (and annotation) files in input, and
-receive your output from the package in the output dir.
+To run the Docker container, you can use the following Bash command.
+This command needs to be run in a dir where the subdirs `input` and
+`output` exist. Place your data and meta (and annotation) files in
+`input`, and receive your output from the package in the `output` dir.
 
 ``` sh
 docker run -it -d \
@@ -199,9 +199,22 @@ docker run -it -d \
 
 Once the container is running, open a web browser and navigate to
 <http://localhost:8888>. Use rstudio as the username and the password
-you set with the -e PASSWORD=password option. As long as the container
-is running, you can work on that localhost page with RStudio, where also
-the `SplineOmics` package is installed.
+you set with the -e PASSWORD=password option.
+
+As long as the container is running, you can work on that localhost page
+with RStudio, where also the `SplineOmics` package is installed. The dir
+`/home/rstudio/` is your R session working dir.
+
+Load your input data for example like this:
+
+``` r
+library(here)
+library(readxl)
+data <- readxl::read_excel(here::here("input", "data.xlsx"))
+```
+
+Direct all generated results to `/home/rstudio/output`, which is mounted
+to your local dir `output`. Your results will be there.
 
 Stop the container:
 
@@ -357,6 +370,15 @@ The `SplineOmics` package is currently not published in a peer-reviewed
 scientific journal or similar outlet. However, if this package helped
 you in your work, consider citing this GitHub repository.
 
+To cite this package, you can use the citation information provided in
+the [`CITATION.cff`](./CITATION.cff) file.
+
+You can also generate a citation in various formats using the
+`CITATION.cff` file by visiting the top right of this repo and clicking
+on the “Cite this repository” button.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
+
 Also, if you like the package, consider giving the GitHub repository a
 star. Your support helps us in the continued development and improvement
 of `SplineOmics`. Thank you for using our package!
@@ -371,5 +393,5 @@ of `SplineOmics`. Thank you for using our package!
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
   code, delivered improvement suggestions
 - [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed
-  parts of the functions and the overall approach together with
+  parts of two functions and the overall approach together with
   Thomas-Rauter
