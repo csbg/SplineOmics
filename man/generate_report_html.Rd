@@ -41,7 +41,7 @@ be directly embedded in the HTML report for downloading.}
 \item{spline_params}{A list of spline parameters.}
 
 \item{report_type}{A character string specifying the report type 
-('limma_hyperparams_screen' or 'cluster_hits').}
+('screen_limma_hyperparams' or 'cluster_hits').}
 
 \item{mode}{A character string specifying the mode 
 ('isolated' or 'integrated').}

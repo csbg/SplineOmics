@@ -1,4 +1,0 @@
-docker build -t splineomics:0.1.0 .
-
-
-

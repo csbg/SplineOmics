@@ -1,4 +1,4 @@
-# This function uses the function run_gsea to run 
+# This function uses the function create_gsea_report to run 
 
 
 
@@ -29,14 +29,14 @@
 #' 
 #' @export
 #' 
-run_gsea <- function(levels_clustered_hits,
-                     genes,
-                     databases,
-                     report_info,
-                     params = NA,
-                     plot_titles = NA,
-                     background = NULL,
-                     report_dir = here::here()) {
+create_gsea_report <- function(levels_clustered_hits,
+                               genes,
+                               databases,
+                               report_info,
+                               params = NA,
+                               plot_titles = NA,
+                               background = NULL,
+                               report_dir = here::here()) {
   
   # Check report_info and report_dir
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -44,7 +44,7 @@ run_gsea <- function(levels_clustered_hits,
   input_control$auto_validate()
   
   # Control the test not covered by the InputControl class
-  control_inputs_gsea_report(levels_clustered_hits = levels_clustered_hits,
+  control_inputs_create_gsea_report(levels_clustered_hits = levels_clustered_hits,
                              genes = genes,
                              databases = databases,
                              params = params,
@@ -81,8 +81,8 @@ run_gsea <- function(levels_clustered_hits,
                        plots_sizes = plots_sizes, 
                        report_info = report_info,
                        level_headers_info = level_headers_info,
-                       report_type = "gsea_report",
-                       filename = "gsea_report",
+                       report_type = "create_gsea_report",
+                       filename = "create_gsea_report",
                        report_dir = report_dir)
   
   return(plots)
@@ -108,7 +108,7 @@ run_gsea <- function(levels_clustered_hits,
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
 #'
-control_inputs_gsea_report <- function(levels_clustered_hits,
+control_inputs_create_gsea_report <- function(levels_clustered_hits,
                                        genes,
                                        databases,
                                        params,
@@ -149,13 +149,13 @@ control_inputs_gsea_report <- function(levels_clustered_hits,
 #' @description
 #' This function manages the GSEA analysis for a specific level. It extracts
 #' genes associated with the clustered hits, removes rows with `NA` values,
-#' and runs the GSEA analysis using the `run_gsea` function.
+#' and runs the GSEA analysis using the `create_gsea_report` function.
 #'
 #' @param clustered_hits A dataframe containing the clustered hits for a 
 #' specific level. It must include a column named `feature` to extract genes.
 #' @param level_name A character string representing the name of the level.
 #'
-#' @return The result of the `run_gsea` function, which typically includes 
+#' @return The result of the `create_gsea_report` function, which typically includes 
 #' various plots and enrichment results.
 #'
 manage_gsea_level <- function(clustered_hits,
@@ -167,7 +167,7 @@ manage_gsea_level <- function(clustered_hits,
   
   message(paste("\n\n Running clusterProfiler for the level:", level_name))
   
-  result <- run_gsea_level(clustered_genes = clustered_hits,
+  result <- create_gsea_report_level(clustered_genes = clustered_hits,
                            databases = databases,
                            params = clusterProfiler_params,
                            plot_title = level_name)
@@ -246,7 +246,7 @@ process_result <- function(level_result,
 #' processing individual plots. The TOC is inserted into the HTML content, 
 #' which is then finalized and written to the specified output file.
 #' 
-build_gsea_report <- function(header_section,
+build_create_gsea_report <- function(header_section,
                               plots,
                               plots_sizes,
                               level_headers_info,
@@ -541,7 +541,7 @@ check_params <- function(params) {
 #'
 #' @importFrom clusterProfiler enricher
 #'
-run_gsea_level <- function(clustered_genes,
+create_gsea_report_level <- function(clustered_genes,
                            databases,
                            params = NA,
                            plot_title = "",
@@ -726,7 +726,7 @@ generate_section_content <- function(section_info,
   base64_df <- sprintf('<a href="%s" download="count2small_results.xlsx">
                     <button>Download count2small_results.xlsx</button></a>', 
                        encode_df_to_base64(section_info$raw_enrich_results,
-                                           "gsea_report"))
+                                           "create_gsea_report"))
   
   html_content <- paste(html_content, 
                         section_header, 

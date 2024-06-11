@@ -19,11 +19,12 @@ HTML reports.
   - [📊 Overview](#overview)
     - [📄 extract_data](#extract_data)
     - [🔍 explore_data](#explore_data)
-    - [🧮️ limma_hyperparams_screen](#limma_hyperparams_screen)
+    - [🧮️ screen_limma_hyperparams](#screen_limma_hyperparams)
     - [⚙️ run_limma_splines](#run_limma_splines)
-    - [📈 limma_report](#limma_report)
+    - [📈 create_limma_report](#create_limma_report)
     - [🌐 cluster_hits](#cluster_hits)
-    - [🔬 run_gsea](#run_gsea)
+    - [📥 download_enrichr_databases](#download_enrichr_databases)
+    - [🔬 create_gsea_report](#create_gsea_report)
   - [🛠️ Functions in Depth](#functions-in-depth)
 - [🐳 Docker Container](#docker-container)
 - [📦 Dependencies](#dependencies)
@@ -44,16 +45,17 @@ If you have omics data over time, the package will help you to run
 `limma` with splines, decide on which parameters to use, perform the
 clustering, run GSEA and show result plots in HTML reports.
 
-### What do I need precicely?
+### What do I need precisely?
 
 1.  A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
     time.
 
-2.  A table describing the features (e.g. gene and protein name, etc.)
+2.  A table with metadata on the rows/features (e.g., gene and protein
+    name)
 
-3.  A meta table where each row corresponds to a sample and each column
-    to specific meta information, for example reactor, time point, etc.
+3.  A table with metadata on the columns/samples (e.g., reactor, time
+    point, etc.)
 
 ### Capabilities
 
@@ -69,7 +71,7 @@ With `SplineOmics`, you can:
 
   Test combinations of hyperparameters, such as different datasets,
   `limma` design formulas, degrees of freedom, and p-value thresholds
-  using the `limma_hyperparams_screen()` function.
+  using the `screen_limma_hyperparams()` function.
 
 - **Perform limma spline analysis:**
 
@@ -84,7 +86,7 @@ With `SplineOmics`, you can:
 - **Run GSEA with clustered hits:**
 
   Perform gene set enrichment analysis using the clustered hits with the
-  `gsea_report()` function.
+  `create_gsea_report()` function.
 
 - **Generate reports:**
 
@@ -101,7 +103,7 @@ repository into your R environment.
   it from [CRAN](https://cran.r-project.org/).
 - **RStudio** is recommended for a more user-friendly experience with R.
   Download and install RStudio from
-  [rstudio.com](https://www.rstudio.com/products/rstudio/download/).
+  [posit.co](https://posit.co/download/rstudio-desktop/).
 
 #### Installation Steps
 
@@ -153,137 +155,16 @@ GitHub repository for similar problems or to post a new issue.
 
 ### 📖 Tutorial
 
-For a tutorial of the `SplineOmics` package, that covers a real CHO cell
-time-series proteomics example from start to the end, click here -
-[SplineOmics
-Tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/SplineOmics-Tutorial.html)
-
-### 📊 Overview
-
-The `SplineOmics` package has following functions available:
-
-#### 📄 extract_data()
-
-Extract the data section and the feature description out of an initial
-Excel file:
-
-``` r
-data <- extract_data(data,
-                     feature_name_columns = NA)
-```
-
-#### 🔍 explore_data()
-
-Generate an HTML with the exploratory data analysis (and additionally
-return the plots in R):
-
-``` r
-plots <- explore_data(data,
-                      meta,
-                      condition,
-                      report_info,
-                      meta_batch_column = NA,
-                      meta_batch2_column = NA,
-                      report_dir = here::here(),
-                      report = TRUE)
-```
-
-#### 🧮 limma_hyperparams_screen()
-
-Allows to systematically test different hyperparameters for the
-subsequent timeseries analysis with limma and splines. Test different
-spline parameters, limma design formulas, verions of data (outliers
-removed vs. not removed), etc. in a semi-combinatorial fashion.
-
-``` r
-limma_hyperparams_screen(datas, 
-                         datas_descr,
-                         metas, 
-                         designs, 
-                         condition, 
-                         spline_test_configs,
-                         report_info,
-                         report_dir = here::here(),
-                         adj_pthresholds = c(0.05),
-                         meta_batch_column = NA,  
-                         meta_batch2_column = NA,
-                         time_unit = "m",    
-                         padjust_method = "BH")
-```
-
-#### ⚙️ run_limma_splines()
-
-Get the limma topTable, with the adjusted p-values for each feature, by
-analysing the time-series data with splines and limma:
-
-``` r
-top_tables <- run_limma_splines(data,
-                                meta,
-                                design,
-                                condition, 
-                                spline_params = 
-                                  list(spline_type = c("n"),
-                                       dof = c(2L)),
-                                padjust_method = "BH")
-```
-
-#### 📈 limma_report()
-
-Show the limma spline results with p-value histograms and volcano plots
-in an HTML report.
-
-``` r
-limma_report(header_section, 
-             plots, 
-             plots_sizes, 
-             level_headers_info,
-             output_file_path = here::here())
-```
-
-#### 🌐 cluster_hits()
-
-Cluster the significant features (hits) via hierarchical clustering:
-
-``` r
-clustering <- cluster_hits(top_tables,
-                           data,
-                           meta,
-                           design,      
-                           condition,   
-                           report_info,   
-                           spline_params = 
-                            list(spline_type = c("n"),
-                                 dof = c(2L)),
-                           adj_pthresholds = c(0.05),
-                           clusters = c("auto"),
-                           meta_batch_column = NA,   
-                           meta_batch2_column = NA,   
-                           time_unit = "min",    
-                           report_dir = here::here(),
-                           report = TRUE)
-```
-
-#### 🔬 run_gsea()
-
-Perform a gene set enrichment analysis (gsea), using clusterProfiler,
-with the clustered hits:
-
-``` r
-run_gsea <- function(levels_clustered_hits,
-                     genes,
-                     databases,
-                     report_info,
-                     params = NA,
-                     plot_titles = NA,
-                     background = NULL,
-                     report_dir = here::here())
-```
+[This
+tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html)
+covers a real CHO cell time-series proteomics example from start to the
+end.
 
 ### 🛠 Functions in Depth
 
-For a detailed description of all arguments and outputs of all the
-available package functions, click here - [SplineOmics
-Tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html)
+A detailed description of all arguments and outputs of all the available
+package functions can be found
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html)
 
 ## 🐳 Docker Container
 
@@ -294,11 +175,11 @@ instructions below to pull the Docker container and run your analysis.
 ### Pulling the Docker Container
 
 You can pull the Docker container of the desired version of the
-`SplineOmics` package from Docker Hub using the following command (here
-it downloads version 0.1.0):
+`SplineOmics` package from GitHub using the following command (here it
+downloads version 0.1.0):
 
 ``` sh
-docker pull thomasrauter/splineomics:0.1.0
+docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
 ```
 
 ### Running the Docker Container in Interactive Mode
@@ -306,20 +187,49 @@ docker pull thomasrauter/splineomics:0.1.0
 To run the Docker container in interactive mode, you can use the
 following command. This will start a container and open a bash shell,
 allowing you to run your analysis interactively within the container.
+This command needs to be run in a dir where the subdirs input and output
+exist. Place your data and meta (and annotation) files in input, and
+receive your output from the package in the output dir.
 
 ``` sh
 docker run -it -d \
-    -v $(pwd)/data.xlsx:/input/data.xlsx \
-    -v $(pwd)/meta.xlsx:/input/meta.xlsx \
-    -v $(pwd)/output:/output \
+    -v $(pwd)/input:/home/rstudio/input \
+    -v $(pwd)/output:/home/rstudio/output \
     -p 8888:8787 \
     -e PASSWORD=password \
+    --name splineomics_container \
     thomasrauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to
 <http://localhost:8888>. Use rstudio as the username and the password
-you set with the -e PASSWORD=password option.
+you set with the -e PASSWORD=password option. As long as the container
+is running, you can work on that localhost page with RStudio, where also
+the `SplineOmics` package is installed.
+
+Stop the container:
+
+``` sh
+docker stop splineomics_container
+```
+
+Start the container again:
+
+``` sh
+docker start splineomics_container
+```
+
+### Inspect Docker container installations
+
+To see all the R packages and system installations that make up the
+Docker container, you can run the following command in the terminal of
+RStudio on your localhost page (<http://localhost:8888>). Because with
+the above command the ‘/home/rstudio/output’ dir is mounted to your
+local filesystem, this will make the installation log files available.
+
+``` sh
+cp -r /log home/rstudio/output
+```
 
 ## 📦 Dependencies
 
@@ -411,17 +321,7 @@ Here’s how you can contribute:
     has already been reported or the feature requested by another user.
 
 2.  **Submit a Pull Request:** If you’ve developed a bug fix or a new
-    feature that you’d like to share, submit a pull request. Here are
-    the steps:
-
-    - Fork the repository.
-    - Create a new branch in your fork for your contributions.
-    - Commit your changes to the branch.
-    - Push the branch to your fork.
-    - Submit a pull request to the `SplineOmics` repository from your
-      fork and branch.
-    - Please describe your changes clearly in the pull request
-      description and reference any related issues.
+    feature that you’d like to share, submit a pull request.
 
 3.  **Improve Documentation:** Good documentation is crucial for any
     project. If you notice missing or incorrect documentation, please
@@ -436,51 +336,16 @@ inspire, and create.
 
 ## 📜 License
 
-This package is licensed under the MIT License with additional terms.
-Please see the [LICENSE](./LICENSE) file for full terms and conditions.
+This package is licensed under the MIT License: [LICENSE](./LICENSE)
 
 © 2024 Thomas Rauter. All rights reserved.
 
 ## 🎓 Citation
 
 The `SplineOmics` package is currently not published in a peer-reviewed
-scientific journal or similar outlet, and as such, there is no formal
-citation requirement associated with its use. You are free to use
-`SplineOmics` without citing it. However, we appreciate acknowledgements
-in your projects or publications that benefit from this package. Also,
-if you like the package, consider giving the GitHub repository a star.
-Your support helps us in the continued development and improvement of
-`SplineOmics`. Thank you for using our package!
+scientific journal or similar outlet. However, if this package helped
+you in your work, consider citing this GitHub repository.
 
-The `SplineOmics` relies substantially on following R libraries in
-particular, which should be cited in your publication:
-
-- limma –\> Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W., Shi,
-  W., and Smyth, G.K. (2015). limma powers differential expression
-  analyses for RNA-sequencing and microarray studies. Nucleic Acids
-  Research 43(7), e47. (DOI:
-  [10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007))
-
-- ggplot2 –\> H. Wickham. ggplot2: Elegant Graphics for Data Analysis.
-  Springer-Verlag New York, 2016.
-
-- dplyr –\> Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
-  *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4,
-  <https://CRAN.R-project.org/package=dplyr>.
-
-- tidyr –\> Wickham H, Vaughan D, Girlich M (2024). *tidyr: Tidy Messy
-  Data*. R package version 1.3.1,
-  <https://CRAN.R-project.org/package=tidyr>.
-
-- ComplexHeatmap –\> Gu, Z. (2016) Complex heatmaps reveal patterns and
-  correlations in multidimensional genomic data. Bioinformatics.
-
-- pheatmap –\> Kolde R (2019). *pheatmap: Pretty Heatmaps*. R package
-  version 1.0.12, <https://CRAN.R-project.org/package=pheatmap>.
-
-- purrr –\> Wickham H, Henry L (2023). *purrr: Functional Programming
-  Tools*. R package version 1.0.2,
-  <https://CRAN.R-project.org/package=purrr>.
-
-- tibble –\> Müller K, Wickham H (2023). *tibble: Simple Data Frames*. R
-  package version 3.2.1, <https://CRAN.R-project.org/package=tibble>.
+Also, if you like the package, consider giving the GitHub repository a
+star. Your support helps us in the continued development and improvement
+of `SplineOmics`. Thank you for using our package!

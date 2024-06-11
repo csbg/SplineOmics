@@ -1,6 +1,6 @@
-#' limma_hyperparams_screen.R contains the exported package function 
-#' limma_hyperparams_screen  and all the functions that make up the 
-#' functionality of limma_hyperparams_screen. limma_hyperparams_screen runs the 
+#' screen_limma_hyperparams.R contains the exported package function 
+#' screen_limma_hyperparams  and all the functions that make up the 
+#' functionality of screen_limma_hyperparams. screen_limma_hyperparams runs the 
 #' other package function, run_limma_splines, for a time series omics dataset,
 #' for different hyperparameters. Such are for example degree of freedom of the
 #' spline, type of spline, limma design formula, and different versions of the 
@@ -9,7 +9,7 @@
 #' and structured manner. Therefore, this function streamlines that process.
 
 
-# Exported function: limma_hyperparams_screen() --------------------------------
+# Exported function: screen_limma_hyperparams() --------------------------------
 
 
 #' Limma Hyperparameters Screening
@@ -49,7 +49,7 @@
 #'
 #' @export
 #'
-limma_hyperparams_screen <- function(datas, 
+screen_limma_hyperparams <- function(datas, 
                                      datas_descr,
                                      metas, 
                                      designs, 
@@ -1016,7 +1016,7 @@ process_combo_pair <- function(combo_pair,
   generate_report_html(plots = plots, 
                        plots_sizes = plots_len, 
                        report_info = report_info,
-                       report_type = "limma_hyperparams_screen",
+                       report_type = "screen_limma_hyperparams",
                        filename = combo_pair_name,
                        timestamp = timestamp,
                        report_dir = report_dir, )
