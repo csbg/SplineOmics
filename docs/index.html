@@ -5,14 +5,21 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Streamlines the process of analysing omics timeseries data with splines • splinetime</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<title>Streamlines the process of analysing omics timeseries data with splines • SplineOmics</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Streamlines the process of analysing omics timeseries data with splines">
-<meta property="og:description" content="More about what it does (maybe more than one line)">
+<meta property="og:description" content="Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.">
+<meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -32,7 +39,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">splinetime</a>
+        <a class="navbar-link" href="index.html">SplineOmics</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
@@ -41,6 +48,21 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/functions-in-depth.html">functions-in-depth</a>
+    </li>
+    <li>
+      <a href="articles/get-started.html">get-started</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -55,272 +77,255 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-
-<div class="page-header"><h1 align="center">
-</h1></div>
-<p>splinetime</p>
-
-<p><br></p>
-<p align="center">
-</p>
-<p><img src="readme_images/splinetime_logo.png" alt="Splinetime Clock" width="400" height="450"></p>
-
-<p><br><br></p>
 <div class="section level1">
-<h1 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
-</h1>
+<div class="page-header"><h1 id="splineomics-">SplineOmics <img src="reference/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"><a class="anchor" aria-label="anchor" href="#splineomics-"></a>
+</h1></div>
+<p><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"><img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"></p>
+<p>The R package <code>SplineOmics</code> gets the significant features (hits) of time-series omics data by using splines and limma for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.</p>
+<div class="section level2">
+<h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
+</h2>
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#installation">Installation</a></li>
+<li><a href="#id_-introduction">📘 Introduction</a></li>
+<li><a href="#id_-installation">🔧 Installation</a></li>
 <li>
-<a href="#usage">Usage</a>
+<a href="#id_-usage">🛠️ Usage</a>
 <ul>
-<li><a href="#limma_hyperparams_screen">limma_hyperparams_screen</a></li>
-<li><a href="#run_limma_splines">run_limma_splines</a></li>
-<li><a href="#cluster_hits">cluster_hits</a></li>
+<li><a href="#id_-tutorial">📖 Tutorial</a></li>
+<li><a href="#id_-functions-in-depth">🔬️ Functions in Depth</a></li>
 </ul>
 </li>
-<li><a href="#dependencies">Dependencies</a></li>
-<li><a href="#system-requirements">System Requirements</a></li>
-<li><a href="#getting-help">Getting Help</a></li>
-<li><a href="#contributing">Contributing</a></li>
-<li><a href="#license">License</a></li>
-<li><a href="#citation">Citation</a></li>
+<li><a href="#id_-docker-container">🐳 Docker Container</a></li>
+<li><a href="#id_-dependencies">📦 Dependencies</a></li>
+<li><a href="#id_-getting-help">❓ Getting Help</a></li>
+<li><a href="#id_-contributing">🤝 Contributing</a></li>
+<li><a href="#id_-license">📜 License</a></li>
+<li><a href="#id_-citation">🎓 Citation</a></li>
 </ul>
 </div>
-<div class="section level1">
-<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h1>
-<p>Welcome to <code>splinetime</code>, an R package designed to streamline the analysis of time-series data by leveraging the power of splines—piecewise polynomial functions—and the robust statistical framework of <code>limma</code> for hypothesis testing. This package simplifies the complex process of time-series analysis, making it accessible and efficient for researchers and data analysts alike.</p>
-<p>With <code>splinetime</code>, users can:</p>
-<ul>
-<li><p><strong>Explore Various Hyperparameters:</strong> The <code><a href="reference/limma_hyperparams_screen.html">limma_hyperparams_screen()</a></code> function offers a comprehensive way to test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, and p-value thresholds. This enables users to evaluate the impact of various settings on their analysis results systematically.</p></li>
-<li><p><strong>Perform Limma Spline Analysis:</strong> Once the optimal hyperparameters are identified, <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> performs the differential expression analysis using splines.</p></li>
-<li><p><strong>Cluster Significant Features:</strong> The <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function goes a step further by clustering the significant features identified in the spline analysis. It organizes these features into meaningful groups and generates a comprehensive report, facilitating the interpretation and communication of the results.</p></li>
-</ul>
-<p><code>splinetime</code> is here to support your journey through the intricate landscape of time-series analysis, offering a clear path through the selection of hyperparameters to the final report. Embrace the power of splines and <code>limma</code> with <code>splinetime</code>, and unlock the full potential of your data.</p>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="id_-introduction">📘 Introduction<a class="anchor" aria-label="anchor" href="#id_-introduction"></a>
 </h2>
-<p>Follow these steps to install the <code>splinetime</code> package from its GitHub repository into your R environment.</p>
+<p>Welcome to <code>SplineOmics</code>, an R package designed to streamline the analysis of omics time-series data, followed by automated HTML report generation.</p>
 <div class="section level3">
-<h3 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
+<h3 id="is-the-splineomics-package-of-use-for-me">Is the SplineOmics package of use for me?<a class="anchor" aria-label="anchor" href="#is-the-splineomics-package-of-use-for-me"></a>
 </h3>
-<ul>
-<li>Ensure <strong>R</strong> is installed on your system. If not, download and install it from <a href="https://cran.r-project.org/" class="external-link">CRAN</a>.</li>
-<li>
-<strong>RStudio</strong> is recommended for a more user-friendly experience with R. Download and install RStudio from <a href="https://www.rstudio.com/products/rstudio/download/" class="external-link">rstudio.com</a>.</li>
-</ul>
+<p>If you have omics data over time, the package will help you to run <code>limma</code> with splines, decide on which parameters to use, perform the clustering, run GSEA and show result plots in HTML reports.</p>
 </div>
 <div class="section level3">
-<h3 id="installation-steps">Installation Steps<a class="anchor" aria-label="anchor" href="#installation-steps"></a>
+<h3 id="what-do-i-need-precisely">What do I need precisely?<a class="anchor" aria-label="anchor" href="#what-do-i-need-precisely"></a>
 </h3>
 <ol style="list-style-type: decimal">
-<li><p><strong>Open RStudio</strong> or your R console.</p></li>
-<li>
-<p>Install the <code>devtools</code> package if you haven’t already. You can do this by running the following command in the R console:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span></code></pre></div>
-</li>
-<li>
-<p>Load the devtools package into your R session with the following command:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span></code></pre></div>
-</li>
-<li>
-<p>To install the splinetime package, run the following command:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"csbg/splinetime"</span><span class="op">)</span></span></code></pre></div>
-<p>This command downloads and installs the splinetime package from the specified GitHub repository.</p>
-</li>
-<li><p>Wait for the installation to complete. This process may take a few moments as it involves downloading the package and its dependencies. You might see messages in the console regarding the installation progress or be prompted to update other packages.</p></li>
-<li>
-<p>Once installation is complete, load the splinetime package into your R session to start using it. Run:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">splinetime</span><span class="op">)</span></span></code></pre></div>
-</li>
-<li><p>Congratulations! You have successfully installed the splinetime package from GitHub. You’re now ready to use its functions in your R projects.</p></li>
+<li><p>A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time.</p></li>
+<li><p>A table with metadata on the rows/features (e.g., gene and protein name)</p></li>
+<li><p>A table with metadata on the columns/samples (e.g., reactor, time point, etc.)</p></li>
 </ol>
 </div>
 <div class="section level3">
-<h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+<h3 id="capabilities">Capabilities<a class="anchor" aria-label="anchor" href="#capabilities"></a>
 </h3>
+<p>With <code>SplineOmics</code>, you can:</p>
+<ul>
+<li>
+<p><strong>Automatically perform exploratory data analysis (EDA):</strong></p>
+<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various EDA plots, such as densitiy, PCA, and correlation heatmap plots.</p>
+</li>
+<li>
+<p><strong>Explore various limma splines hyperparameters:</strong></p>
+<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, and p-value thresholds using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function.</p>
+</li>
+<li>
+<p><strong>Perform limma spline analysis:</strong></p>
+<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified.</p>
+</li>
+<li>
+<p><strong>Cluster significant features:</strong></p>
+<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function.</p>
+</li>
+<li>
+<p><strong>Run GSEA with clustered hits:</strong></p>
+<p>Perform gene set enrichment analysis using the clustered hits with the <code><a href="reference/create_gsea_report.html">create_gsea_report()</a></code> function.</p>
+</li>
+<li>
+<p><strong>Generate reports:</strong></p>
+<p>Automatically generate reports to showcase all results.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_-installation">🔧 Installation<a class="anchor" aria-label="anchor" href="#id_-installation"></a>
+</h2>
+<p>Follow these steps to install the <code>SplineOmics</code> package from its GitHub repository into your R environment.</p>
+<div class="section level4">
+<h4 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
+</h4>
+<ul>
+<li>Ensure <strong>R</strong> is installed on your system. If not, download and install it from <a href="https://cran.r-project.org/" class="external-link">CRAN</a>.</li>
+<li>
+<strong>RStudio</strong> is recommended for a more user-friendly experience with R. Download and install RStudio from <a href="https://posit.co/download/rstudio-desktop/" class="external-link">posit.co</a>.</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="installation-steps">Installation Steps<a class="anchor" aria-label="anchor" href="#installation-steps"></a>
+</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Open RStudio</strong> or your R console.</p></li>
+<li>
+<p><strong>Install and load <code>devtools</code>, and install <code>SplineOmics</code> from GitHub</strong>:</p>
+<p>Copy and paste the following code block into your R console. This will check if the <code>devtools</code> package is installed, install it if it is not, then use it to install the <code>SplineOmics</code> package from GitHub.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Check if devtools is installed; if not, install it</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"devtools"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Load devtools package</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>GITHUB_PAT <span class="op">=</span> <span class="st">"your_GitHub_PAT"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Install the SplineOmics package from GitHub</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"csbg/SplineOmics"</span><span class="op">)</span></span></code></pre></div>
+</li>
+<li>
+<p><strong>Load the <code>SplineOmics</code> package</strong>:</p>
+<p>Once the installation is complete, load the <code>SplineOmics</code> package into your R session or script to start using it:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SplineOmics</span><span class="op">)</span></span></code></pre></div>
+</li>
+</ol>
+</div>
+<div class="section level4">
+<h4 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h4>
 <p>If you encounter errors related to dependencies or package versions during installation, try updating your R and RStudio to the latest versions and repeat the installation steps.</p>
-<p>For issues specifically related to the splinetime package, check the Issues section of the GitHub repository for similar problems or to post a new issue.</p>
+<p>For issues specifically related to the <code>SplineOmics</code> package, check the <a href="https://github.com/%3Cuser%3E/%3Crepo%3E/issues" class="external-link">Issues section</a> of the GitHub repository for similar problems or to post a new issue.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="id_️-usage">🛠️ Usage<a class="anchor" aria-label="anchor" href="#id_%EF%B8%8F-usage"></a>
 </h2>
-<p>The <code>splinetime</code> package provides comprehensive tools for analyzing time-course data, focusing on differential expression analysis and clustering. This section covers detailed instructions for utilizing each of the package’s main functions.</p>
 <div class="section level3">
-<h3 id="limma_hyperparams_screen">limma_hyperparams_screen<a class="anchor" aria-label="anchor" href="#limma_hyperparams_screen"></a>
+<h3 id="id_-tutorial">📖 Tutorial<a class="anchor" aria-label="anchor" href="#id_-tutorial"></a>
 </h3>
-<p>Conducts a hyperparameter screening using the <code>limma</code> package to identify optimal parameters for differential expression analysis across multiple datasets.</p>
-<div class="section level4">
-<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a>
-</h4>
-<ul>
-<li>
-<strong>datas</strong>: A list of expression matrices (data frames or matrices), each representing a distinct dataset.</li>
-<li>
-<strong>datas_descr</strong>: A character vector describing each dataset in <code>datas</code>. Example: <code>c("full_data", "outliers_removed")</code>.</li>
-<li>
-<strong>metas</strong>: A list of metadata data frames corresponding to each dataset in <code>datas</code>. Each metadata frame should contain experimental conditions and batch information.</li>
-<li>
-<strong>designs</strong>: A character vector of model design formulas for differential expression analysis.</li>
-<li>
-<strong>modes</strong>: A character vector indicating the mode of analysis for each design. Example: <code>c("integrated", "isolated")</code>.</li>
-<li>
-<strong>condition</strong>: The name of the experimental condition factor in the metadata.</li>
-<li>
-<strong>DoFs</strong>: A vector of integers specifying degrees of freedom to explore in the analysis.</li>
-<li>
-<strong>feature_names</strong>: A character vector of feature names (e.g., gene or protein names) for annotation.</li>
-<li>
-<strong>report_dir</strong>: Directory path for saving the output reports.</li>
-<li>
-<strong>pthresholds</strong>: A numeric vector of p-value thresholds for determining statistical significance.</li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="example-usage">Example Usage<a class="anchor" aria-label="anchor" href="#example-usage"></a>
-</h4>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/limma_hyperparams_screen.html">limma_hyperparams_screen</a></span><span class="op">(</span><span class="va">datas</span>, </span>
-<span>                                  <span class="va">datas_descr</span>, </span>
-<span>                                  <span class="va">metas</span>, </span>
-<span>                                  <span class="va">designs</span>, </span>
-<span>                                  <span class="va">modes</span>, </span>
-<span>                                  <span class="va">condition</span>, </span>
-<span>                                  <span class="va">DoFs</span>, </span>
-<span>                                  <span class="va">feature_names</span>, </span>
-<span>                                  <span class="va">report_dir</span>, </span>
-<span>                                  <span class="va">pthresholds</span><span class="op">)</span></span></code></pre></div>
-</div>
+<p><a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html" class="external-link">This tutorial</a> covers a real CHO cell time-series proteomics example from start to the end.</p>
 </div>
 <div class="section level3">
-<h3 id="run_limma_splines">run_limma_splines<a class="anchor" aria-label="anchor" href="#run_limma_splines"></a>
+<h3 id="id_-functions-in-depth">🔬 Functions in Depth<a class="anchor" aria-label="anchor" href="#id_-functions-in-depth"></a>
 </h3>
-<p>This function performs differential expression analysis tailored for time-course data using spline models via the <code>limma</code> package. It’s designed to handle complex experimental designs and time as a continuous variable.</p>
-<div class="section level4">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a>
-</h4>
-<ul>
-<li><p><strong>data</strong>: Expression matrix (either a data frame or matrix) representing gene expression levels where rows correspond to features (e.g., genes, proteins) and columns correspond to samples.</p></li>
-<li><p><strong>meta</strong>: Metadata frame corresponding to the samples in the <code>data</code> matrix. This should include at least the experimental condition and the batch information if any batch effect removal is intended.</p></li>
-<li><p><strong>design</strong>: A character string specifying the model design formula for the differential expression analysis. The design should incorporate the experimental conditions and may also include interaction terms.</p></li>
-<li><p><strong>DoFs</strong>: Degrees of Freedom (DoFs) for the spline. This is a vector of integers specifying the degrees of freedom to use for the spline fitting. Different values can be experimented with to find the optimal model fit.</p></li>
-<li><p><strong>condition</strong>: The name of the experimental condition factor within the <code>meta</code> data frame. This specifies the main variable of interest for differential expression analysis.</p></li>
-<li><p><strong>feature_names</strong>: A character vector containing the names of the features (e.g., gene names, protein IDs) for annotation purposes.</p></li>
-<li><p><strong>mode</strong>: A character string specifying the mode of analysis, which can be either “integrated” for a comprehensive model including all factors or “isolated” to focus on specific factors or interactions.</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="example-usage-1">Example Usage<a class="anchor" aria-label="anchor" href="#example-usage-1"></a>
-</h4>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, </span>
-<span>                            meta <span class="op">=</span> <span class="va">meta</span>, </span>
-<span>                            design <span class="op">=</span> <span class="st">"~ 1 + Phase*X + Reactor"</span>, </span>
-<span>                            DoFs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, </span>
-<span>                            condition <span class="op">=</span> <span class="st">"Phase"</span>, </span>
-<span>                            feature_names <span class="op">=</span> <span class="va">annotation</span><span class="op">$</span><span class="va">First.Protein.Description</span>, </span>
-<span>                            mode <span class="op">=</span> <span class="st">"integrated"</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="cluster_hits">cluster_hits<a class="anchor" aria-label="anchor" href="#cluster_hits"></a>
-</h3>
-<p>Clusters significant features based on their expression profiles, following differential expression analysis. This function helps identify groups of features (e.g., genes, proteins) that exhibit similar expression patterns across different conditions or time points.</p>
-<div class="section level4">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a>
-</h4>
-<ul>
-<li><p><strong>top_tables</strong>: A list containing the top tables from differential expression analyses. Each top table should be a data frame with significant features identified by the analysis, including their p-values and other statistics.</p></li>
-<li><p><strong>data</strong>: An expression matrix (data frame or matrix) with rows representing features and columns representing samples. This matrix should correspond to the dataset used in the differential expression analysis, ideally after correcting for any batch effects.</p></li>
-<li><p><strong>meta</strong>: Metadata frame corresponding to the samples in the <code>data</code> matrix. This frame should include variables that describe the experimental conditions, batches, or other grouping factors relevant to the analysis.</p></li>
-<li><p><strong>group_factors</strong>: A character vector specifying the factors in <code>meta</code> used to group the data for clustering. This can include experimental conditions, time points, or any other categorical variables of interest.</p></li>
-<li><p><strong>p_values</strong>: A numeric vector specifying the p-value thresholds for features to be included in the clustering analysis. Only features with p-values below these thresholds in the differential expression analysis will be considered.</p></li>
-<li><p><strong>clusters</strong>: An integer vector specifying the number of clusters to generate. This allows for different levels of granularity in the clustering analysis, depending on the desired number of feature groups.</p></li>
-<li><p><strong>report_dir</strong>: The directory path where clustering results, including any plots or summary tables, will be saved. This allows for easy access and review of the clustering outputs.</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="example-usage-2">Example Usage<a class="anchor" aria-label="anchor" href="#example-usage-2"></a>
-</h4>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span>top_tables <span class="op">=</span> <span class="va">top_tables</span>, </span>
-<span>                                   data <span class="op">=</span> <span class="va">data</span>, </span>
-<span>                                   meta <span class="op">=</span> <span class="va">meta</span>, </span>
-<span>                                   group_factors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Condition"</span>, <span class="st">"TimePoint"</span><span class="op">)</span>, </span>
-<span>                                   p_values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.05</span><span class="op">)</span>, </span>
-<span>                                   clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6L</span>, <span class="fl">3L</span><span class="op">)</span>, </span>
-<span>                                   report_dir <span class="op">=</span> <span class="st">"path/to/results"</span><span class="op">)</span></span></code></pre></div>
-</div>
+<p>A detailed description of all arguments and outputs of all the available package functions can be found <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html" class="external-link">here</a></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
+<h2 id="id_-docker-container">🐳 Docker Container<a class="anchor" aria-label="anchor" href="#id_-docker-container"></a>
 </h2>
-<p>The <code>splinetime</code> package relies on several other R packages for its functionality. Below is a list of dependencies that will be installed along with <code>splinetime</code>. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.</p>
-<ul>
-<li>
-<code>limma</code>: For linear models for microarray data.</li>
-<li>
-<code>splines</code>: Provides functions for regression spline fitting and extraction.</li>
-<li>
-<code>purrr</code>: For functional programming tools.</li>
-<li>
-<code>ggplot2</code>: For creating elegant data visualisations using the grammar of graphics.</li>
-<li>
-<code>tidyr</code>: For tidying your data.</li>
-<li>
-<code>dplyr</code>: For data manipulation.</li>
-<li>
-<code>tibble</code>: For creating tidy data frames that are easy to work with.</li>
-<li>
-<code>dendextend</code>: For extending <code>dendrogram</code> objects in R, allowing for easier manipulation of dendrograms.</li>
-<li>
-<code>RColorBrewer</code>: For providing color palettes for data visualization.</li>
-<li>
-<code>patchwork</code>: For combining multiple ggplot objects into a single plot.</li>
-<li>
-<code>pheatmap</code>: For generating pretty heatmaps.</li>
-<li>
-<code>stats</code>: Provides functions for statistical calculations and random number generation (included with base R).</li>
-<li>
-<code>furrr</code>: Provides tools for applying functions to elements of a list concurrently.</li>
-<li>
-<code>stringr</code>: Simplifies the manipulation of strings.</li>
-<li>
-<code>progress</code>: For adding progress bars to your loops and apply functions.</li>
-<li>
-<code>here</code>: For constructing paths to your project’s files.</li>
-<li>
-<code>knitr</code>: For dynamic report generation in R.</li>
-<li>
-<code>kableExtra</code>: For producing beautiful tables in R Markdown documents.</li>
-</ul>
-<p>To ensure a smooth installation and functionality of <code>splinetime</code>, these dependencies will be automatically checked and, if necessary, installed upon installing <code>splinetime</code>.</p>
+<p>To facilitate reproducible analysis, we provide a Docker container that encapsulates the necessary environment and dependencies. Follow the instructions below to pull the Docker container and run your analysis.</p>
+<div class="section level3">
+<h3 id="pulling-the-docker-container">Pulling the Docker Container<a class="anchor" aria-label="anchor" href="#pulling-the-docker-container"></a>
+</h3>
+<p>You can pull the Docker container of the desired version of the <code>SplineOmics</code> package from GitHub using the following command (here it downloads version 0.1.0):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">docker</span> pull ghcr.io/thomas-rauter/splineomics:0.1.0</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="running-the-docker-container-in-interactive-mode">Running the Docker Container in Interactive Mode<a class="anchor" aria-label="anchor" href="#running-the-docker-container-in-interactive-mode"></a>
+</h3>
+<p>To run the Docker container in interactive mode, you can use the following command. This will start a container and open a bash shell, allowing you to run your analysis interactively within the container. This command needs to be run in a dir where the subdirs input and output exist. Place your data and meta (and annotation) files in input, and receive your output from the package in the output dir.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-d</span> <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/input:/home/rstudio/input <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/output:/home/rstudio/output <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=password <span class="dt">\</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">--name</span> splineomics_container <span class="dt">\</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Use rstudio as the username and the password you set with the -e PASSWORD=password option. As long as the container is running, you can work on that localhost page with RStudio, where also the <code>SplineOmics</code> package is installed.</p>
+<p>Stop the container:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">docker</span> stop splineomics_container</span></code></pre></div>
+<p>Start the container again:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">docker</span> start splineomics_container</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="inspect-docker-container-installations">Inspect Docker container installations<a class="anchor" aria-label="anchor" href="#inspect-docker-container-installations"></a>
+</h3>
+<p>To see all the R packages and system installations that make up the Docker container, you can run the following command in the terminal of RStudio on your localhost page (<a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>). Because with the above command the ‘/home/rstudio/output’ dir is mounted to your local filesystem, this will make the installation log files available.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> /log home/rstudio/output</span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
-<h2 id="system-requirements">System Requirements<a class="anchor" aria-label="anchor" href="#system-requirements"></a>
+<h2 id="id_-dependencies">📦 Dependencies<a class="anchor" aria-label="anchor" href="#id_-dependencies"></a>
 </h2>
-<div class="section level3">
-<h3 id="operating-system">Operating System<a class="anchor" aria-label="anchor" href="#operating-system"></a>
-</h3>
+<p>The <code>SplineOmics</code> package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with <code>SplineOmics</code>. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.</p>
 <ul>
-<li>Recommended: Ubuntu 20.04 LTS (or compatible)</li>
-<li>The project should also run on other Unix-like systems, including macOS and other Linux distributions.</li>
-<li>Windows 10 or later (with appropriate adjustments, if necessary)</li>
+<li>
+<strong>ComplexHeatmap</strong>: For creating complex heatmaps with advanced features.</li>
+<li>
+<strong>RColorBrewer</strong>: For providing color palettes for data visualization.</li>
+<li>
+<strong>base64enc</strong>: For encoding/decoding base64.</li>
+<li>
+<strong>circlize</strong>: For circular visualization of data.</li>
+<li>
+<strong>cluster</strong>: For clustering algorithms such as hierarchical clustering.</li>
+<li>
+<strong>clusterProfiler</strong>: For functional enrichment analysis.</li>
+<li>
+<strong>data.table</strong>: For high-performance data manipulation.</li>
+<li>
+<strong>dendextend</strong>: For extending <code>dendrogram</code> objects in R, allowing for easier manipulation of dendrograms.</li>
+<li>
+<strong>dplyr</strong>: For data manipulation.</li>
+<li>
+<strong>fs</strong>: For file system operations.</li>
+<li>
+<strong>ggplot2</strong>: For creating elegant data visualizations using the grammar of graphics.</li>
+<li>
+<strong>ggrepel</strong>: For better label placement in ggplot2.</li>
+<li>
+<strong>here</strong>: For constructing paths to your project’s files.</li>
+<li>
+<strong>htmltools</strong>: For HTML rendering and output.</li>
+<li>
+<strong>kableExtra</strong>: For producing beautiful tables in R Markdown documents.</li>
+<li>
+<strong>knitr</strong>: For dynamic report generation in R.</li>
+<li>
+<strong>limma</strong>: For linear models for microarray data.</li>
+<li>
+<strong>magrittr</strong>: For piping operators.</li>
+<li>
+<strong>openxlsx</strong>: For reading, writing, and editing xlsx files.</li>
+<li>
+<strong>patchwork</strong>: For combining multiple ggplot objects into a single plot.</li>
+<li>
+<strong>pheatmap</strong>: For creating pretty heatmaps.</li>
+<li>
+<strong>progress</strong>: For adding progress bars to your loops and apply functions.</li>
+<li>
+<strong>purrr</strong>: For functional programming tools.</li>
+<li>
+<strong>ragg</strong>: For creating high-quality images for graphics devices.</li>
+<li>
+<strong>readr</strong>: For reading rectangular data.</li>
+<li>
+<strong>reshape2</strong>: For flexible reshaping of data.</li>
+<li>
+<strong>rlang</strong>: For tools to work with core language features of R and R’s base types.</li>
+<li>
+<strong>scales</strong>: For scale functions for visualization.</li>
+<li>
+<strong>stringr</strong>: For simplifying the manipulation of strings.</li>
+<li>
+<strong>tibble</strong>: For creating tidy data frames that are easy to work with.</li>
+<li>
+<strong>tidyr</strong>: For tidying your data.</li>
+<li>
+<strong>viridis</strong>: For colorblind-friendly color maps.</li>
 </ul>
-</div>
 <div class="section level3">
 <h3 id="r-version">R Version<a class="anchor" aria-label="anchor" href="#r-version"></a>
 </h3>
 <ul>
-<li>Required: R 4.3.3 or higher
+<li>Recommended: R 4.3.3 or higher
 <ul>
 <li>Note: This project was developed using R 4.3.3. While it should be compatible with newer versions, this is the version guaranteed to work as tested.</li>
 </ul>
@@ -329,69 +334,68 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
+<h2 id="id_-getting-help">❓ Getting Help<a class="anchor" aria-label="anchor" href="#id_-getting-help"></a>
 </h2>
-<p>If you encounter a bug or have a suggestion for improving the <code>splinetime</code> package, we encourage you to <a href="https://github.com/csbg/splinetime/issues" class="external-link">open an issue</a> on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.</p>
-<p>For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the <a href="https://github.com/csbg/splinetime/discussions" class="external-link">GitHub Discussions</a> page for <code>splinetime</code>. This forum is a great place to ask for help, share your experiences, and connect with the community.</p>
-<p>Thank you for using and contributing to the development of <code>splinetime</code>!</p>
+<p>If you encounter a bug or have a suggestion for improving the <code>SplineOmics</code> package, we encourage you to <a href="https://github.com/csbg/SplineOmics/issues" class="external-link">open an issue</a> on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.</p>
+<p>For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the <a href="https://github.com/csbg/SplineOmics/discussions" class="external-link">GitHub Discussions</a> page for <code>SplineOmics</code>. This forum is a great place to ask for help, share your experiences, and connect with the community.</p>
+<p>Thank you for using and contributing to the development of <code>SplineOmics</code>!</p>
 </div>
 <div class="section level2">
-<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+<h2 id="id_-contributing">🤝 Contributing<a class="anchor" aria-label="anchor" href="#id_-contributing"></a>
 </h2>
-<p>We welcome contributions to the <code>splinetime</code> package! Whether you’re interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.</p>
+<p>We welcome contributions to the <code>SplineOmics</code> package! Whether you’re interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.</p>
 <p>Here’s how you can contribute:</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Report a Bug or Request a Feature:</strong> If you encounter a bug or have an idea for a new feature, please <a href="https://github.com/csbg/splinetime/issues" class="external-link">open an issue</a> on our GitHub repository. Before opening a new issue, check to see if the issue has already been reported or the feature requested by another user.</p></li>
-<li>
-<p><strong>Submit a Pull Request:</strong> If you’ve developed a bug fix or a new feature that you’d like to share, submit a pull request. Here are the steps:</p>
-<ul>
-<li>Fork the repository.</li>
-<li>Create a new branch in your fork for your contributions.</li>
-<li>Commit your changes to the branch.</li>
-<li>Push the branch to your fork.</li>
-<li>Submit a pull request to the <code>splinetime</code> repository from your fork and branch.</li>
-<li>Please describe your changes clearly in the pull request description and reference any related issues.</li>
-</ul>
-</li>
+<li><p><strong>Report a Bug or Request a Feature:</strong> If you encounter a bug or have an idea for a new feature, please <a href="https://github.com/csbg/SplineOmics/issues" class="external-link">open an issue</a> on our GitHub repository. Before opening a new issue, check to see if the issue has already been reported or the feature requested by another user.</p></li>
+<li><p><strong>Submit a Pull Request:</strong> If you’ve developed a bug fix or a new feature that you’d like to share, submit a pull request.</p></li>
 <li><p><strong>Improve Documentation:</strong> Good documentation is crucial for any project. If you notice missing or incorrect documentation, please feel free to contribute.</p></li>
 </ol>
 <p>Please adhere to our <a href="CODE_OF_CONDUCT.html">Code of Conduct</a> in all your interactions with the project.</p>
-<p>Thank you for considering contributing to <code>splinetime</code>. Your efforts are what make the open-source community a fantastic place to learn, inspire, and create.</p>
+<p>Thank you for considering contributing to <code>SplineOmics</code>. Your efforts are what make the open-source community a fantastic place to learn, inspire, and create.</p>
 </div>
 <div class="section level2">
-<h2 id="licence">Licence<a class="anchor" aria-label="anchor" href="#licence"></a>
+<h2 id="id_-license">📜 License<a class="anchor" aria-label="anchor" href="#id_-license"></a>
 </h2>
-<p><code>splinetime</code> is open-sourced software licensed under the <a href="LICENSE">MIT license</a>.</p>
+<p>This package is licensed under the MIT License: <a href="./LICENSE">LICENSE</a></p>
+<p>© 2024 Thomas Rauter. All rights reserved.</p>
 </div>
 <div class="section level2">
-<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+<h2 id="id_-citation">🎓 Citation<a class="anchor" aria-label="anchor" href="#id_-citation"></a>
 </h2>
-<p>The <code>splinetime</code> package is currently not published in a peer-reviewed scientific journal or similar outlet, and as such, there is no formal citation requirement associated with its use. You are free to use <code>splinetime</code> without citing it. However, we appreciate acknowledgements in your projects or publications that benefit from this package. Your support helps us in the continued development and improvement of <code>splinetime</code>. Thank you for using our package!</p>
+<p>The <code>SplineOmics</code> package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.</p>
+<p>Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of <code>SplineOmics</code>. Thank you for using our package!</p>
 </div>
 </div>
-
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>What license it is under</li>
+<li>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+</li>
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing splinetime</a></li>
+<li><a href="authors.html#citation">Citing SplineOmics</a></li>
 </ul>
 </div>
 
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Who to complain to <br><small class="roles"> Maintainer </small>  </li>
+<li>Thomas Rauter <br><small class="roles"> Maintainer </small>  </li>
 </ul>
 </div>
 
@@ -403,12 +407,12 @@
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Who to complain to.</p>
+<p>Developed by Thomas Rauter.</p>
 </div>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>

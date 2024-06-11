@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 
 # SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)
+![Version](https://img.shields.io/badge/version-0.1.0-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R CMD Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen) [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://ghcr.io/thomas-rauter/splineomics:0.1.0)
 
 The R package `SplineOmics` gets the significant features (hits) of time-series omics data by using splines and limma for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.
 
@@ -28,8 +28,10 @@ The R package `SplineOmics` gets the significant features (hits) of time-series 
 -   [📦 Dependencies](#-dependencies)
 -   [❓ Getting Help](#-getting-help)
 -   [🤝 Contributing](#-contributing)
+-   [💬 Feedback](#-feedback)
 -   [📜 License](#-license)
 -   [🎓 Citation](#-citation)
+-   [🌟 Contributors](#-contributors)
 
 ## 📘 Introduction {#introduction}
 
@@ -153,7 +155,7 @@ docker run -it -d \
     -v $(pwd)/output:/home/rstudio/output \
     -p 8888:8787 \
     -e PASSWORD=password \
-    --name splineomics_container \
+    --name splineomics \
     thomasrauter/splineomics:0.1.0
 ```
 
@@ -162,13 +164,13 @@ Once the container is running, open a web browser and navigate to <http://localh
 Stop the container:
 
 ``` sh
-docker stop splineomics_container
+docker stop splineomics
 ```
 
 Start the container again:
 
 ``` sh
-docker start splineomics_container
+docker start splineomics
 ```
 
 ### Inspect Docker container installations
@@ -245,6 +247,16 @@ Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all your interacti
 
 Thank you for considering contributing to `SplineOmics`. Your efforts are what make the open-source community a fantastic place to learn, inspire, and create.
 
+## 💬 Feedback
+
+We appreciate your feedback! Besides raising issues, you can provide feedback in the following ways:
+
+-   **Direct Email**: Send your feedback directly to [Thomas Rauter](mailto:thomas.rauter@plus.ac.at).
+
+-   **Anonymous Feedback**: Use [this Google Form](https://forms.gle/jocMXSxLf3GrGBdT9) to provide anonymous feedback by answering questions.
+
+Your feedback helps us improve the project and address any issues you may encounter.
+
 ## 📜 License {#license}
 
 This package is licensed under the MIT License: [LICENSE](./LICENSE)
@@ -256,3 +268,10 @@ This package is licensed under the MIT License: [LICENSE](./LICENSE)
 The `SplineOmics` package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.
 
 Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of `SplineOmics`. Thank you for using our package!
+
+## 🌟 Contributors
+
+-   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny.
+-   [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator, provided guidance and support
+-   [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing code, delivered improvement suggestions
+-   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed parts of the functions and the overall approach together with Thomas-Rauter
