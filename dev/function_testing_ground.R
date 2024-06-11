@@ -50,13 +50,14 @@ meta_batch_column <- "Reactor"
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-plots <- explore_data(data = data,
-                      meta = meta,
-                      condition = condition,
-                      report_info = report_info,
-                      meta_batch_column = meta_batch_column,
-                      # meta_batch2_column = NULL,
-                      report_dir = report_dir)
+# plots <- explore_data(data = data,
+#                       meta = meta,
+#                       condition = condition,
+#                       report_info = report_info,
+#                       meta_batch_column = meta_batch_column,
+#                       # meta_batch2_column = NULL,
+#                       report_dir = report_dir,
+#                       report = FALSE)
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -85,24 +86,24 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(limma_hyperparams_screen)
-screen_limma_hyperparams(datas,
-                         datas_descr,
-                         metas,
-                         designs,
-                         condition,
-                         spline_test_configs,
-                         report_info,
-                         report_dir,
-                         pthresholds,
-                         meta_batch_column)
+# screen_limma_hyperparams(datas,
+#                          datas_descr,
+#                          metas,
+#                          designs,
+#                          condition,
+#                          spline_test_configs,
+#                          report_info,
+#                          report_dir,
+#                          pthresholds,
+#                          meta_batch_column)
 
 
 ## Run limma splines -----------------------------------------------------------
-design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
-# design <- "~ 1 + X + Reactor"
+# design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
+design <- "~ 1 + X + Reactor"
 
-spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                     dof = c(2L))
+spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
+                     dof = c(2L, 2L))
 
 # Run the limma spline analysis
 result <- run_limma_splines(data, 

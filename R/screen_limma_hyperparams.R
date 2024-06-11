@@ -60,7 +60,7 @@ screen_limma_hyperparams <- function(datas,
                                      adj_pthresholds = c(0.05),
                                      meta_batch_column = NA,  # batch-effect
                                      meta_batch2_column = NA,
-                                     time_unit = "m",    # For the plot labels
+                                     time_unit = "min",    # For the plot labels
                                      padjust_method = "BH") {
 
   modes <- c()
@@ -104,7 +104,6 @@ screen_limma_hyperparams <- function(datas,
                               spline_test_configs = spline_test_configs,
                               meta_batch_column = meta_batch_column,
                               meta_batch2_column = meta_batch2_column,
-                              # designs,
                               time_unit = time_unit)
 
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
@@ -225,7 +224,6 @@ plot_limma_combos_results <- function(top_tables_combos,
                                       spline_test_configs,
                                       meta_batch_column,
                                       meta_batch2_column,
-                                      # designs,
                                       time_unit = time_unit) {
   
   names_extracted <- stringr::str_extract(names(top_tables_combos),
@@ -246,9 +244,7 @@ plot_limma_combos_results <- function(top_tables_combos,
                                    format = "[:bar] :percent")
   pb$tick(0)
   
-  time_unit_labels <- c("s" = "[sec]", "m" = "[min]", "h" = "[hours]", 
-                        "d" = "[days]")
-  time_unit_label <- time_unit_labels[time_unit]
+  time_unit_label <- paste0("[", time_unit, "]")
   
   if (!is.na(meta_batch_column)) {
     

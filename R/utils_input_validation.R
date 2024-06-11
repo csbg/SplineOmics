@@ -790,7 +790,8 @@ InputControl <- R6::R6Class("InputControl",
       if (!is.character(time_unit) ||
            length(time_unit) != 1 ||
            nchar(time_unit) > 15) {
-        stop(paste0("time_unit must be a single character with < 16 letters"),
+        stop(paste0("time_unit must be a single character vector with", 
+                    "< 16 letters"),
              call. = FALSE)
       }
     },

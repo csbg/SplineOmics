@@ -43,7 +43,7 @@ print(meta)
 
 The first step in analysing data is usually EDA. EDA involves summarizing the main characteristics of the data, often using plots. This can involve densitiy distributions, boxplots, PCA, correlation heatmaps, and more. This process can be carried out by using the package function explore_data(). The necessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are meta_batch_column and meta_batch2_column, that allow to specify the column name that contain batch effect 1 and 2. These columns will be used to run the removeBatchEffect function of limma to remove the batch effect of the data for plotting. When at least one batch column is provided like this, the function will not just generate one EDA HTML report, but two. One for the uncorrected data, and one for the batch corrected data. These reports are written either in the current working dir as default location, or to a location specified with the optional argument report_dir. The function also returns all plots generated. Lastly, if it is desired that no report should be generated, the optional argument report can be set to FALSE.
 
-```{r Perform EDA, eval = FALSE}
+```{r Load EDA arguments, eval = TRUE}
 report_info <- list(
   omics_data_type = "PTX",
   data_description = "Proteomics data of CHO cells",
@@ -56,7 +56,9 @@ condition <- "Phase"
 meta_batch_column <- "Reactor"
 
 report_dir <- here::here("results", "explore_data")
+```
 
+```{r Run EDA function, eval = FALSE}
 plots <- explore_data(data = data,
                       meta = meta,
                       condition = condition,
@@ -74,7 +76,7 @@ The EDA plots can tell you a range of things. The plots in the HTML report are g
 
 Before we can run the limma spline analysis, we have to find out which "hyperparameters" are the best. Hyperparameters in this context are for example degree of freedom, different versions of the data (outlier removed vs. not removed), different limma design formulas, etc. Rationally thinking about which combination of hyperparameters to use is very challenging. Instead, it is often better to just try out a bunch of combinations and choose the best. The function limma_hyperparams_screen() does this for you. For each hyperparameter, you can just specify all the values that you would like to try, and the function then runs the limma spline analysis with the combinations that can be formed with the hyperparameters that you specified. Not every single combo is generated, but instead there are "inner" and "outer" hyperparameters, and only for all "outer" hyperparameters, all combos are generated. The "inner" hyperparameters are the adj. p-value thresholds and the spline parameters. For example, if you have two different versions of one dataset (one time the full dataset, and one time the dataset with some potential outliers removed), these are considered "outer" hyperparameters in this context. The function would generate all possible comparisons for the "outer" hyperparameters, which is just a single comparison. Then, for both versions of the data, every "inner" hyperparameter combo is generated. Lets say you specified natural cubic splines for both, with a degree of freedom of either 2 or 3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each version of data, it would test out all combinations of the spline parameters and the adj. p-value threshold. In this case, this is DoF = 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3, tresh = 0.1.
 
-```{r hyperparameter-screening, eval = FALSE}
+```{r Load hyperparameter-screening args, eval = TRUE}
 data1 <- data 
 meta1 <- meta
 
@@ -97,7 +99,9 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
                                   degree = c(NA, NA, NA, NA),
                                   dof = c(2L, 3L, 4L, 5L),
                                   knots = I(list(c(NA), c(NA), c(NA), c(NA))),                                     bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
+```
 
+```{r Perform hyperparameter-screening, eval = FALSE}
 limma_hyperparams_screen(datas,
                          datas_descr,
                          metas,
@@ -125,8 +129,8 @@ spline_params = list(spline_type = c("n"),  # Chosen spline parameters
                      dof = c(2L))
 
 # Run the limma spline analysis
-result <- run_limma_splines(data1,   # Chosen version of the data
-                            meta1,
+result <- run_limma_splines(data,   # Chosen version of the data
+                            meta,
                             design,
                             spline_params = spline_params,
                             condition)

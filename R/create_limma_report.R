@@ -52,58 +52,62 @@ create_limma_report <- function(run_limma_splines_result,
   }
   ###
   
-  
-  plots <- c(plots, list("Average Difference Conditions"))
-  plots_sizes <- c(plots_sizes, 999)
-  
-  header_info <- list(header_name = "Average Difference Conditions")
-  section_headers_info <- c(section_headers_info, list(header_info))
-  
-  for (i in seq_along(avrg_diff_conditions)) {
-    element_name <- names(avrg_diff_conditions)[i]
-    top_table <- avrg_diff_conditions[[i]]
+  # length == 0 when there was just one level or no interaction effect
+  if (length(avrg_diff_conditions) > 0) {
     
-    comparison <- remove_prefix(element_name, "avrg_diff_")
-    title <- paste("P-Value Histogram:", comparison)
+    plots <- c(plots, list("Average Difference Conditions"))
+    plots_sizes <- c(plots_sizes, 999)
     
-    p_value_hist <- create_p_value_histogram(top_table = top_table,
-                                             adj_pthresh = adj_pthresh,
-                                             title = title)
+    header_info <- list(header_name = "Average Difference Conditions")
+    section_headers_info <- c(section_headers_info, list(header_info))
     
-    compared_levels <- stringr::str_split(comparison, "_vs_")[[1]]
-    
-    volcano_plot <- create_volcano_plot(top_table = top_table,
-                                        adj_pthresh = adj_pthresh,
-                                        compared_levels)
-    
-    plots <- c(plots, list(p_value_hist), list(volcano_plot))
-    plots_sizes <- c(plots_sizes, 1, 1.5)
+    for (i in seq_along(avrg_diff_conditions)) {
+      element_name <- names(avrg_diff_conditions)[i]
+      top_table <- avrg_diff_conditions[[i]]
+      
+      comparison <- remove_prefix(element_name, "avrg_diff_")
+      title <- paste("P-Value Histogram:", comparison)
+      
+      p_value_hist <- create_p_value_histogram(top_table = top_table,
+                                               adj_pthresh = adj_pthresh,
+                                               title = title)
+      
+      compared_levels <- stringr::str_split(comparison, "_vs_")[[1]]
+      
+      volcano_plot <- create_volcano_plot(top_table = top_table,
+                                          adj_pthresh = adj_pthresh,
+                                          compared_levels)
+      
+      plots <- c(plots, list(p_value_hist), list(volcano_plot))
+      plots_sizes <- c(plots_sizes, 1, 1.5)
+    }
   }
-  ###
+
+  # length == 0 when there was just one level or no interaction effect
+  if (length(interaction_condition_time) > 0) {
   
-  
-  plots <- c(plots, list("Interaction of Condition and Time"))
-  plots_sizes <- c(plots_sizes, 999)
-  
-  header_info <- list(header_name = "Interaction of Condition and Time")
-  section_headers_info <- c(section_headers_info, list(header_info))
-  
-  for (i in seq_along(interaction_condition_time)) {
-    element_name <- names(interaction_condition_time)[i]
-    title <- paste(element_name, ": Adj. p-value vs. F-statistic")
-    top_table <- interaction_condition_time[[i]]
+    plots <- c(plots, list("Interaction of Condition and Time"))
+    plots_sizes <- c(plots_sizes, 999)
     
-    comparison <- remove_prefix(element_name, "time_interaction_")
-    title <- paste("P-Value Histogram:", comparison)
+    header_info <- list(header_name = "Interaction of Condition and Time")
+    section_headers_info <- c(section_headers_info, list(header_info))
     
-    p_value_hist <- create_p_value_histogram(top_table = top_table,
-                                             adj_pthresh = adj_pthresh,
-                                             title = title)
-    
-    plots <- c(plots, list(p_value_hist))
-    plots_sizes <- c(plots_sizes, 1)
+    for (i in seq_along(interaction_condition_time)) {
+      element_name <- names(interaction_condition_time)[i]
+      title <- paste(element_name, ": Adj. p-value vs. F-statistic")
+      top_table <- interaction_condition_time[[i]]
+      
+      comparison <- remove_prefix(element_name, "time_interaction_")
+      title <- paste("P-Value Histogram:", comparison)
+      
+      p_value_hist <- create_p_value_histogram(top_table = top_table,
+                                               adj_pthresh = adj_pthresh,
+                                               title = title)
+      
+      plots <- c(plots, list(p_value_hist))
+      plots_sizes <- c(plots_sizes, 1)
+    }
   }
-  ###
   
   all_top_tables <- c(time_effect,
                       avrg_diff_conditions,
@@ -269,10 +273,10 @@ shorten_names <- function(name,
 #' \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 #' 
 build_create_limma_report <- function(header_section, 
-                               plots, 
-                               plots_sizes, 
-                               level_headers_info,
-                               output_file_path = here::here()) {  
+                                      plots, 
+                                      plots_sizes, 
+                                      level_headers_info,
+                                      output_file_path = here::here()) {  
   
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
@@ -319,13 +323,7 @@ build_create_limma_report <- function(header_section,
         next
       } 
     }
-    
-    # Process each plot
-    # plot <- plots[[index]]
-    # plot_size <- plots_sizes[[index]]
-    # img_tag <- plot2base64(plot, plot_size)
-    # html_content <- paste(html_content, img_tag, sep="\n")
-    
+
     html_content <- process_plots(plots = plots,
                                   plots_sizes = plots_sizes,
                                   index = index,
@@ -349,6 +347,5 @@ build_create_limma_report <- function(header_section,
     dir.create(dir_path, recursive = TRUE)
   }
 
-  # Write the HTML content to file
   writeLines(html_content, output_file_path)
 }
