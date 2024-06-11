@@ -12,19 +12,10 @@ HTML reports.
 
 ## Table of Contents
 
-- [📘 Introduction](#introduction)
-- [🔧 Installation](#installation)
+- [📘 Introduction](#-introduction)
+- [🔧 Installation](#-installation)
 - [📂 Usage](#usage)
   - [📖 Tutorial](#tutorial)
-  - [📊 Overview](#overview)
-    - [📄 extract_data](#extract_data)
-    - [🔍 explore_data](#explore_data)
-    - [🧮️ screen_limma_hyperparams](#screen_limma_hyperparams)
-    - [⚙️ run_limma_splines](#run_limma_splines)
-    - [📈 create_limma_report](#create_limma_report)
-    - [🌐 cluster_hits](#cluster_hits)
-    - [📥 download_enrichr_databases](#download_enrichr_databases)
-    - [🔬 create_gsea_report](#create_gsea_report)
   - [🛠️ Functions in Depth](#functions-in-depth)
 - [🐳 Docker Container](#docker-container)
 - [📦 Dependencies](#dependencies)
