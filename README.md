@@ -14,15 +14,15 @@ HTML reports.
 
 - [📘 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
-- [📂 Usage](#usage)
-  - [📖 Tutorial](#tutorial)
-  - [🛠️ Functions in Depth](#functions-in-depth)
-- [🐳 Docker Container](#docker-container)
-- [📦 Dependencies](#dependencies)
-- [❓ Getting Help](#getting-help)
-- [🤝 Contributing](#contributing)
-- [📜 License](#license)
-- [🎓 Citation](#citation)
+- [🛠️ Usage](#-usage)
+  - [📖 Tutorial](#-tutorial)
+  - [🔬️ Functions in Depth](#-functions-in-depth)
+- [🐳 Docker Container](#-docker-container)
+- [📦 Dependencies](#-dependencies)
+- [❓ Getting Help](#-getting-help)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
+- [🎓 Citation](#-citation)
 
 ## 📘 Introduction
 
@@ -142,7 +142,7 @@ For issues specifically related to the `SplineOmics` package, check the
 [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the
 GitHub repository for similar problems or to post a new issue.
 
-## 📂 Usage
+## 🛠️ Usage
 
 ### 📖 Tutorial
 
@@ -151,7 +151,7 @@ tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-starte
 covers a real CHO cell time-series proteomics example from start to the
 end.
 
-### 🛠 Functions in Depth
+### 🔬 Functions in Depth
 
 A detailed description of all arguments and outputs of all the available
 package functions can be found
