@@ -1,17 +1,17 @@
-# The function limma_report() takes the top_tables of the three different 
+# The function create_limma_report() takes the top_tables of the three different 
 # categories (within level time diff, between level average diff, and 
 # between level average and time diff) and makes histogram and vulcano plots 
 # and places them into a nice HTML report.
 
 
 
-# Exported function: limma_report() --------------------------------------------
+# Exported function: create_limma_report() --------------------------------------------
 
 
-limma_report <- function(run_limma_splines_result,
-                         report_info,
-                         adj_pthresh = 0.05,
-                         report_dir = here::here()) {
+create_limma_report <- function(run_limma_splines_result,
+                                report_info,
+                                adj_pthresh = 0.05,
+                                report_dir = here::here()) {
   
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -120,8 +120,8 @@ limma_report <- function(run_limma_splines_result,
                        report_info,
                        data = all_top_tables,
                        level_headers_info = section_headers_info,
-                       report_type = "limma_report",
-                       filename = "limma_report",
+                       report_type = "create_limma_report",
+                       filename = "create_limma_report",
                        report_dir = report_dir)
   
   return(plots)
@@ -268,7 +268,7 @@ shorten_names <- function(name,
 #' @seealso
 #' \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 #' 
-build_limma_report <- function(header_section, 
+build_create_limma_report <- function(header_section, 
                                plots, 
                                plots_sizes, 
                                level_headers_info,

@@ -1,5 +1,0 @@
-# Run the container in interactive mode and check the installation of the package
-docker run -it splineomics:0.1.0 /bin/bash
-
-ls /log/install_log.txt
-cat /log/install_log.txt

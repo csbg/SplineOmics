@@ -22,7 +22,7 @@
 #' @param meta A dataframe, containing metadata that should
 #'             be directly embedded in the HTML report for downloading.
 #' @param report_type A character string specifying the report type 
-#'                    ('limma_hyperparams_screen' or 'cluster_hits').
+#'                    ('screen_limma_hyperparams' or 'cluster_hits').
 #' @param mode A character string specifying the mode 
 #'            ('isolated' or 'integrated').
 #' @param filename A character string specifying the filename for the report.
@@ -60,18 +60,18 @@ generate_report_html <- function(plots,
     } else {
       title <- "explore batch-corrected data"
     }
-  } else if (report_type == "limma_hyperparams_screen") {
+  } else if (report_type == "screen_limma_hyperparams") {
     title <- paste("hyperparams screen |", filename)
-  } else if (report_type == "limma_report") {
+  } else if (report_type == "create_limma_report") {
     title <- "limma report"
   } else if (report_type == "cluster_hits") {                         
     title <- "clustered hits | within level"
-  } else if (report_type == "gsea_report") {                         
+  } else if (report_type == "create_gsea_report") {                         
     title <- "gsea"
     
   } else {
-    stop(paste("report_type must be explore_hits, limma_hyperparams_screen,", 
-               "limma_report, or cluster_hits"),
+    stop(paste("report_type must be explore_hits, screen_limma_hyperparams,", 
+               "create_limma_report, or cluster_hits"),
          call. = FALSE)
   }
   
@@ -103,7 +103,7 @@ generate_report_html <- function(plots,
     
     if (field == "data" && !any(is.na(data)))  {
       
-      if (report_type == "limma_report") {
+      if (report_type == "create_limma_report") {
         base64_df <- sprintf('<a href="%s" download="top_tables.xlsx">
                             <button>Download top_tables.xlsx</button></a>', 
                             encode_df_to_base64(data))
@@ -138,7 +138,7 @@ generate_report_html <- function(plots,
   # Close the table
   header_section <- paste(header_section, "</table>", sep = "\n")
   
-  if (report_type == "gsea_report") {
+  if (report_type == "create_gsea_report") {
     databases_text <- paste(report_info$databases, collapse = ", ")
     header_section <- paste(header_section, 
                             "<p style='font-size: 20px;'>Databases used: ", 
@@ -161,24 +161,24 @@ generate_report_html <- function(plots,
                               plots_sizes = plots_sizes, 
                               output_file_path = output_file_path)
     
-  } else if (report_type == "limma_hyperparams_screen") {
+  } else if (report_type == "screen_limma_hyperparams") {
     
     build_hyperparams_screen_report(header_section = header_section, 
                                     plots = plots, 
                                     plots_sizes = plots_sizes, 
                                     output_file_path = output_file_path)
     
-  } else if (report_type == "limma_report") {
+  } else if (report_type == "create_limma_report") {
     
-    build_limma_report(header_section = header_section,
+    build_create_limma_report(header_section = header_section,
                        plots = plots,
                        plots_sizes = plots_sizes,
                        level_headers_info = level_headers_info,
                        output_file_path = output_file_path)
     
-  } else if (report_type == "gsea_report") {
+  } else if (report_type == "create_gsea_report") {
     
-    build_gsea_report(header_section = header_section,
+    build_create_gsea_report(header_section = header_section,
                       plots = plots,
                       plots_sizes = plots_sizes,
                       level_headers_info = level_headers_info,
@@ -306,7 +306,7 @@ encode_df_to_base64 <- function(df,
     # Convert list of dataframes to Excel with multiple sheets
     
     if (!is.na(report_type)) {
-      if (report_type == "gsea_report") {
+      if (report_type == "create_gsea_report") {
         all_names <- names(df)
         sheet_names <- sapply(all_names, extract_and_combine)
       }
