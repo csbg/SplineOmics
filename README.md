@@ -68,7 +68,7 @@ With `SplineOmics`, you can:
 - **Explore various limma splines hyperparameters:**
 
   Test combinations of hyperparameters, such as different datasets,
-  `limma` design formulas, degrees of freedom, and p-value thresholds
+  `limma` design formulas, degrees of freedom, p-value thresholds, etc.,
   using the `screen_limma_hyperparams()` function.
 
 - **Perform limma spline analysis:**
@@ -83,8 +83,8 @@ With `SplineOmics`, you can:
 
 - **Run GSEA with clustered hits:**
 
-  Perform gene set enrichment analysis using the clustered hits with the
-  `create_gsea_report()` function.
+  Perform gene set enrichment analysis (GSEA) using the clustered hits
+  with the `create_gsea_report()` function.
 
 - **Generate reports:**
 
@@ -107,28 +107,25 @@ repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  **Install and load `devtools`, and install `SplineOmics` from
+2.  **Install and load ``` remotes``, and install ```SplineOmics\` from
     GitHub**:
 
-    Copy and paste the following code block into your R console. This
-    will check if the `devtools` package is installed, install it if it
-    is not, then use it to install the `SplineOmics` package from
-    GitHub.
+    Copy and paste the following code block into your R console.
 
     ``` r
-    # Check if devtools is installed; if not, install it
-    if (!requireNamespace("devtools", quietly = TRUE)) {
-      install.packages("devtools")
+    # Check if remotes is installed; if not, install it
+    if (!requireNamespace("remotes", quietly = TRUE)) {
+      install.packages("remotes")
     }
 
-    # Load devtools package
-    library(devtools)
+    # Load remotes package
+    library(remotes)
 
     # This line will be deleted once the repo is public
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
-    # Install the SplineOmics package from GitHub
-    devtools::install_github("csbg/SplineOmics")
+    # Install the latest version of the SplineOmics package from GitHub
+    remotes::install_github("csbg/SplineOmics@main")
     ```
 
 3.  **Load the `SplineOmics` package**:
@@ -163,13 +160,14 @@ end.
 
 A detailed description of all arguments and outputs of all the available
 package functions can be found
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html)
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
 ## 🐳 Docker Container
 
 To facilitate reproducible analysis, we provide a Docker container that
-encapsulates the necessary environment and dependencies. Follow the
-instructions below to pull the Docker container and run your analysis.
+encapsulates the `SplineOmics` package together with the necessary
+environment and dependencies. Follow the instructions below to pull the
+Docker container and run your analysis.
 
 ### Pulling the Docker Container
 
@@ -193,14 +191,14 @@ docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
     -v $(pwd)/output:/home/rstudio/output \
     -p 8888:8787 \
-    -e PASSWORD=password \
+    -e PASSWORD=123 \
     --name splineomics \
     thomasrauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to
 <http://localhost:8888>. Use rstudio as the username and the password
-you set with the -e PASSWORD=password option.
+you set with the -e PASSWORD=123 option.
 
 As long as the container is running, you can work on that localhost page
 with RStudio, where also the `SplineOmics` package is installed. The dir
@@ -388,7 +386,7 @@ of `SplineOmics`. Thank you for using our package!
 
 - [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
   package, developed the approach together with VSchaepertoens under
-  guidance from nfortelny.
+  guidance from nfortelny and skafdasschaf,
 - [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator,
   provided guidance and support for the overall approach.
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing

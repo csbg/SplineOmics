@@ -199,121 +199,6 @@ generate_explore_plots <- function(data,
 #'
 #' @return None. This function writes the HTML content to the specified file.
 #' 
-# build_explore_data_report <- function(header_section,
-#                                       plots,
-#                                       plots_sizes,
-#                                       output_file_path) {
-# 
-#   level_count = (length(plots) - 6)/8
-# 
-#   html_content <- paste(header_section, "<!--TOC-->", sep="\n")
-# 
-#   toc <- create_toc()
-# 
-#   styles <- define_html_styles()
-#   section_header_style <- styles$section_header_style
-#   toc_style <- styles$toc_style
-# 
-#   pb <- create_progress_bar(plots)
-#   plot_names <- c("Density Plots",
-#                   "Boxplots",
-#                   "Violin Plots",
-#                   "Mean Time Correlation",
-#                   "Lag1 Differences",
-#                   "First Lag Autocorrelation",
-#                   "Coefficient of Variation",
-#                   "PCA",
-#                   "Scree Plot",
-#                   "MDS",
-#                   "Correlation Heatmaps",
-#                   "t-SNE Plot")
-# 
-#   plot_explanations <- get_explore_plots_explanations()
-# 
-#   toc_index <- 0
-#   toc_index_memory <- toc_index
-# 
-#   # Generate the sections and plots
-#   for (index in seq_along(plots)) {
-# 
-#     # Determine when to place headers based on the provided logic
-#     if (length(plots) == 7) {     # Just one level exists
-# 
-#       toc_index <- toc_index + 1
-# 
-#     } else if (index == 1 ||
-#                index == 2 + level_count ||
-#                index == 2 + 2 * level_count ||
-#                index == 2 + 3 * level_count ||
-#                index == 2 + 4 * level_count ||
-#                index == 2 + 5 * level_count ||
-#                index == 2 + 6 * level_count ||
-#                index == 2 + 7 * level_count ||
-#                index == 3 + 7 * level_count ||
-#                index == 4 + 7 * level_count ||
-#                index == 5 + 7 * level_count ||
-#                index == 6 + 8 * level_count) {    # More than just one level
-# 
-#       toc_index <- toc_index + 1
-#     }
-# 
-# 
-#     if (toc_index != toc_index_memory) {
-# 
-#       section_id <- paste0("section_", toc_index)
-#       toc <- paste(toc,
-#                    sprintf('<li style="%s"><a href="#%s">%s</a></li>',
-#                            toc_style,
-#                            section_id,
-#                            plot_names[toc_index]),
-#                    sep = "\n")
-# 
-#       section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>',
-#                                 section_id,
-#                                 section_header_style,
-#                                 plot_names[toc_index])
-# 
-#       plot_description <- sprintf('<p style="font-size: 2em;">%s</p>',
-#                                   plot_explanations[toc_index])
-# 
-# 
-#       html_content <- paste(html_content,
-#                                   section_header,
-#                                   plot_description,
-#                                   sep = "\n")
-# 
-#       toc_index_memory <- toc_index
-#     }
-# 
-# 
-#     # Process each plot
-#     plot <- plots[[index]]
-#     plot_size <- plots_sizes[[index]]
-#     img_tag <- plot2base64(plot, plot_size)
-# 
-#     html_content <- paste(html_content, img_tag, sep = "\n")
-#     pb$tick()
-#   }
-# 
-#   # Close the Table of Contents
-#   toc <- paste(toc, "</ul></div>", sep="\n")
-# 
-#   # Insert the Table of Contents at the placeholder
-#   html_content <- gsub("<!--TOC-->", toc, html_content)
-# 
-#   # Append the final closing tags for the HTML body and document
-#   html_content <- paste(html_content, "</body></html>", sep="\n")
-# 
-#   # Ensure the directory exists
-#   dir_path <- dirname(output_file_path)
-#   if (!dir.exists(dir_path)) {
-#     dir.create(dir_path, recursive = TRUE)
-#   }
-# 
-#   # Write the HTML content to file
-#   writeLines(html_content, output_file_path)
-#   cat("Report written to:", normalizePath(output_file_path), "\n")
-# }
 build_explore_data_report <- function(header_section, 
                                       plots, 
                                       plots_sizes, 
@@ -321,7 +206,7 @@ build_explore_data_report <- function(header_section,
   
   level_count = (length(plots) - 6) / 8
   
-  html_content <- paste(header_section, "<!--TOC-->", sep="\n")
+  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
   toc <- create_toc()
   

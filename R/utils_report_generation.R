@@ -75,6 +75,17 @@ generate_report_html <- function(plots,
          call. = FALSE)
   }
   
+  fields_to_format <- c("data_description",
+                        "method_description",
+                        "results_summary",
+                        "conclusions")
+  
+  for (field in fields_to_format) {
+    if (field %in% names(report_info)) {
+      report_info[[field]] <- format_text(report_info[[field]])
+    }
+  }
+  
   header_text <- paste(title, 
                        report_info$omics_data_type, 
                        timestamp, sep = " | ")
@@ -128,8 +139,8 @@ generate_report_html <- function(plots,
     }
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
     header_section <- paste(header_section,
-                            sprintf('<tr><td style="text-align: right; 
-                                    color:blue; padding-right: 5px;">%s 
+                            sprintf('<tr><td style="text-align: right;
+                                    color:blue; padding-right: 5px;">%s
                                     :</td><td>%s</td></tr>',
                                     field_display, base64_df),
                             sep = "\n")
@@ -197,6 +208,36 @@ generate_report_html <- function(plots,
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+#' Format text
+#'
+#' @description
+#' This function takes a character vector `text` and splits it into individual
+#' characters. It then iterates over the characters and builds lines not exceeding
+#' a specified character limit (default 70). Newlines are inserted between lines
+#' using the `<br>` tag, suitable for HTML display.
+#' 
+#' @param text A character vector to be formatted.
+#' 
+#' @return A character vector with formatted text containing line breaks.
+#' 
+format_text <- function(text) {
+
+  letters <- strsplit(text, "")[[1]]
+  formatted_lines <- vector(mode = "character", length = 0)  
+  current_line <- ""
+  for (char in letters) {
+    if (nchar(current_line) + nchar(char) <= 70) {
+      current_line <- paste(current_line, char, sep = "")
+    } else {
+      formatted_lines <- c(formatted_lines, current_line)
+      current_line <- char
+    }
+  }
+  formatted_lines <- c(formatted_lines, current_line) 
+  formatted_text <- paste(formatted_lines, collapse = "<br>")
+}
 
 
 #' Get Header Section

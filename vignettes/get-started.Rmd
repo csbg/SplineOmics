@@ -190,8 +190,6 @@ clustering_results <- cluster_hits(top_tables = top_tables1,
                                    meta_batch_column = meta_batch_column,
                                    report_dir = report_dir,
                                    report = TRUE)
-
-print(clustering_results)
 ```
 
 To see the output HTML report, click here: [here](../inst/reports/clustering_report.html)
@@ -229,6 +227,7 @@ genes <- annotation[[gene_column_name]][1:nrow(annotation)]
 genes <- sub(" .*", "", genes)
 genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)
+genes <- sub("-.*", "", genes)
 
 downloaded_dbs_filepath <- 
   here::here("dev", "all_databases_08_04_2024-12_41_50.tsv")
@@ -249,8 +248,6 @@ result <- create_gsea_report(levels_clustered_hits =
                              params = clusterProfiler_params,
                              report_info = report_info,
                              report_dir = report_dir)
-
-print(result)
 ```
 
 To see the output HTML report, click here: [here](../inst/reports/gsea_report.html)
