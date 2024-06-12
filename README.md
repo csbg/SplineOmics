@@ -186,9 +186,10 @@ This command needs to be run in a dir where the subdirs `input` and
 `output` exist. Place your data and meta (and annotation) files in
 `input`, and receive your output from the package in the `output` dir.
 
-For Linux and Mac:
+For Linux and macOS:
 
 ``` sh
+# Bash
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
     -v $(pwd)/output:/home/rstudio/output \
@@ -201,7 +202,7 @@ docker run -it -d \
 For Windows:
 
 ```powershell
-# PowerShell command
+# PowerShell
 docker run -it -d `
     -v ${PWD}\input:/home/rstudio/input `
     -v ${PWD}\output:/home/rstudio/output `
