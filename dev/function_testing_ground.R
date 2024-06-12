@@ -1,55 +1,37 @@
 rm(list = ls(all.names = TRUE))
 
-# load("data/PTX/PTX_dfs.RData")
-# library(writexl)
-# write_xlsx(data, "data.xlsx")
-# 
-# # Write data frame 'annotation' to 'annotation.xlsx'
-# write_xlsx(annotation, "annotation.xlsx")
-# 
-# # Write data frame 'meta' to 'meta.xlsx'
-# write_xlsx(meta, "meta.xlsx")
-
-
-
-annotation <- read_excel(system.file("extdata", "annotation.xlsx", package = "SplineOmics"))
-
-gene_column_name <- "Genes"
-genes <- annotation[[gene_column_name]][1:nrow(annotation)]
-genes <- sub(" .*", "", genes)
-genes <- sub(";.*", "", genes)
-genes <- sub("_.*", "", genes)
-
 # Setup ------------------------------------------------------------------------
 library(devtools)
 devtools::load_all()
 
+library(readxl)
 library(conflicted)
 
 
-# Load the data ----------------------------------------------------------------
-# load(here::here("test_data", "timeseries_proteomics_example.RData")) 
 
-# library(tidyverse)
-library(readxl)
-data_excel <- read_excel(here::here("data", "PPTX",
+# Load the data ----------------------------------------------------------------
+
+data_excel <- read_excel(here::here("dev" ,"data", "PPTX",
                                     "PPTX_processed_with_imputation.xlsx"))
 
-meta <- read_excel(here::here("data", "Time_course_PPTX_old_metadata.xlsx"))
+meta <- read_excel(here::here("dev" ,"data",
+                              "Time_course_PPTX_old_metadata.xlsx"))
 
 
-# Automatically extract data matrix from excel/csv table
+
+# Automatically extract data matrix from excel/csv table -----------------------
 
 # debug(extract_data)
 data <- extract_data(data_excel,
                      "Unique identifier")
 
 
+
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
   omics_data_type = "PPTX",
-  data_description = "Old phosphoproteomics data with the missing two samples",
+  data_description = "Old phosphoproteomics data with the missing two samples und ich geehe hierhin und dorthin und dann esse ich eine banane und noch eine und noch eine und noch eine",
   data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -60,14 +42,14 @@ meta_batch_column <- "Reactor"
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-# plots <- explore_data(data = data,
-#                       meta = meta,
-#                       condition = condition,
-#                       report_info = report_info,
-#                       meta_batch_column = meta_batch_column,
-#                       # meta_batch2_column = NULL,
-#                       report_dir = report_dir,
-#                       report = FALSE)
+plots <- explore_data(data = data,
+                      meta = meta,
+                      condition = condition,
+                      report_info = report_info,
+                      meta_batch_column = meta_batch_column,
+                      meta_batch2_column = NA,
+                      report_dir = report_dir,
+                      report = TRUE)
 
 
 # Prep input to hyperparams screen function ------------------------------------

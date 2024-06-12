@@ -973,13 +973,36 @@ InputControl <- R6::R6Class("InputControl",
              call. = FALSE)
       }
       
-      # Check if any field exceeds 80 characters
-      long_fields <- sapply(report_info, function(x) any(nchar(x) > 80))
+      excluded_fields <- c("data_description",
+                           "method_description",
+                           "results summary",
+                           "conclusions")  
+      excluded_limit <- 700  
+      
+      check_long_fields <- function(data,
+                                    excluded_fields,
+                                    excluded_limit) {
+        
+        long_fields <- sapply(data, function(x) {
+          if (any(names(data) %in% excluded_fields)) {
+            any(nchar(x) > excluded_limit)
+          } else {
+            any(nchar(x) > 70)
+          }
+        })
+        return(long_fields)
+      }
+      
+      # Check if any field exceeds 70 characters
+      long_fields <- check_long_fields(report_info, 
+                                       excluded_fields, 
+                                       excluded_limit)
+      
       if (any(long_fields)) {
         too_long_fields <- names(report_info)[long_fields]
-        stop(paste("The following fields have strings exceeding 80 characters:",
-                   paste(too_long_fields, collapse = ", ")),
-             call. = FALSE)
+        stop(paste("The following fields have strings exceeding 70 characters:",
+                   paste(too_long_fields, collapse = ", "),
+                   sep = "\n"), call. = FALSE)
       }
       
       return(TRUE)
@@ -1196,6 +1219,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
      
      # Check condition and time pattern consistency
      self$check_condition_time_consistency(meta, condition)
+     
+     if (!is.character(meta_batch2_column)) {
+       meta_batch2_column <- NULL
+     }
      
      if (is.null(meta_batch_column) && !is.null(meta_batch2_column)) {
        stop(paste("For removing the batch effect, batch2 can only be used when",

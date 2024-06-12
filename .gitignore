@@ -6,5 +6,5 @@ results/
 data/
 inst/README_data
 /Meta/
-/docker/git_ignore
 inst/doc
+/doc/
