@@ -108,9 +108,9 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                       adj_pthresholds = adj_pthresholds,
                       meta = meta,
                       condition = condition)
-  
+
   huge_table_user_prompter(within_level_top_tables)
-  
+
   all_levels_clustering <-
     perform_clustering(top_tables = within_level_top_tables,
                        clusters = clusters,
@@ -153,15 +153,20 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
     }
   })
   
-  
   clustered_hits_levels <- list()
   
   for (i in seq_along(all_levels_clustering)) {
     clustering_level <- all_levels_clustering[[i]]
     element_name <- names(all_levels_clustering)[i]
     
-    clustered_hits_levels[[element_name]] <- 
-      clustering_level$clustered_hits
+    if (any(is.character(clustering_level))) {
+      clustered_hits_levels[[element_name]] <- 
+        clustering_level
+    }
+    else {                                       # normal list result
+      clustered_hits_levels[[element_name]] <- 
+        clustering_level$clustered_hits
+    }
   }
   
   
@@ -237,8 +242,10 @@ filter_top_tables <- function(top_tables,
   if (all(is.na(within_level_top_tables))) {
     stop("All levels have < 2 hits. Cannot run clustering.", call. = FALSE)
   }
-
-  return(within_level_top_tables)
+  
+  # within_level_top_tables <- 
+  #   within_level_top_tables[!sapply(within_level_top_tables, is.logical)]
+  within_level_top_tables
 }
 
 
@@ -256,6 +263,11 @@ filter_top_tables <- function(top_tables,
 huge_table_user_prompter <- function(tables) {
   
   for (i in seq_along(tables)) {
+
+    if (any(is.logical(tables[[i]]))) {
+      next
+    }
+    
     if (nrow(tables[[i]]) > 300) {
       # Prompt the user for input
       while (TRUE) {

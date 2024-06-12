@@ -41,7 +41,8 @@ Imports:
 	stringr (>= 1.4.0),
 	tibble (>= 3.1.8),
 	tidyr (>= 1.2.0),
-	viridis (>= 0.6.2)
+	viridis (>= 0.6.2),
+	stringr
 Suggests:
 	testthat (>= 3.0.0),
 	rmarkdown (>= 2.7),

@@ -55,7 +55,6 @@
 #' @importFrom purrr partial map map_chr map2
 #' @importFrom stats setNames
 #' @importFrom utils combn
-#' @importFrom stringr str_split
 #' 
 #' @export
 #' 

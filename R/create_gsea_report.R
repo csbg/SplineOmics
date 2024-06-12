@@ -37,19 +37,24 @@ create_gsea_report <- function(levels_clustered_hits,
                                plot_titles = NA,
                                background = NULL,
                                report_dir = here::here()) {
-  
+
   # Check report_info and report_dir
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
+  # Remove levels that 
+  levels_clustered_hits <- levels_clustered_hits[!sapply(levels_clustered_hits,
+                                                         is.character)]
+  
   # Control the test not covered by the InputControl class
-  control_inputs_create_gsea_report(levels_clustered_hits = levels_clustered_hits,
-                             genes = genes,
-                             databases = databases,
-                             params = params,
-                             plot_titles = plot_titles,
-                             background = background)
+  control_inputs_create_gsea_report(levels_clustered_hits = 
+                                      levels_clustered_hits,
+                                    genes = genes,
+                                    databases = databases,
+                                    params = params,
+                                    plot_titles = plot_titles,
+                                    background = background)
 
   all_results <- map2(
     levels_clustered_hits,
@@ -117,7 +122,12 @@ control_inputs_create_gsea_report <- function(levels_clustered_hits,
   
   check_clustered_hits(levels_clustered_hits)
   
-  check_genes(genes)
+  highest_index <- sapply(levels_clustered_hits,
+                               function(df) max(df$feature, na.rm = TRUE))
+  max_index_overall <- max(highest_index)
+  
+  check_genes(genes,
+              max_index_overall)
   
   check_databases(databases)
 
@@ -168,9 +178,9 @@ manage_gsea_level <- function(clustered_hits,
   message(paste("\n\n Running clusterProfiler for the level:", level_name))
   
   result <- create_gsea_report_level(clustered_genes = clustered_hits,
-                           databases = databases,
-                           params = clusterProfiler_params,
-                           plot_title = level_name)
+                                     databases = databases,
+                                     params = clusterProfiler_params,
+                                     plot_title = level_name)
 }
 
 
@@ -344,7 +354,7 @@ check_clustered_hits <- function(levels_clustered_hits) {
   for (i in seq_along(levels_clustered_hits)) {
 
     clustered_hits <- levels_clustered_hits[[i]]
-    
+
     # Check if clustered_hits is a dataframe
     if (!is.data.frame(clustered_hits)) {
       stop(paste("Element", i ,"of levels_clustered_hits is not a dataframe", 
@@ -382,12 +392,25 @@ check_clustered_hits <- function(levels_clustered_hits) {
 #' solely of alphabetic letters and numbers.
 #'
 #' @param genes A character vector containing gene IDs.
+#' @param max_index_overall An integer, specifying the highest index of all 
+#'                          features across all levels.
 #'
 #' @return None. This function stops execution and provides 
 #' an error message if the vector does not meet the criteria, 
 #' including the first offending element and its index.
 #'
-check_genes <- function(genes) {
+check_genes <- function(genes,
+                        max_index_overall = NA) {
+  
+  if (!is.na(max_index_overall)) {
+    if (length(genes) < max_index_overall) {
+      stop(paste("genes must at least have over", max_index_overall,
+                 "elements"),
+           call. = FALSE)
+    }
+  }
+
+  
   if (!is.character(genes)) {
     stop("genes must be a character vector", call. = FALSE)
   }
@@ -481,6 +504,9 @@ check_params <- function(params) {
                paste(extra_params, collapse = ", ")), call. = FALSE)
   }
   
+  valid_adj_p_value_methods <- c("holm", "hochberg", "hommel", "bonferroni",
+                                 "BH", "BY", "fdr", "none")
+  
   # Check for required elements and their data types
   for (param in names(params)) {
     
@@ -511,6 +537,16 @@ check_params <- function(params) {
     } else {
       stop("Unexpected element '", param, "' in the list.", call. = FALSE)
     }
+    
+    if (param == 'pAdjustMethod') {
+      if (!(actual_value %in% valid_adj_p_value_methods)) {
+        stop(paste("pAdjustMethod must be one of", 
+                   valid_adj_p_value_methods, collapse = ", "),
+             call. = FALSE)
+        
+      }
+    }
+    
   }
 }
 

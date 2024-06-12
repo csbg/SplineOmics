@@ -44,7 +44,8 @@ clean_data <- extract_data(data,
 **data**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, loaded from for example an Excel, CSV, TSV, etc. file. It must contain a quadratic or rectangular "field" where the numeric values of the data are located. On the right of that field (it must be on the right, otherwise the function will produce an error) there can be annotation information for the features, which column names can be specified to construct a unique identifier for the features.
+-   **Datatype:** [data.frame]{style="color: maroon;"}
+-   **Description:** A dataframe, loaded from for example an Excel, CSV, TSV, etc. file. It must contain a quadratic or rectangular "field" where the numeric values of the data are located. On the right of that field (it must be on the right, otherwise the function will produce an error) there can be annotation information for the features, which column names can be specified to construct a unique identifier for the features.
 :::
 
 ## Optional arguments
@@ -52,7 +53,8 @@ A dataframe, loaded from for example an Excel, CSV, TSV, etc. file. It must cont
 **feature_name_columns**:
 
 ::: {style="margin-left: 20px;"}
-A character vector of column names to use as features. If set to `NA`, all columns are used as features. Default is `NA`.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of column names to use as features. If set to `NA`, all columns are used as features. Default is `NA`.
 :::
 
 ## Returns
@@ -60,7 +62,8 @@ A character vector of column names to use as features. If set to `NA`, all colum
 **clean_data**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, containing only numeric values as the elements. The column names are the combination of all the strings in the cells above the respective column in the original dataframe, that contain the numeric values. The row names are either integers (1, 2, 3, etc.) if feature_name_columns was NA, or the concatenated strings of the columns which names were provided with feature_name_columns.
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, containing only numeric values as the elements. The column names are the combination of all the strings in the cells above the respective column in the original dataframe, that contain the numeric values. The row names are either integers (1, 2, 3, etc.) if feature_name_columns was NA, or the concatenated strings of the columns which names were provided with feature_name_columns.
 :::
 
 # explore_data()
@@ -87,25 +90,29 @@ plots <- explore_data(data,
 **data**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
 :::
 
 **meta**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). This is an example of such a meta dataframe (this is part of it): ![meta dataframe](../man/figures/meta_dataframe_example.png)
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). This is an example of such a meta dataframe (this is part of it): ![meta dataframe](../man/figures/meta_dataframe_example.png)
 :::
 
 **condition**:
 
 ::: {style="margin-left: 20px;"}
-The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
 :::
 
 **report_info**:
 
 ::: {style="margin-left: 20px;"}
-The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
 :::
 
 ## Optional arguments
@@ -113,25 +120,29 @@ The argument report_info must be a named list with these mandatory fields: "omic
 **meta_batch_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the first batch effect of the experiment, if present. If specified, the function explore_data() will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the limma function 'removeBatchEffect'.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument meta_batch_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the first batch effect of the experiment, if present. If specified, the function explore_data() will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the limma function 'removeBatchEffect'.
 :::
 
 **meta_batch2_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch2_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the second batch effect of the experiment, if present. This argument can only be specified if meta_batch_column also is specified. The limma function 'removeBatchEffect' can remove up to two batch effects from the data.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument meta_batch2_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the second batch effect of the experiment, if present. This argument can only be specified if meta_batch_column also is specified. The limma function 'removeBatchEffect' can remove up to two batch effects from the data.
 :::
 
 **report_dir**:
 
 ::: {style="margin-left: 20px;"}
-A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
 :::
 
 **report**:
 
 ::: {style="margin-left: 20px;"}
-A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should be generated or not. Default is TRUE, which means the repors will be generated. It can be set to false if you are only interested in the plots inside your R session.
+-   **Datatype:** [logical]{style="color: red;"} 
+-   **Description:** A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should be generated or not. Default is TRUE, which means the repors will be generated. It can be set to false if you are only interested in the plots inside your R session.
 :::
 
 ## Returns
@@ -139,7 +150,8 @@ A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should 
 **plots**:
 
 ::: {style="margin-left: 20px;"}
-A named list, where the elements are data and optionally batch-corrected-data (if at least one meta batch column was specified). The elements are lists containing the ggplot and ComplexHeatmap plot objects of all the plots, that are put into the HTML report, in that order.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list, where the elements are data and optionally batch-corrected-data (if at least one meta batch column was specified). The elements are lists containing the ggplot and ComplexHeatmap plot objects of all the plots, that are put into the HTML report, in that order.
 :::
 
 # screen_limma_hyperparams()
@@ -171,45 +183,50 @@ screen_limma_hyperparams(datas,
 **datas**:
 
 ::: {style="margin-left: 20px;"}
-A list of valid data dataframes (see extract_data(), Mandatory arguments, data).
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A list of valid data dataframes (see extract_data(), Mandatory arguments, data).
 :::
 
 **datas_descr**:
 
 ::: {style="margin-left: 20px;"}
-A character vector, where each element is a description of the element with the same index in datas (each element describes the corresponding data dataframe)
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector, where each element is a description of the element with the same index in datas (each element describes the corresponding data dataframe)
 :::
 
 **metas**:
 
 ::: {style="margin-left: 20px;"}
-A list of valid meta tables (see extract_data(), Mandatory arguments, meta).
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A list of valid meta tables (see extract_data(), Mandatory arguments, meta).
 :::
 
 **designs**:
 
 ::: {style="margin-left: 20px;"}
-A character vector, where each element is a valid limma design formula, such as
-'~ 1 + Phase*X + Reactor'. Each design formula must contain the capital letter X, and each meta column (such as Phase and Reactor in this example) must be present
-in the respective meta table of the list metas (the first element of designs corresponds to the first element of datas and metas).
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector, where each element is a valid limma design formula, such as '\~ 1 + Phase\*X + Reactor'. Each design formula must contain the capital letter X, and each meta column (such as Phase and Reactor in this example) must be present in the respective meta table of the list metas (the first element of designs corresponds to the first element of datas and metas).
 :::
 
 **condition**:
 
 ::: {style="margin-left: 20px;"}
-The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
 :::
 
 **spline_test_configs**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, where the columns must be 'spline_type', 'degree', 'dof', 'knots', and 'bknots'. Every row is then a set of spline parameters. One such set is one value for the hyperparameter spline_params. 
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, where the columns must be 'spline_type', 'degree', 'dof', 'knots', and 'bknots'. Every row is then a set of spline parameters. One such set is one value for the hyperparameter spline_params.
 :::
 
 **report_info**:
 
 ::: {style="margin-left: 20px;"}
-The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
 :::
 
 ## Optional arguments
@@ -217,38 +234,43 @@ The argument report_info must be a named list with these mandatory fields: "omic
 **report_dir**:
 
 ::: {style="margin-left: 20px;"}
-A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
 :::
 
 **adj_pthresholds**:
 
 ::: {style="margin-left: 20px;"}
-A numeric vector, where element must be 1 > and < 0. This vector contains the different values for the hyperparameter adj. p-value thresholds.
+-   **Datatype:** [numeric]{style="color: green;"} 
+-   **Description:** A numeric vector, where element must be 1 \> and \< 0. This vector contains the different values for the hyperparameter adj. p-value thresholds.
 :::
 
 **meta_batch_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the first batch effect of the experiment, if present. If specified, the function explore_data() will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the limma function 'removeBatchEffect'.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument meta_batch_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the first batch effect of the experiment, if present. If specified, the function explore_data() will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the limma function 'removeBatchEffect'.
 :::
 
 **meta_batch2_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch2_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the second batch effect of the experiment, if present. This argument can only be specified if meta_batch_column also is specified. The limma function 'removeBatchEffect' can remove up to two batch effects from the data.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument meta_batch2_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the second batch effect of the experiment, if present. This argument can only be specified if meta_batch_column also is specified. The limma function 'removeBatchEffect' can remove up to two batch effects from the data.
 :::
 
 **time_unit**:
 
 ::: {style="margin-left: 20px;"}
-A character vector of length == 1, that contains the string that will label the time axis in the respective plots. Can be any string with < 16 letters, but it 
-recommendet using strings such as min for minutes and sec for seconds, for example. 
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of length == 1, that contains the string that will label the time axis in the respective plots. Can be any string with \< 16 letters, but it recommendet using strings such as min for minutes and sec for seconds, for example.
 :::
 
 **padjust_method**:
 
 ::: {style="margin-left: 20px;"}
-A character vector of length == 1 that contains one of the following strings (supported methods for adjusting the p-value): "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". When "none" is specified, the p-value will not be adjusted (not recommendet).
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of length == 1 that contains one of the following strings (supported methods for adjusting the p-value): "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". When "none" is specified, the p-value will not be adjusted (not recommendet).
 :::
 
 ## Returns
@@ -263,7 +285,7 @@ This function does not return anything. As a side-effect, it writes all the HTML
 
 ## Description
 
-This function runs the limma spline analysis with the best hyperparameter that where found in the step before (for example using the function screen_limma_hyperparams). It returns the limma topTables, that contain the (adjusted) p-values for all the features. There are three different types of topTables returned: One containing the results for the time effect, one for the average difference between the conditions, and one for the interaction effect between condition and time. 
+This function runs the limma spline analysis with the best hyperparameter that where found in the step before (for example using the function screen_limma_hyperparams). It returns the limma topTables, that contain the (adjusted) p-values for all the features. There are three different types of topTables returned: One containing the results for the time effect, one for the average difference between the conditions, and one for the interaction effect between condition and time.
 
 ## Usage
 
@@ -283,25 +305,29 @@ top_tables <- run_limma_splines(data,
 **data**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
 :::
 
 **meta**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). For an example of a meta table, see explore_data(), Mandatory arguments, meta.
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). For an example of a meta table, see explore_data(), Mandatory arguments, meta.
 :::
 
 **design**:
 
 ::: {style="margin-left: 20px;"}
-A valid limma design formula, for example "~ 1 + Phase*X + Reactor". The formula must contain a capital X that reperesents the Time column of meta, and every other meta column (such as Phase and Reactor here) must be present in the meta dataframe. 
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid limma design formula, for example "\~ 1 + Phase\*X + Reactor". The formula must contain a capital X that reperesents the Time column of meta, and every other meta column (such as Phase and Reactor here) must be present in the meta dataframe.
 :::
 
 **condition**:
 
 ::: {style="margin-left: 20px;"}
-The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
 :::
 
 ## Optional arguments
@@ -309,13 +335,15 @@ The argument condition must be a character vector of length == 1, containing a s
 **spline_params**:
 
 ::: {style="margin-left: 20px;"}
-A named list, specifying the chosen parameters for the spline analysis. The names that must be used for the respective parameters are 'spline_type', 'degree', 'dof', 'knots', and 'bknots', but not all must be used, just the ones that are defined. These parameters must be provided as vectors. If the limma design formula contains interaction effects, then the length of each vector must be 1, so every level runs with the same parameters. When there is no interaction effect in that formula, for every level there must be spline parameters specified (can also be the same one for every level). For knots and bknots, a list must be specified, where each element is a numeric vector, defining the positions of the knots or bknots, respectively. For design formulas with interaction effect, the lists must have 1 element, and for design formulas with no interaction effect, they must have an element for each level.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list, specifying the chosen parameters for the spline analysis. The names that must be used for the respective parameters are 'spline_type', 'degree', 'dof', 'knots', and 'bknots', but not all must be used, just the ones that are defined. These parameters must be provided as vectors. If the limma design formula contains interaction effects, then the length of each vector must be 1, so every level runs with the same parameters. When there is no interaction effect in that formula, for every level there must be spline parameters specified (can also be the same one for every level). For knots and bknots, a list must be specified, where each element is a numeric vector, defining the positions of the knots or bknots, respectively. For design formulas with interaction effect, the lists must have 1 element, and for design formulas with no interaction effect, they must have an element for each level.
 :::
 
 **padjust_method**:
 
 ::: {style="margin-left: 20px;"}
-A character vector of length == 1 that contains one of the following strings (supported methods for adjusting the p-value): "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". When "none" is specified, the p-value will not be adjusted (not recommendet).
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of length == 1 that contains one of the following strings (supported methods for adjusting the p-value): "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". When "none" is specified, the p-value will not be adjusted (not recommendet).
 :::
 
 ## Returns
@@ -323,7 +351,8 @@ A character vector of length == 1 that contains one of the following strings (su
 **top_tables**:
 
 ::: {style="margin-left: 20px;"}
-A named list, containig the elements with the names time_diff, avrg_diff_conditions, and interaction_condition_time when the limma design formula contained interaction effects and there are more than 1 levels. If there is just one level or the limma design formula contains no interaction effects, than there is just one named element, time_diff. time_diff contains a limma topTable for every level, where the p-values describe if the spline for each feature within that level shows a significant effect over time. avrg_diff_conditions contains a limma topTable for every comparison of two levels, where the p-values describe if a feature has splines with significantly different average values in the two levels, while ignoring the time pattern. interaction_condition_time contains a limma topTable for every comparison of two levels, where the p-values describe if for a feature, the level has an effect on the temporal pattern.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list, containig the elements with the names time_diff, avrg_diff_conditions, and interaction_condition_time when the limma design formula contained interaction effects and there are more than 1 levels. If there is just one level or the limma design formula contains no interaction effects, than there is just one named element, time_diff. time_diff contains a limma topTable for every level, where the p-values describe if the spline for each feature within that level shows a significant effect over time. avrg_diff_conditions contains a limma topTable for every comparison of two levels, where the p-values describe if a feature has splines with significantly different average values in the two levels, while ignoring the time pattern. interaction_condition_time contains a limma topTable for every comparison of two levels, where the p-values describe if for a feature, the level has an effect on the temporal pattern.
 :::
 
 # create_limma_report()
@@ -346,13 +375,15 @@ create_limma_report(run_limma_splines_result,
 **run_limma_splines_result**:
 
 ::: {style="margin-left: 20px;"}
-The named list returned by the function run_limma_splines(). Please do not edit that list by hand. 
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The named list returned by the function run_limma_splines(). Please do not edit that list by hand.
 :::
 
 **report_info**:
 
 ::: {style="margin-left: 20px;"}
-The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
 :::
 
 ## Optional arguments
@@ -360,13 +391,15 @@ The argument report_info must be a named list with these mandatory fields: "omic
 **adj_pthresh**:
 
 ::: {style="margin-left: 20px;"}
-A numeric value (float) > 0 and < 1, that will be the adj. p-value threshold used to filter the features.
+-   **Datatype:** [numeric]{style="color: green;"} 
+-   **Description:** A numeric value (float) \> 0 and \< 1, that will be the adj. p-value threshold used to filter the features.
 :::
 
 **report_dir**:
 
 ::: {style="margin-left: 20px;"}
-A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
 :::
 
 ## Returns
@@ -381,9 +414,7 @@ This function does not return anything. As a side-effect, it writes the HTML rep
 
 ## Description
 
-The function cluster_hits() clusters the hits (significant features) based on 
-the shape of the splines that where fitted by limma to them. The shape of the splines is equal to the temporal pattern. Hierarchical clustering is used. It documents the clustering by generating a range of plots and presenting them in 
-an HTML report. 
+The function cluster_hits() clusters the hits (significant features) based on the shape of the splines that where fitted by limma to them. The shape of the splines is equal to the temporal pattern. Hierarchical clustering is used. It documents the clustering by generating a range of plots and presenting them in an HTML report.
 
 ## Usage
 
@@ -411,39 +442,47 @@ clustering_results <- cluster_hits(top_tables,
 **top_tables**:
 
 ::: {style="margin-left: 20px;"}
-Either a list of time_diff topTables (first element of the list output of the function run_limma_splines()) for each level, or a list with two elements that are lists. In the latter case, one of those lists must be the list containing the time_diff topTables, and the other one must be either the list containing the avrg_diff_conditions- or interaction_condition_time topTables. 
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** Either a list of time_diff topTables (first element of the list output of the function run_limma_splines()) for each level, or a list with two elements that are lists. In the latter case, one of those lists must be the list containing the time_diff topTables, and the other one must be either the list containing the avrg_diff_conditions- or interaction_condition_time topTables.
 
-If the first scenario is the case, 
+If the first scenario is the case, the function filters the topTables of the levels based on the specifed adj. p-value for that level, and clusters them based on the spline coefficients specified in the topTable.
+
+If the second scenario is the case, the function filters the topTable of avrg_diff_conditions- or interaction_condition_time, but takes the spline coefficients from the time_diff topTable (because the topTables of the other categories contain spline coefficients for a comparison of two levels, which cannot directly be plotted to datapoints from one level).
 :::
 
 **data**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, where every element is numeric and the columns represent the samples of a time-series omics experiment. The elements are the intensities/abundances/etc. of the individual features (proteins/metabolites/etc.) which are the rows of this dataframe. The row headers are the IDs of the features. (For an example see output dataframe picture in the section extract_data() ).
 :::
 
 **meta**:
 
 ::: {style="margin-left: 20px;"}
-A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). For an example of a meta table, see explore_data(), Mandatory arguments, meta.
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** A dataframe, that contains the meta information of the time-series omics experiment. Each column contains different meta information, e.g. the reactor, timepoint, etc. Each row corresponds to one specific timepoint, so each row corresponds to a column of data. It must have the column named 'Time', which must contain only numeric elements. Further, it must have a 'condition' column, that divides the experiment into different levels, for example Exponential and Stationary (two growth phases of cells). For an example of a meta table, see explore_data(), Mandatory arguments, meta.
 :::
 
 **design**:
 
 ::: {style="margin-left: 20px;"}
-A valid limma design formula, for example "~ 1 + Phase*X + Reactor". The formula must contain a capital X that reperesents the Time column of meta, and every other meta column (such as Phase and Reactor here) must be present in the meta dataframe. 
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid limma design formula, for example "\~ 1 + Phase\*X + Reactor". The formula must contain a capital X that reperesents the Time column of meta, and every other meta column (such as Phase and Reactor here) must be present in the meta dataframe.
 :::
 
 **condition**:
 
 ::: {style="margin-left: 20px;"}
-The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** The argument condition must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the levels of the experiment.
 :::
 
 **report_info**:
 
 ::: {style="margin-left: 20px;"}
-The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
 :::
 
 ## Optional arguments
@@ -451,50 +490,57 @@ The argument report_info must be a named list with these mandatory fields: "omic
 **spline_params**:
 
 ::: {style="margin-left: 20px;"}
-A named list, specifying the chosen parameters for the spline analysis. The names that must be used for the respective parameters are 'spline_type', 'degree', 'dof', 'knots', and 'bknots', but not all must be used, just the ones that are defined. These parameters must be provided as vectors. If the limma design formula contains interaction effects, then the length of each vector must be 1, so every level runs with the same parameters. When there is no interaction effect in that formula, for every level there must be spline parameters specified (can also be the same one for every level). For knots and bknots, a list must be specified, where each element is a numeric vector, defining the positions of the knots or bknots, respectively. For design formulas with interaction effect, the lists must have 1 element, and for design formulas with no interaction effect, they must have an element for each level.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list, specifying the chosen parameters for the spline analysis. The names that must be used for the respective parameters are 'spline_type', 'degree', 'dof', 'knots', and 'bknots', but not all must be used, just the ones that are defined. These parameters must be provided as vectors. If the limma design formula contains interaction effects, then the length of each vector must be 1, so every level runs with the same parameters. When there is no interaction effect in that formula, for every level there must be spline parameters specified (can also be the same one for every level). For knots and bknots, a list must be specified, where each element is a numeric vector, defining the positions of the knots or bknots, respectively. For design formulas with interaction effect, the lists must have 1 element, and for design formulas with no interaction effect, they must have an element for each level.
 :::
 
 **adj_pthresholds**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [numeric]{style="color: green;"} 
+-   **Description:** A numeric vector, where each element is \> 0 & \< 1. The first element is the adj. p-value threshold for the first level, the second elemnt is for the second level, etc. If the second scenario is true for the top_tables argument, then each element belongs to a comparison of two levels.
 :::
 
 **clusters**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [integer]{style="color: orange;"} 
+-   **Description:** A numeric vector, that specifies the amount of clusters for each level or each level comparison.
 :::
 
 **meta_batch_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the first batch effect of the experiment, if present. If specified, the function explore_data() will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the limma function 'removeBatchEffect'.
+-   **Datatype:** [character]{style="color: blue;"}
+-   **Description:** The argument `meta_batch_column` must contain a string that is a column name of `meta`. This column contains the first batch effect of the experiment, if present. If specified, the function `explore_data()` will generate a second HTML report, containing the same plots but with the batch effect removed from the data. The removal of the batch effect is carried out with the `limma` function `removeBatchEffect`.
 :::
 
 **meta_batch2_column**:
 
 ::: {style="margin-left: 20px;"}
-The argument meta_batch2_column must be a character vector of length == 1, containing a string that is a column name of meta. This column contains the second batch effect of the experiment, if present. This argument can only be specified if meta_batch_column also is specified. The limma function 'removeBatchEffect' can remove up to two batch effects from the data.
+-   **Datatype:** [character]{style="color: blue;"}
+-   **Description:** The argument `meta_batch2_column` must contain a string that is a column name of `meta`. This column contains the second batch effect of the experiment, if present. This argument can only be specified if `meta_batch_column` also is specified. The `limma` function `removeBatchEffect` can remove up to two batch effects from the data.
 :::
 
 **time_unit**:
 
 ::: {style="margin-left: 20px;"}
-A character vector of length == 1, that contains the string that will label the time axis in the respective plots. Can be any string with < 16 letters, but it 
-recommendet using strings such as min for minutes and sec for seconds, for example. 
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of length == 1, that contains the string that will label the time axis in the respective plots. Can be any string with \< 16 letters, but it recommendet using strings such as min for minutes and sec for seconds, for example.
 :::
 
 **report_dir**:
 
 ::: {style="margin-left: 20px;"}
-A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
 :::
 
 **report**:
 
 ::: {style="margin-left: 20px;"}
-A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should be generated or not. Default is TRUE, which means the repors will be generated. It can be set to false if you are only interested in the plots inside your R session.
+-   **Datatype:** [logical]{style="color: red;"} 
+-   **Description:** A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should be generated or not. Default is TRUE, which means the repors will be generated. It can be set to false if you are only interested in the plots inside your R session.
 :::
 
 ## Returns
@@ -502,7 +548,8 @@ A Boolean value (either 'TRUE' or 'FALSE') specifying if the HTML repors should 
 **clustering_results**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list with three elements: 'all_levels_clustering', 'plots', and 'clustered_hits_levels'. 'all_levels_clustering' is a named list, with one element for each level. Those elements contain the clustered_hits dataframe, and all the info that was used to perform the clustering. If a level has > 2 hits (which is insufficient for clustering) then a character will be in place of all those elements, that says: "No result for this level, because the top_table had < 2 hits". Plots contains all the plots that went into the HTML report, in the order in which they appear in that report. 'clustered_hits_levels' is a convenience element of this list, that contains the clustered_hits dataframe for each level or the above stated message if there where < 2 hits.
 :::
 
 # download_enrichr_databases()
@@ -521,7 +568,8 @@ download_enrichr_databases(gene_set_lib,
 **gene_set_lib**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector, where each element is a valid name of an Enrichr database, such as 'WikiPathways_2019_Human'. These databases will be downloaded and written to the TSV file.
 :::
 
 ## Optional arguments
@@ -529,7 +577,8 @@ Placeholder
 **output_dir**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A valid filepath, specifying the output directory of the written databases TSV file. Default is the current working dir.
 :::
 
 ## Returns
@@ -562,25 +611,29 @@ plots <- run_gsea(levels_clustered_hits,
 **levels_clustered_hits**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** Placeholder
 :::
 
 **genes**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector, containing standardized gene names, with as many elements as there are features in data. These will be used to assign the gene to the respective feature, using the index of the feature. That is why this gene vector needs to match the original order of the feature, how they appeared in the input datafile (for example the Excel file).
 :::
 
 **databases**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [data.frame]{style="color: maroon;"} 
+-   **Description:** The as dataframe loaded output file of the function download_enrichr_databases(). Please do not edit that file per hand.
 :::
 
 **report_info**:
 
 ::: {style="margin-left: 20px;"}
-The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** The argument report_info must be a named list with these mandatory fields: "omics_data_type", "data_description", "data_collection_date", "analyst_name", "contact_info", "project_name". The following fields are optional: "method_description", "results_summary", "conclusions". Any other fields besides the mandatory and optional fields are not allowed. All elements of the report_info list must be strings, so character vectors of length == 1. You can write whatever you want in there, as long as it is not exceeding 80 characters. However, we recommend writing descriptive info in there. The fields are self descriptive, but for example, in the field 'omics_data_type', you could write proteomics, to remind yourself, when you look at the report after 2 years, that this was about proteomics.
 :::
 
 ## Optional arguments
@@ -588,25 +641,29 @@ The argument report_info must be a named list with these mandatory fields: "omic
 **params**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A named list, maximally containing the following fields: 'adj_p_value', 'pAdjustMethod', 'minGSSize', 'maxGSSize', 'qvalueCutoff' (you can use only part of those fields). These hold the desired custom parameters for clusterProfiler, that will be used for GSEA. All except 'pAdjustMethod' must be of numeric type, and one of "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none".
 :::
 
 **plot_titles**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector with an element for each level, specifying the title that the enricher dotplots should receive. No title will be used per default.
 :::
 
 **background**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [character]{style="color: blue;"} 
+-   **Description:** A character vector of valid standardized gene names that is a valid background for the clusterProfiler GSEA, for example all expressed genes (all underlying genes of all the features).
 :::
 
 **report_dir**:
 
 ::: {style="margin-left: 20px;"}
-A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
+-   **Datatype:** [character]{style="color: blue;"}
+-   **Description:** A valid path to a directory (when the dir is not existing yet, it will be created automatically). The HTML repors will be written to this directory.
 :::
 
 ## Returns
@@ -614,5 +671,6 @@ A valid path to a directory (when the dir is not existing yet, it will be create
 **plots**:
 
 ::: {style="margin-left: 20px;"}
-Placeholder
+-   **Datatype:** [list]{style="color: olive;"} 
+-   **Description:** A list of the ggplot objects, that represent the dotplots placed into the report. The order is the same as in the report.
 :::
