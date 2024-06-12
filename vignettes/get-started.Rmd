@@ -25,6 +25,7 @@ This tutorial intends to showcase and explain the capabilities of the SplineOmic
 ```{r setup}
 library(SplineOmics)
 library(readxl)
+library(stringr)
 ```
 
 # Load the files
@@ -74,7 +75,7 @@ The EDA plots can tell you a range of things. The plots in the HTML report are g
 
 # Find the best hyperparameters
 
-Before we can run the limma spline analysis, we have to find out which "hyperparameters" are the best. Hyperparameters in this context are for example degree of freedom, different versions of the data (outlier removed vs. not removed), different limma design formulas, etc. Rationally thinking about which combination of hyperparameters to use is very challenging. Instead, it is often better to just try out a bunch of combinations and choose the best. The function limma_hyperparams_screen() does this for you. For each hyperparameter, you can just specify all the values that you would like to try, and the function then runs the limma spline analysis with the combinations that can be formed with the hyperparameters that you specified. Not every single combo is generated, but instead there are "inner" and "outer" hyperparameters, and only for all "outer" hyperparameters, all combos are generated. The "inner" hyperparameters are the adj. p-value thresholds and the spline parameters. For example, if you have two different versions of one dataset (one time the full dataset, and one time the dataset with some potential outliers removed), these are considered "outer" hyperparameters in this context. The function would generate all possible comparisons for the "outer" hyperparameters, which is just a single comparison. Then, for both versions of the data, every "inner" hyperparameter combo is generated. Lets say you specified natural cubic splines for both, with a degree of freedom of either 2 or 3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each version of data, it would test out all combinations of the spline parameters and the adj. p-value threshold. In this case, this is DoF = 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3, tresh = 0.1.
+Before we can run the limma spline analysis, we have to find out which "hyperparameters" are the best. Hyperparameters in this context are for example degree of freedom, different versions of the data (outlier removed vs. not removed), different limma design formulas, etc. Rationally thinking about which combination of hyperparameters to use is very challenging. Instead, it is often better to just try out a bunch of combinations and choose the best. The function screen_limma_hyperparams() does this for you. For each hyperparameter, you can just specify all the values that you would like to try, and the function then runs the limma spline analysis with the combinations that can be formed with the hyperparameters that you specified. Not every single combo is generated, but instead there are "inner" and "outer" hyperparameters, and only for all "outer" hyperparameters, all combos are generated. The "inner" hyperparameters are the adj. p-value thresholds and the spline parameters. For example, if you have two different versions of one dataset (one time the full dataset, and one time the dataset with some potential outliers removed), these are considered "outer" hyperparameters in this context. The function would generate all possible comparisons for the "outer" hyperparameters, which is just a single comparison. Then, for both versions of the data, every "inner" hyperparameter combo is generated. Lets say you specified natural cubic splines for both, with a degree of freedom of either 2 or 3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each version of data, it would test out all combinations of the spline parameters and the adj. p-value threshold. In this case, this is DoF = 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3, tresh = 0.1.
 
 ```{r Load hyperparameter-screening args, eval = TRUE}
 data1 <- data 
@@ -98,11 +99,11 @@ pthresholds <- c(0.05, 0.1)
 spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
                                   degree = c(NA, NA, NA, NA),
                                   dof = c(2L, 3L, 4L, 5L),
-                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),                                     bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
+                                  knots = I(list(c(NA), c(NA), c(NA), c(NA))),                                                        bknots = I(list(c(NA), c(NA), c(NA), c(NA))))
 ```
 
 ```{r Perform hyperparameter-screening, eval = FALSE}
-limma_hyperparams_screen(datas,
+screen_limma_hyperparams(datas,
                          datas_descr,
                          metas,
                          designs,
@@ -158,14 +159,14 @@ The element "interaction_condition_time" is a list that contains as elements the
 The topTables of all three categories can be used to generate p-value histograms an volcano plots.
 
 ```{r build limma report, eval = FALSE}
-report_dir <- here::here("results", "limma_reports")
+report_dir <- here::here("results", "create_limma_reports")
 
-limma_report(run_limma_splines_result = result,
-             report_info = report_info,
-             report_dir = report_dir)
+create_limma_report(run_limma_splines_result = result,
+                    report_info = report_info,
+                    report_dir = report_dir)
 ```
 
-You can view the generated analysis report of the limma_report function here: [here](../inst/reports/limma_report.html)
+You can view the generated analysis report of the create_limma_report function here: [here](../inst/reports/create_limma_report.html)
 
 # Cluster the hits (significant features)
 
@@ -219,17 +220,15 @@ download_enrichr_databases(gene_set_lib)
 
 Per default the file is placed in the current working directory, which is the root dir of the R project. 
 
-To run GSEA, a genes vector has to be created, containing all the underlying genes of the features. The downloaded database file has to be loaded as a dataframe. Further, optionally, the clusterProfiler parameters and the report dir can be specified. The function  run_gsea() runs GSEA using clusterProfiler, generates an HTML report and returns the GSEA dotplots in R.
+To run GSEA, a genes vector has to be created, containing all the underlying genes of the features. The downloaded database file has to be loaded as a dataframe. Further, optionally, the clusterProfiler parameters and the report dir can be specified. The function  create_gsea_report() runs GSEA using clusterProfiler, generates an HTML report and returns the GSEA dotplots in R.
 
 ```{r run GSEA}
 # Get gene vector
-annotation <- as.data.frame(annotation)
-gene_column_name <- "Gene Names"
-genes <- data[[gene_column_name]][1:nrow(annotation)]
+gene_column_name <- "Genes"
+genes <- annotation[[gene_column_name]][1:nrow(annotation)]
 genes <- sub(" .*", "", genes)
 genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)
-
 
 downloaded_dbs_filepath <- 
   here::here("dev", "all_databases_08_04_2024-12_41_50.tsv")
@@ -243,15 +242,24 @@ clusterProfiler_params <- list(adj_p_value = 0.05,
 
 report_dir <- here::here("results", "gsea_reports")
 
-result <- run_gsea(levels_clustered_hits = 
-                        clustering_results$clustered_hits_levels,
-                   genes = genes,
-                   databases = databases,
-                   params = clusterProfiler_params,
-                   report_info = report_info,
-                   report_dir = report_dir)
+result <- create_gsea_report(levels_clustered_hits = 
+                                  clustering_results$clustered_hits_levels,
+                             genes = genes,
+                             databases = databases,
+                             params = clusterProfiler_params,
+                             report_info = report_info,
+                             report_dir = report_dir)
 
 print(result)
 ```
 
 To see the output HTML report, click here: [here](../inst/reports/gsea_report.html)
+
+Every row in the dotplots is a term from a specific database, and the columns 
+are the respective clusters. The color scale contains the info about the odds 
+ratio and the size the -log10 adj. p-value. Only terms that have > 2 genes as 
+support are included in the plot. Further, for each cluster, just maximally 5
+terms are shown (the terms with the highest odds ratios). Note that when for 
+example cluster 1 already has 5 terms, and cluster 2 does not, and gets a term
+which was also found for cluster 1, than this term would be included as the sixth
+term for cluster 1, so this is a way the maximum of 5 can be exceeded.

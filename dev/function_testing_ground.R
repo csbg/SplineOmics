@@ -10,6 +10,16 @@ rm(list = ls(all.names = TRUE))
 # # Write data frame 'meta' to 'meta.xlsx'
 # write_xlsx(meta, "meta.xlsx")
 
+
+
+annotation <- read_excel(system.file("extdata", "annotation.xlsx", package = "SplineOmics"))
+
+gene_column_name <- "Genes"
+genes <- annotation[[gene_column_name]][1:nrow(annotation)]
+genes <- sub(" .*", "", genes)
+genes <- sub(";.*", "", genes)
+genes <- sub("_.*", "", genes)
+
 # Setup ------------------------------------------------------------------------
 library(devtools)
 devtools::load_all()
@@ -20,7 +30,7 @@ library(conflicted)
 # Load the data ----------------------------------------------------------------
 # load(here::here("test_data", "timeseries_proteomics_example.RData")) 
 
-library(tidyverse)
+# library(tidyverse)
 library(readxl)
 data_excel <- read_excel(here::here("data", "PPTX",
                                     "PPTX_processed_with_imputation.xlsx"))
@@ -85,7 +95,7 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 
 # hyperparams screen limma -----------------------------------------------------
-# debug(limma_hyperparams_screen)
+# debug(screen_limma_hyperparams)
 # screen_limma_hyperparams(datas,
 #                          datas_descr,
 #                          metas,

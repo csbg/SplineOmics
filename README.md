@@ -8,11 +8,12 @@ Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
 CMD
 Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://ghcr.io/thomas-rauter/splineomics:0.1.0)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
 The R package `SplineOmics` gets the significant features (hits) of
-time-series omics data by using splines and limma for hypothesis testing
-and clusters the hits based on the spline shape, showing all results in
-HTML reports.
+time-series omics data by using splines and `limma` for hypothesis
+testing and clusters the hits based on the spline shape, showing all
+results in HTML reports.
 
 ## Table of Contents
 
@@ -205,12 +206,13 @@ As long as the container is running, you can work on that localhost page
 with RStudio, where also the `SplineOmics` package is installed. The dir
 `/home/rstudio/` is your R session working dir.
 
-Load your input data for example like this:
+Load your inputs for example like this:
 
 ``` r
 library(here)
 library(readxl)
 data <- readxl::read_excel(here::here("input", "data.xlsx"))
+meta <- readxl::read_excel(here::here("input", "meta.xlsx"))
 ```
 
 Direct all generated results to `/home/rstudio/output`, which is mounted
@@ -232,13 +234,14 @@ docker start splineomics
 
 To see all the R packages and system installations that make up the
 Docker container, you can run the following command in the terminal of
-RStudio on your localhost page (<http://localhost:8888>). Because with
-the above command the ‘/home/rstudio/output’ dir is mounted to your
-local filesystem, this will make the installation log files available.
+RStudio on your localhost browser page.
 
 ``` sh
 cp -r /log home/rstudio/output
 ```
+
+Because the `/home/rstudio/output` dir is mounted to your local
+filesystem, this will make the installation log files available there.
 
 ## 📦 Dependencies
 
@@ -377,8 +380,6 @@ You can also generate a citation in various formats using the
 `CITATION.cff` file by visiting the top right of this repo and clicking
 on the “Cite this repository” button.
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
-
 Also, if you like the package, consider giving the GitHub repository a
 star. Your support helps us in the continued development and improvement
 of `SplineOmics`. Thank you for using our package!
@@ -389,9 +390,11 @@ of `SplineOmics`. Thank you for using our package!
   package, developed the approach together with VSchaepertoens under
   guidance from nfortelny.
 - [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator,
-  provided guidance and support
+  provided guidance and support for the overall approach.
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
-  code, delivered improvement suggestions
-- [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed
-  parts of two functions and the overall approach together with
-  Thomas-Rauter
+  code, delivered improvement suggestions and scientific guidance to
+  develop the approach.
+- [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed the
+  download_enrichr_databases() function and one internal plotting
+  function, as well as some code for the EDA plots, and the overall
+  approach together with Thomas-Rauter.
