@@ -401,7 +401,7 @@ of `SplineOmics`. Thank you for using our package!
 
 - [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
   package, developed the approach together with VSchaepertoens under
-  guidance from nfortelny and skafdasschaf,
+  guidance from nfortelny and skafdasschaf.
 - [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator,
   provided guidance and support for the overall approach.
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
