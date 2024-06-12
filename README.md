@@ -186,6 +186,8 @@ This command needs to be run in a dir where the subdirs `input` and
 `output` exist. Place your data and meta (and annotation) files in
 `input`, and receive your output from the package in the `output` dir.
 
+For Linux and Mac:
+
 ``` sh
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
@@ -193,7 +195,20 @@ docker run -it -d \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    thomasrauter/splineomics:0.1.0
+    ghcr.io/thomasrauter/splineomics:0.1.0
+```
+
+For Windows:
+
+```powershell
+# PowerShell command
+docker run -it -d `
+    -v ${PWD}\input:/home/rstudio/input `
+    -v ${PWD}\output:/home/rstudio/output `
+    -p 8888:8787 `
+    -e PASSWORD=123 `
+    --name splineomics `
+    ghcr.io/thomas-rauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to
