@@ -314,9 +314,10 @@ InputControl <- R6::R6Class("InputControl",
           
         } else if (tibble::is_tibble(element)) {
 
-          matches <- gregexpr("_", string)
+          matches <- gregexpr("_", element_name)
           underscore_count <- sum(sapply(matches,
                               function(x) if (x[1] == -1) 0 else length(x)))
+          
           if (underscore_count != 1) {
             stop(paste("Very likely you did not pass the time_effect result", 
                  "of limma but rather one of avrg_diff_conditions or", 
