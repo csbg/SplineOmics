@@ -34,6 +34,9 @@ solely of alphabetic letters and numbers."><meta property="og:image" content="/l
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/Docker_permission_denied.html">Docker permission denied</a>
+    </li>
+    <li>
       <a href="../articles/functions-in-depth.html">functions-in-depth</a>
     </li>
     <li>
@@ -61,13 +64,18 @@ solely of alphabetic letters and numbers.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_genes</span><span class="op">(</span><span class="va">genes</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_genes</span><span class="op">(</span><span class="va">genes</span>, max_index_overall <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>genes</dt>
 <dd><p>A character vector containing gene IDs.</p></dd>
+
+
+<dt>max_index_overall</dt>
+<dd><p>An integer, specifying the highest index of all 
+features across all levels.</p></dd>
 
 </dl></div>
     <div id="value">

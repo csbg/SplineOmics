@@ -4,25 +4,175 @@
     <loc>/404.html</loc>
   </url>
   <url>
+    <loc>/CODE_OF_CONDUCT.html</loc>
+  </url>
+  <url>
     <loc>/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>/articles/Docker_permission_denied.html</loc>
+  </url>
+  <url>
+    <loc>/articles/functions-in-depth.html</loc>
+  </url>
+  <url>
+    <loc>/articles/get-started.html</loc>
+  </url>
+  <url>
+    <loc>/articles/index.html</loc>
   </url>
   <url>
     <loc>/authors.html</loc>
   </url>
   <url>
+    <loc>/example_report.html</loc>
+  </url>
+  <url>
     <loc>/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/InputControl.html</loc>
+  </url>
+  <url>
+    <loc>/reference/Level2Functions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/Level3Functions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/Level4Functions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/NumericBlockFinder.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SplineOmics-package.html</loc>
+  </url>
+  <url>
+    <loc>/reference/add_feature_names.html</loc>
   </url>
   <url>
     <loc>/reference/between_level.html</loc>
   </url>
   <url>
+    <loc>/reference/build_cluster_hits_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/build_create_gsea_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/build_create_limma_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/build_explore_data_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/build_hyperparams_screen_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_clustered_hits.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_databases.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_datas_descr.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_genes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_null_elements.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_params.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_spline_test_configs.html</loc>
+  </url>
+  <url>
     <loc>/reference/cluster_hits.html</loc>
+  </url>
+  <url>
+    <loc>/reference/control_inputs_create_gsea_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/control_inputs_extract_data.html</loc>
   </url>
   <url>
     <loc>/reference/control_inputs_run_limma.html</loc>
   </url>
   <url>
+    <loc>/reference/create_gsea_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_gsea_report_level.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_limma_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_p_value_histogram.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_progress_bar.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_spline_params.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_toc.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_volcano_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dbs_to_term2genes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/define_html_styles.html</loc>
+  </url>
+  <url>
+    <loc>/reference/design2design_matrix.html</loc>
+  </url>
+  <url>
+    <loc>/reference/determine_analysis_mode.html</loc>
+  </url>
+  <url>
+    <loc>/reference/download_enrichr_databases.html</loc>
+  </url>
+  <url>
+    <loc>/reference/encode_df_to_base64.html</loc>
+  </url>
+  <url>
+    <loc>/reference/enrichr_get_genesets.html</loc>
+  </url>
+  <url>
+    <loc>/reference/explore_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/extract_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/flatten_spline_configs.html</loc>
+  </url>
+  <url>
+    <loc>/reference/format_text.html</loc>
+  </url>
+  <url>
     <loc>/reference/gen_composite_spline_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/gen_hitcomp_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_avrg_diff_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_explore_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_interaction_plots.html</loc>
   </url>
   <url>
     <loc>/reference/generate_report_html.html</loc>
@@ -31,16 +181,91 @@
     <loc>/reference/generate_report_html_new.html</loc>
   </url>
   <url>
+    <loc>/reference/generate_reports.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_reports_meta.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_section_content.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_time_effect_plots.html</loc>
+  </url>
+  <url>
     <loc>/reference/get_curve_values.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_explore_plots_explanations.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_header_section.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_limma_combos_results.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_spline_params_info.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hc_add.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hc_barplot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hc_new.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hc_vennheatmap.html</loc>
   </url>
   <url>
     <loc>/reference/hierarchical_clustering.html</loc>
   </url>
   <url>
+    <loc>/reference/huge_table_user_prompter.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
+    <loc>/reference/is_not_na.html</loc>
+  </url>
+  <url>
     <loc>/reference/limma_hyperparams_screen.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_box_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_clustering_report.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_correlation_heatmaps.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_density_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_enrich_dotplot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_mds_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_pca_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_scree_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_tsne_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/make_violin_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/manage_gsea_level.html</loc>
   </url>
   <url>
     <loc>/reference/modify_limma_top_table.html</loc>
@@ -49,7 +274,40 @@
     <loc>/reference/normalize_curves.html</loc>
   </url>
   <url>
+    <loc>/reference/perform_clustering.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot2base64.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_all_shapes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_composite_splines.html</loc>
+  </url>
+  <url>
     <loc>/reference/plot_consensus_shapes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_cv.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_dendrogram.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_first_lag_autocorrelation.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_heatmap.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_lag1_differences.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_limma_combos_results.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_mean_correlation_with_time.html</loc>
   </url>
   <url>
     <loc>/reference/plot_single_and_consensus_splines.html</loc>
@@ -58,10 +316,58 @@
     <loc>/reference/plot_splines.html</loc>
   </url>
   <url>
+    <loc>/reference/prepare_plot_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_combo.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_combo_pair.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_config_column.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_enrichment_results.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_level_cluster.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/process_result.html</loc>
+  </url>
+  <url>
     <loc>/reference/process_top_table.html</loc>
   </url>
   <url>
+    <loc>/reference/process_within_level.html</loc>
+  </url>
+  <url>
+    <loc>/reference/remove_batch_effect.html</loc>
+  </url>
+  <url>
+    <loc>/reference/remove_prefix.html</loc>
+  </url>
+  <url>
     <loc>/reference/run_limma_splines.html</loc>
+  </url>
+  <url>
+    <loc>/reference/screen_limma_hyperparams.html</loc>
+  </url>
+  <url>
+    <loc>/reference/set_default_params.html</loc>
+  </url>
+  <url>
+    <loc>/reference/shorten_names.html</loc>
+  </url>
+  <url>
+    <loc>/reference/store_hits.html</loc>
   </url>
   <url>
     <loc>/reference/within_level.html</loc>

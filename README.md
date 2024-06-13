@@ -169,23 +169,27 @@ encapsulates the `SplineOmics` package together with the necessary
 environment and dependencies. Follow the instructions below to pull the
 Docker container and run your analysis.
 
-### Pulling the Docker Container
+### Pulling the `Docker` Container
 
-You can pull the Docker container of the desired version of the
-`SplineOmics` package from GitHub using the following command (here it
-downloads version 0.1.0):
+You can pull the `Docker` container of the desired version of the
+`SplineOmics` package from `Docker Hub` using the following command
+(here it downloads version 0.1.0):
 
 ``` sh
-docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
+# Docker Hub repo still private, will make it public then
+docker pull thomasrauter/splineomics:0.1.0
 ```
 
-### Running the Docker Container
+If you face ‘permission denied’ issues, check out [this
+vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html)
 
-To run the Docker container, you can use one of the following commands,
-depending on your operating System. The respective command needs to be
-run in a folder where the subfolders `input` and `output` exist. Place
-your data and meta (and annotation) files in `input`, and receive your
-output from the package in the `output` folder.
+### Running the `Docker` Container
+
+To run the `Docker` container, you can use one of the following
+commands, depending on your operating System. The respective command
+needs to be run in a folder where the subfolders `input` and `output`
+exist. Place your data and meta (and annotation) files in `input`, and
+receive your output from the container in the `output` folder.
 
 For Linux and macOS:
 
@@ -197,7 +201,7 @@ docker run -it -d \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    ghcr.io/thomasrauter/splineomics:0.1.0
+    thomasrauter/splineomics:0.1.0
 ```
 
 For Windows:
@@ -210,7 +214,7 @@ docker run -it -d `
     -p 8888:8787 `
     -e PASSWORD=123 `
     --name splineomics `
-    ghcr.io/thomas-rauter/splineomics:0.1.0
+    thomasrauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to

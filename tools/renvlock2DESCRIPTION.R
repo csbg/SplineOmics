@@ -3,7 +3,6 @@
 # versions from the renv.lock file and includes those that are mentioned in the
 # NAMESPACE file in the DESCRIPTION file.
 
-
 library(jsonlite)
 
 # Load the renv.lock file
@@ -18,7 +17,7 @@ namespace <- readLines("NAMESPACE")
 # Extract package names from the NAMESPACE file
 namespace_packages <- 
   unique(gsub("importFrom\\(([^,]+),.*", "\\1", 
-         grep("importFrom|import", namespace, value = TRUE)))
+              grep("importFrom|import", namespace, value = TRUE)))
 
 # Filter packages based on NAMESPACE file
 namespace_packages <- gsub("import\\((.*)\\)", "\\1", namespace_packages)
@@ -46,7 +45,7 @@ description <- readLines("DESCRIPTION")
 # Find the Imports field
 imports_line <- grep("^Imports:", description)
 
-# If Imports field exists, replace it; otherwise, add it
+# Replace or add the Imports field
 if (length(imports_line) > 0) {
   # Find the end of the Imports field
   end_line <- imports_line
@@ -57,7 +56,8 @@ if (length(imports_line) > 0) {
   
   # Replace the old Imports field
   description <- c(
-    description[1:imports_line],
+    description[1:(imports_line - 1)],
+    "Imports:",
     paste("    ", depends, sep = ""),
     description[(end_line + 1):length(description)]
   )
