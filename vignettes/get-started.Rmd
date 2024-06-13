@@ -25,7 +25,6 @@ This tutorial intends to showcase and explain the capabilities of the SplineOmic
 ```{r setup}
 library(SplineOmics)
 library(readxl)
-library(stringr)
 ```
 
 # Load the files
@@ -173,7 +172,6 @@ You can view the generated analysis report of the create_limma_report function h
 After we obtained the limma spline results, we can cluster the hits based on their temporal pattern (their spline shape). We define what a hit is by setting an adj. p-value threshold for every level. Then, hierarchical clustering is used to place every hit in one of as many clusters as we have specified for that specific level. 
 
 ```{r cluster the hits}
-
 adj_pthresholds <- c(0.05, 0.05)   
 clusters <- list(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")

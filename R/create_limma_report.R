@@ -137,9 +137,9 @@ create_limma_report <- function(run_limma_splines_result,
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
 #'
-#' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal aes
-#'
-generate_time_effect_plots <- function(time_effect, adj_pthresh) {
+generate_time_effect_plots <- function(time_effect,
+                                       adj_pthresh) {
+  
   plots <- list("Time Effect")
   plots_sizes <- c(999)
   
@@ -180,11 +180,12 @@ generate_time_effect_plots <- function(time_effect, adj_pthresh) {
 #'
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
-#'
-#' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal
+#' 
 #' @importFrom stringr str_split
 #'
-generate_avrg_diff_plots <- function(avrg_diff_conditions, adj_pthresh) {
+generate_avrg_diff_plots <- function(avrg_diff_conditions,
+                                     adj_pthresh) {
+  
   plots <- list("Average Difference Conditions")
   plots_sizes <- c(999)
   
@@ -233,9 +234,6 @@ generate_avrg_diff_plots <- function(avrg_diff_conditions, adj_pthresh) {
 #'
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
-#'
-#' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal
-#' @importFrom stringr str_split
 #'
 generate_interaction_plots <- function(interaction_condition_time,
                                        adj_pthresh) {
