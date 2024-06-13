@@ -57,6 +57,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="articles/Docker_permission_denied.html">Docker permission denied</a>
+    </li>
+    <li>
       <a href="articles/functions-in-depth.html">functions-in-depth</a>
     </li>
     <li>
@@ -80,8 +83,8 @@
 <div class="section level1">
 <div class="page-header"><h1 id="splineomics-">SplineOmics <img src="reference/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"><a class="anchor" aria-label="anchor" href="#splineomics-"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"><img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"></p>
-<p>The R package <code>SplineOmics</code> gets the significant features (hits) of time-series omics data by using splines and limma for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.</p>
+<p><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"><a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"><img src="https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen" alt="R CMD Check"><a href="https://ghcr.io/thomas-rauter/splineomics:0.1.0" class="external-link"><img src="https://img.shields.io/badge/docker-pull-blue" alt="Docker"></a> <a href="https://doi.org/10.5281/zenodo.1234567" class="external-link"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg" alt="DOI"></a></p>
+<p>The R package <code>SplineOmics</code> gets the significant features (hits) of time-series omics data by using splines and <code>limma</code> for hypothesis testing and clusters the hits based on the spline shape, showing all results in HTML reports.</p>
 <div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
@@ -99,8 +102,10 @@
 <li><a href="#id_-dependencies">📦 Dependencies</a></li>
 <li><a href="#id_-getting-help">❓ Getting Help</a></li>
 <li><a href="#id_-contributing">🤝 Contributing</a></li>
+<li><a href="#id_-feedback">💬 Feedback</a></li>
 <li><a href="#id_-license">📜 License</a></li>
 <li><a href="#id_-citation">🎓 Citation</a></li>
+<li><a href="#id_-contributors">🌟 Contributors</a></li>
 </ul>
 </div>
 <div class="section level2">
@@ -132,7 +137,7 @@
 </li>
 <li>
 <p><strong>Explore various limma splines hyperparameters:</strong></p>
-<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, and p-value thresholds using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function.</p>
+<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function.</p>
 </li>
 <li>
 <p><strong>Perform limma spline analysis:</strong></p>
@@ -144,7 +149,7 @@
 </li>
 <li>
 <p><strong>Run GSEA with clustered hits:</strong></p>
-<p>Perform gene set enrichment analysis using the clustered hits with the <code><a href="reference/create_gsea_report.html">create_gsea_report()</a></code> function.</p>
+<p>Perform gene set enrichment analysis (GSEA) using the clustered hits with the <code><a href="reference/create_gsea_report.html">create_gsea_report()</a></code> function.</p>
 </li>
 <li>
 <p><strong>Generate reports:</strong></p>
@@ -172,21 +177,22 @@
 <ol style="list-style-type: decimal">
 <li><p><strong>Open RStudio</strong> or your R console.</p></li>
 <li>
-<p><strong>Install and load <code>devtools</code>, and install <code>SplineOmics</code> from GitHub</strong>:</p>
-<p>Copy and paste the following code block into your R console. This will check if the <code>devtools</code> package is installed, install it if it is not, then use it to install the <code>SplineOmics</code> package from GitHub.</p>
+<p><strong>Install and load <code>remotes</code>, and install <code>SplineOmics</code> from GitHub</strong>:</p>
+<p>Copy and paste the following code block into your R console.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Check if devtools is installed; if not, install it</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"devtools"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Check if remotes is installed; if not, install it</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"remotes"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># Load devtools package</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span><span class="co"># Load remotes package</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># This line will be deleted once the repo is public</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>GITHUB_PAT <span class="op">=</span> <span class="st">"your_GitHub_PAT"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Install the SplineOmics package from GitHub</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"csbg/SplineOmics"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Install latest SplineOmics version from GitHub</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"csbg/SplineOmics@main"</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Load the <code>SplineOmics</code> package</strong>:</p>
@@ -214,13 +220,13 @@
 <div class="section level3">
 <h3 id="id_-functions-in-depth">🔬 Functions in Depth<a class="anchor" aria-label="anchor" href="#id_-functions-in-depth"></a>
 </h3>
-<p>A detailed description of all arguments and outputs of all the available package functions can be found <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html" class="external-link">here</a></p>
+<p>A detailed description of all arguments and outputs of all the available package functions can be found <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html" class="external-link">here</a>.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="id_-docker-container">🐳 Docker Container<a class="anchor" aria-label="anchor" href="#id_-docker-container"></a>
 </h2>
-<p>To facilitate reproducible analysis, we provide a Docker container that encapsulates the necessary environment and dependencies. Follow the instructions below to pull the Docker container and run your analysis.</p>
+<p>To facilitate reproducible analysis, we provide a Docker container that encapsulates the <code>SplineOmics</code> package together with the necessary environment and dependencies. Follow the instructions below to pull the Docker container and run your analysis.</p>
 <div class="section level3">
 <h3 id="pulling-the-docker-container">Pulling the Docker Container<a class="anchor" aria-label="anchor" href="#pulling-the-docker-container"></a>
 </h3>
@@ -228,27 +234,47 @@
 <div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">docker</span> pull ghcr.io/thomas-rauter/splineomics:0.1.0</span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="running-the-docker-container-in-interactive-mode">Running the Docker Container in Interactive Mode<a class="anchor" aria-label="anchor" href="#running-the-docker-container-in-interactive-mode"></a>
+<h3 id="running-the-docker-container">Running the Docker Container<a class="anchor" aria-label="anchor" href="#running-the-docker-container"></a>
 </h3>
-<p>To run the Docker container in interactive mode, you can use the following command. This will start a container and open a bash shell, allowing you to run your analysis interactively within the container. This command needs to be run in a dir where the subdirs input and output exist. Place your data and meta (and annotation) files in input, and receive your output from the package in the output dir.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-d</span> <span class="dt">\</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/input:/home/rstudio/input <span class="dt">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/output:/home/rstudio/output <span class="dt">\</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=password <span class="dt">\</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">--name</span> splineomics_container <span class="dt">\</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    thomasrauter/splineomics:0.1.0</span></code></pre></div>
-<p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Use rstudio as the username and the password you set with the -e PASSWORD=password option. As long as the container is running, you can work on that localhost page with RStudio, where also the <code>SplineOmics</code> package is installed.</p>
+<p>To run the Docker container, you can use one of the following commands, depending on your operating System. The respective command needs to be run in a folder where the subfolders <code>input</code> and <code>output</code> exist. Place your data and meta (and annotation) files in <code>input</code>, and receive your output from the package in the <code>output</code> folder.</p>
+<p>For Linux and macOS:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Bash</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-d</span> <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/input:/home/rstudio/input <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/output:/home/rstudio/output <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=123 <span class="dt">\</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="at">--name</span> splineomics <span class="dt">\</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>    ghcr.io/thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<p>For Windows:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># PowerShell</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>docker run <span class="op">-</span>it <span class="op">-</span>d `</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="op">-</span>v <span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span>\input<span class="op">:/</span>home<span class="op">/</span>rstudio<span class="op">/</span>input `</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="op">-</span>v <span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span>\output<span class="op">:/</span>home<span class="op">/</span>rstudio<span class="op">/</span>output `</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="op">-</span>p <span class="dv">8888</span><span class="op">:</span><span class="dv">8787</span> `</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="op">-</span>e PASSWORD<span class="op">=</span><span class="dv">123</span> `</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="op">--</span>name splineomics `</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    ghcr<span class="op">.</span><span class="fu">io</span><span class="op">/</span>thomas-rauter<span class="op">/</span>splineomics<span class="op">:</span><span class="dv">0.1</span><span class="op">.</span><span class="dv">0</span></span></code></pre></div>
+<p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Use rstudio as the username and the password you set with the -e PASSWORD=123 option.</p>
+<p>As long as the container is running, you can work on that localhost page with RStudio, where also the <code>SplineOmics</code> package is installed. <code>/home/rstudio/</code> is your R session working folder.</p>
+<p>Load your inputs for example like this:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readxl.tidyverse.org" class="external-link">readxl</a></span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">readxl</span><span class="fu">::</span><span class="fu"><a href="https://readxl.tidyverse.org/reference/read_excel.html" class="external-link">read_excel</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"input"</span>, <span class="st">"data.xlsx"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu">readxl</span><span class="fu">::</span><span class="fu"><a href="https://readxl.tidyverse.org/reference/read_excel.html" class="external-link">read_excel</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"input"</span>, <span class="st">"meta.xlsx"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Direct all generated results to <code>/home/rstudio/output</code>, which is mounted to your local folder <code>output</code>. Your results will be there.</p>
 <p>Stop the container:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">docker</span> stop splineomics_container</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">docker</span> stop splineomics</span></code></pre></div>
 <p>Start the container again:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">docker</span> start splineomics_container</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">docker</span> start splineomics</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inspect-docker-container-installations">Inspect Docker container installations<a class="anchor" aria-label="anchor" href="#inspect-docker-container-installations"></a>
 </h3>
-<p>To see all the R packages and system installations that make up the Docker container, you can run the following command in the terminal of RStudio on your localhost page (<a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>). Because with the above command the ‘/home/rstudio/output’ dir is mounted to your local filesystem, this will make the installation log files available.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> /log home/rstudio/output</span></code></pre></div>
+<p>To see all the R packages and system installations that make up the Docker container, you can run the following command in the terminal of RStudio on your localhost browser page.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> /log home/rstudio/output</span></code></pre></div>
+<p>Because the <code>/home/rstudio/output</code> dir is mounted to your local filesystem, this will make the installation log files available there.</p>
 </div>
 </div>
 <div class="section level2">
@@ -354,6 +380,16 @@
 <p>Thank you for considering contributing to <code>SplineOmics</code>. Your efforts are what make the open-source community a fantastic place to learn, inspire, and create.</p>
 </div>
 <div class="section level2">
+<h2 id="id_-feedback">💬 Feedback<a class="anchor" aria-label="anchor" href="#id_-feedback"></a>
+</h2>
+<p>We appreciate your feedback! Besides raising issues, you can provide feedback in the following ways:</p>
+<ul>
+<li><p><strong>Direct Email</strong>: Send your feedback directly to <a href="mailto:thomas.rauter@plus.ac.at">Thomas Rauter</a>.</p></li>
+<li><p><strong>Anonymous Feedback</strong>: Use <a href="https://forms.gle/jocMXSxLf3GrGBdT9" class="external-link">this Google Form</a> to provide anonymous feedback by answering questions.</p></li>
+</ul>
+<p>Your feedback helps us improve the project and address any issues you may encounter.</p>
+</div>
+<div class="section level2">
 <h2 id="id_-license">📜 License<a class="anchor" aria-label="anchor" href="#id_-license"></a>
 </h2>
 <p>This package is licensed under the MIT License: <a href="./LICENSE">LICENSE</a></p>
@@ -363,7 +399,23 @@
 <h2 id="id_-citation">🎓 Citation<a class="anchor" aria-label="anchor" href="#id_-citation"></a>
 </h2>
 <p>The <code>SplineOmics</code> package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.</p>
+<p>To cite this package, you can use the citation information provided in the <a href="./CITATION.cff"><code>CITATION.cff</code></a> file.</p>
+<p>You can also generate a citation in various formats using the <code>CITATION.cff</code> file by visiting the top right of this repo and clicking on the “Cite this repository” button.</p>
 <p>Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of <code>SplineOmics</code>. Thank you for using our package!</p>
+</div>
+<div class="section level2">
+<h2 id="id_-contributors">🌟 Contributors<a class="anchor" aria-label="anchor" href="#id_-contributors"></a>
+</h2>
+<ul>
+<li>
+<a href="https://github.com/Thomas-Rauter" class="external-link">Thomas-Rauter</a> - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf.</li>
+<li>
+<a href="https://github.com/nfortelny" class="external-link">nfortelny</a> - 🧠 Principal Investigator, provided guidance and support for the overall approach.</li>
+<li>
+<a href="https://github.com/skafdasschaf" class="external-link">skafdasschaf</a> - 🔧 Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.</li>
+<li>
+<a href="https://github.com/VSchaepertoens" class="external-link">VSchaepertoens</a> - ✨ Developed the download_enrichr_databases() function and one internal plotting function, as well as some code for the EDA plots, and the overall approach together with Thomas-Rauter.</li>
+</ul>
 </div>
 </div>
   </div>

@@ -494,8 +494,13 @@ make_clustering_report <- function(all_levels_clustering,
     composite_plots <- list()
     nrows <- list()
 
+    
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
-      main_title <- paste("Cluster", nr_cluster, sep = " ")
+
+      nr_of_hits <- sum(level_clustering$clustered_hits$cluster == nr_cluster,
+                        na.rm = TRUE)
+      main_title <- paste("Cluster", nr_cluster, " | Hits:", nr_of_hits, 
+                          sep = " ")
 
       top_table_cluster <- top_table %>%
         dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
@@ -858,7 +863,7 @@ plot_heatmap <- function(datas,
                               show_column_names = TRUE,
                               column_names_rot = 60,
                               column_names_gp = gpar(fontsize = 5))
-
+    
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
   heatmaps
@@ -1087,14 +1092,6 @@ plot_single_and_consensus_splines <- function(time_series_data,
                                               title,
                                               time_unit_label) {
 
-  # Transform the dataframe to a long format for ggplot2
-  # df_long <- as.data.frame(t(time_series_data)) %>%
-  #   tibble::rownames_to_column(var = "time") %>%
-  #   tidyr::pivot_longer(cols = -time, names_to = "feature",
-  #                       values_to = "intensity") %>%
-  #   dplyr::arrange(feature) %>%
-  #   dplyr::mutate(time = as.numeric(time))
-
   time_col <- sym("time")
   feature_col <- sym("feature")
 
@@ -1152,13 +1149,15 @@ plot_consensus_shapes <- function(curve_values,
                                   time_unit_label) {
 
   clusters <- sort(unique(curve_values$cluster))
-  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
-
+  # time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
   plots <- list()
   for (current_cluster in clusters) {
-    current_title <- paste("Cluster", current_cluster, sep = " ")
     subset_df <- subset(curve_values, curve_values$cluster == current_cluster)
     subset_df$cluster <- NULL
+    nr_of_hits <- nrow(subset_df)
+    current_title <- paste("Cluster", current_cluster, 
+                           "| Hits:", nr_of_hits,
+                           sep = " ")
 
     plots[[length(plots) + 1]] <-
       plot_single_and_consensus_splines(subset_df,
@@ -1258,13 +1257,19 @@ plot_splines <- function(top_table,
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
       labs(x = paste0("Time ", time_unit_label), y = "Intensity")
 
-    # matched_row <- subset(titles, titles$FeatureID == hit_index)
-    # matched_row <- titles %>%
-    #   filter(FeatureID == hit_index)
     matched_row <- titles %>%
       filter(!!sym("FeatureID") == hit_index)
 
     title <- as.character(matched_row$feature_name)
+    
+    if (nchar(title) > 50) {
+      title_befor <- title
+      title <- substr(title, 1, 50)
+      message(paste("The feature ID", title_befor, "is > 50 characters.",
+                    "Truncating it to 50 chars:", title))
+      
+    }
+    
     if (is.na(title)) {
       title <- paste("feature:", hit_index)
     }

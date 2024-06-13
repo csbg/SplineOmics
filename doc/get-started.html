@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Thomas Rauter" />
+
+
+<title>get-started</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">get-started</h1>
+<h4 class="author">Thomas Rauter</h4>
+<h4 class="date">10 June, 2024</h4>
+
+
+
+<div id="about-this-tutorial" class="section level1">
+<h1>About this tutorial</h1>
+<p>This tutorial intends to showcase and explain the capabilities of the
+SplineOmics package by walking through a real and complete example, from
+start to the end. The example is a time-series proteomics experiment, in
+which CHO cells were cultivated in three bioreactors (three biological
+replicates). Both in the exponential and stationary growth phase,
+samples were taken from each reactor in triplicates at defined
+timepoints relative to a feeding of the cells (60 min before feeding,
+and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
+find out which of the 7162 cellular proteins show a significant change
+over time after the CHO cells were fed. Further, the hits (proteins with
+a significant change over time) are clustered based on their temporal
+pattern, and a gene set enrichment analysis is performed with each
+cluster to see if there are processes which are up- or downregulated
+over time after the feeding.</p>
+</div>
+<div id="load-the-packages" class="section level1">
+<h1>Load the packages</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SplineOmics)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt; </span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div>
+</div>
+<div id="load-the-files" class="section level1">
+<h1>Load the files</h1>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;data.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;annotation.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;meta.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">print</span>(data)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 36</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;    E09_TP01_Exponential E10_TP01_Exponential E12_TP01_Exponential</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;                   &lt;dbl&gt;                &lt;dbl&gt;                &lt;dbl&gt;</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  1                 15.3                 15.2                 15.3</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  2                 14.5                 14.7                 14.6</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;  3                 16.0                 16.1                 16.1</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;  4                 16.2                 16.1                 16.2</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;  5                 15.1                 15.1                 15.2</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt;  6                 14.6                 14.7                 14.6</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;  7                 15.0                 15.0                 15.1</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt;  8                 14.8                 14.7                 14.7</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt;  9                 20.5                 20.6                 20.7</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; 10                 16.4                 16.4                 16.4</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; # ℹ 33 more variables: E09_TP02_Exponential &lt;dbl&gt;, E10_TP02_Exponential &lt;dbl&gt;,</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; #   E12_TP02_Exponential &lt;dbl&gt;, E09_TP03_Exponential &lt;dbl&gt;,</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; #   E10_TP03_Exponential &lt;dbl&gt;, E12_TP03_Exponential &lt;dbl&gt;,</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; #   E09_TP04_Exponential &lt;dbl&gt;, E10_TP04_Exponential &lt;dbl&gt;,</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; #   E12_TP04_Exponential &lt;dbl&gt;, E09_TP05_Exponential &lt;dbl&gt;,</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; #   E10_TP05_Exponential &lt;dbl&gt;, E12_TP05_Exponential &lt;dbl&gt;, …</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 6</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;    `Potential contaminant` Protein.Group         Protein.Ids Protein.Names Genes</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;    &lt;lgl&gt;                   &lt;chr&gt;                 &lt;chr&gt;       &lt;chr&gt;         &lt;chr&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;  1 NA                      A0A8C2MV03;A0A8C2N2L3 A0A8C2MV03… A0A8C2MV03_C… Abhd4</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;  2 NA                      A0A8C2N4G8            A0A8C2N4G8  A0A8C2N4G8_C… Gbe1 </span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;  3 NA                      G3GR83                G3GR83      G3GR83_CRIGR  Akr1…</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;  4 NA                      A0A098KX95            A0A098KX95  A0A098KX95_C… Agpa…</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;  5 NA                      G3HGQ9                G3HGQ9      G3HGQ9_CRIGR  Agpa…</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;  6 NA                      A0A8C2MM23            A0A8C2MM23  A0A8C2MM23_C… Agpa…</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;  7 NA                      G3H8X2                G3H8X2      G3H8X2_CRIGR  Agpa…</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;  8 NA                      A0A8C2MXW6            A0A8C2MXW6… A0A8C2MXW6_C… &lt;NA&gt; </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;  9 NA                      A0A061HUZ2            A0A061HUZ2  A0A061HUZ2_C… H671…</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 10 NA                      A0A8C2MC97            A0A8C2MC97  A0A8C2MC97_C… Plcb3</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: First.Protein.Description &lt;chr&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span></code></pre></div>
+</div>
+<div id="perform-eda-exploratory-data-analysis" class="section level1">
+<h1>Perform EDA (exploratory data analysis)</h1>
+<p>The first step in analysing data is usually EDA. EDA involves
+summarizing the main characteristics of the data, often using plots.
+This can involve densitiy distributions, boxplots, PCA, correlation
+heatmaps, and more. This process can be carried out by using the package
+function explore_data(). The necessary arguments are the data matrix
+(data), the meta table (meta), the name of the column that contains the
+levels of the experiment (condition) (the levels here are Exponential
+and Stationary), and the report_info list, that contains general info
+about the analysis. Optional arguments are meta_batch_column and
+meta_batch2_column, that allow to specify the column name that contain
+batch effect 1 and 2. These columns will be used to run the
+removeBatchEffect function of limma to remove the batch effect of the
+data for plotting. When at least one batch column is provided like this,
+the function will not just generate one EDA HTML report, but two. One
+for the uncorrected data, and one for the batch corrected data. These
+reports are written either in the current working dir as default
+location, or to a location specified with the optional argument
+report_dir. The function also returns all plots generated. Lastly, if it
+is desired that no report should be generated, the optional argument
+report can be set to FALSE.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>report_info <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">omics_data_type =</span> <span class="st">&quot;PTX&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">data_description =</span> <span class="st">&quot;Proteomics data of CHO cells&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">data_collection_date =</span> <span class="st">&quot;February 2024&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">analyst_name =</span> <span class="st">&quot;Thomas Rauter&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">contact_info =</span> <span class="st">&quot;thomas.rauter@plus.ac.at&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;DGTX&quot;</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>meta_batch_column <span class="ot">&lt;-</span> <span class="st">&quot;Reactor&quot;</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;explore_data&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">explore_data</span>(<span class="at">data =</span> data,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>                      <span class="at">meta =</span> meta,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                      <span class="at">condition =</span> condition,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                      <span class="at">report_info =</span> report_info,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>                      <span class="at">meta_batch_column =</span> meta_batch_column,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                      <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
+<p>You can view the generated analysis report of the
+not-batch-corrected-data here: <a href="../inst/reports/report.html">here</a></p>
+<p>The EDA plots can tell you a range of things. The plots in the HTML
+report are grouped into three categories: Distribution and Variability
+Analysis, Time Series Analysis, and Dimensionality Reduction and
+Clustering.</p>
+</div>
+<div id="find-the-best-hyperparameters" class="section level1">
+<h1>Find the best hyperparameters</h1>
+<p>Before we can run the limma spline analysis, we have to find out
+which “hyperparameters” are the best. Hyperparameters in this context
+are for example degree of freedom, different versions of the data
+(outlier removed vs. not removed), different limma design formulas, etc.
+Rationally thinking about which combination of hyperparameters to use is
+very challenging. Instead, it is often better to just try out a bunch of
+combinations and choose the best. The function
+screen_limma_hyperparams() does this for you. For each hyperparameter,
+you can just specify all the values that you would like to try, and the
+function then runs the limma spline analysis with the combinations that
+can be formed with the hyperparameters that you specified. Not every
+single combo is generated, but instead there are “inner” and “outer”
+hyperparameters, and only for all “outer” hyperparameters, all combos
+are generated. The “inner” hyperparameters are the adj. p-value
+thresholds and the spline parameters. For example, if you have two
+different versions of one dataset (one time the full dataset, and one
+time the dataset with some potential outliers removed), these are
+considered “outer” hyperparameters in this context. The function would
+generate all possible comparisons for the “outer” hyperparameters, which
+is just a single comparison. Then, for both versions of the data, every
+“inner” hyperparameter combo is generated. Lets say you specified
+natural cubic splines for both, with a degree of freedom of either 2 or
+3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each
+version of data, it would test out all combinations of the spline
+parameters and the adj. p-value threshold. In this case, this is DoF =
+2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3,
+tresh = 0.1.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> data </span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>meta1 <span class="ot">&lt;-</span> meta</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># (These are not outliers, just removed to showcase this functionality)</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> data[, <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),]</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>datas <span class="ot">&lt;-</span> <span class="fu">list</span>(data1, data2) </span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>datas_descr <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;full_data&quot;</span>, <span class="st">&quot;outliers_removed&quot;</span>) </span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>metas <span class="ot">&lt;-</span> <span class="fu">list</span>(meta1, meta2) </span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>, <span class="st">&quot;~ 1 + X + Reactor&quot;</span>) </span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;hyperparams_screen_reports&quot;</span>) </span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co"># Every row a combo to test.</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>),</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>                                  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>                                  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>),</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>                                  <span class="at">knots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))),                                                        <span class="at">bknots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))))</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">screen_limma_hyperparams</span>(datas,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                         datas_descr,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                         metas,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                         designs,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                         condition,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                         spline_test_configs,</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                         report_info,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>                         report_dir,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>                         pthresholds,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>                         meta_batch_column)</span></code></pre></div>
+<p>To see the output HTML report, click here: <a href="../inst/reports/hyperparams_screen_report.html">here</a></p>
+</div>
+<div id="run-limma-spline-analysis" class="section level1">
+<h1>Run limma spline analysis</h1>
+<p>Once we identified the hyperparameters, that are likely the best
+ones, we can run the limma spline analysis with them and get the
+results.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>     <span class="co"># Chosen limma design</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>spline_params <span class="ot">=</span> <span class="fu">list</span>(<span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),  <span class="co"># Chosen spline parameters</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>                     <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>))</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># Run the limma spline analysis</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">run_limma_splines</span>(data,   <span class="co"># Chosen version of the data</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>                            meta,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>                            design,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>                            <span class="at">spline_params =</span> spline_params,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>                            condition)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; The time values do not change consistently after the replicates.</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>top_tables1 <span class="ot">&lt;-</span> result<span class="sc">$</span>time_effect </span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="fu">print</span>(top_tables1)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; $Phase_Exponential</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt;         X1      X2 AveExpr     F   P.Value adj.P.Val feature_index feature_names</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;        </span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt;  1  0.136   0.222     20.5  19.4   3.61e-6   0.00990          5683 5683         </span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt;  2 -0.177   0.242     20.9  17.1   1.03e-5   0.00990           110 110          </span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt;  3  0.0716  0.408     18.5  17.0   1.07e-5   0.00990          3253 3253         </span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt;  4  0.0457 -0.216     16.2  16.6   1.30e-5   0.00990          2861 2861         </span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt;  5 -0.0365  0.203     17.8  16.6   1.31e-5   0.00990          2514 2514         </span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt;  6  0.0707  0.248     21.6  16.6   1.33e-5   0.00990          5321 5321         </span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt;  7  0.250   0.154     17.3  16.4   1.46e-5   0.00990          6689 6689         </span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt;  8 -0.644  -0.0790    14.3  16.4   1.46e-5   0.00990          6127 6127         </span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt;  9 -0.376  -0.408     16.2  16.3   1.50e-5   0.00990           213 213          </span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; 10  0.128  -0.116     15.4  16.3   1.50e-5   0.00990          4067 4067         </span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; $Phase_Stationary</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co">#&gt;         X1      X2 AveExpr     F   P.Value adj.P.Val feature_index feature_names</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;        </span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co">#&gt;  1 -0.656  -0.375     14.3  26.8   1.85e-7   0.00133          6127 6127         </span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="co">#&gt;  2 -0.360  -0.221     15.5  16.2   1.62e-5   0.0345           1465 1465         </span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="co">#&gt;  3 -0.313  -0.129     17.6  16.0   1.71e-5   0.0345           2722 2722         </span></span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="co">#&gt;  4 -0.363  -0.107     19.2  15.8   1.92e-5   0.0345           6549 6549         </span></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="co">#&gt;  5 -1.13   -0.769     11.7  15.3   2.41e-5   0.0345           1231 1231         </span></span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a><span class="co">#&gt;  6  0.267   0.0878    14.5  12.8   8.95e-5   0.107            1092 1092         </span></span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a><span class="co">#&gt;  7  0.0815 -0.254     13.9  12.3   1.21e-4   0.110            5503 5503         </span></span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a><span class="co">#&gt;  8 -0.432  -0.189     15.1  12.3   1.22e-4   0.110            1399 1399         </span></span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a><span class="co">#&gt;  9 -0.815  -0.503     16.8  11.9   1.51e-4   0.120            3187 3187         </span></span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a><span class="co">#&gt; 10  0.824   0.461     11.3  11.3   2.07e-4   0.148            4277 4277         </span></span>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>top_tables2 <span class="ot">&lt;-</span> result<span class="sc">$</span>avrg_diff_conditions </span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">print</span>(top_tables2)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; $avrg_diff_Exponential_vs_Stationary</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;    logFC AveExpr     t  P.Value adj.P.Val     B feature_index feature_names</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;        </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;  1 -2.85    17.1 -55.5 2.71e-32  1.94e-28  63.2          6548 6548         </span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;  2 -1.26    16.6 -45.8 8.78e-30  3.14e-26  57.8          1156 1156         </span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt;  3 -1.51    15.9 -41.5 1.71e-28  4.09e-25  55.0          2623 2623         </span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;  4 -2.63    15.0 -40.7 3.04e-28  5.44e-25  54.4           822 822          </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;  5 -2.52    15.3 -39.1 1.01e-27  1.44e-24  53.3          4129 4129         </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;  6 -1.81    16.1 -38.5 1.63e-27  1.95e-24  52.8          1123 1123         </span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;  7 -2.72    14.3 -37.0 5.42e-27  5.55e-24  51.7          1098 1098         </span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;  8 -2.10    14.2 -36.6 7.45e-27  6.67e-24  51.3          3158 3158         </span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;  9 -2.34    16.1 -35.4 2.02e-26  1.61e-23  50.4          3155 3155         </span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; 10 -2.71    14.6 -35.3 2.32e-26  1.66e-23  50.2          2955 2955         </span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>top_tables3 <span class="ot">&lt;-</span> result<span class="sc">$</span>interaction_condition_time </span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">print</span>(top_tables3) </span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; $time_interaction_Exponential_vs_Stationary</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;    PhaseStationary.X1 PhaseStationary.X2 AveExpr     F   P.Value adj.P.Val</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;                 &lt;dbl&gt;              &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;  1             -0.519             0.147     14.1 14.1  0.0000458     0.328</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;  2              1.51             -0.0622    12.4 12.3  0.000117      0.394</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  3              2.71              0.698     12.9 11.7  0.000171      0.394</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  4             -0.223             0.210     15.3 10.8  0.000280      0.394</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;  5              0.967             0.0145    13.5 10.7  0.000298      0.394</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;  6              0.510             0.115     16.5 10.2  0.000401      0.394</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;  7              1.13             -0.240     12.3  9.72 0.000538      0.394</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt;  8             -0.121            -0.179     15.9  9.72 0.000539      0.394</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt;  9             -0.311            -0.144     17.3  9.71 0.000542      0.394</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; 10              0.602             0.302     12.8  9.69 0.000550      0.394</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 3 more variables: feature_index &lt;int&gt;, feature_names &lt;chr&gt;, intercept &lt;dbl&gt;</span></span></code></pre></div>
+<p>The output of the function run_limma_splines() is a named list, where
+each element is a specific “category” of results. Each of those elements
+is a list, containing as elements the respective limma topTables, either
+for each level or each comparison between two levels.</p>
+<p>The element “time_effect” is a list, where each element is the
+topTable where the p-value for each feature for the respective level are
+reported.</p>
+<p>The element “avrg_diff_conditions” is a list that contains as
+elements the topTables, that represent the comparison of the average
+differences of the levels.</p>
+<p>The element “interaction_condition_time” is a list that contains as
+elements the topTables, that represent the interaction between the
+levels (which includes both time and the average differences)</p>
+</div>
+<div id="build-limma-report" class="section level1">
+<h1>Build limma report</h1>
+<p>The topTables of all three categories can be used to generate p-value
+histograms an volcano plots.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;create_limma_reports&quot;</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">create_limma_report</span>(<span class="at">run_limma_splines_result =</span> result,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>                    <span class="at">report_info =</span> report_info,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>                    <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
+<p>You can view the generated analysis report of the create_limma_report
+function here: <a href="../inst/reports/create_limma_report.html">here</a></p>
+</div>
+<div id="cluster-the-hits-significant-features" class="section level1">
+<h1>Cluster the hits (significant features)</h1>
+<p>After we obtained the limma spline results, we can cluster the hits
+based on their temporal pattern (their spline shape). We define what a
+hit is by setting an adj. p-value threshold for every level. Then,
+hierarchical clustering is used to place every hit in one of as many
+clusters as we have specified for that specific level.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.05</span>)   </span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)   </span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;clustering_reports&quot;</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> <span class="fu">cluster_hits</span>(<span class="at">top_tables =</span> top_tables1, </span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>                                   <span class="at">data =</span> data, </span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>                                   <span class="at">meta =</span> meta, </span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>                                   <span class="at">design =</span> design,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>                                   <span class="at">condition =</span> condition, </span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>                                   <span class="at">spline_params =</span> spline_params,</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>                                   <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>                                   <span class="at">clusters =</span> clusters,</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>                                   <span class="at">report_info =</span> report_info,</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>                                   <span class="at">meta_batch_column =</span> meta_batch_column,</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>                                   <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>                                   <span class="at">report =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; The time values do not change consistently after the replicates.</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Generating report. This takes a few seconds.&quot;</span></span></code></pre></div>
+<p>To see the output HTML report, click here: <a href="../inst/reports/clustering_report.html">here</a></p>
+</div>
+<div id="perform-gene-set-enrichment-analysis-gsea" class="section level1">
+<h1>Perform gene set enrichment analysis (GSEA)</h1>
+<p>To each clustered hit, the respective gene can be assigned and GSEA
+performed. For this, the Enrichr databases of choice have to be
+downloaded:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>gene_set_lib <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;WikiPathways_2019_Human&quot;</span>,</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                  <span class="st">&quot;NCI-Nature_2016&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>                  <span class="st">&quot;TRRUST_Transcription_Factors_2019&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>                  <span class="st">&quot;MSigDB_Hallmark_2020&quot;</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>                  <span class="st">&quot;GO_Cellular_Component_2018&quot;</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>                  <span class="st">&quot;CORUM&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>                  <span class="st">&quot;KEGG_2019_Human&quot;</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>                  <span class="st">&quot;TRANSFAC_and_JASPAR_PWMs&quot;</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>                  <span class="st">&quot;ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X&quot;</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>                  <span class="st">&quot;GO_Biological_Process_2018&quot;</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>                  <span class="st">&quot;GO_Molecular_Function_2018&quot;</span>,</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>                  <span class="st">&quot;Human_Gene_Atlas&quot;</span>)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
+<p>Per default the file is placed in the current working directory,
+which is the root dir of the R project.</p>
+<p>To run GSEA, a genes vector has to be created, containing all the
+underlying genes of the features. The downloaded database file has to be
+loaded as a dataframe. Further, optionally, the clusterProfiler
+parameters and the report dir can be specified. The function
+create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
+report and returns the GSEA dotplots in R.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Get gene vector</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Genes&quot;</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]][<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(annotation)]</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot; .*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;;.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;_.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;-.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span> </span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>databases <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(downloaded_dbs_filepath, <span class="at">col_types =</span> readr<span class="sc">::</span><span class="fu">cols</span>())</span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a>                               <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a>                               <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a>                               <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a>                               <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;gsea_reports&quot;</span>)</span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">create_gsea_report</span>(<span class="at">levels_clustered_hits =</span> </span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a>                                  clustering_results<span class="sc">$</span>clustered_hits_levels,</span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a>                             <span class="at">genes =</span> genes,</span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a>                             <span class="at">databases =</span> databases,</span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a>                             <span class="at">params =</span> clusterProfiler_params,</span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a>                             <span class="at">report_info =</span> report_info,</span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a>                             <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
+<p>To see the output HTML report, click here: <a href="../inst/reports/gsea_report.html">here</a></p>
+<p>Every row in the dotplots is a term from a specific database, and the
+columns are the respective clusters. The color scale contains the info
+about the odds ratio and the size the -log10 adj. p-value. Only terms
+that have &gt; 2 genes as support are included in the plot. Further, for
+each cluster, just maximally 5 terms are shown (the terms with the
+highest odds ratios). Note that when for example cluster 1 already has 5
+terms, and cluster 2 does not, and gets a term which was also found for
+cluster 1, than this term would be included as the sixth term for
+cluster 1, so this is a way the maximum of 5 can be exceeded.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

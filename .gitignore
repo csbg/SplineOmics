@@ -4,7 +4,4 @@
 .Ruserdata
 results/
 data/
-inst/README_data
-/Meta/
-inst/doc
-/doc/
+dev/
