@@ -107,7 +107,7 @@ repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  **Install and load ``` remotes``, and install ```SplineOmics\` from
+2.  **Install and load `remotes`, and install `SplineOmics` from
     GitHub**:
 
     Copy and paste the following code block into your R console.
@@ -124,7 +124,7 @@ repository into your R environment.
     # This line will be deleted once the repo is public
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
-    # Install the latest version of the SplineOmics package from GitHub
+    # Install latest SplineOmics version from GitHub
     remotes::install_github("csbg/SplineOmics@main")
     ```
 

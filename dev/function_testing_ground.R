@@ -49,7 +49,7 @@ plots <- explore_data(data = data,
                       meta_batch_column = meta_batch_column,
                       meta_batch2_column = NA,
                       report_dir = report_dir,
-                      report = TRUE)
+                      report = FALSE)
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -91,11 +91,11 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 
 ## Run limma splines -----------------------------------------------------------
-# design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
-design <- "~ 1 + X + Reactor"
+design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
+# design <- "~ 1 + X + Reactor"
 
-spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
-                     dof = c(2L, 2L))
+spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                     dof = c(2L))
 
 # Run the limma spline analysis
 result <- run_limma_splines(data, 
@@ -113,6 +113,8 @@ report_dir <- here::here("results", "limma_reports")
 create_limma_report(run_limma_splines_result = result,
                     report_info = report_info,
                     report_dir = report_dir)
+
+
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
