@@ -25,7 +25,7 @@ screen_limma_hyperparams(
   adj_pthresholds = c(0.05),
   meta_batch_column = NA,
   meta_batch2_column = NA,
-  time_unit = "m",
+  time_unit = "min",
   padjust_method = "BH"
 )
 }

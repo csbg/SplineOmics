@@ -4,10 +4,13 @@
 \alias{check_genes}
 \title{Check Valid Gene IDs}
 \usage{
-check_genes(genes)
+check_genes(genes, max_index_overall = NA)
 }
 \arguments{
 \item{genes}{A character vector containing gene IDs.}
+
+\item{max_index_overall}{An integer, specifying the highest index of all 
+features across all levels.}
 }
 \value{
 None. This function stops execution and provides 
