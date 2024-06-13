@@ -181,19 +181,35 @@ docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
 
 ### Running the Docker Container
 
-To run the Docker container, you can use the following Bash command.
-This command needs to be run in a dir where the subdirs `input` and
+To run the Docker container, you can use one of the following commands, depending on your operating System.
+The respective command needs to be run in a folder where the subfolders `input` and
 `output` exist. Place your data and meta (and annotation) files in
-`input`, and receive your output from the package in the `output` dir.
+`input`, and receive your output from the package in the `output` folder.
+
+For Linux and macOS:
 
 ``` sh
+# Bash
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
     -v $(pwd)/output:/home/rstudio/output \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    thomasrauter/splineomics:0.1.0
+    ghcr.io/thomasrauter/splineomics:0.1.0
+```
+
+For Windows:
+
+```powershell
+# PowerShell
+docker run -it -d `
+    -v ${PWD}\input:/home/rstudio/input `
+    -v ${PWD}\output:/home/rstudio/output `
+    -p 8888:8787 `
+    -e PASSWORD=123 `
+    --name splineomics `
+    ghcr.io/thomas-rauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to
@@ -201,8 +217,7 @@ Once the container is running, open a web browser and navigate to
 you set with the -e PASSWORD=123 option.
 
 As long as the container is running, you can work on that localhost page
-with RStudio, where also the `SplineOmics` package is installed. The dir
-`/home/rstudio/` is your R session working dir.
+with RStudio, where also the `SplineOmics` package is installed. `/home/rstudio/` is your R session working folder.
 
 Load your inputs for example like this:
 
@@ -214,7 +229,7 @@ meta <- readxl::read_excel(here::here("input", "meta.xlsx"))
 ```
 
 Direct all generated results to `/home/rstudio/output`, which is mounted
-to your local dir `output`. Your results will be there.
+to your local folder `output`. Your results will be there.
 
 Stop the container:
 
@@ -386,7 +401,7 @@ of `SplineOmics`. Thank you for using our package!
 
 - [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
   package, developed the approach together with VSchaepertoens under
-  guidance from nfortelny and skafdasschaf,
+  guidance from nfortelny and skafdasschaf.
 - [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator,
   provided guidance and support for the overall approach.
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
