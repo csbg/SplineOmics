@@ -2,6 +2,7 @@
 
 export(cluster_hits)
 export(create_gsea_report)
+export(create_limma_report)
 export(download_enrichr_databases)
 export(explore_data)
 export(extract_data)

@@ -181,10 +181,11 @@ docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
 
 ### Running the Docker Container
 
-To run the Docker container, you can use one of the following commands, depending on your operating System.
-The respective command needs to be run in a folder where the subfolders `input` and
-`output` exist. Place your data and meta (and annotation) files in
-`input`, and receive your output from the package in the `output` folder.
+To run the Docker container, you can use one of the following commands,
+depending on your operating System. The respective command needs to be
+run in a folder where the subfolders `input` and `output` exist. Place
+your data and meta (and annotation) files in `input`, and receive your
+output from the package in the `output` folder.
 
 For Linux and macOS:
 
@@ -201,7 +202,7 @@ docker run -it -d \
 
 For Windows:
 
-```powershell
+``` powershell
 # PowerShell
 docker run -it -d `
     -v ${PWD}\input:/home/rstudio/input `
@@ -217,7 +218,8 @@ Once the container is running, open a web browser and navigate to
 you set with the -e PASSWORD=123 option.
 
 As long as the container is running, you can work on that localhost page
-with RStudio, where also the `SplineOmics` package is installed. `/home/rstudio/` is your R session working folder.
+with RStudio, where also the `SplineOmics` package is installed.
+`/home/rstudio/` is your R session working folder.
 
 Load your inputs for example like this:
 

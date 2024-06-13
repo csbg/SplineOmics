@@ -33,7 +33,7 @@ The R package `SplineOmics` gets the significant features (hits) of time-series 
 -   [🎓 Citation](#-citation)
 -   [🌟 Contributors](#-contributors)
 
-## 📘 Introduction {#introduction}
+## 📘 Introduction
 
 Welcome to `SplineOmics`, an R package designed to streamline the analysis of omics time-series data, followed by automated HTML report generation.
 
@@ -77,7 +77,7 @@ With `SplineOmics`, you can:
 
     Automatically generate reports to showcase all results.
 
-## 🔧 Installation {#installation}
+## 🔧 Installation
 
 Follow these steps to install the `SplineOmics` package from its GitHub repository into your R environment.
 
@@ -124,17 +124,17 @@ If you encounter errors related to dependencies or package versions during insta
 
 For issues specifically related to the `SplineOmics` package, check the [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the GitHub repository for similar problems or to post a new issue.
 
-## 🛠️ Usage {#usage}
+## 🛠️ Usage
 
-### 📖 Tutorial {#tutorial}
+### 📖 Tutorial
 
 [This tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html) covers a real CHO cell time-series proteomics example from start to the end.
 
-### 🔬 Functions in Depth {#functions-in-depth}
+### 🔬 Functions in Depth
 
 A detailed description of all arguments and outputs of all the available package functions can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
-## 🐳 Docker Container {#docker-container}
+## 🐳 Docker Container
 
 To facilitate reproducible analysis, we provide a Docker container that encapsulates the `SplineOmics` package together with the necessary environment and dependencies. Follow the instructions below to pull the Docker container and run your analysis.
 
@@ -148,21 +148,37 @@ docker pull ghcr.io/thomas-rauter/splineomics:0.1.0
 
 ### Running the Docker Container
 
-To run the Docker container, you can use the following Bash command. This command needs to be run in a dir where the subdirs `input` and `output` exist. Place your data and meta (and annotation) files in `input`, and receive your output from the package in the `output` dir.
+To run the Docker container, you can use one of the following commands, depending on your operating System. The respective command needs to be run in a folder where the subfolders `input` and `output` exist. Place your data and meta (and annotation) files in `input`, and receive your output from the package in the `output` folder.
+
+For Linux and macOS:
 
 ``` sh
+# Bash
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
     -v $(pwd)/output:/home/rstudio/output \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    thomasrauter/splineomics:0.1.0
+    ghcr.io/thomasrauter/splineomics:0.1.0
+```
+
+For Windows:
+
+``` powershell
+# PowerShell
+docker run -it -d `
+    -v ${PWD}\input:/home/rstudio/input `
+    -v ${PWD}\output:/home/rstudio/output `
+    -p 8888:8787 `
+    -e PASSWORD=123 `
+    --name splineomics `
+    ghcr.io/thomas-rauter/splineomics:0.1.0
 ```
 
 Once the container is running, open a web browser and navigate to <http://localhost:8888>. Use rstudio as the username and the password you set with the -e PASSWORD=123 option.
 
-As long as the container is running, you can work on that localhost page with RStudio, where also the `SplineOmics` package is installed. The dir `/home/rstudio/` is your R session working dir.
+As long as the container is running, you can work on that localhost page with RStudio, where also the `SplineOmics` package is installed. `/home/rstudio/` is your R session working folder.
 
 Load your inputs for example like this:
 
@@ -173,7 +189,7 @@ data <- readxl::read_excel(here::here("input", "data.xlsx"))
 meta <- readxl::read_excel(here::here("input", "meta.xlsx"))
 ```
 
-Direct all generated results to `/home/rstudio/output`, which is mounted to your local dir `output`. Your results will be there.
+Direct all generated results to `/home/rstudio/output`, which is mounted to your local folder `output`. Your results will be there.
 
 Stop the container:
 
@@ -197,7 +213,7 @@ cp -r /log home/rstudio/output
 
 Because the `/home/rstudio/output` dir is mounted to your local filesystem, this will make the installation log files available there.
 
-## 📦 Dependencies {#dependencies}
+## 📦 Dependencies
 
 The `SplineOmics` package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with `SplineOmics`. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.
 
@@ -213,7 +229,7 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **fs**: For file system operations.
 -   **ggplot2**: For creating elegant data visualizations using the grammar of graphics.
 -   **ggrepel**: For better label placement in ggplot2.
--   **here**: For constructing paths to your project's files.
+-   **here**: For constructing paths to your project’s files.
 -   **htmltools**: For HTML rendering and output.
 -   **kableExtra**: For producing beautiful tables in R Markdown documents.
 -   **knitr**: For dynamic report generation in R.
@@ -227,7 +243,7 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **ragg**: For creating high-quality images for graphics devices.
 -   **readr**: For reading rectangular data.
 -   **reshape2**: For flexible reshaping of data.
--   **rlang**: For tools to work with core language features of R and R's base types.
+-   **rlang**: For tools to work with core language features of R and R’s base types.
 -   **scales**: For scale functions for visualization.
 -   **stringr**: For simplifying the manipulation of strings.
 -   **tibble**: For creating tidy data frames that are easy to work with.
@@ -239,23 +255,23 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   Recommended: R 4.3.3 or higher
     -   Note: This project was developed using R 4.3.3. While it should be compatible with newer versions, this is the version guaranteed to work as tested.
 
-## ❓ Getting Help {#getting-help}
+## ❓ Getting Help
 
 If you encounter a bug or have a suggestion for improving the `SplineOmics` package, we encourage you to [open an issue](https://github.com/csbg/SplineOmics/issues) on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.
 
-For more detailed questions, discussions, or contributions regarding the package's use and development, please refer to the [GitHub Discussions](https://github.com/csbg/SplineOmics/discussions) page for `SplineOmics`. This forum is a great place to ask for help, share your experiences, and connect with the community.
+For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the [GitHub Discussions](https://github.com/csbg/SplineOmics/discussions) page for `SplineOmics`. This forum is a great place to ask for help, share your experiences, and connect with the community.
 
 Thank you for using and contributing to the development of `SplineOmics`!
 
-## 🤝 Contributing {#contributing}
+## 🤝 Contributing
 
-We welcome contributions to the `SplineOmics` package! Whether you're interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.
+We welcome contributions to the `SplineOmics` package! Whether you’re interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.
 
-Here's how you can contribute:
+Here’s how you can contribute:
 
 1.  **Report a Bug or Request a Feature:** If you encounter a bug or have an idea for a new feature, please [open an issue](https://github.com/csbg/SplineOmics/issues) on our GitHub repository. Before opening a new issue, check to see if the issue has already been reported or the feature requested by another user.
 
-2.  **Submit a Pull Request:** If you've developed a bug fix or a new feature that you'd like to share, submit a pull request.
+2.  **Submit a Pull Request:** If you’ve developed a bug fix or a new feature that you’d like to share, submit a pull request.
 
 3.  **Improve Documentation:** Good documentation is crucial for any project. If you notice missing or incorrect documentation, please feel free to contribute.
 
@@ -273,25 +289,25 @@ We appreciate your feedback! Besides raising issues, you can provide feedback in
 
 Your feedback helps us improve the project and address any issues you may encounter.
 
-## 📜 License {#license}
+## 📜 License
 
 This package is licensed under the MIT License: [LICENSE](./LICENSE)
 
 © 2024 Thomas Rauter. All rights reserved.
 
-## 🎓 Citation {#citation}
+## 🎓 Citation
 
 The `SplineOmics` package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.
 
 To cite this package, you can use the citation information provided in the [`CITATION.cff`](./CITATION.cff) file.
 
-You can also generate a citation in various formats using the `CITATION.cff` file by visiting the top right of this repo and clicking on the "Cite this repository" button.
+You can also generate a citation in various formats using the `CITATION.cff` file by visiting the top right of this repo and clicking on the “Cite this repository” button.
 
 Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of `SplineOmics`. Thank you for using our package!
 
 ## 🌟 Contributors
 
--   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf,
+-   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf.
 -   [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator, provided guidance and support for the overall approach.
 -   [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.
 -   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed the download_enrichr_databases() function and one internal plotting function, as well as some code for the EDA plots, and the overall approach together with Thomas-Rauter.
