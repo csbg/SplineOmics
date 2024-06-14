@@ -7,6 +7,7 @@ devtools::load_all()
 library(readxl)
 library(conflicted)
 
+# interactive_demo()
 
 
 # Load the data ----------------------------------------------------------------
@@ -31,7 +32,7 @@ data <- extract_data(data_excel,
 
 report_info <- list(
   omics_data_type = "PPTX",
-  data_description = "Old phosphoproteomics data with the missing two samples und ich geehe hierhin und dorthin und dann esse ich eine banane und noch eine und noch eine und noch eine",
+  data_description = "Old phosphoproteomics data with the missing two samples",
   data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -49,7 +50,7 @@ plots <- explore_data(data = data,
                       meta_batch_column = meta_batch_column,
                       meta_batch2_column = NA,
                       report_dir = report_dir,
-                      report = FALSE)
+                      report = TRUE)
 
 
 # Prep input to hyperparams screen function ------------------------------------

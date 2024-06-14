@@ -4,13 +4,15 @@
 \alias{get_header_section}
 \title{Get Header Section}
 \usage{
-get_header_section(title, header_text)
+get_header_section(title, header_text, report_type)
 }
 \arguments{
 \item{title}{A string specifying the title of the HTML document.}
 
 \item{header_text}{A string specifying the text to be displayed in the 
 header of the report.}
+
+\item{report_type}{A character specifying the type of HTML report.}
 }
 \value{
 A string containing the HTML header section.

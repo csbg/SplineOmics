@@ -134,17 +134,15 @@ generate_explore_plots <- function(data,
   
   plot_functions_and_sizes <- list(
     list(func = make_density_plots, size = 1),
-    list(func = make_box_plots, size = 1.5),
-    list(func = make_violin_plots, size = 1.5),
+    list(func = make_violin_box_plots, size = 1.5),
+    list(func = make_pca_plot, size = 1.5, flatten = FALSE),
+    list(func = make_mds_plot, size = 1.5, flatten = FALSE),
+    list(func = make_correlation_heatmaps, size = NULL),
+    list(func = make_tsne_plot, size = 1.5, flatten = FALSE),
     list(func = plot_mean_correlation_with_time, size = 1.5),
     list(func = plot_lag1_differences, size = 1.5),
     list(func = plot_first_lag_autocorrelation, size = 1.5),
-    list(func = plot_cv, size = 1.5),
-    list(func = make_pca_plot, size = 1.5, flatten = FALSE),
-    list(func = make_scree_plot, size = 1.5, flatten = FALSE),
-    list(func = make_mds_plot, size = 1.5, flatten = FALSE),
-    list(func = make_correlation_heatmaps, size = NULL),
-    list(func = make_tsne_plot, size = 1.5, flatten = FALSE)
+    list(func = plot_cv, size = 1.5)
   )
   
   apply_plot_function <- function(entry) {
@@ -160,6 +158,10 @@ generate_explore_plots <- function(data,
   
   # Flatten the results and sizes conditionally
   for (result in plot_results) {
+    
+    all_plots <- c(all_plots, "section_break")
+    all_plots_sizes <- c(all_plots_sizes, NA)
+    
     if (is.null(result$size)) {
       # Special handling for make_correlation_heatmaps
       all_plots <- c(all_plots, result$plots$heatmaps)
@@ -197,15 +199,15 @@ generate_explore_plots <- function(data,
 #' @param output_file_path A string specifying the file path where the HTML 
 #' report will be saved.
 #'
+#' @importFrom purrr discard
+#'
 #' @return None. This function writes the HTML content to the specified file.
 #' 
 build_explore_data_report <- function(header_section, 
                                       plots, 
                                       plots_sizes, 
                                       output_file_path) {  
-  
-  level_count = (length(plots) - 6) / 8
-  
+
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
   toc <- create_toc()
@@ -214,111 +216,72 @@ build_explore_data_report <- function(header_section,
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
   
-  pb <- create_progress_bar(plots)
+  just_plots <- plots %>% purrr::discard(~ is.character(.))
+  pb <- create_progress_bar(just_plots)
+  
   plot_names <- c("Density Plots", 
-                  "Boxplots", 
-                  "Violin Plots",
+                  "Violin Box Plots",
+                  "PCA ", 
+                  "MDS",
+                  "Correlation Heatmaps",
+                  "t-SNE Plot",
                   "Mean Time Correlation",
                   "Lag1 Differences",
                   "First Lag Autocorrelation",
-                  "Coefficient of Variation",
-                  "PCA ", 
-                  "Scree Plot",
-                  "MDS",
-                  "Correlation Heatmaps",
-                  "t-SNE Plot")
+                  "Coefficient of Variation")
   
   plot_explanations <- get_explore_plots_explanations()
   
-  toc_index <- 0
-  toc_index_memory <- toc_index
   major_headers <- c("Distribution and Variability Analysis", 
-                     "Time Series Analysis", 
-                     "Dimensionality Reduction and Clustering")
-  major_header_added <- c(FALSE, FALSE, FALSE)
+                     "Dimensionality Reduction and Clustering",
+                     "Time Series Analysis")
   
-  # CSS for major headers
   major_header_style <- 
     "font-size: 6em; font-family: Arial, sans-serif; text-align: center;"
+  
+  toc_index <- 0
+  toc_index_memory <- toc_index
+  major_header_index <- 0
   
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     
-    # Add major headers at the specified positions
-    if (index == 1 && !major_header_added[1]) {
-      major_header_added[1] <- TRUE
-      section_id <- paste0("section_major_", 1)
-      toc <- paste(toc, 
-                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-                           toc_style, 
-                           section_id,
-                           major_headers[1]), 
-                   sep = "\n")
-      
-      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
-                              section_id, 
-                              major_header_style, 
-                              major_headers[1])
-      
-      html_content <- paste(html_content, group_header, sep = "\n")
-      
-    } else if (index == (2 + 3 * level_count) && !major_header_added[2]) {
-      
-      major_header_added[2] <- TRUE
-      section_id <- paste0("section_major_", 2)
-      toc <- paste(toc, 
-                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-                           toc_style, 
-                           section_id,
-                           major_headers[2]), 
-                   sep = "\n")
-      
-      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
-                              section_id, 
-                              major_header_style, 
-                              major_headers[2])
-      
-      html_content <- paste(html_content, group_header, sep = "\n")
-      
-    } else if (index == (2 + 7 * level_count) && !major_header_added[3]) {
-      
-      major_header_added[3] <- TRUE
-      section_id <- paste0("section_major_", 3)
-      toc <- paste(toc, 
-                   sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-                           toc_style, 
-                           section_id,
-                           major_headers[3]), 
-                   sep = "\n")
-      
-      group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
-                              section_id, 
-                              major_header_style, 
-                              major_headers[3])
-      
-      html_content <- paste(html_content, group_header, sep = "\n")
-    }
-    
-    # Determine when to place headers based on the provided logic
-    if (length(plots) == 12) {     # Just one level exists
+    if (is.character(plots[[index]])) {    # Section break
       
       toc_index <- toc_index + 1
       
-    } else if (index == 1 || 
-               index == 2 + level_count || 
-               index == 2 + 2 * level_count || 
-               index == 2 + 3 * level_count ||
-               index == 2 + 4 * level_count ||
-               index == 2 + 5 * level_count ||
-               index == 2 + 6 * level_count ||
-               index == 2 + 7 * level_count || 
-               index == 3 + 7 * level_count || 
-               index == 4 + 7 * level_count ||
-               index == 5 + 7 * level_count ||
-               index == 6 + 8 * level_count) {    # More than just one level
-      
-      toc_index <- toc_index + 1
+      if (toc_index == 1 ||   # positions of major headers.
+          toc_index == 3 ||
+          toc_index == 7) {
+
+        major_header_index <- major_header_index + 1
+        
+        section_id <- paste0("section_major_", major_header_index)
+        toc <- paste(toc, 
+                     sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
+                             toc_style, 
+                             section_id,
+                             major_headers[major_header_index]), 
+                     sep = "\n")
+        
+        group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
+                                section_id, 
+                                major_header_style, 
+                                major_headers[major_header_index])
+        
+        if (toc_index == 3) {  
+          group_header <- paste(group_header, 
+                                '<p style="font-size: 40px;">If you are unsure 
+                                which dimensionality reduction plot to consult, 
+                                choose PCA.</p>', 
+                                sep = "\n")
+        }
+        
+        html_content <- paste(html_content, group_header, sep = "\n")
+      }
+      next
     }
+  
     
     if (toc_index != toc_index_memory) {
       
@@ -400,12 +363,20 @@ build_explore_data_report <- function(header_section,
 #'
 #' @return A ggplot object representing the density plot.
 #'
-#' @importFrom ggplot2 ggplot geom_density ggtitle aes
+#' @importFrom ggplot2 ggplot geom_density ggtitle aes theme
 #' @importFrom reshape2 melt
 #'
 make_density_plots <- function(data, 
                                meta, 
                                condition) {
+  
+  custom_theme <- ggplot2::theme(
+    panel.background = ggplot2::element_rect(fill = "white", color = "white"),
+    plot.background = ggplot2::element_rect(fill = "white", color = "white"),
+    panel.grid.major.x = ggplot2::element_blank(),
+    panel.grid.major.y = ggplot2::element_line(color = "grey"),
+    panel.grid.minor = ggplot2::element_blank()
+  )
   
   density_plots <- list()
   
@@ -417,7 +388,8 @@ make_density_plots <- function(data,
     overall_plot <- ggplot2::ggplot(data_long, 
                                     ggplot2::aes(x = !!rlang::sym("value"))) +
       ggplot2::geom_density(fill = "blue", alpha = 0.5) +
-      ggplot2::ggtitle("All Levels")
+      ggplot2::ggtitle("All Levels") +
+      custom_theme
     
     density_plots <- c(density_plots, list(overall_plot))
   }
@@ -435,7 +407,8 @@ make_density_plots <- function(data,
     level_plot <- ggplot2::ggplot(data_level_long, 
                                   ggplot2::aes(x = !!rlang::sym("value"))) +
       ggplot2::geom_density(fill = "blue", alpha = 0.5) +
-      ggplot2::ggtitle(paste("Level:", level))
+      ggplot2::ggtitle(paste("Level:", level)) + 
+      custom_theme
     
     # Add the level plot to the list
     density_plots <- c(density_plots, list(level_plot))
@@ -445,55 +418,8 @@ make_density_plots <- function(data,
 }
 
 
-#' Generate Boxplot
-#'
-#' @description
-#' This function generates a boxplot for a given data matrix. The boxplot shows 
-#' the distribution of the values in the data matrix across different variables, 
-#' with log2 intensity on the y-axis.
-#'
-#' @param data A numeric matrix containing the data.
-#' @param meta A dataframe containing the column meta data of data
-#' @param condition The name of the factor column of meta for the experiment
-#'
-#' @return A ggplot object representing the boxplot.
-#'
-#' @importFrom ggplot2 ggplot aes geom_boxplot labs theme element_text
-#' @importFrom reshape2 melt
-#'
-make_box_plots <- function(data,
-                           meta,
-                           condition) {
-  
-  boxplots <- list()
-  
-  # Create boxplots for each level of the condition
-  levels <- unique(meta[[condition]])
-  for (level in levels) {
-    # Filter the data for the current level
-    indices <- which(meta[[condition]] == level)
-    data_level <- data[, indices, drop = FALSE]
-    data_level_long <- reshape2::melt(as.data.frame(data_level), id.vars = NULL)
-    
-    # Create the boxplot for the current level
-    level_plot <- ggplot2::ggplot(data_level_long, 
-                                  ggplot2::aes(x = !!rlang::sym("variable"),
-                                               y = !!rlang::sym("value"))) +
-      ggplot2::geom_boxplot(fill = "#AEC6CF", color = "black") +
-      ggplot2::labs(x = "Variables", y = "log2 intensity", 
-                    title = paste("Level:", level)) +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1,
-                                                         size = 6))
-    
-    # Add the level plot to the list
-    boxplots <- c(boxplots, list(level_plot))
-  }
-  
-  return(boxplots)
-}
 
-
-#' Generate Violin Plot
+#' Generate Violin Box Plot
 #'
 #' @description
 #' This function generates a violin plot for a given data matrix. The violin 
@@ -510,13 +436,21 @@ make_box_plots <- function(data,
 #' @importFrom ggplot2 ggplot aes geom_violin theme labs
 #' @importFrom grid unit
 #' 
-make_violin_plots <- function(data,
-                              meta,
-                              condition) {
+make_violin_box_plots <- function(data,
+                                  meta,
+                                  condition) {
   
-  violin_plots <- list()
+  custom_theme <- ggplot2::theme(
+    panel.background = ggplot2::element_rect(fill = "white", color = "white"),
+    plot.background = ggplot2::element_rect(fill = "white", color = "white"),
+    panel.grid.major.x = ggplot2::element_blank(),
+    panel.grid.major.y = ggplot2::element_line(color = "grey"),
+    panel.grid.minor = ggplot2::element_blank()
+  )
   
-  # Create violin plots for each level of the condition
+  plots <- list()
+  
+  # Create plots for each level of the condition
   levels <- unique(meta[[condition]])
   for (level in levels) {
     # Filter the data for the current level
@@ -524,22 +458,25 @@ make_violin_plots <- function(data,
     data_level <- data[, indices, drop = FALSE]
     data_level_long <- reshape2::melt(as.data.frame(data_level), id.vars = NULL)
     
-    # Create the violin plot for the current level
+    # Create the violin plot with boxplot overlay for the current level
     level_plot <- ggplot2::ggplot(data_level_long, 
                                   ggplot2::aes(x = !!rlang::sym("variable"),
                                                y = !!rlang::sym("value"))) +
-      ggplot2::geom_violin(trim = FALSE, fill = "#77DD77", 
-                           color = "black") +
+      ggplot2::geom_violin(trim = FALSE, fill = "#77DD77", color = "black") +
+      ggplot2::geom_boxplot(width = 0.1, fill = "white", 
+                            color = "black", outlier.shape = NA) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1,
                                                          size = 6),
                      plot.margin = grid::unit(c(0, 0, 0, 0), "cm")) +
       ggplot2::labs(x = "Timepoint", y = "Value", 
-                    title = paste("Level:", level))
+                    title = paste("Level:", level)) +
+      custom_theme
     
-    violin_plots <- c(violin_plots, list(level_plot))
+    # Add the level plot to the list
+    plots <- c(plots, list(level_plot))
   }
   
-  return(violin_plots)
+  return(plots)
 }
 
 
@@ -701,7 +638,7 @@ plot_first_lag_autocorrelation <- function(data,
 plot_lag1_differences <- function(data, 
                                   meta, 
                                   condition) {
-
+  
   plot_list <- list()
   
   # Loop through each level of the condition
@@ -710,14 +647,20 @@ plot_lag1_differences <- function(data,
     condition_indices <- which(meta[[condition]] == cond)
     data_subset <- data[, condition_indices]
     
-    # Compute lag-1 differences of each feature
+    # Compute absolute lag-1 differences of each feature
     lag1_differences <- t(apply(data_subset, 1, 
-                                function(feature) {diff(feature)}))
+                                function(feature) {
+                                  abs(diff(feature))
+                                }))
     
-    # Calculate mean and stdev of lag-1 differences for each feature
-    mean_lag1_diff <- apply(lag1_differences, 1, mean, na.rm = TRUE)
-    std_lag1_diff <- apply(lag1_differences, 1, sd, na.rm = TRUE)
-
+    # Normalize lag-1 differences by the mean of the feature values
+    feature_means <- apply(data_subset, 1, mean, na.rm = TRUE)
+    normalized_lag1_differences <- lag1_differences / feature_means
+    
+    # Calculate mean and stdev of normalized lag-1 differences for each feature
+    mean_lag1_diff <- apply(normalized_lag1_differences, 1, mean, na.rm = TRUE)
+    std_lag1_diff <- apply(normalized_lag1_differences, 1, sd, na.rm = TRUE)
+    
     # Create a data frame for plotting
     diff_data <- data.frame(
       Feature = 1:nrow(data),
@@ -731,16 +674,17 @@ plot_lag1_differences <- function(data,
                               color = "black") +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = element_text(size = 13),         # Title text size
-        axis.title.x = element_text(size = 10),       # X-axis title text size
-        axis.title.y = element_text(size = 10),       # Y-axis title text size
-        axis.text.x = element_text(size = 7),        # X-axis text size
-        axis.text.y = element_text(size = 7)         # Y-axis text size
+        plot.title = ggplot2::element_text(size = 13),         
+        axis.title.x = ggplot2::element_text(size = 10),       
+        axis.title.y = ggplot2::element_text(size = 10),       
+        axis.text.x = ggplot2::element_text(size = 7),       
+        axis.text.y = ggplot2::element_text(size = 7)        
       ) +
       ggplot2::labs(title = paste("Level:", cond),
-           x = "Mean Lag-1 Difference",
-           y = "Count of Features",
-           subtitle = paste("Mean:", 
+                    x = "Mean Normalized Absolute Lag-1 Difference",
+                    y = "Count of Features",
+                    subtitle = 
+                      paste("Mean:", 
                             round(mean(mean_lag1_diff, na.rm = TRUE), 3), 
                             "SD:", round(sd(mean_lag1_diff, na.rm = TRUE), 3)))
     
@@ -749,6 +693,7 @@ plot_lag1_differences <- function(data,
   
   return(plot_list)
 }
+
 
 
 #' Coefficient of Variation (CV) Plot
@@ -874,61 +819,6 @@ make_pca_plot <- function(data,
     ggplot2::labs(color = condition) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = element_text(hjust = 0.5))
-}
-
-
-#' Generate PCA Variance Explained Plot
-#'
-#' @description
-#' This function generates a bar plot showing the variance explained by the 
-#' first seven principal components of a given data matrix.
-#'
-#' @param data A numeric matrix containing the data.
-#' @param meta A dataframe, containign the meta information of data.
-#' @param condition The column of the meta dataframe containign the levels that 
-#'                  separate the experiment.
-#'
-#' @return A ggplot object representing the variance explained by the principal 
-#' components.
-#'
-#' @importFrom stats prcomp
-#' @importFrom limma plotMDS
-#' @importFrom ggplot2 ggplot aes geom_col geom_text xlab ylab ggtitle 
-#' theme_minimal
-#' 
-make_scree_plot <- function(data,
-                            meta,
-                            condition) {
-  
-  # meta and condition are not used, just taken because the functions are 
-  # called from another function that passes these arguments.
-  
-  # Perform PCA
-  pc <- stats::prcomp(t(data))
-  
-  # Calculate the variance explained
-  variance_explained <- pc$sdev^2 / sum(pc$sdev^2)
-  percent_variance_explained <- round(variance_explained * 100, digits = 1)
-  
-  # Create a dataframe for the first 7 principal components
-  var_explained <- data.frame(
-    PC = paste0("PC", 1:7),
-    Variance = percent_variance_explained[1:7]
-  )
-  
-  # Create the variance explained plot
-  variance_plot <- ggplot2::ggplot(var_explained, 
-                                   ggplot2::aes(x = !!rlang::sym("PC"), 
-                                                y = !!rlang::sym("Variance"))) +
-    ggplot2::geom_col(fill = "#AEC6CF", color = "black") +
-    ggplot2::geom_text(aes(label = round(!!rlang::sym("Variance"), digits = 2)), 
-                       vjust = -0.2) +
-    ggplot2::xlab("Principal Component") +
-    ggplot2::ylab("Variance Explained (%)") +
-    ggplot2::theme_minimal() +
-    ggplot2::ylim(0, max(var_explained$Variance) + 5)  # Space above highest bar
-  
-  return(variance_plot)
 }
 
 
@@ -1180,67 +1070,23 @@ make_tsne_plot <- function(data,
 get_explore_plots_explanations <- function() {
   
   plot_explanations <- c(
-    "Density plots show the distribution of intensities or abundances across 
-  samples. Peaks in the plot indicate common values, while the spread 
-  indicates variability. Use this plot to identify the range and most 
-  frequent values in your data.",
+    "Density plots 
+    resemble smooth, continuous hills or curves that illustrate where the data
+    is concentrated over a continuous range of values. By showing how frequently
+    values occur within the data range, density plots show
+    patterns such as peaks, valleys, and the overall spread of the data. The 
+    height of the curve at any given point indicates the density of the data 
+    points in that area, with higher curves representing more data points.",
     
-    "Boxplots display the spread and outliers of values for each sample. The 
-  box represents the interquartile range (IQR), the line inside the box is 
-  the median, and the whiskers extend to 1.5 * IQR from the quartiles. 
-  Points outside this range are considered outliers. Use boxplots to 
-  compare distributions and identify outliers.",
-    
-    "Violin plots combine boxplots and density plots to show the distribution 
-  of values. They provide a summary of the data's range, central tendency, 
-  and distribution shape. Use violin plots to understand the full 
+    "Violin Box plots combine boxplots and density plots to show the  
+  distribution of values. They provide a summary of the data's range, central  
+  tendency, and distribution shape. Use violin plots to understand the full 
   distribution and compare between groups.",
-    
-    "Mean Time Correlation plots summarize the correlation of each feature 
-  with time, highlighting time-dependent trends. Positive correlations 
-  indicate increasing trends, negative correlations indicate decreasing 
-  trends. Use this plot to identify features that change over time.",
-    
-    "Purpose: Lag-1 Differences plots illustrate the changes in feature values 
-  between successive time points. What It Shows: This plot helps identify 
-  the variability and consistency in the changes of feature values over time.
-  The mean lag-1 difference indicates the average change between time points.
-  The standard deviation of the lag-1 differences indicates the variability 
-  in these changes. How to Use It: Use this plot to understand the magnitude 
-  and variability of changes in feature values over time. Identify features 
-  with consistent increases or decreases and those with high variability 
-  between time points.",  
-    
-    "First Lag Autocorrelation plots illustrate the temporal dependencies 
-  within each feature by calculating the autocorrelation of the feature 
-  with itself at a lag of one time point. This plot helps identify 
-  features that have consistent patterns over time. A high positive 
-  autocorrelation indicates that the feature values are similar to their 
-  previous values, suggesting a trend or periodicity. A high negative 
-  autocorrelation suggests an alternating pattern over time. Use this 
-  plot to understand the persistence and cyclic behavior of the features 
-  across time points, and to identify features that exhibit stable or 
-  periodic patterns.",
-    
-    "Purpose: Coefficient of Variation (CV) plots illustrate the relative 
-  variability of each feature by calculating the CV for each feature. 
-  What It Shows: This plot helps identify features with high or low 
-  relative variability. The mean CV indicates the average relative 
-  variability across features. The standard deviation of CV indicates the 
-  variability in the relative variability across features. How to Use It:
-  Use this plot to understand the consistency and variability of feature 
-  values. Identify features with consistently high or low variability 
-  relative to their mean.",
     
     "PCA plots visualize the major trends and patterns in high-dimensional 
   data by reducing it to a few principal components. Points close to each 
   other are similar, they are correlated and clustered. Use PCA plots to 
   identify clustering and variance explained by the principal components.",
-    
-    "Scree plots show the amount of variance explained by 
-  each principal component. The y-axis represents the percentage of total 
-  variance explained, and the x-axis represents the principal components. 
-  Use this plot to determine the number of components to consider.",
     
     "MDS plots display similarities or dissimilarities between samples in a 
   reduced dimension space. Points close to each other are more similar. 
@@ -1257,6 +1103,36 @@ get_explore_plots_explanations <- function() {
   characteristics. Use t-SNE plots to identify clusters and subgroups within
   your data, revealing how samples relate to each other based on their
   features. This helps in understanding the structure and similarities within
-  the dataset, especially for discovering hidden patterns and groups." 
+  the dataset, especially for discovering hidden patterns and groups.", 
+  
+  "In Mean Time Correlation, the correlation of each feature with time is 
+  calculated and the values shown in a histogram. Positive correlation means
+  the values of the feature increase with time, negative means they decrease.",
+  
+  "Normalized lag-1 difference is the absolute difference in values between 
+  timepoints t and t-1 for a given feature, divided by the mean of all values 
+  of that feature. For each feature, the mean of all
+  lag-1 differences is calculated and displayed in a histogram. A small mean 
+  lag-1 difference compared to the size of the values indicates that the 
+  temporal pattern remains relatively flat. For example, a mean normalized
+  lag-1 difference of 0.2 means on average there was a 20% change between
+  the timepoints.",  
+  
+  "First lag autocorrelation measures the degree to which a time series is 
+  correlated with its immediate past values. A high autocorrelation coefficient
+  (p1) near 1 indicates a strong positive relationship: when the current value
+  increases (or decreases), the previous value tends to do the same. Conversely,
+  a coefficient near -1 indicates a strong negative relationship: when the 
+  current value increases (or decreases), the previous value tends to decrease
+  (or increase). A coefficient close to 0 suggests little to no relationship
+  between consecutive values. Understanding first lag autocorrelation helps 
+  in identifying if there's a consistent pattern or trend in how the time
+  series behaves over time.",
+  
+  "Coefficient of Variation (CV) plots depict the variability relative to the
+  mean of a dataset. A higher CV indicates greater relative variability, 
+  while a lower CV suggests more consistency around the mean. These plots
+  help assess the dispersion of data points and are useful in comparing the
+  spread of different datasets or monitoring changes in variability over time."
     )
 }

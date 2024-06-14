@@ -91,7 +91,8 @@ generate_report_html <- function(plots,
                        timestamp, sep = " | ")
   
   header_section <- get_header_section(title = title,
-                                       header_text = header_text)
+                                       header_text = header_text,
+                                       report_type = report_type)
 
   all_fields <- c("omics_data_type",
                   "data_description", 
@@ -250,6 +251,7 @@ format_text <- function(text) {
 #' @param title A string specifying the title of the HTML document.
 #' @param header_text A string specifying the text to be displayed in the 
 #' header of the report.
+#' @param report_type A character specifying the type of HTML report.
 #'
 #' @return A string containing the HTML header section.
 #'
@@ -263,7 +265,8 @@ format_text <- function(text) {
 #' @importFrom base64enc dataURI
 #' 
 get_header_section <- function(title,
-                               header_text) {
+                               header_text,
+                               report_type) {
   
   if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
     logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
@@ -312,6 +315,32 @@ get_header_section <- function(title,
     "<table>",
     sep = ""
   )
+  
+  sentence <- 
+    switch(report_type,
+           "explore_data" = paste("<p style='font-size: 2em;'>",
+                                  "This HTML report contains the exploratory",
+                                  "data analysis plots, such as density and", 
+                                  "PCA plots.</p>"),
+           "screen_limma_hyperparams" = "<p style='font-size: 2em;'></p>",
+           "create_limma_report" = paste("<p style='font-size: 2em;'>",
+                                         "This HTML report contains all the",
+                                         "plots visualizing the results from", 
+                                         "the limma topTables.</p>"),
+           "cluster_hits" = paste("<p style='font-size: 2em;'>",
+                                  "Clustering of features that show", 
+                                  "significant changes over time <br>", 
+                                  "Clustering was done based on the shape",
+                                  "of the spline.</p>"),
+           "create_gsea_report" = "<p style='font-size: 2em;'></p>")
+  
+  header_section <- paste(header_section,
+                          "<p>", sentence, "</p>",
+                          "</body></html>",
+                          sep = "")
+  
+  return(header_section)
+  
 }
 
 
@@ -479,7 +508,7 @@ create_toc <- function() {
 define_html_styles <- function() {
   
   section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
-  toc_style <- "font-size: 30px;"
+  toc_style <- "font-size: 40px;"
   
   styles <- list(
     section_header_style = section_header_style,

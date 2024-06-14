@@ -9,13 +9,15 @@ library(SplineOmics)
 library(readxl)
 
 ## ----load the files-----------------------------------------------------------
-data <- read_excel(system.file("extdata", "data.xlsx", package = "SplineOmics"))
-annotation <- read_excel(system.file("extdata", "annotation.xlsx", package = "SplineOmics"))
+data_excel <- 
+  read_excel(system.file("extdata", "data.xlsx", package = "SplineOmics"))
 meta <- read_excel(system.file("extdata", "meta.xlsx", package = "SplineOmics"))
 
-print(data)
-print(annotation)
+print(data_excel)
 print(meta)
+
+## ----process inputs, eval = TRUE----------------------------------------------
+data <- extract_data(data_excel, c("First.Protein.Description", "ID"))
 
 ## ----Load EDA arguments, eval = TRUE------------------------------------------
 report_info <- list(
@@ -44,9 +46,10 @@ report_dir <- here::here("results", "explore_data")
 data1 <- data 
 meta1 <- meta
 
-# (These are not outliers, just removed to showcase this functionality)
-data2 <- data[, -c(1, 2)]
-meta2 <- meta[-c(1, 2),]
+data2 <- data[, !(colnames(data) %in% c("E12_TP05_Exponential", 
+                                        "E10_TP10_Stationary"))]
+meta2 <- meta[!meta$`Sample.ID` %in% c("E12_TP05_Exponential", 
+                                       "E10_TP10_Stationary"), ]
 
 datas <- list(data1, data2) 
 datas_descr <- c("full_data", "outliers_removed") 
@@ -85,8 +88,8 @@ spline_params = list(spline_type = c("n"),  # Chosen spline parameters
                      dof = c(2L))
 
 # Run the limma spline analysis
-result <- run_limma_splines(data,   # Chosen version of the data
-                            meta,
+result <- run_limma_splines(data2,   # Chosen version of the data
+                            meta2,
                             design,
                             spline_params = spline_params,
                             condition)
@@ -113,8 +116,8 @@ clusters <- list(2L, 2L)
 report_dir <- here::here("results", "clustering_reports")
 
 clustering_results <- cluster_hits(top_tables = top_tables1, 
-                                   data = data, 
-                                   meta = meta, 
+                                   data = data2, 
+                                   meta = meta2, 
                                    design = design,
                                    condition = condition, 
                                    spline_params = spline_params,

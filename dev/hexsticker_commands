@@ -6,7 +6,7 @@ img <- "man/figures/logo.png"
 # Generate the hex sticker with a slightly darker light grey background and anthracite border
 sticker(
     img,
-    package = "",                # No package name added
+    package = "SplineOmics",                # No package name added
     p_size = 0,                  # No text, so size is set to 0
     s_x = 1.05,                  # Adjusted horizontal position
     s_y = 0.85,                  # Adjusted vertical position

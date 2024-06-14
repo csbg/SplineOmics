@@ -5,8 +5,11 @@ date: "10 June, 2024"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{get-started}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r, include = FALSE}
@@ -18,7 +21,20 @@ knitr::opts_chunk$set(
 
 # About this tutorial
 
-This tutorial intends to showcase and explain the capabilities of the SplineOmics package by walking through a real and complete example, from start to the end. The example is a time-series proteomics experiment, in which CHO cells were cultivated in three bioreactors (three biological replicates). Both in the exponential and stationary growth phase, samples were taken from each reactor in triplicates at defined timepoints relative to a feeding of the cells (60 min before feeding, and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to find out which of the 7162 cellular proteins show a significant change over time after the CHO cells were fed. Further, the hits (proteins with a significant change over time) are clustered based on their temporal pattern, and a gene set enrichment analysis is performed with each cluster to see if there are processes which are up- or downregulated over time after the feeding.
+This tutorial intends to showcase and explain the capabilities of the
+SplineOmics package by walking through a real and complete example, from
+start to the end. The example is a time-series proteomics experiment, in
+which CHO cells were cultivated in three bioreactors (three biological
+replicates). Both in the exponential and stationary growth phase,
+samples were taken from each reactor in triplicates at defined
+timepoints relative to a feeding of the cells (60 min before feeding,
+and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
+find out which of the 7162 cellular proteins show a significant change
+over time after the CHO cells were fed. Further, the hits (proteins with
+a significant change over time) are clustered based on their temporal
+pattern, and a gene set enrichment analysis is performed with each
+cluster to see if there are processes which are up- or downregulated
+over time after the feeding.
 
 # Load the packages
 
@@ -29,19 +45,65 @@ library(readxl)
 
 # Load the files
 
+In this example, the data.xlsx file contains the numeric values (the
+intensities) and also the feature descriptions, such as gene and protein
+name.
+
+The file meta.xlsx contains the meta information, which are the
+descriptions of the columns of the numeric values of data.
+
 ```{r load the files}
-data <- read_excel(system.file("extdata", "data.xlsx", package = "SplineOmics"))
-annotation <- read_excel(system.file("extdata", "annotation.xlsx", package = "SplineOmics"))
+data_excel <- 
+  read_excel(system.file("extdata", "data.xlsx", package = "SplineOmics"))
 meta <- read_excel(system.file("extdata", "meta.xlsx", package = "SplineOmics"))
 
-print(data)
-print(annotation)
+print(data_excel)
 print(meta)
+```
+
+# Bring the inputs into the standardized (required) format
+
+Since data_excel is not in the format that is required by the
+SplineOmics package, it still needs some processing. This can be with a
+few commands in R, but if your file looks like the one here, with the
+data matrix field on the left and the annotation info on the right,
+separated by one empty column, then the function extract_data() can do
+this processing automatically. It identifies this data matrix field, and
+puts it into a dataframe. The column headers are made up of all the
+infos that are written in the cells above the respective column of this
+data matrix field. The rowheaders are increasing numbers if no
+annotation columns were specified. In this example, the annotation
+columns "First.Protein.Description" and "ID" are specified so that these
+are combined and form the rowheaders (feature names). They will be used
+to label any plots were a feature is shown individually (such as the
+spline plots with the datapoints from an individual feature).
+
+```{r process inputs, eval = TRUE}
+data <- extract_data(data_excel, c("First.Protein.Description", "ID"))
 ```
 
 # Perform EDA (exploratory data analysis)
 
-The first step in analysing data is usually EDA. EDA involves summarizing the main characteristics of the data, often using plots. This can involve densitiy distributions, boxplots, PCA, correlation heatmaps, and more. This process can be carried out by using the package function explore_data(). The necessary arguments are the data matrix (data), the meta table (meta), the name of the column that contains the levels of the experiment (condition) (the levels here are Exponential and Stationary), and the report_info list, that contains general info about the analysis. Optional arguments are meta_batch_column and meta_batch2_column, that allow to specify the column name that contain batch effect 1 and 2. These columns will be used to run the removeBatchEffect function of limma to remove the batch effect of the data for plotting. When at least one batch column is provided like this, the function will not just generate one EDA HTML report, but two. One for the uncorrected data, and one for the batch corrected data. These reports are written either in the current working dir as default location, or to a location specified with the optional argument report_dir. The function also returns all plots generated. Lastly, if it is desired that no report should be generated, the optional argument report can be set to FALSE.
+The first step in analysing data is usually EDA. EDA involves
+summarizing the main characteristics of the data, often using plots.
+This can involve densitiy distributions, boxplots, PCA, correlation
+heatmaps, and more. This process can be carried out by using the package
+function explore_data(). The necessary arguments are the data matrix
+(data), the meta table (meta), the name of the column that contains the
+levels of the experiment (condition) (the levels here are Exponential
+and Stationary), and the report_info list, that contains general info
+about the analysis. Optional arguments are meta_batch_column and
+meta_batch2_column, that allow to specify the column name that contain
+batch effect 1 and 2. These columns will be used to run the
+removeBatchEffect function of limma to remove the batch effect of the
+data for plotting. When at least one batch column is provided like this,
+the function will not just generate one EDA HTML report, but two. One
+for the uncorrected data, and one for the batch corrected data. These
+reports are written either in the current working dir as default
+location, or to a location specified with the optional argument
+report_dir. The function also returns all plots generated. Lastly, if it
+is desired that no report should be generated, the optional argument
+report can be set to FALSE.
 
 ```{r Load EDA arguments, eval = TRUE}
 report_info <- list(
@@ -68,21 +130,59 @@ plots <- explore_data(data = data,
 
 ```
 
-You can view the generated analysis report of the not-batch-corrected-data here: [here](../inst/reports/report.html)
+You can view the generated analysis report of the
+not-batch-corrected-data here: [here](../inst/reports/report.html)
 
-The EDA plots can tell you a range of things. The plots in the HTML report are grouped into three categories: Distribution and Variability Analysis, Time Series Analysis, and Dimensionality Reduction and Clustering.
+The EDA plots can tell you a range of things. The plots in the HTML
+report are grouped into three categories: Distribution and Variability
+Analysis, Time Series Analysis, and Dimensionality Reduction and
+Clustering.
+
+If you look at the correlation heatmaps in the HTML report, you can see
+that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
+Seeing this, you might want to remove them from the data. You can test
+out what happens when you do this, along with testing how other
+hyperparameter choices influence the results, with the package function
+screen_limma_hyperparams().
 
 # Find the best hyperparameters
 
-Before we can run the limma spline analysis, we have to find out which "hyperparameters" are the best. Hyperparameters in this context are for example degree of freedom, different versions of the data (outlier removed vs. not removed), different limma design formulas, etc. Rationally thinking about which combination of hyperparameters to use is very challenging. Instead, it is often better to just try out a bunch of combinations and choose the best. The function screen_limma_hyperparams() does this for you. For each hyperparameter, you can just specify all the values that you would like to try, and the function then runs the limma spline analysis with the combinations that can be formed with the hyperparameters that you specified. Not every single combo is generated, but instead there are "inner" and "outer" hyperparameters, and only for all "outer" hyperparameters, all combos are generated. The "inner" hyperparameters are the adj. p-value thresholds and the spline parameters. For example, if you have two different versions of one dataset (one time the full dataset, and one time the dataset with some potential outliers removed), these are considered "outer" hyperparameters in this context. The function would generate all possible comparisons for the "outer" hyperparameters, which is just a single comparison. Then, for both versions of the data, every "inner" hyperparameter combo is generated. Lets say you specified natural cubic splines for both, with a degree of freedom of either 2 or 3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each version of data, it would test out all combinations of the spline parameters and the adj. p-value threshold. In this case, this is DoF = 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3, tresh = 0.1.
+Before we can run the limma spline analysis, we have to find out which
+"hyperparameters" are the best. Hyperparameters in this context are for
+example degree of freedom, different versions of the data (outlier
+removed vs. not removed), different limma design formulas, etc.
+Rationally thinking about which combination of hyperparameters to use is
+very challenging. Instead, it is often better to just try out a bunch of
+combinations and choose the best. The function
+screen_limma_hyperparams() does this for you. For each hyperparameter,
+you can just specify all the values that you would like to try, and the
+function then runs the limma spline analysis with the combinations that
+can be formed with the hyperparameters that you specified. Not every
+single combo is generated, but instead there are "inner" and "outer"
+hyperparameters, and only for all "outer" hyperparameters, all combos
+are generated. The "inner" hyperparameters are the adj. p-value
+thresholds and the spline parameters. For example, if you have two
+different versions of one dataset (one time the full dataset, and one
+time the dataset with some potential outliers removed), these are
+considered "outer" hyperparameters in this context. The function would
+generate all possible comparisons for the "outer" hyperparameters, which
+is just a single comparison. Then, for both versions of the data, every
+"inner" hyperparameter combo is generated. Lets say you specified
+natural cubic splines for both, with a degree of freedom of either 2 or
+3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each
+version of data, it would test out all combinations of the spline
+parameters and the adj. p-value threshold. In this case, this is DoF =
+2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3,
+tresh = 0.1.
 
 ```{r Load hyperparameter-screening args, eval = TRUE}
 data1 <- data 
 meta1 <- meta
 
-# (These are not outliers, just removed to showcase this functionality)
-data2 <- data[, -c(1, 2)]
-meta2 <- meta[-c(1, 2),]
+data2 <- data[, !(colnames(data) %in% c("E12_TP05_Exponential", 
+                                        "E10_TP10_Stationary"))]
+meta2 <- meta[!meta$`Sample.ID` %in% c("E12_TP05_Exponential", 
+                                       "E10_TP10_Stationary"), ]
 
 datas <- list(data1, data2) 
 datas_descr <- c("full_data", "outliers_removed") 
@@ -115,13 +215,15 @@ screen_limma_hyperparams(datas,
 
 ```
 
-To see the output HTML report, click here: [here](../inst/reports/hyperparams_screen_report.html)
+To see the output HTML report, click here:
+[here](../inst/reports/hyperparams_screen_report.html)
 
 # Run limma spline analysis
 
-Once we identified the hyperparameters, that are likely the best ones, we can run the limma spline analysis with them and get the results.
+Once we identified the hyperparameters, that are likely the best ones,
+we can run the limma spline analysis with them and get the results.
 
-```{r limma spline analysis} 
+```{r limma spline analysis}
 
 design <- "~ 1 + Phase*X + Reactor"     # Chosen limma design
 
@@ -129,8 +231,8 @@ spline_params = list(spline_type = c("n"),  # Chosen spline parameters
                      dof = c(2L))
 
 # Run the limma spline analysis
-result <- run_limma_splines(data,   # Chosen version of the data
-                            meta,
+result <- run_limma_splines(data2,   # Chosen version of the data
+                            meta2,
                             design,
                             spline_params = spline_params,
                             condition)
@@ -145,17 +247,27 @@ top_tables3 <- result$interaction_condition_time
 print(top_tables3) 
 ```
 
-The output of the function run_limma_splines() is a named list, where each element is a specific "category" of results. Each of those elements is a list, containing as elements the respective limma topTables, either for each level or each comparison between two levels.
+The output of the function run_limma_splines() is a named list, where
+each element is a specific "category" of results. Each of those elements
+is a list, containing as elements the respective limma topTables, either
+for each level or each comparison between two levels.
 
-The element "time_effect" is a list, where each element is the topTable where the p-value for each feature for the respective level are reported.
+The element "time_effect" is a list, where each element is the topTable
+where the p-value for each feature for the respective level are
+reported.
 
-The element "avrg_diff_conditions" is a list that contains as elements the topTables, that represent the comparison of the average differences of the levels.
+The element "avrg_diff_conditions" is a list that contains as elements
+the topTables, that represent the comparison of the average differences
+of the levels.
 
-The element "interaction_condition_time" is a list that contains as elements the topTables, that represent the interaction between the levels (which includes both time and the average differences)
+The element "interaction_condition_time" is a list that contains as
+elements the topTables, that represent the interaction between the
+levels (which includes both time and the average differences)
 
 # Build limma report
 
-The topTables of all three categories can be used to generate p-value histograms an volcano plots.
+The topTables of all three categories can be used to generate p-value
+histograms an volcano plots.
 
 ```{r build limma report, eval = FALSE}
 report_dir <- here::here("results", "create_limma_reports")
@@ -165,11 +277,16 @@ create_limma_report(run_limma_splines_result = result,
                     report_dir = report_dir)
 ```
 
-You can view the generated analysis report of the create_limma_report function here: [here](../inst/reports/create_limma_report.html)
+You can view the generated analysis report of the create_limma_report
+function here: [here](../inst/reports/create_limma_report.html)
 
 # Cluster the hits (significant features)
 
-After we obtained the limma spline results, we can cluster the hits based on their temporal pattern (their spline shape). We define what a hit is by setting an adj. p-value threshold for every level. Then, hierarchical clustering is used to place every hit in one of as many clusters as we have specified for that specific level. 
+After we obtained the limma spline results, we can cluster the hits
+based on their temporal pattern (their spline shape). We define what a
+hit is by setting an adj. p-value threshold for every level. Then,
+hierarchical clustering is used to place every hit in one of as many
+clusters as we have specified for that specific level.
 
 ```{r cluster the hits}
 adj_pthresholds <- c(0.05, 0.05)   
@@ -177,8 +294,8 @@ clusters <- list(2L, 2L)
 report_dir <- here::here("results", "clustering_reports")
 
 clustering_results <- cluster_hits(top_tables = top_tables1, 
-                                   data = data, 
-                                   meta = meta, 
+                                   data = data2, 
+                                   meta = meta2, 
                                    design = design,
                                    condition = condition, 
                                    spline_params = spline_params,
@@ -190,12 +307,14 @@ clustering_results <- cluster_hits(top_tables = top_tables1,
                                    report = TRUE)
 ```
 
-To see the output HTML report, click here: [here](../inst/reports/clustering_report.html)
+To see the output HTML report, click here:
+[here](../inst/reports/clustering_report.html)
 
 # Perform gene set enrichment analysis (GSEA)
 
-To each clustered hit, the respective gene can be assigned and GSEA performed.
-For this, the Enrichr databases of choice have to be downloaded:
+To each clustered hit, the respective gene can be assigned and GSEA
+performed. For this, the Enrichr databases of choice have to be
+downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
 gene_set_lib <- c("WikiPathways_2019_Human",
@@ -214,9 +333,15 @@ gene_set_lib <- c("WikiPathways_2019_Human",
 download_enrichr_databases(gene_set_lib)
 ```
 
-Per default the file is placed in the current working directory, which is the root dir of the R project. 
+Per default the file is placed in the current working directory, which
+is the root dir of the R project.
 
-To run GSEA, a genes vector has to be created, containing all the underlying genes of the features. The downloaded database file has to be loaded as a dataframe. Further, optionally, the clusterProfiler parameters and the report dir can be specified. The function  create_gsea_report() runs GSEA using clusterProfiler, generates an HTML report and returns the GSEA dotplots in R.
+To run GSEA, a genes vector has to be created, containing all the
+underlying genes of the features. The downloaded database file has to be
+loaded as a dataframe. Further, optionally, the clusterProfiler
+parameters and the report dir can be specified. The function
+create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
+report and returns the GSEA dotplots in R.
 
 ```{r run GSEA, eval = FALSE}
 # Get gene vector
@@ -248,13 +373,15 @@ result <- create_gsea_report(levels_clustered_hits =
                              report_dir = report_dir)
 ```
 
-To see the output HTML report, click here: [here](../inst/reports/gsea_report.html)
+To see the output HTML report, click here:
+[here](../inst/reports/gsea_report.html)
 
-Every row in the dotplots is a term from a specific database, and the columns 
-are the respective clusters. The color scale contains the info about the odds 
-ratio and the size the -log10 adj. p-value. Only terms that have > 2 genes as 
-support are included in the plot. Further, for each cluster, just maximally 5
-terms are shown (the terms with the highest odds ratios). Note that when for 
-example cluster 1 already has 5 terms, and cluster 2 does not, and gets a term
-which was also found for cluster 1, than this term would be included as the sixth
-term for cluster 1, so this is a way the maximum of 5 can be exceeded.
+Every row in the dotplots is a term from a specific database, and the
+columns are the respective clusters. The color scale contains the info
+about the odds ratio and the size the -log10 adj. p-value. Only terms
+that have \> 2 genes as support are included in the plot. Further, for
+each cluster, just maximally 5 terms are shown (the terms with the
+highest odds ratios). Note that when for example cluster 1 already has 5
+terms, and cluster 2 does not, and gets a term which was also found for
+cluster 1, than this term would be included as the sixth term for
+cluster 1, so this is a way the maximum of 5 can be exceeded.
