@@ -7,7 +7,7 @@ MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
 CMD
 Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
-[![Docker](https://img.shields.io/badge/docker-pull-blue)](https://ghcr.io/thomas-rauter/splineomics:0.1.0)
+[![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
 The R package `SplineOmics` gets the significant features (hits) of
@@ -20,8 +20,8 @@ results in HTML reports.
 - [📘 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
 - [🛠️ Usage](#-usage)
-  - [📖 Tutorial](#-tutorial)
-  - [🔬️ Functions in Depth](#-functions-in-depth)
+  - [Tutorial](#-tutorial)
+  - [Functions in Depth](#-functions-in-depth)
 - [🐳 Docker Container](#-docker-container)
 - [📦 Dependencies](#-dependencies)
 - [❓ Getting Help](#-getting-help)
@@ -52,18 +52,17 @@ clustering, run GSEA and show result plots in HTML reports.
 2.  A table with metadata on the rows/features (e.g., gene and protein
     name)
 
-3.  A table with metadata on the columns/samples (e.g., reactor, time
+3.  A table with metadata on the columns/samples (e.g., batch, time
     point, etc.)
 
 ### Capabilities
 
 With `SplineOmics`, you can:
 
-- **Automatically perform exploratory data analysis (EDA):**
+- **Automatically perform exploratory data analysis:**
 
   The `explore_data()` function generates an HTML report, containing
-  various EDA plots, such as densitiy, PCA, and correlation heatmap
-  plots.
+  various plots, such as densitiy, PCA, and correlation heatmap plots.
 
 - **Explore various limma splines hyperparameters:**
 
@@ -149,14 +148,25 @@ GitHub repository for similar problems or to post a new issue.
 
 ## 🛠️ Usage
 
-### 📖 Tutorial
+### Tutorial
 
 [This
 tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html)
 covers a real CHO cell time-series proteomics example from start to the
 end.
 
-### 🔬 Functions in Depth
+When you have the `SplineOmics` package installed, you can also run the
+following commands in `RStudio` to start the tutorial as an interactive
+demo:
+
+``` r
+library(SplineOmics)
+interactive_demo()
+```
+
+This opens the R Markdown file of the demo in `RStudio`.
+
+### Functions in Depth
 
 A detailed description of all arguments and outputs of all the available
 package functions can be found
@@ -166,101 +176,10 @@ package functions can be found
 
 To facilitate reproducible analysis, we provide a Docker container that
 encapsulates the `SplineOmics` package together with the necessary
-environment and dependencies. Follow the instructions below to pull the
-Docker container and run your analysis.
+environment and dependencies.
 
-### Pulling the `Docker` Container
-
-You can pull the `Docker` container of the desired version of the
-`SplineOmics` package from `Docker Hub` using the following command
-(here it downloads version 0.1.0):
-
-``` sh
-# Docker Hub repo still private, will make it public then
-docker pull thomasrauter/splineomics:0.1.0
-```
-
-If you face ‘permission denied’ issues, check out [this
-vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html)
-
-### Running the `Docker` Container
-
-To run the `Docker` container, you can use one of the following
-commands, depending on your operating System. The respective command
-needs to be run in a folder where the subfolders `input` and `output`
-exist. Place your data and meta (and annotation) files in `input`, and
-receive your output from the container in the `output` folder.
-
-For Linux and macOS:
-
-``` sh
-# Bash
-docker run -it -d \
-    -v $(pwd)/input:/home/rstudio/input \
-    -v $(pwd)/output:/home/rstudio/output \
-    -p 8888:8787 \
-    -e PASSWORD=123 \
-    --name splineomics \
-    thomasrauter/splineomics:0.1.0
-```
-
-For Windows:
-
-``` powershell
-# PowerShell
-docker run -it -d `
-    -v ${PWD}\input:/home/rstudio/input `
-    -v ${PWD}\output:/home/rstudio/output `
-    -p 8888:8787 `
-    -e PASSWORD=123 `
-    --name splineomics `
-    thomasrauter/splineomics:0.1.0
-```
-
-Once the container is running, open a web browser and navigate to
-<http://localhost:8888>. Use rstudio as the username and the password
-you set with the -e PASSWORD=123 option.
-
-As long as the container is running, you can work on that localhost page
-with RStudio, where also the `SplineOmics` package is installed.
-`/home/rstudio/` is your R session working folder.
-
-Load your inputs for example like this:
-
-``` r
-library(here)
-library(readxl)
-data <- readxl::read_excel(here::here("input", "data.xlsx"))
-meta <- readxl::read_excel(here::here("input", "meta.xlsx"))
-```
-
-Direct all generated results to `/home/rstudio/output`, which is mounted
-to your local folder `output`. Your results will be there.
-
-Stop the container:
-
-``` sh
-docker stop splineomics
-```
-
-Start the container again:
-
-``` sh
-docker start splineomics
-```
-
-### Inspect Docker container installations
-
-To see all the R packages and system installations that make up the
-Docker container, you can run the following command in the terminal of
-RStudio on your localhost browser page.
-
-``` sh
-cp -r /log home/rstudio/output
-```
-
-Because the `/home/rstudio/output` dir is mounted to your local
-filesystem, this will make the installation log files available there.
+The instructions for downloading and running the container are
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
 ## 📦 Dependencies
 
@@ -314,9 +233,6 @@ compatibility issues.
 ### R Version
 
 - Recommended: R 4.3.3 or higher
-  - Note: This project was developed using R 4.3.3. While it should be
-    compatible with newer versions, this is the version guaranteed to
-    work as tested.
 
 ## ❓ Getting Help
 
@@ -415,5 +331,5 @@ of `SplineOmics`. Thank you for using our package!
   develop the approach.
 - [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed the
   download_enrichr_databases() function and one internal plotting
-  function, as well as some code for the EDA plots, and the overall
-  approach together with Thomas-Rauter.
+  function, as well as some code for the exploratory data analysis
+  plots, and the overall approach together with Thomas-Rauter.

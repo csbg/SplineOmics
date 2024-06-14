@@ -459,7 +459,7 @@ make_clustering_report <- function(all_levels_clustering,
       ith_unique_value <- levels[i]
 
       # Construct header name
-      header_name <- sprintf("Level: %s", ith_unique_value)
+      header_name <- ith_unique_value
 
       nr_hits <- nrow(level_clustering$clustered_hits)
 
@@ -844,13 +844,15 @@ plot_heatmap <- function(datas,
 
     ht <-
       ComplexHeatmap::Heatmap(z_score,
+                              name = paste0("left-labels = cluster,", 
+                                            "top-labels = time"),
                               use_raster = TRUE,
                               column_split = meta_level$Time,
                               cluster_columns = FALSE,
                               row_split = clusters$cluster,
                               cluster_rows = FALSE,
                               heatmap_legend_param = list(title = "z-score of
-                                                                log2 intensity",
+                                                                log2 values",
                                                           title_position =
                                                             "lefttop-rot"),
                               row_gap = unit(2, "pt"),
@@ -863,7 +865,7 @@ plot_heatmap <- function(datas,
                               show_column_names = TRUE,
                               column_names_rot = 60,
                               column_names_gp = gpar(fontsize = 5))
-    
+
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
   heatmaps
@@ -993,7 +995,8 @@ plot_dendrogram <- function(hc,
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
     ggplot2::labs(title =
-                    "Hierarchical Clustering Dendrogram (colors = clusters)",
+                    paste("Hierarchical Clustering Dendrogram Features", 
+                          "(colors = clusters)"),
                   x = "", y = "") +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text.x = ggplot2::element_blank(),
@@ -1058,7 +1061,7 @@ plot_all_shapes <- function(curve_values,
     geom_line() +
     ggtitle("Average Curves by Cluster") +
     xlab(paste0("Time ", time_unit_label)) +
-    ylab("min-max normalized intensities") +
+    ylab("min-max normalized values") +
     scale_color_brewer(palette = "Dark2",
                        name = "Cluster") +
     theme_minimal()
@@ -1123,7 +1126,7 @@ plot_single_and_consensus_splines <- function(time_series_data,
     labs(
       title = title,
       x = paste("Time ", time_unit_label),
-      y = "Intensity") +
+      y = "Value") +
     # ggtitle(title) +
     theme(legend.position = "none")
 }
@@ -1168,7 +1171,7 @@ plot_consensus_shapes <- function(curve_values,
   composite_consensus_shapes_plot <-
     patchwork::wrap_plots(plots, ncol = 2) +
     patchwork::plot_annotation(
-      title = "min-max normalized single and consensus shapes",
+      title = "min-max normalized cluster consensus shapes",
       theme = ggplot2::theme(plot.title = element_text(hjust = 0.5, size = 14))
     )
 
@@ -1255,18 +1258,18 @@ plot_splines <- function(top_table,
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
-      labs(x = paste0("Time ", time_unit_label), y = "Intensity")
+      labs(x = paste0("Time ", time_unit_label), y = "Value")
 
     matched_row <- titles %>%
       filter(!!sym("FeatureID") == hit_index)
 
     title <- as.character(matched_row$feature_name)
     
-    if (nchar(title) > 50) {
+    if (nchar(title) > 30) {
       title_befor <- title
-      title <- substr(title, 1, 50)
-      message(paste("The feature ID", title_befor, "is > 50 characters.",
-                    "Truncating it to 50 chars:", title))
+      title <- substr(title, 1, 30)
+      message(paste("The feature ID", title_befor, "is > 30 characters.",
+                    "Truncating it to 30 chars:", title))
       
     }
     
@@ -1275,8 +1278,8 @@ plot_splines <- function(top_table,
     }
 
     p <- p + labs(title = title,
-                  x = paste0("Time ", time_unit_label), y = "Intensity") +
-      theme(plot.title = element_text(size = 4),
+                  x = paste0("Time ", time_unit_label), y = "Value") +
+      theme(plot.title = element_text(size = 6),
             axis.title.x = element_text(size = 8),
             axis.title.y = element_text(size = 8)) +
       annotate("text", x = x_max + (x_extension / 2), y =
@@ -1346,7 +1349,10 @@ build_cluster_hits_report <- function(header_section,
   j <- 0
   level_headers_info <- Filter(Negate(is.null), level_headers_info)
 
+  
   pb <- create_progress_bar(plots)
+  bonus_index <- -1
+  
   # Generate the sections and plots
   for (index in seq_along(plots)) {
 
@@ -1356,7 +1362,10 @@ build_cluster_hits_report <- function(header_section,
 
       # means jump to next level
       if (any(class(plots[[index]]) == "character")) {
-
+        
+        # So that below the subsection headers are added for ALL levels
+        bonus_index <- bonus_index + index
+        
         section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
                                   section_header_style,
                                   index,
@@ -1398,12 +1407,56 @@ build_cluster_hits_report <- function(header_section,
         next
       }
     }
-
-    # Process each plot
-    # plot <- plots[[index]]
-    # plot_size <- plots_sizes[[index]]
-    # img_tag <- plot2base64(plot, plot_size)
-    # html_content <- paste(html_content, img_tag, sep = "\n")
+    
+    if (index == 2 + bonus_index ||
+        index == 5 + bonus_index ||
+        index == 6 + bonus_index) {
+      
+      if (index == 2 + bonus_index) {
+        
+        adjusted_index <- 2
+        
+      } else if (index == 5 + bonus_index) {
+        
+        adjusted_index <- 5
+        
+      } else {     # index == 6 + bonus_index
+        
+        adjusted_index <- 6
+      }
+      
+      header <- switch(
+        as.character(adjusted_index),
+        "2" = paste(
+          "<h2 id='section2' style='text-align: center; font-size: 3.5em;'>",
+          "Overall Clustering</h2>"
+        ),
+        "5" = paste(
+          "<h2 id='section5' style='text-align: center; font-size: 3.5em;'>",
+          "Z-Score of log2 Value Heatmap</h2>"
+        ),
+        "6" = paste(
+          "<h2 id='section6' style='text-align: center; font-size: 3.5em;'>",
+          "Individual Features Splines</h2>"
+        )
+      )
+      
+      html_content <- paste(html_content, header, sep = "\n")
+      
+      header_text <- switch(
+        as.character(adjusted_index),
+        "2" = "Overall Clustering",
+        "5" = "Z-Score of log2 Value Heatmap",
+        "6" = "Individual Features Splines"
+      )
+      
+      toc_entry <- sprintf(
+        "<li style='margin-left: 30px; %s'><a href='#section%s'>%s</a></li>",
+        "font-size: 30px;", adjusted_index, header_text
+      )
+      
+      toc <- paste(toc, toc_entry, sep = "\n")
+    }
     
     html_content <- process_plots(plots = plots,
                                   plots_sizes = plots_sizes,

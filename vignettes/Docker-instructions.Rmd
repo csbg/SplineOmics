@@ -1,0 +1,130 @@
+---
+title: "Docker-instructions"
+author: "Thomas Rauter"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Docker-instructions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+.sourceCode pre {
+  background-color: #f7f7f7;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.copy-btn:hover {
+  background: #45a049;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".sourceCode pre").forEach(function(block) {
+    var button = document.createElement("button");
+    button.innerHTML = "Copy";
+    button.className = "copy-btn";
+    block.appendChild(button);
+
+    button.addEventListener("click", function() {
+      var code = Array.from(block.childNodes)
+                      .filter(node => node.nodeType === Node.TEXT_NODE)
+                      .map(node => node.textContent)
+                      .join('');
+      navigator.clipboard.writeText(code).then(function() {
+        button.innerHTML = "Copied!";
+        setTimeout(function() {
+          button.innerHTML = "Copy";
+        }, 2000);
+      });
+    });
+  });
+});
+</script>
+
+# Pulling the `Docker` Container
+
+Pull `Docker` container:
+
+``` sh
+# Docker Hub repo still private, will make it public then
+docker pull thomasrauter/splineomics:0.1.0
+```
+
+If you face 'permission denied' issues, check out [this vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html)
+
+# Running the `Docker` Container
+
+To run the `Docker` container, you can use one of the following commands, depending on your operating System. The respective command needs to be run in a folder where the subfolders `input` and `output` exist. Place your data and meta (and annotation) files in `input`, and receive your output from the container in the `output` folder.
+
+For Linux and macOS:
+
+``` sh
+# Bash
+docker run -it -d \
+    -v $(pwd)/input:/home/rstudio/input \
+    -v $(pwd)/output:/home/rstudio/output \
+    -p 8888:8787 \
+    -e PASSWORD=123 \
+    --name splineomics \
+    thomasrauter/splineomics:0.1.0
+```
+
+For Windows:
+
+``` powershell
+# PowerShell
+docker run -it -d `
+    -v ${PWD}\input:/home/rstudio/input `
+    -v ${PWD}\output:/home/rstudio/output `
+    -p 8888:8787 `
+    -e PASSWORD=123 `
+    --name splineomics `
+    thomasrauter/splineomics:0.1.0
+```
+
+Once the container is running, open a web browser and navigate to <http://localhost:8888>. Use rstudio as the username and the password you set with the -e PASSWORD=123 option.
+
+As long as the container is running, you can work on that localhost page with RStudio, where also the `SplineOmics` package is installed. `/home/rstudio/` is your R session working folder.
+
+Direct all generated results to `/home/rstudio/output`, which is mounted to your local folder `output`. Your results will be there.
+
+Stop the container:
+
+``` sh
+docker stop splineomics
+```
+
+Start the container again:
+
+``` sh
+docker start splineomics
+```
+
+# Inspect Docker container installations
+
+To see all the R packages and system installations that make up the Docker container, you can run the following command in the terminal of RStudio on your localhost browser page.
+
+``` sh
+cp -r /log home/rstudio/output
+```
+
+Because the `/home/rstudio/output` dir is mounted to your local filesystem, this will make the installation log files available there.
