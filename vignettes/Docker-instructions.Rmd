@@ -93,8 +93,8 @@ For Windows:
 ``` powershell
 # PowerShell
 docker run -it -d `
-    -v ${PWD}\input:/home/rstudio/input `
-    -v ${PWD}\output:/home/rstudio/output `
+    -v "${PWD}\input:/home/rstudio/input" `
+    -v "${PWD}\output:/home/rstudio/output" `
     -p 8888:8787 `
     -e PASSWORD=123 `
     --name splineomics `
