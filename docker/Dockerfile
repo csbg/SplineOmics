@@ -28,7 +28,7 @@ WORKDIR /app
 RUN R -e "install.packages('renv')"
 
 # Copy the renv lockfile into the container
-COPY ../renv.lock /renv/renv.lock
+COPY ./renv.lock /renv/renv.lock
 
 # Set renv library path
 ENV RENV_PATHS_LIBRARY /renv/library
@@ -40,7 +40,7 @@ RUN R -e "renv::restore(lockfile = '/renv/renv.lock')"
 RUN R -e "install.packages('remotes')"
 
 # Copy the local package tarball into the Docker image
-COPY ../../SplineOmics_0.1.0.tar.gz /tmp/SplineOmics_0.1.0.tar.gz
+COPY ./SplineOmics_0.1.0.tar.gz /tmp/SplineOmics_0.1.0.tar.gz
 
 # Install the package from the tarball
 RUN R -e "remotes::install_local('/tmp/SplineOmics_0.1.0.tar.gz', dependencies = FALSE)" 2>&1 | tee /log/install_log.txt
