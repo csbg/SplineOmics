@@ -14,6 +14,7 @@ generate_report_html(
   report_info,
   data = NA,
   meta = NA,
+  topTables = NA,
   level_headers_info = NA,
   spline_params = NA,
   report_type = "explore_data",

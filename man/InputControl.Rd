@@ -92,6 +92,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_clusters}{\code{InputControl$check_clusters()}}
 \item \href{#method-InputControl-check_time_unit}{\code{InputControl$check_time_unit()}}
 \item \href{#method-InputControl-check_report_dir}{\code{InputControl$check_report_dir()}}
+\item \href{#method-InputControl-check_genes}{\code{InputControl$check_genes()}}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
 \item \href{#method-InputControl-check_report_info}{\code{InputControl$check_report_info()}}
 \item \href{#method-InputControl-check_report}{\code{InputControl$check_report()}}
@@ -586,6 +587,28 @@ Returns TRUE if the directory exists or is successfully created.
 Stops execution
 and returns an error message if the directory cannot be created or is not
 valid.
+
+Check Genes Validity
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_genes"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_genes}{}}}
+\subsection{Method \code{check_genes()}}{
+This function checks the validity of the `data` and `genes` arguments 
+within the `self$args` list. It ensures that `genes` is a character 
+vector, 
+that neither `data` nor `genes` is `NULL`, and that the length of `genes` 
+matches the number of rows in `data`.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_genes()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns `TRUE` if all checks pass. Returns `NULL` if any required 
+arguments are `NULL`. Throws an error if `genes` is not a character 
+vector 
+or if the length of `genes` does not match the number of rows in `data`.
 
 Check p-Adjustment Method
 }

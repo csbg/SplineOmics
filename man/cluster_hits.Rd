@@ -16,6 +16,7 @@ cluster_hits(
   design,
   condition,
   report_info,
+  genes,
   spline_params = list(spline_type = c("n"), dof = c(2L)),
   adj_pthresholds = c(0.05),
   clusters = c("auto"),
@@ -43,6 +44,8 @@ must include a 'Time' column and any columns specified by `conditions`.}
 used to define groups for analysis.}
 
 \item{report_info}{A character string to be printed at the top of the report.}
+
+\item{genes}{A character vector containing the gene names of the features}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 

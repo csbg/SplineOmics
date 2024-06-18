@@ -28,7 +28,7 @@ WORKDIR /app
 RUN R -e "install.packages('renv')"
 
 # Copy the renv lockfile into the container
-COPY ./renv.lock /renv/renv.lock
+COPY ./SplineOmics/renv.lock /renv/renv.lock
 
 # Set renv library path
 ENV RENV_PATHS_LIBRARY /renv/library
@@ -54,5 +54,6 @@ RUN dpkg-query -Wf '${Package} ${Version}\n' > /log/installed_os_packages.txt
 # Default command to start RStudio Server
 CMD ["/init"]
 
-# To build the image, run the following command in the same dir as this Dockerfile: docker build -t thomasrauter/splineomics:0.1.0 .
+# To build the image, run the following command in the dir where the SplineOmics project dir is located: 
+# docker build -f ./SplineOmics/docker/Dockerfile -t thomasrauter/splineomics:0.1.0 .
 

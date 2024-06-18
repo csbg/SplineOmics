@@ -34,6 +34,7 @@
 #' @param clusters Character or integer vector specifying the number of
 #' clusters or 'auto' for automatic estimation.
 #' @param report_info A character string to be printed at the top of the report.
+#' @param genes A character vector containing the gene names of the features
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param design A character of length 1 representing the limma design formula
 #' @param meta_batch_column A character string specifying the column name in
@@ -139,6 +140,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                              data = data,
                              meta = meta,
                              spline_params = spline_params,
+                             adj_pthresholds = adj_pthresholds,
                              report_dir = report_dir,
                              mode = mode,
                              report_info = report_info,
@@ -423,6 +425,7 @@ make_clustering_report <- function(all_levels_clustering,
                                    data,
                                    meta,
                                    spline_params,
+                                   adj_pthresholds,
                                    report_dir,
                                    mode,
                                    report_info,
@@ -503,7 +506,8 @@ make_clustering_report <- function(all_levels_clustering,
       nr_hits <- nrow(level_clustering$clustered_hits)
 
       header_info <- list(header_name = header_name,
-                          nr_hits = nr_hits)
+                          nr_hits = nr_hits,
+                          adj_pvalue_threshold = adj_pthresholds[i])
 
       level_headers_info[[i]] <- header_info
     }
@@ -1422,6 +1426,7 @@ build_cluster_hits_report <- function(header_section,
     if (current_header_index <= length(level_headers_info)) {
       header_info <- level_headers_info[[current_header_index]]
       nr_hits <- header_info$nr_hits
+      adj_pvalue_threshold <- header_info$adj_pvalue_threshold
 
       # means jump to next level
       if (any(class(plots[[index]]) == "character")) {
@@ -1453,8 +1458,11 @@ build_cluster_hits_report <- function(header_section,
         hits_info <- sprintf(
           paste0(
             "<p style='text-align: center; font-size: 30px;'>",
+            "adj.p-value threshold: %.3f</p>",
+            "<p style='text-align: center; font-size: 30px;'>",
             "Number of hits: %d</p>"
           ),
+          adj_pvalue_threshold,
           nr_hits
         )
 
@@ -1500,7 +1508,7 @@ build_cluster_hits_report <- function(header_section,
         ),
         "6" = paste(
           "<h2 id='section6' style='text-align: center; font-size: 3.5em;'>",
-          "Individual Features Splines</h2>"
+          "Individual Significant Features Splines</h2>"
         )
       )
       
