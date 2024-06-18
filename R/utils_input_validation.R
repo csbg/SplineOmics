@@ -860,6 +860,41 @@ InputControl <- R6::R6Class("InputControl",
     },
     
     
+    #' Check Genes Validity
+    #'
+    #' @description
+    #' This function checks the validity of the `data` and `genes` arguments 
+    #' within the `self$args` list. It ensures that `genes` is a character 
+    #' vector, 
+    #' that neither `data` nor `genes` is `NULL`, and that the length of `genes` 
+    #' matches the number of rows in `data`.
+    #'
+    #' @return Returns `TRUE` if all checks pass. Returns `NULL` if any required 
+    #' arguments are `NULL`. Throws an error if `genes` is not a character 
+    #' vector 
+    #' or if the length of `genes` does not match the number of rows in `data`.
+    #' 
+    check_genes = function() {
+      
+      data <- self$args$data
+      genes <- self$args$genes
+
+      required_args <- list(data, genes)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.character(genes)) {
+        stop(paste0("genes must be a character vector"), call. = FALSE)
+      }
+      
+      if (length(genes) != nrow(data)) {
+        stop(paste0("length(genes) must be equal to nrow(data)"), call. = FALSE)
+      }
+    },
+    
+    
     #' Check p-Adjustment Method
     #'
     #' @description

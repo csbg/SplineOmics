@@ -19,19 +19,43 @@ meta <- read_excel(here::here("dev" ,"data",
                               "Time_course_PPTX_old_metadata.xlsx"))
 
 
+# data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
+# 
+# meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
+
+
+# Get the gene list ------------------------------------------------------------
+
+data <- as.data.frame(data_excel)
+gene_column_name <- "Gene Names"
+genes <- data[[gene_column_name]][4:nrow(data)]
+
+
+
 
 # Automatically extract data matrix from excel/csv table -----------------------
 
+feature_name_columns <- c("Unique identifier",
+                          "Protein", 
+                          "Positions within proteins")
+
 # debug(extract_data)
 data <- extract_data(data_excel,
-                     "Unique identifier")
+                     feature_name_columns)
 
 
+# Remove outliers --------------------------------------------------------------
+
+data <- data %>%
+  select(-E12_TP05_Exponential, -E10_TP10_Stationary)
+
+meta <- meta %>%
+  filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
 
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
-  omics_data_type = "PPTX",
+  omics_data_type = "PTX",
   data_description = "Old phosphoproteomics data with the missing two samples",
   data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
@@ -43,14 +67,14 @@ meta_batch_column <- "Reactor"
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-plots <- explore_data(data = data,
-                      meta = meta,
-                      condition = condition,
-                      report_info = report_info,
-                      meta_batch_column = meta_batch_column,
-                      meta_batch2_column = NA,
-                      report_dir = report_dir,
-                      report = TRUE)
+# plots <- explore_data(data = data,
+#                       meta = meta,
+#                       condition = condition,
+#                       report_info = report_info,
+#                       meta_batch_column = meta_batch_column,
+#                       meta_batch2_column = NA,
+#                       report_dir = report_dir,
+#                       report = TRUE)
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -111,9 +135,9 @@ top_tables3 <- result$interaction_condition_time
 
 report_dir <- here::here("results", "limma_reports")
 
-create_limma_report(run_limma_splines_result = result,
-                    report_info = report_info,
-                    report_dir = report_dir)
+# create_limma_report(run_limma_splines_result = result,
+#                     report_info = report_info,
+#                     report_dir = report_dir)
 
 
 
@@ -124,7 +148,7 @@ report_dir <- here::here("results", "clustering_reports")
 
 combo_list <- list(top_tables1, top_tables1)
 
-#debug(cluster_hits)
+# debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables1, 
                                    data = data, 
                                    meta = meta, 
@@ -134,6 +158,7 @@ clustering_results <- cluster_hits(top_tables = top_tables1,
                                    adj_pthresholds = adj_pthresholds,
                                    clusters = clusters,
                                    report_info = report_info,
+                                   genes = genes,
                                    meta_batch_column = meta_batch_column,
                                    # meta_batch2_column = meta_batch2_column,
                                    report_dir = report_dir,
