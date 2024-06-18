@@ -45,6 +45,7 @@ generate_report_html <- function(plots,
                                  report_info,
                                  data = NA,
                                  meta = NA,
+                                 topTables = NA,
                                  level_headers_info = NA,
                                  spline_params = NA,
                                  report_type = "explore_data",
@@ -99,6 +100,7 @@ generate_report_html <- function(plots,
                   "data_collection_date",
                   "data",
                   "meta",
+                  "limma_topTables",
                   "meta_condition",
                   "meta_batch",
                   "limma_design",
@@ -134,6 +136,12 @@ generate_report_html <- function(plots,
       base64_df <- sprintf('<a href="%s" download="meta.xlsx">
                            <button>Download meta.xlsx</button></a>', 
                            encode_df_to_base64(meta))
+      
+    } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
+      
+      base64_df <- sprintf('<a href="%s" download="limma_topTables.xlsx">
+                           <button>Download limma_topTables.xlsx</button></a>', 
+                           encode_df_to_base64(topTables))
     } else {
       base64_df <- ifelse(is.null(report_info[[field]]),
                           "NA", report_info[[field]])
@@ -191,10 +199,10 @@ generate_report_html <- function(plots,
   } else if (report_type == "create_gsea_report") {
     
     build_create_gsea_report(header_section = header_section,
-                      plots = plots,
-                      plots_sizes = plots_sizes,
-                      level_headers_info = level_headers_info,
-                      output_file_path = output_file_path)
+                             plots = plots,
+                             plots_sizes = plots_sizes,
+                             level_headers_info = level_headers_info,
+                             output_file_path = output_file_path)
     
   } else {           # report_type == "cluster_hits"
     build_cluster_hits_report(header_section = header_section, 

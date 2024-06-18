@@ -71,6 +71,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          design,      # limma design formula
                          condition,   # meta factor column
                          report_info,   # Gets printed on top of the report
+                         genes,       # Underlying genes of the features
                          spline_params = list(spline_type = c("n"),
                                               dof = c(2L)),
                          adj_pthresholds = c(0.05),
@@ -118,7 +119,13 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                        condition = condition,
                        spline_params = spline_params,
                        mode = mode)
-
+  
+  # Add the Gene column to the limma topTable.
+  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
+    x$top_table <- add_gene_column(x$top_table, genes)
+    return(x)
+  })
+  
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
   report_info$meta_batch <- paste(meta_batch_column,
@@ -291,6 +298,38 @@ huge_table_user_prompter <- function(tables) {
       }
     }
   }
+}
+
+
+#' Add Gene Column
+#'
+#' @description
+#' This function takes a tibble and a character vector of genes, and adds a 
+#' column named `Gene` to the tibble. The `Gene` column is created based on the 
+#' values in the `feature_index` column, and is placed immediately after it.
+#'
+#' @param df A tibble containing a `feature_index` column with numeric values.
+#' @param genes A character vector of gene names.
+#' @return A tibble with an added `Gene` column placed after the `feature_index`
+#'  column.
+#'  
+#'  @importFrom dplyr mutate
+#'  
+add_gene_column <- function(df,
+                            genes) {
+  
+  # Create the Gene column
+  df <- df |>
+    dplyr::mutate(gene = genes[feature_index])
+  
+  # Reorder columns to place Gene after feature_index
+  feature_index_position <- which(names(df) == "feature_index")
+  df <- df |>
+    dplyr::select(1:feature_index_position,
+                  gene,
+                  (feature_index_position + 1):ncol(df))
+  
+  return(df)
 }
 
 
@@ -536,6 +575,29 @@ make_clustering_report <- function(all_levels_clustering,
                      1.5,
                      unlist(nrows))
   }
+
+  topTables <- list()
+  
+  # Loop over each element in all_levels_clustering
+  for (i in seq_along(all_levels_clustering)) {
+    # Get the current element, which is a list
+    current_element <- all_levels_clustering[[i]]
+    
+    # Extract the top_table element and store it in topTables
+    topTables[[i]] <- current_element$top_table
+    
+    # Get the name of the outer list element
+    element_name <- names(all_levels_clustering)[i]
+    
+    # Trim the name to 30 characters if necessary
+    if (nchar(element_name) > 30) {
+      element_name <- substr(element_name, 1, 30)
+    }
+    
+    # Set the name for the corresponding topTables element
+    names(topTables)[i] <- element_name
+  }
+  
   print("Generating report. This takes a few seconds.")
   generate_report_html(plots = plots,
                        plots_sizes = plots_sizes,
@@ -544,6 +606,7 @@ make_clustering_report <- function(all_levels_clustering,
                        report_info = report_info,
                        data = data_report,
                        meta = meta,
+                       topTables = topTables,
                        report_type = "cluster_hits",
                        mode = mode,
                        filename = "report_clustered_hits",
