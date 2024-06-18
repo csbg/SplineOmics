@@ -10,6 +10,7 @@ make_clustering_report(
   data,
   meta,
   spline_params,
+  adj_pthresholds,
   report_dir,
   mode,
   report_info,

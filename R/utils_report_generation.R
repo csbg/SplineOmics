@@ -337,7 +337,7 @@ get_header_section <- function(title,
                                          "the limma topTables.</p>"),
            "cluster_hits" = paste("<p style='font-size: 2em;'>",
                                   "Clustering of features that show", 
-                                  "significant changes over time <br>", 
+                                  "significant changes over time (= hits) <br>", 
                                   "Clustering was done based on the shape",
                                   "of the spline.</p>"),
            "create_gsea_report" = "<p style='font-size: 2em;'></p>")
@@ -439,18 +439,12 @@ encode_df_to_base64 <- function(df,
 #' @return A character string containing an HTML img tag with the Base64-encoded
 #'  plot.
 #'
-#' @examples
-#' \dontrun{
-#' library(ggplot2)
-#' plot <- ggplot(mtcars, aes(mpg, cyl)) + geom_point()
-#' plot2base64(plot, plot_nrows = 1)}
-#'
 #' @seealso
-#' \link[ragg]{agg_png}, \link[base64enc]{dataURI}
+#'   \link[base64enc]{dataURI}
 #' 
 #' @importFrom ggplot2 ggsave
 #' @importFrom base64enc dataURI
-#' @importFrom ragg agg_png
+#' @importFrom svglite svglite
 #' 
 plot2base64 <- function(plot, 
                         plot_nrows, 
@@ -458,18 +452,14 @@ plot2base64 <- function(plot,
                         base_height_per_row = 2.5, 
                         units = "in", 
                         html_img_width = "100%") {
-
-  additional_height_per_row <- 2.1
-  height <- base_height_per_row + (plot_nrows - 1) * 
-    additional_height_per_row
   
-  # Create a graphical device in memory using ragg
-  img_file <- tempfile(fileext = ".png")
-  ragg::agg_png(filename = img_file, 
-                width = width, 
-                height = height, 
-                units = units, 
-                res = 300)
+  additional_height_per_row <- 2.1
+  height <- base_height_per_row + (plot_nrows - 1) * additional_height_per_row
+  
+  # Create a temporary file for the SVG
+  img_file <- tempfile(fileext = ".svg")
+
+  svglite::svglite(file = img_file, width = width, height = height)
   
   # Draw the plot
   print(plot)
@@ -477,16 +467,24 @@ plot2base64 <- function(plot,
   # Turn off the device
   dev.off()
   
-  # Convert the image to a Base64 string
-  img_base64 <- base64enc::dataURI(file = img_file, mime = "image/png")
+  # Read the SVG file content
+  svg_content <- readLines(img_file, warn = FALSE)
   
-  # Delete the temporary image file
+  # Convert the SVG content to a single string
+  svg_string <- paste(svg_content, collapse = "\n")
+  
+  # Encode the SVG content as base64
+  svg_base64 <- base64enc::dataURI(charToRaw(svg_string),
+                                   mime = "image/svg+xml")
+  
+  # Delete the temporary SVG file
   unlink(img_file)
   
-  # Return the HTML img tag with the Base64 string and a fixed width
+  # Return the HTML img tag with the base64 string and a fixed width
   return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
-                 img_base64, html_img_width))
+                 svg_base64, html_img_width))
 }
+
 
 
 #' Create Table of Contents

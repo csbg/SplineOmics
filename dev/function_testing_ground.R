@@ -12,22 +12,22 @@ library(conflicted)
 
 # Load the data ----------------------------------------------------------------
 
-data_excel <- read_excel(here::here("dev" ,"data", "PPTX",
-                                    "PPTX_processed_with_imputation.xlsx"))
-
-meta <- read_excel(here::here("dev" ,"data",
-                              "Time_course_PPTX_old_metadata.xlsx"))
-
-
-# data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
+# data_excel <- read_excel(here::here("dev" ,"data", "PPTX",
+#                                     "PPTX_processed_with_imputation.xlsx"))
 # 
-# meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
+# meta <- read_excel(here::here("dev" ,"data",
+#                               "Time_course_PPTX_old_metadata.xlsx"))
+
+
+data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
+
+meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
 
 
 # Get the gene list ------------------------------------------------------------
 
 data <- as.data.frame(data_excel)
-gene_column_name <- "Gene Names"
+gene_column_name <- "Genes"
 genes <- data[[gene_column_name]][4:nrow(data)]
 
 
@@ -35,9 +35,11 @@ genes <- data[[gene_column_name]][4:nrow(data)]
 
 # Automatically extract data matrix from excel/csv table -----------------------
 
-feature_name_columns <- c("Unique identifier",
-                          "Protein", 
-                          "Positions within proteins")
+# feature_name_columns <- c("Unique identifier",
+#                           "Protein", 
+#                           "Positions within proteins")
+
+feature_name_columns <- c("First.Protein.Description")
 
 # debug(extract_data)
 data <- extract_data(data_excel,
@@ -46,11 +48,11 @@ data <- extract_data(data_excel,
 
 # Remove outliers --------------------------------------------------------------
 
-data <- data %>%
-  select(-E12_TP05_Exponential, -E10_TP10_Stationary)
-
-meta <- meta %>%
-  filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
+# data <- data %>%
+#   select(-E12_TP05_Exponential, -E10_TP10_Stationary)
+# 
+# meta <- meta %>%
+#   filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
 
 # Explore data -----------------------------------------------------------------
 
