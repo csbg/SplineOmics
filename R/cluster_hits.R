@@ -123,16 +123,25 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
   
   # Add the Gene column to the limma topTable.
   all_levels_clustering <- lapply(all_levels_clustering, function(x) {
-    x$top_table <- add_gene_column(x$top_table, genes)
+    if (!is.logical(x)) {
+      x$top_table <- add_gene_column(x$top_table, genes)
+    }
     return(x)
   })
+  
   
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
   report_info$meta_batch <- paste(meta_batch_column,
                                   meta_batch2_column,
                                   sep = ", ")
-
+  
+  # Custom metric to limma topTable instead of logFC value.
+  all_levels_clustering <- calculate_abs_interval_diff(all_levels_clustering,
+                                                       data,
+                                                       meta,
+                                                       condition)
+  
   if (report) {
     plots <-
       make_clustering_report(all_levels_clustering = all_levels_clustering,
@@ -212,7 +221,6 @@ filter_top_tables <- function(top_tables,
     within_level_top_tables <- top_tables
   }
 
-
   for (i in seq_along(within_level_top_tables)) {
 
     within_level_top_table <- within_level_top_tables[[i]]
@@ -226,12 +234,6 @@ filter_top_tables <- function(top_tables,
       hit_indices <- within_level_top_table[["feature_index"]][
         within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
       ]
-    }
-
-    if (length(hit_indices) == 0) {
-      stop(paste("No features in level", level ,"have an adj.P.Val <",
-                 adj_pthresholds[i]),
-           call. = FALSE)
     }
 
     top_table_filtered <-
@@ -277,11 +279,11 @@ huge_table_user_prompter <- function(tables) {
       next
     }
     
-    if (nrow(tables[[i]]) > 300) {
+    if (nrow(tables[[i]]) > 500) {
       # Prompt the user for input
       while (TRUE) {
         user_input <- readline(prompt = paste("The table", names(tables)[i], 
-                                              "has more than 300 rows. Do you", 
+                                              "has more than 500 rows. Do you", 
                                               "want to proceed? (y/n): "))
         user_input <- tolower(user_input)
         
@@ -379,6 +381,67 @@ perform_clustering <- function(top_tables,
                                                   spline_params = spline_params,
                                                   mode = mode),
                                   SIMPLIFY = FALSE)  # Return a list
+}
+
+
+#' Calculate Mean of Absolute Differences and Update DataFrame by Level
+#'
+#' @description
+#' This function takes `all_levels_clustering`, `data`, `meta`, and `condition` 
+#' as inputs, calculates the mean of the absolute difference between consecutive
+#' averages of biological replicates for each feature (row) in `data` over time, 
+#' and updates `all_levels_clustering` with these mean values based on 
+#' `feature_index`.
+#'
+#' @param all_levels_clustering A list of clustering levels, each containing
+#' a dataframe with a `top_table` element.
+#' @param data A dataframe containing only numeric values.
+#' @param meta A dataframe containing meta information about `data` with a 
+#' column `Time` for biological replicates.
+#' @param condition A string specifying the column name in `meta` that divides 
+#' the experiment into levels.
+#'
+#' @return The updated `all_levels_clustering` with a new column 
+#' `abs_interval_diff` in each `top_table` for the corresponding level.
+#'
+calculate_abs_interval_diff <- function(all_levels_clustering,
+                                        data,
+                                        meta, 
+                                        condition) {
+
+  unique_conditions <- unique(meta[[condition]])
+  
+  # Process each level in all_levels_clustering
+  for (i in seq_along(all_levels_clustering)) {
+    
+    if (is.logical(all_levels_clustering[[i]])) next
+    
+    if (i > length(unique_conditions)) break
+    
+    level_condition <- unique_conditions[i]
+    level_indices <- which(meta[[condition]] == level_condition)
+    level_data <- data[, level_indices, drop = FALSE]
+    level_meta <- meta[level_indices, , drop = FALSE]
+    
+    abs_diff_means <- apply(level_data, 1, function(row) {
+      time_points <- unique(level_meta$Time)
+      replicate_means <- sapply(time_points, function(tp) {
+        mean(row[level_meta$Time == tp], na.rm = TRUE)
+      })
+      abs_diffs <- abs(diff(replicate_means))
+      mean(abs_diffs, na.rm = TRUE)
+    })
+    
+    top_table <- all_levels_clustering[[i]]$top_table
+    top_table$abs_interval_diff <- sapply(top_table$feature_index,
+                                          function(index) {
+      abs_diff_means[index]
+    })
+    
+    all_levels_clustering[[i]]$top_table <- top_table
+  }
+  
+  return(all_levels_clustering)
 }
 
 
@@ -581,14 +644,17 @@ make_clustering_report <- function(all_levels_clustering,
   }
 
   topTables <- list()
-  
+
   # Loop over each element in all_levels_clustering
   for (i in seq_along(all_levels_clustering)) {
+    
+    if (is.logical(all_levels_clustering[[i]])) next
+    
     # Get the current element, which is a list
     current_element <- all_levels_clustering[[i]]
     
-    # Extract the top_table element and store it in topTables
-    topTables[[i]] <- current_element$top_table
+    # Extract the top_table element
+    top_table_element <- current_element$top_table
     
     # Get the name of the outer list element
     element_name <- names(all_levels_clustering)[i]
@@ -598,9 +664,11 @@ make_clustering_report <- function(all_levels_clustering,
       element_name <- substr(element_name, 1, 30)
     }
     
-    # Set the name for the corresponding topTables element
-    names(topTables)[i] <- element_name
+    topTables[[element_name]] <- top_table_element
   }
+
+  enrichr_format <- prepare_gene_lists_for_enrichr(all_levels_clustering,
+                                                   genes)
   
   print("Generating report. This takes a few seconds.")
   generate_report_html(plots = plots,
@@ -611,6 +679,7 @@ make_clustering_report <- function(all_levels_clustering,
                        data = data_report,
                        meta = meta,
                        topTables = topTables,
+                       enrichr_format = enrichr_format,
                        report_type = "cluster_hits",
                        mode = mode,
                        filename = "report_clustered_hits",
@@ -624,6 +693,32 @@ make_clustering_report <- function(all_levels_clustering,
 # Level 2 internal functions ---------------------------------------------------
 
 
+#' Check for Between-Level Patterns in Top Tables
+#'
+#' @description
+#' This function checks if any of the elements within a list of top tables 
+#' contain element names that match the specified between-level pattern.
+#'
+#' @param top_tables A list where each element is itself a list containing 
+#' named elements.
+#'
+#' @return A list with two elements:
+#' \describe{
+#'   \item{between_levels}{A logical value indicating whether any element names 
+#'   match the between-level pattern.}
+#'   \item{index_with_pattern}{The index of the first element in `top_tables` 
+#'   where all names match the between-level pattern, or NA if no match is 
+#'   found.}
+#' }
+#'
+#' @details
+#' The function iterates over each element in `top_tables`. For each element 
+#' that 
+#' is a list, it checks if all names within that inner list match the pattern 
+#' `".+_vs_.+"`. If a match is found, the function sets `between_levels` to TRUE 
+#' and records the index of the matching element. The search stops at the first 
+#' match.
+#' 
 check_between_level_pattern <- function(top_tables) {
 
   # Initialize variables
@@ -651,17 +746,38 @@ check_between_level_pattern <- function(top_tables) {
     }
   }
 
-  # Return the result as a list
   return(list(between_levels = between_levels,
               index_with_pattern = index_with_pattern))
 }
 
 
+#' Get Hit Indices for a Specific Level
+#'
+#' @description
+#' This function retrieves unique feature indices from a list of between-level 
+#' top tables for a specified level, based on adjusted p-value thresholds.
+#'
+#' @param between_level_top_tables A list of data frames containing the 
+#' between-level top tables.
+#' @param level A string specifying the level to search for within the names 
+#' of the data frames.
+#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds for 
+#' each data frame in `between_level_top_tables`.
+#'
+#' @return A vector of unique feature indices that meet the adjusted p-value 
+#' threshold criteria for the specified level.
+#'
+#' @details
+#' The function iterates over each data frame in `between_level_top_tables`. For 
+#' each data frame whose name contains the specified level (case insensitive), 
+#' it identifies the rows where the adjusted p-value is below the corresponding 
+#' threshold. The function then extracts the feature indices from these rows and 
+#' compiles a unique list of these indices.
+#' 
 get_level_hit_indices <- function(between_level_top_tables,
                                   level,
                                   adj_pthresholds) {
 
-  # Initialize a vector to store unique feature indices
   unique_hit_indices <- c()
 
   # Loop through the elements of the list
@@ -746,6 +862,41 @@ process_level_cluster <- function(top_table,
 }
 
 
+#' Remove Batch Effect from Cluster Hits
+#'
+#' @description
+#' This function removes batch effects from the data for each level specified 
+#' by the condition. It supports both isolated and integrated modes, with 
+#' optional handling for a second batch column.
+#'
+#' @param data A dataframe containing the main data.
+#' @param meta A dataframe containing meta information.
+#' @param condition A string specifying the column in `meta` that divides the 
+#' experiment into levels.
+#' @param meta_batch_column A string specifying the column in `meta` that 
+#' indicates batch information.
+#' @param meta_batch2_column A string specifying the second batch column in 
+#' `meta`, if applicable.
+#' @param design A design matrix for the experiment.
+#' @param mode A string indicating the mode of operation: "isolated" or 
+#' "integrated".
+#' @param spline_params A list of spline parameters for the design matrix.
+#'
+#' @return A list of dataframes with batch effects removed for each level.
+#'
+#' @details
+#' The function operates in two modes:
+#' \describe{
+#'   \item{isolated}{Processes each level independently, using only data from 
+#'   that level.}
+#'   \item{integrated}{Processes the entire dataset together.}
+#' }
+#' If `meta_batch_column` is specified, the function removes batch effects using 
+#' `removeBatchEffect`. If a second batch column (`meta_batch2_column`) is 
+#' specified, it is also included in the batch effect removal.
+#'
+#' @importFrom limma removeBatchEffect
+#' 
 remove_batch_effect_cluster_hits <- function(data,
                                              meta,
                                              condition,
@@ -792,12 +943,26 @@ remove_batch_effect_cluster_hits <- function(data,
         batch = meta_copy[[meta_batch_column]],
         design = design_matrix
       )
-
-      if (!is.na(meta_batch2_column)) {
-        args$batch2 <- meta_copy[[meta_batch2_column]]
+      
+      if (mode == "isolated") {
+        
+        level <- unique_levels[level_index]
+        meta_copy <- subset(meta, meta[[condition]] == level)
+        
+        if (!is.na(meta_batch2_column) &&
+            length(unique(meta_copy[[meta_batch2_column]])) > 1) {
+          args$batch2 <- meta_copy[[meta_batch2_column]]
+        }
+      } else {   # mode == integrated
+        
+        if (!is.na(meta_batch2_column) &&
+            length(unique(meta_copy[[meta_batch2_column]])) > 1) {
+          args$batch2 <- meta_copy[[meta_batch2_column]]
+        }
       }
 
-      data_copy <- do.call(removeBatchEffect, args)
+
+      data_copy <- do.call(limma::removeBatchEffect, args)
 
       # For mode == "integrated", all elements are identical
       datas <- c(datas, list(data_copy))
@@ -1016,16 +1181,10 @@ plot_heatmap <- function(datas,
 #' \link[dendextend]{color_branches}, \link[dendextend]{as.ggdend},
 #' \link[ggplot2]{ggplot2}
 #'
-#' @importFrom stats as.dendrogram
-#' @importFrom stats cutree
-#' @importFrom RColorBrewer brewer.pal.info
-#' @importFrom RColorBrewer brewer.pal
-#' @importFrom dendextend color_branches
-#' @importFrom dendextend as.ggdend
-#' @importFrom ggplot2 ggplot element_blank
-#' @importFrom ggplot2 labs
-#' @importFrom ggplot2 theme_minimal
-#' @importFrom ggplot2 theme
+#' @importFrom stats as.dendrogram cutree
+#' @importFrom RColorBrewer brewer.pal.info brewer.pal
+#' @importFrom dendextend color_branches as.ggdend
+#' @importFrom ggplot2 ggplot element_blank labs theme_minimal theme
 #'
 plot_dendrogram <- function(hc,
                             k) {
@@ -1325,7 +1484,7 @@ plot_splines <- function(top_table,
                 color = 'red') +
       theme_minimal() +
       scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
-      labs(x = paste0("Time ", time_unit_label), y = "Value")
+      labs(x = paste0("Time ", time_unit_label), y = NULL)
 
     matched_row <- titles %>%
       filter(!!sym("FeatureID") == hit_index)
@@ -1345,7 +1504,7 @@ plot_splines <- function(top_table,
     }
 
     p <- p + labs(title = title,
-                  x = paste0("Time ", time_unit_label), y = "Value") +
+                  x = paste0("Time ", time_unit_label), y = NULL) +
       theme(plot.title = element_text(size = 6),
             axis.title.x = element_text(size = 8),
             axis.title.y = element_text(size = 8)) +
@@ -1372,6 +1531,75 @@ plot_splines <- function(top_table,
   } else {
     stop("plot_list in function plot_splines splinetime package has length 0!")
   }
+}
+
+
+#' Prepare Gene Lists for Enrichr and Return as String
+#'
+#' @description
+#' This function processes the clustered hits in each element of 
+#' `all_levels_clustering`, formats the gene names for easy copy-pasting into 
+#' Enrichr, and returns the formatted gene lists as a string.
+#'
+#' @param all_levels_clustering A list where each element contains a dataframe
+#' `clustered_hits` with columns `feature` and `cluster`.
+#' @param genes A vector of gene names corresponding to the feature indices.
+#'
+#' @return A character vector with the formatted gene lists for each cluster.
+#'
+prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
+                                           gene) {
+  
+  formatted_gene_lists <- list()
+  
+  for (i in seq_along(all_levels_clustering)) {
+    
+    if (is.logical(all_levels_clustering[[i]])) next
+    
+    level_name <- names(all_levels_clustering)[i]
+    clustered_hits <- all_levels_clustering[[i]]$clustered_hits
+    
+    # Process each cluster
+    clusters <- split(clustered_hits$feature, clustered_hits$cluster)
+    level_gene_lists <- list()
+    
+    for (cluster_id in names(clusters)) {
+      cluster_genes <- clusters[[cluster_id]]
+      gene_list <- sapply(cluster_genes, function(idx) {
+        gene_name <- gene[idx]
+        if (!is.na(gene_name) && gene_name != "") {
+          # Extract the first block of alphanumeric characters
+          clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
+          toupper(clean_gene_name)
+        } else {
+          NA
+        }
+      })
+      gene_list <- na.omit(gene_list)
+      
+      if (length(gene_list) > 0) {
+        level_gene_lists[[paste0("Cluster ", cluster_id)]] <- 
+          paste(gene_list, collapse = "\n")
+      }
+    }
+    
+    formatted_gene_lists[[level_name]] <- level_gene_lists
+  }
+  
+  # Prepare the background gene list
+  clean_genes <- sapply(gene, function(gene_name) {
+    if (!is.na(gene_name) && gene_name != "") {
+      # Extract the first block of alphanumeric characters
+      clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
+      toupper(clean_gene_name)
+    } else {
+      NA
+    }
+  })
+  background_gene_list <- paste(na.omit(clean_genes), collapse = "\n")
+  
+  return(list(gene_lists = formatted_gene_lists,
+              background = background_gene_list))
 }
 
 

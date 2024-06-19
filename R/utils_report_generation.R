@@ -46,6 +46,7 @@ generate_report_html <- function(plots,
                                  data = NA,
                                  meta = NA,
                                  topTables = NA,
+                                 enrichr_format = NA,
                                  level_headers_info = NA,
                                  spline_params = NA,
                                  report_type = "explore_data",
@@ -94,13 +95,16 @@ generate_report_html <- function(plots,
   header_section <- get_header_section(title = title,
                                        header_text = header_text,
                                        report_type = report_type)
-
+  
+  # Define the fields
   all_fields <- c("omics_data_type",
                   "data_description", 
                   "data_collection_date",
                   "data",
                   "meta",
                   "limma_topTables",
+                  "Enrichr_clustered_genes",
+                  "Enrichr_background",
                   "meta_condition",
                   "meta_batch",
                   "limma_design",
@@ -111,52 +115,79 @@ generate_report_html <- function(plots,
                   "results_summary", 
                   "conclusions")
   
-  max_field_length <- max(nchar(gsub("_", " ", all_fields)))
-
-  for (field in all_fields) {
-    
-    if (field == "data" && !any(is.na(data)))  {
-      
-      if (report_type == "create_limma_report") {
-        base64_df <- sprintf('<a href="%s" download="top_tables.xlsx">
-                            <button>Download top_tables.xlsx</button></a>', 
-                            encode_df_to_base64(data))
-      } else {
-        base64_df <- sprintf('<a href="%s" download="data.xlsx">
-                             <button>Download data.xlsx</button></a>', 
-                             encode_df_to_base64(data))
-      }
-
-      
-    } else if (field == "meta" &&
-               !is.null(meta) &&
-               is.data.frame(meta) &&
-               !any(is.na(meta))) {
-      
-      base64_df <- sprintf('<a href="%s" download="meta.xlsx">
-                           <button>Download meta.xlsx</button></a>', 
-                           encode_df_to_base64(meta))
-      
-    } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
-      
-      base64_df <- sprintf('<a href="%s" download="limma_topTables.xlsx">
-                           <button>Download limma_topTables.xlsx</button></a>', 
-                           encode_df_to_base64(topTables))
-    } else {
-      base64_df <- ifelse(is.null(report_info[[field]]),
-                          "NA", report_info[[field]])
-    }
-    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
-    header_section <- paste(header_section,
-                            sprintf('<tr><td style="text-align: right;
-                                    color:blue; padding-right: 5px;">%s
-                                    :</td><td>%s</td></tr>',
-                                    field_display, base64_df),
-                            sep = "\n")
+  download_fields <- c()
+  if (!all(is.na(data))) download_fields <- c(download_fields, "data")
+  if (!all(is.na(meta))) download_fields <- c(download_fields, "meta")
+  if (!all(is.na(topTables))) download_fields <- c(download_fields,
+                                                   "limma_topTables")
+  if (!all(is.na(enrichr_format))) {
+    download_fields <- c(download_fields,
+                         "Enrichr_clustered_genes",
+                         "Enrichr_background")
   }
   
-  # Close the table
-  header_section <- paste(header_section, "</table>", sep = "\n")
+  report_info_fields <- setdiff(all_fields, download_fields)
+  
+  max_field_length <- max(nchar(gsub("_", " ", all_fields)))
+  
+  # Initialize sections
+  report_info_section <- "<h2>Report Info</h2><table>"
+  downloads_section <- "<h2>Downloads</h2><table>"
+  
+  
+  # Process Report Info fields
+  for (field in report_info_fields) {
+    
+    base64_df <- process_field(field,
+                               data,
+                               meta,
+                               topTables,
+                               report_info,
+                               encode_df_to_base64,
+                               report_type, 
+                               enrichr_format)
+    
+    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
+    report_info_section <- paste(report_info_section,
+                                 sprintf('<tr><td style="text-align: right;
+                                       color:blue; padding-right: 5px;">%s
+                                       :</td><td>%s</td></tr>',
+                                         field_display, base64_df),
+                                 sep = "\n")
+  }
+  
+  # Close the Report Info table
+  report_info_section <- paste(report_info_section, "</table>", sep = "\n")
+  
+  # Process Download fields
+  for (field in download_fields) {
+    
+    base64_df <- process_field(field,
+                               data,
+                               meta,
+                               topTables,
+                               report_info,
+                               encode_df_to_base64,
+                               report_type,
+                               enrichr_format)
+    
+    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
+    downloads_section <- paste(downloads_section,
+                               sprintf('<tr><td style="text-align: right;
+                                     color:blue; padding-right: 5px;">%s
+                                     :</td><td>%s</td></tr>',
+                                       field_display, base64_df),
+                               sep = "\n")
+  }
+  
+  # Close the Downloads table
+  downloads_section <- paste(downloads_section, "</table>", sep = "\n")
+  
+  # Preserve initial header_section content
+  header_section <- paste(header_section,
+                          report_info_section,
+                          downloads_section, sep = "\n")
+  
   
   if (report_type == "create_gsea_report") {
     databases_text <- paste(report_info$databases, collapse = ", ")
@@ -223,7 +254,8 @@ generate_report_html <- function(plots,
 #'
 #' @description
 #' This function takes a character vector `text` and splits it into individual
-#' characters. It then iterates over the characters and builds lines not exceeding
+#' characters. It then iterates over the characters and builds lines not 
+#' exceeding
 #' a specified character limit (default 70). Newlines are inserted between lines
 #' using the `<br>` tag, suitable for HTML display.
 #' 
@@ -329,17 +361,28 @@ get_header_section <- function(title,
            "explore_data" = paste("<p style='font-size: 2em;'>",
                                   "This HTML report contains the exploratory",
                                   "data analysis plots, such as density and", 
-                                  "PCA plots.</p>"),
+                                  "PCA plots. <br> Right-click on ", 
+                                  "any plot in this report to save it", 
+                                  "as a .svg (vector graphic)", 
+                                  "file!</p>"),
            "screen_limma_hyperparams" = "<p style='font-size: 2em;'></p>",
-           "create_limma_report" = paste("<p style='font-size: 2em;'>",
-                                         "This HTML report contains all the",
-                                         "plots visualizing the results from", 
-                                         "the limma topTables.</p>"),
-           "cluster_hits" = paste("<p style='font-size: 2em;'>",
-                                  "Clustering of features that show", 
-                                  "significant changes over time (= hits) <br>", 
-                                  "Clustering was done based on the shape",
-                                  "of the spline.</p>"),
+           "create_limma_report" = 
+             paste("<p style='font-size: 2em;'>",
+                   "This HTML report contains all the",
+                   "plots visualizing the results from", 
+                   "the limma topTables. <br> Right-click on", 
+                   "any plot in this report to save it", 
+                   "as a .svg (vector graphic)", 
+                   "file!</p>"),
+           "cluster_hits" = 
+             paste("<p style='font-size: 2em;'>",
+                   "Clustering of features that show", 
+                   "significant changes over time (= hits) <br>", 
+                   "Clustering was done based on the shape",
+                   "of the spline. <br> Right-click on any plot", 
+                   "in this report to save it as a", 
+                   ".svg (vector graphic) file! <br> If one level of the", 
+                   "experiment is not shown, it means it has no hits!</p>"),
            "create_gsea_report" = "<p style='font-size: 2em;'></p>")
   
   header_section <- paste(header_section,
@@ -348,7 +391,6 @@ get_header_section <- function(title,
                           sep = "")
   
   return(header_section)
-  
 }
 
 
@@ -408,7 +450,8 @@ encode_df_to_base64 <- function(df,
   base64_file <- base64enc::base64encode(file_content)
   
   # Determine MIME type
-  mime_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  mime_type <- 
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   
   # Create the data URI scheme
   data_uri <- paste0("data:", mime_type, ";base64,", base64_file)
@@ -546,6 +589,90 @@ process_plots <- function(plots,
 }
 
 
+#' Process and Encode Data Field for Report
+#'
+#' @description
+#' This function processes a given field, encodes the associated data as base64, 
+#' and generates a download link for the report. It handles different types of 
+#' fields including data, meta, top tables, and Enrichr formatted gene lists.
+#'
+#' @param field A string specifying the field to process.
+#' @param data A dataframe containing the main data.
+#' @param meta A dataframe containing meta information.
+#' @param topTables A dataframe containing the results of differential 
+#'                  expression analysis.
+#' @param report_info A list containing additional report information.
+#' @param encode_df_to_base64 A function to encode a dataframe to base64.
+#' @param report_type A string specifying the type of report.
+#' @param enrichr_format A list with the formatted gene lists and background 
+#'                       gene list.
+#'
+#' @return A string containing the HTML link for downloading the processed 
+#'         field.
+#'
+#' @importFrom base64enc base64encode
+#' 
+process_field <- function(field,
+                          data,
+                          meta,
+                          topTables,
+                          report_info,
+                          encode_df_to_base64,
+                          report_type,
+                          enrichr_format) {
+
+  if (field == "data" && !any(is.na(data)))  {
+
+    base64_df <- sprintf('<a href="%s" download="data.xlsx">
+                         <button>Download data.xlsx</button></a>', 
+                         encode_df_to_base64(data))
+    
+  } else if (field == "meta" &&
+             !is.null(meta) &&
+             is.data.frame(meta) &&
+             !any(is.na(meta))) {
+    base64_df <- sprintf('<a href="%s" download="meta.xlsx">
+                         <button>Download meta.xlsx</button></a>', 
+                         encode_df_to_base64(meta))
+
+  } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
+    base64_df <- sprintf('<a href="%s" download="limma_topTables.xlsx">
+                         <button>Download limma_topTables.xlsx</button></a>', 
+                         encode_df_to_base64(topTables))
+
+  } else if (field == "Enrichr_clustered_genes" && 
+             !any(is.na(enrichr_format)) &&
+             !is.null(enrichr_format$gene_lists)) {
+    
+    # Create ZIP file for Enrichr_clustered_genes
+    zip_base64 <- create_enrichr_zip(enrichr_format)
+    base64_df <- sprintf(
+      paste('<a href="data:application/zip;base64,%s" download=',
+            '"Enrichr_clustered_genes.zip">',
+            '<button>Download Enrichr_clustered_genes.zip</button></a>'),
+      zip_base64
+    )
+    
+  } else if (field == "Enrichr_background" && 
+             !any(is.na(enrichr_format)) &&
+             !is.null(enrichr_format$background)) {
+    
+    base64_df <- sprintf(
+      paste(
+        '<a href="data:text/plain;base64,%s"', 
+        'download="Enrichr_background.txt">',
+        '<button>Download Enrichr_background.txt</button></a>'
+      ),
+      base64enc::base64encode(charToRaw(enrichr_format$background))
+    )
+    
+  } else {
+    base64_df <- ifelse(is.null(report_info[[field]]),
+                        "NA", report_info[[field]])
+  }
+  return(base64_df)
+}
+
 
 # Level 3 internal functions ---------------------------------------------------
 
@@ -567,5 +694,64 @@ extract_and_combine <- function(input) {
   
   return(combined)
 }
+
+
+#' Create a ZIP File for Enrichr Gene Lists
+#'
+#' @description
+#' This function creates a ZIP file containing directories for each level of 
+#' gene lists. Each directory contains text files for each cluster. The ZIP file 
+#' is then encoded to base64 for easy download.
+#'
+#' @param enrichr_format A list with the formatted gene lists and background 
+#' gene list, typically the output of `prepare_gene_lists_for_enrichr`.
+#'
+#' @return A base64-encoded string representing the ZIP file.
+#'
+#' @details
+#' The function creates a temporary directory to store the files. For each level 
+#' in the `enrichr_format$gene_lists`, it creates a directory named after the 
+#' level. Within each level directory, it creates a text file for each cluster, 
+#' containing the genes in that cluster. The directories and files are added 
+#' to a ZIP file, which is then encoded to base64.
+#'
+#' @importFrom zip zip
+#' @importFrom base64enc base64encode
+#' 
+create_enrichr_zip <- function(enrichr_format) {
+  
+  temp_dir <- tempfile(pattern = "enrichr")
+  dir.create(temp_dir)
+  zip_file <- tempfile(fileext = ".zip")
+  
+  for (level in names(enrichr_format$gene_lists)) {
+    
+    level_dir <- file.path(temp_dir, level)
+    dir.create(level_dir, recursive = TRUE)
+    
+    for (cluster in names(enrichr_format$gene_lists[[level]])) {
+      
+      cluster_file <- file.path(level_dir, paste0(cluster, ".txt"))
+      writeLines(enrichr_format$gene_lists[[level]][[cluster]], cluster_file)
+    }
+  }
+  
+  # Create the ZIP file using relative paths
+  original_wd <- getwd()
+  setwd(temp_dir)
+  files_to_zip <- list.files(temp_dir, recursive = TRUE)
+  zip::zip(zipfile = zip_file, files = files_to_zip)
+  setwd(original_wd)
+  
+  # Read the ZIP file and encode it to base64
+  zip_base64 <- base64enc::base64encode(zip_file)
+  
+  # Clean up temporary directory and files
+  unlink(temp_dir, recursive = TRUE)
+  unlink(zip_file)
+  
+  return(zip_base64)
+}
+
 
 
