@@ -329,7 +329,7 @@ of `SplineOmics`. Thank you for using our package!
 - [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
   code, delivered improvement suggestions and scientific guidance to
   develop the approach.
-- [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed the
-  download_enrichr_databases() function and one internal plotting
-  function, as well as some code for the exploratory data analysis
-  plots, and the overall approach together with Thomas-Rauter.
+- [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed one
+  internal plotting function, as well as some code for the exploratory
+  data analysis plots, and the overall approach together with
+  Thomas-Rauter.

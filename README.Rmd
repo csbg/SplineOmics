@@ -245,4 +245,4 @@ Also, if you like the package, consider giving the GitHub repository a star. You
 -   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf.
 -   [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator, provided guidance and support for the overall approach.
 -   [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.
--   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed the download_enrichr_databases() function and one internal plotting function, as well as some code for the exploratory data analysis plots, and the overall approach together with Thomas-Rauter.
+-   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed one internal plotting function, as well as some code for the exploratory data analysis plots, and the overall approach together with Thomas-Rauter.

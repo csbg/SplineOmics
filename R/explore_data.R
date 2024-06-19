@@ -40,7 +40,7 @@ explore_data <- function(data,
                          meta_batch2_column = NA,
                          report_dir = here::here(),
                          report = TRUE) {
-  
+
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
