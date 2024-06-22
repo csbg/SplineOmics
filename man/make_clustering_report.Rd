@@ -18,7 +18,7 @@ make_clustering_report(
   design,
   meta_batch_column,
   meta_batch2_column,
-  time_unit
+  plot_info
 )
 }
 \arguments{

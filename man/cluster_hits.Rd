@@ -22,7 +22,8 @@ cluster_hits(
   clusters = c("auto"),
   meta_batch_column = NA,
   meta_batch2_column = NA,
-  time_unit = "min",
+  plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
+    treatment_timepoints = NA),
   report_dir = here::here(),
   report = TRUE
 )
@@ -61,14 +62,14 @@ the metadata used for batch effect removal.}
 \item{meta_batch2_column}{A character string specifying the second column 
 name in the metadata used for batch effect removal.}
 
-\item{time_unit}{A character string specifying the time unit label for plots
-(e.g., 'm' for minutes).}
-
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}
 
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}
+
+\item{time_unit}{A character string specifying the time unit label for plots
+(e.g., 'm' for minutes).}
 }
 \value{
 A list where each element corresponds to a group factor and contains

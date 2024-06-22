@@ -382,7 +382,7 @@ get_header_section <- function(title,
                    "of the spline. <br> Right-click on any plot", 
                    "in this report to save it as a", 
                    ".svg (vector graphic) file! <br> If one level of the", 
-                   "experiment is not shown, it means it has no hits!</p>"),
+                   "experiment is not shown, it means it has < 2 hits!</p>"),
            "create_gsea_report" = "<p style='font-size: 2em;'></p>")
   
   header_section <- paste(header_section,
@@ -499,7 +499,9 @@ plot2base64 <- function(plot,
   additional_height_per_row <- 2.1
   height <- base_height_per_row + (plot_nrows - 1) * additional_height_per_row
   
-  # Create a temporary file for the SVG
+  # Create a temporary file for the SVG. SVG does not specify the quality 
+  # already, but later, after exporting the figures from the HTML, you can
+  # specify the quality.
   img_file <- tempfile(fileext = ".svg")
 
   svglite::svglite(file = img_file, width = width, height = height)

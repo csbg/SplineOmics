@@ -79,7 +79,10 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                          clusters = c("auto"),
                          meta_batch_column = NA,   # to remove batch effect
                          meta_batch2_column = NA,   # second batch effect
-                         time_unit = "min",    # For the plot labels
+                         plot_info = list(y_axis_label = "Value",
+                                          time_unit = "min",
+                                          treatment_labels = NA,
+                                          treatment_timepoints = NA),
                          report_dir = here::here(),
                          report = TRUE) {
 
@@ -157,7 +160,7 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                              design = design,
                              meta_batch_column = meta_batch_column,
                              meta_batch2_column = meta_batch2_column,
-                             time_unit = time_unit)
+                             plot_info = plot_info)
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
@@ -496,7 +499,7 @@ make_clustering_report <- function(all_levels_clustering,
                                    design,
                                    meta_batch_column,
                                    meta_batch2_column,
-                                   time_unit) {
+                                   plot_info) {
 
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
@@ -529,7 +532,7 @@ make_clustering_report <- function(all_levels_clustering,
     dir.create(report_dir)
   }
 
-  time_unit_label <- paste0("[", time_unit, "]")
+  time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
   heatmaps <- plot_heatmap(datas = datas,
                            meta = meta,
@@ -618,7 +621,8 @@ make_clustering_report <- function(all_levels_clustering,
                                           meta_level,
                                           X,
                                           main_title,
-                                          time_unit_label)
+                                          time_unit_label,
+                                          plot_info)
 
       composite_plots[[length(composite_plots) + 1]] <-
         plot_splines_result$composite_plot
@@ -1441,7 +1445,8 @@ plot_splines <- function(top_table,
                          meta,
                          X,   # Was already created from spline_params before
                          main_title,
-                         time_unit_label) {
+                         time_unit_label,
+                         plot_info) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table %>% dplyr::arrange(feature_names)
@@ -1475,43 +1480,75 @@ plot_splines <- function(top_table,
 
     x_max <- as.numeric(max(time_points))
     x_extension <- x_max * 0.05
-
+    
+    treatment_time <- plot_info$treatment_time
+    treatment_label <- plot_info$treatment_labels
+    
+    color_values <- c("Datapoints" = "blue", "Spline" = "red")
+    color_values[treatment_label] <- "orange"
+    
     p <- ggplot2::ggplot() +
-      geom_point(data = plot_data, aes(x = Time,
-                                       y = !!rlang::sym("Y")),
-                 color = 'blue') +
-      geom_line(data = plot_spline, aes(x = Time, y = !!rlang::sym("Fitted")),
-                color = 'red') +
-      theme_minimal() +
-      scale_x_continuous(limits = c(min(time_points), x_max + x_extension)) +
-      labs(x = paste0("Time ", time_unit_label), y = NULL)
-
-    matched_row <- titles %>%
-      filter(!!sym("FeatureID") == hit_index)
-
+      ggplot2::geom_point(data = plot_data, 
+                          ggplot2::aes(x = Time, 
+                                       y = !!rlang::sym("Y"), 
+                                       color = "Datapoints")) +
+      ggplot2::geom_line(data = plot_spline, 
+                         ggplot2::aes(x = Time, 
+                                      y = !!rlang::sym("Fitted"), 
+                                      color = "Spline")) +
+      ggplot2::geom_vline(aes(xintercept = treatment_time, 
+                              color = treatment_label), 
+                          linetype = "dashed", size = 0.5) +
+      ggplot2::theme_minimal() +
+      ggplot2::scale_x_continuous(limits = c(min(time_points), 
+                                             x_max + x_extension),
+                                  breaks = time_points) + 
+      ggplot2::labs(x = paste0("Time ", time_unit_label), 
+                    y = plot_info$y_axis_label) +  
+      ggplot2::scale_color_manual(values = color_values) +
+      ggplot2::theme(legend.position = "top", 
+                     legend.justification = "center",
+                     legend.box = "horizontal",   
+                     legend.background = ggplot2::element_blank(),  
+                     legend.title = ggplot2::element_blank(),  
+                     legend.text = ggplot2::element_text(size = 5),
+                     legend.key.size = unit(0.5, "lines"),
+                     legend.key.width = unit(0.25, "lines"),
+                     legend.spacing = unit(0, "lines"),  
+                     legend.margin = ggplot2::margin(0, 0, -5, 0),  
+                     legend.box.margin = ggplot2::margin(0, 0, -5, 0),
+                     axis.text.x = ggplot2::element_text(size = 5),
+                     axis.title.y = ggplot2::element_text(size = 8, 
+                                                          margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)),
+                     axis.text.y = ggplot2::element_text(margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)))
+                     
+    
+    # Add title and annotations
+    matched_row <- dplyr::filter(titles, 
+                                 !!rlang::sym("FeatureID") == hit_index)
+    
     title <- as.character(matched_row$feature_name)
     
     if (nchar(title) > 30) {
-      title_befor <- title
+      title_before <- title
       title <- substr(title, 1, 30)
-      message(paste("The feature ID", title_befor, "is > 30 characters.",
+      message(paste("The feature ID", title_before, "is > 30 characters.",
                     "Truncating it to 30 chars:", title))
-      
     }
     
     if (is.na(title)) {
       title <- paste("feature:", hit_index)
     }
-
-    p <- p + labs(title = title,
-                  x = paste0("Time ", time_unit_label), y = NULL) +
-      theme(plot.title = element_text(size = 6),
-            axis.title.x = element_text(size = 8),
-            axis.title.y = element_text(size = 8)) +
-      annotate("text", x = x_max + (x_extension / 2), y =
-                 max(fitted_values, na.rm = TRUE),
-               label = "",
-               hjust = 0.5, vjust = 1, size = 3.5, angle = 0, color = "black")
+    
+    p <- p + ggplot2::labs(title = title) +
+      ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
+                     axis.title.x = ggplot2::element_text(size = 8),
+                     axis.title.y = ggplot2::element_text(size = 8)) +
+      ggplot2::annotate("text", x = x_max + (x_extension / 2), 
+                        y = max(fitted_values, na.rm = TRUE),
+                        label = "", hjust = 0.5, vjust = 1, size = 3.5, 
+                        angle = 0, color = "black")
+    
 
     plot_list[[length(plot_list) + 1]] <- p
   }
@@ -1529,7 +1566,7 @@ plot_splines <- function(top_table,
                                                               size = 14)))
     return(list(composite_plot = composite_plot, nrows = nrows))
   } else {
-    stop("plot_list in function plot_splines splinetime package has length 0!")
+    stop("plot_list in function plot_splines has length 0!", call. = FALSE)
   }
 }
 
