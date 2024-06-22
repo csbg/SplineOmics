@@ -151,6 +151,11 @@ report_dir <- here::here("results", "clustering_reports")
 
 combo_list <- list(top_tables1, top_tables1)
 
+plot_info <- list(y_axis_label = "log2 intensity",
+                  time_unit = "min",
+                  treatment_labels = "feeding",
+                  treatment_timepoints = 0)
+
 # debug(cluster_hits)
 clustering_results <- cluster_hits(top_tables = top_tables1, 
                                    data = data, 
@@ -164,6 +169,7 @@ clustering_results <- cluster_hits(top_tables = top_tables1,
                                    genes = genes,
                                    meta_batch_column = meta_batch_column,
                                    # meta_batch2_column = meta_batch2_column,
+                                   plot_info = plot_info,
                                    report_dir = report_dir,
                                    report = TRUE)
 
