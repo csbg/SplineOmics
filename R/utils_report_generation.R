@@ -87,7 +87,7 @@ generate_report_html <- function(plots,
       report_info[[field]] <- format_text(report_info[[field]])
     }
   }
-  
+
   header_text <- paste(title, 
                        report_info$omics_data_type, 
                        timestamp, sep = " | ")

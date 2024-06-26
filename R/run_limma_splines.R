@@ -318,7 +318,7 @@ process_top_table <- function(top_table_and_fit,
   top_table <- modify_limma_top_table(top_table, feature_names)
   
   intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
-  intercepts_ordered <- intercepts[match(top_table$feature_index, 
+  intercepts_ordered <- intercepts[match(top_table$feature_nr, 
                                          rownames(intercepts)), , 
                                    drop = FALSE]
   top_table$intercept <- intercepts_ordered[, 1]
@@ -409,17 +409,17 @@ process_within_level <- function(data,
 #' 
 modify_limma_top_table <- function(top_table, 
                                    feature_names) {
+
+  top_table <- tidyr::as_tibble(top_table, rownames = "feature_nr")
   
-  feature_index <- dplyr::sym("feature_index")
-  
-  top_table <- tidyr::as_tibble(top_table, rownames = "feature_index")
-  
+  # Convert feature_nr to integer
   top_table <- top_table %>% 
-    dplyr::relocate(feature_index, .after = dplyr::last_col()) %>%
-    dplyr::mutate(feature_index = as.integer(feature_index))
+    dplyr::mutate(feature_nr = as.integer(feature_nr)) %>%
+    dplyr::relocate(feature_nr, .after = dplyr::last_col())
   
-  sorted_feature_names <- feature_names[top_table$feature_index]
+  # Sort and add feature names based on the feature_nr
+  sorted_feature_names <- feature_names[top_table$feature_nr]
   top_table <- top_table %>% dplyr::mutate(feature_names = sorted_feature_names)
   
-  top_table
+  return(top_table)
 }

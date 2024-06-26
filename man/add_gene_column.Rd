@@ -7,12 +7,12 @@
 add_gene_column(df, genes)
 }
 \arguments{
-\item{df}{A tibble containing a `feature_index` column with numeric values.}
+\item{df}{A tibble containing a `feature_nr` column with numeric values.}
 
 \item{genes}{A character vector of gene names.}
 }
 \value{
-A tibble with an added `Gene` column placed after the `feature_index`
+A tibble with an added `Gene` column placed after the `feature_nr`
  column.
  
  @importFrom dplyr mutate
@@ -20,5 +20,5 @@ A tibble with an added `Gene` column placed after the `feature_index`
 \description{
 This function takes a tibble and a character vector of genes, and adds a 
 column named `Gene` to the tibble. The `Gene` column is created based on the 
-values in the `feature_index` column, and is placed immediately after it.
+values in the `feature_nr` column, and is placed immediately after it.
 }

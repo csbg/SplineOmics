@@ -27,5 +27,5 @@ This function takes `all_levels_clustering`, `data`, `meta`, and `condition`
 as inputs, calculates the mean of the absolute difference between consecutive
 averages of biological replicates for each feature (row) in `data` over time, 
 and updates `all_levels_clustering` with these mean values based on 
-`feature_index`.
+`feature_nr`.
 }
