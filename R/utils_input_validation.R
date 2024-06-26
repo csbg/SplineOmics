@@ -636,10 +636,10 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       expected_cols1_3 <- c("X1", "X2", "AveExpr", "F", "P.Value", "adj.P.Val",
-                            "feature_index", "feature_names", "intercept")
+                            "feature_nr", "feature_names", "intercept")
       
       expected_cols2 <- c("logFC", "AveExpr", "t", "P.Value", "adj.P.Val",
-                          "B", "feature_index", "feature_names", "intercept")
+                          "B", "feature_nr", "feature_names", "intercept")
       
       for (df in top_tables$time_effect) {
         check_columns(df, expected_cols1_3)
@@ -1318,7 +1318,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
        AveExpr = "numeric",
        P.Value = "numeric",
        adj.P.Val = "numeric",
-       feature_index = "integer",
+       feature_nr = "integer",
        feature_names = "character",
        intercept = "numeric"
      )

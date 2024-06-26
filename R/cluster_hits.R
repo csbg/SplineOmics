@@ -139,12 +139,6 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
                                   meta_batch2_column,
                                   sep = ", ")
   
-  # Custom metric to limma topTable instead of logFC value.
-  all_levels_clustering <- calculate_abs_interval_diff(all_levels_clustering,
-                                                       data,
-                                                       meta,
-                                                       condition)
-  
   if (report) {
     plots <-
       make_clustering_report(all_levels_clustering = all_levels_clustering,
@@ -234,13 +228,13 @@ filter_top_tables <- function(top_tables,
                                            level,
                                            adj_pthresholds)
     } else {    # within level
-      hit_indices <- within_level_top_table[["feature_index"]][
+      hit_indices <- within_level_top_table[["feature_nr"]][
         within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
       ]
     }
 
     top_table_filtered <-
-      within_level_top_table[within_level_top_table[["feature_index"]]
+      within_level_top_table[within_level_top_table[["feature_nr"]]
                              %in% hit_indices, ]
 
     if (nrow(top_table_filtered) < 2) {
@@ -313,11 +307,11 @@ huge_table_user_prompter <- function(tables) {
 #' @description
 #' This function takes a tibble and a character vector of genes, and adds a 
 #' column named `Gene` to the tibble. The `Gene` column is created based on the 
-#' values in the `feature_index` column, and is placed immediately after it.
+#' values in the `feature_nr` column, and is placed immediately after it.
 #'
-#' @param df A tibble containing a `feature_index` column with numeric values.
+#' @param df A tibble containing a `feature_nr` column with numeric values.
 #' @param genes A character vector of gene names.
-#' @return A tibble with an added `Gene` column placed after the `feature_index`
+#' @return A tibble with an added `Gene` column placed after the `feature_nr`
 #'  column.
 #'  
 #'  @importFrom dplyr mutate
@@ -327,14 +321,14 @@ add_gene_column <- function(df,
   
   # Create the Gene column
   df <- df |>
-    dplyr::mutate(gene = genes[feature_index])
+    dplyr::mutate(gene = genes[feature_nr])
   
-  # Reorder columns to place Gene after feature_index
-  feature_index_position <- which(names(df) == "feature_index")
+  # Reorder columns to place Gene after feature_nr
+  feature_nr_position <- which(names(df) == "feature_nr")
   df <- df |>
-    dplyr::select(1:feature_index_position,
+    dplyr::select(1:feature_nr_position,
                   gene,
-                  (feature_index_position + 1):ncol(df))
+                  (feature_nr_position + 1):ncol(df))
   
   return(df)
 }
@@ -394,7 +388,7 @@ perform_clustering <- function(top_tables,
 #' as inputs, calculates the mean of the absolute difference between consecutive
 #' averages of biological replicates for each feature (row) in `data` over time, 
 #' and updates `all_levels_clustering` with these mean values based on 
-#' `feature_index`.
+#' `feature_nr`.
 #'
 #' @param all_levels_clustering A list of clustering levels, each containing
 #' a dataframe with a `top_table` element.
@@ -436,7 +430,7 @@ calculate_abs_interval_diff <- function(all_levels_clustering,
     })
     
     top_table <- all_levels_clustering[[i]]$top_table
-    top_table$abs_interval_diff <- sapply(top_table$feature_index,
+    top_table$abs_interval_diff <- sapply(top_table$feature_nr,
                                           function(index) {
       abs_diff_means[index]
     })
@@ -500,7 +494,7 @@ make_clustering_report <- function(all_levels_clustering,
                                    meta_batch_column,
                                    meta_batch2_column,
                                    plot_info) {
-
+  
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
@@ -626,7 +620,7 @@ make_clustering_report <- function(all_levels_clustering,
 
       composite_plots[[length(composite_plots) + 1]] <-
         plot_splines_result$composite_plot
-
+      
       nrows[[length(nrows) + 1]] <- plot_splines_result$nrows
     }
 
@@ -799,9 +793,9 @@ get_level_hit_indices <- function(between_level_top_tables,
         which(within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i])
 
       # Extract the feature indices from the identified rows
-      feature_indices <- within_level_top_table[hit_indices, "feature_index"]
+      feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
       feature_indices <- within_level_top_table[hit_indices,
-                                                "feature_index", drop = TRUE]
+                                                "feature_nr", drop = TRUE]
       unique_hit_indices <- c(unique_hit_indices, feature_indices)
     }
   }
@@ -1455,7 +1449,7 @@ plot_splines <- function(top_table,
   time_points <- meta$Time
 
   titles <- data.frame(
-    FeatureID = top_table$feature_index,
+    FeatureID = top_table$feature_nr,
     feature_names = top_table$feature_names
   )
 
@@ -1463,7 +1457,7 @@ plot_splines <- function(top_table,
 
   ## Generate individual plots -------------------------------------------------
   for (hit in 1:nrow(top_table)) {
-    hit_index <- as.numeric(top_table$feature_index[hit])
+    hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
 
     intercept <- top_table$intercept[hit]
@@ -1480,7 +1474,7 @@ plot_splines <- function(top_table,
 
     x_max <- as.numeric(max(time_points))
     x_extension <- x_max * 0.05
-    
+
     treatment_time <- plot_info$treatment_time
     treatment_label <- plot_info$treatment_labels
     
@@ -1496,9 +1490,6 @@ plot_splines <- function(top_table,
                          ggplot2::aes(x = Time, 
                                       y = !!rlang::sym("Fitted"), 
                                       color = "Spline")) +
-      ggplot2::geom_vline(aes(xintercept = treatment_time, 
-                              color = treatment_label), 
-                          linetype = "dashed", size = 0.5) +
       ggplot2::theme_minimal() +
       ggplot2::scale_x_continuous(limits = c(min(time_points), 
                                              x_max + x_extension),
@@ -1518,10 +1509,24 @@ plot_splines <- function(top_table,
                      legend.margin = ggplot2::margin(0, 0, -5, 0),  
                      legend.box.margin = ggplot2::margin(0, 0, -5, 0),
                      axis.text.x = ggplot2::element_text(size = 5),
-                     axis.title.y = ggplot2::element_text(size = 8, 
-                                                          margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)),
-                     axis.text.y = ggplot2::element_text(margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)))
-                     
+                     axis.title.y = 
+                       ggplot2::element_text(size = 8, 
+                                             margin = ggplot2::margin(
+                                               t = 0, r = 2, b = 0, l = 0)),
+                     axis.text.y = 
+                       ggplot2::element_text(margin = ggplot2::margin(
+                         t = 0, r = 5, b = 0, l = 0)))
+    
+    # Add vertical line only if treatment_time is not NA
+    if (!is.na(treatment_time)) {
+      p <- p + ggplot2::geom_vline(aes(xintercept = treatment_time, 
+                                       color = treatment_label), 
+                                   linetype = "dashed", size = 0.5)
+      if (!is.na(treatment_label)) {
+        color_values[treatment_label] <- "orange"
+      }
+      p <- p + ggplot2::scale_color_manual(values = color_values)
+    }
     
     # Add title and annotations
     matched_row <- dplyr::filter(titles, 
@@ -1549,7 +1554,6 @@ plot_splines <- function(top_table,
                         label = "", hjust = 0.5, vjust = 1, size = 3.5, 
                         angle = 0, color = "black")
     
-
     plot_list[[length(plot_list) + 1]] <- p
   }
 
@@ -1564,6 +1568,7 @@ plot_splines <- function(top_table,
                                  theme = theme(plot.title =
                                                  element_text(hjust = 0.5,
                                                               size = 14)))
+    
     return(list(composite_plot = composite_plot, nrows = nrows))
   } else {
     stop("plot_list in function plot_splines has length 0!", call. = FALSE)
@@ -1999,7 +2004,7 @@ hierarchical_clustering <- function(curve_values,
 
   clustered_hits <- data.frame(cluster = cluster_assignments)
   # top_table_hits <- dplyr::filter(top_table, top_table[["adj.P.Val"]] < 0.05)
-  clustered_hits$feature <- top_table$feature_index
+  clustered_hits$feature <- top_table$feature_nr
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
 
   colnames(curve_values) <- smooth_timepoints

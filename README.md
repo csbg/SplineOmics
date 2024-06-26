@@ -10,10 +10,10 @@ Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
-The R package `SplineOmics` gets the significant features (hits) of
+The R package `SplineOmics` finds the significant features (hits) of
 time-series omics data by using splines and `limma` for hypothesis
-testing and clusters the hits based on the spline shape, showing all
-results in HTML reports.
+testing and clusters the hits based on the spline shape while plotting
+showing all results in summary HTML reports.
 
 ## Table of Contents
 
@@ -34,12 +34,12 @@ results in HTML reports.
 ## 📘 Introduction
 
 Welcome to `SplineOmics`, an R package designed to streamline the
-analysis of omics time-series data, followed by automated HTML report
+analysis of -omics time-series data, followed by automated HTML report
 generation.
 
 ### Is the SplineOmics package of use for me?
 
-If you have omics data over time, the package will help you to run
+If you have -omics data over time, the package will help you to run
 `limma` with splines, decide on which parameters to use, perform the
 clustering, run GSEA and show result plots in HTML reports.
 
@@ -49,11 +49,11 @@ clustering, run GSEA and show result plots in HTML reports.
     metabolite, etc.) and each column is a sample taken at a specific
     time.
 
-2.  A table with metadata on the rows/features (e.g., gene and protein
-    name)
+2.  A table with identifiers on the rows/features of the data matrix
+    (e.g., gene and protein name)
 
-3.  A table with metadata on the columns/samples (e.g., batch, time
-    point, etc.)
+3.  A table with metadata on the columns/samples of the data matrix
+    (e.g., batch, time point, etc.)
 
 ### Capabilities
 
@@ -62,7 +62,7 @@ With `SplineOmics`, you can:
 - **Automatically perform exploratory data analysis:**
 
   The `explore_data()` function generates an HTML report, containing
-  various plots, such as densitiy, PCA, and correlation heatmap plots.
+  various plots, such as density, PCA, and correlation heatmap plots.
 
 - **Explore various limma splines hyperparameters:**
 
@@ -91,7 +91,7 @@ With `SplineOmics`, you can:
 
 ## 🔧 Installation
 
-Follow these steps to install the `SplineOmics` package from its GitHub
+Follow these steps to install the `SplineOmics` package from the GitHub
 repository into your R environment.
 
 #### Prerequisites
@@ -174,7 +174,7 @@ package functions can be found
 
 ## 🐳 Docker Container
 
-To facilitate reproducible analysis, we provide a Docker container that
+To facilitate reproducible analysis, a Docker container is provided that
 encapsulates the `SplineOmics` package together with the necessary
 environment and dependencies.
 
