@@ -10,63 +10,56 @@ the spline shape.
 Cluster Hits from Top Tables}
 \usage{
 cluster_hits(
-  top_tables,
-  data,
-  meta,
-  design,
-  condition,
-  report_info,
+  splineomics,
   genes,
-  spline_params = list(spline_type = c("n"), dof = c(2L)),
   adj_pthresholds = c(0.05),
   clusters = c("auto"),
-  meta_batch_column = NA,
-  meta_batch2_column = NA,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   report_dir = here::here(),
+  analysis_type = "time_effect",
   report = TRUE
 )
 }
 \arguments{
-\item{top_tables}{A list of data frames, each representing a top table from
-differential expression analysis, containing at least 'adj.P.Val' and
-expression data columns.}
+\item{splineomics}{An S3 object of class `SplineOmics` that contains all the 
+necessary data and parameters for the analysis, including:
+\itemize{
+  \item \code{data}: The original expression dataset used for differential 
+  expression analysis.
+  \item \code{meta}: A dataframe containing metadata corresponding to the 
+  \code{data}, must include a 'Time' column and any columns specified by 
+  \code{conditions}.
+  \item \code{design}: A character of length 1 representing the limma 
+  design formula.
+  \item \code{condition}: Character of length 1 specifying the column name 
+  in \code{meta} used to define groups for analysis.
+  \item \code{spline_params}: A list of spline parameters for the analysis.
+  \item \code{meta_batch_column}: A character string specifying the column 
+  name in the metadata used for batch effect removal.
+  \item \code{meta_batch2_column}: A character string specifying the second 
+  column name in the metadata used for batch effect removal.
+  \item \code{limma_splines_result}: A list of data frames, each representing
+   a top table from differential expression analysis, containing at least 
+   'adj.P.Val' and expression data columns.
+}}
 
-\item{data}{The original expression dataset used for differential expression
-analysis.}
+\item{genes}{A character vector containing the gene names of the features to
+be analyzed.}
 
-\item{meta}{A dataframe containing metadata corresponding to the `data`,
-must include a 'Time' column and any columns specified by `conditions`.}
-
-\item{design}{A character of length 1 representing the limma design formula}
-
-\item{condition}{Character of length 1 specifying the column name in `meta`
-used to define groups for analysis.}
-
-\item{report_info}{A character string to be printed at the top of the report.}
-
-\item{genes}{A character vector containing the gene names of the features}
-
-\item{spline_params}{A list of spline parameters for the analysis.}
-
-\item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
+\item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering 
 hits in each top table.}
 
-\item{clusters}{Character or integer vector specifying the number of
-clusters or 'auto' for automatic estimation.}
-
-\item{meta_batch_column}{A character string specifying the column name in
-the metadata used for batch effect removal.}
-
-\item{meta_batch2_column}{A character string specifying the second column 
-name in the metadata used for batch effect removal.}
+\item{clusters}{Character or integer vector specifying the number of clusters
+or 'auto' for automatic estimation.}
 
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}
 
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}
+
+\item{report_info}{A character string to be printed at the top of the report.}
 
 \item{time_unit}{A character string specifying the time unit label for plots
 (e.g., 'm' for minutes).}
@@ -89,14 +82,6 @@ clustering. The results,
 including clustering assignments and normalized spline curves, are saved in a
 specified directory and
 compiled into an HTML report.
-}
-\examples{
-\dontrun{
-  cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"),
-                                  c(0.05),
-                                  c(3), "path/to/report/dir")
-}
-
 }
 \seealso{
 \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}

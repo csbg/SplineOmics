@@ -20,27 +20,35 @@
 #' specified directory and
 #' compiled into an HTML report.
 #'
-#' @param top_tables A list of data frames, each representing a top table from
-#' differential expression analysis, containing at least 'adj.P.Val' and
-#' expression data columns.
-#' @param data The original expression dataset used for differential expression
-#' analysis.
-#' @param meta A dataframe containing metadata corresponding to the `data`,
-#' must include a 'Time' column and any columns specified by `conditions`.
-#' @param condition Character of length 1 specifying the column name in `meta`
-#' used to define groups for analysis.
-#' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
+#' @param splineomics An S3 object of class `SplineOmics` that contains all the 
+#' necessary data and parameters for the analysis, including:
+#' \itemize{
+#'   \item \code{data}: The original expression dataset used for differential 
+#'   expression analysis.
+#'   \item \code{meta}: A dataframe containing metadata corresponding to the 
+#'   \code{data}, must include a 'Time' column and any columns specified by 
+#'   \code{conditions}.
+#'   \item \code{design}: A character of length 1 representing the limma 
+#'   design formula.
+#'   \item \code{condition}: Character of length 1 specifying the column name 
+#'   in \code{meta} used to define groups for analysis.
+#'   \item \code{spline_params}: A list of spline parameters for the analysis.
+#'   \item \code{meta_batch_column}: A character string specifying the column 
+#'   name in the metadata used for batch effect removal.
+#'   \item \code{meta_batch2_column}: A character string specifying the second 
+#'   column name in the metadata used for batch effect removal.
+#'   \item \code{limma_splines_result}: A list of data frames, each representing
+#'    a top table from differential expression analysis, containing at least 
+#'    'adj.P.Val' and expression data columns.
+#' }
+#' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
 #' hits in each top table.
-#' @param clusters Character or integer vector specifying the number of
-#' clusters or 'auto' for automatic estimation.
+#' @param clusters Character or integer vector specifying the number of clusters
+#'  or 'auto' for automatic estimation.
 #' @param report_info A character string to be printed at the top of the report.
-#' @param genes A character vector containing the gene names of the features
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param design A character of length 1 representing the limma design formula
-#' @param meta_batch_column A character string specifying the column name in
-#' the metadata used for batch effect removal.
-#' @param meta_batch2_column A character string specifying the second column 
-#'                           name in the metadata used for batch effect removal.
+#' @param genes A character vector containing the gene names of the features to
+#'  be analyzed.
+
 #' @param time_unit A character string specifying the time unit label for plots
 #' (e.g., 'm' for minutes).
 #' @param report_dir Character string specifying the directory path where the
@@ -55,37 +63,29 @@
 #'         data frame with normalized spline curves, and `top_table` with
 #'         cluster assignments.
 #'
-#' @examples
-#' \dontrun{
-#'   cluster_results <- cluster_hits(top_tables, data, meta, c("GroupFactor"),
-#'                                   c(0.05),
-#'                                   c(3), "path/to/report/dir")
-#' }
-#'
 #' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
 #'
 #' @export
 #'
-cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
-                         data,
-                         meta,
-                         design,      # limma design formula
-                         condition,   # meta factor column
-                         report_info,   # Gets printed on top of the report
-                         genes,       # Underlying genes of the features
-                         spline_params = list(spline_type = c("n"),
-                                              dof = c(2L)),
-                         adj_pthresholds = c(0.05),
-                         clusters = c("auto"),
-                         meta_batch_column = NA,   # to remove batch effect
-                         meta_batch2_column = NA,   # second batch effect
-                         plot_info = list(y_axis_label = "Value",
-                                          time_unit = "min",
-                                          treatment_labels = NA,
-                                          treatment_timepoints = NA),
-                         report_dir = here::here(),
-                         report = TRUE) {
-
+cluster_hits <- function(
+    splineomics,
+    # top_tables,  # limma topTable (from run_limma_splines)
+    genes,       # Underlying genes of the features
+    adj_pthresholds = c(0.05),
+    clusters = c("auto"),
+    plot_info = list(
+      y_axis_label = "Value",
+      time_unit = "min",
+      treatment_labels = NA,
+      treatment_timepoints = NA
+      ),
+    report_dir = here::here(),
+    analysis_type = "time_effect",
+    report = TRUE
+    ) {
+  
+  design <- splineomics[["design"]]
+  condition <- splineomics[["condition"]]
   mode <- determine_analysis_mode(design,
                                   condition)
 
@@ -94,6 +94,15 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
+  
+  data <- splineomics[["data"]]
+  meta <- splineomics[["meta"]]
+  design <- splineomics[["design"]]
+  condition <- splineomics[["condition"]]
+  spline_params <- splineomics[["spline_params"]]
+  meta_batch_column <- splineomics[["meta_batch_column"]]
+  meta_batch2_column <- splineomics[["meta_batch2_column"]]
+  limma_splines_result <- splineomics[["limma_splines_result"]]
 
   data_report <- rownames_to_column(data, var = "Feature_name")
 
@@ -107,7 +116,24 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
     levels <- unique(meta[[condition]])
     adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
   }
-
+  
+  
+  if (analysis_type == "time_effect") {
+    top_tables <- splineomics[['limma_splines_result']][['time_effect']]
+    
+  } else if (analysis_type == "avrg_diff_conditions") {
+    top_tables <- list(
+      splineomics[['limma_splines_result']][['time_effect']],
+      splineomics[['limma_splines_result']][['avrg_diff_conditions']]
+    )
+    
+  } else {   # analysis_type == "interaction_condition_time"
+    top_tables <- list(
+      splineomics[['limma_splines_result']][['time_effect']],
+      splineomics[['limma_splines_result']][['interaction_condition_time']]
+    )
+  }
+  
   within_level_top_tables <-
     filter_top_tables(top_tables = top_tables,
                       adj_pthresholds = adj_pthresholds,
@@ -195,10 +221,12 @@ cluster_hits <- function(top_tables,  # limma topTable (from run_limma_splines)
 # Level 1 internal functions ---------------------------------------------------
 
 
-filter_top_tables <- function(top_tables,
-                              adj_pthresholds,
-                              meta,
-                              condition) {
+filter_top_tables <- function(
+    top_tables,
+    adj_pthresholds,
+    meta,
+    condition
+    ) {
 
   result <- check_between_level_pattern(top_tables)
 
@@ -250,9 +278,7 @@ filter_top_tables <- function(top_tables,
   if (all(is.na(within_level_top_tables))) {
     stop("All levels have < 2 hits. Cannot run clustering.", call. = FALSE)
   }
-  
-  # within_level_top_tables <- 
-  #   within_level_top_tables[!sapply(within_level_top_tables, is.logical)]
+
   within_level_top_tables
 }
 
@@ -378,67 +404,6 @@ perform_clustering <- function(top_tables,
                                                   spline_params = spline_params,
                                                   mode = mode),
                                   SIMPLIFY = FALSE)  # Return a list
-}
-
-
-#' Calculate Mean of Absolute Differences and Update DataFrame by Level
-#'
-#' @description
-#' This function takes `all_levels_clustering`, `data`, `meta`, and `condition` 
-#' as inputs, calculates the mean of the absolute difference between consecutive
-#' averages of biological replicates for each feature (row) in `data` over time, 
-#' and updates `all_levels_clustering` with these mean values based on 
-#' `feature_nr`.
-#'
-#' @param all_levels_clustering A list of clustering levels, each containing
-#' a dataframe with a `top_table` element.
-#' @param data A dataframe containing only numeric values.
-#' @param meta A dataframe containing meta information about `data` with a 
-#' column `Time` for biological replicates.
-#' @param condition A string specifying the column name in `meta` that divides 
-#' the experiment into levels.
-#'
-#' @return The updated `all_levels_clustering` with a new column 
-#' `abs_interval_diff` in each `top_table` for the corresponding level.
-#'
-calculate_abs_interval_diff <- function(all_levels_clustering,
-                                        data,
-                                        meta, 
-                                        condition) {
-
-  unique_conditions <- unique(meta[[condition]])
-  
-  # Process each level in all_levels_clustering
-  for (i in seq_along(all_levels_clustering)) {
-    
-    if (is.logical(all_levels_clustering[[i]])) next
-    
-    if (i > length(unique_conditions)) break
-    
-    level_condition <- unique_conditions[i]
-    level_indices <- which(meta[[condition]] == level_condition)
-    level_data <- data[, level_indices, drop = FALSE]
-    level_meta <- meta[level_indices, , drop = FALSE]
-    
-    abs_diff_means <- apply(level_data, 1, function(row) {
-      time_points <- unique(level_meta$Time)
-      replicate_means <- sapply(time_points, function(tp) {
-        mean(row[level_meta$Time == tp], na.rm = TRUE)
-      })
-      abs_diffs <- abs(diff(replicate_means))
-      mean(abs_diffs, na.rm = TRUE)
-    })
-    
-    top_table <- all_levels_clustering[[i]]$top_table
-    top_table$abs_interval_diff <- sapply(top_table$feature_nr,
-                                          function(index) {
-      abs_diff_means[index]
-    })
-    
-    all_levels_clustering[[i]]$top_table <- top_table
-  }
-  
-  return(all_levels_clustering)
 }
 
 

@@ -21,6 +21,13 @@ InputControl <- R6::R6Class("InputControl",
     #' @return A new instance of the InputControl class.
     #' 
     initialize = function(args) {
+      
+      if (!is.null(args$splineomics) &&
+          inherits(args$splineomics, "SplineOmics")) {
+        args <- c(args, args$splineomics)
+        args$splineomics <- NULL 
+      }
+      
       self$args <- args
     },
     
@@ -822,7 +829,8 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_report_dir = function() {
       
-      report_dir <- self$args$report_dir
+      report_dir <- self$args[["report_dir"]]
+      
       if (is.null(report_dir)) {
         # some functions just have a different name.
         report_dir <- self$args$output_dir  
@@ -953,7 +961,7 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_report_info = function() {
       
-      report_info <- self$args$report_info
+      report_info <- self$args[["report_info"]]
       
       required_args <- list(report_info)
       
@@ -1063,7 +1071,7 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_report = function() {
       
-      report <- self$args$report
+      report <- self$args[["report"]]
       
       required_args <- list(report)
       

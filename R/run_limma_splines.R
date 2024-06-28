@@ -20,17 +20,8 @@
 #' multiple 
 #' degrees of freedom corresponding to the factors under investigation.
 #'
-#' @param data A dataframe containing the expression data, 
-#'             where rows represent features (e.g., genes) and columns represent 
-#'             samples. 
-#' @param meta A dataframe containing the metadata for the samples, 
-#'             must include a column for each factor in `factors`.
-#' @param design A character string specifying the design formula for the Limma 
-#' model.
-#' @param condition The name of the factor column of meta. The factor divides
-#' the experiment into different levels (unique elements of the factor column). 
-#' @param spline_params A named list, specifying the parameters for the splines,
-#' such as type (ns or B-splines, dof, knots, etc).
+#' @param splineomics A SplineOmics object, containing data, meta, design, 
+#'                    condition, and spline_params.
 #' @param padjust_method A character string specifying the method for adjusting 
 #'                       p-values for multiple testing. Defaults to "BH" 
 #'                       (Benjamini-Hochberg).
@@ -58,14 +49,13 @@
 #' 
 #' @export
 #' 
-run_limma_splines <- function(data,
-                              meta,
-                              design,
-                              condition, 
-                              spline_params = list(spline_type = c("n"),
-                                                   dof = c(2L)),
-                              padjust_method = "BH") {
+run_limma_splines <- function(
+    splineomics,
+    padjust_method = "BH"
+    ) {
   
+  design <- splineomics[["design"]]
+  condition <- splineomics[["condition"]]
   mode <- determine_analysis_mode(design,
                                   condition)
   
@@ -74,6 +64,10 @@ run_limma_splines <- function(data,
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
+  
+  data <- splineomics[["data"]]
+  meta <- splineomics[["meta"]]
+  spline_params <- splineomics[["spline_params"]]
 
   matrix_and_feature_names <- process_data(data)
   data <- matrix_and_feature_names$data
@@ -127,15 +121,22 @@ run_limma_splines <- function(data,
         result$condition_time
     }
   } else { # mode == "isolated"
-    message(paste0("mode == 'integrated' necessary for between level ",
-                 "comparisons. Returning emtpy lists for ttslc_factor_only ",
-                 "and ttslc_factor_time (ttslc means 'top tables level ",
+    message(paste("mode == 'integrated' necessary for between level",
+                 "comparisons. Returning emtpy lists for ttslc_factor_only",
+                 "and ttslc_factor_time (ttslc means 'top tables level",
                  "comparison')."))
   }
   
- list(time_effect = within_level_top_table, 
-      avrg_diff_conditions = between_level_condition_only,
-      interaction_condition_time = between_level_condition_time)
+ limma_splines_result <- list(
+   time_effect = within_level_top_table, 
+   avrg_diff_conditions = between_level_condition_only,
+   interaction_condition_time = between_level_condition_time
+   )
+ 
+ splineomics <- update_splineomics(
+   splineomics,
+   limma_splines_result = limma_splines_result
+ )
 }
 
 

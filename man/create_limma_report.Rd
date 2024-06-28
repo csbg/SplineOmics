@@ -4,26 +4,21 @@
 \alias{create_limma_report}
 \title{Create a limma report}
 \usage{
-create_limma_report(
-  run_limma_splines_result,
-  report_info,
-  adj_pthresh = 0.05,
-  report_dir = here::here()
-)
+create_limma_report(splineomics, adj_pthresh = 0.05, report_dir = here::here())
 }
 \arguments{
+\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold 
+for significance. Default is 0.05.}
+
+\item{report_dir}{A string specifying the directory where the report should 
+be saved. Default is the current working directory.}
+
 \item{run_limma_splines_result}{A list containing the results of the LIMMA 
 analysis with splines. It should have three components: `time_effect`, 
 `avrg_diff_conditions`, and `interaction_condition_time`.}
 
 \item{report_info}{A list containing metadata and other information to be 
 included in the report.}
-
-\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold 
-for significance. Default is 0.05.}
-
-\item{report_dir}{A string specifying the directory where the report should 
-be saved. Default is the current working directory.}
 }
 \value{
 A list of plots included in the generated HTML report.
