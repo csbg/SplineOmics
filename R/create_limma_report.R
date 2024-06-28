@@ -43,10 +43,13 @@
 #' 
 #' @export
 #' 
-create_limma_report <- function(run_limma_splines_result,
-                                report_info,
-                                adj_pthresh = 0.05,
-                                report_dir = here::here()) {
+create_limma_report <- function(
+    # run_limma_splines_result,
+    # report_info,
+    splineomics,
+    adj_pthresh = 0.05,
+    report_dir = here::here()
+    ) {
   
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -54,11 +57,13 @@ create_limma_report <- function(run_limma_splines_result,
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
+  limma_splines_result <- splineomics[["limma_splines_result"]]
+  report_info <- splineomics[["report_info"]]
+  
   # Get the top_tables of the three limma analysis categories
-  time_effect <- run_limma_splines_result$time_effect
-  avrg_diff_conditions <- run_limma_splines_result$avrg_diff_conditions
-  interaction_condition_time <- 
-    run_limma_splines_result$interaction_condition_time
+  time_effect <- limma_splines_result$time_effect
+  avrg_diff_conditions <- limma_splines_result$avrg_diff_conditions
+  interaction_condition_time <- limma_splines_result$interaction_condition_time
   
   plots <- list()
   plots_sizes <- list()

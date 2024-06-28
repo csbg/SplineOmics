@@ -64,19 +64,23 @@ report_info <- list(
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX")
 
-condition <- "Phase"
-meta_batch_column <- "Reactor"
+splineomics <- create_splineomics(
+  data = data,
+  meta = meta,
+  report_info = report_info,
+  condition = "Phase",
+  meta_batch_column = "Reactor"
+)
+
+
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-# plots <- explore_data(data = data,
-#                       meta = meta,
-#                       condition = condition,
-#                       report_info = report_info,
-#                       meta_batch_column = meta_batch_column,
-#                       meta_batch2_column = NA,
-#                       report_dir = report_dir,
-#                       report = TRUE)
+# plots <- explore_data(
+#   splineomics,
+#   report_dir = report_dir,
+#   report = TRUE
+#   )
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -118,28 +122,30 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 
 ## Run limma splines -----------------------------------------------------------
-design <- "~ 1 + Phase*X + Reactor"          # Chosen limma design
-# design <- "~ 1 + X + Reactor"
 
-spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                     dof = c(2L))
+splineomics <- update_splineomics(
+  splineomics = splineomics,
+  design = "~ 1 + Phase*X + Reactor",
+  data = data2,
+  meta = meta2,
+  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                       dof = c(2L))
+)
 
+# debug(run_limma_splines)
 # Run the limma spline analysis
-result <- run_limma_splines(data, 
-                            meta, 
-                            design, 
-                            spline_params = spline_params,
-                            condition)
-
-top_tables1 <- result$time_effect
-top_tables2 <- result$avrg_diff_conditions 
-top_tables3 <- result$interaction_condition_time
+splineomics <- run_limma_splines(
+  splineomics
+  )
 
 report_dir <- here::here("results", "limma_reports")
 
-# create_limma_report(run_limma_splines_result = result,
-#                     report_info = report_info,
-#                     report_dir = report_dir)
+create_limma_report(
+  # run_limma_splines_result = result,
+  # report_info = report_info,
+  splineomics,
+  report_dir = report_dir
+  )
 
 
 
@@ -148,23 +154,20 @@ adj_pthresholds <- c(0.05, 0.05)
 clusters <- list(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")
 
-combo_list <- list(top_tables1, top_tables1)
+# combo_list <- list(top_tables1, top_tables1)
 
-# debug(cluster_hits)
-clustering_results <- cluster_hits(top_tables = top_tables1, 
-                                   data = data, 
-                                   meta = meta, 
-                                   design = design,
-                                   condition = condition, 
-                                   spline_params = spline_params,
-                                   adj_pthresholds = adj_pthresholds,
-                                   clusters = clusters,
-                                   report_info = report_info,
-                                   genes = genes,
-                                   meta_batch_column = meta_batch_column,
-                                   # meta_batch2_column = meta_batch2_column,
-                                   report_dir = report_dir,
-                                   report = TRUE)
+
+
+debug(cluster_hits)
+clustering_results <- cluster_hits(
+  splineomics = splineomics,
+  analysis_type = "time_effect",
+  # top_tables = top_tables1, 
+  adj_pthresholds = adj_pthresholds,
+  clusters = clusters,
+  genes = genes,
+  report_dir = report_dir,
+  )
 
 
 

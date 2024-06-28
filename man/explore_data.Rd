@@ -4,30 +4,12 @@
 \alias{explore_data}
 \title{Generate Exploratory Plots}
 \usage{
-explore_data(
-  data,
-  meta,
-  condition,
-  report_info,
-  meta_batch_column = NA,
-  meta_batch2_column = NA,
-  report_dir = here::here(),
-  report = TRUE
-)
+explore_data(splineomics, report_dir = here::here(), report = TRUE)
 }
 \arguments{
-\item{data}{A dataframe containing the data.}
-
-\item{meta}{A dataframe containing metadata corresponding to the `data`.}
-
-\item{condition}{A character string specifying the condition (column of meta)}
-
-\item{report_info}{A named list containing report information.}
-
-\item{meta_batch_column}{A character string specifying the meta batch column.}
-
-\item{meta_batch2_column}{A character string specifying the meta batch2
-column.}
+\item{splineomics}{A SplineOmics object, containing the data, meta, 
+condition, report_info, meta_batch_column, and
+meta_batch2_column;}
 
 \item{report_dir}{A non-empty string specifying the report directory.}
 

@@ -15,13 +15,9 @@
 #' of exploratory plots including density plots, boxplots, PCA plots, MDS plots, 
 #' variance explained plots, and violin plots.
 #'
-#' @param data A dataframe containing the data.
-#' @param meta A dataframe containing metadata corresponding to the `data`.
-#' @param condition A character string specifying the condition (column of meta)
-#' @param report_info A named list containing report information.
-#' @param meta_batch_column A character string specifying the meta batch column.
-#' @param meta_batch2_column A character string specifying the meta batch2
-#'                           column.
+#' @param splineomics A SplineOmics object, containing the data, meta, 
+#'                    condition, report_info, meta_batch_column, and
+#'                    meta_batch2_column;
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param report A Boolean TRUE or FALSE value, specifying if a report should
 #'               be generated or not. A report is generated per default, but
@@ -32,21 +28,27 @@
 #'
 #' @export
 #' 
-explore_data <- function(data,
-                         meta,
-                         condition,
-                         report_info,
-                         meta_batch_column = NA,
-                         meta_batch2_column = NA,
-                         report_dir = here::here(),
-                         report = TRUE) {
+explore_data <- function(
+    splineomics,
+    report_dir = here::here(),
+    report = TRUE
+    ) {
 
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-
+  
+  
+  data <- splineomics[["data"]]
+  meta <- splineomics[["meta"]]
+  condition <- splineomics[["condition"]]
+  report_info <- splineomics[["report_info"]]
+  meta_batch_column <- splineomics[["meta_batch_column"]]
+  meta_batch2_column <- splineomics[["meta_batch2_column"]]
+  
+  
   data_report <- rownames_to_column(data, var = "Feature_name")
   
   matrix_and_feature_names <- process_data(data)
@@ -203,10 +205,12 @@ generate_explore_plots <- function(data,
 #'
 #' @return None. This function writes the HTML content to the specified file.
 #' 
-build_explore_data_report <- function(header_section, 
-                                      plots, 
-                                      plots_sizes, 
-                                      output_file_path) {  
+build_explore_data_report <- function(
+    header_section, 
+    plots, 
+    plots_sizes, 
+    output_file_path
+    ) {  
 
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
@@ -219,22 +223,26 @@ build_explore_data_report <- function(header_section,
   just_plots <- plots %>% purrr::discard(~ is.character(.))
   pb <- create_progress_bar(just_plots)
   
-  plot_names <- c("Density Plots", 
-                  "Violin Box Plots",
-                  "PCA ", 
-                  "MDS",
-                  "Correlation Heatmaps",
-                  "t-SNE Plot",
-                  "Mean Time Correlation",
-                  "Lag1 Differences",
-                  "First Lag Autocorrelation",
-                  "Coefficient of Variation")
+  plot_names <- c(
+    "Density Plots", 
+    "Violin Box Plots",
+    "PCA ", 
+    "MDS",
+    "Correlation Heatmaps",
+    "t-SNE Plot",
+    "Mean Time Correlation",
+    "Lag1 Differences",
+    "First Lag Autocorrelation",
+    "Coefficient of Variation"
+    )
   
   plot_explanations <- get_explore_plots_explanations()
   
-  major_headers <- c("Distribution and Variability Analysis", 
-                     "Dimensionality Reduction and Clustering",
-                     "Time Series Analysis")
+  major_headers <- c(
+    "Distribution and Variability Analysis", 
+    "Dimensionality Reduction and Clustering",
+    "Time Series Analysis"
+    )
   
   major_header_style <- 
     "font-size: 6em; font-family: Arial, sans-serif; text-align: center;"
@@ -287,13 +295,17 @@ build_explore_data_report <- function(header_section,
       
       section_id <- paste0("section_", toc_index)
       toc <- 
-        paste(toc, 
-              sprintf(
-                '<li style="margin-left: 20px;%s"><a href="#%s">%s</a></li>', 
-                toc_style, 
-                section_id,
-                plot_names[toc_index]), 
-              sep = "\n")
+        paste(
+          toc, 
+          sprintf(
+            paste0(
+              '<li style="margin-left: 20px; font-size: 30px;">',
+              '<a href="#%s">%s</a></li>'
+            ), 
+            section_id,
+            plot_names[toc_index]), 
+          sep = "\n"
+          )
       
       section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>', 
                                 section_id, 

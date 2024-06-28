@@ -9,31 +9,11 @@ p-value to every feature of a time series omics dataset, to find out which
 features are significantly changed over the time course.
 Run Limma Analysis with Spline Interpolation for Hyperparameter Screening}
 \usage{
-run_limma_splines(
-  data,
-  meta,
-  design,
-  condition,
-  spline_params = list(spline_type = c("n"), dof = c(2L)),
-  padjust_method = "BH"
-)
+run_limma_splines(splineomics, padjust_method = "BH")
 }
 \arguments{
-\item{data}{A dataframe containing the expression data, 
-where rows represent features (e.g., genes) and columns represent 
-samples.}
-
-\item{meta}{A dataframe containing the metadata for the samples, 
-must include a column for each factor in `factors`.}
-
-\item{design}{A character string specifying the design formula for the Limma 
-model.}
-
-\item{condition}{The name of the factor column of meta. The factor divides
-the experiment into different levels (unique elements of the factor column).}
-
-\item{spline_params}{A named list, specifying the parameters for the splines,
-such as type (ns or B-splines, dof, knots, etc).}
+\item{splineomics}{A SplineOmics object, containing data, meta, design, 
+condition, and spline_params.}
 
 \item{padjust_method}{A character string specifying the method for adjusting 
 p-values for multiple testing. Defaults to "BH" 
