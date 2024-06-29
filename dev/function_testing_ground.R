@@ -158,7 +158,7 @@ report_dir <- here::here("results", "clustering_reports")
 
 
 
-debug(cluster_hits)
+# debug(cluster_hits)
 clustering_results <- cluster_hits(
   splineomics = splineomics,
   analysis_type = "time_effect",
