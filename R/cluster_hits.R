@@ -1743,7 +1743,7 @@ build_cluster_hits_report <- function(header_section,
         ),
         "6" = paste(
           "<h2 id='section6' style='text-align: center; font-size: 3.5em;'>",
-          "Individual Significant Features Splines</h2>"
+          "Individual Significant Features (Hits) Splines</h2>"
         )
       )
       

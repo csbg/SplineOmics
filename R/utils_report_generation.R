@@ -40,21 +40,23 @@
 #' @importFrom grDevices dev.off
 #' @importFrom htmltools save_html
 #' 
-generate_report_html <- function(plots, 
-                                 plots_sizes, 
-                                 report_info,
-                                 data = NA,
-                                 meta = NA,
-                                 topTables = NA,
-                                 enrichr_format = NA,
-                                 level_headers_info = NA,
-                                 spline_params = NA,
-                                 report_type = "explore_data",
-                                 mode = NA,
-                                 filename = "report",
-                                 timestamp = format(Sys.time(), 
-                                                    "%d_%m_%Y-%H_%M_%S"),
-                                 report_dir = here::here()) {
+generate_report_html <- function(
+    plots, 
+    plots_sizes, 
+    report_info,
+    data = NA,
+    meta = NA,
+    topTables = NA,
+    enrichr_format = NA,
+    level_headers_info = NA,
+    spline_params = NA,
+    report_type = "explore_data",
+    mode = NA,
+    filename = "report",
+    timestamp = format(Sys.time(), 
+                      "%d_%m_%Y-%H_%M_%S"),
+    report_dir = here::here()
+    ) {
 
   if (report_type == "explore_data") {
     if (filename == "explore_data") {
@@ -77,10 +79,12 @@ generate_report_html <- function(plots,
          call. = FALSE)
   }
   
-  fields_to_format <- c("data_description",
-                        "method_description",
-                        "results_summary",
-                        "conclusions")
+  fields_to_format <- c(
+    "data_description",
+    "method_description",
+    "results_summary",
+    "conclusions"
+    )
   
   for (field in fields_to_format) {
     if (field %in% names(report_info)) {
@@ -88,32 +92,39 @@ generate_report_html <- function(plots,
     }
   }
 
-  header_text <- paste(title, 
-                       report_info$omics_data_type, 
-                       timestamp, sep = " | ")
+  header_text <- paste(
+    title, 
+    paste("Omics-Datatype:", report_info$omics_data_type), 
+    paste("Date-Time:", timestamp), sep = " | "
+    )
+  header_text <- paste(header_text, "<br><br><br>")
   
-  header_section <- get_header_section(title = title,
-                                       header_text = header_text,
-                                       report_type = report_type)
+  header_section <- get_header_section(
+    title = title,
+    header_text = header_text,
+    report_type = report_type
+    )
   
   # Define the fields
-  all_fields <- c("omics_data_type",
-                  "data_description", 
-                  "data_collection_date",
-                  "data",
-                  "meta",
-                  "limma_topTables",
-                  "Enrichr_clustered_genes",
-                  "Enrichr_background",
-                  "meta_condition",
-                  "meta_batch",
-                  "limma_design",
-                  "analyst_name", 
-                  "contact_info",
-                  "project_name",
-                  "method_description",
-                  "results_summary", 
-                  "conclusions")
+  all_fields <- c(
+    "omics_data_type",
+    "data_description", 
+    "data_collection_date",
+    "data",
+    "meta",
+    "limma_topTables",
+    "Enrichr_clustered_genes",
+    "Enrichr_background",
+    "meta_condition",
+    "meta_batch",
+    "limma_design",
+    "analyst_name", 
+    "contact_info",
+    "project_name",
+    "method_description",
+    "results_summary", 
+    "conclusions"
+    )
   
   download_fields <- c()
   if (!all(is.na(data))) download_fields <- c(download_fields, "data")
@@ -131,29 +142,41 @@ generate_report_html <- function(plots,
   max_field_length <- max(nchar(gsub("_", " ", all_fields)))
   
   # Initialize sections
-  report_info_section <- "<h2>Report Info</h2><table>"
-  downloads_section <- "<h2>Downloads</h2><table>"
+  report_info_section <- paste(
+    '<hr style="border: none; height: 3px;', 
+    'background-color: #333; margin: 40px 0;', 
+    'width: 75%;"> <h2 style="font-size: 48px;">', 
+    'Report Info ℹ️</h2><table>', sep = ""
+    )
   
+  downloads_section <- paste(
+    '<hr><h2 style="font-size: 48px;">', 
+    'Downloads 📥</h2><table>'
+    )
   
   # Process Report Info fields
   for (field in report_info_fields) {
     
-    base64_df <- process_field(field,
-                               data,
-                               meta,
-                               topTables,
-                               report_info,
-                               encode_df_to_base64,
-                               report_type, 
-                               enrichr_format)
+    base64_df <- process_field(
+      field,
+      data,
+      meta,
+      topTables,
+      report_info,
+      encode_df_to_base64,
+      report_type, 
+      enrichr_format
+      )
     
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
-    report_info_section <- paste(report_info_section,
-                                 sprintf('<tr><td style="text-align: right;
-                                       color:blue; padding-right: 5px;">%s
-                                       :</td><td>%s</td></tr>',
-                                         field_display, base64_df),
-                                 sep = "\n")
+    report_info_section <- paste(
+      report_info_section,
+      sprintf('<tr><td style="text-align: right;
+           color:blue; padding-right: 5px;">%s
+           :</td><td>%s</td></tr>',
+             field_display, base64_df),
+      sep = "\n"
+      )
   }
   
   # Close the Report Info table
@@ -162,22 +185,26 @@ generate_report_html <- function(plots,
   # Process Download fields
   for (field in download_fields) {
     
-    base64_df <- process_field(field,
-                               data,
-                               meta,
-                               topTables,
-                               report_info,
-                               encode_df_to_base64,
-                               report_type,
-                               enrichr_format)
+    base64_df <- process_field(
+      field,
+      data,
+      meta,
+      topTables,
+      report_info,
+      encode_df_to_base64,
+      report_type,
+      enrichr_format
+      )
     
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
-    downloads_section <- paste(downloads_section,
-                               sprintf('<tr><td style="text-align: right;
-                                     color:blue; padding-right: 5px;">%s
-                                     :</td><td>%s</td></tr>',
-                                       field_display, base64_df),
-                               sep = "\n")
+    downloads_section <- paste(
+      downloads_section,
+      sprintf('<tr><td style="text-align: right;
+           color:blue; padding-right: 5px;">%s
+           :</td><td>%s</td></tr>',
+             field_display, base64_df),
+      sep = "\n"
+      )
   }
   
   # Close the Downloads table
@@ -221,11 +248,13 @@ generate_report_html <- function(plots,
     
   } else if (report_type == "create_limma_report") {
     
-    build_create_limma_report(header_section = header_section,
-                       plots = plots,
-                       plots_sizes = plots_sizes,
-                       level_headers_info = level_headers_info,
-                       output_file_path = output_file_path)
+    build_create_limma_report(
+      header_section = header_section,
+      plots = plots,
+      plots_sizes = plots_sizes,
+      level_headers_info = level_headers_info,
+      output_file_path = output_file_path
+      )
     
   } else if (report_type == "create_gsea_report") {
     
@@ -317,6 +346,45 @@ get_header_section <- function(title,
   
   logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
   
+  # header_section <- paste(
+  #   "<html><head><title>", title, "</title>",
+  #   "<style>",
+  #   "table {",
+  #   "  font-size: 30px;",
+  #   "}",
+  #   "td {",
+  #   "  padding: 8px;",  # Adds padding to table cells for better readability
+  #   "  text-align: left;",  # Ensures text in cells is left-aligned
+  #   "}",
+  #   "td:first-child {",
+  #   "  text-align: right;",  # Right aligns the first column
+  #   "  color: blue;",        # Sets the color of the first column to blue
+  #   "}",
+  #   "h1 {",
+  #   "  color: #333333;",  # Dark gray color for the title
+  #   "  display: flex;",
+  #   "  align-items: center;",  # Aligns items vertically in the center
+  #   "  justify-content: space-between;", # Ensures the logo is on the far right
+  #   "}",
+  #   ".logo {",
+  #   "  position: absolute;",  # Position the logo absolutely
+  #   "  top: 0;",              # Align with the top of the h1
+  #   "  right: 0;",            # Align with the right of the h1
+  #   "  width: 400px;",  # Adjust the width to make the logo smaller
+  #   "  height: auto;",  # Maintain aspect ratio
+  #   "}",
+  #   "hr {",
+  #   "  margin-top: 20px;",  # Space above the line
+  #   "  margin-bottom: 20px;",  # Space below the line
+  #   "}",
+  #   "</style>",
+  #   "</head><body>",
+  #   "<h1>", header_text, "<img src='",
+  #   logo_base64, "' alt='Logo' class='logo'></h1>",
+  #   "<table>",
+  #   sep = ""
+  # )
+  
   header_section <- paste(
     "<html><head><title>", title, "</title>",
     "<style>",
@@ -336,17 +404,18 @@ get_header_section <- function(title,
     "  display: flex;",
     "  align-items: center;",  # Aligns items vertically in the center
     "  justify-content: space-between;", # Ensures the logo is on the far right
+    "  margin-top: 0; margin-bottom: 0;",  # Reset margin to ensure no extra space
     "}",
     ".logo {",
     "  position: absolute;",  # Position the logo absolutely
-    "  top: 0;",              # Align with the top of the h1
+    "  top: 60px;",           # Adjust the top position to move the logo down
     "  right: 0;",            # Align with the right of the h1
-    "  width: 400px;",  # Adjust the width to make the logo smaller
-    "  height: auto;",  # Maintain aspect ratio
+    "  width: 400px;",        # Adjust the width to make the logo smaller
+    "  height: auto;",        # Maintain aspect ratio
     "}",
     "hr {",
-    "  margin-top: 20px;",  # Space above the line
-    "  margin-bottom: 20px;",  # Space below the line
+    "  margin-top: 20px;",    # Space above the line
+    "  margin-bottom: 20px;", # Space below the line
     "}",
     "</style>",
     "</head><body>",
@@ -356,34 +425,61 @@ get_header_section <- function(title,
     sep = ""
   )
   
-  sentence <- 
-    switch(report_type,
-           "explore_data" = paste("<p style='font-size: 2em;'>",
-                                  "This HTML report contains the exploratory",
-                                  "data analysis plots, such as density and", 
-                                  "PCA plots. <br> Right-click on ", 
-                                  "any plot in this report to save it", 
-                                  "as a .svg (vector graphic)", 
-                                  "file!</p>"),
-           "screen_limma_hyperparams" = "<p style='font-size: 2em;'></p>",
-           "create_limma_report" = 
-             paste("<p style='font-size: 2em;'>",
-                   "This HTML report contains all the",
-                   "plots visualizing the results from", 
-                   "the limma topTables. <br> Right-click on", 
-                   "any plot in this report to save it", 
-                   "as a .svg (vector graphic)", 
-                   "file!</p>"),
-           "cluster_hits" = 
-             paste("<p style='font-size: 2em;'>",
-                   "Clustering of features that show", 
-                   "significant changes over time (= hits) <br>", 
-                   "Clustering was done based on the shape",
-                   "of the spline. <br> Right-click on any plot", 
-                   "in this report to save it as a", 
-                   ".svg (vector graphic) file! <br> If one level of the", 
-                   "experiment is not shown, it means it has < 2 hits!</p>"),
-           "create_gsea_report" = "<p style='font-size: 2em;'></p>")
+  
+  
+  sentence <- switch(
+    report_type,
+    "explore_data" = paste(
+      '<div style="border: 2px solid #f00; padding: 15px;', 
+      'position: relative; margin-bottom: 20px;', 
+      'background-color: #fee; font-family: Arial,', 
+      'sans-serif; width: 65%;">',
+      '<div style="position: absolute; top: -25px;', 
+      'right: -25px; transform: rotate(45deg);', 
+      'background-color: #f00; color: #fff;', 
+      'padding: 10px 15px; font-size: 2em;', 
+      'font-weight: bold; z-index: 1;">Note!</div>',
+      '<p style="font-size: 2em;">',
+      "This HTML report contains the exploratory",
+      "data analysis plots, such as density and", 
+      "PCA plots. <br> Right-click on ", 
+      "any plot in this report to save it as a .svg (vector graphic) file!</p>",
+      '</div>'
+      ),
+    "screen_limma_hyperparams" = '<p style="font-size: 2em;"></p>',
+    "create_limma_report" = paste(
+      '<div style="border: 2px solid #f00; padding: 15px; position: relative;', 
+      'margin-bottom: 20px; background-color: #fee; font-family: Arial,', 
+      'sans-serif; width: 65%;">',
+      '<div style="position: absolute; top: -25px; right: -25px; transform:', 
+      'rotate(45deg); background-color: #f00; color: #fff; padding: 10px 15px;', 
+      'font-size: 2em; font-weight: bold; z-index: 1;">Note!</div>',
+      '<p style="font-size: 2em;">',
+      "This HTML report contains all the plots visualizing the results from", 
+      "the limma topTables. <br> Right-click on", 
+      "any plot in this report to save it as a .svg (vector graphic) file!</p>",
+      '</div>'
+      ),
+    "cluster_hits" = paste(
+      '<div style="border: 2px solid #f00; padding: 15px;', 
+      'position: relative; margin-bottom: 20px;', 
+      'background-color: #fee; font-family: Arial, sans-serif; width: 65%;">',
+      '<div style="position: absolute; top: -20px;', 
+      'right: -27px; transform: rotate(45deg);', 
+      'background-color: #f00; color: #fff; padding:', 
+      '10px 15px; font-size: 2em; font-weight: bold;', 
+      'z-index: 1;">Note!</div>',
+      '<p style="font-size: 2em;">',
+      "Clustering of features that show", 
+      "significant changes over time (= hits).<br>", 
+      "Clustering was done based on the min-max normalized shape",
+      "of the spline. <br> Right-click on any plot", 
+      "in this report to save it as a", 
+      ".svg (vector graphic) file! <br> If one level of ", 
+      "the experiment is not shown, it means it has < 2 hits!</p>",
+      '</div>'
+      ),
+    "create_gsea_report" = '<p style="font-size: 2em;"></p>')
   
   header_section <- paste(header_section,
                           "<p>", sentence, "</p>",
@@ -541,10 +637,14 @@ plot2base64 <- function(plot,
 #' 
 create_toc <- function() {
   
-  toc <- "<div id='toc' style='text-align: center; display: block; margin: auto;
-          width: 80%;'>
-        <h2 style='font-size: 40px;'>Table of Contents</h2>
-        <ul style='display: inline-block; text-align: left;'>"
+  toc <- paste("<hr style='border: none; height: 3px; background-color:
+               #333; margin: 40px 0;'>",
+               "<div id='toc' style='text-align: center; display: block; margin:
+               auto; width: 80%;'>",
+               "<h2 style='font-size: 60px;'>Table of Contents</h2>",
+               "<ul style='display: inline-block; text-align: left;'>",
+               sep = ""
+               )
 }
 
 
