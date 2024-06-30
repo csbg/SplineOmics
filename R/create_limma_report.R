@@ -31,26 +31,15 @@
 #'
 #' @importFrom stringr str_split
 #' @importFrom here here
-#'
-#' @examples
-#' \dontrun{
-#'   run_limma_splines_result <- list(time_effect = list(), 
-#'                                    avrg_diff_conditions = list(), 
-#'                                    interaction_condition_time = list())
-#'   report_info <- list(title = "LIMMA Report", author = "John Doe")
-#'   create_limma_report(run_limma_splines_result, report_info)
-#' }
 #' 
 #' @export
 #' 
 create_limma_report <- function(
-    # run_limma_splines_result,
-    # report_info,
     splineomics,
     adj_pthresh = 0.05,
     report_dir = here::here()
     ) {
-  
+
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "create_limma_report"
@@ -63,6 +52,7 @@ create_limma_report <- function(
   input_control$auto_validate()
   
   limma_splines_result <- splineomics[["limma_splines_result"]]
+  annotation <- splineomics[["annotation"]]
   report_info <- splineomics[["report_info"]]
   
   # Get the top_tables of the three limma analysis categories
@@ -116,15 +106,30 @@ create_limma_report <- function(
                       unique_values = unique_values)
   names(all_top_tables) <- new_names
   
-  generate_report_html(plots, 
-                       plots_sizes, 
-                       report_info,
-                       topTables = all_top_tables,
-                       level_headers_info = section_headers_info,
-                       report_type = "create_limma_report",
-                       filename = "create_limma_report",
-                       report_dir = report_dir)
+  # Add annotation info into the top_tables
+  for (index in seq_along(all_top_tables)) {
+    all_top_tables[[index]] <- merge_top_table_with_annotation(
+      top_table = all_top_tables[[index]],
+      annotation = annotation
+    )
+  }
+
+  generate_report_html(
+    plots, 
+    plots_sizes, 
+    report_info,
+    topTables = all_top_tables,
+    level_headers_info = section_headers_info,
+    report_type = "create_limma_report",
+    filename = "create_limma_report",
+    report_dir = report_dir
+    )
   
+  print_info_message(
+    message_prefix = "Limma report generation",
+    report_dir = report_dir
+  )
+
   return(plots)
 }
 
@@ -378,22 +383,11 @@ build_create_limma_report <- function(header_section,
     pb$tick()
   }
   
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-  
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-  
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep="\n")
-  
-  # Ensure the directory exists
-  dir_path <- dirname(output_file_path)
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-
-  writeLines(html_content, output_file_path)
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    output_file_path = output_file_path
+  )
 }
 
 

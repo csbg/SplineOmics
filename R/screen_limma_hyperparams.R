@@ -145,6 +145,11 @@ screen_limma_hyperparams <- function(
     report_dir = report_dir,
     timestamp = timestamp
     )
+  
+  print_info_message(
+    message_prefix = "limma hyperparameter screening",
+    report_dir = report_dir
+  )
 }
 
 
@@ -1456,25 +1461,11 @@ build_hyperparams_screen_report <- function(
       )
   }
   
-  # Close the HTML document
-  # html_content <- paste(header_section, "</body></html>", sep = "\n")
-  
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-  
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-  
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
-  
-  dir_path <- dirname(output_file_path)
-  
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  writeLines(html_content, output_file_path)
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    output_file_path = output_file_path
+  )
 }
 
 

@@ -4,39 +4,6 @@
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Process Data
-#'
-#' @description
-#' Converts a dataframe to a numeric matrix and extracts or generates 
-#' feature names based on row names.
-#'
-#' @param data A dataframe to be processed.
-#'
-#' @return A list with two elements: 
-#' \item{data}{A numeric matrix of the input dataframe.}
-#' \item{feature_names}{A character vector of feature names derived from 
-#' the row names or generated based on row indices.}
-#'
-process_data <- function(data) {
-  
-  if (is.null(rownames(data)) || all(rownames(data) == "")) {
-    # If no row names, create feature names based on row indices
-    feature_names <- paste0("Row", seq_len(nrow(data)))
-  } else {
-    # If row names exist, extract them
-    feature_names <- rownames(data)
-  }
-  
-  feature_names <- rownames(data)
-  data <- apply(data, 2, as.numeric)
-  
-  list(
-    data = data,
-    feature_names = feature_names
-    )
-}
-
-
 #' Create Progress Bar
 #'
 #' @description
@@ -182,4 +149,90 @@ determine_analysis_mode <- function(design,
                   "is analysed using the level specific data."))
     return("isolated")
   }
+}
+
+
+#' Merge Annotation with a Single Top Table
+#'
+#' @description
+#' This function merges annotation information into a single `top_table`
+#' dataframe based on the `feature_nr` column.
+#'
+#' @param top_table A dataframe containing the `top_table` with a `feature_nr` column.
+#' @param annotation A dataframe containing the annotation information.
+#'
+#' @return A dataframe with updated `top_table` containing merged annotation information.
+#'
+merge_top_table_with_annotation <- function(
+    top_table,
+    annotation
+) {
+  
+  top_table$feature_nr <- as.numeric(as.character(top_table$feature_nr))
+  annotation_rows <- annotation[top_table$feature_nr, ]
+  top_table <- cbind(top_table, annotation_rows)
+}
+
+
+#' Bind Data with Annotation
+#'
+#' @description
+#' This function converts a matrix to a dataframe, adds row names as the first 
+#' column,
+#' and binds it with annotation data.
+#'
+#' @param data A matrix containing the numeric data.
+#' @param annotation A dataframe containing the annotation information.
+#'
+#' @return A dataframe with `data` and `annotation` combined, and the row names
+#'  of `data`
+#' as the first column named `feature_names`.
+#'
+bind_data_with_annotation <- function(
+    data,
+    annotation
+) {
+  
+  data_df <- as.data.frame(data)
+  
+  # Check if the number of rows match (additional check, just for safety)
+  if (nrow(data_df) != nrow(annotation)) {
+    stop("The number of rows in data and annotation must be the same.",
+         call. = FALSE)
+  }
+  
+  # Add row names as the first column named feature_names
+  combined_df <- cbind(
+    feature_name = rownames(data_df),
+    data_df, annotation
+  )
+}
+
+
+#' Print Informational Message
+#'
+#' @description
+#' This function prints a nicely formatted informational message with a green "Info" label.
+#'
+#' @param message_prefix A custom message prefix to be displayed before the success message.
+#' @param report_dir The directory where the HTML reports are located.
+#'
+#' @return NULL
+#'
+print_info_message <- function(
+    message_prefix,
+    report_dir
+    ) {
+  
+  # Green color code for "Info"
+  green_info <- "\033[32mInfo\033[0m"
+  
+  full_message <- paste(
+    green_info, message_prefix, "completed successfully.\n",
+    "Your HTML reports are located in the directory: ", report_dir, ".\n",
+    "Please note that due to embedded files, the reports might be flagged as\n",
+    "harmful by other software. Rest assured that they provide no harm.\n"
+  )
+  
+  cat(full_message)
 }

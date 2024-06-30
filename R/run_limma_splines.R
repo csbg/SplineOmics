@@ -67,11 +67,10 @@ run_limma_splines <- function(
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
-
-  matrix_and_feature_names <- process_data(data)
-  data <- matrix_and_feature_names$data
-  feature_names <- matrix_and_feature_names$feature_names
   
+  feature_names <- rownames(data)
+  rownames(data) <- NULL
+
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
   
@@ -132,13 +131,19 @@ run_limma_splines <- function(
                  "comparison')."))
   }
   
- limma_splines_result <- list(
+  cat(paste(
+    "\033[32mInfo\033[0m",
+    "limma spline analysis completed successfully"
+  )
+  )
+  
+  limma_splines_result <- list(
    time_effect = within_level_top_table, 
    avrg_diff_conditions = between_level_condition_only,
    interaction_condition_time = between_level_condition_time
    )
- 
- splineomics <- update_splineomics(
+  
+  splineomics <- update_splineomics(
    splineomics,
    limma_splines_result = limma_splines_result
  )
@@ -254,16 +259,18 @@ between_level <- function(data,
 #' 
 #' @importFrom stats relevel
 #' 
-within_level <- function(level, 
-                         level_index,
-                         spline_params,
-                         data, 
-                         meta, 
-                         design, 
-                         condition, 
-                         feature_names, 
-                         padjust_method, 
-                         mode) {
+within_level <- function(
+    level, 
+    level_index,
+    spline_params,
+    data, 
+    meta, 
+    design, 
+    condition, 
+    feature_names, 
+    padjust_method, 
+    mode
+    ) {
   
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
@@ -272,26 +279,40 @@ within_level <- function(level,
   } else { # mode == "integrated"
     data_copy <- data
     meta_copy <- meta
-    meta_copy[[condition]] <- stats::relevel(meta_copy[[condition]], 
-                                             ref = level)
-    level_index <- 1L   # spline_params must be uniform across all levels for
-    # integrated mode.
+    meta_copy[[condition]] <- stats::relevel(
+      meta_copy[[condition]], 
+      ref = level
+      )
+    # spline_params must be uniform across all levels for integrated mode.
+    level_index <- 1L   
   }
   
-  result <- process_within_level(data_copy, 
-                                 meta_copy, 
-                                 design, 
-                                 condition, 
-                                 level,
-                                 spline_params,
-                                 level_index, 
-                                 padjust_method)
+  result <- process_within_level(
+    data_copy, 
+    meta_copy, 
+    design, 
+    condition, 
+    level,
+    spline_params,
+    level_index, 
+    padjust_method
+    )
 
-  top_table <- process_top_table(result, 
-                                 feature_names)
+  top_table <- process_top_table(
+    result, 
+    feature_names
+    )
   
-  results_name <- paste(condition, level, sep = "_")
-  list(name = results_name, top_table = top_table)
+  results_name <- paste(
+    condition,
+    level,
+    sep = "_"
+    )
+  
+  list(
+    name = results_name,
+    top_table = top_table
+    )
 }
 
 
@@ -315,13 +336,18 @@ within_level <- function(level,
 #' 
 #' @importFrom stats coef
 #' 
-process_top_table <- function(top_table_and_fit, 
-                              feature_names) {
-  
+process_top_table <- function(
+    top_table_and_fit, 
+    feature_names
+    ) {
+
   top_table <- top_table_and_fit$top_table
   fit <- top_table_and_fit$fit
   
-  top_table <- modify_limma_top_table(top_table, feature_names)
+  top_table <- modify_limma_top_table(
+    top_table,
+    feature_names
+    )
   
   intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
   intercepts_ordered <- intercepts[match(top_table$feature_nr, 
@@ -364,19 +390,23 @@ process_top_table <- function(top_table_and_fit,
 #' @importFrom limma eBayes
 #' @importFrom limma topTable
 #' 
-process_within_level <- function(data,
-                                 meta,
-                                 design,
-                                 factor,
-                                 level,
-                                 spline_params,
-                                 level_index,
-                                 padjust_method) {
+process_within_level <- function(
+    data,
+    meta,
+    design,
+    factor,
+    level,
+    spline_params,
+    level_index,
+    padjust_method
+    ) {
 
-  design_matrix <- design2design_matrix(meta,
-                                        spline_params,
-                                        level_index,
-                                        design)
+  design_matrix <- design2design_matrix(
+    meta,
+    spline_params,
+    level_index,
+    design
+    )
   
   fit <- limma::lmFit(data, design_matrix)
   fit <- limma::eBayes(fit)
@@ -389,7 +419,10 @@ process_within_level <- function(data,
 
   attr(top_table, "adjust.method") <- padjust_method
   
-  list(top_table = top_table, fit = fit)
+  list(
+    top_table = top_table,
+    fit = fit
+    )
 }
 
 
@@ -413,8 +446,10 @@ process_within_level <- function(data,
 #' @importFrom tidyr as_tibble
 #' @importFrom dplyr relocate last_col mutate
 #' 
-modify_limma_top_table <- function(top_table, 
-                                   feature_names) {
+modify_limma_top_table <- function(
+    top_table, 
+    feature_names
+    ) {
 
   top_table <- tidyr::as_tibble(top_table, rownames = "feature_nr")
   

@@ -29,14 +29,16 @@
 #' 
 #' @export
 #' 
-create_gsea_report <- function(levels_clustered_hits,
-                               genes,
-                               databases,
-                               report_info,
-                               params = NA,
-                               plot_titles = NA,
-                               background = NULL,
-                               report_dir = here::here()) {
+create_gsea_report <- function(
+    levels_clustered_hits,
+    genes,
+    databases,
+    report_info,
+    params = NA,
+    plot_titles = NA,
+    background = NULL,
+    report_dir = here::here()
+    ) {
 
   # Check report_info and report_dir
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -90,6 +92,11 @@ create_gsea_report <- function(levels_clustered_hits,
                        filename = "create_gsea_report",
                        report_dir = report_dir)
   
+  print_info_message(
+    message_prefix = "Gene set enrichment analysis",
+    report_dir = report_dir
+  )
+
   return(plots)
 }
 
@@ -306,23 +313,11 @@ build_create_gsea_report <- function(header_section,
     pb$tick()
   }
   
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-  
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-  
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
-  
-  # Ensure the directory exists
-  dir_path <- dirname(output_file_path)
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  # Write the HTML content to file
-  writeLines(html_content, output_file_path)
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    output_file_path = output_file_path
+  )
 }
 
 

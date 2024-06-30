@@ -44,7 +44,7 @@ generate_report_html <- function(
     plots, 
     plots_sizes, 
     report_info,
-    data = NA,
+    data = NULL,
     meta = NA,
     topTables = NA,
     enrichr_format = NA,
@@ -58,7 +58,9 @@ generate_report_html <- function(
                       "%d_%m_%Y-%H_%M_%S"),
     report_dir = here::here()
     ) {
-
+  
+  feature_names_formula <- NA
+  
   if (report_type == "explore_data") {
     if (filename == "explore_data") {
       title <- "explore data"
@@ -67,10 +69,14 @@ generate_report_html <- function(
     }
   } else if (report_type == "screen_limma_hyperparams") {
     title <- paste("hyperparams screen |", filename)
+    
   } else if (report_type == "create_limma_report") {
     title <- "limma report"
+    
   } else if (report_type == "cluster_hits") {                         
     title <- paste("clustered hits |", analysis_type)
+    feature_names_formula <- generate_feature_name_template(data)
+    
   } else if (report_type == "create_gsea_report") {                         
     title <- "gsea"
     
@@ -103,19 +109,14 @@ generate_report_html <- function(
   header_section <- get_header_section(
     title = title,
     header_text = header_text,
-    report_type = report_type
+    report_type = report_type,
+    feature_names_formula = feature_names_formula
     )
   
-  # Define the fields
-  all_fields <- c(
+  report_info_fields <- c(
     "omics_data_type",
     "data_description", 
     "data_collection_date",
-    "data",
-    "meta",
-    "limma_topTables",
-    "Enrichr_clustered_genes",
-    "Enrichr_background",
     "meta_condition",
     "meta_batch",
     "limma_design",
@@ -126,23 +127,33 @@ generate_report_html <- function(
     "results_summary", 
     "conclusions"
     )
-  
+
   download_fields <- c()
-  if (!all(is.na(data))) download_fields <- c(download_fields, "data")
-  if (!all(is.na(meta))) download_fields <- c(download_fields, "meta")
-  if (!all(is.na(topTables))) download_fields <- c(download_fields,
-                                                   "limma_topTables")
+  if (!is.null(data)) download_fields <- c(
+    download_fields,
+    "data_with_annotation"
+    )
+  
+  if (!all(is.na(meta))) download_fields <- c(
+    download_fields,
+    "meta"
+    )
+  
+  if (!all(is.na(topTables))) download_fields <- c(
+    download_fields,
+    "limma_topTables"
+    )
+  
   if (!all(is.na(enrichr_format))) {
-    download_fields <- c(download_fields,
-                         "Enrichr_clustered_genes",
-                         "Enrichr_background")
+    download_fields <- c(
+      download_fields,
+      "Enrichr_clustered_genes",
+      "Enrichr_background"
+      )
   }
   
-  report_info_fields <- setdiff(all_fields, download_fields)
+  max_field_length <- max(nchar(gsub("_", " ", report_info_fields)))
   
-  max_field_length <- max(nchar(gsub("_", " ", all_fields)))
-  
-  # Initialize sections
   report_info_section <- paste(
     '<hr style="border: none; height: 3px;', 
     'background-color: #333; margin: 40px 0;', 
@@ -154,10 +165,9 @@ generate_report_html <- function(
     '<hr><h2 style="font-size: 48px;">', 
     'Downloads 📥</h2><table>'
     )
-  
-  # Process Report Info fields
+
   for (field in report_info_fields) {
-    
+
     base64_df <- process_field(
       field,
       data,
@@ -183,9 +193,8 @@ generate_report_html <- function(
   # Close the Report Info table
   report_info_section <- paste(report_info_section, "</table>", sep = "\n")
   
-  # Process Download fields
   for (field in download_fields) {
-    
+
     base64_df <- process_field(
       field,
       data,
@@ -285,7 +294,98 @@ generate_report_html <- function(
 }
 
 
+#' Generate and Write HTML Content with Table of Contents
+#'
+#' @description
+#' This function generates HTML content by inserting a table of contents (TOC) 
+#' at a specified placeholder and writes the final HTML content to an output file.
+#'
+#' @param toc The HTML string representing the table of contents.
+#' @param html_content The initial HTML content containing a placeholder for the TOC.
+#' @param output_file_path The file path where the final HTML content will be written.
+#'
+#' @return NULL
+#'
+generate_and_write_html <- function(
+    toc,
+    html_content,
+    output_file_path
+    ) {
+  
+  output_file_path <- normalizePath(output_file_path, mustWork = FALSE)
+  
+  # Close the Table of Contents
+  toc <- paste(toc, "</ul></div>", sep = "\n")
+  
+  # Insert the Table of Contents at the placeholder
+  html_content <- gsub("<!--TOC-->", toc, html_content)
+  
+  # Append a horizontal line after the TOC
+  html_content <- gsub("</ul></div>", "</ul></div>\n<hr>", html_content)
+  
+  # Append the final closing tags for the HTML body and document
+  html_content <- paste(html_content, "</body></html>", sep = "\n")
+  
+  # Ensure the directory exists
+  dir_path <- dirname(output_file_path)
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+  }
+  
+  writeLines(html_content, output_file_path)
+}
+
+
+
 # Level 2 internal functions ---------------------------------------------------
+
+
+#' Generate Column Headers String from Feature Name
+#'
+#' @description
+#' This function takes a dataframe as input and returns a string that replaces the values
+#' in the `feature_name` column of the first row with their respective column headers.
+#'
+#' @param df A dataframe containing a column called `feature_name`.
+#'
+#' @return A string in the format of the value in `feature_name` but containing
+#' the column headers instead of the values.
+#'
+generate_feature_name_template <- function(df) {
+
+  # Ensure the dataframe contains the feature_name column
+  if (!"feature_name" %in% colnames(df)) {
+    stop(
+      "The dataframe must contain a column named 'feature_name'",
+      call. = FALSE
+    )
+  }
+  
+  # Extract the feature_name from the first row
+  feature_name_value <- df$feature_name[1]
+  
+  # Split the feature_name value into its components
+  feature_name_parts <- strsplit(feature_name_value, "_")[[1]]
+  
+  # Initialize an empty vector to store the column headers
+  column_headers <- vector()
+  
+  # Iterate over the parts and find corresponding column headers
+  for (part in feature_name_parts) {
+    # Find columns that match the part perfectly, excluding the feature_name column
+    matching_columns <- which(sapply(df[1, ],
+                                     function(x) identical(x, part)) 
+                              & colnames(df) != "feature_name")
+    if (length(matching_columns) > 0) {
+      column_headers <- c(column_headers, colnames(df)[matching_columns])
+    } else {
+      column_headers <- c(column_headers, part)
+    }
+  }
+  
+  # Combine the column headers into a single string with underscores
+  result_string <- paste(column_headers, collapse = "_")
+}
 
 
 #' Format text
@@ -342,9 +442,12 @@ format_text <- function(text) {
 #'
 #' @importFrom base64enc dataURI
 #' 
-get_header_section <- function(title,
-                               header_text,
-                               report_type) {
+get_header_section <- function(
+    title,
+    header_text,
+    report_type,
+    feature_names_formula
+    ) {
   
   if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
     logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
@@ -354,46 +457,7 @@ get_header_section <- function(title,
   }
   
   logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
-  
-  # header_section <- paste(
-  #   "<html><head><title>", title, "</title>",
-  #   "<style>",
-  #   "table {",
-  #   "  font-size: 30px;",
-  #   "}",
-  #   "td {",
-  #   "  padding: 8px;",  # Adds padding to table cells for better readability
-  #   "  text-align: left;",  # Ensures text in cells is left-aligned
-  #   "}",
-  #   "td:first-child {",
-  #   "  text-align: right;",  # Right aligns the first column
-  #   "  color: blue;",        # Sets the color of the first column to blue
-  #   "}",
-  #   "h1 {",
-  #   "  color: #333333;",  # Dark gray color for the title
-  #   "  display: flex;",
-  #   "  align-items: center;",  # Aligns items vertically in the center
-  #   "  justify-content: space-between;", # Ensures the logo is on the far right
-  #   "}",
-  #   ".logo {",
-  #   "  position: absolute;",  # Position the logo absolutely
-  #   "  top: 0;",              # Align with the top of the h1
-  #   "  right: 0;",            # Align with the right of the h1
-  #   "  width: 400px;",  # Adjust the width to make the logo smaller
-  #   "  height: auto;",  # Maintain aspect ratio
-  #   "}",
-  #   "hr {",
-  #   "  margin-top: 20px;",  # Space above the line
-  #   "  margin-bottom: 20px;",  # Space below the line
-  #   "}",
-  #   "</style>",
-  #   "</head><body>",
-  #   "<h1>", header_text, "<img src='",
-  #   logo_base64, "' alt='Logo' class='logo'></h1>",
-  #   "<table>",
-  #   sep = ""
-  # )
-  
+
   header_section <- paste(
     "<html><head><title>", title, "</title>",
     "<style>",
@@ -433,8 +497,6 @@ get_header_section <- function(title,
     "<table>",
     sep = ""
   )
-  
-  
   
   sentence <- switch(
     report_type,
@@ -486,14 +548,24 @@ get_header_section <- function(title,
       "in this report to save it as a", 
       ".svg (vector graphic) file! <br> If one level of ", 
       "the experiment is not shown, it means it has < 2 hits!</p>",
+      paste(
+        '<span style="font-size:1.3em;">',
+        'feature_name "formula": ', 
+        '{annotation-column-x}_{annotation-column-y}_ ... :', 
+        '<br><b>', 
+        feature_names_formula, 
+        '</b></span>'
+      ),
       '</div>'
       ),
     "create_gsea_report" = '<p style="font-size: 2em;"></p>')
   
-  header_section <- paste(header_section,
-                          "<p>", sentence, "</p>",
-                          "</body></html>",
-                          sep = "")
+  header_section <- paste(
+    header_section,
+    "<p>", sentence, "</p>",
+    "</body></html>",
+    sep = ""
+    )
   
   return(header_section)
 }
@@ -723,19 +795,21 @@ process_plots <- function(plots,
 #'
 #' @importFrom base64enc base64encode
 #' 
-process_field <- function(field,
-                          data,
-                          meta,
-                          topTables,
-                          report_info,
-                          encode_df_to_base64,
-                          report_type,
-                          enrichr_format) {
-
-  if (field == "data" && !any(is.na(data)))  {
-
+process_field <- function(
+    field,
+    data,
+    meta,
+    topTables,
+    report_info,
+    encode_df_to_base64,
+    report_type,
+    enrichr_format
+    ) {
+  
+  if (field == "data_with_annotation")  {
     base64_df <- sprintf('<a href="%s" download="data.xlsx">
-                         <button>Download data.xlsx</button></a>', 
+                         <button>Download data_with_annotation.xlsx
+                         </button></a>', 
                          encode_df_to_base64(data))
     
   } else if (field == "meta" &&
