@@ -6,6 +6,7 @@ devtools::load_all()
 
 library(readxl)
 library(conflicted)
+library(dplyr)
 
 # interactive_demo()
 
@@ -22,6 +23,10 @@ library(conflicted)
 data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
 
 meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
+
+annotation <- data_excel %>%
+  select(39:ncol(data_excel)) %>%  
+  dplyr::slice(-c(1:3))  
 
 
 # Get the gene list ------------------------------------------------------------
@@ -68,6 +73,7 @@ report_info <- list(
 splineomics <- create_splineomics(
   data = data,
   meta = meta,
+  annotation = annotation,
   report_info = report_info,
   condition = "Phase",
   meta_batch_column = "Reactor"

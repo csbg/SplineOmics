@@ -48,15 +48,11 @@ explore_data <- function(
   
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
+  annotation <- splineomics[["annotation"]]
   condition <- splineomics[["condition"]]
   report_info <- splineomics[["report_info"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
-  
-  data_report <- data.frame(
-    Feature_name = rownames(data),
-    data, stringsAsFactors = FALSE
-    )
   
   matrix_and_feature_names <- process_data(data)
   data <- matrix_and_feature_names$data
@@ -104,7 +100,7 @@ explore_data <- function(
         plots = plots_and_plots_sizes$plots,
         plots_sizes = plots_and_plots_sizes$plots_sizes,
         report_info = report_info,
-        data = data_report,
+        data = bind_data_with_annotation(data, annotation),
         meta = meta,
         filename = paste0("explore_", data_name),
         timestamp = timestamp,
@@ -115,6 +111,11 @@ explore_data <- function(
     all_plots[[data_name]] <- plots_and_plots_sizes$plots
   }
   
+  print_info_message(
+    message_prefix = "Exploratory data analysis",
+    report_dir = report_dir
+  )
+
   return(all_plots)
 }
 
@@ -345,31 +346,12 @@ build_explore_data_report <- function(
     pb$tick()
   }
   
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-  
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-  
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
-  
-  # Ensure the directory exists
-  dir_path <- dirname(output_file_path)
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-  
-  # Write the HTML content to file
-  writeLines(html_content, output_file_path)
-  cat("Report written to:", normalizePath(output_file_path), "\n")
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    output_file_path = output_file_path
+  )
 }
-
-
-
-
-
-
 
 
 

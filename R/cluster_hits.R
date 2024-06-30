@@ -101,22 +101,12 @@ cluster_hits <- function(
   
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
+  annotation <- splineomics[["annotation"]]
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
   spline_params <- splineomics[["spline_params"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
-  limma_splines_result <- splineomics[["limma_splines_result"]]
-
-  # data_report <- rownames_to_column(data, var = "Feature_name")
-  data_report <- data.frame(
-    Feature_name = rownames(data),
-    data, stringsAsFactors = FALSE
-  )
-
-  # feature_names are in top_tables
-  matrix_and_feature_names <- process_data(data)
-  data <- matrix_and_feature_names$data
 
   # To set the default p-value threshold for ALL levels.
   if (is.numeric(adj_pthresholds) &&
@@ -143,36 +133,31 @@ cluster_hits <- function(
   }
   
   within_level_top_tables <-
-    filter_top_tables(top_tables = top_tables,
-                      adj_pthresholds = adj_pthresholds,
-                      meta = meta,
-                      condition = condition)
+    filter_top_tables(
+      top_tables = top_tables,
+      adj_pthresholds = adj_pthresholds,
+      meta = meta,
+      condition = condition
+      )
 
   huge_table_user_prompter(within_level_top_tables)
 
   all_levels_clustering <-
-    perform_clustering(top_tables = within_level_top_tables,
-                       clusters = clusters,
-                       meta = meta,
-                       condition = condition,
-                       spline_params = spline_params,
-                       mode = mode)
-  
-  # Add the Gene column to the limma topTable.
-  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
-    if (!is.logical(x)) {
-      x$top_table <- add_gene_column(x$top_table, genes)
-    }
-    return(x)
-  })
-  
-  
+    perform_clustering(
+      top_tables = within_level_top_tables,
+      clusters = clusters,
+      meta = meta,
+      condition = condition,
+      spline_params = spline_params,
+      mode = mode
+      )
+
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
   report_info$meta_batch <- paste(meta_batch_column,
                                   meta_batch2_column,
                                   sep = ", ")
-  
+
   if (report) {
     plots <-
       make_clustering_report(
@@ -180,12 +165,12 @@ cluster_hits <- function(
         condition = condition,
         data = data,
         meta = meta,
+        annotation = annotation,
         spline_params = spline_params,
         adj_pthresholds = adj_pthresholds,
         report_dir = report_dir,
         mode = mode,
         report_info = report_info,
-        data_report = data_report,
         design = design,
         meta_batch_column = meta_batch_column,
         meta_batch2_column = meta_batch2_column,
@@ -221,7 +206,11 @@ cluster_hits <- function(
     }
   }
   
-  
+  print_info_message(
+    message_prefix = "Clustering the hits",
+    report_dir = report_dir
+  )
+
   list(all_levels_clustering = all_levels_clustering,
        plots = plots,
        clustered_hits_levels = clustered_hits_levels)
@@ -391,12 +380,14 @@ add_gene_column <- function(df,
 #' @seealso
 #' \code{\link{process_level_cluster}}
 #'
-perform_clustering <- function(top_tables,
-                               clusters,
-                               meta,
-                               condition,
-                               spline_params,
-                               mode) {
+perform_clustering <- function(
+    top_tables,
+    clusters,
+    meta,
+    condition,
+    spline_params,
+    mode
+    ) {
 
   levels <- unique(meta[[condition]])
 
@@ -406,15 +397,19 @@ perform_clustering <- function(top_tables,
 
   }
 
-  all_levels_clustering <- mapply(process_level_cluster,
-                                  top_tables,
-                                  clusters,
-                                  levels,
-                                  MoreArgs = list(meta = meta,
-                                                  condition = condition,
-                                                  spline_params = spline_params,
-                                                  mode = mode),
-                                  SIMPLIFY = FALSE)  # Return a list
+  all_levels_clustering <- mapply(
+    process_level_cluster,
+    top_tables,
+    clusters,
+    levels,
+    MoreArgs = list(
+      meta = meta,
+      condition = condition,
+      spline_params = spline_params,
+      mode = mode
+      ),
+    SIMPLIFY = FALSE
+    )  # Return a list
 }
 
 
@@ -461,12 +456,12 @@ make_clustering_report <- function(
     condition,
     data,
     meta,
+    annotation,
     spline_params,
     adj_pthresholds,
     report_dir,
     mode,
     report_info,
-    data_report,
     design,
     meta_batch_column,
     meta_batch2_column,
@@ -650,9 +645,16 @@ make_clustering_report <- function(
     topTables[[element_name]] <- top_table_element
   }
 
-  enrichr_format <- prepare_gene_lists_for_enrichr(all_levels_clustering,
-                                                   genes)
+  enrichr_format <- prepare_gene_lists_for_enrichr(
+    all_levels_clustering,
+    genes
+    )
   
+  all_levels_clustering <- merge_annotation_all_levels_clustering(
+    all_levels_clustering = all_levels_clustering,
+    annotation = annotation
+  )
+
   print("Generating report. This takes a few seconds.")
   generate_report_html(
     plots = plots,
@@ -660,7 +662,7 @@ make_clustering_report <- function(
     level_headers_info = level_headers_info,
     spline_params = spline_params,
     report_info = report_info,
-    data = data_report,
+    data = bind_data_with_annotation(data, annotation),
     meta = meta,
     topTables = topTables,
     enrichr_format = enrichr_format,
@@ -1559,6 +1561,39 @@ plot_splines <- function(
 }
 
 
+#' Merge Annotation with All Top Tables
+#'
+#' @description
+#' This function merges annotation information into the `top_table` of each
+#' non-logical element in a list.
+#'
+#' @param all_levels_clustering A list where each element contains a `top_table`
+#' dataframe with a `feature_nr` column. Some elements may be logical values.
+#' @param annotation A dataframe containing the annotation information.
+#'
+#' @return A list with updated `top_table` dataframes containing merged 
+#' annotation information.
+#'
+merge_annotation_all_levels_clustering <- function(
+    all_levels_clustering,
+    annotation
+    ) {
+  
+  all_levels_clustering <- lapply(
+    all_levels_clustering,
+    function(x) {
+      if (!is.logical(x)) {
+        x$top_table <- merge_top_table_with_annotation(
+          x$top_table,
+          annotation
+        )
+      }
+      return(x)
+    }
+  )
+}
+
+
 #' Prepare Gene Lists for Enrichr and Return as String
 #'
 #' @description
@@ -1626,6 +1661,7 @@ prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
   return(list(gene_lists = formatted_gene_lists,
               background = background_gene_list))
 }
+
 
 
 #' Build Cluster Hits Report
@@ -1791,24 +1827,12 @@ build_cluster_hits_report <- function(
     
     pb$tick()
   }
-
-  # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep="\n")
-
-  # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
-
-  # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
-
-  # Ensure the directory exists
-  dir_path <- dirname(output_file_path)
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
-  }
-
-  # Write the HTML content to file
-  writeLines(html_content, output_file_path)
+  
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    output_file_path = output_file_path
+  )
 }
 
 

@@ -65,6 +65,7 @@ InputControl <- R6::R6Class("InputControl",
     #'
     auto_validate = function() {
       self$check_data_and_meta()
+      self$check_annotation()
       self$check_datas_and_metas()
       self$check_datas_descr()
       self$check_top_tables()
@@ -76,10 +77,11 @@ InputControl <- R6::R6Class("InputControl",
       self$check_spline_test_configs()
       self$check_adj_pthresholds()
       self$check_clusters()
-      self$check_time_unit()
+      self$check_plot_info()
       self$check_report_dir()
       self$check_padjust_method()
       self$check_report_info()
+      self$check_analysis_type()
       self$check_report()
     },
     
@@ -148,6 +150,53 @@ InputControl <- R6::R6Class("InputControl",
           stop(paste0("data column number must be equal to meta row number"),
                call. = FALSE)
         }
+      }
+    },
+    
+    
+    #' Check Annotation Consistency
+    #'
+    #' @description
+    #' This method checks the consistency of the annotation with the data. 
+    #' It ensures
+    #' that the annotation is a dataframe and that it has the same number 
+    #' of rows as the data.
+    #'
+    #' @details
+    #' The method performs the following checks:
+    #' 
+    #' * Ensures that both `annotation` and `data` are provided.
+    #' * Confirms that `annotation` is a dataframe.
+    #' * Verifies that `annotation` and `data` have the same number of rows.
+    #' 
+    #' If any of these checks fail, an informative error message is returned.
+    #'
+    #' @return NULL if any required arguments are missing. Otherwise, performs 
+    #' checks and potentially raises errors if checks fail.
+    #'
+    check_annotation = function() {
+      
+      annotation <- self$args[["annotation"]]
+      data <- self$args[["data"]]
+
+      required_args <- list(annotation, data)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.data.frame(annotation)) {
+        stop(
+          "annotation is not a dataframe but must be one!",
+          call. = FALSE
+        )
+      }
+      
+      if (nrow(annotation) != nrow(data)) {
+        stop(
+          "annotation and data don't have the same nr. of rows but must have!",
+          call. = FALSE
+          )
       }
     },
     
@@ -772,41 +821,103 @@ InputControl <- R6::R6Class("InputControl",
     },
     
     
-    #' Check Time Unit
+    #' Check Plot Info
     #'
     #' @description
-    #' This function checks if the provided time unit is valid. The valid time
-    #' units are:
-    #' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. If the
-    #' time unit
-    #' is not one of these, the function stops execution and returns an error
-    #' message.
+    #' This method checks the validity of the `plot_info` list. It ensures that 
+    #' `y_axis_label` and `time_unit` meet the length constraints, 
+    #' `treatment_labels` 
+    #' is either `NA` or a character vector with elements meeting the length 
+    #' constraint, 
+    #' and `treatment_timepoints` is either `NA` or a numeric vector with the 
+    #' same length 
+    #' as `treatment_labels`.
     #'
-    #' @param time_unit A character string specifying the time unit. Valid 
-    #' options
-    #' are
-    #' 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.
+    #' @details
+    #' The method performs the following checks:
+    #' 
+    #' * Ensures that `plot_info` is provided and not NULL.
+    #' * Confirms that `y_axis_label` is a character vector with maximally 30
+    #'  characters.
+    #' * Confirms that `time_unit` is a character vector with maximally 15 
+    #' characters.
+    #' * Validates that `treatment_labels` is either `NA` or a character vector
+    #'  with each 
+    #'   element being maximally 15 characters long.
+    #' * Validates that `treatment_timepoints` is either `NA` or a numeric 
+    #' vector with the 
+    #'   same length as `treatment_labels` if `treatment_labels` is not `NA`.
     #'
-    #' @return Returns TRUE if the time unit is valid. Stops execution and 
-    #' returns
-    #' an error message if the time unit is invalid.
+    #' If any of these checks fail, an informative error message is returned.
     #'
-    check_time_unit = function() {
+    #' @return NULL if `plot_info` is not provided or invalid. Otherwise, 
+    #' performs checks
+    #' and potentially raises errors if checks fail.
+    #'
+    check_plot_info = function() {
       
-      time_unit <- self$args$time_unit
+      plot_info <- self$args$plot_info
       
-      required_args <- list(time_unit)
+      required_args <- list(plot_info)
       
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
       
-      if (!is.character(time_unit) ||
-           length(time_unit) != 1 ||
-           nchar(time_unit) > 15) {
-        stop(paste0("time_unit must be a single character vector with", 
-                    "< 16 letters"),
-             call. = FALSE)
+      # Check y_axis_label
+      if (!is.character(plot_info$y_axis_label) ||
+          nchar(plot_info$y_axis_label) > 30) {
+        stop(
+          "y_axis_label must be a string with maximally 30 characters",
+          call. = FALSE
+          )
+      }
+      
+      # Check time_unit
+      if (!is.character(plot_info$time_unit) ||
+          nchar(plot_info$time_unit) > 15) {
+        stop(
+          "time_unit must be a string with maximally 15 characters",
+          call. = FALSE
+          )
+      }
+      
+      # Check treatment_labels
+      if (!is.na(plot_info$treatment_labels)) {
+        if (!is.character(plot_info$treatment_labels)) {
+          stop(
+            "treatment_labels must be either NA or a character vector",
+            call. = FALSE
+            )
+        }
+        if (any(nchar(plot_info$treatment_labels) > 15)) {
+          stop(
+            paste(
+              "Each element of treatment_labels must be maximally 15", 
+              "characters long"),
+            call. = FALSE
+            )
+        }
+      }
+      
+      # Check treatment_timepoints
+      if (!is.na(plot_info$treatment_timepoints)) {
+        if (!is.numeric(plot_info$treatment_timepoints)) {
+          stop(
+            "treatment_timepoints must be either NA or a numeric vector",
+            call. = FALSE
+            )
+        }
+        if (!is.na(plot_info$treatment_labels) &&
+            length(plot_info$treatment_timepoints) !=
+            length(plot_info$treatment_labels)) {
+          stop(
+            paste(
+              "treatment_timepoints must have the same length as", 
+              "treatment_labels"),
+            call. = FALSE
+            )
+        }
       }
     },
     
@@ -1064,6 +1175,58 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       return(TRUE)
+    },
+    
+    
+    #' Check Analysis Mode
+    #'
+    #' @description
+    #' This method checks the validity of the `analysis_mode` argument. 
+    #' It ensures that 
+    #' `analysis_mode` is a character vector of length 1 and that it matches
+    #'  one of the 
+    #' allowed analysis modes: "time_effect", "avrg_diff_conditions", or 
+    #' "interaction_condition_time".
+    #'
+    #' @details
+    #' The method performs the following checks:
+    #' 
+    #' * Ensures that `analysis_mode` is provided and not NULL.
+    #' * Confirms that `analysis_mode` is a character vector of length 1.
+    #' * Validates that `analysis_mode` matches one of the allowed values.
+    #'
+    #' If any of these checks fail, an informative error message is returned.
+    #'
+    #' @return NULL if `analysis_mode` is not provided or invalid. Otherwise, 
+    #' performs checks
+    #' and potentially raises errors if checks fail.
+    #'
+    check_analysis_type = function() {
+      
+      analysis_mode <- self$args[["analysis_mode"]]
+      
+      required_args <- list(analysis_mode)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      if (!is.character(analysis_mode) || length(analysis_mode) != 1) {
+        stop(
+          "analysis_mode must be a character vector of length 1",
+          call. = FALSE
+          )
+      }
+      
+      if (analysis_mode != "time_effect" ||
+          analysis_mode != "avrg_diff_conditions" ||
+          analysis_mode != "interaction_condition_time") {
+        stop(
+          "analysis_mode must be one of time_effect, avrg_diff_conditions,", 
+          "or interaction_condition_time",
+          call. = FALSE
+          )
+      }
     },
     
     
@@ -2030,51 +2193,52 @@ check_splineomics_elements <- function(
 
   required_elements <- switch(
     func_type,
-    "cluster_hits" = c(
-      "design",
-      "condition",
-      "data",
-      "meta",
-      "spline_params",
-      "meta_batch_column",
-      "meta_batch2_column",
-      "limma_splines_result"
-      ),
-    "create_limma_report" = c(
-      "limma_splines_result",
-      "report_info"
-      ),
-    "run_limma_splines" = c(
-      "design",
-      "condition",
-      "data",
-      "meta",
-      "spline_params"
-      ),
     "explore_data" = c(
       "data",
       "meta",
+      "annotation",
       "condition",
       "report_info",
-      "meta_batch_column",
-      "meta_batch2_column"
       ),
     "screen_limma_hyperparams" = c(
       "condition",
       "report_info",
-      "meta_batch_column",
-      "meta_batch2_column"
+    ),
+    "run_limma_splines" = c(
+      "data",
+      "meta",
+      "design",
+      "condition",
+      "spline_params"
+    ),
+    "create_limma_report" = c(
+      "limma_splines_result",
+      "annotation",
+      "report_info"
+    ),
+    "cluster_hits" = c(
+      "data",
+      "meta",
+      "annotation",
+      "design",
+      "condition",
+      "spline_params",
+      "limma_splines_result"
     ),
     stop("Invalid function type provided.", call. = FALSE)
     )
   
-  missing_elements <- setdiff(
-    required_elements, names(splineomics)
-    )
+  missing_elements <- required_elements[
+    !sapply(
+      splineomics[required_elements],
+      function(x) !is.null(x)
+      )
+    ]
   
   if (length(missing_elements) > 0) {
-    stop(paste("The following required elements are missing for function type",
-               func_type, ":", paste(missing_elements, collapse = ", "),
+    stop(paste("The following required elements for the function", func_type,
+               "were not passed to the SplineOmics object:",
+               paste(missing_elements, collapse = ", "),
                "\nAll required elements for", func_type, "are:",
                paste(required_elements, collapse = ", ")),
          call. = FALSE)
@@ -2095,9 +2259,14 @@ check_splineomics_elements <- function(
 #' any `NULL` elements are found in the input list.
 #'
 check_null_elements <- function(args) {
+
+  null_elements <- names(args)[sapply(args, is.null)]
   
-  if (any(sapply(args, is.null))) {
-    stop("One or more function arguments are NULL.",
-         call. = FALSE)
+  if (length(null_elements) > 0) {
+    stop(
+      paste("The following function arguments are NULL:", 
+            paste(null_elements, collapse = ", ")),
+      call. = FALSE
+    )
   }
 }
