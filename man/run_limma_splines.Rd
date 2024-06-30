@@ -20,16 +20,16 @@ p-values for multiple testing. Defaults to "BH"
 (Benjamini-Hochberg).}
 }
 \value{
-A list containing three elements: 
-        - `top_tables`: A list of top tables generated from within-level 
-        analysis 
-                        for each factor and level.
-        - `ttslc_factor_only`: A list of top tables from between-level 
-        comparisons 
-                               for each factor, excluding time effects.
-        - `ttslc_factor_time`: A list of top tables from between-level 
-        comparisons 
-                               for each factor, including time effects.
+The SplineOmics object, updated with a list with three elements: 
+        - `time_effect`: A list of top tables for each level with the time
+                         effect.
+        - `avrg_diff_conditions`: A list of top tables for each comparison
+                                 between the levels. The comparison is the 
+                                 average difference of the values.
+        - `interaction_condition_time`: A list of top tables for each 
+                                        comparison between levels. The 
+                                        comparison is the interaction between
+                                        the condition and the time.
 }
 \description{
 This function conducts differential expression analysis using the Limma 
@@ -41,11 +41,4 @@ modes
 for within-level analysis and between-level comparison, adjusting for 
 multiple 
 degrees of freedom corresponding to the factors under investigation.
-}
-\examples{
-\dontrun{
-  results <- run_limma_splines(data, meta, "~ 1 + Factor*X + Time", c(2L), 
-                               c("Factor"), c("Gene1", "Gene2"), "isolated")
-}
-
 }

@@ -51,6 +51,7 @@ generate_report_html <- function(
     level_headers_info = NA,
     spline_params = NA,
     report_type = "explore_data",
+    analysis_type = NA,  # only for cluster_hits()
     mode = NA,
     filename = "report",
     timestamp = format(Sys.time(), 
@@ -69,7 +70,7 @@ generate_report_html <- function(
   } else if (report_type == "create_limma_report") {
     title <- "limma report"
   } else if (report_type == "cluster_hits") {                         
-    title <- "clustered hits | within level"
+    title <- paste("clustered hits |", analysis_type)
   } else if (report_type == "create_gsea_report") {                         
     title <- "gsea"
     
@@ -234,17 +235,21 @@ generate_report_html <- function(
   
   if (report_type == "explore_data") {
     
-    build_explore_data_report(header_section = header_section, 
-                              plots = plots, 
-                              plots_sizes = plots_sizes, 
-                              output_file_path = output_file_path)
+    build_explore_data_report(
+      header_section = header_section, 
+      plots = plots, 
+      plots_sizes = plots_sizes, 
+      output_file_path = output_file_path
+      )
     
   } else if (report_type == "screen_limma_hyperparams") {
     
-    build_hyperparams_screen_report(header_section = header_section, 
-                                    plots = plots, 
-                                    plots_sizes = plots_sizes, 
-                                    output_file_path = output_file_path)
+    build_hyperparams_screen_report(
+      header_section = header_section, 
+      plots = plots, 
+      plots_sizes = plots_sizes, 
+      output_file_path = output_file_path
+      )
     
   } else if (report_type == "create_limma_report") {
     
@@ -258,20 +263,24 @@ generate_report_html <- function(
     
   } else if (report_type == "create_gsea_report") {
     
-    build_create_gsea_report(header_section = header_section,
-                             plots = plots,
-                             plots_sizes = plots_sizes,
-                             level_headers_info = level_headers_info,
-                             output_file_path = output_file_path)
+    build_create_gsea_report(
+      header_section = header_section,
+      plots = plots,
+      plots_sizes = plots_sizes,
+      level_headers_info = level_headers_info,
+      output_file_path = output_file_path
+      )
     
   } else {           # report_type == "cluster_hits"
-    build_cluster_hits_report(header_section = header_section, 
-                              plots = plots, 
-                              plots_sizes = plots_sizes,
-                              level_headers_info = level_headers_info,
-                              spline_params = spline_params,
-                              mode = mode,
-                              output_file_path = output_file_path)
+    build_cluster_hits_report(
+      header_section = header_section, 
+      plots = plots, 
+      plots_sizes = plots_sizes,
+      level_headers_info = level_headers_info,
+      spline_params = spline_params,
+      mode = mode,
+      output_file_path = output_file_path
+      )
   }
 }
 

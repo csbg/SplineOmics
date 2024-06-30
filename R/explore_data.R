@@ -33,7 +33,12 @@ explore_data <- function(
     report_dir = here::here(),
     report = TRUE
     ) {
-
+  
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "explore_data"
+  )
+  
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
@@ -48,8 +53,10 @@ explore_data <- function(
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
   
-  
-  data_report <- rownames_to_column(data, var = "Feature_name")
+  data_report <- data.frame(
+    Feature_name = rownames(data),
+    data, stringsAsFactors = FALSE
+    )
   
   matrix_and_feature_names <- process_data(data)
   data <- matrix_and_feature_names$data
@@ -76,27 +83,33 @@ explore_data <- function(
   
   all_plots <- list()
   report_info$meta_condition <- c(condition)
-  report_info$meta_batch <- paste(meta_batch_column, 
-                                  meta_batch2_column,
-                                  sep = ", ")
+  report_info$meta_batch <- paste(
+    meta_batch_column, 
+    meta_batch2_column,
+    sep = ", "
+    )
   timestamp = format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   for (data_name in names(data_list)) {
     
     current_data <- data_list[[data_name]]
-    plots_and_plots_sizes <- generate_explore_plots(current_data, 
-                                                    meta, 
-                                                    condition)
+    plots_and_plots_sizes <- generate_explore_plots(
+      current_data, 
+      meta, 
+      condition
+      )
     
     if (report) {
-      generate_report_html(plots = plots_and_plots_sizes$plots,
-                           plots_sizes = plots_and_plots_sizes$plots_sizes,
-                           report_info = report_info,
-                           data = data_report,
-                           meta = meta,
-                           filename = paste0("explore_", data_name),
-                           timestamp = timestamp,
-                           report_dir = report_dir)
+      generate_report_html(
+        plots = plots_and_plots_sizes$plots,
+        plots_sizes = plots_and_plots_sizes$plots_sizes,
+        report_info = report_info,
+        data = data_report,
+        meta = meta,
+        filename = paste0("explore_", data_name),
+        timestamp = timestamp,
+        report_dir = report_dir
+        )
     }
     
     all_plots[[data_name]] <- plots_and_plots_sizes$plots

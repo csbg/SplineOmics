@@ -49,19 +49,23 @@
 #'
 #' @export
 #'
-screen_limma_hyperparams <- function(datas, 
-                                     datas_descr,
-                                     metas, 
-                                     designs, 
-                                     condition, 
-                                     spline_test_configs,
-                                     report_info,
-                                     report_dir = here::here(),
-                                     adj_pthresholds = c(0.05),
-                                     meta_batch_column = NA,  # batch-effect
-                                     meta_batch2_column = NA,
-                                     time_unit = "min",    # For the plot labels
-                                     padjust_method = "BH") {
+screen_limma_hyperparams <- function(
+    splineomics,  # SplineOmics object
+    datas, 
+    datas_descr,
+    metas, 
+    designs, 
+    spline_test_configs,
+    report_dir = here::here(),
+    adj_pthresholds = c(0.05),
+    time_unit = "min",    # For the plot labels
+    padjust_method = "BH"
+    ) {
+  
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "screen_limma_hyperparams"
+  )
 
   modes <- c()
   for (design in designs) {
@@ -75,6 +79,11 @@ screen_limma_hyperparams <- function(datas,
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
+  
+  condition <- splineomics[["condition"]]
+  report_info <- splineomics[["report_info"]]
+  meta_batch_column <- splineomics[["meta_batch_column"]]
+  meta_batch2_column <- splineomics[["meta_batch2_column"]]
 
   # Convert the data dataframe to a matrix and extract the feature names
   data_matrices <- list()
@@ -87,43 +96,55 @@ screen_limma_hyperparams <- function(datas,
   datas <- data_matrices
   
   top_tables_combos <- 
-    get_limma_combos_results(datas = datas, 
-                             metas = metas, 
-                             designs = designs, 
-                             modes = modes, 
-                             condition = condition, 
-                             spline_test_configs = spline_test_configs,
-                             feature_names = feature_names, 
-                             adj_pthresholds = adj_pthresholds, 
-                             padjust_method = padjust_method)
+    get_limma_combos_results(
+      datas = datas, 
+      metas = metas, 
+      designs = designs, 
+      modes = modes, 
+      condition = condition, 
+      spline_test_configs = spline_test_configs,
+      feature_names = feature_names, 
+      adj_pthresholds = adj_pthresholds, 
+      padjust_method = padjust_method
+      )
 
   combo_pair_plots <- 
-    plot_limma_combos_results(top_tables_combos = top_tables_combos, 
-                              datas = datas, 
-                              metas = metas,
-                              spline_test_configs = spline_test_configs,
-                              meta_batch_column = meta_batch_column,
-                              meta_batch2_column = meta_batch2_column,
-                              time_unit = time_unit)
+    plot_limma_combos_results(
+      top_tables_combos = top_tables_combos, 
+      datas = datas, 
+      metas = metas,
+      spline_test_configs = spline_test_configs,
+      meta_batch_column = meta_batch_column,
+      meta_batch2_column = meta_batch2_column,
+      time_unit = time_unit
+      )
 
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   
   report_info$meta_condition <- c(condition)
-  report_info$meta_batch <- paste(meta_batch_column, 
-                                  meta_batch2_column,
-                                  sep = ", ")
+  report_info$meta_batch <- paste(
+    meta_batch_column, 
+    meta_batch2_column,
+    sep = ", "
+    )
   
-  generate_reports(combo_pair_plots = combo_pair_plots, 
-                   report_info = report_info,
-                   report_dir = report_dir,
-                   timestamp = timestamp)
+  generate_reports(
+    combo_pair_plots = combo_pair_plots, 
+    report_info = report_info,
+    report_dir = report_dir,
+    timestamp = timestamp
+    )
   
-  generate_reports_meta(datas_descr = datas_descr, 
-                        designs = designs, 
-                        modes = modes, 
-                        spline_test_configs = spline_test_configs,
-                        report_dir = report_dir,
-                        timestamp = timestamp)
+  # Generates a HTML which shows the overview of the hyperparameters, which
+  # are explored in the HTML reports generated with the function above.
+  generate_reports_meta(
+    datas_descr = datas_descr, 
+    designs = designs, 
+    modes = modes, 
+    spline_test_configs = spline_test_configs,
+    report_dir = report_dir,
+    timestamp = timestamp
+    )
 }
 
 
@@ -157,15 +178,17 @@ screen_limma_hyperparams <- function(datas,
 #' @importFrom purrr set_names
 #' @importFrom rlang sym
 #'                          
-get_limma_combos_results <- function(datas, 
-                                     metas, 
-                                     designs, 
-                                     modes, 
-                                     condition, 
-                                     spline_test_configs,
-                                     feature_names, 
-                                     adj_pthresholds, 
-                                     padjust_method) {
+get_limma_combos_results <- function(
+    datas, 
+    metas, 
+    designs, 
+    modes, 
+    condition, 
+    spline_test_configs,
+    feature_names, 
+    adj_pthresholds, 
+    padjust_method
+    ) {
 
   combos <- tidyr::expand_grid(
     data_index = seq_along(datas),
@@ -173,21 +196,25 @@ get_limma_combos_results <- function(datas,
     spline_config_index = seq_along(spline_test_configs$spline_type),
     pthreshold = adj_pthresholds
   ) %>% 
-    dplyr::mutate(id = paste0("Data_", !!rlang::sym("data_index"), 
-                              "_Design_", !!rlang::sym("design_index"), 
-                              "_SConfig_", !!rlang::sym("spline_config_index"), 
-                              "_PThresh_", !!rlang::sym("pthreshold")))
+    dplyr::mutate(id = paste0(
+      "Data_", !!rlang::sym("data_index"), 
+      "_Design_", !!rlang::sym("design_index"), 
+      "_SConfig_", !!rlang::sym("spline_config_index"), 
+      "_PThresh_", !!rlang::sym("pthreshold")
+      ))
   
-    purrr::pmap(combos, 
-                process_combo,
-                datas = datas,
-                metas = metas,
-                designs = designs,
-                modes = modes,
-                condition = condition, 
-                spline_test_configs = spline_test_configs,
-                feature_names = feature_names, 
-                padjust_method = padjust_method) %>% 
+    purrr::pmap(
+      combos, 
+      process_combo,
+      datas = datas,
+      metas = metas,
+      designs = designs,
+      modes = modes,
+      condition = condition, 
+      spline_test_configs = spline_test_configs,
+      feature_names = feature_names, 
+      padjust_method = padjust_method
+      ) %>% 
     purrr::set_names(combos$id)
 }
 
@@ -218,14 +245,16 @@ get_limma_combos_results <- function(datas,
 #' @importFrom purrr set_names
 #' @importFrom purrr map
 #'                           
-plot_limma_combos_results <- function(top_tables_combos,
-                                      datas,
-                                      metas,
-                                      spline_test_configs,
-                                      meta_batch_column,
-                                      meta_batch2_column,
-                                      time_unit = time_unit) {
-  
+plot_limma_combos_results <- function(
+    top_tables_combos,
+    datas,
+    metas,
+    spline_test_configs,
+    meta_batch_column,
+    meta_batch2_column,
+    time_unit = time_unit
+    ) {
+
   names_extracted <- stringr::str_extract(names(top_tables_combos),
                                           "Data_\\d+_Design_\\d+")
   
@@ -246,14 +275,16 @@ plot_limma_combos_results <- function(top_tables_combos,
   
   time_unit_label <- paste0("[", time_unit, "]")
   
-  if (!is.na(meta_batch_column)) {
+  if (!is.null(meta_batch_column)) {
     
     # Takes the shortcut approach without the specific design_matrix
-    datas <- remove_batch_effect(datas = datas, 
-                                 metas = metas,
-                                 condition = condition,
-                                 meta_batch_column = meta_batch_column,
-                                 meta_batch2_column = meta_batch2_column)
+    datas <- remove_batch_effect(
+      datas = datas, 
+      metas = metas,
+      condition = condition,
+      meta_batch_column = meta_batch_column,
+      meta_batch2_column = meta_batch2_column
+      )
   }
   
   
@@ -265,17 +296,29 @@ plot_limma_combos_results <- function(top_tables_combos,
       hitcomp <- gen_hitcomp_plots(combo_pair)
       
       composites <- purrr::map(combo_pair, function(combo) {
-        composite <- gen_composite_spline_plots(combo,
-                                                datas,
-                                                metas,
-                                                spline_test_configs,
-                                                time_unit_label)
+        composite <- gen_composite_spline_plots(
+          combo,
+          datas,
+          metas,
+          spline_test_configs,
+          time_unit_label
+          )
       })
       pb$tick()
-      list(hitcomp = hitcomp, composites = composites)
+      list(
+        hitcomp = hitcomp,
+        composites = composites
+        )
     }
-    ), purrr::map(combo_pairs, function(pair) paste(pair[1], "vs", pair[2],
-                                             sep = "_"))
+    ), purrr::map(
+        combo_pairs,
+        function(pair) paste(
+          pair[1],
+          "vs",
+          pair[2],
+          sep = "_"
+          )
+      )
   )
 }
 
@@ -479,49 +522,58 @@ check_spline_test_configs <- function(spline_test_configs,
 #' \code{\link{create_spline_params}}, 
 #' \code{\link{run_limma_splines}}
 #' 
-process_combo <- function(data_index, 
-                          design_index, 
-                          spline_config_index, 
-                          pthreshold, 
-                          datas,
-                          metas,
-                          designs,
-                          modes,
-                          condition,
-                          spline_test_configs,
-                          feature_names,
-                          padjust_method,
-                          ...) {
+process_combo <- function(
+    data_index, 
+    design_index, 
+    spline_config_index, 
+    pthreshold, 
+    datas,
+    metas,
+    designs,
+    modes,
+    condition,
+    spline_test_configs,
+    feature_names,
+    padjust_method,
+    ...
+    ) {
 
   data <- datas[[data_index]]
   meta <- metas[[data_index]]
   design <- designs[[design_index]]
   mode <- modes[[design_index]]
   
-  spline_params <- create_spline_params(spline_test_configs = 
-                                          spline_test_configs, 
-                                        index = spline_config_index, 
-                                        meta = meta, 
-                                        condition = condition, 
-                                        mode = mode)
-  
+  spline_params <- create_spline_params(
+    spline_test_configs = spline_test_configs, 
+    index = spline_config_index, 
+    meta = meta, 
+    condition = condition, 
+    mode = mode
+    )
+
   # Because either DoF or knots are specified, and only optionally bknots
   # If they are not specified, their value is NA.
   spline_params <- Filter(is_not_na, spline_params)
   
-  data <- as.data.frame(data)
   rownames(data) <- feature_names
   
+  splineomics <- create_splineomics(
+    data = data,
+    meta = meta,
+    design = design,
+    spline_params = spline_params, 
+    condition = condition,
+  )
+  
   # suppressMessages will not affect warnings and error messages!
-  result <- suppressMessages(run_limma_splines(data = data, 
-                                               meta = meta, 
-                                               design = design, 
-                                               spline_params = spline_params, 
-                                               condition = condition,
-                                               padjust_method = padjust_method))
-  
-  
-  result$time_effect
+  result <- suppressMessages(
+    run_limma_splines(
+      splineomics,
+      padjust_method = padjust_method
+      )
+    )
+
+  result[['limma_splines_result']][['time_effect']]
 }
 
 
@@ -881,11 +933,13 @@ gen_hitcomp_plots <- function(combo_pair) {
 #' 
 #' @importFrom utils tail
 #' 
-gen_composite_spline_plots <- function(internal_combos, 
-                                       datas, 
-                                       metas,
-                                       spline_test_configs,
-                                       time_unit_label) {
+gen_composite_spline_plots <- function(
+    internal_combos, 
+    datas, 
+    metas,
+    spline_test_configs,
+    time_unit_label
+    ) {
   
   plots <- list()
   plots_len <- integer(0)
@@ -912,37 +966,39 @@ gen_composite_spline_plots <- function(internal_combos,
       
       # Show 6 significant and 6 non significant splines, each within a 
       # composite plot (the 6 individual plots combined with patchwork)
-      for(type in c('significant', 'not_significant')) {
+      for (type in c('significant', 'not_significant')) {
         
         if (type == "significant") {
           filtered_rows <- top_table[top_table$adj.P.Val < pthresh, ]
-          selected_rows <- if(nrow(filtered_rows) > 6) {
+          selected_rows <- if (nrow(filtered_rows) > 6) {
             filtered_rows[sample(nrow(filtered_rows), 6), ]
           } else {
             filtered_rows
           }
-          indices <- as.integer(selected_rows$feature_index)
+          indices <- as.integer(selected_rows$feature_nr)
         } else if (type == "not_significant") {
           filtered_rows <- top_table[top_table$adj.P.Val >= pthresh, ]
-          selected_rows <- if(nrow(filtered_rows) > 6) {
+          selected_rows <- if (nrow(filtered_rows) > 6) {
             filtered_rows[sample(nrow(filtered_rows), 6), ]
           } else {
             filtered_rows
           }
-          indices <- as.integer(selected_rows$feature_index)
+          indices <- as.integer(selected_rows$feature_nr)
         }
         
         # One composite spline plot for each unique combo between DoF and 
         # adj. p-value threshold (for one level within one condition)
         # This fun just generates a single composite plot
-        result <- plot_composite_splines(data_level, 
-                                         meta_level,
-                                         spline_test_configs,
-                                         top_table, 
-                                         combo_name, 
-                                         indices,
-                                         type,
-                                         time_unit_label)
+        result <- plot_composite_splines(
+          data_level, 
+          meta_level,
+          spline_test_configs,
+          top_table, 
+          combo_name, 
+          indices,
+          type,
+          time_unit_label
+          )
         
         if (is.list(result)) {
           plot_name <- paste(combo_name, top_table_name, type, sep = "_")
@@ -953,8 +1009,10 @@ gen_composite_spline_plots <- function(internal_combos,
     }
   }
   
-  list(composite_plots = plots, 
-       composite_plots_len = plots_len)
+  list(
+    composite_plots = plots, 
+    composite_plots_len = plots_len
+    )
 }
 
 
@@ -1170,7 +1228,7 @@ store_hits <- function(condition) {
 
     hits_cond[[key_name]] <- df %>%
       filter(df[["adj.P.Val"]] < adj_p_value_treshold) %>%
-      pull(!!sym("feature_index")) %>%
+      pull(!!sym("feature_nr")) %>%
       as.character()
   }
   
@@ -1208,14 +1266,16 @@ store_hits <- function(condition) {
 #' @importFrom ggplot2 scale_x_continuous labs annotate theme
 #' @importFrom patchwork wrap_plots plot_annotation
 #' 
-plot_composite_splines <- function(data, 
-                                   meta, 
-                                   spline_test_configs,
-                                   top_table, 
-                                   top_table_name, 
-                                   indices,
-                                   type,
-                                   time_unit_label) {
+plot_composite_splines <- function(
+    data, 
+    meta, 
+    spline_test_configs,
+    top_table, 
+    top_table_name, 
+    indices,
+    type,
+    time_unit_label
+    ) {
   
   plot_list <- list()
   config_index <- 
@@ -1246,16 +1306,15 @@ plot_composite_splines <- function(data,
   }
   
   # Generate all the individual plots
-  for(index in indices) {
-    # X <- splines::ns(smooth_timepoints, df = DoF, intercept = FALSE)
+  for (index in indices) {
     
     DoF <- which(names(top_table) == "AveExpr") - 1
     spline_coeffs <- 
-      as.numeric(top_table[top_table$feature_index == 
+      as.numeric(top_table[top_table$feature_nr == 
                              index, paste0("X", 1:DoF)])
     
     intercept <- 
-      as.numeric(top_table$intercept[top_table$feature_index == index])
+      as.numeric(top_table$intercept[top_table$feature_nr == index])
     
     fitted_values <- X %*% spline_coeffs + intercept
     
@@ -1297,7 +1356,7 @@ plot_composite_splines <- function(data,
     plot_list[[length(plot_list) + 1]] <- p
   }
   
-  if(length(plot_list) > 0) {
+  if (length(plot_list) > 0) {
     # Generate the combined plot
     num_plots <- length(plot_list)
     ncol <- 3
@@ -1309,8 +1368,10 @@ plot_composite_splines <- function(data,
                       theme = theme(plot.title = element_text(hjust = 0.5, 
                                                               size = 14)))
     
-    return(list(composite_plot = composite_plot, 
-                composite_plot_len = composite_plot_len))
+    return(list(
+      composite_plot = composite_plot, 
+      composite_plot_len = composite_plot_len)
+      )
   } else {
     return(FALSE)
   }
@@ -1335,10 +1396,12 @@ plot_composite_splines <- function(data,
 #' @seealso
 #' \code{\link{plot2base64}}
 #' 
-build_hyperparams_screen_report <- function(header_section, 
-                                            plots, 
-                                            plots_sizes, 
-                                            output_file_path) {
+build_hyperparams_screen_report <- function(
+    header_section, 
+    plots, 
+    plots_sizes, 
+    output_file_path
+    ) {
 
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
@@ -1348,10 +1411,12 @@ build_hyperparams_screen_report <- function(header_section,
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
   
-  headers <- c("Venn-Heatmap",
-               "Venn-Heatmap long",
-               "Nr. Hits Barplots",
-               "Spline Curves")
+  headers <- c(
+    "Venn-Heatmap",
+    "Venn-Heatmap long",
+    "Nr. Hits Barplots",
+    "Spline Curves"
+    )
   
   section_texts <- get_hyperparams_screen_plots_explanations()
   
@@ -1361,28 +1426,34 @@ build_hyperparams_screen_report <- function(header_section,
     
     if (index <= nr_of_sections) {
       
-      section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
-                                section_header_style,
-                                index,
-                                headers[index])
+      section_header <- sprintf(
+        "<h2 style='%s' id='section%d'>%s</h2>",
+        section_header_style,
+        index,
+        headers[index]
+        )
       
       section_text <- sprintf('<p style="font-size: 2em;">%s</p>',
                                   section_texts[index])
       
-      html_content <- paste(html_content,
-                            section_header,
-                            section_text,
-                            sep = "\n")
+      html_content <- paste(
+        html_content,
+        section_header,
+        section_text,
+        sep = "\n"
+        )
       
       toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
                            toc_style, index, headers[index])
       toc <- paste(toc, toc_entry, sep = "\n")
     }
 
-    html_content <- process_plots(plots = plots,
-                                  plots_sizes = plots_sizes,
-                                  index = index,
-                                  html_content = html_content)
+    html_content <- process_plots(
+      plots = plots,
+      plots_sizes = plots_sizes,
+      index = index,
+      html_content = html_content
+      )
   }
   
   # Close the HTML document
@@ -1410,6 +1481,14 @@ build_hyperparams_screen_report <- function(header_section,
 # Level 4 internal functions ---------------------------------------------------
 
 
+#' Get Explanations for Hyperparameter Screen Plots
+#'
+#' @description
+#' This function provides textual explanations for various hyperparameter
+#' screen plots used in the analysis. These explanations include descriptions
+#' of the 'Venn-Heatmap' and bar plots, as well as details on the spline
+#' curves shown for hits and non-significant features.
+#' 
 get_hyperparams_screen_plots_explanations <- function() {
   
   section_texts <- c("The 'Venn-Heatmap' is inspired from a Venn-diagram, in

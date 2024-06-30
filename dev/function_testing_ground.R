@@ -62,7 +62,8 @@ report_info <- list(
   data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
-  project_name = "DGTX")
+  project_name = "DGTX"
+  )
 
 splineomics <- create_splineomics(
   data = data,
@@ -109,16 +110,16 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(screen_limma_hyperparams)
-# screen_limma_hyperparams(datas,
-#                          datas_descr,
-#                          metas,
-#                          designs,
-#                          condition,
-#                          spline_test_configs,
-#                          report_info,
-#                          report_dir,
-#                          pthresholds,
-#                          meta_batch_column)
+# screen_limma_hyperparams(
+#   splineomics,
+#   datas,
+#   datas_descr,
+#   metas,
+#   designs,
+#   spline_test_configs,
+#   report_dir,
+#   pthresholds,
+#   )
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -140,12 +141,10 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-create_limma_report(
-  # run_limma_splines_result = result,
-  # report_info = report_info,
-  splineomics,
-  report_dir = report_dir
-  )
+# create_limma_report(
+#   splineomics,
+#   report_dir = report_dir
+#   )
 
 
 
@@ -162,7 +161,6 @@ report_dir <- here::here("results", "clustering_reports")
 clustering_results <- cluster_hits(
   splineomics = splineomics,
   analysis_type = "time_effect",
-  # top_tables = top_tables1, 
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
   genes = genes,

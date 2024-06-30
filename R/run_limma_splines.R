@@ -26,22 +26,16 @@
 #'                       p-values for multiple testing. Defaults to "BH" 
 #'                       (Benjamini-Hochberg).
 #'
-#' @return A list containing three elements: 
-#'         - `top_tables`: A list of top tables generated from within-level 
-#'         analysis 
-#'                         for each factor and level.
-#'         - `ttslc_factor_only`: A list of top tables from between-level 
-#'         comparisons 
-#'                                for each factor, excluding time effects.
-#'         - `ttslc_factor_time`: A list of top tables from between-level 
-#'         comparisons 
-#'                                for each factor, including time effects.
-#'
-#' @examples
-#' \dontrun{
-#'   results <- run_limma_splines(data, meta, "~ 1 + Factor*X + Time", c(2L), 
-#'                                c("Factor"), c("Gene1", "Gene2"), "isolated")
-#' }
+#' @return The SplineOmics object, updated with a list with three elements: 
+#'         - `time_effect`: A list of top tables for each level with the time
+#'                          effect.
+#'         - `avrg_diff_conditions`: A list of top tables for each comparison
+#'                                  between the levels. The comparison is the 
+#'                                  average difference of the values.
+#'         - `interaction_condition_time`: A list of top tables for each 
+#'                                         comparison between levels. The 
+#'                                         comparison is the interaction between
+#'                                         the condition and the time.
 #' 
 #' @importFrom purrr partial map map_chr map2
 #' @importFrom stats setNames
@@ -53,6 +47,11 @@ run_limma_splines <- function(
     splineomics,
     padjust_method = "BH"
     ) {
+
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "run_limma_splines"
+  )
   
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
@@ -77,19 +76,23 @@ run_limma_splines <- function(
   levels <- levels(meta[[condition]])
   
   # Get hits for level (within level analysis) ---------------------------------
-  process_level_with_params <- purrr::partial(within_level, 
-                                              spline_params = spline_params,
-                                              data = data, 
-                                              meta = meta, 
-                                              design = design, 
-                                              condition = condition, 
-                                              feature_names = feature_names, 
-                                              padjust_method = padjust_method, 
-                                              mode = mode)
+  process_level_with_params <- purrr::partial(
+    within_level, 
+    spline_params = spline_params,
+    data = data, 
+    meta = meta, 
+    design = design, 
+    condition = condition, 
+    feature_names = feature_names, 
+    padjust_method = padjust_method, 
+    mode = mode
+    )
   
-  results_list <- purrr::map2(levels, 
-                              seq_along(levels), 
-                              process_level_with_params)
+  results_list <- purrr::map2(
+    levels, 
+    seq_along(levels), 
+    process_level_with_params
+    )
   
   within_level_top_table <- 
     stats::setNames(purrr::map(results_list, "top_table"), 
@@ -103,14 +106,16 @@ run_limma_splines <- function(
   if (mode == "integrated") {
     level_combinations <- utils::combn(levels, 2, simplify = FALSE)
     for (lev_combo in level_combinations) {
-      result <- between_level(data = data, 
-                              meta = meta, 
-                              design = design, 
-                              spline_params = spline_params,
-                              condition = condition, 
-                              compared_levels = lev_combo, 
-                              padjust_method = padjust_method, 
-                              feature_names = feature_names)
+      result <- between_level(
+        data = data, 
+        meta = meta, 
+        design = design, 
+        spline_params = spline_params,
+        condition = condition, 
+        compared_levels = lev_combo, 
+        padjust_method = padjust_method, 
+        feature_names = feature_names
+        )
       
       between_level_condition_only[[paste0("avrg_diff_" ,lev_combo[1],
                                            "_vs_", lev_combo[2])]] <- 

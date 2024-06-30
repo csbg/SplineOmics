@@ -21,8 +21,7 @@ the feature names are just numbers (stored as
 characters) starting from 1 (1, 2, 3, etc.)}
 }
 \value{
-A matrix containing only the numeric data from the identified area, 
-with rows containing NA values removed.
+A numeric matrix with row headers and appropriate column names.
 }
 \description{
 This function takes a dataframe and identifies a rectangular or quadratic 
@@ -30,12 +29,4 @@ area containing numeric data, starting from the first occurrence of a
 6x6 block of numeric values. It then extracts this area into a matrix, 
 ensuring that each row contains only numeric values. Rows with any NA values 
 are removed from the resulting matrix.
-}
-\examples{
-\dontrun{
-# Example of how to use the function
-data <- read.csv("path_to_your_file.csv")
-result_matrix <- extract_numeric_matrix(data)
-print(result_matrix)}
-
 }
