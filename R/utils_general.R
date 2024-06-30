@@ -28,10 +28,12 @@ process_data <- function(data) {
   }
   
   feature_names <- rownames(data)
-  data <- as.matrix(data)
   data <- apply(data, 2, as.numeric)
   
-  list(data = data, feature_names = feature_names)
+  list(
+    data = data,
+    feature_names = feature_names
+    )
 }
 
 

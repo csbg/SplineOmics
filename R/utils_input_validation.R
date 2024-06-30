@@ -125,14 +125,18 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      self$check_data(data,
-                      data_meta_index)
+      self$check_data(
+        data,
+        data_meta_index
+        )
       
-      self$check_meta(meta = meta,
-                      condition = condition,
-                      meta_batch_column = meta_batch_column,
-                      meta_batch2_column = meta_batch2_column,
-                      data_meta_index = data_meta_index)
+      self$check_meta(
+        meta = meta,
+        condition = condition,
+        meta_batch_column = meta_batch_column,
+        meta_batch2_column = meta_batch2_column,
+        data_meta_index = data_meta_index
+        )
       
       if (!(nrow(meta) == ncol(data))) {
         if (!is.null(data_meta_index)) {
@@ -969,17 +973,21 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      mandatory_fields <- c("omics_data_type",
-                            "data_description",
-                            "data_collection_date",
-                            "analyst_name",
-                            "contact_info",
-                            "project_name")
+      mandatory_fields <- c(
+        "omics_data_type",
+        "data_description",
+        "data_collection_date",
+        "analyst_name",
+        "contact_info",
+        "project_name"
+        )
       
-      all_fields <- c(mandatory_fields,
-                      "method_description",
-                      "results_summary",
-                      "conclusions")
+      all_fields <- c(
+        mandatory_fields,
+        "method_description",
+        "results_summary",
+        "conclusions"
+        )
       
       # Check if report_info is a named list
       if (!is.list(report_info) || is.null(names(report_info))) {
@@ -1019,10 +1027,12 @@ InputControl <- R6::R6Class("InputControl",
              call. = FALSE)
       }
       
-      excluded_fields <- c("data_description",
-                           "method_description",
-                           "results summary",
-                           "conclusions")  
+      excluded_fields <- c(
+        "data_description",
+        "method_description",
+        "results summary",
+        "conclusions"
+        )  
       excluded_limit <- 700  
       
       check_long_fields <- function(data,
@@ -1040,9 +1050,11 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       # Check if any field exceeds 70 characters
-      long_fields <- check_long_fields(report_info, 
-                                       excluded_fields, 
-                                       excluded_limit)
+      long_fields <- check_long_fields(
+        report_info, 
+        excluded_fields, 
+        excluded_limit
+        )
       
       if (any(long_fields)) {
         too_long_fields <- names(report_info)[long_fields]
@@ -1122,21 +1134,19 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' error
    #' message if any check fails.
    #'
-   check_data = function(data, 
-                         data_meta_index = NULL) {
+   check_data = function(
+    data, 
+    data_meta_index = NULL
+    ) {
      
-     # Check if the input is a dataframe
-     if (!is.data.frame(data)) {
-       stop(self$create_error_message("data must be a dataframe.", 
-                                      data_meta_index),
-            call. = FALSE)
-     }
-     
-     # Check if all elements in the dataframe are numeric
-     if (!all(sapply(data, is.numeric))) {
-       stop(self$create_error_message("data must contain only numeric values.",
-                                      data_meta_index),
-            call. = FALSE)
+     if (!is.matrix(data) || !is.numeric(data)) {
+       stop(
+         self$create_error_message(
+           "data must be a numeric matrix.", 
+           data_meta_index
+           ), 
+         call. = FALSE
+         )
      }
      
      # Check for missing values
@@ -1215,11 +1225,13 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' @return Returns TRUE if all checks pass. Stops execution and returns an
    #' error message if any check fails.
    #'
-   check_meta = function(meta,
-                         condition,
-                         meta_batch_column = NULL,
-                         meta_batch2_column = NULL,
-                         data_meta_index = NULL) {
+   check_meta = function(
+    meta,
+    condition,
+    meta_batch_column = NULL,
+    meta_batch2_column = NULL,
+    data_meta_index = NULL
+    ) {
      
      if (!is.data.frame(meta) || 
          !"Time" %in% names(meta) ||
@@ -1246,11 +1258,13 @@ Level2Functions <- R6::R6Class("Level2Functions",
      
      # Check if condition is a column in the meta dataframe
      if (!condition %in% colnames(meta)) {
-       stop(self$create_error_message(sprintf("The condition '%s' is not a %s",
-                                              condition,
-                                              paste("column in meta")),
-                                      data_meta_index),
-            call. = FALSE)
+       stop(self$create_error_message(
+         sprintf(
+           "The condition '%s' is not a %s",
+           condition,
+           paste("column in meta")
+           ), 
+         data_meta_index), call. = FALSE)
      }
      
      # Check if the factor column is of appropriate type
@@ -1276,18 +1290,28 @@ Level2Functions <- R6::R6Class("Level2Functions",
      }
      
      if (!is.null(meta_batch_column)) {
-       
-       if (meta_batch_column == "Time" || meta_batch_column == condition) {
-         stop(paste("meta_batch_column must not be == 'Time' or", condition),
-              call. = FALSE)
+       if (is.character(meta_batch_column)) {
+         
+         if (meta_batch_column == "Time" || meta_batch_column == condition) {
+           stop(paste("meta_batch_column must not be == 'Time' or", condition),
+                call. = FALSE)
+         }
+  
+         self$check_batch_column(
+           meta,
+           meta_batch_column,
+           data_meta_index
+           )
+       } else {
+         stop(
+           "meta_batch_column must be a character",
+           call. = FALSE
+           )
        }
-
-       self$check_batch_column(meta,
-                               meta_batch_column,
-                               data_meta_index)
      }
      
      if (!is.null(meta_batch2_column)) {
+       if (is.character(meta_batch2_column)) {
        
        if (meta_batch2_column == "Time" || meta_batch2_column == condition) {
          stop(paste("meta_batch2_column must not be == 'Time' or", condition),
@@ -1303,6 +1327,12 @@ Level2Functions <- R6::R6Class("Level2Functions",
        self$check_batch_column(meta,
                                meta_batch2_column,
                                data_meta_index)
+       } else {
+         stop(
+           "meta_batch2_column must be a character",
+           call. = FALSE
+         )
+       }
      }
      
      return(TRUE)
@@ -1760,9 +1790,11 @@ Level3Functions <- R6::R6Class("Level3Functions",
    #' @return NULL. The method is used for its side effects of throwing errors 
    #' or printing messages.
    #'
-   check_batch_column = function(meta,
-                                 meta_batch_column,
-                                 data_meta_index) {
+   check_batch_column = function(
+    meta,
+    meta_batch_column,
+    data_meta_index
+    ) {
 
      if (!is.null(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
        stop(self$create_error_message(sprintf("Batch effect column '%s' %s",
@@ -1976,6 +2008,78 @@ Level4Functions <- R6::R6Class("Level4Functions",
 
 
 # Utility input control functions ----------------------------------------------
+
+
+#' Check for Required Elements in the SplineOmics Object
+#'
+#' @description
+#' This function checks if the given object contains all the required named
+#' elements for a specified function type. If any element is missing, it stops
+#' the script and provides an informative error message.
+#'
+#' @param splineomics The object to be checked.
+#' @param func_type A string specifying the function type. It can be one of
+#' "cluster_hits", "create_limma_report", "run_limma_splines", or "explore_data"
+#'
+#' @return None. Stops execution if any required element is missing.
+#'
+check_splineomics_elements <- function(
+    splineomics,
+    func_type
+    ) {
+
+  required_elements <- switch(
+    func_type,
+    "cluster_hits" = c(
+      "design",
+      "condition",
+      "data",
+      "meta",
+      "spline_params",
+      "meta_batch_column",
+      "meta_batch2_column",
+      "limma_splines_result"
+      ),
+    "create_limma_report" = c(
+      "limma_splines_result",
+      "report_info"
+      ),
+    "run_limma_splines" = c(
+      "design",
+      "condition",
+      "data",
+      "meta",
+      "spline_params"
+      ),
+    "explore_data" = c(
+      "data",
+      "meta",
+      "condition",
+      "report_info",
+      "meta_batch_column",
+      "meta_batch2_column"
+      ),
+    "screen_limma_hyperparams" = c(
+      "condition",
+      "report_info",
+      "meta_batch_column",
+      "meta_batch2_column"
+    ),
+    stop("Invalid function type provided.", call. = FALSE)
+    )
+  
+  missing_elements <- setdiff(
+    required_elements, names(splineomics)
+    )
+  
+  if (length(missing_elements) > 0) {
+    stop(paste("The following required elements are missing for function type",
+               func_type, ":", paste(missing_elements, collapse = ", "),
+               "\nAll required elements for", func_type, "are:",
+               paste(required_elements, collapse = ", ")),
+         call. = FALSE)
+  }
+}
 
 
 #' Check for NULL Elements in Arguments

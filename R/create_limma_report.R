@@ -51,6 +51,11 @@ create_limma_report <- function(
     report_dir = here::here()
     ) {
   
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "create_limma_report"
+  )
+  
   # Control the function arguments
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)

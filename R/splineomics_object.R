@@ -50,23 +50,23 @@
 create_splineomics <- function(
     data,
     meta,
-    report_info,
     condition,
-    meta_batch_column = NA,
-    meta_batch2_column = NA,
+    report_info = NULL,
+    meta_batch_column = NULL,
+    meta_batch2_column = NULL,
     design = NULL,
     spline_params = NULL
     ) {
   
   splineomics <- list(
-    report_info = report_info,
+    data = data,
+    meta = meta,
     condition = condition,
+    report_info = report_info,
     meta_batch_column = meta_batch_column,
     meta_batch2_column = meta_batch2_column,
     design = design,
-    spline_params = spline_params,
-    data = data,
-    meta = meta
+    spline_params = spline_params
   )
   
   class(splineomics) <- "SplineOmics"

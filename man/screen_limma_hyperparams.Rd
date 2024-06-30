@@ -14,17 +14,14 @@ and structured manner. Therefore, this function streamlines that process.
 Limma Hyperparameters Screening}
 \usage{
 screen_limma_hyperparams(
+  splineomics,
   datas,
   datas_descr,
   metas,
   designs,
-  condition,
   spline_test_configs,
-  report_info,
   report_dir = here::here(),
   adj_pthresholds = c(0.05),
-  meta_batch_column = NA,
-  meta_batch2_column = NA,
   time_unit = "min",
   padjust_method = "BH"
 )
@@ -39,27 +36,27 @@ screen_limma_hyperparams(
 
 \item{designs}{A character vector of design formulas for the limma analysis.}
 
-\item{condition}{A single character string specifying the condition.}
-
 \item{spline_test_configs}{A configuration object for spline tests.}
-
-\item{report_info}{An object containing report information.}
 
 \item{report_dir}{A non-empty string specifying the report directory.}
 
 \item{adj_pthresholds}{A numeric vector of p-value thresholds for 
 significance determination.}
 
+\item{time_unit}{A character string specifying the time unit label for plots.}
+
+\item{padjust_method}{A character string specifying the method for p-value 
+adjustment.}
+
+\item{condition}{A single character string specifying the condition.}
+
+\item{report_info}{An object containing report information.}
+
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
 \item{meta_batch2_column}{A character string specifying the second meta 
 batch column (the limma function removeBatchEffect
 supports a maximum of two batch columns.)}
-
-\item{time_unit}{A character string specifying the time unit label for plots.}
-
-\item{padjust_method}{A character string specifying the method for p-value 
-adjustment.}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.

@@ -23,25 +23,21 @@
 #'                             the feature names are just numbers (stored as
 #'                             characters) starting from 1 (1, 2, 3, etc.)
 #'
-#' @return A matrix containing only the numeric data from the identified area, 
-#' with rows containing NA values removed.
-#'
-#' @examples
-#' \dontrun{
-#' # Example of how to use the function
-#' data <- read.csv("path_to_your_file.csv")
-#' result_matrix <- extract_numeric_matrix(data)
-#' print(result_matrix)}
+#' @return A numeric matrix with row headers and appropriate column names.
 #'
 #' @importFrom stats complete.cases
 #'
 #' @export
 #' 
-extract_data <- function(data,
-                         feature_name_columns = NA) {
+extract_data <- function(
+    data,
+    feature_name_columns = NA
+    ) {
   
-  control_inputs_extract_data(data = data,
-                              feature_name_columns = feature_name_columns)
+  control_inputs_extract_data(
+    data = data,
+    feature_name_columns = feature_name_columns
+    )
   
   data <- as.data.frame(data)
   
@@ -57,8 +53,10 @@ extract_data <- function(data,
 
   
   # Extract the numeric data block
-  numeric_data <- data[upper_left_row:lower_right_row,
-                       upper_left_col:lower_right_col]
+  numeric_data <- data[
+    upper_left_row:lower_right_row,
+    upper_left_col:lower_right_col
+    ]
 
   numeric_data[] <-
     lapply(numeric_data, function(col) suppressWarnings(
@@ -66,18 +64,24 @@ extract_data <- function(data,
 
   # Check if every element of numeric_data is numeric
   if (any(sapply(numeric_data, function(col) all(is.na(col))))) {
-    stop(paste("All elements of the numeric data must be numeric. Please",
-               "ensure there is an empty column between the numeric data and",
-               "the annotation information, which, if present, must be on the",
-               "right of the numeric data, not on the left."),
-               call. = FALSE)
+    stop(
+      paste(
+      "All elements of the data field must be numeric. Please",
+      "ensure there is an empty column between the numeric data and",
+      "the annotation information, which, if present, must be on the",
+      "right of the numeric data, not on the left."
+      ), 
+      call. = FALSE
+      )
   }
 
   # Remove rows and columns that are entirely NA
-  numeric_data <- numeric_data[rowSums(is.na(numeric_data)) !=
-                                 ncol(numeric_data), ]
-  numeric_data <- numeric_data[, colSums(is.na(numeric_data)) !=
-                                 nrow(numeric_data)]
+  numeric_data <- numeric_data[
+    rowSums(is.na(numeric_data)) != ncol(numeric_data), 
+    ]
+  numeric_data <- numeric_data[
+    , colSums(is.na(numeric_data)) != nrow(numeric_data)
+    ]
 
   # Remove rows with any NA values
   clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
@@ -91,9 +95,16 @@ extract_data <- function(data,
   
   colnames(clean_data) <- headers
   
-  clean_data <- add_feature_names(data = data,
-                                  clean_data = clean_data,
-                                  feature_name_columns = feature_name_columns)
+  clean_data <- add_feature_names(
+    data = data,
+    clean_data = clean_data,
+    feature_name_columns = feature_name_columns
+    )
+  
+  clean_matrix <- as.matrix(clean_data)
+  rownames(clean_matrix) <- rownames(clean_data)
+  
+  clean_matrix
 }
 
 

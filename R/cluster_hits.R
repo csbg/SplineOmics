@@ -69,7 +69,6 @@
 #'
 cluster_hits <- function(
     splineomics,
-    # top_tables,  # limma topTable (from run_limma_splines)
     genes,       # Underlying genes of the features
     adj_pthresholds = c(0.05),
     clusters = c("auto"),
@@ -83,6 +82,11 @@ cluster_hits <- function(
     analysis_type = "time_effect",
     report = TRUE
     ) {
+  
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "cluster_hits"
+  )
   
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
@@ -104,7 +108,11 @@ cluster_hits <- function(
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
   limma_splines_result <- splineomics[["limma_splines_result"]]
 
-  data_report <- rownames_to_column(data, var = "Feature_name")
+  # data_report <- rownames_to_column(data, var = "Feature_name")
+  data_report <- data.frame(
+    Feature_name = rownames(data),
+    data, stringsAsFactors = FALSE
+  )
 
   # feature_names are in top_tables
   matrix_and_feature_names <- process_data(data)
@@ -167,20 +175,23 @@ cluster_hits <- function(
   
   if (report) {
     plots <-
-      make_clustering_report(all_levels_clustering = all_levels_clustering,
-                             condition = condition,
-                             data = data,
-                             meta = meta,
-                             spline_params = spline_params,
-                             adj_pthresholds = adj_pthresholds,
-                             report_dir = report_dir,
-                             mode = mode,
-                             report_info = report_info,
-                             data_report = data_report,
-                             design = design,
-                             meta_batch_column = meta_batch_column,
-                             meta_batch2_column = meta_batch2_column,
-                             plot_info = plot_info)
+      make_clustering_report(
+        all_levels_clustering = all_levels_clustering,
+        condition = condition,
+        data = data,
+        meta = meta,
+        spline_params = spline_params,
+        adj_pthresholds = adj_pthresholds,
+        report_dir = report_dir,
+        mode = mode,
+        report_info = report_info,
+        data_report = data_report,
+        design = design,
+        meta_batch_column = meta_batch_column,
+        meta_batch2_column = meta_batch2_column,
+        plot_info = plot_info,
+        analysis_type = analysis_type
+        )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
@@ -445,33 +456,38 @@ perform_clustering <- function(top_tables,
 #' @importFrom dplyr filter
 #' @importFrom stats na.omit
 #'
-make_clustering_report <- function(all_levels_clustering,
-                                   condition,
-                                   data,
-                                   meta,
-                                   spline_params,
-                                   adj_pthresholds,
-                                   report_dir,
-                                   mode,
-                                   report_info,
-                                   data_report,
-                                   design,
-                                   meta_batch_column,
-                                   meta_batch2_column,
-                                   plot_info) {
+make_clustering_report <- function(
+    all_levels_clustering,
+    condition,
+    data,
+    meta,
+    spline_params,
+    adj_pthresholds,
+    report_dir,
+    mode,
+    report_info,
+    data_report,
+    design,
+    meta_batch_column,
+    meta_batch2_column,
+    plot_info,
+    analysis_type
+    ) {
   
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
   datas <-
-    remove_batch_effect_cluster_hits(data = data,
-                                     meta = meta,
-                                     condition = condition,
-                                     meta_batch_column = meta_batch_column,
-                                     meta_batch2_column = meta_batch2_column,
-                                     design = design,
-                                     mode = mode,
-                                     spline_params = spline_params)
+    remove_batch_effect_cluster_hits(
+      data = data,
+      meta = meta,
+      condition = condition,
+      meta_batch_column = meta_batch_column,
+      meta_batch2_column = meta_batch2_column,
+      design = design,
+      mode = mode,
+      spline_params = spline_params
+      )
 
 
   # To extract the stored value for the potential auto cluster decision.
@@ -493,12 +509,14 @@ make_clustering_report <- function(all_levels_clustering,
 
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
-  heatmaps <- plot_heatmap(datas = datas,
-                           meta = meta,
-                           mode = mode,
-                           condition = condition,
-                           all_levels_clustering = all_levels_clustering,
-                           time_unit_label = time_unit_label)
+  heatmaps <- plot_heatmap(
+    datas = datas,
+    meta = meta,
+    mode = mode,
+    condition = condition,
+    all_levels_clustering = all_levels_clustering,
+    time_unit_label = time_unit_label
+    )
 
   # log2_intensity_shape <- plot_log2_intensity_shapes()
 
@@ -575,13 +593,15 @@ make_clustering_report <- function(all_levels_clustering,
 
       X <- level_clustering$X
 
-      plot_splines_result <- plot_splines(top_table_cluster,
-                                          data_level,
-                                          meta_level,
-                                          X,
-                                          main_title,
-                                          time_unit_label,
-                                          plot_info)
+      plot_splines_result <- plot_splines(
+        top_table_cluster,
+        data_level,
+        meta_level,
+        X,
+        main_title,
+        time_unit_label,
+        plot_info
+        )
 
       composite_plots[[length(composite_plots) + 1]] <-
         plot_splines_result$composite_plot
@@ -634,19 +654,22 @@ make_clustering_report <- function(all_levels_clustering,
                                                    genes)
   
   print("Generating report. This takes a few seconds.")
-  generate_report_html(plots = plots,
-                       plots_sizes = plots_sizes,
-                       level_headers_info = level_headers_info,
-                       spline_params = spline_params,
-                       report_info = report_info,
-                       data = data_report,
-                       meta = meta,
-                       topTables = topTables,
-                       enrichr_format = enrichr_format,
-                       report_type = "cluster_hits",
-                       mode = mode,
-                       filename = "report_clustered_hits",
-                       report_dir = report_dir)
+  generate_report_html(
+    plots = plots,
+    plots_sizes = plots_sizes,
+    level_headers_info = level_headers_info,
+    spline_params = spline_params,
+    report_info = report_info,
+    data = data_report,
+    meta = meta,
+    topTables = topTables,
+    enrichr_format = enrichr_format,
+    report_type = "cluster_hits",
+    analysis_type = analysis_type,
+    mode = mode,
+    filename = "report_clustered_hits",
+    report_dir = report_dir
+    )
 
   return(plots)
 }
@@ -860,21 +883,23 @@ process_level_cluster <- function(top_table,
 #'
 #' @importFrom limma removeBatchEffect
 #' 
-remove_batch_effect_cluster_hits <- function(data,
-                                             meta,
-                                             condition,
-                                             meta_batch_column,
-                                             meta_batch2_column,
-                                             design,
-                                             mode,
-                                             spline_params) {
+remove_batch_effect_cluster_hits <- function(
+    data,
+    meta,
+    condition,
+    meta_batch_column,
+    meta_batch2_column,
+    design,
+    mode,
+    spline_params
+    ) {
 
   datas <- list()
   n <- length(unique(meta[[condition]]))
   level_indices <- as.integer(1:n)
   unique_levels <- unique(meta[[condition]])
 
-  if (!is.na(meta_batch_column)) {
+  if (!is.null(meta_batch_column)) {
 
     for (level_index in level_indices) {
 
@@ -912,13 +937,13 @@ remove_batch_effect_cluster_hits <- function(data,
         level <- unique_levels[level_index]
         meta_copy <- subset(meta, meta[[condition]] == level)
         
-        if (!is.na(meta_batch2_column) &&
+        if (!is.null(meta_batch2_column) &&
             length(unique(meta_copy[[meta_batch2_column]])) > 1) {
           args$batch2 <- meta_copy[[meta_batch2_column]]
         }
       } else {   # mode == integrated
         
-        if (!is.na(meta_batch2_column) &&
+        if (!is.null(meta_batch2_column) &&
             length(unique(meta_copy[[meta_batch2_column]])) > 1) {
           args$batch2 <- meta_copy[[meta_batch2_column]]
         }
@@ -1280,9 +1305,11 @@ plot_all_shapes <- function(curve_values,
 #' @importFrom rlang sym
 #' @importFrom data.table :=
 #'
-plot_single_and_consensus_splines <- function(time_series_data,
-                                              title,
-                                              time_unit_label) {
+plot_single_and_consensus_splines <- function(
+    time_series_data,
+    title,
+    time_unit_label
+    ) {
 
   time_col <- sym("time")
   feature_col <- sym("feature")
@@ -1399,13 +1426,15 @@ plot_consensus_shapes <- function(curve_values,
 #' scale_x_continuous annotate
 #' @importFrom patchwork wrap_plots plot_annotation
 #'
-plot_splines <- function(top_table,
-                         data,
-                         meta,
-                         X,   # Was already created from spline_params before
-                         main_title,
-                         time_unit_label,
-                         plot_info) {
+plot_splines <- function(
+    top_table,
+    data,
+    meta,
+    X,   # Was already created from spline_params before
+    main_title,
+    time_unit_label,
+    plot_info
+    ) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table %>% dplyr::arrange(feature_names)
@@ -1521,23 +1550,12 @@ plot_splines <- function(top_table,
     
     plot_list[[length(plot_list) + 1]] <- p
   }
-
-  ## Generate the combined plot ------------------------------------------------
-  if(length(plot_list) > 0) {
-    num_plots <- length(plot_list)
-    ncol <- 3
-    nrows <- ceiling(num_plots / ncol)
-
-    composite_plot <- patchwork::wrap_plots(plot_list, ncol = 3) +
-      patchwork::plot_annotation(title = main_title,
-                                 theme = theme(plot.title =
-                                                 element_text(hjust = 0.5,
-                                                              size = 14)))
-    
-    return(list(composite_plot = composite_plot, nrows = nrows))
-  } else {
-    stop("plot_list in function plot_splines has length 0!", call. = FALSE)
-  }
+  
+  return(create_composite_plot(
+    plot_list = plot_list,
+    main_title = main_title
+    )
+    )
 }
 
 
@@ -1631,13 +1649,15 @@ prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
 #' @seealso
 #' \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 #'
-build_cluster_hits_report <- function(header_section,
-                                      plots,
-                                      plots_sizes,
-                                      level_headers_info,
-                                      spline_params,
-                                      mode,
-                                      output_file_path) {
+build_cluster_hits_report <- function(
+    header_section,
+    plots,
+    plots_sizes,
+    level_headers_info,
+    spline_params,
+    mode,
+    output_file_path
+    ) {
 
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
@@ -2011,8 +2031,10 @@ hierarchical_clustering <- function(curve_values,
 #' @return A character string containing HTML-formatted information about the
 #'         spline parameters at the specified index.
 #'
-get_spline_params_info <- function(spline_params,
-                                   j) {
+get_spline_params_info <- function(
+    spline_params,
+    j
+    ) {
 
   if (!is.null(spline_params$spline_type) &&
       length(spline_params$spline_type) >= j) {
@@ -2073,3 +2095,41 @@ get_spline_params_info <- function(spline_params,
   }
   return(spline_params_info)
 }
+
+
+#' Create Composite Plot from Plot List
+#'
+#' @description
+#' This function takes a list of plots and creates a composite plot using
+#' the patchwork package. It also returns the number of rows in the 
+#' composite plot.
+#'
+#' @param plot_list A list of ggplot objects to be combined into a 
+#' composite plot.
+#' @param main_title The main title for the composite plot.
+#'
+#' @return A list containing the composite plot and the number of rows.
+#'
+create_composite_plot <- function(
+    plot_list,
+    main_title
+    ) {
+  
+  if (length(plot_list) > 0) {
+    num_plots <- length(plot_list)
+    ncol <- 3
+    nrows <- ceiling(num_plots / ncol)
+    
+    composite_plot <- patchwork::wrap_plots(plot_list, ncol = ncol) +
+      patchwork::plot_annotation(
+        title = main_title,
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 14))
+      )
+    
+    return(list(composite_plot = composite_plot, nrows = nrows))
+  } else {
+    stop("plot_list in function create_composite_plot has length 0!",
+         call. = FALSE)
+  }
+}
+
