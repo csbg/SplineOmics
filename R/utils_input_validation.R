@@ -883,7 +883,7 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       # Check treatment_labels
-      if (!is.na(plot_info$treatment_labels)) {
+      if (!any(is.na(plot_info$treatment_labels))) {
         if (!is.character(plot_info$treatment_labels)) {
           stop(
             "treatment_labels must be either NA or a character vector",
@@ -899,16 +899,16 @@ InputControl <- R6::R6Class("InputControl",
             )
         }
       }
-      
+
       # Check treatment_timepoints
-      if (!is.na(plot_info$treatment_timepoints)) {
+      if (!any(is.na(plot_info$treatment_timepoints))) {
         if (!is.numeric(plot_info$treatment_timepoints)) {
           stop(
             "treatment_timepoints must be either NA or a numeric vector",
             call. = FALSE
             )
         }
-        if (!is.na(plot_info$treatment_labels) &&
+        if (!any(is.na(plot_info$treatment_labels)) &&
             length(plot_info$treatment_timepoints) !=
             length(plot_info$treatment_labels)) {
           stop(

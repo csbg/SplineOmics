@@ -159,9 +159,12 @@ adj_pthresholds <- c(0.05, 0.05)
 clusters <- list(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")
 
-# combo_list <- list(top_tables1, top_tables1)
-
-
+plot_info = list(
+  y_axis_label = "log2 intensity",
+  time_unit = "min",
+  treatment_labels = c("Feeding", "Test"),
+  treatment_timepoints = c(10, 200)
+)
 
 # debug(cluster_hits)
 clustering_results <- cluster_hits(
@@ -170,6 +173,7 @@ clustering_results <- cluster_hits(
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
   genes = genes,
+  plot_info = plot_info,
   report_dir = report_dir,
   )
 

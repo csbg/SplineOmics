@@ -572,8 +572,9 @@ make_clustering_report <- function(
 
     meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
 
-    composite_plots <- list()
-    nrows <- list()
+    individual_spline_plots <- list()
+    indiv_spline_plots_heights <- list()
+    # nrows <- list()
 
     
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
@@ -598,27 +599,32 @@ make_clustering_report <- function(
         plot_info
         )
 
-      composite_plots[[length(composite_plots) + 1]] <-
-        plot_splines_result$composite_plot
+      individual_spline_plots[[length(individual_spline_plots) + 1]] <- 
+        plot_splines_result
+      indiv_spline_plots_heights[[length(indiv_spline_plots_heights) + 1]] <- 1
       
-      nrows[[length(nrows) + 1]] <- plot_splines_result$nrows
+      # nrows[[length(nrows) + 1]] <- plot_splines_result$nrows
     }
 
-    plots <- c(plots,
-               "level_header",    # is the signal for the plotting code
-               list(dendrogram, p_curves),
-               list(consensus_shapes$plot),
-               heatmaps[[i]],
-               composite_plots)
+    plots <- c(
+      plots,
+      "level_header",    # is the signal for the plotting code
+      list(dendrogram, p_curves),
+      list(consensus_shapes$plot),
+      heatmaps[[i]],
+      individual_spline_plots = individual_spline_plots
+      )
 
     # For every plot in plots, this determines the size in the HTML
-    plots_sizes <- c(plots_sizes,
-                     999,               # dummy size for "next_level" signal
-                     1.5,
-                     1.5,
-                     consensus_shapes$size,
-                     1.5,
-                     unlist(nrows))
+    plots_sizes <- c(
+      plots_sizes,
+      999,               # dummy size for "next_level" signal
+      1.5,
+      1.5,
+      consensus_shapes$size,
+      1.5,
+      unlist(indiv_spline_plots_heights)
+      )
   }
 
   topTables <- list()
@@ -1427,6 +1433,7 @@ plot_consensus_shapes <- function(curve_values,
 #' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal labs theme
 #' scale_x_continuous annotate
 #' @importFrom patchwork wrap_plots plot_annotation
+#' @importFrom scales hue_pal
 #'
 plot_splines <- function(
     top_table,
@@ -1471,11 +1478,13 @@ plot_splines <- function(
     x_max <- as.numeric(max(time_points))
     x_extension <- x_max * 0.05
 
-    treatment_time <- plot_info$treatment_time
-    treatment_label <- plot_info$treatment_labels
+    treatment_times <- plot_info$treatment_timepoints 
+    treatment_labels <- plot_info$treatment_labels 
     
     color_values <- c("Datapoints" = "blue", "Spline" = "red")
-    color_values[treatment_label] <- "orange"
+    distinct_colors <- scales::hue_pal()(length(treatment_labels))
+    names(distinct_colors) <- treatment_labels
+    color_values <- c(color_values, distinct_colors)
     
     p <- ggplot2::ggplot() +
       ggplot2::geom_point(data = plot_data, 
@@ -1498,31 +1507,39 @@ plot_splines <- function(
                      legend.box = "horizontal",   
                      legend.background = ggplot2::element_blank(),  
                      legend.title = ggplot2::element_blank(),  
-                     legend.text = ggplot2::element_text(size = 5),
-                     legend.key.size = unit(0.5, "lines"),
+                     legend.text = ggplot2::element_text(size = 4),
+                     legend.key.size = unit(0.25, "lines"),
                      legend.key.width = unit(0.25, "lines"),
-                     legend.spacing = unit(0, "lines"),  
-                     legend.margin = ggplot2::margin(0, 0, -5, 0),  
-                     legend.box.margin = ggplot2::margin(0, 0, -5, 0),
-                     axis.text.x = ggplot2::element_text(size = 5),
+                     legend.spacing = unit(0.1, "lines"),  
+                     legend.margin = ggplot2::margin(1, 1, 1, 1),  
+                     legend.box.margin = ggplot2::margin(1, 1, 1, 1),
+                     legend.box.background = ggplot2::element_rect(
+                       color = "black",
+                       size = 0.5
+                       ),  
+                     axis.text.x = ggplot2::element_text(size = 8),
                      axis.title.y = 
-                       ggplot2::element_text(size = 8, 
+                       ggplot2::element_text(size = 10, 
                                              margin = ggplot2::margin(
                                                t = 0, r = 2, b = 0, l = 0)),
                      axis.text.y = 
                        ggplot2::element_text(margin = ggplot2::margin(
                          t = 0, r = 5, b = 0, l = 0)))
     
-    # Add vertical line only if treatment_time is not NA
-    if (!is.na(treatment_time)) {
-      p <- p + ggplot2::geom_vline(aes(xintercept = treatment_time, 
-                                       color = treatment_label), 
-                                   linetype = "dashed", size = 0.5)
-      if (!is.na(treatment_label)) {
-        color_values[treatment_label] <- "orange"
+    # Add vertical lines for each treatment time
+    for (i in seq_along(treatment_times)) {
+      if (!is.na(treatment_times[i]) && !is.na(treatment_labels[i])) {
+        p <- p + ggplot2::geom_vline(xintercept = treatment_times[i], 
+                                     linetype = "dashed", 
+                                     size = 0.5,
+                                     aes(color = treatment_labels[i]))
       }
-      p <- p + ggplot2::scale_color_manual(values = color_values)
     }
+    
+    
+    
+    
+    
     
     # Add title and annotations
     matched_row <- dplyr::filter(titles, 
@@ -1530,11 +1547,11 @@ plot_splines <- function(
     
     title <- as.character(matched_row$feature_name)
     
-    if (nchar(title) > 30) {
+    if (nchar(title) > 100) {
       title_before <- title
-      title <- substr(title, 1, 30)
-      message(paste("The feature ID", title_before, "is > 30 characters.",
-                    "Truncating it to 30 chars:", title))
+      title <- paste0(substr(title, 1, 100), " ...")
+      message(paste("The feature ID", title_before, "is > 100 characters.",
+                    "Truncating it to 100 chars:", title))
     }
     
     if (is.na(title)) {
@@ -1553,11 +1570,16 @@ plot_splines <- function(
     plot_list[[length(plot_list) + 1]] <- p
   }
   
-  return(create_composite_plot(
-    plot_list = plot_list,
-    main_title = main_title
-    )
-    )
+  
+  ncol <- 3
+  num_plots <- length(plot_list)
+  nrows <- ceiling(num_plots / ncol)
+  return(spline_plots = plot_list)
+  # return(create_composite_plot(
+  #   plot_list = plot_list,
+  #   main_title = main_title
+  #   )
+    # )
 }
 
 
@@ -1725,13 +1747,18 @@ build_cluster_hits_report <- function(
         # So that below the subsection headers are added for ALL levels
         bonus_index <- bonus_index + index
         
-        section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
-                                  section_header_style,
-                                  index,
-                                  header_info$header_name)
+        section_header <- sprintf(
+          "<h2 style='%s' id='section%d'>%s</h2>",
+          section_header_style,
+          index,
+          header_info$header_name
+          )
 
-        html_content <- paste(html_content, section_header,
-                                    sep = "\n")
+        html_content <- paste(
+          html_content,
+          section_header,
+          sep = "\n"
+          )
 
         if (mode == "integrated") {
           j <- 1
@@ -1740,11 +1767,16 @@ build_cluster_hits_report <- function(
         }
 
         spline_params_info <-
-          get_spline_params_info(spline_params = spline_params,
-                                 j = j)
+          get_spline_params_info(
+            spline_params = spline_params,
+            j = j
+            )
 
-        html_content <- paste(html_content, spline_params_info,
-                                    sep = "\n")
+        html_content <- paste(
+          html_content,
+          spline_params_info,
+          sep = "\n"
+          )
 
         hits_info <- sprintf(
           paste0(
@@ -1757,11 +1789,23 @@ build_cluster_hits_report <- function(
           nr_hits
         )
 
-        html_content <- paste(html_content, hits_info, sep = "\n")
+        html_content <- paste(
+          html_content,
+          hits_info,
+          sep = "\n"
+          )
 
-        toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
-                             toc_style, index, header_info[[1]])
-        toc <- paste(toc, toc_entry, sep = "\n")
+        toc_entry <- sprintf(
+          "<li style='%s'><a href='#section%d'>%s</a></li>",
+          toc_style,
+          index,
+          header_info[[1]]
+          )
+        toc <- paste(
+          toc,
+          toc_entry,
+          sep = "\n"
+          )
 
         current_header_index <- current_header_index + 1
 
@@ -1820,10 +1864,12 @@ build_cluster_hits_report <- function(
       toc <- paste(toc, toc_entry, sep = "\n")
     }
     
-    html_content <- process_plots(plots = plots,
-                                  plots_sizes = plots_sizes,
-                                  index = index,
-                                  html_content = html_content)
+    html_content <- process_plots(
+      plots_element = plots[[index]],
+      element_name = names(plots)[index],
+      plots_size = plots_sizes[[index]],
+      html_content = html_content
+      )
     
     pb$tick()
   }
@@ -2134,26 +2180,63 @@ get_spline_params_info <- function(
 #'
 #' @return A list containing the composite plot and the number of rows.
 #'
-create_composite_plot <- function(
-    plot_list,
-    main_title
-    ) {
-  
-  if (length(plot_list) > 0) {
-    num_plots <- length(plot_list)
-    ncol <- 3
-    nrows <- ceiling(num_plots / ncol)
-    
-    composite_plot <- patchwork::wrap_plots(plot_list, ncol = ncol) +
-      patchwork::plot_annotation(
-        title = main_title,
-        theme = theme(plot.title = element_text(hjust = 0.5, size = 14))
-      )
-    
-    return(list(composite_plot = composite_plot, nrows = nrows))
-  } else {
-    stop("plot_list in function create_composite_plot has length 0!",
-         call. = FALSE)
-  }
-}
+# create_composite_plot <- function(
+#     plot_list,
+#     main_title
+#     ) {
+#   
+#   if (length(plot_list) > 0) {
+#     num_plots <- length(plot_list)
+#     ncol <- 3
+#     nrows <- ceiling(num_plots / ncol)
+#     
+#     composite_plot <- patchwork::wrap_plots(plot_list, ncol = ncol) +
+#       patchwork::plot_annotation(
+#         title = main_title,
+#         theme = theme(plot.title = element_text(hjust = 0.5, size = 14))
+#       )
+#     
+#     return(list(composite_plot = composite_plot, nrows = nrows))
+#   } else {
+#     stop("plot_list in function create_composite_plot has length 0!",
+#          call. = FALSE)
+#   }
+# }
+
+#' library(ggplot2)
+#' library(gridExtra)
+#' library(dplyr)
+#' 
+#' #' Create Grid of Individual Plots
+#' #'
+#' #' @description
+#' #' This function creates a grid layout of individual plots from a list of ggplot2 objects.
+#' #'
+#' #' @param plot_list A list of ggplot2 objects.
+#' #' @param main_title The main title for the grid of plots.
+#' #'
+#' #' @return A grid layout of individual plots.
+#' #' @importFrom gridExtra grid.arrange
+#' #' @importFrom grid textGrob gpar
+#' create_composite_plot <- function(plot_list, main_title) {
+#'   if (length(plot_list) > 0) {
+#'     num_plots <- length(plot_list)
+#'     ncol <- 3
+#'     nrows <- ceiling(num_plots / ncol)
+#'     
+#'     # Create a list of grobs
+#'     grobs <- lapply(plot_list, ggplot2::ggplotGrob)
+#'     
+#'     # Arrange the grobs in a grid
+#'     grid_layout <- gridExtra::grid.arrange(
+#'       grobs = grobs,
+#'       ncol = ncol,
+#'       top = grid::textGrob(main_title, gp = gpar(fontsize = 20, fontface = "bold"))
+#'     )
+#'     
+#'     return(list(composite_plot = grid_layout, nrows = nrows))
+#'   } else {
+#'     stop("plot_list in function create_grid_of_plots has length 0!", call. = FALSE)
+#'   }
+#' }
 
