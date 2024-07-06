@@ -4,7 +4,7 @@
 \alias{get_header_section}
 \title{Get Header Section}
 \usage{
-get_header_section(title, header_text, report_type)
+get_header_section(title, header_text, report_type, feature_names_formula)
 }
 \arguments{
 \item{title}{A string specifying the title of the HTML document.}

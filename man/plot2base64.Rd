@@ -6,7 +6,7 @@
 \usage{
 plot2base64(
   plot,
-  plot_nrows,
+  height,
   width = 7,
   base_height_per_row = 2.5,
   units = "in",
@@ -15,8 +15,6 @@ plot2base64(
 }
 \arguments{
 \item{plot}{A ggplot2 plot object.}
-
-\item{plot_nrows}{An integer specifying the number of rows in the plot.}
 
 \item{width}{A numeric value specifying the width of the plot in inches.}
 
@@ -28,6 +26,8 @@ height.}
 
 \item{html_img_width}{A character string specifying the width of the image
 in HTML.}
+
+\item{plot_nrows}{An integer specifying the number of rows in the plot.}
 }
 \value{
 A character string containing an HTML img tag with the Base64-encoded

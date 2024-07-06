@@ -8,10 +8,11 @@
 create_splineomics(
   data,
   meta,
-  report_info,
   condition,
-  meta_batch_column = NA,
-  meta_batch2_column = NA,
+  annotation = NULL,
+  report_info = NULL,
+  meta_batch_column = NULL,
+  meta_batch2_column = NULL,
   design = NULL,
   spline_params = NULL
 )
@@ -21,11 +22,11 @@ create_splineomics(
 
 \item{meta}{Metadata associated with the omics data (optional).}
 
+\item{condition}{A condition variable.}
+
 \item{report_info}{A list containing report information such as omics data 
 type, data description, data collection date, analyst name, contact info, 
 and project name.}
-
-\item{condition}{A condition variable.}
 
 \item{meta_batch_column}{Column for meta batch information (optional).}
 

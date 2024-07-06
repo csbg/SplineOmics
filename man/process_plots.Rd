@@ -4,15 +4,14 @@
 \alias{process_plots}
 \title{Process Plots}
 \usage{
-process_plots(plots, plots_sizes, index, html_content)
+process_plots(plots_element, element_name, plots_size, html_content)
 }
 \arguments{
-\item{plots}{A list of plots to be processed.}
+\item{plots_element}{A list of plots to be processed.}
 
-\item{plots_sizes}{A list of sizes for the plots.}
+\item{element_name}{A character string specifying the name of the element.}
 
-\item{index}{An integer, specifying which element index to take of plots and
-plots_sizes.}
+\item{plots_size}{A list of sizes for the plots.}
 
 \item{html_content}{The current state of the HTML content.}
 }

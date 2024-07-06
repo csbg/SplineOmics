@@ -9,16 +9,17 @@ make_clustering_report(
   condition,
   data,
   meta,
+  annotation,
   spline_params,
   adj_pthresholds,
   report_dir,
   mode,
   report_info,
-  data_report,
   design,
   meta_batch_column,
   meta_batch2_column,
-  plot_info
+  plot_info,
+  analysis_type
 )
 }
 \arguments{
@@ -40,16 +41,16 @@ level within a condition.}
 
 \item{report_info}{An object containing report information.}
 
-\item{data_report}{A dataframe containing the data used in the limma splines
-analysis. This data will be embedded in the HTML report,
-so that it can be downloaded from there.}
-
 \item{design}{A string representing the limma design formula}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
 \item{meta_batch2_column}{A character string specifying the second meta 
 batch column.}
+
+\item{data_report}{A dataframe containing the data used in the limma splines
+analysis. This data will be embedded in the HTML report,
+so that it can be downloaded from there.}
 
 \item{time_unit}{A character string specifying the time unit
 ('s', 'm', 'h', 'd').}

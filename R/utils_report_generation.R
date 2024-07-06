@@ -781,61 +781,86 @@ define_html_styles <- function() {
 #' @description
 #' Converts plots to base64 and appends them to the HTML content.
 #'
-#' @param plots A list of plots to be processed.
-#' @param plots_sizes A list of sizes for the plots.
-#' @param index An integer, specifying which element index to take of plots and
-#'              plots_sizes.
+#' @param plots_element A list of plots to be processed.
+#' @param element_name A character string specifying the name of the element.
+#' @param plots_size A list of sizes for the plots.
 #' @param html_content The current state of the HTML content.
+#' @param toc The current state of the table of contents (TOC).
+#' @param header_index An index to uniquely identify each section 
+#' for anchoring.
 #'
 #' @return Updated HTML content with the plots included.
 #' 
-# process_plots <- function(
-#     plots_element,
-#     plots_size,
-#     html_content
-#     ) {
-#   
-#   
-#   img_tag <- plot2base64(
-#     plots_element,
-#     plots_size
-#     )
-#   html_content <- paste(
-#     html_content,
-#     img_tag,
-#     sep = "\n"
-#     )
-# }
 process_plots <- function(
     plots_element,
     element_name,
     plots_size,
-    html_content
+    html_content,
+    toc,
+    header_index
     ) {
   
   if (startsWith(element_name, "individual_spline_plots")) {
+    
+    spline_plots <- plots_element$spline_plots
+    main_title <- plots_element$cluster_main_title
+    
+    # Create a TOC entry for the main title
+    toc_entry <- paste0(
+      "<li style='margin-left: 50px; font-size: 25px;'>",
+      "<a href='#section", header_index, "'>",
+      main_title, 
+      "</a></li>"
+    )
+    toc <- paste(toc, toc_entry, sep = "\n")
+    
+    # Add the main title as a section title with an anchor before the first plot
+    grid_content <- paste0(
+      '<h2 id="section',
+      header_index,
+      '" style="text-align: center; margin-bottom: 20px; font-size: 50px;">',
+      main_title, '</h2>'
+    )
+    
     # Convert each individual plot to base64 and store in a list
-    base64_list <- lapply(plots_element, function(plot) {
-      # Extract the title from the plot
+    base64_list <- lapply(spline_plots, function(plot) {
       title <- plot$labels$title
-      plot <- plot + ggplot2::labs(title = NULL)  # Remove the title from the plot
+      # Remove the title from the plot (so that it is not there twice)
+      plot <- plot + ggplot2::labs(title = NULL)  
       
-      # Convert the plot to base64
       base64_plot <- plot2base64(plot, height = plots_size)
       
-      # Return a list containing the title and the base64 plot
-      list(title = title, plot = base64_plot)
+      list(
+        title = title,
+        plot = base64_plot
+      )
     })
     
     # Arrange the base64 images and titles in a single-column layout
-    grid_content <- ""
     for (i in seq_along(base64_list)) {
       # Add the title as HTML text
-      grid_content <- paste0(grid_content, '<div style="padding: 5px; text-align: center; font-size: 32px;">', base64_list[[i]]$title, '</div>')
+      grid_content <- paste0(
+        grid_content,
+        '<div style="padding: 5px; text-align: center; font-size: 32px;">',
+        base64_list[[i]]$title, '</div>'
+      )
       # Start a new row for each plot
-      grid_content <- paste0(grid_content, '<div style="display: flex;">')
-      grid_content <- paste0(grid_content, '<div style="flex: 1; padding: 5px;">', base64_list[[i]]$plot, '</div>')
+      grid_content <- paste0(
+        grid_content,
+        '<div style="display: flex;">'
+      )
+      grid_content <- paste0(
+        grid_content,
+        '<div style="flex: 1; padding: 5px;">', base64_list[[i]]$plot, '</div>'
+      )
+      
       grid_content <- paste0(grid_content, '</div>')
+      
+      # Add a horizontal line after each plot
+      grid_content <- paste0(
+        grid_content,
+        '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">'
+      )
     }
     
     # Add the grid content to the HTML content
@@ -844,19 +869,27 @@ process_plots <- function(
       grid_content,
       sep = "\n"
     )
-  }
-  else {
+  } else {
     # Process a single plot
     img_tag <- plot2base64(plots_element, height = plots_size)
     html_content <- paste(
       html_content,
+      '<div id="section', header_index, '">',
       img_tag,
+      '</div>',
+      '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">',  
       sep = "\n"
     )
   }
   
-  return(html_content)
+  return(
+    list(
+      html_content = html_content,
+      toc = toc
+      )
+    )
 }
+
 
 
 #' Process and Encode Data Field for Report

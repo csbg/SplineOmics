@@ -53,11 +53,19 @@ data <- extract_data(data_excel,
 
 # Remove outliers --------------------------------------------------------------
 
-# data <- data %>%
-#   select(-E12_TP05_Exponential, -E10_TP10_Stationary)
-# 
-# meta <- meta %>%
-#   filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
+col_names <- colnames(data)
+
+# Identify the columns to remove
+cols_to_remove <- c("E12_TP05_Exponential", "E10_TP10_Stationary")
+
+# Find the indices of the columns to remove
+cols_to_remove_indices <- which(col_names %in% cols_to_remove)
+
+# Remove the columns by subsetting
+data <- data[, -cols_to_remove_indices]
+
+meta <- meta %>%
+  dplyr::filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
 
 # Explore data -----------------------------------------------------------------
 
@@ -162,8 +170,8 @@ report_dir <- here::here("results", "clustering_reports")
 plot_info = list(
   y_axis_label = "log2 intensity",
   time_unit = "min",
-  treatment_labels = c("Feeding", "Test"),
-  treatment_timepoints = c(10, 200)
+  treatment_labels = c("Feeding"),
+  treatment_timepoints = c(0)
 )
 
 # debug(cluster_hits)
