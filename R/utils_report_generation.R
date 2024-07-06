@@ -370,16 +370,37 @@ generate_feature_name_template <- function(df) {
   # Initialize an empty vector to store the column headers
   column_headers <- vector()
   
+  # Function to find the matching column header
+  find_matching_column <- function(part) {
+    for (i in 1:length(part)) {
+      substring <- paste(part[1:i], collapse = "_")
+      matching_columns <- which(sapply(df[1, ],
+                                       function(x) identical(x, substring)) 
+                                & colnames(df) != "feature_name")
+      if (length(matching_columns) > 0) {
+        return(colnames(df)[matching_columns])
+      }
+    }
+    return(NULL)
+  }
+  
   # Iterate over the parts and find corresponding column headers
-  for (part in feature_name_parts) {
-    # Find columns that match the part perfectly, excluding the feature_name column
-    matching_columns <- which(sapply(df[1, ],
-                                     function(x) identical(x, part)) 
-                              & colnames(df) != "feature_name")
-    if (length(matching_columns) > 0) {
-      column_headers <- c(column_headers, colnames(df)[matching_columns])
-    } else {
-      column_headers <- c(column_headers, part)
+  i <- 1
+  while (i <= length(feature_name_parts)) {
+    j <- i
+    while (j <= length(feature_name_parts)) {
+      substring <- paste(feature_name_parts[i:j], collapse = "_")
+      matching_column <- find_matching_column(feature_name_parts[i:j])
+      if (!is.null(matching_column)) {
+        column_headers <- c(column_headers, matching_column)
+        i <- j + 1
+        break
+      }
+      j <- j + 1
+    }
+    if (i == j) {
+      column_headers <- c(column_headers, feature_name_parts[i])
+      i <- i + 1
     }
   }
   
@@ -666,15 +687,17 @@ encode_df_to_base64 <- function(df,
 #' @importFrom base64enc dataURI
 #' @importFrom svglite svglite
 #' 
-plot2base64 <- function(plot, 
-                        plot_nrows, 
-                        width = 7, 
-                        base_height_per_row = 2.5, 
-                        units = "in", 
-                        html_img_width = "100%") {
+plot2base64 <- function(
+    plot, 
+    height, 
+    width = 7, 
+    base_height_per_row = 2.5, 
+    units = "in", 
+    html_img_width = "100%"
+    ) {
   
   additional_height_per_row <- 2.1
-  height <- base_height_per_row + (plot_nrows - 1) * additional_height_per_row
+  height <- base_height_per_row + (height - 1) * additional_height_per_row
   
   # Create a temporary file for the SVG. SVG does not specify the quality 
   # already, but later, after exporting the figures from the HTML, you can
@@ -685,7 +708,7 @@ plot2base64 <- function(plot,
   
   # Draw the plot
   print(plot)
-  
+
   # Turn off the device
   dev.off()
   
@@ -703,8 +726,12 @@ plot2base64 <- function(plot,
   unlink(img_file)
   
   # Return the HTML img tag with the base64 string and a fixed width
-  return(sprintf('<img src="%s" alt="Plot" style="width:%s;">', 
-                 svg_base64, html_img_width))
+  return(
+    sprintf(
+      '<img src="%s" alt="Plot" style="width:%s;">', 
+      svg_base64, html_img_width
+      )
+    )
 }
 
 
@@ -762,13 +789,73 @@ define_html_styles <- function() {
 #'
 #' @return Updated HTML content with the plots included.
 #' 
-process_plots <- function(plots,
-                          plots_sizes,
-                          index,
-                          html_content) {
-
-  img_tag <- plot2base64(plots[[index]], plots_sizes[[index]])
-  html_content <- paste(html_content, img_tag, sep = "\n")
+# process_plots <- function(
+#     plots_element,
+#     plots_size,
+#     html_content
+#     ) {
+#   
+#   
+#   img_tag <- plot2base64(
+#     plots_element,
+#     plots_size
+#     )
+#   html_content <- paste(
+#     html_content,
+#     img_tag,
+#     sep = "\n"
+#     )
+# }
+process_plots <- function(
+    plots_element,
+    element_name,
+    plots_size,
+    html_content
+    ) {
+  
+  if (startsWith(element_name, "individual_spline_plots")) {
+    # Convert each individual plot to base64 and store in a list
+    base64_list <- lapply(plots_element, function(plot) {
+      # Extract the title from the plot
+      title <- plot$labels$title
+      plot <- plot + ggplot2::labs(title = NULL)  # Remove the title from the plot
+      
+      # Convert the plot to base64
+      base64_plot <- plot2base64(plot, height = plots_size)
+      
+      # Return a list containing the title and the base64 plot
+      list(title = title, plot = base64_plot)
+    })
+    
+    # Arrange the base64 images and titles in a single-column layout
+    grid_content <- ""
+    for (i in seq_along(base64_list)) {
+      # Add the title as HTML text
+      grid_content <- paste0(grid_content, '<div style="padding: 5px; text-align: center; font-size: 32px;">', base64_list[[i]]$title, '</div>')
+      # Start a new row for each plot
+      grid_content <- paste0(grid_content, '<div style="display: flex;">')
+      grid_content <- paste0(grid_content, '<div style="flex: 1; padding: 5px;">', base64_list[[i]]$plot, '</div>')
+      grid_content <- paste0(grid_content, '</div>')
+    }
+    
+    # Add the grid content to the HTML content
+    html_content <- paste(
+      html_content,
+      grid_content,
+      sep = "\n"
+    )
+  }
+  else {
+    # Process a single plot
+    img_tag <- plot2base64(plots_element, height = plots_size)
+    html_content <- paste(
+      html_content,
+      img_tag,
+      sep = "\n"
+    )
+  }
+  
+  return(html_content)
 }
 
 

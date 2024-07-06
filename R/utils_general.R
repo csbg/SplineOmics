@@ -14,15 +14,6 @@
 #'
 #' @return A progress bar object from the 'progress' package.
 #'
-#' @examples
-#' \dontrun{
-#' items <- 1:10
-#' pb <- create_progress_bar(items)
-#' for (i in items) {
-#'   pb$tick()
-#'   Sys.sleep(0.1)
-#' }}
-#'
 #' @importFrom progress progress_bar
 #'
 #' @seealso
@@ -64,10 +55,12 @@ create_progress_bar <- function(iterable) {
 #' @importFrom splines bs ns
 #' @importFrom stats model.matrix as.formula
 #'
-design2design_matrix <- function(meta,
-                                 spline_params,
-                                 level_index,
-                                 design) {
+design2design_matrix <- function(
+    meta,
+    spline_params,
+    level_index,
+    design
+    ) {
 
   args <- list(x = meta$Time, intercept = FALSE)   # Time column is mandatory
   
@@ -111,8 +104,10 @@ design2design_matrix <- function(meta,
 #'
 #' @keywords internal
 #' 
-determine_analysis_mode <- function(design, 
-                                    factor_column) {
+determine_analysis_mode <- function(
+    design, 
+    factor_column
+    ) {
   
   if (!is.character(design) || length(design) != 1) {
     stop(paste("design must be a character of length 1"),
