@@ -572,10 +572,7 @@ make_clustering_report <- function(
 
     meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
 
-    individual_spline_plots <- list()
-    indiv_spline_plots_heights <- list()
-    # nrows <- list()
-
+    clusters_spline_plots <- list()
     
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
 
@@ -589,30 +586,29 @@ make_clustering_report <- function(
 
       X <- level_clustering$X
 
-      plot_splines_result <- plot_splines(
-        top_table_cluster,
-        data_level,
-        meta_level,
-        X,
-        main_title,
-        time_unit_label,
-        plot_info
+      spline_plots <- plot_splines(
+        top_table = top_table_cluster,
+        data = data_level,
+        meta = meta_level,
+        X = X,
+        time_unit_label = time_unit_label,
+        plot_info = plot_info
         )
 
-      individual_spline_plots[[length(individual_spline_plots) + 1]] <- 
-        plot_splines_result
-      indiv_spline_plots_heights[[length(indiv_spline_plots_heights) + 1]] <- 1
-      
-      # nrows[[length(nrows) + 1]] <- plot_splines_result$nrows
+      clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
+        spline_plots = spline_plots,
+        cluster_main_title = main_title
+        )
     }
 
     plots <- c(
       plots,
-      "level_header",    # is the signal for the plotting code
-      list(dendrogram, p_curves),
-      list(consensus_shapes$plot),
-      heatmaps[[i]],
-      individual_spline_plots = individual_spline_plots
+      new_level = "level_header",    # is the signal for the plotting code
+      dendrogram = list(dendrogram),
+      p_curves = list(p_curves),
+      consensus_shapes = list(consensus_shapes$plot),
+      heatmap = heatmaps[[i]],
+      individual_spline_plots = clusters_spline_plots  # gets expanded like this
       )
 
     # For every plot in plots, this determines the size in the HTML
@@ -623,7 +619,7 @@ make_clustering_report <- function(
       1.5,
       consensus_shapes$size,
       1.5,
-      unlist(indiv_spline_plots_heights)
+      rep(1, length(clusters_spline_plots))
       )
   }
 
@@ -1245,10 +1241,12 @@ plot_dendrogram <- function(hc,
 #' \code{\link{ggplot2}}
 #'
 #' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
-#'             theme_minimal
+#'                     theme_minimal
 #'
-plot_all_shapes <- function(curve_values,
-                            time_unit_label) {
+plot_all_shapes <- function(
+    curve_values,
+    time_unit_label
+    ) {
 
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
 
@@ -1281,7 +1279,7 @@ plot_all_shapes <- function(curve_values,
                                   color =
                                     factor(!!rlang::sym("cluster")))) +
     geom_line() +
-    ggtitle("Average Curves by Cluster") +
+    ggtitle("Average Splines by Cluster") +
     xlab(paste0("Time ", time_unit_label)) +
     ylab("min-max normalized values") +
     scale_color_brewer(palette = "Dark2",
@@ -1317,11 +1315,11 @@ plot_single_and_consensus_splines <- function(
     time_series_data,
     title,
     time_unit_label
-    ) {
-
+) {
+  
   time_col <- sym("time")
   feature_col <- sym("feature")
-
+  
   # Convert data to long format with appropriate column names
   df_long <- as.data.frame(t(time_series_data)) %>%
     rownames_to_column(var = "time") %>%
@@ -1329,12 +1327,12 @@ plot_single_and_consensus_splines <- function(
                  values_to = "intensity") %>%
     arrange(!!feature_col) %>%
     mutate(!!time_col := as.numeric(!!time_col))
-
+  
   # Compute consensus (mean of each column)
   consensus <- colMeans(time_series_data, na.rm = TRUE)
   consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)),
                              consensus = consensus)
-
+  
   p <- ggplot2::ggplot() +
     geom_line(data = df_long, aes(x = !!rlang::sym("time"),
                                   y = !!rlang::sym("intensity"),
@@ -1372,14 +1370,19 @@ plot_single_and_consensus_splines <- function(
 #' @seealso
 #' \code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
 #'
-plot_consensus_shapes <- function(curve_values,
-                                  time_unit_label) {
+plot_consensus_shapes <- function(
+    curve_values,
+    time_unit_label
+    ) {
 
   clusters <- sort(unique(curve_values$cluster))
-  # time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
+
   plots <- list()
   for (current_cluster in clusters) {
-    subset_df <- subset(curve_values, curve_values$cluster == current_cluster)
+    subset_df <- subset(
+      curve_values,
+      curve_values$cluster == current_cluster
+      )
     subset_df$cluster <- NULL
     nr_of_hits <- nrow(subset_df)
     current_title <- paste("Cluster", current_cluster, 
@@ -1421,8 +1424,6 @@ plot_consensus_shapes <- function(curve_values,
 #' @param meta A dataframe containing metadata for the data, including time
 #' points.
 #' @param X The limma design matrix that defines the experimental conditions.
-#' @param main_title The main title to be used for the composite plot of all
-#' features.
 #' @param time_unit_label A string shown in the plots as the unit for the time,
 #' such as min or hours.
 #'
@@ -1440,7 +1441,6 @@ plot_splines <- function(
     data,
     meta,
     X,   # Was already created from spline_params before
-    main_title,
     time_unit_label,
     plot_info
     ) {
@@ -1481,16 +1481,18 @@ plot_splines <- function(
     treatment_times <- plot_info$treatment_timepoints 
     treatment_labels <- plot_info$treatment_labels 
     
-    color_values <- c("Datapoints" = "blue", "Spline" = "red")
+    color_values <- c("Data" = "blue", "Spline" = "red")
     distinct_colors <- scales::hue_pal()(length(treatment_labels))
     names(distinct_colors) <- treatment_labels
     color_values <- c(color_values, distinct_colors)
+    
+    all_time_points <- unique(c(time_points, treatment_times))
     
     p <- ggplot2::ggplot() +
       ggplot2::geom_point(data = plot_data, 
                           ggplot2::aes(x = Time, 
                                        y = !!rlang::sym("Y"), 
-                                       color = "Datapoints")) +
+                                       color = "Data")) +
       ggplot2::geom_line(data = plot_spline, 
                          ggplot2::aes(x = Time, 
                                       y = !!rlang::sym("Fitted"), 
@@ -1498,49 +1500,52 @@ plot_splines <- function(
       ggplot2::theme_minimal() +
       ggplot2::scale_x_continuous(limits = c(min(time_points), 
                                              x_max + x_extension),
-                                  breaks = time_points) + 
+                                  breaks = all_time_points) + 
       ggplot2::labs(x = paste0("Time ", time_unit_label), 
                     y = plot_info$y_axis_label) +  
       ggplot2::scale_color_manual(values = color_values) +
-      ggplot2::theme(legend.position = "top", 
-                     legend.justification = "center",
-                     legend.box = "horizontal",   
-                     legend.background = ggplot2::element_blank(),  
-                     legend.title = ggplot2::element_blank(),  
-                     legend.text = ggplot2::element_text(size = 4),
-                     legend.key.size = unit(0.25, "lines"),
-                     legend.key.width = unit(0.25, "lines"),
-                     legend.spacing = unit(0.1, "lines"),  
-                     legend.margin = ggplot2::margin(1, 1, 1, 1),  
-                     legend.box.margin = ggplot2::margin(1, 1, 1, 1),
-                     legend.box.background = ggplot2::element_rect(
-                       color = "black",
-                       size = 0.5
-                       ),  
-                     axis.text.x = ggplot2::element_text(size = 8),
-                     axis.title.y = 
-                       ggplot2::element_text(size = 10, 
-                                             margin = ggplot2::margin(
-                                               t = 0, r = 2, b = 0, l = 0)),
-                     axis.text.y = 
-                       ggplot2::element_text(margin = ggplot2::margin(
-                         t = 0, r = 5, b = 0, l = 0)))
+      ggplot2::theme(
+        legend.position = "right", 
+        legend.justification = "center",
+        legend.box = "vertical",   
+        legend.background = ggplot2::element_blank(),  
+        legend.title = ggplot2::element_blank(),  
+        legend.text = ggplot2::element_text(
+          size = 6, 
+          margin = ggplot2::margin(l = 0, r = 6)
+          ),
+        legend.spacing.x = unit(0.5, "cm"), # Adjust horizontal spacing
+        legend.margin = ggplot2::margin(1, 1, 1, 1),  
+        legend.box.margin = ggplot2::margin(1, 1, 1, 1),
+        legend.box.background = ggplot2::element_rect(
+         color = "black",
+         size = 0.5
+         ),  
+        axis.text.x = ggplot2::element_text(size = 8),
+        axis.title.y = 
+         ggplot2::element_text(size = 10, 
+                               margin = ggplot2::margin(
+                                 t = 0, r = 2, b = 0, l = 0)),
+        axis.text.y = 
+         ggplot2::element_text(margin = ggplot2::margin(
+           t = 0, r = 5, b = 0, l = 0
+           )))
+    
+    # Create a data frame for the treatment lines
+    treatment_df <- data.frame(
+      Time = treatment_times,
+      Label = treatment_labels
+    )
     
     # Add vertical lines for each treatment time
-    for (i in seq_along(treatment_times)) {
-      if (!is.na(treatment_times[i]) && !is.na(treatment_labels[i])) {
-        p <- p + ggplot2::geom_vline(xintercept = treatment_times[i], 
-                                     linetype = "dashed", 
-                                     size = 0.5,
-                                     aes(color = treatment_labels[i]))
-      }
-    }
-    
-    
-    
-    
-    
-    
+    p <- p + ggplot2::geom_vline(
+      data = treatment_df, 
+      ggplot2::aes(xintercept = Time, 
+                  color = Label), 
+      linetype = "dashed", 
+      size = 0.5
+      )
+
     # Add title and annotations
     matched_row <- dplyr::filter(titles, 
                                  !!rlang::sym("FeatureID") == hit_index)
@@ -1569,17 +1574,8 @@ plot_splines <- function(
     
     plot_list[[length(plot_list) + 1]] <- p
   }
-  
-  
-  ncol <- 3
-  num_plots <- length(plot_list)
-  nrows <- ceiling(num_plots / ncol)
-  return(spline_plots = plot_list)
-  # return(create_composite_plot(
-  #   plot_list = plot_list,
-  #   main_title = main_title
-  #   )
-    # )
+
+  return(plot_list)
 }
 
 
@@ -1731,26 +1727,26 @@ build_cluster_hits_report <- function(
 
   
   pb <- create_progress_bar(plots)
-  bonus_index <- -1
+
+  header_index <- 0
   
   # Generate the sections and plots
   for (index in seq_along(plots)) {
+    header_index <- header_index + 1
 
     if (current_header_index <= length(level_headers_info)) {
       header_info <- level_headers_info[[current_header_index]]
       nr_hits <- header_info$nr_hits
       adj_pvalue_threshold <- header_info$adj_pvalue_threshold
 
-      # means jump to next level
-      if (any(class(plots[[index]]) == "character")) {
-        
-        # So that below the subsection headers are added for ALL levels
-        bonus_index <- bonus_index + index
-        
+      # means this is the section of a new level
+      # The very first level is also a new level
+      if (names(plots)[index] == "new_level") {
+
         section_header <- sprintf(
           "<h2 style='%s' id='section%d'>%s</h2>",
           section_header_style,
-          index,
+          header_index,
           header_info$header_name
           )
 
@@ -1783,7 +1779,8 @@ build_cluster_hits_report <- function(
             "<p style='text-align: center; font-size: 30px;'>",
             "adj.p-value threshold: %.3f</p>",
             "<p style='text-align: center; font-size: 30px;'>",
-            "Number of hits: %d</p>"
+            "Number of hits: %d</p>",
+            "<hr>"
           ),
           adj_pvalue_threshold,
           nr_hits
@@ -1798,7 +1795,7 @@ build_cluster_hits_report <- function(
         toc_entry <- sprintf(
           "<li style='%s'><a href='#section%d'>%s</a></li>",
           toc_style,
-          index,
+          header_index,
           header_info[[1]]
           )
         toc <- paste(
@@ -1813,63 +1810,63 @@ build_cluster_hits_report <- function(
         next
       }
     }
+
+    element_name <- names(plots)[index]
+
+    header_levels <- c(
+      "dendrogram",
+      "heatmap",
+      "individual_spline_plots1"
+    )
     
-    if (index == 2 + bonus_index ||
-        index == 5 + bonus_index ||
-        index == 6 + bonus_index) {
+    if (element_name %in% header_levels) {
       
-      if (index == 2 + bonus_index) {
-        
-        adjusted_index <- 2
-        
-      } else if (index == 5 + bonus_index) {
-        
-        adjusted_index <- 5
-        
-      } else {     # index == 6 + bonus_index
-        
-        adjusted_index <- 6
+      if (element_name == "dendrogram") {
+        header_text <- "Overall Clustering"
+      } else if (element_name == "heatmap") {
+        header_text <- "Z-Score of log2 Value Heatmap"
+      } else {  # element_name == "individual_spline_plots1"
+        header_text <- "Individual Significant Features (Hits) Splines"
       }
       
-      header <- switch(
-        as.character(adjusted_index),
-        "2" = paste(
-          "<h2 id='section2' style='text-align: center; font-size: 3.5em;'>",
-          "Overall Clustering</h2>"
-        ),
-        "5" = paste(
-          "<h2 id='section5' style='text-align: center; font-size: 3.5em;'>",
-          "Z-Score of log2 Value Heatmap</h2>"
-        ),
-        "6" = paste(
-          "<h2 id='section6' style='text-align: center; font-size: 3.5em;'>",
-          "Individual Significant Features (Hits) Splines</h2>"
-        )
+      # Add the main title as a section title with an anchor 
+      # before the first plot
+      header <- paste0(
+        "<h2 id='section",
+        header_index,
+        "' style='text-align: center; font-size: 3.5em;'>",
+        header_text, "</h2>"
       )
       
-      html_content <- paste(html_content, header, sep = "\n")
-      
-      header_text <- switch(
-        as.character(adjusted_index),
-        "2" = "Overall Clustering",
-        "5" = "Z-Score of log2 Value Heatmap",
-        "6" = "Individual Features Splines"
+      html_content <- paste(
+        html_content,
+        header,
+        sep = "\n"
       )
       
-      toc_entry <- sprintf(
-        "<li style='margin-left: 30px; %s'><a href='#section%s'>%s</a></li>",
-        "font-size: 30px;", adjusted_index, header_text
+      toc_entry <- paste0(
+        "<li style='margin-left: 30px; font-size: 30px;'>",
+        "<a href='#section", header_index, "'>",
+        header_text, 
+        "</a></li>"
       )
       
       toc <- paste(toc, toc_entry, sep = "\n")
     }
     
-    html_content <- process_plots(
+    header_index <- header_index + 1
+    
+    result <- process_plots(
       plots_element = plots[[index]],
       element_name = names(plots)[index],
       plots_size = plots_sizes[[index]],
-      html_content = html_content
+      html_content = html_content,
+      toc = toc,
+      header_index = header_index
       )
+    
+    html_content <- result$html_content
+    toc <- result$toc
     
     pb$tick()
   }
@@ -2142,101 +2139,26 @@ get_spline_params_info <- function(
   }
 
   if (spline_params$spline_type[j] == "b") {
-    spline_params_info <-
-      sprintf("<p style='text-align: center; font-size: 30px;'>
-                    <span style='color: blue;'>Spline-type:</span> B-spline<br>
-                    <span style='color: blue;'>Degree:</span> %s<br>
-                    <span style='color: blue;'>DoF:</span> %s<br>
-                    <span style='color: blue;'>Knots:</span> %s<br>
-                    <span style='color: blue;'>Boundary-knots:</span> %s</p>",
-              spline_params$degree[j], spline_params$dof[j],
-              spline_params$knots[j], spline_params$bknots[j])
-  } else {    # == "n"
-    spline_params_info <-
-      sprintf("<p style='text-align: center; font-size: 30px;'>
-                    <span style='color: blue;'>Spline-type:</span> Natural cubic
-                    spline<br>
-                    <span style='color: blue;'>DoF:</span> %s<br>
-                    <span style='color: blue;'>Knots:</span> %s<br>
-                    <span style='color: blue;'>Boundary-knots:</span> %s</p>",
-              spline_params$dof[j], spline_params$knots[j],
-              spline_params$bknots[j])
-
+    spline_params_info <- sprintf("
+    <p style='text-align: center; font-size: 30px;'>
+        <span style='color: blue;'>Spline-type:</span> B-spline<br>
+        <span style='color: blue;'>Degree:</span> %s<br>
+        <span style='color: blue;'>DoF:</span> %s<br>
+        <span style='color: blue;'>Knots:</span> %s<br>
+        <span style='color: blue;'>Boundary-knots:</span> %s
+    </p>",
+    spline_params$degree[j], spline_params$dof[j],
+    spline_params$knots[j], spline_params$bknots[j])
+  } else {    # spline_type == "n"
+    spline_params_info <- sprintf("
+    <p style='text-align: center; font-size: 30px;'>
+        <span style='color: blue;'>Spline-type:</span> Natural cubic spline<br>
+        <span style='color: blue;'>DoF:</span> %s<br>
+        <span style='color: blue;'>Knots:</span> %s<br>
+        <span style='color: blue;'>Boundary-knots:</span> %s
+    </p>",
+    spline_params$dof[j], spline_params$knots[j],
+    spline_params$bknots[j])
   }
   return(spline_params_info)
 }
-
-
-#' Create Composite Plot from Plot List
-#'
-#' @description
-#' This function takes a list of plots and creates a composite plot using
-#' the patchwork package. It also returns the number of rows in the 
-#' composite plot.
-#'
-#' @param plot_list A list of ggplot objects to be combined into a 
-#' composite plot.
-#' @param main_title The main title for the composite plot.
-#'
-#' @return A list containing the composite plot and the number of rows.
-#'
-# create_composite_plot <- function(
-#     plot_list,
-#     main_title
-#     ) {
-#   
-#   if (length(plot_list) > 0) {
-#     num_plots <- length(plot_list)
-#     ncol <- 3
-#     nrows <- ceiling(num_plots / ncol)
-#     
-#     composite_plot <- patchwork::wrap_plots(plot_list, ncol = ncol) +
-#       patchwork::plot_annotation(
-#         title = main_title,
-#         theme = theme(plot.title = element_text(hjust = 0.5, size = 14))
-#       )
-#     
-#     return(list(composite_plot = composite_plot, nrows = nrows))
-#   } else {
-#     stop("plot_list in function create_composite_plot has length 0!",
-#          call. = FALSE)
-#   }
-# }
-
-#' library(ggplot2)
-#' library(gridExtra)
-#' library(dplyr)
-#' 
-#' #' Create Grid of Individual Plots
-#' #'
-#' #' @description
-#' #' This function creates a grid layout of individual plots from a list of ggplot2 objects.
-#' #'
-#' #' @param plot_list A list of ggplot2 objects.
-#' #' @param main_title The main title for the grid of plots.
-#' #'
-#' #' @return A grid layout of individual plots.
-#' #' @importFrom gridExtra grid.arrange
-#' #' @importFrom grid textGrob gpar
-#' create_composite_plot <- function(plot_list, main_title) {
-#'   if (length(plot_list) > 0) {
-#'     num_plots <- length(plot_list)
-#'     ncol <- 3
-#'     nrows <- ceiling(num_plots / ncol)
-#'     
-#'     # Create a list of grobs
-#'     grobs <- lapply(plot_list, ggplot2::ggplotGrob)
-#'     
-#'     # Arrange the grobs in a grid
-#'     grid_layout <- gridExtra::grid.arrange(
-#'       grobs = grobs,
-#'       ncol = ncol,
-#'       top = grid::textGrob(main_title, gp = gpar(fontsize = 20, fontface = "bold"))
-#'     )
-#'     
-#'     return(list(composite_plot = grid_layout, nrows = nrows))
-#'   } else {
-#'     stop("plot_list in function create_grid_of_plots has length 0!", call. = FALSE)
-#'   }
-#' }
-

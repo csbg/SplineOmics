@@ -4,7 +4,7 @@
 \alias{plot_splines}
 \title{Plot Splines for Features Based on Top Table Information}
 \usage{
-plot_splines(top_table, data, meta, X, main_title, time_unit_label, plot_info)
+plot_splines(top_table, data, meta, X, time_unit_label, plot_info)
 }
 \arguments{
 \item{top_table}{A dataframe containing the indices and names of features,
@@ -19,9 +19,6 @@ feature.}
 points.}
 
 \item{X}{The limma design matrix that defines the experimental conditions.}
-
-\item{main_title}{The main title to be used for the composite plot of all
-features.}
 
 \item{time_unit_label}{A string shown in the plots as the unit for the time,
 such as min or hours.}

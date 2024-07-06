@@ -857,8 +857,12 @@ InputControl <- R6::R6Class("InputControl",
     check_plot_info = function() {
       
       plot_info <- self$args$plot_info
+      meta <- self$args$meta
       
-      required_args <- list(plot_info)
+      required_args <- list(
+        plot_info,
+        meta
+        )
       
       if (any(sapply(required_args, is.null))) {
         return(NULL)
@@ -890,10 +894,10 @@ InputControl <- R6::R6Class("InputControl",
             call. = FALSE
             )
         }
-        if (any(nchar(plot_info$treatment_labels) > 15)) {
+        if (any(nchar(plot_info$treatment_labels) > 10)) {
           stop(
             paste(
-              "Each element of treatment_labels must be maximally 15", 
+              "Each element of treatment_labels must be maximally 10", 
               "characters long"),
             call. = FALSE
             )
@@ -918,6 +922,18 @@ InputControl <- R6::R6Class("InputControl",
             call. = FALSE
             )
         }
+      }
+      
+
+      max_time <- max(meta$Time, na.rm = TRUE)
+      
+      if (any(plot_info$treatment_timepoints > max_time)) {
+        stop(
+          paste(
+            "All treatment_timepoints must be before the last timepoint:",
+            max_time),
+          call. = FALSE
+        )
       }
     },
     

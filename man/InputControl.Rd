@@ -12,6 +12,16 @@ InputControl: A class for controlling and validating inputs
 This class provides methods to validate the inputs of a function.
 
 
+The method performs the following checks:
+
+* Ensures that both `annotation` and `data` are provided.
+* Confirms that `annotation` is a dataframe.
+* Verifies that `annotation` and `data` have the same number of rows.
+
+If any of these checks fail, an informative error message is returned.
+
+
+
 - The method first checks if the lengths of \code{designs} and 
 \code{modes} 
   are equal. If not, it raises an error.
@@ -32,7 +42,35 @@ automatic
 - If `clusters` is not a list or if the list contains non-character and 
   non-numeric types, it throws an error.
 
-Check Time Unit
+Check Plot Info
+
+
+
+The method performs the following checks:
+
+* Ensures that `plot_info` is provided and not NULL.
+* Confirms that `y_axis_label` is a character vector with maximally 30
+ characters.
+* Confirms that `time_unit` is a character vector with maximally 15 
+characters.
+* Validates that `treatment_labels` is either `NA` or a character vector
+ with each 
+  element being maximally 15 characters long.
+* Validates that `treatment_timepoints` is either `NA` or a numeric 
+vector with the 
+  same length as `treatment_labels` if `treatment_labels` is not `NA`.
+
+If any of these checks fail, an informative error message is returned.
+
+
+
+The method performs the following checks:
+
+* Ensures that `analysis_mode` is provided and not NULL.
+* Confirms that `analysis_mode` is a character vector of length 1.
+* Validates that `analysis_mode` matches one of the allowed values.
+
+If any of these checks fail, an informative error message is returned.
 
 
 
@@ -78,6 +116,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-new}{\code{InputControl$new()}}
 \item \href{#method-InputControl-auto_validate}{\code{InputControl$auto_validate()}}
 \item \href{#method-InputControl-check_data_and_meta}{\code{InputControl$check_data_and_meta()}}
+\item \href{#method-InputControl-check_annotation}{\code{InputControl$check_annotation()}}
 \item \href{#method-InputControl-check_datas_and_metas}{\code{InputControl$check_datas_and_metas()}}
 \item \href{#method-InputControl-check_datas_descr}{\code{InputControl$check_datas_descr()}}
 \item \href{#method-InputControl-check_top_tables}{\code{InputControl$check_top_tables()}}
@@ -90,11 +129,12 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_limma_top_tables}{\code{InputControl$check_limma_top_tables()}}
 \item \href{#method-InputControl-check_adj_pthresholds}{\code{InputControl$check_adj_pthresholds()}}
 \item \href{#method-InputControl-check_clusters}{\code{InputControl$check_clusters()}}
-\item \href{#method-InputControl-check_time_unit}{\code{InputControl$check_time_unit()}}
+\item \href{#method-InputControl-check_plot_info}{\code{InputControl$check_plot_info()}}
 \item \href{#method-InputControl-check_report_dir}{\code{InputControl$check_report_dir()}}
 \item \href{#method-InputControl-check_genes}{\code{InputControl$check_genes()}}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
 \item \href{#method-InputControl-check_report_info}{\code{InputControl$check_report_info()}}
+\item \href{#method-InputControl-check_analysis_type}{\code{InputControl$check_analysis_type()}}
 \item \href{#method-InputControl-check_report}{\code{InputControl$check_report()}}
 \item \href{#method-InputControl-clone}{\code{InputControl$clone()}}
 }
@@ -220,6 +260,25 @@ data/meta pair for error messages. Default is NA.}
 \subsection{Returns}{
 Returns TRUE if all checks pass. Stops execution and returns an
 error message if any check fails.
+
+Check Annotation Consistency
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_annotation"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_annotation}{}}}
+\subsection{Method \code{check_annotation()}}{
+This method checks the consistency of the annotation with the data. 
+It ensures
+that the annotation is a dataframe and that it has the same number 
+of rows as the data.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_annotation()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+NULL if any required arguments are missing. Otherwise, performs 
+checks and potentially raises errors if checks fail.
 
 Check Multiple Data and Meta Pairs
 }
@@ -527,33 +586,25 @@ estimation.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-InputControl-check_time_unit"></a>}}
-\if{latex}{\out{\hypertarget{method-InputControl-check_time_unit}{}}}
-\subsection{Method \code{check_time_unit()}}{
-This function checks if the provided time unit is valid. The valid time
-units are:
-'s' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. If the
-time unit
-is not one of these, the function stops execution and returns an error
-message.
+\if{html}{\out{<a id="method-InputControl-check_plot_info"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_plot_info}{}}}
+\subsection{Method \code{check_plot_info()}}{
+This method checks the validity of the `plot_info` list. It ensures that 
+`y_axis_label` and `time_unit` meet the length constraints, 
+`treatment_labels` 
+is either `NA` or a character vector with elements meeting the length 
+constraint, 
+and `treatment_timepoints` is either `NA` or a numeric vector with the 
+same length 
+as `treatment_labels`.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_time_unit()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_plot_info()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{time_unit}}{A character string specifying the time unit. Valid 
-options
-are
-'s' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.}
-}
-\if{html}{\out{</div>}}
-}
 \subsection{Returns}{
-Returns TRUE if the time unit is valid. Stops execution and 
-returns
-an error message if the time unit is invalid.
+NULL if `plot_info` is not provided or invalid. Otherwise, 
+performs checks
+and potentially raises errors if checks fail.
 
 Check and Create Report Directory
 }
@@ -669,6 +720,28 @@ and adheres to the required formats.
 \subsection{Returns}{
 TRUE if the report information is valid; otherwise, an error is
 thrown.
+
+Check Analysis Mode
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_analysis_type"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_analysis_type}{}}}
+\subsection{Method \code{check_analysis_type()}}{
+This method checks the validity of the `analysis_mode` argument. 
+It ensures that 
+`analysis_mode` is a character vector of length 1 and that it matches
+ one of the 
+allowed analysis modes: "time_effect", "avrg_diff_conditions", or 
+"interaction_condition_time".
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_analysis_type()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+NULL if `analysis_mode` is not provided or invalid. Otherwise, 
+performs checks
+and potentially raises errors if checks fail.
 
 Check Report
 }

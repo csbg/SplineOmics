@@ -30,13 +30,3 @@ The report includes various plots and sections summarizing the analysis
 results for time effects, average differences between conditions, 
 and interaction effects between condition and time.
 }
-\examples{
-\dontrun{
-  run_limma_splines_result <- list(time_effect = list(), 
-                                   avrg_diff_conditions = list(), 
-                                   interaction_condition_time = list())
-  report_info <- list(title = "LIMMA Report", author = "John Doe")
-  create_limma_report(run_limma_splines_result, report_info)
-}
-
-}
