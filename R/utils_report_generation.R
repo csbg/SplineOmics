@@ -323,6 +323,16 @@ generate_and_write_html <- function(
   # Append a horizontal line after the TOC
   html_content <- gsub("</ul></div>", "</ul></div>\n<hr>", html_content)
   
+  # Path to the external JavaScript file within the package
+  js_file_path <- system.file("www/hotkeys.js", package = "SplineOmics")
+  if (js_file_path == "") {
+    stop("JavaScript file not found.")
+  }
+  
+  # Include the external JavaScript file before the closing body tag
+  script_tag <- paste0("<script src='", js_file_path, "'></script>")
+  html_content <- gsub("</body>", paste(script_tag, "</body>"), html_content)
+  
   # Append the final closing tags for the HTML body and document
   html_content <- paste(html_content, "</body></html>", sep = "\n")
   
@@ -568,7 +578,10 @@ get_header_section <- function(
       "of the spline. <br> Right-click on any plot", 
       "in this report to save it as a", 
       ".svg (vector graphic) file! <br> If one level of ", 
-      "the experiment is not shown, it means it has < 2 hits!</p>",
+      "the experiment is not shown, it means it has < 2 hits!<br>",
+      "To jump to the Table of Contents, press the 't' key", 
+      "on your keyboard.",
+      "</p>",
       paste(
         '<span style="font-size:1.3em;">',
         'feature_name "formula": ', 
@@ -745,15 +758,63 @@ plot2base64 <- function(
 #' 
 create_toc <- function() {
   
-  toc <- paste("<hr style='border: none; height: 3px; background-color:
-               #333; margin: 40px 0;'>",
-               "<div id='toc' style='text-align: center; display: block; margin:
-               auto; width: 80%;'>",
-               "<h2 style='font-size: 60px;'>Table of Contents</h2>",
-               "<ul style='display: inline-block; text-align: left;'>",
-               sep = ""
-               )
+  toc <- paste(
+  "<hr style='border: none; height: 3px; background-color:
+  #333; margin: 40px 0;'>",
+  "<div id='toc' style='text-align: center; display: block; margin:
+  auto; width: 80%;'>",
+  "<h2 style='font-size: 60px;'>Table of Contents</h2>",
+  "<ul style='display: inline-block; text-align: left;'>",
+  sep = ""
+  )
 }
+
+
+create_hotkey_script <- function() {
+  hotkey_script <- "
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') {
+                document.getElementById('toc').scrollIntoView();
+            }
+            if (event.key === 'e') {
+                var email = 'your.email@example.com';
+                var mailto_url = 'mailto:' + email;
+                var new_tab = window.open(mailto_url, '_blank');
+                if (new_tab) {
+                    new_tab.opener = null;  // Prevents a possible security vulnerability
+                }
+            }
+            if (event.key === 'd') {
+                downloadEmbeddedFiles();
+            }
+        });
+    });
+
+    function downloadEmbeddedFiles() {
+        var zip = new JSZip();
+        var files = [
+            // Add your embedded files here
+            {name: 'file1.txt', content: 'Content of file 1'},
+            {name: 'file2.txt', content: 'Content of file 2'}
+        ];
+
+        files.forEach(function(file) {
+            zip.file(file.name, file.content);
+        });
+
+        zip.generateAsync({type: 'blob'}).then(function(content) {
+            saveAs(content, 'embedded_files.zip');
+        });
+    }
+  </script>"
+  
+  return(hotkey_script)
+}
+
 
 
 #' Define HTML Styles
@@ -1057,6 +1118,3 @@ create_enrichr_zip <- function(enrichr_format) {
   
   return(zip_base64)
 }
-
-
-

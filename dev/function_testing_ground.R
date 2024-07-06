@@ -141,8 +141,8 @@ spline_test_configs <- data.frame(spline_type = c("n", "n", "n", "n"),
 splineomics <- update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",
-  data = data2,
-  meta = meta2,
+  data = data1,
+  meta = meta1,
   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
                        dof = c(2L))
 )
