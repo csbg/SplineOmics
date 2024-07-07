@@ -34,6 +34,11 @@ explore_data <- function(
     report = TRUE
     ) {
   
+  report_dir <- normalizePath(
+    report_dir,
+    mustWork = FALSE
+  )
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "explore_data"

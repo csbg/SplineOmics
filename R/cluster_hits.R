@@ -83,6 +83,11 @@ cluster_hits <- function(
     report = TRUE
     ) {
   
+  report_dir <- normalizePath(
+    report_dir,
+    mustWork = FALSE
+    )
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "cluster_hits"

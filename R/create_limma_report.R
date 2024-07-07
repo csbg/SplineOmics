@@ -39,7 +39,12 @@ create_limma_report <- function(
     adj_pthresh = 0.05,
     report_dir = here::here()
     ) {
-
+  
+  report_dir <- normalizePath(
+    report_dir,
+    mustWork = FALSE
+  )
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "create_limma_report"
