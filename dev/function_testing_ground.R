@@ -155,7 +155,7 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-# create_limma_report(
+# plots <- create_limma_report(
 #   splineomics,
 #   report_dir = report_dir
 #   )

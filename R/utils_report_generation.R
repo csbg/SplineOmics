@@ -221,24 +221,30 @@ generate_report_html <- function(
   downloads_section <- paste(downloads_section, "</table>", sep = "\n")
   
   # Preserve initial header_section content
-  header_section <- paste(header_section,
-                          report_info_section,
-                          downloads_section, sep = "\n")
+  header_section <- paste(
+    header_section,
+    report_info_section,
+    downloads_section, sep = "\n"
+    )
   
   
   if (report_type == "create_gsea_report") {
     databases_text <- paste(report_info$databases, collapse = ", ")
-    header_section <- paste(header_section, 
-                            "<p style='font-size: 20px;'>Databases used: ", 
-                            databases_text, 
-                            "</p>", 
-                            sep = "\n")
+    header_section <- paste(
+      header_section, 
+      "<p style='font-size: 20px;'>Databases used: ", 
+      databases_text, 
+      "</p>", 
+      sep = "\n"
+      )
   }
   
-  file_name <- sprintf("%s_%s_%s.html",
-                       filename,
-                       report_info$omics_data_type,
-                       timestamp)
+  file_name <- sprintf(
+    "%s_%s_%s.html",
+    filename,
+    report_info$omics_data_type,
+    timestamp
+    )
   
   output_file_path <- here::here(report_dir, file_name)
   
@@ -323,15 +329,39 @@ generate_and_write_html <- function(
   # Append a horizontal line after the TOC
   html_content <- gsub("</ul></div>", "</ul></div>\n<hr>", html_content)
   
+  
+  
+  
+  
+  # Hardcoded variables for testing
+  email <- "thomas.rauter@plus.ac.at"
+  name <- "Thomas Rauter"
+  datetime <- "tomorrow"
+  
   # Path to the external JavaScript file within the package
   js_file_path <- system.file("www/hotkeys.js", package = "SplineOmics")
   if (js_file_path == "") {
     stop("JavaScript file not found.")
   }
   
-  # Include the external JavaScript file before the closing body tag
-  script_tag <- paste0("<script src='", js_file_path, "'></script>")
+  # Read the JavaScript file and replace placeholders with actual values
+  js_content <- readLines(js_file_path, encoding = "UTF-8")
+  js_content <- gsub("\\{\\{email\\}\\}", email, js_content)
+  js_content <- gsub("\\{\\{name\\}\\}", name, js_content)
+  js_content <- gsub("\\{\\{datetime\\}\\}", datetime, js_content)
+  
+  # Include JSZip and FileSaver.js libraries
+  libraries <- "
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'></script>
+  "
+  
+  # Include the modified JavaScript content before the closing body tag
+  script_tag <- paste(libraries, "<script>", paste(js_content, collapse = "\n"), "</script>")
   html_content <- gsub("</body>", paste(script_tag, "</body>"), html_content)
+  
+  
+  
   
   # Append the final closing tags for the HTML body and document
   html_content <- paste(html_content, "</body></html>", sep = "\n")
@@ -342,7 +372,9 @@ generate_and_write_html <- function(
     dir.create(dir_path, recursive = TRUE)
   }
   
-  writeLines(html_content, output_file_path)
+  con <- file(output_file_path, "w", encoding = "UTF-8")
+  writeLines(html_content, con, useBytes = TRUE)
+  close(con)
 }
 
 
@@ -491,6 +523,7 @@ get_header_section <- function(
 
   header_section <- paste(
     "<html><head><title>", title, "</title>",
+    "<meta charset=\"UTF-8\">",  # Ensure UTF-8 encoding (JavaScript issues)
     "<style>",
     "table {",
     "  font-size: 30px;",
@@ -529,7 +562,7 @@ get_header_section <- function(
     sep = ""
   )
   
-  sentence <- switch(
+  note <- switch(
     report_type,
     "explore_data" = paste(
       '<div style="border: 2px solid #f00; padding: 15px;', 
@@ -543,8 +576,7 @@ get_header_section <- function(
       'font-weight: bold; z-index: 1;">Note!</div>',
       '<p style="font-size: 2em;">',
       "This HTML report contains the exploratory",
-      "data analysis plots, such as density and", 
-      "PCA plots. <br> Right-click on ", 
+      "data analysis plots, (e.g. density plots) <br> Right-click on", 
       "any plot in this report to save it as a .svg (vector graphic) file!</p>",
       '</div>'
       ),
@@ -557,7 +589,7 @@ get_header_section <- function(
       'rotate(45deg); background-color: #f00; color: #fff; padding: 10px 15px;', 
       'font-size: 2em; font-weight: bold; z-index: 1;">Note!</div>',
       '<p style="font-size: 2em;">',
-      "This HTML report contains all the plots visualizing the results from", 
+      "This HTML report contains plots visualizing the results from", 
       "the limma topTables. <br> Right-click on", 
       "any plot in this report to save it as a .svg (vector graphic) file!</p>",
       '</div>'
@@ -594,12 +626,35 @@ get_header_section <- function(
       ),
     "create_gsea_report" = '<p style="font-size: 2em;"></p>')
   
+  hotkeys_box <- paste(
+    '<div style="border: 2px solid #00f; padding: 15px;', 
+    'position: relative; margin-bottom: 20px;', 
+    'background-color: #eef; font-family: Arial,', 
+    'sans-serif; width: 65%;">',
+    '<div style="position: absolute; top: -5px;', 
+    'right: -65px; transform: rotate(45deg);', 
+    'background-color: #00f; color: #fff;', 
+    'padding: 10px 15px; font-size: 2em;', 
+    'font-weight: bold; z-index: 1;">Hotkeys</div>',
+    '<p style="font-size: 2em;">',
+    "To jump to the <b>Table of Contents</b>, press the '<b>t</b>' key on", 
+    "your keyboard. 📑<br>",
+    "To <b>download</b> all embedded files as a <b>zip file</b>, press the", 
+    "'<b>d</b>' key on your keyboard. 📥<br>",
+    "To write a <b>mail</b> to the contact info in this report, press the",
+    "'<b>e</b>' key on your keyboard. ✉️<br>",
+    '</p>',
+    '</div>'
+  )
+  
   header_section <- paste(
     header_section,
-    "<p>", sentence, "</p>",
+    "<p>", note, "</p>",
+    "<br><br>",
+    hotkeys_box,
     "</body></html>",
     sep = ""
-    )
+  )
   
   return(header_section)
 }
@@ -854,14 +909,17 @@ define_html_styles <- function() {
 #' 
 process_plots <- function(
     plots_element,
-    element_name,
     plots_size,
     html_content,
     toc,
-    header_index
+    header_index,
+    element_name = NA
     ) {
   
-  if (startsWith(element_name, "individual_spline_plots")) {
+  if (
+    !is.na(element_name) && 
+    startsWith(element_name, "individual_spline_plots")
+    ) {
     
     spline_plots <- plots_element$spline_plots
     main_title <- plots_element$cluster_main_title
@@ -976,6 +1034,78 @@ process_plots <- function(
 #'
 #' @importFrom base64enc base64encode
 #' 
+# process_field <- function(
+#     field,
+#     data,
+#     meta,
+#     topTables,
+#     report_info,
+#     encode_df_to_base64,
+#     report_type,
+#     enrichr_format
+#     ) {
+#   
+#   if (field == "data_with_annotation")  {
+#     base64_df <- sprintf(
+#     '<a href="%s" download="data.xlsx">
+#     <button>Download data_with_annotation.xlsx
+#     </button></a>', 
+#     encode_df_to_base64(data)
+#     )
+#     
+#   } else if (field == "meta" &&
+#              !is.null(meta) &&
+#              is.data.frame(meta) &&
+#              !any(is.na(meta))) {
+#     base64_df <- sprintf(
+#     '<a href="%s" download="meta.xlsx">
+#     <button>Download meta.xlsx</button></a>', 
+#     encode_df_to_base64(meta)
+#     )
+# 
+#   } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
+#     base64_df <- sprintf(
+#     '<a href="%s" download="limma_topTables.xlsx">
+#      <button>Download limma_topTables.xlsx</button></a>', 
+#      encode_df_to_base64(topTables)
+#     )
+# 
+#   } else if (field == "Enrichr_clustered_genes" && 
+#              !any(is.na(enrichr_format)) &&
+#              !is.null(enrichr_format$gene_lists)) {
+#     
+#     # Create ZIP file for Enrichr_clustered_genes
+#     zip_base64 <- create_enrichr_zip(enrichr_format)
+#     base64_df <- sprintf(
+#       paste(
+#         '<a href="data:application/zip;base64,%s" download=',
+#         '"Enrichr_clustered_genes.zip">',
+#         '<button>Download Enrichr_clustered_genes.zip</button></a>'
+#         ),
+#       zip_base64
+#     )
+#     
+#   } else if (field == "Enrichr_background" && 
+#              !any(is.na(enrichr_format)) &&
+#              !is.null(enrichr_format$background)) {
+#     
+#     base64_df <- sprintf(
+#       paste(
+#         '<a href="data:text/plain;base64,%s"', 
+#         'download="Enrichr_background.txt">',
+#         '<button>Download Enrichr_background.txt</button></a>'
+#       ),
+#       base64enc::base64encode(charToRaw(enrichr_format$background))
+#     )
+#     
+#   } else {
+#     base64_df <- ifelse(
+#       is.null(report_info[[field]]),
+#       "NA", report_info[[field]]
+#       )
+#   }
+#   return(base64_df)
+# }
 process_field <- function(
     field,
     data,
@@ -985,27 +1115,32 @@ process_field <- function(
     encode_df_to_base64,
     report_type,
     enrichr_format
-    ) {
+) {
   
   if (field == "data_with_annotation")  {
-    base64_df <- sprintf('<a href="%s" download="data.xlsx">
-                         <button>Download data_with_annotation.xlsx
-                         </button></a>', 
-                         encode_df_to_base64(data))
+    base64_df <- sprintf(
+      '<a href="%s" download="data.xlsx" class="embedded-file">
+       <button>Download data_with_annotation.xlsx</button></a>', 
+      encode_df_to_base64(data)
+    )
     
   } else if (field == "meta" &&
              !is.null(meta) &&
              is.data.frame(meta) &&
              !any(is.na(meta))) {
-    base64_df <- sprintf('<a href="%s" download="meta.xlsx">
-                         <button>Download meta.xlsx</button></a>', 
-                         encode_df_to_base64(meta))
-
+    base64_df <- sprintf(
+      '<a href="%s" download="meta.xlsx" class="embedded-file">
+       <button>Download meta.xlsx</button></a>', 
+      encode_df_to_base64(meta)
+    )
+    
   } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
-    base64_df <- sprintf('<a href="%s" download="limma_topTables.xlsx">
-                         <button>Download limma_topTables.xlsx</button></a>', 
-                         encode_df_to_base64(topTables))
-
+    base64_df <- sprintf(
+      '<a href="%s" download="limma_topTables.xlsx" class="embedded-file">
+       <button>Download limma_topTables.xlsx</button></a>', 
+      encode_df_to_base64(topTables)
+    )
+    
   } else if (field == "Enrichr_clustered_genes" && 
              !any(is.na(enrichr_format)) &&
              !is.null(enrichr_format$gene_lists)) {
@@ -1013,9 +1148,8 @@ process_field <- function(
     # Create ZIP file for Enrichr_clustered_genes
     zip_base64 <- create_enrichr_zip(enrichr_format)
     base64_df <- sprintf(
-      paste('<a href="data:application/zip;base64,%s" download=',
-            '"Enrichr_clustered_genes.zip">',
-            '<button>Download Enrichr_clustered_genes.zip</button></a>'),
+      '<a href="data:application/zip;base64,%s" download="Enrichr_clustered_genes.zip" class="embedded-file">
+       <button>Download Enrichr_clustered_genes.zip</button></a>',
       zip_base64
     )
     
@@ -1024,20 +1158,20 @@ process_field <- function(
              !is.null(enrichr_format$background)) {
     
     base64_df <- sprintf(
-      paste(
-        '<a href="data:text/plain;base64,%s"', 
-        'download="Enrichr_background.txt">',
-        '<button>Download Enrichr_background.txt</button></a>'
-      ),
+      '<a href="data:text/plain;base64,%s" download="Enrichr_background.txt" class="embedded-file">
+       <button>Download Enrichr_background.txt</button></a>',
       base64enc::base64encode(charToRaw(enrichr_format$background))
     )
     
   } else {
-    base64_df <- ifelse(is.null(report_info[[field]]),
-                        "NA", report_info[[field]])
+    base64_df <- ifelse(
+      is.null(report_info[[field]]),
+      "NA", report_info[[field]]
+    )
   }
   return(base64_df)
 }
+
 
 
 # Level 3 internal functions ---------------------------------------------------
