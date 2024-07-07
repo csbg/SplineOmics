@@ -53,14 +53,10 @@ explore_data <- function(
   report_info <- splineomics[["report_info"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
-  
-  matrix_and_feature_names <- process_data(data)
-  data <- matrix_and_feature_names$data
 
-  
   data_list <- list(data = data)
   
-  if (!is.na(meta_batch_column)) {
+  if (!is.null(meta_batch_column)) {
     
     args <- list(
       x = data,
@@ -68,7 +64,7 @@ explore_data <- function(
       group = meta[[condition]]
     )
 
-    if (!is.na(meta_batch2_column)) {
+    if (!is.null(meta_batch2_column)) {
       args$batch2 <- meta[[meta_batch2_column]]
     }
 

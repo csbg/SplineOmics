@@ -2214,11 +2214,11 @@ check_splineomics_elements <- function(
       "meta",
       "annotation",
       "condition",
-      "report_info",
+      "report_info"
       ),
     "screen_limma_hyperparams" = c(
       "condition",
-      "report_info",
+      "report_info"
     ),
     "run_limma_splines" = c(
       "data",

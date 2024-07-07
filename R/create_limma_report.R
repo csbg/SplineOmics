@@ -63,47 +63,83 @@ create_limma_report <- function(
   plots <- list()
   plots_sizes <- list()
   section_headers_info <- list()
-  ###
+
   
+  result <- generate_time_effect_plots(
+    time_effect,
+    adj_pthresh
+    )
   
-  result <- generate_time_effect_plots(time_effect, adj_pthresh)
-  
-  plots <- c(plots, result$plots)
-  plots_sizes <- c(plots_sizes, result$plots_sizes)
-  section_headers_info <- c(section_headers_info, result$section_headers_info)
+  plots <- c(
+    plots,
+    result$plots
+    )
+  plots_sizes <- c(
+    plots_sizes,
+    result$plots_sizes
+    )
+  section_headers_info <- c(
+    section_headers_info,
+    result$section_headers_info
+    )
 
   
   # length == 0 when there was just one level or no interaction effect
   if (length(avrg_diff_conditions) > 0) {
     
-    result <- generate_avrg_diff_plots(avrg_diff_conditions,
-                                       adj_pthresh)
+    result <- generate_avrg_diff_plots(
+      avrg_diff_conditions,
+      adj_pthresh
+      )
     
-    plots <- c(plots, result$plots)
-    plots_sizes <- c(plots_sizes, result$plots_sizes)
-    section_headers_info <- c(section_headers_info, result$section_headers_info)
+    plots <- c(
+      plots,
+      result$plots
+      )
+    plots_sizes <- c(
+      plots_sizes,
+      result$plots_sizes
+      )
+    section_headers_info <- c(
+      section_headers_info,
+      result$section_headers_info
+      )
   }
 
   # length == 0 when there was just one level or no interaction effect
   if (length(interaction_condition_time) > 0) {
     
-    result <- generate_interaction_plots(interaction_condition_time,
-                                         adj_pthresh)
+    result <- generate_interaction_plots(
+      interaction_condition_time,
+      adj_pthresh
+      )
     
-    plots <- c(plots, result$plots)
-    plots_sizes <- c(plots_sizes, result$plots_sizes)
-    section_headers_info <- c(section_headers_info,
-                              result$section_headers_info)
+    plots <- c(
+      plots,
+      result$plots
+      )
+    plots_sizes <- c(
+      plots_sizes,
+      result$plots_sizes
+      )
+    section_headers_info <- c(
+      section_headers_info,
+      result$section_headers_info
+      )
   }
   
-  all_top_tables <- c(time_effect,
-                      avrg_diff_conditions,
-                      interaction_condition_time)
+  all_top_tables <- c(
+    time_effect,
+    avrg_diff_conditions,
+    interaction_condition_time
+    )
   
   unique_values <- unique(meta[[condition]])
-  new_names <- sapply(names(all_top_tables),
-                      shorten_names,
-                      unique_values = unique_values)
+  new_names <- sapply(
+    names(all_top_tables),
+    shorten_names,
+    unique_values = unique_values
+    )
   names(all_top_tables) <- new_names
   
   # Add annotation info into the top_tables
@@ -323,11 +359,13 @@ shorten_names <- function(name,
 #' @seealso
 #' \code{\link{plot2base64}}, \code{\link{create_progress_bar}}
 #' 
-build_create_limma_report <- function(header_section, 
-                                      plots, 
-                                      plots_sizes, 
-                                      level_headers_info,
-                                      output_file_path = here::here()) {  
+build_create_limma_report <- function(
+    header_section, 
+    plots, 
+    plots_sizes, 
+    level_headers_info,
+    output_file_path = here::here()
+    ) {  
   
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
@@ -350,13 +388,18 @@ build_create_limma_report <- function(header_section,
       # means jump to next section
       if (any(class(plots[[index]]) == "character")) {  
         
-        section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>", 
-                                  section_header_style, 
-                                  index, 
-                                  header_info$header_name)
+        section_header <- sprintf(
+          "<h2 style='%s' id='section%d'>%s</h2>", 
+          section_header_style, 
+          index, 
+          header_info$header_name
+          )
         
-        html_content <- paste(html_content, section_header, 
-                                    sep="\n")
+        html_content <- paste(
+          html_content,
+          section_header, 
+          sep = "\n"
+          )
 
         hits_info <- sprintf(
             "<p style='text-align: center; font-size: 30px;'>"
@@ -364,9 +407,18 @@ build_create_limma_report <- function(header_section,
         
         html_content <- paste(html_content, hits_info, sep="\n")
         
-        toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>", 
-                             toc_style, index, header_info[[1]])
-        toc <- paste(toc, toc_entry, sep="\n")
+        toc_entry <- sprintf(
+          "<li style='%s'><a href='#section%d'>%s</a></li>", 
+          toc_style,
+          index,
+          header_info[[1]]
+          )
+        
+        toc <- paste(
+          toc,
+          toc_entry,
+          sep = "\n"
+          )
         
         current_header_index <- current_header_index + 1
         
@@ -375,10 +427,15 @@ build_create_limma_report <- function(header_section,
       } 
     }
 
-    html_content <- process_plots(plots = plots,
-                                  plots_sizes = plots_sizes,
-                                  index = index,
-                                  html_content = html_content)
+    result <- process_plots(
+      plots_element = plots[[index]],
+      plots_size = plots_sizes[[index]],
+      html_content = html_content,
+      toc = toc,
+      header_index = current_header_index
+    )
+    html_content <- result$html_content
+    toc <- result$toc
     
     pb$tick()
   }

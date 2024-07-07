@@ -86,14 +86,16 @@ screen_limma_hyperparams <- function(
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
 
   # Convert the data dataframe to a matrix and extract the feature names
-  data_matrices <- list()
-  for (data in datas) {
-    matrix_and_feature_names <- process_data(data)
-    data <- matrix_and_feature_names$data
-    data_matrices <- c(data_matrices, list(data))
-    feature_names <- matrix_and_feature_names$feature_names
-  }
-  datas <- data_matrices
+  # data_matrices <- list()
+  # for (data in datas) {
+  #   matrix_and_feature_names <- process_data(data)
+  #   data <- matrix_and_feature_names$data
+  #   data_matrices <- c(data_matrices, list(data))
+  #   feature_names <- matrix_and_feature_names$feature_names
+  # }
+  # datas <- data_matrices
+  feature_names <- rownames(datas[[1]])
+  
   
   top_tables_combos <- 
     get_limma_combos_results(
@@ -604,11 +606,13 @@ process_combo <- function(
 #' 
 #' @importFrom limma removeBatchEffect
 #'
-remove_batch_effect <- function(datas, 
-                                metas,
-                                meta_batch_column,
-                                meta_batch2_column,
-                                condition) {
+remove_batch_effect <- function(
+    datas, 
+    metas,
+    meta_batch_column,
+    meta_batch2_column,
+    condition
+    ) {
   
   results <- list()
   for (i in seq_along(datas)) {
@@ -624,16 +628,11 @@ remove_batch_effect <- function(datas,
       group = meta[[condition]]
     )
     
-    if (!is.na(meta_batch2_column)) {
+    if (!is.null(meta_batch2_column)) {
       args$batch2 <- meta[[meta_batch2_column]]
     }
     
     batch_corrected_data <- do.call(removeBatchEffect, args)
-    
-
-    # data_corrected <- removeBatchEffect(x = data, 
-    #                                     batch = meta[[meta_batch_column]],
-    #                                     group = meta[[condition]])
     results[[i]] <- batch_corrected_data
   }
   return(results)
@@ -653,8 +652,10 @@ remove_batch_effect <- function(datas,
 #' @return An object of class "hitcomp" containing empty data lists 
 #' and condition names.
 #' 
-hc_new <- function(cond1name = "Condition 1", 
-                   cond2name = "Condition 2") {
+hc_new <- function(
+    cond1name = "Condition 1", 
+    cond2name = "Condition 2"
+    ) {
   
   if (!is.character(cond1name) || nchar(cond1name) > 25) 
     stop("cond1name max len = 25")
@@ -688,10 +689,12 @@ hc_new <- function(cond1name = "Condition 1",
 #'
 #' @return The updated hit comparison object.
 #'              
-hc_add <- function(hc_obj, 
-                   top_table, 
-                   params_id, condition = 1, 
-                   threshold = 0.05){
+hc_add <- function(
+    hc_obj, 
+    top_table, 
+    params_id, condition = 1, 
+    threshold = 0.05
+    ){
   
   # Validate input
   if (!is.data.frame(top_table)) stop("top_table must be a dataframe.")
@@ -712,7 +715,10 @@ hc_add <- function(hc_obj,
   )
   
   # Append to the appropriate global list in the package environment
-  hc_obj$data[[condition]] <- append(hc_obj$data[[condition]], list(new_entry))
+  hc_obj$data[[condition]] <- append(
+    hc_obj$data[[condition]],
+    list(new_entry)
+    )
   return(hc_obj)
 }
 
@@ -786,19 +792,25 @@ hc_vennheatmap <- function(hc_obj) {
                         hc_obj$condition_names[[1]],
                         hc_obj$condition_names[[2]])
   
-  vennheatmap_plot <- pheatmap::pheatmap(venn_matrix, color = color_palette,
-                                         breaks = breaks,
-                                         cluster_cols = FALSE,
-                                         cluster_rows = TRUE,
-                                         show_rownames = TRUE,
-                                         show_colnames = TRUE,
-                                         border_color = NA,
-                                         main = plot_title,
-                                         silent = TRUE,
-                                         fontsize = 6)
+  vennheatmap_plot <- pheatmap::pheatmap(
+    venn_matrix, color = color_palette,
+    breaks = breaks,
+    cluster_cols = FALSE,
+    cluster_rows = TRUE,
+    show_rownames = TRUE,
+    show_colnames = TRUE,
+    border_color = NA,
+    main = plot_title,
+    silent = TRUE,
+    fontsize = 6
+    )
   
-  return(list(vennheatmap = vennheatmap_plot, 
-              nrhits = nrow(venn_matrix)))
+  return(
+    list(
+      vennheatmap = vennheatmap_plot, 
+      nrhits = nrow(venn_matrix)
+      )
+    )
 }
 
 
@@ -837,8 +849,13 @@ hc_barplot <- function(hc_obj) {
     purrr::set_names(hc_obj$condition_names) %>% 
     dplyr::bind_rows(.id = "condition")
   
-  ggplot2::ggplot(plot_data, aes(x = !!rlang::sym("params"), 
-                                 y = !!rlang::sym("n_hits"))) +
+  ggplot2::ggplot(
+    plot_data,
+    aes(
+      x = !!rlang::sym("params"), 
+      y = !!rlang::sym("n_hits")
+      )
+    ) +
     geom_col() +
     geom_text(
       aes(label = !!rlang::sym("n_hits")),
@@ -853,7 +870,12 @@ hc_barplot <- function(hc_obj) {
     facet_wrap(vars(!!rlang::sym("condition")), ncol = 1) +
     theme_minimal() +
     theme(
-      axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1, size = 4),
+      axis.text.x = element_text(
+        angle = 60,
+        vjust = 1,
+        hjust = 1,
+        size = 4
+        ),
       panel.grid.major.x = element_blank()
     ) +
     NULL
@@ -877,9 +899,15 @@ hc_barplot <- function(hc_obj) {
 #' 
 gen_hitcomp_plots <- function(combo_pair) {
   
-  combo_pair_combined <- c(combo_pair[[1]], combo_pair[[2]])
+  combo_pair_combined <- c(
+    combo_pair[[1]],
+    combo_pair[[2]]
+    )
   
-  hitcomp <- hc_new(names(combo_pair)[1], names(combo_pair)[2])
+  hitcomp <- hc_new(
+    names(combo_pair)[1],
+    names(combo_pair)[2]
+    )
   
   combo_names <- sapply(names(combo_pair_combined), function(name) {
     # Using sub to extract everything from 'DoF' onwards
@@ -900,18 +928,29 @@ gen_hitcomp_plots <- function(combo_pair) {
     
     for (top_table_name in names(combo_top_tables)) {
       top_table <- combo_top_tables[[top_table_name]]
-      id <- paste(top_table_name, combo_name, sep = "_")
-      hitcomp <- hc_add(hitcomp, top_table, id, condition_nr, pthreshold)
+      id <- paste(
+        top_table_name,
+        combo_name,
+        sep = "_"
+        )
+      hitcomp <- hc_add(
+        hitcomp,
+        top_table,
+        id,
+        condition_nr,
+        pthreshold
+        )
     }
   }
 
   result <- hc_vennheatmap(hitcomp)
   barplot <- hc_barplot(hitcomp)
   
-  list(vennheatmap = result$vennheatmap, 
-       vennheatmap_len = c(as.integer(result$nrhits/16)),
-       barplot = barplot,
-       barplot_len = c(2L)
+  list(
+    vennheatmap = result$vennheatmap, 
+    vennheatmap_len = c(as.integer(result$nrhits/16)),
+    barplot = barplot,
+    barplot_len = c(2L)
   )
 }
 
@@ -1006,7 +1045,12 @@ gen_composite_spline_plots <- function(
           )
         
         if (is.list(result)) {
-          plot_name <- paste(combo_name, top_table_name, type, sep = "_")
+          plot_name <- paste(
+            combo_name,
+            top_table_name,
+            type,
+            sep = "_"
+            )
           plots[[plot_name]] <- result$composite_plot
           plots_len <- c(plots_len, result$composite_plot_len)
         }
@@ -1039,11 +1083,13 @@ gen_composite_spline_plots <- function(
 #' @seealso
 #' \code{\link{generate_report_html}}
 #' 
-process_combo_pair <- function(combo_pair, 
-                               combo_pair_name, 
-                               report_info,
-                               report_dir,
-                               timestamp) {
+process_combo_pair <- function(
+    combo_pair, 
+    combo_pair_name, 
+    report_info,
+    report_dir,
+    timestamp
+    ) {
 
   plots <- list()
   plots_len <- integer(0)
@@ -1054,10 +1100,12 @@ process_combo_pair <- function(combo_pair,
   plots[[2]] <- hitcomp$vennheatmap
   plots[[3]] <- hitcomp$barplot
   
-  plots_len <- c(plots_len, 
-                 2, 
-                 hitcomp$vennheatmap_len, 
-                 hitcomp$barplot_len)
+  plots_len <- c(
+    plots_len, 
+    2, 
+    hitcomp$vennheatmap_len, 
+    hitcomp$barplot_len
+    )
   
   composites <- combo_pair$composites
   
@@ -1072,13 +1120,15 @@ process_combo_pair <- function(combo_pair,
   }
   
   # Function is in splinetime_general_fun.R
-  generate_report_html(plots = plots, 
-                       plots_sizes = plots_len, 
-                       report_info = report_info,
-                       report_type = "screen_limma_hyperparams",
-                       filename = combo_pair_name,
-                       timestamp = timestamp,
-                       report_dir = report_dir, )
+  generate_report_html(
+    plots = plots, 
+    plots_sizes = plots_len, 
+    report_info = report_info,
+    report_type = "screen_limma_hyperparams",
+    filename = combo_pair_name,
+    timestamp = timestamp,
+    report_dir = report_dir
+    )
 }
 
 
@@ -1099,19 +1149,23 @@ process_combo_pair <- function(combo_pair,
 #' @seealso
 #' \code{\link{process_config_column}}
 #' 
-create_spline_params <- function(spline_test_configs, 
-                                 index, 
-                                 meta, 
-                                 condition, 
-                                 mode) {
+create_spline_params <- function(
+    spline_test_configs, 
+    index, 
+    meta, 
+    condition, 
+    mode
+    ) {
   
   num_levels <- length(unique(meta[[condition]]))  
   
-  result <- lapply(spline_test_configs, 
-                   process_config_column, 
-                   index, 
-                   num_levels, 
-                   mode)
+  result <- lapply(
+    spline_test_configs, 
+    process_config_column, 
+    index, 
+    num_levels, 
+    mode
+    )
 }
 
 
@@ -1135,9 +1189,16 @@ flatten_spline_configs <- function(spline_configs) {
     formatted_strings <- list()
     
     Map(function(name, element) {
-      formatted_strings <<- 
-        c(formatted_strings, paste0(name, " = ", 
-                                    paste(element, collapse = ", ")))
+      formatted_strings <<- c(
+        formatted_strings,
+        paste0(
+          name,
+          " = ", 
+          paste(
+            element,
+            collapse = ", ")
+          )
+        )
       
     }, names_of_spline_configs, ith_elements)
     
@@ -1187,10 +1248,12 @@ is_not_na <- function(x) {
 #'
 #' @return A vector or list with the processed configuration values.
 #' 
-process_config_column <- function(config_column, 
-                                  index, 
-                                  num_levels, 
-                                  mode) {
+process_config_column <- function(
+    config_column, 
+    index, 
+    num_levels, 
+    mode
+    ) {
   
   if (mode == "integrated") {
     if (is.list(config_column)) {
@@ -1453,12 +1516,15 @@ build_hyperparams_screen_report <- function(
       toc <- paste(toc, toc_entry, sep = "\n")
     }
 
-    html_content <- process_plots(
-      plots = plots,
-      plots_sizes = plots_sizes,
-      index = index,
-      html_content = html_content
-      )
+    result <- process_plots(
+      plots_element = plots[[index]],
+      plots_size = plots_sizes[[index]],
+      html_content = html_content,
+      toc = toc,
+      header_index = index
+    )
+    html_content <- result$html_content
+    toc <- result$toc
   }
   
   generate_and_write_html(

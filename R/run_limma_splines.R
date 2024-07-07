@@ -55,10 +55,17 @@ run_limma_splines <- function(
   
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
-  mode <- determine_analysis_mode(design,
-                                  condition)
+  mode <- determine_analysis_mode(
+    design,
+    condition
+    )
   
-  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  args <- lapply(
+    as.list(match.call()[-1]),
+    eval,
+    parent.frame()
+    )
+  
   args$mode <- mode
   check_null_elements(args)
   input_control <- InputControl$new(args)
@@ -94,8 +101,10 @@ run_limma_splines <- function(
     )
   
   within_level_top_table <- 
-    stats::setNames(purrr::map(results_list, "top_table"), 
-                    purrr::map_chr(results_list, "name"))
+    stats::setNames(
+      purrr::map(results_list, "top_table"), 
+      purrr::map_chr(results_list, "name")
+      )
   
   
   # Factor and Factor:Time comparisons between levels --------------------------
@@ -116,26 +125,32 @@ run_limma_splines <- function(
         feature_names = feature_names
         )
       
-      between_level_condition_only[[paste0("avrg_diff_" ,lev_combo[1],
-                                           "_vs_", lev_combo[2])]] <- 
-        result$condition_only
-      between_level_condition_time[[paste0("time_interaction_" ,
-                                           lev_combo[1],
-                                           "_vs_", lev_combo[2])]] <- 
-        result$condition_time
+      between_level_condition_only[[
+        paste0(
+          "avrg_diff_" ,lev_combo[1],
+          "_vs_", lev_combo[2]
+          )
+        ]] <- result$condition_only
+      
+      between_level_condition_time[[
+        paste0(
+          "time_interaction_" ,
+          lev_combo[1],
+          "_vs_", lev_combo[2]
+          )
+        ]] <- result$condition_time
     }
   } else { # mode == "isolated"
-    message(paste("mode == 'integrated' necessary for between level",
-                 "comparisons. Returning emtpy lists for ttslc_factor_only",
-                 "and ttslc_factor_time (ttslc means 'top tables level",
-                 "comparison')."))
+    message(paste(
+      "mode == 'integrated' necessary for between level",
+      "comparisons. Returning emtpy lists for ttslc_factor_only",
+      "and ttslc_factor_time (ttslc means 'top tables level",
+      "comparison')."
+      )
+      )
   }
   
-  cat(paste(
-    "\033[32mInfo\033[0m",
-    "limma spline analysis completed successfully"
-  )
-  )
+  message("\033[32mInfo\033[0m limma spline analysis completed successfully")
   
   limma_splines_result <- list(
    time_effect = within_level_top_table, 
@@ -144,8 +159,8 @@ run_limma_splines <- function(
    )
   
   splineomics <- update_splineomics(
-   splineomics,
-   limma_splines_result = limma_splines_result
+    splineomics = splineomics,
+    limma_splines_result = limma_splines_result
  )
 }
 
