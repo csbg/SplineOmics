@@ -39,6 +39,11 @@ create_gsea_report <- function(
     background = NULL,
     report_dir = here::here()
     ) {
+  
+  report_dir <- normalizePath(
+    report_dir,
+    mustWork = FALSE
+  )
 
   # Check report_info and report_dir
   args <- lapply(

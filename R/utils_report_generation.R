@@ -305,24 +305,27 @@ generate_report_html <- function(
 }
 
 
-#' Generate and Write HTML Content with Table of Contents
+#' Generate and Write HTML Report
 #'
 #' @description
-#' This function generates HTML content by inserting a table of contents (TOC) 
-#' at a specified placeholder and writes the final HTML content to an output file.
+#' This function generates an HTML report by inserting a table of contents,
+#' embedding necessary JavaScript files, and writing the final HTML content 
+#' to a specified output file.
 #'
-#' @param toc The HTML string representing the table of contents.
-#' @param html_content The initial HTML content containing a placeholder for the TOC.
-#' @param output_file_path The file path where the final HTML content will be written.
-#'
-#' @return NULL
-#'
+#' @param toc A string containing the table of contents in HTML format.
+#' @param html_content A string containing the main HTML content with a 
+#' placeholder for the table of contents.
+#' @param report_info A list containing report information such as 
+#' `contact_info` and `analyst_name`.
+#' @param output_file_path A string specifying the path where the final 
+#' HTML file will be written.
+#' 
 generate_and_write_html <- function(
     toc,
     html_content,
     report_info,
     output_file_path
-    ) {
+) {
   
   output_file_path <- normalizePath(
     output_file_path,
@@ -351,9 +354,12 @@ generate_and_write_html <- function(
     )
   
   # Path to the external JavaScript file within the package
-  js_file_path <- system.file(
-    "www/hotkeys.js",
-    package = "SplineOmics"
+  js_file_path <- normalizePath(
+    system.file(
+      "www/hotkeys.js",
+      package = "SplineOmics"
+      ),
+    mustWork = FALSE
     )
   if (js_file_path == "") {
     stop("JavaScript file not found.")
@@ -374,41 +380,77 @@ generate_and_write_html <- function(
     report_info$analyst_name,
     js_content
     )
-
-  # Include JSZip and FileSaver.js libraries from local package files
-  jszip_path <- system.file(
-    "www/jszip.min.js",
-    package = "SplineOmics"
+  
+  # Read the content of JSZip and FileSaver JavaScript files as text
+  jszip_path <- normalizePath(
+    system.file(
+      "www/jszip.min.js",
+      package = "SplineOmics"
+      ),
+    mustWork = FALSE
     )
-  filesaver_path <- system.file(
-    "www/FileSaver.min.js",
-    package = "SplineOmics"
+  filesaver_path <- normalizePath(
+    system.file(
+      "www/FileSaver.min.js",
+      package = "SplineOmics"
+      ),
+    mustWork = FALSE
     )
-  libraries <- paste(
-    "<script src='",
+  
+  if (!file.exists(jszip_path)) {
+    stop("JSZip file not found at: ", jszip_path)
+  }
+  if (!file.exists(filesaver_path)) {
+    stop("FileSaver.js file not found at: ", filesaver_path)
+  }
+  
+  jszip_content <- readLines(
     jszip_path,
-    "'></script>",
-    "<script src='",
+    encoding = "UTF-8",
+    warn = FALSE
+    )
+  filesaver_content <- readLines(
     filesaver_path,
-    "'></script>",
-    sep = "\n"
+    encoding = "UTF-8",
+    warn = FALSE
+    )
+  
+  # Combine all JavaScript content
+  combined_js_content <- c(
+    "<script>",
+    jszip_content,
+    filesaver_content,
+    js_content,
+    "</script>"
   )
   
-  # Include the modified JavaScript content before the closing body tag
+  # Properly escape special characters in JavaScript content
+  combined_js_content <- paste(
+    combined_js_content,
+    collapse = "\n"
+    )
+  combined_js_content <- gsub(
+    "\\\\",
+    "\\\\\\\\",
+    combined_js_content
+    ) # Escape backslashes
+  combined_js_content <- gsub(    # Escape double quotes
+    "\"",
+    "\\\"",
+    combined_js_content
+    )      
+  
+  # Embed the combined JavaScript content before the closing body tag
   script_tag <- paste(
-    libraries,
-    "<script>",
-    paste(
-      js_content,
-      collapse = "\n"
-      ),
-    "</script>"
+    combined_js_content,
+    collapse = "\n"
     )
   html_content <- gsub(
     "</body>",
     paste(
       script_tag,
-      "</body>"
+      "</body>",
+      sep = "\n"
       ),
     html_content
     )
@@ -423,10 +465,7 @@ generate_and_write_html <- function(
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
   if (!dir.exists(dir_path)) {
-    dir.create(
-      dir_path,
-      recursive = TRUE
-      )
+    dir.create(dir_path, recursive = TRUE)
   }
   
   con <- file(
@@ -441,6 +480,8 @@ generate_and_write_html <- function(
     )
   close(con)
 }
+
+
 
 
 

@@ -62,6 +62,11 @@ screen_limma_hyperparams <- function(
     padjust_method = "BH"
     ) {
   
+  report_dir <- normalizePath(
+    report_dir,
+    mustWork = FALSE
+  )
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "screen_limma_hyperparams"
