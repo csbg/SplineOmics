@@ -41,22 +41,33 @@ create_gsea_report <- function(
     ) {
 
   # Check report_info and report_dir
-  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  args <- lapply(
+    as.list(
+      match.call()[-1]),
+    eval,
+    parent.frame()
+    )
+  
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
   # Remove levels that 
-  levels_clustered_hits <- levels_clustered_hits[!sapply(levels_clustered_hits,
-                                                         is.character)]
+  levels_clustered_hits <- levels_clustered_hits[
+    !sapply(
+      levels_clustered_hits,
+      is.character
+      )
+    ]
   
   # Control the test not covered by the InputControl class
-  control_inputs_create_gsea_report(levels_clustered_hits = 
-                                      levels_clustered_hits,
-                                    genes = genes,
-                                    databases = databases,
-                                    params = params,
-                                    plot_titles = plot_titles,
-                                    background = background)
+  control_inputs_create_gsea_report(
+    levels_clustered_hits = levels_clustered_hits,
+    genes = genes,
+    databases = databases,
+    params = params,
+    plot_titles = plot_titles,
+    background = background
+    )
 
   all_results <- map2(
     levels_clustered_hits,
@@ -84,13 +95,15 @@ create_gsea_report <- function(
   
   report_info$databases <- unique(databases[["DB"]])
 
-  generate_report_html(plots = plots, 
-                       plots_sizes = plots_sizes, 
-                       report_info = report_info,
-                       level_headers_info = level_headers_info,
-                       report_type = "create_gsea_report",
-                       filename = "create_gsea_report",
-                       report_dir = report_dir)
+  generate_report_html(
+    plots = plots, 
+    plots_sizes = plots_sizes, 
+    report_info = report_info,
+    level_headers_info = level_headers_info,
+    report_type = "create_gsea_report",
+    filename = "create_gsea_report",
+    report_dir = report_dir
+    )
   
   print_info_message(
     message_prefix = "Gene set enrichment analysis",
@@ -250,6 +263,8 @@ process_result <- function(level_result,
 #' @param plots_sizes A list of sizes for the plots.
 #' @param level_headers_info A list containing header information for each 
 #' level of clustered hits.
+#' @param report_info A named list containg the report info fields. Here used
+#'                    for the email hotkey functionality.
 #' @param output_file_path A string specifying the file path where the report 
 #' will be saved.
 #'
@@ -263,13 +278,20 @@ process_result <- function(level_result,
 #' processing individual plots. The TOC is inserted into the HTML content, 
 #' which is then finalized and written to the specified output file.
 #' 
-build_create_gsea_report <- function(header_section,
-                              plots,
-                              plots_sizes,
-                              level_headers_info,
-                              output_file_path) {
+build_create_gsea_report <- function(
+    header_section,
+    plots,
+    plots_sizes,
+    level_headers_info,
+    report_info,
+    output_file_path
+    ) {
 
-  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
+  html_content <- paste(
+    header_section,
+    "<!--TOC-->",
+    sep = "\n"
+    )
 
   toc <- create_toc()
 
@@ -278,7 +300,10 @@ build_create_gsea_report <- function(header_section,
   toc_style <- styles$toc_style
 
   current_header_index <- 1
-  level_headers_info <- Filter(Negate(is.null), level_headers_info)
+  level_headers_info <- Filter(
+    Negate(is.null),
+    level_headers_info
+    )
   
   pb <- create_progress_bar(plots)
   # Generate the sections and plots
@@ -289,12 +314,14 @@ build_create_gsea_report <- function(header_section,
       
       section_info <- level_headers_info[[current_header_index]]
       
-      section_content <- generate_section_content(section_info,
-                                                  index,
-                                                  toc,
-                                                  html_content,
-                                                  section_header_style,
-                                                  toc_style)
+      section_content <- generate_section_content(
+        section_info,
+        index,
+        toc,
+        html_content,
+        section_header_style,
+        toc_style
+        )
       
       html_content <- section_content$html_content
       toc <- section_content$toc
@@ -305,10 +332,15 @@ build_create_gsea_report <- function(header_section,
       next
     }
 
-    html_content <- process_plots(plots = plots,
-                                  plots_sizes = plots_sizes,
-                                  index = index,
-                                  html_content = html_content)
+    result <- process_plots(
+      plots_element = plots[[index]],
+      plots_size = plots_sizes[[index]],
+      html_content = html_content,
+      toc = toc,
+      header_index = index
+    )
+    html_content <- result$html_content
+    toc <- result$toc
     
     pb$tick()
   }
@@ -316,6 +348,7 @@ build_create_gsea_report <- function(header_section,
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
+    report_info,
     output_file_path = output_file_path
   )
 }

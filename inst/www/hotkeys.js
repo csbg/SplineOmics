@@ -7,9 +7,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (event.key === 'e') {
             var email = '{{email}}';
             var fullName = '{{name}}';
-            var datetime = '{{datetime}}';
-            var subject = `SplineOmics HTML report Date-Time: ${datetime}`;
-            var body = `Dear ${fullName},\n\n`;
+            var subject = `SplineOmics HTML report`;
+            var body = `Dear ${fullName},`;
 
             var mailto_url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             var new_tab = window.open(mailto_url, '_blank');

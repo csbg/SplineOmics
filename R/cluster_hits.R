@@ -102,6 +102,7 @@ cluster_hits <- function(
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
   annotation <- splineomics[["annotation"]]
+  report_info <- splineomics[["report_info"]]
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
   spline_params <- splineomics[["spline_params"]]
@@ -154,9 +155,11 @@ cluster_hits <- function(
 
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
-  report_info$meta_batch <- paste(meta_batch_column,
-                                  meta_batch2_column,
-                                  sep = ", ")
+  report_info$meta_batch <- paste(
+    meta_batch_column,
+    meta_batch2_column,
+    sep = ", "
+    )
 
   if (report) {
     plots <-
@@ -444,7 +447,7 @@ perform_clustering <- function(
 #' @seealso
 #' \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}},
 #' \code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}},
-#' \code{\link{plot_consensus_shapes}}, \code{\link{plot_splines}},
+#' \code{\link{plot_cluster_mean_splines}}, \code{\link{plot_splines}},
 #' \code{\link{generate_report_html}}
 #'
 #' @importFrom limma removeBatchEffect
@@ -472,17 +475,16 @@ make_clustering_report <- function(
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
-  datas <-
-    remove_batch_effect_cluster_hits(
-      data = data,
-      meta = meta,
-      condition = condition,
-      meta_batch_column = meta_batch_column,
-      meta_batch2_column = meta_batch2_column,
-      design = design,
-      mode = mode,
-      spline_params = spline_params
-      )
+  datas <- remove_batch_effect_cluster_hits(
+    data = data,
+    meta = meta,
+    condition = condition,
+    meta_batch_column = meta_batch_column,
+    meta_batch2_column = meta_batch2_column,
+    design = design,
+    mode = mode,
+    spline_params = spline_params
+    )
 
 
   # To extract the stored value for the potential auto cluster decision.
@@ -543,21 +545,31 @@ make_clustering_report <- function(
 
       nr_hits <- nrow(level_clustering$clustered_hits)
 
-      header_info <- list(header_name = header_name,
-                          nr_hits = nr_hits,
-                          adj_pvalue_threshold = adj_pthresholds[i])
+      header_info <- list(
+        header_name = header_name,
+        nr_hits = nr_hits,
+        adj_pvalue_threshold = adj_pthresholds[i]
+        )
 
       level_headers_info[[i]] <- header_info
     }
 
     curve_values <- level_clustering$curve_values
 
-    dendrogram <- plot_dendrogram(level_clustering$hc,
-                                  clusters[q])
+    dendrogram <- plot_dendrogram(
+      level_clustering$hc,
+      clusters[q]
+      )
 
-    p_curves <- plot_all_shapes(curve_values, time_unit_label)
+    p_curves <- plot_all_mean_splines(
+      curve_values = curve_values,
+      plot_info = plot_info
+      )
 
-    consensus_shapes <- plot_consensus_shapes(curve_values, time_unit_label)
+    cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
+      curve_values = curve_values,
+      plot_info = plot_info
+      )
 
     top_table <- level_clustering$top_table
     levels <- as.character(unique(meta[[condition]]))
@@ -606,7 +618,7 @@ make_clustering_report <- function(
       new_level = "level_header",    # is the signal for the plotting code
       dendrogram = list(dendrogram),
       p_curves = list(p_curves),
-      consensus_shapes = list(consensus_shapes$plot),
+      cluster_mean_splines = list(cluster_mean_splines),
       heatmap = heatmaps[[i]],
       individual_spline_plots = clusters_spline_plots  # gets expanded like this
       )
@@ -617,7 +629,7 @@ make_clustering_report <- function(
       999,               # dummy size for "next_level" signal
       1.5,
       1.5,
-      consensus_shapes$size,
+      1,
       1.5,
       rep(1, length(clusters_spline_plots))
       )
@@ -919,15 +931,23 @@ remove_batch_effect_cluster_hits <- function(
         level_index <- 1L   # spline_params here has only one set of params
       }
 
-      design_matrix <- design2design_matrix(meta = meta_copy,
-                                            spline_params = spline_params,
-                                            level_index = level_index,
-                                            design = design)
+      design_matrix <- design2design_matrix(
+        meta = meta_copy,
+        spline_params = spline_params,
+        level_index = level_index,
+        design = design
+        )
 
       # The batch columns are not allowed to be in the design_matrix for
       # removeBatchEffect. Instead the batch column is specified with batch =
-      batch_columns <- grep(paste0("^", meta_batch_column),
-                            colnames(design_matrix))
+      batch_columns <- grep(
+        paste0(
+          "^",
+          meta_batch_column
+          ),
+        colnames(design_matrix)
+        )
+      
       design_matrix <- design_matrix[, -batch_columns]
 
       args <- list(
@@ -1009,12 +1029,14 @@ remove_batch_effect_cluster_hits <- function(
 #' @importFrom ggplot2 theme_bw scale_x_continuous
 #' @importFrom grid gpar
 #'
-plot_heatmap <- function(datas,
-                         meta,
-                         mode,
-                         condition,
-                         all_levels_clustering,
-                         time_unit_label) {
+plot_heatmap <- function(
+    datas,
+    meta,
+    mode,
+    condition,
+    all_levels_clustering,
+    time_unit_label
+    ) {
 
   BASE_TEXT_SIZE_PT <- 5
 
@@ -1036,7 +1058,7 @@ plot_heatmap <- function(datas,
 
   levels <- unique(meta[[condition]])
   heatmaps <- list()
-
+  
   # Generate a heatmap for every level
   for (i in seq_along(all_levels_clustering)) {
 
@@ -1065,30 +1087,36 @@ plot_heatmap <- function(datas,
     z_score <- t(scale(t(data_level)))
 
     meta_level <- meta[level_indices, ]
+    
+    row_labels <- truncate_row_names(rownames(data_level))
 
     ht <-
-      ComplexHeatmap::Heatmap(z_score,
-                              name = paste0("left-labels = cluster,", 
-                                            "top-labels = time"),
-                              use_raster = TRUE,
-                              column_split = meta_level$Time,
-                              cluster_columns = FALSE,
-                              row_split = clusters$cluster,
-                              cluster_rows = FALSE,
-                              heatmap_legend_param = list(title = "z-score of
-                                                                log2 values",
-                                                          title_position =
-                                                            "lefttop-rot"),
-                              row_gap = unit(2, "pt"),
-                              column_gap = unit(2, "pt"),
-                              # width = unit(2, "mm") * ncol(z_score) +
-                              #   5 * unit(2, "pt"),
-                              # height = unit(2, "mm") * nrow(z_score) +
-                              #   5 * unit(2, "pt"),
-                              show_row_names = TRUE,
-                              show_column_names = TRUE,
-                              column_names_rot = 60,
-                              column_names_gp = gpar(fontsize = 5))
+      ComplexHeatmap::Heatmap(
+        z_score,
+        name = paste0(
+          "left-labels = cluster,", 
+          "top-labels = time"
+          ),
+        use_raster = TRUE,
+        column_split = meta_level$Time,
+        cluster_columns = FALSE,
+        row_split = clusters$cluster,
+        cluster_rows = FALSE,
+        heatmap_legend_param = list(
+          title = "z-score of log2 values",
+          title_position = "lefttop-rot"
+          ),
+        row_gap = unit(2, "pt"),
+        column_gap = unit(2, "pt"),
+        # width = unit(2, "mm") * ncol(z_score) +
+        #   5 * unit(2, "pt"),
+        # height = unit(2, "mm") * nrow(z_score) +
+        #   5 * unit(2, "pt"),
+        show_row_names = TRUE,
+        row_labels = row_labels,
+        show_column_names = TRUE,
+        column_names_rot = 70,
+        column_names_gp = gpar(fontsize = 5))
 
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
@@ -1178,8 +1206,10 @@ plot_heatmap <- function(datas,
 #' @importFrom dendextend color_branches as.ggdend
 #' @importFrom ggplot2 ggplot element_blank labs theme_minimal theme
 #'
-plot_dendrogram <- function(hc,
-                            k) {
+plot_dendrogram <- function(
+    hc,
+    k
+    ) {
 
   dend <- stats::as.dendrogram(hc)
   clusters <- stats::cutree(hc, k)
@@ -1192,40 +1222,57 @@ plot_dendrogram <- function(hc,
   if (k < 3) {
     colors <- RColorBrewer::brewer.pal(3, palette_name)[1:k]
   } else {
-    colors <- RColorBrewer::brewer.pal(min(max_colors_in_palette, k),
-                                       palette_name)
+    colors <- RColorBrewer::brewer.pal(
+      min(
+        max_colors_in_palette,
+        k
+        ),
+      palette_name
+      )
   }
 
   if (k > max_colors_in_palette) {
     colors <- rep(colors, length.out = k)
   }
 
-  dend_colored <- dendextend::color_branches(dend, k = k,
-                                             labels_colors = colors)
+  dend_colored <- dendextend::color_branches(
+    dend,
+    k = k,
+    labels_colors = colors
+    )
 
   dend_colored <-
-    dendextend::set(dend_colored, "labels",
-                    value = rep("",
-                                length(dendextend::get_leaves_attr(dend_colored,
-                                                                   "label"))))
-
+    dendextend::set(
+      dend_colored,
+      "labels",
+      value = rep(
+        "",
+        length(dendextend::get_leaves_attr(
+          dend_colored,
+          "label"
+          )
+          )
+        )
+      )
 
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
-    ggplot2::labs(title =
-                    paste("Hierarchical Clustering Dendrogram Features", 
-                          "(colors = clusters)"),
-                  x = "", y = "") +
+    ggplot2::labs(title = paste(
+      "Hierarchical Clustering Dendrogram Features (colors = clusters)"
+      ), 
+      x = "",
+      y = "") +
     ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text.x = ggplot2::element_blank(),
-                   axis.ticks.x = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_blank(),
-                   axis.ticks.y = ggplot2::element_blank())
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank()
+      )
 }
 
 
-
-#' Plot All Shapes
+#' Plot All Mean Splines
 #'
 #' @description
 #' Generates a plot of average curves for each cluster, showing min-max
@@ -1241,11 +1288,11 @@ plot_dendrogram <- function(hc,
 #' \code{\link{ggplot2}}
 #'
 #' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
-#'                     theme_minimal
+#'                     theme_minimal aes
 #'
-plot_all_shapes <- function(
+plot_all_mean_splines <- function(
     curve_values,
-    time_unit_label
+    plot_info
     ) {
 
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
@@ -1262,33 +1309,40 @@ plot_all_shapes <- function(
 
     # Create a data frame for the average curve with an additional 'Cluster'
     # column
-    curve_df <- data.frame(Time = time, Value = average_curve,
-                           cluster = as.factor(current_cluster))
+    curve_df <- data.frame(
+      Time = time, Value = average_curve,
+      cluster = as.factor(current_cluster)
+      )
 
     # Bind the curve data frame to the cumulative data frame
     average_curves <- rbind(average_curves, curve_df)
   }
 
-  average_curves$cluster <-
-    factor(average_curves$cluster,
-           levels = sort(unique(as.numeric(average_curves$cluster))))
+  average_curves$cluster <- factor(
+    average_curves$cluster,
+    levels = sort(
+      unique(as.numeric(average_curves$cluster)))
+    )
+  
+  time_unit_label = paste0("[", plot_info$time_unit, "]")
 
-  p_curves <- ggplot2::ggplot(average_curves,
-                              aes(x = !!rlang::sym("Time"),
-                                  y = !!rlang::sym("Value"),
-                                  color =
-                                    factor(!!rlang::sym("cluster")))) +
+  p_curves <- ggplot2::ggplot(
+    average_curves,
+    aes(x = !!rlang::sym("Time"),
+        y = !!rlang::sym("Value"),
+        color = factor(!!rlang::sym("cluster")))
+  ) +
     geom_line() +
     ggtitle("Average Splines by Cluster") +
-    xlab(paste0("Time ", time_unit_label)) +
-    ylab("min-max normalized values") +
-    scale_color_brewer(palette = "Dark2",
-                       name = "Cluster") +
-    theme_minimal()
+    xlab(paste("Time", time_unit_label)) +
+    ylab(paste("min-max norm.", plot_info$y_axis_label)) +
+    scale_color_brewer(palette = "Dark2", name = "Cluster") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5))
 }
 
 
-#' Plot Single and Consensus Splines
+#' Plot Single and Mean Splines
 #'
 #' @description
 #' Generates a plot showing individual time series shapes and their consensus
@@ -1307,14 +1361,14 @@ plot_all_shapes <- function(
 #' @importFrom tibble rownames_to_column
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
-#' ggtitle xlab ylab
+#'                     ggtitle aes labs element_rect
 #' @importFrom rlang sym
 #' @importFrom data.table :=
 #'
-plot_single_and_consensus_splines <- function(
+plot_single_and_mean_splines <- function(
     time_series_data,
     title,
-    time_unit_label
+    plot_info
 ) {
   
   time_col <- sym("time")
@@ -1322,35 +1376,75 @@ plot_single_and_consensus_splines <- function(
   
   # Convert data to long format with appropriate column names
   df_long <- as.data.frame(t(time_series_data)) %>%
-    rownames_to_column(var = "time") %>%
-    pivot_longer(cols = -!!time_col, names_to = "feature",
-                 values_to = "intensity") %>%
-    arrange(!!feature_col) %>%
-    mutate(!!time_col := as.numeric(!!time_col))
+    tibble::rownames_to_column(var = "time") %>%
+    tidyr::pivot_longer(
+      cols = -!!time_col,
+      names_to = "feature",
+      values_to = "intensity"
+      ) %>%
+    dplyr::arrange(!!feature_col) %>%
+    dplyr::mutate(!!time_col := as.numeric(!!time_col))
   
   # Compute consensus (mean of each column)
-  consensus <- colMeans(time_series_data, na.rm = TRUE)
-  consensus_df <- data.frame(time = as.numeric(colnames(time_series_data)),
-                             consensus = consensus)
+  consensus <- colMeans(
+    time_series_data,
+    na.rm = TRUE
+    )
+  
+  consensus_df <- data.frame(
+    time = as.numeric(
+      colnames(time_series_data)
+      ),
+    consensus = consensus
+    )
+  
+  time_unit_label = paste0("[", plot_info$time_unit, "]")
   
   p <- ggplot2::ggplot() +
-    geom_line(data = df_long, aes(x = !!rlang::sym("time"),
-                                  y = !!rlang::sym("intensity"),
-                                  group = !!rlang::sym("feature"),
-                                  colour = "Single Shapes"),
-              alpha = 0.3, linewidth = 0.5) +
-    geom_line(data = consensus_df, aes(x = !!rlang::sym("time"), y = consensus,
-                                       colour = "Consensus Shape"),
-              linewidth = 1.5) +
-    scale_colour_manual("", values = c("Consensus Shape" = "darkblue",
-                                       "Single Shapes" = "#6495ED")) +
-    theme_minimal() +
-    labs(
+    ggplot2::geom_line(
+      data = df_long, 
+      ggplot2::aes(
+        x = !!rlang::sym("time"),
+        y = !!rlang::sym("intensity"),
+        group = !!rlang::sym("feature"),
+        colour = "Spline"
+        ), 
+      alpha = 0.3, linewidth = 0.5) +
+    ggplot2::geom_line(
+      data = consensus_df,
+      aes(
+        x = !!rlang::sym("time"),
+        y = consensus,
+        colour = "Mean"
+        ),
+      linewidth = 1.5) +
+    ggplot2::scale_colour_manual(
+      "",
+      values = c(
+        "Mean" = "darkblue",
+        "Spline" = "#6495ED")
+      ) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
       title = title,
-      x = paste("Time ", time_unit_label),
-      y = "Value") +
-    # ggtitle(title) +
-    theme(legend.position = "none")
+      x = paste(
+        "Time",
+        time_unit_label
+        ),
+      y = paste(
+        "min-max norm.",
+        plot_info$y_axis_label
+        )
+      ) +
+    ggtitle(title) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.box = "vertical",
+      legend.title = element_blank(),
+      legend.background = ggplot2::element_blank(),
+      axis.title.y = element_text(size = 8),
+      plot.title = ggplot2::element_text(hjust = 0.5)
+    )
 }
 
 
@@ -1364,15 +1458,14 @@ plot_single_and_consensus_splines <- function(
 #'  assignments.
 #' @param time_unit_label A character string specifying the time unit label.
 #'
-#' @return A list containing the composite plot of consensus shapes and its
-#' size.
+#' @return A list containing a plot for every cluster
 #'
 #' @seealso
-#' \code{\link{plot_single_and_consensus_splines}}, \code{\link{patchwork}}
+#' \code{\link{plot_single_and_mean_splines}}
 #'
-plot_consensus_shapes <- function(
+plot_cluster_mean_splines <- function(
     curve_values,
-    time_unit_label
+    plot_info
     ) {
 
   clusters <- sort(unique(curve_values$cluster))
@@ -1385,25 +1478,23 @@ plot_consensus_shapes <- function(
       )
     subset_df$cluster <- NULL
     nr_of_hits <- nrow(subset_df)
-    current_title <- paste("Cluster", current_cluster, 
-                           "| Hits:", nr_of_hits,
-                           sep = " ")
+    current_title <- paste(
+      "Cluster",
+      current_cluster, 
+      "| Hits:",
+      nr_of_hits,
+      sep = " "
+      )
 
     plots[[length(plots) + 1]] <-
-      plot_single_and_consensus_splines(subset_df,
-                                        current_title,
-                                        time_unit_label)
+      plot_single_and_mean_splines(
+        subset_df,
+        current_title,
+        plot_info = plot_info
+        )
   }
-
-  composite_consensus_shapes_plot <-
-    patchwork::wrap_plots(plots, ncol = 2) +
-    patchwork::plot_annotation(
-      title = "min-max normalized cluster consensus shapes",
-      theme = ggplot2::theme(plot.title = element_text(hjust = 0.5, size = 14))
-    )
-
-  list(plot = composite_consensus_shapes_plot,
-       size = length(plots)/2)
+  
+  return(plots)
 }
 
 
@@ -1517,10 +1608,6 @@ plot_splines <- function(
         legend.spacing.x = unit(0.5, "cm"), # Adjust horizontal spacing
         legend.margin = ggplot2::margin(1, 1, 1, 1),  
         legend.box.margin = ggplot2::margin(1, 1, 1, 1),
-        legend.box.background = ggplot2::element_rect(
-         color = "black",
-         size = 0.5
-         ),  
         axis.text.x = ggplot2::element_text(size = 8),
         axis.title.y = 
          ggplot2::element_text(size = 10, 
@@ -1695,6 +1782,8 @@ prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
 #' @param spline_params A list of spline parameters.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
+#' @param report_info A named list containg the report info fields. Here used
+#'                    for the email hotkey functionality.
 #' @param output_file_path A character string specifying the path to save the
 #'                         HTML report.
 #'
@@ -1710,6 +1799,7 @@ build_cluster_hits_report <- function(
     level_headers_info,
     spline_params,
     mode,
+    report_info,
     output_file_path
     ) {
 
@@ -1815,6 +1905,7 @@ build_cluster_hits_report <- function(
 
     header_levels <- c(
       "dendrogram",
+      "cluster_mean_splines",
       "heatmap",
       "individual_spline_plots1"
     )
@@ -1823,6 +1914,8 @@ build_cluster_hits_report <- function(
       
       if (element_name == "dendrogram") {
         header_text <- "Overall Clustering"
+      } else if (element_name == "cluster_mean_splines") {
+        header_text <- "Min-max normalized individual and mean splines"
       } else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
       } else {  # element_name == "individual_spline_plots1"
@@ -1874,6 +1967,7 @@ build_cluster_hits_report <- function(
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
+    report_info = report_info,
     output_file_path = output_file_path
   )
 }
@@ -2161,4 +2255,31 @@ get_spline_params_info <- function(
     spline_params$bknots[j])
   }
   return(spline_params_info)
+}
+
+
+#' Truncate Row Names
+#'
+#' @description
+#' This function truncates row names that exceed a specified maximum length.
+#' If the row name length exceeds the maximum length, it appends " ..."
+#' to indicate truncation.
+#'
+#' @param names A character vector of row names.
+#' @param max_length An integer specifying the maximum length of the row names.
+#' Default is 40.
+#'
+#' @return A character vector of truncated row names.
+#'
+truncate_row_names <- function(
+    names,
+    max_length = 40
+    ) {
+  sapply(names, function(x) {
+    if (nchar(x) > max_length) {
+      return(paste0(substr(x, 1, max_length - 3), " ..."))
+    } else {
+      return(x)
+    }
+  })
 }

@@ -351,6 +351,8 @@ shorten_names <- function(name,
 #' @param plots A list of ggplot2 plot objects.
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param level_headers_info A list of header information for each level.
+#' @param report_info A named list containg the report info fields. Here used
+#'                    for the email hotkey functionality.
 #' @param output_file_path A character string specifying the path to save the 
 #'                         HTML report.
 #'
@@ -364,6 +366,7 @@ build_create_limma_report <- function(
     plots, 
     plots_sizes, 
     level_headers_info,
+    report_info,
     output_file_path = here::here()
     ) {  
   
@@ -443,6 +446,7 @@ build_create_limma_report <- function(
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
+    report_info = report_info,
     output_file_path = output_file_path
   )
 }

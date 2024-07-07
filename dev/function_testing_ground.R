@@ -164,7 +164,7 @@ report_dir <- here::here("results", "limma_reports")
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
-clusters <- list(2L, 2L)   
+clusters <- list(6L, 3L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
@@ -189,49 +189,55 @@ clustering_results <- cluster_hits(
 
 # Perform gsea -----------------------------------------------------------------
 
-gene_set_lib <- c("WikiPathways_2019_Human",
-                  "NCI-Nature_2016",
-                  "TRRUST_Transcription_Factors_2019",
-                  "MSigDB_Hallmark_2020",
-                  "GO_Cellular_Component_2018",
-                  "CORUM",
-                  "KEGG_2019_Human",
-                  "TRANSFAC_and_JASPAR_PWMs",
-                  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
-                  "GO_Biological_Process_2018",
-                  "GO_Molecular_Function_2018",
-                  "Human_Gene_Atlas")
+gene_set_lib <- c(
+  "WikiPathways_2019_Human",
+  "NCI-Nature_2016",
+  "TRRUST_Transcription_Factors_2019",
+  "MSigDB_Hallmark_2020",
+  "GO_Cellular_Component_2018",
+  "CORUM",
+  "KEGG_2019_Human",
+  "TRANSFAC_and_JASPAR_PWMs",
+  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+  "GO_Biological_Process_2018",
+  "GO_Molecular_Function_2018",
+  "Human_Gene_Atlas"
+  )
 
 # download_enrichr_databases(gene_set_lib)
 
 # Get gene vector
 data <- as.data.frame(data_excel)
-gene_column_name <- "Gene Names"
+gene_column_name <- "Genes"
 genes <- data[[gene_column_name]][4:nrow(data)]
 genes <- sub(" .*", "", genes)
 genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)
+genes <- sub("-.*", "", genes)
 
 
 downloaded_dbs_filepath <- 
-  here::here("data", "all_databases_08_04_2024-12_41_50.tsv")
+  here::here("dev", "data", "all_databases_08_04_2024-12_41_50.tsv")
 
 databases <- readr::read_tsv(downloaded_dbs_filepath, col_types = readr::cols())
 
-clusterProfiler_params <- list(adj_p_value = 0.05,
-                               pAdjustMethod = "BH",
-                               minGSSize = 10,
-                               maxGSSize = 500,
-                               qvalueCutoff = 0.2)
+clusterProfiler_params <- list(
+  adj_p_value = 0.05,
+  pAdjustMethod = "BH",
+  minGSSize = 10,
+  maxGSSize = 500,
+  qvalueCutoff = 0.2
+  )
 
 report_dir <- here::here("results", "gsea_reports")
 
-# debug(run_gsea)
-result <- create_gsea_report(levels_clustered_hits = 
-                                clustering_results$clustered_hits_levels,
-                              genes = genes,
-                              databases = databases,
-                              params = clusterProfiler_params,
-                              report_info = report_info,
-                              report_dir = report_dir)
+# debug(create_gsea_report)
+result <- create_gsea_report(
+  levels_clustered_hits = clustering_results$clustered_hits_levels,
+  genes = genes,
+  databases = databases,
+  params = clusterProfiler_params,
+  report_info = report_info,
+  report_dir = report_dir
+  )
 

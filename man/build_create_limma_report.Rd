@@ -9,6 +9,7 @@ build_create_limma_report(
   plots,
   plots_sizes,
   level_headers_info,
+  report_info,
   output_file_path = here::here()
 )
 }
@@ -20,6 +21,9 @@ build_create_limma_report(
 \item{plots_sizes}{A list of integers specifying the size of each plot.}
 
 \item{level_headers_info}{A list of header information for each level.}
+
+\item{report_info}{A named list containg the report info fields. Here used
+for the email hotkey functionality.}
 
 \item{output_file_path}{A character string specifying the path to save the 
 HTML report.}

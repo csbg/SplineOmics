@@ -4,7 +4,13 @@
 \alias{build_explore_data_report}
 \title{Build Explore Data Report}
 \usage{
-build_explore_data_report(header_section, plots, plots_sizes, output_file_path)
+build_explore_data_report(
+  header_section,
+  plots,
+  plots_sizes,
+  report_info,
+  output_file_path
+)
 }
 \arguments{
 \item{header_section}{A string containing the HTML content for the header 
@@ -15,6 +21,9 @@ in the report.}
 
 \item{plots_sizes}{A list of sizes corresponding to each plot, defining the 
 dimensions to be used when rendering the plots.}
+
+\item{report_info}{A named list containg the report info fields. Here used
+for the email hotkey functionality.}
 
 \item{output_file_path}{A string specifying the file path where the HTML 
 report will be saved.}
