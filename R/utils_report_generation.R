@@ -253,7 +253,8 @@ generate_report_html <- function(
     build_explore_data_report(
       header_section = header_section, 
       plots = plots, 
-      plots_sizes = plots_sizes, 
+      plots_sizes = plots_sizes,
+      report_info = report_info,
       output_file_path = output_file_path
       )
     
@@ -263,6 +264,7 @@ generate_report_html <- function(
       header_section = header_section, 
       plots = plots, 
       plots_sizes = plots_sizes, 
+      report_info = report_info,
       output_file_path = output_file_path
       )
     
@@ -273,6 +275,7 @@ generate_report_html <- function(
       plots = plots,
       plots_sizes = plots_sizes,
       level_headers_info = level_headers_info,
+      report_info = report_info,
       output_file_path = output_file_path
       )
     
@@ -283,6 +286,7 @@ generate_report_html <- function(
       plots = plots,
       plots_sizes = plots_sizes,
       level_headers_info = level_headers_info,
+      report_info = report_info,
       output_file_path = output_file_path
       )
     
@@ -294,6 +298,7 @@ generate_report_html <- function(
       level_headers_info = level_headers_info,
       spline_params = spline_params,
       mode = mode,
+      report_info = report_info,
       output_file_path = output_file_path
       )
   }
@@ -315,65 +320,125 @@ generate_report_html <- function(
 generate_and_write_html <- function(
     toc,
     html_content,
+    report_info,
     output_file_path
     ) {
   
-  output_file_path <- normalizePath(output_file_path, mustWork = FALSE)
+  output_file_path <- normalizePath(
+    output_file_path,
+    mustWork = FALSE
+    )
   
   # Close the Table of Contents
-  toc <- paste(toc, "</ul></div>", sep = "\n")
+  toc <- paste(
+    toc,
+    "</ul></div>",
+    sep = "\n"
+    )
   
   # Insert the Table of Contents at the placeholder
-  html_content <- gsub("<!--TOC-->", toc, html_content)
+  html_content <- gsub(
+    "<!--TOC-->",
+    toc,
+    html_content
+    )
   
   # Append a horizontal line after the TOC
-  html_content <- gsub("</ul></div>", "</ul></div>\n<hr>", html_content)
-  
-  
-  
-  
-  
-  # Hardcoded variables for testing
-  email <- "thomas.rauter@plus.ac.at"
-  name <- "Thomas Rauter"
-  datetime <- "tomorrow"
+  html_content <- gsub(
+    "</ul></div>",
+    "</ul></div>\n<hr>",
+    html_content
+    )
   
   # Path to the external JavaScript file within the package
-  js_file_path <- system.file("www/hotkeys.js", package = "SplineOmics")
+  js_file_path <- system.file(
+    "www/hotkeys.js",
+    package = "SplineOmics"
+    )
   if (js_file_path == "") {
     stop("JavaScript file not found.")
   }
   
   # Read the JavaScript file and replace placeholders with actual values
-  js_content <- readLines(js_file_path, encoding = "UTF-8")
-  js_content <- gsub("\\{\\{email\\}\\}", email, js_content)
-  js_content <- gsub("\\{\\{name\\}\\}", name, js_content)
-  js_content <- gsub("\\{\\{datetime\\}\\}", datetime, js_content)
-  
-  # Include JSZip and FileSaver.js libraries
-  libraries <- "
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'></script>
-  "
+  js_content <- readLines(
+    js_file_path,
+    encoding = "UTF-8"
+    )
+  js_content <- gsub(
+    "\\{\\{email\\}\\}",
+    report_info$contact_info,
+    js_content
+    )
+  js_content <- gsub(
+    "\\{\\{name\\}\\}",
+    report_info$analyst_name,
+    js_content
+    )
+
+  # Include JSZip and FileSaver.js libraries from local package files
+  jszip_path <- system.file(
+    "www/jszip.min.js",
+    package = "SplineOmics"
+    )
+  filesaver_path <- system.file(
+    "www/FileSaver.min.js",
+    package = "SplineOmics"
+    )
+  libraries <- paste(
+    "<script src='",
+    jszip_path,
+    "'></script>",
+    "<script src='",
+    filesaver_path,
+    "'></script>",
+    sep = "\n"
+  )
   
   # Include the modified JavaScript content before the closing body tag
-  script_tag <- paste(libraries, "<script>", paste(js_content, collapse = "\n"), "</script>")
-  html_content <- gsub("</body>", paste(script_tag, "</body>"), html_content)
-  
-  
-  
+  script_tag <- paste(
+    libraries,
+    "<script>",
+    paste(
+      js_content,
+      collapse = "\n"
+      ),
+    "</script>"
+    )
+  html_content <- gsub(
+    "</body>",
+    paste(
+      script_tag,
+      "</body>"
+      ),
+    html_content
+    )
   
   # Append the final closing tags for the HTML body and document
-  html_content <- paste(html_content, "</body></html>", sep = "\n")
+  html_content <- paste(
+    html_content,
+    "</body></html>",
+    sep = "\n"
+    )
   
   # Ensure the directory exists
   dir_path <- dirname(output_file_path)
   if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
+    dir.create(
+      dir_path,
+      recursive = TRUE
+      )
   }
   
-  con <- file(output_file_path, "w", encoding = "UTF-8")
-  writeLines(html_content, con, useBytes = TRUE)
+  con <- file(
+    output_file_path,
+    "w",
+    encoding = "UTF-8"
+    )
+  writeLines(
+    html_content,
+    con,
+    useBytes = TRUE
+    )
   close(con)
 }
 
@@ -637,12 +702,11 @@ get_header_section <- function(
     'padding: 10px 15px; font-size: 2em;', 
     'font-weight: bold; z-index: 1;">Hotkeys</div>',
     '<p style="font-size: 2em;">',
-    "To jump to the <b>Table of Contents</b>, press the '<b>t</b>' key on", 
-    "your keyboard. 📑<br>",
-    "To <b>download</b> all embedded files as a <b>zip file</b>, press the", 
-    "'<b>d</b>' key on your keyboard. 📥<br>",
-    "To write a <b>mail</b> to the contact info in this report, press the",
-    "'<b>e</b>' key on your keyboard. ✉️<br>",
+    "To jump to the <b>Table of Contents</b>, press '<b>t</b>'. 📑<br>",
+    "To <b>download</b> all embedded files as a <b>zip file</b>, press", 
+    "'<b>d</b>'. 📥<br>",
+    "To write a <b>email</b> to the contact info, press",
+    "'<b>e</b>'. ✉️<br>",
     '</p>',
     '</div>'
   )
@@ -915,10 +979,13 @@ process_plots <- function(
     header_index,
     element_name = NA
     ) {
-  
+
   if (
     !is.na(element_name) && 
-    startsWith(element_name, "individual_spline_plots")
+    startsWith(
+      element_name,
+      "individual_spline_plots"
+      ) 
     ) {
     
     spline_plots <- plots_element$spline_plots
@@ -931,7 +998,11 @@ process_plots <- function(
       main_title, 
       "</a></li>"
     )
-    toc <- paste(toc, toc_entry, sep = "\n")
+    toc <- paste(
+      toc,
+      toc_entry,
+      sep = "\n"
+      )
     
     # Add the main title as a section title with an anchor before the first plot
     grid_content <- paste0(
@@ -988,16 +1059,20 @@ process_plots <- function(
       grid_content,
       sep = "\n"
     )
+  } else if (
+    !is.na(element_name) &&
+    element_name == "cluster_mean_splines"
+    ) {
+    # One plot for each cluster
+    for (i in seq_along(plots_element)) {
+      html_content <- add_plot_to_html(
+        html_content, plots_element[[i]], plots_size, header_index + i - 1
+      )
+    }
   } else {
     # Process a single plot
-    img_tag <- plot2base64(plots_element, height = plots_size)
-    html_content <- paste(
-      html_content,
-      '<div id="section', header_index, '">',
-      img_tag,
-      '</div>',
-      '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">',  
-      sep = "\n"
+    html_content <- add_plot_to_html(
+      html_content, plots_element, plots_size, header_index
     )
   }
   
@@ -1251,4 +1326,38 @@ create_enrichr_zip <- function(enrichr_format) {
   unlink(zip_file)
   
   return(zip_base64)
+}
+
+
+#' Add Plot to HTML Content
+#'
+#' @description
+#' This function converts a plot to a base64 image and adds it to the 
+#' HTML content.
+#'
+#' @param html_content The current HTML content as a character string.
+#' @param plot_element The plot element to be converted to base64.
+#' @param plots_size An integer specifying the height of the plot.
+#' @param section_index An integer specifying the section index.
+#'
+#' @return The updated HTML content as a character string.
+#'
+add_plot_to_html <- function(
+    html_content,
+    plot_element,
+    plots_size,
+    section_index
+) {
+  img_tag <- plot2base64(
+    plot_element,
+    height = plots_size
+    )
+  paste(
+    html_content,
+    '<div id="section', section_index, '">',
+    img_tag,
+    '</div>',
+    '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">',
+    sep = "\n"
+  )
 }

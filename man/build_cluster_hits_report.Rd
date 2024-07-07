@@ -11,6 +11,7 @@ build_cluster_hits_report(
   level_headers_info,
   spline_params,
   mode,
+  report_info,
   output_file_path
 )
 }
@@ -27,6 +28,9 @@ build_cluster_hits_report(
 
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
+
+\item{report_info}{A named list containg the report info fields. Here used
+for the email hotkey functionality.}
 
 \item{output_file_path}{A character string specifying the path to save the
 HTML report.}

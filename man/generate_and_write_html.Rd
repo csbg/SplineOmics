@@ -4,7 +4,7 @@
 \alias{generate_and_write_html}
 \title{Generate and Write HTML Content with Table of Contents}
 \usage{
-generate_and_write_html(toc, html_content, output_file_path)
+generate_and_write_html(toc, html_content, report_info, output_file_path)
 }
 \arguments{
 \item{toc}{The HTML string representing the table of contents.}

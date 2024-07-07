@@ -9,6 +9,7 @@ build_create_gsea_report(
   plots,
   plots_sizes,
   level_headers_info,
+  report_info,
   output_file_path
 )
 }
@@ -22,6 +23,9 @@ section of the report.}
 
 \item{level_headers_info}{A list containing header information for each 
 level of clustered hits.}
+
+\item{report_info}{A named list containg the report info fields. Here used
+for the email hotkey functionality.}
 
 \item{output_file_path}{A string specifying the file path where the report 
 will be saved.}

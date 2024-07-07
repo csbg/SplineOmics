@@ -49,6 +49,7 @@ explore_data <- function(
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
   annotation <- splineomics[["annotation"]]
+  report_info <- splineomics[["report_info"]]
   condition <- splineomics[["condition"]]
   report_info <- splineomics[["report_info"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
@@ -208,6 +209,8 @@ generate_explore_plots <- function(data,
 #' in the report.
 #' @param plots_sizes A list of sizes corresponding to each plot, defining the 
 #' dimensions to be used when rendering the plots.
+#' @param report_info A named list containg the report info fields. Here used
+#'                    for the email hotkey functionality.
 #' @param output_file_path A string specifying the file path where the HTML 
 #' report will be saved.
 #'
@@ -219,6 +222,7 @@ build_explore_data_report <- function(
     header_section, 
     plots, 
     plots_sizes, 
+    report_info,
     output_file_path
     ) {  
 
@@ -317,18 +321,24 @@ build_explore_data_report <- function(
           sep = "\n"
           )
       
-      section_header <- sprintf('<h2 id="%s" style="%s">%s</h2>', 
-                                section_id, 
-                                section_header_style, 
-                                plot_names[toc_index])
+      section_header <- sprintf(
+        '<h2 id="%s" style="%s">%s</h2>', 
+        section_id, 
+        section_header_style, 
+        plot_names[toc_index]
+        )
       
-      plot_description <- sprintf('<p style="font-size: 2em;">%s</p>',
-                                  plot_explanations[toc_index])
+      plot_description <- sprintf(
+        '<p style="font-size: 2em;">%s</p>',
+        plot_explanations[toc_index]
+        )
       
-      html_content <- paste(html_content, 
-                            section_header, 
-                            plot_description, 
-                            sep = "\n")
+      html_content <- paste(
+        html_content, 
+        section_header, 
+        plot_description, 
+        sep = "\n"
+        )
       
       toc_index_memory <- toc_index
     }
@@ -338,13 +348,18 @@ build_explore_data_report <- function(
     plot_size <- plots_sizes[[index]]
     img_tag <- plot2base64(plot, plot_size)
     
-    html_content <- paste(html_content, img_tag, sep = "\n")
+    html_content <- paste(
+      html_content,
+      img_tag,
+      sep = "\n"
+      )
     pb$tick()
   }
   
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
+    report_info = report_info,
     output_file_path = output_file_path
   )
 }

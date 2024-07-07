@@ -4,16 +4,28 @@
 \alias{process_plots}
 \title{Process Plots}
 \usage{
-process_plots(plots_element, element_name, plots_size, html_content)
+process_plots(
+  plots_element,
+  plots_size,
+  html_content,
+  toc,
+  header_index,
+  element_name = NA
+)
 }
 \arguments{
 \item{plots_element}{A list of plots to be processed.}
 
-\item{element_name}{A character string specifying the name of the element.}
-
 \item{plots_size}{A list of sizes for the plots.}
 
 \item{html_content}{The current state of the HTML content.}
+
+\item{toc}{The current state of the table of contents (TOC).}
+
+\item{header_index}{An index to uniquely identify each section 
+for anchoring.}
+
+\item{element_name}{A character string specifying the name of the element.}
 }
 \value{
 Updated HTML content with the plots included.

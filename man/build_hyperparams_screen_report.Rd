@@ -8,6 +8,7 @@ build_hyperparams_screen_report(
   header_section,
   plots,
   plots_sizes,
+  report_info,
   output_file_path
 )
 }
@@ -18,6 +19,9 @@ build_hyperparams_screen_report(
 
 \item{plots_sizes}{A list of integers specifying the number of rows for each 
 plot.}
+
+\item{report_info}{A named list containg the report info fields. Here used
+for the email hotkey functionality.}
 
 \item{output_file_path}{A character string specifying the path to save the 
 HTML report.}

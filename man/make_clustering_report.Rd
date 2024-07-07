@@ -65,6 +65,6 @@ curve plots, and consensus shapes for each level within a condition.
 \seealso{
 \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}},
 \code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}},
-\code{\link{plot_consensus_shapes}}, \code{\link{plot_splines}},
+\code{\link{plot_cluster_mean_splines}}, \code{\link{plot_splines}},
 \code{\link{generate_report_html}}
 }

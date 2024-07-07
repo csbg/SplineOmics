@@ -1456,6 +1456,8 @@ plot_composite_splines <- function(
 #' @param plots A list of ggplot2 plot objects.
 #' @param plots_sizes A list of integers specifying the number of rows for each 
 #' plot.
+#' @param report_info A named list containg the report info fields. Here used
+#'                    for the email hotkey functionality.
 #' @param output_file_path A character string specifying the path to save the 
 #' HTML report.
 #'
@@ -1468,6 +1470,7 @@ build_hyperparams_screen_report <- function(
     header_section, 
     plots, 
     plots_sizes, 
+    report_info,
     output_file_path
     ) {
 
@@ -1530,6 +1533,7 @@ build_hyperparams_screen_report <- function(
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
+    report_info = report_info,
     output_file_path = output_file_path
   )
 }
