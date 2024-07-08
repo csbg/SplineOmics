@@ -20,24 +20,19 @@ library(dplyr)
 #                               "Time_course_PPTX_old_metadata.xlsx"))
 
 
-# data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
-# 
-# meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
+data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
 
-data_excel <- read_excel(here::here("inst" ,"extdata", "data_phosphoproteomics_old.xlsx"))
+meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
 
-meta <- read_excel(here::here("inst" ,"extdata", "meta_phosphoproteomics_old.xlsx"))
-
-first_na_col <- which(is.na(data_excel[1,]))[1]
 annotation <- data_excel %>%
-  dplyr::select((first_na_col + 1):ncol(data_excel)) %>%
-  dplyr::slice(-c(1:3))
+  select(39:ncol(data_excel)) %>%  
+  dplyr::slice(-c(1:3))  
 
 
 # Get the gene list ------------------------------------------------------------
 
 data <- as.data.frame(data_excel)
-gene_column_name <- "Gene Names"
+gene_column_name <- "Genes"
 genes <- data[[gene_column_name]][4:nrow(data)]
 
 
@@ -49,10 +44,7 @@ genes <- data[[gene_column_name]][4:nrow(data)]
 #                           "Protein", 
 #                           "Positions within proteins")
 
-# feature_name_columns <- c("First.Protein.Description")
-feature_name_columns <- c("Protein",
-                          "Unique identifier",
-                          "Position")
+feature_name_columns <- c("First.Protein.Description")
 
 # debug(extract_data)
 data <- extract_data(data_excel,
@@ -64,16 +56,16 @@ data <- extract_data(data_excel,
 col_names <- colnames(data)
 
 # Identify the columns to remove
-# cols_to_remove <- c("E12_TP05_Exponential", "E10_TP10_Stationary")
+cols_to_remove <- c("E12_TP05_Exponential", "E10_TP10_Stationary")
 
 # Find the indices of the columns to remove
-# cols_to_remove_indices <- which(col_names %in% cols_to_remove)
-# 
-# # Remove the columns by subsetting
-# data <- data[, -cols_to_remove_indices]
-# 
-# meta <- meta %>%
-#   dplyr::filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
+cols_to_remove_indices <- which(col_names %in% cols_to_remove)
+
+# Remove the columns by subsetting
+data <- data[, -cols_to_remove_indices]
+
+meta <- meta %>%
+  dplyr::filter(!Sample.ID %in% c("E12_TP05_Exponential", "E10_TP10_Stationary"))
 
 # Explore data -----------------------------------------------------------------
 
@@ -92,8 +84,7 @@ splineomics <- create_splineomics(
   annotation = annotation,
   report_info = report_info,
   condition = "Phase",
-  meta_batch_column = "Reactor",
-  feature_name_columns = feature_name_columns
+  meta_batch_column = "Reactor"
 )
 
 
@@ -173,7 +164,7 @@ report_dir <- here::here("results", "limma_reports")
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
-clusters <- list(3L, 3L)   
+clusters <- list(6L, 3L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(

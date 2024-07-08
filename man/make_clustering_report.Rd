@@ -19,7 +19,8 @@ make_clustering_report(
   meta_batch_column,
   meta_batch2_column,
   plot_info,
-  analysis_type
+  analysis_type,
+  feature_name_columns
 )
 }
 \arguments{

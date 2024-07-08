@@ -13,6 +13,7 @@ create_splineomics(
   report_info = NULL,
   meta_batch_column = NULL,
   meta_batch2_column = NULL,
+  feature_name_columns = NULL,
   design = NULL,
   spline_params = NULL
 )

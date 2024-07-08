@@ -612,7 +612,8 @@ make_clustering_report <- function(
         meta = meta_level,
         X = X,
         time_unit_label = time_unit_label,
-        plot_info = plot_info
+        plot_info = plot_info,
+        adj_pthreshold = adj_pthresholds[i]
         )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -689,6 +690,7 @@ make_clustering_report <- function(
     meta = meta,
     topTables = topTables,
     enrichr_format = enrichr_format,
+    adj_pthresholds = adj_pthresholds,
     report_type = "cluster_hits",
     feature_name_columns = feature_name_columns,
     analysis_type = analysis_type,
@@ -1543,11 +1545,12 @@ plot_splines <- function(
     meta,
     X,   # Was already created from spline_params before
     time_unit_label,
-    plot_info
+    plot_info,
+    adj_pthreshold
     ) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
-  top_table <- top_table %>% dplyr::arrange(feature_names)
+  top_table <- top_table |> dplyr::arrange(feature_names)
 
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
@@ -1568,110 +1571,157 @@ plot_splines <- function(
 
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
 
-    Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 100)
+    Time <- seq(
+      meta$Time[1],
+      meta$Time[length(meta$Time)],
+      length.out = 100
+      )
 
     fitted_values <- X %*% spline_coeffs + intercept
 
-    plot_data <- data.frame(Time = time_points, Y = y_values)
-
-    plot_spline <- data.frame(Time = Time, Fitted = fitted_values)
-
-    x_max <- as.numeric(max(time_points))
-    x_extension <- x_max * 0.05
-
-    treatment_times <- plot_info$treatment_timepoints 
-    treatment_labels <- plot_info$treatment_labels 
-    
-    color_values <- c("Data" = "blue", "Spline" = "red")
-    distinct_colors <- scales::hue_pal()(length(treatment_labels))
-    names(distinct_colors) <- treatment_labels
-    color_values <- c(color_values, distinct_colors)
-    
-    all_time_points <- unique(c(time_points, treatment_times))
-    
-    p <- ggplot2::ggplot() +
-      ggplot2::geom_point(data = plot_data, 
-                          ggplot2::aes(x = Time, 
-                                       y = !!rlang::sym("Y"), 
-                                       color = "Data")) +
-      ggplot2::geom_line(data = plot_spline, 
-                         ggplot2::aes(x = Time, 
-                                      y = !!rlang::sym("Fitted"), 
-                                      color = "Spline")) +
-      ggplot2::theme_minimal() +
-      ggplot2::scale_x_continuous(limits = c(min(time_points), 
-                                             x_max + x_extension),
-                                  breaks = all_time_points) + 
-      ggplot2::labs(x = paste0("Time ", time_unit_label), 
-                    y = plot_info$y_axis_label) +  
-      ggplot2::scale_color_manual(values = color_values) +
-      ggplot2::theme(
-        legend.position = "right", 
-        legend.justification = "center",
-        legend.box = "vertical",   
-        legend.background = ggplot2::element_blank(),  
-        legend.title = ggplot2::element_blank(),  
-        legend.text = ggplot2::element_text(
-          size = 6, 
-          margin = ggplot2::margin(l = 0, r = 6)
-          ),
-        legend.spacing.x = unit(0.5, "cm"), # Adjust horizontal spacing
-        legend.margin = ggplot2::margin(1, 1, 1, 1),  
-        legend.box.margin = ggplot2::margin(1, 1, 1, 1),
-        axis.text.x = ggplot2::element_text(size = 8),
-        axis.title.y = 
-         ggplot2::element_text(size = 10, 
-                               margin = ggplot2::margin(
-                                 t = 0, r = 2, b = 0, l = 0)),
-        axis.text.y = 
-         ggplot2::element_text(margin = ggplot2::margin(
-           t = 0, r = 5, b = 0, l = 0
-           )))
-    
-    # Create a data frame for the treatment lines
-    treatment_df <- data.frame(
-      Time = treatment_times,
-      Label = treatment_labels
-    )
-    
-    # Add vertical lines for each treatment time
-    p <- p + ggplot2::geom_vline(
-      data = treatment_df, 
-      ggplot2::aes(xintercept = Time, 
-                  color = Label), 
-      linetype = "dashed", 
-      size = 0.5
+    plot_data <- data.frame(
+      Time = time_points,
+      Y = y_values
       )
+    
+    # Get adjusted p-value and significance stars
+    adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
+    significance_stars <- ifelse(
+      adj_p_value < adj_pthreshold / 50,
+      "***",
+      ifelse(
+        adj_p_value < adj_pthreshold / 5,
+        "**",
+        ifelse(
+          adj_p_value < adj_pthreshold,
+          "*",
+          ""
+          )
+        )
+      )
+    
+    # Use local environment to avoid unwanted updating dynamic legend label.
+    p <- local({
+      spline_label <- paste0(
+        "Spline\n(adj. p-val:\n",
+        round(adj_p_value, 4),
+        "\nAsterisk: ",
+        significance_stars,
+        ")"
+      )
+  
+      plot_spline <- data.frame(
+        Time = Time,
+        Fitted = fitted_values
+        )
+  
+      x_max <- as.numeric(max(time_points))
+      x_extension <- x_max * 0.05
+  
+      treatment_times <- plot_info$treatment_timepoints 
+      treatment_labels <- plot_info$treatment_labels 
+      
+      color_values <- c("Data" = "blue", "Spline" = "red")
+      distinct_colors <- scales::hue_pal()(length(treatment_labels))
+      names(distinct_colors) <- treatment_labels
+      color_values <- c(color_values, distinct_colors)
+  
+      all_time_points <- unique(
+        c(
+          time_points,
+          treatment_times
+          )
+        )
+      
+      dynamic_label <- function(labels) {
+        return(ifelse(labels == "Spline", spline_label, labels))
+      }
+  
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_point(data = plot_data, 
+                            ggplot2::aes(x = Time, 
+                                         y = !!rlang::sym("Y"), 
+                                         color = "Data")) +
+        ggplot2::geom_line(data = plot_spline, 
+                           ggplot2::aes(x = Time, 
+                                        y = !!rlang::sym("Fitted"), 
+                                        color = "Spline")) +
+        ggplot2::theme_minimal() +
+        ggplot2::scale_x_continuous(limits = c(min(time_points), 
+                                               x_max + x_extension),
+                                    breaks = all_time_points) + 
+        ggplot2::labs(x = paste0("Time ", time_unit_label), 
+                      y = plot_info$y_axis_label) +  
+        ggplot2::scale_color_manual(values = color_values,
+                                    labels = dynamic_label) +
+        ggplot2::theme(
+          legend.position = "right", 
+          legend.justification = "center",
+          legend.box = "vertical",   
+          legend.background = ggplot2::element_blank(),  
+          legend.title = ggplot2::element_blank(),  
+          legend.text = ggplot2::element_text(
+            size = 6, 
+            margin = ggplot2::margin(l = 0, r = 6)
+            ),
+          legend.spacing.x = unit(0.5, "cm"), # Adjust horizontal spacing
+          legend.margin = ggplot2::margin(1, 1, 1, 1),  
+          legend.box.margin = ggplot2::margin(1, 1, 1, 1),
+          axis.text.x = ggplot2::element_text(size = 8),
+          axis.title.y = 
+           ggplot2::element_text(size = 10, 
+                                 margin = ggplot2::margin(
+                                   t = 0, r = 2, b = 0, l = 0)),
+          axis.text.y = 
+           ggplot2::element_text(margin = ggplot2::margin(
+             t = 0, r = 5, b = 0, l = 0
+           )))
+  
+      # Create a data frame for the treatment lines
+      treatment_df <- data.frame(
+        Time = treatment_times,
+        Label = treatment_labels
+      )
+      
+      # Add vertical lines for each treatment time
+      p <- p + ggplot2::geom_vline(
+        data = treatment_df, 
+        ggplot2::aes(xintercept = Time, 
+                    color = Label), 
+        linetype = "dashed", 
+        size = 0.5
+        )
+  
+      # Add title and annotations
+      matched_row <- dplyr::filter(titles, 
+                                   !!rlang::sym("FeatureID") == hit_index)
+      
+      title <- as.character(matched_row$feature_name)
+      
+      if (nchar(title) > 100) {
+        title_before <- title
+        title <- paste0(substr(title, 1, 100), " ...")
+        message(paste("The feature ID", title_before, "is > 100 characters.",
+                      "Truncating it to 100 chars:", title))
+      }
+      
+      if (is.na(title)) {
+        title <- paste("feature:", hit_index)
+      }
+      
+      p <- p + ggplot2::labs(title = title) +
+        ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
+                       axis.title.x = ggplot2::element_text(size = 8),
+                       axis.title.y = ggplot2::element_text(size = 8)) +
+        ggplot2::annotate("text", x = x_max + (x_extension / 2),
+                          y = max(fitted_values, na.rm = TRUE),
+                          label = "", hjust = 0.5, vjust = 1, size = 3.5,
+                          angle = 0, color = "black")
+      p
+    })
 
-    # Add title and annotations
-    matched_row <- dplyr::filter(titles, 
-                                 !!rlang::sym("FeatureID") == hit_index)
-    
-    title <- as.character(matched_row$feature_name)
-    
-    if (nchar(title) > 100) {
-      title_before <- title
-      title <- paste0(substr(title, 1, 100), " ...")
-      message(paste("The feature ID", title_before, "is > 100 characters.",
-                    "Truncating it to 100 chars:", title))
-    }
-    
-    if (is.na(title)) {
-      title <- paste("feature:", hit_index)
-    }
-    
-    p <- p + ggplot2::labs(title = title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
-                     axis.title.x = ggplot2::element_text(size = 8),
-                     axis.title.y = ggplot2::element_text(size = 8)) +
-      ggplot2::annotate("text", x = x_max + (x_extension / 2), 
-                        y = max(fitted_values, na.rm = TRUE),
-                        label = "", hjust = 0.5, vjust = 1, size = 3.5, 
-                        angle = 0, color = "black")
-    
     plot_list[[length(plot_list) + 1]] <- p
   }
-
   return(plot_list)
 }
 
@@ -1808,6 +1858,7 @@ build_cluster_hits_report <- function(
     plots_sizes,
     level_headers_info,
     spline_params,
+    adj_pthresholds,
     mode,
     report_info,
     output_file_path
@@ -1829,6 +1880,7 @@ build_cluster_hits_report <- function(
   pb <- create_progress_bar(plots)
 
   header_index <- 0
+  level_index <- 0
   
   # Generate the sections and plots
   for (index in seq_along(plots)) {
@@ -1842,7 +1894,9 @@ build_cluster_hits_report <- function(
       # means this is the section of a new level
       # The very first level is also a new level
       if (names(plots)[index] == "new_level") {
-
+        
+        level_index <- level_index + 1
+        
         section_header <- sprintf(
           "<h2 style='%s' id='section%d'>%s</h2>",
           section_header_style,
@@ -1919,7 +1973,7 @@ build_cluster_hits_report <- function(
       "heatmap",
       "individual_spline_plots1"
     )
-    
+
     if (element_name %in% header_levels) {
       
       if (element_name == "dendrogram") {
@@ -1929,7 +1983,16 @@ build_cluster_hits_report <- function(
       } else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
       } else {  # element_name == "individual_spline_plots1"
+        adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
+        asterisks_definition <- paste(
+          "<b><span style='font-size:20pt'>Asterisks definition:", 
+          "</span></b><br>",
+          paste("Adj. p-value <", adjusted_p_val, "--> *", sep = " "),
+          paste("Adj. p-value <", adjusted_p_val / 5, "--> **", sep = " "),
+          paste("Adj. p-value <", adjusted_p_val / 50, "--> ***", sep = " "),
+          sep = "<br>"
+        )
       }
       
       # Add the main title as a section title with an anchor 
@@ -1940,6 +2003,16 @@ build_cluster_hits_report <- function(
         "' style='text-align: center; font-size: 3.5em;'>",
         header_text, "</h2>"
       )
+      
+      # Add the asterisks definition if it exists
+      if (exists("asterisks_definition")) {
+        header <- paste0(
+          header,
+          "<div style='text-align: center;",
+          "font-size: 1.5em;'>",
+          asterisks_definition,
+          "</div>")
+      }
       
       html_content <- paste(
         html_content,

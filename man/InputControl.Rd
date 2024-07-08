@@ -74,6 +74,18 @@ If any of these checks fail, an informative error message is returned.
 
 
 
+This function performs the following checks:
+1. Ensures `feature_name_columns` and `annotation` are not `NULL`.
+2. Verifies that each element in `feature_name_columns` is a character
+ with 
+   a length of 1.
+3. Checks that all elements of `feature_name_columns` are valid column 
+names in the `annotation` data frame.
+
+Check Report
+
+
+
 The function performs the following checks:
 - Whether the `report` argument is present.
 - If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws 
@@ -135,6 +147,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
 \item \href{#method-InputControl-check_report_info}{\code{InputControl$check_report_info()}}
 \item \href{#method-InputControl-check_analysis_type}{\code{InputControl$check_analysis_type()}}
+\item \href{#method-InputControl-check_feature_name_columns}{\code{InputControl$check_feature_name_columns()}}
 \item \href{#method-InputControl-check_report}{\code{InputControl$check_report()}}
 \item \href{#method-InputControl-clone}{\code{InputControl$clone()}}
 }
@@ -203,6 +216,7 @@ The following validation methods are called in sequence:
 - \code{self$check_padjust_method()}
 - \code{self$check_report_info()}
 - \code{self$check_report()}
+- \code{self$check_feature_name_columns()}
 }
 }
 \if{html}{\out{<hr>}}
@@ -743,7 +757,28 @@ NULL if `analysis_mode` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.
 
-Check Report
+Check Feature Name Columns
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_feature_name_columns"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_feature_name_columns}{}}}
+\subsection{Method \code{check_feature_name_columns()}}{
+This function checks whether all elements of `feature_name_columns` are 
+characters of length 1 and whether they are valid column names in the 
+`annotation` data frame.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_feature_name_columns()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns `NULL` if any required arguments are missing. Throws 
+an error
+if any element of `feature_name_columns` is not a character of length 1 
+or if
+any element is not a column name in `annotation`. Returns `TRUE` if all
+ checks
+pass.
 }
 }
 \if{html}{\out{<hr>}}

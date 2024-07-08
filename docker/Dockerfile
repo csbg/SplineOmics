@@ -31,7 +31,7 @@ RUN R -e "install.packages('renv')"
 COPY ./SplineOmics/renv.lock /renv/renv.lock
 
 # Set renv library path
-ENV RENV_PATHS_LIBRARY /renv/library
+ENV RENV_PATHS_LIBRARY=/renv/library
 
 # Restore renv environment
 RUN R -e "renv::restore(lockfile = '/renv/renv.lock')"
