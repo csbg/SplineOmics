@@ -1,10 +1,37 @@
+// Array to store positions where 't' key is pressed
+let savedPosition = null;
+
 document.addEventListener('DOMContentLoaded', (event) => {
+    console.log('DOMContentLoaded event triggered');
+
     document.addEventListener('keydown', function(event) {
         console.log('Key pressed:', event.key);
+
         if (event.key === 't') {
-            document.getElementById('toc').scrollIntoView();
-        }
-        if (event.key === 'e') {
+            // Store the current scroll position
+		    savedPosition = window.scrollY;
+        	console.log('Position saved:', savedPosition);
+
+            // Ensuring correct element scrolls into view
+            const tocElement = document.getElementById('toc');
+            if (tocElement) {
+                tocElement.scrollIntoView();
+            } else {
+                console.log('TOC element not found');
+            }
+        } else if (event.key === 's') {
+            // Store the current scroll position
+		    savedPosition = window.scrollY;
+        	console.log('Position saved:', savedPosition);
+        } else if (event.key === 'b') {
+            // Jump back to the saved scroll position
+            if (savedPosition !== null) {
+                window.scrollTo(0, savedPosition);
+                console.log('Jumped back to position:', savedPosition);
+            } else {
+                console.log('No position saved.');
+            }
+        } else if (event.key === 'e') {
             var email = '{{email}}';
             var fullName = '{{name}}';
             var subject = `SplineOmics HTML report`;
@@ -15,8 +42,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (new_tab) {
                 new_tab.opener = null;  // Prevents a possible security vulnerability
             }
-        }
-        if (event.key === 'd') {
+        } else if (event.key === 'd') {
             console.log('Download embedded files');
             downloadEmbeddedFiles();
         }
