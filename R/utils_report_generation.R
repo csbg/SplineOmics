@@ -51,6 +51,7 @@ generate_report_html <- function(
     level_headers_info = NA,
     spline_params = NA,
     report_type = "explore_data",
+    feature_name_columns = NA,
     analysis_type = NA,  # only for cluster_hits()
     mode = NA,
     filename = "report",
@@ -75,7 +76,10 @@ generate_report_html <- function(
     
   } else if (report_type == "cluster_hits") {                         
     title <- paste("clustered hits |", analysis_type)
-    feature_names_formula <- generate_feature_name_template(data)
+    feature_names_formula <- paste(
+      feature_name_columns,
+      collapse = "_"
+      )
     
   } else if (report_type == "create_gsea_report") {                         
     title <- "gsea"
@@ -483,75 +487,6 @@ generate_and_write_html <- function(
 
 
 # Level 2 internal functions ---------------------------------------------------
-
-
-#' Generate Column Headers String from Feature Name
-#'
-#' @description
-#' This function takes a dataframe as input and returns a string that replaces the values
-#' in the `feature_name` column of the first row with their respective column headers.
-#'
-#' @param df A dataframe containing a column called `feature_name`.
-#'
-#' @return A string in the format of the value in `feature_name` but containing
-#' the column headers instead of the values.
-#'
-generate_feature_name_template <- function(df) {
-
-  # Ensure the dataframe contains the feature_name column
-  if (!"feature_name" %in% colnames(df)) {
-    stop(
-      "The dataframe must contain a column named 'feature_name'",
-      call. = FALSE
-    )
-  }
-  
-  # Extract the feature_name from the first row
-  feature_name_value <- df$feature_name[1]
-  
-  # Split the feature_name value into its components
-  feature_name_parts <- strsplit(feature_name_value, "_")[[1]]
-  
-  # Initialize an empty vector to store the column headers
-  column_headers <- vector()
-  
-  # Function to find the matching column header
-  find_matching_column <- function(part) {
-    for (i in 1:length(part)) {
-      substring <- paste(part[1:i], collapse = "_")
-      matching_columns <- which(sapply(df[1, ],
-                                       function(x) identical(x, substring)) 
-                                & colnames(df) != "feature_name")
-      if (length(matching_columns) > 0) {
-        return(colnames(df)[matching_columns])
-      }
-    }
-    return(NULL)
-  }
-  
-  # Iterate over the parts and find corresponding column headers
-  i <- 1
-  while (i <= length(feature_name_parts)) {
-    j <- i
-    while (j <= length(feature_name_parts)) {
-      substring <- paste(feature_name_parts[i:j], collapse = "_")
-      matching_column <- find_matching_column(feature_name_parts[i:j])
-      if (!is.null(matching_column)) {
-        column_headers <- c(column_headers, matching_column)
-        i <- j + 1
-        break
-      }
-      j <- j + 1
-    }
-    if (i == j) {
-      column_headers <- c(column_headers, feature_name_parts[i])
-      i <- i + 1
-    }
-  }
-  
-  # Combine the column headers into a single string with underscores
-  result_string <- paste(column_headers, collapse = "_")
-}
 
 
 #' Format text

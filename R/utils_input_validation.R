@@ -58,6 +58,7 @@ InputControl <- R6::R6Class("InputControl",
     #' - \code{self$check_padjust_method()}
     #' - \code{self$check_report_info()}
     #' - \code{self$check_report()}
+    #' - \code{self$check_feature_name_columns()}
     #'
     #' @return NULL. The function is used for its side effects of validating 
     #' input
@@ -83,6 +84,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_report_info()
       self$check_analysis_type()
       self$check_report()
+      self$check_feature_name_columns()
     },
     
 
@@ -1240,6 +1242,73 @@ InputControl <- R6::R6Class("InputControl",
         stop(
           "analysis_mode must be one of time_effect, avrg_diff_conditions,", 
           "or interaction_condition_time",
+          call. = FALSE
+          )
+      }
+    },
+    
+    
+    #' Check Feature Name Columns
+    #'
+    #' @description
+    #' This function checks whether all elements of `feature_name_columns` are 
+    #' characters of length 1 and whether they are valid column names in the 
+    #' `annotation` data frame.
+    #'
+    #' @return Returns `NULL` if any required arguments are missing. Throws 
+    #' an error
+    #' if any element of `feature_name_columns` is not a character of length 1 
+    #' or if
+    #' any element is not a column name in `annotation`. Returns `TRUE` if all
+    #'  checks
+    #' pass.
+    #'
+    #' @details
+    #' This function performs the following checks:
+    #' 1. Ensures `feature_name_columns` and `annotation` are not `NULL`.
+    #' 2. Verifies that each element in `feature_name_columns` is a character
+    #'  with 
+    #'    a length of 1.
+    #' 3. Checks that all elements of `feature_name_columns` are valid column 
+    #' names in the `annotation` data frame.
+    #'
+    check_feature_name_columns = function() {
+      
+      feature_name_columns <- self$args[["feature_name_columns"]]
+      annotation <- self$args[["annotation"]]
+      
+      required_args <- list(
+        feature_name_columns,
+        annotation
+        )
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      # Check if every element in feature_name_columns is a character 
+      # of length 1
+      if (
+        !all(
+          sapply(
+            feature_name_columns,
+            function(x) is.character(x) && length(x) == 1)
+          )
+        ) {
+        stop(
+          paste("All elements of feature_name_columns must be characters", 
+                "with length 1."),
+          call. = FALSE
+          )
+      }
+      
+      # Check if all elements of feature_name_columns are column names 
+      # in annotation
+      if (!all(feature_name_columns %in% colnames(annotation))) {
+        stop(
+          paste(
+            "All elements of feature_name_columns must be column names",  
+            "in annotation."),
           call. = FALSE
           )
       }

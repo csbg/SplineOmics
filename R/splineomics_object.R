@@ -55,6 +55,7 @@ create_splineomics <- function(
     report_info = NULL,
     meta_batch_column = NULL,
     meta_batch2_column = NULL,
+    feature_name_columns = NULL,
     design = NULL,
     spline_params = NULL
     ) {
@@ -67,6 +68,7 @@ create_splineomics <- function(
     report_info = report_info,
     meta_batch_column = meta_batch_column,
     meta_batch2_column = meta_batch2_column,
+    feature_name_columns = feature_name_columns,
     design = design,
     spline_params = spline_params
   )
@@ -105,6 +107,7 @@ update_splineomics <- function(
     "report_info",
     "meta_batch_column",
     "meta_batch2_column",
+    "feature_name_columns",
     "design",
     "spline_params",
     "limma_splines_result"
