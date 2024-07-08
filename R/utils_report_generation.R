@@ -50,6 +50,7 @@ generate_report_html <- function(
     enrichr_format = NA,
     level_headers_info = NA,
     spline_params = NA,
+    adj_pthresholds = NA,
     report_type = "explore_data",
     feature_name_columns = NA,
     analysis_type = NA,  # only for cluster_hits()
@@ -301,6 +302,7 @@ generate_report_html <- function(
       plots_sizes = plots_sizes,
       level_headers_info = level_headers_info,
       spline_params = spline_params,
+      adj_pthresholds = adj_pthresholds,
       mode = mode,
       report_info = report_info,
       output_file_path = output_file_path

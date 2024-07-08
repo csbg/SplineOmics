@@ -4,7 +4,15 @@
 \alias{plot_splines}
 \title{Plot Splines for Features Based on Top Table Information}
 \usage{
-plot_splines(top_table, data, meta, X, time_unit_label, plot_info)
+plot_splines(
+  top_table,
+  data,
+  meta,
+  X,
+  time_unit_label,
+  plot_info,
+  adj_pthreshold
+)
 }
 \arguments{
 \item{top_table}{A dataframe containing the indices and names of features,

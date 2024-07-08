@@ -10,6 +10,7 @@ build_cluster_hits_report(
   plots_sizes,
   level_headers_info,
   spline_params,
+  adj_pthresholds,
   mode,
   report_info,
   output_file_path
