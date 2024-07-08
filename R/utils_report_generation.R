@@ -482,9 +482,6 @@ generate_and_write_html <- function(
 }
 
 
-
-
-
 # Level 2 internal functions ---------------------------------------------------
 
 
@@ -717,8 +714,6 @@ get_header_section <- function(
       "in this report to save it as a", 
       ".svg (vector graphic) file! <br> If one level of ", 
       "the experiment is not shown, it means it has < 2 hits!<br>",
-      "To jump to the Table of Contents, press the 't' key", 
-      "on your keyboard.",
       "</p>",
       paste(
         '<span style="font-size:1.3em;">',
@@ -732,25 +727,47 @@ get_header_section <- function(
       ),
     "create_gsea_report" = '<p style="font-size: 2em;"></p>')
   
+  # hotkeys_box <- paste(
+  #   '<div style="border: 2px solid #00f; padding: 15px;', 
+  #   'position: relative; margin-bottom: 20px;', 
+  #   'background-color: #eef; font-family: Arial,', 
+  #   'sans-serif; width: 65%;">',
+  #   '<div style="position: absolute; top: -5px;', 
+  #   'right: -65px; transform: rotate(45deg);', 
+  #   'background-color: #00f; color: #fff;', 
+  #   'padding: 10px 15px; font-size: 2em;', 
+  #   'font-weight: bold; z-index: 1;">Hotkeys</div>',
+  #   '<p style="font-size: 2em;">',
+  #   "To jump to the <b>Table of Contents</b>, press '<b>t</b>'. 📑<br>",
+  #   "To <b>download</b> all embedded files as a <b>zip file</b>, press", 
+  #   "'<b>d</b>'. 📥<br>",
+  #   "To write a <b>email</b> to the contact info, press",
+  #   "'<b>e</b>'. ✉️<br>",
+  #   '</p>',
+  #   '</div>'
+  # )
   hotkeys_box <- paste(
-    '<div style="border: 2px solid #00f; padding: 15px;', 
-    'position: relative; margin-bottom: 20px;', 
-    'background-color: #eef; font-family: Arial,', 
+    '<div style="border: 2px solid #00f; padding: 15px;',
+    'position: relative; margin-bottom: 20px;',
+    'background-color: #eef; font-family: Arial,',
     'sans-serif; width: 65%;">',
-    '<div style="position: absolute; top: -5px;', 
-    'right: -65px; transform: rotate(45deg);', 
-    'background-color: #00f; color: #fff;', 
-    'padding: 10px 15px; font-size: 2em;', 
+    '<div style="position: absolute; top: -5px;',
+    'right: -65px; transform: rotate(45deg);',
+    'background-color: #00f; color: #fff;',
+    'padding: 10px 15px; font-size: 2em;',
     'font-weight: bold; z-index: 1;">Hotkeys</div>',
     '<p style="font-size: 2em;">',
-    "To jump to the <b>Table of Contents</b>, press '<b>t</b>'. 📑<br>",
-    "To <b>download</b> all embedded files as a <b>zip file</b>, press", 
-    "'<b>d</b>'. 📥<br>",
-    "To write a <b>email</b> to the contact info, press",
-    "'<b>e</b>'. ✉️<br>",
+    "Press:<br>",
+    "<b>t</b>  --> Jump to <b>Table of Contents</b> and save current scroll", 
+    "position 📑<br>",
+    "<b>s</b> --> <b>Save</b> current scroll position 📌<br>",
+    "<b>b</b> --> Jump <b>back</b> to saved position 🔙<br>",
+    "<b>d</b> --> <b>Download</b> all embedded files as zip 📥<br>",
+    "<b>e</b> --> Write an <b>email</b> to contact info ✉️<br>",
     '</p>',
     '</div>'
   )
+  
   
   header_section <- paste(
     header_section,
@@ -908,7 +925,6 @@ plot2base64 <- function(
 }
 
 
-
 #' Create Table of Contents
 #'
 #' @description
@@ -928,53 +944,6 @@ create_toc <- function() {
   sep = ""
   )
 }
-
-
-create_hotkey_script <- function() {
-  hotkey_script <- "
-  <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js'></script>
-  <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 't') {
-                document.getElementById('toc').scrollIntoView();
-            }
-            if (event.key === 'e') {
-                var email = 'your.email@example.com';
-                var mailto_url = 'mailto:' + email;
-                var new_tab = window.open(mailto_url, '_blank');
-                if (new_tab) {
-                    new_tab.opener = null;  // Prevents a possible security vulnerability
-                }
-            }
-            if (event.key === 'd') {
-                downloadEmbeddedFiles();
-            }
-        });
-    });
-
-    function downloadEmbeddedFiles() {
-        var zip = new JSZip();
-        var files = [
-            // Add your embedded files here
-            {name: 'file1.txt', content: 'Content of file 1'},
-            {name: 'file2.txt', content: 'Content of file 2'}
-        ];
-
-        files.forEach(function(file) {
-            zip.file(file.name, file.content);
-        });
-
-        zip.generateAsync({type: 'blob'}).then(function(content) {
-            saveAs(content, 'embedded_files.zip');
-        });
-    }
-  </script>"
-  
-  return(hotkey_script)
-}
-
 
 
 #' Define HTML Styles
