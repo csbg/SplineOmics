@@ -113,6 +113,7 @@ cluster_hits <- function(
   spline_params <- splineomics[["spline_params"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
+  feature_name_columns <- splineomics[["feature_name_columns"]]
 
   # To set the default p-value threshold for ALL levels.
   if (is.numeric(adj_pthresholds) &&
@@ -183,7 +184,8 @@ cluster_hits <- function(
         meta_batch_column = meta_batch_column,
         meta_batch2_column = meta_batch2_column,
         plot_info = plot_info,
-        analysis_type = analysis_type
+        analysis_type = analysis_type,
+        feature_name_columns = feature_name_columns
         )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
@@ -474,7 +476,8 @@ make_clustering_report <- function(
     meta_batch_column,
     meta_batch2_column,
     plot_info,
-    analysis_type
+    analysis_type,
+    feature_name_columns
     ) {
   
   # Optionally remove the batch-effect with the batch column and design matrix
@@ -675,6 +678,7 @@ make_clustering_report <- function(
   )
 
   print("Generating report. This takes a few seconds.")
+
   generate_report_html(
     plots = plots,
     plots_sizes = plots_sizes,
@@ -686,6 +690,7 @@ make_clustering_report <- function(
     topTables = topTables,
     enrichr_format = enrichr_format,
     report_type = "cluster_hits",
+    feature_name_columns = feature_name_columns,
     analysis_type = analysis_type,
     mode = mode,
     filename = "report_clustered_hits",
