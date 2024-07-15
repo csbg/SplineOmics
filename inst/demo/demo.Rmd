@@ -41,7 +41,6 @@ library(SplineOmics)   # Functions are marked with SplineOmics::
 library(readxl)
 library(here)
 library(readr)
-library(dplyr)
 ```
 
 Because some functions of the dplyr package have names that are also used by 
