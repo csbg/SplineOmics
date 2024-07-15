@@ -16,7 +16,11 @@
 #' 
 demo <- function() {
   
-  file <- system.file("demo", "demo.Rmd", package = "SplineOmics")
+  file <- system.file(
+    "demo",
+    "demo.Rmd",
+    package = "SplineOmics"
+    )
   if (file != "") {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)

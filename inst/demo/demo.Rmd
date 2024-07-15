@@ -26,17 +26,22 @@ samples were taken from each reactor in triplicates at defined
 timepoints relative to a feeding of the cells (60 min before feeding,
 and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
 find out which of the 7162 cellular proteins show a significant change
-over time after the CHO cells were fed (= impact of the feeding). Further, 
-the hits (proteins with a significant change over time) are clustered based on
-their temporal pattern, and a gene set enrichment analysis is performed with 
-each cluster to see if there are processes which are up- or downregulated
-over time after the feeding.
+over time after the CHO cells were fed (= impact of the feeding).
+Further, the hits (proteins with a significant change over time) are
+clustered based on their temporal pattern, and a gene set enrichment
+analysis is performed with each cluster to see if there are processes
+which are up- or downregulated over time after the feeding.
 
 # Load the packages
 
-```{r setup}
-library(SplineOmics)
+```{r Load the required packages}
+library(SplineOmics)   # Functions are marked with SplineOmics::
+
+# Additional packages needed to prepare SplineOmics function inputs
 library(readxl)
+library(here)
+library(readr)
+library(dplyr)
 ```
 
 # Load the files
@@ -48,12 +53,12 @@ name (= annotation part)
 The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.
 
-(These example files are part of the package and don't have to be present on 
-your system)
+(These example files are part of the package and don't have to be
+present on your system. For your analysis, create filepath for example with the
+here library instead of system.file)
 
-```{r load the files}
-data_excel <- 
-  read_excel(
+```{r Load the files}
+data_excel <- readxl::read_excel(
     system.file(
       "extdata",
       "proteomics_data.xlsx",
@@ -61,7 +66,7 @@ data_excel <-
       )
     )
 
-meta <- read_excel(
+meta <- readxl::read_excel(
   system.file(
     "extdata",
     "proteomics_meta.xlsx",
@@ -93,8 +98,8 @@ are combined and form the rowheaders (feature names). They will be used
 to label any plots were a feature is shown individually (such as the
 spline plots with the datapoints from an individual feature).
 
-```{r process inputs}
-data <- extract_data(
+```{r Process the inputs}
+data <- SplineOmics::extract_data(
   data_excel,
   c(
     "First.Protein.Description",
@@ -126,7 +131,7 @@ report_dir. The function also returns all plots generated. Lastly, if it
 is desired that no report should be generated, the optional argument
 report can be set to FALSE.
 
-```{r Define info that is written all the HTML reports}
+```{r Define info that is written in all the HTML reports}
 report_info <- list(
   omics_data_type = "PTX",
   data_description = "Proteomics data of CHO cells",
@@ -137,8 +142,18 @@ report_info <- list(
   )
 ```
 
+Because multiple functions of the SplineOmics object take the same inputs, and
+because some functions generate "intermediate" output, which is just used by 
+subsequent functions in the workflow, the SplineOmics object is used. This can
+be seen as a bag where all those arguments are stored, and each function takes
+the needed arguments from there and potentially puts something additional in. 
+
+The documentation of each function describes which arguments must be in the 
+SplineOmics object when it is passed to the respective function.
+
+
 ```{r Create the SplineOmics object}
-splineomics <- create_splineomics(
+splineomics <- SplineOmics::create_splineomics(
   data = data,
   meta = meta,
   annotation = annotation,
@@ -148,13 +163,13 @@ splineomics <- create_splineomics(
 )
 ```
 
-```{r Run EDA function}
+```{r Run the EDA function}
 report_dir <- here::here(
-  "results",
+  "demo_results",
   "explore_data"
   )
 
-plots <- explore_data(
+plots <- SplineOmics::explore_data(
   splineomics = splineomics,
   report_dir = report_dir
   )
@@ -162,9 +177,9 @@ plots <- explore_data(
 ```
 
 The EDA plots can tell you a range of things. The plots in the HTML
-report are grouped into three categories: Distribution and Variability
-Analysis, Time Series Analysis, and Dimensionality Reduction and
-Clustering.
+report are grouped into three categories: distribution and variability
+analysis, time series analysis, and dimensional reduction and
+clustering.
 
 If you look at the correlation heatmaps in the HTML report, you can see
 that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
@@ -212,6 +227,7 @@ data2 <- data[, !(colnames(data) %in% c(
   "E10_TP10_Stationary"
   )
   )]
+
 meta2 <- meta[!meta$`Sample.ID` %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
@@ -223,7 +239,10 @@ datas_descr <- c(
   "outliers_removed"
   ) 
 
-metas <- list(meta1, meta2) 
+metas <- list(
+  meta1,
+  meta2
+  ) 
 
 designs <- c(
   "~ 1 + Phase*X + Reactor",
@@ -250,11 +269,11 @@ spline_test_configs <- data.frame(
 
 ```{r Perform hyperparameter-screening}
 report_dir <- here::here(
-  "results",
+  "demo_results",
   "hyperparams_screen_reports"
   ) 
 
-screen_limma_hyperparams(
+SplineOmics::screen_limma_hyperparams(
   splineomics,
   datas,
   datas_descr,
@@ -272,11 +291,11 @@ Once we identified the hyperparameters, that are likely the best ones,
 we can run the limma spline analysis with them and get the results.
 
 ```{r Update the SplineOmics object}
-splineomics <- update_splineomics(
+splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
+  data = data2,
+  meta = meta2,
   design = "~ 1 + Phase*X + Reactor",
-  data = data1,  # data1 and meta1 == data and meta that were loaded before. 
-  meta = meta1,  # This is for illustration
   spline_params = list(
     spline_type = c("n"),   
     dof = c(2L)
@@ -284,10 +303,10 @@ splineomics <- update_splineomics(
 )
 ```
 
-```{r limma spline analysis}
+```{r Run the limma spline analysis}
 
 # Run the limma spline analysis
-splineomics <- run_limma_splines(
+splineomics <- SplineOmics::run_limma_splines(
   splineomics
   )
 ```
@@ -314,13 +333,13 @@ levels (which includes both time and the average differences)
 The topTables of all three categories can be used to generate p-value
 histograms an volcano plots.
 
-```{r build limma report}
+```{r Build limma report}
 report_dir <- here::here(
-  "results",
+  "demo_results",
   "create_limma_reports"
   )
 
-plots <- create_limma_report(
+plots <- SplineOmics::create_limma_report(
   splineomics,
   report_dir = report_dir
   )
@@ -334,7 +353,7 @@ hit is by setting an adj. p-value threshold for every level. Then,
 hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
-```{r cluster the hits}
+```{r Cluster the hits}
 adj_pthresholds <- c(
   0.05,
   0.05
@@ -346,7 +365,7 @@ clusters <- list(
   )
 
 report_dir <- here::here(
-  "results",
+  "demo_results",
   "clustering_reports"
   )
 
@@ -360,7 +379,7 @@ plot_info = list(
 gene_column_name <- "Genes"
 genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
 
-clustering_results <- cluster_hits(
+clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   analysis_type = "time_effect",
   adj_pthresholds = adj_pthresholds,
@@ -377,7 +396,7 @@ To each clustered hit, the respective gene can be assigned and GSEA
 performed. For this, the Enrichr databases of choice have to be
 downloaded:
 
-```{r download Enrichr databases}
+```{r Define which Enrichr databases to download}
 gene_set_lib <- c(
   "WikiPathways_2019_Human",
   "NCI-Nature_2016",
@@ -392,12 +411,19 @@ gene_set_lib <- c(
   "GO_Molecular_Function_2018",
   "Human_Gene_Atlas"
   )
-
-download_enrichr_databases(gene_set_lib)
 ```
 
-Per default the file is placed in the current working directory, which
-is the root dir of the R project.
+```{r Download the Enrichr databases}
+output_dir  <- here::here(
+  "demo_results",
+  "downloaded_databases"
+  )
+
+SplineOmics::download_enrichr_databases(
+  gene_set_lib = gene_set_lib,
+  output_dir = output_dir
+  )
+```
 
 To run GSEA, a genes vector has to be created, containing all the
 underlying genes of the features. The downloaded database file has to be
@@ -406,8 +432,9 @@ parameters and the report dir can be specified. The function
 create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
 report and returns the GSEA dotplots in R.
 
-```{r run GSEA}
-# Get gene vector
+```{r Run GSEA}
+# Get gene vector. 
+# For your analysis, this code needs to be customized based on the format.
 gene_column_name <- "Genes"
 genes <- annotation[[gene_column_name]][1:nrow(annotation)]
 genes <- sub(" .*", "", genes)
@@ -415,8 +442,13 @@ genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)
 genes <- sub("-.*", "", genes)
 
-downloaded_dbs_filepath <-
-  here::here("all_databases_08_04_2024-12_41_50.tsv")
+# The file has a timestamp, but this code takes it irrespective of it.
+downloaded_dbs_filepath <- list.files(
+  path = output_dir,
+  pattern = "\\.tsv$",
+  full.names = TRUE
+  )[1]
+
 databases <- readr::read_tsv(
   downloaded_dbs_filepath,
   col_types = readr::cols()
@@ -431,11 +463,11 @@ clusterProfiler_params <- list(
   )
 
 report_dir <- here::here(
-  "results",
+  "demo_results",
   "gsea_reports"
   )
 
-result <- create_gsea_report(
+result <- SplineOmics::create_gsea_report(
   levels_clustered_hits = clustering_results$clustered_hits_levels,
   genes = genes,
   databases = databases,
@@ -445,12 +477,11 @@ result <- create_gsea_report(
   )
 ```
 
-Every row in the dotplots is a term from a specific database, and the
-columns are the respective clusters. The color scale contains the info
-about the odds ratio and the size the -log10 adj. p-value. Only terms
-that have \> 2 genes as support are included in the plot. Further, for
-each cluster, just maximally 5 terms are shown (the terms with the
-highest odds ratios). Note that when for example cluster 1 already has 5
-terms, and cluster 2 does not, and gets a term which was also found for
-cluster 1, than this term would be included as the sixth term for
-cluster 1, so this is a way the maximum of 5 can be exceeded.
+In the output HTML, every row in the dotplots is a term from a specific 
+database, and the columns are the respective clusters. The color scale contains the info about the odds ratio and the size the -log10 adj. p-value. Only terms
+that have more than 2 genes as support are included in the plot.
+Further, for each cluster, just maximally 5 terms are shown (the terms
+with the highest odds ratios). Note that when for example cluster 1
+already has 5 terms, and cluster 2 does not, and gets a term which was
+also found for cluster 1, than this term would be included as the sixth
+term for cluster 1, so this is a way the maximum of 5 can be exceeded.
