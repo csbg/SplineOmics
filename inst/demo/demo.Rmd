@@ -44,6 +44,23 @@ library(readr)
 library(dplyr)
 ```
 
+Because some functions of the dplyr package have names that are also used by 
+base R functions, it is good practice to explicitly state the preference with
+the conflicted package.
+
+```{r Load dplyr package}
+library(dplyr)
+library(conflicted)
+
+# Explicitly state preference of functions
+conflicted::conflict_prefer("filter", "dplyr")
+conflicted::conflict_prefer("lag", "dplyr")
+conflicted::conflict_prefer("intersect", "base")
+conflicted::conflict_prefer("setdiff", "base")
+conflicted::conflict_prefer("setequal", "base")
+conflicted::conflict_prefer("union", "base")
+```
+
 # Load the files
 
 In this example, the data.xlsx file contains the numeric values (the

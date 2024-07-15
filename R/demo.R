@@ -14,7 +14,7 @@
 #' 
 #' @export
 #' 
-demo <- function() {
+splineomics_demo <- function() {
   
   file <- system.file(
     "demo",
