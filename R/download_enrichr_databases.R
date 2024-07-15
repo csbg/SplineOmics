@@ -30,8 +30,10 @@
 #' 
 #' @export
 #'
-download_enrichr_databases <- function(gene_set_lib,
-                                       output_dir = here::here()) {
+download_enrichr_databases <- function(
+    gene_set_lib,
+    output_dir = here::here()
+    ) {
   
   # Control the user inputs
   if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
@@ -44,8 +46,6 @@ download_enrichr_databases <- function(gene_set_lib,
   input_control <- InputControl$new(args)
   input_control$auto_validate()
 
-  
-  debug(enrichr_get_genesets)
   genesets <- enrichr_get_genesets(databases = gene_set_lib)
   
   genesets <- do.call(rbind, lapply(names(genesets), function(db.nam){

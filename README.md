@@ -112,8 +112,26 @@ repository into your R environment.
     Copy and paste the following code block into your R console.
 
     ``` r
+    # Check if BiocManager is installed; if not, install it
+    if (!requireNamespace(
+      "BiocManager",
+      quietly = TRUE
+      )) {
+      install.packages("BiocManager")
+    }
+
+    # Install necessary Bioconductor dependencies
+    BiocManager::install(c(
+      "ComplexHeatmap",
+      "clusterProfiler",
+      "limma"
+      ))
+
     # Check if remotes is installed; if not, install it
-    if (!requireNamespace("remotes", quietly = TRUE)) {
+    if (!requireNamespace(
+      "remotes",
+      quietly = TRUE
+      )) {
       install.packages("remotes")
     }
 
@@ -124,7 +142,10 @@ repository into your R environment.
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
     # Install latest SplineOmics version from GitHub
-    remotes::install_github("csbg/SplineOmics@main", force = TRUE)
+    remotes::install_github(
+      "csbg/SplineOmics@main",
+      force = TRUE
+      )
     ```
 
 3.  **Load the `SplineOmics` package**:

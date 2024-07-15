@@ -448,7 +448,7 @@ parameters and the report dir can be specified. The function
 create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
 report and returns the GSEA dotplots in R.
 
-```{r Run GSEA}
+```{r Prepare GSEA inputs}
 # Get gene vector. 
 # For your analysis, this code needs to be customized based on the format.
 gene_column_name <- "Genes"
@@ -477,7 +477,9 @@ clusterProfiler_params <- list(
   maxGSSize = 500,
   qvalueCutoff = 0.2
   )
+```
 
+```{r Run GSEA}
 report_dir <- here::here(
   "demo_results",
   "gsea_reports"
