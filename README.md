@@ -124,7 +124,7 @@ repository into your R environment.
     Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
     # Install latest SplineOmics version from GitHub
-    remotes::install_github("csbg/SplineOmics@main")
+    remotes::install_github("csbg/SplineOmics@main", force = TRUE)
     ```
 
 3.  **Load the `SplineOmics` package**:
