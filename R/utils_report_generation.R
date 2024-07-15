@@ -553,10 +553,17 @@ get_header_section <- function(
     ) {
   
   if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
-    logo_path <- file.path("inst", "extdata", "SplineOmics_logo.png")
+    logo_path <- file.path(
+      "inst",
+      "logos",
+      "SplineOmics_logo.png"
+      )
   } else {
-    logo_path <- system.file("extdata", "SplineOmics_logo.png",
-                             package = "SplineOmics")
+    logo_path <- system.file(
+      "logos",
+      "SplineOmics_logo.png",
+      package = "SplineOmics"
+      )
   }
   
   logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")

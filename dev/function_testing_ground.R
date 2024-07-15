@@ -20,9 +20,10 @@ library(dplyr)
 #                               "Time_course_PPTX_old_metadata.xlsx"))
 
 
-data_excel <- read_excel(here::here("inst" ,"extdata", "data.xlsx"))
+data_excel <- read_excel(here::here(
+  "inst" ,"extdata", "proteomics_data.xlsx"))
 
-meta <- read_excel(here::here("inst" ,"extdata", "meta.xlsx"))
+meta <- read_excel(here::here("inst" ,"extdata", "proteomics_meta.xlsx"))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%  
@@ -91,11 +92,12 @@ splineomics <- create_splineomics(
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-# plots <- explore_data(
-#   splineomics,
-#   report_dir = report_dir,
-#   report = TRUE
-#   )
+plots <- explore_data(
+  splineomics,
+  report_dir = report_dir,
+  report = TRUE
+  )
+
 
 
 # Prep input to hyperparams screen function ------------------------------------

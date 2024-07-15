@@ -7,16 +7,16 @@
 #' Interactive Demo for Getting Started
 #'
 #' @description
-#' This function opens the `get-started.Rmd` file in RStudio for
+#' This function opens the `demo.Rmd` file in RStudio for
 #' interactive use. Users can then run each code chunk step by step.
 #'
 #' @importFrom rstudioapi navigateToFile
 #' 
 #' @export
 #' 
-interactive_demo <- function() {
+demo <- function() {
   
-  file <- system.file("demo", "get-started.Rmd", package = "SplineOmics")
+  file <- system.file("demo", "demo.Rmd", package = "SplineOmics")
   if (file != "") {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)
@@ -24,6 +24,6 @@ interactive_demo <- function() {
       stop("RStudio API not available. Please open the file manually: ", file)
     }
   } else {
-    stop("Demo file not found: get-started.Rmd file not found under inst/demo.")
+    stop("Demo file not found: demo.Rmd file not found under inst/demo.")
   }
 }

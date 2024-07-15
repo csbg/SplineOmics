@@ -30,9 +30,7 @@ samples were taken from each reactor in triplicates at defined
 timepoints relative to a feeding of the cells (60 min before feeding,
 and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
 find out which of the 7162 cellular proteins show a significant change
-over time after the CHO cells were fed. Further, the hits (proteins with
-a significant change over time) are clustered based on their temporal
-pattern, and a gene set enrichment analysis is performed with each
+over time after the CHO cells were fed (= impact of the feeding). Further, the hits (proteins with a significant change over time) are clustered based on their temporal pattern, and a gene set enrichment analysis is performed with each
 cluster to see if there are processes which are up- or downregulated
 over time after the feeding.
 
@@ -47,28 +45,32 @@ library(readxl)
 
 In this example, the data.xlsx file contains the numeric values (the
 intensities) and also the feature descriptions, such as gene and protein
-name.
+name (= annotation part)
 
 The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.
+
+(These example files are part of the package and don't have to be present on 
+your system)
 
 ```{r load the files}
 data_excel <- 
   read_excel(
     system.file(
       "extdata",
-      "data.xlsx",
+      "proteomics_data.xlsx",
       package = "SplineOmics"
       )
     )
 meta <- read_excel(
   system.file(
     "extdata",
-    "meta.xlsx",
+    "proteomics_meta.xlsx",
     package = "SplineOmics"
     )
   )
 
+# Extract the annotation part from the dataframe.
 first_na_col <- which(is.na(data_excel[1,]))[1]
 annotation <- data_excel |>
   dplyr::select((first_na_col + 1):ncol(data_excel)) |>
@@ -136,7 +138,8 @@ report_info <- list(
   data_collection_date = "February 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
-  project_name = "DGTX")
+  project_name = "DGTX"
+  )
 
 report_dir <- here::here(
   "results",
@@ -279,8 +282,8 @@ we can run the limma spline analysis with them and get the results.
 splineomics <- update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",
-  data = data1,
-  meta = meta1,
+  data = data1,  # data1 and meta1 == data and meta that were loaded before. 
+  meta = meta1,  # This is for illustration
   spline_params = list(
     spline_type = c("n"),   
     dof = c(2L)
