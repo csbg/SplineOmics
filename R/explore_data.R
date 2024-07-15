@@ -1037,9 +1037,11 @@ make_correlation_heatmaps <- function(data,
 #' @importFrom ggplot2 ggplot aes geom_point xlab ylab theme_minimal theme
 #'                     element_line labs
 #'
-make_tsne_plot <- function(data,
-                           meta,
-                           condition) {
+make_tsne_plot <- function(
+    data,
+    meta,
+    condition
+    ) {
   
   # Transpose the matrix so that rows are samples
   data_t <- t(data)
@@ -1050,11 +1052,15 @@ make_tsne_plot <- function(data,
   message(paste("Making t-SNE plot\n"))
   
   # Run t-SNE
-  tsne_result <- Rtsne::Rtsne(data_t,
-                              dims = 2,
-                              perplexity = perplexity,
-                              verbose = TRUE,
-                              max_iter = 1000)
+  tsne_result <- suppressMessages(
+    Rtsne::Rtsne(
+      data_t,
+      dims = 2,
+      perplexity = perplexity,
+      verbose = FALSE,
+      max_iter = 1000
+      )
+  )
   
   # Create a data frame with t-SNE results for ggplot2
   tsne_df <- data.frame(tSNE1 = tsne_result$Y[, 1],
@@ -1092,70 +1098,10 @@ make_tsne_plot <- function(data,
 #' 
 get_explore_plots_explanations <- function() {
   
-  plot_explanations <- c(
-    "Density plots 
-    resemble smooth, continuous hills or curves that illustrate where the data
-    is concentrated over a continuous range of values. By showing how frequently
-    values occur within the data range, density plots show
-    patterns such as peaks, valleys, and the overall spread of the data. The 
-    height of the curve at any given point indicates the density of the data 
-    points in that area, with higher curves representing more data points.",
-    
-    "Violin Box plots combine boxplots and density plots to show the  
-  distribution of values. They provide a summary of the data's range, central  
-  tendency, and distribution shape. Use violin plots to understand the full 
-  distribution and compare between groups.",
-    
-    "PCA plots visualize the major trends and patterns in high-dimensional 
-  data by reducing it to a few principal components. Points close to each 
-  other are similar, they are correlated and clustered. Use PCA plots to 
-  identify clustering and variance explained by the principal components.",
-    
-    "MDS plots display similarities or dissimilarities between samples in a 
-  reduced dimension space. Points close to each other are more similar. 
-  Use MDS plots to visualize the distance or similarity between samples.",
-    
-    "Correlation Heatmaps illustrate the pairwise correlation between all 
-  samples. Colors represent the strength of correlation, with a color 
-  gradient indicating positive or negative correlations. Use this plot to 
-  identify highly correlated samples or groups.",
-    
-  "t-SNE plots visualize high-dimensional data by reducing it to two or three
-  dimensions, making complex patterns and relationships easier to see. 
-  Points close to each other in the plot represent samples with similar 
-  characteristics. Use t-SNE plots to identify clusters and subgroups within
-  your data, revealing how samples relate to each other based on their
-  features. This helps in understanding the structure and similarities within
-  the dataset, especially for discovering hidden patterns and groups.", 
-  
-  "In Mean Time Correlation, the correlation of each feature with time is 
-  calculated and the values shown in a histogram. Positive correlation means
-  the values of the feature increase with time, negative means they decrease.",
-  
-  "Normalized lag-1 difference is the absolute difference in values between 
-  timepoints t and t-1 for a given feature, divided by the mean of all values 
-  of that feature. For each feature, the mean of all
-  lag-1 differences is calculated and displayed in a histogram. A small mean 
-  lag-1 difference compared to the size of the values indicates that the 
-  temporal pattern remains relatively flat. For example, a mean normalized
-  lag-1 difference of 0.2 means on average there was a 20% change between
-  the timepoints.",  
-  
-  "First lag autocorrelation measures the degree to which a time series is 
-  correlated with its immediate past values. A high autocorrelation coefficient
-  (p1) near 1 indicates a strong positive relationship: when the current value
-  increases (or decreases), the previous value tends to do the same. Conversely,
-  a coefficient near -1 indicates a strong negative relationship: when the 
-  current value increases (or decreases), the previous value tends to decrease
-  (or increase). A coefficient close to 0 suggests little to no relationship
-  between consecutive values. Understanding first lag autocorrelation helps 
-  in identifying if there's a consistent pattern or trend in how the time
-  series behaves over time.",
-  
-  "Coefficient of Variation (CV) plots depict the variability relative to the
-  mean of a dataset. A higher CV indicates greater relative variability, 
-  while a lower CV suggests more consistency around the mean. These plots
-  help assess the dispersion of data points and are useful in comparing the
-  spread of different datasets or monitoring changes in variability over time."
+  plot_explanations_file <- system.file(
+    "descriptions",
+    "explore_plot_explanations.txt",
+    package = "SplineOmics"
     )
+  plot_explanations <- readLines(plot_explanations_file)
 }
