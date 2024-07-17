@@ -30,18 +30,20 @@
 #' @description
 #' Creates a SplineOmics object containing variables that are commonly used 
 #' across multiple functions in the package.
-#'
+#' 
+#' @param data The actual omics data.
+#' @param meta Metadata associated with the omics data.
+#' @param condition A condition variable.
+#' @param annotation A dataframe with the feature descriptions of data 
+#' (optional).
 #' @param report_info A list containing report information such as omics data 
 #' type, data description, data collection date, analyst name, contact info, 
-#' and project name.
-#' @param condition A condition variable.
+#' and project name (optional). 
 #' @param meta_batch_column Column for meta batch information (optional).
 #' @param meta_batch2_column Column for secondary meta batch information 
 #' (optional).
 #' @param design A design matrix or similar object (optional).
 #' @param spline_params Parameters for spline functions (optional).
-#' @param data The actual omics data (optional).
-#' @param meta Metadata associated with the omics data (optional).
 #'
 #' @return A SplineOmics object.
 #'

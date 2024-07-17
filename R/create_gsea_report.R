@@ -138,12 +138,14 @@ create_gsea_report <- function(
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
 #'
-control_inputs_create_gsea_report <- function(levels_clustered_hits,
-                                       genes,
-                                       databases,
-                                       params,
-                                       plot_titles,
-                                       background) {
+control_inputs_create_gsea_report <- function(
+    levels_clustered_hits,
+    genes,
+    databases,
+    params,
+    plot_titles,
+    background
+    ) {
   
   check_clustered_hits(levels_clustered_hits)
   
@@ -151,8 +153,10 @@ control_inputs_create_gsea_report <- function(levels_clustered_hits,
                                function(df) max(df$feature, na.rm = TRUE))
   max_index_overall <- max(highest_index)
   
-  check_genes(genes,
-              max_index_overall)
+  check_genes(
+    genes,
+    max_index_overall
+    )
   
   check_databases(databases)
 
@@ -193,8 +197,10 @@ control_inputs_create_gsea_report <- function(levels_clustered_hits,
 #' @return The result of the `create_gsea_report` function, which typically includes 
 #' various plots and enrichment results.
 #'
-manage_gsea_level <- function(clustered_hits,
-                              level_name) {
+manage_gsea_level <- function(
+    clustered_hits,
+    level_name
+    ) {
   
   genes_level <- genes[clustered_hits$feature]
   clustered_hits$gene <- genes_level
@@ -202,10 +208,12 @@ manage_gsea_level <- function(clustered_hits,
   
   message(paste("\n\n Running clusterProfiler for the level:", level_name))
   
-  result <- create_gsea_report_level(clustered_genes = clustered_hits,
-                                     databases = databases,
-                                     params = clusterProfiler_params,
-                                     plot_title = level_name)
+  result <- create_gsea_report_level(
+    clustered_genes = clustered_hits,
+    databases = databases,
+    params = clusterProfiler_params,
+    plot_title = level_name
+    )
 }
 
 
@@ -610,11 +618,13 @@ check_params <- function(params) {
 #'
 #' @importFrom clusterProfiler enricher
 #'
-create_gsea_report_level <- function(clustered_genes,
-                           databases,
-                           params = NA,
-                           plot_title = "",
-                           background = NULL) {
+create_gsea_report_level <- function(
+    clustered_genes,
+    databases,
+    params = NA,
+    plot_title = "",
+    background = NULL
+    ) {
   
   set_default_params(params)
   
@@ -667,16 +677,18 @@ create_gsea_report_level <- function(clustered_genes,
       message(paste("\nDatabase:", database_name))
       
       enrichment <- 
-        clusterProfiler::enricher(gene = gene_list,
-                                  pvalueCutoff  = params$adj_p_value,
-                                  pAdjustMethod = params$pAdjustMethod,
-                                  universe      = background,
-                                  minGSSize     = params$minGSSize,
-                                  maxGSSize     = params$maxGSSize,
-                                  qvalueCutoff  = params$qvalueCutoff,
-                                  gson          = NULL,
-                                  TERM2GENE     = term2gene,
-                                  TERM2NAME     = NA)
+        clusterProfiler::enricher(
+          gene = gene_list,
+          pvalueCutoff  = params$adj_p_value,
+          pAdjustMethod = params$pAdjustMethod,
+          universe      = background,
+          minGSSize     = params$minGSSize,
+          maxGSSize     = params$maxGSSize,
+          qvalueCutoff  = params$qvalueCutoff,
+          gson          = NULL,
+          TERM2GENE     = term2gene,
+          TERM2NAME     = NA
+          )
       
       enrichment <- as.data.frame(enrichment)
       
@@ -695,12 +707,13 @@ create_gsea_report_level <- function(clustered_genes,
     }
     
     if (at_least_one_result) {
-      all_db_results <- process_enrichment_results(all_db_results,
-                                                   enrichment_results,
-                                                   params$adj_p_value,
-                                                   column_name,
-                                                   count_column_name,
-                                                   background = use_background
+      all_db_results <- process_enrichment_results(
+        all_db_results,
+        enrichment_results,
+        params$adj_p_value,
+        column_name,
+        count_column_name,
+        background = use_background
       )
     } else {
       print(paste0("No enrichment results for cluster", cluster))
@@ -712,18 +725,22 @@ create_gsea_report_level <- function(clustered_genes,
   has_true <- any(any_result)
   
   if (has_true) {
-    result <- make_enrich_dotplot(all_db_results,
-                                  names(all_term2genes),
-                                  plot_title)
+    result <- make_enrich_dotplot(
+      all_db_results,
+      names(all_term2genes),
+      plot_title
+      )
   } else {
     message("No database led to an enrichment result!")
     return(NA)
   }
   
-  list(dotplot = result[["dotplot"]],
-       dotplot_nrows = result[["dotplot_size"]],
-       full_enrich_results = result[["full_enrich_results"]],
-       raw_results = raw_results)
+  list(
+    dotplot = result[["dotplot"]],
+    dotplot_nrows = result[["dotplot_size"]],
+    full_enrich_results = result[["full_enrich_results"]],
+    raw_results = raw_results
+    )
 }
 
 
@@ -1000,22 +1017,30 @@ process_enrichment_results <- function(all_db_results,
 #' @importFrom viridis scale_color_viridis
 #' @importFrom scales oob_squish
 #' 
-make_enrich_dotplot <- function(enrichments_list,
-                                databases,
-                                title = "Title") {
+make_enrich_dotplot <- function(
+    enrichments_list,
+    databases,
+    title = "Title"
+    ) {
 
   results <- prepare_plot_data(enrichments_list, databases)
   top_plot_data <- results$top_plot_data
   full_enrich_results <- results$full_enrich_results
   
-  dotplot_size <- as.integer(nrow(top_plot_data)/6) + 1
+  dotplot_size <- as.integer(nrow(top_plot_data)/24) + 1
   
-  p <- ggplot2::ggplot(top_plot_data, 
-                       ggplot2::aes(cluster,
-                                    term,
-                                    size = -log10(adj.p_value))) +
-    # ggplot2::geom_point(aes(color = odds_ratios)) +
-    ggplot2::geom_point(aes(color = odds_ratios), na.rm = TRUE) +
+  p <- ggplot2::ggplot(
+    top_plot_data, 
+    ggplot2::aes(
+      cluster,
+      term,
+      size = -log10(adj.p_value)
+      )
+    ) +
+    ggplot2::geom_point(
+      aes(color = odds_ratios),
+      na.rm = TRUE
+      ) +
     ggplot2::geom_blank(aes(cluster, term)) + # Ensure all columns are shown
     ggplot2::ylab("database: term") +
     viridis::scale_color_viridis(
@@ -1025,7 +1050,7 @@ make_enrich_dotplot <- function(enrichments_list,
       end = 0.9,
       labels = function(x) round(x, 2),
       guide = ggplot2::guide_colorbar(
-        barheight = unit(15, "mm"),
+        barheight = unit(12, "mm"),
         barwidth = unit(2, "mm"),
         ticks = FALSE
       )
@@ -1042,17 +1067,23 @@ make_enrich_dotplot <- function(enrichments_list,
     ggplot2::theme_bw() +
     ggplot2::theme(
       panel.grid = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(size = 12)
-      #   legend.key.height = unit(3, "mm"),
-      #   legend.key.width = unit(3, "mm"),
+      plot.title = ggplot2::element_text(size = 12),
+      axis.text.y = ggplot2::element_text(size = 5),
+      legend.text = ggplot2::element_text(size = 5),  
+      legend.title = ggplot2::element_text(size = 6), 
+        legend.key.height = unit(4, "mm"),
+        legend.key.width = unit(3, "mm"),
+        legend.spacing = ggplot2::unit(4, "mm")
       #   legend.margin = margin(),
       #   panel.spacing = unit(-.5, "pt"),
     ) +
     ggplot2::labs(title = title)
   
-  list(dotplot = p, 
-       dotplot_size = dotplot_size, 
-       full_enrich_results = full_enrich_results)
+  list(
+    dotplot = p, 
+    dotplot_size = dotplot_size, 
+    full_enrich_results = full_enrich_results
+    )
 }
 
 

@@ -15,7 +15,7 @@
 #' ensuring that each row contains only numeric values. Rows with any NA values 
 #' are removed from the resulting matrix.
 #'
-#' @param data A dataframe loaded from a csv file, potentially containing a 
+#' @param data A dataframe loaded from a tabular file, potentially containing a 
 #' rectangular or quadratic area with numeric data amidst other values.
 #' @param feature_name_columns (Optional) A character vector, specifying the
 #'                             columns of the dataframe data, that should be 

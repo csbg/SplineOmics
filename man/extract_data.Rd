@@ -11,7 +11,7 @@ Extract Numeric Matrix from Dataframe}
 extract_data(data, feature_name_columns = NA)
 }
 \arguments{
-\item{data}{A dataframe loaded from a csv file, potentially containing a 
+\item{data}{A dataframe loaded from a tabular file, potentially containing a 
 rectangular or quadratic area with numeric data amidst other values.}
 
 \item{feature_name_columns}{(Optional) A character vector, specifying the

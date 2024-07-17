@@ -155,7 +155,7 @@ When you have the `SplineOmics` package installed, you can also run the followin
 
 ``` r
 library(SplineOmics)
-interactive_demo()
+i_demo()
 ```
 
 This opens the R Markdown file of the demo in `RStudio`.
