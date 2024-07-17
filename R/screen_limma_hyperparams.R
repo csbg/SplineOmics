@@ -71,11 +71,15 @@ screen_limma_hyperparams <- function(
     splineomics = splineomics,
     func_type = "screen_limma_hyperparams"
   )
-
+  
+  condition <- splineomics[["condition"]]
+  
   modes <- c()
   for (design in designs) {
-    mode <- determine_analysis_mode(design,
-                                    condition)
+    mode <- determine_analysis_mode(
+      design,
+      condition
+      )
     modes <- c(modes, mode)
   }
 
@@ -85,7 +89,6 @@ screen_limma_hyperparams <- function(
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
-  condition <- splineomics[["condition"]]
   report_info <- splineomics[["report_info"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
@@ -111,6 +114,7 @@ screen_limma_hyperparams <- function(
       top_tables_combos = top_tables_combos, 
       datas = datas, 
       metas = metas,
+      condition = condition,
       spline_test_configs = spline_test_configs,
       meta_batch_column = meta_batch_column,
       meta_batch2_column = meta_batch2_column,
@@ -231,6 +235,7 @@ get_limma_combos_results <- function(
 #' @param top_tables_combos A list of top tables for each combination.
 #' @param datas A list of matrices.
 #' @param metas A list of metadata corresponding to the data matrices.
+#' @param condition Meta column name that contains the levels.
 #' @param spline_test_configs A configuration object for spline tests.
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param meta_batch2_column A character string specifying the second meta batch
@@ -252,6 +257,7 @@ plot_limma_combos_results <- function(
     top_tables_combos,
     datas,
     metas,
+    condition,
     spline_test_configs,
     meta_batch_column,
     meta_batch2_column,
