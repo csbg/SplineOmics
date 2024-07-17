@@ -90,15 +90,6 @@ screen_limma_hyperparams <- function(
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
 
-  # Convert the data dataframe to a matrix and extract the feature names
-  # data_matrices <- list()
-  # for (data in datas) {
-  #   matrix_and_feature_names <- process_data(data)
-  #   data <- matrix_and_feature_names$data
-  #   data_matrices <- c(data_matrices, list(data))
-  #   feature_names <- matrix_and_feature_names$feature_names
-  # }
-  # datas <- data_matrices
   feature_names <- rownames(datas[[1]])
   
   

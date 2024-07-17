@@ -19,15 +19,18 @@ create_splineomics(
 )
 }
 \arguments{
-\item{data}{The actual omics data (optional).}
+\item{data}{The actual omics data.}
 
-\item{meta}{Metadata associated with the omics data (optional).}
+\item{meta}{Metadata associated with the omics data.}
 
 \item{condition}{A condition variable.}
 
+\item{annotation}{A dataframe with the feature descriptions of data 
+(optional).}
+
 \item{report_info}{A list containing report information such as omics data 
 type, data description, data collection date, analyst name, contact info, 
-and project name.}
+and project name (optional).}
 
 \item{meta_batch_column}{Column for meta batch information (optional).}
 

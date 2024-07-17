@@ -14,7 +14,7 @@
 #' 
 #' @export
 #' 
-splineomics_demo <- function() {
+i_demo <- function() {
   
   file <- system.file(
     "demo",
@@ -25,7 +25,7 @@ splineomics_demo <- function() {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)
     } else {
-      stop("RStudio API not available. Please open the file manually: ", file)
+      stop("RStudio API not available. Cannot open demo.")
     }
   } else {
     stop("Demo file not found: demo.Rmd file not found under inst/demo.")

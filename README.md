@@ -182,7 +182,7 @@ demo:
 
 ``` r
 library(SplineOmics)
-interactive_demo()
+i_demo()
 ```
 
 This opens the R Markdown file of the demo in `RStudio`.
