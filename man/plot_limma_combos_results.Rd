@@ -8,6 +8,7 @@ plot_limma_combos_results(
   top_tables_combos,
   datas,
   metas,
+  condition,
   spline_test_configs,
   meta_batch_column,
   meta_batch2_column,
@@ -20,6 +21,8 @@ plot_limma_combos_results(
 \item{datas}{A list of matrices.}
 
 \item{metas}{A list of metadata corresponding to the data matrices.}
+
+\item{condition}{Meta column name that contains the levels.}
 
 \item{spline_test_configs}{A configuration object for spline tests.}
 

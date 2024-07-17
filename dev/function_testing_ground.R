@@ -109,9 +109,9 @@ datas <- list(data1, data2)
 datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
 designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
-condition <- "Phase"
+
 report_dir <- here::here("results", "hyperparams_screen_reports")
-meta_batch_column = "Reactor"
+
 pthresholds <- c(0.05, 0.1)
 
 # Every row a combo to test.
@@ -157,10 +157,10 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-# create_limma_report(
-#   splineomics,
-#   report_dir = report_dir
-#   )
+plots <- create_limma_report(
+  splineomics,
+  report_dir = report_dir
+  )
 
 
 
@@ -185,7 +185,6 @@ clustering_results <- cluster_hits(
   genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
-  report = FALSE
   )
 
 
@@ -219,16 +218,14 @@ genes <- sub("_.*", "", genes)
 genes <- sub("-.*", "", genes)
 
 
-downloaded_dbs_filepath <- here::here(
-  "dev",
-  "data",
-  "all_databases_08_04_2024-12_41_50.tsv"
-  )
+downloaded_dbs_filepath <- 
+  here::here(
+    "dev",
+    "data",
+    "all_databases_08_04_2024-12_41_50.tsv"
+    )
 
-databases <- readr::read_tsv(
-  downloaded_dbs_filepath,
-  col_types = readr::cols()
-  )
+databases <- readr::read_tsv(downloaded_dbs_filepath, col_types = readr::cols())
 
 clusterProfiler_params <- list(
   adj_p_value = 0.05,

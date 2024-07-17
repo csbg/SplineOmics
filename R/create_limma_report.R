@@ -57,6 +57,7 @@ create_limma_report <- function(
   input_control$auto_validate()
   
   limma_splines_result <- splineomics[["limma_splines_result"]]
+  condition <- splineomics[["condition"]]
   annotation <- splineomics[["annotation"]]
   report_info <- splineomics[["report_info"]]
   
