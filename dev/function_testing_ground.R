@@ -1,3 +1,4 @@
+
 rm(list = ls(all.names = TRUE))
 
 # Setup ------------------------------------------------------------------------
@@ -24,13 +25,13 @@ data_excel <- read_excel(here::here(
   "inst",
   "extdata",
   "proteomics_data.xlsx"
-  ))
+))
 
 meta <- read_excel(here::here(
   "inst",
   "extdata",
   "proteomics_meta.xlsx"
-  ))
+))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%  
@@ -76,7 +77,7 @@ report_info <- list(
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX"
-  )
+)
 
 splineomics <- create_splineomics(
   data = data,
@@ -121,7 +122,7 @@ spline_test_configs <- data.frame(
   dof = c(2L, 3L, 4L, 5L),
   knots = I(list(c(NA), c(NA), c(NA), c(NA))),
   bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
-  )
+)
 
 
 # hyperparams screen limma -----------------------------------------------------
@@ -153,14 +154,14 @@ splineomics <- update_splineomics(
 # Run the limma spline analysis
 splineomics <- run_limma_splines(
   splineomics
-  )
+)
 
 report_dir <- here::here("results", "limma_reports")
 
 plots <- create_limma_report(
   splineomics,
   report_dir = report_dir
-  )
+)
 
 
 
@@ -185,7 +186,7 @@ clustering_results <- cluster_hits(
   genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
-  )
+)
 
 
 
@@ -204,7 +205,7 @@ gene_set_lib <- c(
   "GO_Biological_Process_2018",
   "GO_Molecular_Function_2018",
   "Human_Gene_Atlas"
-  )
+)
 
 # download_enrichr_databases(gene_set_lib)
 
@@ -223,7 +224,7 @@ downloaded_dbs_filepath <-
     "dev",
     "data",
     "all_databases_08_04_2024-12_41_50.tsv"
-    )
+  )
 
 databases <- readr::read_tsv(downloaded_dbs_filepath, col_types = readr::cols())
 
@@ -233,7 +234,7 @@ clusterProfiler_params <- list(
   minGSSize = 10,
   maxGSSize = 500,
   qvalueCutoff = 0.2
-  )
+)
 
 report_dir <- here::here("results", "gsea_reports")
 
@@ -245,5 +246,4 @@ result <- create_gsea_report(
   params = clusterProfiler_params,
   report_info = report_info,
   report_dir = report_dir
-  )
-
+)

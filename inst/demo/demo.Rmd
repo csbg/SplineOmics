@@ -35,6 +35,32 @@ optional arguments are documented here. These however are only short forms of
 the full documentation of the arguments, which you can find by selecting a 
 function and pressing F2.
 
+# Install missing packages
+
+Make sure all the required packages for this analysis script are installed.
+Part of these packages are not dependencies of the SplineOmics package, that is
+why they could be missing.
+
+```{r Conditionally install missing packages}
+install_if_missing <- function(packages) {
+  for (pkg in packages) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      install.packages(pkg)
+    }
+  }
+}
+
+# List of packages to check and install if missing
+packages_to_install <- c(
+  "readxl",
+  "here",
+  "readr",
+  "dplyr",
+  "conflicted"
+  )
+install_if_missing(packages_to_install)
+```
+
 # Load the packages
 
 ```{r Load the required packages}
