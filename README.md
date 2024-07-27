@@ -42,7 +42,7 @@ generation.
 
 If you have -omics data over time, the package will help you to run
 `limma` with splines, decide on which parameters to use, perform the
-clustering, run GSEA and show result plots in HTML reports. Any data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package.
+clustering, run GSEA and show result plots in HTML reports. Any time-series data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, etc.).
 
 ### What do I need precisely?
 
