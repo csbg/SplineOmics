@@ -97,7 +97,7 @@ repository into your R environment.
 #### Prerequisites
 
 - Ensure **R** is installed on your system. If not, download and install
-  it from <a href="https://cran.r-project.org/" target="_blank">CRAN</a>.
+  it from [CRAN](https://cran.r-project.org/).
 - **RStudio** is recommended for a more user-friendly experience with R.
   Download and install RStudio from
   [posit.co](https://posit.co/download/rstudio-desktop/).
