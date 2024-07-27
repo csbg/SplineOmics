@@ -24,7 +24,7 @@ showing all results in summary HTML reports.
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
 - [📦 Dependencies](#-dependencies)
-- [📚 Further reading](#-further-reading)
+- [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
 - [🤝 Contributing](#-contributing)
 - [💬 Feedback](#-feedback)
@@ -294,7 +294,7 @@ For those interested in gaining a deeper understanding of the methodologies used
 
 - **Splines**: To learn more about splines, you can refer to this [review](https://doi.org/10.1186/s12874-019-0666-3).
 
-- **limma**: To read about the limma R package, you can refer to this [publication](https://doi.org/10.1093/nar/gkv007).
+- **limma**: To read about the `limma` R package, you can refer to this [publication](https://doi.org/10.1093/nar/gkv007).
 
 - **Hierarchical clustering**: To get information about hierarchical clustering, you can refer to this [web article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
 
