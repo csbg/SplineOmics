@@ -189,9 +189,9 @@ Alternatively, you can run your analysis in a `Docker` container. The underlying
 encapsulates the `SplineOmics` package together with the necessary
 environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.
 
-More information about `Docker containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
+More information about `Docker` containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
 
-For instructions on downloading the image of the 'SplineOmics' package and running the container, please refer to the
+For instructions on downloading the image of the `SplineOmics` package and running the container, please refer to the
 [Docker instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
 ## ▶️ Usage
