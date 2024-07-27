@@ -24,6 +24,7 @@ showing all results in summary HTML reports.
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
 - [📦 Dependencies](#-dependencies)
+- [📚 Further reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
 - [🤝 Contributing](#-contributing)
 - [💬 Feedback](#-feedback)
