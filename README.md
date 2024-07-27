@@ -20,7 +20,7 @@ showing all results in summary HTML reports.
 - [📘 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
   - [🐳 Docker Container](#-docker-container)
-- [🛠️ Usage](#-usage)
+- [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
 - [📦 Dependencies](#-dependencies)
@@ -110,7 +110,7 @@ repository into your R environment.
     GitHub** with all dependencies.
 
 Copy and paste the following code block into your R console or run it as
-a script:
+a script. 
 
 ``` r
 # Function to ensure a package is installed
@@ -154,6 +154,16 @@ if ("SplineOmics" %in% rownames(installed.packages())) {
 }
 ```
 
+Note that when some installation filepaths are not writable on Windows, it is necessary running `RStudio` as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and rerun the code block above.
+
+```r
+# Create a directory for R libraries
+dir.create("~/Rlibs", showWarnings = FALSE)
+
+# Set the library path to include the new directory
+.libPaths(c("~/Rlibs", .libPaths()))
+```
+
 3.  **Load the `SplineOmics` package**:
 
 Once the installation is complete, load the `SplineOmics` package into
@@ -184,13 +194,13 @@ More information about `Docker containers can be found on the [official Docker p
 For instructions on downloading the image of the 'SplineOmics' package and running the container, please refer to the
 [Docker instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
-## 🛠️ Usage
+## ▶️ Usage
 
 ### Tutorial
 
 [This
 tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html)
-covers a real CHO cell time-series proteomics example from start to the
+covers a real CHO cell time-series proteomics example from start to
 end.
 
 When you have the `SplineOmics` package installed, you can also run the
