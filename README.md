@@ -112,6 +112,9 @@ repository into your R environment.
 Copy and paste the following code block into your R console or run it as
 a script. 
 
+> **Note for Windows Users:**  
+> Please read the text below this code block before running it!
+
 ``` r
 # Function to ensure a package is installed
 ensure_installed <- function(pkg) {
@@ -154,7 +157,7 @@ if ("SplineOmics" %in% rownames(installed.packages())) {
 }
 ```
 
-Note that when some installation filepaths are not writable on Windows, it is necessary running `RStudio` as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and rerun the code block above.
+Note that when some installation paths are not writable on **Windows**, it is necessary running `RStudio` as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and (re)run the code block above.
 
 ```r
 # Create a directory for R libraries
@@ -283,6 +286,16 @@ compatibility issues.
 ### R Version
 
 - Recommended: R 4.3.3 or higher
+
+## 📚 Further Reading
+
+For those interested in gaining a deeper understanding of the methodologies used in the `SplineOmics` package, here are some recommended publications:
+
+- **Splines**: To learn more about splines, you can refer to this [review](https://doi.org/10.1186/s12874-019-0666-3).
+
+- **limma**: To read about the limma R package, you can refer to this [publication](10.1093/nar/gkv007).
+
+- **Hierarchical clustering**: To get information about hierarchical clustering, you can refer to this [web article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
 
 ## ❓ Getting Help
 
