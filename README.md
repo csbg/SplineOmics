@@ -19,10 +19,10 @@ showing all results in summary HTML reports.
 
 - [📘 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
+  - [🐳 Docker Container](#-docker-container)
 - [🛠️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
-- [🐳 Docker Container](#-docker-container)
 - [📦 Dependencies](#-dependencies)
 - [❓ Getting Help](#-getting-help)
 - [🤝 Contributing](#-contributing)
@@ -91,8 +91,8 @@ With `SplineOmics`, you can:
 
 ## 🔧 Installation
 
-Follow these steps to install the `SplineOmics` package from the GitHub
-repository into your R environment.
+Follow the steps below to install the `SplineOmics` package from the GitHub
+repository into your R environment. 
 
 #### Prerequisites
 
@@ -106,30 +106,52 @@ repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  **Install and load `remotes`, and install `SplineOmics` from
-    GitHub**:
+2.  **Install** `SplineOmics` **from
+    GitHub** with all dependencies.
 
 Copy and paste the following code block into your R console or run it as
 a script:
 
 ``` r
-# Conditionally install 'pak' (package installer)
-if (!requireNamespace("pak", quietly = TRUE)) {
-  install.packages("pak")
+# Function to ensure a package is installed
+ensure_installed <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
 }
 
-# This line will be deleted once the repo is public
+# Install packages if not already available
+ensure_installed("BiocManager")
+ensure_installed("remotes")
+
+# Load packages
+library(BiocManager)
+library(remotes)
+
+# Install Bioconductor dependencies
+BiocManager::install(c(
+  "ComplexHeatmap",
+   "clusterProfiler",
+   "limma"
+  ), force = TRUE)
+
+# Delete once repo is public
 Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
-pak::cache_clean()
+# Install SplineOmics from GitHub
+remotes::install_github(
+  "csbg/SplineOmics@ad35d9aef2e8a8b19572c83ec771f4d92b343a4e",
+  dependencies = TRUE,  # Install all dependencies
+  force = TRUE,         # Force reinstallation
+  upgrade = "always",   # Always upgrade dependencies
+)
 
-# Install SplineOmics from GitHub including all dependencies
-if (!"SplineOmics" %in% rownames(installed.packages())) {
-  pak::pkg_install("csbg/SplineOmics@main")
+# Verify the installation
+if ("SplineOmics" %in% rownames(installed.packages())) {
+  message("SplineOmics installed successfully.")
+} else {
+  message("SplineOmics installation failed.")
 }
-
-# Show the installed and loaded packages
-sessionInfo()
 ```
 
 3.  **Load the `SplineOmics` package**:
@@ -150,6 +172,17 @@ versions and repeat the installation steps.
 For issues specifically related to the `SplineOmics` package, check the
 [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the
 GitHub repository for similar problems or to post a new issue.
+
+### 🐳 Docker Container
+
+Alternatively, you can run your analysis in a `Docker` container. The underlying `Docker` image
+encapsulates the `SplineOmics` package together with the necessary
+environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.
+
+More information about `Docker containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
+
+For instructions on downloading the image of the 'SplineOmics' package and running the container, please refer to the
+[Docker instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
 ## 🛠️ Usage
 
@@ -173,20 +206,20 @@ This opens the R Markdown file of the demo in `RStudio`. Note that this
 Markdown requires the readxls and the conflicted package in addition to
 the dependencies of the `SplineOmics`\`package.
 
+To get a template for your analysis, run:
+
+``` r
+library(SplineOmics)  # Once the package is loaded, this is not needed anymore.
+template()
+```
+
+This opens an R Markdown file in `RStudio` that contains the "skeleton" of the whole workflow.
+
 ### Functions in Depth
 
 A detailed description of all arguments and outputs of all the available
 package functions can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
-
-## 🐳 Docker Container
-
-To facilitate reproducible analysis, a Docker container is provided that
-encapsulates the `SplineOmics` package together with the necessary
-environment and dependencies.
-
-The instructions for downloading and running the container are
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
 ## 📦 Dependencies
 
