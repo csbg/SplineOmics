@@ -11,9 +11,8 @@ Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
 The R package `SplineOmics` finds the significant features (hits) of
-time-series omics data by using splines and `limma` for hypothesis
-testing and clusters the hits based on the spline shape while plotting
-showing all results in summary HTML reports.
+time-series -omics data by using splines and `limma` for hypothesis
+testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.
 
 ## Table of Contents
 
