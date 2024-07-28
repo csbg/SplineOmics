@@ -97,7 +97,7 @@ repository into your R environment.
 #### Prerequisites
 
 - Ensure **R** is installed on your system. If not, download and install
-  it from [CRAN](https://cran.r-project.org/) (to open the links in this README section in a new tab, press the scroll wheel (middle button) of your mouse).
+  it from [CRAN](https://cran.r-project.org/).
 - **RStudio** is recommended for a more user-friendly experience with R.
   Download and install RStudio from
   [posit.co](https://posit.co/download/rstudio-desktop/).
@@ -206,31 +206,23 @@ tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-starte
 covers a real CHO cell time-series proteomics example from start to
 end.
 
-When you have the `SplineOmics` package installed, you can also run the
-following commands in `RStudio` to start the tutorial as an interactive
-demo:
+To open an R Markdown file of the **tutorial** in `RStudio`, run:
 
 ``` r
 library(SplineOmics)
-i_demo()
+open_tutorial()  
 ```
 
-This opens the R Markdown file of the demo in `RStudio`. Note that this
-Markdown requires the readxls and the conflicted package in addition to
-the dependencies of the `SplineOmics`\`package.
-
-To get a template for your analysis, run:
+To open an R Markdown file in `RStudio` containing a **template** for your own analysis, run:
 
 ``` r
-library(SplineOmics)  # Once the package is loaded, this is not needed anymore.
-template()
+library(SplineOmics)
+open_template()
 ```
-
-This opens an R Markdown file in `RStudio` that contains the "skeleton" of the whole workflow.
 
 ### Functions in Depth
 
-A detailed description of all arguments and outputs of all the available
+A detailed description of all arguments and outputs of the available
 package functions can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
@@ -310,11 +302,7 @@ efficiently.
 For more detailed questions, discussions, or contributions regarding the
 package’s use and development, please refer to the [GitHub
 Discussions](https://github.com/csbg/SplineOmics/discussions) page for
-`SplineOmics`. This forum is a great place to ask for help, share your
-experiences, and connect with the community.
-
-Thank you for using and contributing to the development of
-`SplineOmics`!
+`SplineOmics`. 
 
 ## 🤝 Contributing
 
