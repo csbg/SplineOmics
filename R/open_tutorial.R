@@ -1,33 +1,33 @@
 # This function is exported, but not part of the functionality of the 
 # SplineOmics package. Rather, it provides a convenient way of opening the 
-# demo (tutorial) for the SplineOmics package in a R Markdown file, which
+# tutorial for the SplineOmics package in a R Markdown file, which
 # provides an interactive experience.
 
 
-#' Interactive Demo for Getting Started
+#' Interactive Tutorial for Getting Started
 #'
 #' @description
-#' This function opens the `demo.Rmd` file in RStudio for
+#' This function opens the `tutorial.Rmd` file in RStudio for
 #' interactive use. Users can then run each code chunk step by step.
 #'
 #' @importFrom rstudioapi navigateToFile
 #' 
 #' @export
 #' 
-i_demo <- function() {
+open_tutorial <- function() {
   
   file <- system.file(
-    "demo",
-    "demo.Rmd",
+    "tutorial",
+    "tutorial.Rmd",
     package = "SplineOmics"
     )
   if (file != "") {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)
     } else {
-      stop("RStudio API not available. Cannot open demo.")
+      stop("RStudio API not available. Cannot open tutorial.")
     }
   } else {
-    stop("Demo file not found: demo.Rmd file not found under inst/demo.")
+    stop("tutorial.Rmd file not found under inst/tutorial")
   }
 }
