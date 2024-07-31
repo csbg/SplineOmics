@@ -11,19 +11,19 @@ Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
 The R package `SplineOmics` finds the significant features (hits) of
-time-series omics data by using splines and `limma` for hypothesis
-testing and clusters the hits based on the spline shape while plotting
-showing all results in summary HTML reports.
+time-series -omics data by using splines and `limma` for hypothesis
+testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.
 
 ## Table of Contents
 
 - [📘 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
-- [🛠️ Usage](#-usage)
+  - [🐳 Docker Container](#-docker-container)
+- [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
-- [🐳 Docker Container](#-docker-container)
 - [📦 Dependencies](#-dependencies)
+- [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
 - [🤝 Contributing](#-contributing)
 - [💬 Feedback](#-feedback)
@@ -41,7 +41,7 @@ generation.
 
 If you have -omics data over time, the package will help you to run
 `limma` with splines, decide on which parameters to use, perform the
-clustering, run GSEA and show result plots in HTML reports.
+clustering, run GSEA and show result plots in HTML reports. Any time-series data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, etc.).
 
 ### What do I need precisely?
 
@@ -91,8 +91,8 @@ With `SplineOmics`, you can:
 
 ## 🔧 Installation
 
-Follow these steps to install the `SplineOmics` package from the GitHub
-repository into your R environment.
+Follow the steps below to install the `SplineOmics` package from the GitHub
+repository into your R environment. 
 
 #### Prerequisites
 
@@ -106,30 +106,65 @@ repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  **Install and load `remotes`, and install `SplineOmics` from
-    GitHub**:
+2.  **Install** `SplineOmics` **from
+    GitHub** with all dependencies.
 
 Copy and paste the following code block into your R console or run it as
-a script:
+a script. 
+
+> **Note for Windows Users:**  
+> Please read the text below this code block before running it!
 
 ``` r
-# Conditionally install 'pak' (package installer)
-if (!requireNamespace("pak", quietly = TRUE)) {
-  install.packages("pak")
+# Function to ensure a package is installed
+ensure_installed <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
 }
 
-# This line will be deleted once the repo is public
+# Install packages if not already available
+ensure_installed("BiocManager")
+ensure_installed("remotes")
+
+# Load packages
+library(BiocManager)
+library(remotes)
+
+# Install Bioconductor dependencies
+BiocManager::install(c(
+  "ComplexHeatmap",
+   "clusterProfiler",
+   "limma"
+  ), force = TRUE)
+
+# Delete once repo is public
 Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
 
-pak::cache_clean()
+# Install SplineOmics from GitHub
+remotes::install_github(
+  "csbg/SplineOmics@ad35d9aef2e8a8b19572c83ec771f4d92b343a4e",
+  dependencies = TRUE,  # Install all dependencies
+  force = TRUE,         # Force reinstallation
+  upgrade = "always",   # Always upgrade dependencies
+)
 
-# Install SplineOmics from GitHub including all dependencies
-if (!"SplineOmics" %in% rownames(installed.packages())) {
-  pak::pkg_install("csbg/SplineOmics@main")
+# Verify the installation
+if ("SplineOmics" %in% rownames(installed.packages())) {
+  message("SplineOmics installed successfully.")
+} else {
+  message("SplineOmics installation failed.")
 }
+```
 
-# Show the installed and loaded packages
-sessionInfo()
+Note that when some installation paths are not writable on **Windows**, it is necessary running `RStudio` as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and (re)run the code block above.
+
+```r
+# Create a directory for R libraries
+dir.create("~/Rlibs", showWarnings = FALSE)
+
+# Set the library path to include the new directory
+.libPaths(c("~/Rlibs", .libPaths()))
 ```
 
 3.  **Load the `SplineOmics` package**:
@@ -151,42 +186,45 @@ For issues specifically related to the `SplineOmics` package, check the
 [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the
 GitHub repository for similar problems or to post a new issue.
 
-## 🛠️ Usage
+### 🐳 Docker Container
+
+Alternatively, you can run your analysis in a `Docker` container. The underlying `Docker` image
+encapsulates the `SplineOmics` package together with the necessary
+environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.
+
+More information about `Docker` containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
+
+For instructions on downloading the image of the `SplineOmics` package and running the container, please refer to the
+[Docker instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
+
+## ▶️ Usage
 
 ### Tutorial
 
 [This
 tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html)
-covers a real CHO cell time-series proteomics example from start to the
+covers a real CHO cell time-series proteomics example from start to
 end.
 
-When you have the `SplineOmics` package installed, you can also run the
-following commands in `RStudio` to start the tutorial as an interactive
-demo:
+To open an R Markdown file of the **tutorial** in `RStudio`, run:
 
 ``` r
 library(SplineOmics)
-i_demo()
+open_tutorial()  
 ```
 
-This opens the R Markdown file of the demo in `RStudio`. Note that this
-Markdown requires the readxls and the conflicted package in addition to
-the dependencies of the `SplineOmics`\`package.
+To open an R Markdown file in `RStudio` containing a **template** for your own analysis, run:
+
+``` r
+library(SplineOmics)
+open_template()
+```
 
 ### Functions in Depth
 
-A detailed description of all arguments and outputs of all the available
+A detailed description of all arguments and outputs of the available
 package functions can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
-
-## 🐳 Docker Container
-
-To facilitate reproducible analysis, a Docker container is provided that
-encapsulates the `SplineOmics` package together with the necessary
-environment and dependencies.
-
-The instructions for downloading and running the container are
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
 
 ## 📦 Dependencies
 
@@ -241,6 +279,16 @@ compatibility issues.
 
 - Recommended: R 4.3.3 or higher
 
+## 📚 Further Reading
+
+For those interested in gaining a deeper understanding of the methodologies used in the `SplineOmics` package, here are some recommended publications:
+
+- **Splines**: To learn more about splines, you can refer to this [review](https://doi.org/10.1186/s12874-019-0666-3).
+
+- **limma**: To read about the `limma` R package, you can refer to this [publication](https://doi.org/10.1093/nar/gkv007).
+
+- **Hierarchical clustering**: To get information about hierarchical clustering, you can refer to this [web article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
+
 ## ❓ Getting Help
 
 If you encounter a bug or have a suggestion for improving the
@@ -254,11 +302,7 @@ efficiently.
 For more detailed questions, discussions, or contributions regarding the
 package’s use and development, please refer to the [GitHub
 Discussions](https://github.com/csbg/SplineOmics/discussions) page for
-`SplineOmics`. This forum is a great place to ask for help, share your
-experiences, and connect with the community.
-
-Thank you for using and contributing to the development of
-`SplineOmics`!
+`SplineOmics`. 
 
 ## 🤝 Contributing
 
