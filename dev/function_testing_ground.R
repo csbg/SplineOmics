@@ -56,8 +56,10 @@ genes <- data[[gene_column_name]][4:nrow(data)]
 feature_name_columns <- c("First.Protein.Description")
 
 # debug(extract_data)
-data <- extract_data(data_excel,
-                     feature_name_columns)
+data <- extract_data(
+  data_excel,
+  feature_name_columns
+  )
 
 
 # Remove outliers --------------------------------------------------------------
@@ -158,10 +160,113 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   report_dir = report_dir
+# )
+
+
+# # Sample importance ------------------------------------------------------------
+# # Determine which samples are most important 
+# 
+# top_table1 <- splineomics[["limma_splines_result"]][["time_effect"]][["Phase_Exponential"]]
+# top_table2 <- splineomics[["limma_splines_result"]][["time_effect"]][["Phase_Stationary"]]
+# 
+# if (!requireNamespace("randomForest", quietly = TRUE)) {
+#   install.packages("randomForest")
+# }
+# library(randomForest)
+# 
+# 
+# 
+# top_tables <- list(top_table1, top_table2)
+# 
+# # Example usage
+# save_train_data(data, meta, top_tables, "Phase")
+# 
+# 
+# # Inner function to train and plot Random Forest model
+# train_and_plot_rf <- function(data_subset, labels, condition_level) {
+#   # Split the data into training and test sets
+#   set.seed(42)  # Ensure reproducibility
+#   n_samples <- nrow(data_subset)
+#   train_indices <- sample(seq_len(n_samples), size = 0.8 * n_samples)
+#   X_train <- data_subset[train_indices, ]
+#   X_test <- data_subset[-train_indices, ]
+#   y_train <- labels[train_indices]
+#   y_test <- labels[-train_indices]
+#   
+#   # Train the Random Forest model
+#   rf_model <- randomForest(X_train, y_train, importance = TRUE)
+#   
+#   # Get and plot feature importance
+#   importance_values <- importance(rf_model)
+#   varImpPlot(rf_model, main = paste("Feature Importance for Condition:", condition_level))
+#   
+#   # Predict on the test set and calculate accuracy (R² Score)
+#   predictions <- predict(rf_model, X_test)
+#   mse <- mean((predictions - y_test)^2)
+#   r2_score <- 1 - mse / var(y_test)
+#   
+#   # Print the R² score
+#   print(paste("R² score for condition", condition_level, ":", r2_score))
+#   
+#   return(r2_score)
+# }
+# 
+# 
+# determine_sample_importance <- function(
+#     data_matrix,
+#     meta,
+#     top_tables,
+#     condition
+#     ) {
+#   # Ensure reproducibility
+#   set.seed(42)
+#   
+#   # Split the data based on the condition
+#   unique_conditions <- unique(meta[[condition]])
+#   accuracies <- c()
+#   
+#   for (i in seq_along(unique_conditions)) {
+#     cond <- unique_conditions[i]
+#     subset_indices <- which(meta[[condition]] == cond)
+#     subset_data <- data_matrix[, subset_indices, drop = FALSE]
+#     subset_meta <- meta[subset_indices, ]
+#     
+#     # Average the columns based on the Time column
+#     averaged_subset <- t(apply(subset_data, 1, function(row) {
+#       tapply(row, subset_meta$Time, mean)
+#     }))
+#     
+#     # Get the corresponding top_table for this condition by index
+#     top_table <- top_tables[[i]]
+#     
+#     # Sort topTable by feature_nr
+#     top_table_sorted <- top_table[order(top_table$feature_nr), ]
+#     
+#     # Extract the labels (adj.P.Val) and sort them
+#     labels <- top_table_sorted$adj.P.Val
+#     
+#     # Ensure the labels are correctly ordered according to feature_nr
+#     feature_order <- top_table_sorted$feature_nr
+#     labels <- labels[order(feature_order)]
+#     
+#     # Call the inner function to train and plot Random Forest model
+#     accuracy <- train_and_plot_rf(averaged_subset, labels, cond)
+#     accuracies <- c(accuracies, accuracy)
+#   }
+#   return(accuracies)
+# }
+# 
+# 
+# 
+# accuracies <- prepare_and_analyze(
+#   data,
+#   meta,
+#   top_tables,
+#   "Phase"
+# )
 
 
 
@@ -207,7 +312,7 @@ gene_set_lib <- c(
   "Human_Gene_Atlas"
 )
 
-# download_enrichr_databases(gene_set_lib)
+download_enrichr_databases(gene_set_lib)
 
 # Get gene vector
 data <- as.data.frame(data_excel)

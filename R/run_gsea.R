@@ -29,7 +29,7 @@
 #' 
 #' @export
 #' 
-create_gsea_report <- function(
+run_gsea <- function(
     levels_clustered_hits,
     genes,
     databases,

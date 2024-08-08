@@ -262,9 +262,9 @@ build_explore_data_report <- function(
     "Dimensionality Reduction and Clustering",
     "Time Series Analysis"
     )
-  
-  major_header_style <- 
-    "font-size: 6em; font-family: Arial, sans-serif; text-align: center;"
+
+  major_header_style <- "font-size: 6em; font-family: Arial, sans-serif;
+  display: inline-block;"
   
   toc_index <- 0
   toc_index_memory <- toc_index
@@ -283,28 +283,45 @@ build_explore_data_report <- function(
 
         major_header_index <- major_header_index + 1
         
-        section_id <- paste0("section_major_", major_header_index)
-        toc <- paste(toc, 
-                     sprintf('<li style="%s"><a href="#%s">%s</a></li>', 
-                             toc_style, 
-                             section_id,
-                             major_headers[major_header_index]), 
-                     sep = "\n")
+        section_id <- paste0(
+          "section_major_",
+          major_header_index
+          )
+        toc <- paste(
+          toc, 
+          sprintf(
+            '<li style="%s"><a href="#%s">%s</a></li>', 
+            toc_style, 
+            section_id,
+            major_headers[major_header_index]
+           ), 
+          sep = "\n"
+          )
         
-        group_header <- sprintf('<h1 id="%s" style="%s">%s</h1>', 
-                                section_id, 
-                                major_header_style, 
-                                major_headers[major_header_index])
+        group_header <- sprintf(
+
+          '<div style="text-align: center;"><h1 id="%s"
+          style="%s">%s</h1></div>',
+          section_id, 
+          major_header_style, 
+          major_headers[major_header_index]
+          )
         
         if (toc_index == 3) {  
-          group_header <- paste(group_header, 
-                                '<p style="font-size: 40px;">If you are unsure 
-                                which dimensionality reduction plot to consult, 
-                                choose PCA.</p>', 
-                                sep = "\n")
+          group_header <- paste(
+            group_header, 
+            '<p style="font-size: 40px;">If you are unsure 
+            which dimensionality reduction plot to consult, 
+            choose PCA.</p>', 
+            sep = "\n"
+            )
         }
         
-        html_content <- paste(html_content, group_header, sep = "\n")
+        html_content <- paste(
+          html_content,
+          group_header,
+          sep = "\n"
+          )
       }
       next
     }

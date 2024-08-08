@@ -31,3 +31,35 @@ open_tutorial <- function() {
     stop("tutorial.Rmd file not found under inst/tutorial")
   }
 }
+
+
+#' Open Template for Quick Setup
+#'
+#' @description
+#' This function opens the `template.Rmd` file in RStudio for
+#' interactive use. The template file provides a structure for users 
+#' to quickly set up their personal analysis.
+#'
+#' @importFrom rstudioapi navigateToFile
+#' 
+#' @export
+#' 
+open_template <- function() {
+  
+  file <- system.file(
+    "template",
+    "template.Rmd",
+    package = "SplineOmics"
+  )
+  if (file != "") {
+    if (rstudioapi::isAvailable()) {
+      rstudioapi::navigateToFile(file)
+    } else {
+      stop("RStudio API not available. Cannot open template.")
+    }
+  } else {
+    stop("template.Rmd file not found under inst/template")
+  }
+}
+
+

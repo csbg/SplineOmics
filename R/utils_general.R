@@ -11,6 +11,8 @@
 #'
 #' @param iterable An iterable object (e.g., list or vector) whose length 
 #' determines the total number of steps.
+#' @param message A message to display with the progress bar 
+#' (default is "Processing").
 #'
 #' @return A progress bar object from the 'progress' package.
 #'
@@ -19,11 +21,14 @@
 #' @seealso
 #' \code{\link{progress_bar}}
 #' 
-create_progress_bar <- function(iterable) {
-
+create_progress_bar <- function(
+    iterable,
+    message = "Processing"
+) {
+  
   # Create and return the progress bar
   pb <- progress::progress_bar$new(
-    format = "  Processing [:bar] :percent :elapsed",
+    format = paste(" ", message, " [:bar] :percent :elapsed"),
     total = length(iterable),
     width = 60,
     clear = FALSE
@@ -31,6 +36,7 @@ create_progress_bar <- function(iterable) {
   
   return(pb)
 }
+
 
 
 #' Create Design Matrix for Splines

@@ -88,15 +88,21 @@ download_enrichr_databases <- function(
 #'
 enrichr_get_genesets <- function(databases) {
   
-  pb <- create_progress_bar(databases)
+  pb <- create_progress_bar(
+    databases,
+    message = "Downloading"
+    )
   
   setNames(lapply(databases, function(dbx) {
     
     # Update the progress bar
     pb$tick()
     
-    fpath <- paste0("http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?", 
-                    "mode=text&libraryName=", dbx)
+    fpath <- paste0(
+      "http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?", 
+      "mode=text&libraryName=",
+      dbx
+      )
     
     fhandle <- file(fpath)
     dblines <- tryCatch({
