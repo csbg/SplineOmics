@@ -126,6 +126,15 @@ annotation <- data_excel |>
   dplyr::slice(-c(1:3))
 ```
 
+Note that for this experiment, just a single treatment is present, which is 
+the growth phase (exponential or stationary) of the cells. This is encoded in 
+"condition" column of meta, here called "Phase". If there is more than one 
+treatment, they can be combined in the single condition column. For example,
+if additionally, there would also be a temperature shift, from 37 to 32 °C, this
+could for example be written in the condition column in following way: exp_37,
+exp_32, stat_37, stat_32 (Both treatments combined in one string and all placed
+in the single condition column).
+
 # Bring the inputs into the standardized (required) format
 
 Since `data_excel` is not in the format required by the SplineOmics
@@ -154,11 +163,16 @@ with datapoints from an individual feature.
     names. If omitted, the feature names are just numbers (stored as
     characters) starting from 1 (1, 2, 3, etc.).
 
+(When you want to have meaningful feature descriptions, add feature-name columns
+as arguments to the function below. They are used for the row headers of the 
+matrix. If you don't use this function, make sure you have row headers to your 
+matrix if you want feature descriptions for your plots.)
+
 ```{r Process the inputs}
 data <- SplineOmics::extract_data(
   data = data_excel,
   feature_name_columns = c(   # Feature names will be a combo out of these col
-    "First.Protein.Description",
+    "First.Protein.Description",   # Prodivde the row headers of the matrix
     "ID"
     )
   )
@@ -217,7 +231,7 @@ function.
 
 -   **data**: A matrix with the data
 -   **meta**: Metadata associated with the data.
--   **condition**: Column name of the levels (e.g., Exponential and
+-   **condition**: Meta column name of the levels (e.g., Exponential and
     Stationary).
 
 ## Optional Arguments `create_splineomics()`

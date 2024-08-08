@@ -1986,8 +1986,8 @@ build_cluster_hits_report <- function(
         adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
         asterisks_definition <- paste(
-          "<b><span style='font-size:20pt'>Asterisks definition:", 
-          "</span></b><br>",
+          "<b><span style='font-size:20pt; margin-bottom: 0;'>
+          Asterisks definition:</span></b>",
           paste("Adj. p-value <", adjusted_p_val, "--> *", sep = " "),
           paste("Adj. p-value <", adjusted_p_val / 5, "--> **", sep = " "),
           paste("Adj. p-value <", adjusted_p_val / 50, "--> ***", sep = " "),

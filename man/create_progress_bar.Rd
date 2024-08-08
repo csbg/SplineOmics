@@ -6,11 +6,14 @@
 functions of the SplineOmics package.
 Create Progress Bar}
 \usage{
-create_progress_bar(iterable)
+create_progress_bar(iterable, message = "Processing")
 }
 \arguments{
 \item{iterable}{An iterable object (e.g., list or vector) whose length 
 determines the total number of steps.}
+
+\item{message}{A message to display with the progress bar 
+(default is "Processing").}
 }
 \value{
 A progress bar object from the 'progress' package.

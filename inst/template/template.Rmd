@@ -1,0 +1,263 @@
+---
+title: "template"
+author: "Thomas Rauter"
+date: "15 July, 2024"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+(When you want to have meaningful feature descriptions, add feature-name columns
+as arguments to the function below. They are used for the row headers. If you
+dont use this function, make sure you have row headers to your matrix if you
+want feature descriptions for your plots.)
+
+```{r Process the inputs}
+data <- SplineOmics::extract_data(
+  data = your_data, 
+  # Specify the feature name columns (Replace with your actual column names)
+  feature_name_columns = c(
+    "Feature_Column_1",  # Replace with your first feature column name
+    "Feature_Column_2"   # Replace with your second feature column name
+  )
+)
+```
+
+
+```{r Define info that is written in all the HTML reports}
+report_info <- list(
+  omics_data_type = "Your_omics_data_type", 
+  data_description = "Your_data_description",  
+  data_collection_date = "Your_data_collection_date", 
+  analyst_name = "Your_name",  
+  contact_info = "Your_contact_info",  
+  project_name = "Your_project_name" 
+)
+```
+
+
+```{r Create the SplineOmics object}
+splineomics <- SplineOmics::create_splineomics(
+  data = data,  # Replace with your data
+  meta = meta,  # Replace with your metadata
+  annotation = annotation,  # Replace with your annotation
+  report_info = report_info,  # Replace with your report information
+  condition = "Phase",  # Replace with your condition
+  meta_batch_column = "Reactor"  # Replace with your metadata batch column
+)
+```
+
+```{r Run the EDA function}
+report_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+plots <- SplineOmics::explore_data(
+  splineomics = splineomics,  # Replace with your SplineOmics object
+  report_dir = report_dir  # Replace with your report directory
+)
+
+```
+
+```{r Load hyperparameter-screening args}
+data1 <- data 
+meta1 <- meta
+
+data2 <- data[, !(colnames(data) %in% c(
+  "Your_Outlier_Column1",  # Replace with your outlier column name
+  "Your_Outlier_Column2"   # Replace with your outlier column name
+  )
+  )]
+
+meta2 <- meta[!meta$`Sample.ID` %in% c(
+  "Your_Outlier_Column1",  # Replace with your outlier column name
+  "Your_Outlier_Column2"   # Replace with your outlier column name
+  ), ]
+
+datas <- list(data1, data2) 
+datas_descr <- c(
+  "full_data",
+  "outliers_removed"
+  ) 
+
+metas <- list(
+  meta1,
+  meta2
+  ) 
+
+designs <- c(
+  "~ 1 + Your_Condition*X + Your_Batch",  # Replace with your design formula
+  "~ 1 + X + Your_Batch"  # Replace with your design formula
+  ) 
+
+pthresholds <- c(
+  0.05,
+  0.1
+  )
+```
+
+```{r spline_test_configs definition}
+# Every row a combo to test.
+spline_test_configs <- data.frame(
+  spline_type = c("n", "n", "n", "n"),  # All should use natural splines (n)
+  degree = c(NA, NA, NA, NA),  # Only needed for B-splines (spline_type = b)
+  dof = c(2L, 3L, 4L, 5L),  # Test these variations of the DoF
+  # Per default, knots are placed automatically in a central fashion
+  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
+  bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
+)
+```
+
+```{r Perform hyperparameter-screening}
+report_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+SplineOmics::screen_limma_hyperparams(
+  splineomics = splineomics,  # Replace with your SplineOmics object
+  datas = datas,  # Replace with your data list
+  datas_descr = datas_descr,  # Replace with your data descriptions
+  metas = metas,  # Replace with your metadata list
+  designs = designs,  # Replace with your design formulas
+  spline_test_configs = spline_test_configs,  # Replace with your spline test configurations
+  report_dir = report_dir,  # Replace with your report directory
+  adj_pthresholds = pthresholds  # Replace with your adjusted p-value thresholds
+)
+```
+
+```{r best spline params}
+spline_params <- list(
+  spline_type = c("n"),  # Natural splines for all levels
+  dof = c(2L)  # Degree of freedom of 2 for all levels
+)
+```
+
+```{r Update the SplineOmics object}
+splineomics <- SplineOmics::update_splineomics(
+  splineomics = splineomics,  # Replace with your SplineOmics object
+  data = data2,  # Replace with your data
+  meta = meta2,  # Replace with your metadata
+  design = "~ 1 + Phase*X + Reactor",  # Replace with your design formula
+  spline_params = spline_params  # Replace with your spline parameters
+)
+```
+
+```{r Run the limma spline analysis}
+splineomics <- SplineOmics::run_limma_splines(
+  splineomics = splineomics  # Replace with your SplineOmics object
+)
+```
+
+```{r Build limma report}
+report_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+plots <- SplineOmics::create_limma_report(
+  splineomics = splineomics,  # Replace with your SplineOmics object
+  report_dir = report_dir  # Replace with your report directory
+)
+```
+
+```{r Prepare inputs for the cluster_hits function}
+adj_pthresholds <- c(
+  0.05,  # Threshold for the first phase
+  0.05   # Threshold for the second phase
+)
+
+clusters <- list(
+  6L,  # Number of clusters for the first phase
+  3L   # Number of clusters for the second phase
+)
+
+plot_info <- list(  # For the spline plots
+  y_axis_label = "your_y_axis_label",  # Replace with your y-axis label
+  time_unit = "your_time_unit",  # Replace with your time unit
+  treatment_labels = c("your_treatment_label"),  # Replace with your treatment label
+  treatment_timepoints = c(your_treatment_timepoint)  # Replace with your treatment timepoint
+)
+
+gene_column_name <- "your_gene_column_name"  # Replace with your gene column name
+genes <- original_data[[gene_column_name]]
+```
+
+```{r Cluster the hits}
+report_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+clustering_results <- SplineOmics::cluster_hits(
+  splineomics = splineomics,  # Replace with your SplineOmics object
+  genes = genes,  # Replace with your genes
+  analysis_type = "time_effect",  # Replace with your analysis type
+  adj_pthresholds = adj_pthresholds,  # Replace with your adjusted p-value thresholds
+  clusters = clusters,  # Replace with your clusters
+  plot_info = plot_info,  # Replace with your plot information
+  report_dir = report_dir  # Replace with your report directory
+)
+```
+
+```{r Define which Enrichr databases to download}
+gene_set_lib <- c(
+  "Your_Gene_Set_1",  # Replace with your gene set library name
+  "Your_Gene_Set_2",  
+  "Your_Gene_Set_3", 
+)
+
+```
+
+```{r Download the Enrichr databases}
+output_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+SplineOmics::download_enrichr_databases(
+  gene_set_lib = gene_set_lib,  # Replace with your gene set library list
+  output_dir = output_dir  # Replace with your output directory
+)
+```
+
+```{r Prepare GSEA inputs}
+databases <- readr::read_tsv(
+  downloaded_dbs_filepath,
+  col_types = readr::cols()
+)
+
+clusterProfiler_params <- list(
+  adj_p_value = 0.05,  # Adjusted p-value threshold
+  pAdjustMethod = "BH",  # P-value adjustment method
+  minGSSize = 10,  # Minimum gene set size
+  maxGSSize = 500,  # Maximum gene set size
+  qvalueCutoff = 0.2  # Q-value cutoff
+)
+
+```
+
+```{r Run GSEA}
+report_dir <- here::here(
+  "your_results_directory",  # Replace with your results directory
+  "your_subdirectory"  # Replace with your subdirectory
+)
+
+result <- SplineOmics::create_gsea_report(
+  levels_clustered_hits = clustering_results$clustered_hits_levels,  # Replace with your clustered hits levels
+  genes = genes,  # Replace with your genes
+  databases = databases,  # Replace with your databases
+  params = clusterProfiler_params,  # Replace with your clusterProfiler parameters
+  report_info = report_info,  # Replace with your report information
+  report_dir = report_dir  # Replace with your report directory
+)
+```
