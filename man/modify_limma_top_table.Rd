@@ -17,6 +17,3 @@ A tibble with feature indices and names included.
 \description{
 Modifies the limma top table to include feature indices and names.
 }
-\seealso{
-\link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
-}

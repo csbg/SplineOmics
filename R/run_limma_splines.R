@@ -200,51 +200,86 @@ run_limma_splines <- function(
 #' @importFrom limma eBayes
 #' @importFrom limma topTable
 #' 
-between_level <- function(data, 
-                          meta, 
-                          design, 
-                          spline_params, 
-                          condition, 
-                          compared_levels,
-                          padjust_method, 
-                          feature_names) {
+between_level <- function(
+    data, 
+    meta, 
+    design, 
+    spline_params, 
+    condition, 
+    compared_levels,
+    padjust_method, 
+    feature_names
+    ) {
   
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
   
-  design_matrix <- design2design_matrix(meta = meta,
-                                        spline_params = spline_params,
-                                        level_index = 1,
-                                        design = design)
+  design_matrix <- design2design_matrix(
+    meta = meta,
+    spline_params = spline_params,
+    level_index = 1,
+    design = design
+    )
   
   fit <- limma::lmFit(data, design_matrix)
   fit <- limma::eBayes(fit)
 
-  factor_only_contrast_coeff <- paste0(condition, compared_levels[2])
-  condition_only <- limma::topTable(fit, coef = factor_only_contrast_coeff,
-                               adjust.method = padjust_method, number = Inf)
+  factor_only_contrast_coeff <- paste0(
+    condition,
+    compared_levels[2]
+    )
+  condition_only <- limma::topTable(
+    fit,
+    coef = factor_only_contrast_coeff,
+    adjust.method = padjust_method,
+    number = Inf
+    )
   
-  condition_only_resuls <- list(top_table = condition_only,
-                                fit = fit)
-  top_table_condition_only <- process_top_table(condition_only_resuls, 
-                                                feature_names)
+  condition_only_resuls <- list(
+    top_table = condition_only,
+    fit = fit
+    )
+  top_table_condition_only <- process_top_table(
+    condition_only_resuls, 
+    feature_names
+    )
   
   
-  num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
-  factor_time_contrast_coeffs <- paste0(condition, compared_levels[2], ":X", 
-                                        seq_len(num_matching_columns))
-  condition_time <- limma::topTable(fit, coef = factor_time_contrast_coeffs,
-                                    adjust.method = padjust_method,
-                                    number = Inf)
+  num_matching_columns <- sum(
+    grepl(
+      "^X\\d+$",
+      colnames(design_matrix)
+      )
+    )
   
-  condition_and_time_results <- list(top_table = condition_time,
-                                     fit = fit)
-  top_table_condition_and_time <- process_top_table(condition_and_time_results, 
-                                                    feature_names)
+  factor_time_contrast_coeffs <- paste0(
+    condition,
+    compared_levels[2],
+    ":X", 
+    seq_len(num_matching_columns)
+    )
   
-  list(condition_only = top_table_condition_only,
-       condition_time = top_table_condition_and_time)
+  condition_time <- limma::topTable(
+    fit,
+    coef = factor_time_contrast_coeffs,
+    adjust.method = padjust_method,
+    number = Inf
+    )
+  
+  condition_and_time_results <- list(
+    top_table = condition_time,
+    fit = fit
+    )
+  top_table_condition_and_time <- process_top_table(
+    condition_and_time_results, 
+    feature_names
+    )
+  
+  list(
+    condition_only = top_table_condition_only,
+    condition_time = top_table_condition_and_time
+    )
 }
 
 
@@ -429,8 +464,12 @@ process_within_level <- function(
   num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
   coeffs <- paste0("X", seq_len(num_matching_columns))
   
-  top_table <- limma::topTable(fit, adjust.method = padjust_method, 
-                               number = Inf, coef = coeffs)
+  top_table <- limma::topTable(
+    fit,
+    adjust.method = padjust_method, 
+    number = Inf,
+    coef = coeffs
+    )
 
   attr(top_table, "adjust.method") <- padjust_method
   
@@ -454,9 +493,6 @@ process_within_level <- function(
 #' @param feature_names A character vector of feature names.
 #'
 #' @return A tibble with feature indices and names included.
-#'
-#' @seealso
-#' \link[tidyr]{as_tibble}, \link[dplyr]{relocate}, \link[dplyr]{mutate}
 #' 
 #' @importFrom tidyr as_tibble
 #' @importFrom dplyr relocate last_col mutate
@@ -467,6 +503,8 @@ modify_limma_top_table <- function(
     ) {
 
   top_table <- tidyr::as_tibble(top_table, rownames = "feature_nr")
+  
+  feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
   
   # Convert feature_nr to integer
   top_table <- top_table %>% 

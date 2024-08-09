@@ -1,0 +1,127 @@
+---
+title: "Designing a Limma Design Formula"
+author: "Your Name"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Designing a Limma Design Formula}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Introduction
+
+The `limma` package is a powerful tool for analyzing gene expression
+data, particularly in the context of microarrays and RNA-seq. A critical
+part of any `limma` analysis is the design formula, which specifies the
+experimental conditions and contrasts that you are interested in. This
+vignette provides a guide on how to construct a `limma` design formula
+correctly, with examples and best practices.
+
+# Understanding the Design Matrix
+
+The design matrix is a crucial component in any differential expression
+analysis using `limma`. It defines the relationships between the samples
+and the experimental conditions (factors) under investigation. A
+well-constructed design matrix allows `limma` to correctly model the
+effects of these factors and estimate the differential expression.
+
+## Basic Design Formula
+
+In its simplest form, the design formula includes only one factor, such
+as treatment vs. control. If your experiment involves comparing two
+conditions (e.g., `treated` vs. `untreated`), you can create a design
+formula like this:
+
+``` r
+design <- model.matrix(~ 0 + condition, data = meta)
+```
+
+Here, condition is a factor variable in your metadata (meta) that
+represents the experimental groups.
+
+Important Points: The \~ 0 + condition syntax tells R to create a design
+matrix without an intercept (i.e., a matrix where each level of the
+factor condition is represented by its own column). This approach is
+helpful when you want to make direct comparisons between conditions.
+Including Multiple Factors If your experiment includes more than one
+factor, such as time points and treatments, you can include both in the
+design formula:
+
+``` r
+design <- model.matrix(~ 0 + treatment + time, data = meta)
+```
+
+This formula assumes that the effects of treatment and time are additive
+(no interaction). If you suspect that the interaction between treatment
+and time might be important, you can include an interaction term:
+
+``` r
+design <- model.matrix(~ 0 + treatment * time, data = meta)
+```
+
+Interaction Term: The treatment \* time term includes both the main
+effects of treatment and time and their interaction. Blocking Factors In
+some experiments, you might have technical or biological replicates, or
+other blocking factors (e.g., batch effects). You can include these
+blocking factors in your design formula:
+
+``` r
+design <- model.matrix(~ 0 + treatment + batch, data = meta)
+```
+
+This formula accounts for both treatment and batch effects, ensuring
+that your analysis is not confounded by batch effects.
+
+# Creating Contrasts
+
+After defining your design matrix, you will likely want to make specific
+comparisons between conditions. This is where contrasts come in. For
+example, to compare treated vs. untreated, you can define a contrast
+matrix:
+
+``` r
+contrast <- makeContrasts(
+  treated_vs_untreated = treatmenttreated - treatmentuntreated,
+  levels = design
+)
+```
+
+# Practical Example
+
+Let’s say you have an experiment with two treatments (A and B) and two
+time points (early and late). Your metadata might look like this:
+
+``` r
+meta <- data.frame(
+  sample = c("S1", "S2", "S3", "S4"),
+  treatment = factor(c("A", "A", "B", "B")),
+  time = factor(c("early", "late", "early", "late"))
+)
+```
+
+Your design formula would be:
+
+``` r
+design <- model.matrix(~ 0 + treatment * time, data = meta)
+```
+
+And a contrast to compare treatment A at the early time point against
+treatment B at the late time point would be:
+
+``` r
+contrast <- makeContrasts(
+  A_early_vs_B_late = (treatmentA:timeearly) - (treatmentB:timelate),
+  levels = design
+)
+```
+
+# Conclusion
+
+Constructing a correct limma design formula is crucial for accurate
+differential expression analysis. This vignette covered the basics of
+creating a design matrix and making contrasts for different experimental
+designs. With these guidelines, you should be able to set up your limma
+analysis effectively and get meaningful results from your data.

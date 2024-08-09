@@ -236,8 +236,10 @@ manage_gsea_level <- function(
 #'   name, full enrichment results, and raw enrichment results if available.}
 #' }
 #'
-process_result <- function(level_result,
-                           level_name) {
+process_result <- function(
+    level_result,
+    level_name
+    ) {
   
   result <- list()
   
@@ -440,8 +442,10 @@ check_clustered_hits <- function(levels_clustered_hits) {
 #' an error message if the vector does not meet the criteria, 
 #' including the first offending element and its index.
 #'
-check_genes <- function(genes,
-                        max_index_overall = NA) {
+check_genes <- function(
+    genes,
+    max_index_overall = NA
+    ) {
   
   if (!is.na(max_index_overall)) {
     if (length(genes) < max_index_overall) {
@@ -539,14 +543,24 @@ check_params <- function(params) {
   # Check for extra elements
   extra_params <- setdiff(names(params), names(required_params))
   if (length(extra_params) > 0) {
-    stop(paste("The list contains extra elements besides the allowed elements", 
-               "adj_p_value, pAdjustMethod, minGSSize, maxGSSize and", 
-               "qvalueCutoff: ",
-               paste(extra_params, collapse = ", ")), call. = FALSE)
+    stop(paste(
+      "The list contains extra elements besides the allowed elements", 
+      "adj_p_value, pAdjustMethod, minGSSize, maxGSSize and", 
+      "qvalueCutoff: ",
+      paste(extra_params, collapse = ", ")
+      ), call. = FALSE)
   }
   
-  valid_adj_p_value_methods <- c("holm", "hochberg", "hommel", "bonferroni",
-                                 "BH", "BY", "fdr", "none")
+  valid_adj_p_value_methods <- c(
+    "holm",
+    "hochberg",
+    "hommel",
+    "bonferroni",
+    "BH",
+    "BY",
+    "fdr", 
+    "none"
+    )
   
   # Check for required elements and their data types
   for (param in names(params)) {
@@ -576,7 +590,12 @@ check_params <- function(params) {
              expected_type, ".", call. = FALSE)
       }
     } else {
-      stop("Unexpected element '", param, "' in the list.", call. = FALSE)
+      stop(
+        "Unexpected element '",
+        param,
+        "' in the list.",
+        call. = FALSE
+        )
     }
     
     if (param == 'pAdjustMethod') {
@@ -758,17 +777,21 @@ create_gsea_report_level <- function(
 #' @param toc_style The CSS style for the TOC entries.
 #'
 #' @return A list with updated HTML content and TOC.
-generate_section_content <- function(section_info,
-                                     index,
-                                     toc,
-                                     html_content,
-                                     section_header_style,
-                                     toc_style) {
+generate_section_content <- function(
+    section_info,
+    index,
+    toc,
+    html_content,
+    section_header_style,
+    toc_style
+    ) {
   
-  section_header <- sprintf("<h2 style='%s' id='section%d'>%s</h2>",
-                            section_header_style,
-                            index,
-                            section_info$header_name)
+  section_header <- sprintf(
+    "<h2 style='%s' id='section%d'>%s</h2>",
+    section_header_style,
+    index,
+    section_info$header_name
+    )
   
   if (any(is.na(section_info$full_enrich_results))) {
     
@@ -779,55 +802,82 @@ generate_section_content <- function(section_info,
       "</p>"
     )
     
-    html_content <- paste(html_content,
-                          section_header,
-                          no_results_message,
-                          sep = "\n")
+    html_content <- paste(
+      html_content,
+      section_header,
+      no_results_message,
+      sep = "\n"
+      )
     
-    toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
-                         toc_style, index, section_info$header_name)
+    toc_entry <- sprintf(
+      "<li style='%s'><a href='#section%d'>%s</a></li>",
+      toc_style,
+      index,
+      section_info$header_name
+      )
     
-    toc <- paste(toc, toc_entry, sep = "\n")
+    toc <- paste(
+      toc,
+      toc_entry,
+      sep = "\n"
+      )
     
-    return(list(html_content = html_content,
-           toc = toc))
+    return(list(
+      html_content = html_content,
+      toc = toc
+      ))
   }
   
-  full_enrich_results_header <- paste0("<h3 style='font-size: 30px;", 
-                                       "font-weight: bold; color: #333;", 
-                                       "'>Enrichment Results</h3>")
+  full_enrich_results_header <- paste0(
+    "<h3 style='font-size: 30px; font-weight: bold; color: #333;", 
+    "'>Enrichment Results</h3>")
   
   full_enrich_results_html <- 
-    knitr::kable(section_info$full_enrich_results, 
-                 format = "html", 
-                 table.attr = 
-                   "style='width:100%;border-collapse:collapse;'", 
-                 row.names = FALSE)
+    knitr::kable(
+      section_info$full_enrich_results, 
+      format = "html", 
+      table.attr = "style='width:100%;border-collapse:collapse;'", 
+      row.names = FALSE
+      )
   
-  raw_enrich_results_header <- paste0("<h3 style='font-size: 30px;", 
-                                      "font-weight: bold; color: #333;", 
-                                      "'>Count smaller 2 Enrichment ", 
-                                      "Results</h3>")
+  raw_enrich_results_header <- paste0(
+    "<h3 style='font-size: 30px; font-weight: bold; color: #333;", 
+    "'>Count smaller 2 Enrichment Results</h3>")
   
-  base64_df <- sprintf('<a href="%s" download="count2small_results.xlsx">
-                    <button>Download count2small_results.xlsx</button></a>', 
-                       encode_df_to_base64(section_info$raw_enrich_results,
-                                           "create_gsea_report"))
+  base64_df <- sprintf(
+  '<a href="%s" download="count2small_results.xlsx">
+  <button>Download count2small_results.xlsx</button></a>', 
+  encode_df_to_base64(
+    section_info$raw_enrich_results,
+    "create_gsea_report"
+    )
+  )
   
-  html_content <- paste(html_content, 
-                        section_header, 
-                        full_enrich_results_header, 
-                        full_enrich_results_html, 
-                        raw_enrich_results_header, 
-                        base64_df, 
-                        sep = "\n")
+  html_content <- paste(
+    html_content, 
+    section_header, 
+    full_enrich_results_header, 
+    full_enrich_results_html, 
+    raw_enrich_results_header, 
+    base64_df, 
+    sep = "\n"
+    )
   
-  toc_entry <- sprintf("<li style='%s'><a href='#section%d'>%s</a></li>",
-                       toc_style, index, section_info$header_name)
-  toc <- paste(toc, toc_entry, sep = "\n")
+  toc_entry <- sprintf(
+    "<li style='%s'><a href='#section%d'>%s</a></li>",
+    toc_style,
+    index, section_info$header_name
+    )
+  toc <- paste(
+    toc,
+    toc_entry,
+    sep = "\n"
+    )
   
-  list(html_content = html_content,
-       toc = toc)
+  list(
+    html_content = html_content,
+    toc = toc
+    )
 }
 
 
@@ -925,12 +975,14 @@ dbs_to_term2genes <- function(databases) {
 #'
 #' @return A list of data frames containing processed enrichment results.
 #'
-process_enrichment_results <- function(all_db_results,
-                                       enrichment_results,
-                                       adjP_threshold,
-                                       column_name,
-                                       count_column_name,
-                                       background = FALSE) {
+process_enrichment_results <- function(
+    all_db_results,
+    enrichment_results,
+    adjP_threshold,
+    column_name,
+    count_column_name,
+    background = FALSE
+    ) {
   
   column_indices <- list(2, 6, 3, 4, 9)
   
@@ -1115,7 +1167,11 @@ make_enrich_dotplot <- function(
 #'                   unite
 #' @importFrom stats na.omit
 #' 
-prepare_plot_data <- function(enrichments_list, databases) {
+prepare_plot_data <- function(
+    enrichments_list,
+    databases
+    ) {
+  
   plot_data <-
     enrichments_list %>%
     purrr::set_names(databases) %>%

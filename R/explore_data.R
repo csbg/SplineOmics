@@ -144,9 +144,11 @@ explore_data <- function(
 #'   corresponding plots.}
 #' }
 #' 
-generate_explore_plots <- function(data,
-                                   meta,
-                                   condition) {
+generate_explore_plots <- function(
+    data,
+    meta,
+    condition
+    ) {
   
   meta[[condition]] <- as.factor(meta[[condition]])
   
@@ -263,8 +265,8 @@ build_explore_data_report <- function(
     "Time Series Analysis"
     )
 
-  major_header_style <- "font-size: 6em; font-family: Arial, sans-serif;
-  display: inline-block;"
+  major_header_style <- 
+    "font-size: 6em; font-family: Arial, sans-serif; display: inline-block;"
   
   toc_index <- 0
   toc_index_memory <- toc_index
@@ -277,9 +279,11 @@ build_explore_data_report <- function(
       
       toc_index <- toc_index + 1
       
-      if (toc_index == 1 ||   # positions of major headers.
-          toc_index == 3 ||
-          toc_index == 7) {
+      if (
+        toc_index == 1 ||   # positions of major headers.
+        toc_index == 3 ||
+        toc_index == 7
+        ) {
 
         major_header_index <- major_header_index + 1
         
@@ -373,6 +377,7 @@ build_explore_data_report <- function(
     html_content <- paste(
       html_content,
       img_tag,
+      "<hr>",  # Add horizontal line after each plot
       sep = "\n"
       )
     pb$tick()
@@ -406,9 +411,11 @@ build_explore_data_report <- function(
 #' @importFrom ggplot2 ggplot geom_density ggtitle aes theme
 #' @importFrom reshape2 melt
 #'
-make_density_plots <- function(data, 
-                               meta, 
-                               condition) {
+make_density_plots <- function(
+    data, 
+    meta, 
+    condition
+    ) {
   
   custom_theme <- ggplot2::theme(
     panel.background = ggplot2::element_rect(fill = "white", color = "white"),
@@ -476,9 +483,11 @@ make_density_plots <- function(data,
 #' @importFrom ggplot2 ggplot aes geom_violin theme labs
 #' @importFrom grid unit
 #' 
-make_violin_box_plots <- function(data,
-                                  meta,
-                                  condition) {
+make_violin_box_plots <- function(
+    data,
+    meta,
+    condition
+    ) {
   
   custom_theme <- ggplot2::theme(
     panel.background = ggplot2::element_rect(fill = "white", color = "white"),
@@ -537,9 +546,11 @@ make_violin_box_plots <- function(data,
 #' @return A ggplot2 object showing the distribution of mean correlations
 #'  with time.
 #'  
-plot_mean_correlation_with_time <- function(data,
-                                            meta,
-                                            condition) {
+plot_mean_correlation_with_time <- function(
+    data,
+    meta,
+    condition
+    ) {
 
   plot_list <- list()
   
@@ -599,9 +610,11 @@ plot_mean_correlation_with_time <- function(data,
 #' @return A list of ggplot2 objects, each showing the distribution of first 
 #' lag autocorrelation coefficients for one condition.
 #'
-plot_first_lag_autocorrelation <- function(data,
-                                           meta, 
-                                           condition) {
+plot_first_lag_autocorrelation <- function(
+    data,
+    meta, 
+    condition
+    ) {
   
   # Initialize a list to store the plots
   plot_list <- list()
@@ -675,9 +688,11 @@ plot_first_lag_autocorrelation <- function(data,
 #' @return A list of ggplot2 objects, each showing the distribution of lag-1 
 #' differences for one condition.
 #'
-plot_lag1_differences <- function(data, 
-                                  meta, 
-                                  condition) {
+plot_lag1_differences <- function(
+    data, 
+    meta, 
+    condition
+    ) {
   
   plot_list <- list()
   
@@ -709,9 +724,15 @@ plot_lag1_differences <- function(data,
     )
     
     # Generate the plot
-    p <- ggplot2::ggplot(diff_data, aes(x = Mean_Lag1_Difference)) +
-      ggplot2::geom_histogram(binwidth = 0.05, fill = "#ff7f0e",
-                              color = "black") +
+    p <- ggplot2::ggplot(
+      diff_data,
+      aes(x = Mean_Lag1_Difference)
+      ) +
+      ggplot2::geom_histogram(
+        binwidth = 0.005,
+        fill = "#ff7f0e",
+        color = "black"
+        ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
         plot.title = ggplot2::element_text(size = 13),         
@@ -720,13 +741,16 @@ plot_lag1_differences <- function(data,
         axis.text.x = ggplot2::element_text(size = 7),       
         axis.text.y = ggplot2::element_text(size = 7)        
       ) +
-      ggplot2::labs(title = paste("Level:", cond),
-                    x = "Mean Normalized Absolute Lag-1 Difference",
-                    y = "Count of Features",
-                    subtitle = 
-                      paste("Mean:", 
-                            round(mean(mean_lag1_diff, na.rm = TRUE), 3), 
-                            "SD:", round(sd(mean_lag1_diff, na.rm = TRUE), 3)))
+      ggplot2::labs(
+        title = paste("Level:", cond),
+        x = "Mean Normalized Absolute Lag-1 Difference",
+        y = "Count of Features",
+        subtitle = paste(
+          "Mean:", 
+          round(mean(mean_lag1_diff, na.rm = TRUE), 3), 
+          "SD:", round(sd(mean_lag1_diff, na.rm = TRUE), 3)
+          )
+        )
     
     plot_list[[cond]] <- p
   }
@@ -756,9 +780,11 @@ plot_lag1_differences <- function(data,
 #' @return A list of ggplot2 objects, each showing the distribution of CVs for
 #'  one condition.
 #'
-plot_cv <- function(data, 
-                    meta, 
-                    condition) {
+plot_cv <- function(
+    data, 
+    meta, 
+    condition
+    ) {
   
   plot_list <- list()
   
@@ -823,9 +849,11 @@ plot_cv <- function(data,
 #' theme
 #' @importFrom ggrepel geom_text_repel
 #' 
-make_pca_plot <- function(data, 
-                          meta, 
-                          condition) {
+make_pca_plot <- function(
+    data, 
+    meta, 
+    condition
+    ) {
   
   pc <- stats::prcomp(t(data))
   pca_df <- data.frame(PC1 = pc$x[, 1], PC2 = pc$x[, 2])
@@ -880,34 +908,48 @@ make_pca_plot <- function(data,
 #' @importFrom ggplot2 ggplot geom_point ggtitle theme_minimal
 #' @importFrom ggrepel geom_text_repel
 #' 
-make_mds_plot <- function(data,
-                          meta,
-                          condition) {
+make_mds_plot <- function(
+    data,
+    meta,
+    condition
+    ) {
 
-  mds <- limma::plotMDS(x = data, plot = FALSE)
+  mds <- limma::plotMDS(
+    x = data,
+    plot = FALSE
+    )
   
   # Extract MDS coordinates
-  mds_df <- data.frame(Dim1 = mds$x, 
-                       Dim2 = mds$y, 
-                       Labels = colnames(data))
+  mds_df <- data.frame(
+    Dim1 = mds$x, 
+    Dim2 = mds$y, 
+    Labels = colnames(data)
+    )
   
   mds_df$Levels <- meta[[condition]]
   
   # Generate the MDS plot using ggplot2 and ggrepel
-  mds_plot <- ggplot2::ggplot(mds_df, 
-                              ggplot2::aes(x = .data$Dim1, 
-                                           y = .data$Dim2, 
-                                           label = .data$Labels,
-                                           color = .data$Levels)) +
+  mds_plot <- ggplot2::ggplot(
+    mds_df, 
+    ggplot2::aes(
+      x = .data$Dim1, 
+      y = .data$Dim2, 
+    label = .data$Labels,
+    color = .data$Levels)
+    ) +
     ggplot2::geom_point() +
-    ggrepel::geom_text_repel(box.padding = 0.35, 
-                             point.padding = 0.5, 
-                             max.overlaps = Inf,
-                             size = 2) +
+    ggrepel::geom_text_repel(
+      box.padding = 0.35, 
+      point.padding = 0.5, 
+      max.overlaps = Inf,
+      size = 2
+      ) +
     ggplot2::theme_minimal() +
-    ggplot2::labs(x = "Dimension 1",
-                  y = "Dimension 2",
-                  color = condition) +
+    ggplot2::labs(
+      x = "Dimension 1",
+      y = "Dimension 2",
+      color = condition
+      ) +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 }
 
@@ -934,9 +976,11 @@ make_mds_plot <- function(data,
 #' @importFrom ComplexHeatmap Heatmap
 #' @importFrom grDevices colorRampPalette
 #' 
-make_correlation_heatmaps <- function(data, 
-                                      meta, 
-                                      condition) {
+make_correlation_heatmaps <- function(
+    data, 
+    meta, 
+    condition
+    ) {
   
   heatmaps <- list()
   heatmaps_sizes <- c()
@@ -952,9 +996,10 @@ make_correlation_heatmaps <- function(data,
     breaks <- seq(min(corr_all, na.rm = TRUE), 
                   max(corr_all, na.rm = TRUE), length.out = 100)
     col_fun <- 
-      circlize::colorRamp2(breaks, 
-                           colorRampPalette(c("blue", "white", "red")
-                           )(length(breaks)))
+      circlize::colorRamp2(
+        breaks, 
+        colorRampPalette(c("blue", "white", "red"))(length(breaks))
+        )
     
     heatmap_all <- ComplexHeatmap::Heatmap(
       corr_all,
@@ -998,9 +1043,11 @@ make_correlation_heatmaps <- function(data,
                         max(corr_level, na.rm = TRUE), length.out = 100)
     
     col_fun_level <- 
-      circlize::colorRamp2(breaks_level, 
-                           colorRampPalette(c("blue", "white", "red")
-                           )(length(breaks_level)))
+      circlize::colorRamp2(
+        breaks_level, 
+        colorRampPalette(c("blue", "white", "red")
+        )(length(breaks_level))
+        )
     
     # Create the correlation heatmap for the current level
     heatmap_level <- ComplexHeatmap::Heatmap(
@@ -1080,20 +1127,25 @@ make_tsne_plot <- function(
   )
   
   # Create a data frame with t-SNE results for ggplot2
-  tsne_df <- data.frame(tSNE1 = tsne_result$Y[, 1],
-                        tSNE2 = tsne_result$Y[, 2],
-                        condition = meta[[condition]])
+  tsne_df <- data.frame(
+    tSNE1 = tsne_result$Y[, 1],
+    tSNE2 = tsne_result$Y[, 2],
+    condition = meta[[condition]]
+    )
   
-  tsne_plot <- ggplot2::ggplot(tsne_df,
-                               ggplot2::aes(x = tSNE1,
-                                            y = tSNE2,
-                                            color = condition)) +
+  tsne_plot <- ggplot2::ggplot(
+    tsne_df,
+    ggplot2::aes(x = tSNE1,
+                y = tSNE2,
+                color = condition)
+    ) +
     ggplot2::geom_point(size = 2) +
     ggplot2::xlab("t-SNE1") +
     ggplot2::ylab("t-SNE2") +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.grid.major = ggplot2::element_line(color = "grey80"),
-                   panel.grid.minor = ggplot2::element_line(color = "grey90")) +
+    ggplot2::theme(
+      panel.grid.major = ggplot2::element_line(color = "grey80"),
+      panel.grid.minor = ggplot2::element_line(color = "grey90")) +
     ggplot2::labs(color = condition)
 }
 

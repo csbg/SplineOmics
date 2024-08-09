@@ -488,6 +488,36 @@ generate_and_write_html <- function(
 }
 
 
+#' Read and split section texts from a file
+#'
+#' @description
+#' This internal function reads the contents of a text file located in the 
+#' `inst/descriptions` directory of the package and splits it into individual 
+#' sections based on a specified delimiter.
+#'
+#' @param filename A character string specifying the name of the file 
+#' containing the section texts. The file should be located in the 
+#' `inst/descriptions` directory of the package.
+#'
+#' @return A character vector where each element is a section of the text 
+#' split by the delimiter `|`.
+#' 
+read_section_texts <- function(filename) {
+  
+  file_path <- system.file(
+    "descriptions",
+    filename,
+    package = "SplineOmics"
+    )
+  content <- readLines(
+    file_path,
+    warn = FALSE
+    ) %>% paste(collapse = " ")
+  # Split the content by the delimiter
+  strsplit(content, "\\|")[[1]]
+}
+
+
 # Level 2 internal functions ---------------------------------------------------
 
 
@@ -670,26 +700,7 @@ get_header_section <- function(
       '</div>'
       ),
     "create_gsea_report" = '<p style="font-size: 2em;"></p>')
-  
-  # hotkeys_box <- paste(
-  #   '<div style="border: 2px solid #00f; padding: 15px;', 
-  #   'position: relative; margin-bottom: 20px;', 
-  #   'background-color: #eef; font-family: Arial,', 
-  #   'sans-serif; width: 65%;">',
-  #   '<div style="position: absolute; top: -5px;', 
-  #   'right: -65px; transform: rotate(45deg);', 
-  #   'background-color: #00f; color: #fff;', 
-  #   'padding: 10px 15px; font-size: 2em;', 
-  #   'font-weight: bold; z-index: 1;">Hotkeys</div>',
-  #   '<p style="font-size: 2em;">',
-  #   "To jump to the <b>Table of Contents</b>, press '<b>t</b>'. 📑<br>",
-  #   "To <b>download</b> all embedded files as a <b>zip file</b>, press", 
-  #   "'<b>d</b>'. 📥<br>",
-  #   "To write a <b>email</b> to the contact info, press",
-  #   "'<b>e</b>'. ✉️<br>",
-  #   '</p>',
-  #   '</div>'
-  # )
+
   hotkeys_box <- paste(
     '<div style="border: 2px solid #00f; padding: 15px;',
     'position: relative; margin-bottom: 20px;',
@@ -743,8 +754,10 @@ get_header_section <- function(
 #' 
 #' @importFrom openxlsx createWorkbook addWorksheet writeData saveWorkbook
 #' 
-encode_df_to_base64 <- function(df,
-                                report_type = NA) {
+encode_df_to_base64 <- function(
+    df,
+    report_type = NA
+    ) {
   
   temp_file <- tempfile(fileext = ".xlsx")
   wb <- openxlsx::createWorkbook()
@@ -752,8 +765,15 @@ encode_df_to_base64 <- function(df,
   if (is.data.frame(df)) {
     # Convert single dataframe to Excel with one sheet
     sheet_name <- "Sheet1"
-    openxlsx::addWorksheet(wb, sheet_name)
-    openxlsx::writeData(wb, sheet = sheet_name, df)
+    openxlsx::addWorksheet(
+      wb,
+      sheet_name
+      )
+    openxlsx::writeData(
+      wb,
+      sheet = sheet_name,
+      df
+      )
   } else if (is.list(df) && all(sapply(df, is.data.frame))) {
     # Convert list of dataframes to Excel with multiple sheets
     
@@ -768,17 +788,32 @@ encode_df_to_base64 <- function(df,
     
     
     for (i in seq_along(sheet_names)) {
-      openxlsx::addWorksheet(wb, sheet_names[i])
-      openxlsx::writeData(wb, sheet = sheet_names[i], df[[i]])
+      openxlsx::addWorksheet(
+        wb,
+        sheet_names[i]
+        )
+      openxlsx::writeData(
+        wb,
+        sheet = sheet_names[i],
+        df[[i]]
+        )
     }
   } else {
     stop("Input must be a dataframe or a list of dataframes.")
   }
   
-  openxlsx::saveWorkbook(wb, temp_file, overwrite = TRUE)
+  openxlsx::saveWorkbook(
+    wb,
+    temp_file,
+    overwrite = TRUE
+    )
   
   # Read the file and encode to base64
-  file_content <- readBin(temp_file, "raw", file.info(temp_file)$size)
+  file_content <- readBin(
+    temp_file, 
+    "raw",
+    file.info(temp_file)$size
+    )
   base64_file <- base64enc::base64encode(file_content)
   
   # Determine MIME type
@@ -786,7 +821,12 @@ encode_df_to_base64 <- function(df,
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   
   # Create the data URI scheme
-  data_uri <- paste0("data:", mime_type, ";base64,", base64_file)
+  data_uri <- paste0(
+    "data:",
+    mime_type,
+    ";base64,",
+    base64_file
+    )
   
   # Remove the temporary file
   unlink(temp_file)
@@ -853,8 +893,10 @@ plot2base64 <- function(
   svg_string <- paste(svg_content, collapse = "\n")
   
   # Encode the SVG content as base64
-  svg_base64 <- base64enc::dataURI(charToRaw(svg_string),
-                                   mime = "image/svg+xml")
+  svg_base64 <- base64enc::dataURI(
+    charToRaw(svg_string),
+    mime = "image/svg+xml"
+    )
   
   # Delete the temporary SVG file
   unlink(img_file)
@@ -999,7 +1041,7 @@ process_plots <- function(
       )
       
       grid_content <- paste0(grid_content, '</div>')
-      
+
       # Add a horizontal line after each plot
       grid_content <- paste0(
         grid_content,

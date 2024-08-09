@@ -27,6 +27,9 @@ WORKDIR /app
 # Install renv
 RUN R -e "install.packages('renv')"
 
+# Install important R packages that are not dependencies of the SplineOmics package
+RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))"
+
 # Copy the renv lockfile into the container
 COPY ./SplineOmics/renv.lock /renv/renv.lock
 

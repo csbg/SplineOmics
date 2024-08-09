@@ -25,6 +25,7 @@ The R package `SplineOmics` finds the significant features (hits) of time-series
 -   [▶️ Usage](#-usage)
     -   [Tutorial](#-tutorial)
     -   [Functions in Depth](#-functions-in-depth)
+    -   [Transcriptomics and glycan fractional abundance data](#transcriptomics-and-glycan-fractional-abundance data)
 -   [📦 Dependencies](#-dependencies)
 -   [📚 Further Reading](#-further-reading)
 -   [❓ Getting Help](#-getting-help)
@@ -76,7 +77,7 @@ With `SplineOmics`, you can:
 
 -   **Generate reports:**
 
-    Automatically generate reports to showcase all results.
+    Automatically generate reports to showcase all results. See an example report of the cluster_hits() function [here](./inst/reports/cluster_hits_report.html)
 
 ## 🔧 Installation
 
@@ -176,7 +177,8 @@ For instructions on downloading the image of the `SplineOmics` package and runni
 
 ### Tutorial
 
-[This tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html) covers a real CHO cell time-series proteomics example from start to end.
+[This tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html) 
+covers a real CHO cell time-series proteomics example from start to end.
 
 To open an R Markdown file of the **tutorial** in `RStudio`, run:
 
@@ -196,16 +198,20 @@ open_template()
 
 A detailed description of all arguments and outputs of the available package functions can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
+### Design limma design formula
+
+A quick guide on how to design a limma design formula can be found 
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
+
 ### Transcriptomics and glycan fractional abundance data
 
-To preprocess the glycan fractional abundance data matrix, you need to apply the centered log ratio (CLR) transformation using the `clr` function from the `compositions` package. This transformation is essential for converting the compositional data into a form suitable for multivariate analysis.
+To preprocess the glycan fractional abundance data matrix, were each row is a type of glycan and the columns are the timepoints, you need to apply the centered log ratio (CLR) transformation using the `clr` function from the `compositions` package. This transformation is essential for converting the compositional data into a form suitable for multivariate analysis.
 
 ``` r
 library(compositions)
 clr_transformed_data <- clr(data_matrix)
 # use clr_transformed_data as SplineOmics input
 ```
-
 
 ## 📦 Dependencies
 
