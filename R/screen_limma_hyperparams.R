@@ -329,6 +329,7 @@ plot_limma_combos_results <- function(
           )
       )
   )
+  return(combo_pair_results)
 }
 
 
@@ -347,10 +348,12 @@ plot_limma_combos_results <- function(
 #' @importFrom progress progress_bar
 #' @importFrom purrr imap
 #'                  
-generate_reports <- function(combo_pair_plots, 
-                             report_info,
-                             report_dir,
-                             timestamp) {
+generate_reports <- function(
+    combo_pair_plots, 
+    report_info,
+    report_dir,
+    timestamp
+    ) {
   
   print("Building .html reports for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pair_plots)
@@ -383,25 +386,34 @@ generate_reports <- function(combo_pair_plots,
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling
 #'                       
-generate_reports_meta <- function(datas_descr, 
-                                  designs, 
-                                  modes, 
-                                  spline_test_configs,
-                                  report_dir,
-                                  timestamp) {
+generate_reports_meta <- function(
+    datas_descr, 
+    designs, 
+    modes, 
+    spline_test_configs,
+    report_dir,
+    timestamp
+    ) {
   
   formatted_spline_configs <- flatten_spline_configs(spline_test_configs)
   
   # Combine the hyperparameters and their descriptions into two vectors
-  hyperparameters <- c(paste0("Data_", seq_along(datas_descr)), 
-                       paste0("Design_", seq_along(designs)),
-                       paste0("SConfig_", seq_along(formatted_spline_configs)))
-  descriptions <- c(datas_descr, paste(designs, "(mode:", modes, ")"), 
-                    unlist(formatted_spline_configs))
+  hyperparameters <- c(
+    paste0("Data_", seq_along(datas_descr)), 
+    paste0("Design_", seq_along(designs)),
+    paste0("SConfig_", seq_along(formatted_spline_configs))
+    )
+  descriptions <- c(
+    datas_descr,
+    paste(designs, "(mode:", modes, ")"), 
+    unlist(formatted_spline_configs)
+    )
   
-  table_df <- data.frame(hyperparameter = hyperparameters, 
-                         description = descriptions, 
-                         stringsAsFactors = FALSE)
+  table_df <- data.frame(
+    hyperparameter = hyperparameters, 
+    description = descriptions, 
+    stringsAsFactors = FALSE
+    )
   
   filename <- sprintf("hyperparams_screen_meta_table_%s.html", timestamp)
   file_path <- here::here(report_dir, filename)
@@ -425,16 +437,21 @@ generate_reports_meta <- function(datas_descr,
   "
   
   # Generate the HTML table with custom CSS for larger font size and save it
-  html_table <- 
-    paste0(custom_css, 
-           knitr::kable(table_df, format = "html", escape = FALSE) %>% 
-             kableExtra::kable_styling(
-               bootstrap_options = c("striped", "hover")))
+  html_table <- paste0(
+    custom_css, 
+    knitr::kable(table_df, format = "html", escape = FALSE) %>% 
+     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    )
   
-  writeLines(html_table, con = file_path)
+  writeLines(
+    html_table,
+    con = file_path
+    )
   
-  cat("Meta table for the limma hyperparameter screen reports saved to:",
-      file_path, "\n")
+  cat(
+    "Meta table for the limma hyperparameter screen reports saved to:",
+    file_path, "\n"
+    )
 }
 
 
@@ -490,8 +507,10 @@ check_datas_descr <- function(datas_descr) {
 #' \code{\link{check_spline_type_params}}, 
 #' \code{\link{check_max_and_min_dof}}
 #' 
-check_spline_test_configs <- function(spline_test_configs, 
-                                      metas) {
+check_spline_test_configs <- function(
+    spline_test_configs, 
+    metas
+    ) {
   
   check_colums_spline_test_configs(spline_test_configs)
   
@@ -1168,6 +1187,7 @@ create_spline_params <- function(
     num_levels, 
     mode
     )
+  return(result)
 }
 
 
@@ -1491,7 +1511,10 @@ build_hyperparams_screen_report <- function(
     "Spline Curves"
     )
   
-  section_texts <- get_hyperparams_screen_plots_explanations()
+  # section_texts <- get_hyperparams_screen_plots_explanations()
+  section_texts <- read_section_texts(
+    "screen_hyperparams_plot_explanations.txt"
+    )
   
   nr_of_sections <- length(headers)
   
@@ -1538,52 +1561,4 @@ build_hyperparams_screen_report <- function(
     report_info = report_info,
     output_file_path = output_file_path
   )
-}
-
-
-# Level 4 internal functions ---------------------------------------------------
-
-
-#' Get Explanations for Hyperparameter Screen Plots
-#'
-#' @description
-#' This function provides textual explanations for various hyperparameter
-#' screen plots used in the analysis. These explanations include descriptions
-#' of the 'Venn-Heatmap' and bar plots, as well as details on the spline
-#' curves shown for hits and non-significant features.
-#' 
-get_hyperparams_screen_plots_explanations <- function() {
-  
-  section_texts <- c("The 'Venn-Heatmap' is inspired from a Venn-diagram, in
-                     the sense two results are shown in distinct colors and
-                     the overlaps between the results are shown with the mix of
-                     the two colors. Every row in the 'Venn-Heatmap' is a 
-                     feature that is a hit for at least one combination of 
-                     hyperparameters. Every column is a combination of the
-                     'internal' hyperparameters. By looking at this, one can
-                     see how many and which hits each 'internal' hyperparameter
-                     combo delivered for the two combinations of 'outer' 
-                     hyperparameters.",
-                     
-                     "The 'Venn-Heatmap' is inspired from a Venn-diagram, in
-                     the sense two results are shown in distinct colors and
-                     the overlaps between the results are shown with the mix of
-                     the two colors. Every row in the 'Venn-Heatmap' is a 
-                     feature that is a hit for at least one combination of 
-                     hyperparameters. Every column is a combination of the
-                     'internal' hyperparameters. By looking at this, one can
-                     see how many and which hits each 'internal' hyperparameter
-                     combo delivered for the two combinations of 'outer' 
-                     hyperparameters.",
-                     
-                     "The barplots show how many hits each 'internal' 
-                     hyperparameter combo delivered for the two combinations of
-                     'outer' hyperparameters.",
-                     
-                     "In this section, the spline curves with the data points
-                     for maximally 6 hits and 6 random non-significant features
-                     are shown for each combo of hyperparameters. This maily
-                     allows to identify the spline parameters that lead to nice
-                     fits (not overfitting == curves too wiggly) and not 
-                     underfitting (curves not matching pattern complexity)")
 }

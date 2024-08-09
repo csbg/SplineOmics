@@ -1,0 +1,8 @@
+The 'Venn-Heatmap' is inspired from a Venn-diagram, in the sense two results are shown in distinct colors and the overlaps between the results are shown with the mix of the two colors. Every row in the 'Venn-Heatmap' is a feature that is a hit for at least one combination of hyperparameters. Every column is a combination of the 'internal' hyperparameters. By looking at this, one can see how many and which hits each 'internal' hyperparameter combo delivered for the two combinations of 'outer' hyperparameters.|
+
+This is the same venn-heatmap as above, but in a format long enough to see all details.|
+
+The barplots show how many hits each 'internal' hyperparameter combo delivered for the two combinations of 'outer' hyperparameters.|
+
+In this section, the spline curves with the data points for maximally 6 hits and 6 random non-significant features are shown for each combo of hyperparameters. This mainly allows to identify the spline parameters that lead to nice fits (not overfitting == curves too wiggly) and not underfitting (curves not matching pattern complexity)
+

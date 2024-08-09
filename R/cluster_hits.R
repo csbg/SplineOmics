@@ -139,25 +139,23 @@ cluster_hits <- function(
     )
   }
   
-  within_level_top_tables <-
-    filter_top_tables(
-      top_tables = top_tables,
-      adj_pthresholds = adj_pthresholds,
-      meta = meta,
-      condition = condition
-      )
+  within_level_top_tables <- filter_top_tables(
+    top_tables = top_tables,
+    adj_pthresholds = adj_pthresholds,
+    meta = meta,
+    condition = condition
+    )
 
   huge_table_user_prompter(within_level_top_tables)
 
-  all_levels_clustering <-
-    perform_clustering(
-      top_tables = within_level_top_tables,
-      clusters = clusters,
-      meta = meta,
-      condition = condition,
-      spline_params = spline_params,
-      mode = mode
-      )
+  all_levels_clustering <- perform_clustering(
+    top_tables = within_level_top_tables,
+    clusters = clusters,
+    meta = meta,
+    condition = condition,
+    spline_params = spline_params,
+    mode = mode
+    )
 
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
@@ -168,25 +166,24 @@ cluster_hits <- function(
     )
 
   if (report) {
-    plots <-
-      make_clustering_report(
-        all_levels_clustering = all_levels_clustering,
-        condition = condition,
-        data = data,
-        meta = meta,
-        annotation = annotation,
-        spline_params = spline_params,
-        adj_pthresholds = adj_pthresholds,
-        report_dir = report_dir,
-        mode = mode,
-        report_info = report_info,
-        design = design,
-        meta_batch_column = meta_batch_column,
-        meta_batch2_column = meta_batch2_column,
-        plot_info = plot_info,
-        analysis_type = analysis_type,
-        feature_name_columns = feature_name_columns
-        )
+    plots <- make_clustering_report(
+      all_levels_clustering = all_levels_clustering,
+      condition = condition,
+      data = data,
+      meta = meta,
+      annotation = annotation,
+      spline_params = spline_params,
+      adj_pthresholds = adj_pthresholds,
+      report_dir = report_dir,
+      mode = mode,
+      report_info = report_info,
+      design = design,
+      meta_batch_column = meta_batch_column,
+      meta_batch2_column = meta_batch2_column,
+      plot_info = plot_info,
+      analysis_type = analysis_type,
+      feature_name_columns = feature_name_columns
+      )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
@@ -315,9 +312,11 @@ huge_table_user_prompter <- function(tables) {
     if (nrow(tables[[i]]) > 500) {
       # Prompt the user for input
       while (TRUE) {
-        user_input <- readline(prompt = paste("The table", names(tables)[i], 
-                                              "has more than 500 rows. Do you", 
-                                              "want to proceed? (y/n): "))
+        user_input <- readline(prompt = paste(
+          "The table",
+          names(tables)[i], 
+          "has more than 500 rows. Do you want to proceed? (y/n): "
+          ))
         user_input <- tolower(user_input)
         
         # Check user input
@@ -329,8 +328,10 @@ huge_table_user_prompter <- function(tables) {
           stop("Script stopped. User chose not to proceed.", call. = FALSE)
         } else {
           # Invalid input, ask the user again
-          cat(paste("Invalid input. Please type 'y' to proceed or 'n' to stop", 
-                    "the script.\n"))
+          cat(paste(
+            "Invalid input. Please type 'y' to proceed or 'n' to stop", 
+            "the script.\n"
+            ))
         }
       }
     }
@@ -352,8 +353,13 @@ huge_table_user_prompter <- function(tables) {
 #'  
 #'  @importFrom dplyr mutate
 #'  
-add_gene_column <- function(df,
-                            genes) {
+add_gene_column <- function(
+    df,
+    genes
+    ) {
+  
+  feature_nr <- NULL # dummy declaration for lintr and R CMD.
+  gene <- NULL # dummy declaration for lintr and R CMD.
   
   # Create the Gene column
   df <- df |>
@@ -362,9 +368,11 @@ add_gene_column <- function(df,
   # Reorder columns to place Gene after feature_nr
   feature_nr_position <- which(names(df) == "feature_nr")
   df <- df |>
-    dplyr::select(1:feature_nr_position,
-                  gene,
-                  (feature_nr_position + 1):ncol(df))
+    dplyr::select(
+      1:feature_nr_position,
+      gene,
+      (feature_nr_position + 1):ncol(df)
+      )
   
   return(df)
 }
@@ -420,6 +428,8 @@ perform_clustering <- function(
       ),
     SIMPLIFY = FALSE
     )  # Return a list
+  
+  return(all_levels_clustering)
 }
 
 
@@ -596,10 +606,17 @@ make_clustering_report <- function(
     
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
 
-      nr_of_hits <- sum(level_clustering$clustered_hits$cluster == nr_cluster,
-                        na.rm = TRUE)
-      main_title <- paste("Cluster", nr_cluster, " | Hits:", nr_of_hits, 
-                          sep = " ")
+      nr_of_hits <- sum(
+        level_clustering$clustered_hits$cluster == nr_cluster,
+        na.rm = TRUE
+        )
+      main_title <- paste(
+        "Cluster",
+        nr_cluster,
+        " | Hits:",
+        nr_of_hits, 
+        sep = " "
+        )
 
       top_table_cluster <- top_table %>%
         dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
@@ -760,8 +777,10 @@ check_between_level_pattern <- function(top_tables) {
     }
   }
 
-  return(list(between_levels = between_levels,
-              index_with_pattern = index_with_pattern))
+  return(list(
+    between_levels = between_levels,
+    index_with_pattern = index_with_pattern
+    ))
 }
 
 
@@ -788,9 +807,11 @@ check_between_level_pattern <- function(top_tables) {
 #' threshold. The function then extracts the feature indices from these rows and 
 #' compiles a unique list of these indices.
 #' 
-get_level_hit_indices <- function(between_level_top_tables,
-                                  level,
-                                  adj_pthresholds) {
+get_level_hit_indices <- function(
+    between_level_top_tables,
+    level,
+    adj_pthresholds
+    ) {
 
   unique_hit_indices <- c()
 
@@ -812,7 +833,10 @@ get_level_hit_indices <- function(between_level_top_tables,
       feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
       feature_indices <- within_level_top_table[hit_indices,
                                                 "feature_nr", drop = TRUE]
-      unique_hit_indices <- c(unique_hit_indices, feature_indices)
+      unique_hit_indices <- c(
+        unique_hit_indices,
+        feature_indices
+        )
     }
   }
 
@@ -843,33 +867,39 @@ get_level_hit_indices <- function(between_level_top_tables,
 #' \code{\link{get_curve_values}}, \code{\link{normalize_curves}},
 #' \code{\link{hierarchical_clustering}}
 #'
-process_level_cluster <- function(top_table,
-                                  cluster_size,
-                                  level,
-                                  meta,
-                                  condition,
-                                  spline_params,
-                                  mode) {
+process_level_cluster <- function(
+    top_table,
+    cluster_size,
+    level,
+    meta,
+    condition,
+    spline_params,
+    mode
+    ) {
 
   # means that it had < 2 hits.
   if (is.null(top_table) || all(is.na(top_table))) {
     return(NA)
   }
   
-  curve_results <- get_curve_values(top_table = top_table,
-                                    level = level,
-                                    meta = meta,
-                                    condition = condition,
-                                    spline_params = spline_params,
-                                    mode = mode)
+  curve_results <- get_curve_values(
+    top_table = top_table,
+    level = level,
+    meta = meta,
+    condition = condition,
+    spline_params = spline_params,
+    mode = mode
+    )
 
   normalized_curves <- normalize_curves(curve_results$curve_values)
 
   clustering_result <-
-    hierarchical_clustering(curve_values = normalized_curves,
-                            k = cluster_size,
-                            smooth_timepoints = curve_results$smooth_timepoints,
-                            top_table = top_table)
+    hierarchical_clustering(
+      curve_values = normalized_curves,
+      k = cluster_size,
+      smooth_timepoints = curve_results$smooth_timepoints,
+      top_table = top_table
+      )
 
   clustering_result$X <- curve_results$X
   return(clustering_result)
@@ -1136,68 +1166,6 @@ plot_heatmap <- function(
 }
 
 
-# plot_log2_intensity_shapes <- function() {
-#   # data_to_plot <- data.frame(first_protein_description =
-#   #                              rownames(data.matrix.batch.filt.sig),
-#   #                            data.matrix.batch.filt.sig) %>%
-#
-#
-#   data_to_plot <- data %>%
-#     dplyr::mutate(cluster_number = clusters$cluster) %>%
-#     tidyr::pivot_longer(cols = colnames(data.matrix.batch.filt.sig),
-#                         names_to = "sample_name",
-#                         values_to = "log2_intensity") %>%
-#     tidyr::separate(sample_name,
-#                     into = c("reactor", "time_point",
-#                              "phase_of_fermentation"),
-#                     sep = "_") %>%
-#     dplyr::mutate(time_to_feed = rep(meta_exp_filt$time_to_feed,
-#                                      length(clusters_exp$feature))) %>%
-#     dplyr::group_by(first_protein_description) %>%
-#     dplyr::mutate(log2_intensity = rescale(log2_intensity))
-#
-#
-#   data_to_plot_mean_protein  <- data_to_plot %>%
-#     dplyr::group_by(first_protein_description, time_to_feed) %>%
-#     dplyr::mutate(mean_intensity_protein = mean(log2_intensity)) %>%
-#     ungroup()
-#
-#   data_to_plot_mean_tp <- data_to_plot %>%
-#     dplyr::group_by(cluster_number, time_to_feed) %>%
-#     dplyr::summarise(mean_intensity_tp = mean(log2_intensity))
-#
-#   clusters_exp %>%
-#     count(cluster)
-#
-#   ggplot2::ggplot(data = data_to_plot_mean_protein) +
-#     geom_line(aes(x = time_to_feed, y = mean_intensity_protein,
-#                   color = first_protein_description), alpha = 0.5) +
-#     geom_line(data = data_to_plot_mean_tp,aes(x = time_to_feed,
-#                                               y = mean_intensity_tp),
-#               linewidth = 0.8) +
-#     facet_wrap(~cluster_number, ncol = 2,
-#                labeller = labeller(cluster_number =
-#                                      c("1" = "Cluster 1: 32 proteins",
-#                                        "2" = "Cluster 2: 48 proteins",
-#                                        "3" = "Cluster 3: 68 proteins",
-#                                        "4" = "Cluster 4: 29 proteins",
-#                                        "5" = "Cluster 5: 17 proteins",
-#                                        "6" = "Cluster 6: 13 proteins")))  +
-#     geom_vline(xintercept = 0, linetype = 'dashed', color = 'red',
-#                linewidth = 0.5) +
-#     ylab("normalized log2 intensity") +
-#     theme_bw() +
-#     theme(legend.position = "none",
-#           panel.grid.minor = element_blank()) +
-#     scale_x_continuous(breaks = data_to_plot$time_to_feed)
-#
-#   #
-#   # ht= ComplexHeatmap::draw(ht, heatmap_legend_side = "right")
-#   #
-#   # print(ht)
-# }
-
-
 #' Plot Dendrogram
 #'
 #' @description
@@ -1296,11 +1264,10 @@ plot_dendrogram <- function(
 #'
 #' @return A ggplot object representing the average curves by cluster.
 #'
-#' @seealso
-#' \code{\link{ggplot2}}
-#'
+#' @importFrom scales hue_pal
+#' @importFrom RColorBrewer brewer.pal
 #' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
-#'                     theme_minimal aes
+#'                     theme_minimal aes element_text
 #'
 plot_all_mean_splines <- function(
     curve_values,
@@ -1327,7 +1294,10 @@ plot_all_mean_splines <- function(
       )
 
     # Bind the curve data frame to the cumulative data frame
-    average_curves <- rbind(average_curves, curve_df)
+    average_curves <- rbind(
+      average_curves,
+      curve_df
+      )
   }
 
   average_curves$cluster <- factor(
@@ -1337,20 +1307,101 @@ plot_all_mean_splines <- function(
     )
   
   time_unit_label = paste0("[", plot_info$time_unit, "]")
+  
+  # Create a data frame for the treatment lines
+  treatment_df <- data.frame(
+    Time = plot_info$treatment_timepoints,
+    Label = plot_info$treatment_labels
+  )
 
+  treatment_labels <- plot_info$treatment_labels
+  distinct_colors <- scales::hue_pal()(length(treatment_labels))
+  names(distinct_colors) <- treatment_labels
+  
+  # Generate unique colors for clusters separately
+  cluster_colors <- RColorBrewer::brewer.pal(
+    n = max(3, length(unique(average_curves$cluster))),
+    "Dark2"
+    )
+  if (length(cluster_colors) > length(unique(average_curves$cluster))) {
+    cluster_colors <- cluster_colors[1:length(unique(average_curves$cluster))]
+  }
+  names(cluster_colors) <- paste(
+    "Cluster",
+    levels(average_curves$cluster)
+    )
+  
+  # Combine the colors
+  color_values <- c(
+    cluster_colors,
+    distinct_colors
+    )
+  
   p_curves <- ggplot2::ggplot(
     average_curves,
-    aes(x = !!rlang::sym("Time"),
-        y = !!rlang::sym("Value"),
-        color = factor(!!rlang::sym("cluster")))
+    ggplot2::aes(
+      x = !!rlang::sym("Time"),
+      y = !!rlang::sym("Value"),
+      color = paste("Cluster", factor(!!rlang::sym("cluster")))
+      )
   ) +
-    geom_line() +
-    ggtitle("Average Splines by Cluster") +
-    xlab(paste("Time", time_unit_label)) +
-    ylab(paste("min-max norm.", plot_info$y_axis_label)) +
-    scale_color_brewer(palette = "Dark2", name = "Cluster") +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5))
+    ggplot2::geom_line() +
+    ggplot2::ggtitle("Average Splines by Cluster") +
+    ggplot2::xlab(paste("Time", time_unit_label)) +
+    ggplot2::ylab(paste("min-max norm.", plot_info$y_axis_label)) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +
+    # Add vertical dashed lines for treatment times
+    ggplot2::geom_vline(
+      data = treatment_df, 
+      ggplot2::aes(xintercept = Time, color = Label), 
+      linetype = "dashed", 
+      size = 0.5
+    ) +
+    ggplot2::geom_text(
+      data = treatment_df,
+      ggplot2::aes(
+        x = Time - max(Time) * 0.005,  # Slightly offset from the vertical line
+        y = 1,  # Place the labels at the top of the plot
+        label = Time,
+        color = Label
+      ),  
+      angle = 90,  # Rotate the labels
+      vjust = 0,  # Position on the left side of the dashed line
+      hjust = 1,  
+      size = 3,  # Text size
+      show.legend = FALSE  # Prevent text labels from appearing in the legend
+    ) +
+    ggplot2::scale_color_manual(
+      values = color_values,
+      name = ggplot2::element_text("Cluster/Treatment"),
+      guide = ggplot2::guide_legend(
+        override.aes = list(
+          linetype = c(rep(
+            "solid",
+            length(cluster_colors)),
+            rep(
+              "dashed", 
+              length(distinct_colors))
+            ),
+          size = c(rep(
+            1,
+            length(cluster_colors)),
+            rep(
+              0.5,
+              length(distinct_colors))
+            )  
+        )
+      )
+    ) +
+    # Adjust legend key sizes, specifically height to avoid overlapping
+    ggplot2::theme(
+      legend.key.size = grid::unit(0.6, "cm"),  
+      legend.key.height = grid::unit(0.3, "cm"),
+      legend.title = ggplot2::element_text(size = 8) 
+    )
+  
+  return(p_curves)
 }
 
 
@@ -1376,6 +1427,7 @@ plot_all_mean_splines <- function(
 #'                     ggtitle aes labs element_rect
 #' @importFrom rlang sym
 #' @importFrom data.table :=
+#' @importFrom scales hue_pal
 #'
 plot_single_and_mean_splines <- function(
     time_series_data,
@@ -1383,8 +1435,8 @@ plot_single_and_mean_splines <- function(
     plot_info
 ) {
   
-  time_col <- sym("time")
-  feature_col <- sym("feature")
+  time_col <- rlang::sym("time")
+  feature_col <- rlang::sym("feature")
   
   # Convert data to long format with appropriate column names
   df_long <- as.data.frame(t(time_series_data)) %>%
@@ -1393,7 +1445,7 @@ plot_single_and_mean_splines <- function(
       cols = -!!time_col,
       names_to = "feature",
       values_to = "intensity"
-      ) %>%
+    ) %>%
     dplyr::arrange(!!feature_col) %>%
     dplyr::mutate(!!time_col := as.numeric(!!time_col))
   
@@ -1401,16 +1453,34 @@ plot_single_and_mean_splines <- function(
   consensus <- colMeans(
     time_series_data,
     na.rm = TRUE
-    )
+  )
   
   consensus_df <- data.frame(
     time = as.numeric(
       colnames(time_series_data)
-      ),
+    ),
     consensus = consensus
-    )
+  )
   
   time_unit_label = paste0("[", plot_info$time_unit, "]")
+  
+  # Generate colors for the treatments
+  treatment_labels <- plot_info$treatment_labels
+  distinct_colors <- scales::hue_pal()(length(treatment_labels))
+  names(distinct_colors) <- treatment_labels
+  
+  # Combine the colors for splines, consensus, and treatments
+  color_values <- c(
+    "Mean" = "darkblue",
+    "Spline" = "#6495ED",
+    distinct_colors
+    )
+  
+  # Create a data frame for treatment lines with positions and labels
+  treatment_df <- data.frame(
+    Time = plot_info$treatment_timepoints,
+    Label = treatment_labels
+    )
   
   p <- ggplot2::ggplot() +
     ggplot2::geom_line(
@@ -1420,43 +1490,75 @@ plot_single_and_mean_splines <- function(
         y = !!rlang::sym("intensity"),
         group = !!rlang::sym("feature"),
         colour = "Spline"
-        ), 
+      ), 
       alpha = 0.3, linewidth = 0.5) +
     ggplot2::geom_line(
       data = consensus_df,
-      aes(
+      ggplot2::aes(
         x = !!rlang::sym("time"),
         y = consensus,
         colour = "Mean"
-        ),
+      ),
       linewidth = 1.5) +
+    ggplot2::geom_vline(
+      data = treatment_df, 
+      ggplot2::aes(
+        xintercept = Time,
+        color = Label
+        ), 
+      linetype = "dashed", 
+      size = 0.5
+    ) +
+    ggplot2::geom_text(
+      data = treatment_df,
+      ggplot2::aes(
+        x = Time - max(Time) * 0.005,   # not touching line
+        y = 1,
+        label = Time,
+        color = Label
+        ),  
+      angle = 90,
+      vjust = 0,   # 0 = left side of the dashed line, 1 = right side
+      hjust = 1,  
+      size = 3,  # Adjust text size
+      show.legend = FALSE  # Prevent text labels from appearing in the legend
+    ) +
     ggplot2::scale_colour_manual(
-      "",
-      values = c(
-        "Mean" = "darkblue",
-        "Spline" = "#6495ED")
-      ) +
+      name = "",    # legend name
+      values = color_values,
+      guide = ggplot2::guide_legend(
+        override.aes = list(
+          size = c(1.5, 0.5, rep(0.5, length(treatment_labels)))  
+        )
+      )
+    ) +
+    ggplot2::coord_cartesian(clip = "off") +  # Allows drawing outside plot area
     ggplot2::theme_minimal() +
     ggplot2::labs(
       title = title,
       x = paste(
         "Time",
         time_unit_label
-        ),
+      ),
       y = paste(
         "min-max norm.",
         plot_info$y_axis_label
-        )
-      ) +
-    ggtitle(title) +
+      )
+    ) +
+    ggplot2::ggtitle(title) +
     ggplot2::theme(
+      plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),  
       legend.position = "right",
       legend.box = "vertical",
-      legend.title = element_blank(),
+      legend.title = ggplot2::element_text(size = 8), 
       legend.background = ggplot2::element_blank(),
-      axis.title.y = element_text(size = 8),
-      plot.title = ggplot2::element_text(hjust = 0.5)
+      axis.title.y = ggplot2::element_text(size = 6),
+      plot.title = ggplot2::element_text(hjust = 0.5),
+      legend.key.size = grid::unit(0.6, "cm"),  
+      legend.key.height = grid::unit(0.3, "cm")  
     )
+  
+  return(p)
 }
 
 
@@ -1548,7 +1650,9 @@ plot_splines <- function(
     plot_info,
     adj_pthreshold
     ) {
-
+  
+  feature_names <- NULL   # dummy declaration for the lintr and R CMD.
+  
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(feature_names)
 
@@ -1626,34 +1730,50 @@ plot_splines <- function(
       names(distinct_colors) <- treatment_labels
       color_values <- c(color_values, distinct_colors)
   
-      all_time_points <- unique(
-        c(
-          time_points,
-          treatment_times
-          )
-        )
+      all_time_points <- unique(c(time_points))
       
       dynamic_label <- function(labels) {
-        return(ifelse(labels == "Spline", spline_label, labels))
+        return(ifelse(
+          labels == "Spline",
+          spline_label,
+          labels
+          ))
       }
-  
+
       p <- ggplot2::ggplot() +
-        ggplot2::geom_point(data = plot_data, 
-                            ggplot2::aes(x = Time, 
-                                         y = !!rlang::sym("Y"), 
-                                         color = "Data")) +
-        ggplot2::geom_line(data = plot_spline, 
-                           ggplot2::aes(x = Time, 
-                                        y = !!rlang::sym("Fitted"), 
-                                        color = "Spline")) +
+        ggplot2::geom_point(
+          data = plot_data, 
+          ggplot2::aes(
+            x = Time, 
+            y = !!rlang::sym("Y"), 
+            color = "Data"
+          )
+        ) +
+        ggplot2::geom_line(
+          data = plot_spline, 
+          ggplot2::aes(
+            x = Time, 
+            y = !!rlang::sym("Fitted"), 
+            color = "Spline"
+          )
+        ) +
         ggplot2::theme_minimal() +
-        ggplot2::scale_x_continuous(limits = c(min(time_points), 
-                                               x_max + x_extension),
-                                    breaks = all_time_points) + 
-        ggplot2::labs(x = paste0("Time ", time_unit_label), 
-                      y = plot_info$y_axis_label) +  
-        ggplot2::scale_color_manual(values = color_values,
-                                    labels = dynamic_label) +
+        ggplot2::scale_x_continuous(
+          limits = c(min(time_points), x_max + x_extension),
+          breaks = all_time_points,  
+          labels = function(x) {
+
+            x
+          }
+        ) +
+        ggplot2::labs(
+          x = paste0("Time ", time_unit_label), 
+          y = plot_info$y_axis_label
+        ) +
+        ggplot2::scale_color_manual(
+          values = color_values,
+          labels = dynamic_label
+        ) +
         ggplot2::theme(
           legend.position = "right", 
           legend.justification = "center",
@@ -1663,34 +1783,58 @@ plot_splines <- function(
           legend.text = ggplot2::element_text(
             size = 6, 
             margin = ggplot2::margin(l = 0, r = 6)
-            ),
-          legend.spacing.x = unit(0.5, "cm"), # Adjust horizontal spacing
+          ),
+          legend.spacing.x = unit(0.5, "cm"), 
           legend.margin = ggplot2::margin(1, 1, 1, 1),  
           legend.box.margin = ggplot2::margin(1, 1, 1, 1),
           axis.text.x = ggplot2::element_text(size = 8),
-          axis.title.y = 
-           ggplot2::element_text(size = 10, 
-                                 margin = ggplot2::margin(
-                                   t = 0, r = 2, b = 0, l = 0)),
-          axis.text.y = 
-           ggplot2::element_text(margin = ggplot2::margin(
-             t = 0, r = 5, b = 0, l = 0
-           )))
+          axis.title.y = ggplot2::element_text(
+            size = 10, 
+            margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)
+          ),
+          axis.text.y = ggplot2::element_text(
+            margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)
+          )
+        )
   
       # Create a data frame for the treatment lines
       treatment_df <- data.frame(
         Time = treatment_times,
         Label = treatment_labels
       )
-      
-      # Add vertical lines for each treatment time
+
       p <- p + ggplot2::geom_vline(
         data = treatment_df, 
-        ggplot2::aes(xintercept = Time, 
-                    color = Label), 
+        ggplot2::aes(
+          xintercept = Time, 
+          color = Label
+        ), 
         linetype = "dashed", 
         size = 0.5
-        )
+      )
+
+      plot_build <- ggplot2::ggplot_build(p)
+      y_range <- plot_build$layout$panel_params[[1]]$y.range
+      
+      # Calculate a y-position slightly below the top of the y-axis range
+      y_position <- y_range[2] + dtiff(y_range) * 0.03  
+      
+      
+      # Add the geom_text for treatment labels at the top of the y-axis
+      p <- p + ggplot2::geom_text(
+        data = treatment_df,
+        ggplot2::aes(
+          x = Time - max(Time) * 0.005,  # Slightly offset from vertical line
+          y = y_position,  # Uniform y position just above the max y value
+          label = Time,
+          color = Label
+        ),
+        angle = 90,  # Rotate the labels
+        vjust = 0,  # Position on the left side of the dashed line
+        hjust = 1,  # Align the right side of  text with the adjusted x position
+        size = 3,  # Text size
+        show.legend = FALSE  # Prevent text labels from appearing in the legend
+      )
   
       # Add title and annotations
       matched_row <- dplyr::filter(titles, 
@@ -1772,8 +1916,10 @@ merge_annotation_all_levels_clustering <- function(
 #'
 #' @return A character vector with the formatted gene lists for each cluster.
 #'
-prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
-                                           gene) {
+prepare_gene_lists_for_enrichr <- function(
+    all_levels_clustering,
+    gene
+    ) {
   
   formatted_gene_lists <- list()
   
@@ -1823,8 +1969,10 @@ prepare_gene_lists_for_enrichr <- function(all_levels_clustering,
   })
   background_gene_list <- paste(na.omit(clean_genes), collapse = "\n")
   
-  return(list(gene_lists = formatted_gene_lists,
-              background = background_gene_list))
+  return(list(
+    gene_lists = formatted_gene_lists,
+    background = background_gene_list
+    ))
 }
 
 
@@ -1982,6 +2130,14 @@ build_cluster_hits_report <- function(
         header_text <- "Min-max normalized individual and mean splines"
       } else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
+        
+        heatmap_description <- paste(
+          "<div style='text-align: center; font-size: 1.5em;'>",
+          "Rows = features (labels on the right, cluster labels on the left),",
+          "columns = timepoints; Blue = down, red = up, --> compared to the rest
+          of the row;",
+          "</div>"
+        )
       } else {  # element_name == "individual_spline_plots1"
         adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
@@ -2001,8 +2157,12 @@ build_cluster_hits_report <- function(
         "<h2 id='section",
         header_index,
         "' style='text-align: center; font-size: 3.5em;'>",
-        header_text, "</h2>"
+        header_text,
+        "</h2>",
+        if (exists("heatmap_description")) heatmap_description else ""
       )
+      
+      if (exists("heatmap_description")) rm(heatmap_description)
       
       # Add the asterisks definition if it exists
       if (exists("asterisks_definition")) {
@@ -2022,7 +2182,9 @@ build_cluster_hits_report <- function(
       
       toc_entry <- paste0(
         "<li style='margin-left: 30px; font-size: 30px;'>",
-        "<a href='#section", header_index, "'>",
+        "<a href='#section",
+        header_index,
+        "'>",
         header_text, 
         "</a></li>"
       )
@@ -2088,12 +2250,14 @@ build_cluster_hits_report <- function(
 #' @importFrom dplyr select all_of
 #' @importFrom splines ns
 #'
-get_curve_values <- function(top_table,
-                             level,
-                             meta,
-                             condition,
-                             spline_params,
-                             mode) {
+get_curve_values <- function(
+    top_table,
+    level,
+    meta,
+    condition,
+    spline_params,
+    mode
+    ) {
 
   subset_meta <- meta[meta[[condition]] == level, ]
 
@@ -2130,27 +2294,35 @@ get_curve_values <- function(top_table,
 
   DoF <- which(names(top_table) == "AveExpr") - 1
 
-  columns_to_select <- 1:DoF
+  # columns_to_select <- 1:DoF
 
   splineCoeffs <- top_table %>%
     dplyr::select(all_of(1:DoF)) %>%
     as.matrix()
 
-  curve_values <- matrix(nrow = nrow(splineCoeffs),
-                         ncol = length(smooth_timepoints))
+  curve_values <- matrix(
+    nrow = nrow(splineCoeffs),
+    ncol = length(smooth_timepoints)
+    )
 
   for(i in 1:nrow(splineCoeffs)) {
-    current_coeffs <- matrix(splineCoeffs[i, ], ncol = ncol(splineCoeffs),
-                             byrow = TRUE)
+    current_coeffs <- matrix(
+      splineCoeffs[i, ],
+      ncol = ncol(splineCoeffs),
+      byrow = TRUE
+      )
 
     curve_values[i, ] <- current_coeffs %*% t(X)
   }
 
   curve_values <- as.data.frame(curve_values)
   rownames(curve_values) <- rownames(splineCoeffs)
-  list(curve_values = curve_values,
-       smooth_timepoints = smooth_timepoints,
-       X = X)
+  
+  list(
+    curve_values = curve_values,
+    smooth_timepoints = smooth_timepoints,
+    X = X
+    )
 }
 
 
@@ -2201,10 +2373,12 @@ normalize_curves <- function(curve_values) {
 #' @importFrom stats dist hclust cutree
 #' @importFrom cluster silhouette
 #'
-hierarchical_clustering <- function(curve_values,
-                                    k,
-                                    smooth_timepoints,
-                                    top_table) {
+hierarchical_clustering <- function(
+    curve_values,
+    k,
+    smooth_timepoints,
+    top_table
+    ) {
 
   distance_matrix <- stats::dist(curve_values, method = "euclidean")
   hc <- stats::hclust(distance_matrix, method = "complete")
@@ -2243,11 +2417,13 @@ hierarchical_clustering <- function(curve_values,
   top_table$cluster[1:nrow(clustered_hits)] <-
     as.integer(clustered_hits$cluster)
 
-  group_clustering <- list(clustered_hits = clustered_hits,
-                           hc = hc,
-                           curve_values = curve_values,
-                           top_table = top_table,
-                           clusters = k)
+  group_clustering <- list(
+    clustered_hits = clustered_hits,
+    hc = hc,
+    curve_values = curve_values,
+    top_table = top_table,
+    clusters = k
+    )
 }
 
 

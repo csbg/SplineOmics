@@ -23,6 +23,8 @@ showing all results in summary HTML reports.
 - [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
+  - [Transcriptomics and glycan fractional abundance
+    data](#transcriptomics-and-glycan-fractional-abundance%20data)
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
@@ -92,7 +94,9 @@ With `SplineOmics`, you can:
 
 - **Generate reports:**
 
-  Automatically generate reports to showcase all results.
+  Automatically generate reports to showcase all results. See an example
+  report of the cluster_hits() function
+  [here](./inst/reports/cluster_hits_report.html)
 
 ## 🔧 Installation
 
@@ -238,9 +242,15 @@ A detailed description of all arguments and outputs of the available
 package functions can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
+### Design limma design formula
+
+A quick guide on how to design a limma design formula can be found
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
+
 ### Transcriptomics and glycan fractional abundance data
 
-To preprocess the glycan fractional abundance data matrix, you need to
+To preprocess the glycan fractional abundance data matrix, were each row
+is a type of glycan and the columns are the timepoints, you need to
 apply the centered log ratio (CLR) transformation using the `clr`
 function from the `compositions` package. This transformation is
 essential for converting the compositional data into a form suitable for

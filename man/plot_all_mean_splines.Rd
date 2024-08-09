@@ -19,6 +19,3 @@ A ggplot object representing the average curves by cluster.
 Generates a plot of average curves for each cluster, showing min-max
 normalized intensities over time.
 }
-\seealso{
-\code{\link{ggplot2}}
-}

@@ -194,8 +194,10 @@ create_limma_report <- function(
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
 #'
-generate_time_effect_plots <- function(time_effect,
-                                       adj_pthresh) {
+generate_time_effect_plots <- function(
+    time_effect,
+    adj_pthresh
+    ) {
   
   plots <- list("Time Effect")
   plots_sizes <- c(999)
@@ -209,17 +211,24 @@ generate_time_effect_plots <- function(time_effect,
     
     title <- paste("P-Value Histogram:", element_name)
     
-    p_value_hist <- create_p_value_histogram(top_table = top_table,
-                                             adj_pthresh = adj_pthresh,
-                                             title = title)
+    p_value_hist <- create_p_value_histogram(
+      top_table = top_table,
+      adj_pthresh = adj_pthresh,
+      title = title
+      )
     
-    plots <- c(plots, list(p_value_hist))
+    plots <- c(
+      plots,
+      list(p_value_hist)
+      )
     plots_sizes <- c(plots_sizes, 1)
   }
   
-  list(plots = plots, 
-       plots_sizes = plots_sizes, 
-       section_headers_info = section_headers_info)
+  list(
+    plots = plots, 
+    plots_sizes = plots_sizes, 
+    section_headers_info = section_headers_info
+    )
 }
 
 
@@ -240,8 +249,10 @@ generate_time_effect_plots <- function(time_effect,
 #' 
 #' @importFrom stringr str_split
 #'
-generate_avrg_diff_plots <- function(avrg_diff_conditions,
-                                     adj_pthresh) {
+generate_avrg_diff_plots <- function(
+    avrg_diff_conditions,
+    adj_pthresh
+    ) {
   
   plots <- list("Average Difference Conditions")
   plots_sizes <- c(999)
@@ -256,23 +267,29 @@ generate_avrg_diff_plots <- function(avrg_diff_conditions,
     comparison <- remove_prefix(element_name, "avrg_diff_")
     title <- paste("P-Value Histogram:", comparison)
     
-    p_value_hist <- create_p_value_histogram(top_table = top_table,
-                                             adj_pthresh = adj_pthresh,
-                                             title = title)
+    p_value_hist <- create_p_value_histogram(
+      top_table = top_table,
+      adj_pthresh = adj_pthresh,
+      title = title
+      )
     
     compared_levels <- stringr::str_split(comparison, "_vs_")[[1]]
     
-    volcano_plot <- create_volcano_plot(top_table = top_table,
-                                        adj_pthresh = adj_pthresh,
-                                        compared_levels)
+    volcano_plot <- create_volcano_plot(
+      top_table = top_table,
+      adj_pthresh = adj_pthresh,
+      compared_levels
+      )
     
     plots <- c(plots, list(p_value_hist), list(volcano_plot))
     plots_sizes <- c(plots_sizes, 1, 1.5)
   }
   
-  list(plots = plots, 
-       plots_sizes = plots_sizes, 
-       section_headers_info = section_headers_info)
+  list(
+    plots = plots, 
+    plots_sizes = plots_sizes, 
+    section_headers_info = section_headers_info
+    )
 }
 
 
@@ -292,8 +309,10 @@ generate_avrg_diff_plots <- function(avrg_diff_conditions,
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
 #'
-generate_interaction_plots <- function(interaction_condition_time,
-                                       adj_pthresh) {
+generate_interaction_plots <- function(
+    interaction_condition_time,
+    adj_pthresh
+    ) {
   
   plots <- list("Interaction of Condition and Time")
   plots_sizes <- c(999)
@@ -309,17 +328,21 @@ generate_interaction_plots <- function(interaction_condition_time,
     comparison <- remove_prefix(element_name, "time_interaction_")
     title <- paste("P-Value Histogram:", comparison)
     
-    p_value_hist <- create_p_value_histogram(top_table = top_table,
-                                             adj_pthresh = adj_pthresh,
-                                             title = title)
+    p_value_hist <- create_p_value_histogram(
+      top_table = top_table,
+      adj_pthresh = adj_pthresh,
+      title = title
+      )
     
     plots <- c(plots, list(p_value_hist))
     plots_sizes <- c(plots_sizes, 1)
   }
   
-  list(plots = plots, 
-       plots_sizes = plots_sizes, 
-       section_headers_info = section_headers_info)
+  list(
+    plots = plots, 
+    plots_sizes = plots_sizes, 
+    section_headers_info = section_headers_info
+    )
 }
 
 
@@ -336,8 +359,10 @@ generate_interaction_plots <- function(interaction_condition_time,
 #'
 #' @return A string with the unique values replaced by their abbreviations.
 #'
-shorten_names <- function(name,
-                          unique_values) {
+shorten_names <- function(
+    name,
+    unique_values
+    ) {
   
   for (val in unique_values) {
     short_val <- substr(val, 1, 3)
@@ -478,9 +503,11 @@ build_create_limma_report <- function(
 #'
 #' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal
 #'
-create_p_value_histogram <- function(top_table,
-                                     adj_pthresh = 0.05,
-                                     title = "P-Value Histogram") {
+create_p_value_histogram <- function(
+    top_table,
+    adj_pthresh = 0.05,
+    title = "P-Value Histogram"
+    ) {
   
   # Check if the top_table has a P.Value column
   if (!"P.Value" %in% colnames(top_table)) {
@@ -488,11 +515,20 @@ create_p_value_histogram <- function(top_table,
   }
   
   # Create the histogram
-  p <- ggplot2::ggplot(top_table, aes(x = P.Value)) +
-    ggplot2::geom_histogram(binwidth = 0.05,
-                            fill = "orange",
-                            color = "black", alpha = 0.7) +
-    ggplot2::labs(title = title, x = "Unadjusted P-Value", y = "Frequency") +
+  p <- ggplot2::ggplot(
+    top_table,
+    aes(x = P.Value)
+    ) +
+    ggplot2::geom_histogram(
+      binwidth = 0.05,
+      fill = "orange",
+      color = "black", alpha = 0.7
+      ) +
+    ggplot2::labs(
+      title = title,
+      x = "Unadjusted P-Value",
+      y = "Frequency"
+      ) +
     ggplot2::theme_minimal()
   
   return(p)
@@ -516,13 +552,18 @@ create_p_value_histogram <- function(top_table,
 #' @importFrom ggplot2 ggplot aes geom_point theme_minimal labs geom_hline 
 #'                     annotate scale_color_manual
 #' 
-create_volcano_plot <- function(top_table, 
-                                adj_pthresh, 
-                                compared_levels) {
+create_volcano_plot <- function(
+    top_table, 
+    adj_pthresh, 
+    compared_levels
+    ) {
   
   # Add a column for coloring points based on logFC
-  top_table$Regulation <- ifelse(top_table$logFC > 0, 
-                                 compared_levels[2], compared_levels[1])
+  top_table$Regulation <- ifelse(
+    top_table$logFC > 0, 
+    compared_levels[2],
+    compared_levels[1]
+    )
   
   # Create a named vector for the colors
   colors <- c("blue", "darkgrey")
@@ -531,9 +572,13 @@ create_volcano_plot <- function(top_table,
   # Calculate the number of hits
   num_hits <- sum(top_table$adj.P.Val < adj_pthresh)
   
-  volcano_plot <- ggplot2::ggplot(top_table, aes(x = logFC, 
-                                                 y = -log10(adj.P.Val), 
-                                                 color = Regulation)) +
+  volcano_plot <- ggplot2::ggplot(
+    top_table,
+    aes(
+      x = logFC, 
+      y = -log10(adj.P.Val), 
+      color = Regulation)
+    ) +
     ggplot2::geom_point() +
     ggplot2::theme_minimal() +
     ggplot2::labs(title = paste("Volcano Plot:",
@@ -558,6 +603,8 @@ create_volcano_plot <- function(top_table,
                       label = paste("Hits:", num_hits), 
                       hjust = 1.1, vjust = 2, color = "black", size = 3) +
     ggplot2::theme(legend.position = "none")
+  
+  return(volcano_plot)
 }
 
 
@@ -572,8 +619,10 @@ create_volcano_plot <- function(top_table,
 #'
 #' @return A string with the prefix removed.
 #'
-remove_prefix <- function(string, 
-                          prefix) {
+remove_prefix <- function(
+    string, 
+    prefix
+    ) {
   
   pattern <- paste0("^", prefix)
   result <- sub(pattern, "", string)
