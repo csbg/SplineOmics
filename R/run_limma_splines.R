@@ -22,9 +22,6 @@
 #'
 #' @param splineomics A SplineOmics object, containing data, meta, design, 
 #'                    condition, and spline_params.
-#' @param padjust_method A character string specifying the method for adjusting 
-#'                       p-values for multiple testing. Defaults to "BH" 
-#'                       (Benjamini-Hochberg).
 #'
 #' @return The SplineOmics object, updated with a list with three elements: 
 #'         - `time_effect`: A list of top tables for each level with the time
@@ -44,8 +41,7 @@
 #' @export
 #' 
 run_limma_splines <- function(
-    splineomics,
-    padjust_method = "BH"
+    splineomics
     ) {
 
   check_splineomics_elements(
@@ -72,8 +68,10 @@ run_limma_splines <- function(
   input_control$auto_validate()
   
   data <- splineomics[["data"]]
+  preprocess_rna_seq <- splineomics[["preprocess_rna_seq"]]
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
+  padjust_method <- splineomics[["padjust_method"]]
   
   feature_names <- rownames(data)
   rownames(data) <- NULL
@@ -86,6 +84,7 @@ run_limma_splines <- function(
     within_level, 
     spline_params = spline_params,
     data = data, 
+    preprocess_rna_seq = preprocess_rna_seq,
     meta = meta, 
     design = design, 
     condition = condition, 
@@ -93,19 +92,25 @@ run_limma_splines <- function(
     padjust_method = padjust_method, 
     mode = mode
     )
-  
+
   results_list <- purrr::map2(
     levels, 
     seq_along(levels), 
     process_level_with_params
     )
-  
+
   within_level_top_table <- 
     stats::setNames(
       purrr::map(results_list, "top_table"), 
       purrr::map_chr(results_list, "name")
       )
   
+  # For RNA-seq data, voom data matrices must be passed to cluster_hits()
+  voom_matrices <- lapply(results_list, function(x) x$voom_data_matrix_level)
+
+  if (!any(sapply(voom_matrices, is.null))) {
+    data <- do.call(rbind, voom_matrices)   # Combine from all levels
+  }
   
   # Factor and Factor:Time comparisons between levels --------------------------
   between_level_condition_only <- list()        
@@ -116,6 +121,7 @@ run_limma_splines <- function(
     for (lev_combo in level_combinations) {
       result <- between_level(
         data = data, 
+        preprocess_rna_seq,
         meta = meta, 
         design = design, 
         spline_params = spline_params,
@@ -144,10 +150,8 @@ run_limma_splines <- function(
     message(paste(
       "mode == 'integrated' necessary for between level",
       "comparisons. Returning emtpy lists for ttslc_factor_only",
-      "and ttslc_factor_time (ttslc means 'top tables level",
-      "comparison')."
-      )
-      )
+      "and ttslc_factor_time (ttslc means 'top tables level comparison')."
+      ))
   }
   
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
@@ -160,6 +164,7 @@ run_limma_splines <- function(
   
   splineomics <- update_splineomics(
     splineomics = splineomics,
+    data = data,   # In case voom_data_matrix has been generated.
     limma_splines_result = limma_splines_result
  )
 }
@@ -176,6 +181,7 @@ run_limma_splines <- function(
 #' within a condition.
 #'
 #' @param data A matrix of data values.
+#' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the LIMMA analysis.
 #' @param spline_params A list of spline parameters for the analysis.
@@ -202,6 +208,7 @@ run_limma_splines <- function(
 #' 
 between_level <- function(
     data, 
+    preprocess_rna_seq,
     meta, 
     design, 
     spline_params, 
@@ -213,6 +220,7 @@ between_level <- function(
   
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
+  
   meta <- subset(meta, meta[[condition]] %in% compared_levels)
   
   design_matrix <- design2design_matrix(
@@ -222,7 +230,17 @@ between_level <- function(
     design = design
     )
   
-  fit <- limma::lmFit(data, design_matrix)
+  if (preprocess_rna_seq) {
+    data <- preprocess_rna_seq_data(
+      raw_counts = data,
+      design_matrix = design
+    )
+  }
+  
+  fit <- limma::lmFit(
+    data,
+    design_matrix
+    )
   fit <- limma::eBayes(fit)
 
   factor_only_contrast_coeff <- paste0(
@@ -293,6 +311,7 @@ between_level <- function(
 #' @param level_index The index of the level within the condition.
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param data A matrix of data values.
+#' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
 #' @param meta A dataframe containing metadata.
 #' @param design A design formula or matrix for the LIMMA analysis.
 #' @param condition A character string specifying the condition.
@@ -314,6 +333,7 @@ within_level <- function(
     level_index,
     spline_params,
     data, 
+    preprocess_rna_seq,
     meta, 
     design, 
     condition, 
@@ -338,14 +358,13 @@ within_level <- function(
   }
   
   result <- process_within_level(
-    data_copy, 
-    meta_copy, 
-    design, 
-    condition, 
-    level,
-    spline_params,
-    level_index, 
-    padjust_method
+    data = data_copy, 
+    preprocess_rna_seq = preprocess_rna_seq,
+    meta = meta_copy, 
+    design = design, 
+    spline_params = spline_params,
+    level_index = level_index, 
+    padjust_method = padjust_method
     )
 
   top_table <- process_top_table(
@@ -361,12 +380,64 @@ within_level <- function(
   
   list(
     name = results_name,
-    top_table = top_table
+    top_table = top_table,
+    voom_data_matrix_level = result$voom_data_matrix
     )
 }
 
 
 # Level 2 internal functions ---------------------------------------------------
+
+
+#' Perform default preprocessing of raw RNA-seq counts
+#'
+#' @description
+#' This function is called when `preprocess_rna_seq` is `TRUE`. It performs the 
+#' default preprocessing steps for raw RNA-seq counts, including creating a 
+#' `DGEList` object, normalizing the counts, and applying the `voom` 
+#' transformation.
+#'
+#' @param raw_counts A matrix of raw RNA-seq counts (genes as rows, samples as
+#'  columns).
+#' @param design_matrix A design matrix used in the linear modeling, typically
+#'  specifying the experimental conditions.
+#' @param normalize_func An optional normalization function. If provided, this 
+#' function will be used to normalize the `DGEList` object. If not provided,
+#'  TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
+#'
+#' @return A `voom` object, which includes the log2-counts per million (logCPM)
+#'  matrix and observation-specific weights.
+#' 
+#' @importFrom edgeR DGEList calcNormFactors
+#' @importFrom limma voom
+#'   
+preprocess_rna_seq_data <- function(
+    raw_counts,
+    design_matrix,
+    normalize_func = NULL
+) {
+  
+  message("Preprocessing RNA-seq data (normalization + voom)...")
+  
+  # Step 1: Create DGEList object from raw counts
+  y <- edgeR::DGEList(counts = raw_counts)
+  
+  # Step 2: Apply the normalization function (either user-provided or default)
+  if (!is.null(normalize_func) && is.function(normalize_func)) {
+    y <- normalize_func(y)   # user provided normalisation function
+  } else {
+    # Default: Normalize the counts using TMM normalization
+    y <- edgeR::calcNormFactors(y)
+  }
+  
+  # Step 3: Apply voom transformation to get logCPM values and weights
+  voom_obj <- limma::voom(
+    y,
+    design_matrix
+  )
+  
+  return(voom_obj)
+}
 
 
 #' Process Top Table
@@ -387,12 +458,12 @@ within_level <- function(
 #' @importFrom stats coef
 #' 
 process_top_table <- function(
-    top_table_and_fit, 
+    process_within_level_result, 
     feature_names
     ) {
 
-  top_table <- top_table_and_fit$top_table
-  fit <- top_table_and_fit$fit
+  top_table <- process_within_level_result$top_table
+  fit <- process_within_level_result$fit
   
   top_table <- modify_limma_top_table(
     top_table,
@@ -417,10 +488,9 @@ process_top_table <- function(
 #' analysis for a selected level of a factor
 #'
 #' @param data A matrix of data values.
+#' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
-#' @param factor A character string specifying the factor.
-#' @param level The level within the factor to process.
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param level_index The index of the level within the factor.
 #' @param padjust_method A character string specifying the p-adjustment method.
@@ -442,10 +512,9 @@ process_top_table <- function(
 #' 
 process_within_level <- function(
     data,
+    preprocess_rna_seq,
     meta,
     design,
-    factor,
-    level,
     spline_params,
     level_index,
     padjust_method
@@ -458,10 +527,26 @@ process_within_level <- function(
     design
     )
   
-  fit <- limma::lmFit(data, design_matrix)
+  if (preprocess_rna_seq) {
+    data <- preprocess_rna_seq_data(
+      raw_counts = data,
+      design_matrix = design
+    )
+    voom_data_matrix <- data$E
+  } else {
+    voom_data_matrix = NULL
+  }
+  
+  fit <- limma::lmFit(
+    data,
+    design_matrix
+    )
   fit <- limma::eBayes(fit)
 
-  num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
+  num_matching_columns <- sum(grepl(
+    "^X\\d+$",
+    colnames(design_matrix)
+    ))
   coeffs <- paste0("X", seq_len(num_matching_columns))
   
   top_table <- limma::topTable(
@@ -472,10 +557,11 @@ process_within_level <- function(
     )
 
   attr(top_table, "adjust.method") <- padjust_method
-  
+
   list(
     top_table = top_table,
-    fit = fit
+    fit = fit,
+    voom_data_matrix = voom_data_matrix
     )
 }
 

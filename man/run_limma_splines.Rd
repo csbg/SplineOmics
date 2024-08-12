@@ -9,15 +9,11 @@ p-value to every feature of a time series omics dataset, to find out which
 features are significantly changed over the time course.
 Run Limma Analysis with Spline Interpolation for Hyperparameter Screening}
 \usage{
-run_limma_splines(splineomics, padjust_method = "BH")
+run_limma_splines(splineomics)
 }
 \arguments{
 \item{splineomics}{A SplineOmics object, containing data, meta, design, 
 condition, and spline_params.}
-
-\item{padjust_method}{A character string specifying the method for adjusting 
-p-values for multiple testing. Defaults to "BH" 
-(Benjamini-Hochberg).}
 }
 \value{
 The SplineOmics object, updated with a list with three elements: 

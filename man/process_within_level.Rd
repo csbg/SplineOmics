@@ -6,10 +6,9 @@
 \usage{
 process_within_level(
   data,
+  preprocess_rna_seq,
   meta,
   design,
-  factor,
-  level,
   spline_params,
   level_index,
   padjust_method
@@ -18,13 +17,11 @@ process_within_level(
 \arguments{
 \item{data}{A matrix of data values.}
 
+\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
+
 \item{meta}{A dataframe containing metadata, including a 'Time' column.}
 
 \item{design}{A design formula or matrix for the limma analysis.}
-
-\item{factor}{A character string specifying the factor.}
-
-\item{level}{The level within the factor to process.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 

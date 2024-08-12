@@ -15,7 +15,9 @@ create_splineomics(
   meta_batch2_column = NULL,
   feature_name_columns = NULL,
   design = NULL,
-  spline_params = NULL
+  spline_params = NULL,
+  preprocess_rna_seq = FALSE,
+  padjust_method = "BH"
 )
 }
 \arguments{

@@ -1097,6 +1097,8 @@ plot_heatmap <- function(
     legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
     legend_border = FALSE
   )
+  
+  ht_opt$message = FALSE
 
   levels <- unique(meta[[condition]])
   heatmaps <- list()
@@ -1678,7 +1680,7 @@ plot_splines <- function(
     Time <- seq(
       meta$Time[1],
       meta$Time[length(meta$Time)],
-      length.out = 100
+      length.out = 1000   # To ensure smootheness of the curve
       )
 
     fitted_values <- X %*% spline_coeffs + intercept
@@ -1731,6 +1733,12 @@ plot_splines <- function(
       color_values <- c(color_values, distinct_colors)
   
       all_time_points <- unique(c(time_points))
+
+      # Filter out close labels based to avoid overlapping.
+      time_diffs <- diff(all_time_points)
+      min_spacing <- x_max * 0.05  # keep all that are more than 5% apart.
+      keep_labels <- c(TRUE, time_diffs > min_spacing)
+      filtered_time_points <- all_time_points[keep_labels]
       
       dynamic_label <- function(labels) {
         return(ifelse(
@@ -1760,7 +1768,7 @@ plot_splines <- function(
         ggplot2::theme_minimal() +
         ggplot2::scale_x_continuous(
           limits = c(min(time_points), x_max + x_extension),
-          breaks = all_time_points,  
+          breaks = filtered_time_points,  
           labels = function(x) {
 
             x
@@ -1787,16 +1795,20 @@ plot_splines <- function(
           legend.spacing.x = unit(0.5, "cm"), 
           legend.margin = ggplot2::margin(1, 1, 1, 1),  
           legend.box.margin = ggplot2::margin(1, 1, 1, 1),
-          axis.text.x = ggplot2::element_text(size = 8),
+          axis.text.x = ggplot2::element_text(
+            size = 8, 
+            angle = 45,   # Tilt labels by 45 degrees
+            hjust = 1     # Adjust horizontal justification
+          ),
           axis.title.y = ggplot2::element_text(
-            size = 10, 
+            size = 8, 
             margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)
           ),
           axis.text.y = ggplot2::element_text(
             margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)
           )
         )
-  
+      
       # Create a data frame for the treatment lines
       treatment_df <- data.frame(
         Time = treatment_times,
@@ -1817,7 +1829,7 @@ plot_splines <- function(
       y_range <- plot_build$layout$panel_params[[1]]$y.range
       
       # Calculate a y-position slightly below the top of the y-axis range
-      y_position <- y_range[2] + dtiff(y_range) * 0.03  
+      y_position <- y_range[2] + diff(y_range) * 0.03  
       
       
       # Add the geom_text for treatment labels at the top of the y-axis
@@ -1854,13 +1866,22 @@ plot_splines <- function(
       }
       
       p <- p + ggplot2::labs(title = title) +
-        ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
-                       axis.title.x = ggplot2::element_text(size = 8),
-                       axis.title.y = ggplot2::element_text(size = 8)) +
-        ggplot2::annotate("text", x = x_max + (x_extension / 2),
-                          y = max(fitted_values, na.rm = TRUE),
-                          label = "", hjust = 0.5, vjust = 1, size = 3.5,
-                          angle = 0, color = "black")
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(size = 6),
+          axis.title.x = ggplot2::element_text(size = 8),
+          axis.title.y = ggplot2::element_text(size = 8)
+          ) +
+        ggplot2::annotate(
+          "text",
+          x = x_max + (x_extension / 2),
+          y = max(fitted_values, na.rm = TRUE),
+          label = "",
+          hjust = 0.5,
+          vjust = 1,
+          size = 3.5,
+          angle = 0,
+          color = "black"
+          )
       p
     })
 
@@ -2268,9 +2289,11 @@ get_curve_values <- function(
     level_index <- 1   # Different spline params not supported for this mode
   }
 
-  smooth_timepoints <- seq(subset_meta$Time[1],
-                           subset_meta$Time[length(subset_meta$Time)],
-                           length.out = 100)
+  smooth_timepoints <- seq(
+    subset_meta$Time[1],
+    subset_meta$Time[length(subset_meta$Time)],
+    length.out = 1000   # To ensure smoothness of the curve.
+    )
 
   args <- list(x = smooth_timepoints, intercept = FALSE)
 

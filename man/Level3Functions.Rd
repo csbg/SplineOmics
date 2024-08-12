@@ -11,11 +11,29 @@ Level3Functions: A class for level 3 utility functions
 \details{
 This class provides methods for creating error messages and checking
 batch columns.
+
+
+The function verifies that the `voom` object contains the following 
+components:
+- `E`: A matrix of log2-counts per million (logCPM) values.
+- `weights`: A matrix of observation-specific weights that matches the 
+dimensions of `E`.
+- `design`: A matrix representing the design matrix used in the linear 
+modeling, 
+  with the same number of rows as there are columns in `E`.
+
+The function also checks for optional components such as:
+- `genes`: A data frame of gene annotations.
+- `targets`: A data frame of target information.
+- `sample.weights`: A numeric vector of sample-specific weights.
+
+If any of these checks fail, the function stops and reports the issues.
+If the structure is valid, a message confirming the validity is printed.
 }
 \seealso{
 \code{\link{Level2Functions}}
 
-Check Batch Column
+Check the structure of a voom object
 }
 \section{Super class}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{Level3Functions}
@@ -23,6 +41,7 @@ Check Batch Column
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-Level3Functions-check_voom_structure}{\code{Level3Functions$check_voom_structure()}}
 \item \href{#method-Level3Functions-check_batch_column}{\code{Level3Functions$check_batch_column()}}
 \item \href{#method-Level3Functions-check_time_column_pattern}{\code{Level3Functions$check_time_column_pattern()}}
 \item \href{#method-Level3Functions-check_condition_time_consistency}{\code{Level3Functions$check_condition_time_consistency()}}
@@ -36,6 +55,36 @@ Check Batch Column
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Level3Functions-check_voom_structure"></a>}}
+\if{latex}{\out{\hypertarget{method-Level3Functions-check_voom_structure}{}}}
+\subsection{Method \code{check_voom_structure()}}{
+This function checks the structure of a `voom` object to ensure that it
+contains 
+all the expected components and that these components have the correct 
+types 
+and dimensions. The function does not check the actual data within the 
+matrices.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_voom_structure(voom_obj)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{voom_obj}}{A list representing a `voom` object, typically created 
+by the 
+  `voom` function from the `limma` package.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Boolean TRUE or FALSE. However, the function is mostly called for
+its side effects, which stop the script if the structure is not valid.
+
+Check Batch Column
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Level3Functions-check_batch_column"></a>}}
 \if{latex}{\out{\hypertarget{method-Level3Functions-check_batch_column}{}}}

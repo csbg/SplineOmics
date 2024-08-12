@@ -155,7 +155,7 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
       
       for (i in 1:(num_rows - 5)) {
         for (j in 1:(num_cols - 5)) {
-          block <- self$data[i:(i+5), j:(j+5)]
+          block <- self$data[i:(i + 5), j:(j + 5)]
           block_num <- suppressWarnings(as.numeric(as.matrix(block)))
           if (all(!is.na(block_num)) && (all(is.numeric(block_num)))) {
             upper_left_row <- i
