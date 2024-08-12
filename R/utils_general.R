@@ -68,7 +68,10 @@ design2design_matrix <- function(
     design
     ) {
 
-  args <- list(x = meta$Time, intercept = FALSE)   # Time column is mandatory
+  args <- list(
+    x = meta$Time,
+    intercept = FALSE
+    )   # Time column is mandatory
   
   if (!is.null(spline_params$dof)) {
     args$df <- spline_params$dof[level_index]
@@ -87,7 +90,10 @@ design2design_matrix <- function(
     meta$X <- do.call(splines::ns, args)
   }
   
-  design_matrix <- stats::model.matrix(stats::as.formula(design), data = meta)
+  design_matrix <- stats::model.matrix(
+    stats::as.formula(design),
+    data = meta
+    )
 }
 
 

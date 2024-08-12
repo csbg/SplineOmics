@@ -6,6 +6,7 @@
 \usage{
 between_level(
   data,
+  preprocess_rna_seq,
   meta,
   design,
   spline_params,
@@ -17,6 +18,8 @@ between_level(
 }
 \arguments{
 \item{data}{A matrix of data values.}
+
+\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
 
 \item{meta}{A dataframe containing metadata, including a 'Time' column.}
 

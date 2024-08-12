@@ -1386,7 +1386,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
     data, 
     data_meta_index = NULL
     ) {
-     
+
      if (!is.matrix(data) || !is.numeric(data)) {
        stop(
          self$create_error_message(
@@ -1399,8 +1399,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
      
      # Check for missing values
      if (any(is.na(data))) {
-       stop(self$create_error_message("data must not contain missing values.",
-                                      data_meta_index),
+       stop(self$create_error_message(
+         "data must not contain missing values.",
+         data_meta_index
+         ),
             call. = FALSE)
      }
      
@@ -1408,11 +1410,11 @@ Level2Functions <- R6::R6Class("Level2Functions",
      if (any(data < 0)) {
        stop(
          self$create_error_message(
-           paste("All elements of data must be ",
-                 "non-negative. The elements should",
-                 "represent concentrations, abundances, or",
-                 "intensities (which are inherently",
-                 "non-negative)."),
+           paste(
+             "All elements of data must be non-negative. The elements should",
+             "represent concentrations, abundances, or",
+             "intensities (which are inherently non-negative)."
+             ),
             data_meta_index),
             call. = FALSE)
      }
@@ -2021,7 +2023,121 @@ Level3Functions <- R6::R6Class("Level3Functions",
  inherit = Level4Functions,
 
  public = list(
-
+   
+   #' Check the structure of a voom object
+   #'
+   #' @description
+   #' This function checks the structure of a `voom` object to ensure that it
+   #' contains 
+   #' all the expected components and that these components have the correct 
+   #' types 
+   #' and dimensions. The function does not check the actual data within the 
+   #' matrices.
+   #'
+   #' @param voom_obj A list representing a `voom` object, typically created 
+   #' by the 
+   #'   `voom` function from the `limma` package.
+   #'
+   #' @details
+   #' The function verifies that the `voom` object contains the following 
+   #' components:
+   #' - `E`: A matrix of log2-counts per million (logCPM) values.
+   #' - `weights`: A matrix of observation-specific weights that matches the 
+   #' dimensions of `E`.
+   #' - `design`: A matrix representing the design matrix used in the linear 
+   #' modeling, 
+   #'   with the same number of rows as there are columns in `E`.
+   #'
+   #' The function also checks for optional components such as:
+   #' - `genes`: A data frame of gene annotations.
+   #' - `targets`: A data frame of target information.
+   #' - `sample.weights`: A numeric vector of sample-specific weights.
+   #'
+   #' If any of these checks fail, the function stops and reports the issues.
+   #' If the structure is valid, a message confirming the validity is printed.
+   #'
+   #' @return Boolean TRUE or FALSE. However, the function is mostly called for
+   #' its side effects, which stop the script if the structure is not valid.
+   #'
+   check_voom_structure = function(voom_obj) {
+     
+     # Initialize a list to collect any issues found
+     issues <- list()
+     
+     # Check if the input is a list
+     if (!is.list(voom_obj)) {
+       stop("The input is not a list. A voom object should be a list.")
+     }
+     
+     # Check for the presence of the expected components
+     expected_components <- c("E", "weights", "design")
+     for (comp in expected_components) {
+       if (!comp %in% names(voom_obj)) {
+         issues <- c(issues, paste("Missing component:", comp))
+       }
+     }
+     
+     # Check that 'E' is a matrix
+     if ("E" %in% names(voom_obj) && !is.matrix(voom_obj$E)) {
+       issues <- c(issues, "'E' should be a matrix.")
+     }
+     
+     # Check that 'weights' is a matrix and matches the dimensions of 'E'
+     if ("weights" %in% names(voom_obj)) {
+       if (!is.matrix(voom_obj$weights)) {
+         issues <- c(issues, "'weights' should be a matrix.")
+       } else if (!all(dim(voom_obj$weights) == dim(voom_obj$E))) {
+         issues <- c(
+           issues,
+           "'weights' dimensions do not match 'E' dimensions."
+           )
+       }
+     }
+     
+     # Check that 'design' is a matrix and has the correct number of rows
+     if ("design" %in% names(voom_obj)) {
+       if (!is.matrix(voom_obj$design)) {
+         issues <- c(issues, "'design' should be a matrix.")
+       } else if (nrow(voom_obj$design) != ncol(voom_obj$E)) {
+         issues <- c(
+           issues,
+           "'design' matrix should have the same number of rows as the 
+           number of columns in 'E'."
+           )
+       }
+     }
+     
+     # Optionally, check for the presence of other common components
+     if ("genes" %in% names(voom_obj) && !is.data.frame(voom_obj$genes)) {
+       issues <- c(issues, "'genes' should be a data frame.")
+     }
+     
+     # Check for the presence of optional components like targets or 
+     # sample weights
+     if ("targets" %in% names(voom_obj) && !is.data.frame(voom_obj$targets)) {
+       issues <- c(issues, "'targets' should be a data frame.")
+     }
+     
+     if ("sample.weights" %in% names(voom_obj) 
+         && !is.numeric(voom_obj$sample.weights)) {
+       issues <- c(issues, "'sample.weights' should be numeric.")
+     }
+     
+     # Report results
+     if (length(issues) > 0) {
+       stop(
+         "The voom object failed the structure check:\n", 
+         paste(
+           issues,
+           collapse = "\n"
+           ),
+         call. = FALSE
+         )
+     } else {
+       return(TRUE)
+     }
+   },
+   
 
    #' Check Batch Column
    #'
@@ -2287,15 +2403,19 @@ check_splineomics_elements <- function(
       "report_info"
       ),
     "screen_limma_hyperparams" = c(
+      "preprocess_rna_seq",
       "condition",
-      "report_info"
+      "report_info",
+      "padjust_method"
     ),
     "run_limma_splines" = c(
       "data",
+      "preprocess_rna_seq",
       "meta",
       "design",
       "condition",
-      "spline_params"
+      "spline_params",
+      "padjust_method"
     ),
     "create_limma_report" = c(
       "limma_splines_result",
@@ -2322,12 +2442,22 @@ check_splineomics_elements <- function(
     ]
   
   if (length(missing_elements) > 0) {
-    stop(paste("The following required elements for the function", func_type,
-               "were not passed to the SplineOmics object:",
-               paste(missing_elements, collapse = ", "),
-               "\nAll required elements for", func_type, "are:",
-               paste(required_elements, collapse = ", ")),
-         call. = FALSE)
+    stop(paste(
+      "The following required elements for the function",
+      func_type,
+      "were not passed to the SplineOmics object:",
+      paste(
+        missing_elements,
+        collapse = ", "
+        ),
+      "\nAll required elements for",
+      func_type,
+      "are:",
+      paste(
+        required_elements, 
+        collapse = ", ")
+      ),
+      call. = FALSE)
   }
 }
 

@@ -43,6 +43,7 @@ Check Data Matrix
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_batch_column"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_batch_column'><code>SplineOmics::Level3Functions$check_batch_column()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_condition_time_consistency"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_condition_time_consistency'><code>SplineOmics::Level3Functions$check_condition_time_consistency()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_time_column_pattern"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_time_column_pattern'><code>SplineOmics::Level3Functions$check_time_column_pattern()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_voom_structure"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_voom_structure'><code>SplineOmics::Level3Functions$check_voom_structure()</code></a></span></li>
 </ul>
 </details>
 }}

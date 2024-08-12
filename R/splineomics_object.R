@@ -59,11 +59,14 @@ create_splineomics <- function(
     meta_batch2_column = NULL,
     feature_name_columns = NULL,
     design = NULL,
-    spline_params = NULL
+    spline_params = NULL,
+    preprocess_rna_seq = FALSE,
+    padjust_method = "BH"
     ) {
   
   splineomics <- list(
     data = data,
+    preprocess_rna_seq = preprocess_rna_seq,
     meta = meta,
     condition = condition,
     annotation = annotation,
@@ -72,7 +75,8 @@ create_splineomics <- function(
     meta_batch2_column = meta_batch2_column,
     feature_name_columns = feature_name_columns,
     design = design,
-    spline_params = spline_params
+    spline_params = spline_params,
+    padjust_method = padjust_method
   )
   
   class(splineomics) <- "SplineOmics"

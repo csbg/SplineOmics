@@ -140,8 +140,9 @@ in the single condition column).
 Since `data_excel` is not in the format required by the SplineOmics
 package, it needs processing. This can be done with a few R commands,
 but if your file looks like the one here, with the data matrix on the
-left and annotation info on the right, separated by an empty column, the
-`extract_data()` function can handle this automatically.
+left and annotation info on the right, separated by an empty column 
+(which is required!), the `extract_data()` function can handle this 
+automatically.
 
 The function identifies the data matrix and converts it into a
 dataframe. Column headers are created from the information in the cells

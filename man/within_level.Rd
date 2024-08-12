@@ -9,6 +9,7 @@ within_level(
   level_index,
   spline_params,
   data,
+  preprocess_rna_seq,
   meta,
   design,
   condition,
@@ -25,6 +26,8 @@ within_level(
 \item{spline_params}{A list of spline parameters for the analysis.}
 
 \item{data}{A matrix of data values.}
+
+\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
 
 \item{meta}{A dataframe containing metadata.}
 
