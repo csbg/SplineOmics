@@ -15,6 +15,12 @@ time-series -omics data by using splines and `limma` for hypothesis
 testing. It then clusters the hits based on the spline shape while
 showing all results in summary HTML reports.
 
+<figure>
+<img src="man/figures/SplineOmics_graphical_abstract.png"
+alt="Graphical Abstract" />
+<figcaption aria-hidden="true">Graphical Abstract</figcaption>
+</figure>
+
 ## Table of Contents
 
 - [📘 Introduction](#-introduction)
@@ -23,8 +29,8 @@ showing all results in summary HTML reports.
 - [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
-  - [Transcriptomics and glycan fractional abundance
-    data](#transcriptomics-and-glycan-fractional-abundance%20data)
+  - [Preprocessing of RNA-seq and glycan fractional abundance
+    data](#-preprocessing-of-rna-seq-and-glycan-fractional-abundance-data)
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
@@ -295,11 +301,9 @@ compatibility issues.
 - **cluster**: For clustering algorithms such as hierarchical
   clustering.
 - **clusterProfiler**: For functional enrichment analysis.
-- **data.table**: For high-performance data manipulation.
 - **dendextend**: For extending `dendrogram` objects in R, allowing for
   easier manipulation of dendrograms.
 - **dplyr**: For data manipulation.
-- **fs**: For file system operations.
 - **ggplot2**: For creating elegant data visualizations using the
   grammar of graphics.
 - **ggrepel**: For better label placement in ggplot2.

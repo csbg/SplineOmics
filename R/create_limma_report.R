@@ -556,56 +556,134 @@ create_volcano_plot <- function(
     top_table, 
     adj_pthresh, 
     compared_levels
-    ) {
+) {
   
-  # Add a column for coloring points based on logFC
-  top_table$Regulation <- ifelse(
-    top_table$logFC > 0, 
-    compared_levels[2],
-    compared_levels[1]
+  logFC <- NULL
+  adj.P.Val <- NULL
+  
+  top_table <- top_table %>%
+    dplyr::mutate(
+      Regulation = ifelse(
+        logFC > 0, 
+        compared_levels[2], 
+        compared_levels[1]
+      ),
+      Alpha = ifelse(
+        adj.P.Val < adj_pthresh, 
+        1, 
+        0.5
+      )
     )
   
   # Create a named vector for the colors
-  colors <- c("blue", "darkgrey")
-  names(colors) <- c(compared_levels[2], compared_levels[1])
+  colors <- c("blue", "darkgrey") %>%
+    setNames(c(
+      compared_levels[2],
+      compared_levels[1]
+      ))
   
   # Calculate the number of hits
-  num_hits <- sum(top_table$adj.P.Val < adj_pthresh)
+  num_hits <- sum(
+    top_table$adj.P.Val < adj_pthresh
+  )
   
   volcano_plot <- ggplot2::ggplot(
-    top_table,
-    aes(
+    data = top_table,
+    mapping = ggplot2::aes(
       x = logFC, 
       y = -log10(adj.P.Val), 
-      color = Regulation)
-    ) +
+      color = Regulation,
+      alpha = Alpha
+    )
+  ) +
     ggplot2::geom_point() +
     ggplot2::theme_minimal() +
-    ggplot2::labs(title = paste("Volcano Plot:",
-                                compared_levels[1], "vs", compared_levels[2]),
-                  x = paste("Log Fold Change (",
-                            compared_levels[2], " / ",
-                            compared_levels[1], ")", sep = ""),
-                  y = "-Log10 Adjusted P-value") +
-    ggplot2::geom_hline(yintercept = -log10(adj_pthresh), 
-                        linetype = "dashed", color = "red") +
-    ggplot2::annotate("text", x = Inf, y = -log10(adj_pthresh), 
-                      label = paste("Adj.P.Val:", adj_pthresh), 
-                      hjust = 1.1, vjust = -1.5, color = "red") +
-    ggplot2::scale_color_manual(values = colors) +
-    ggplot2::annotate("text", x = max(top_table$logFC) * 0.8, y = Inf, 
-                      label = paste(compared_levels[2], "higher"), 
-                      hjust = 1.1, vjust = 1.1, color = "blue", size = 3) +
-    ggplot2::annotate("text", x = min(top_table$logFC) * 0.8, y = Inf, 
-                      label = paste(compared_levels[1], "higher"), 
-                      hjust = -0.1, vjust = 1.1, color = "darkgrey", size = 3) +
-    ggplot2::annotate("text", x = Inf, y = Inf, 
-                      label = paste("Hits:", num_hits), 
-                      hjust = 1.1, vjust = 2, color = "black", size = 3) +
-    ggplot2::theme(legend.position = "none")
+    ggplot2::labs(
+      title = paste(
+        "Volcano Plot:", 
+        compared_levels[1], 
+        "vs", 
+        compared_levels[2]
+      ),
+      x = paste(
+        "Log Fold Change (", 
+        compared_levels[2], 
+        " / ", 
+        compared_levels[1], 
+        ")", 
+        sep = ""
+      ),
+      y = "-Log10 Adjusted P-value"
+    ) +
+    ggplot2::geom_hline(
+      yintercept = -log10(adj_pthresh), 
+      linetype = "dashed", 
+      color = "red"
+    ) +
+    ggplot2::annotate(
+      geom = "text", 
+      x = Inf, 
+      y = -log10(adj_pthresh), 
+      label = paste(
+        "Adj.P.Val:", 
+        adj_pthresh
+      ), 
+      hjust = 1.1, 
+      vjust = -1.5, 
+      color = "red"
+    ) +
+    ggplot2::scale_color_manual(
+      values = colors
+    ) +
+    ggplot2::scale_alpha(
+      range = c(0.5, 1)
+    ) +
+    ggplot2::annotate(
+      geom = "text", 
+      x = max(top_table$logFC) * 0.8, 
+      y = Inf, 
+      label = paste(
+        compared_levels[2], 
+        "higher"
+      ), 
+      hjust = 1.1, 
+      vjust = 1.1, 
+      color = "blue", 
+      size = 3
+    ) +
+    ggplot2::annotate(
+      geom = "text", 
+      x = min(top_table$logFC) * 0.8, 
+      y = Inf, 
+      label = paste(
+        compared_levels[1], 
+        "higher"
+      ), 
+      hjust = -0.1, 
+      vjust = 1.1, 
+      color = "darkgrey", 
+      size = 3
+    ) +
+    ggplot2::annotate(
+      geom = "text", 
+      x = Inf, 
+      y = Inf, 
+      label = paste(
+        "Hits:", 
+        num_hits
+      ), 
+      hjust = 1.1, 
+      vjust = 2, 
+      color = "black", 
+      size = 3
+    ) +
+    ggplot2::theme(
+      legend.position = "none"
+    )
   
   return(volcano_plot)
 }
+
 
 
 #' Remove Prefix from String

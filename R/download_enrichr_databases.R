@@ -23,8 +23,6 @@
 #'         specified directory containing the gene sets from the specified 
 #'         Enrichr databases.
 #'
-#' @importFrom data.table data.table
-#' @importFrom fs dir_create
 #' @importFrom here here
 #' @importFrom readr write_tsv
 #' 
@@ -48,16 +46,23 @@ download_enrichr_databases <- function(
 
   genesets <- enrichr_get_genesets(databases = gene_set_lib)
   
-  genesets <- do.call(rbind, lapply(names(genesets), function(db.nam){
-    do.call(rbind,lapply(names(genesets[[db.nam]]), function(set.nam){
-      data.table::data.table(DB = db.nam, Geneset = set.nam, 
-                             Gene = genesets[[db.nam]][[set.nam]])
+  genesets <- do.call(rbind, lapply(names(genesets), function(db.nam) {
+    do.call(rbind, lapply(names(genesets[[db.nam]]), function(set.nam) {
+      tibble::tibble(
+        DB = db.nam,
+        Geneset = set.nam,
+        Gene = genesets[[db.nam]][[set.nam]]
+      )
     }))
   }))
   
   genesets[,Gene := gsub(",.+$", "", Gene)]
   
-  fs::dir_create("databases")
+  dir.create(
+    output_dir,
+    recursive = TRUE,
+    showWarnings = FALSE
+    )
   
   timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
   filename <- paste0("all_databases_", timestamp, ".tsv")
@@ -66,7 +71,6 @@ download_enrichr_databases <- function(
   
   return(filename_path)
 }
-
 
 
 # Level 1 internal functions ---------------------------------------------------

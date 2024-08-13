@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     document.addEventListener('keydown', function(event) {
         console.log('Key pressed:', event.key);
-	
+
         if (event.key === 't') {
             // Store the current scroll position
 		    savedPosition = window.scrollY;

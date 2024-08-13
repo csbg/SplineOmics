@@ -120,7 +120,7 @@ splineomics <- create_splineomics(
   report_info = report_info,
   condition = "Phase",
   meta_batch_column = "Reactor",
-  preprocess_rna_seq = TRUE
+  preprocess_rna_seq = FALSE
 )
 
 
@@ -194,6 +194,7 @@ report_dir <- here::here("results", "limma_reports")
 
 plots <- create_limma_report(
   splineomics,
+  adj_pthresh = 0.1,
   report_dir = report_dir
 )
 

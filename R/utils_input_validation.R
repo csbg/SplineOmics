@@ -1494,8 +1494,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
             call. = FALSE)
      }
      
-     self$check_time_column_pattern(meta)
-     
      if (any(is.na(meta))) {
        stop(self$create_error_message("meta must not contain missing values.",
                                       data_meta_index),
@@ -2190,81 +2188,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
        }
      }
    },
-   
-   
-   #' Check Time Column Pattern
-   #'
-   #' @description
-   #' This function checks if the time values in the metadata follow a 
-   #' consistent 
-   #' pattern with a fixed number of replicates. It ensures that the time values 
-   #' change consistently after each block of replicates and identifies the 
-   #' repeating pattern.
-   #'
-   #' @param meta A data frame containing a column named "Time" with time 
-   #'             values.
-   #'
-   #' @return Returns TRUE if the time values follow a consistent pattern. It 
-   #'         also outputs messages if inconsistencies are found.
-   #'
-   check_time_column_pattern = function(meta) {
-     
-     time_values <- meta[["Time"]]
-     
-     # # Find the number of replicates
-     # replicate_count <- 1
-     # for (i in 2:length(time_values)) {
-     #   if (time_values[i] != time_values[1]) {
-     #     replicate_count <- i - 1
-     #     break
-     #   }
-     # }
 
-     # # Check that the value changes after the replicate_count consistently
-     # for (i in seq(replicate_count + 1, length(time_values), 
-     #               by = replicate_count)) {
-     #   if (i + replicate_count - 1 > length(time_values)) break
-     #   current_block <- time_values[i:(i + replicate_count - 1)]
-     #   previous_value <- time_values[i - 1]
-     #   if (!all(current_block == current_block[1]) ||
-     #       current_block[1] <= previous_value) {
-     #     message(paste("The time values do not change consistently", 
-     #                   "after the replicates."))
-     #     break
-     #   }
-     # }
-     
-     # # Find the pattern
-     # pattern_end <- 1
-     # for (i in (replicate_count + 1):length(time_values)) {
-     #   if (time_values[i] < time_values[i - 1]) {
-     #     pattern_end <- i - 1
-     #     break
-     #   }
-     # }
-     # 
-     # pattern <- time_values[1:pattern_end]
-     # pattern_length <- length(pattern)
-     # 
-     # # Check if the pattern is fully repeated
-     # for (i in seq(pattern_length + 1, length(time_values),
-     #               by = pattern_length)) {
-     #   if (i + pattern_length - 1 > length(time_values)) break
-     #   if (!all(time_values[i:(i + pattern_length - 1)] == pattern)) {
-     #     message("The time pattern is not fully repeated.")
-     #     break
-     #   }
-     # }
-     # 
-     # # Check if there are leftover values
-     # if (length(time_values) %% pattern_length != 0) {
-     #   message(paste("The time pattern is not fully repeated.", 
-     #                 "There are leftover values."))
-     # }
-     
-     return(TRUE)
-   },
-   
    
    #' Check Condition Time Consistency
    #'
@@ -2284,8 +2208,10 @@ Level3Functions <- R6::R6Class("Level3Functions",
    #' @return Logical TRUE if the condition values are consistent with the
    #'  time series pattern.
    #'
-   check_condition_time_consistency = function(meta,
-                                               condition) {
+   check_condition_time_consistency = function(
+    meta,
+    condition
+    ) {
      
      # Get the unique times in the order they appear
      unique_times <- unique(meta[["Time"]])
