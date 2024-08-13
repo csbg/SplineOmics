@@ -1428,7 +1428,6 @@ plot_all_mean_splines <- function(
 #' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
 #'                     ggtitle aes labs element_rect
 #' @importFrom rlang sym
-#' @importFrom data.table :=
 #' @importFrom scales hue_pal
 #'
 plot_single_and_mean_splines <- function(
@@ -1449,7 +1448,7 @@ plot_single_and_mean_splines <- function(
       values_to = "intensity"
     ) %>%
     dplyr::arrange(!!feature_col) %>%
-    dplyr::mutate(!!time_col := as.numeric(!!time_col))
+    dplyr::mutate(time = as.numeric(time))
   
   # Compute consensus (mean of each column)
   consensus <- colMeans(

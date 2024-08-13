@@ -158,7 +158,6 @@ generate_explore_plots <- function(
     list(func = make_pca_plot, size = 1.5, flatten = FALSE),
     list(func = make_mds_plot, size = 1.5, flatten = FALSE),
     list(func = make_correlation_heatmaps, size = NULL),
-    list(func = make_tsne_plot, size = 1.5, flatten = FALSE),
     list(func = plot_mean_correlation_with_time, size = 1.5),
     list(func = plot_lag1_differences, size = 1.5),
     list(func = plot_first_lag_autocorrelation, size = 1.5),
@@ -193,13 +192,20 @@ generate_explore_plots <- function(
     } else {
       # Flatten the result
       all_plots <- c(all_plots, result$plots)
-      all_plots_sizes <- c(all_plots_sizes, rep(result$size,
-                                                length(result$plots)))
+      all_plots_sizes <- c(
+        all_plots_sizes,
+        rep(
+          result$size,
+          length(result$plots)
+          )
+        )
     }
   }
 
-  list(plots = all_plots, 
-       plots_sizes = all_plots_sizes)
+  list(
+    plots = all_plots, 
+    plots_sizes = all_plots_sizes
+    )
 }
 
 
@@ -250,7 +256,6 @@ build_explore_data_report <- function(
     "PCA ", 
     "MDS",
     "Correlation Heatmaps",
-    "t-SNE Plot",
     "Mean Time Correlation",
     "Lag1 Differences",
     "First Lag Autocorrelation",
@@ -282,7 +287,7 @@ build_explore_data_report <- function(
       if (
         toc_index == 1 ||   # positions of major headers.
         toc_index == 3 ||
-        toc_index == 7
+        toc_index == 6
         ) {
 
         major_header_index <- major_header_index + 1
@@ -432,13 +437,21 @@ make_density_plots <- function(
   
   if (length(unique(meta[[condition]])) > 1) {    # Only when > 2 levels
     # Create the overall density plot for all data
-    overall_plot <- ggplot2::ggplot(data_long, 
-                                    ggplot2::aes(x = !!rlang::sym("value"))) +
-      ggplot2::geom_density(fill = "blue", alpha = 0.5) +
+    overall_plot <- ggplot2::ggplot(
+      data_long, 
+      ggplot2::aes(x = !!rlang::sym("value"))
+      ) +
+      ggplot2::geom_density(
+        fill = "blue",
+        alpha = 0.5
+        ) +
       ggplot2::ggtitle("All Levels") +
       custom_theme
     
-    density_plots <- c(density_plots, list(overall_plot))
+    density_plots <- c(
+      density_plots,
+      list(overall_plot)
+      )
   }
   
   
@@ -451,14 +464,19 @@ make_density_plots <- function(
     data_level_long <- reshape2::melt(as.data.frame(data_level), id.vars = NULL)
     
     # Create the density plot for the current level
-    level_plot <- ggplot2::ggplot(data_level_long, 
-                                  ggplot2::aes(x = !!rlang::sym("value"))) +
+    level_plot <- ggplot2::ggplot(
+      data_level_long, 
+      ggplot2::aes(x = !!rlang::sym("value"))
+      ) +
       ggplot2::geom_density(fill = "blue", alpha = 0.5) +
       ggplot2::ggtitle(paste("Level:", level)) + 
       custom_theme
     
     # Add the level plot to the list
-    density_plots <- c(density_plots, list(level_plot))
+    density_plots <- c(
+      density_plots,
+      list(level_plot)
+      )
   }
   
   return(density_plots)
@@ -1087,75 +1105,6 @@ make_correlation_heatmaps <- function(
   
   list(heatmaps = heatmaps,
        heatmaps_sizes = heatmaps_sizes)
-}
-
-
-#' Generate a t-SNE Plot
-#'
-#' @description
-#' This function performs t-SNE on a given data matrix and creates a ggplot2 
-#' scatter plot where points are colored based on a specified condition from 
-#' the metadata.
-#'
-#' @param data A matrix where rows represent features and columns represent 
-#' samples.
-#' @param meta A data frame containing metadata for the samples, with rows 
-#' corresponding to columns in the data matrix.
-#' @param condition The name of the column in the metadata data frame that 
-#' contains the condition labels for coloring the plot.
-#'
-#' @return A ggplot2 object representing the t-SNE plot.
-#'
-#' @importFrom Rtsne Rtsne
-#' @importFrom ggplot2 ggplot aes geom_point xlab ylab theme_minimal theme
-#'                     element_line labs
-#'
-make_tsne_plot <- function(
-    data,
-    meta,
-    condition
-    ) {
-  
-  # Transpose the matrix so that rows are samples
-  data_t <- t(data)
-  
-  # perplexity should be less than number of samples divides by three
-  perplexity <- min(30, nrow(meta) / 3 - 1)
-  
-  message(paste("Making t-SNE plot\n"))
-  
-  # Run t-SNE
-  tsne_result <- suppressMessages(
-    Rtsne::Rtsne(
-      data_t,
-      dims = 2,
-      perplexity = perplexity,
-      verbose = FALSE,
-      max_iter = 1000
-      )
-  )
-  
-  # Create a data frame with t-SNE results for ggplot2
-  tsne_df <- data.frame(
-    tSNE1 = tsne_result$Y[, 1],
-    tSNE2 = tsne_result$Y[, 2],
-    condition = meta[[condition]]
-    )
-  
-  tsne_plot <- ggplot2::ggplot(
-    tsne_df,
-    ggplot2::aes(x = tSNE1,
-                y = tSNE2,
-                color = condition)
-    ) +
-    ggplot2::geom_point(size = 2) +
-    ggplot2::xlab("t-SNE1") +
-    ggplot2::ylab("t-SNE2") +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      panel.grid.major = ggplot2::element_line(color = "grey80"),
-      panel.grid.minor = ggplot2::element_line(color = "grey90")) +
-    ggplot2::labs(color = condition)
 }
 
 

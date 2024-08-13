@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
 
 The R package `SplineOmics` finds the significant features (hits) of time-series -omics data by using splines and `limma` for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.
 
+![Graphical Abstract](man/figures/SplineOmics_graphical_abstract.png)
+
 ## Table of Contents
 
 -   [📘 Introduction](#-introduction)
@@ -25,7 +27,7 @@ The R package `SplineOmics` finds the significant features (hits) of time-series
 -   [▶️ Usage](#-usage)
     -   [Tutorial](#-tutorial)
     -   [Functions in Depth](#-functions-in-depth)
-    -   [Transcriptomics and glycan fractional abundance data](#transcriptomics-and-glycan-fractional-abundance%20data)
+    -   [Preprocessing of RNA-seq and glycan fractional abundance data](#-preprocessing-of-rna-seq-and-glycan-fractional-abundance-data)
 -   [📦 Dependencies](#-dependencies)
 -   [📚 Further Reading](#-further-reading)
 -   [❓ Getting Help](#-getting-help)
@@ -175,7 +177,7 @@ For instructions on downloading the image of the `SplineOmics` package and runni
 
 ## ▶️ Usage
 
-### Tutorial
+### Tutorial {#tutorial}
 
 [This tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html) covers a real CHO cell time-series proteomics example from start to end.
 
@@ -193,7 +195,7 @@ library(SplineOmics)
 open_template()
 ```
 
-### Functions in Depth
+### Functions in Depth {#functions-in-depth}
 
 A detailed description of all arguments and outputs of the available package functions can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
@@ -201,7 +203,7 @@ A detailed description of all arguments and outputs of the available package fun
 
 A quick guide on how to design a `limma` design formula can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
 
-### Preprocessing of RNA-seq and glycan fractional abundance data
+### Preprocessing of RNA-seq and glycan fractional abundance data {#preprocessing-of-rna-seq-and-glycan-fractional-abundance-data}
 
 #### RNA-seq data
 
@@ -226,10 +228,8 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **circlize**: For circular visualization of data.
 -   **cluster**: For clustering algorithms such as hierarchical clustering.
 -   **clusterProfiler**: For functional enrichment analysis.
--   **data.table**: For high-performance data manipulation.
 -   **dendextend**: For extending `dendrogram` objects in R, allowing for easier manipulation of dendrograms.
 -   **dplyr**: For data manipulation.
--   **fs**: For file system operations.
 -   **ggplot2**: For creating elegant data visualizations using the grammar of graphics.
 -   **ggrepel**: For better label placement in ggplot2.
 -   **here**: For constructing paths to your project’s files.

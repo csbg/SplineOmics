@@ -43,7 +43,6 @@ Check the structure of a voom object
 \itemize{
 \item \href{#method-Level3Functions-check_voom_structure}{\code{Level3Functions$check_voom_structure()}}
 \item \href{#method-Level3Functions-check_batch_column}{\code{Level3Functions$check_batch_column()}}
-\item \href{#method-Level3Functions-check_time_column_pattern}{\code{Level3Functions$check_time_column_pattern()}}
 \item \href{#method-Level3Functions-check_condition_time_consistency}{\code{Level3Functions$check_condition_time_consistency()}}
 \item \href{#method-Level3Functions-clone}{\code{Level3Functions$clone()}}
 }
@@ -111,34 +110,6 @@ data/meta pair. Default is NA.}
 \subsection{Returns}{
 NULL. The method is used for its side effects of throwing errors 
 or printing messages.
-
-Check Time Column Pattern
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Level3Functions-check_time_column_pattern"></a>}}
-\if{latex}{\out{\hypertarget{method-Level3Functions-check_time_column_pattern}{}}}
-\subsection{Method \code{check_time_column_pattern()}}{
-This function checks if the time values in the metadata follow a 
-consistent 
-pattern with a fixed number of replicates. It ensures that the time values 
-change consistently after each block of replicates and identifies the 
-repeating pattern.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_time_column_pattern(meta)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{meta}}{A data frame containing a column named "Time" with time 
-values.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Returns TRUE if the time values follow a consistent pattern. It 
-        also outputs messages if inconsistencies are found.
 
 Check Condition Time Consistency
 }
