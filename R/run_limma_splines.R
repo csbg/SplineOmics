@@ -69,22 +69,25 @@ run_limma_splines <- function(
   
   data <- splineomics[["data"]]
   preprocess_rna_seq <- splineomics[["preprocess_rna_seq"]]
+  normalization_fun <- splineomics[["normalization_fun"]]
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
   padjust_method <- splineomics[["padjust_method"]]
   
   feature_names <- rownames(data)
-  rownames(data) <- NULL
+  data_copy <- data
+  rownames(data_copy) <- NULL   # To just have numbers describing the rows
 
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
   
-  # Get hits for level (within level analysis) ---------------------------------
+  # Get hits for level (within level analysis) 
   process_level_with_params <- purrr::partial(
     within_level, 
     spline_params = spline_params,
-    data = data, 
+    data = data_copy, 
     preprocess_rna_seq = preprocess_rna_seq,
+    normalization_fun = normalization_fun,
     meta = meta, 
     design = design, 
     condition = condition, 
@@ -104,15 +107,24 @@ run_limma_splines <- function(
       purrr::map(results_list, "top_table"), 
       purrr::map_chr(results_list, "name")
       )
-  
-  # For RNA-seq data, voom data matrices must be passed to cluster_hits()
-  voom_matrices <- lapply(results_list, function(x) x$voom_data_matrix_level)
+
+  # For RNA-seq data, voom$E data matrices must be passed to cluster_hits()
+  voom_matrices <- lapply(
+    results_list,
+    function(x) x$voom_data_matrix_level
+    )
 
   if (!any(sapply(voom_matrices, is.null))) {
-    data <- do.call(rbind, voom_matrices)   # Combine from all levels
+    if (args$mode == "isolated") {
+      data <- do.call(rbind, voom_matrices)   # Combine from all levels
+    } else {    # mode == "integrated"
+      # All levels contain the full data. Can just take the first one.
+      data <- voom_matrices[[1]]  
+    }
+    rownames(data) <- feature_names  # Readd the original row headers.
   }
   
-  # Factor and Factor:Time comparisons between levels --------------------------
+  # Factor and Factor:Time comparisons between levels 
   between_level_condition_only <- list()        
   between_level_condition_time <- list()        # Factor AND time
   
@@ -120,8 +132,9 @@ run_limma_splines <- function(
     level_combinations <- utils::combn(levels, 2, simplify = FALSE)
     for (lev_combo in level_combinations) {
       result <- between_level(
-        data = data, 
-        preprocess_rna_seq,
+        data = data_copy, 
+        preprocess_rna_seq = preprocess_rna_seq,
+        normalization_fun = normalization_fun,
         meta = meta, 
         design = design, 
         spline_params = spline_params,
@@ -182,6 +195,7 @@ run_limma_splines <- function(
 #'
 #' @param data A matrix of data values.
 #' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
+#' @param normalization_fun Function for normalizing RNA-seq raw-counts.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the LIMMA analysis.
 #' @param spline_params A list of spline parameters for the analysis.
@@ -209,6 +223,7 @@ run_limma_splines <- function(
 between_level <- function(
     data, 
     preprocess_rna_seq,
+    normalization_fun,
     meta, 
     design, 
     spline_params, 
@@ -233,7 +248,8 @@ between_level <- function(
   if (preprocess_rna_seq) {
     data <- preprocess_rna_seq_data(
       raw_counts = data,
-      design_matrix = design
+      design_matrix = design_matrix,
+      normalization_fun
     )
   }
   
@@ -312,6 +328,7 @@ between_level <- function(
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param data A matrix of data values.
 #' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
+#' @param normalization_fun Function to normalize RNA-seq raw counts.
 #' @param meta A dataframe containing metadata.
 #' @param design A design formula or matrix for the LIMMA analysis.
 #' @param condition A character string specifying the condition.
@@ -334,6 +351,7 @@ within_level <- function(
     spline_params,
     data, 
     preprocess_rna_seq,
+    normalization_fun,
     meta, 
     design, 
     condition, 
@@ -360,6 +378,7 @@ within_level <- function(
   result <- process_within_level(
     data = data_copy, 
     preprocess_rna_seq = preprocess_rna_seq,
+    normalization_fun = normalization_fun,
     meta = meta_copy, 
     design = design, 
     spline_params = spline_params,
@@ -377,7 +396,7 @@ within_level <- function(
     level,
     sep = "_"
     )
-  
+
   list(
     name = results_name,
     top_table = top_table,
@@ -418,7 +437,7 @@ preprocess_rna_seq_data <- function(
 ) {
   
   message("Preprocessing RNA-seq data (normalization + voom)...")
-  
+
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
   
@@ -464,7 +483,7 @@ process_top_table <- function(
 
   top_table <- process_within_level_result$top_table
   fit <- process_within_level_result$fit
-  
+
   top_table <- modify_limma_top_table(
     top_table,
     feature_names
@@ -489,6 +508,7 @@ process_top_table <- function(
 #'
 #' @param data A matrix of data values.
 #' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
+#' @param normalization_fun Function for normalizing RNA-seq raw counts.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
 #' @param spline_params A list of spline parameters for the analysis.
@@ -513,6 +533,7 @@ process_top_table <- function(
 process_within_level <- function(
     data,
     preprocess_rna_seq,
+    normalization_fun,
     meta,
     design,
     spline_params,
@@ -526,11 +547,12 @@ process_within_level <- function(
     level_index,
     design
     )
-  
+
   if (preprocess_rna_seq) {
     data <- preprocess_rna_seq_data(
       raw_counts = data,
-      design_matrix = design
+      design_matrix = design_matrix,
+      normalize_func = normalization_fun 
     )
     voom_data_matrix <- data$E
   } else {
@@ -588,10 +610,13 @@ modify_limma_top_table <- function(
     feature_names
     ) {
 
-  top_table <- tidyr::as_tibble(top_table, rownames = "feature_nr")
+  top_table <- tidyr::as_tibble(
+    top_table, 
+    rownames = "feature_nr"
+    )
   
   feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
-  
+
   # Convert feature_nr to integer
   top_table <- top_table %>% 
     dplyr::mutate(feature_nr = as.integer(feature_nr)) %>%

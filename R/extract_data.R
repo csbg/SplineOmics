@@ -22,6 +22,8 @@
 #'                             used to construct the feature names. If ommited,
 #'                             the feature names are just numbers (stored as
 #'                             characters) starting from 1 (1, 2, 3, etc.)
+#' @param user_prompt Boolean specifying whether the user prompt about the 
+#' correct format of the input data should be shown.
 #'
 #' @return A numeric matrix with row headers and appropriate column names.
 #'
@@ -31,13 +33,21 @@
 #' 
 extract_data <- function(
     data,
-    feature_name_columns = NA
+    feature_name_columns = NA,
+    user_prompt = TRUE
     ) {
   
   control_inputs_extract_data(
     data = data,
     feature_name_columns = feature_name_columns
     )
+  
+  if (user_prompt) {
+    ask_user(paste(
+      "Is the data matrix on the left, the annotation info on the right,",
+      "separated by an empty column? "
+      ))
+  }
   
   data <- as.data.frame(data)
   
@@ -249,8 +259,10 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
 #'
 #' If any of these checks fail, the function stops with an error message.
 #' 
-control_inputs_extract_data <- function(data,
-                                        feature_name_columns) {
+control_inputs_extract_data <- function(
+    data,
+    feature_name_columns
+    ) {
   
   if (!is.data.frame(data)) {
     stop("Input data must be a dataframe.", call. = FALSE)
@@ -278,6 +290,28 @@ control_inputs_extract_data <- function(data,
   
   if (nrow(data) == 0) {
     stop("Input dataframe is empty.", call. = FALSE)
+  }
+}
+
+
+#' Prompt the user with a yes/no question
+#'
+#' @description
+#' This function prompts the user with a yes/no question. If the user answers 
+#' "yes" (case insensitive), the code proceeds. If the user answers "no" or 
+#' anything else, the code stops.
+#'
+#' @param question A string of the question to ask the user.
+#' 
+#' @return None.
+#'  
+ask_user <- function(question) {
+  message(question, " (yes/no):")
+  response <- readline()
+  if (tolower(response) == "yes") {
+    message("Proceeding...")
+  } else {
+    stop("Please make sure that this is the case!", call. = FALSE)
   }
 }
 

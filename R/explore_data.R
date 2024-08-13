@@ -808,8 +808,11 @@ plot_cv <- function(
     )
     
     p <- ggplot2::ggplot(cv_data, aes(x = .data$CV)) +
-      ggplot2::geom_histogram(binwidth = 0.05, fill = "#e377c2",
-                              color = "black") +
+      ggplot2::geom_histogram(
+        binwidth = 0.01, 
+        fill = "#e377c2",
+        color = "black"
+        ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
         plot.title = element_text(size = 13),         
@@ -818,11 +821,17 @@ plot_cv <- function(
         axis.text.x = element_text(size = 7),        
         axis.text.y = element_text(size = 7)        
       ) +
-      ggplot2::labs(title = paste("Level:", cond),
-           x = "Coefficient of Variation (CV)",
-           y = "Count of Features",
-           subtitle = paste("Mean CV:", round(mean_cv, 3), 
-                            "SD CV:", round(std_cv, 3)))
+      ggplot2::labs(
+        title = paste("Level:", cond),
+        x = "Coefficient of Variation (CV)",
+        y = "Count of Features",
+        subtitle = paste(
+          "Mean CV:",
+          round(mean_cv, 3), 
+          "SD CV:",
+          round(std_cv, 3)
+          )
+        )
     
     plot_list[[cond]] <- p
   }

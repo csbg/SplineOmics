@@ -10,6 +10,7 @@ within_level(
   spline_params,
   data,
   preprocess_rna_seq,
+  normalization_fun,
   meta,
   design,
   condition,
@@ -28,6 +29,8 @@ within_level(
 \item{data}{A matrix of data values.}
 
 \item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
+
+\item{normalization_fun}{Function to normalize RNA-seq raw counts.}
 
 \item{meta}{A dataframe containing metadata.}
 

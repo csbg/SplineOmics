@@ -17,6 +17,7 @@ create_splineomics(
   design = NULL,
   spline_params = NULL,
   preprocess_rna_seq = FALSE,
+  normalization_fun = NULL,
   padjust_method = "BH"
 )
 }
@@ -42,6 +43,16 @@ and project name (optional).}
 \item{design}{A design matrix or similar object (optional).}
 
 \item{spline_params}{Parameters for spline functions (optional).}
+
+\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
+
+\item{normalization_fun}{Function used for normalizing RNA-seq. Must take as
+input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y 
+with the normalized counts.}
+
+\item{padjust_method}{Method for p-value adjustment, one of "none", "BH", 
+"BY", "holm", "bonferroni", "hochberg", or "hommel". 
+Defaults to "BH" (Benjamini-Hochberg).}
 }
 \value{
 A SplineOmics object.
