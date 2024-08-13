@@ -242,24 +242,41 @@ A detailed description of all arguments and outputs of the available
 package functions can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
 
-### Design limma design formula
+### Design `limma` design formula
 
-A quick guide on how to design a limma design formula can be found
+A quick guide on how to design a `limma` design formula can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
 
-### Transcriptomics and glycan fractional abundance data
+### Preprocessing of RNA-seq and glycan fractional abundance data
 
-To preprocess the glycan fractional abundance data matrix, were each row
-is a type of glycan and the columns are the timepoints, you need to
-apply the centered log ratio (CLR) transformation using the `clr`
-function from the `compositions` package. This transformation is
-essential for converting the compositional data into a form suitable for
-multivariate analysis.
+#### RNA-seq data
+
+Transcriptomics data must be preprocessed for `limma`. This is done by
+setting the preprocess_rna_seq argument to TRUE (see documentation of
+create_splineomics() function). Then, the raw RNA-seq counts provided in
+the data matrix will undergo normalization and transformation. The
+default normalization is performed using TMM (Trimmed Mean of M-values)
+normalization via the `edgeR`::calcNormFactors function, followed by the
+voom transformation from the `limma` package to obtain log-transformed
+counts per million (logCPM) with associated precision weights. If you
+require a different normalization method, you can supply your custom
+normalization function.
+
+#### Glycan fractional abundance data
+
+The glycan fractional abundance data matrix, where each row represents a
+type of glycan and the columns correspond to timepoints, must be
+transformed before analysis. This preprocessing step is essential due to
+the compositional nature of the data. In compositional data, an increase
+in the abundance of one component (glycan) necessarily results in a
+decrease in others, introducing a dependency among the variables that
+can bias the analysis. One way to address this issue is by applying the
+Centered Log Ratio (CLR) transformation to the data with the clr
+function from the compositions package:
 
 ``` r
 library(compositions)
-clr_transformed_data <- clr(data_matrix)
-# use clr_transformed_data as SplineOmics input
+clr_transformed_data <- clr(data_matrix)  # use as SplineOmics input
 ```
 
 ## 📦 Dependencies

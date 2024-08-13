@@ -44,6 +44,13 @@
 #' (optional).
 #' @param design A design matrix or similar object (optional).
 #' @param spline_params Parameters for spline functions (optional).
+#' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
+#' @param normalization_fun Function used for normalizing RNA-seq. Must take as
+#' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y 
+#' with the normalized counts.
+#' @param padjust_method Method for p-value adjustment, one of "none", "BH", 
+#' "BY", "holm", "bonferroni", "hochberg", or "hommel". 
+#' Defaults to "BH" (Benjamini-Hochberg).
 #'
 #' @return A SplineOmics object.
 #'
@@ -61,6 +68,7 @@ create_splineomics <- function(
     design = NULL,
     spline_params = NULL,
     preprocess_rna_seq = FALSE,
+    normalization_fun = NULL,
     padjust_method = "BH"
     ) {
   

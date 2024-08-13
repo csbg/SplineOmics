@@ -8,7 +8,7 @@ data matrix, that serves as input for the other functions of this package.
 This is for convenience only.
 Extract Numeric Matrix from Dataframe}
 \usage{
-extract_data(data, feature_name_columns = NA)
+extract_data(data, feature_name_columns = NA, user_prompt = TRUE)
 }
 \arguments{
 \item{data}{A dataframe loaded from a tabular file, potentially containing a 
@@ -19,6 +19,9 @@ columns of the dataframe data, that should be
 used to construct the feature names. If ommited,
 the feature names are just numbers (stored as
 characters) starting from 1 (1, 2, 3, etc.)}
+
+\item{user_prompt}{Boolean specifying whether the user prompt about the 
+correct format of the input data should be shown.}
 }
 \value{
 A numeric matrix with row headers and appropriate column names.

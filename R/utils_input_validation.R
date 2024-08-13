@@ -1422,25 +1422,27 @@ Level2Functions <- R6::R6Class("Level2Functions",
      # Check for rows with all zeros
      if (any(rowSums(data) == 0)) {
        stop(
-         self$create_error_message("data must not contain rows with all zeros.",
-                                    data_meta_index),
+         self$create_error_message(
+           "data must not contain rows with all zeros!",
+           data_meta_index),
             call. = FALSE)
      }
      
      # Check for columns with all zeros
      if (any(colSums(data) == 0)) {
-       stop(self$create_error_message(paste("data must not contain columns", 
-                                            "with all zeros."),
+       stop(self$create_error_message(paste(
+         "data must not contain columns with all zeros!"),
                                       data_meta_index),
             call. = FALSE)
      }
      
-     # Check if row headers (rownames) are all strings
+     # Check if row headers (rownames) are present and non-null
      row_headers <- rownames(data)
-     if (is.null(row_headers) || !all(sapply(row_headers, is.character))) {
-       stop(self$create_error_message("All row headers must be strings.",
-                                      data_meta_index),
-            call. = FALSE)
+     if (is.null(row_headers)) {
+       stop(self$create_error_message(
+         "The data matrix must have row headers!",
+         data_meta_index),
+         call. = FALSE)
      }
      
      return(TRUE)
