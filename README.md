@@ -1,5 +1,9 @@
 
-# SplineOmics <img src="man/figures/hex_logo.png" style="float: right; width: 150px; margin-left: 300px; vertical-align: middle;"/>
+<div style="display: flex; align-items: center;">
+
+<div style="flex: 3; max-width: 75%;">
+
+# SplineOmics
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -15,6 +19,16 @@ time-series -omics data by using splines and `limma` for hypothesis
 testing. It then clusters the hits based on the spline shape while
 showing all results in summary HTML reports.
 
+</div>
+
+<div style="flex: 1; text-align: right;">
+
+<img src="man/figures/hex_logo.png" style="width: 150px;"/>
+
+</div>
+
+</div>
+
 <figure>
 <img src="man/figures/SplineOmics_graphical_abstract.png"
 alt="Graphical Abstract" />
@@ -29,8 +43,7 @@ alt="Graphical Abstract" />
 - [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
   - [Functions in Depth](#-functions-in-depth)
-  - [Preprocessing of RNA-seq and glycan fractional abundance
-    data](#-preprocessing-of-rna-seq-and-glycan-fractional-abundance-data)
+  - [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
@@ -39,6 +52,7 @@ alt="Graphical Abstract" />
 - [📜 License](#-license)
 - [🎓 Citation](#-citation)
 - [🌟 Contributors](#-contributors)
+- [🙏 Acknowledgements](#-ackknowledgements)
 
 ## 📘 Introduction
 
@@ -58,15 +72,15 @@ abundances, etc.).
 
 ### What do I need precisely?
 
-1.  A data matrix where each row is a feature (e.g., protein,
+1.  **Data**: A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
     time.
 
-2.  A table with identifiers on the rows/features of the data matrix
-    (e.g., gene and protein name)
+2.  **Meta**: A table with metadata on the columns/samples of the data
+    matrix (e.g., batch, time point, etc.)
 
-3.  A table with metadata on the columns/samples of the data matrix
-    (e.g., batch, time point, etc.)
+3.  **Annotation**: A table with identifiers on the rows/features of the
+    data matrix (e.g., gene and protein name).
 
 ### Capabilities
 
@@ -102,7 +116,7 @@ With `SplineOmics`, you can:
 
   Automatically generate reports to showcase all results. See an example
   report of the cluster_hits() function
-  [here](./inst/reports/cluster_hits_report.html)
+  [here](./inst/reports/cluster_hits_report.html).
 
 ## 🔧 Installation
 
@@ -121,7 +135,7 @@ GitHub repository into your R environment.
 
 1.  **Open RStudio** or your R console.
 
-2.  **Install** `SplineOmics` **from GitHub** with all dependencies.
+2.  **Install `SplineOmics` from GitHub** with all dependencies.
 
 Copy and paste the following code block into your R console or run it as
 a script.
@@ -253,7 +267,7 @@ package functions can be found
 A quick guide on how to design a `limma` design formula can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
 
-### Preprocessing of RNA-seq and glycan fractional abundance data
+### RNA-seq and Glycan Data
 
 #### RNA-seq data
 
@@ -447,3 +461,13 @@ of `SplineOmics`. Thank you for using our package!
   internal plotting function, as well as some code for the exploratory
   data analysis plots, and the overall approach together with
   Thomas-Rauter.
+
+## 🙏 Acknowledgements
+
+This work was carried out in the context of the DigiTherapeutX project,
+which was funded by the Austrian Science Fund (FWF). The research was
+conducted under the supervision of Prof. Nikolaus Fortelny, who leads
+the Computational Systems Biology working group at the Paris Lodron
+University of Salzburg, Austria. You can find more information about
+Prof. Fortelny’s research group
+[here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).
