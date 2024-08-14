@@ -1,8 +1,4 @@
 
-<div style="display: flex; align-items: center;">
-
-<div style="flex: 3; max-width: 75%;">
-
 # SplineOmics
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License:
@@ -14,20 +10,12 @@ Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
+<img src="man/figures/hex_logo.png" align="left" width="80"/>
+
 The R package `SplineOmics` finds the significant features (hits) of
 time-series -omics data by using splines and `limma` for hypothesis
 testing. It then clusters the hits based on the spline shape while
 showing all results in summary HTML reports.
-
-</div>
-
-<div style="flex: 1; text-align: right;">
-
-<img src="man/figures/hex_logo.png" style="width: 150px;"/>
-
-</div>
-
-</div>
 
 <figure>
 <img src="man/figures/SplineOmics_graphical_abstract.png"
