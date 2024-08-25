@@ -9,12 +9,42 @@
 #' @description
 #' This function opens the `tutorial.Rmd` file in RStudio for
 #' interactive use. Users can then run each code chunk step by step.
-#'
-#' @importFrom rstudioapi navigateToFile
 #' 
 #' @export
 #' 
 open_tutorial <- function() {
+  
+  # Check if rstudioapi is installed
+  if (!requireNamespace(
+    "rstudioapi",
+    quietly = TRUE
+  )) {
+    repeat {
+      # Prompt the user for action
+      cat("The 'rstudioapi' package is not installed.\n")
+      cat("1: Install 'rstudioapi'\n")
+      cat("2: Do not install and quit\n")
+      cat("3: Resolve manually and retry\n")
+      choice <- readline(prompt = "Please enter your choice (1, 2, or 3): ")
+      
+      # Check user input and take appropriate action
+      if (choice == "1") {
+        install.packages("rstudioapi")
+        break
+      } else if (choice == "2") {
+        stop(
+          "User chose not to install 'rstudioapi'. Exiting function.",
+          call. = FALSE
+          )
+      } else if (choice == "3") {
+        stop(
+          "Please install 'rstudioapi' manually and retry.",
+          call. = FALSE)
+      } else {
+        cat("Invalid choice. Please enter 1, 2, or 3.\n")
+      }
+    }
+  }
   
   file <- system.file(
     "tutorial",
@@ -39,12 +69,42 @@ open_tutorial <- function() {
 #' This function opens the `template.Rmd` file in RStudio for
 #' interactive use. The template file provides a structure for users 
 #' to quickly set up their personal analysis.
-#'
-#' @importFrom rstudioapi navigateToFile
 #' 
 #' @export
 #' 
 open_template <- function() {
+  
+  # Check if rstudioapi is installed
+  if (!requireNamespace(
+    "rstudioapi",
+    quietly = TRUE
+    )) {
+    repeat {
+      # Prompt the user for action
+      cat("The 'rstudioapi' package is not installed.\n")
+      cat("1: Install 'rstudioapi'\n")
+      cat("2: Do not install and quit\n")
+      cat("3: Resolve manually and retry\n")
+      choice <- readline(prompt = "Please enter your choice (1, 2, or 3): ")
+      
+      # Check user input and take appropriate action
+      if (choice == "1") {
+        install.packages("rstudioapi")
+        break
+      } else if (choice == "2") {
+        stop(
+          "User chose not to install 'rstudioapi'. Exiting function.",
+          call. = FALSE
+        )
+      } else if (choice == "3") {
+        stop(
+          "Please install 'rstudioapi' manually and retry.",
+          call. = FALSE)
+      } else {
+        cat("Invalid choice. Please enter 1, 2, or 3.\n")
+      }
+    }
+  }
   
   file <- system.file(
     "template",

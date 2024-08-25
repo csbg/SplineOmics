@@ -36,6 +36,9 @@ required and optional arguments are documented here. These however are
 only short forms of the full documentation of the arguments, which you
 can find by selecting a function and pressing F2.
 
+Further note: To run the code of a box, click on the respective ▶️ play button
+like symbol.
+
 # Install missing packages
 
 Make sure all the required packages for this analysis script are
@@ -126,22 +129,23 @@ annotation <- data_excel |>
   dplyr::slice(-c(1:3))
 ```
 
-Note that for this experiment, just a single treatment is present, which is 
-the growth phase (exponential or stationary) of the cells. This is encoded in 
-"condition" column of meta, here called "Phase". If there is more than one 
-treatment, they can be combined in the single condition column. For example,
-if additionally, there would also be a temperature shift, from 37 to 32 °C, this
-could for example be written in the condition column in following way: exp_37,
-exp_32, stat_37, stat_32 (Both treatments combined in one string and all placed
-in the single condition column).
+Note that for this experiment, just a single treatment is present, which
+is the growth phase (exponential or stationary) of the cells. This is
+encoded in "condition" column of meta, here called "Phase". If there is
+more than one treatment, they can be combined in the single condition
+column. For example, if additionally, there would also be a temperature
+shift, from 37 to 32 °C, this could for example be written in the
+condition column in following way: exp_37, exp_32, stat_37, stat_32
+(Both treatments combined in one string and all placed in the single
+condition column).
 
 # Bring the inputs into the standardized (required) format
 
 Since `data_excel` is not in the format required by the SplineOmics
 package, it needs processing. This can be done with a few R commands,
 but if your file looks like the one here, with the data matrix on the
-left and annotation info on the right, separated by an empty column 
-(which is required!), the `extract_data()` function can handle this 
+left and annotation info on the right, separated by an empty column
+(which is required!), the `extract_data()` function can handle this
 automatically.
 
 The function identifies the data matrix and converts it into a
@@ -164,10 +168,11 @@ with datapoints from an individual feature.
     names. If omitted, the feature names are just numbers (stored as
     characters) starting from 1 (1, 2, 3, etc.).
 
-(When you want to have meaningful feature descriptions, add feature-name columns
-as arguments to the function below. They are used for the row headers of the 
-matrix. If you don't use this function, make sure you have row headers to your 
-matrix if you want feature descriptions for your plots.)
+(When you want to have meaningful feature descriptions, add feature-name
+columns as arguments to the function below. They are used for the row
+headers of the matrix. If you don't use this function, make sure you
+have row headers to your matrix if you want feature descriptions for
+your plots.)
 
 ```{r Process the inputs}
 data <- SplineOmics::extract_data(
@@ -517,46 +522,48 @@ Reactor".
 # Run limma spline analysis
 
 Once we identify the hyperparameters that are likely the best, we can
-run the limma spline analysis with them to obtain the results. For this, the 
-SplineOmics object must be updated based on our findings from the hyperparameter
-screening.
+run the limma spline analysis with them to obtain the results. For this,
+the SplineOmics object must be updated based on our findings from the
+hyperparameter screening.
 
-For example, we figured out that natural cubic splines with a DoF of 2 perform
-the best in terms of avoiding under- and overfitting. 
+For example, we figured out that natural cubic splines with a DoF of 2
+perform the best in terms of avoiding under- and overfitting.
 
 ### Spline Parameters List
 
-The `spline_params` list is used to specify the final spline parameters that 
-you want to use for your analysis. It takes the same arguments as the 
-`spline_test_configs` dataframe, but here you define the actual parameters for 
-the spline analysis.
+The `spline_params` list is used to specify the final spline parameters
+that you want to use for your analysis. It takes the same arguments as
+the `spline_test_configs` dataframe, but here you define the actual
+parameters for the spline analysis.
 
 #### Parameters
 
-- **spline_type**: The type of spline to use. Options are:
-  - `"n"`: Natural cubic splines
-  - `"b"`: B-splines
-- **degree**: The degree of the spline. This is only required for B-splines 
-(`spline_type = "b"`). For natural cubic splines (`spline_type = "n"`), this 
-should be set to `NA`.
-- **dof**: Degrees of Freedom (DoF) for the spline. This parameter controls the
-flexibility of the spline. Higher values allow more flexibility.
-- **knots**: A list specifying the positions of the knots. If set to `NA`, the 
-knots are placed automatically in a central fashion. Knots are only needed when
-you want to manually specify their positions. Each element of the list should
-correspond to a vector of knot positions for the respective spline.
+-   **spline_type**: The type of spline to use. Options are:
+    -   `"n"`: Natural cubic splines
+    -   `"b"`: B-splines
+-   **degree**: The degree of the spline. This is only required for
+    B-splines (`spline_type = "b"`). For natural cubic splines
+    (`spline_type = "n"`), this should be set to `NA`.
+-   **dof**: Degrees of Freedom (DoF) for the spline. This parameter
+    controls the flexibility of the spline. Higher values allow more
+    flexibility.
+-   **knots**: A list specifying the positions of the knots. If set to
+    `NA`, the knots are placed automatically in a central fashion. Knots
+    are only needed when you want to manually specify their positions.
+    Each element of the list should correspond to a vector of knot
+    positions for the respective spline.
 
 #### Usage with Limma Design Formula
 
-- **Interaction Effects**: If the limma design formula contains an interaction 
-effect, you must specify a single option for each parameter. This single 
-option will be applied to all levels. This approach ensures consistency across 
-all levels when interactions are present.
-- **No Interaction Effects**: If the limma design formula contains no 
-interaction effects, you must specify one element in the vector for each level.
-Each element corresponds to the respective level in the order they appear in the
-metadata.
-
+-   **Interaction Effects**: If the limma design formula contains an
+    interaction effect, you must specify a single option for each
+    parameter. This single option will be applied to all levels. This
+    approach ensures consistency across all levels when interactions are
+    present.
+-   **No Interaction Effects**: If the limma design formula contains no
+    interaction effects, you must specify one element in the vector for
+    each level. Each element corresponds to the respective level in the
+    order they appear in the metadata.
 
 ```{r best spline params}
 spline_params = list(     
@@ -565,8 +572,8 @@ spline_params = list(
   )
 ```
 
-The spline_params, among others, can be loaded in the SplineOmics object with 
-the `update_splineomics()` function.
+The spline_params, among others, can be loaded in the SplineOmics object
+with the `update_splineomics()` function.
 
 ## Required Arguments `update_splineomics()`
 
@@ -604,8 +611,6 @@ splineomics <- SplineOmics::update_splineomics(
   spline_params = spline_params
 )
 ```
-
-
 
 ## Required Arguments `run_limma_splines()`
 

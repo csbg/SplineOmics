@@ -22,9 +22,9 @@ The R package `SplineOmics` finds the significant features (hits) of time-series
 ::: {style="clear: both;"}
 :::
 
-The image below shows the full workflow streamlined by `SplineOmics`:
+The graphical abstract below shows the full workflow streamlined by `SplineOmics`:
 
-![Graphical Abstract](man/figures/SplineOmics_graphical_abstract.png)
+![](man/figures/SplineOmics_graphical_abstract.png)
 
 ## Table of Contents
 
@@ -151,7 +151,10 @@ if ("SplineOmics" %in% rownames(installed.packages())) {
 }
 ```
 
-Note that when some installation paths are not writable on **Windows**, it is necessary running `RStudio` as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and (re)run the code block above.
+Note that when some installation paths are not writable on **Windows**, it is 
+necessary running `RStudio` as administrator once for the installation. 
+Otherwise, set up a library path (code block below) for the installation and 
+(re)run the code block above.
 
 ``` r
 # Create a directory for R libraries
@@ -163,7 +166,8 @@ dir.create("~/Rlibs", showWarnings = FALSE)
 
 3.  **Load the `SplineOmics` package**:
 
-Once the installation is complete, load the `SplineOmics` package into your R session or script to start using it:
+Once the installation is complete, load the `SplineOmics` package into your 
+R session or script to start using it:
 
 ``` r
 library(SplineOmics)
@@ -210,6 +214,8 @@ A detailed description of all arguments and outputs of the available package fun
 ### Design `limma` design formula
 
 A quick guide on how to design a `limma` design formula can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
+
+An explanation of the three different `limma` results can be found [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/inst/descriptions/limma_result_categories.pdf)
 
 ### RNA-seq and Glycan Data
 

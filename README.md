@@ -21,13 +21,10 @@ showing all results in summary HTML reports.
 
 </div>
 
-The image below shows the full workflow streamlined by `SplineOmics`:
+The graphical abstract below shows the full workflow streamlined by
+`SplineOmics`:
 
-<figure>
-<img src="man/figures/SplineOmics_graphical_abstract.png"
-alt="Graphical Abstract" />
-<figcaption aria-hidden="true">Graphical Abstract</figcaption>
-</figure>
+![](man/figures/SplineOmics_graphical_abstract.png)
 
 ## Table of Contents
 
@@ -260,6 +257,9 @@ package functions can be found
 
 A quick guide on how to design a `limma` design formula can be found
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
+
+An explanation of the three different `limma` results can be found
+[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/inst/descriptions/limma_result_categories.pdf)
 
 ### RNA-seq and Glycan Data
 
