@@ -600,7 +600,7 @@ make_clustering_report <- function(
       data_level <- datas[[i]]
     }
 
-    meta_level <- meta %>% dplyr::filter(meta[[condition]] == levels[i])
+    meta_level <- meta |> dplyr::filter(meta[[condition]] == levels[i])
 
     clusters_spline_plots <- list()
     
@@ -618,7 +618,7 @@ make_clustering_report <- function(
         sep = " "
         )
 
-      top_table_cluster <- top_table %>%
+      top_table_cluster <- top_table |>
         dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
 
       X <- level_clustering$X
@@ -1116,7 +1116,7 @@ plot_heatmap <- function(
     level_clustering <- all_levels_clustering[[i]]
 
     clustered_hits <- level_clustering$clustered_hits
-    clusters <- clustered_hits %>% dplyr::arrange(!!rlang::sym("cluster"))
+    clusters <- clustered_hits |> dplyr::arrange(!!rlang::sym("cluster"))
 
     level <- levels[[i]]
     level_indices <- which(meta[[condition]] == level)
@@ -1184,45 +1184,26 @@ plot_heatmap <- function(
 #' \link[ggplot2]{ggplot2}
 #'
 #' @importFrom stats as.dendrogram cutree
-#' @importFrom RColorBrewer brewer.pal.info brewer.pal
 #' @importFrom dendextend color_branches as.ggdend
 #' @importFrom ggplot2 ggplot element_blank labs theme_minimal theme
 #'
 plot_dendrogram <- function(
     hc,
     k
-    ) {
-
+) {
+  
   dend <- stats::as.dendrogram(hc)
   clusters <- stats::cutree(hc, k)
-
-  palette_name <- "Set3"
-  max_colors_in_palette <-
-    RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
-
-  # Handle cases where k is less than 3 to avoid warnings
-  if (k < 3) {
-    colors <- RColorBrewer::brewer.pal(3, palette_name)[1:k]
-  } else {
-    colors <- RColorBrewer::brewer.pal(
-      min(
-        max_colors_in_palette,
-        k
-        ),
-      palette_name
-      )
-  }
-
-  if (k > max_colors_in_palette) {
-    colors <- rep(colors, length.out = k)
-  }
-
+  
+  # Use scales::hue_pal for generating distinct colors
+  colors <- scales::hue_pal()(k)
+  
   dend_colored <- dendextend::color_branches(
     dend,
     k = k,
     labels_colors = colors
-    )
-
+  )
+  
   dend_colored <-
     dendextend::set(
       dend_colored,
@@ -1232,26 +1213,30 @@ plot_dendrogram <- function(
         length(dendextend::get_leaves_attr(
           dend_colored,
           "label"
-          )
-          )
-        )
+        ))
       )
-
+    )
+  
   ggdend <- dendextend::as.ggdend(dend_colored)
   p_dend <- ggplot2::ggplot(ggdend) +
-    ggplot2::labs(title = paste(
-      "Hierarchical Clustering Dendrogram Features (colors = clusters)"
+    ggplot2::labs(
+      title = paste(
+        "Hierarchical Clustering Dendrogram Features (colors = clusters)"
       ), 
       x = "",
-      y = "") +
+      y = ""
+    ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank()
-      )
+    )
+  
+  return(p_dend)
 }
+
 
 
 #' Plot All Mean Splines
@@ -1267,7 +1252,6 @@ plot_dendrogram <- function(
 #' @return A ggplot object representing the average curves by cluster.
 #'
 #' @importFrom scales hue_pal
-#' @importFrom RColorBrewer brewer.pal
 #' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
 #'                     theme_minimal aes element_text
 #'
@@ -1320,11 +1304,8 @@ plot_all_mean_splines <- function(
   distinct_colors <- scales::hue_pal()(length(treatment_labels))
   names(distinct_colors) <- treatment_labels
   
-  # Generate unique colors for clusters separately
-  cluster_colors <- RColorBrewer::brewer.pal(
-    n = max(3, length(unique(average_curves$cluster))),
-    "Dark2"
-    )
+  cluster_colors <- scales::hue_pal()(length(unique(average_curves$cluster)))
+  
   if (length(cluster_colors) > length(unique(average_curves$cluster))) {
     cluster_colors <- cluster_colors[1:length(unique(average_curves$cluster))]
   }
@@ -1440,14 +1421,14 @@ plot_single_and_mean_splines <- function(
   feature_col <- rlang::sym("feature")
   
   # Convert data to long format with appropriate column names
-  df_long <- as.data.frame(t(time_series_data)) %>%
-    tibble::rownames_to_column(var = "time") %>%
+  df_long <- as.data.frame(t(time_series_data)) |>
+    tibble::rownames_to_column(var = "time") |>
     tidyr::pivot_longer(
       cols = -!!time_col,
       names_to = "feature",
       values_to = "intensity"
-    ) %>%
-    dplyr::arrange(!!feature_col) %>%
+    ) |>
+    dplyr::arrange(!!feature_col) |>
     dplyr::mutate(time = as.numeric(time))
   
   # Compute consensus (mean of each column)
@@ -2318,8 +2299,8 @@ get_curve_values <- function(
 
   # columns_to_select <- 1:DoF
 
-  splineCoeffs <- top_table %>%
-    dplyr::select(all_of(1:DoF)) %>%
+  splineCoeffs <- top_table |>
+    dplyr::select(all_of(1:DoF)) |>
     as.matrix()
 
   curve_values <- matrix(
@@ -2393,7 +2374,6 @@ normalize_curves <- function(curve_values) {
 #' @return A list containing clustering results and the modified top_table.
 #'
 #' @importFrom stats dist hclust cutree
-#' @importFrom cluster silhouette
 #'
 hierarchical_clustering <- function(
     curve_values,
@@ -2405,30 +2385,10 @@ hierarchical_clustering <- function(
   distance_matrix <- stats::dist(curve_values, method = "euclidean")
   hc <- stats::hclust(distance_matrix, method = "complete")
 
-  if (is.character(k) && k == "auto") {
-    # Calculate silhouette width for a range of clusters
-    max_clusters <- 8
-    sil_widths <- numeric(max_clusters - 1)
-    for (i in 2:max_clusters) {
-      temp_clusters <- stats::cutree(hc, k = i)
-      silhouette_score <-
-        mean(cluster::silhouette(temp_clusters, distance_matrix)[, "sil_width"])
-
-      adjusted_score <- silhouette_score + (0.02 * log(i)) # scaling factor
-      sil_widths[i - 1] <- adjusted_score
-    }
-
-    # Find the index of the maximum adjusted silhouette score
-    best_k_index <- which.max(sil_widths)
-    k <- best_k_index + 1  # because index shift due to starting at 2 clusters
-
-    cluster_assignments <- stats::cutree(hc, k = k)
-  } else if (is.numeric(k)) {
-    cluster_assignments <- stats::cutree(hc, k = k)
-  }
+  cluster_assignments <- stats::cutree(hc, k = k)
 
   clustered_hits <- data.frame(cluster = cluster_assignments)
-  # top_table_hits <- dplyr::filter(top_table, top_table[["adj.P.Val"]] < 0.05)
+
   clustered_hits$feature <- top_table$feature_nr
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
 

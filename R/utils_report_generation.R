@@ -38,7 +38,6 @@
 #' @importFrom here here
 #' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices dev.off
-#' @importFrom htmltools save_html
 #' 
 generate_report_html <- function(
     plots, 
@@ -512,7 +511,7 @@ read_section_texts <- function(filename) {
   content <- readLines(
     file_path,
     warn = FALSE
-    ) %>% paste(collapse = " ")
+    ) |> paste(collapse = " ")
   # Split the content by the delimiter
   strsplit(content, "\\|")[[1]]
 }
@@ -1251,9 +1250,24 @@ process_field <- function(
 extract_and_combine <- function(input) {
   
   # Extract substring after 'cluster:' and before the next ','
-  cluster_match <- str_extract(input, "(?<=cluster: )[^,]+")
+  cluster_match <- regmatches(
+    input,
+    regexpr(
+      "(?<=cluster: )[^,]+",
+      input,
+      perl = TRUE
+      )
+    )
+  
   # Extract substring after 'database:'
-  database_match <- str_extract(input, "(?<=database: )[^,]+")
+  database_match <- regmatches(
+    input,
+    regexpr(
+      "(?<=database: )[^,]+",
+      input,
+      perl = TRUE
+      )
+    )
   
   # Combine the substrings with a whitespace in between
   combined <- paste(cluster_match, database_match, sep = " ")

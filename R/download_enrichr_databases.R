@@ -24,7 +24,6 @@
 #'         Enrichr databases.
 #'
 #' @importFrom here here
-#' @importFrom readr write_tsv
 #' 
 #' @export
 #'
@@ -56,7 +55,8 @@ download_enrichr_databases <- function(
     }))
   }))
   
-  genesets[,Gene := gsub(",.+$", "", Gene)]
+  genesets <- genesets %>%
+    mutate(Gene = gsub(",.+$", "", Gene))
   
   dir.create(
     output_dir,
@@ -64,10 +64,29 @@ download_enrichr_databases <- function(
     showWarnings = FALSE
     )
   
-  timestamp <- format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
-  filename <- paste0("all_databases_", timestamp, ".tsv")
-  filename_path <- here::here(output_dir, filename)
-  readr::write_tsv(x = genesets, filename_path)
+  timestamp <- format(
+    Sys.time(),
+    "%d_%m_%Y-%H_%M_%S"
+    )
+  
+  filename <- paste0(
+    "all_databases_",
+    timestamp, ".tsv"
+    )
+  
+  filename_path <- here::here(
+    output_dir,
+    filename
+    )
+
+  write.table(
+    x = genesets,
+    file = filename_path,
+    sep = "\t",  
+    row.names = FALSE,  
+    col.names = TRUE,   
+    quote = FALSE       # Do not quote strings
+  )
   
   return(filename_path)
 }

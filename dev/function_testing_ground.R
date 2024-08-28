@@ -6,7 +6,6 @@ library(devtools)
 devtools::load_all()
 
 library(readxl)
-library(conflicted)
 library(dplyr)
 
 # interactive_demo()
@@ -14,24 +13,24 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-# data_excel <- read_excel(here::here("dev" ,"data", "PPTX",
-#                                     "PPTX_processed_with_imputation.xlsx"))
+data_excel <- read_excel(here::here("dev" ,"data", "PTX",
+                                    "PTX_processed_table.xlsx"))
+
+meta <- read_excel(here::here("dev" ,"data",
+                              "Time_course_PTX_metadata.xlsx"))
+
+
+# data_excel <- read_excel(here::here(
+#   "inst",
+#   "extdata",
+#   "proteomics_data.xlsx"
+# ))
 # 
-# meta <- read_excel(here::here("dev" ,"data",
-#                               "Time_course_PPTX_old_metadata.xlsx"))
-
-
-data_excel <- read_excel(here::here(
-  "inst",
-  "extdata",
-  "proteomics_data.xlsx"
-))
-
-meta <- read_excel(here::here(
-  "inst",
-  "extdata",
-  "proteomics_meta.xlsx"
-))
+# meta <- read_excel(here::here(
+#   "inst",
+#   "extdata",
+#   "proteomics_meta.xlsx"
+# ))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%  
@@ -40,9 +39,9 @@ annotation <- data_excel %>%
 
 # Get the gene list ------------------------------------------------------------
 
-data <- as.data.frame(data_excel)
+data_full <- as.data.frame(data_excel)
 gene_column_name <- "Genes"
-genes <- data[[gene_column_name]][4:nrow(data)]
+genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 
 
@@ -53,7 +52,7 @@ genes <- data[[gene_column_name]][4:nrow(data)]
 #                           "Protein", 
 #                           "Positions within proteins")
 
-feature_name_columns <- c("First.Protein.Description")
+feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
 
 # debug(extract_data)
 data <- extract_data(
@@ -192,16 +191,16 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  adj_pthresh = 0.1,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   adj_pthresh = 0.1,
+#   report_dir = report_dir
+# )
 
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
-clusters <- list(6L, 3L)   
+clusters <- c(6L, 3L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
@@ -241,12 +240,9 @@ gene_set_lib <- c(
   "Human_Gene_Atlas"
 )
 
-download_enrichr_databases(gene_set_lib)
+# download_enrichr_databases(gene_set_lib)
 
 # Get gene vector
-data <- as.data.frame(data_excel)
-gene_column_name <- "Genes"
-genes <- data[[gene_column_name]][4:nrow(data)]
 genes <- sub(" .*", "", genes)
 genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)

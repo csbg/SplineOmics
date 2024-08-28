@@ -427,7 +427,6 @@ within_level <- function(
 #' @return A `voom` object, which includes the log2-counts per million (logCPM)
 #'  matrix and observation-specific weights.
 #' 
-#' @importFrom edgeR DGEList calcNormFactors
 #' @importFrom limma voom
 #'   
 preprocess_rna_seq_data <- function(
@@ -437,7 +436,58 @@ preprocess_rna_seq_data <- function(
 ) {
   
   message("Preprocessing RNA-seq data (normalization + voom)...")
-
+  
+  # Check if edgeR is installed; if not, prompt the user
+  if (!requireNamespace("edgeR", quietly = TRUE)) {
+    message("The 'edgeR' package is not installed.")
+    
+    # Prompt user for action
+    repeat {
+      user_input <- readline(prompt = 
+                               "What would you like to do?\n
+                               1: Automatically install edgeR\n
+                               2: Manually install edgeR\n
+                               3: Cancel\n
+                               Please enter 1, 2, or 3: "
+                             )
+      
+      if (user_input == "1") {
+        # Try to install edgeR automatically from Bioconductor
+        message("Attempting to install 'edgeR' automatically 
+                from Bioconductor...")
+        if (!requireNamespace("BiocManager", quietly = TRUE)) {
+          install.packages("BiocManager")
+        }
+        tryCatch(
+          {
+            BiocManager::install("edgeR", update = FALSE)
+          },
+          error = function(e) {
+            stop(
+            "Automatic installation of 'edgeR' failed.
+            Please install it manually and try again.",
+            call. = FALSE
+            )
+          }
+        )
+        break  # Exit the loop if installation is successful
+      } else if (user_input == "2") {
+        stop(
+        "Please install 'edgeR' manually using 
+         BiocManager::install('edgeR') and then re-run the function.",
+         call. = FALSE
+        )
+      } else if (user_input == "3") {
+        stop("Operation canceled by the user.", call. = FALSE)
+      } else {
+        message("Invalid input. Please enter 1, 2, or 3.")
+      }
+    }
+  }
+  
+  # Load edgeR functions after installation check
+  require(edgeR)
+  
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
   
@@ -618,13 +668,13 @@ modify_limma_top_table <- function(
   feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
 
   # Convert feature_nr to integer
-  top_table <- top_table %>% 
-    dplyr::mutate(feature_nr = as.integer(feature_nr)) %>%
+  top_table <- top_table |> 
+    dplyr::mutate(feature_nr = as.integer(feature_nr)) |>
     dplyr::relocate(feature_nr, .after = dplyr::last_col())
   
   # Sort and add feature names based on the feature_nr
   sorted_feature_names <- feature_names[top_table$feature_nr]
-  top_table <- top_table %>% dplyr::mutate(feature_names = sorted_feature_names)
+  top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
   
   return(top_table)
 }

@@ -178,7 +178,6 @@ screen_limma_hyperparams <- function(
 #' @return A list of results for each combination of data, design, and spline 
 #' configuration.
 #'                          
-#' @importFrom magrittr %>%
 #' @importFrom tidyr expand_grid
 #' @importFrom dplyr mutate
 #' @importFrom purrr pmap
@@ -202,7 +201,7 @@ get_limma_combos_results <- function(
     design_index = seq_along(designs),
     spline_config_index = seq_along(spline_test_configs$spline_type),
     pthreshold = adj_pthresholds
-  ) %>% 
+  ) |> 
     dplyr::mutate(id = paste0(
       "Data_", !!rlang::sym("data_index"), 
       "_Design_", !!rlang::sym("design_index"), 
@@ -221,7 +220,7 @@ get_limma_combos_results <- function(
       spline_test_configs = spline_test_configs,
       feature_names = feature_names, 
       padjust_method = padjust_method
-      ) %>% 
+      ) |> 
     purrr::set_names(combos$id)
 }
 
@@ -248,7 +247,6 @@ get_limma_combos_results <- function(
 #' @return A list of results including hit comparison plots and composite 
 #' spline plots for each pair of combinations.
 #'                           
-#' @importFrom stringr str_extract
 #' @importFrom progress progress_bar
 #' @importFrom purrr set_names
 #' @importFrom purrr map
@@ -264,8 +262,13 @@ plot_limma_combos_results <- function(
     time_unit = time_unit
     ) {
 
-  names_extracted <- stringr::str_extract(names(top_tables_combos),
-                                          "Data_\\d+_Design_\\d+")
+  names_extracted <- regmatches(
+    names(top_tables_combos),
+    regexpr("Data_\\d+_Design_\\d+",
+            names(top_tables_combos)
+            )
+    )
+  
   
   combos_separated <- lapply(unique(names_extracted), function(id) {
     top_tables_combos[names_extracted == id]
@@ -383,8 +386,6 @@ generate_reports <- function(
 #' @return No return value, called for side effects.
 #'                       
 #' @importFrom here here
-#' @importFrom knitr kable
-#' @importFrom kableExtra kable_styling
 #'                       
 generate_reports_meta <- function(
     datas_descr, 
@@ -419,29 +420,66 @@ generate_reports_meta <- function(
   file_path <- here::here(report_dir, filename)
   
   custom_css <- "
-  <style>
-  table {
-    font-size: 32px; /* Significantly larger font size */
-    margin-left: auto; /* Center table horizontally */
-    margin-right: auto;
-  }
-  th, td {
-    border: 1px solid #cccccc;
-    padding: 12px; /* Increased padding for more space between table cells */
-    text-align: left;
-  }
-  th {
-    background-color: #f2f2f2;
-  }
-  </style>
-  "
+    <style>
+    table {
+      font-size: 32px;
+      margin-left: auto; 
+      margin-right: auto;
+    }
+    th, td {
+      border: 1px solid #cccccc;
+      padding: 12px; 
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    </style>
+    "
+
+  custom_css <- "
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      tr:hover {
+        background-color: #ddd;
+      }
+    </style>
+    "
   
-  # Generate the HTML table with custom CSS for larger font size and save it
-  html_table <- paste0(
-    custom_css, 
-    knitr::kable(table_df, format = "html", escape = FALSE) %>% 
-     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-    )
+  # Start HTML table with the header
+  html_table <- "<table>"
+  html_table <- paste0(html_table, "<thead><tr>")
+  
+  # Add column headers
+  for (header in colnames(table_df)) {
+    html_table <- paste0(html_table, "<th>", header, "</th>")
+  }
+  html_table <- paste0(html_table, "</tr></thead><tbody>")
+  
+  # Add table rows
+  for (i in 1:nrow(table_df)) {
+    html_table <- paste0(html_table, "<tr>")
+    for (j in 1:ncol(table_df)) {
+      html_table <- paste0(html_table, "<td>", table_df[i, j], "</td>")
+    }
+    html_table <- paste0(html_table, "</tr>")
+  }
+  
+  # Close the table body and the table tag
+  html_table <- paste0(html_table, "</tbody></table>")
+  
+  html_table <- paste0(custom_css, html_table)
   
   writeLines(
     html_table,
@@ -594,12 +632,7 @@ process_combo <- function(
   )
   
   # suppressMessages will not affect warnings and error messages!
-  result <- suppressMessages(
-    run_limma_splines(
-      splineomics,
-      padjust_method = padjust_method
-      )
-    )
+  result <- suppressMessages(run_limma_splines(splineomics))
 
   result[['limma_splines_result']][['time_effect']]
 }
@@ -781,27 +814,27 @@ hc_vennheatmap <- function(hc_obj) {
   )
   
   df_1 <-
-    hits_1 %>% 
-    tibble::enframe("params", "features") %>% 
-    tidyr::unnest_longer(!!rlang::sym("features")) %>%
+    hits_1 |> 
+    tibble::enframe("params", "features") |> 
+    tidyr::unnest_longer(!!rlang::sym("features")) |>
     dplyr::mutate(x1 = 1)
   
   df_2 <-
-    hits_2 %>% 
-    tibble::enframe("params", "features") %>% 
-    tidyr::unnest_longer(!!rlang::sym("features")) %>%
+    hits_2 |> 
+    tibble::enframe("params", "features") |> 
+    tidyr::unnest_longer(!!rlang::sym("features")) |>
     dplyr::mutate(x2 = 2)
   
   venn_matrix <- 
-    df %>% 
-    dplyr::left_join(df_1, by = c("features", "params")) %>% 
-    dplyr::left_join(df_2, by = c("features", "params")) %>% 
-    tidyr::replace_na(list(x1 = 0, x2 = 0)) %>% 
-    dplyr::mutate(x = !!rlang::sym("x1") + !!rlang::sym("x2")) %>% 
-    dplyr::select(!c(!!rlang::sym("x1"), !!rlang::sym("x2"))) %>%
+    df |> 
+    dplyr::left_join(df_1, by = c("features", "params")) |> 
+    dplyr::left_join(df_2, by = c("features", "params")) |> 
+    tidyr::replace_na(list(x1 = 0, x2 = 0)) |> 
+    dplyr::mutate(x = !!rlang::sym("x1") + !!rlang::sym("x2")) |> 
+    dplyr::select(!c(!!rlang::sym("x1"), !!rlang::sym("x2"))) |>
     tidyr::pivot_wider(names_from = !!rlang::sym("params"), 
-                       values_from = !!rlang::sym("x")) %>% 
-    tibble::column_to_rownames("features") %>% 
+                       values_from = !!rlang::sym("x")) |> 
+    tibble::column_to_rownames("features") |> 
     as.matrix()
   
   venn_matrix <- venn_matrix[, order(colnames(venn_matrix))]
@@ -860,14 +893,14 @@ hc_barplot <- function(hc_obj) {
   
   plot_data <- 
     list(
-      store_hits(hc_obj$data[[1]]) %>% 
-        purrr::map_int(length) %>% 
+      store_hits(hc_obj$data[[1]]) |> 
+        purrr::map_int(length) |> 
         tibble::enframe("params", "n_hits"),
-      store_hits(hc_obj$data[[2]]) %>% 
-        purrr::map_int(length) %>% 
+      store_hits(hc_obj$data[[2]]) |> 
+        purrr::map_int(length) |> 
         tibble::enframe("params", "n_hits")
-    ) %>% 
-    purrr::set_names(hc_obj$condition_names) %>% 
+    ) |> 
+    purrr::set_names(hc_obj$condition_names) |> 
     dplyr::bind_rows(.id = "condition")
   
   ggplot2::ggplot(
@@ -1316,9 +1349,9 @@ store_hits <- function(condition) {
     adj_p_value_treshold <- item$Parameters$adj_p_value_threshold
     key_name <- item$Parameters$params_id
 
-    hits_cond[[key_name]] <- df %>%
-      filter(df[["adj.P.Val"]] < adj_p_value_treshold) %>%
-      pull(!!sym("feature_nr")) %>%
+    hits_cond[[key_name]] <- df |>
+      filter(df[["adj.P.Val"]] < adj_p_value_treshold) |>
+      pull(!!sym("feature_nr")) |>
       as.character()
   }
   

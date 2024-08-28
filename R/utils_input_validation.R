@@ -790,12 +790,8 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @details
     #' The function performs the following checks:
-    #' - Whether the `clusters` argument is present.
-    #' - If `clusters` is a single character string "auto", it defaults to 
-    #' automatic 
-    #'   cluster estimation and prints a message.
-    #' - If `clusters` is not a list or if the list contains non-character and 
-    #'   non-numeric types, it throws an error.
+    #' - If `clusters` is an integer or a vector of integers. Otherwise, it 
+    #'   gives an error.
     #'
     check_clusters = function() {
       
@@ -807,18 +803,26 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      if (is.character(clusters) && 
-          length(clusters) == 1 && clusters[1] == "auto") {
+      # Check if clusters is a single integer or a vector of integers
+      if (is.numeric(clusters) && all(clusters == as.integer(clusters))) {
         
-        print(paste0("No cluster amounts were specified as arguments. Default ",
-                     "argument is automatic cluster estimation."))
+        # If clusters is a single integer, ensure it is positive
+        if (length(clusters) == 1 && clusters <= 0) {
+          stop("clusters must be a positive integer.", call. = FALSE)
+        }
         
-      } else if (!is.list(clusters) ||
-                 !all(sapply(clusters, function(x) is.character(x) ||
-                             is.numeric(x)))) {
-        stop(paste("clusters must be a list containing only character", 
-                   "or numeric types."),
-             call. = FALSE)
+        # If clusters is a vector of integers, ensure all are positive
+        if (length(clusters) > 1 && any(clusters <= 0)) {
+          stop(
+            "All elements in clusters must be positive integers.",
+            call. = FALSE
+            )
+        }
+      } else {
+        stop(
+          "clusters must be a single integer or a vector of integers.",
+          call. = FALSE
+          )
       }
     },
     

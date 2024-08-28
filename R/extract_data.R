@@ -98,7 +98,7 @@ extract_data <- function(
   
   # Extract headers for each column above the identified block
   headers <- sapply(upper_left_col:lower_right_col, function(col_idx) {
-    header_values <- data[1:(upper_left_row-1), col_idx]
+    header_values <- data[1:(upper_left_row - 1), col_idx]
     header_values <- header_values[!is.na(header_values)]
     paste(header_values, collapse = "_")
   })
@@ -209,7 +209,7 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
       
       # Expand the block vertically
       lower_right_row <- upper_left_row
-      for (i in (upper_left_row+1):num_rows) {
+      for (i in (upper_left_row + 1):num_rows) {
         if (is.na(self$data[i, upper_left_col])) {
           break
         }
@@ -274,10 +274,15 @@ control_inputs_extract_data <- function(
       stop("feature_name_columns should be a character vector.", call. = FALSE)
     }
     
-    if (!all(feature_name_columns %in% colnames(data))) {
-      stop("Not all feature_name_columns are present in the data.", 
-           call. = FALSE)
+    missing_columns <- setdiff(feature_name_columns, colnames(data))
+    if (length(missing_columns) > 0) {
+      stop(paste(
+        "The following feature_name_columns are not present in the data:",
+        paste(missing_columns, collapse = ", ")
+        ),
+        call. = FALSE)
     }
+    
     
     if (!any(is.na(feature_name_columns))) {
       if (all(is.na(data[feature_name_columns]))) {
