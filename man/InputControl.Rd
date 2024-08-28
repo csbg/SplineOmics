@@ -35,12 +35,8 @@ to the
 
 
 The function performs the following checks:
-- Whether the `clusters` argument is present.
-- If `clusters` is a single character string "auto", it defaults to 
-automatic 
-  cluster estimation and prints a message.
-- If `clusters` is not a list or if the list contains non-character and 
-  non-numeric types, it throws an error.
+- If `clusters` is an integer or a vector of integers. Otherwise, it 
+  gives an error.
 
 Check Plot Info
 

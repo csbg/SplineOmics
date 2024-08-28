@@ -13,24 +13,24 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-data_excel <- read_excel(here::here("dev" ,"data", "PTX",
-                                    "PTX_processed_table.xlsx"))
-
-meta <- read_excel(here::here("dev" ,"data",
-                              "Time_course_PTX_metadata.xlsx"))
-
-
-# data_excel <- read_excel(here::here(
-#   "inst",
-#   "extdata",
-#   "proteomics_data.xlsx"
-# ))
+# data_excel <- read_excel(here::here("dev" ,"data", "PTX",
+#                                     "PTX_processed_table.xlsx"))
 # 
-# meta <- read_excel(here::here(
-#   "inst",
-#   "extdata",
-#   "proteomics_meta.xlsx"
-# ))
+# meta <- read_excel(here::here("dev" ,"data",
+#                               "Time_course_PTX_metadata.xlsx"))
+
+
+data_excel <- read_excel(here::here(
+  "inst",
+  "extdata",
+  "proteomics_data.xlsx"
+))
+
+meta <- read_excel(here::here(
+  "inst",
+  "extdata",
+  "proteomics_meta.xlsx"
+))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%  
@@ -40,7 +40,7 @@ annotation <- data_excel %>%
 # Get the gene list ------------------------------------------------------------
 
 data_full <- as.data.frame(data_excel)
-gene_column_name <- "Genes"
+gene_column_name <- "Gene_symbol"
 genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 
@@ -52,7 +52,8 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 #                           "Protein", 
 #                           "Positions within proteins")
 
-feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
+# feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
+feature_name_columns <- c("Gene_name")
 
 # debug(extract_data)
 data <- extract_data(

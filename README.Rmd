@@ -19,9 +19,6 @@ knitr::opts_chunk$set(
 
 The R package `SplineOmics` finds the significant features (hits) of time-series -omics data by using splines and `limma` for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.
 
-::: {style="clear: both;"}
-:::
-
 The graphical abstract below shows the full workflow streamlined by `SplineOmics`:
 
 ![](man/figures/SplineOmics_graphical_abstract.png)
@@ -128,7 +125,6 @@ library(remotes)
 # Install Bioconductor dependencies
 BiocManager::install(c(
   "ComplexHeatmap",
-  "clusterProfiler",
   "limma"
   ), force = TRUE)
 
@@ -237,6 +233,7 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **clusterProfiler**: For functional enrichment analysis.
 -   **dendextend**: For extending `dendrogram` objects in R, allowing for easier manipulation of dendrograms.
 -   **dplyr**: For data manipulation.
+-   **edgeR** For preprocessing RNA-seq data.
 -   **ggplot2**: For creating elegant data visualizations using the grammar of graphics.
 -   **ggrepel**: For better label placement in ggplot2.
 -   **here**: For constructing paths to your project’s files.
@@ -250,7 +247,6 @@ The `SplineOmics` package relies on several other R packages for its functionali
 -   **scales**: For scale functions for visualization.
 -   **tibble**: For creating tidy data frames that are easy to work with.
 -   **tidyr**: For tidying your data.
--   **viridis**: For colorblind-friendly color maps.
 -   **zip**: For combining files into a zip file.
 
 ### R Version
