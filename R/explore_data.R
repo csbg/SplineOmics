@@ -247,7 +247,7 @@ build_explore_data_report <- function(
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
   
-  just_plots <- plots %>% purrr::discard(~ is.character(.))
+  just_plots <- plots |> purrr::discard(~ is.character(.))
   pb <- create_progress_bar(just_plots)
   
   plot_names <- c(
@@ -414,7 +414,6 @@ build_explore_data_report <- function(
 #' @return A ggplot object representing the density plot.
 #'
 #' @importFrom ggplot2 ggplot geom_density ggtitle aes theme
-#' @importFrom reshape2 melt
 #'
 make_density_plots <- function(
     data, 
@@ -431,9 +430,15 @@ make_density_plots <- function(
   )
   
   density_plots <- list()
+
+  # Melt the data to long format using tidyr
+  data_long <- tidyr::pivot_longer(
+    as.data.frame(data),
+    cols = everything(),
+    names_to = "variable",
+    values_to = "value"
+  )
   
-  # Melt the data to long format
-  data_long <- reshape2::melt(as.data.frame(data), id.vars = NULL)
   
   if (length(unique(meta[[condition]])) > 1) {    # Only when > 2 levels
     # Create the overall density plot for all data
@@ -457,11 +462,20 @@ make_density_plots <- function(
   
   # Create density plots for each level of the condition
   levels <- unique(meta[[condition]])
+  
   for (level in levels) {
+    
     # Filter the data for the current level
     indices <- which(meta[[condition]] == level)
+    
     data_level <- data[, indices, drop = FALSE]
-    data_level_long <- reshape2::melt(as.data.frame(data_level), id.vars = NULL)
+    
+    data_level_long <- tidyr::pivot_longer(
+      as.data.frame(data_level),
+      cols = everything(),
+      names_to = "variable",
+      values_to = "value"
+    )
     
     # Create the density plot for the current level
     level_plot <- ggplot2::ggplot(
@@ -497,7 +511,6 @@ make_density_plots <- function(
 #'
 #' @return A ggplot object representing the violin plot.
 #' 
-#' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_violin theme labs
 #' @importFrom grid unit
 #' 
@@ -519,11 +532,20 @@ make_violin_box_plots <- function(
   
   # Create plots for each level of the condition
   levels <- unique(meta[[condition]])
+  
   for (level in levels) {
+    
     # Filter the data for the current level
     indices <- which(meta[[condition]] == level)
+    
     data_level <- data[, indices, drop = FALSE]
-    data_level_long <- reshape2::melt(as.data.frame(data_level), id.vars = NULL)
+    
+    data_level_long <- tidyr::pivot_longer(
+      as.data.frame(data_level),
+      cols = everything(),
+      names_to = "variable",
+      values_to = "value"
+    )
     
     # Create the violin plot with boxplot overlay for the current level
     level_plot <- ggplot2::ggplot(data_level_long, 
@@ -999,7 +1021,6 @@ make_mds_plot <- function(
 #' heatmaps.
 #'
 #' @importFrom stats cor
-#' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap
 #' @importFrom grDevices colorRampPalette
 #' 
@@ -1022,15 +1043,12 @@ make_correlation_heatmaps <- function(
     # Define the color function for the heatmap based on the range of corr_all
     breaks <- seq(min(corr_all, na.rm = TRUE), 
                   max(corr_all, na.rm = TRUE), length.out = 100)
-    col_fun <- 
-      circlize::colorRamp2(
-        breaks, 
-        colorRampPalette(c("blue", "white", "red"))(length(breaks))
-        )
+
+    col_fun <- colorRampPalette(c("blue", "white", "red"))
     
     heatmap_all <- ComplexHeatmap::Heatmap(
       corr_all,
-      col = col_fun,
+      col = col_fun(100),
       name = "Correlation",
       column_title = "All Levels",
       heatmap_legend_param = list(
@@ -1069,17 +1087,12 @@ make_correlation_heatmaps <- function(
     breaks_level <- seq(min(corr_level, na.rm = TRUE), 
                         max(corr_level, na.rm = TRUE), length.out = 100)
     
-    col_fun_level <- 
-      circlize::colorRamp2(
-        breaks_level, 
-        colorRampPalette(c("blue", "white", "red")
-        )(length(breaks_level))
-        )
+    col_fun_level <- colorRampPalette(c("blue", "white", "red"))
     
     # Create the correlation heatmap for the current level
     heatmap_level <- ComplexHeatmap::Heatmap(
       corr_level,
-      col = col_fun_level,
+      col = col_fun_level(100),
       name = "Correlation",
       column_title = paste("Level:", level),
       heatmap_legend_param = list(

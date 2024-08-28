@@ -29,7 +29,6 @@
 #'
 #' @return A list of plots included in the generated HTML report.
 #'
-#' @importFrom stringr str_split
 #' @importFrom here here
 #' 
 #' @export
@@ -246,8 +245,6 @@ generate_time_effect_plots <- function(
 #'
 #' @return A list containing the plots and their sizes, as well as the 
 #' section header information.
-#' 
-#' @importFrom stringr str_split
 #'
 generate_avrg_diff_plots <- function(
     avrg_diff_conditions,
@@ -273,7 +270,7 @@ generate_avrg_diff_plots <- function(
       title = title
       )
     
-    compared_levels <- stringr::str_split(comparison, "_vs_")[[1]]
+    compared_levels <- strsplit(comparison, "_vs_")[[1]]
     
     volcano_plot <- create_volcano_plot(
       top_table = top_table,
@@ -561,7 +558,7 @@ create_volcano_plot <- function(
   logFC <- NULL
   adj.P.Val <- NULL
   
-  top_table <- top_table %>%
+  top_table <- top_table |>
     dplyr::mutate(
       Regulation = ifelse(
         logFC > 0, 
@@ -576,7 +573,7 @@ create_volcano_plot <- function(
     )
   
   # Create a named vector for the colors
-  colors <- c("blue", "darkgrey") %>%
+  colors <- c("blue", "darkgrey") |>
     setNames(c(
       compared_levels[2],
       compared_levels[1]

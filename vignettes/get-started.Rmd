@@ -51,7 +51,9 @@ The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.
 
 (These example files are part of the package and don't have to be present on 
-your system)
+your system).
+
+Please note that this dataset is an actual experimental dataset, but the annotation information, such as gene names, has been removed since it is not yet published. Instead, the dataset includes randomly generated gene symbols and gene names corresponding to Cricetulus griseus (Chinese Hamster) for each row. This is intended to demonstrate the functionality of the package.
 
 ```{r load the files}
 data_excel <- 
@@ -102,8 +104,7 @@ spline plots with the datapoints from an individual feature).
 data <- extract_data(
   data_excel,
   c(
-    "First.Protein.Description",
-    "ID"
+    "Gene_name"
     )
   )
 ```
@@ -368,7 +369,7 @@ plot_info = list(
   treatment_timepoints = c(0)
 )
 
-gene_column_name <- "Genes"
+gene_column_name <- "Gene_symbol"
 genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
 
 clustering_results <- cluster_hits(
@@ -421,9 +422,7 @@ create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
 report and returns the GSEA dotplots in R.
 
 ```{r run GSEA, eval = FALSE}
-# Get gene vector
-gene_column_name <- "Genes"
-genes <- annotation[[gene_column_name]][1:nrow(annotation)]
+# Modify gene vector
 genes <- sub(" .*", "", genes)
 genes <- sub(";.*", "", genes)
 genes <- sub("_.*", "", genes)

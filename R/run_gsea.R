@@ -73,6 +73,8 @@ run_gsea <- function(
     plot_titles = plot_titles,
     background = background
     )
+  
+  ensure_clusterProfiler()  # Deals with clusterProfiler installation.
 
   all_results <- map2(
     levels_clustered_hits,
@@ -179,6 +181,80 @@ control_inputs_create_gsea_report <- function(
     } else {
       check_genes(background)
     }
+  }
+}
+
+
+#' Ensure 'clusterProfiler' is installed and loaded
+#'
+#' @description
+#' This function checks if the 'clusterProfiler' package is installed.
+#' If not, it prompts the user to choose whether to install it automatically,
+#' install it manually, or cancel the operation. Once installed, the package
+#' is loaded for use.
+#'
+ensure_clusterProfiler <- function() {
+  
+  # Check if clusterProfiler is installed; if not, prompt the user
+  if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
+    message("The 'clusterProfiler' package is not installed.")
+    
+    # Prompt user for action
+    repeat {
+      user_input <- readline(
+        prompt = paste0(
+          "What would you like to do?\n",
+          "1: Automatically install clusterProfiler\n",
+          "2: Manually install clusterProfiler\n",
+          "3: Cancel\n",
+          "Please enter 1, 2, or 3: "
+        )
+      )
+      
+      if (user_input == "1") {
+        # Try to install clusterProfiler automatically from Bioconductor
+        message(
+          "Attempting to install 'clusterProfiler' automatically
+          from Bioconductor..."
+          )
+        
+        if (!requireNamespace("BiocManager", quietly = TRUE)) {
+          install.packages("BiocManager")
+        }
+        
+        tryCatch(
+          {
+            BiocManager::install("clusterProfiler", update = FALSE, ask = FALSE)
+          },
+          error = function(e) {
+            stop(
+              "Automatic installation of 'clusterProfiler' failed.
+              Please install it manually and try again.",
+              call. = FALSE
+              )
+          }
+        )
+        break  # Exit the loop if installation is successful
+      } else if (user_input == "2") {
+        stop(
+          "Please install 'clusterProfiler' manually 
+          using BiocManager::install('clusterProfiler') and 
+          then re-run the function.",
+          call. = FALSE
+          )
+      } else if (user_input == "3") {
+        stop("Operation canceled by the user.", call. = FALSE)
+      } else {
+        message("Invalid input. Please enter 1, 2, or 3.")
+      }
+    }
+  }
+  
+  # Load clusterProfiler functions after installation check
+  if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
+    stop("Failed to load 'clusterProfiler'. Please ensure it is installed correctly.", call. = FALSE)
+  } else {
+    library(clusterProfiler)
   }
 }
 
@@ -635,8 +711,6 @@ check_params <- function(params) {
 #' @return An object containing the results of the Gene Set Enrichment Analysis,
 #' including any plots generated during the analysis.
 #'
-#' @importFrom clusterProfiler enricher
-#'
 create_gsea_report_level <- function(
     clustered_genes,
     databases,
@@ -832,13 +906,29 @@ generate_section_content <- function(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;", 
     "'>Enrichment Results</h3>")
   
-  full_enrich_results_html <- 
-    knitr::kable(
-      section_info$full_enrich_results, 
-      format = "html", 
-      table.attr = "style='width:100%;border-collapse:collapse;'", 
-      row.names = FALSE
-      )
+  df <- section_info$full_enrich_results
+  
+  # Start the HTML table with the specified attributes
+  html_table <- "<table style='width:100%;border-collapse:collapse;'>"
+  
+  # Add the table header
+  html_table <- paste0(html_table, "<thead><tr>")
+  for (header in colnames(df)) {
+    html_table <- paste0(html_table, "<th>", header, "</th>")
+  }
+  html_table <- paste0(html_table, "</tr></thead><tbody>")
+  
+  # Add the table rows
+  for (i in 1:nrow(df)) {
+    html_table <- paste0(html_table, "<tr>")
+    for (j in 1:ncol(df)) {
+      html_table <- paste0(html_table, "<td>", df[i, j], "</td>")
+    }
+    html_table <- paste0(html_table, "</tr>")
+  }
+  
+  # Close the table body and the table tag
+  full_enrich_results_html <- paste0(html_table, "</tbody></table>")
   
   raw_enrich_results_header <- paste0(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;", 
@@ -1066,7 +1156,6 @@ process_enrichment_results <- function(
 #'
 #' @importFrom ggplot2 ggplot aes geom_point ylab coord_fixed guide_colorbar
 #'                     theme_bw theme element_blank element_text labs
-#' @importFrom viridis scale_color_viridis
 #' @importFrom scales oob_squish
 #' 
 make_enrich_dotplot <- function(
@@ -1095,11 +1184,10 @@ make_enrich_dotplot <- function(
       ) +
     ggplot2::geom_blank(aes(cluster, term)) + # Ensure all columns are shown
     ggplot2::ylab("database: term") +
-    viridis::scale_color_viridis(
+    ggplot2::scale_color_gradient(
       "odds\nratio",
-      option = "inferno",
-      direction = -1,
-      end = 0.9,
+      low = "blue",  
+      high = "red",     
       labels = function(x) round(x, 2),
       guide = ggplot2::guide_colorbar(
         barheight = unit(12, "mm"),
@@ -1173,25 +1261,23 @@ prepare_plot_data <- function(
     ) {
   
   plot_data <-
-    enrichments_list %>%
-    purrr::set_names(databases) %>%
-    purrr::keep(is.data.frame) %>%
-    dplyr::bind_rows(.id = "db") %>%
-    tidyr::pivot_longer(dplyr::starts_with("Cluster"), names_to = "p_odd") %>%
+    enrichments_list |>
+    purrr::set_names(databases) |>
+    purrr::keep(is.data.frame) |>
+    dplyr::bind_rows(.id = "db") |>
+    tidyr::pivot_longer(dplyr::starts_with("Cluster"), names_to = "p_odd") |>
     tidyr::separate_wider_regex(
       p_odd,
       c("Cluster_", cluster = "\\d+", "_", type = ".*"),
       too_few = "align_start"
-    ) %>%
-    tidyr::replace_na(list(type = "adj.p_value")) %>%
-    tidyr::pivot_wider(names_from = type, values_from = value) %>%
-    # na.omit() %>%
-    {.}
+    ) |>
+    tidyr::replace_na(list(type = "adj.p_value")) |>
+    tidyr::pivot_wider(names_from = type, values_from = value)
   
-  plot_data <- plot_data %>%
-    dplyr::group_by(db, BioProcess) %>%
-    dplyr::mutate(avg_odds_ratio = mean(odds_ratios, na.rm = TRUE)) %>%
-    dplyr::ungroup() %>%
+  plot_data <- plot_data |>
+    dplyr::group_by(db, BioProcess) |>
+    dplyr::mutate(avg_odds_ratio = mean(odds_ratios, na.rm = TRUE)) |>
+    dplyr::ungroup() |>
     dplyr::arrange(desc(avg_odds_ratio), db, BioProcess)
   
   # Initialize the cluster counts
@@ -1251,20 +1337,32 @@ prepare_plot_data <- function(
   }
   
   # Combine selected combos into a dataframe
-  top_combos <- do.call(rbind, selected_combos)
+  top_combos <- do.call(
+    rbind,
+    selected_combos
+    )
   
   # Filter the original data to keep only rows matching the top 5 combinations
-  top_plot_data <- plot_data %>%
+  top_plot_data <- plot_data |>
     dplyr::semi_join(top_combos, by = c("db", "BioProcess"))
   
   full_enrich_results <- stats::na.omit(plot_data)
   
-  top_plot_data <- top_plot_data %>%
-    tidyr::unite(db, BioProcess, col = "term", sep = ": ")
+  top_plot_data <- top_plot_data |>
+    tidyr::unite(
+      db,
+      BioProcess,
+      col = "term",
+      sep = ": "
+      )
   
-  top_plot_data$term <- factor(top_plot_data$term,
-                               levels = rev(unique(top_plot_data$term)))
+  top_plot_data$term <- factor(
+    top_plot_data$term,
+    levels = rev(unique(top_plot_data$term))
+    )
   
-  list(top_plot_data = top_plot_data,
-       full_enrich_results = full_enrich_results)
+  list(
+    top_plot_data = top_plot_data,
+    full_enrich_results = full_enrich_results
+    )
 }
