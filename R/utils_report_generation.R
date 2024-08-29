@@ -14,15 +14,34 @@
 #'
 #' @param plots A list of ggplot2 plot objects.
 #' @param plots_sizes A list of integers specifying the size of each plot.
-#' @param level_headers_info A list of header information for each level.
-#' @param spline_params A list of spline parameters.
 #' @param report_info A named list containing report information.
 #' @param data A dataframe or a list of dataframes, containing data that should
 #'             be directly embedded in the HTML report for downloading.
 #' @param meta A dataframe, containing metadata that should
 #'             be directly embedded in the HTML report for downloading.
+#' @param topTables List of limma topTables
+#' @param enrichr_format List, containing two lists: The gene list and the list
+#'                       of background genes.
+#' @param level_headers_info A list of header information for each level.
+#' @param spline_params A list of spline parameters, such as dof and type.
+#' @param adj_pthresholds Numeric vector with the values for the adj.p.tresholds
+#'                        for each level.
 #' @param report_type A character string specifying the report type 
 #'                    ('screen_limma_hyperparams' or 'cluster_hits').
+#' @param feature_name_columns Character vector with the column names of the
+#'                             annotation information, such as the columns 
+#'                             containing the gene names. These column names
+#'                             are used to put the info in the HTML reports on
+#'                             how the descriptions above the individual spline
+#'                             plots where created. This is because those 
+#'                             descriptions can be made up of several column
+#'                             values, and the specific columns are then stated
+#'                             in the HTML report on top (e.g gene_uniprotID).
+#' @param analysis_type One of the strings "time_effect", "avrg_diff_conditions"
+#'                      , or "interaction_condition_time". Those represent the
+#'                      three different outputs of a limma analysis. For more
+#'                      info on those 3 "categories", see package dir inst/
+#'                      descriptions/limma_result_categories.pdf.
 #' @param mode A character string specifying the mode 
 #'            ('isolated' or 'integrated').
 #' @param filename A character string specifying the filename for the report.
@@ -51,7 +70,7 @@ generate_report_html <- function(
     spline_params = NA,
     adj_pthresholds = NA,
     report_type = "explore_data",
-    feature_name_columns = NA,
+    feature_name_columns = NA,  # only for cluster_hits()
     analysis_type = NA,  # only for cluster_hits()
     mode = NA,
     filename = "report",
@@ -162,12 +181,12 @@ generate_report_html <- function(
     '<hr style="border: none; height: 3px;', 
     'background-color: #333; margin: 40px 0;', 
     'width: 75%;"> <h2 style="font-size: 48px;">', 
-    'Report Info ℹ️</h2><table>', sep = ""
+    'Report Info \u2139</h2><table>', sep = ""
     )
   
   downloads_section <- paste(
     '<hr><h2 style="font-size: 48px;">', 
-    'Downloads 📥</h2><table>'
+    'Downloads \U0001F4E5</h2><table>'
     )
 
   for (field in report_info_fields) {
@@ -562,6 +581,11 @@ format_text <- function(text) {
 #' @param header_text A string specifying the text to be displayed in the 
 #' header of the report.
 #' @param report_type A character specifying the type of HTML report.
+#' @param feature_names_formula String describing which columns of the 
+#'                              annotation info, such as gene and uniprotID, 
+#'                              where used to construct the description above
+#'                              the individual spline plots. This is placed in
+#'                              the beginning of the output HTML reports.
 #'
 #' @return A string containing the HTML header section.
 #'
@@ -713,11 +737,11 @@ get_header_section <- function(
     '<p style="font-size: 2em;">',
     "Press:<br>",
     "<b>t</b>  --> Jump to <b>Table of Contents</b> and save current scroll", 
-    "position 📑<br>",
-    "<b>s</b> --> <b>Save</b> current scroll position 📌<br>",
-    "<b>b</b> --> Jump <b>back</b> to saved position 🔙<br>",
-    "<b>d</b> --> <b>Download</b> all embedded files as zip 📥<br>",
-    "<b>e</b> --> Write an <b>email</b> to contact info ✉️<br>",
+    "position \U0001F4D1<br>",
+    "<b>s</b> --> <b>Save</b> current scroll position \U0001F4CC<br>",
+    "<b>b</b> --> Jump <b>back</b> to saved position \U0001F519<br>",
+    "<b>d</b> --> <b>Download</b> all embedded files as zip \U0001F4E5<br>",
+    "<b>e</b> --> Write an <b>email</b> to contact info \u2709<br>",
     '</p>',
     '</div>'
   )
@@ -841,7 +865,8 @@ encode_df_to_base64 <- function(
 #' img tag for embedding in a report.
 #'
 #' @param plot A ggplot2 plot object.
-#' @param plot_nrows An integer specifying the number of rows in the plot.
+#' @param height An integer specifying the height of the plot for correct
+#'               representation in the HTML.
 #' @param width A numeric value specifying the width of the plot in inches.
 #' @param base_height_per_row A numeric value specifying the base height per
 #'  row in inches.
@@ -1104,78 +1129,6 @@ process_plots <- function(
 #'
 #' @importFrom base64enc base64encode
 #' 
-# process_field <- function(
-#     field,
-#     data,
-#     meta,
-#     topTables,
-#     report_info,
-#     encode_df_to_base64,
-#     report_type,
-#     enrichr_format
-#     ) {
-#   
-#   if (field == "data_with_annotation")  {
-#     base64_df <- sprintf(
-#     '<a href="%s" download="data.xlsx">
-#     <button>Download data_with_annotation.xlsx
-#     </button></a>', 
-#     encode_df_to_base64(data)
-#     )
-#     
-#   } else if (field == "meta" &&
-#              !is.null(meta) &&
-#              is.data.frame(meta) &&
-#              !any(is.na(meta))) {
-#     base64_df <- sprintf(
-#     '<a href="%s" download="meta.xlsx">
-#     <button>Download meta.xlsx</button></a>', 
-#     encode_df_to_base64(meta)
-#     )
-# 
-#   } else if (field == "limma_topTables" && !any(is.na(topTables)))  {
-#     base64_df <- sprintf(
-#     '<a href="%s" download="limma_topTables.xlsx">
-#      <button>Download limma_topTables.xlsx</button></a>', 
-#      encode_df_to_base64(topTables)
-#     )
-# 
-#   } else if (field == "Enrichr_clustered_genes" && 
-#              !any(is.na(enrichr_format)) &&
-#              !is.null(enrichr_format$gene_lists)) {
-#     
-#     # Create ZIP file for Enrichr_clustered_genes
-#     zip_base64 <- create_enrichr_zip(enrichr_format)
-#     base64_df <- sprintf(
-#       paste(
-#         '<a href="data:application/zip;base64,%s" download=',
-#         '"Enrichr_clustered_genes.zip">',
-#         '<button>Download Enrichr_clustered_genes.zip</button></a>'
-#         ),
-#       zip_base64
-#     )
-#     
-#   } else if (field == "Enrichr_background" && 
-#              !any(is.na(enrichr_format)) &&
-#              !is.null(enrichr_format$background)) {
-#     
-#     base64_df <- sprintf(
-#       paste(
-#         '<a href="data:text/plain;base64,%s"', 
-#         'download="Enrichr_background.txt">',
-#         '<button>Download Enrichr_background.txt</button></a>'
-#       ),
-#       base64enc::base64encode(charToRaw(enrichr_format$background))
-#     )
-#     
-#   } else {
-#     base64_df <- ifelse(
-#       is.null(report_info[[field]]),
-#       "NA", report_info[[field]]
-#       )
-#   }
-#   return(base64_df)
-# }
 process_field <- function(
     field,
     data,

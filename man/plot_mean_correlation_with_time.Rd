@@ -17,6 +17,8 @@ separate the experiment.}
 \value{
 A ggplot2 object showing the distribution of mean correlations
  with time.
+ 
+ @importFrom rlang .data
 }
 \description{
 This function takes a data frame with time series data 

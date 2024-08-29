@@ -8,7 +8,6 @@ Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
 CMD
 Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 
 <img src="man/figures/hex_logo.png" align="left" width="65"/>
 
@@ -414,7 +413,7 @@ scientific journal or similar outlet. However, if this package helped
 you in your work, consider citing this GitHub repository.
 
 To cite this package, you can use the citation information provided in
-the [`CITATION.cff`](./CITATION.cff) file.
+the [`inst/CITATION.cff`](./inst/CITATION.cff) file.
 
 You can also generate a citation in various formats using the
 `CITATION.cff` file by visiting the top right of this repo and clicking

@@ -6,10 +6,9 @@
 \usage{
 run_gsea(
   levels_clustered_hits,
-  genes,
   databases,
   report_info,
-  params = NA,
+  clusterProfiler_params = NA,
   plot_titles = NA,
   background = NULL,
   report_dir = here::here()
@@ -18,13 +17,14 @@ run_gsea(
 \arguments{
 \item{levels_clustered_hits}{A list of clustered hits at different levels.}
 
-\item{genes}{A vector of genes to be analyzed.}
-
-\item{databases}{A list of databases to be used in the analysis.}
+\item{databases}{A list of databases for the gene set enrichment analysis.}
 
 \item{report_info}{A list containing information for the report generation.}
 
-\item{params}{Additional parameters for the GSEA analysis, default is NA.}
+\item{clusterProfiler_params}{Additional parameters for the GSEA analysis,
+default is NA. Those include adj_p_value, 
+pAdjustMethod, etc (see clusterProfiler 
+documentation).}
 
 \item{plot_titles}{Titles for the plots, default is NA.}
 

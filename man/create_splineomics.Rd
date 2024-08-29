@@ -40,6 +40,14 @@ and project name (optional).}
 \item{meta_batch2_column}{Column for secondary meta batch information 
 (optional).}
 
+\item{feature_name_columns}{Character vector containing the column names of 
+the annotation info that describe the features.
+This argument is used to specify in the HTML 
+report how exactly the feature names displayed
+above each individual spline plot have been
+created. Use the same vector that was used to 
+create the row headers for the data matrix!}
+
 \item{design}{A design matrix or similar object (optional).}
 
 \item{spline_params}{Parameters for spline functions (optional).}

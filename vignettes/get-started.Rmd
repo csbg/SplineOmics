@@ -56,14 +56,14 @@ your system).
 Please note that this dataset is an actual experimental dataset, but the annotation information, such as gene names, has been removed since it is not yet published. Instead, the dataset includes randomly generated gene symbols and gene names corresponding to Cricetulus griseus (Chinese Hamster) for each row. This is intended to demonstrate the functionality of the package.
 
 ```{r load the files}
-data_excel <- 
-  read_excel(
-    system.file(
-      "extdata",
-      "proteomics_data.xlsx",
-      package = "SplineOmics"
-      )
-    )
+
+data_excel <- readRDS(system.file(
+  "extdata",
+  "proteomics_data.rds",
+  package = "SplineOmics"
+  ))
+
+
 meta <- read_excel(
   system.file(
     "extdata",
@@ -102,10 +102,9 @@ spline plots with the datapoints from an individual feature).
 
 ```{r process inputs, eval = TRUE}
 data <- extract_data(
-  data_excel,
-  c(
-    "Gene_name"
-    )
+  data = data_excel,
+  feature_name_columns = c("Gene_name"),
+  user_prompt = FALSE
   )
 ```
 
@@ -352,7 +351,7 @@ adj_pthresholds <- c(
   0.05
   )
 
-clusters <- list(
+clusters <- c(
   6L,
   3L
   )

@@ -414,6 +414,7 @@ build_explore_data_report <- function(
 #' @return A ggplot object representing the density plot.
 #'
 #' @importFrom ggplot2 ggplot geom_density ggtitle aes theme
+#' @importFrom dplyr everything
 #'
 make_density_plots <- function(
     data, 
@@ -434,7 +435,7 @@ make_density_plots <- function(
   # Melt the data to long format using tidyr
   data_long <- tidyr::pivot_longer(
     as.data.frame(data),
-    cols = everything(),
+    cols = dplyr::everything(),
     names_to = "variable",
     values_to = "value"
   )
@@ -586,6 +587,8 @@ make_violin_box_plots <- function(
 #' @return A ggplot2 object showing the distribution of mean correlations
 #'  with time.
 #'  
+#'  @importFrom rlang .data
+#'  
 plot_mean_correlation_with_time <- function(
     data,
     meta,
@@ -611,10 +614,13 @@ plot_mean_correlation_with_time <- function(
       rownames(data) <- paste0("Feature", 1:nrow(data))
     }
     
-    cor_data <- data.frame(Feature = rownames(data), Correlation = correlations)
+    cor_data <- data.frame(
+      Feature = rownames(data),
+      Correlation = correlations
+      )
     
     # Generate the plot
-    p <- ggplot2::ggplot(cor_data, aes(x = Correlation)) +
+    p <- ggplot2::ggplot(cor_data, aes(x = .data$Correlation)) +
       ggplot2::geom_histogram(binwidth = 0.05, fill = "#bcbd22", 
                               color = "black") +
       ggplot2::theme_minimal() +
@@ -649,6 +655,9 @@ plot_mean_correlation_with_time <- function(
 #'
 #' @return A list of ggplot2 objects, each showing the distribution of first 
 #' lag autocorrelation coefficients for one condition.
+#' 
+#' @importFrom stats acf
+#' @importFrom rlang .data
 #'
 plot_first_lag_autocorrelation <- function(
     data,
@@ -664,14 +673,14 @@ plot_first_lag_autocorrelation <- function(
     # Subset the data and meta for the current condition
     condition_indices <- which(meta[[condition]] == cond)
     data_subset <- data[, condition_indices]
-    time_subset <- meta$Time[condition_indices]
+    # time_subset <- meta$Time[condition_indices]
     
     # Compute first lag autocorrelation of each feature
     autocorrelations <- apply(data_subset, 1, function(feature) {
       # Compute first lag difference
       lag_diff <- diff(feature)
       # Compute autocorrelation
-      acf(lag_diff, plot = FALSE)$acf[2]
+      stats::acf(lag_diff, plot = FALSE)$acf[2]
     })
     
     # Calculate mean and standard deviation of autocorrelations
@@ -679,11 +688,13 @@ plot_first_lag_autocorrelation <- function(
     std_autocorrelation <- sd(autocorrelations, na.rm = TRUE)
     
     # Create a data frame for plotting
-    cor_data <- data.frame(Feature = 1:nrow(data),
-                           Autocorrelation = autocorrelations)
+    cor_data <- data.frame(
+      Feature = 1:nrow(data),
+      Autocorrelation = autocorrelations
+      )
     
     # Generate the plot
-    p <- ggplot2::ggplot(cor_data, aes(x = Autocorrelation)) +
+    p <- ggplot2::ggplot(cor_data, aes(x = .data$Autocorrelation)) +
       ggplot2::geom_histogram(binwidth = 0.05, fill = "#9467bd",
                               color = "black") +
       ggplot2::theme_minimal() +
@@ -727,6 +738,9 @@ plot_first_lag_autocorrelation <- function(
 #'
 #' @return A list of ggplot2 objects, each showing the distribution of lag-1 
 #' differences for one condition.
+#' 
+#' @importFrom stats sd
+#' @importFrom rlang .data
 #'
 plot_lag1_differences <- function(
     data, 
@@ -749,12 +763,29 @@ plot_lag1_differences <- function(
                                 }))
     
     # Normalize lag-1 differences by the mean of the feature values
-    feature_means <- apply(data_subset, 1, mean, na.rm = TRUE)
+    feature_means <- apply(
+      data_subset,
+      1,
+      mean,
+      na.rm = TRUE
+      )
+    
     normalized_lag1_differences <- lag1_differences / feature_means
     
     # Calculate mean and stdev of normalized lag-1 differences for each feature
-    mean_lag1_diff <- apply(normalized_lag1_differences, 1, mean, na.rm = TRUE)
-    std_lag1_diff <- apply(normalized_lag1_differences, 1, sd, na.rm = TRUE)
+    mean_lag1_diff <- apply(
+      normalized_lag1_differences,
+      1,
+      mean,
+      na.rm = TRUE
+      )
+    
+    std_lag1_diff <- apply(
+      normalized_lag1_differences,
+      1,
+      stats::sd,
+      na.rm = TRUE
+      )
     
     # Create a data frame for plotting
     diff_data <- data.frame(
@@ -766,7 +797,7 @@ plot_lag1_differences <- function(
     # Generate the plot
     p <- ggplot2::ggplot(
       diff_data,
-      aes(x = Mean_Lag1_Difference)
+      aes(x = .data$Mean_Lag1_Difference)
       ) +
       ggplot2::geom_histogram(
         binwidth = 0.005,
@@ -788,7 +819,7 @@ plot_lag1_differences <- function(
         subtitle = paste(
           "Mean:", 
           round(mean(mean_lag1_diff, na.rm = TRUE), 3), 
-          "SD:", round(sd(mean_lag1_diff, na.rm = TRUE), 3)
+          "SD:", round(stats::sd(mean_lag1_diff, na.rm = TRUE), 3)
           )
         )
     
@@ -839,7 +870,7 @@ plot_cv <- function(
     
     # Calculate mean and standard deviation of CVs
     mean_cv <- mean(cvs, na.rm = TRUE)
-    std_cv <- sd(cvs, na.rm = TRUE)
+    std_cv <- stats::sd(cvs, na.rm = TRUE)
     
     # Create a data frame for plotting
     cv_data <- data.frame(

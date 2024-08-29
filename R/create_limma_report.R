@@ -17,13 +17,26 @@
 #' results for time effects, average differences between conditions, 
 #' and interaction effects between condition and time.
 #'
-#' @param run_limma_splines_result A list containing the results of the LIMMA 
-#' analysis with splines. It should have three components: `time_effect`, 
-#' `avrg_diff_conditions`, and `interaction_condition_time`.
-#' @param report_info A list containing metadata and other information to be 
-#' included in the report.
+#' @param splineomics An S3 object of class `SplineOmics` that contains all the 
+#' necessary data and parameters for the analysis, including:
+#' \itemize{
+#'   \item \code{limma_splines_result}: A list containing top tables from
+#'    differential expression analysis for the three different limma results.
+#'   \item \code{meta}: A data frame with sample metadata. Must contain a column
+#'                      "Time".
+#'   \item \code{condition}: A character string specifying the column name in
+#'                          the metadata (\code{meta}) that defines groups 
+#'                          for analysis. This column contains levels such as
+#'                           "exponential" and "stationary" for phases, or 
+#'                           "drug" and "no_drug" for treatments.
+#'   \item \code{annotation}: A data frame containing feature information, 
+#'                            such as gene and protein names, associated with 
+#'                            the expression data.
+#'   \item \code{report_info}: A list containing metadata about the analysis 
+#'                             for reporting purposes.
+#' }
 #' @param adj_pthresh A numeric value specifying the adjusted p-value threshold 
-#' for significance. Default is 0.05.
+#' for significance. Default is 0.05. Must be > 0 and < 1.
 #' @param report_dir A string specifying the directory where the report should 
 #' be saved. Default is the current working directory.
 #'
@@ -56,6 +69,7 @@ create_limma_report <- function(
   input_control$auto_validate()
   
   limma_splines_result <- splineomics[["limma_splines_result"]]
+  meta <- splineomics[["meta"]]
   condition <- splineomics[["condition"]]
   annotation <- splineomics[["annotation"]]
   report_info <- splineomics[["report_info"]]
@@ -499,6 +513,7 @@ build_create_limma_report <- function(
 #' @return A ggplot2 object representing the histogram of unadjusted p-values.
 #'
 #' @importFrom ggplot2 ggplot geom_histogram labs theme_minimal
+#' @importFrom rlang .data
 #'
 create_p_value_histogram <- function(
     top_table,
@@ -514,7 +529,8 @@ create_p_value_histogram <- function(
   # Create the histogram
   p <- ggplot2::ggplot(
     top_table,
-    aes(x = P.Value)
+    # aes(x = P.Value)
+    aes(x = .data$P.Value)
     ) +
     ggplot2::geom_histogram(
       binwidth = 0.05,
@@ -548,6 +564,7 @@ create_p_value_histogram <- function(
 #'
 #' @importFrom ggplot2 ggplot aes geom_point theme_minimal labs geom_hline 
 #'                     annotate scale_color_manual
+#' @importFrom rlang .data
 #' 
 create_volcano_plot <- function(
     top_table, 
@@ -589,8 +606,8 @@ create_volcano_plot <- function(
     mapping = ggplot2::aes(
       x = logFC, 
       y = -log10(adj.P.Val), 
-      color = Regulation,
-      alpha = Alpha
+      color = .data$Regulation,
+      alpha = .data$Alpha
     )
   ) +
     ggplot2::geom_point() +

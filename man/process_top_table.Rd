@@ -7,10 +7,12 @@
 process_top_table(process_within_level_result, feature_names)
 }
 \arguments{
-\item{feature_names}{A non-empty character vector of feature names.}
+\item{process_within_level_result}{List of lists containing the limma 
+topTable, fit, and optionally the voom
+object. All of this is from one specific
+level.}
 
-\item{top_table_and_fit}{A list containing the top table and the fit object 
-from LIMMA.}
+\item{feature_names}{A non-empty character vector of feature names.}
 }
 \value{
 A dataframe containing the processed top table with added intercepts.

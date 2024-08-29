@@ -20,10 +20,10 @@ library(dplyr)
 #                               "Time_course_PTX_metadata.xlsx"))
 
 
-data_excel <- read_excel(here::here(
-  "inst",
+data_excel <- readRDS(system.file(
   "extdata",
-  "proteomics_data.xlsx"
+  "proteomics_data.rds",
+  package = "SplineOmics"
 ))
 
 meta <- read_excel(here::here(
@@ -117,6 +117,7 @@ splineomics <- create_splineomics(
   data = data,
   meta = meta,
   annotation = annotation,
+  feature_name_columns = feature_name_columns,
   report_info = report_info,
   condition = "Phase",
   meta_batch_column = "Reactor",
@@ -190,13 +191,30 @@ splineomics <- run_limma_splines(
   splineomics
 )
 
+
+
+# Extract the feature_nr column
+feature_nr <- splineomics[["limma_splines_result"]][["time_effect"]][["Phase_Exponential"]][["feature_nr"]]
+
+# Select the last 3000 entries
+last_3000_feature_nr <- tail(feature_nr, 3000)
+
+# Define the output file path for the RData file
+output_rdata_file <- "inst/extdata/last_3000_feature_nr.RData"
+
+# Save the list as RData
+save(last_3000_feature_nr, file = output_rdata_file)
+
+
+
+
 report_dir <- here::here("results", "limma_reports")
 
-# plots <- create_limma_report(
-#   splineomics,
-#   adj_pthresh = 0.1,
-#   report_dir = report_dir
-# )
+plots <- create_limma_report(
+  splineomics,
+  adj_pthresh = 0.1,
+  report_dir = report_dir
+)
 
 
 ## Cluster hits ----------------------------------------------------------------
@@ -242,12 +260,12 @@ gene_set_lib <- c(
 )
 
 # download_enrichr_databases(gene_set_lib)
-
-# Get gene vector
-genes <- sub(" .*", "", genes)
-genes <- sub(";.*", "", genes)
-genes <- sub("_.*", "", genes)
-genes <- sub("-.*", "", genes)
+ 
+# # Get gene vector
+# genes <- sub(" .*", "", genes)
+# genes <- sub(";.*", "", genes)
+# genes <- sub("_.*", "", genes)
+# genes <- sub("-.*", "", genes)
 
 
 downloaded_dbs_filepath <- 
@@ -272,9 +290,8 @@ report_dir <- here::here("results", "gsea_reports")
 # debug(run_gsea)
 result <- run_gsea(
   levels_clustered_hits = clustering_results$clustered_hits_levels,
-  genes = genes,
   databases = databases,
-  params = clusterProfiler_params,
+  clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
   report_dir = report_dir
 )

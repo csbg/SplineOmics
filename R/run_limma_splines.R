@@ -456,7 +456,7 @@ preprocess_rna_seq_data <- function(
         message("Attempting to install 'edgeR' automatically 
                 from Bioconductor...")
         if (!requireNamespace("BiocManager", quietly = TRUE)) {
-          install.packages("BiocManager")
+          utils::install.packages("BiocManager")
         }
         tryCatch(
           {
@@ -484,10 +484,7 @@ preprocess_rna_seq_data <- function(
       }
     }
   }
-  
-  # Load edgeR functions after installation check
-  require(edgeR)
-  
+
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
   
@@ -515,8 +512,10 @@ preprocess_rna_seq_data <- function(
 #' Processes the top table from a LIMMA analysis, adding feature names and 
 #' intercepts.
 #'
-#' @param top_table_and_fit A list containing the top table and the fit object 
-#' from LIMMA.
+#' @param process_within_level_result List of lists containing the limma 
+#'                                    topTable, fit, and optionally the voom
+#'                                    object. All of this is from one specific
+#'                                    level.
 #' @param feature_names A non-empty character vector of feature names.
 #'
 #' @return A dataframe containing the processed top table with added intercepts.
@@ -572,13 +571,9 @@ process_top_table <- function(
 #' \link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
 #' \link[limma]{eBayes}, \link[limma]{topTable}
 #' 
-#' @importFrom splines bs
-#' @importFrom splines ns
-#' @importFrom stats as.formula
-#' @importFrom stats model.matrix
-#' @importFrom limma lmFit
-#' @importFrom limma eBayes
-#' @importFrom limma topTable
+#' @importFrom splines bs ns
+#' @importFrom stats as.formula model.matrix
+#' @importFrom limma lmFit eBayes topTable
 #' 
 process_within_level <- function(
     data,

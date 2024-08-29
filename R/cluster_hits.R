@@ -41,18 +41,26 @@
 #'    a top table from differential expression analysis, containing at least 
 #'    'adj.P.Val' and expression data columns.
 #' }
+#' @param genes A character vector containing the gene names of the features to
+#'  be analyzed.
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
 #' hits in each top table.
 #' @param clusters Character or integer vector specifying the number of clusters
 #'  or 'auto' for automatic estimation.
-#' @param report_info A character string to be printed at the top of the report.
-#' @param genes A character vector containing the gene names of the features to
-#'  be analyzed.
-
-#' @param time_unit A character string specifying the time unit label for plots
-#' (e.g., 'm' for minutes).
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved.
+#' @param analysis_type String specifying type of limma results (which of the 
+#'                      three categories: time_effect, avrg_diff_conditions,
+#'                      and interaction_condition_time (
+#'                      see limma_result_categories.pdf in inst/descriptions).
 #' @param report Boolean TRUE or FALSE value specifing if a report should be
 #' generated.
 #'
@@ -164,7 +172,9 @@ cluster_hits <- function(
     meta_batch2_column,
     sep = ", "
     )
-
+  
+  genes <- clean_gene_symbols(genes)
+  
   if (report) {
     plots <- make_clustering_report(
       all_levels_clustering = all_levels_clustering,
@@ -172,6 +182,7 @@ cluster_hits <- function(
       data = data,
       meta = meta,
       annotation = annotation,
+      genes = genes,
       spline_params = spline_params,
       adj_pthresholds = adj_pthresholds,
       report_dir = report_dir,
@@ -212,15 +223,23 @@ cluster_hits <- function(
         clustering_level$clustered_hits
     }
   }
+
+  # Add gene column for the run_gsea() function.
+  clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
+    df$gene <- genes[df$feature]
+    return(df)
+  })
   
   print_info_message(
     message_prefix = "Clustering the hits",
     report_dir = report_dir
   )
-
-  list(all_levels_clustering = all_levels_clustering,
-       plots = plots,
-       clustered_hits_levels = clustered_hits_levels)
+  
+  list(
+    all_levels_clustering = all_levels_clustering,
+    plots = plots,
+    clustered_hits_levels = clustered_hits_levels
+    )
 }
 
 
@@ -339,45 +358,6 @@ huge_table_user_prompter <- function(tables) {
 }
 
 
-#' Add Gene Column
-#'
-#' @description
-#' This function takes a tibble and a character vector of genes, and adds a 
-#' column named `Gene` to the tibble. The `Gene` column is created based on the 
-#' values in the `feature_nr` column, and is placed immediately after it.
-#'
-#' @param df A tibble containing a `feature_nr` column with numeric values.
-#' @param genes A character vector of gene names.
-#' @return A tibble with an added `Gene` column placed after the `feature_nr`
-#'  column.
-#'  
-#'  @importFrom dplyr mutate
-#'  
-add_gene_column <- function(
-    df,
-    genes
-    ) {
-  
-  feature_nr <- NULL # dummy declaration for lintr and R CMD.
-  gene <- NULL # dummy declaration for lintr and R CMD.
-  
-  # Create the Gene column
-  df <- df |>
-    dplyr::mutate(gene = genes[feature_nr])
-  
-  # Reorder columns to place Gene after feature_nr
-  feature_nr_position <- which(names(df) == "feature_nr")
-  df <- df |>
-    dplyr::select(
-      1:feature_nr_position,
-      gene,
-      (feature_nr_position + 1):ncol(df)
-      )
-  
-  return(df)
-}
-
-
 #' Perform Clustering
 #'
 #' @description
@@ -444,26 +424,46 @@ perform_clustering <- function(
 #' @param condition A character string specifying the condition.
 #' @param data A matrix of data values.
 #' @param meta A dataframe containing metadata.
+#' @param annotation Dataframe containig the annotation info of the features,
+#'                   such as gene and uniprotID, for example.
+#' @param genes Character vector containing the genes of the features.
 #' @param spline_params A list of spline parameters for the analysis.
+#' @param adj_pthresholds Numeric vector, containing a float < 1 > 0 as each 
+#'                        value. There is one float for every level, and this is
+#'                        the adj. p-value threshold. 
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
 #' ('isolated' or 'integrated').
 #' @param report_info An object containing report information.
-#' @param data_report A dataframe containing the data used in the limma splines
-#'                    analysis. This data will be embedded in the HTML report,
-#'                    so that it can be downloaded from there.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param meta_batch2_column A character string specifying the second meta 
 #'                           batch column.
-#' @param time_unit A character string specifying the time unit
-#' ('s', 'm', 'h', 'd').
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
+#' @param analysis_type One of the strings "time_effect", "avrg_diff_conditions"
+#'                      , or "interaction_condition_time". Those represent the
+#'                      three different outputs of a limma analysis. For more
+#'                      info on those 3 "categories", see package dir inst/
+#'                      descriptions/limma_result_categories.pdf.
+#' @param feature_name_columns Character vector containing the column names of 
+#'                             the annotation info that describe the features.
+#'                             This argument is used to specify in the HTML 
+#'                             report how exactly the feature names displayed
+#'                             above each individual spline plot have been
+#'                             created. Use the same vector that was used to 
+#'                             create the row headers for the data matrix!
 #'
 #' @return No return value, called for side effects.
 #'
 #' @seealso
 #' \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}},
-#' \code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}},
 #' \code{\link{plot_cluster_mean_splines}}, \code{\link{plot_splines}},
 #' \code{\link{generate_report_html}}
 #'
@@ -477,6 +477,7 @@ make_clustering_report <- function(
     data,
     meta,
     annotation,
+    genes,
     spline_params,
     adj_pthresholds,
     report_dir,
@@ -703,7 +704,10 @@ make_clustering_report <- function(
     level_headers_info = level_headers_info,
     spline_params = spline_params,
     report_info = report_info,
-    data = bind_data_with_annotation(data, annotation),
+    data = bind_data_with_annotation(
+      data,
+      annotation
+      ),
     meta = meta,
     topTables = topTables,
     enrichr_format = enrichr_format,
@@ -719,6 +723,55 @@ make_clustering_report <- function(
   return(plots)
 }
 
+
+#' Clean the Gene Symbols
+#'
+#' @description
+#' This function preprocesses a vector of gene names by cleaning and 
+#' formatting them. It removes any non-alphanumeric characters after the 
+#' first block of alphanumeric characters and converts the remaining 
+#' characters to uppercase.
+#'
+#' @param genes A character vector containing gene names to be cleaned.
+#'
+#' @return A character vector of cleaned gene symbols (names) with the same 
+#' length as the input. The cleaned names will be in uppercase, and any 
+#' invalid or empty gene names will be replaced with NA.
+#'
+clean_gene_symbols <- function(genes) {
+  message(paste0(
+    "\033[33m\nGene symbols: Transforming all non-alphanumeric characters to ",
+    "whitespace, then extracting the substring of alphanumeric characters ",
+    "before the first whitespace or end of the string. The extracted ",
+    "substring is then converted to uppercase.\033[0m"
+  ))
+  
+  message(paste0(
+    "\033[38;5;214mIf this does not produce valid gene symbols for your gene", 
+    "set enrichment analysis, modify ",
+    "the genes argument of this function (cluster_hits) accordingly!\033[0m"
+  ))
+  
+  # Apply cleaning process to each gene
+  cleaned_genes <- sapply(genes, function(gene_name) {
+    if (!is.na(gene_name) && gene_name != "") {
+      # Replace all non-alphanumeric characters with whitespace
+      gene_name <- gsub("[^A-Za-z0-9]", " ", gene_name)
+      
+      # Extract the first block of alphanumeric characters before the 
+      # first whitespace
+      clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
+      
+      # Convert to uppercase
+      toupper(clean_gene_name)
+    } else {
+      NA
+    }
+  })
+  
+  # Return cleaned genes, keeping the same index as input
+  return(cleaned_genes)
+}
 
 
 # Level 2 internal functions ---------------------------------------------------
@@ -1247,13 +1300,21 @@ plot_dendrogram <- function(
 #'
 #' @param curve_values A dataframe containing curve values and cluster
 #' assignments.
-#' @param time_unit_label A character string specifying the time unit label.
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
 #'
 #' @return A ggplot object representing the average curves by cluster.
 #'
 #' @importFrom scales hue_pal
 #' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
 #'                     theme_minimal aes element_text
+#' @importFrom rlang .data
 #'
 plot_all_mean_splines <- function(
     curve_values,
@@ -1337,17 +1398,18 @@ plot_all_mean_splines <- function(
     # Add vertical dashed lines for treatment times
     ggplot2::geom_vline(
       data = treatment_df, 
-      ggplot2::aes(xintercept = Time, color = Label), 
+      ggplot2::aes(xintercept = .data$Time, color = .data$Label), 
       linetype = "dashed", 
       size = 0.5
     ) +
     ggplot2::geom_text(
       data = treatment_df,
       ggplot2::aes(
-        x = Time - max(Time) * 0.005,  # Slightly offset from the vertical line
+        # Slightly offset from the vertical line
+        x = .data$Time - max(.data$Time) * 0.005,  
         y = 1,  # Place the labels at the top of the plot
-        label = Time,
-        color = Label
+        label = .data$Time,
+        color = .data$Label
       ),  
       angle = 90,  # Rotate the labels
       vjust = 0,  # Position on the left side of the dashed line
@@ -1396,7 +1458,14 @@ plot_all_mean_splines <- function(
 #'
 #' @param time_series_data A dataframe or matrix with time series data.
 #' @param title A character string specifying the title of the plot.
-#' @param time_unit_label A character string specifying the time unit label.
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
 #'
 #' @return A ggplot object representing the single and consensus shapes.
 #'
@@ -1408,7 +1477,7 @@ plot_all_mean_splines <- function(
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
 #'                     ggtitle aes labs element_rect
-#' @importFrom rlang sym
+#' @importFrom rlang sym .data
 #' @importFrom scales hue_pal
 #'
 plot_single_and_mean_splines <- function(
@@ -1429,7 +1498,7 @@ plot_single_and_mean_splines <- function(
       values_to = "intensity"
     ) |>
     dplyr::arrange(!!feature_col) |>
-    dplyr::mutate(time = as.numeric(time))
+    dplyr::mutate(time = as.numeric(.data$time))
   
   # Compute consensus (mean of each column)
   consensus <- colMeans(
@@ -1485,8 +1554,8 @@ plot_single_and_mean_splines <- function(
     ggplot2::geom_vline(
       data = treatment_df, 
       ggplot2::aes(
-        xintercept = Time,
-        color = Label
+        xintercept = .data$Time,
+        color = .data$Label
         ), 
       linetype = "dashed", 
       size = 0.5
@@ -1494,10 +1563,10 @@ plot_single_and_mean_splines <- function(
     ggplot2::geom_text(
       data = treatment_df,
       ggplot2::aes(
-        x = Time - max(Time) * 0.005,   # not touching line
+        x = .data$Time - max(.data$Time) * 0.005,   # not touching line
         y = 1,
-        label = Time,
-        color = Label
+        label = .data$Time,
+        color = .data$Label
         ),  
       angle = 90,
       vjust = 0,   # 0 = left side of the dashed line, 1 = right side
@@ -1552,7 +1621,14 @@ plot_single_and_mean_splines <- function(
 #'
 #' @param curve_values A dataframe containing curve values and cluster
 #'  assignments.
-#' @param time_unit_label A character string specifying the time unit label.
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
 #'
 #' @return A list containing a plot for every cluster
 #'
@@ -1613,6 +1689,15 @@ plot_cluster_mean_splines <- function(
 #' @param X The limma design matrix that defines the experimental conditions.
 #' @param time_unit_label A string shown in the plots as the unit for the time,
 #' such as min or hours.
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
+#' @param adj_pthreshold Double > 0 and < 1 specifying the adj. p-val threshold.
 #'
 #' @return A list containing the composite plot and the number of rows used in
 #' the plot layout.
@@ -1622,6 +1707,7 @@ plot_cluster_mean_splines <- function(
 #' scale_x_continuous annotate
 #' @importFrom patchwork wrap_plots plot_annotation
 #' @importFrom scales hue_pal
+#' @importFrom rlang .data
 #'
 plot_splines <- function(
     top_table,
@@ -1798,8 +1884,8 @@ plot_splines <- function(
       p <- p + ggplot2::geom_vline(
         data = treatment_df, 
         ggplot2::aes(
-          xintercept = Time, 
-          color = Label
+          xintercept = .data$Time, 
+          color = .data$Label
         ), 
         linetype = "dashed", 
         size = 0.5
@@ -1818,8 +1904,8 @@ plot_splines <- function(
         ggplot2::aes(
           x = Time - max(Time) * 0.005,  # Slightly offset from vertical line
           y = y_position,  # Uniform y position just above the max y value
-          label = Time,
-          color = Label
+          label = .data$Time,
+          color = .data$Label
         ),
         angle = 90,  # Rotate the labels
         vjust = 0,  # Position on the left side of the dashed line
@@ -1919,9 +2005,9 @@ merge_annotation_all_levels_clustering <- function(
 #'
 prepare_gene_lists_for_enrichr <- function(
     all_levels_clustering,
-    gene
-    ) {
-  
+    genes
+) {
+
   formatted_gene_lists <- list()
   
   for (i in seq_along(all_levels_clustering)) {
@@ -1932,22 +2018,18 @@ prepare_gene_lists_for_enrichr <- function(
     clustered_hits <- all_levels_clustering[[i]]$clustered_hits
     
     # Process each cluster
-    clusters <- split(clustered_hits$feature, clustered_hits$cluster)
+    clusters <- split(
+      clustered_hits$feature,
+      clustered_hits$cluster
+    )
+    
     level_gene_lists <- list()
     
     for (cluster_id in names(clusters)) {
       cluster_genes <- clusters[[cluster_id]]
-      gene_list <- sapply(cluster_genes, function(idx) {
-        gene_name <- gene[idx]
-        if (!is.na(gene_name) && gene_name != "") {
-          # Extract the first block of alphanumeric characters
-          clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
-          toupper(clean_gene_name)
-        } else {
-          NA
-        }
-      })
-      gene_list <- na.omit(gene_list)
+
+      gene_list <- genes[cluster_genes]
+      gene_list <- na.omit(gene_list)  # Remove NAs if any
       
       if (length(gene_list) > 0) {
         level_gene_lists[[paste0("Cluster ", cluster_id)]] <- 
@@ -1958,23 +2040,18 @@ prepare_gene_lists_for_enrichr <- function(
     formatted_gene_lists[[level_name]] <- level_gene_lists
   }
   
-  # Prepare the background gene list
-  clean_genes <- sapply(gene, function(gene_name) {
-    if (!is.na(gene_name) && gene_name != "") {
-      # Extract the first block of alphanumeric characters
-      clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
-      toupper(clean_gene_name)
-    } else {
-      NA
-    }
-  })
-  background_gene_list <- paste(na.omit(clean_genes), collapse = "\n")
+  # Prepare the background genes list using preprocessed genes
+  background_gene_list <- paste(
+    na.omit(genes),
+    collapse = "\n"
+    )
   
   return(list(
     gene_lists = formatted_gene_lists,
     background = background_gene_list
-    ))
+  ))
 }
+
 
 
 
@@ -1989,6 +2066,7 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
+#' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
 #' @param report_info A named list containg the report info fields. Here used
