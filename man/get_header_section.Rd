@@ -13,6 +13,12 @@ get_header_section(title, header_text, report_type, feature_names_formula)
 header of the report.}
 
 \item{report_type}{A character specifying the type of HTML report.}
+
+\item{feature_names_formula}{String describing which columns of the 
+annotation info, such as gene and uniprotID, 
+where used to construct the description above
+the individual spline plots. This is placed in
+the beginning of the output HTML reports.}
 }
 \value{
 A string containing the HTML header section.

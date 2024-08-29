@@ -27,6 +27,8 @@ build_cluster_hits_report(
 
 \item{spline_params}{A list of spline parameters.}
 
+\item{adj_pthresholds}{Float vector with values for any level for adj.p.tresh}
+
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
 

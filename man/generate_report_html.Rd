@@ -41,12 +41,36 @@ be directly embedded in the HTML report for downloading.}
 \item{meta}{A dataframe, containing metadata that should
 be directly embedded in the HTML report for downloading.}
 
+\item{topTables}{List of limma topTables}
+
+\item{enrichr_format}{List, containing two lists: The gene list and the list
+of background genes.}
+
 \item{level_headers_info}{A list of header information for each level.}
 
-\item{spline_params}{A list of spline parameters.}
+\item{spline_params}{A list of spline parameters, such as dof and type.}
+
+\item{adj_pthresholds}{Numeric vector with the values for the adj.p.tresholds
+for each level.}
 
 \item{report_type}{A character string specifying the report type 
 ('screen_limma_hyperparams' or 'cluster_hits').}
+
+\item{feature_name_columns}{Character vector with the column names of the
+annotation information, such as the columns 
+containing the gene names. These column names
+are used to put the info in the HTML reports on
+how the descriptions above the individual spline
+plots where created. This is because those 
+descriptions can be made up of several column
+values, and the specific columns are then stated
+in the HTML report on top (e.g gene_uniprotID).}
+
+\item{analysis_type}{One of the strings "time_effect", "avrg_diff_conditions"
+, or "interaction_condition_time". Those represent the
+three different outputs of a limma analysis. For more
+info on those 3 "categories", see package dir inst/
+descriptions/limma_result_categories.pdf.}
 
 \item{mode}{A character string specifying the mode 
 ('isolated' or 'integrated').}

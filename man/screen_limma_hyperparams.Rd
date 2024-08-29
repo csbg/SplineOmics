@@ -27,6 +27,23 @@ screen_limma_hyperparams(
 )
 }
 \arguments{
+\item{splineomics}{An S3 object of class `SplineOmics` that contains all the 
+necessary data and parameters for the analysis, including:
+\itemize{
+  \item \code{condition}: A string specifying the column name of the meta
+                          dataframe, that contains the levels that separate
+                          the experiment ('treatment' can be a condition, and
+                          'drug' and 'no drug' can be the levels of such a 
+                          condition).
+  \item \code{report_info}: 
+  \item \code{meta_batch_column}: A character string specifying the meta 
+                                  batch column.
+  \item \code{meta_batch2_column}: A character string specifying the second 
+                                   meta batch column (the limma function 
+                                   removeBatchEffect supports a maximum of 
+                                   two batch columns.)
+}}
+
 \item{datas}{A list of data frames containing the datasets to be analyzed.}
 
 \item{datas_descr}{A description object for the data.}
@@ -47,16 +64,6 @@ significance determination.}
 
 \item{padjust_method}{A character string specifying the method for p-value 
 adjustment.}
-
-\item{condition}{A single character string specifying the condition.}
-
-\item{report_info}{An object containing report information.}
-
-\item{meta_batch_column}{A character string specifying the meta batch column.}
-
-\item{meta_batch2_column}{A character string specifying the second meta 
-batch column (the limma function removeBatchEffect
-supports a maximum of two batch columns.)}
 }
 \value{
 Returns a list of plots generated from the limma analysis results.

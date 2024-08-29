@@ -17,6 +17,36 @@ methods to check dataframes and spline parameters.
 
 Check Data Matrix
 }
+\keyword{Check}
+\keyword{Column}
+\keyword{Columns}
+\keyword{Dataframe}
+\keyword{Degrees}
+\keyword{Freedom}
+\keyword{Maximum}
+\keyword{Minimum}
+\keyword{Parameters}
+\keyword{Spline}
+\keyword{This}
+\keyword{Type}
+\keyword{a}
+\keyword{and}
+\keyword{checks}
+\keyword{column}
+\keyword{columns}
+\keyword{data}
+\keyword{dataframe}
+\keyword{expected}
+\keyword{function}
+\keyword{if}
+\keyword{internal}
+\keyword{match}
+\keyword{names}
+\keyword{of}
+\keyword{respective}
+\keyword{the}
+\keyword{their}
+\keyword{types.}
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{Level2Functions}
 }
@@ -28,7 +58,7 @@ Check Data Matrix
 \item \href{#method-Level2Functions-check_dataframe}{\code{Level2Functions$check_dataframe()}}
 \item \href{#method-Level2Functions-check_spline_params_generally}{\code{Level2Functions$check_spline_params_generally()}}
 \item \href{#method-Level2Functions-check_spline_params_mode_dependent}{\code{Level2Functions$check_spline_params_mode_dependent()}}
-\item \href{#method-Level2Functions-check_colums_spline_test_configs}{\code{Level2Functions$check_colums_spline_test_configs()}}
+\item \href{#method-Level2Functions-check_columns_spline_test_configs}{\code{Level2Functions$check_columns_spline_test_configs()}}
 \item \href{#method-Level2Functions-check_spline_type_column}{\code{Level2Functions$check_spline_type_column()}}
 \item \href{#method-Level2Functions-check_spline_type_params}{\code{Level2Functions$check_spline_type_params()}}
 \item \href{#method-Level2Functions-check_max_and_min_dof}{\code{Level2Functions$check_max_and_min_dof()}}
@@ -211,13 +241,13 @@ Check Columns in Spline Test Configurations
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Level2Functions-check_colums_spline_test_configs"></a>}}
-\if{latex}{\out{\hypertarget{method-Level2Functions-check_colums_spline_test_configs}{}}}
-\subsection{Method \code{check_colums_spline_test_configs()}}{
+\if{html}{\out{<a id="method-Level2Functions-check_columns_spline_test_configs"></a>}}
+\if{latex}{\out{\hypertarget{method-Level2Functions-check_columns_spline_test_configs}{}}}
+\subsection{Method \code{check_columns_spline_test_configs()}}{
 Validates that the spline test configurations contain the required columns 
 in the correct order.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_colums_spline_test_configs(spline_test_configs)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_columns_spline_test_configs(spline_test_configs)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -230,8 +260,6 @@ configurations.}
 }
 \subsection{Returns}{
 No return value, called for side effects.
-
-Check Spline Type Column
 }
 }
 \if{html}{\out{<hr>}}
@@ -254,8 +282,6 @@ configurations.}
 }
 \subsection{Returns}{
 No return value, called for side effects.
-
-Check Spline Type Parameters
 }
 }
 \if{html}{\out{<hr>}}
@@ -278,8 +304,6 @@ configurations.}
 }
 \subsection{Returns}{
 TRUE if all checks pass, otherwise an error is thrown.
-
-Check Maximum and Minimum Degrees of Freedom
 }
 }
 \if{html}{\out{<hr>}}
@@ -304,11 +328,6 @@ configurations.}
 }
 \subsection{Returns}{
 No return value, called for side effects.
-
-Check Dataframe Columns
-
-This function checks if the columns of a dataframe match the expected 
-column names and their respective data types.
 }
 }
 \if{html}{\out{<hr>}}

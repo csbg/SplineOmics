@@ -10,6 +10,7 @@ make_clustering_report(
   data,
   meta,
   annotation,
+  genes,
   spline_params,
   adj_pthresholds,
   report_dir,
@@ -33,7 +34,16 @@ level within a condition.}
 
 \item{meta}{A dataframe containing metadata.}
 
+\item{annotation}{Dataframe containig the annotation info of the features,
+such as gene and uniprotID, for example.}
+
+\item{genes}{Character vector containing the genes of the features.}
+
 \item{spline_params}{A list of spline parameters for the analysis.}
+
+\item{adj_pthresholds}{Numeric vector, containing a float < 1 > 0 as each 
+value. There is one float for every level, and this is
+the adj. p-value threshold.}
 
 \item{report_dir}{A character string specifying the report directory.}
 
@@ -49,12 +59,28 @@ level within a condition.}
 \item{meta_batch2_column}{A character string specifying the second meta 
 batch column.}
 
-\item{data_report}{A dataframe containing the data used in the limma splines
-analysis. This data will be embedded in the HTML report,
-so that it can be downloaded from there.}
+\item{plot_info}{List containing the elements y_axis_label (string), 
+time_unit (string), treatment_labels (character vector),
+treatment_timepoints (integer vector). All can also be NA. 
+This list is used to add this info to the spline plots. 
+time_unit is used to label the x-axis, and treatment_labels
+and -timepoints are used to create vertical dashed lines,
+indicating the positions of the treatments (such as 
+feeding, temperature shift, etc.).}
 
-\item{time_unit}{A character string specifying the time unit
-('s', 'm', 'h', 'd').}
+\item{analysis_type}{One of the strings "time_effect", "avrg_diff_conditions"
+, or "interaction_condition_time". Those represent the
+three different outputs of a limma analysis. For more
+info on those 3 "categories", see package dir inst/
+descriptions/limma_result_categories.pdf.}
+
+\item{feature_name_columns}{Character vector containing the column names of 
+the annotation info that describe the features.
+This argument is used to specify in the HTML 
+report how exactly the feature names displayed
+above each individual spline plot have been
+created. Use the same vector that was used to 
+create the row headers for the data matrix!}
 }
 \value{
 No return value, called for side effects.
@@ -65,7 +91,6 @@ curve plots, and consensus shapes for each level within a condition.
 }
 \seealso{
 \code{\link{removeBatchEffect}}, \code{\link{plot_heatmap}},
-\code{\link{plot_dendrogram}}, \code{\link{plot_all_shapes}},
 \code{\link{plot_cluster_mean_splines}}, \code{\link{plot_splines}},
 \code{\link{generate_report_html}}
 }

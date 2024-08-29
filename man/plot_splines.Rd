@@ -30,6 +30,17 @@ points.}
 
 \item{time_unit_label}{A string shown in the plots as the unit for the time,
 such as min or hours.}
+
+\item{plot_info}{List containing the elements y_axis_label (string), 
+time_unit (string), treatment_labels (character vector),
+treatment_timepoints (integer vector). All can also be NA. 
+This list is used to add this info to the spline plots. 
+time_unit is used to label the x-axis, and treatment_labels
+and -timepoints are used to create vertical dashed lines,
+indicating the positions of the treatments (such as 
+feeding, temperature shift, etc.).}
+
+\item{adj_pthreshold}{Double > 0 and < 1 specifying the adj. p-val threshold.}
 }
 \value{
 A list containing the composite plot and the number of rows used in

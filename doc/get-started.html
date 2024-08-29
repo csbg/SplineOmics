@@ -354,67 +354,107 @@ samples were taken from each reactor in triplicates at defined
 timepoints relative to a feeding of the cells (60 min before feeding,
 and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
 find out which of the 7162 cellular proteins show a significant change
-over time after the CHO cells were fed. Further, the hits (proteins with
-a significant change over time) are clustered based on their temporal
-pattern, and a gene set enrichment analysis is performed with each
-cluster to see if there are processes which are up- or downregulated
-over time after the feeding.</p>
+over time after the CHO cells were fed (= impact of the feeding).
+Further, the hits (proteins with a significant change over time) are
+clustered based on their temporal pattern, and a gene set enrichment
+analysis is performed with each cluster to see if there are processes
+which are up- or downregulated over time after the feeding.</p>
 </div>
 <div id="load-the-packages" class="section level1">
 <h1>Load the packages</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SplineOmics)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt; </span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div>
 </div>
 <div id="load-the-files" class="section level1">
 <h1>Load the files</h1>
 <p>In this example, the data.xlsx file contains the numeric values (the
 intensities) and also the feature descriptions, such as gene and protein
-name.</p>
+name (= annotation part)</p>
 <p>The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data_excel <span class="ot">&lt;-</span> </span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="fu">read_excel</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;data.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span>))</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; New names:</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; • `` -&gt; `...38`</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;meta.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span>))</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">print</span>(data_excel)</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,165 × 45</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;  1 Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;  2 Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;  3 Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;  4 &lt;NA&gt;        15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;  5 &lt;NA&gt;        14.5… 14.6… 14.5… 14.6… 14.6… 14.6… 14.6… 14.6… 14.6… 14.5… 14.5…</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;        15.9… 16.0… 16.0… 16.0… 15.8… 16.0… 15.9… 15.8… 16.0… 15.9… 15.9…</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;  7 &lt;NA&gt;        16.1… 16.0… 16.1… 16.1… 16.0… 16.1… 16.0… 16.0… 16.0… 15.9… 16.0…</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;  8 &lt;NA&gt;        15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;        14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;        15.0… 14.9… 15.1… 15.0… 15.0… 15.1… 14.9… 15.1… 14.9… 15.0… 14.9…</span></span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,155 more rows</span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 33 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, ID &lt;chr&gt;,</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; #   `Potential contaminant` &lt;lgl&gt;, Protein.Group &lt;chr&gt;, Protein.Ids &lt;chr&gt;, …</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span></code></pre></div>
+<p>(These example files are part of the package and don’t have to be
+present on your system).</p>
+<p>Please note that this dataset is an actual experimental dataset, but
+the annotation information, such as gene names, has been removed since
+it is not yet published. Instead, the dataset includes randomly
+generated gene symbols and gene names corresponding to Cricetulus
+griseus (Chinese Hamster) for each row. This is intended to demonstrate
+the functionality of the package.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data_excel <span class="ot">&lt;-</span> </span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="fu">system.file</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>      <span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>      <span class="st">&quot;proteomics_data.xlsx&quot;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>      <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>      )</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    )</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; New names:</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; • `` -&gt; `...38`</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="fu">system.file</span>(</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    <span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    <span class="st">&quot;proteomics_meta.xlsx&quot;</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>    <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    )</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  )</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co"># Extract the annotation part from the dataframe.</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>first_na_col <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">is.na</span>(data_excel[<span class="dv">1</span>,]))[<span class="dv">1</span>]</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> data_excel <span class="sc">|&gt;</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>((first_na_col <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(data_excel)) <span class="sc">|&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>))</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="fu">print</span>(data_excel)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,165 × 40</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;  1 Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;  2 Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;  3 Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;  4 &lt;NA&gt;        15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;  5 &lt;NA&gt;        14.5… 14.6… 14.5… 14.6… 14.6… 14.6… 14.6… 14.6… 14.6… 14.5… 14.5…</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;        15.9… 16.0… 16.0… 16.0… 15.8… 16.0… 15.9… 15.8… 16.0… 15.9… 15.9…</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;  7 &lt;NA&gt;        16.1… 16.0… 16.1… 16.1… 16.0… 16.1… 16.0… 16.0… 16.0… 15.9… 16.0…</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt;  8 &lt;NA&gt;        15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;        14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;        15.0… 14.9… 15.1… 15.0… 15.0… 15.1… 14.9… 15.1… 14.9… 15.0… 14.9…</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,155 more rows</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; # ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, Gene_symbol &lt;chr&gt;,</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; #   Gene_name &lt;chr&gt;</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 2</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;    Gene_symbol  Gene_name                               </span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;        &lt;chr&gt;                                   </span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt;  1 LOC113838844 cone-rod homeobox protein-like          </span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;  2 Bag4         BAG cochaperone 4                       </span></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt;  3 Aoc3         amine oxidase copper containing 3       </span></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt;  4 Heatr9       HEAT repeat containing 9                </span></span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt;  5 Wdr83os      WD repeat domain 83 opposite strand     </span></span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt;  6 Cubn         cubilin                                 </span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt;  7 Arhgef5      Rho guanine nucleotide exchange factor 5</span></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt;  8 LOC103158723 40S ribosomal protein S9                </span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt;  9 Ncbp2as2     NCBP2 antisense 2 (head to head)        </span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt; 10 Dynlt1       dynein light chain Tctex-type 1         </span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span></code></pre></div>
 </div>
 <div id="bring-the-inputs-into-the-standardized-required-format" class="section level1">
 <h1>Bring the inputs into the standardized (required) format</h1>
@@ -432,7 +472,11 @@ columns “First.Protein.Description” and “ID” are specified so that these
 are combined and form the rowheaders (feature names). They will be used
 to label any plots were a feature is shown individually (such as the
 spline plots with the datapoints from an individual feature).</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">extract_data</span>(data_excel, <span class="fu">c</span>(<span class="st">&quot;First.Protein.Description&quot;</span>, <span class="st">&quot;ID&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">extract_data</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> data_excel,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">feature_name_columns =</span> <span class="fu">c</span>(<span class="st">&quot;Gene_name&quot;</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">user_prompt =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="perform-eda-exploratory-data-analysis" class="section level1">
 <h1>Perform EDA (exploratory data analysis)</h1>
@@ -456,24 +500,31 @@ location, or to a location specified with the optional argument
 report_dir. The function also returns all plots generated. Lastly, if it
 is desired that no report should be generated, the optional argument
 report can be set to FALSE.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>report_info <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">omics_data_type =</span> <span class="st">&quot;PTX&quot;</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">data_description =</span> <span class="st">&quot;Proteomics data of CHO cells&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">data_collection_date =</span> <span class="st">&quot;February 2024&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">analyst_name =</span> <span class="st">&quot;Thomas Rauter&quot;</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">contact_info =</span> <span class="st">&quot;thomas.rauter@plus.ac.at&quot;</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;DGTX&quot;</span>)</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>meta_batch_column <span class="ot">&lt;-</span> <span class="st">&quot;Reactor&quot;</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a></span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;explore_data&quot;</span>)</span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">explore_data</span>(<span class="at">data =</span> data,</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                      <span class="at">meta =</span> meta,</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                      <span class="at">condition =</span> condition,</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                      <span class="at">report_info =</span> report_info,</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>                      <span class="at">meta_batch_column =</span> meta_batch_column,</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                      <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>report_info <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">omics_data_type =</span> <span class="st">&quot;PTX&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">data_description =</span> <span class="st">&quot;Proteomics data of CHO cells&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">data_collection_date =</span> <span class="st">&quot;February 2024&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">analyst_name =</span> <span class="st">&quot;Thomas Rauter&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">contact_info =</span> <span class="st">&quot;thomas.rauter@plus.ac.at&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;DGTX&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  )</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="st">&quot;explore_data&quot;</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">create_splineomics</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">data =</span> data,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">meta =</span> meta,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">annotation =</span> annotation,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">condition =</span> <span class="st">&quot;Phase&quot;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">meta_batch_column =</span> <span class="st">&quot;Reactor&quot;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">explore_data</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the
 not-batch-corrected-data here: <a href="../inst/reports/report.html">here</a></p>
 <p>The EDA plots can tell you a range of things. The plots in the HTML
@@ -516,39 +567,58 @@ version of data, it would test out all combinations of the spline
 parameters and the adj. p-value threshold. In this case, this is DoF =
 2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3,
 tresh = 0.1.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> data </span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>meta1 <span class="ot">&lt;-</span> meta</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> data[, <span class="sc">!</span>(<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                                        <span class="st">&quot;E10_TP10_Stationary&quot;</span>))]</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span><span class="st">`</span><span class="at">Sample.ID</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                                       <span class="st">&quot;E10_TP10_Stationary&quot;</span>), ]</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>datas <span class="ot">&lt;-</span> <span class="fu">list</span>(data1, data2) </span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>datas_descr <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;full_data&quot;</span>, <span class="st">&quot;outliers_removed&quot;</span>) </span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>metas <span class="ot">&lt;-</span> <span class="fu">list</span>(meta1, meta2) </span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>, <span class="st">&quot;~ 1 + X + Reactor&quot;</span>) </span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;hyperparams_screen_reports&quot;</span>) </span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>)</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co"># Every row a combo to test.</span></span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>),</span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>                                  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>                                  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>),</span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>                                  <span class="at">knots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))),                                                        <span class="at">bknots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))))</span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">screen_limma_hyperparams</span>(datas,</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                         datas_descr,</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>                         metas,</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>                         designs,</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>                         condition,</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>                         spline_test_configs,</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>                         report_info,</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>                         report_dir,</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>                         pthresholds,</span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>                         meta_batch_column)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> data </span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>meta1 <span class="ot">&lt;-</span> meta</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> data[, <span class="sc">!</span>(<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  )</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  )]</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span><span class="st">`</span><span class="at">Sample.ID</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  ), ]</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>datas <span class="ot">&lt;-</span> <span class="fu">list</span>(data1, data2) </span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>datas_descr <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="st">&quot;full_data&quot;</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  <span class="st">&quot;outliers_removed&quot;</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>  ) </span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>metas <span class="ot">&lt;-</span> <span class="fu">list</span>(meta1, meta2) </span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>  <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="st">&quot;~ 1 + X + Reactor&quot;</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  ) </span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>  <span class="st">&quot;hyperparams_screen_reports&quot;</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>  ) </span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  <span class="fl">0.1</span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>  )</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="co"># Every row a combo to test.</span></span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a>  <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>),</span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a>  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>),</span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>  <span class="at">knots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))),                                                        <span class="at">bknots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>)))</span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">screen_limma_hyperparams</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  splineomics,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  datas,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  datas_descr,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  metas,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  designs,</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  spline_test_configs,</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  report_dir,</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  pthresholds,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  )</span></code></pre></div>
 <p>To see the output HTML report, click here: <a href="../inst/reports/hyperparams_screen_report.html">here</a></p>
 </div>
 <div id="run-limma-spline-analysis" class="section level1">
@@ -556,95 +626,24 @@ tresh = 0.1.</p>
 <p>Once we identified the hyperparameters, that are likely the best
 ones, we can run the limma spline analysis with them and get the
 results.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>     <span class="co"># Chosen limma design</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>spline_params <span class="ot">=</span> <span class="fu">list</span>(<span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),  <span class="co"># Chosen spline parameters</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>                     <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>))</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># Run the limma spline analysis</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">run_limma_splines</span>(data2,   <span class="co"># Chosen version of the data</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>                            meta2,</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>                            design,</span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>                            <span class="at">spline_params =</span> spline_params,</span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>                            condition)</span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
-<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; The time values do not change consistently after the replicates.</span></span>
-<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt; The time pattern is not fully repeated.</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>top_tables1 <span class="ot">&lt;-</span> result<span class="sc">$</span>time_effect </span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">print</span>(top_tables1)</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; $Phase_Exponential</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;         X1     X2 AveExpr     F    P.Value adj.P.Val feature_index feature_names</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;      &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;        </span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;  1  0.0919 -0.212    16.2  20.5 0.00000304   0.00650          2861 Holocytochro…</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;  2 -0.0150 -0.208    15.9  20.1 0.00000350   0.00650          1829 Double PHD f…</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt;  3 -0.101  -0.194    16.3  19.4 0.00000478   0.00650          2165 Exopolyphosp…</span></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;  4 -0.129  -0.144    16.2  19.4 0.00000485   0.00650          4827 Protein phos…</span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;  5 -0.0449  0.485    21.8  19.2 0.00000531   0.00650            14 10 kDa heat …</span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;  6  0.133   0.223    20.5  19.0 0.00000556   0.00650          5683 Small riboso…</span></span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;  7  0.103   0.409    18.5  18.7 0.00000635   0.00650          3253 Large riboso…</span></span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;  8  0.139   0.283    20.1  18.4 0.00000744   0.00666          6250 Transketolas…</span></span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;  9 -0.139   0.238    20.9  18.1 0.00000858   0.00683           110 40S ribosoma…</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; 10 -0.189   0.163    20.9  16.9 0.0000143    0.00967            19 14-3-3 prote…</span></span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; $Phase_Stationary</span></span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt;        X1      X2 AveExpr     F    P.Value adj.P.Val feature_index feature_names</span></span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;        </span></span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt;  1 -0.659 -0.383     14.3  27.7    2.09e-7   0.00150          6127 Thioredoxin-…</span></span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt;  2  0.296  0.0860    14.5  21.0    2.50e-6   0.00710          1092 Cell cycle p…</span></span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt;  3  0.399  0.105     17.7  20.5    2.97e-6   0.00710          3762 Mortality fa…</span></span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt;  4 -0.522 -0.430     16.9  19.1    5.53e-6   0.00991          2690 Guanine nucl…</span></span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt;  5 -0.314 -0.234     15.5  17.9    9.12e-6   0.0131           1465 Cysteine and…</span></span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt;  6 -0.322 -0.132     17.6  17.1    1.29e-5   0.0154           2722 HEAT repeat …</span></span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt;  7 -1.02  -0.802     11.7  16.6    1.66e-5   0.0170           1231 Chromosome 3…</span></span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt;  8 -0.357 -0.114     19.2  15.6    2.66e-5   0.0238           6549 Ubiquitin-co…</span></span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt;  9 -0.201 -0.118     16.4  14.0    5.79e-5   0.0461           4089 Nuclear pore…</span></span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt; 10 -0.758 -0.524     16.8  13.5    7.36e-5   0.0492           3187 LIM and sene…</span></span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>top_tables2 <span class="ot">&lt;-</span> result<span class="sc">$</span>avrg_diff_conditions </span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">print</span>(top_tables2)</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; $avrg_diff_Exponential_vs_Stationary</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;    logFC AveExpr     t  P.Value adj.P.Val     B feature_index feature_names     </span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;         &lt;int&gt; &lt;chr&gt;             </span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;  1 -2.85    17.1 -60.9 8.98e-32  6.43e-28  62.2          6548 Ubiquitin-conjuga…</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;  2 -1.26    16.6 -46.6 1.72e-28  6.14e-25  55.1          1156 Centrosomal prote…</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  3 -1.51    15.9 -44.7 5.69e-28  1.36e-24  53.9          2623 Glutathione perox…</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  4 -2.70    14.6 -43.2 1.51e-27  2.47e-24  53.0          2955 Inner centromere …</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;  5 -2.33    16.1 -43.0 1.72e-27  2.47e-24  52.8          3155 Kinetochore prote…</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;  6 -2.63    15.0 -42.5 2.38e-27  2.84e-24  52.5           822 Borealin_ID822    </span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;  7 -1.81    16.1 -41.8 3.74e-27  3.82e-24  52.1          1123 Centromere protei…</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt;  8 -1.44    14.5 -41.5 4.67e-27  4.18e-24  51.9          1258 Citron Rho-intera…</span></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt;  9 -2.04    14.4 -40.2 1.16e-26  9.23e-24  51.0          6704 WD repeat and HMG…</span></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; 10 -1.11    16.4 -39.6 1.67e-26  1.20e-23  50.6          1373 Condensin complex…</span></span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: intercept &lt;dbl&gt;</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>top_tables3 <span class="ot">&lt;-</span> result<span class="sc">$</span>interaction_condition_time </span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">print</span>(top_tables3) </span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; $time_interaction_Exponential_vs_Stationary</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 9</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt;    PhaseStationary.X1 PhaseStationary.X2 AveExpr     F   P.Value adj.P.Val</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;                 &lt;dbl&gt;              &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;  1              0.412             0.0327    15.8  13.0 0.0000975     0.214</span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt;  2              0.322            -0.859     12.6  12.8 0.000107      0.214</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt;  3             -0.515             0.128     14.1  12.7 0.000111      0.214</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt;  4              0.901            -0.362     12.8  12.6 0.000120      0.214</span></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt;  5              0.546             0.124     16.5  12.1 0.000156      0.224</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt;  6             -0.299             0.137     16.2  11.2 0.000263      0.228</span></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt;  7             -0.739             0.392     12.0  10.6 0.000368      0.228</span></span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt;  8              0.111             0.222     15.0  10.5 0.000382      0.228</span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt;  9              1.36             -0.0103    12.4  10.5 0.000393      0.228</span></span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt; 10              2.46              0.772     12.9  10.3 0.000434      0.228</span></span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 3 more variables: feature_index &lt;int&gt;, feature_names &lt;chr&gt;, intercept &lt;dbl&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">update_splineomics</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">design =</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">data =</span> data1,  <span class="co"># data1 and meta1 == data and meta that were loaded before. </span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">meta =</span> meta1,  <span class="co"># This is for illustration</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">spline_params =</span> <span class="fu">list</span>(</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),   </span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    )</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co"># Run the limma spline analysis</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">run_limma_splines</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  splineomics</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  )</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; [32mInfo[0m limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Each of those elements
 is a list, containing as elements the respective limma topTables, either
@@ -663,13 +662,17 @@ levels (which includes both time and the average differences)</p>
 <h1>Build limma report</h1>
 <p>The topTables of all three categories can be used to generate p-value
 histograms an volcano plots.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;create_limma_reports&quot;</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="fu">create_limma_report</span>(<span class="at">run_limma_splines_result =</span> result,</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                    <span class="at">report_info =</span> report_info,</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>                    <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="st">&quot;create_limma_reports&quot;</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  )</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">create_limma_report</span>(</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  splineomics,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
-function here: <a href="../inst/reports/create_limma_report.html">here</a></p>
+function <a href="../inst/reports/create_limma_report.html">here</a>.</p>
 </div>
 <div id="cluster-the-hits-significant-features" class="section level1">
 <h1>Cluster the hits (significant features)</h1>
@@ -678,226 +681,64 @@ based on their temporal pattern (their spline shape). We define what a
 hit is by setting an adj. p-value threshold for every level. Then,
 hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.05</span>)   </span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)   </span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;clustering_reports&quot;</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Genes&quot;</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>genes <span class="ot">&lt;-</span> data_excel[[gene_column_name]][<span class="dv">4</span><span class="sc">:</span><span class="fu">nrow</span>(data_excel)]</span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> <span class="fu">cluster_hits</span>(<span class="at">top_tables =</span> top_tables1, </span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>                                   <span class="at">data =</span> data2, </span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>                                   <span class="at">meta =</span> meta2, </span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>                                   <span class="at">design =</span> design,</span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>                                   <span class="at">condition =</span> condition, </span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>                                   <span class="at">spline_params =</span> spline_params,</span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>                                   <span class="at">genes =</span> genes,</span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>                                   <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>                                   <span class="at">clusters =</span> clusters,</span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>                                   <span class="at">report_info =</span> report_info,</span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>                                   <span class="at">meta_batch_column =</span> meta_batch_column,</span>
-<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>                                   <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>                                   <span class="at">report =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
-<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="co">#&gt; The time values do not change consistently after the replicates.</span></span>
-<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt; The time pattern is not fully repeated.</span></span>
-<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
-<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="co">#&gt; The feature ID 1-alkyl-2-acetylglycerophosphocholine esterase_ID9 is &gt; 30 characters. Truncating it to 30 chars: 1-alkyl-2-acetylglycerophospho</span></span>
-<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt; The feature ID 28S ribosomal protein S18c_ID63 is &gt; 30 characters. Truncating it to 30 chars: 28S ribosomal protein S18c_ID6</span></span>
-<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt; The feature ID 7-dehydrocholesterol reductase_ID159 is &gt; 30 characters. Truncating it to 30 chars: 7-dehydrocholesterol reductase</span></span>
-<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt; The feature ID ADP-ribosylation factor-like protein 2-binding protein_ID213 is &gt; 30 characters. Truncating it to 30 chars: ADP-ribosylation factor-like p</span></span>
-<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="co">#&gt; The feature ID ATP synthase F1 subunit delta_ID293 is &gt; 30 characters. Truncating it to 30 chars: ATP synthase F1 subunit delta_</span></span>
-<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="co">#&gt; The feature ID Abhydrolase domain containing 2_ID347 is &gt; 30 characters. Truncating it to 30 chars: Abhydrolase domain containing</span></span>
-<span id="cb16-31"><a href="#cb16-31" tabindex="-1"></a><span class="co">#&gt; The feature ID Alpha-tocopherol transfer protein-like_ID509 is &gt; 30 characters. Truncating it to 30 chars: Alpha-tocopherol transfer prot</span></span>
-<span id="cb16-32"><a href="#cb16-32" tabindex="-1"></a><span class="co">#&gt; The feature ID BTB/POZ domain-containing adapter for CUL3-mediated RhoA degradation protein 3 isoform X4_ID744 is &gt; 30 characters. Truncating it to 30 chars: BTB/POZ domain-containing adap</span></span>
-<span id="cb16-33"><a href="#cb16-33" tabindex="-1"></a><span class="co">#&gt; The feature ID CDKN2A interacting protein_ID918 is &gt; 30 characters. Truncating it to 30 chars: CDKN2A interacting protein_ID9</span></span>
-<span id="cb16-34"><a href="#cb16-34" tabindex="-1"></a><span class="co">#&gt; The feature ID Choline transporter-like protein_ID1200 is &gt; 30 characters. Truncating it to 30 chars: Choline transporter-like prote</span></span>
-<span id="cb16-35"><a href="#cb16-35" tabindex="-1"></a><span class="co">#&gt; The feature ID Core-binding factor subunit beta_ID1402 is &gt; 30 characters. Truncating it to 30 chars: Core-binding factor subunit be</span></span>
-<span id="cb16-36"><a href="#cb16-36" tabindex="-1"></a><span class="co">#&gt; The feature ID Cyclin dependent kinase 6_ID1439 is &gt; 30 characters. Truncating it to 30 chars: Cyclin dependent kinase 6_ID14</span></span>
-<span id="cb16-37"><a href="#cb16-37" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytochrome c oxidase subunit_ID1507 is &gt; 30 characters. Truncating it to 30 chars: Cytochrome c oxidase subunit_I</span></span>
-<span id="cb16-38"><a href="#cb16-38" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytochrome c1, heme protein, mitochondrial_ID1520 is &gt; 30 characters. Truncating it to 30 chars: Cytochrome c1, heme protein, m</span></span>
-<span id="cb16-39"><a href="#cb16-39" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytosolic Fe-S cluster assembly factor NUBP1_ID1542 is &gt; 30 characters. Truncating it to 30 chars: Cytosolic Fe-S cluster assembl</span></span>
-<span id="cb16-40"><a href="#cb16-40" tabindex="-1"></a><span class="co">#&gt; The feature ID DNA-directed RNA polymerase II subunit GRINL1A_ID1674 is &gt; 30 characters. Truncating it to 30 chars: DNA-directed RNA polymerase II</span></span>
-<span id="cb16-41"><a href="#cb16-41" tabindex="-1"></a><span class="co">#&gt; The feature ID Death inducer-obliterator 1_ID1701 is &gt; 30 characters. Truncating it to 30 chars: Death inducer-obliterator 1_ID</span></span>
-<span id="cb16-42"><a href="#cb16-42" tabindex="-1"></a><span class="co">#&gt; The feature ID Dol-P-Glc:Glc(2)Man(9)GlcNAc(2)-PP-Dol alpha-1,2-glucosyltransferase_ID1818 is &gt; 30 characters. Truncating it to 30 chars: Dol-P-Glc:Glc(2)Man(9)GlcNAc(2</span></span>
-<span id="cb16-43"><a href="#cb16-43" tabindex="-1"></a><span class="co">#&gt; The feature ID ETHE1 persulfide dioxygenase_ID1990 is &gt; 30 characters. Truncating it to 30 chars: ETHE1 persulfide dioxygenase_I</span></span>
-<span id="cb16-44"><a href="#cb16-44" tabindex="-1"></a><span class="co">#&gt; The feature ID Equilibrative nucleoside transporter 2_ID2087 is &gt; 30 characters. Truncating it to 30 chars: Equilibrative nucleoside trans</span></span>
-<span id="cb16-45"><a href="#cb16-45" tabindex="-1"></a><span class="co">#&gt; The feature ID Eukaryotic translation initiation factor 4E family member 2_ID2144 is &gt; 30 characters. Truncating it to 30 chars: Eukaryotic translation initiat</span></span>
-<span id="cb16-46"><a href="#cb16-46" tabindex="-1"></a><span class="co">#&gt; The feature ID Exopolyphosphatase PRUNE1 isoform X1_ID2165 is &gt; 30 characters. Truncating it to 30 chars: Exopolyphosphatase PRUNE1 isof</span></span>
-<span id="cb16-47"><a href="#cb16-47" tabindex="-1"></a><span class="co">#&gt; The feature ID Farnesylated proteins-converting enzyme 2_ID2334 is &gt; 30 characters. Truncating it to 30 chars: Farnesylated proteins-converti</span></span>
-<span id="cb16-48"><a href="#cb16-48" tabindex="-1"></a><span class="co">#&gt; The feature ID GST C-terminal domain-containing protein_ID2502 is &gt; 30 characters. Truncating it to 30 chars: GST C-terminal domain-containi</span></span>
-<span id="cb16-49"><a href="#cb16-49" tabindex="-1"></a><span class="co">#&gt; The feature ID General transcription factor IIH subunit 1_ID2566 is &gt; 30 characters. Truncating it to 30 chars: General transcription factor I</span></span>
-<span id="cb16-50"><a href="#cb16-50" tabindex="-1"></a><span class="co">#&gt; The feature ID Glutaredoxin, cysteine rich 1_ID2612 is &gt; 30 characters. Truncating it to 30 chars: Glutaredoxin, cysteine rich 1_</span></span>
-<span id="cb16-51"><a href="#cb16-51" tabindex="-1"></a><span class="co">#&gt; The feature ID H1.1 linker histone, cluster member_ID2709 is &gt; 30 characters. Truncating it to 30 chars: H1.1 linker histone, cluster m</span></span>
-<span id="cb16-52"><a href="#cb16-52" tabindex="-1"></a><span class="co">#&gt; The feature ID Histocompatibility minor 13_ID2827 is &gt; 30 characters. Truncating it to 30 chars: Histocompatibility minor 13_ID</span></span>
-<span id="cb16-53"><a href="#cb16-53" tabindex="-1"></a><span class="co">#&gt; The feature ID Holocytochrome c-type synthase_ID2861 is &gt; 30 characters. Truncating it to 30 chars: Holocytochrome c-type synthase</span></span>
-<span id="cb16-54"><a href="#cb16-54" tabindex="-1"></a><span class="co">#&gt; The feature ID Malonyl-CoA-acyl carrier protein transacylase_ID3507 is &gt; 30 characters. Truncating it to 30 chars: Malonyl-CoA-acyl carrier prote</span></span>
-<span id="cb16-55"><a href="#cb16-55" tabindex="-1"></a><span class="co">#&gt; The feature ID Mammalian ependymin-related protein 1_ID3508 is &gt; 30 characters. Truncating it to 30 chars: Mammalian ependymin-related pr</span></span>
-<span id="cb16-56"><a href="#cb16-56" tabindex="-1"></a><span class="co">#&gt; The feature ID Mediator of RNA polymerase II transcription subunit 27_ID3545 is &gt; 30 characters. Truncating it to 30 chars: Mediator of RNA polymerase II</span></span>
-<span id="cb16-57"><a href="#cb16-57" tabindex="-1"></a><span class="co">#&gt; The feature ID Melanoma antigen, family E, 1_ID3560 is &gt; 30 characters. Truncating it to 30 chars: Melanoma antigen, family E, 1_</span></span>
-<span id="cb16-58"><a href="#cb16-58" tabindex="-1"></a><span class="co">#&gt; The feature ID Methylosome protein WDR77_ID3613 is &gt; 30 characters. Truncating it to 30 chars: Methylosome protein WDR77_ID36</span></span>
-<span id="cb16-59"><a href="#cb16-59" tabindex="-1"></a><span class="co">#&gt; The feature ID Microtubule-associated protein RP/EB family member 3_ID3648 is &gt; 30 characters. Truncating it to 30 chars: Microtubule-associated protein</span></span>
-<span id="cb16-60"><a href="#cb16-60" tabindex="-1"></a><span class="co">#&gt; The feature ID Mitochondrial import inner membrane translocase subunit_ID3681 is &gt; 30 characters. Truncating it to 30 chars: Mitochondrial import inner mem</span></span>
-<span id="cb16-61"><a href="#cb16-61" tabindex="-1"></a><span class="co">#&gt; The feature ID Mitochondrial ribosomal protein S18A_ID3716 is &gt; 30 characters. Truncating it to 30 chars: Mitochondrial ribosomal protei</span></span>
-<span id="cb16-62"><a href="#cb16-62" tabindex="-1"></a><span class="co">#&gt; The feature ID Myosin regulatory light chain 10 isoform X2_ID3818 is &gt; 30 characters. Truncating it to 30 chars: Myosin regulatory light chain</span></span>
-<span id="cb16-63"><a href="#cb16-63" tabindex="-1"></a><span class="co">#&gt; The feature ID Neuronal acetylcholine receptor subunit alpha-4_ID4018 is &gt; 30 characters. Truncating it to 30 chars: Neuronal acetylcholine recepto</span></span>
-<span id="cb16-64"><a href="#cb16-64" tabindex="-1"></a><span class="co">#&gt; The feature ID Nuclear cap-binding protein subunit 3_ID4067 is &gt; 30 characters. Truncating it to 30 chars: Nuclear cap-binding protein su</span></span>
-<span id="cb16-65"><a href="#cb16-65" tabindex="-1"></a><span class="co">#&gt; The feature ID Nuclear-interacting partner of ALK_ID4122 is &gt; 30 characters. Truncating it to 30 chars: Nuclear-interacting partner of</span></span>
-<span id="cb16-66"><a href="#cb16-66" tabindex="-1"></a><span class="co">#&gt; The feature ID Nudix (nucleoside diphosphate linked moiety X)-type motif 16-like 1_ID4178 is &gt; 30 characters. Truncating it to 30 chars: Nudix (nucleoside diphosphate</span></span>
-<span id="cb16-67"><a href="#cb16-67" tabindex="-1"></a><span class="co">#&gt; The feature ID Phosphatidylinositol N-acetylglucosaminyltransferase subunit Q_ID4387 is &gt; 30 characters. Truncating it to 30 chars: Phosphatidylinositol N-acetylg</span></span>
-<span id="cb16-68"><a href="#cb16-68" tabindex="-1"></a><span class="co">#&gt; The feature ID Phosphorylated adapter RNA export protein_ID4430 is &gt; 30 characters. Truncating it to 30 chars: Phosphorylated adapter RNA exp</span></span>
-<span id="cb16-69"><a href="#cb16-69" tabindex="-1"></a><span class="co">#&gt; The feature ID Poly(RC)-binding protein 2 isoform X21_ID4491 is &gt; 30 characters. Truncating it to 30 chars: Poly(RC)-binding protein 2 iso</span></span>
-<span id="cb16-70"><a href="#cb16-70" tabindex="-1"></a><span class="co">#&gt; The feature ID Protein kinase C-binding protein 1 isoform X9_ID4787 is &gt; 30 characters. Truncating it to 30 chars: Protein kinase C-binding prote</span></span>
-<span id="cb16-71"><a href="#cb16-71" tabindex="-1"></a><span class="co">#&gt; The feature ID Protein phosphatase 6 regulatory subunit 3_ID4827 is &gt; 30 characters. Truncating it to 30 chars: Protein phosphatase 6 regulato</span></span>
-<span id="cb16-72"><a href="#cb16-72" tabindex="-1"></a><span class="co">#&gt; The feature ID Proton-coupled amino acid transporter 1_ID4881 is &gt; 30 characters. Truncating it to 30 chars: Proton-coupled amino acid tran</span></span>
-<span id="cb16-73"><a href="#cb16-73" tabindex="-1"></a><span class="co">#&gt; The feature ID RAB11 family interacting protein 2_ID4940 is &gt; 30 characters. Truncating it to 30 chars: RAB11 family interacting prote</span></span>
-<span id="cb16-74"><a href="#cb16-74" tabindex="-1"></a><span class="co">#&gt; The feature ID RBR-type E3 ubiquitin transferase_ID4994 is &gt; 30 characters. Truncating it to 30 chars: RBR-type E3 ubiquitin transfer</span></span>
-<span id="cb16-75"><a href="#cb16-75" tabindex="-1"></a><span class="co">#&gt; The feature ID RNA binding motif protein 41_ID5051 is &gt; 30 characters. Truncating it to 30 chars: RNA binding motif protein 41_I</span></span>
-<span id="cb16-76"><a href="#cb16-76" tabindex="-1"></a><span class="co">#&gt; The feature ID RNA polymerase II subunit A C-terminal domain phosphatase SSU72_ID5073 is &gt; 30 characters. Truncating it to 30 chars: RNA polymerase II subunit A C-</span></span>
-<span id="cb16-77"><a href="#cb16-77" tabindex="-1"></a><span class="co">#&gt; The feature ID Ribonuclease P protein subunit p38_ID5296 is &gt; 30 characters. Truncating it to 30 chars: Ribonuclease P protein subunit</span></span>
-<span id="cb16-78"><a href="#cb16-78" tabindex="-1"></a><span class="co">#&gt; The feature ID SWI/SNF related, matrix associated, actin dependent regulator of chromatin, subfamily d, member 2_ID5468 is &gt; 30 characters. Truncating it to 30 chars: SWI/SNF related, matrix associ</span></span>
-<span id="cb16-79"><a href="#cb16-79" tabindex="-1"></a><span class="co">#&gt; The feature ID Serine/threonine-protein phosphatase_ID5564 is &gt; 30 characters. Truncating it to 30 chars: Serine/threonine-protein phosp</span></span>
-<span id="cb16-80"><a href="#cb16-80" tabindex="-1"></a><span class="co">#&gt; The feature ID Sin3A associated protein 130_ID5622 is &gt; 30 characters. Truncating it to 30 chars: Sin3A associated protein 130_I</span></span>
-<span id="cb16-81"><a href="#cb16-81" tabindex="-1"></a><span class="co">#&gt; The feature ID Small integral membrane protein 11A_ID5638 is &gt; 30 characters. Truncating it to 30 chars: Small integral membrane protei</span></span>
-<span id="cb16-82"><a href="#cb16-82" tabindex="-1"></a><span class="co">#&gt; The feature ID Synaptophysin-like protein_ID5917 is &gt; 30 characters. Truncating it to 30 chars: Synaptophysin-like protein_ID5</span></span>
-<span id="cb16-83"><a href="#cb16-83" tabindex="-1"></a><span class="co">#&gt; The feature ID TLE family member 3, transcriptional corepressor_ID6018 is &gt; 30 characters. Truncating it to 30 chars: TLE family member 3, transcrip</span></span>
-<span id="cb16-84"><a href="#cb16-84" tabindex="-1"></a><span class="co">#&gt; The feature ID TRAF-type zinc finger domain-containing protein 1_ID6034 is &gt; 30 characters. Truncating it to 30 chars: TRAF-type zinc finger domain-c</span></span>
-<span id="cb16-85"><a href="#cb16-85" tabindex="-1"></a><span class="co">#&gt; The feature ID Transmembrane protein 243_ID6319 is &gt; 30 characters. Truncating it to 30 chars: Transmembrane protein 243_ID63</span></span>
-<span id="cb16-86"><a href="#cb16-86" tabindex="-1"></a><span class="co">#&gt; The feature ID U2 small nuclear RNA auxiliary factor 1_ID6440 is &gt; 30 characters. Truncating it to 30 chars: U2 small nuclear RNA auxiliary</span></span>
-<span id="cb16-87"><a href="#cb16-87" tabindex="-1"></a><span class="co">#&gt; The feature ID Ubiquitin-conjugating enzyme E2 E3_ID6551 is &gt; 30 characters. Truncating it to 30 chars: Ubiquitin-conjugating enzyme E</span></span>
-<span id="cb16-88"><a href="#cb16-88" tabindex="-1"></a><span class="co">#&gt; The feature ID Voltage-gated potassium channel subunit beta-2_ID6689 is &gt; 30 characters. Truncating it to 30 chars: Voltage-gated potassium channe</span></span>
-<span id="cb16-89"><a href="#cb16-89" tabindex="-1"></a><span class="co">#&gt; The feature ID Zinc finger CCCH-type containing 18_ID6796 is &gt; 30 characters. Truncating it to 30 chars: Zinc finger CCCH-type containi</span></span>
-<span id="cb16-90"><a href="#cb16-90" tabindex="-1"></a><span class="co">#&gt; The feature ID gamma-glutamylcyclotransferase_ID7011 is &gt; 30 characters. Truncating it to 30 chars: gamma-glutamylcyclotransferase</span></span>
-<span id="cb16-91"><a href="#cb16-91" tabindex="-1"></a><span class="co">#&gt; The feature ID vitamin-K-epoxide reductase (warfarin-sensitive)_ID7160 is &gt; 30 characters. Truncating it to 30 chars: vitamin-K-epoxide reductase (w</span></span>
-<span id="cb16-92"><a href="#cb16-92" tabindex="-1"></a><span class="co">#&gt; The feature ID 10 kDa heat shock protein, mitochondrial_ID14 is &gt; 30 characters. Truncating it to 30 chars: 10 kDa heat shock protein, mit</span></span>
-<span id="cb16-93"><a href="#cb16-93" tabindex="-1"></a><span class="co">#&gt; The feature ID 40S ribosomal protein S26_ID106 is &gt; 30 characters. Truncating it to 30 chars: 40S ribosomal protein S26_ID10</span></span>
-<span id="cb16-94"><a href="#cb16-94" tabindex="-1"></a><span class="co">#&gt; The feature ID 60 kDa heat shock protein, mitochondrial_ID144 is &gt; 30 characters. Truncating it to 30 chars: 60 kDa heat shock protein, mit</span></span>
-<span id="cb16-95"><a href="#cb16-95" tabindex="-1"></a><span class="co">#&gt; The feature ID 60S acidic ribosomal protein P0_ID145 is &gt; 30 characters. Truncating it to 30 chars: 60S acidic ribosomal protein P</span></span>
-<span id="cb16-96"><a href="#cb16-96" tabindex="-1"></a><span class="co">#&gt; The feature ID 60S ribosomal protein L29_ID151 is &gt; 30 characters. Truncating it to 30 chars: 60S ribosomal protein L29_ID15</span></span>
-<span id="cb16-97"><a href="#cb16-97" tabindex="-1"></a><span class="co">#&gt; The feature ID ADP-ribosylation factor 4_ID199 is &gt; 30 characters. Truncating it to 30 chars: ADP-ribosylation factor 4_ID19</span></span>
-<span id="cb16-98"><a href="#cb16-98" tabindex="-1"></a><span class="co">#&gt; The feature ID Activating signal cointegrator 1 isoform X2_ID385 is &gt; 30 characters. Truncating it to 30 chars: Activating signal cointegrator</span></span>
-<span id="cb16-99"><a href="#cb16-99" tabindex="-1"></a><span class="co">#&gt; The feature ID ArfGAP with GTPase domain, ankyrin repeat and PH domain 3_ID607 is &gt; 30 characters. Truncating it to 30 chars: ArfGAP with GTPase domain, ank</span></span>
-<span id="cb16-100"><a href="#cb16-100" tabindex="-1"></a><span class="co">#&gt; The feature ID Bifunctional purine biosynthesis protein ATIC_ID800 is &gt; 30 characters. Truncating it to 30 chars: Bifunctional purine biosynthes</span></span>
-<span id="cb16-101"><a href="#cb16-101" tabindex="-1"></a><span class="co">#&gt; The feature ID Carboxylic ester hydrolase_ID1042 is &gt; 30 characters. Truncating it to 30 chars: Carboxylic ester hydrolase_ID1</span></span>
-<span id="cb16-102"><a href="#cb16-102" tabindex="-1"></a><span class="co">#&gt; The feature ID Collagen, type XVI, alpha 1_ID1361 is &gt; 30 characters. Truncating it to 30 chars: Collagen, type XVI, alpha 1_ID</span></span>
-<span id="cb16-103"><a href="#cb16-103" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytochrome c oxidase assembly factor 3_ID1497 is &gt; 30 characters. Truncating it to 30 chars: Cytochrome c oxidase assembly</span></span>
-<span id="cb16-104"><a href="#cb16-104" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytochrome c oxidase copper chaperone_ID1506 is &gt; 30 characters. Truncating it to 30 chars: Cytochrome c oxidase copper ch</span></span>
-<span id="cb16-105"><a href="#cb16-105" tabindex="-1"></a><span class="co">#&gt; The feature ID Cytosolic non-specific dipeptidase_ID1547 is &gt; 30 characters. Truncating it to 30 chars: Cytosolic non-specific dipepti</span></span>
-<span id="cb16-106"><a href="#cb16-106" tabindex="-1"></a><span class="co">#&gt; The feature ID DENN domain containing 4C_ID1588 is &gt; 30 characters. Truncating it to 30 chars: DENN domain containing 4C_ID15</span></span>
-<span id="cb16-107"><a href="#cb16-107" tabindex="-1"></a><span class="co">#&gt; The feature ID DNA-directed RNA polymerases I and III subunit RPAC2_ID1687 is &gt; 30 characters. Truncating it to 30 chars: DNA-directed RNA polymerases I</span></span>
-<span id="cb16-108"><a href="#cb16-108" tabindex="-1"></a><span class="co">#&gt; The feature ID E3 ubiquitin-protein ligase TRIM41 isoform X2_ID1928 is &gt; 30 characters. Truncating it to 30 chars: E3 ubiquitin-protein ligase TR</span></span>
-<span id="cb16-109"><a href="#cb16-109" tabindex="-1"></a><span class="co">#&gt; The feature ID Electron transfer flavoprotein subunit alpha_ID2011 is &gt; 30 characters. Truncating it to 30 chars: Electron transfer flavoprotein</span></span>
-<span id="cb16-110"><a href="#cb16-110" tabindex="-1"></a><span class="co">#&gt; The feature ID Eukaryotic translation initiation factor 4C_ID2141 is &gt; 30 characters. Truncating it to 30 chars: Eukaryotic translation initiat</span></span>
-<span id="cb16-111"><a href="#cb16-111" tabindex="-1"></a><span class="co">#&gt; The feature ID Eukaryotic translation initiation factor 4E-binding protein 1_ID2147 is &gt; 30 characters. Truncating it to 30 chars: Eukaryotic translation initiat</span></span>
-<span id="cb16-112"><a href="#cb16-112" tabindex="-1"></a><span class="co">#&gt; The feature ID FAS-associated factor 1 isoform X2_ID2245 is &gt; 30 characters. Truncating it to 30 chars: FAS-associated factor 1 isofor</span></span>
-<span id="cb16-113"><a href="#cb16-113" tabindex="-1"></a><span class="co">#&gt; The feature ID Family with sequence similarity 149 member B1_ID2302 is &gt; 30 characters. Truncating it to 30 chars: Family with sequence similarit</span></span>
-<span id="cb16-114"><a href="#cb16-114" tabindex="-1"></a><span class="co">#&gt; The feature ID Family with sequence similarity 168 member A_ID2306 is &gt; 30 characters. Truncating it to 30 chars: Family with sequence similarit</span></span>
-<span id="cb16-115"><a href="#cb16-115" tabindex="-1"></a><span class="co">#&gt; The feature ID Fumarate hydratase, mitochondrial_ID2410 is &gt; 30 characters. Truncating it to 30 chars: Fumarate hydratase, mitochondr</span></span>
-<span id="cb16-116"><a href="#cb16-116" tabindex="-1"></a><span class="co">#&gt; The feature ID GTP-binding protein Rheb isoform X2_ID2513 is &gt; 30 characters. Truncating it to 30 chars: GTP-binding protein Rheb isofo</span></span>
-<span id="cb16-117"><a href="#cb16-117" tabindex="-1"></a><span class="co">#&gt; The feature ID GTP-binding protein SAR1a_ID2514 is &gt; 30 characters. Truncating it to 30 chars: GTP-binding protein SAR1a_ID25</span></span>
-<span id="cb16-118"><a href="#cb16-118" tabindex="-1"></a><span class="co">#&gt; The feature ID General receptor for phosphoinositides 1 associated scaffold protein_ID2551 is &gt; 30 characters. Truncating it to 30 chars: General receptor for phosphoin</span></span>
-<span id="cb16-119"><a href="#cb16-119" tabindex="-1"></a><span class="co">#&gt; The feature ID Glucose-fructose oxidoreductase domain-containing protein 2_ID2591 is &gt; 30 characters. Truncating it to 30 chars: Glucose-fructose oxidoreductas</span></span>
-<span id="cb16-120"><a href="#cb16-120" tabindex="-1"></a><span class="co">#&gt; The feature ID Glutathione peroxidase 1_ID2623 is &gt; 30 characters. Truncating it to 30 chars: Glutathione peroxidase 1_ID262</span></span>
-<span id="cb16-121"><a href="#cb16-121" tabindex="-1"></a><span class="co">#&gt; The feature ID Heat shock cognate 71 kDa protein_ID2756 is &gt; 30 characters. Truncating it to 30 chars: Heat shock cognate 71 kDa prot</span></span>
-<span id="cb16-122"><a href="#cb16-122" tabindex="-1"></a><span class="co">#&gt; The feature ID Heterogeneous nuclear ribonucleoprotein C_ID2795 is &gt; 30 characters. Truncating it to 30 chars: Heterogeneous nuclear ribonucl</span></span>
-<span id="cb16-123"><a href="#cb16-123" tabindex="-1"></a><span class="co">#&gt; The feature ID Hsp90 co-chaperone Cdc37_ID2886 is &gt; 30 characters. Truncating it to 30 chars: Hsp90 co-chaperone Cdc37_ID288</span></span>
-<span id="cb16-124"><a href="#cb16-124" tabindex="-1"></a><span class="co">#&gt; The feature ID Inactive phospholipid phosphatase 7_ID2943 is &gt; 30 characters. Truncating it to 30 chars: Inactive phospholipid phosphat</span></span>
-<span id="cb16-125"><a href="#cb16-125" tabindex="-1"></a><span class="co">#&gt; The feature ID Inter-alpha-trypsin inhibitor heavy chain 5_ID3001 is &gt; 30 characters. Truncating it to 30 chars: Inter-alpha-trypsin inhibitor</span></span>
-<span id="cb16-126"><a href="#cb16-126" tabindex="-1"></a><span class="co">#&gt; The feature ID Large ribosomal subunit protein P2_ID3236 is &gt; 30 characters. Truncating it to 30 chars: Large ribosomal subunit protei</span></span>
-<span id="cb16-127"><a href="#cb16-127" tabindex="-1"></a><span class="co">#&gt; The feature ID Large ribosomal subunit protein eL33_ID3252 is &gt; 30 characters. Truncating it to 30 chars: Large ribosomal subunit protei</span></span>
-<span id="cb16-128"><a href="#cb16-128" tabindex="-1"></a><span class="co">#&gt; The feature ID Large ribosomal subunit protein eL34_ID3253 is &gt; 30 characters. Truncating it to 30 chars: Large ribosomal subunit protei</span></span>
-<span id="cb16-129"><a href="#cb16-129" tabindex="-1"></a><span class="co">#&gt; The feature ID Lysine-specific histone demethylase_ID3396 is &gt; 30 characters. Truncating it to 30 chars: Lysine-specific histone demeth</span></span>
-<span id="cb16-130"><a href="#cb16-130" tabindex="-1"></a><span class="co">#&gt; The feature ID Mesenteric estrogen dependent adipogenesis_ID3574 is &gt; 30 characters. Truncating it to 30 chars: Mesenteric estrogen dependent</span></span>
-<span id="cb16-131"><a href="#cb16-131" tabindex="-1"></a><span class="co">#&gt; The feature ID Microtubule-associated proteins 1A/1B light chain 3B_ID3649 is &gt; 30 characters. Truncating it to 30 chars: Microtubule-associated protein</span></span>
-<span id="cb16-132"><a href="#cb16-132" tabindex="-1"></a><span class="co">#&gt; The feature ID Misato mitochondrial distribution and morphology regulator 1_ID3658 is &gt; 30 characters. Truncating it to 30 chars: Misato mitochondrial distribut</span></span>
-<span id="cb16-133"><a href="#cb16-133" tabindex="-1"></a><span class="co">#&gt; The feature ID Mitochondrial import receptor subunit TOM6 homolog_ID3695 is &gt; 30 characters. Truncating it to 30 chars: Mitochondrial import receptor</span></span>
-<span id="cb16-134"><a href="#cb16-134" tabindex="-1"></a><span class="co">#&gt; The feature ID Monocarboxylate transporter 1_ID3760 is &gt; 30 characters. Truncating it to 30 chars: Monocarboxylate transporter 1_</span></span>
-<span id="cb16-135"><a href="#cb16-135" tabindex="-1"></a><span class="co">#&gt; The feature ID N-acetylserotonin O-methyltransferase-like protein_ID3848 is &gt; 30 characters. Truncating it to 30 chars: N-acetylserotonin O-methyltran</span></span>
-<span id="cb16-136"><a href="#cb16-136" tabindex="-1"></a><span class="co">#&gt; The feature ID N-terminal Xaa-Pro-Lys N-methyltransferase 1_ID3865 is &gt; 30 characters. Truncating it to 30 chars: N-terminal Xaa-Pro-Lys N-methy</span></span>
-<span id="cb16-137"><a href="#cb16-137" tabindex="-1"></a><span class="co">#&gt; The feature ID NAD(P)H dehydrogenase [quinone] 1_ID3874 is &gt; 30 characters. Truncating it to 30 chars: NAD(P)H dehydrogenase [quinone</span></span>
-<span id="cb16-138"><a href="#cb16-138" tabindex="-1"></a><span class="co">#&gt; The feature ID Nuclear transcription factor, X-box binding 1_ID4120 is &gt; 30 characters. Truncating it to 30 chars: Nuclear transcription factor,</span></span>
-<span id="cb16-139"><a href="#cb16-139" tabindex="-1"></a><span class="co">#&gt; The feature ID Nucleoside diphosphate kinase_ID4165 is &gt; 30 characters. Truncating it to 30 chars: Nucleoside diphosphate kinase_</span></span>
-<span id="cb16-140"><a href="#cb16-140" tabindex="-1"></a><span class="co">#&gt; The feature ID Nucleosome assembly protein 1 like 1_ID4169 is &gt; 30 characters. Truncating it to 30 chars: Nucleosome assembly protein 1</span></span>
-<span id="cb16-141"><a href="#cb16-141" tabindex="-1"></a><span class="co">#&gt; The feature ID Nucleus accumbens associated 1, BEN and BTB (POZ) domain containing_ID4174 is &gt; 30 characters. Truncating it to 30 chars: Nucleus accumbens associated 1</span></span>
-<span id="cb16-142"><a href="#cb16-142" tabindex="-1"></a><span class="co">#&gt; The feature ID Oligoribonuclease, mitochondrial_ID4194 is &gt; 30 characters. Truncating it to 30 chars: Oligoribonuclease, mitochondri</span></span>
-<span id="cb16-143"><a href="#cb16-143" tabindex="-1"></a><span class="co">#&gt; The feature ID Oligosaccharyltransferase complex subunit_ID4195 is &gt; 30 characters. Truncating it to 30 chars: Oligosaccharyltransferase comp</span></span>
-<span id="cb16-144"><a href="#cb16-144" tabindex="-1"></a><span class="co">#&gt; The feature ID PDGFA associated protein 1_ID4238 is &gt; 30 characters. Truncating it to 30 chars: PDGFA associated protein 1_ID4</span></span>
-<span id="cb16-145"><a href="#cb16-145" tabindex="-1"></a><span class="co">#&gt; The feature ID Phosphoserine aminotransferase_ID4431 is &gt; 30 characters. Truncating it to 30 chars: Phosphoserine aminotransferase</span></span>
-<span id="cb16-146"><a href="#cb16-146" tabindex="-1"></a><span class="co">#&gt; The feature ID Pigment epithelium-derived factor isoform X2_ID4437 is &gt; 30 characters. Truncating it to 30 chars: Pigment epithelium-derived fac</span></span>
-<span id="cb16-147"><a href="#cb16-147" tabindex="-1"></a><span class="co">#&gt; The feature ID Polymerase (DNA-directed), epsilon 4 (p12 subunit)_ID4512 is &gt; 30 characters. Truncating it to 30 chars: Polymerase (DNA-directed), eps</span></span>
-<span id="cb16-148"><a href="#cb16-148" tabindex="-1"></a><span class="co">#&gt; The feature ID Protein disulfide-isomerase A4_ID4769 is &gt; 30 characters. Truncating it to 30 chars: Protein disulfide-isomerase A4</span></span>
-<span id="cb16-149"><a href="#cb16-149" tabindex="-1"></a><span class="co">#&gt; The feature ID Protein disulfide-isomerase A6_ID4770 is &gt; 30 characters. Truncating it to 30 chars: Protein disulfide-isomerase A6</span></span>
-<span id="cb16-150"><a href="#cb16-150" tabindex="-1"></a><span class="co">#&gt; The feature ID Protein disulfide-isomerase_ID4768 is &gt; 30 characters. Truncating it to 30 chars: Protein disulfide-isomerase_ID</span></span>
-<span id="cb16-151"><a href="#cb16-151" tabindex="-1"></a><span class="co">#&gt; The feature ID RAB5C, member RAS oncogene family_ID4961 is &gt; 30 characters. Truncating it to 30 chars: RAB5C, member RAS oncogene fam</span></span>
-<span id="cb16-152"><a href="#cb16-152" tabindex="-1"></a><span class="co">#&gt; The feature ID Ras-related protein Rab-14_ID5161 is &gt; 30 characters. Truncating it to 30 chars: Ras-related protein Rab-14_ID5</span></span>
-<span id="cb16-153"><a href="#cb16-153" tabindex="-1"></a><span class="co">#&gt; The feature ID Receptor expression-enhancing protein_ID5177 is &gt; 30 characters. Truncating it to 30 chars: Receptor expression-enhancing</span></span>
-<span id="cb16-154"><a href="#cb16-154" tabindex="-1"></a><span class="co">#&gt; The feature ID SAP domain-containing protein_ID5366 is &gt; 30 characters. Truncating it to 30 chars: SAP domain-containing protein_</span></span>
-<span id="cb16-155"><a href="#cb16-155" tabindex="-1"></a><span class="co">#&gt; The feature ID Small nuclear ribonucleoprotein G_ID5649 is &gt; 30 characters. Truncating it to 30 chars: Small nuclear ribonucleoprotei</span></span>
-<span id="cb16-156"><a href="#cb16-156" tabindex="-1"></a><span class="co">#&gt; The feature ID Small ribosomal subunit protein eS28_ID5665 is &gt; 30 characters. Truncating it to 30 chars: Small ribosomal subunit protei</span></span>
-<span id="cb16-157"><a href="#cb16-157" tabindex="-1"></a><span class="co">#&gt; The feature ID Small ribosomal subunit protein uS10_ID5674 is &gt; 30 characters. Truncating it to 30 chars: Small ribosomal subunit protei</span></span>
-<span id="cb16-158"><a href="#cb16-158" tabindex="-1"></a><span class="co">#&gt; The feature ID Small ribosomal subunit protein uS13_ID5677 is &gt; 30 characters. Truncating it to 30 chars: Small ribosomal subunit protei</span></span>
-<span id="cb16-159"><a href="#cb16-159" tabindex="-1"></a><span class="co">#&gt; The feature ID Small ribosomal subunit protein uS3_ID5683 is &gt; 30 characters. Truncating it to 30 chars: Small ribosomal subunit protei</span></span>
-<span id="cb16-160"><a href="#cb16-160" tabindex="-1"></a><span class="co">#&gt; The feature ID Sprouty related EVH1 domain containing 1_ID5825 is &gt; 30 characters. Truncating it to 30 chars: Sprouty related EVH1 domain co</span></span>
-<span id="cb16-161"><a href="#cb16-161" tabindex="-1"></a><span class="co">#&gt; The feature ID T-complex protein 1 subunit eta_ID5953 is &gt; 30 characters. Truncating it to 30 chars: T-complex protein 1 subunit et</span></span>
-<span id="cb16-162"><a href="#cb16-162" tabindex="-1"></a><span class="co">#&gt; The feature ID T-complex protein 1 subunit zeta_ID5956 is &gt; 30 characters. Truncating it to 30 chars: T-complex protein 1 subunit ze</span></span>
-<span id="cb16-163"><a href="#cb16-163" tabindex="-1"></a><span class="co">#&gt; The feature ID Thioredoxin-interacting protein_ID6127 is &gt; 30 characters. Truncating it to 30 chars: Thioredoxin-interacting protei</span></span>
-<span id="cb16-164"><a href="#cb16-164" tabindex="-1"></a><span class="co">#&gt; The feature ID Transcription factor BTF3_ID6199 is &gt; 30 characters. Truncating it to 30 chars: Transcription factor BTF3_ID61</span></span>
-<span id="cb16-165"><a href="#cb16-165" tabindex="-1"></a><span class="co">#&gt; The feature ID Translation machinery-associated protein 7_ID6255 is &gt; 30 characters. Truncating it to 30 chars: Translation machinery-associat</span></span>
-<span id="cb16-166"><a href="#cb16-166" tabindex="-1"></a><span class="co">#&gt; The feature ID Transmembrane emp24 domain-containing protein 2 isoform X2_ID6277 is &gt; 30 characters. Truncating it to 30 chars: Transmembrane emp24 domain-con</span></span>
-<span id="cb16-167"><a href="#cb16-167" tabindex="-1"></a><span class="co">#&gt; The feature ID Transmembrane emp24 domain-containing protein 5_ID6280 is &gt; 30 characters. Truncating it to 30 chars: Transmembrane emp24 domain-con</span></span>
-<span id="cb16-168"><a href="#cb16-168" tabindex="-1"></a><span class="co">#&gt; The feature ID Transmembrane protein 131_ID6293 is &gt; 30 characters. Truncating it to 30 chars: Transmembrane protein 131_ID62</span></span>
-<span id="cb16-169"><a href="#cb16-169" tabindex="-1"></a><span class="co">#&gt; The feature ID Transmembrane protein 87B_ID6339 is &gt; 30 characters. Truncating it to 30 chars: Transmembrane protein 87B_ID63</span></span>
-<span id="cb16-170"><a href="#cb16-170" tabindex="-1"></a><span class="co">#&gt; The feature ID Tropomyosin alpha-3 chain_ID6381 is &gt; 30 characters. Truncating it to 30 chars: Tropomyosin alpha-3 chain_ID63</span></span>
-<span id="cb16-171"><a href="#cb16-171" tabindex="-1"></a><span class="co">#&gt; The feature ID Tropomyosin alpha-4 chain_ID6382 is &gt; 30 characters. Truncating it to 30 chars: Tropomyosin alpha-4 chain_ID63</span></span>
-<span id="cb16-172"><a href="#cb16-172" tabindex="-1"></a><span class="co">#&gt; The feature ID Tumor necrosis factor receptor type 1-associated DEATH domain protein_ID6415 is &gt; 30 characters. Truncating it to 30 chars: Tumor necrosis factor receptor</span></span>
-<span id="cb16-173"><a href="#cb16-173" tabindex="-1"></a><span class="co">#&gt; The feature ID Tyrosine-protein kinase receptor TYRO3_ID6430 is &gt; 30 characters. Truncating it to 30 chars: Tyrosine-protein kinase recept</span></span>
-<span id="cb16-174"><a href="#cb16-174" tabindex="-1"></a><span class="co">#&gt; The feature ID UPF0461 protein C5orf24 homolog_ID6485 is &gt; 30 characters. Truncating it to 30 chars: UPF0461 protein C5orf24 homolo</span></span>
-<span id="cb16-175"><a href="#cb16-175" tabindex="-1"></a><span class="co">#&gt; The feature ID UV excision repair protein RAD23_ID6500 is &gt; 30 characters. Truncating it to 30 chars: UV excision repair protein RAD</span></span>
-<span id="cb16-176"><a href="#cb16-176" tabindex="-1"></a><span class="co">#&gt; The feature ID Ubiquitin-conjugating enzyme E2 variant 1_ID6555 is &gt; 30 characters. Truncating it to 30 chars: Ubiquitin-conjugating enzyme E</span></span>
-<span id="cb16-177"><a href="#cb16-177" tabindex="-1"></a><span class="co">#&gt; The feature ID Ubiquitin-conjugating enzyme E2 variant 2_ID6556 is &gt; 30 characters. Truncating it to 30 chars: Ubiquitin-conjugating enzyme E</span></span>
-<span id="cb16-178"><a href="#cb16-178" tabindex="-1"></a><span class="co">#&gt; The feature ID V-type proton ATPase subunit E 1_ID6605 is &gt; 30 characters. Truncating it to 30 chars: V-type proton ATPase subunit E</span></span>
-<span id="cb16-179"><a href="#cb16-179" tabindex="-1"></a><span class="co">#&gt; The feature ID Vacuolar ATPase assembly factor VMA21_ID6622 is &gt; 30 characters. Truncating it to 30 chars: Vacuolar ATPase assembly facto</span></span>
-<span id="cb16-180"><a href="#cb16-180" tabindex="-1"></a><span class="co">#&gt; The feature ID Vacuolar proton pump subunit B_ID6646 is &gt; 30 characters. Truncating it to 30 chars: Vacuolar proton pump subunit B</span></span>
-<span id="cb16-181"><a href="#cb16-181" tabindex="-1"></a><span class="co">#&gt; The feature ID cAMP-dependent protein kinase type I-alpha regulatory subunit_ID6973 is &gt; 30 characters. Truncating it to 30 chars: cAMP-dependent protein kinase</span></span>
-<span id="cb16-182"><a href="#cb16-182" tabindex="-1"></a><span class="co">#&gt; The feature ID methylcrotonoyl-CoA carboxylase_ID7045 is &gt; 30 characters. Truncating it to 30 chars: methylcrotonoyl-CoA carboxylas</span></span>
-<span id="cb16-183"><a href="#cb16-183" tabindex="-1"></a><span class="co">#&gt; The feature ID phosphatidylinositol-3,4-bisphosphate 4-phosphatase_ID7061 is &gt; 30 characters. Truncating it to 30 chars: phosphatidylinositol-3,4-bisph</span></span>
-<span id="cb16-184"><a href="#cb16-184" tabindex="-1"></a><span class="co">#&gt; The feature ID sphinganine-1-phosphate aldolase_ID7110 is &gt; 30 characters. Truncating it to 30 chars: sphinganine-1-phosphate aldola</span></span>
-<span id="cb16-185"><a href="#cb16-185" tabindex="-1"></a><span class="co">#&gt; The feature ID thioredoxin-disulfide reductase_ID7151 is &gt; 30 characters. Truncating it to 30 chars: thioredoxin-disulfide reductas</span></span>
-<span id="cb16-186"><a href="#cb16-186" tabindex="-1"></a><span class="co">#&gt; The feature ID Chromosome 3 C16orf87 homolog_ID1231 is &gt; 30 characters. Truncating it to 30 chars: Chromosome 3 C16orf87 homolog_</span></span>
-<span id="cb16-187"><a href="#cb16-187" tabindex="-1"></a><span class="co">#&gt; The feature ID Copper transport protein_ID1399 is &gt; 30 characters. Truncating it to 30 chars: Copper transport protein_ID139</span></span>
-<span id="cb16-188"><a href="#cb16-188" tabindex="-1"></a><span class="co">#&gt; The feature ID Cysteine and glycine rich protein 2_ID1465 is &gt; 30 characters. Truncating it to 30 chars: Cysteine and glycine rich prot</span></span>
-<span id="cb16-189"><a href="#cb16-189" tabindex="-1"></a><span class="co">#&gt; The feature ID Cysteine and glycine-rich protein 1_ID1466 is &gt; 30 characters. Truncating it to 30 chars: Cysteine and glycine-rich prot</span></span>
-<span id="cb16-190"><a href="#cb16-190" tabindex="-1"></a><span class="co">#&gt; The feature ID Guanine nucleotide-binding protein G(I)/G(S)/G(T) subunit beta-1_ID2690 is &gt; 30 characters. Truncating it to 30 chars: Guanine nucleotide-binding pro</span></span>
-<span id="cb16-191"><a href="#cb16-191" tabindex="-1"></a><span class="co">#&gt; The feature ID HEAT repeat containing 3_ID2722 is &gt; 30 characters. Truncating it to 30 chars: HEAT repeat containing 3_ID272</span></span>
-<span id="cb16-192"><a href="#cb16-192" tabindex="-1"></a><span class="co">#&gt; The feature ID LIM and senescent cell antigen-like-containing domain protein_ID3187 is &gt; 30 characters. Truncating it to 30 chars: LIM and senescent cell antigen</span></span>
-<span id="cb16-193"><a href="#cb16-193" tabindex="-1"></a><span class="co">#&gt; The feature ID Nuclear pore complex protein Nup160_ID4089 is &gt; 30 characters. Truncating it to 30 chars: Nuclear pore complex protein N</span></span>
-<span id="cb16-194"><a href="#cb16-194" tabindex="-1"></a><span class="co">#&gt; The feature ID Solute carrier family 30 member 4_ID5729 is &gt; 30 characters. Truncating it to 30 chars: Solute carrier family 30 membe</span></span>
-<span id="cb16-195"><a href="#cb16-195" tabindex="-1"></a><span class="co">#&gt; The feature ID Thioredoxin-interacting protein_ID6127 is &gt; 30 characters. Truncating it to 30 chars: Thioredoxin-interacting protei</span></span>
-<span id="cb16-196"><a href="#cb16-196" tabindex="-1"></a><span class="co">#&gt; The feature ID Ubiquitin-conjugating enzyme E2 D2B_ID6549 is &gt; 30 characters. Truncating it to 30 chars: Ubiquitin-conjugating enzyme E</span></span>
-<span id="cb16-197"><a href="#cb16-197" tabindex="-1"></a><span class="co">#&gt; The feature ID Cell cycle progression 1_ID1092 is &gt; 30 characters. Truncating it to 30 chars: Cell cycle progression 1_ID109</span></span>
-<span id="cb16-198"><a href="#cb16-198" tabindex="-1"></a><span class="co">#&gt; The feature ID Mortality factor 4-like protein 2_ID3762 is &gt; 30 characters. Truncating it to 30 chars: Mortality factor 4-like protei</span></span>
-<span id="cb16-199"><a href="#cb16-199" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Generating report. This takes a few seconds.&quot;</span></span></code></pre></div>
-<p>To see the output HTML report, click here: <a href="../inst/reports/clustering_report.html">here</a></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fl">0.05</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  )</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="dv">6</span><span class="dt">L</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="dv">3</span><span class="dt">L</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  )</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="st">&quot;clustering_reports&quot;</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  )</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>plot_info <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">&quot;log2 intensity&quot;</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;min&quot;</span>,</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">c</span>(<span class="st">&quot;Feeding&quot;</span>),</span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">c</span>(<span class="dv">0</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>)</span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a>genes <span class="ot">&lt;-</span> data_excel[[gene_column_name]][<span class="dv">4</span><span class="sc">:</span><span class="fu">nrow</span>(data_excel)]</span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> <span class="fu">cluster_hits</span>(</span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>  <span class="at">analysis_type =</span> <span class="st">&quot;time_effect&quot;</span>,</span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  )</span></code></pre></div>
+<p>Here you can see a <a href="../inst/reports/clustering_report.html">cluster_hits
+report</a></p>
 </div>
 <div id="perform-gene-set-enrichment-analysis-gsea" class="section level1">
 <h1>Perform gene set enrichment analysis (GSEA)</h1>
 <p>To each clustered hit, the respective gene can be assigned and GSEA
 performed. For this, the Enrichr databases of choice have to be
 downloaded:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>gene_set_lib <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;WikiPathways_2019_Human&quot;</span>,</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>                  <span class="st">&quot;NCI-Nature_2016&quot;</span>,</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                  <span class="st">&quot;TRRUST_Transcription_Factors_2019&quot;</span>,</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                  <span class="st">&quot;MSigDB_Hallmark_2020&quot;</span>,</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                  <span class="st">&quot;GO_Cellular_Component_2018&quot;</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>                  <span class="st">&quot;CORUM&quot;</span>,</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>                  <span class="st">&quot;KEGG_2019_Human&quot;</span>,</span>
-<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>                  <span class="st">&quot;TRANSFAC_and_JASPAR_PWMs&quot;</span>,</span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>                  <span class="st">&quot;ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X&quot;</span>,</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>                  <span class="st">&quot;GO_Biological_Process_2018&quot;</span>,</span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>                  <span class="st">&quot;GO_Molecular_Function_2018&quot;</span>,</span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>                  <span class="st">&quot;Human_Gene_Atlas&quot;</span>)</span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>gene_set_lib <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="st">&quot;WikiPathways_2019_Human&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="st">&quot;NCI-Nature_2016&quot;</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="st">&quot;TRRUST_Transcription_Factors_2019&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="st">&quot;MSigDB_Hallmark_2020&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="st">&quot;GO_Cellular_Component_2018&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="st">&quot;CORUM&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="st">&quot;KEGG_2019_Human&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="st">&quot;TRANSFAC_and_JASPAR_PWMs&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="st">&quot;ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X&quot;</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="st">&quot;GO_Biological_Process_2018&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="st">&quot;GO_Molecular_Function_2018&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="st">&quot;Human_Gene_Atlas&quot;</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  )</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
 which is the root dir of the R project.</p>
 <p>To run GSEA, a genes vector has to be created, containing all the
@@ -906,34 +747,42 @@ loaded as a dataframe. Further, optionally, the clusterProfiler
 parameters and the report dir can be specified. The function
 create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
 report and returns the GSEA dotplots in R.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># Get gene vector</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Genes&quot;</span></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]][<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(annotation)]</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot; .*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;;.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;_.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;-.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a></span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span> </span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>databases <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(downloaded_dbs_filepath, <span class="at">col_types =</span> readr<span class="sc">::</span><span class="fu">cols</span>())</span>
-<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a></span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
-<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>                               <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
-<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>                               <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
-<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>                               <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
-<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>                               <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span>)</span>
-<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a></span>
-<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>, <span class="st">&quot;gsea_reports&quot;</span>)</span>
-<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a></span>
-<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">create_gsea_report</span>(<span class="at">levels_clustered_hits =</span> </span>
-<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>                                  clustering_results<span class="sc">$</span>clustered_hits_levels,</span>
-<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>                             <span class="at">genes =</span> genes,</span>
-<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a>                             <span class="at">databases =</span> databases,</span>
-<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a>                             <span class="at">params =</span> clusterProfiler_params,</span>
-<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a>                             <span class="at">report_info =</span> report_info,</span>
-<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a>                             <span class="at">report_dir =</span> report_dir)</span></code></pre></div>
-<p>To see the output HTML report, click here: <a href="../inst/reports/gsea_report.html">here</a></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Modify gene vector</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot; .*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;;.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;_.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;-.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>databases <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  downloaded_dbs_filepath,</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="at">col_types =</span> readr<span class="sc">::</span><span class="fu">cols</span>()</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  )</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>  )</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  <span class="st">&quot;gsea_reports&quot;</span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a>  )</span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">create_gsea_report</span>(</span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>  <span class="at">levels_clustered_hits =</span> clustering_results<span class="sc">$</span>clustered_hits_levels,</span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>  <span class="at">databases =</span> databases,</span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  <span class="at">params =</span> clusterProfiler_params,</span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a>  )</span></code></pre></div>
+<p>Here you can see an <a href="../inst/reports/gsea_report.html">gsea
+report</a></p>
 <p>Every row in the dotplots is a term from a specific database, and the
 columns are the respective clusters. The color scale contains the info
 about the odds ratio and the size the -log10 adj. p-value. Only terms

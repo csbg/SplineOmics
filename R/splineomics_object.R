@@ -42,6 +42,13 @@
 #' @param meta_batch_column Column for meta batch information (optional).
 #' @param meta_batch2_column Column for secondary meta batch information 
 #' (optional).
+#' @param feature_name_columns Character vector containing the column names of 
+#'                             the annotation info that describe the features.
+#'                             This argument is used to specify in the HTML 
+#'                             report how exactly the feature names displayed
+#'                             above each individual spline plot have been
+#'                             created. Use the same vector that was used to 
+#'                             create the row headers for the data matrix!
 #' @param design A design matrix or similar object (optional).
 #' @param spline_params Parameters for spline functions (optional).
 #' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq

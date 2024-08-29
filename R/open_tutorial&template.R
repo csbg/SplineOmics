@@ -29,7 +29,7 @@ open_tutorial <- function() {
       
       # Check user input and take appropriate action
       if (choice == "1") {
-        install.packages("rstudioapi")
+        utils::install.packages("rstudioapi")
         break
       } else if (choice == "2") {
         stop(
@@ -89,7 +89,7 @@ open_template <- function() {
       
       # Check user input and take appropriate action
       if (choice == "1") {
-        install.packages("rstudioapi")
+        utils::install.packages("rstudioapi")
         break
       } else if (choice == "2") {
         stop(

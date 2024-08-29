@@ -6,7 +6,7 @@ Date: 2024-08-13
 Author: Thomas Rauter
 Maintainer: Thomas Rauter <thomas.rauter@plus.ac.at>
 Description: Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.
-Depends: R (>= 4.3.3)
+Depends: R (>= 4.3.0)
 License: MIT + file LICENSE
 Imports:
     ComplexHeatmap(>= 2.18.0),
@@ -29,11 +29,15 @@ Imports:
     tidyr(>= 1.3.1),
     zip(>= 2.3.1)
 Suggests:
-   	edgeR(>= 4.0.16),
-   	clusterProfiler(>= 4.10.1),
-	rmarkdown (>= 2.7),
-	rstudioapi(>= 0.16.0),
-	conflicted (>= 1.2.0)
+    BiocManager,
+    edgeR(>= 4.0.16),
+    clusterProfiler(>= 4.10.1),
+    rmarkdown (>= 2.7),
+    knitr,
+    testthat,
+    readxl,
+    rstudioapi(>= 0.16.0),
+    conflicted (>= 1.2.0)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2

@@ -24,6 +24,7 @@
 #'         Enrichr databases.
 #'
 #' @importFrom here here
+#' @importFrom rlang .data
 #' 
 #' @export
 #'
@@ -55,8 +56,8 @@ download_enrichr_databases <- function(
     }))
   }))
   
-  genesets <- genesets %>%
-    mutate(Gene = gsub(",.+$", "", Gene))
+  genesets <- genesets |>
+    mutate(Gene = gsub(",.+$", "", .data$Gene))
   
   dir.create(
     output_dir,
@@ -79,7 +80,7 @@ download_enrichr_databases <- function(
     filename
     )
 
-  write.table(
+  utils::write.table(
     x = genesets,
     file = filename_path,
     sep = "\t",  

@@ -4,7 +4,7 @@
 \alias{prepare_gene_lists_for_enrichr}
 \title{Prepare Gene Lists for Enrichr and Return as String}
 \usage{
-prepare_gene_lists_for_enrichr(all_levels_clustering, gene)
+prepare_gene_lists_for_enrichr(all_levels_clustering, genes)
 }
 \arguments{
 \item{all_levels_clustering}{A list where each element contains a dataframe

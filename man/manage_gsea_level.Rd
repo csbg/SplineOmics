@@ -4,17 +4,29 @@
 \alias{manage_gsea_level}
 \title{Manage GSEA Analysis for a Specific Level}
 \usage{
-manage_gsea_level(clustered_hits, level_name)
+manage_gsea_level(
+  clustered_hits,
+  level_name,
+  databases,
+  clusterProfiler_params
+)
 }
 \arguments{
 \item{clustered_hits}{A dataframe containing the clustered hits for a 
 specific level. It must include a column named `feature` to extract genes.}
 
 \item{level_name}{A character string representing the name of the level.}
+
+\item{databases}{A list of databases for the gene set enrichment analysis.}
+
+\item{clusterProfiler_params}{Additional parameters for the GSEA analysis,
+default is NA. Those include adj_p_value, 
+pAdjustMethod, etc (see clusterProfiler 
+documentation).}
 }
 \value{
-The result of the `create_gsea_report` function, which typically includes 
-various plots and enrichment results.
+The result of the `create_gsea_report` function, which typically
+        includes various plots and enrichment results.
 }
 \description{
 This function manages the GSEA analysis for a specific level. It extracts

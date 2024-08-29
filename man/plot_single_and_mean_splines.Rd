@@ -11,7 +11,14 @@ plot_single_and_mean_splines(time_series_data, title, plot_info)
 
 \item{title}{A character string specifying the title of the plot.}
 
-\item{time_unit_label}{A character string specifying the time unit label.}
+\item{plot_info}{List containing the elements y_axis_label (string), 
+time_unit (string), treatment_labels (character vector),
+treatment_timepoints (integer vector). All can also be NA. 
+This list is used to add this info to the spline plots. 
+time_unit is used to label the x-axis, and treatment_labels
+and -timepoints are used to create vertical dashed lines,
+indicating the positions of the treatments (such as 
+feeding, temperature shift, etc.).}
 }
 \value{
 A ggplot object representing the single and consensus shapes.

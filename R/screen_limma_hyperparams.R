@@ -22,21 +22,31 @@
 #' generating an HTML report
 #' as part of a larger analysis workflow.
 #'
+#' @param splineomics An S3 object of class `SplineOmics` that contains all the 
+#' necessary data and parameters for the analysis, including:
+#' \itemize{
+#'   \item \code{condition}: A string specifying the column name of the meta
+#'                           dataframe, that contains the levels that separate
+#'                           the experiment ('treatment' can be a condition, and
+#'                           'drug' and 'no drug' can be the levels of such a 
+#'                           condition).
+#'   \item \code{report_info}: 
+#'   \item \code{meta_batch_column}: A character string specifying the meta 
+#'                                   batch column.
+#'   \item \code{meta_batch2_column}: A character string specifying the second 
+#'                                    meta batch column (the limma function 
+#'                                    removeBatchEffect supports a maximum of 
+#'                                    two batch columns.)
+#' }
 #' @param datas A list of data frames containing the datasets to be analyzed.
 #' @param datas_descr A description object for the data.
 #' @param metas A list of data frames containing metadata for each dataset in 
 #' `datas`.
 #' @param designs A character vector of design formulas for the limma analysis.
-#' @param condition A single character string specifying the condition.
 #' @param spline_test_configs A configuration object for spline tests.
-#' @param report_info An object containing report information.
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector of p-value thresholds for 
 #' significance determination.
-#' @param meta_batch_column A character string specifying the meta batch column.
-#' @param meta_batch2_column A character string specifying the second meta 
-#'                           batch column (the limma function removeBatchEffect
-#'                           supports a maximum of two batch columns.)
 #' @param time_unit A character string specifying the time unit label for plots.
 #' @param padjust_method A character string specifying the method for p-value 
 #' adjustment.
@@ -495,69 +505,6 @@ generate_reports_meta <- function(
 
 
 # Level 2 internal functions ---------------------------------------------------
-
-
-#' Check Data Descriptions
-#'
-#' @description
-#' Validates that the data descriptions are character vectors with each element 
-#' not exceeding 80 characters in length.
-#'
-#' @param datas_descr A character vector of data descriptions.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @seealso
-#' \code{\link{stop}} for error handling.
-#' 
-check_datas_descr <- function(datas_descr) {
-  
-  if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
-    long_elements_indices <- which(nchar(datas_descr) > 80)
-    long_elements <- datas_descr[long_elements_indices]
-    error_message <- sprintf(
-      "'datas_descr' must be a character vector with no element over 80 
-      characters. Offending element(s) at indices %s: '%s'. Please shorten
-      the description.",
-      paste(long_elements_indices, collapse = ", "),
-      paste(long_elements, collapse = "', '")
-    )
-    stop(error_message)
-  }
-}
-
-
-#' Check Spline Test Configurations
-#'
-#' @description
-#' Validates the spline test configurations by checking required columns, 
-#' spline type column, spline type parameters, and maximum and minimum degrees 
-#' of freedom against the metadata.
-#'
-#' @param spline_test_configs A configuration object for spline tests.
-#' @param metas A list of metadata corresponding to the data matrices.
-#'
-#' @return No return value, called for side effects.
-#'
-#' @seealso
-#' \code{\link{check_colums_spline_test_configs}}, 
-#' \code{\link{check_spline_type_column}}, 
-#' \code{\link{check_spline_type_params}}, 
-#' \code{\link{check_max_and_min_dof}}
-#' 
-check_spline_test_configs <- function(
-    spline_test_configs, 
-    metas
-    ) {
-  
-  check_colums_spline_test_configs(spline_test_configs)
-  
-  check_spline_type_column(spline_test_configs)
-  
-  check_spline_type_params(spline_test_configs)
-  
-  check_max_and_min_dof(spline_test_configs, metas)
-}
 
 
 #' Process Combination

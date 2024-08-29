@@ -16,6 +16,9 @@ plot2base64(
 \arguments{
 \item{plot}{A ggplot2 plot object.}
 
+\item{height}{An integer specifying the height of the plot for correct
+representation in the HTML.}
+
 \item{width}{A numeric value specifying the width of the plot in inches.}
 
 \item{base_height_per_row}{A numeric value specifying the base height per
@@ -26,8 +29,6 @@ height.}
 
 \item{html_img_width}{A character string specifying the width of the image
 in HTML.}
-
-\item{plot_nrows}{An integer specifying the number of rows in the plot.}
 }
 \value{
 A character string containing an HTML img tag with the Base64-encoded

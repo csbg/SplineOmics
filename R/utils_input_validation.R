@@ -610,7 +610,8 @@ InputControl <- R6::R6Class("InputControl",
     #' @param meta A dataframe containing metadata.
     #' @param condition A character string specifying the condition.
     #'
-    #' @return No return value, called for side effects.
+    #' @return Returns `NULL` if any required arguments are mising, otherwise,
+    #'         called for side effects.
     #'
     check_spline_params = function() {
       
@@ -626,27 +627,30 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       self$check_spline_params_generally(spline_params)
-      self$check_spline_params_mode_dependent(spline_params,
-                                              mode,
-                                              meta,
-                                              condition)
+      self$check_spline_params_mode_dependent(
+        spline_params,
+        mode,
+        meta,
+        condition
+        )
     },
     
     
     #' Check Spline Test Configurations
     #'
-    #' @description
-    #' This function verifies the spline test configurations and associated 
+    #' @describeIn InputControl
+    #' This method verifies the spline test configurations and associated 
     #' metadata
     #' within the object's arguments. It performs a series of checks on the 
     #' configurations, including column verification, spline type validation, 
     #' and ensuring that the degrees of freedom (dof) are within acceptable 
     #' ranges.
-    #'
-    #' @return
-    #' Returns `NULL` if any required arguments 
-    #' (`spline_test_configs` or `metas`) 
-    #' are missing. Otherwise, it performs a series of validation checks.
+    #' 
+    #' @param spline_test_configs A configuration object for spline tests.
+    #' @param metas A list of metadata corresponding to the data matrices.
+    #' 
+    #' @return Returns `NULL` if any required arguments are mising, otherwise,
+    #'         called for side effects.
     #'
     check_spline_test_configs = function() {
       
@@ -659,13 +663,16 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      self$check_colums_spline_test_configs(spline_test_configs)
+      self$check_columns_spline_test_configs(spline_test_configs)
       
       self$check_spline_type_column(spline_test_configs)
       
       self$check_spline_type_params(spline_test_configs)
       
-      self$check_max_and_min_dof(spline_test_configs, metas)
+      self$check_max_and_min_dof(
+        spline_test_configs,
+        metas
+        )
     },
     
     
@@ -1646,6 +1653,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' @return No return value, called for side effects.
    #'
    check_spline_params_generally = function(spline_params) {
+     
      if ("spline_type" %in% names(spline_params)) {
        if (!all(spline_params$spline_type %in% c("b", "n"))) {
          stop(
@@ -1804,9 +1812,17 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'
    #' @return No return value, called for side effects.
    #' 
-   check_colums_spline_test_configs = function(spline_test_configs) {
+   #' @keywords internal
+   #' 
+   check_columns_spline_test_configs = function(spline_test_configs) {
      
-     required_columns <- c("spline_type", "degree", "dof", "knots", "bknots")
+     required_columns <- c(
+       "spline_type", 
+       "degree",
+       "dof",
+       "knots",
+       "bknots"
+       )
      
      # Check for exact match of column names and order
      if (!identical(names(spline_test_configs), required_columns)) {
@@ -1818,15 +1834,15 @@ Level2Functions <- R6::R6Class("Level2Functions",
        # Append specific issues to the error message
        if (length(missing_columns) > 0) {
          error_message <- paste0(error_message, "Missing columns: ",
-                                 paste(missing_columns, collapse=", "), ". ")
+                                 paste(missing_columns, collapse = ", "), ". ")
        }
        if (length(extra_columns) > 0) {
          error_message <- paste0(error_message, "Extra columns: ",
-                                 paste(extra_columns, collapse=", "), ". ")
+                                 paste(extra_columns, collapse = ", "), ". ")
        }
        error_message <- paste0(error_message,
                                "Expected columns in order: ",
-                               paste(required_columns, collapse=", "), ".")
+                               paste(required_columns, collapse = ", "), ".")
        
        stop(error_message)
      }
@@ -1843,6 +1859,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' configurations.
    #'
    #' @return No return value, called for side effects.
+   #' 
+   #' @keywords internal
    #' 
    check_spline_type_column = function(spline_test_configs) {
      
@@ -1872,6 +1890,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' configurations.
    #'
    #' @return TRUE if all checks pass, otherwise an error is thrown.
+   #' 
+   #' @keywords internal
    #' 
    check_spline_type_params = function(spline_test_configs) {
      
@@ -1936,6 +1956,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' @param metas A list of metadata corresponding to the data matrices.
    #'
    #' @return No return value, called for side effects.
+   #' 
+   #' @keywords internal
    #' 
    check_max_and_min_dof = function(spline_test_configs, 
                                      metas) {

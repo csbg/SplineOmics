@@ -53,16 +53,25 @@ hits in each top table.}
 \item{clusters}{Character or integer vector specifying the number of clusters
 or 'auto' for automatic estimation.}
 
+\item{plot_info}{List containing the elements y_axis_label (string), 
+time_unit (string), treatment_labels (character vector),
+treatment_timepoints (integer vector). All can also be NA. 
+This list is used to add this info to the spline plots. 
+time_unit is used to label the x-axis, and treatment_labels
+and -timepoints are used to create vertical dashed lines,
+indicating the positions of the treatments (such as 
+feeding, temperature shift, etc.).}
+
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}
 
+\item{analysis_type}{String specifying type of limma results (which of the 
+three categories: time_effect, avrg_diff_conditions,
+and interaction_condition_time (
+see limma_result_categories.pdf in inst/descriptions).}
+
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}
-
-\item{report_info}{A character string to be printed at the top of the report.}
-
-\item{time_unit}{A character string specifying the time unit label for plots
-(e.g., 'm' for minutes).}
 }
 \value{
 A list where each element corresponds to a group factor and contains

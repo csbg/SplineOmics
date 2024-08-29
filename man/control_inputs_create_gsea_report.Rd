@@ -6,7 +6,6 @@
 \usage{
 control_inputs_create_gsea_report(
   levels_clustered_hits,
-  genes,
   databases,
   params,
   plot_titles,
@@ -16,8 +15,6 @@ control_inputs_create_gsea_report(
 \arguments{
 \item{levels_clustered_hits}{A list containing clustered hits at various 
 levels.}
-
-\item{genes}{A character vector of gene identifiers.}
 
 \item{databases}{A list of databases to be used in the GSEA analysis.}
 

@@ -87,6 +87,16 @@ The function performs the following checks:
 - If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws 
 an error.
 }
+\section{Functions}{
+\itemize{
+\item \code{InputControl}: This method verifies the spline test configurations and associated 
+metadata
+within the object's arguments. It performs a series of checks on the 
+configurations, including column verification, spline type validation, 
+and ensuring that the degrees of freedom (dof) are within acceptable 
+ranges.
+
+}}
 \seealso{
 \code{\link{stop}} for error handling.
 
@@ -156,7 +166,7 @@ Initialize an InputControl object}
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_condition_time_consistency"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_condition_time_consistency'><code>SplineOmics::Level3Functions$check_condition_time_consistency()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level3Functions" data-id="check_voom_structure"><a href='../../SplineOmics/html/Level3Functions.html#method-Level3Functions-check_voom_structure'><code>SplineOmics::Level3Functions$check_voom_structure()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_columns"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_columns'><code>SplineOmics::Level2Functions$check_columns()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_colums_spline_test_configs"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_colums_spline_test_configs'><code>SplineOmics::Level2Functions$check_colums_spline_test_configs()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_columns_spline_test_configs"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_columns_spline_test_configs'><code>SplineOmics::Level2Functions$check_columns_spline_test_configs()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_data"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_data'><code>SplineOmics::Level2Functions$check_data()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_dataframe"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_dataframe'><code>SplineOmics::Level2Functions$check_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="SplineOmics" data-topic="Level2Functions" data-id="check_max_and_min_dof"><a href='../../SplineOmics/html/Level2Functions.html#method-Level2Functions-check_max_and_min_dof'><code>SplineOmics::Level2Functions$check_max_and_min_dof()</code></a></span></li>
@@ -495,7 +505,8 @@ specified mode.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value, called for side effects.
+Returns `NULL` if any required arguments are mising, otherwise,
+        called for side effects.
 
 Check Spline Test Configurations
 }
@@ -504,20 +515,22 @@ Check Spline Test Configurations
 \if{html}{\out{<a id="method-InputControl-check_spline_test_configs"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_spline_test_configs}{}}}
 \subsection{Method \code{check_spline_test_configs()}}{
-This function verifies the spline test configurations and associated 
-metadata
-within the object's arguments. It performs a series of checks on the 
-configurations, including column verification, spline type validation, 
-and ensuring that the degrees of freedom (dof) are within acceptable 
-ranges.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_spline_test_configs()}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{spline_test_configs}}{A configuration object for spline tests.}
+
+\item{\code{metas}}{A list of metadata corresponding to the data matrices.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
-Returns `NULL` if any required arguments 
-(`spline_test_configs` or `metas`) 
-are missing. Otherwise, it performs a series of validation checks.
+Returns `NULL` if any required arguments are mising, otherwise,
+        called for side effects.
 
 Check Limma Top Tables Structure
 

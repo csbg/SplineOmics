@@ -13,10 +13,12 @@
 #' the input data, manages GSEA levels, and produces an HTML report with plots.
 #'
 #' @param levels_clustered_hits A list of clustered hits at different levels.
-#' @param genes A vector of genes to be analyzed.
-#' @param databases A list of databases to be used in the analysis.
+#' @param databases A list of databases for the gene set enrichment analysis.
 #' @param report_info A list containing information for the report generation.
-#' @param params Additional parameters for the GSEA analysis, default is NA.
+#' @param clusterProfiler_params Additional parameters for the GSEA analysis,
+#'                               default is NA. Those include adj_p_value, 
+#'                               pAdjustMethod, etc (see clusterProfiler 
+#'                               documentation).
 #' @param plot_titles Titles for the plots, default is NA.
 #' @param background Background data, default is NULL.
 #' @param report_dir Directory where the report will be saved, default is 
@@ -31,10 +33,9 @@
 #' 
 run_gsea <- function(
     levels_clustered_hits,
-    genes,
     databases,
     report_info,
-    params = NA,
+    clusterProfiler_params = NA,
     plot_titles = NA,
     background = NULL,
     report_dir = here::here()
@@ -67,9 +68,8 @@ run_gsea <- function(
   # Control the test not covered by the InputControl class
   control_inputs_create_gsea_report(
     levels_clustered_hits = levels_clustered_hits,
-    genes = genes,
     databases = databases,
-    params = params,
+    params = clusterProfiler_params,
     plot_titles = plot_titles,
     background = background
     )
@@ -79,7 +79,12 @@ run_gsea <- function(
   all_results <- map2(
     levels_clustered_hits,
     names(levels_clustered_hits),
-    manage_gsea_level
+    ~ manage_gsea_level(
+      .x,
+      .y,
+      databases, 
+      clusterProfiler_params
+      )
   )
   
   names(all_results) <- names(levels_clustered_hits)
@@ -133,7 +138,6 @@ run_gsea <- function(
 #'
 #' @param levels_clustered_hits A list containing clustered hits at various 
 #' levels.
-#' @param genes A character vector of gene identifiers.
 #' @param databases A list of databases to be used in the GSEA analysis.
 #' @param params A list of parameters for the GSEA analysis.
 #' @param plot_titles A character vector of titles for the plots, with length 
@@ -142,7 +146,6 @@ run_gsea <- function(
 #'
 control_inputs_create_gsea_report <- function(
     levels_clustered_hits,
-    genes,
     databases,
     params,
     plot_titles,
@@ -150,16 +153,7 @@ control_inputs_create_gsea_report <- function(
     ) {
   
   check_clustered_hits(levels_clustered_hits)
-  
-  highest_index <- sapply(levels_clustered_hits,
-                               function(df) max(df$feature, na.rm = TRUE))
-  max_index_overall <- max(highest_index)
-  
-  check_genes(
-    genes,
-    max_index_overall
-    )
-  
+
   check_databases(databases)
 
   check_params(params)
@@ -194,7 +188,7 @@ control_inputs_create_gsea_report <- function(
 #' is loaded for use.
 #'
 ensure_clusterProfiler <- function() {
-  
+
   # Check if clusterProfiler is installed; if not, prompt the user
   if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
     message("The 'clusterProfiler' package is not installed.")
@@ -219,7 +213,7 @@ ensure_clusterProfiler <- function() {
           )
         
         if (!requireNamespace("BiocManager", quietly = TRUE)) {
-          install.packages("BiocManager")
+          utils::install.packages("BiocManager")
         }
         
         tryCatch(
@@ -249,13 +243,6 @@ ensure_clusterProfiler <- function() {
       }
     }
   }
-  
-  # Load clusterProfiler functions after installation check
-  if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
-    stop("Failed to load 'clusterProfiler'. Please ensure it is installed correctly.", call. = FALSE)
-  } else {
-    library(clusterProfiler)
-  }
 }
 
 
@@ -269,20 +256,28 @@ ensure_clusterProfiler <- function() {
 #' @param clustered_hits A dataframe containing the clustered hits for a 
 #' specific level. It must include a column named `feature` to extract genes.
 #' @param level_name A character string representing the name of the level.
+#' @param databases A list of databases for the gene set enrichment analysis.
+#' @param clusterProfiler_params Additional parameters for the GSEA analysis,
+#'                               default is NA. Those include adj_p_value, 
+#'                               pAdjustMethod, etc (see clusterProfiler 
+#'                               documentation).
 #'
-#' @return The result of the `create_gsea_report` function, which typically includes 
-#' various plots and enrichment results.
+#' @return The result of the `create_gsea_report` function, which typically
+#'         includes various plots and enrichment results.
 #'
 manage_gsea_level <- function(
     clustered_hits,
-    level_name
+    level_name,
+    databases, 
+    clusterProfiler_params
     ) {
-  
-  genes_level <- genes[clustered_hits$feature]
-  clustered_hits$gene <- genes_level
+
   clustered_hits <- na.omit(clustered_hits)
   
-  message(paste("\n\n Running clusterProfiler for the level:", level_name))
+  message(paste(
+    "\n\n Running clusterProfiler for the level:",
+    level_name
+    ))
   
   result <- create_gsea_report_level(
     clustered_genes = clustered_hits,
@@ -759,7 +754,7 @@ create_gsea_report_level <- function(
     cluster_genes <- selected_rows$gene
     gene_list <- as.list(cluster_genes)
     gene_list <- unlist(gene_list)
-    gene_list <- toupper(gene_list)
+    # gene_list <- toupper(gene_list)
     
     at_least_one_result = FALSE
     
@@ -767,7 +762,10 @@ create_gsea_report_level <- function(
     for (database_name in names(all_term2genes)) {
       term2gene <- all_term2genes[[database_name]]
       
-      message(paste("\nDatabase:", database_name))
+      message(paste(
+        "\nDatabase:",
+        database_name
+        ))
       
       enrichment <- 
         clusterProfiler::enricher(
@@ -797,6 +795,12 @@ create_gsea_report_level <- function(
       # Store all for returning in the end.
       name <- sprintf("cluster: %s, database: %s", cluster, database_name)
       raw_results[[name]] <- enrichment
+    }
+    
+    if (is.null(background)) {
+      use_background = TRUE
+    } else {
+      use_background = FALSE
     }
     
     if (at_least_one_result) {
@@ -1157,6 +1161,7 @@ process_enrichment_results <- function(
 #' @importFrom ggplot2 ggplot aes geom_point ylab coord_fixed guide_colorbar
 #'                     theme_bw theme element_blank element_text labs
 #' @importFrom scales oob_squish
+#' @importFrom rlang .data
 #' 
 make_enrich_dotplot <- function(
     enrichments_list,
@@ -1164,7 +1169,11 @@ make_enrich_dotplot <- function(
     title = "Title"
     ) {
 
-  results <- prepare_plot_data(enrichments_list, databases)
+  results <- prepare_plot_data(
+    enrichments_list,
+    databases
+    )
+  
   top_plot_data <- results$top_plot_data
   full_enrich_results <- results$full_enrich_results
   
@@ -1173,16 +1182,19 @@ make_enrich_dotplot <- function(
   p <- ggplot2::ggplot(
     top_plot_data, 
     ggplot2::aes(
-      cluster,
-      term,
-      size = -log10(adj.p_value)
+      .data$cluster,
+      .data$term,
+      size = -log10(.data$adj.p_value)
       )
     ) +
     ggplot2::geom_point(
-      aes(color = odds_ratios),
+      aes(color = .data$odds_ratios),
       na.rm = TRUE
       ) +
-    ggplot2::geom_blank(aes(cluster, term)) + # Ensure all columns are shown
+    ggplot2::geom_blank(aes(
+      .data$cluster,
+      .data$term
+      )) + # Ensure all columns are shown
     ggplot2::ylab("database: term") +
     ggplot2::scale_color_gradient(
       "odds\nratio",
@@ -1254,6 +1266,7 @@ make_enrich_dotplot <- function(
 #' @importFrom tidyr pivot_longer separate_wider_regex replace_na pivot_wider
 #'                   unite
 #' @importFrom stats na.omit
+#' @importFrom rlang .data
 #' 
 prepare_plot_data <- function(
     enrichments_list,
@@ -1267,18 +1280,21 @@ prepare_plot_data <- function(
     dplyr::bind_rows(.id = "db") |>
     tidyr::pivot_longer(dplyr::starts_with("Cluster"), names_to = "p_odd") |>
     tidyr::separate_wider_regex(
-      p_odd,
+      .data$p_odd,
       c("Cluster_", cluster = "\\d+", "_", type = ".*"),
       too_few = "align_start"
     ) |>
     tidyr::replace_na(list(type = "adj.p_value")) |>
-    tidyr::pivot_wider(names_from = type, values_from = value)
+    tidyr::pivot_wider(names_from = .data$type, values_from = .data$value)
   
   plot_data <- plot_data |>
-    dplyr::group_by(db, BioProcess) |>
-    dplyr::mutate(avg_odds_ratio = mean(odds_ratios, na.rm = TRUE)) |>
+    dplyr::group_by(.data$db, .data$BioProcess) |>
+    dplyr::mutate(avg_odds_ratio = mean(.data$odds_ratios, na.rm = TRUE)) |>
     dplyr::ungroup() |>
-    dplyr::arrange(desc(avg_odds_ratio), db, BioProcess)
+    dplyr::arrange(
+      dplyr::desc(.data$avg_odds_ratio),
+      .data$db, .data$BioProcess
+      )
   
   # Initialize the cluster counts
   cluster_counts <-
@@ -1295,8 +1311,18 @@ prepare_plot_data <- function(
     combo <- plot_data[i, ]
     
     # Get the relevant rows from the original data
+    # relevant_rows <-
+    #   dplyr::filter(
+    #     plot_data,
+    #     db == combo$db,
+    #     BioProcess == combo$BioProcess
+    #     )
     relevant_rows <-
-      dplyr::filter(plot_data, db == combo$db, BioProcess == combo$BioProcess)
+      dplyr::filter(
+        plot_data,
+        plot_data[["db"]] == combo[["db"]],
+        plot_data[["BioProcess"]] == combo[["BioProcess"]]
+      )
     
     # Update counts for non-NA odds_ratios clusters
     update_counts <-
@@ -1344,14 +1370,20 @@ prepare_plot_data <- function(
   
   # Filter the original data to keep only rows matching the top 5 combinations
   top_plot_data <- plot_data |>
-    dplyr::semi_join(top_combos, by = c("db", "BioProcess"))
+    dplyr::semi_join(
+      top_combos,
+      by = c(
+        "db",
+        "BioProcess"
+        )
+      )
   
   full_enrich_results <- stats::na.omit(plot_data)
   
   top_plot_data <- top_plot_data |>
     tidyr::unite(
-      db,
-      BioProcess,
+      .data$db,
+      .data$BioProcess,
       col = "term",
       sep = ": "
       )
