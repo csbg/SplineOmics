@@ -298,11 +298,9 @@ compatibility issues.
 - **ComplexHeatmap**: For creating complex heatmaps with advanced
   features.
 - **base64enc**: For encoding/decoding base64.
-- **clusterProfiler**: For functional enrichment analysis.
 - **dendextend**: For extending `dendrogram` objects in R, allowing for
   easier manipulation of dendrograms.
 - **dplyr**: For data manipulation.
-- **edgeR** For preprocessing RNA-seq data.
 - **ggplot2**: For creating elegant data visualizations using the
   grammar of graphics.
 - **ggrepel**: For better label placement in ggplot2.
@@ -321,6 +319,16 @@ compatibility issues.
 - **tibble**: For creating tidy data frames that are easy to work with.
 - **tidyr**: For tidying your data.
 - **zip**: For combining files into a zip file.
+
+### Optional dependencies
+
+These dependencies are only necessary for some functions:
+
+- **edgeR**: For preprocessing RNA-seq data in the run_limma_splines()
+  fun.
+- **clusterProfiler**: For the run_gsea() function (gene set
+  enrichment).
+- **rstudioapi**: For the open_tutorial() and open_template() functions.
 
 ### R Version
 
