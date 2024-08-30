@@ -192,22 +192,6 @@ splineomics <- run_limma_splines(
 )
 
 
-
-# Extract the feature_nr column
-feature_nr <- splineomics[["limma_splines_result"]][["time_effect"]][["Phase_Exponential"]][["feature_nr"]]
-
-# Select the last 3000 entries
-last_3000_feature_nr <- tail(feature_nr, 3000)
-
-# Define the output file path for the RData file
-output_rdata_file <- "inst/extdata/last_3000_feature_nr.RData"
-
-# Save the list as RData
-save(last_3000_feature_nr, file = output_rdata_file)
-
-
-
-
 report_dir <- here::here("results", "limma_reports")
 
 plots <- create_limma_report(

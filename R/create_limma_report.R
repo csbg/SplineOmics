@@ -412,7 +412,27 @@ build_create_limma_report <- function(
     output_file_path = here::here()
     ) {  
   
-  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
+  # Read the text file and split it into blocks
+  descriptions_path <- system.file(
+    "descriptions",
+    "create_limma_report_html_plot_descriptions.txt",
+    package = "SplineOmics"
+    )
+  text_blocks <- readLines(descriptions_path)
+  text_blocks <- split(
+    text_blocks,
+    cumsum(text_blocks == "")
+    ) # Split by empty lines
+  
+  # Remove empty elements created by split
+  text_blocks <- Filter(function(x) length(x) > 0, text_blocks)
+  
+  
+  html_content <- paste(
+    header_section,
+    "<!--TOC-->",
+    sep = "\n"
+    )
   
   toc <- create_toc()
   
@@ -445,12 +465,36 @@ build_create_limma_report <- function(
           section_header, 
           sep = "\n"
           )
+        
+        # Add text block after the main headers.
+        if (current_header_index <= length(text_blocks)) {
+          # Convert text block to a single string with HTML paragraph format
+          text_block_html <- paste(
+            "<p style='font-size: 200%;'>", 
+            paste(
+              text_blocks[[current_header_index]],
+              collapse = " "
+              ),
+            "</p>",
+            sep = ""
+            )
+          
+          html_content <- paste(
+            html_content,
+            text_block_html,
+            sep = "\n"
+          )
+        }
 
         hits_info <- sprintf(
             "<p style='text-align: center; font-size: 30px;'>"
         )
         
-        html_content <- paste(html_content, hits_info, sep="\n")
+        html_content <- paste(
+          html_content,
+          hits_info,
+          sep = "\n"
+          )
         
         toc_entry <- sprintf(
           "<li style='%s'><a href='#section%d'>%s</a></li>", 
@@ -519,7 +563,7 @@ create_p_value_histogram <- function(
     top_table,
     adj_pthresh = 0.05,
     title = "P-Value Histogram"
-    ) {
+) {
   
   # Check if the top_table has a P.Value column
   if (!"P.Value" %in% colnames(top_table)) {
@@ -529,20 +573,58 @@ create_p_value_histogram <- function(
   # Create the histogram
   p <- ggplot2::ggplot(
     top_table,
-    # aes(x = P.Value)
     aes(x = .data$P.Value)
-    ) +
+  ) +
     ggplot2::geom_histogram(
-      binwidth = 0.05,
+      binwidth = 0.025,
       fill = "orange",
-      color = "black", alpha = 0.7
-      ) +
+      color = "black",
+      alpha = 0.7,
+      boundary = 0  # Ensure bins align with 0
+    ) +
+    # Add a red dashed line at the adjusted p-value threshold
+    ggplot2::geom_vline(
+      xintercept = adj_pthresh,
+      linetype = "dashed",
+      color = "red",
+      size = 1
+    ) +
+    # Add a transparent mask over the area above the threshold
+    ggplot2::annotate(
+      "rect",
+      xmin = max(adj_pthresh, 0),  # Ensure xmin is at least 0
+      xmax = 1,  # Ensure xmax is at most 1
+      ymin = 0,
+      ymax = Inf,
+      alpha = 0.3,
+      fill = "gray"
+    ) +
     ggplot2::labs(
       title = title,
       x = "Unadjusted P-Value",
       y = "Frequency"
-      ) +
-    ggplot2::theme_minimal()
+    ) +
+    ggplot2::theme_minimal() +
+    # Set x-axis limits to strictly stay between 0 and 1
+    ggplot2::scale_x_continuous(limits = c(0, 1))  # Strictly enforce x-axis limits
+  
+  # Extract y-axis limits and the maximum bin count to position the label
+  y_max <- max(ggplot2::ggplot_build(p)$data[[1]]$count)
+  
+  # Add a little buffer above the highest bar for the label
+  y_label_position <- y_max * 1.1  # 10% higher than the highest bar
+  
+  # Add the label for the adjusted p-value threshold at the correct y position
+  p <- p + 
+    ggplot2::annotate(
+      "text",
+      x = adj_pthresh,
+      y = y_label_position,  # Just above the highest bar
+      label = paste("p-thresh:", adj_pthresh),
+      color = "black",  # Change the font color to black
+      hjust = -0.1,
+      size = 3  # Slightly smaller font size
+    )
   
   return(p)
 }
@@ -594,7 +676,7 @@ create_volcano_plot <- function(
     setNames(c(
       compared_levels[2],
       compared_levels[1]
-      ))
+    ))
   
   # Calculate the number of hits
   num_hits <- sum(
@@ -610,6 +692,15 @@ create_volcano_plot <- function(
       alpha = .data$Alpha
     )
   ) +
+    # Add a shaded region below the adjusted p-value threshold
+    ggplot2::annotate(
+      "rect", 
+      xmin = -Inf, 
+      xmax = Inf, 
+      ymin = 0, 
+      ymax = -log10(adj_pthresh), 
+      fill = "gray90"  # Light gray color for visual distinction
+    ) +
     ggplot2::geom_point() +
     ggplot2::theme_minimal() +
     ggplot2::labs(
@@ -629,17 +720,19 @@ create_volcano_plot <- function(
       ),
       y = "-Log10 Adjusted P-value"
     ) +
+    # Add a dashed red line for the adjusted p-value threshold
     ggplot2::geom_hline(
       yintercept = -log10(adj_pthresh), 
       linetype = "dashed", 
       color = "red"
     ) +
+    # Add a label for the adjusted p-value threshold
     ggplot2::annotate(
       geom = "text", 
       x = Inf, 
       y = -log10(adj_pthresh), 
       label = paste(
-        "Adj.P.Val:", 
+        "adj.p-thresh:", 
         adj_pthresh
       ), 
       hjust = 1.1, 
@@ -697,7 +790,6 @@ create_volcano_plot <- function(
   
   return(volcano_plot)
 }
-
 
 
 #' Remove Prefix from String
