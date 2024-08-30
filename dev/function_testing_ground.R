@@ -194,11 +194,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  adj_pthresh = 0.1,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   adj_pthresh = 0.1,
+#   report_dir = report_dir
+# )
 
 
 ## Cluster hits ----------------------------------------------------------------

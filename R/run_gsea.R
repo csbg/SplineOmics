@@ -94,7 +94,7 @@ run_gsea <- function(
     names(all_results),
     process_result
   )
-  
+
   # Extract the plots, plot sizes, and header info from the processed results
   plots <- purrr::flatten(map(processed_results, "plot"))
   plots <- c("section_break", plots)
@@ -122,7 +122,7 @@ run_gsea <- function(
     report_dir = report_dir
   )
 
-  return(plots)
+  return(Filter(function(x) !is.character(x), plots))
 }
 
 
@@ -390,11 +390,11 @@ build_create_gsea_report <- function(
     Negate(is.null),
     level_headers_info
     )
-  
+
   pb <- create_progress_bar(plots)
   # Generate the sections and plots
   for (index in seq_along(plots)) {
-
+    
     # means jump to next level
     if (any(class(plots[[index]]) == "character")) {
       
@@ -407,7 +407,7 @@ build_create_gsea_report <- function(
         html_content,
         section_header_style,
         toc_style
-        )
+      )
       
       html_content <- section_content$html_content
       toc <- section_content$toc
@@ -417,7 +417,7 @@ build_create_gsea_report <- function(
       pb$tick()
       next
     }
-
+    
     result <- process_plots(
       plots_element = plots[[index]],
       plots_size = plots_sizes[[index]],
@@ -834,7 +834,7 @@ create_gsea_report_level <- function(
   
   list(
     dotplot = result[["dotplot"]],
-    dotplot_nrows = result[["dotplot_size"]],
+    dotplot_nrows = result[["dotplot_height"]],
     full_enrich_results = result[["full_enrich_results"]],
     raw_results = raw_results
     )
@@ -862,14 +862,14 @@ generate_section_content <- function(
     html_content,
     section_header_style,
     toc_style
-    ) {
+) {
   
   section_header <- sprintf(
     "<h2 style='%s' id='section%d'>%s</h2>",
     section_header_style,
     index,
     section_info$header_name
-    )
+  )
   
   if (any(is.na(section_info$full_enrich_results))) {
     
@@ -885,25 +885,25 @@ generate_section_content <- function(
       section_header,
       no_results_message,
       sep = "\n"
-      )
+    )
     
     toc_entry <- sprintf(
       "<li style='%s'><a href='#section%d'>%s</a></li>",
       toc_style,
       index,
       section_info$header_name
-      )
+    )
     
     toc <- paste(
       toc,
       toc_entry,
       sep = "\n"
-      )
+    )
     
     return(list(
       html_content = html_content,
       toc = toc
-      ))
+    ))
   }
   
   full_enrich_results_header <- paste0(
@@ -939,11 +939,11 @@ generate_section_content <- function(
     "'>Count smaller 2 Enrichment Results</h3>")
   
   base64_df <- sprintf(
-  '<a href="%s" download="count2small_results.xlsx">
+    '<a href="%s" download="count2small_results.xlsx">
   <button>Download count2small_results.xlsx</button></a>', 
-  encode_df_to_base64(
-    section_info$raw_enrich_results,
-    "create_gsea_report"
+    encode_df_to_base64(
+      section_info$raw_enrich_results,
+      "create_gsea_report"
     )
   )
   
@@ -955,26 +955,24 @@ generate_section_content <- function(
     raw_enrich_results_header, 
     base64_df, 
     sep = "\n"
-    )
+  )
   
   toc_entry <- sprintf(
     "<li style='%s'><a href='#section%d'>%s</a></li>",
     toc_style,
     index, section_info$header_name
-    )
+  )
   toc <- paste(
     toc,
     toc_entry,
     sep = "\n"
-    )
+  )
   
   list(
     html_content = html_content,
     toc = toc
-    )
+  )
 }
-
-
 
 
 # Level 3 internal functions ---------------------------------------------------
@@ -1163,43 +1161,147 @@ process_enrichment_results <- function(
 #' @importFrom scales oob_squish
 #' @importFrom rlang .data
 #' 
+# make_enrich_dotplot <- function(
+#     enrichments_list,
+#     databases,
+#     title = "Title"
+# ) {
+#   
+#   results <- prepare_plot_data(
+#     enrichments_list,
+#     databases
+#   )
+#   
+#   top_plot_data <- results$top_plot_data
+#   full_enrich_results <- results$full_enrich_results
+#   
+#   # Calculate plot height based on the number of y-axis labels
+#   height_per_label <- 0.13
+#   num_labels <- length(unique(top_plot_data$term))
+#   plot_height <- num_labels * height_per_label
+#   
+#   if (plot_height > 0.9) {  # to always have a minimum size.
+#     plot_height <- 0.9
+#   }
+#   
+#   # Ensure term labels are truncated to a maximum of 100 characters
+#   top_plot_data$term <- as.character(top_plot_data$term)
+#   top_plot_data$term <- ifelse(
+#     nchar(top_plot_data$term) > 100,
+#     paste0(substr(top_plot_data$term, 1, 97), "..."),
+#     top_plot_data$term
+#   )
+#   
+#   p <- ggplot2::ggplot(
+#     top_plot_data,
+#     ggplot2::aes(
+#       .data$cluster,
+#       .data$term,
+#       size = -log10(.data$adj.p_value)
+#     )
+#   ) +
+#     ggplot2::geom_point(
+#       aes(color = .data$odds_ratios),
+#       na.rm = TRUE
+#     ) +
+#     ggplot2::geom_blank(aes(
+#       .data$cluster,
+#       .data$term
+#     )) + # Ensure all columns are shown
+#     ggplot2::ylab("database: term") +
+#     ggplot2::scale_color_gradient(
+#       "odds\nratio",
+#       low = "blue",
+#       high = "red",
+#       labels = function(x) round(x, 2),
+#       guide = ggplot2::guide_colorbar(
+#         barheight = unit(12, "mm"),
+#         barwidth = unit(2, "mm"),
+#         ticks = FALSE
+#       )
+#     ) +
+#     ggplot2::scale_size_area(
+#       max_size = 3,
+#       limits = c(0, 2),
+#       breaks = c(0, 1, 2),
+#       labels = c("0", "1", "2 or higher"),
+#       oob = scales::oob_squish
+#     ) +
+#     ggplot2::theme_bw() +
+#     ggplot2::theme(
+#       panel.grid = ggplot2::element_blank(),
+#       plot.title = ggplot2::element_text(size = 12, hjust = 0.5),
+#       axis.text.y = ggplot2::element_text(size = 5),
+#       axis.text.x = ggplot2::element_text(size = 5),
+#       legend.text = ggplot2::element_text(size = 5),
+#       legend.title = ggplot2::element_text(size = 6),
+#       legend.key.height = unit(4, "mm"),
+#       legend.key.width = unit(3, "mm"),
+#       legend.spacing = ggplot2::unit(4, "mm"),
+#       plot.margin = ggplot2::unit(c(2, 2, 2, 2), "mm")
+#     ) +
+#     ggplot2::labs(title = title) +
+#     ggplot2::scale_y_discrete(expand = expansion(mult = c(0.01, 0.01))) +
+#     ggplot2::coord_cartesian(clip = "off") 
+#   
+#   list(
+#     dotplot = p,
+#     dotplot_height = plot_height,
+#     full_enrich_results = full_enrich_results
+#   )
+# }
 make_enrich_dotplot <- function(
     enrichments_list,
     databases,
     title = "Title"
-    ) {
-
+) {
+  
   results <- prepare_plot_data(
     enrichments_list,
     databases
-    )
+  )
   
   top_plot_data <- results$top_plot_data
   full_enrich_results <- results$full_enrich_results
   
-  dotplot_size <- as.integer(nrow(top_plot_data)/24) + 1
+  # Calculate plot height based on the number of y-axis labels
+  height_per_label <- 0.1
+  num_labels <- length(unique(top_plot_data$term))
+  plot_height <- num_labels * height_per_label
+  
+  if (plot_height < 0.70) {  # to always have a minimum size.
+    plot_height <- 0.70
+  }
+
+  # Ensure term labels are truncated to a maximum of 100 characters
+  top_plot_data$term <- as.character(top_plot_data$term)
+  top_plot_data$term <- ifelse(
+    nchar(top_plot_data$term) > 100,
+    paste0(substr(top_plot_data$term, 1, 97), "..."),
+    top_plot_data$term
+  )
   
   p <- ggplot2::ggplot(
-    top_plot_data, 
+    top_plot_data,
     ggplot2::aes(
       .data$cluster,
       .data$term,
       size = -log10(.data$adj.p_value)
-      )
-    ) +
+    )
+  ) +
     ggplot2::geom_point(
       aes(color = .data$odds_ratios),
       na.rm = TRUE
-      ) +
+    ) +
     ggplot2::geom_blank(aes(
       .data$cluster,
       .data$term
-      )) + # Ensure all columns are shown
+    )) + # Ensure all columns are shown
     ggplot2::ylab("database: term") +
     ggplot2::scale_color_gradient(
       "odds\nratio",
-      low = "blue",  
-      high = "red",     
+      low = "blue",
+      high = "red",
       labels = function(x) round(x, 2),
       guide = ggplot2::guide_colorbar(
         barheight = unit(12, "mm"),
@@ -1213,29 +1315,35 @@ make_enrich_dotplot <- function(
       breaks = c(0, 1, 2),
       labels = c("0", "1", "2 or higher"),
       oob = scales::oob_squish
-    )  +
-    ggplot2::coord_fixed() +
-    # facet_wrap(vars(db), ncol = 1, scales = "free_y") +
+    ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      panel.grid = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(size = 12),
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_line(size = 0.2, color = "gray80"),
+      panel.grid.minor.y = ggplot2::element_line(size = 0.1, color = "gray90"),
+      plot.title = ggplot2::element_text(size = 12, hjust = 0.5),
       axis.text.y = ggplot2::element_text(size = 5),
-      legend.text = ggplot2::element_text(size = 5),  
-      legend.title = ggplot2::element_text(size = 6), 
-        legend.key.height = unit(4, "mm"),
-        legend.key.width = unit(3, "mm"),
-        legend.spacing = ggplot2::unit(4, "mm")
-      #   legend.margin = margin(),
-      #   panel.spacing = unit(-.5, "pt"),
+      axis.text.x = ggplot2::element_text(size = 5),
+      legend.text = ggplot2::element_text(size = 5),
+      legend.title = ggplot2::element_text(size = 6),
+      legend.key.height = unit(4, "mm"),
+      legend.key.width = unit(3, "mm"),
+      legend.spacing = ggplot2::unit(0, "mm"),
+      legend.spacing.y = ggplot2::unit(0.5, "mm"),  
+      plot.margin = ggplot2::unit(c(2, 0, 2, 2), "mm"),
+      legend.position = "right",
+      legend.box.margin = ggplot2::margin(0, 0, 0, 0)
     ) +
-    ggplot2::labs(title = title)
+    ggplot2::labs(title = title) +
+    ggplot2::scale_y_discrete(expand = expansion(mult = c(0.1, 0.1))) +
+    ggplot2::coord_cartesian(clip = "off") 
   
   list(
-    dotplot = p, 
-    dotplot_size = dotplot_size, 
+    dotplot = p,
+    dotplot_height = plot_height,
     full_enrich_results = full_enrich_results
-    )
+  )
 }
 
 

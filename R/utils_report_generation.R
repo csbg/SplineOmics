@@ -1008,15 +1008,15 @@ process_plots <- function(
     toc,
     header_index,
     element_name = NA
-    ) {
-
+) {
+  
   if (
     !is.na(element_name) && 
     startsWith(
       element_name,
       "individual_spline_plots"
-      ) 
-    ) {
+    ) 
+  ) {
     
     spline_plots <- plots_element$spline_plots
     main_title <- plots_element$cluster_main_title
@@ -1032,7 +1032,7 @@ process_plots <- function(
       toc,
       toc_entry,
       sep = "\n"
-      )
+    )
     
     # Add the main title as a section title with an anchor before the first plot
     grid_content <- paste0(
@@ -1075,7 +1075,7 @@ process_plots <- function(
       )
       
       grid_content <- paste0(grid_content, '</div>')
-
+      
       # Add a horizontal line after each plot
       grid_content <- paste0(
         grid_content,
@@ -1092,7 +1092,7 @@ process_plots <- function(
   } else if (
     !is.na(element_name) &&
     element_name == "cluster_mean_splines"
-    ) {
+  ) {
     # One plot for each cluster
     for (i in seq_along(plots_element)) {
       html_content <- add_plot_to_html(
@@ -1110,8 +1110,8 @@ process_plots <- function(
     list(
       html_content = html_content,
       toc = toc
-      )
     )
+  )
 }
 
 
