@@ -218,7 +218,7 @@ get_limma_combos_results <- function(
       "_SConfig_", !!rlang::sym("spline_config_index"), 
       "_PThresh_", !!rlang::sym("pthreshold")
       ))
-  
+
     purrr::pmap(
       combos, 
       process_combo,
@@ -566,7 +566,10 @@ process_combo <- function(
 
   # Because either DoF or knots are specified, and only optionally bknots
   # If they are not specified, their value is NA.
-  spline_params <- Filter(is_not_na, spline_params)
+  spline_params <- Filter(
+    is_not_na,
+    spline_params
+    )
   
   rownames(data) <- feature_names
   
@@ -1251,12 +1254,12 @@ is_not_na <- function(x) {
 #' @return A vector or list with the processed configuration values.
 #' 
 process_config_column <- function(
-    config_column, 
-    index, 
-    num_levels, 
+    config_column,
+    index,
+    num_levels,
     mode
     ) {
-  
+
   if (mode == "integrated") {
     if (is.list(config_column)) {
       config_column[[index]]
@@ -1269,7 +1272,7 @@ process_config_column <- function(
     } else {
       rep(config_column[index], num_levels)
     }
-  } 
+  }
 }
 
 
@@ -1356,17 +1359,17 @@ plot_composite_splines <- function(
                            length.out = 100)
   
   args <- list(x = smooth_timepoints, intercept = FALSE)
+  args$df <- spline_test_configs$dof[[config_index]]
   
-  if (!is.na(spline_test_configs$dof[[config_index]])) {
-    args$df <- spline_test_configs$dof[[config_index]]
-  } else {
-    args$knots <- spline_test_configs$knots[[config_index]]
-  }
-  
-  if (!is.na(spline_test_configs$bknots[[config_index]])) {
-    args$Boundary.knots <- spline_test_configs$bknots[[config_index]]
-  }
-  
+  # if (!is.na(spline_test_configs$dof[[config_index]])) {
+  #   args$df <- spline_test_configs$dof[[config_index]]
+  # } else {
+  #   args$knots <- spline_test_configs$knots[[config_index]]
+  # }
+  # 
+  # if (!is.na(spline_test_configs$bknots[[config_index]])) {
+  #   args$Boundary.knots <- spline_test_configs$bknots[[config_index]]
+  # }
   
   if (spline_test_configs$spline_type[config_index] == "b") {
     args$degree <- spline_test_configs$degree[[config_index]]

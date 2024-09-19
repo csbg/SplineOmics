@@ -2251,6 +2251,8 @@ build_cluster_hits_report <- function(
           "font-size: 1.5em;'>",
           asterisks_definition,
           "</div>")
+        
+        rm(asterisks_definition)  # Otherwise, the next level has it everywhere
       }
       
       html_content <- paste(

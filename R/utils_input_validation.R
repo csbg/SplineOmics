@@ -620,7 +620,12 @@ InputControl <- R6::R6Class("InputControl",
       meta <- self$args$meta
       condition <- self$args$condition
       
-      required_args <- list(spline_params, mode, meta, condition)
+      required_args <- list(
+        spline_params,
+        mode,
+        meta,
+        condition
+        )
       
       if (any(sapply(required_args, is.null))) {
         return(NULL)
@@ -662,7 +667,7 @@ InputControl <- R6::R6Class("InputControl",
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
-      
+
       self$check_columns_spline_test_configs(spline_test_configs)
       
       self$check_spline_type_column(spline_test_configs)
@@ -1210,65 +1215,65 @@ InputControl <- R6::R6Class("InputControl",
     #' Check Analysis Mode
     #'
     #' @description
-    #' This method checks the validity of the `analysis_mode` argument. 
-    #' It ensures that 
+    #' This method checks the validity of the `analysis_mode` argument.
+    #' It ensures that
     #' `analysis_mode` is a character vector of length 1 and that it matches
-    #'  one of the 
-    #' allowed analysis modes: "time_effect", "avrg_diff_conditions", or 
+    #'  one of the
+    #' allowed analysis modes: "time_effect", "avrg_diff_conditions", or
     #' "interaction_condition_time".
     #'
     #' @details
     #' The method performs the following checks:
-    #' 
+    #'
     #' * Ensures that `analysis_mode` is provided and not NULL.
     #' * Confirms that `analysis_mode` is a character vector of length 1.
     #' * Validates that `analysis_mode` matches one of the allowed values.
     #'
     #' If any of these checks fail, an informative error message is returned.
     #'
-    #' @return NULL if `analysis_mode` is not provided or invalid. Otherwise, 
+    #' @return NULL if `analysis_mode` is not provided or invalid. Otherwise,
     #' performs checks
     #' and potentially raises errors if checks fail.
     #'
     check_analysis_type = function() {
-      
+
       analysis_mode <- self$args[["analysis_mode"]]
-      
+
       required_args <- list(analysis_mode)
-      
+
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
-      
+
       if (!is.character(analysis_mode) || length(analysis_mode) != 1) {
         stop(
           "analysis_mode must be a character vector of length 1",
           call. = FALSE
           )
       }
-      
+
       if (analysis_mode != "time_effect" ||
           analysis_mode != "avrg_diff_conditions" ||
           analysis_mode != "interaction_condition_time") {
         stop(
-          "analysis_mode must be one of time_effect, avrg_diff_conditions,", 
+          "analysis_mode must be one of time_effect, avrg_diff_conditions,",
           "or interaction_condition_time",
           call. = FALSE
           )
       }
     },
-    
-    
+
+
     #' Check Feature Name Columns
     #'
     #' @description
-    #' This function checks whether all elements of `feature_name_columns` are 
-    #' characters of length 1 and whether they are valid column names in the 
+    #' This function checks whether all elements of `feature_name_columns` are
+    #' characters of length 1 and whether they are valid column names in the
     #' `annotation` data frame.
     #'
-    #' @return Returns `NULL` if any required arguments are missing. Throws 
+    #' @return Returns `NULL` if any required arguments are missing. Throws
     #' an error
-    #' if any element of `feature_name_columns` is not a character of length 1 
+    #' if any element of `feature_name_columns` is not a character of length 1
     #' or if
     #' any element is not a column name in `annotation`. Returns `TRUE` if all
     #'  checks
@@ -1278,26 +1283,26 @@ InputControl <- R6::R6Class("InputControl",
     #' This function performs the following checks:
     #' 1. Ensures `feature_name_columns` and `annotation` are not `NULL`.
     #' 2. Verifies that each element in `feature_name_columns` is a character
-    #'  with 
+    #'  with
     #'    a length of 1.
-    #' 3. Checks that all elements of `feature_name_columns` are valid column 
+    #' 3. Checks that all elements of `feature_name_columns` are valid column
     #' names in the `annotation` data frame.
     #'
     check_feature_name_columns = function() {
-      
+
       feature_name_columns <- self$args[["feature_name_columns"]]
       annotation <- self$args[["annotation"]]
-      
+
       required_args <- list(
         feature_name_columns,
         annotation
         )
-      
+
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
-      
-      # Check if every element in feature_name_columns is a character 
+
+      # Check if every element in feature_name_columns is a character
       # of length 1
       if (
         !all(
@@ -1307,49 +1312,49 @@ InputControl <- R6::R6Class("InputControl",
           )
         ) {
         stop(
-          paste("All elements of feature_name_columns must be characters", 
+          paste("All elements of feature_name_columns must be characters",
                 "with length 1."),
           call. = FALSE
           )
       }
-      
-      # Check if all elements of feature_name_columns are column names 
+
+      # Check if all elements of feature_name_columns are column names
       # in annotation
       if (!all(feature_name_columns %in% colnames(annotation))) {
         stop(
           paste(
-            "All elements of feature_name_columns must be column names",  
+            "All elements of feature_name_columns must be column names",
             "in annotation."),
           call. = FALSE
           )
       }
     },
-    
-    
+
+
     #' Check Report
     #'
     #' @description
-    #' This function verifies the `report` argument within the object's 
+    #' This function verifies the `report` argument within the object's
     #' arguments.
-    #' It checks if the `report` argument is present and validates its 
+    #' It checks if the `report` argument is present and validates its
     #' Boolean value.
     #'
     #' @details
     #' The function performs the following checks:
     #' - Whether the `report` argument is present.
-    #' - If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws 
+    #' - If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws
     #' an error.
     #'
     check_report = function() {
-      
+
       report <- self$args[["report"]]
-      
+
       required_args <- list(report)
-      
+
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
-      
+
       if (report != TRUE && report != FALSE) {
         stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
       }
@@ -1371,13 +1376,13 @@ InputControl <- R6::R6Class("InputControl",
 #'
 Level2Functions <- R6::R6Class("Level2Functions",
  inherit = Level3Functions,
- 
+
  public = list(
-   
+
    #' Check Data Matrix
    #'
    #' @description
-   #' This function checks the validity of the data matrix, ensuring that it 
+   #' This function checks the validity of the data matrix, ensuring that it
    #' is a
    #' matrix, contains only numeric values,
    #' has no missing values, and all elements are non-negative. Additionally, it
@@ -1389,25 +1394,25 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'  data
    #' for error messages. Default is NA.
    #'
-   #' @return Returns TRUE if all checks pass. Stops execution and returns an 
+   #' @return Returns TRUE if all checks pass. Stops execution and returns an
    #' error
    #' message if any check fails.
    #'
    check_data = function(
-    data, 
+    data,
     data_meta_index = NULL
     ) {
 
      if (!is.matrix(data) || !is.numeric(data)) {
        stop(
          self$create_error_message(
-           "data must be a numeric matrix.", 
+           "data must be a numeric matrix.",
            data_meta_index
-           ), 
+           ),
          call. = FALSE
          )
      }
-     
+
      # Check for missing values
      if (any(is.na(data))) {
        stop(self$create_error_message(
@@ -1416,7 +1421,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
          ),
             call. = FALSE)
      }
-     
+
      # Check for non-negative values
      if (any(data < 0)) {
        stop(
@@ -1429,7 +1434,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
             data_meta_index),
             call. = FALSE)
      }
-     
+
      # Check for rows with all zeros
      if (any(rowSums(data) == 0)) {
        stop(
@@ -1438,7 +1443,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
            data_meta_index),
             call. = FALSE)
      }
-     
+
      # Check for columns with all zeros
      if (any(colSums(data) == 0)) {
        stop(self$create_error_message(paste(
@@ -1446,7 +1451,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                                       data_meta_index),
             call. = FALSE)
      }
-     
+
      # Check if row headers (rownames) are present and non-null
      row_headers <- rownames(data)
      if (is.null(row_headers)) {
@@ -1455,11 +1460,11 @@ Level2Functions <- R6::R6Class("Level2Functions",
          data_meta_index),
          call. = FALSE)
      }
-     
+
      return(TRUE)
    },
-   
-   
+
+
    #' Check Metadata
    #'
    #' @description
@@ -1471,12 +1476,12 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' Additionally, it checks for an optional batch effect column and prints
    #' messages regarding its use.
    #'
-   #' @param meta A dataframe containing the metadata, including the 'Time' 
+   #' @param meta A dataframe containing the metadata, including the 'Time'
    #' column.
-   #' @param condition A single character string specifying the column name 
+   #' @param condition A single character string specifying the column name
    #' in the
    #' meta dataframe to be checked.
-   #' @param meta_batch_column An optional parameter specifying the column 
+   #' @param meta_batch_column An optional parameter specifying the column
    #' name in
    #'  the meta dataframe used to remove the batch effect. Default is NA.
    #' @param meta_batch2_column An optional parameter specifying the column
@@ -1495,28 +1500,31 @@ Level2Functions <- R6::R6Class("Level2Functions",
     meta_batch2_column = NULL,
     data_meta_index = NULL
     ) {
-     
-     if (!is.data.frame(meta) || 
+
+     if (!is.data.frame(meta) ||
          !"Time" %in% names(meta) ||
          !is.numeric(meta[["Time"]])) {
-       stop(self$create_error_message(paste("meta must be a dataframe with", 
-                                            "the numeric column Time"),
-                                      data_meta_index),
-            call. = FALSE)
+       stop(self$create_error_message(
+         paste("meta must be a dataframe with the numeric column Time"),
+         data_meta_index
+         ), 
+         call. = FALSE)
      }
-     
+
      if (any(is.na(meta))) {
-       stop(self$create_error_message("meta must not contain missing values.",
-                                      data_meta_index),
-            call. = FALSE)
+       stop(self$create_error_message(
+         "meta must not contain missing values.",
+         data_meta_index
+         ),
+         call. = FALSE)
      }
-     
+
      # Check if condition is a single character
      if (!is.character(condition) || length(condition) != 1) {
        stop("'condition' must be a single character",
             call. = FALSE)
      }
-     
+
      # Check if condition is a column in the meta dataframe
      if (!condition %in% colnames(meta)) {
        stop(self$create_error_message(
@@ -1524,10 +1532,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
            "The condition '%s' is not a %s",
            condition,
            paste("column in meta")
-           ), 
+           ),
          data_meta_index), call. = FALSE)
      }
-     
+
      # Check if the factor column is of appropriate type
      if (!is.factor(meta[[condition]]) &&
          !is.character(meta[[condition]])) {
@@ -1537,27 +1545,27 @@ Level2Functions <- R6::R6Class("Level2Functions",
                                       data_meta_index),
             call. = FALSE)
      }
-     
+
      # Check condition and time pattern consistency
      self$check_condition_time_consistency(meta, condition)
-     
+
      if (!is.character(meta_batch2_column)) {
        meta_batch2_column <- NULL
      }
-     
+
      if (is.null(meta_batch_column) && !is.null(meta_batch2_column)) {
        stop(paste("For removing the batch effect, batch2 can only be used when",
                   "batch is used!"), call. = FALSE)
      }
-     
+
      if (!is.null(meta_batch_column)) {
        if (is.character(meta_batch_column)) {
-         
+
          if (meta_batch_column == "Time" || meta_batch_column == condition) {
            stop(paste("meta_batch_column must not be == 'Time' or", condition),
                 call. = FALSE)
          }
-  
+
          self$check_batch_column(
            meta,
            meta_batch_column,
@@ -1570,21 +1578,21 @@ Level2Functions <- R6::R6Class("Level2Functions",
            )
        }
      }
-     
+
      if (!is.null(meta_batch2_column)) {
        if (is.character(meta_batch2_column)) {
-       
+
        if (meta_batch2_column == "Time" || meta_batch2_column == condition) {
          stop(paste("meta_batch2_column must not be == 'Time' or", condition),
               call. = FALSE)
        }
-       
+
        if (meta_batch_column == meta_batch2_column) {
          stop(paste("meta_batch_column must not be equal to",
                     "meta_batch2_column"),
               call. = FALSE)
        }
-       
+
        self$check_batch_column(meta,
                                meta_batch2_column,
                                data_meta_index)
@@ -1595,15 +1603,15 @@ Level2Functions <- R6::R6Class("Level2Functions",
          )
        }
      }
-     
+
      return(TRUE)
    },
-   
-   
+
+
    #' Check Dataframe
    #'
    #' @description
-   #' Validates that the dataframe contains all required columns with the 
+   #' Validates that the dataframe contains all required columns with the
    #' correct data types.
    #'
    #' @param df A dataframe to check.
@@ -1611,7 +1619,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' @return TRUE if the dataframe is valid, otherwise an error is thrown.
    #'
    check_dataframe = function(df) {
-     
+
      # Define the required columns and their expected types
      required_columns <- list(
        AveExpr = "numeric",
@@ -1621,15 +1629,15 @@ Level2Functions <- R6::R6Class("Level2Functions",
        feature_names = "character",
        intercept = "numeric"
      )
-     
+
      # Check if all required columns are present
      missing_columns <- setdiff(names(required_columns), names(df))
      if (length(missing_columns) > 0) {
-       stop(paste("Missing columns in top_table:", 
+       stop(paste("Missing columns in top_table:",
                   paste(missing_columns, collapse = ", ")),
             call. = FALSE)
      }
-     
+
      # Check if columns have the correct type
      for (col in names(required_columns)) {
        if (!inherits(df[[col]], required_columns[[col]])) {
@@ -1638,11 +1646,11 @@ Level2Functions <- R6::R6Class("Level2Functions",
               call. = FALSE)
        }
      }
-     
+
      return(TRUE)
    },
-   
-   
+
+
    #' Check Spline Parameters Generally
    #'
    #' @description
@@ -1653,77 +1661,81 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #' @return No return value, called for side effects.
    #'
    check_spline_params_generally = function(spline_params) {
-     
+
+     allowed_fields <- c("spline_type", "degree", "dof")
+
+     if (!all(names(spline_params) %in% allowed_fields)) {
+       stop(
+         paste(
+           "spline_params contains invalid fields. Only 'spline_type',",
+           "'degree', and 'dof' are allowed."
+         ), call. = FALSE
+       )
+     }
+
+     # Check if spline_type exists and contains valid values
      if ("spline_type" %in% names(spline_params)) {
        if (!all(spline_params$spline_type %in% c("b", "n"))) {
          stop(
-           paste("Elements of spline_type must be either 'b' for B-splines or",
-                    "'n'. for natural cubic splines, in spline_params"),
-              call. = FALSE)
+           paste(
+            "Elements of spline_type must be either 'b' for B-splines",
+            "or 'n' for natural cubic splines."),
+           call. = FALSE
+         )
        }
      } else {
-       stop("spline_type is missing in spline_params.",
-            call. = FALSE)
+       stop("spline_type is missing in spline_params.", call. = FALSE)
      }
-     
-     # Check if degree exists and is an integer vector
+
+     # Check if degree exists and is an integer vector for B-splines,
+     # and NA for natural splines
      if ("degree" %in% names(spline_params)) {
-       if (!all(spline_params$degree == as.integer(spline_params$degree))) {
-         stop("degree must be an integer vector in spline_params.",
-              call. = FALSE)
+       for (i in seq_along(spline_params$spline_type)) {
+         if (spline_params$spline_type[i] == "b" &&
+             (!is.integer(spline_params$degree[i])
+              || is.na(spline_params$degree[i]))) {
+           stop(
+             paste(
+               "Degree must be specified as an integer for",
+               "B-splines in spline_params."
+               ),
+             call. = FALSE)
+         }
+         if (spline_params$spline_type[i] == "n"
+             && !is.na(spline_params$degree[i])) {
+           stop(
+             paste(
+               "Degree must be NA for natural cubic",
+               "splines in spline_params."
+               ),
+             call. = FALSE)
+         }
        }
-     } else if (!all(spline_params$spline_type %in% c("n"))) {
-       stop("degree is missing in spline_params.",
-            call. = FALSE)
+     } else if (all(spline_params$spline_type == 'b')) {
+       stop("degree is missing in spline_params.", call. = FALSE)
      }
-     
-     if (("dof" %in% names(spline_params)) &&
-         ("knots" %in% names(spline_params))) {
-       stop(
-         "Either dof or knots must be present, but not both,in spline_params.",
-            call. = FALSE)
-     } else if (!("dof" %in% names(spline_params)) &&
-                !("knots" %in% names(spline_params))) {
-       stop("At least one of dof or knots must be present, in spline_params.",
-            call. = FALSE)
-     }
-     
+
      # Check if dof exists and is an integer vector
      if ("dof" %in% names(spline_params)) {
        if (!all(spline_params$dof == as.integer(spline_params$dof))) {
-         stop("dof must be an integer vector in spline_params.",
-              call. = FALSE)
+         stop("dof must be an integer vector in spline_params.", call. = FALSE)
        }
+       # Check for B-splines that dof is greater than 2
        for (i in seq_along(spline_params$spline_type)) {
-         if (spline_params$spline_type[i] == "b" && spline_params$dof[i] < 3) {
+         if (spline_params$spline_type[i] == "b"
+             && spline_params$dof[i] < 3) {
            stop(
-             paste("B-splines require DoF > 2, for spline_params spline_type",
-                      "index", i),
-                call. = FALSE)
+             paste("B-splines require DoF > 2 for spline_type at index", i),
+             call. = FALSE
+             )
          }
        }
-     }
-     
-     # Check if knots exists and is a list of numeric vectors
-     if ("knots" %in% names(spline_params)) {
-       if (!is.list(spline_params$knots) ||
-           any(sapply(spline_params$knots, function(x) !is.numeric(x)))) {
-         stop("knots must be a list of numeric vectors in spline_params.",
-              call. = FALSE)
-       }
-     }
-     
-     # Check if bknots exists and is a list of numeric vectors
-     if ("bknots" %in% names(spline_params)) {
-       if (!is.list(spline_params$bknots) ||
-           any(sapply(spline_params$bknots, function(x) !is.numeric(x)))) {
-         stop("bknots must be a list of numeric vectors, in spline_params.",
-              call. = FALSE)
-       }
+     } else {
+       stop("dof is missing in spline_params.", call. = FALSE)
      }
    },
-   
-   
+
+
    #' Check Spline Parameters Mode Dependent
    #'
    #' @description
@@ -1737,100 +1749,123 @@ Level2Functions <- R6::R6Class("Level2Functions",
    #'
    #' @return No return value, called for side effects.
    #'
-   #'
-   check_spline_params_mode_dependent = function(spline_params,
-                                                 mode,
-                                                 meta,
-                                                 condition) {
+   check_spline_params_mode_dependent = function(
+    spline_params,
+    mode,
+    meta,
+    condition
+    ) {
      if (mode == "integrated") {
-       # Check that each vector in the main parameters has exactly one element
-       if (any(sapply(spline_params, function(x) length(x) != 1))) {
-         stop(paste("All parameters in spline_params must have exactly one",
-                    "element when mode is 'integrated'. Different spline",
-                    "parameters for the different levels is not supported for",
-                    "this mode"),
-              call. = FALSE)
+       # Check that all parameters in spline_params have exactly
+       # one "logical" element
+       if (any(sapply(spline_params, function(x) {
+         # Atomic vectors (like numeric or character vectors)
+         # should count as 1 element
+         !is.atomic(x) && length(x) != 1
+       }))) {
+         stop(paste(
+           "All parameters in spline_params must have exactly one element",
+           "when mode is 'integrated'.",
+           "Different spline parameters for the different levels is not",
+           "supported for this mode."
+         ), call. = FALSE)
        }
-       
-       # Additional check for 'knots' and 'bknots' if they exist
-       if ("knots" %in% names(spline_params)) {
-         if (length(spline_params$knots) != 1) {
-           stop(
-             paste("All elements in 'knots' in spline_params must have length",
-                   "1 when mode is 'integrated'. Different spline parameters",
-                   "for the different levels is not supported for this mode"),
-                call. = FALSE)
-         }
-       }
-       if ("bknots" %in% names(spline_params)) {
-         if (length(spline_params$bknots) != 1) {
-           stop(
-             paste("All elements in 'bknots' in spline_params must have length",
-                   "1 when mode is 'integrated'. Different spline parameters",
-                   "for the different levels is not supported for this mode"),
-                call. = FALSE)
-         }
-       }
+
+       # # Additional check for 'knots' and 'bknots' if they exist
+       # if ("knots" %in% names(spline_params)) {
+       #   # Check if 'knots' is atomic (i.e., treat vectors as a single unit) or NA
+       #   if (!(is.atomic(spline_params$knots) || all(is.na(spline_params$knots)))) {
+       #     stop(
+       #       paste(
+       #         "All elements in 'knots' in spline_params must be atomic",
+       #         "or NA when mode is 'integrated'.",
+       #         "Different spline parameters for different levels are not",
+       #         "supported for this mode."
+       #       ),
+       #       call. = FALSE
+       #     )
+       #   }
+       # }
+       #
+       # if ("bknots" %in% names(spline_params)) {
+       #   # Check if 'bknots' is atomic (i.e., treat vectors as a single unit) or NA
+       #   if (!(is.atomic(spline_params$bknots) ||
+       #         all(is.na(spline_params$bknots)))) {
+       #     stop(
+       #       paste(
+       #         "All elements in 'bknots' in spline_params must be atomic or",
+       #         "NA when mode is 'integrated'.",
+       #         "Different spline parameters for different levels are not",
+       #         "supported for this mode."
+       #       ),
+       #       call. = FALSE
+       #     )
+       #   }
+       # }
+
+
      } else if (mode == "isolated") {
        num_levels <- length(unique(meta[[condition]]))
-       if (any(sapply(spline_params, length) != num_levels)) {
-         stop(paste("Each vector or list in spline_params must have as many",
-                    "elements as there are unique elements in the ", condition,
-                    "column of meta when mode is 'isolated'."),
-              call. = FALSE)
-       }
-       if ("knots" %in% names(spline_params)) {
-         if (length(spline_params$knots) != num_levels) {
-           stop(
-             paste("'knots' in spline_params must have the same number of",
-                   "elements as there are unique elements in the ", condition,
-                   "column of meta when mode is 'isolated'."),
+         if (any(sapply(spline_params, length) != num_levels)) {
+           stop(paste(
+             "Each vector or list in spline_params must have as many",
+             "elements as there are unique elements in the ", condition,
+             "column of meta when mode is 'isolated'."
+             ),
                 call. = FALSE)
          }
-       }
-       if ("bknots" %in% names(spline_params)) {
-         if (length(spline_params$bknots) != num_levels) {
-           stop(
-             paste("'bknots' in spline_params must have the same number of",
-                   "elements as there are unique elements in the ", condition,
-                   "column of meta when mode is 'isolated'."),
-                call. = FALSE)
-         }
-       }
+       # if ("knots" %in% names(spline_params)) {
+       #   if (length(spline_params$knots) != num_levels) {
+       #     stop(
+       #       paste("'knots' in spline_params must have the same number of",
+       #             "elements as there are unique elements in the ", condition,
+       #             "column of meta when mode is 'isolated'."),
+       #          call. = FALSE)
+       #   }
+       # }
+       # if ("bknots" %in% names(spline_params)) {
+       #   if (length(spline_params$bknots) != num_levels) {
+       #     stop(
+       #       paste("'bknots' in spline_params must have the same number of",
+       #             "elements as there are unique elements in the ", condition,
+       #             "column of meta when mode is 'isolated'."),
+       #          call. = FALSE)
+       #   }
+       # }
      }
    },
-   
-   
+
+
    #' Check Columns in Spline Test Configurations
    #'
    #' @description
-   #' Validates that the spline test configurations contain the required columns 
+   #' Validates that the spline test configurations contain the required columns
    #' in the correct order.
    #'
    #' @param spline_test_configs A dataframe containing spline test
    #'  configurations.
    #'
    #' @return No return value, called for side effects.
-   #' 
+   #'
    #' @keywords internal
-   #' 
+   #'
    check_columns_spline_test_configs = function(spline_test_configs) {
-     
+
      required_columns <- c(
-       "spline_type", 
+       "spline_type",
        "degree",
-       "dof",
-       "knots",
-       "bknots"
+       "dof"
+       # "knots",
+       # "bknots"
        )
-     
+
      # Check for exact match of column names and order
      if (!identical(names(spline_test_configs), required_columns)) {
        # Find the missing or extra columns
        missing_columns <- setdiff(required_columns, names(spline_test_configs))
        extra_columns <- setdiff(names(spline_test_configs), required_columns)
        error_message <- "Error: Incorrect columns in dataframe. "
-       
+
        # Append specific issues to the error message
        if (length(missing_columns) > 0) {
          error_message <- paste0(error_message, "Missing columns: ",
@@ -1843,132 +1878,138 @@ Level2Functions <- R6::R6Class("Level2Functions",
        error_message <- paste0(error_message,
                                "Expected columns in order: ",
                                paste(required_columns, collapse = ", "), ".")
-       
+
        stop(error_message)
      }
    },
-   
-   
+
+
    #' Check Spline Type Column
    #'
    #' @description
-   #' Validates that the 'spline_type' column in the spline test configurations 
+   #' Validates that the 'spline_type' column in the spline test configurations
    #' contains only 'n' or 'b'.
    #'
-   #' @param spline_test_configs A dataframe containing spline test 
+   #' @param spline_test_configs A dataframe containing spline test
    #' configurations.
    #'
    #' @return No return value, called for side effects.
-   #' 
+   #'
    #' @keywords internal
-   #' 
+   #'
    check_spline_type_column = function(spline_test_configs) {
-     
+
      if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
        # Identify invalid entries
        invalid_entries <- spline_test_configs$spline_type[
          !spline_test_configs$spline_type %in% c("n", "b")
        ]
        error_message <- sprintf(
-         "Error: 'spline_type' contains invalid entries. 
+         "Error: 'spline_type' contains invalid entries.
         Only 'n' or 'b' are allowed. Invalid entries found: %s",
          paste(unique(invalid_entries), collapse=", ")
        )
-       
+
        stop(error_message)
      }
    },
-   
-   
+
+
    #' Check Spline Type Parameters
    #'
    #' @description
-   #' Validates the parameters for each row in the spline test configurations 
+   #' Validates the parameters for each row in the spline test configurations
    #' based on the spline type.
    #'
-   #' @param spline_test_configs A dataframe containing spline test 
+   #' @param spline_test_configs A dataframe containing spline test
    #' configurations.
    #'
    #' @return TRUE if all checks pass, otherwise an error is thrown.
-   #' 
+   #'
    #' @keywords internal
-   #' 
+   #'
    check_spline_type_params = function(spline_test_configs) {
-     
+
      for (i in seq_len(nrow(spline_test_configs))) {
        row <- spline_test_configs[i,]
        switch(as.character(row$spline_type),
               "n" = {
-                if (!is.na(row$degree)) 
+                if (!is.na(row$degree))
                   stop("degree must be NA for spline_type n")
-                if (!((is.na(row$dof) && !is.na(row$knots)) ||
-                      (!is.na(row$dof) && is.na(row$knots)))) {
-                  stop("Either dof or knots must be NA, but not both, for 
+
+                # if (!((is.na(row$dof) && !is.na(row$knots)) ||
+                #       (!is.na(row$dof) && is.na(row$knots)))) {
+                #   stop("Either dof or knots must be NA, but not both, for
+                #     spline_type n")
+                # }
+
+                if (!is.integer(row$dof)) {
+                  stop("dof must be an integer when it is not NA for
                     spline_type n")
                 }
-                if (!is.na(row$dof) && !is.integer(row$dof)) {
-                  stop("dof must be an integer when it is not NA for 
-                    spline_type n")
-                }
-                if (!is.na(row$knots) && !is.numeric(row$knots)) {
-                  stop("knots must be a numeric vector when it is not NA for 
-                    spline_type n")
-                }
-                if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
-                                           length(row$bknots) != 2)) {
-                  stop("bknots must be a numeric vector of exactly two elements 
-                    or NA for spline_type n")
-                }
+
+                # if (!is.na(row$knots) && !is.numeric(row$knots)) {
+                #   stop("knots must be a numeric vector when it is not NA for
+                #     spline_type n")
+                # }
+                # if (!is.na(row$bknots) && (!is.numeric(row$bknots) ||
+                #                            length(row$bknots) != 2)) {
+                #   stop("bknots must be a numeric vector of exactly two elements
+                #     or NA for spline_type n")
+                # }
               },
               "b" = {
-                if (!is.integer(row$degree)) stop("degree must be an integer for 
+                if (!is.integer(row$degree)) stop("degree must be an integer for
                                                spline_type b")
-                if (!is.na(row$dof) && (!is.integer(row$dof) || 
+                if (!is.na(row$dof) && (!is.integer(row$dof) ||
                                         row$dof < row$degree)) {
-                  stop("dof must be an integer at least as big as degree for 
+                  stop("dof must be an integer at least as big as degree for
                     spline_type b")
                 }
-                if (!is.na(row$knots) && !is.numeric(row$knots)) {
-                  stop("knots must be a numeric vector when it is not NA for 
-                    spline_type b")
-                }
-                if (!is.na(row$bknots) && (!is.numeric(row$bknots) || 
-                                           length(row$bknots) != 2)) {
-                  stop("bknots must be a numeric vector of exactly two elements 
-                    or NA for spline_type b")
-                }
+
+                # if (!is.na(row$knots) && !is.numeric(row$knots)) {
+                #   stop("knots must be a numeric vector when it is not NA for
+                #     spline_type b")
+                # }
+                # if (!is.na(row$bknots) && (!is.numeric(row$bknots) ||
+                #                            length(row$bknots) != 2)) {
+                #   stop("bknots must be a numeric vector of exactly two elements
+                #     or NA for spline_type b")
+                # }
               },
               stop("spline_type must be either 'n' or 'b'")
        )
      }
      return(TRUE)
    },
-   
-   
+
+
    #' Check Maximum and Minimum Degrees of Freedom
    #'
    #' @description
-   #' Validates the degrees of freedom (DoF) for each row in the spline test 
+   #' Validates the degrees of freedom (DoF) for each row in the spline test
    #' configurations based on the metadata.
    #'
-   #' @param spline_test_configs A dataframe containing spline test 
+   #' @param spline_test_configs A dataframe containing spline test
    #' configurations.
    #' @param metas A list of metadata corresponding to the data matrices.
    #'
    #' @return No return value, called for side effects.
-   #' 
+   #'
    #' @keywords internal
-   #' 
-   check_max_and_min_dof = function(spline_test_configs, 
-                                     metas) {
-     
+   #'
+   check_max_and_min_dof = function(
+    spline_test_configs,
+    metas
+    ) {
+
      for (i in seq_len(nrow(spline_test_configs))) {
        row <- spline_test_configs[i, ]
        spline_type <- row[["spline_type"]]
        dof <- row[["dof"]]
        degree <- row[["degree"]]
        knots <- row[["knots"]]
-       
+
        # Calculate k and DoF if dof is NA
        if (is.na(dof)) {
          k <- length(knots)
@@ -1980,30 +2021,30 @@ Level2Functions <- R6::R6Class("Level2Functions",
            stop("Unknown spline type '", spline_type, "' at row ", i)
          }
        }
-       
+
        # Check if calculated or provided DoF is valid
        if (dof < 2) {
          stop("DoF must be at least 2, found DoF of ", dof, " at row ", i)
        }
-       
+
        for (j in seq_along(metas)) {
          meta <- metas[[j]]
          nr_timepoints <- length(unique(meta$Time))
          if (dof > nr_timepoints) {
-           stop("DoF (", dof, ") cannot exceed the number of unique time points 
+           stop("DoF (", dof, ") cannot exceed the number of unique time points
            (", nr_timepoints, ") in meta", j, " at row ", i)
          }
        }
-       
+
      }
-     
+
      invisible(NULL)
   },
-  
-  
+
+
   #' Check Dataframe Columns
   #'
-  #' This function checks if the columns of a dataframe match the expected 
+  #' This function checks if the columns of a dataframe match the expected
   #' column names and their respective data types.
   #'
   #' @param df A dataframe to check.
@@ -2011,10 +2052,12 @@ Level2Functions <- R6::R6Class("Level2Functions",
   #'
   #' @return This function does not return a value. It stops execution if the
   #' dataframe columns or their classes do not match the expected structure.
-  #' 
-  check_columns = function(df, 
-                           expected_cols) {
-    
+  #'
+  check_columns = function(
+    df,
+    expected_cols
+    ) {
+
     actual_cols <- names(df)
     if (!all(expected_cols %in% actual_cols)) {
       stop("Dataframe columns do not match expected structure",
@@ -2041,7 +2084,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
 #'
 #' This class provides methods for creating error messages and checking
 #' batch columns.
-#' 
+#'
 #' @seealso \code{\link{Level2Functions}}
 #'
 Level3Functions <- R6::R6Class("Level3Functions",
@@ -2049,29 +2092,29 @@ Level3Functions <- R6::R6Class("Level3Functions",
  inherit = Level4Functions,
 
  public = list(
-   
+
    #' Check the structure of a voom object
    #'
    #' @description
    #' This function checks the structure of a `voom` object to ensure that it
-   #' contains 
-   #' all the expected components and that these components have the correct 
-   #' types 
-   #' and dimensions. The function does not check the actual data within the 
+   #' contains
+   #' all the expected components and that these components have the correct
+   #' types
+   #' and dimensions. The function does not check the actual data within the
    #' matrices.
    #'
-   #' @param voom_obj A list representing a `voom` object, typically created 
-   #' by the 
+   #' @param voom_obj A list representing a `voom` object, typically created
+   #' by the
    #'   `voom` function from the `limma` package.
    #'
    #' @details
-   #' The function verifies that the `voom` object contains the following 
+   #' The function verifies that the `voom` object contains the following
    #' components:
    #' - `E`: A matrix of log2-counts per million (logCPM) values.
-   #' - `weights`: A matrix of observation-specific weights that matches the 
+   #' - `weights`: A matrix of observation-specific weights that matches the
    #' dimensions of `E`.
-   #' - `design`: A matrix representing the design matrix used in the linear 
-   #' modeling, 
+   #' - `design`: A matrix representing the design matrix used in the linear
+   #' modeling,
    #'   with the same number of rows as there are columns in `E`.
    #'
    #' The function also checks for optional components such as:
@@ -2086,15 +2129,15 @@ Level3Functions <- R6::R6Class("Level3Functions",
    #' its side effects, which stop the script if the structure is not valid.
    #'
    check_voom_structure = function(voom_obj) {
-     
+
      # Initialize a list to collect any issues found
      issues <- list()
-     
+
      # Check if the input is a list
      if (!is.list(voom_obj)) {
        stop("The input is not a list. A voom object should be a list.")
      }
-     
+
      # Check for the presence of the expected components
      expected_components <- c("E", "weights", "design")
      for (comp in expected_components) {
@@ -2102,12 +2145,12 @@ Level3Functions <- R6::R6Class("Level3Functions",
          issues <- c(issues, paste("Missing component:", comp))
        }
      }
-     
+
      # Check that 'E' is a matrix
      if ("E" %in% names(voom_obj) && !is.matrix(voom_obj$E)) {
        issues <- c(issues, "'E' should be a matrix.")
      }
-     
+
      # Check that 'weights' is a matrix and matches the dimensions of 'E'
      if ("weights" %in% names(voom_obj)) {
        if (!is.matrix(voom_obj$weights)) {
@@ -2119,7 +2162,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
            )
        }
      }
-     
+
      # Check that 'design' is a matrix and has the correct number of rows
      if ("design" %in% names(voom_obj)) {
        if (!is.matrix(voom_obj$design)) {
@@ -2127,32 +2170,32 @@ Level3Functions <- R6::R6Class("Level3Functions",
        } else if (nrow(voom_obj$design) != ncol(voom_obj$E)) {
          issues <- c(
            issues,
-           "'design' matrix should have the same number of rows as the 
+           "'design' matrix should have the same number of rows as the
            number of columns in 'E'."
            )
        }
      }
-     
+
      # Optionally, check for the presence of other common components
      if ("genes" %in% names(voom_obj) && !is.data.frame(voom_obj$genes)) {
        issues <- c(issues, "'genes' should be a data frame.")
      }
-     
-     # Check for the presence of optional components like targets or 
+
+     # Check for the presence of optional components like targets or
      # sample weights
      if ("targets" %in% names(voom_obj) && !is.data.frame(voom_obj$targets)) {
        issues <- c(issues, "'targets' should be a data frame.")
      }
-     
-     if ("sample.weights" %in% names(voom_obj) 
+
+     if ("sample.weights" %in% names(voom_obj)
          && !is.numeric(voom_obj$sample.weights)) {
        issues <- c(issues, "'sample.weights' should be numeric.")
      }
-     
+
      # Report results
      if (length(issues) > 0) {
        stop(
-         "The voom object failed the structure check:\n", 
+         "The voom object failed the structure check:\n",
          paste(
            issues,
            collapse = "\n"
@@ -2163,12 +2206,12 @@ Level3Functions <- R6::R6Class("Level3Functions",
        return(TRUE)
      }
    },
-   
+
 
    #' Check Batch Column
    #'
    #' @description
-   #' This method checks the batch column in the metadata and provides 
+   #' This method checks the batch column in the metadata and provides
    #' appropriate messages.
    #'
    #' @param meta A dataframe containing metadata.
@@ -2177,7 +2220,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
    #' @param data_meta_index An optional parameter specifying the index of the
    #'  data/meta pair. Default is NA.
    #'
-   #' @return NULL. The method is used for its side effects of throwing errors 
+   #' @return NULL. The method is used for its side effects of throwing errors
    #' or printing messages.
    #'
    check_batch_column = function(
@@ -2215,14 +2258,14 @@ Level3Functions <- R6::R6Class("Level3Functions",
      }
    },
 
-   
+
    #' Check Condition Time Consistency
    #'
    #' @description
    #' This function checks whether the values in the `condition` column
-   #' have unique values for each block of identical `Time` values in the 
+   #' have unique values for each block of identical `Time` values in the
    #' `meta` dataframe.
-   #' Additionally, it ensures that every new block of a given time has a 
+   #' Additionally, it ensures that every new block of a given time has a
    #' new value
    #' in the `condition` column.
    #'
@@ -2238,29 +2281,29 @@ Level3Functions <- R6::R6Class("Level3Functions",
     meta,
     condition
     ) {
-     
+
      # Get the unique times in the order they appear
      unique_times <- unique(meta[["Time"]])
-     
+
      # Initialize a list to store previously seen conditions for each time
      # segment
      seen_conditions <- list()
-     
+
      # Iterate through each block of unique times
      for (time in unique_times) {
        # Get the indices for the current time segment
        current_indices <- which(meta[["Time"]] == time)
-       
+
        # Get the condition values for the current time segment
        current_conditions <- meta[current_indices, condition, drop = TRUE]
-       
+
        # Ensure that all conditions in the current segment are the same
        if (length(unique(current_conditions)) != 2) {
          stop(paste("Every block of identical time values in meta must",
                     "have unique values in the column", condition),
               call. = FALSE)
        }
-       
+
        # Check if the condition value has been seen before for this time segment
        if (!is.null(seen_conditions[[as.character(time)]])) {
          if (current_conditions[1] %in% seen_conditions[[as.character(time)]]) {
@@ -2268,7 +2311,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
                         current_conditions[1], time), call. = FALSE)
          }
        }
-       
+
        # Update the seen conditions for the current time segment
        if (is.null(seen_conditions[[as.character(time)]])) {
          seen_conditions[[as.character(time)]] <- character(0)
@@ -2278,7 +2321,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
          current_conditions[1]
        )
      }
-     
+
      return(TRUE)
    }
  )
@@ -2312,11 +2355,17 @@ Level4Functions <- R6::R6Class("Level4Functions",
    #' @return Returns a formatted error message string. If an index is provided,
    #' the message includes the index; otherwise, it returns the message as is.
    #'
-   create_error_message = function(message,
-                                   data_meta_index = NULL) {
+   create_error_message = function(
+    message,
+    data_meta_index = NULL
+    ) {
 
      if (!is.null(data_meta_index)) {
-       return(sprintf("data/meta pair index %d: %s", data_meta_index, message))
+       return(sprintf(
+         "data/meta pair index %d: %s",
+         data_meta_index,
+         message
+         ))
      } else {
        return(message)
      }
@@ -2385,16 +2434,19 @@ check_splineomics_elements <- function(
       "spline_params",
       "limma_splines_result"
     ),
-    stop("Invalid function type provided.", call. = FALSE)
+    stop(
+      "Invalid function type provided.",
+      call. = FALSE
+      )
     )
-  
+
   missing_elements <- required_elements[
     !sapply(
       splineomics[required_elements],
       function(x) !is.null(x)
       )
     ]
-  
+
   if (length(missing_elements) > 0) {
     stop(paste(
       "The following required elements for the function",
@@ -2408,7 +2460,7 @@ check_splineomics_elements <- function(
       func_type,
       "are:",
       paste(
-        required_elements, 
+        required_elements,
         collapse = ", ")
       ),
       call. = FALSE)
@@ -2418,23 +2470,23 @@ check_splineomics_elements <- function(
 
 #' Check for NULL Elements in Arguments
 #'
-#' This function checks if any elements in the provided list of arguments 
+#' This function checks if any elements in the provided list of arguments
 #' are `NULL`.
-#' If any `NULL` elements are found, it stops the execution and returns 
+#' If any `NULL` elements are found, it stops the execution and returns
 #' an informative error message.
 #'
 #' @param args A list of arguments to check for `NULL` elements.
 #'
-#' @return This function does not return a value. It stops execution if 
+#' @return This function does not return a value. It stops execution if
 #' any `NULL` elements are found in the input list.
 #'
 check_null_elements <- function(args) {
 
   null_elements <- names(args)[sapply(args, is.null)]
-  
+
   if (length(null_elements) > 0) {
     stop(
-      paste("The following function arguments are NULL:", 
+      paste("The following function arguments are NULL:",
             paste(null_elements, collapse = ", ")),
       call. = FALSE
     )

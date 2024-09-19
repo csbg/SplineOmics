@@ -699,7 +699,9 @@ get_header_section <- function(
         "limma_result_categories.pdf",
         package = "SplineOmics"
         ), 
-      '" download>download and review this PDF document</a>.</p>',
+      '" download>download and review this PDF document</a><br><br>
+      The grey shaded areas of the plots in this report cover the
+      non-significant features!</p>',
       '</div>'
     ),
     "cluster_hits" = paste(
