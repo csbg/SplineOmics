@@ -151,9 +151,6 @@ BiocManager::install(c(
   "limma"
   ), force = TRUE)
 
-# Delete once repo is public
-Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
-
 # Install SplineOmics from GitHub
 remotes::install_github(
   "csbg/SplineOmics@ad35d9aef2e8a8b19572c83ec771f4d92b343a4e",
@@ -229,7 +226,7 @@ this
 ### Tutorial
 
 [This
-tutorial](https://csbg.github.io/SplineOmics/docs/articles/get-started.html)
+tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html)
 covers a real CHO cell time-series proteomics example from start to end.
 
 To open an R Markdown file of the **tutorial** in `RStudio`, run:

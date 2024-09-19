@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 
 # SplineOmics
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R CMD Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen) [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics) 
+![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) ![Maintained? Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R CMD Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen) [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
 
 <img src="man/figures/hex_logo.png" align="left" width="65"/>
 
@@ -128,9 +128,6 @@ BiocManager::install(c(
   "limma"
   ), force = TRUE)
 
-# Delete once repo is public
-Sys.setenv(GITHUB_PAT = "your_GitHub_PAT")
-
 # Install SplineOmics from GitHub
 remotes::install_github(
   "csbg/SplineOmics@ad35d9aef2e8a8b19572c83ec771f4d92b343a4e",
@@ -187,8 +184,7 @@ If you face "permission denied" issues on Linux distributions, check this [vigne
 
 ### Tutorial
 
-[This tutorial](https://csbg.github.io/SplineOmics/docs/articles/get-started.html)
-covers a real CHO cell time-series proteomics example from start to end.
+[This tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html) covers a real CHO cell time-series proteomics example from start to end.
 
 To open an R Markdown file of the **tutorial** in `RStudio`, run:
 
