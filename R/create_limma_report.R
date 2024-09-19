@@ -226,7 +226,7 @@ generate_time_effect_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      adj_pthresh = adj_pthresh,
+      pthresh = adj_pthresh,
       title = title
       )
     
@@ -280,7 +280,7 @@ generate_avrg_diff_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      adj_pthresh = adj_pthresh,
+      pthresh = adj_pthresh,
       title = title
       )
     
@@ -341,7 +341,7 @@ generate_interaction_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      adj_pthresh = adj_pthresh,
+      pthresh = adj_pthresh,
       title = title
       )
     
@@ -550,7 +550,7 @@ build_create_limma_report <- function(
 #'
 #' @param top_table A data frame containing the limma top_table with
 #'                  a column named `P.Value` for unadjusted p-values.
-#' @param adj_pthresh A numeric value for the adjusted p-value threshold
+#' @param pthresh A numeric value for the adjusted p-value threshold
 #'                    (not used in this function, included for consistency).
 #' @param title A character string for the title of the histogram.
 #'
@@ -561,7 +561,7 @@ build_create_limma_report <- function(
 #'
 create_p_value_histogram <- function(
     top_table,
-    adj_pthresh = 0.05,
+    pthresh = 0.05,
     title = "P-Value Histogram"
 ) {
   
@@ -569,6 +569,11 @@ create_p_value_histogram <- function(
   if (!"P.Value" %in% colnames(top_table)) {
     stop("The top_table must contain a column named 'P.Value'.")
   }
+  
+  below_thresh_count <- sum(top_table$P.Value < pthresh)
+  total_pvalues <- nrow(top_table)
+  below_thresh_percent <- (below_thresh_count / total_pvalues) * 100
+  
   
   # Create the histogram
   p <- ggplot2::ggplot(
@@ -584,7 +589,7 @@ create_p_value_histogram <- function(
     ) +
     # Add a red dashed line at the adjusted p-value threshold
     ggplot2::geom_vline(
-      xintercept = adj_pthresh,
+      xintercept = pthresh,
       linetype = "dashed",
       color = "red",
       size = 1
@@ -592,7 +597,7 @@ create_p_value_histogram <- function(
     # Add a transparent mask over the area above the threshold
     ggplot2::annotate(
       "rect",
-      xmin = max(adj_pthresh, 0),  # Ensure xmin is at least 0
+      xmin = max(pthresh, 0),  # Ensure xmin is at least 0
       xmax = 1,  # Ensure xmax is at most 1
       ymin = 0,
       ymax = Inf,
@@ -618,12 +623,27 @@ create_p_value_histogram <- function(
   p <- p + 
     ggplot2::annotate(
       "text",
-      x = adj_pthresh,
+      x = pthresh,
       y = y_label_position,  # Just above the highest bar
-      label = paste("p-thresh:", adj_pthresh),
+      label = paste("p-thresh:", pthresh),
       color = "black",  # Change the font color to black
       hjust = -0.1,
       size = 3  # Slightly smaller font size
+    )
+  
+  # Add the count and percentage of p-values below the threshold
+  p <- p + 
+    ggplot2::annotate(
+      "text",
+      x = 0.5,  # Position in the middle of the plot
+      y = y_label_position,  # Just above the highest bar
+      label = paste(
+        "Count < p-thresh:", below_thresh_count, 
+        "(", round(below_thresh_percent, 2), "%)"
+      ),
+      color = "black",  # Black font color
+      size = 3,  # Same font size as the p-thresh label
+      hjust = 0.5  # Centered horizontally
     )
   
   return(p)
@@ -679,9 +699,9 @@ create_volcano_plot <- function(
     ))
   
   # Calculate the number of hits
-  num_hits <- sum(
-    top_table$adj.P.Val < adj_pthresh
-  )
+  num_hits <- sum(top_table$adj.P.Val < adj_pthresh)
+  total_tests <- nrow(top_table)
+  percent_hits <- (num_hits / total_tests) * 100
   
   volcano_plot <- ggplot2::ggplot(
     data = top_table,
@@ -711,7 +731,7 @@ create_volcano_plot <- function(
         compared_levels[2]
       ),
       x = paste(
-        "Log Fold Change (", 
+        "Log2 Fold Change (", 
         compared_levels[2], 
         " / ", 
         compared_levels[1], 
@@ -773,14 +793,15 @@ create_volcano_plot <- function(
     ) +
     ggplot2::annotate(
       geom = "text", 
-      x = Inf, 
+      x = 0, 
       y = Inf, 
       label = paste(
         "Hits:", 
-        num_hits
+        num_hits, 
+        "(", round(percent_hits, 2), "%)"
       ), 
-      hjust = 1.1, 
-      vjust = 2, 
+      hjust = 0.5, 
+      vjust = 3, 
       color = "black", 
       size = 3
     ) +

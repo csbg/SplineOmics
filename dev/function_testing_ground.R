@@ -124,15 +124,14 @@ splineomics <- create_splineomics(
   preprocess_rna_seq = FALSE
 )
 
-
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-# plots <- explore_data(
-#   splineomics,
-#   report_dir = report_dir,
-#   report = TRUE
-#   )
+plots <- explore_data(
+  splineomics,
+  report_dir = report_dir,
+  report = TRUE
+  )
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -153,26 +152,24 @@ pthresholds <- c(0.05, 0.1)
 
 # Every row a combo to test.
 spline_test_configs <- data.frame(
-  spline_type = c("n", "n", "n", "n"),
-  degree = c(NA, NA, NA, NA),
-  dof = c(2L, 3L, 4L, 5L),
-  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
-  bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
+  spline_type = c("n", "n", "b", "b"),  
+  degree = c(NA, NA, 2L, 4L),
+  dof = c(2L, 3L, 3L, 4L)
 )
 
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(screen_limma_hyperparams)
-# screen_limma_hyperparams(
-#   splineomics,
-#   datas,
-#   datas_descr,
-#   metas,
-#   designs,
-#   spline_test_configs,
-#   report_dir,
-#   pthresholds,
-#   )
+screen_limma_hyperparams(
+  splineomics,
+  datas,
+  datas_descr,
+  metas,
+  designs,
+  spline_test_configs,
+  report_dir,
+  pthresholds
+  )
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -194,11 +191,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-# plots <- create_limma_report(
-#   splineomics,
-#   adj_pthresh = 0.1,
-#   report_dir = report_dir
-# )
+plots <- create_limma_report(
+  splineomics,
+  adj_pthresh = 0.1,
+  report_dir = report_dir
+)
 
 
 ## Cluster hits ----------------------------------------------------------------
@@ -245,13 +242,6 @@ gene_set_lib <- c(
 
 # download_enrichr_databases(gene_set_lib)
  
-# # Get gene vector
-# genes <- sub(" .*", "", genes)
-# genes <- sub(";.*", "", genes)
-# genes <- sub("_.*", "", genes)
-# genes <- sub("-.*", "", genes)
-
-
 downloaded_dbs_filepath <- 
   here::here(
     "dev",

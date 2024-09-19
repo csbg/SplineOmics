@@ -1,5 +1,49 @@
-Features that have a significant time effect have a spline that shows a temporal pattern (the degree of temporal pattern that is sufficient for this depends on the adj.p-value threshold) within one level (then they are significant for that level). If the spline fit to the time course of a feature within a level is more or less flat over time, it will not a significant feature (hit) in this limma result category.
+<p style="font-size: 150%;">
+  Features that have a significant time effect have a spline that shows a 
+  temporal pattern (the degree of temporal pattern that is sufficient for this 
+  depends on the adj.p-value threshold) within one level (then they are 
+  significant for that level). If the spline fit to the time course of a feature 
+  within a level is more or less flat over time, it will not be a significant 
+  feature (hit) in this limma result category.
+</p>
+<div style="border: 2px solid #3498db; background-color: #eaf2f8; padding: 15px; margin-top: 20px; border-radius: 5px;">
+  <p style="font-size: 110%; font-weight: bold;">Plot Explanation:</p>
+  <p style="font-size: 100%;">
+    A p-value histogram shows the distribution of p-values from multiple 
+    statistical tests. On the x-axis, we have the unadjusted p-values, ranging 
+    from 0 to 1, while the y-axis represents the frequency, or how often p-values 
+    fall within a certain range. If there is no true signal, we expect the 
+    p-values to be uniformly distributed, resulting in a flat histogram across 
+    all bins. This means that the tests are not detecting any statistically 
+    significant differences. However, if there is a strong signal in the data, 
+    we will see a concentration of p-values near 0, indicating that many tests 
+    have resulted in statistically significant findings. On the other hand, if 
+    most p-values are clustered near 1, it could suggest that the tests are not 
+    finding significant effects.
+  </p>
+</div>
 
-Features that have a significant average difference between two conditions (when there are more then two, all of them are compared pairwise) have different oveall y-axis values for the spline in the compared levels. For example, if the time course of a given feature is on overage around 17 in one level, but around 11 in the other level, this could be a significant feature (hit) in this limma result category (irrespective of the temporal pattern of this feature in any or the compared levels).
+<p style="font-size: 150%;">
+  Features that have a significant average difference between two conditions 
+  (when there are more than two, all of them are compared pairwise) have 
+  different overall y-axis values for the spline in the compared levels. For 
+  example, if the time course of a given feature is on average around 17 in one 
+  level, but around 11 in the other level, this could be a significant feature 
+  (hit) in this limma result category (irrespective of the temporal pattern of 
+  this feature in any of the compared levels).
+</p>
+<div style="border: 2px solid #3498db; background-color: #eaf2f8; padding: 15px; margin-top: 20px; border-radius: 5px;">
+  <p style="font-size: 110%; font-weight: bold;">Plot Explanation:</p>
+  <p style="font-size: 100%;">
+    A volcano plot is a scatter plot used to visualize the results of multiple 
+    hypothesis tests. The x-axis represents the log fold change, showing how 
+    much something changes between two groups, while the y-axis represents 
+    -log10(adj. p-value), which shows the statistical significance. Points 
+    further from the center on the x-axis show larger effects, and points higher 
+    on the y-axis indicate more significant results.
+  </p>
+</div>
 
+<p style="font-size: 150%;">
 Features that have a significant interaction of condition and time have a different temporal pattern of their spline in both compared levels. For example, if the spline curve goes up in level 1 of the comparison, but goes down in level 2, this could be a significant feature (hit) in this limma result category.
+</p>

@@ -9,6 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{=html}
 <style>
 .sourceCode pre {
   background-color: #f7f7f7;
@@ -35,7 +36,8 @@ vignette: >
   background: #45a049;
 }
 </style>
-
+```
+```{=html}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll(".sourceCode pre").forEach(function(block) {
@@ -59,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 </script>
-
+```
 # Pulling the `Docker` Container
 
 Pull `Docker` container:
