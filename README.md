@@ -102,7 +102,7 @@ With `SplineOmics`, you can:
 
   Automatically generate reports to showcase all results. See an example
   report of the cluster_hits() function
-  [here](./inst/reports/cluster_hits_report.html).
+  [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
 
 ## 🔧 Installation
 
@@ -217,6 +217,12 @@ Docker page](https://www.docker.com/resources/what-container/).
 For instructions on downloading the image of the `SplineOmics` package
 and running the container, please refer to the [Docker
 instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
+
+#### Troubleshooting
+
+If you face “permission denied” issues on Linux distributions, check
+this
+[vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html).
 
 ## ▶️ Usage
 
