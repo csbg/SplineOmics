@@ -1,10 +1,3 @@
-#' run_limma_splines.R contains the exported package function run_limma_splines  
-#' and all the functions that make up the functionality of run_limma_splines.
-#' run_limma_splines performs a limma analysis, using splines, to assign a 
-#' p-value to every feature of a time series omics dataset, to find out which
-#' features are significantly changed over the time course.
-
-
 # Exported function: run_limma_splines() ---------------------------------------
 
  
@@ -461,13 +454,14 @@ preprocess_rna_seq_data <- function(
     
     # Prompt user for action
     repeat {
-      user_input <- readline(prompt = 
-                               "What would you like to do?\n
-                               1: Automatically install edgeR\n
-                               2: Manually install edgeR\n
-                               3: Cancel\n
-                               Please enter 1, 2, or 3: "
-                             )
+      user_input <- readline(
+       prompt = 
+        "What would you like to do?\n
+        1: Automatically install edgeR\n
+        2: Manually install edgeR\n
+        3: Cancel\n
+        Please enter 1, 2, or 3: "
+       )
       
       if (user_input == "1") {
         # Try to install edgeR automatically from Bioconductor
