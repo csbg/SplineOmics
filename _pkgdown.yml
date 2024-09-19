@@ -1,0 +1,12 @@
+template:
+  bootstrap: 5
+
+url: https://csbg.github.io/SplineOmics/
+
+navbar:
+  structure:
+    left:
+      - home
+      - reference
+      - articles
+      - news
