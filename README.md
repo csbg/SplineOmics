@@ -19,7 +19,12 @@ showing all results in summary HTML reports.
 The graphical abstract below shows the full workflow streamlined by
 `SplineOmics`:
 
-![](man/figures/SplineOmics_graphical_abstract.png)
+<figure>
+<img src="man/figures/SplineOmics_graphical_abstract.png"
+alt="Graphical Abstract of SplineOmics Workflow" />
+<figcaption aria-hidden="true">Graphical Abstract of SplineOmics
+Workflow</figcaption>
+</figure>
 
 ## Table of Contents
 
@@ -86,7 +91,7 @@ With `SplineOmics`, you can:
   using the `screen_limma_hyperparams()` function ([example
   report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
   (along with the
-  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html))
+  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html))).
 
 - **Perform limma spline analysis:**
 
@@ -215,7 +220,7 @@ Docker page](https://www.docker.com/resources/what-container/).
 
 For instructions on downloading the image of the `SplineOmics` package
 and running the container, please refer to the [Docker
-instructions](https://csbg.github.io/SplineOmics/articles/Docker_instructions.html).
+instructions](https://csbg.github.io/SplineOmics/articles/Docker-instructions.html).
 
 #### Troubleshooting
 
@@ -257,24 +262,24 @@ in the package (exported and internal functions) can be found
 A quick guide on how to design a `limma` design formula can be found
 [here](https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html)
 
-An (PDF) explanation of the three different `limma` results can be
-downloaded
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/inst/descriptions/limma_result_categories.pdf)
+An explanation of the three different `limma` results is
+[here](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
 
 ### RNA-seq and Glycan Data
 
 #### RNA-seq data
 
 Transcriptomics data must be preprocessed for `limma`. This is done by
-setting the preprocess_rna_seq argument to TRUE (see documentation of
-create_splineomics() function). Then, the raw RNA-seq counts provided in
-the data matrix will undergo normalization and transformation. The
-default normalization is performed using TMM (Trimmed Mean of M-values)
-normalization via the `edgeR`::calcNormFactors function, followed by the
-voom transformation from the `limma` package to obtain log-transformed
-counts per million (logCPM) with associated precision weights. If you
-require a different normalization method, you can supply your custom
-normalization function.
+setting the preprocess_rna_seq argument to TRUE (see [documentation of
+the create_splineomics
+function](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)).
+Then, the raw RNA-seq counts provided in the data matrix will undergo
+normalization and transformation. The default normalization is performed
+using TMM (Trimmed Mean of M-values) normalization via the
+`edgeR`::calcNormFactors function, followed by the voom transformation
+from the `limma` package to obtain log-transformed counts per million
+(logCPM) with associated precision weights. If you require a different
+normalization method, you can supply your custom normalization function.
 
 #### Glycan fractional abundance data
 
