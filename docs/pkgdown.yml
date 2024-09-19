@@ -1,9 +1,9 @@
 pandoc: 3.1.11
-pkgdown: 2.1.0
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   design_limma_design_formula: design_limma_design_formula.html
   Docker_permission_denied: Docker_permission_denied.html
   Docker-instructions: Docker-instructions.html
   get-started: get-started.html
-last_built: 2024-09-19T13:28Z
+last_built: 2024-09-19T14:25Z

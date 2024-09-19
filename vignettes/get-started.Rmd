@@ -240,6 +240,20 @@ plots <- explore_data(
 
 ```
 
+[Here](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html) you can see the HTML report of the explore_data() function with the NOT batch-corrected data, and [here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html) the report for the batch-corrected data.
+
+The EDA plots can tell you a range of things. The plots in the HTML
+report are grouped into three categories: Distribution and Variability
+Analysis, Time Series Analysis, and Dimensionality Reduction and
+Clustering.
+
+If you look at the correlation heatmaps in the HTML report, you can see
+that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
+Seeing this, you might want to remove them from the data. You can test
+out what happens when you do this, along with testing how other
+hyperparameter choices influence the results, with the package function
+screen_limma_hyperparams().
+
 ## Finding the Best Hyperparameters
 
 Before running the **limma spline analysis**, it is important to find
@@ -373,12 +387,17 @@ screen_limma_hyperparams(
 
 ```
 
-You can view an example report [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
+You can view an example report
+[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
 
-This report contains the results for the comparison of the "outer" hyperparameters
-data 1 and design (formula) 1 against data 1 and design 2. For both of those, all combinations of the "inner" hyperparameters are generated (every possible combination of all specified adj. p-value thresholds and spline configs).
+This report contains the results for the comparison of the "outer"
+hyperparameters data 1 and design (formula) 1 against data 1 and design
+2. For both of those, all combinations of the "inner" hyperparameters
+are generated (every possible combination of all specified adj. p-value
+thresholds and spline configs).
 
-The encoding of this is [here](https://github.com/csbg/SplineOmics_html_reports/blob/97b73e1cf1353df11a9035f576b98167699cf03c/hyperparams_screen_meta_table_19_09_2024-13_44_10.html)
+The encoding of this is
+[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html)
 (This is part of the output of the screen_limma_hyperparams function).
 
 # Run limma spline analysis
@@ -416,8 +435,7 @@ splineomics <- run_limma_splines(
 ```
 
 The output of the function run_limma_splines() is a named list, where
-each element is a specific "category" of results. Refer to [this
-document](../inst/descriptions/limma_result_categories.pdf) for an
+each element is a specific "category" of results. Refer to [this document](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html) for an
 explanation of the different result categories. Each of those elements
 is a list, containing as elements the respective limma topTables, either
 for each level or each comparison between two levels.
@@ -452,7 +470,8 @@ plots <- create_limma_report(
 ```
 
 You can view the generated analysis report of the create_limma_report
-function [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/create_limma_report_PTX_19_09_2024-13_47_02.html).
+function
+[here](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html).
 
 # Cluster the hits (significant features)
 
@@ -499,8 +518,8 @@ clustering_results <- cluster_hits(
   )
 ```
 
-You can view the generated analysis report of the cluster_hits
-function [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
+You can view the generated analysis report of the cluster_hits function
+[here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
 
 # Perform gene set enrichment analysis (GSEA)
 
@@ -530,11 +549,11 @@ download_enrichr_databases(gene_set_lib)
 Per default the file is placed in the current working directory, which
 is the root dir of the R project.
 
-To run GSEA, the downloaded database file has to be
-loaded as a dataframe. Further, optionally, the clusterProfiler
-parameters and the report dir can be specified. The function
-create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
-report and returns the GSEA dotplots in R.
+To run GSEA, the downloaded database file has to be loaded as a
+dataframe. Further, optionally, the clusterProfiler parameters and the
+report dir can be specified. The function create_gsea_report() runs GSEA
+using clusterProfiler, generates an HTML report and returns the GSEA
+dotplots in R.
 
 ```{r run GSEA, eval = FALSE}
 downloaded_dbs_filepath <-
@@ -567,8 +586,8 @@ result <- create_gsea_report(
   )
 ```
 
-You can view the generated analysis report of the cluster_hits
-function [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/create_gsea_report_PTX_19_09_2024-13_47_33.html).
+You can view the generated analysis report of the cluster_hits function
+[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html).
 
 Every row in the dotplots is a term from a specific database, and the
 columns are the respective clusters. The color scale contains the info

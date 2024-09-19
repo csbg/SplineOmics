@@ -75,34 +75,36 @@ With `SplineOmics`, you can:
 - **Automatically perform exploratory data analysis:**
 
   The `explore_data()` function generates an HTML report, containing
-  various plots, such as density, PCA, and correlation heatmap plots.
+  various plots, such as density, PCA, and correlation heatmap plots
+  ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html)).
 
 - **Explore various limma splines hyperparameters:**
 
   Test combinations of hyperparameters, such as different datasets,
   `limma` design formulas, degrees of freedom, p-value thresholds, etc.,
-  using the `screen_limma_hyperparams()` function.
+  using the `screen_limma_hyperparams()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
+  (along with the
+  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html))
 
 - **Perform limma spline analysis:**
 
   Use the `run_limma_splines()` function to perform the `limma` analysis
-  with splines once the optimal hyperparameters are identified.
+  with splines once the optimal hyperparameters are identified ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html)).
 
 - **Cluster significant features:**
 
   Cluster the significant features (hits) identified in the spline
-  analysis with the `cluster_hits()` function.
+  analysis with the `cluster_hits()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html)).
 
 - **Run GSEA with clustered hits:**
 
   Perform gene set enrichment analysis (GSEA) using the clustered hits
-  with the `create_gsea_report()` function.
-
-- **Generate reports:**
-
-  Automatically generate reports to showcase all results. See an example
-  report of the cluster_hits() function
-  [here](https://github.com/csbg/SplineOmics_html_reports/raw/97b73e1cf1353df11a9035f576b98167699cf03c/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
+  with the `create_gsea_report()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html)).
 
 ## 🔧 Installation
 
@@ -213,13 +215,13 @@ Docker page](https://www.docker.com/resources/what-container/).
 
 For instructions on downloading the image of the `SplineOmics` package
 and running the container, please refer to the [Docker
-instructions](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_instructions.html).
+instructions](https://csbg.github.io/SplineOmics/articles/Docker_instructions.html).
 
 #### Troubleshooting
 
 If you face “permission denied” issues on Linux distributions, check
 this
-[vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html).
+[vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
 ## ▶️ Usage
 
@@ -246,16 +248,17 @@ open_template()
 
 ### Functions in Depth
 
-A detailed description of all arguments and outputs of the available
-package functions can be found
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/functions-in-depth.html).
+A detailed description of all arguments and outputs of all the functions
+in the package (exported and internal functions) can be found
+[here](https://csbg.github.io/SplineOmics/reference/).
 
 ### Design `limma` design formula
 
 A quick guide on how to design a `limma` design formula can be found
-[here](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/design_limma_design_formula.html)
+[here](https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html)
 
-An explanation of the three different `limma` results can be found
+An (PDF) explanation of the three different `limma` results can be
+downloaded
 [here](https://raw.githubusercontent.com/csbg/SplineOmics/main/inst/descriptions/limma_result_categories.pdf)
 
 ### RNA-seq and Glycan Data
