@@ -4,7 +4,7 @@ author: "Thomas Rauter"
 date: "10 June, 2024"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Docker-permission-denied}
+  %\VignetteIndexEntry{Docker_permission_denied}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
