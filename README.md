@@ -229,7 +229,7 @@ this
 ### Tutorial
 
 [This
-tutorial](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/get-started.html)
+tutorial](https://csbg.github.io/SplineOmics/docs/get-started.html)
 covers a real CHO cell time-series proteomics example from start to end.
 
 To open an R Markdown file of the **tutorial** in `RStudio`, run:
