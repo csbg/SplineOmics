@@ -339,194 +339,380 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">get-started</h1>
 <h4 class="author">Thomas Rauter</h4>
-<h4 class="date">10 June, 2024</h4>
+<h4 class="date">20 September, 2024</h4>
 
 
 
 <div id="about-this-tutorial" class="section level1">
 <h1>About this tutorial</h1>
 <p>This tutorial intends to showcase and explain the capabilities of the
-SplineOmics package by walking through a real and complete example, from
-start to the end. The example is a time-series proteomics experiment, in
-which CHO cells were cultivated in three bioreactors (three biological
-replicates). Both in the exponential and stationary growth phase,
-samples were taken from each reactor in triplicates at defined
-timepoints relative to a feeding of the cells (60 min before feeding,
-and 15, 60, 90, 120, and 240 min after). The goal of this analysis is to
-find out which of the 7162 cellular proteins show a significant change
-over time after the CHO cells were fed (= impact of the feeding).
-Further, the hits (proteins with a significant change over time) are
-clustered based on their temporal pattern, and a gene set enrichment
-analysis is performed with each cluster to see if there are processes
-which are up- or downregulated over time after the feeding.</p>
+<strong>SplineOmics</strong> package by walking through a real and
+complete example, from start to finish.</p>
+<div id="example-overview" class="section level3">
+<h3>Example Overview</h3>
+<p>The example involves a <strong>time-series proteomics
+experiment</strong>, where CHO (chinese hamster ovary) cells were
+cultivated in three bioreactors (three biological replicates). The
+experiment includes the following setup:</p>
+<ul>
+<li>Samples were taken both during the <strong>exponential</strong> and
+<strong>stationary growth phases</strong>.</li>
+<li>Samples were collected in triplicates from each reactor at defined
+timepoints relative to cell feeding:
+<ul>
+<li>60 minutes before feeding</li>
+<li>15, 60, 90, 120, and 240 minutes after feeding</li>
+</ul></li>
+</ul>
+</div>
+<div id="analysis-goals" class="section level3">
+<h3>Analysis Goals</h3>
+<p>The main goals of this analysis are:</p>
+<ul>
+<li><strong>Identify proteins with significant temporal
+changes</strong>: Out of 7162 cellular proteins, the objective is to
+detect which proteins show a significant change over time after the CHO
+cells were fed (i.e., the impact of the feeding).</li>
+<li><strong>Cluster hits based on temporal patterns</strong>: The
+proteins (hits) with significant temporal changes will be clustered
+according to their time-based patterns.</li>
+<li><strong>Perform gene set enrichment analysis</strong>: For each
+cluster, a gene set enrichment analysis will be performed to determine
+if specific biological processes are up- or downregulated after
+feeding.</li>
+</ul>
+</div>
+<div id="note" class="section level3">
+<h3>Note</h3>
+<p>The documentation of all the <strong>SplineOmics</strong> package
+functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">here</a></p>
+</div>
 </div>
 <div id="load-the-packages" class="section level1">
 <h1>Load the packages</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SplineOmics)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(readxl)  <span class="co"># for loading Excel files</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(here)    <span class="co"># For managing filepaths</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; here() starts at /home/thomasrauter/Documents/PhD/projects/DGTX/R_packages/SplineOmics</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">library</span>(dplyr)   <span class="co"># For data manipulation</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;dplyr&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:stats&#39;:</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt;     filter, lag</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:base&#39;:</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span></code></pre></div>
 </div>
 <div id="load-the-files" class="section level1">
 <h1>Load the files</h1>
-<p>In this example, the data.xlsx file contains the numeric values (the
-intensities) and also the feature descriptions, such as gene and protein
-name (= annotation part)</p>
+<p>In this example, the proteomics_data.rds file contains the numeric
+values (the intensities) and also the feature descriptions, such as gene
+and protein name (= annotation part). Usually, you would load the data
+from for example an Excel file, but the .rds file is more compressed,
+which is the reason this format was chosen here to limit the size of the
+SplineOmics package.</p>
 <p>The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.</p>
 <p>(These example files are part of the package and don’t have to be
 present on your system).</p>
 <p>Please note that this dataset is an actual experimental dataset, but
 the annotation information, such as gene names, has been removed since
-it is not yet published. Instead, the dataset includes randomly
-generated gene symbols and gene names corresponding to Cricetulus
-griseus (Chinese Hamster) for each row. This is intended to demonstrate
-the functionality of the package.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data_excel <span class="ot">&lt;-</span> </span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="fu">system.file</span>(</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>      <span class="st">&quot;extdata&quot;</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>      <span class="st">&quot;proteomics_data.xlsx&quot;</span>,</span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>      <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>      )</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    )</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; New names:</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; • `` -&gt; `...38`</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="fu">system.file</span>(</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    <span class="st">&quot;extdata&quot;</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    <span class="st">&quot;proteomics_meta.xlsx&quot;</span>,</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>    <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    )</span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  )</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co"># Extract the annotation part from the dataframe.</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>first_na_col <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">is.na</span>(data_excel[<span class="dv">1</span>,]))[<span class="dv">1</span>]</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> data_excel <span class="sc">|&gt;</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>((first_na_col <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(data_excel)) <span class="sc">|&gt;</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>))</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="fu">print</span>(data_excel)</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,165 × 40</span></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;  1 Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;  2 Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;  3 Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;  4 &lt;NA&gt;        15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
-<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;  5 &lt;NA&gt;        14.5… 14.6… 14.5… 14.6… 14.6… 14.6… 14.6… 14.6… 14.6… 14.5… 14.5…</span></span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;        15.9… 16.0… 16.0… 16.0… 15.8… 16.0… 15.9… 15.8… 16.0… 15.9… 15.9…</span></span>
-<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;  7 &lt;NA&gt;        16.1… 16.0… 16.1… 16.1… 16.0… 16.1… 16.0… 16.0… 16.0… 15.9… 16.0…</span></span>
-<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt;  8 &lt;NA&gt;        15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
-<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;        14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
-<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;        15.0… 14.9… 15.1… 15.0… 15.0… 15.1… 14.9… 15.1… 14.9… 15.0… 14.9…</span></span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,155 more rows</span></span>
-<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; # ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
-<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
-<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
-<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
-<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, Gene_symbol &lt;chr&gt;,</span></span>
-<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; #   Gene_name &lt;chr&gt;</span></span>
-<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
-<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7,162 × 2</span></span>
-<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;    Gene_symbol  Gene_name                               </span></span>
-<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;        &lt;chr&gt;                                   </span></span>
-<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt;  1 LOC113838844 cone-rod homeobox protein-like          </span></span>
-<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;  2 Bag4         BAG cochaperone 4                       </span></span>
-<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt;  3 Aoc3         amine oxidase copper containing 3       </span></span>
-<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt;  4 Heatr9       HEAT repeat containing 9                </span></span>
-<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt;  5 Wdr83os      WD repeat domain 83 opposite strand     </span></span>
-<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt;  6 Cubn         cubilin                                 </span></span>
-<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt;  7 Arhgef5      Rho guanine nucleotide exchange factor 5</span></span>
-<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt;  8 LOC103158723 40S ribosomal protein S9                </span></span>
-<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt;  9 Ncbp2as2     NCBP2 antisense 2 (head to head)        </span></span>
-<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt; 10 Dynlt1       dynein light chain Tctex-type 1         </span></span>
-<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; # ℹ 7,152 more rows</span></span>
-<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
-<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
-<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
-<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
-<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
-<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
-<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
-<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
-<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
-<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
-<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
-<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
-<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
-<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span></code></pre></div>
+it was not yet published at the time of making the SplineOmics package
+public. Instead, the dataset includes randomly generated gene symbols
+and gene names corresponding to Cricetulus griseus (Chinese Hamster) for
+each row. This is intended to demonstrate the functionality of the
+package.</p>
+<p>The left part of data contains the numeric values, and the right part
+the annotation info, which can be copied in a separate dataframe, as
+shown below.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="st">&quot;proteomics_data.rds&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  ))</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="fu">system.file</span>(</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>    <span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>    <span class="st">&quot;proteomics_meta.xlsx&quot;</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    <span class="at">package =</span> <span class="st">&quot;SplineOmics&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    )</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  )</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co"># Extract the annotation part from the dataframe.</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>first_na_col <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">is.na</span>(data[<span class="dv">1</span>,]))[<span class="dv">1</span>]</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>((first_na_col <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(data)) <span class="sc">|&gt;</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>))</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="fu">print</span>(data)</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4,165 × 40</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;  1 Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;  2 Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;  3 Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;  4 &lt;NA&gt;        15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;  5 &lt;NA&gt;        15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;        14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;  7 &lt;NA&gt;        16.3… 16.4… 16.4… 16.4… 16.4… 16.4… 16.3… 16.3… 16.4… 16.4… 16.4…</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;  8 &lt;NA&gt;        16.7… 16.7… 16.6… 16.7… 16.7… 16.7… 16.7… 16.7… 16.6… 16.6… 16.7…</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;        13.8… 13.7… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9…</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;        21.8… 21.7… 21.6… 21.8… 21.6… 21.5… 21.5… 21.6… 21.5… 21.6… 21.5…</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; # ℹ 4,155 more rows</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; # ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, Gene_symbol &lt;chr&gt;,</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; #   Gene_name &lt;chr&gt;</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4,162 × 2</span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="co">#&gt;    Gene_symbol  Gene_name                                              </span></span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;        &lt;chr&gt;                                                  </span></span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;  1 LOC113838844 cone-rod homeobox protein-like                         </span></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;  2 Wdr83os      WD repeat domain 83 opposite strand                    </span></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;  3 Cubn         cubilin                                                </span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;  4 Dynlt1       dynein light chain Tctex-type 1                        </span></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt;  5 Ostc         oligosaccharyltransferase complex non-catalytic subunit</span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt;  6 Unc5cl       unc-5 family C-terminal like                           </span></span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a><span class="co">#&gt;  7 Cfl1         cofilin 1                                              </span></span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co">#&gt;  8 LOC100752202 HEN methyltransferase 1                                </span></span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co">#&gt;  9 LOC100755162 acyl-coenzyme A synthetase ACSM5, mitochondrial        </span></span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="co">#&gt; 10 LOC100768921 40S ribosomal protein S21                              </span></span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt; # ℹ 4,152 more rows</span></span></code></pre></div>
+<div id="bring-the-inputs-into-the-standardized-format" class="section level2">
+<h2>Bring the Inputs into the Standardized Format</h2>
+<p>Since <code>data</code> is not in the format required by the
+<strong>SplineOmics</strong> package, it needs some processing. The
+SplineOmics package requires data to be a numeric matrix, so no element
+is allowed to be anything else than a number. This can be done with a
+few commands in R, but if your file has a specific structure, the
+function <code>extract_data()</code> can handle this automatically.</p>
+<div id="file-structure-requirements" class="section level3">
+<h3>File Structure Requirements</h3>
+<p>If your file looks like the one used here, where:</p>
+<ul>
+<li>The <strong>data matrix field</strong> is on the left</li>
+<li>The <strong>annotation info</strong> is on the right</li>
+<li>These fields are separated by one empty column</li>
+</ul>
 </div>
-<div id="bring-the-inputs-into-the-standardized-required-format" class="section level1">
-<h1>Bring the inputs into the standardized (required) format</h1>
-<p>Since data_excel is not in the format that is required by the
-SplineOmics package, it still needs some processing. This can be with a
-few commands in R, but if your file looks like the one here, with the
-data matrix field on the left and the annotation info on the right,
-separated by one empty column, then the function extract_data() can do
-this processing automatically. It identifies this data matrix field, and
-puts it into a dataframe. The column headers are made up of all the
-infos that are written in the cells above the respective column of this
-data matrix field. The rowheaders are increasing numbers if no
-annotation columns were specified. In this example, the annotation
-columns “First.Protein.Description” and “ID” are specified so that these
-are combined and form the rowheaders (feature names). They will be used
-to label any plots were a feature is shown individually (such as the
-spline plots with the datapoints from an individual feature).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">extract_data</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> data_excel,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">feature_name_columns =</span> <span class="fu">c</span>(<span class="st">&quot;Gene_name&quot;</span>),</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">user_prompt =</span> <span class="cn">FALSE</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  )</span></code></pre></div>
+<div id="usage-of-the-extract_data-function" class="section level3">
+<h3>Usage of the extract_data() function</h3>
+<p>Then, <code>extract_data()</code> can:</p>
+<ul>
+<li><strong>Identify the data matrix field</strong> and return it as a
+numeric matrix.</li>
+<li><strong>Create column headers</strong> from the information written
+in the cells above the respective columns of the data matrix field.</li>
+<li><strong>Assign rowheaders</strong>:
+<ul>
+<li>If no annotation columns are specified, rowheaders will be
+increasing numbers.</li>
+<li>If annotation columns are specified (like
+<code>&quot;First.Protein.Description&quot;</code> and <code>&quot;ID&quot;</code> in this
+example), these will be combined to form the rowheaders (feature
+names).</li>
+</ul></li>
+</ul>
+</div>
+<div id="usage-in-plotting" class="section level3">
+<h3>Usage in Plotting</h3>
+<p>The generated rowheaders will be used to label any plots where a
+feature is shown individually, such as:</p>
+<ul>
+<li><strong>Spline plots</strong> with the datapoints from an individual
+feature.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">extract_data</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="co"># The dataframe with the numbers on the left and info on the right.</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">data =</span> data,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="co"># Use this annotation column for the feature names.</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">feature_name_columns =</span> <span class="fu">c</span>(<span class="st">&quot;Gene_name&quot;</span>),  </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="co"># When TRUE, you must confirm that data is in the required format.</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">user_prompt =</span> <span class="cn">FALSE</span>   </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+</div>
 </div>
 <div id="perform-eda-exploratory-data-analysis" class="section level1">
 <h1>Perform EDA (exploratory data analysis)</h1>
-<p>The first step in analysing data is usually EDA. EDA involves
-summarizing the main characteristics of the data, often using plots.
-This can involve densitiy distributions, boxplots, PCA, correlation
-heatmaps, and more. This process can be carried out by using the package
-function explore_data(). The necessary arguments are the data matrix
-(data), the meta table (meta), the name of the column that contains the
-levels of the experiment (condition) (the levels here are Exponential
-and Stationary), and the report_info list, that contains general info
-about the analysis. Optional arguments are meta_batch_column and
-meta_batch2_column, that allow to specify the column name that contain
-batch effect 1 and 2. These columns will be used to run the
-removeBatchEffect function of limma to remove the batch effect of the
-data for plotting. When at least one batch column is provided like this,
-the function will not just generate one EDA HTML report, but two. One
-for the uncorrected data, and one for the batch corrected data. These
-reports are written either in the current working dir as default
-location, or to a location specified with the optional argument
-report_dir. The function also returns all plots generated. Lastly, if it
-is desired that no report should be generated, the optional argument
-report can be set to FALSE.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>report_info <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">omics_data_type =</span> <span class="st">&quot;PTX&quot;</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">data_description =</span> <span class="st">&quot;Proteomics data of CHO cells&quot;</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">data_collection_date =</span> <span class="st">&quot;February 2024&quot;</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">analyst_name =</span> <span class="st">&quot;Thomas Rauter&quot;</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">contact_info =</span> <span class="st">&quot;thomas.rauter@plus.ac.at&quot;</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;DGTX&quot;</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  )</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="st">&quot;explore_data&quot;</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  )</span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">create_splineomics</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">data =</span> data,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">meta =</span> meta,</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">annotation =</span> annotation,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">condition =</span> <span class="st">&quot;Phase&quot;</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">meta_batch_column =</span> <span class="st">&quot;Reactor&quot;</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">explore_data</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<p>Now that we have the data in the required format (numeric matrix) we
+can go on.</p>
+<p>The first step in analyzing data is typically <strong>Exploratory
+Data Analysis (EDA)</strong>. EDA involves summarizing the main
+characteristics of the data, often through visualizations.</p>
+<div id="common-eda-plots" class="section level3">
+<h3>Common EDA Plots</h3>
+<p>Some common types of EDA plots include:</p>
+<ul>
+<li><strong>Density distributions</strong></li>
+<li><strong>Boxplots</strong></li>
+<li><strong>PCA (Principal Component Analysis)</strong></li>
+<li><strong>Correlation heatmaps</strong></li>
+</ul>
+<p>Again, you can generate those plots yourself with a few lines of R
+code. However, if you prefer, for convenience, the
+<code>explore_data()</code> function can handle this for you.</p>
+</div>
+<div id="using-explore_data-for-eda" class="section level3">
+<h3>Using <code>explore_data()</code> for EDA</h3>
+<p>The <strong>SplineOmics</strong> package provides the function
+<code>explore_data()</code> to perform EDA. This function requires the
+following arguments:</p>
+<ul>
+<li><strong>data</strong>: The numeric data matrix.</li>
+<li><strong>meta</strong>: The metadata table.</li>
+<li><strong>condition</strong>: The name of the column in the metadata
+that contains the levels of the experiment (e.g., “Exponential” and
+“Stationary”).</li>
+<li><strong>report_info</strong>: A list that contains general
+information about the analysis, such as the name of the analyst and the
+datatype (e.g. proteomics)</li>
+</ul>
+</div>
+<div id="optional-arguments" class="section level3">
+<h3>Optional Arguments</h3>
+<p>In addition to the required arguments, <code>explore_data()</code>
+offers several optional arguments:</p>
+<ul>
+<li><p><strong>meta_batch_column</strong>: The name of the column that
+contains the first batch effect.</p></li>
+<li><p><strong>meta_batch2_column</strong>: The name of the column that
+contains the second batch effect.</p>
+<p>If at least one batch column is provided, the function will:</p>
+<ul>
+<li>Use the <code>removeBatchEffect()</code> function from
+<strong>limma</strong> to remove the batch effect from the data before
+plotting.</li>
+<li>Generate two EDA HTML reports: one for the <strong>uncorrected
+data</strong> and one for the <strong>batch-corrected
+data</strong>.</li>
+</ul></li>
+</ul>
+</div>
+<div id="output-and-report-options" class="section level3">
+<h3>Output and Report Options</h3>
+<ul>
+<li>By default, the reports are saved in the <strong>current working
+directory</strong>, but this location can be changed using the
+<code>report_dir</code> argument.</li>
+<li>The function also <strong>returns all plots</strong> generated
+during the analysis, so that you can modify them according to your own
+needs.</li>
+<li>If you do not want a report to be generated, you can set the
+<code>report</code> argument to <code>FALSE</code> (when you for example
+just want the figures in the R environment)</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Those fields are mandatory, because we believe that when such a report is</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># opened after half a year, those infos can be very helpful. </span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>report_info <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">omics_data_type =</span> <span class="st">&quot;PTX&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">data_description =</span> <span class="st">&quot;Proteomics data of CHO cells&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">data_collection_date =</span> <span class="st">&quot;February 2024&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">analyst_name =</span> <span class="st">&quot;Thomas Rauter&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">contact_info =</span> <span class="st">&quot;thomas.rauter@plus.ac.at&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;DGTX&quot;</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  )</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="st">&quot;explore_data&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+<div id="splineomics-object" class="section level2">
+<h2>SplineOmics Object</h2>
+<p>In the SplineOmics package, multiple functions take the same
+arguments as input. To make this easier and to avoid errors, we decided
+that those arguments are not provided individually to the functions, but
+are all stored in an R6 object (which is of type ‘SplineOmics’) and then
+this object is passed to the functions. Additionally, some functions
+generate intermediate output, which is just necessary for the next
+function in the workflow, which is then also just passed along by
+updating the SplineOmics object. But you don’t have to worry about
+this.</p>
+<div id="functionality" class="section level3">
+<h3>Functionality</h3>
+<p>The SplineOmics object can be seen as a container where all necessary
+arguments are stored. Each function retrieves the required arguments
+from the object and potentially adds new data or results back into
+it.</p>
+</div>
+<div id="documentation" class="section level3">
+<h3>Documentation</h3>
+<p>The documentation of the function that creates the SplineOmics object
+can be found <a href="https://csbg.github.io/SplineOmics/reference/create_splineomics.html">here</a>
+and the documentation of the function that updates it [<a href="https://csbg.github.io/SplineOmics/reference/update_splineomics.html">here</a></p>
+<p>The documentation for each function that takes the SplineOmics object
+as input specifies which arguments must be present in the SplineOmics
+object when it is passed to the respective function.</p>
+</div>
+</div>
+<div id="required-arguments-create_splineomics" class="section level2">
+<h2>Required Arguments <code>create_splineomics()</code></h2>
+<ul>
+<li><strong>data</strong>: A matrix with the data</li>
+<li><strong>meta</strong>: Metadata associated with the data.</li>
+<li><strong>condition</strong>: Meta column name of the levels (e.g.,
+Exponential and Stationary).</li>
+</ul>
+</div>
+<div id="optional-arguments-create_splineomics" class="section level2">
+<h2>Optional Arguments <code>create_splineomics()</code></h2>
+<ul>
+<li><strong>rna_seq_data</strong>: An object containing the preprocessed
+RNA-seq data, such as the output from <code>limma::voom</code>
+function.</li>
+<li><strong>annotation</strong>: A dataframe with the feature
+descriptions of data.</li>
+<li><strong>report_info</strong>: A list containing general information
+about the analysis.</li>
+<li><strong>meta_batch_column</strong>: Column for meta batch
+information.</li>
+<li><strong>meta_batch2_column</strong>: Column for secondary meta batch
+information.</li>
+<li><strong>design</strong>: A limma design formula</li>
+<li><strong>spline_params</strong>: Parameters for the spline
+functions.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># splineomics now contains the SplineOmics object.</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">create_splineomics</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">data =</span> data,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">meta =</span> meta,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">annotation =</span> annotation,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">condition =</span> <span class="st">&quot;Phase&quot;</span>,  <span class="co"># Column of meta that contains the levels.</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">meta_batch_column =</span> <span class="st">&quot;Reactor&quot;</span>  <span class="co"># For batch effect removal</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>Now that we have the SplineOmics object defined, we can perform our
+exploratory data analysis.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">explore_data</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,   <span class="co"># SplineOmics object</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  )</span></code></pre></div>
-<p>You can view the generated analysis report of the
-not-batch-corrected-data here: <a href="../inst/reports/report.html">here</a></p>
+<p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html">Here</a>
+you can see the HTML report of the explore_data() function with the NOT
+batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html">here</a>
+the report for the batch-corrected data.</p>
 <p>The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
 Analysis, Time Series Analysis, and Dimensionality Reduction and
@@ -538,78 +724,186 @@ test out what happens when you do this, along with testing how other
 hyperparameter choices influence the results, with the package function
 screen_limma_hyperparams().</p>
 </div>
-<div id="find-the-best-hyperparameters" class="section level1">
-<h1>Find the best hyperparameters</h1>
-<p>Before we can run the limma spline analysis, we have to find out
-which “hyperparameters” are the best. Hyperparameters in this context
-are for example degree of freedom, different versions of the data
-(outlier removed vs. not removed), different limma design formulas, etc.
-Rationally thinking about which combination of hyperparameters to use is
-very challenging. Instead, it is often better to just try out a bunch of
-combinations and choose the best. The function
-screen_limma_hyperparams() does this for you. For each hyperparameter,
-you can just specify all the values that you would like to try, and the
-function then runs the limma spline analysis with the combinations that
-can be formed with the hyperparameters that you specified. Not every
-single combo is generated, but instead there are “inner” and “outer”
-hyperparameters, and only for all “outer” hyperparameters, all combos
-are generated. The “inner” hyperparameters are the adj. p-value
-thresholds and the spline parameters. For example, if you have two
-different versions of one dataset (one time the full dataset, and one
-time the dataset with some potential outliers removed), these are
-considered “outer” hyperparameters in this context. The function would
-generate all possible comparisons for the “outer” hyperparameters, which
-is just a single comparison. Then, for both versions of the data, every
-“inner” hyperparameter combo is generated. Lets say you specified
-natural cubic splines for both, with a degree of freedom of either 2 or
-3. For the adj. p-value threshold, you specified 0.05 or 0.1. For each
-version of data, it would test out all combinations of the spline
-parameters and the adj. p-value threshold. In this case, this is DoF =
-2, thesh = 0.05; DoF = 3, tresh = 0.05; DoF = 2, tresh = 0.1; DoF = 3,
-tresh = 0.1.</p>
+<div id="finding-the-best-hyperparameters" class="section level2">
+<h2>Finding the Best Hyperparameters</h2>
+<p>Before running the <strong>limma spline analysis</strong>, it is
+important to find the best “hyperparameters”. In this context,
+hyperparameters include:</p>
+<ul>
+<li><strong>Degree of freedom (DoF)</strong></li>
+<li><strong>Different versions of the data</strong> (e.g., outlier
+removed vs. not removed)</li>
+<li><strong>Different limma design formulas</strong></li>
+</ul>
+<div id="challenge-of-hyperparameter-selection" class="section level3">
+<h3>Challenge of Hyperparameter Selection</h3>
+<p>Rationally determining the best combination of hyperparameters can be
+very challenging. By rationally, I mean deciding upon the final
+hyperparameters without ever testing any, just by scientific reasoning.
+It is much easier just testing a few and seeing how they actually
+behave. However, manually selecting combinations can be tedious, and you
+have to work very systematically, which can be challenging. To solve
+this problem, the <code>screen_limma_hyperparams()</code> function was
+written.</p>
+</div>
+<div id="using-screen_limma_hyperparams" class="section level3">
+<h3>Using <code>screen_limma_hyperparams()</code></h3>
+<p>The function <code>screen_limma_hyperparams()</code> automates the
+process of testing different combinations of hyperparameters. Here’s how
+it works:</p>
+<ul>
+<li><strong>Specify values</strong>: For each hyperparameter, you can
+specify all the values you want to test.</li>
+<li><strong>Run combinations</strong>: The function runs the
+<strong>limma spline analysis</strong> with combinations formed from the
+hyperparameters you’ve provided in a semi combinatorial way.</li>
+</ul>
+</div>
+<div id="inner-vs.-outer-hyperparameters" class="section level3">
+<h3>Inner vs. Outer Hyperparameters</h3>
+<p>Semi combinatorial here means that not every possible combination is
+generated. Instead, there are <strong>inner</strong> and
+<strong>outer</strong> hyperparameters:</p>
+<ul>
+<li><strong>Outer hyperparameters</strong>: These include things like
+<strong>different versions of the dataset</strong> (e.g., full dataset
+vs. dataset with outliers removed).
+<ul>
+<li>All possible combinations of outer hyperparameters are
+generated.</li>
+</ul></li>
+<li><strong>Inner hyperparameters</strong>: These include
+<strong>adjusted p-value thresholds</strong> and <strong>spline
+parameters</strong> (e.g., degree of freedom).
+<ul>
+<li>For each version of the data (outer hyperparameter), all
+combinations of inner hyperparameters are tested.</li>
+</ul></li>
+</ul>
+<p>This approach is neccessary, because otherwise the amount of combos
+would explode.</p>
+</div>
+<div id="example" class="section level3">
+<h3>Example</h3>
+<p>For example, if you have two versions of a dataset (one full dataset,
+and one with some outliers removed), these versions are considered outer
+hyperparameters. Additionaly, lets say, you want to test two different
+limma design formulas, formula 1 and 2. The function will test out all
+combinations of those outer hyperparameters and compare them with each
+other, which results in a total of 6 combinations here:</p>
+<ul>
+<li><p><strong>Full Dataset Formula 1</strong> vs <strong>Full Dataset
+Formula 2</strong></p></li>
+<li><p><strong>Full Dataset Formula 1</strong> vs <strong>Outliers
+Removed Dataset Formula 1</strong></p></li>
+<li><p><strong>Full Dataset Formula 1</strong> vs <strong>Outliers
+Removed Dataset Formula 2</strong></p></li>
+<li><p><strong>Full Dataset Formula 2</strong> vs <strong>Outliers
+Removed Dataset Formula 1</strong></p></li>
+<li><p><strong>Full Dataset Formula 2</strong> vs <strong>Outliers
+Removed Dataset Formula 2</strong></p></li>
+<li><p><strong>Outliers Removed Dataset Formula 1</strong> vs
+<strong>Outliers Removed Dataset Formula 2</strong></p></li>
+</ul>
+<p>Let’s say you specified the following inner hyperparameters:</p>
+<ul>
+<li><strong>Spline parameters</strong>: Natural cubic splines with a
+degree of freedom of either 2 or 3.</li>
+<li><strong>Adjusted p-value threshold</strong>: 0.05 or 0.1.</li>
+</ul>
+<p>The function will generate and test all combinations of the spline
+parameters and p-value thresholds for all 4 combos:</p>
+<p>Combo 1:</p>
+<ul>
+<li><p><strong>DoF = 2, threshold = 0.05</strong></p></li>
+<li><p><strong>DoF = 3, threshold = 0.05</strong></p></li>
+<li><p><strong>DoF = 2, threshold = 0.1</strong></p></li>
+<li><p><strong>DoF = 3, threshold = 0.1</strong></p></li>
+</ul>
+<p>Combo 2:</p>
+<ul>
+<li><p><strong>DoF = 2, threshold = 0.05</strong></p></li>
+<li><p><strong>DoF = 3, threshold = 0.05</strong></p></li>
+<li><p><strong>DoF = 2, threshold = 0.1</strong></p></li>
+<li><p><strong>DoF = 3, threshold = 0.1</strong></p></li>
+</ul>
+<p>Combo 3: …</p>
+<p>This allows you to systematically explore different combinations and
+select the optimal hyperparameters for your analysis.</p>
+<p>Below is an example for our proteomics data:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> data </span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>meta1 <span class="ot">&lt;-</span> meta</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> data[, <span class="sc">!</span>(<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">c</span>(</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  )</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  )]</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span><span class="st">`</span><span class="at">Sample.ID</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  ), ]</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>datas <span class="ot">&lt;-</span> <span class="fu">list</span>(data1, data2) </span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>datas_descr <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="st">&quot;full_data&quot;</span>,</span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  <span class="st">&quot;outliers_removed&quot;</span></span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>  ) </span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>metas <span class="ot">&lt;-</span> <span class="fu">list</span>(meta1, meta2) </span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>  <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,</span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="st">&quot;~ 1 + X + Reactor&quot;</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  ) </span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>  <span class="st">&quot;hyperparams_screen_reports&quot;</span></span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>  ) </span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  <span class="fl">0.1</span></span>
-<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>  )</span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a></span>
-<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="co"># Every row a combo to test.</span></span>
-<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a>  <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>),</span>
-<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
-<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a>  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>),</span>
-<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>  <span class="at">knots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>))),                                                        <span class="at">bknots =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">c</span>(<span class="cn">NA</span>)))</span>
-<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a>  )</span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">screen_limma_hyperparams</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># Remove the &quot;outliers&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> data[, <span class="sc">!</span>(<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  )</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  )]</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co"># Adjust meta so that it matches data2</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span><span class="st">`</span><span class="at">Sample.ID</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  ), ]</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co"># As mentioned above, all the values of one hyperparameter are stored </span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co"># and provided as a list.</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>datas <span class="ot">&lt;-</span> <span class="fu">list</span>(data1, data2) </span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co"># This will be used to describe the versions of the data.</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>datas_descr <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="st">&quot;full_data&quot;</span>,</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  <span class="st">&quot;outliers_removed&quot;</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>  ) </span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>metas <span class="ot">&lt;-</span> <span class="fu">list</span>(meta1, meta2) </span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co"># Test two different limma designs</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>  <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  <span class="st">&quot;~ 1 + X + Reactor&quot;</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  ) </span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co"># Specify the meta &quot;level&quot; column</span></span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a>  <span class="st">&quot;hyperparams_screen_reports&quot;</span></span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>  ) </span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="co"># To remove the batch effect</span></span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a></span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a><span class="co"># Test out two different p-value thresholds (inner hyperparameter)</span></span>
+<span id="cb7-47"><a href="#cb7-47" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-48"><a href="#cb7-48" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
+<span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a>  <span class="fl">0.1</span></span>
+<span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a>  )</span>
+<span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a></span>
+<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a><span class="co"># Create a dataframe with combinations of spline parameters to test</span></span>
+<span id="cb7-53"><a href="#cb7-53" tabindex="-1"></a><span class="co"># (every row a combo to test)</span></span>
+<span id="cb7-54"><a href="#cb7-54" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-55"><a href="#cb7-55" tabindex="-1"></a>   <span class="co"># &#39;n&#39; stands for natural cubic splines, b for B-splines.</span></span>
+<span id="cb7-56"><a href="#cb7-56" tabindex="-1"></a>  <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;b&quot;</span>),  </span>
+<span id="cb7-57"><a href="#cb7-57" tabindex="-1"></a>  <span class="co"># Degree is not applicable (NA) for natural splines.</span></span>
+<span id="cb7-58"><a href="#cb7-58" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="dv">2</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>),           </span>
+<span id="cb7-59"><a href="#cb7-59" tabindex="-1"></a>  <span class="co"># Degrees of freedom (DoF) to test.</span></span>
+<span id="cb7-60"><a href="#cb7-60" tabindex="-1"></a>  <span class="co"># Higher dof means spline can fit more complex patterns.</span></span>
+<span id="cb7-61"><a href="#cb7-61" tabindex="-1"></a>  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>)         </span>
+<span id="cb7-62"><a href="#cb7-62" tabindex="-1"></a>)</span>
+<span id="cb7-63"><a href="#cb7-63" tabindex="-1"></a></span>
+<span id="cb7-64"><a href="#cb7-64" tabindex="-1"></a><span class="fu">print</span>(spline_test_configs)</span>
+<span id="cb7-65"><a href="#cb7-65" tabindex="-1"></a><span class="co">#&gt;   spline_type degree dof</span></span>
+<span id="cb7-66"><a href="#cb7-66" tabindex="-1"></a><span class="co">#&gt; 1           n     NA   2</span></span>
+<span id="cb7-67"><a href="#cb7-67" tabindex="-1"></a><span class="co">#&gt; 2           n     NA   3</span></span>
+<span id="cb7-68"><a href="#cb7-68" tabindex="-1"></a><span class="co">#&gt; 3           b      2   3</span></span>
+<span id="cb7-69"><a href="#cb7-69" tabindex="-1"></a><span class="co">#&gt; 4           b      4   4</span></span></code></pre></div>
+<p>Now that we specified all the values for each hyperparameter that we
+want to test, we can run the <code>screen_limma_hyperparams()</code>
+function.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>SplineOmics<span class="sc">::</span><span class="fu">screen_limma_hyperparams</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  splineomics,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  datas,</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  datas_descr,</span>
@@ -619,35 +913,54 @@ tresh = 0.1.</p>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  report_dir,</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  pthresholds,</span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  )</span></code></pre></div>
-<p>To see the output HTML report, click here: <a href="../inst/reports/hyperparams_screen_report.html">here</a></p>
+<p>As mentioned, this function generates a report for each comparison of
+the outer hyperparameters, which are too many to show here. You can view
+an example report <a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html">here</a></p>
+<p>This report contains the results for the comparison of the “outer”
+hyperparameters data 1 and design (formula) 1 compared against data 1
+and design 2. For both of those, all combinations of the “inner”
+hyperparameters are generated (every possible combination of all
+specified adj. p-value thresholds and spline configs).</p>
+<p>The encoding used in the reports and the titles is <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html">here</a>
+(This is part of the output of the screen_limma_hyperparams
+function).</p>
+</div>
+</div>
 </div>
 <div id="run-limma-spline-analysis" class="section level1">
 <h1>Run limma spline analysis</h1>
-<p>Once we identified the hyperparameters, that are likely the best
-ones, we can run the limma spline analysis with them and get the
-results.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">update_splineomics</span>(</span>
+<p>Once we identified the hyperparameters that are likely the best ones,
+we can run the limma spline analysis with them and get the results.</p>
+<p>Lets just assume for now that the new parameters, with which the
+SplineOmics object is updated, are the best for this analysis. The
+choice depends on the analysis. For example, for this analysis, natural
+cubic splines (n) with a dof of two seemed to fit the data best (not
+overfitting, but also not underfitting), which was the reason those
+spline parameters were chosen.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">update_splineomics</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">design =</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">data =</span> data1,  <span class="co"># data1 and meta1 == data and meta that were loaded before. </span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">meta =</span> meta1,  <span class="co"># This is for illustration</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">design =</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,  <span class="co"># best design formula</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">data =</span> data2,   <span class="co"># data without &quot;outliers&quot; was better</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">meta =</span> meta2,  </span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">spline_params =</span> <span class="fu">list</span>(</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),   </span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),   <span class="co"># natural cubic splines</span></span>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    )</span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>)</span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co"># Run the limma spline analysis</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> <span class="fu">run_limma_splines</span>(</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  splineomics</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  )</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; [32mInfo[0m limma spline analysis completed successfully</span></span></code></pre></div>
+<p>Run the <code>run_limma_splines()</code> function with the updated
+SplineOmics object:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">run_limma_splines</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  splineomics</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  )</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; [32mInfo[0m limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
-each element is a specific “category” of results. Each of those elements
-is a list, containing as elements the respective limma topTables, either
-for each level or each comparison between two levels.</p>
+each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
+document</a> for an explanation of the different result categories. Each
+of those elements is a list, containing as elements the respective limma
+topTables, either for each level or each comparison between two
+levels.</p>
 <p>The element “time_effect” is a list, where each element is the
 topTable where the p-value for each feature for the respective level are
 reported.</p>
@@ -667,28 +980,29 @@ histograms an volcano plots.</p>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="st">&quot;create_limma_reports&quot;</span></span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  )</span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>plots <span class="ot">&lt;-</span> <span class="fu">create_limma_report</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>plots <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">create_limma_report</span>(</span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  splineomics,</span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
-function <a href="../inst/reports/create_limma_report.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html">here</a>.</p>
 </div>
 <div id="cluster-the-hits-significant-features" class="section level1">
 <h1>Cluster the hits (significant features)</h1>
 <p>After we obtained the limma spline results, we can cluster the hits
 based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Then,
-hierarchical clustering is used to place every hit in one of as many
+hit is by setting an adj. p-value threshold for every level. Hits are
+features (e.g. proteins) that have an adj. p-value below the threshold.
+Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fl">0.05</span></span>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(  <span class="co"># 0.05 for both levels</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fl">0.05</span>,  <span class="co"># exponential</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fl">0.05</span>   <span class="co"># stationary</span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  )</span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="dv">6</span><span class="dt">L</span>,</span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="dv">3</span><span class="dt">L</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="dv">6</span><span class="dt">L</span>,  <span class="co"># 6 clusters for the exponential phase level</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="dv">3</span><span class="dt">L</span>   <span class="co"># 3 clusters for the stationary phase level</span></span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  )</span>
 <span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
@@ -696,102 +1010,140 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="st">&quot;clustering_reports&quot;</span></span>
 <span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  )</span>
 <span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>plot_info <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>plot_info <span class="ot">=</span> <span class="fu">list</span>(  <span class="co"># For the spline plots</span></span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">&quot;log2 intensity&quot;</span>,</span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;min&quot;</span>,</span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">c</span>(<span class="st">&quot;Feeding&quot;</span>),</span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">c</span>(<span class="dv">0</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;min&quot;</span>,  <span class="co"># our measurements were in minutes</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">c</span>(<span class="st">&quot;Feeding&quot;</span>),  </span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">c</span>(<span class="dv">0</span>)  <span class="co"># Feeding was at 0 minutes.</span></span>
 <span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>)</span>
 <span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a></span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a>genes <span class="ot">&lt;-</span> data_excel[[gene_column_name]][<span class="dv">4</span><span class="sc">:</span><span class="fu">nrow</span>(data_excel)]</span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a></span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> <span class="fu">cluster_hits</span>(</span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>  <span class="at">analysis_type =</span> <span class="st">&quot;time_effect&quot;</span>,</span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  )</span></code></pre></div>
-<p>Here you can see a <a href="../inst/reports/clustering_report.html">cluster_hits
-report</a></p>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co"># Get all the gene names. They are used for generating files</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co"># which contents can be directly used as the input for the Enrichr webtool,</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co"># if you prefer to manually perform the enrichment. Those files are</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co"># embedded in the output HTML report and can be downloaded from there.</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>genes <span class="ot">&lt;-</span> data_excel[[gene_column_name]][<span class="dv">4</span><span class="sc">:</span><span class="fu">nrow</span>(data_excel)]</span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  <span class="co"># Cluster the hits from the time_effect results. You can also cluster</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>  <span class="co"># the hits from the other two limma result categories by specifying</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  <span class="co"># it here with this argument.</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a>  <span class="at">analysis_type =</span> <span class="st">&quot;time_effect&quot;</span>,  </span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a>  )</span></code></pre></div>
+<p>You can view the generated analysis report of the cluster_hits
+function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html">here</a>.</p>
 </div>
 <div id="perform-gene-set-enrichment-analysis-gsea" class="section level1">
 <h1>Perform gene set enrichment analysis (GSEA)</h1>
-<p>To each clustered hit, the respective gene can be assigned and GSEA
+<p>Usually, the final step in such a bioinformatics analysis is GSEA. To
+each clustered hit, the respective gene can be assigned and GSEA
 performed. For this, the Enrichr databases of choice have to be
 downloaded:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>gene_set_lib <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="st">&quot;WikiPathways_2019_Human&quot;</span>,</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="st">&quot;NCI-Nature_2016&quot;</span>,</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="st">&quot;TRRUST_Transcription_Factors_2019&quot;</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="st">&quot;MSigDB_Hallmark_2020&quot;</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="st">&quot;GO_Cellular_Component_2018&quot;</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="st">&quot;CORUM&quot;</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="st">&quot;KEGG_2019_Human&quot;</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="st">&quot;TRANSFAC_and_JASPAR_PWMs&quot;</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="st">&quot;ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X&quot;</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="st">&quot;GO_Biological_Process_2018&quot;</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="st">&quot;GO_Molecular_Function_2018&quot;</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="st">&quot;Human_Gene_Atlas&quot;</span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  )</span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Specify which databases you want to download from Enrichr</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>gene_set_lib <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="st">&quot;WikiPathways_2019_Human&quot;</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="st">&quot;NCI-Nature_2016&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="st">&quot;TRRUST_Transcription_Factors_2019&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="st">&quot;MSigDB_Hallmark_2020&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="st">&quot;GO_Cellular_Component_2018&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="st">&quot;CORUM&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="st">&quot;KEGG_2019_Human&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="st">&quot;TRANSFAC_and_JASPAR_PWMs&quot;</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="st">&quot;ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="st">&quot;GO_Biological_Process_2018&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="st">&quot;GO_Molecular_Function_2018&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="st">&quot;Human_Gene_Atlas&quot;</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  )</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>SplineOmics<span class="sc">::</span><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
 which is the root dir of the R project.</p>
-<p>To run GSEA, a genes vector has to be created, containing all the
-underlying genes of the features. The downloaded database file has to be
-loaded as a dataframe. Further, optionally, the clusterProfiler
-parameters and the report dir can be specified. The function
-create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
-report and returns the GSEA dotplots in R.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Modify gene vector</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot; .*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;;.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;_.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;-.*&quot;</span>, <span class="st">&quot;&quot;</span>, genes)</span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>databases <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  downloaded_dbs_filepath,</span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="at">col_types =</span> readr<span class="sc">::</span><span class="fu">cols</span>()</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  )</span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>  )</span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a></span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  <span class="st">&quot;gsea_reports&quot;</span></span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a>  )</span>
-<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a></span>
-<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">create_gsea_report</span>(</span>
-<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>  <span class="at">levels_clustered_hits =</span> clustering_results<span class="sc">$</span>clustered_hits_levels,</span>
-<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
-<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>  <span class="at">databases =</span> databases,</span>
-<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  <span class="at">params =</span> clusterProfiler_params,</span>
-<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
-<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
-<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a>  )</span></code></pre></div>
-<p>Here you can see an <a href="../inst/reports/gsea_report.html">gsea
-report</a></p>
-<p>Every row in the dotplots is a term from a specific database, and the
-columns are the respective clusters. The color scale contains the info
-about the odds ratio and the size the -log10 adj. p-value. Only terms
-that have &gt; 2 genes as support are included in the plot. Further, for
-each cluster, just maximally 5 terms are shown (the terms with the
-highest odds ratios). Note that when for example cluster 1 already has 5
-terms, and cluster 2 does not, and gets a term which was also found for
-cluster 1, than this term would be included as the sixth term for
-cluster 1, so this is a way the maximum of 5 can be exceeded.</p>
+<p>To run GSEA, the downloaded database file has to be loaded as a
+dataframe. Further, optionally, the clusterProfiler parameters and the
+report dir can be specified. The function create_gsea_report() runs GSEA
+using clusterProfiler, generates an HTML report and returns the GSEA
+dotplots in R.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># Load the file</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>databases <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  downloaded_dbs_filepath,</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>)</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co"># Specify the clusterProfiler parameters</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  )</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  <span class="st">&quot;gsea_reports&quot;</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  )</span></code></pre></div>
+<p>The function below runs the clusterProfiler for all clusters and all
+levels, and generates the HTML report:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">run_gsea</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="co"># A dataframe with three columns: feature, cluster, and gene. Feature contains</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="co"># the integer index of the feature, cluster the integer specifying the cluster</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="co"># number, and gene the string of the gene, such as &quot;CLSTN2&quot;.</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">levels_clustered_hits =</span> clustering_results<span class="sc">$</span>clustered_hits_levels,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">databases =</span> databases,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">clusterProfiler_params =</span> clusterProfiler_params,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  )</span></code></pre></div>
+<p>You can view the generated analysis report of the cluster_hits
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html">here</a>.</p>
+<p>This report first shows all enrichment results, where more than 2
+genes supported a term, in a tabular format. The table with all the
+terms with &lt; 2 genes supporting it can be downloaded by clicking on a
+button below that table.</p>
+<p>For the dotplots below that, every row is a term from a specific
+database, and the columns are the respective clusters. The color scale
+contains the info about the odds ratio and the size the -log10 adj.
+p-value. Only terms that have &gt; 2 genes as support are included in
+the plot. Further, for each cluster, just maximally 5 terms are shown
+(the terms with the highest odds ratios). Note that when for example
+cluster 1 already has 5 terms, and cluster 2 does not, and gets a term
+which was also found for cluster 1, than this term would be included as
+the sixth term for cluster 1, so this is a way the maximum of 5 can be
+exceeded.</p>
+<p>If a phase, like stationary here, does not lead to any enrichment
+results, that is stated with a red message.</p>
+</div>
+<div id="conclusion" class="section level1">
+<h1>Conclusion</h1>
+<p>This example showed most functionalities of the SplineOmics package.
+You can also run other datatypes with it, including timeseries RNA-seq
+and glycan data (for those, refer to the documentation in the README
+file on the GitHub page under Usage/RNA-seq and Glycan Data).</p>
+<p>To get an interactive version of this example, download the
+SplineOmics package and run the function <code>open_tutorial()</code>
+which opens an R Markdown file, where you can run the different code
+blocks and if your are working in R Studio (which is recommendet) you
+can easily check out the values of the individual variables and generate
+the output reports yourself.</p>
+<p>When you run the function <code>open_template()</code> you get a
+minimal R Markdown file, where the code is written so that you can use
+it as a skeleton to plug in your own data and run it.</p>
+<p>We hope that the SplineOmics package makes your scientific data
+analysis easier. If you face any problems (bugs in the code) or are not
+satisfied with the documentation, open an issue on GitHub or check out
+the other options under the Feedback section of the README on GitHub.
+Thank you!</p>
 </div>
 
 

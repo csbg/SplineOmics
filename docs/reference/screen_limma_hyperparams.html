@@ -71,6 +71,7 @@ as part of a larger analysis workflow.</p>
 <span>  <span class="va">spline_test_configs</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>  rna_seq_datas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  time_unit <span class="op">=</span> <span class="st">"min"</span>,</span>
 <span>  padjust_method <span class="op">=</span> <span class="st">"BH"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -98,7 +99,7 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>c
 
 
 <dt id="arg-datas">datas<a class="anchor" aria-label="anchor" href="#arg-datas"></a></dt>
-<dd><p>A list of data frames containing the datasets to be analyzed.</p></dd>
+<dd><p>A list of matrices containing the datasets to be analyzed.</p></dd>
 
 
 <dt id="arg-datas-descr">datas_descr<a class="anchor" aria-label="anchor" href="#arg-datas-descr"></a></dt>
@@ -125,6 +126,11 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>c
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
 <dd><p>A numeric vector of p-value thresholds for
 significance determination.</p></dd>
+
+
+<dt id="arg-rna-seq-datas">rna_seq_datas<a class="anchor" aria-label="anchor" href="#arg-rna-seq-datas"></a></dt>
+<dd><p>A list of RNA-seq data objects, such as the voom object
+derived from the limma::voom function.</p></dd>
 
 
 <dt id="arg-time-unit">time_unit<a class="anchor" aria-label="anchor" href="#arg-time-unit"></a></dt>

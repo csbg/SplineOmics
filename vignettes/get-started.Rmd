@@ -1,7 +1,7 @@
 ---
 title: "get-started"
 author: "Thomas Rauter"
-date: "10 June, 2024"
+date: "20 September, 2024"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{get-started}
@@ -56,8 +56,8 @@ The main goals of this analysis are:
 
 ### Note
 
-The documentation of all the **SplineOmics** package functions can be viewed
-[here](https://csbg.github.io/SplineOmics/reference)
+The documentation of all the **SplineOmics** package functions can be
+viewed [here](https://csbg.github.io/SplineOmics/reference)
 
 # Load the packages
 
@@ -70,11 +70,12 @@ library(dplyr)   # For data manipulation
 
 # Load the files
 
-In this example, the proteomics_data.rds file contains the numeric values (the
-intensities) and also the feature descriptions, such as gene and protein
-name (= annotation part). Usually, you would load the data from for example an
-Excel file, but the .rds file is more compressed, which is the reason this 
-format was chosen here to limit the size of the SplineOmics package.
+In this example, the proteomics_data.rds file contains the numeric
+values (the intensities) and also the feature descriptions, such as gene
+and protein name (= annotation part). Usually, you would load the data
+from for example an Excel file, but the .rds file is more compressed,
+which is the reason this format was chosen here to limit the size of the
+SplineOmics package.
 
 The file meta.xlsx contains the meta information, which are the
 descriptions of the columns of the numeric values of data.
@@ -83,15 +84,16 @@ descriptions of the columns of the numeric values of data.
 present on your system).
 
 Please note that this dataset is an actual experimental dataset, but the
-annotation information, such as gene names, has been removed since it was
-not yet published at the time of making the SplineOmics package public. Instead,
-the dataset includes randomly generated gene
-symbols and gene names corresponding to Cricetulus griseus (Chinese
-Hamster) for each row. This is intended to demonstrate the functionality
-of the package.
+annotation information, such as gene names, has been removed since it
+was not yet published at the time of making the SplineOmics package
+public. Instead, the dataset includes randomly generated gene symbols
+and gene names corresponding to Cricetulus griseus (Chinese Hamster) for
+each row. This is intended to demonstrate the functionality of the
+package.
 
-The left part of data contains the numeric values, and the right part the 
-annotation info, which can be copied in a separate dataframe, as shown below.
+The left part of data contains the numeric values, and the right part
+the annotation info, which can be copied in a separate dataframe, as
+shown below.
 
 ```{r load the files}
 
@@ -124,11 +126,11 @@ print(annotation)
 ## Bring the Inputs into the Standardized Format
 
 Since `data` is not in the format required by the **SplineOmics**
-package, it needs some processing. The SplineOmics package requires data to be 
-a numeric matrix, so no element is allowed to be anything else than a number.
-This can be done with a few commands
-in R, but if your file has a specific structure, the function
-`extract_data()` can handle this automatically.
+package, it needs some processing. The SplineOmics package requires data
+to be a numeric matrix, so no element is allowed to be anything else
+than a number. This can be done with a few commands in R, but if your
+file has a specific structure, the function `extract_data()` can handle
+this automatically.
 
 ### File Structure Requirements
 
@@ -142,7 +144,8 @@ If your file looks like the one used here, where:
 
 Then, `extract_data()` can:
 
--   **Identify the data matrix field** and return it as a numeric matrix.
+-   **Identify the data matrix field** and return it as a numeric
+    matrix.
 -   **Create column headers** from the information written in the cells
     above the respective columns of the data matrix field.
 -   **Assign rowheaders**:
@@ -172,7 +175,8 @@ data <- SplineOmics::extract_data(
 
 # Perform EDA (exploratory data analysis)
 
-Now that we have the data in the required format (numeric matrix) we can go on.
+Now that we have the data in the required format (numeric matrix) we can
+go on.
 
 The first step in analyzing data is typically **Exploratory Data
 Analysis (EDA)**. EDA involves summarizing the main characteristics of
@@ -188,8 +192,8 @@ Some common types of EDA plots include:
 -   **Correlation heatmaps**
 
 Again, you can generate those plots yourself with a few lines of R code.
-However, if you prefer, for convenience, the `explore_data()` function can 
-handle this for you.
+However, if you prefer, for convenience, the `explore_data()` function
+can handle this for you.
 
 ### Using `explore_data()` for EDA
 
@@ -201,7 +205,8 @@ perform EDA. This function requires the following arguments:
 -   **condition**: The name of the column in the metadata that contains
     the levels of the experiment (e.g., "Exponential" and "Stationary").
 -   **report_info**: A list that contains general information about the
-    analysis, such as the name of the analyst and the datatype (e.g. proteomics)
+    analysis, such as the name of the analyst and the datatype (e.g.
+    proteomics)
 
 ### Optional Arguments
 
@@ -229,8 +234,8 @@ optional arguments:
 -   The function also **returns all plots** generated during the
     analysis, so that you can modify them according to your own needs.
 -   If you do not want a report to be generated, you can set the
-    `report` argument to `FALSE` (when you for example just want the figures
-    in the R environment)
+    `report` argument to `FALSE` (when you for example just want the
+    figures in the R environment)
 
 ```{r Load EDA arguments, eval = TRUE}
 # Those fields are mandatory, because we believe that when such a report is
@@ -252,14 +257,14 @@ report_dir <- here::here(
 
 ## SplineOmics Object
 
-In the SplineOmics package, multiple functions take the same arguments as input.
-To make this easier and to avoid errors, we decided that those arguments are not
-provided individually to the functions, but are all stored in an R6 object 
-(which is of type 'SplineOmics') and then this object is passed to the
-functions. Additionally, some functions generate intermediate output, which is 
-just necessary for the next function in the workflow, which is then also just 
-passed along by updating the SplineOmics object. But you don't have to worry 
-about this.
+In the SplineOmics package, multiple functions take the same arguments
+as input. To make this easier and to avoid errors, we decided that those
+arguments are not provided individually to the functions, but are all
+stored in an R6 object (which is of type 'SplineOmics') and then this
+object is passed to the functions. Additionally, some functions generate
+intermediate output, which is just necessary for the next function in
+the workflow, which is then also just passed along by updating the
+SplineOmics object. But you don't have to worry about this.
 
 ### Functionality
 
@@ -269,15 +274,15 @@ from the object and potentially adds new data or results back into it.
 
 ### Documentation
 
-The documentation of the function that creates the SplineOmics object can be 
-found [here](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)
-and the documentation of the function that updates it 
+The documentation of the function that creates the SplineOmics object
+can be found
+[here](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)
+and the documentation of the function that updates it
 [[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html)
 
-The documentation for each function that takes the SplineOmics object as input
-specifies which arguments must be
-present in the SplineOmics object when it is passed to the respective
-function.
+The documentation for each function that takes the SplineOmics object as
+input specifies which arguments must be present in the SplineOmics
+object when it is passed to the respective function.
 
 ## Required Arguments `create_splineomics()`
 
@@ -288,8 +293,8 @@ function.
 
 ## Optional Arguments `create_splineomics()`
 
--   **rna_seq_data**: An object containing the preprocessed RNA-seq data, 
-    such as the output from `limma::voom` function.
+-   **rna_seq_data**: An object containing the preprocessed RNA-seq
+    data, such as the output from `limma::voom` function.
 -   **annotation**: A dataframe with the feature descriptions of data.
 -   **report_info**: A list containing general information about the
     analysis.
@@ -310,8 +315,8 @@ splineomics <- SplineOmics::create_splineomics(
 )
 ```
 
-Now that we have the SplineOmics object defined, we can perform our exploratory
-data analysis. 
+Now that we have the SplineOmics object defined, we can perform our
+exploratory data analysis.
 
 ```{r Run EDA function, eval = FALSE}
 plots <- SplineOmics::explore_data(
@@ -352,12 +357,12 @@ the best "hyperparameters". In this context, hyperparameters include:
 ### Challenge of Hyperparameter Selection
 
 Rationally determining the best combination of hyperparameters can be
-very challenging. By rationally, I mean deciding upon the final hyperparameters 
-without ever testing any, just by scientific reasoning. It is much easier just 
-testing a few and seeing how they actually behave. However, manually selecting
-combinations can be tedious, and you have to work very systematically, which 
-can be challenging. To solve this problem, the `screen_limma_hyperparams()` 
-function was written.
+very challenging. By rationally, I mean deciding upon the final
+hyperparameters without ever testing any, just by scientific reasoning.
+It is much easier just testing a few and seeing how they actually
+behave. However, manually selecting combinations can be tedious, and you
+have to work very systematically, which can be challenging. To solve
+this problem, the `screen_limma_hyperparams()` function was written.
 
 ### Using `screen_limma_hyperparams()`
 
@@ -372,8 +377,8 @@ testing different combinations of hyperparameters. Here's how it works:
 
 ### Inner vs. Outer Hyperparameters
 
-Semi combinatorial here means that not every possible combination is generated.
-Instead, there are **inner** and **outer** hyperparameters:
+Semi combinatorial here means that not every possible combination is
+generated. Instead, there are **inner** and **outer** hyperparameters:
 
 -   **Outer hyperparameters**: These include things like **different
     versions of the dataset** (e.g., full dataset vs. dataset with
@@ -385,29 +390,32 @@ Instead, there are **inner** and **outer** hyperparameters:
     -   For each version of the data (outer hyperparameter), all
         combinations of inner hyperparameters are tested.
 
-This approach is neccessary, because otherwise the amount of combos would 
-explode.
+This approach is neccessary, because otherwise the amount of combos
+would explode.
 
 ### Example
 
 For example, if you have two versions of a dataset (one full dataset,
 and one with some outliers removed), these versions are considered outer
-hyperparameters. Additionaly, lets say, you want to test two different limma
-design formulas, formula 1 and 2. The function will test out all combinations
-of those outer hyperparameters and compare them with each other, which results
-in a total of 6 combinations here:
+hyperparameters. Additionaly, lets say, you want to test two different
+limma design formulas, formula 1 and 2. The function will test out all
+combinations of those outer hyperparameters and compare them with each
+other, which results in a total of 6 combinations here:
 
-- **Full Dataset Formula 1** vs **Full Dataset Formula 2**
-- **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 1**
-- **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
+-   **Full Dataset Formula 1** vs **Full Dataset Formula 2**
 
-- **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 1**
-- **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 2**
+-   **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 1**
 
-- **Outliers Removed Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
+-   **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
 
-Let's say you specified the following inner
-hyperparameters:
+-   **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 1**
+
+-   **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 2**
+
+-   **Outliers Removed Dataset Formula 1** vs **Outliers Removed Dataset
+    Formula 2**
+
+Let's say you specified the following inner hyperparameters:
 
 -   **Spline parameters**: Natural cubic splines with a degree of
     freedom of either 2 or 3.
@@ -417,19 +425,26 @@ The function will generate and test all combinations of the spline
 parameters and p-value thresholds for all 4 combos:
 
 Combo 1:
+
 -   **DoF = 2, threshold = 0.05**
+
 -   **DoF = 3, threshold = 0.05**
+
 -   **DoF = 2, threshold = 0.1**
+
 -   **DoF = 3, threshold = 0.1**
 
-Combo 2: 
+Combo 2:
+
 -   **DoF = 2, threshold = 0.05**
+
 -   **DoF = 3, threshold = 0.05**
+
 -   **DoF = 2, threshold = 0.1**
+
 -   **DoF = 3, threshold = 0.1**
 
-Combo 3:
-...
+Combo 3: ...
 
 This allows you to systematically explore different combinations and
 select the optimal hyperparameters for your analysis.
@@ -503,8 +518,8 @@ spline_test_configs <- data.frame(
 print(spline_test_configs)
 ```
 
-Now that we specified all the values for each hyperparameter that we want to 
-test, we can run the `screen_limma_hyperparams()` function.
+Now that we specified all the values for each hyperparameter that we
+want to test, we can run the `screen_limma_hyperparams()` function.
 
 ```{r Perform hyperparameter-screening, eval = FALSE}
 SplineOmics::screen_limma_hyperparams(
@@ -520,15 +535,16 @@ SplineOmics::screen_limma_hyperparams(
 
 ```
 
-As mentioned, this function generates a report for each comparison of the outer
-hyperparameters, which are too many to show here. You can view an example report
+As mentioned, this function generates a report for each comparison of
+the outer hyperparameters, which are too many to show here. You can view
+an example report
 [here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
 
 This report contains the results for the comparison of the "outer"
-hyperparameters data 1 and design (formula) 1 compared against data 1 and design
-2. For both of those, all combinations of the "inner" hyperparameters
-are generated (every possible combination of all specified adj. p-value
-thresholds and spline configs).
+hyperparameters data 1 and design (formula) 1 compared against data 1
+and design 2. For both of those, all combinations of the "inner"
+hyperparameters are generated (every possible combination of all
+specified adj. p-value thresholds and spline configs).
 
 The encoding used in the reports and the titles is
 [here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html)
@@ -559,7 +575,8 @@ splineomics <- SplineOmics::update_splineomics(
 )
 ```
 
-Run the `run_limma_splines()` function with the updated SplineOmics object:
+Run the `run_limma_splines()` function with the updated SplineOmics
+object:
 
 ```{r limma spline analysis, eval = TRUE}
 splineomics <- SplineOmics::run_limma_splines(
@@ -611,8 +628,8 @@ function
 
 After we obtained the limma spline results, we can cluster the hits
 based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are features
-(e.g. proteins) that have an adj. p-value below the threshold. 
+hit is by setting an adj. p-value threshold for every level. Hits are
+features (e.g. proteins) that have an adj. p-value below the threshold.
 Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
@@ -665,8 +682,8 @@ You can view the generated analysis report of the cluster_hits function
 
 # Perform gene set enrichment analysis (GSEA)
 
-Usually, the final step in such a bioinformatics analysis is GSEA. To each 
-clustered hit, the respective gene can be assigned and GSEA
+Usually, the final step in such a bioinformatics analysis is GSEA. To
+each clustered hit, the respective gene can be assigned and GSEA
 performed. For this, the Enrichr databases of choice have to be
 downloaded:
 
@@ -726,8 +743,8 @@ report_dir <- here::here(
   )
 ```
 
-The function below runs the clusterProfiler for all clusters and all levels,
-and generates the HTML report:
+The function below runs the clusterProfiler for all clusters and all
+levels, and generates the HTML report:
 
 ```{r run GSEA, eval = FALSE}
 result <- SplineOmics::run_gsea(
@@ -765,22 +782,23 @@ results, that is stated with a red message.
 
 # Conclusion
 
-This example showed most functionalities of the SplineOmics package. You can
-also run other datatypes with it, including timeseries RNA-seq and glycan data 
-(for those, refer to the documentation in the README file on the GitHub page
-under Usage/RNA-seq and Glycan Data). 
+This example showed most functionalities of the SplineOmics package. You
+can also run other datatypes with it, including timeseries RNA-seq and
+glycan data (for those, refer to the documentation in the README file on
+the GitHub page under Usage/RNA-seq and Glycan Data).
 
-To get an interactive version of this 
-example, download the SplineOmics package and run the function `open_tutorial()`
-which opens an R Markdown file, where you can run the different code blocks and
-if your are working in R Studio (which is recommendet) you can easily check out
-the values of the individual variables and generate the output reports yourself.
+To get an interactive version of this example, download the SplineOmics
+package and run the function `open_tutorial()` which opens an R Markdown
+file, where you can run the different code blocks and if your are
+working in R Studio (which is recommendet) you can easily check out the
+values of the individual variables and generate the output reports
+yourself.
 
-When you run the function `open_template()` you get a minimal R Markdown file,
-where the code is written so that you can use it as a skeleton to plug in your 
-own data and run it. 
+When you run the function `open_template()` you get a minimal R Markdown
+file, where the code is written so that you can use it as a skeleton to
+plug in your own data and run it.
 
-We hope that the SplineOmics package makes your scientific data analysis easier.
-If you face any problems (bugs in the code) or are not satisfied with the 
-documentation, open an issue on GitHub or check out the other options under the 
-Feedback section of the README on GitHub. Thank you!
+We hope that the SplineOmics package makes your scientific data analysis
+easier. If you face any problems (bugs in the code) or are not satisfied
+with the documentation, open an issue on GitHub or check out the other
+options under the Feedback section of the README on GitHub. Thank you!

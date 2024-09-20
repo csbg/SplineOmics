@@ -66,8 +66,9 @@
 <p><img src="reference/figures/hex_logo.png" align="left" width="65"></p>
 <p>The R package <code>SplineOmics</code> finds the significant features (hits) of time-series -omics data by using splines and <code>limma</code> for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.</p>
 <p>The graphical abstract below shows the full workflow streamlined by <code>SplineOmics</code>:</p>
-<p><img src="reference/figures/SplineOmics_graphical_abstract.png"></p>
-<div class="section level2">
+<figure><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"><figcaption aria-hidden="true">
+Graphical Abstract of SplineOmics Workflow
+</figcaption></figure><div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
 <ul>
@@ -122,23 +123,23 @@
 <ul>
 <li>
 <p><strong>Automatically perform exploratory data analysis:</strong></p>
-<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html" class="external-link">example report</a>).</p>
+<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Explore various limma splines hyperparameters:</strong></p>
-<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html" class="external-link">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html" class="external-link">encoding</a>)</p>
+<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html">encoding</a>)).</p>
 </li>
 <li>
 <p><strong>Perform limma spline analysis:</strong></p>
-<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html" class="external-link">example report</a>).</p>
+<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Cluster significant features:</strong></p>
-<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html" class="external-link">example report</a>).</p>
+<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Run GSEA with clustered hits:</strong></p>
-<p>Perform gene set enrichment analysis (GSEA) using the clustered hits with the <code>create_gsea_report()</code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html" class="external-link">example report</a>).</p>
+<p>Perform gene set enrichment analysis (GSEA) using the clustered hits with the <code>create_gsea_report()</code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html">example report</a>).</p>
 </li>
 </ul>
 </div>
@@ -217,7 +218,7 @@ Please read the text below this code block before running it!</p>
 </ol>
 <p>Once the installation is complete, load the <code>SplineOmics</code> package into your R session or script to start using it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SplineOmics</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -230,11 +231,11 @@ Please read the text below this code block before running it!</p>
 </h3>
 <p>Alternatively, you can run your analysis in a <code>Docker</code> container. The underlying <code>Docker</code> image encapsulates the <code>SplineOmics</code> package together with the necessary environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.</p>
 <p>More information about <code>Docker</code> containers can be found on the <a href="https://www.docker.com/resources/what-container/" class="external-link">official Docker page</a>.</p>
-<p>For instructions on downloading the image of the <code>SplineOmics</code> package and running the container, please refer to the <a href="https://csbg.github.io/SplineOmics/articles/Docker_instructions.html" class="external-link">Docker instructions</a>.</p>
+<p>For instructions on downloading the image of the <code>SplineOmics</code> package and running the container, please refer to the <a href="https://csbg.github.io/SplineOmics/articles/Docker-instructions.html">Docker instructions</a>.</p>
 <div class="section level4">
 <h4 id="troubleshooting-1">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting-1"></a>
 </h4>
-<p>If you face “permission denied” issues on Linux distributions, check this <a href="https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html" class="external-link">vignette</a>.</p>
+<p>If you face “permission denied” issues on Linux distributions, check this <a href="https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html">vignette</a>.</p>
 </div>
 </div>
 </div>
@@ -244,26 +245,26 @@ Please read the text below this code block before running it!</p>
 <div class="section level3">
 <h3 id="tutorial">Tutorial<a class="anchor" aria-label="anchor" href="#tutorial"></a>
 </h3>
-<p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html" class="external-link">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
+<p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
 <p>To open an R Markdown file of the <strong>tutorial</strong> in <code>RStudio</code>, run:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SplineOmics</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/open_tutorial.html">open_tutorial</a></span><span class="op">(</span><span class="op">)</span>  </span></code></pre></div>
 <p>To open an R Markdown file in <code>RStudio</code> containing a <strong>template</strong> for your own analysis, run:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SplineOmics</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/open_template.html">open_template</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="functions-in-depth">Functions in Depth<a class="anchor" aria-label="anchor" href="#functions-in-depth"></a>
 </h3>
-<p>A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found <a href="https://csbg.github.io/SplineOmics/reference/" class="external-link">here</a>.</p>
+<p>A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found <a href="https://csbg.github.io/SplineOmics/reference/">here</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="design-limma-design-formula">Design <code>limma</code> design formula<a class="anchor" aria-label="anchor" href="#design-limma-design-formula"></a>
 </h3>
-<p>A quick guide on how to design a <code>limma</code> design formula can be found <a href="https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html" class="external-link">here</a></p>
-<p>An (PDF) explanation of the three different <code>limma</code> results can be downloaded <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/inst/descriptions/limma_result_categories.pdf" class="external-link">here</a></p>
+<p>A quick guide on how to design a <code>limma</code> design formula can be found <a href="https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html">here</a></p>
+<p>An explanation of the three different <code>limma</code> results is <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">here</a></p>
 </div>
 <div class="section level3">
 <h3 id="rna-seq-and-glycan-data">RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#rna-seq-and-glycan-data"></a>
@@ -271,7 +272,7 @@ Please read the text below this code block before running it!</p>
 <div class="section level4">
 <h4 id="rna-seq-data">RNA-seq data<a class="anchor" aria-label="anchor" href="#rna-seq-data"></a>
 </h4>
-<p>Transcriptomics data must be preprocessed for <code>limma</code>. This is done by setting the preprocess_rna_seq argument to TRUE (see documentation of create_splineomics() function). Then, the raw RNA-seq counts provided in the data matrix will undergo normalization and transformation. The default normalization is performed using TMM (Trimmed Mean of M-values) normalization via the <code>edgeR</code>::calcNormFactors function, followed by the voom transformation from the <code>limma</code> package to obtain log-transformed counts per million (logCPM) with associated precision weights. If you require a different normalization method, you can supply your custom normalization function.</p>
+<p>Transcriptomics data must be preprocessed for <code>limma</code>. You need to provide an appropriate object, such as a <code>voom</code> object, in the <code>rna_seq_data</code> argument of the <code>SplineOmics</code> object (see <a href="https://csbg.github.io/SplineOmics/reference/create_splineomics.html">documentation</a>). Along with this, the normalized matrix (e.g., the <code>$E</code> slot of the <code>voom</code> object) must be passed to the <code>data</code> argument. This allows flexibility in preprocessing; you can use any method you prefer as long as the final object and matrix are compatible with limma. One way to preprocess your RNA-seq data is by using the <code><a href="reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function included in the <code>SplineOmics</code> package (see <a href="https://csbg.github.io/SplineOmics/reference/preprocess_rna_seq_data.html">documentation</a>).</p>
 </div>
 <div class="section level4">
 <h4 id="glycan-fractional-abundance-data">Glycan fractional abundance data<a class="anchor" aria-label="anchor" href="#glycan-fractional-abundance-data"></a>
