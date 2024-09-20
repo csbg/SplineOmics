@@ -9,8 +9,7 @@ within_level(
   level_index,
   spline_params,
   data,
-  preprocess_rna_seq,
-  normalization_fun,
+  rna_seq_data,
   meta,
   design,
   condition,
@@ -28,13 +27,12 @@ within_level(
 
 \item{data}{A matrix of data values.}
 
-\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
+such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
-\item{normalization_fun}{Function to normalize RNA-seq raw counts.}
+\item{meta}{A dataframe containing the metadata for data.}
 
-\item{meta}{A dataframe containing metadata.}
-
-\item{design}{A design formula or matrix for the LIMMA analysis.}
+\item{design}{A design formula or matrix for the limma analysis.}
 
 \item{condition}{A character string specifying the condition.}
 
@@ -50,7 +48,7 @@ A list containing the name of the results and the top table of
          results.
 }
 \description{
-Processes a single level within a condition, performing LIMMA analysis 
+Processes a single level within a condition, performing limma analysis 
 and generating the top table of results.
 }
 \seealso{

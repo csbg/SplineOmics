@@ -79,28 +79,38 @@ data <- extract_data(
 
 # Simulate RNA-seq data to test voom functionality -----------------------------
 
-# generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
-#   set.seed(123)  # For reproducibility
-#   
-#   # Define sample and gene names
-#   gene_names <- paste0("Gene", 1:n_genes)
-#   sample_names <- paste0("Sample", 1:n_samples)
-#   
-#   # Generate random raw RNA-seq counts (Poisson distributed)
-#   # Base expression level with some variability
-#   base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
-#   counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
-#   
-#   # Assign row and column names
-#   rownames(counts_matrix) <- gene_names
-#   colnames(counts_matrix) <- sample_names
-#   
-#   return(counts_matrix)
-# }
-# 
-# # Example usage:
-# n_genes <- 7162  # Adjust the number of genes as needed
+generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
+  set.seed(123)  # For reproducibility
+
+  # Define sample and gene names
+  gene_names <- paste0("Gene", 1:n_genes)
+  sample_names <- paste0("Sample", 1:n_samples)
+
+  # Generate random raw RNA-seq counts (Poisson distributed)
+  # Base expression level with some variability
+  base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
+  counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
+
+  # Assign row and column names
+  rownames(counts_matrix) <- gene_names
+  colnames(counts_matrix) <- sample_names
+
+  return(counts_matrix)
+}
+
+# Example usage:
+n_genes <- 4162  # Adjust the number of genes as needed
 # data <- generate_rnaseq_data(n_genes = n_genes)
+
+voom_obj <- preprocess_rna_seq_data(
+  raw_counts = data,
+  meta = meta,
+  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                       dof = c(2L)),
+  design = "~ 1 + Phase*X + Reactor"
+)
+
+# data <- voom_obj$E
 
 # Explore data -----------------------------------------------------------------
 
@@ -115,23 +125,23 @@ report_info <- list(
 
 splineomics <- create_splineomics(
   data = data,
+  # rna_seq_data = voom_obj,
   meta = meta,
   annotation = annotation,
   feature_name_columns = feature_name_columns,
   report_info = report_info,
   condition = "Phase",
   meta_batch_column = "Reactor",
-  preprocess_rna_seq = FALSE
 )
 
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-plots <- explore_data(
-  splineomics,
-  report_dir = report_dir,
-  report = TRUE
-  )
+# plots <- explore_data(
+#   splineomics,
+#   report_dir = report_dir,
+#   report = TRUE
+#   )
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -140,15 +150,18 @@ meta1 <- meta
 
 data2 <- data[, -c(1, 2)]
 meta2 <- meta[-c(1, 2),]
+# data2 <- data
+# meta2 <- meta
 
 datas <- list(data1, data2)
+# rna_seq_datas <- list(voom_obj, voom_obj)  # Just to test it.
 datas_descr <- c("full_data", "outliers_removed")
 metas <- list(meta1, meta2)
-designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + X + Reactor")
+designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
 
 report_dir <- here::here("results", "hyperparams_screen_reports")
 
-pthresholds <- c(0.05, 0.1)
+pthresholds <- c(0.05, 0.01)
 
 # Every row a combo to test.
 spline_test_configs <- data.frame(
@@ -160,16 +173,17 @@ spline_test_configs <- data.frame(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(screen_limma_hyperparams)
-screen_limma_hyperparams(
-  splineomics,
-  datas,
-  datas_descr,
-  metas,
-  designs,
-  spline_test_configs,
-  report_dir,
-  pthresholds
-  )
+# screen_limma_hyperparams(
+#   splineomics,
+#   datas,
+#   datas_descr,
+#   metas,
+#   designs,
+#   spline_test_configs,
+#   report_dir,
+#   pthresholds,
+#   rna_seq_datas,
+#   )
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -177,8 +191,8 @@ screen_limma_hyperparams(
 splineomics <- update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",
-  data = data1,
-  meta = meta1,
+  data = data2,
+  meta = meta2,
   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
                        dof = c(2L))
 )
@@ -191,11 +205,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  adj_pthresh = 0.1,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   adj_pthresh = 0.1,
+#   report_dir = report_dir
+# )
 
 
 ## Cluster hits ----------------------------------------------------------------

@@ -38,7 +38,7 @@
 #'                                    removeBatchEffect supports a maximum of 
 #'                                    two batch columns.)
 #' }
-#' @param datas A list of data frames containing the datasets to be analyzed.
+#' @param datas A list of matrices containing the datasets to be analyzed.
 #' @param datas_descr A description object for the data.
 #' @param metas A list of data frames containing metadata for each dataset in 
 #' `datas`.
@@ -47,6 +47,8 @@
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector of p-value thresholds for 
 #' significance determination.
+#' @param rna_seq_datas A list of RNA-seq data objects, such as the voom object
+#' derived from the limma::voom function.
 #' @param time_unit A character string specifying the time unit label for plots.
 #' @param padjust_method A character string specifying the method for p-value 
 #' adjustment.
@@ -68,10 +70,15 @@ screen_limma_hyperparams <- function(
     spline_test_configs,
     report_dir = here::here(),
     adj_pthresholds = c(0.05),
+    rna_seq_datas = NULL,
     time_unit = "min",    # For the plot labels
     padjust_method = "BH"
     ) {
   
+  if (is.null(rna_seq_datas)) {  # Set the default value.
+    rna_seq_datas <- vector("list", length(datas)) 
+  }
+
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -109,6 +116,7 @@ screen_limma_hyperparams <- function(
   top_tables_combos <- 
     get_limma_combos_results(
       datas = datas, 
+      rna_seq_datas = rna_seq_datas,
       metas = metas, 
       designs = designs, 
       modes = modes, 
@@ -175,6 +183,8 @@ screen_limma_hyperparams <- function(
 #' spline configurations using the LIMMA method.
 #'
 #' @param datas A list of matrices.
+#' @param rna_seq_datas A list of RNA-seq data objects, such as the voom object
+#' derived from the limma::voom function.
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param designs A list of design matrices.
 #' @param modes A character vector containing 'isolated' or 'integrated'.
@@ -196,6 +206,7 @@ screen_limma_hyperparams <- function(
 #'                          
 get_limma_combos_results <- function(
     datas, 
+    rna_seq_datas,
     metas, 
     designs, 
     modes, 
@@ -223,6 +234,7 @@ get_limma_combos_results <- function(
       combos, 
       process_combo,
       datas = datas,
+      rna_seq_datas = rna_seq_datas,
       metas = metas,
       designs = designs,
       modes = modes,
@@ -279,7 +291,6 @@ plot_limma_combos_results <- function(
             )
     )
   
-  
   combos_separated <- lapply(unique(names_extracted), function(id) {
     top_tables_combos[names_extracted == id]
   })
@@ -288,11 +299,14 @@ plot_limma_combos_results <- function(
   
   combos <- names(combos_separated)
   combo_pairs <- combn(combos, 2, simplify = FALSE)
-  
+
   print("Generating the plots for all pairwise hyperparams-combo comparisons")
   progress_ticks <- length(combo_pairs)
-  pb <- progress::progress_bar$new(total = progress_ticks, 
-                                   format = "[:bar] :percent")
+  pb <- progress::progress_bar$new(
+    total = progress_ticks, 
+    format = "[:bar] :percent"
+    )
+  
   pb$tick(0)
   
   time_unit_label <- paste0("[", time_unit, "]")
@@ -314,7 +328,7 @@ plot_limma_combos_results <- function(
     purrr::map(combo_pairs, function(pair) {
 
       combo_pair <- combos_separated[pair]
-      
+
       hitcomp <- gen_hitcomp_plots(combo_pair)
       
       composites <- purrr::map(combo_pair, function(combo) {
@@ -519,6 +533,8 @@ generate_reports_meta <- function(
 #' spline_test_configs list.
 #' @param pthreshold The p-value threshold for significance.
 #' @param datas A list of data matrices
+#' @param rna_seq_datas A list of RNA-seq data objects, such as the voom object
+#' derived from the limma::voom function.
 #' @param metas A list of metadata corresponding to the data matrices.
 #' @param designs A list of design matrices.
 #' @param modes A character vector containing 'isolated' or 'integrated'.
@@ -541,6 +557,7 @@ process_combo <- function(
     spline_config_index, 
     pthreshold, 
     datas,
+    rna_seq_datas,
     metas,
     designs,
     modes,
@@ -552,6 +569,7 @@ process_combo <- function(
     ) {
 
   data <- datas[[data_index]]
+  rna_seq_data <- rna_seq_datas[[data_index]]
   meta <- metas[[data_index]]
   design <- designs[[design_index]]
   mode <- modes[[design_index]]
@@ -575,12 +593,13 @@ process_combo <- function(
   
   splineomics <- create_splineomics(
     data = data,
+    rna_seq_data = rna_seq_data,
     meta = meta,
     design = design,
     spline_params = spline_params, 
     condition = condition,
   )
-  
+
   # suppressMessages will not affect warnings and error messages!
   result <- suppressMessages(run_limma_splines(splineomics))
 
@@ -748,10 +767,50 @@ hc_add <- function(
 #' @importFrom purrr flatten_chr
 #' 
 hc_vennheatmap <- function(hc_obj) {
-  
+
   hits_1 <- store_hits(hc_obj$data[[1]])
   hits_2 <- store_hits(hc_obj$data[[2]])
+
+  color_palette <- c("white", "blue", "yellow", "green")
+  breaks <- c(-0.5, 0.5, 1.5, 2.5, 3.5)
   
+  # Check if all elements in hits_1 and hits_2 are character(0)
+  no_hits_1 <- all(sapply(hits_1, function(x) length(x) == 0))
+  no_hits_2 <- all(sapply(hits_2, function(x) length(x) == 0))
+  
+  # If both have no hits, create a placeholder plot for no hits
+  if (no_hits_1 && no_hits_2) {
+    # Create a simple empty matrix for the plot
+    venn_matrix <- matrix(
+      0,
+      nrow = 1,
+      ncol = 1, 
+      dimnames = list("No Hits", "No Hits")
+      )
+    
+    plot_title <- sprintf(
+      "No hits found for %s and %s", 
+      hc_obj$condition_names[[1]], 
+      hc_obj$condition_names[[2]]
+      )
+
+    # Continue with your plotting code
+    vennheatmap_plot <- pheatmap::pheatmap(
+      venn_matrix, color = color_palette,
+      breaks = breaks,
+      cluster_cols = FALSE,
+      cluster_rows = FALSE,
+      show_rownames = TRUE,
+      show_colnames = TRUE,
+      border_color = NA,
+      main = plot_title,
+      silent = TRUE,
+      fontsize = 6
+    )
+    
+    return(list(vennheatmap = vennheatmap_plot, nrhits = 0))
+  }
+
   df <- tidyr::expand_grid(
     features = union(
       flatten_chr(hits_1),
@@ -786,11 +845,8 @@ hc_vennheatmap <- function(hc_obj) {
                        values_from = !!rlang::sym("x")) |> 
     tibble::column_to_rownames("features") |> 
     as.matrix()
-  
+
   venn_matrix <- venn_matrix[, order(colnames(venn_matrix))]
-  
-  color_palette <- c("white", "blue", "yellow", "green")
-  breaks <- c(-0.5, 0.5, 1.5, 2.5, 3.5)
   
   plot_title <- sprintf("0 -> none, 1 -> %s, 2 -> %s, 3 -> both", 
                         hc_obj$condition_names[[1]],
@@ -1360,17 +1416,7 @@ plot_composite_splines <- function(
   
   args <- list(x = smooth_timepoints, intercept = FALSE)
   args$df <- spline_test_configs$dof[[config_index]]
-  
-  # if (!is.na(spline_test_configs$dof[[config_index]])) {
-  #   args$df <- spline_test_configs$dof[[config_index]]
-  # } else {
-  #   args$knots <- spline_test_configs$knots[[config_index]]
-  # }
-  # 
-  # if (!is.na(spline_test_configs$bknots[[config_index]])) {
-  #   args$Boundary.knots <- spline_test_configs$bknots[[config_index]]
-  # }
-  
+
   if (spline_test_configs$spline_type[config_index] == "b") {
     args$degree <- spline_test_configs$degree[[config_index]]
     X <- do.call(splines::bs, args)

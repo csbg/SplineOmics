@@ -90,7 +90,7 @@ cluster_hits <- function(
     analysis_type = "time_effect",
     report = TRUE
     ) {
-  
+
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -226,6 +226,9 @@ cluster_hits <- function(
 
   # Add gene column for the run_gsea() function.
   clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
+    if (is.character(df)) {
+      return(df)  
+    }
     df$gene <- genes[df$feature]
     return(df)
   })
@@ -490,7 +493,7 @@ make_clustering_report <- function(
     analysis_type,
     feature_name_columns
     ) {
-  
+
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level

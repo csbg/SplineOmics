@@ -6,6 +6,7 @@
 \usage{
 get_limma_combos_results(
   datas,
+  rna_seq_datas,
   metas,
   designs,
   modes,
@@ -18,6 +19,9 @@ get_limma_combos_results(
 }
 \arguments{
 \item{datas}{A list of matrices.}
+
+\item{rna_seq_datas}{A list of RNA-seq data objects, such as the voom object
+derived from the limma::voom function.}
 
 \item{metas}{A list of metadata corresponding to the data matrices.}
 

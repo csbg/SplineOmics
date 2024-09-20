@@ -13,13 +13,13 @@ This class provides methods for creating error messages and checking
 batch columns.
 
 
-The function verifies that the `voom` object contains the following 
+The function verifies that the `voom` object contains the following
 components:
 - `E`: A matrix of log2-counts per million (logCPM) values.
-- `weights`: A matrix of observation-specific weights that matches the 
+- `weights`: A matrix of observation-specific weights that matches the
 dimensions of `E`.
-- `design`: A matrix representing the design matrix used in the linear 
-modeling, 
+- `design`: A matrix representing the design matrix used in the linear
+modeling,
   with the same number of rows as there are columns in `E`.
 
 The function also checks for optional components such as:
@@ -59,10 +59,10 @@ Check the structure of a voom object
 \if{latex}{\out{\hypertarget{method-Level3Functions-check_voom_structure}{}}}
 \subsection{Method \code{check_voom_structure()}}{
 This function checks the structure of a `voom` object to ensure that it
-contains 
-all the expected components and that these components have the correct 
-types 
-and dimensions. The function does not check the actual data within the 
+contains
+all the expected components and that these components have the correct
+types
+and dimensions. The function does not check the actual data within the
 matrices.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_voom_structure(voom_obj)}\if{html}{\out{</div>}}
@@ -71,8 +71,8 @@ matrices.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{voom_obj}}{A list representing a `voom` object, typically created 
-by the 
+\item{\code{voom_obj}}{A list representing a `voom` object, typically created
+by the
   `voom` function from the `limma` package.}
 }
 \if{html}{\out{</div>}}
@@ -88,7 +88,7 @@ Check Batch Column
 \if{html}{\out{<a id="method-Level3Functions-check_batch_column"></a>}}
 \if{latex}{\out{\hypertarget{method-Level3Functions-check_batch_column}{}}}
 \subsection{Method \code{check_batch_column()}}{
-This method checks the batch column in the metadata and provides 
+This method checks the batch column in the metadata and provides
 appropriate messages.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level3Functions$check_batch_column(meta, meta_batch_column, data_meta_index)}\if{html}{\out{</div>}}
@@ -108,7 +108,7 @@ data/meta pair. Default is NA.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-NULL. The method is used for its side effects of throwing errors 
+NULL. The method is used for its side effects of throwing errors
 or printing messages.
 
 Check Condition Time Consistency
@@ -119,9 +119,9 @@ Check Condition Time Consistency
 \if{latex}{\out{\hypertarget{method-Level3Functions-check_condition_time_consistency}{}}}
 \subsection{Method \code{check_condition_time_consistency()}}{
 This function checks whether the values in the `condition` column
-have unique values for each block of identical `Time` values in the 
+have unique values for each block of identical `Time` values in the
 `meta` dataframe.
-Additionally, it ensures that every new block of a given time has a 
+Additionally, it ensures that every new block of a given time has a
 new value
 in the `condition` column.
 \subsection{Usage}{
