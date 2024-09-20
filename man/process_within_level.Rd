@@ -6,8 +6,7 @@
 \usage{
 process_within_level(
   data,
-  preprocess_rna_seq,
-  normalization_fun,
+  rna_seq_data,
   meta,
   design,
   spline_params,
@@ -18,9 +17,8 @@ process_within_level(
 \arguments{
 \item{data}{A matrix of data values.}
 
-\item{preprocess_rna_seq}{Boolean specifying whether to preprocess RNA seq}
-
-\item{normalization_fun}{Function for normalizing RNA-seq raw counts.}
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
+such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
 \item{meta}{A dataframe containing metadata, including a 'Time' column.}
 

@@ -10,12 +10,12 @@ check_null_elements(args)
 \item{args}{A list of arguments to check for `NULL` elements.}
 }
 \value{
-This function does not return a value. It stops execution if 
+This function does not return a value. It stops execution if
 any `NULL` elements are found in the input list.
 }
 \description{
-This function checks if any elements in the provided list of arguments 
+This function checks if any elements in the provided list of arguments
 are `NULL`.
-If any `NULL` elements are found, it stops the execution and returns 
+If any `NULL` elements are found, it stops the execution and returns
 an informative error message.
 }

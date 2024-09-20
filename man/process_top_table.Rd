@@ -8,9 +8,8 @@ process_top_table(process_within_level_result, feature_names)
 }
 \arguments{
 \item{process_within_level_result}{List of lists containing the limma 
-topTable, fit, and optionally the voom
-object. All of this is from one specific
-level.}
+topTable, and fit. All of this is from 
+one specific level.}
 
 \item{feature_names}{A non-empty character vector of feature names.}
 }

@@ -1,7 +1,7 @@
 ---
 title: "demo"
 author: "Thomas Rauter"
-date: "15 July, 2024"
+date: "20 September, 2024"
 output: html_document
 editor_options: 
   markdown: 
@@ -17,24 +17,43 @@ knitr::opts_chunk$set(
 
 # About this tutorial
 
-This tutorial demonstrates the capabilities of the SplineOmics package
-through a comprehensive example: a time-series proteomics experiment
-involving CHO cells cultivated in three bioreactors (biological
-replicates). Samples were collected from each reactor in triplicates at
-specific time points relative to cell feeding (60 min before, and 15,
-60, 90, 120, and 240 min after feeding) during both exponential and
-stationary growth phases.
+This tutorial intends to showcase and explain the capabilities of the
+**SplineOmics** package by walking through a real and complete example,
+from start to finish.
 
-The objective is to identify which of the 7162 cellular proteins show
-significant changes over time post-feeding. Proteins with significant
-temporal changes are then clustered based on their patterns. A gene set
-enrichment analysis is performed for each cluster to identify processes
-that are up- or downregulated over time after feeding.
+### Example Overview
 
-Note: For a better understanding of the SplineOmics functions, the
-required and optional arguments are documented here. These however are
-only short forms of the full documentation of the arguments, which you
-can find by selecting a function and pressing F2.
+The example involves a **time-series proteomics experiment**, where CHO
+(chinese hamster ovary) cells were cultivated in three bioreactors
+(three biological replicates). The experiment includes the following
+setup:
+
+-   Samples were taken both during the **exponential** and **stationary
+    growth phases**.
+-   Samples were collected in triplicates from each reactor at defined
+    timepoints relative to cell feeding:
+    -   60 minutes before feeding
+    -   15, 60, 90, 120, and 240 minutes after feeding
+
+### Analysis Goals
+
+The main goals of this analysis are:
+
+-   **Identify proteins with significant temporal changes**: Out of 7162
+    cellular proteins, the objective is to detect which proteins show a
+    significant change over time after the CHO cells were fed (i.e., the
+    impact of the feeding).
+-   **Cluster hits based on temporal patterns**: The proteins (hits)
+    with significant temporal changes will be clustered according to
+    their time-based patterns.
+-   **Perform gene set enrichment analysis**: For each cluster, a gene
+    set enrichment analysis will be performed to determine if specific
+    biological processes are up- or downregulated after feeding.
+
+### Note
+
+The documentation of all the **SplineOmics** package functions can be viewed
+[here](https://csbg.github.io/SplineOmics/reference)
 
 Further note: To run the code of a box, click on the respective ▶️ play button
 like symbol.
@@ -43,7 +62,9 @@ like symbol.
 
 Make sure all the required packages for this analysis script are
 installed. Part of these packages are not dependencies of the
-SplineOmics package, that is why they could be missing.
+SplineOmics package, that is why they could be missing. If the code block 
+below does not work for you, manually install those packages and skip this 
+block. 
 
 ```{r Conditionally install missing packages}
 install_if_missing <- function(packages) {
@@ -71,9 +92,9 @@ install_if_missing(packages_to_install)
 library(SplineOmics)   # Functions are marked with SplineOmics::
 
 # Additional packages needed to prepare SplineOmics function inputs
-library(readxl)
-library(here)
-library(readr)
+library(readxl)  # for loading Excel files
+library(here)   # For managing filepaths
+library(readr)  # For reading the database TSV files
 ```
 
 To avoid conflicts between functions from the dplyr package and base R
@@ -82,7 +103,7 @@ the conflicted package. This ensures that the intended function is used,
 preventing potential errors and improving code clarity.
 
 ```{r Load dplyr package}
-library(dplyr)
+library(dplyr)   # For data manipulation
 library(conflicted)
 
 # Explicitly state preference of functions
@@ -96,25 +117,38 @@ conflicted::conflict_prefer("union", "base")
 
 # Load the files
 
-In this example, the data.xlsx file contains numeric values
-(intensities) and feature descriptions, such as gene and protein names
-(annotation part). The meta.xlsx file contains meta information, which
-describes the columns of the numeric values in data.xlsx.
+In this example, the proteomics_data.rds file contains the numeric values (the
+intensities) and also the feature descriptions, such as gene and protein
+name (= annotation part). Usually, you would load the data from for example an
+Excel file, but the .rds file is more compressed, which is the reason this 
+format was chosen here to limit the size of the SplineOmics package.
 
-These example files are included in the package and do not need to be
-present on your system. For your analysis, create file paths using the
-here library instead of system.file.
+The file meta.xlsx contains the meta information, which are the
+descriptions of the columns of the numeric values of data.
 
-```{r Load the files}
-data_excel <- readxl::read_excel(
-    system.file(
-      "extdata",
-      "proteomics_data.xlsx",
-      package = "SplineOmics"
-      )
-    )
+(These example files are part of the package and don't have to be
+present on your system).
 
-meta <- readxl::read_excel(
+Please note that this dataset is an actual experimental dataset, but the
+annotation information, such as gene names, has been removed since it was
+not yet published at the time of making the SplineOmics package public. Instead,
+the dataset includes randomly generated gene
+symbols and gene names corresponding to Cricetulus griseus (Chinese
+Hamster) for each row. This is intended to demonstrate the functionality
+of the package.
+
+The left part of data contains the numeric values, and the right part the 
+annotation info, which can be copied in a separate dataframe, as shown below.
+
+```{r load the files}
+data <- readRDS(system.file(
+  "extdata",
+  "proteomics_data.rds",
+  package = "SplineOmics"
+  ))
+
+
+meta <- read_excel(
   system.file(
     "extdata",
     "proteomics_meta.xlsx",
@@ -123,88 +157,130 @@ meta <- readxl::read_excel(
   )
 
 # Extract the annotation part from the dataframe.
-first_na_col <- which(is.na(data_excel[1,]))[1]
-annotation <- data_excel |>
-  dplyr::select((first_na_col + 1):ncol(data_excel)) |>
+first_na_col <- which(is.na(data[1,]))[1]
+annotation <- data |>
+  dplyr::select((first_na_col + 1):ncol(data)) |>
   dplyr::slice(-c(1:3))
+
+print(data)
+print(meta)
+print(annotation)
 ```
 
-Note that for this experiment, just a single treatment is present, which
-is the growth phase (exponential or stationary) of the cells. This is
-encoded in "condition" column of meta, here called "Phase". If there is
-more than one treatment, they can be combined in the single condition
-column. For example, if additionally, there would also be a temperature
-shift, from 37 to 32 °C, this could for example be written in the
-condition column in following way: exp_37, exp_32, stat_37, stat_32
-(Both treatments combined in one string and all placed in the single
-condition column).
+## Bring the Inputs into the Standardized Format
 
-# Bring the inputs into the standardized (required) format
+Since `data` is not in the format required by the **SplineOmics**
+package, it needs some processing. The SplineOmics package requires data to be 
+a numeric matrix, so no element is allowed to be anything else than a number.
+This can be done with a few commands
+in R, but if your file has a specific structure, the function
+`extract_data()` can handle this automatically.
 
-Since `data_excel` is not in the format required by the SplineOmics
-package, it needs processing. This can be done with a few R commands,
-but if your file looks like the one here, with the data matrix on the
-left and annotation info on the right, separated by an empty column
-(which is required!), the `extract_data()` function can handle this
-automatically.
+### File Structure Requirements
 
-The function identifies the data matrix and converts it into a
-dataframe. Column headers are created from the information in the cells
-above each data matrix column. If no annotation columns are specified,
-row headers are simply increasing numbers. In this example, the
-annotation columns "First.Protein.Description" and "ID" are specified to
-form the row headers (feature names). These names will be used to label
-any plots where a feature is shown individually, such as spline plots
-with datapoints from an individual feature.
+If your file looks like the one used here, where:
 
-## Required Arguments `extract_data()`
+-   The **data matrix field** is on the left
+-   The **annotation info** is on the right
+-   These fields are separated by one empty column
 
--   **data**: A dataframe loaded from a tabular file.
+### Usage of the extract_data() function
 
-## Optional Arguments `extract_data()`
+Then, `extract_data()` can:
 
--   **feature_name_columns**: A character vector specifying the columns
-    of the dataframe `data` that should be used to construct the feature
-    names. If omitted, the feature names are just numbers (stored as
-    characters) starting from 1 (1, 2, 3, etc.).
+-   **Identify the data matrix field** and return it as a numeric matrix.
+-   **Create column headers** from the information written in the cells
+    above the respective columns of the data matrix field.
+-   **Assign rowheaders**:
+    -   If no annotation columns are specified, rowheaders will be
+        increasing numbers.
+    -   If annotation columns are specified (like
+        `"First.Protein.Description"` and `"ID"` in this example), these
+        will be combined to form the rowheaders (feature names).
 
-(When you want to have meaningful feature descriptions, add feature-name
-columns as arguments to the function below. They are used for the row
-headers of the matrix. If you don't use this function, make sure you
-have row headers to your matrix if you want feature descriptions for
-your plots.)
+### Usage in Plotting
 
-```{r Process the inputs}
+The generated rowheaders will be used to label any plots where a feature
+is shown individually, such as:
+
+-   **Spline plots** with the datapoints from an individual feature.
+
+```{r process inputs, eval = TRUE}
 data <- SplineOmics::extract_data(
-  data = data_excel,
-  feature_name_columns = c(   # Feature names will be a combo out of these col
-    "First.Protein.Description",   # Prodivde the row headers of the matrix
-    "ID"
-    )
+  # The dataframe with the numbers on the left and info on the right.
+  data = data,
+  # Use this annotation column for the feature names.
+  feature_name_columns = c("Gene_name"),  
+  # When TRUE, you must confirm that data is in the required format.
+  user_prompt = FALSE   
   )
 ```
 
 # Perform EDA (exploratory data analysis)
 
-The first step in analyzing data is usually EDA. EDA involves
-summarizing the main characteristics of the data, often using plots such
-as density distributions, boxplots, PCA, and correlation heatmaps. This
-process can be carried out using the package function `explore_data()`.
+Now that we have the data in the required format (numeric matrix) we can go on.
 
-These batch columns are used to run the `removeBatchEffect` function of
-limma to remove the batch effect from the data for plotting. When at
-least one batch column is provided, the function generates two EDA HTML
-reports: one for the uncorrected data and one for the batch corrected
-data.
+The first step in analyzing data is typically **Exploratory Data
+Analysis (EDA)**. EDA involves summarizing the main characteristics of
+the data, often through visualizations.
 
-### Report Generation
+### Common EDA Plots
 
-The reports are written to the current working directory by default or
-to a specified location using the optional argument `report_dir`. The
-function also returns all generated plots. If no report should be
-generated, set the optional argument `report` to `FALSE`.
+Some common types of EDA plots include:
 
-```{r Define info that is written in all the HTML reports}
+-   **Density distributions**
+-   **Boxplots**
+-   **PCA (Principal Component Analysis)**
+-   **Correlation heatmaps**
+
+Again, you can generate those plots yourself with a few lines of R code.
+However, if you prefer, for convenience, the `explore_data()` function can 
+handle this for you.
+
+### Using `explore_data()` for EDA
+
+The **SplineOmics** package provides the function `explore_data()` to
+perform EDA. This function requires the following arguments:
+
+-   **data**: The numeric data matrix.
+-   **meta**: The metadata table.
+-   **condition**: The name of the column in the metadata that contains
+    the levels of the experiment (e.g., "Exponential" and "Stationary").
+-   **report_info**: A list that contains general information about the
+    analysis, such as the name of the analyst and the datatype (e.g. proteomics)
+
+### Optional Arguments
+
+In addition to the required arguments, `explore_data()` offers several
+optional arguments:
+
+-   **meta_batch_column**: The name of the column that contains the
+    first batch effect.
+
+-   **meta_batch2_column**: The name of the column that contains the
+    second batch effect.
+
+    If at least one batch column is provided, the function will:
+
+    -   Use the `removeBatchEffect()` function from **limma** to remove
+        the batch effect from the data before plotting.
+    -   Generate two EDA HTML reports: one for the **uncorrected data**
+        and one for the **batch-corrected data**.
+
+### Output and Report Options
+
+-   By default, the reports are saved in the **current working
+    directory**, but this location can be changed using the `report_dir`
+    argument.
+-   The function also **returns all plots** generated during the
+    analysis, so that you can modify them according to your own needs.
+-   If you do not want a report to be generated, you can set the
+    `report` argument to `FALSE` (when you for example just want the figures
+    in the R environment)
+
+```{r Load EDA arguments, eval = TRUE}
+# Those fields are mandatory, because we believe that when such a report is
+# opened after half a year, those infos can be very helpful. 
 report_info <- list(
   omics_data_type = "PTX",
   data_description = "Proteomics data of CHO cells",
@@ -213,13 +289,23 @@ report_info <- list(
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX"
   )
+
+report_dir <- here::here(
+  "demo_results",
+  "explore_data"
+  )
 ```
 
 ## SplineOmics Object
 
-The SplineOmics object is used because multiple functions in the package
-take the same inputs, and some functions generate "intermediate" output
-that is used by subsequent functions in the workflow.
+In the SplineOmics package, multiple functions take the same arguments as input.
+To make this easier and to avoid errors, we decided that those arguments are not
+provided individually to the functions, but are all stored in an R6 object 
+(which is of type 'SplineOmics') and then this object is passed to the
+functions. Additionally, some functions generate intermediate output, which is 
+just necessary for the next function in the workflow, which is then also just 
+passed along by updating the SplineOmics object. But you don't have to worry 
+about this.
 
 ### Functionality
 
@@ -229,7 +315,13 @@ from the object and potentially adds new data or results back into it.
 
 ### Documentation
 
-The documentation for each function specifies which arguments must be
+The documentation of the function that creates the SplineOmics object can be 
+found [here](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)
+and the documentation of the function that updates it 
+[[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html)
+
+The documentation for each function that takes the SplineOmics object as input
+specifies which arguments must be
 present in the SplineOmics object when it is passed to the respective
 function.
 
@@ -242,6 +334,8 @@ function.
 
 ## Optional Arguments `create_splineomics()`
 
+-   **rna_seq_data**: An object containing the preprocessed RNA-seq data, 
+    such as the output from `limma::voom` function.
 -   **annotation**: A dataframe with the feature descriptions of data.
 -   **report_info**: A list containing general information about the
     analysis.
@@ -250,522 +344,339 @@ function.
 -   **design**: A limma design formula
 -   **spline_params**: Parameters for the spline functions.
 
-```{r Create the SplineOmics object}
+```{r Create the SplineOmics object, eval = TRUE}
+# splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
   data = data,
   meta = meta,
   annotation = annotation,
   report_info = report_info,
-  condition = "Phase",
-  meta_batch_column = "Reactor"
+  condition = "Phase",  # Column of meta that contains the levels.
+  meta_batch_column = "Reactor"  # For batch effect removal
 )
 ```
 
-## Required Arguments `explore_data()`
+Now that we have the SplineOmics object defined, we can perform our exploratory
+data analysis. 
 
--   **splineomics**: A SplineOmics object containing the following
-    fields:
-    -   **data**: A matrix with the data.
-    -   **meta**: Metadata associated with the data.
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **report_info**: A list containing general information about the
-        analysis.
-    -   **meta_batch_column**: Column for meta batch information.
-    -   **meta_batch2_column**: Column for secondary meta batch
-        information.
-
-## Optional Arguments `explore_data()`
-
--   **report_dir**: The path to the output directory. Default is current
-    work dir.
--   **report**: A Boolean TRUE or FALSE value specifying if a report
-    should be generated. Default is TRUE.
-
-```{r Run the EDA function}
-report_dir <- here::here(
-  "demo_results",
-  "explore_data"
-  )
-
+```{r Run EDA function, eval = TRUE}
 plots <- SplineOmics::explore_data(
-  splineomics = splineomics,
+  splineomics = splineomics,   # SplineOmics object
   report_dir = report_dir
   )
 
 ```
 
-The EDA plots can reveal a range of insights. In the HTML report, the
-plots are grouped into three categories: distribution and variability
-analysis, time series analysis, and dimensional reduction and
-clustering.
+The EDA plots can tell you a range of things. The plots in the HTML
+report are grouped into three categories: Distribution and Variability
+Analysis, Time Series Analysis, and Dimensionality Reduction and
+Clustering.
 
-### Correlation Heatmaps
+If you look at the correlation heatmaps in the HTML report, you can see
+that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
+Seeing this, you might want to remove them from the data. You can test
+out what happens when you do this, along with testing how other
+hyperparameter choices influence the results, with the package function
+screen_limma_hyperparams().
 
-If you examine the correlation heatmaps in the HTML report, you might
-notice that the samples `E12_TP05_Exponential` and `E10_TP10_Stationary`
-stand out. Based on this observation, you might decide to remove these
-samples from the data. The impact of such decicions can be explored with
-the screen_limma_hyperparams() function.
+## Finding the Best Hyperparameters
 
-# Find the best hyperparameters
+Before running the **limma spline analysis**, it is important to find
+the best "hyperparameters". In this context, hyperparameters include:
 
-## Determining the Best Hyperparameters
+-   **Degree of freedom (DoF)**
+-   **Different versions of the data** (e.g., outlier removed vs. not
+    removed)
+-   **Different limma design formulas**
 
-Before running the limma spline analysis, we need to determine the best
-"hyperparameters." Hyperparameters in this context include the degree of
-freedom, different versions of the data (e.g., outlier removed vs. not
-removed), different limma design formulas, etc. Rationally choosing the
-best combination of hyperparameters is challenging, so it is often
-better to try out multiple combinations and select the best one.
+### Challenge of Hyperparameter Selection
+
+Rationally determining the best combination of hyperparameters can be
+very challenging. By rationally, I mean deciding upon the final hyperparameters 
+without ever testing any, just by scientific reasoning. It is much easier just 
+testing a few and seeing how they actually behave. However, manually selecting
+combinations can be tedious, and you have to work very systematically, which 
+can be challenging. To solve this problem, the `screen_limma_hyperparams()` 
+function was written.
 
 ### Using `screen_limma_hyperparams()`
 
-The function `screen_limma_hyperparams()` automates this process. For
-each hyperparameter, you specify the values you want to try, and the
-function runs the limma spline analysis with various combinations of
-these hyperparameters. Not every single combination is generated.
-Instead, there are "inner" and "outer" hyperparameters. All combinations
-are generated for "outer" hyperparameters, while specific combinations
-are generated for "inner" hyperparameters.
+The function `screen_limma_hyperparams()` automates the process of
+testing different combinations of hyperparameters. Here's how it works:
 
-"Inner" hyperparameters include the adjusted p-value thresholds and
-spline parameters. For example, if you have two versions of a dataset
-(one with potential outliers removed and one without), these are
-considered "outer" hyperparameters. The function generates all possible
-comparisons for the "outer" hyperparameters, resulting in a single
-comparison. Then, for each version of the data, it generates every
-combination of the "inner" hyperparameters.
+-   **Specify values**: For each hyperparameter, you can specify all the
+    values you want to test.
+-   **Run combinations**: The function runs the **limma spline
+    analysis** with combinations formed from the hyperparameters you've
+    provided in a semi combinatorial way.
+
+### Inner vs. Outer Hyperparameters
+
+Semi combinatorial here means that not every possible combination is generated.
+Instead, there are **inner** and **outer** hyperparameters:
+
+-   **Outer hyperparameters**: These include things like **different
+    versions of the dataset** (e.g., full dataset vs. dataset with
+    outliers removed).
+    -   All possible combinations of outer hyperparameters are
+        generated.
+-   **Inner hyperparameters**: These include **adjusted p-value
+    thresholds** and **spline parameters** (e.g., degree of freedom).
+    -   For each version of the data (outer hyperparameter), all
+        combinations of inner hyperparameters are tested.
+
+This approach is neccessary, because otherwise the amount of combos would 
+explode.
 
 ### Example
 
-For example, if you specify natural cubic splines with a degree of
-freedom of 2 or 3, and adjusted p-value thresholds of 0.05 or 0.1, the
-function will test all combinations:
+For example, if you have two versions of a dataset (one full dataset,
+and one with some outliers removed), these versions are considered outer
+hyperparameters. Additionaly, lets say, you want to test two different limma
+design formulas, formula 1 and 2. The function will test out all combinations
+of those outer hyperparameters and compare them with each other, which results
+in a total of 6 combinations here:
 
--   DoF = 2, threshold = 0.05
--   DoF = 3, threshold = 0.05
--   DoF = 2, threshold = 0.1
--   DoF = 3, threshold = 0.1
+- **Full Dataset Formula 1** vs **Full Dataset Formula 2**
+- **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 1**
+- **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
 
-This systematic approach helps in identifying the best hyperparameters
-for the analysis.
+- **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 1**
+- **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 2**
 
-```{r Load hyperparameter-screening args}
+- **Outliers Removed Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
+
+Let's say you specified the following inner
+hyperparameters:
+
+-   **Spline parameters**: Natural cubic splines with a degree of
+    freedom of either 2 or 3.
+-   **Adjusted p-value threshold**: 0.05 or 0.1.
+
+The function will generate and test all combinations of the spline
+parameters and p-value thresholds for all 4 combos:
+
+Combo 1:
+-   **DoF = 2, threshold = 0.05**
+-   **DoF = 3, threshold = 0.05**
+-   **DoF = 2, threshold = 0.1**
+-   **DoF = 3, threshold = 0.1**
+
+Combo 2: 
+-   **DoF = 2, threshold = 0.05**
+-   **DoF = 3, threshold = 0.05**
+-   **DoF = 2, threshold = 0.1**
+-   **DoF = 3, threshold = 0.1**
+
+Combo 3:
+...
+
+This allows you to systematically explore different combinations and
+select the optimal hyperparameters for your analysis.
+
+Below is an example for our proteomics data:
+
+```{r Load hyperparameter-screening args, eval = TRUE}
 data1 <- data 
 meta1 <- meta
 
-data2 <- data[, !(colnames(data) %in% c(  # Remove potential outliers
-  "E12_TP05_Exponential",   
+# Remove the "outliers"
+data2 <- data[, !(colnames(data) %in% c(
+  "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   )
   )]
 
+# Adjust meta so that it matches data2
 meta2 <- meta[!meta$`Sample.ID` %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   ), ]
 
+# As mentioned above, all the values of one hyperparameter are stored 
+# and provided as a list.
 datas <- list(data1, data2) 
+
+# This will be used to describe the versions of the data.
 datas_descr <- c(
   "full_data",
   "outliers_removed"
   ) 
 
-metas <- list(
-  meta1,
-  meta2
-  ) 
+metas <- list(meta1, meta2) 
 
+# Test two different limma designs
 designs <- c(
   "~ 1 + Phase*X + Reactor",
   "~ 1 + X + Reactor"
   ) 
 
-pthresholds <- c(
-  0.05,
-  0.1
-  )
-```
+# Specify the meta "level" column
+condition <- "Phase" 
 
-### Spline Configuration Parameters
-
-The `spline_test_configs` dataframe (see box below) is used to specify
-the parameters for different runs of spline analysis. Each row in the
-dataframe corresponds to one set of spline settings. The supported
-spline types are natural cubic splines (denoted by "n") and B-splines
-(denoted by "b").
-
-#### Parameters
-
--   **spline_type**: The type of spline to use. Options are:
-    -   `"n"`: Natural cubic splines
-    -   `"b"`: B-splines
--   **degree**: The degree of the spline. This is only required for
-    B-splines (`spline_type = "b"`). For natural cubic splines
-    (`spline_type = "n"`), this should be set to `NA`.
--   **dof**: Degrees of Freedom (DoF) for the spline. This parameter
-    controls the flexibility of the spline. Higher values allow more
-    flexibility.
--   **knots**: A list specifying the positions of the knots. If set to
-    `NA`, the knots are placed automatically in a central fashion. Knots
-    are only needed when you want to manually specify their positions.
-    Each element of the list should correspond to a vector of knot
-    positions for the respective spline.
-
-#### Understanding the Relationship Between Degree, DoF, and Knots
-
-The relationship between the degree of the spline, the degrees of
-freedom (DoF), and the number of internal knots (k) varies between
-B-splines and natural cubic splines. Here's a breakdown:
-
--   **B-splines**:
-
-    -   **degree**: The degree of the spline.
-    -   **DoF**: Degrees of freedom.
-    -   **k**: Number of internal knots.
-
-    The relationships are given by the following formulas:
-
-    -   `DoF = k + degree`
-    -   `k = DoF - degree`
-
--   **Natural cubic splines**:
-
-    -   **degree**: Always 3 for cubic splines.
-    -   **DoF**: Degrees of freedom.
-    -   **k**: Number of internal knots.
-
-    The relationships are given by the following formulas:
-
-    -   `DoF = k + 1`
-    -   `k = DoF - 1`
-
-#### Specifying Parameters
-
-You either specify the degrees of freedom (DoF) or the knots, not both.
-The choice depends on how you want to control the flexibility of the
-spline:
-
--   **Specifying DoF**: The number of internal knots (k) will be
-    determined automatically based on the DoF.
--   **Specifying Knots**: The degrees of freedom (DoF) will be
-    calculated based on the number of knots and the degree of the
-    spline.
-
-```{r spline_test_configs definition}
-# Every row a combo to test.
-spline_test_configs <- data.frame(
-  spline_type = c("n", "n", "n", "n"),  # All should use natural splines (n)
-  degree = c(NA, NA, NA, NA),  # only needed for B-splines (spline_type = b)
-  dof = c(2L, 3L, 4L, 5L),     # Test these variations of the DoF.
-  # Per default, knots are placed automatically in a central fashion.
-  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
-  bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
-  )
-```
-
-## Required Arguments `screen_limma_hyperparams()`
-
--   **splineomics**: A SplineOmics object containing the following
-    fields:
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **report_info**: A list containing general information about the
-        analysis.
-    -   **meta_batch_column**: Column for meta batch information.
-    -   **meta_batch2_column**: Column for secondary meta batch
-        information.
--   **datas**: A list of data frames containing the datasets to be
-    analyzed.
--   **datas_descr**: A description object for the data.
--   **metas**: A list of data frames containing metadata for each
-    dataset in `datas`.
--   **designs**: A character vector of design formulas for the limma
-    analysis.
--   **spline_test_configs**: A configuration object for spline tests.
-
-## Optional Arguments `screen_limma_hyperparams()`
-
--   **report_dir**: The path to the output directory. Default is current
-    work dir.
--   **adj_pthresholds**: A numeric vector of p-value thresholds for
-    significance determination.
--   **time_unit**: A character string specifying the time unit label for
-    plots.
--   **padjust_method**: A character string specifying the method for
-    p-value adjustment. Default is "BH" (Benjamini-Hochberg).
-
-```{r Perform hyperparameter-screening}
 report_dir <- here::here(
   "demo_results",
   "hyperparams_screen_reports"
   ) 
 
-SplineOmics::screen_limma_hyperparams(
-  splineomics = splineomics,
-  datas = datas,
-  datas_descr = datas_descr,
-  metas = metas,
-  designs = designs,
-  spline_test_configs = spline_test_configs,
-  report_dir = report_dir,
-  adj_pthresholds = pthresholds
+# To remove the batch effect
+meta_batch_column = "Reactor" 
+
+# Test out two different p-value thresholds (inner hyperparameter)
+pthresholds <- c(
+  0.05,
+  0.1
   )
+
+# Create a dataframe with combinations of spline parameters to test
+# (every row a combo to test)
+spline_test_configs <- data.frame(
+   # 'n' stands for natural cubic splines, b for B-splines.
+  spline_type = c("n", "n", "b", "b"),  
+  # Degree is not applicable (NA) for natural splines.
+  degree = c(NA, NA, 2L, 4L),           
+  # Degrees of freedom (DoF) to test.
+  # Higher dof means spline can fit more complex patterns.
+  dof = c(2L, 3L, 3L, 4L)         
+)
+
+print(spline_test_configs)
 ```
 
-The last HTML generated by `screen_limma_hyperparams()` describes the
-meaning of all short words used in the reports. For example it states
-that Design_1 = "\~ 1 + Phase\*X + Reactor", and Design_2 = "\~ 1 + X +
-Reactor".
+Now that we specified all the values for each hyperparameter that we want to 
+test, we can run the `screen_limma_hyperparams()` function.
+
+```{r Perform hyperparameter-screening, eval = TRUE}
+SplineOmics::screen_limma_hyperparams(
+  splineomics,
+  datas,
+  datas_descr,
+  metas,
+  designs,
+  spline_test_configs,
+  report_dir,
+  pthresholds,
+  )
+
+```
 
 # Run limma spline analysis
 
-Once we identify the hyperparameters that are likely the best, we can
-run the limma spline analysis with them to obtain the results. For this,
-the SplineOmics object must be updated based on our findings from the
-hyperparameter screening.
+Once we identified the hyperparameters that are likely the best ones, we
+can run the limma spline analysis with them and get the results.
 
-For example, we figured out that natural cubic splines with a DoF of 2
-perform the best in terms of avoiding under- and overfitting.
+Lets just assume for now that the new parameters, with which the
+SplineOmics object is updated, are the best for this analysis. The
+choice depends on the analysis. For example, for this analysis, natural
+cubic splines (n) with a dof of two seemed to fit the data best (not
+overfitting, but also not underfitting), which was the reason those
+spline parameters were chosen.
 
-### Spline Parameters List
-
-The `spline_params` list is used to specify the final spline parameters
-that you want to use for your analysis. It takes the same arguments as
-the `spline_test_configs` dataframe, but here you define the actual
-parameters for the spline analysis.
-
-#### Parameters
-
--   **spline_type**: The type of spline to use. Options are:
-    -   `"n"`: Natural cubic splines
-    -   `"b"`: B-splines
--   **degree**: The degree of the spline. This is only required for
-    B-splines (`spline_type = "b"`). For natural cubic splines
-    (`spline_type = "n"`), this should be set to `NA`.
--   **dof**: Degrees of Freedom (DoF) for the spline. This parameter
-    controls the flexibility of the spline. Higher values allow more
-    flexibility.
--   **knots**: A list specifying the positions of the knots. If set to
-    `NA`, the knots are placed automatically in a central fashion. Knots
-    are only needed when you want to manually specify their positions.
-    Each element of the list should correspond to a vector of knot
-    positions for the respective spline.
-
-#### Usage with Limma Design Formula
-
--   **Interaction Effects**: If the limma design formula contains an
-    interaction effect, you must specify a single option for each
-    parameter. This single option will be applied to all levels. This
-    approach ensures consistency across all levels when interactions are
-    present.
--   **No Interaction Effects**: If the limma design formula contains no
-    interaction effects, you must specify one element in the vector for
-    each level. Each element corresponds to the respective level in the
-    order they appear in the metadata.
-
-```{r best spline params}
-spline_params = list(     
-  spline_type = c("n"),   # Natural splines for all levels
-  dof = c(2L)             # Degree of freedom of 2 for all levels
-  )
-```
-
-The spline_params, among others, can be loaded in the SplineOmics object
-with the `update_splineomics()` function.
-
-## Required Arguments `update_splineomics()`
-
--   **splineomics**: A SplineOmics object to be updated.
-
-## Optional Arguments `update_splineomics()`
-
--   **...**: Named arguments with new values for fields to be updated or
-    added. Allowed fields include:
-    -   **data**: A matrix with the data.
-    -   **meta**: Metadata associated with the data.
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **annotation**: A dataframe with the feature descriptions of
-        data.
-    -   **report_info**: A list containing report information such as
-        omics data type, data description, data collection date, analyst
-        name, contact info, and project name.
-    -   **meta_batch_column**: Column for meta batch information.
-    -   **meta_batch2_column**: Column for secondary meta batch
-        information.
-    -   **feature_name_columns**: Columns used to construct feature
-        names.
-    -   **design**: A limma design formula
-    -   **spline_params**: Parameters for spline functions.
-    -   **limma_splines_result**: Results from the limma splines
-        analysis.
-
-```{r Update the SplineOmics object}
+```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  data = data2,   # Currently data1 (data is loaded)
-  meta = meta2,   # Currently meta1 (meta is loaded)
-  design = "~ 1 + Phase*X + Reactor",
-  spline_params = spline_params
+  design = "~ 1 + Phase*X + Reactor",  # best design formula
+  data = data2,   # data without "outliers" was better
+  meta = meta2,  
+  spline_params = list(
+    spline_type = c("n"),   # natural cubic splines
+    dof = c(2L)
+    )
 )
 ```
 
-## Required Arguments `run_limma_splines()`
+Run the `run_limma_splines()` function with the updated SplineOmics object:
 
--   **splineomics**: A SplineOmics object containing the following
-    fields:
-    -   **data**: A matrix with the data.
-    -   **meta**: Metadata associated with the data.
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **design**: A limma design formula
-    -   **spline_params**: Parameters for spline functions.
-
-## Optional Arguments `run_limma_splines()`
-
--   **padjust_method**: A character string specifying the method for
-    p-value adjustment. Default is "BH" (Benjamini-Hochberg).
-
-```{r Run the limma spline analysis}
-# Run the limma spline analysis
+```{r limma spline analysis, eval = TRUE}
 splineomics <- SplineOmics::run_limma_splines(
-  splineomics = splineomics
+  splineomics
   )
 ```
 
-The function run_limma_splines() adds a named list to the returned
-SplineOmics object. Each element in this list represents a specific
-"category" of results. These elements are lists containing the
-respective limma topTables, either for each level or for comparisons
-between two levels.
+The output of the function run_limma_splines() is a named list, where
+each element is a specific "category" of results. Refer to [this
+document](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
+for an explanation of the different result categories. Each of those
+elements is a list, containing as elements the respective limma
+topTables, either for each level or each comparison between two levels.
 
-The element "time_effect" is a list where each element is a topTable
-reporting the p-values for each feature for the respective level.
+The element "time_effect" is a list, where each element is the topTable
+where the p-value for each feature for the respective level are
+reported.
 
-The element "avrg_diff_conditions" is a list containing topTables that
-represent the comparison of the average differences between the levels.
+The element "avrg_diff_conditions" is a list that contains as elements
+the topTables, that represent the comparison of the average differences
+of the levels.
 
-The element "interaction_condition_time" is a list containing topTables
-that represent the interaction between the levels, which includes both
-time and average differences.
+The element "interaction_condition_time" is a list that contains as
+elements the topTables, that represent the interaction between the
+levels (which includes both time and the average differences)
 
 # Build limma report
 
 The topTables of all three categories can be used to generate p-value
 histograms an volcano plots.
 
-## Required Arguments `create_limma_report()`
-
--   **splineomics**: A SplineOmics object containing the following
-    fields:
-    -   **limma_splines_result**: A list containing the results of the
-        limma analysis with splines. It should have three components:
-        `time_effect`, `avrg_diff_conditions`, and
-        `interaction_condition_time`.
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **annotation**: A dataframe with the feature descriptions of
-        data.
-    -   **report_info**: A list containing metadata and other
-        information to be included in the report.
-
-## Optional Arguments `create_limma_report()`
-
--   **adj_pthresh**: A numeric value specifying the adjusted p-value
-    threshold for significance. Default is 0.05.
--   **report_dir**: The path to the output directory. Default is current
-    work dir.
-
-```{r Build limma report}
+```{r build limma report, eval = TRUE}
 report_dir <- here::here(
   "demo_results",
   "create_limma_reports"
   )
 
 plots <- SplineOmics::create_limma_report(
-  splineomics = splineomics,
+  splineomics,
   report_dir = report_dir
   )
 ```
 
 # Cluster the hits (significant features)
 
-After obtaining the limma spline results, we can cluster the hits based
-on their temporal patterns (spline shapes). A hit is defined by setting
-an adjusted p-value threshold for each level. Hierarchical clustering is
-then used to assign each hit to one of the specified number of clusters
-for that level.
+After we obtained the limma spline results, we can cluster the hits
+based on their temporal pattern (their spline shape). We define what a
+hit is by setting an adj. p-value threshold for every level. Hits are features
+(e.g. proteins) that have an adj. p-value below the threshold. 
+Hierarchical clustering is used to place every hit in one of as many
+clusters as we have specified for that specific level.
 
-```{r Prepare inputs for the cluster_hits function}
-adj_pthresholds <- c(
-  0.05,   # threshold for the exponential phase
-  0.05    # threshold for the stationary phase
+```{r cluster the hits, eval = TRUE}
+adj_pthresholds <- c(  # 0.05 for both levels
+  0.05,  # exponential
+  0.05   # stationary
   )
 
-clusters <- list(
-  6L,   # 6 clusters for the exponential phase
-  3L    # 3 clusters for the stationary phase
+clusters <- c(
+  6L,  # 6 clusters for the exponential phase level
+  3L   # 3 clusters for the stationary phase level
   )
 
-plot_info = list(                    # For the spline plots
-  y_axis_label = "log2 intensity",   # Unit of the values in the data matrix.
-  time_unit = "min",
-  treatment_labels = c("Feeding"),
-  treatment_timepoints = c(0)       # The feeding occurred at 0 minutes.
-)
-
-gene_column_name <- "Genes" 
-genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
-```
-
-## Required Arguments `cluster_hits()`
-
--   **splineomics**: An S3 object of class `SplineOmics` that contains
-    all the necessary data and parameters for the analysis, including:
-    -   **data**: A matrix with the data.
-    -   **meta**: Metadata associated with the data.
-    -   **design**: A limma design formula.
-    -   **condition**: Column name of the levels (e.g., Exponential and
-        Stationary).
-    -   **spline_params**: Parameters for spline functions.
-    -   **meta_batch_column**: Column for meta batch information.
-    -   **meta_batch2_column**: Column for secondary meta batch
-        information.
-    -   **limma_splines_result**: A list of data frames, each
-        representing a top table from differential expression analysis,
-        containing at least 'adj.P.Val' and expression data columns.
-    -   **genes**: A character vector containing the gene names of the
-        features to be analyzed.
-
-## Optional Arguments `cluster_hits()`
-
--   **adj_pthresholds**: Numeric vector of p-value thresholds for
-    filtering hits in each top table. Default is 0.05.
--   **clusters**: Character or integer vector specifying the number of
-    clusters or 'auto' for automatic estimation.
--   **report_info**: A character string to be printed at the top of the
-    report.
--   **time_unit**: A character string specifying the time unit label for
-    plots (e.g., 'min' for minutes).
--   **report_dir**: The path to the output directory. Default is current
-    work dir.
--   **report**: Boolean TRUE or FALSE value specifying if a report
-    should be generated. Default is TRUE.
-
-```{r Cluster the hits}
 report_dir <- here::here(
   "demo_results",
   "clustering_reports"
   )
 
+plot_info = list(  # For the spline plots
+  y_axis_label = "log2 intensity",
+  time_unit = "min",  # our measurements were in minutes
+  treatment_labels = c("Feeding"),  
+  treatment_timepoints = c(0)  # Feeding was at 0 minutes.
+)
+
+# Get all the gene names. They are used for generating files
+# which contents can be directly used as the input for the Enrichr webtool,
+# if you prefer to manually perform the enrichment. Those files are
+# embedded in the output HTML report and can be downloaded from there.
+gene_column_name <- "Gene_symbol"
+genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
+
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
-  genes = genes,
-  analysis_type = "time_effect",   # effect of time on features in level.
+  # Cluster the hits from the time_effect results. You can also cluster
+  # the hits from the other two limma result categories by specifying
+  # it here with this argument.
+  analysis_type = "time_effect",  
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
+  genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
   )
@@ -773,11 +684,13 @@ clustering_results <- SplineOmics::cluster_hits(
 
 # Perform gene set enrichment analysis (GSEA)
 
-To each clustered hit, the respective gene can be assigned and GSEA
+Usually, the final step in such a bioinformatics analysis is GSEA. To each 
+clustered hit, the respective gene can be assigned and GSEA
 performed. For this, the Enrichr databases of choice have to be
 downloaded:
 
-```{r Define which Enrichr databases to download}
+```{r download Enrichr databases, eval = TRUE}
+# Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
   "WikiPathways_2019_Human",
   "NCI-Nature_2016",
@@ -792,19 +705,7 @@ gene_set_lib <- c(
   "GO_Molecular_Function_2018",
   "Human_Gene_Atlas"
   )
-```
 
-## Required Arguments `download_enrichr_databases()`
-
--   **gene_set_lib**: A char vector of database names to download from
-    Enrichr.
-
-## Optional Arguments `download_enrichr_databases()`
-
--   **output_dir**: The path to the output directory where the .tsv file
-    will be saved. Defaults to the current working directory.
-
-```{r Download the Enrichr databases}
 output_dir  <- here::here(
   "demo_results",
   "downloaded_databases"
@@ -816,24 +717,16 @@ SplineOmics::download_enrichr_databases(
   )
 ```
 
-To run GSEA, a genes vector must be created, containing all the
-underlying genes of the features. The downloaded database file should be
-loaded as a dataframe. Additionally, the clusterProfiler parameters and
-the report directory can optionally be specified. The function
-create_gsea_report() runs GSEA using clusterProfiler, generates an HTML
-report, and returns the GSEA dot plots in R.
+Per default the file is placed in the current working directory, which
+is the root dir of the R project.
 
-```{r Prepare GSEA inputs}
-# Get gene vector. Every gene must be in the standardized format expected by
-# the enrichment tools. The subsequent code extracts this part.
-# For your analysis, this code needs to be customized based on the format.
-gene_column_name <- "Genes"
-genes <- annotation[[gene_column_name]][1:nrow(annotation)]
-genes <- sub(" .*", "", genes)
-genes <- sub(";.*", "", genes)
-genes <- sub("_.*", "", genes)
-genes <- sub("-.*", "", genes)
+To run GSEA, the downloaded database file has to be loaded as a
+dataframe. Further, optionally, the clusterProfiler parameters and the
+report dir can be specified. The function create_gsea_report() runs GSEA
+using clusterProfiler, generates an HTML report and returns the GSEA
+dotplots in R.
 
+```{r run GSEA, eval = TRUE}
 # The file has a timestamp, but this code takes it irrespective of it.
 downloaded_dbs_filepath <- list.files(
   path = output_dir,
@@ -846,6 +739,7 @@ databases <- readr::read_tsv(
   col_types = readr::cols()
   )
 
+# Specify the clusterProfiler parameters
 clusterProfiler_params <- list(
   adj_p_value = 0.05,
   pAdjustMethod = "BH",
@@ -853,50 +747,43 @@ clusterProfiler_params <- list(
   maxGSSize = 500,
   qvalueCutoff = 0.2
   )
-```
 
-## Required Arguments `create_gsea_report()`
-
--   **levels_clustered_hits**: A list of clustered hits for the
-    different levels.
--   **genes**: A vector of genes of all features of the dataset
--   **databases**: A list of databases to be used in the analysis.
--   **report_info**: A list containing information for the report
-    generation.
-
-## Optional Arguments `create_gsea_report()`
-
--   **params**: Additional parameters for the GSEA analysis. Default is
-    NA.
--   **plot_titles**: Titles for the plots. Default is NA.
--   **background**: Background data. Default is NULL.
--   **report_dir**: The path to the output directory where the report
-    will be saved. Default is the current working directory.
-
-```{r Run GSEA}
 report_dir <- here::here(
   "demo_results",
   "gsea_reports"
   )
+```
 
-result <- SplineOmics::create_gsea_report(
+The function below runs the clusterProfiler for all clusters and all levels,
+and generates the HTML report:
+
+```{r run GSEA, eval = TRUE}
+result <- SplineOmics::run_gsea(
+  # A dataframe with three columns: feature, cluster, and gene. Feature contains
+  # the integer index of the feature, cluster the integer specifying the cluster
+  # number, and gene the string of the gene, such as "CLSTN2".
   levels_clustered_hits = clustering_results$clustered_hits_levels,
-  genes = genes,
   databases = databases,
-  params = clusterProfiler_params,
+  clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
   report_dir = report_dir
   )
 ```
 
-In the output HTML, each row in the dot plots represents a term from a
-specific database, and the columns correspond to the respective
-clusters. The color scale indicates the odds ratio, while the size
-represents the -log10 adjusted p-value. Only terms with support from
-more than 2 genes are included in the plot. For each cluster, a maximum
-of 5 terms with the highest odds ratios are shown.
+This report first shows all enrichment results, where more than 2 genes
+supported a term, in a tabular format. The table with all the terms with
+\< 2 genes supporting it can be downloaded by clicking on a button below
+that table.
 
-Note that if, for example, cluster 1 already has 5 terms and cluster 2
-receives a term that was also found for cluster 1, this term will be
-included as the sixth term for cluster 1. This is how the maximum of 5
-can be exceeded.
+For the dotplots below that, every row is a term from a specific
+database, and the columns are the respective clusters. The color scale
+contains the info about the odds ratio and the size the -log10 adj.
+p-value. Only terms that have \> 2 genes as support are included in the
+plot. Further, for each cluster, just maximally 5 terms are shown (the
+terms with the highest odds ratios). Note that when for example cluster
+1 already has 5 terms, and cluster 2 does not, and gets a term which was
+also found for cluster 1, than this term would be included as the sixth
+term for cluster 1, so this is a way the maximum of 5 can be exceeded.
+
+If a phase, like stationary here, does not lead to any enrichment
+results, that is stated with a red message.

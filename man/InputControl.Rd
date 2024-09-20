@@ -73,9 +73,9 @@ If any of these checks fail, an informative error message is returned.
 This function performs the following checks:
 1. Ensures `feature_name_columns` and `annotation` are not `NULL`.
 2. Verifies that each element in `feature_name_columns` is a character
- with 
+ with
    a length of 1.
-3. Checks that all elements of `feature_name_columns` are valid column 
+3. Checks that all elements of `feature_name_columns` are valid column
 names in the `annotation` data frame.
 
 Check Report
@@ -84,7 +84,7 @@ Check Report
 
 The function performs the following checks:
 - Whether the `report` argument is present.
-- If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws 
+- If `report` is not a Boolean value (`TRUE` or `FALSE`), it throws
 an error.
 }
 \section{Functions}{
@@ -751,18 +751,18 @@ Check Analysis Mode
 \if{html}{\out{<a id="method-InputControl-check_analysis_type"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_analysis_type}{}}}
 \subsection{Method \code{check_analysis_type()}}{
-This method checks the validity of the `analysis_mode` argument. 
-It ensures that 
+This method checks the validity of the `analysis_mode` argument.
+It ensures that
 `analysis_mode` is a character vector of length 1 and that it matches
- one of the 
-allowed analysis modes: "time_effect", "avrg_diff_conditions", or 
+ one of the
+allowed analysis modes: "time_effect", "avrg_diff_conditions", or
 "interaction_condition_time".
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_analysis_type()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-NULL if `analysis_mode` is not provided or invalid. Otherwise, 
+NULL if `analysis_mode` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.
 
@@ -773,17 +773,17 @@ Check Feature Name Columns
 \if{html}{\out{<a id="method-InputControl-check_feature_name_columns"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_feature_name_columns}{}}}
 \subsection{Method \code{check_feature_name_columns()}}{
-This function checks whether all elements of `feature_name_columns` are 
-characters of length 1 and whether they are valid column names in the 
+This function checks whether all elements of `feature_name_columns` are
+characters of length 1 and whether they are valid column names in the
 `annotation` data frame.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_feature_name_columns()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Returns `NULL` if any required arguments are missing. Throws 
+Returns `NULL` if any required arguments are missing. Throws
 an error
-if any element of `feature_name_columns` is not a character of length 1 
+if any element of `feature_name_columns` is not a character of length 1
 or if
 any element is not a column name in `annotation`. Returns `TRUE` if all
  checks
@@ -794,9 +794,9 @@ pass.
 \if{html}{\out{<a id="method-InputControl-check_report"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_report}{}}}
 \subsection{Method \code{check_report()}}{
-This function verifies the `report` argument within the object's 
+This function verifies the `report` argument within the object's
 arguments.
-It checks if the `report` argument is present and validates its 
+It checks if the `report` argument is present and validates its
 Boolean value.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_report()}\if{html}{\out{</div>}}

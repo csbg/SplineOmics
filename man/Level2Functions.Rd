@@ -80,7 +80,7 @@ Check Data Matrix
 \if{html}{\out{<a id="method-Level2Functions-check_data"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_data}{}}}
 \subsection{Method \code{check_data()}}{
-This function checks the validity of the data matrix, ensuring that it 
+This function checks the validity of the data matrix, ensuring that it
 is a
 matrix, contains only numeric values,
 has no missing values, and all elements are non-negative. Additionally, it
@@ -102,7 +102,7 @@ for error messages. Default is NA.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns TRUE if all checks pass. Stops execution and returns an 
+Returns TRUE if all checks pass. Stops execution and returns an
 error
 message if any check fails.
 
@@ -133,14 +133,14 @@ messages regarding its use.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{meta}}{A dataframe containing the metadata, including the 'Time' 
+\item{\code{meta}}{A dataframe containing the metadata, including the 'Time'
 column.}
 
-\item{\code{condition}}{A single character string specifying the column name 
+\item{\code{condition}}{A single character string specifying the column name
 in the
 meta dataframe to be checked.}
 
-\item{\code{meta_batch_column}}{An optional parameter specifying the column 
+\item{\code{meta_batch_column}}{An optional parameter specifying the column
 name in
  the meta dataframe used to remove the batch effect. Default is NA.}
 
@@ -164,7 +164,7 @@ Check Dataframe
 \if{html}{\out{<a id="method-Level2Functions-check_dataframe"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_dataframe}{}}}
 \subsection{Method \code{check_dataframe()}}{
-Validates that the dataframe contains all required columns with the 
+Validates that the dataframe contains all required columns with the
 correct data types.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_dataframe(df)}\if{html}{\out{</div>}}
@@ -236,7 +236,6 @@ Validates the spline parameters depending on the specified mode.
 \subsection{Returns}{
 No return value, called for side effects.
 
-
 Check Columns in Spline Test Configurations
 }
 }
@@ -244,7 +243,7 @@ Check Columns in Spline Test Configurations
 \if{html}{\out{<a id="method-Level2Functions-check_columns_spline_test_configs"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_columns_spline_test_configs}{}}}
 \subsection{Method \code{check_columns_spline_test_configs()}}{
-Validates that the spline test configurations contain the required columns 
+Validates that the spline test configurations contain the required columns
 in the correct order.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_columns_spline_test_configs(spline_test_configs)}\if{html}{\out{</div>}}
@@ -266,7 +265,7 @@ No return value, called for side effects.
 \if{html}{\out{<a id="method-Level2Functions-check_spline_type_column"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_spline_type_column}{}}}
 \subsection{Method \code{check_spline_type_column()}}{
-Validates that the 'spline_type' column in the spline test configurations 
+Validates that the 'spline_type' column in the spline test configurations
 contains only 'n' or 'b'.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_spline_type_column(spline_test_configs)}\if{html}{\out{</div>}}
@@ -275,7 +274,7 @@ contains only 'n' or 'b'.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{spline_test_configs}}{A dataframe containing spline test 
+\item{\code{spline_test_configs}}{A dataframe containing spline test
 configurations.}
 }
 \if{html}{\out{</div>}}
@@ -288,7 +287,7 @@ No return value, called for side effects.
 \if{html}{\out{<a id="method-Level2Functions-check_spline_type_params"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_spline_type_params}{}}}
 \subsection{Method \code{check_spline_type_params()}}{
-Validates the parameters for each row in the spline test configurations 
+Validates the parameters for each row in the spline test configurations
 based on the spline type.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_spline_type_params(spline_test_configs)}\if{html}{\out{</div>}}
@@ -297,7 +296,7 @@ based on the spline type.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{spline_test_configs}}{A dataframe containing spline test 
+\item{\code{spline_test_configs}}{A dataframe containing spline test
 configurations.}
 }
 \if{html}{\out{</div>}}
@@ -310,7 +309,7 @@ TRUE if all checks pass, otherwise an error is thrown.
 \if{html}{\out{<a id="method-Level2Functions-check_max_and_min_dof"></a>}}
 \if{latex}{\out{\hypertarget{method-Level2Functions-check_max_and_min_dof}{}}}
 \subsection{Method \code{check_max_and_min_dof()}}{
-Validates the degrees of freedom (DoF) for each row in the spline test 
+Validates the degrees of freedom (DoF) for each row in the spline test
 configurations based on the metadata.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Level2Functions$check_max_and_min_dof(spline_test_configs, metas)}\if{html}{\out{</div>}}
@@ -319,7 +318,7 @@ configurations based on the metadata.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{spline_test_configs}}{A dataframe containing spline test 
+\item{\code{spline_test_configs}}{A dataframe containing spline test
 configurations.}
 
 \item{\code{metas}}{A list of metadata corresponding to the data matrices.}

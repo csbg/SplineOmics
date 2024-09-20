@@ -529,6 +529,18 @@ InputControl <- R6::R6Class("InputControl",
              call. = FALSE)
       }
       
+      # Ensure that the formula begins with an intercept (~ 1)
+      # Ignore whitespace, check the start of the string
+      if (!grepl("^\\s*~\\s*1", formula)) {
+        stop(
+          paste(
+            "The design formula must start with an intercept term '~ 1'.",
+            "This is because spline curves are plotted onto the data", 
+            "which is not possible without an intercept"
+            ),
+             call. = FALSE)
+      }
+      
       # Ensure the formula contains the intercept term 'X'
       if (!grepl("\\bX\\b", formula)) {
         stop("The design formula must include the term 'X'.",
@@ -2406,14 +2418,12 @@ check_splineomics_elements <- function(
       "report_info"
       ),
     "screen_limma_hyperparams" = c(
-      "preprocess_rna_seq",
       "condition",
       "report_info",
       "padjust_method"
     ),
     "run_limma_splines" = c(
       "data",
-      "preprocess_rna_seq",
       "meta",
       "design",
       "condition",

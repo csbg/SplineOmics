@@ -16,4 +16,5 @@
 ^CODE_OF_CONDUCT\.md$
 ^inst/CITATION\.cff$
 ^pkgdown$
+_pkgdown.yml$
 

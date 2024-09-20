@@ -10,6 +10,7 @@ process_combo(
   spline_config_index,
   pthreshold,
   datas,
+  rna_seq_datas,
   metas,
   designs,
   modes,
@@ -31,6 +32,9 @@ spline_test_configs list.}
 \item{pthreshold}{The p-value threshold for significance.}
 
 \item{datas}{A list of data matrices}
+
+\item{rna_seq_datas}{A list of RNA-seq data objects, such as the voom object
+derived from the limma::voom function.}
 
 \item{metas}{A list of metadata corresponding to the data matrices.}
 

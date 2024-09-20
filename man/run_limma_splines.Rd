@@ -2,18 +2,37 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{run_limma_splines}
 \alias{run_limma_splines}
-\title{run_limma_splines.R contains the exported package function run_limma_splines  
-and all the functions that make up the functionality of run_limma_splines.
-run_limma_splines performs a limma analysis, using splines, to assign a 
-p-value to every feature of a time series omics dataset, to find out which
-features are significantly changed over the time course.
-Run Limma Analysis with Spline Interpolation for Hyperparameter Screening}
+\title{Run limma analysis with splines}
 \usage{
 run_limma_splines(splineomics)
 }
 \arguments{
-\item{splineomics}{A SplineOmics object, containing data, meta, design, 
-condition, and spline_params.}
+\item{splineomics}{An S3 object of class `SplineOmics` that contains the 
+following elements:
+\itemize{
+  \item \code{data}: The matrix of the omics dataset, with the feature
+  names optionally as row headers.
+  \item \code{rna_seq_data}: An object containing the preprocessed 
+  RNA-seq data, 
+  such as the output from `limma::voom` or a similar preprocessing pipeline.
+  \item \code{meta}: A dataframe containing metadata corresponding to the 
+  \code{data}, must include a 'Time' column and the column specified by 
+  \code{condition}.
+  \item \code{design}: A character string representing the limma design 
+  formula.
+  \item \code{condition}: A character string specifying the column name 
+  in \code{meta} used to define groups for analysis.
+  \item \code{spline_params}: A list of spline parameters used in the 
+  analysis, including:
+    \itemize{
+      \item \code{spline_type}: The type of spline (e.g., "n" for natural 
+      splines or "b" for B-splines).
+      \item \code{dof}: Degrees of freedom for the spline.
+      \item \code{knots}: Positions of the internal knots (for B-splines).
+      \item \code{bknots}: Boundary knots (for B-splines).
+      \item \code{degree}: Degree of the spline (for B-splines only).
+    }
+}}
 }
 \value{
 The SplineOmics object, updated with a list with three elements: 
@@ -28,13 +47,9 @@ The SplineOmics object, updated with a list with three elements:
                                         the condition and the time.
 }
 \description{
-This function conducts differential expression analysis using the Limma 
-package, 
-incorporating spline interpolation to model the effect of various 
-experimental 
-factors across different levels. It supports both isolated and integrated 
-modes 
-for within-level analysis and between-level comparison, adjusting for 
-multiple 
-degrees of freedom corresponding to the factors under investigation.
+This function performs a limma spline analysis to identify significant
+time-dependent changes in features (e.g., proteins) within an omics 
+time-series dataset. It evaluates features within each condition level 
+and between levels by comparing average differences and interactions 
+between time and condition.
 }

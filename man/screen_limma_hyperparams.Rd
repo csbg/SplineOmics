@@ -22,6 +22,7 @@ screen_limma_hyperparams(
   spline_test_configs,
   report_dir = here::here(),
   adj_pthresholds = c(0.05),
+  rna_seq_datas = NULL,
   time_unit = "min",
   padjust_method = "BH"
 )
@@ -44,7 +45,7 @@ necessary data and parameters for the analysis, including:
                                    two batch columns.)
 }}
 
-\item{datas}{A list of data frames containing the datasets to be analyzed.}
+\item{datas}{A list of matrices containing the datasets to be analyzed.}
 
 \item{datas_descr}{A description object for the data.}
 
@@ -59,6 +60,9 @@ necessary data and parameters for the analysis, including:
 
 \item{adj_pthresholds}{A numeric vector of p-value thresholds for 
 significance determination.}
+
+\item{rna_seq_datas}{A list of RNA-seq data objects, such as the voom object
+derived from the limma::voom function.}
 
 \item{time_unit}{A character string specifying the time unit label for plots.}
 

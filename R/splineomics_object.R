@@ -1,25 +1,25 @@
-#' Create and update the SplineOmics object
-#' =====
-#'
-#' Description
-#' -----------
-#' Contains the functions to create and update a SplineOmics object. This object
-#' is used to collect function arguments, that are equivalent for more than one 
-#' exported function of the SplineOmics package. Additionally
-#'
-#' Functions
-#' ---------
-#' - create_splineomics: Create a SplineOmics object
-#' - update_splineomics: Add additional arguments to the SplineOmics 
-#' object or overwrite existing arguments.
-#'
-#' Classes
-#' -------
-#' None
-#'
-#' Notes
-#' -----
-#' None
+# Create and update the SplineOmics object
+# =====
+#
+# Description
+# -----------
+# Contains the functions to create and update a SplineOmics object. This object
+# is used to collect function arguments, that are equivalent for more than one 
+# exported function of the SplineOmics package. Additionally
+#
+# Functions
+# ---------
+# - create_splineomics: Create a SplineOmics object
+# - update_splineomics: Add additional arguments to the SplineOmics 
+# object or overwrite existing arguments.
+#
+# Classes
+# -------
+# None
+#
+# Notes
+# -----
+# None
 
 
 # Exported functions -----------------------------------------------------------
@@ -31,9 +31,17 @@
 #' Creates a SplineOmics object containing variables that are commonly used 
 #' across multiple functions in the package.
 #' 
-#' @param data The actual omics data.
+#' @param data The actual omics data. In the case the rna_seq_data argument is
+#' used, still provide this argument. In that case, input the data matrix in 
+#' here (for example the $E part of the voom object). Assign your feature names
+#' as row headers (otherwise, just numbers will be your feature names).
 #' @param meta Metadata associated with the omics data.
 #' @param condition A condition variable.
+#' @param rna_seq_data An object containing the preprocessed RNA-seq data, 
+#' such as the output from `limma::voom` or a similar preprocessing pipeline. 
+#' This argument is not controlled by any function of the `SplineOmics` package.
+#' Rather, in that regard it relies on the input control from the `limma::lmfit`
+#' function.
 #' @param annotation A dataframe with the feature descriptions of data 
 #' (optional).
 #' @param report_info A list containing report information such as omics data 
@@ -50,11 +58,12 @@
 #'                             created. Use the same vector that was used to 
 #'                             create the row headers for the data matrix!
 #' @param design A design matrix or similar object (optional).
-#' @param spline_params Parameters for spline functions (optional).
-#' @param preprocess_rna_seq Boolean specifying whether to preprocess RNA seq
-#' @param normalization_fun Function used for normalizing RNA-seq. Must take as
-#' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y 
-#' with the normalized counts.
+#' @param spline_params Parameters for spline functions (optional). Must contain
+#' the named elements spline_type, which must contain either the string "n" for
+#' natural cubic splines, or "b", for B-splines, the named element degree in the
+#' case of B-splines, that must contain only an integer, and the named element 
+#' dof, specifying the degree of freedom, containing an integer and required
+#' both for natural and B-splines.
 #' @param padjust_method Method for p-value adjustment, one of "none", "BH", 
 #' "BY", "holm", "bonferroni", "hochberg", or "hommel". 
 #' Defaults to "BH" (Benjamini-Hochberg).
@@ -64,9 +73,10 @@
 #' @export
 #' 
 create_splineomics <- function(
-    data,
+    data,  
     meta,
     condition,
+    rna_seq_data = NULL,
     annotation = NULL,
     report_info = NULL,
     meta_batch_column = NULL,
@@ -74,14 +84,12 @@ create_splineomics <- function(
     feature_name_columns = NULL,
     design = NULL,
     spline_params = NULL,
-    preprocess_rna_seq = FALSE,
-    normalization_fun = NULL,
     padjust_method = "BH"
     ) {
-  
+
   splineomics <- list(
     data = data,
-    preprocess_rna_seq = preprocess_rna_seq,
+    rna_seq_data = rna_seq_data,
     meta = meta,
     condition = condition,
     annotation = annotation,
@@ -122,6 +130,7 @@ update_splineomics <- function(
   
   allowed_fields <- c(
     "data",
+    "rna_seq_data",
     "meta",
     "condition",
     "annotation",
@@ -135,6 +144,7 @@ update_splineomics <- function(
     )
   
   args <- list(...)
+
   for (name in names(args)) {
     if (!(name %in% allowed_fields)) {
       stop(paste("Field", name, "is not allowed."))

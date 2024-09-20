@@ -210,7 +210,18 @@ An explanation of the three different `limma` results is [here](https://csbg.git
 
 #### RNA-seq data
 
-Transcriptomics data must be preprocessed for `limma`. This is done by setting the preprocess_rna_seq argument to TRUE (see [documentation of the create_splineomics function](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)). Then, the raw RNA-seq counts provided in the data matrix will undergo normalization and transformation. The default normalization is performed using TMM (Trimmed Mean of M-values) normalization via the `edgeR`::calcNormFactors function, followed by the voom transformation from the `limma` package to obtain log-transformed counts per million (logCPM) with associated precision weights. If you require a different normalization method, you can supply your custom normalization function.
+Transcriptomics data must be preprocessed for `limma`. You need to provide an
+appropriate object, such as a `voom` object, in the `rna_seq_data` argument of
+the `SplineOmics` object (see 
+[documentation](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)). 
+Along with this, the normalized matrix 
+(e.g., the `$E` slot of the `voom` object) must be passed to the `data`
+argument. This allows flexibility in preprocessing; you can use any method
+you prefer as long as the final object and matrix are compatible with limma.
+One way to preprocess your RNA-seq data is by using the `preprocess_rna_seq_data()`
+function included in the `SplineOmics` package 
+(see [documentation](https://csbg.github.io/SplineOmics/reference/preprocess_rna_seq_data.html)).
+
 
 #### Glycan fractional abundance data
 
