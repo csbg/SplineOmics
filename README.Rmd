@@ -126,7 +126,7 @@ BiocManager::install(c(
 
 # Install SplineOmics from GitHub
 remotes::install_github(
-  "csbg/SplineOmics@ad35d9aef2e8a8b19572c83ec771f4d92b343a4e",
+  "csbg/SplineOmics",   # Install latest commit.
   dependencies = TRUE,  # Install all dependencies
   force = TRUE,         # Force reinstallation
   upgrade = "always",   # Always upgrade dependencies
