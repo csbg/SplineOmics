@@ -1,10 +1,10 @@
 ---
-title: "Docker permission denied"
+title: "Docker_permission_denied"
 author: "Thomas Rauter"
 date: "10 June, 2024"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Docker-permission-denied}
+  %\VignetteIndexEntry{Docker_permission_denied}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 If you face 'permission denied' issues, you might need to add your user to the Docker group. Follow these steps:
 
-**1.  Create the Docker Group (if it doesn't already exist):**
+**1. Create the Docker Group (if it doesn't already exist):**
 
 ``` sh
 sudo groupadd docker
@@ -26,7 +26,7 @@ sudo groupadd docker
 
 This command creates a Docker group if it does not already exist on your system.
 
-**2.  Add Your User to the Docker Group:**
+**2. Add Your User to the Docker Group:**
 
 ``` sh
 sudo usermod -aG docker $USER
@@ -34,7 +34,7 @@ sudo usermod -aG docker $USER
 
 This command adds your user to the Docker group, which allows you to run Docker commands without sudo.
 
-**3.  Log Out and Log Back In:**
+**3. Log Out and Log Back In:**
 
 This step is necessary to apply the group membership changes. After logging back in, you should be able to run Docker commands without sudo.
 
@@ -44,7 +44,7 @@ Alternatively, you can use the following command to apply the group changes imme
 newgrp docker
 ```
 
-**4.  Verify Docker Permissions:**
+**4. Verify Docker Permissions:**
 
 To check if the permission issue is resolved, run a simple Docker command:
 
@@ -54,7 +54,7 @@ docker run hello-world
 
 If the command runs successfully, you have configured Docker correctly.
 
-**5.  Ensure Docker Service is Running:**
+**5. Ensure Docker Service is Running:**
 
 If you still encounter issues, ensure that the Docker service is running:
 

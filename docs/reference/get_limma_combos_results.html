@@ -49,6 +49,7 @@ spline configurations using the LIMMA method.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_limma_combos_results</span><span class="op">(</span></span>
 <span>  <span class="va">datas</span>,</span>
+<span>  <span class="va">rna_seq_datas</span>,</span>
 <span>  <span class="va">metas</span>,</span>
 <span>  <span class="va">designs</span>,</span>
 <span>  <span class="va">modes</span>,</span>
@@ -66,6 +67,11 @@ spline configurations using the LIMMA method.</p>
 
 <dl><dt id="arg-datas">datas<a class="anchor" aria-label="anchor" href="#arg-datas"></a></dt>
 <dd><p>A list of matrices.</p></dd>
+
+
+<dt id="arg-rna-seq-datas">rna_seq_datas<a class="anchor" aria-label="anchor" href="#arg-rna-seq-datas"></a></dt>
+<dd><p>A list of RNA-seq data objects, such as the voom object
+derived from the limma::voom function.</p></dd>
 
 
 <dt id="arg-metas">metas<a class="anchor" aria-label="anchor" href="#arg-metas"></a></dt>

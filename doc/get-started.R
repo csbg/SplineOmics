@@ -4,19 +4,21 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----setup--------------------------------------------------------------------
+## ----setup, eval = TRUE-------------------------------------------------------
 library(SplineOmics)
-library(readxl)
+library(readxl)  # for loading Excel files
+library(here)    # For managing filepaths
+library(dplyr)   # For data manipulation
 
 ## ----load the files-----------------------------------------------------------
-data_excel <- 
-  read_excel(
-    system.file(
-      "extdata",
-      "proteomics_data.xlsx",
-      package = "SplineOmics"
-      )
-    )
+
+data <- readRDS(system.file(
+  "extdata",
+  "proteomics_data.rds",
+  package = "SplineOmics"
+  ))
+
+
 meta <- read_excel(
   system.file(
     "extdata",
@@ -26,23 +28,28 @@ meta <- read_excel(
   )
 
 # Extract the annotation part from the dataframe.
-first_na_col <- which(is.na(data_excel[1,]))[1]
-annotation <- data_excel |>
-  dplyr::select((first_na_col + 1):ncol(data_excel)) |>
+first_na_col <- which(is.na(data[1,]))[1]
+annotation <- data |>
+  dplyr::select((first_na_col + 1):ncol(data)) |>
   dplyr::slice(-c(1:3))
 
-print(data_excel)
-print(annotation)
+print(data)
 print(meta)
+print(annotation)
 
 ## ----process inputs, eval = TRUE----------------------------------------------
-data <- extract_data(
-  data = data_excel,
-  feature_name_columns = c("Gene_name"),
-  user_prompt = FALSE
+data <- SplineOmics::extract_data(
+  # The dataframe with the numbers on the left and info on the right.
+  data = data,
+  # Use this annotation column for the feature names.
+  feature_name_columns = c("Gene_name"),  
+  # When TRUE, you must confirm that data is in the required format.
+  user_prompt = FALSE   
   )
 
 ## ----Load EDA arguments, eval = TRUE------------------------------------------
+# Those fields are mandatory, because we believe that when such a report is
+# opened after half a year, those infos can be very helpful. 
 report_info <- list(
   omics_data_type = "PTX",
   data_description = "Proteomics data of CHO cells",
@@ -58,18 +65,19 @@ report_dir <- here::here(
   )
 
 ## ----Create the SplineOmics object, eval = TRUE-------------------------------
-splineomics <- create_splineomics(
+# splineomics now contains the SplineOmics object.
+splineomics <- SplineOmics::create_splineomics(
   data = data,
   meta = meta,
   annotation = annotation,
   report_info = report_info,
-  condition = "Phase",
-  meta_batch_column = "Reactor"
+  condition = "Phase",  # Column of meta that contains the levels.
+  meta_batch_column = "Reactor"  # For batch effect removal
 )
 
 ## ----Run EDA function, eval = FALSE-------------------------------------------
-#  plots <- explore_data(
-#    splineomics = splineomics,
+#  plots <- SplineOmics::explore_data(
+#    splineomics = splineomics,   # SplineOmics object
 #    report_dir = report_dir
 #    )
 #  
@@ -78,48 +86,70 @@ splineomics <- create_splineomics(
 data1 <- data 
 meta1 <- meta
 
+# Remove the "outliers"
 data2 <- data[, !(colnames(data) %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   )
   )]
+
+# Adjust meta so that it matches data2
 meta2 <- meta[!meta$`Sample.ID` %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   ), ]
 
+# As mentioned above, all the values of one hyperparameter are stored 
+# and provided as a list.
 datas <- list(data1, data2) 
+
+# This will be used to describe the versions of the data.
 datas_descr <- c(
   "full_data",
   "outliers_removed"
   ) 
 
 metas <- list(meta1, meta2) 
+
+# Test two different limma designs
 designs <- c(
   "~ 1 + Phase*X + Reactor",
   "~ 1 + X + Reactor"
   ) 
+
+# Specify the meta "level" column
 condition <- "Phase" 
+
 report_dir <- here::here(
   "results",
   "hyperparams_screen_reports"
   ) 
+
+# To remove the batch effect
 meta_batch_column = "Reactor" 
+
+# Test out two different p-value thresholds (inner hyperparameter)
 pthresholds <- c(
   0.05,
   0.1
   )
 
-# Every row a combo to test.
+# Create a dataframe with combinations of spline parameters to test
+# (every row a combo to test)
 spline_test_configs <- data.frame(
-  spline_type = c("n", "n", "n", "n"),
-  degree = c(NA, NA, NA, NA),
-  dof = c(2L, 3L, 4L, 5L),
-  knots = I(list(c(NA), c(NA), c(NA), c(NA))),                                                        bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
-  )
+   # 'n' stands for natural cubic splines, b for B-splines.
+  spline_type = c("n", "n", "b", "b"),  
+  # Degree is not applicable (NA) for natural splines.
+  degree = c(NA, NA, 2L, 4L),           
+  # Degrees of freedom (DoF) to test.
+  # Higher dof means spline can fit more complex patterns.
+  dof = c(2L, 3L, 3L, 4L)         
+)
+
+print(spline_test_configs)
 
 ## ----Perform hyperparameter-screening, eval = FALSE---------------------------
-#  screen_limma_hyperparams(
+#  SplineOmics::screen_limma_hyperparams(
 #    splineomics,
 #    datas,
 #    datas_descr,
@@ -132,22 +162,19 @@ spline_test_configs <- data.frame(
 #  
 
 ## ----Update the SplineOmics object, eval = TRUE-------------------------------
-splineomics <- update_splineomics(
+splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor",
-  data = data1,  # data1 and meta1 == data and meta that were loaded before. 
-  meta = meta1,  # This is for illustration
+  design = "~ 1 + Phase*X + Reactor",  # best design formula
+  data = data2,   # data without "outliers" was better
+  meta = meta2,  
   spline_params = list(
-    spline_type = c("n"),   
+    spline_type = c("n"),   # natural cubic splines
     dof = c(2L)
     )
 )
 
-
 ## ----limma spline analysis, eval = TRUE---------------------------------------
-
-# Run the limma spline analysis
-splineomics <- run_limma_splines(
+splineomics <- SplineOmics::run_limma_splines(
   splineomics
   )
 
@@ -157,20 +184,20 @@ splineomics <- run_limma_splines(
 #    "create_limma_reports"
 #    )
 #  
-#  plots <- create_limma_report(
+#  plots <- SplineOmics::create_limma_report(
 #    splineomics,
 #    report_dir = report_dir
 #    )
 
 ## ----cluster the hits, eval = FALSE-------------------------------------------
-#  adj_pthresholds <- c(
-#    0.05,
-#    0.05
+#  adj_pthresholds <- c(  # 0.05 for both levels
+#    0.05,  # exponential
+#    0.05   # stationary
 #    )
 #  
 #  clusters <- c(
-#    6L,
-#    3L
+#    6L,  # 6 clusters for the exponential phase level
+#    3L   # 3 clusters for the stationary phase level
 #    )
 #  
 #  report_dir <- here::here(
@@ -178,18 +205,25 @@ splineomics <- run_limma_splines(
 #    "clustering_reports"
 #    )
 #  
-#  plot_info = list(
+#  plot_info = list(  # For the spline plots
 #    y_axis_label = "log2 intensity",
-#    time_unit = "min",
+#    time_unit = "min",  # our measurements were in minutes
 #    treatment_labels = c("Feeding"),
-#    treatment_timepoints = c(0)
+#    treatment_timepoints = c(0)  # Feeding was at 0 minutes.
 #  )
 #  
+#  # Get all the gene names. They are used for generating files
+#  # which contents can be directly used as the input for the Enrichr webtool,
+#  # if you prefer to manually perform the enrichment. Those files are
+#  # embedded in the output HTML report and can be downloaded from there.
 #  gene_column_name <- "Gene_symbol"
 #  genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
 #  
-#  clustering_results <- cluster_hits(
+#  clustering_results <- SplineOmics::cluster_hits(
 #    splineomics = splineomics,
+#    # Cluster the hits from the time_effect results. You can also cluster
+#    # the hits from the other two limma result categories by specifying
+#    # it here with this argument.
 #    analysis_type = "time_effect",
 #    adj_pthresholds = adj_pthresholds,
 #    clusters = clusters,
@@ -199,6 +233,7 @@ splineomics <- run_limma_splines(
 #    )
 
 ## ----download Enrichr databases, eval = FALSE---------------------------------
+#  # Specify which databases you want to download from Enrichr
 #  gene_set_lib <- c(
 #    "WikiPathways_2019_Human",
 #    "NCI-Nature_2016",
@@ -214,22 +249,21 @@ splineomics <- run_limma_splines(
 #    "Human_Gene_Atlas"
 #    )
 #  
-#  download_enrichr_databases(gene_set_lib)
+#  SplineOmics::download_enrichr_databases(gene_set_lib)
 
-## ----run GSEA, eval = FALSE---------------------------------------------------
-#  # Modify gene vector
-#  genes <- sub(" .*", "", genes)
-#  genes <- sub(";.*", "", genes)
-#  genes <- sub("_.*", "", genes)
-#  genes <- sub("-.*", "", genes)
-#  
+## ----prepare arguments for GSEA, eval = FALSE---------------------------------
+#  # Specify the filepath of the TSV file with the database info
 #  downloaded_dbs_filepath <-
 #    here::here("all_databases_08_04_2024-12_41_50.tsv")
-#  databases <- readr::read_tsv(
-#    downloaded_dbs_filepath,
-#    col_types = readr::cols()
-#    )
 #  
+#  # Load the file
+#  databases <- read.delim(
+#    downloaded_dbs_filepath,
+#    sep = "\t",
+#    stringsAsFactors = FALSE
+#  )
+#  
+#  # Specify the clusterProfiler parameters
 #  clusterProfiler_params <- list(
 #    adj_p_value = 0.05,
 #    pAdjustMethod = "BH",
@@ -242,12 +276,15 @@ splineomics <- run_limma_splines(
 #    "results",
 #    "gsea_reports"
 #    )
-#  
-#  result <- create_gsea_report(
+
+## ----run GSEA, eval = FALSE---------------------------------------------------
+#  result <- SplineOmics::run_gsea(
+#    # A dataframe with three columns: feature, cluster, and gene. Feature contains
+#    # the integer index of the feature, cluster the integer specifying the cluster
+#    # number, and gene the string of the gene, such as "CLSTN2".
 #    levels_clustered_hits = clustering_results$clustered_hits_levels,
-#    genes = genes,
 #    databases = databases,
-#    params = clusterProfiler_params,
+#    clusterProfiler_params = clusterProfiler_params,
 #    report_info = report_info,
 #    report_dir = report_dir
 #    )

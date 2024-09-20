@@ -118,6 +118,13 @@ These dependencies are only necessary for some functions:
 None
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://csbg.github.io/SplineOmics}
+}
+
+}
 \keyword{GSEA,}
 \keyword{HTML}
 \keyword{clustering,}
