@@ -9,7 +9,7 @@ dbs_to_term2genes(databases)
 \arguments{
 \item{databases}{A dataframe, containing the three columns DB, Geneset, and
 gene. This dataframe contains the databases downloaded from
-Enrichr with the SplineOmics package function: 
+Enrichr with the SplineOmics package function:
 download_enrichr_databases.}
 }
 \value{

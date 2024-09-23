@@ -94,7 +94,7 @@ data2 <- data[, !(colnames(data) %in% c(
   )]
 
 # Adjust meta so that it matches data2
-meta2 <- meta[!meta$`Sample.ID` %in% c(
+meta2 <- meta[!meta$Sample.ID %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   ), ]
@@ -249,12 +249,13 @@ splineomics <- SplineOmics::run_limma_splines(
 #    "Human_Gene_Atlas"
 #    )
 #  
-#  SplineOmics::download_enrichr_databases(gene_set_lib)
+#  SplineOmics::download_enrichr_databases(
+#    gene_set_lib = gene_set_lib,
+#    filename = "databases.tsv")
 
 ## ----prepare arguments for GSEA, eval = FALSE---------------------------------
 #  # Specify the filepath of the TSV file with the database info
-#  downloaded_dbs_filepath <-
-#    here::here("all_databases_08_04_2024-12_41_50.tsv")
+#  downloaded_dbs_filepath <- here::here("databases.tsv")
 #  
 #  # Load the file
 #  databases <- read.delim(

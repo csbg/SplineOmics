@@ -7,7 +7,7 @@
 prepare_plot_data(enrichments_list, databases)
 }
 \arguments{
-\item{enrichments_list}{A list of enrichments containing data frames for 
+\item{enrichments_list}{A list of enrichments containing data frames for
 different databases.}
 
 \item{databases}{A character vector specifying the databases to be included.}
@@ -15,13 +15,13 @@ different databases.}
 \value{
 A list containing two data frames:
 \describe{
-  \item{top_plot_data}{A data frame containing the prepared plot data for 
+  \item{top_plot_data}{A data frame containing the prepared plot data for
                          visualization of top combinations.}
-  \item{full_enrich_results}{A data frame containing the full enrichments 
+  \item{full_enrich_results}{A data frame containing the full enrichments
                               results.}
 }
 }
 \description{
-This function prepares plot data for visualization based on enrichments 
+This function prepares plot data for visualization based on enrichments
 lists and specified databases.
 }

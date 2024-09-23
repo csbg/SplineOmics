@@ -13,19 +13,19 @@ control_inputs_create_gsea_report(
 )
 }
 \arguments{
-\item{levels_clustered_hits}{A list containing clustered hits at various 
+\item{levels_clustered_hits}{A list containing clustered hits at various
 levels.}
 
 \item{databases}{A list of databases to be used in the GSEA analysis.}
 
 \item{params}{A list of parameters for the GSEA analysis.}
 
-\item{plot_titles}{A character vector of titles for the plots, with length 
+\item{plot_titles}{A character vector of titles for the plots, with length
 matching `levels_clustered_hits`.}
 
 \item{background}{A character vector of background genes or NULL.}
 }
 \description{
-Validates the inputs for generating a GSEA report, including clustered 
+Validates the inputs for generating a GSEA report, including clustered
 hits, genes, databases, parameters, plot titles, and background genes.
 }

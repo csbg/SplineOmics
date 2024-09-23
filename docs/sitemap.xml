@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://csbg.github.io/SplineOmics/404.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/CHANGELOG.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/LICENSE-text.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/Docker-instructions.html</loc></url>
@@ -134,6 +135,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/screen_limma_hyperparams.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/set_default_params.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/shorten_names.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/stop_call_false.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/store_hits.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/truncate_row_names.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/update_splineomics.html</loc></url>

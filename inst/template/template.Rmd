@@ -78,7 +78,7 @@ data2 <- data[, !(colnames(data) %in% c(
   )
   )]
 
-meta2 <- meta[!meta$`Sample.ID` %in% c(
+meta2 <- meta[!meta$Sample.ID %in% c(
   "Your_Outlier_Column1",  # Replace with your outlier column name
   "Your_Outlier_Column2"   # Replace with your outlier column name
   ), ]

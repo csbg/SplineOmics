@@ -1,14 +1,3 @@
-#' screen_limma_hyperparams.R contains the exported package function 
-#' screen_limma_hyperparams  and all the functions that make up the 
-#' functionality of screen_limma_hyperparams. screen_limma_hyperparams runs the 
-#' other package function, run_limma_splines, for a time series omics dataset,
-#' for different hyperparameters. Such are for example degree of freedom of the
-#' spline, type of spline, limma design formula, and different versions of the 
-#' data (full data vs. outliers removed). This can result in several 
-#' combinations, and it is tedious analyzing the combination in an organised 
-#' and structured manner. Therefore, this function streamlines that process.
-
-
 # Exported function: screen_limma_hyperparams() --------------------------------
 
 
@@ -88,20 +77,8 @@ screen_limma_hyperparams <- function(
     splineomics = splineomics,
     func_type = "screen_limma_hyperparams"
   )
-  
-  condition <- splineomics[["condition"]]
-  
-  modes <- c()
-  for (design in designs) {
-    mode <- determine_analysis_mode(
-      design,
-      condition
-      )
-    modes <- c(modes, mode)
-  }
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
-  args$modes <- modes
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -109,9 +86,18 @@ screen_limma_hyperparams <- function(
   report_info <- splineomics[["report_info"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
+  condition <- splineomics[["condition"]]
 
   feature_names <- rownames(datas[[1]])
   
+  modes <- c()
+  for (design in designs) {
+    mode <- determine_analysis_mode(
+      design,
+      condition
+    )
+    modes <- c(modes, mode)
+  }
   
   top_tables_combos <- 
     get_limma_combos_results(

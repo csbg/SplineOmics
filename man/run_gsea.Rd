@@ -10,7 +10,7 @@ run_gsea(
   report_info,
   clusterProfiler_params = NA,
   plot_titles = NA,
-  background = NULL,
+  universe = NULL,
   report_dir = here::here()
 )
 }
@@ -22,15 +22,15 @@ run_gsea(
 \item{report_info}{A list containing information for the report generation.}
 
 \item{clusterProfiler_params}{Additional parameters for the GSEA analysis,
-default is NA. Those include adj_p_value, 
-pAdjustMethod, etc (see clusterProfiler 
+default is NA. Those include adj_p_value,
+pAdjustMethod, etc (see clusterProfiler
 documentation).}
 
 \item{plot_titles}{Titles for the plots, default is NA.}
 
-\item{background}{Background data, default is NULL.}
+\item{universe}{Enrichment background data, default is NULL.}
 
-\item{report_dir}{Directory where the report will be saved, default is 
+\item{report_dir}{Directory where the report will be saved, default is
 `here::here()`.}
 }
 \value{

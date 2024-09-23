@@ -1,27 +1,3 @@
-# Create and update the SplineOmics object
-# =====
-#
-# Description
-# -----------
-# Contains the functions to create and update a SplineOmics object. This object
-# is used to collect function arguments, that are equivalent for more than one 
-# exported function of the SplineOmics package. Additionally
-#
-# Functions
-# ---------
-# - create_splineomics: Create a SplineOmics object
-# - update_splineomics: Add additional arguments to the SplineOmics 
-# object or overwrite existing arguments.
-#
-# Classes
-# -------
-# None
-#
-# Notes
-# -----
-# None
-
-
 # Exported functions -----------------------------------------------------------
 
 

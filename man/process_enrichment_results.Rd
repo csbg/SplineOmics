@@ -14,10 +14,10 @@ process_enrichment_results(
 )
 }
 \arguments{
-\item{all_db_results}{A list of data frames containing enrichment results 
+\item{all_db_results}{A list of data frames containing enrichment results
 for all databases.}
 
-\item{enrichment_results}{A list of data frames containing enrichment 
+\item{enrichment_results}{A list of data frames containing enrichment
 results for individual databases.}
 
 \item{adjP_threshold}{The threshold for adjusted p-values.}

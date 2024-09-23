@@ -640,7 +640,7 @@ select the optimal hyperparameters for your analysis.</p>
 <span>  <span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Adjust meta so that it matches data2</span></span>
-<span><span class="va">meta2</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[</span><span class="op">!</span><span class="va">meta</span><span class="op">$</span><span class="va">`Sample.ID`</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="va">meta2</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[</span><span class="op">!</span><span class="va">meta</span><span class="op">$</span><span class="va">Sample.ID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"E12_TP05_Exponential"</span>, </span>
 <span>  <span class="st">"E10_TP10_Stationary"</span></span>
 <span>  <span class="op">)</span>, <span class="op">]</span></span>
@@ -754,8 +754,8 @@ SplineOmics object:</p>
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
 <span><span class="co">#&gt; Column 'Reactor' of meta will be used to remove the batch effect for the plotting</span></span>
+<span><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
@@ -869,7 +869,9 @@ downloaded:</p>
 <span>  <span class="st">"Human_Gene_Atlas"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_enrichr_databases.html">download_enrichr_databases</a></span><span class="op">(</span><span class="va">gene_set_lib</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_enrichr_databases.html">download_enrichr_databases</a></span><span class="op">(</span></span>
+<span>  gene_set_lib <span class="op">=</span> <span class="va">gene_set_lib</span>,</span>
+<span>  filename <span class="op">=</span> <span class="st">"databases.tsv"</span><span class="op">)</span></span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
 which is the root dir of the R project.</p>
 <p>To run GSEA, the downloaded database file has to be loaded as a
@@ -879,8 +881,7 @@ using clusterProfiler, generates an HTML report and returns the GSEA
 dotplots in R.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
-<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"all_databases_08_04_2024-12_41_50.tsv"</span><span class="op">)</span></span>
+<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"databases.tsv"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load the file</span></span>
 <span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>

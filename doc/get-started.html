@@ -842,7 +842,7 @@ select the optimal hyperparameters for your analysis.</p>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  )]</span>
 <span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a></span>
 <span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co"># Adjust meta so that it matches data2</span></span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span><span class="st">`</span><span class="at">Sample.ID</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>meta2 <span class="ot">&lt;-</span> meta[<span class="sc">!</span>meta<span class="sc">$</span>Sample.ID <span class="sc">%in%</span> <span class="fu">c</span>(</span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="st">&quot;E12_TP05_Exponential&quot;</span>, </span>
 <span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="st">&quot;E10_TP10_Stationary&quot;</span></span>
 <span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  ), ]</span>
@@ -952,8 +952,8 @@ SplineOmics object:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">run_limma_splines</span>(</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  splineomics</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  )</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; Column &#39;Reactor&#39; of meta will be used to remove the batch effect for the plotting</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; [32mInfo[0m limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
@@ -1061,7 +1061,9 @@ downloaded:</p>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="st">&quot;Human_Gene_Atlas&quot;</span></span>
 <span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  )</span>
 <span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>SplineOmics<span class="sc">::</span><span class="fu">download_enrichr_databases</span>(gene_set_lib)</span></code></pre></div>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>SplineOmics<span class="sc">::</span><span class="fu">download_enrichr_databases</span>(</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="at">gene_set_lib =</span> gene_set_lib,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="at">filename =</span> <span class="st">&quot;databases.tsv&quot;</span>)</span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
 which is the root dir of the R project.</p>
 <p>To run GSEA, the downloaded database file has to be loaded as a
@@ -1070,29 +1072,28 @@ report dir can be specified. The function create_gsea_report() runs GSEA
 using clusterProfiler, generates an HTML report and returns the GSEA
 dotplots in R.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;all_databases_08_04_2024-12_41_50.tsv&quot;</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># Load the file</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>databases <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  downloaded_dbs_filepath,</span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>)</span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co"># Specify the clusterProfiler parameters</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span></span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  )</span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a></span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  <span class="st">&quot;gsea_reports&quot;</span></span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>downloaded_dbs_filepath <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;databases.tsv&quot;</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co"># Load the file</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>databases <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  downloaded_dbs_filepath,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>)</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co"># Specify the clusterProfiler parameters</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">qvalueCutoff =</span> <span class="fl">0.2</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  )</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>  <span class="st">&quot;gsea_reports&quot;</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a>  )</span></code></pre></div>
 <p>The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">run_gsea</span>(</span>

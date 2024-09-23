@@ -17,4 +17,6 @@
 ^inst/CITATION\.cff$
 ^pkgdown$
 _pkgdown.yml$
+^CITATION\.cff$
+^CHANGELOG\.md$
 

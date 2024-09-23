@@ -247,3 +247,29 @@ print_info_message <- function(
   
   cat(full_message)
 }
+
+
+#' Stop with custom message without call.
+#'
+#' @description
+#' A helper function that triggers an error with the specified message and 
+#' suppresses the function call in the error output. This function behaves 
+#' similarly to the base `stop()` function but automatically concatenates 
+#' multiple message strings if provided.
+#'
+#' @param ... One or more character strings specifying the error message. 
+#'            If multiple strings are provided, they will be concatenated 
+#'            with a space between them.
+#'
+#' @return This function does not return a value; it stops execution and 
+#'         throws an error.
+#'
+stop_call_false <- function(...) {
+  # Concatenate all arguments into a single string
+  message_text <- paste(..., sep = " ")
+  
+  # Call stop with the concatenated message and call. = FALSE
+  stop(message_text, call. = FALSE)
+}
+
+

@@ -16,13 +16,13 @@ A list with the following components:
 \describe{
   \item{plot}{A plot object or "section_break" if the result contains `NA`.}
   \item{plot_size}{An integer indicating the size of the plot.}
-  \item{header_info}{A list with header information, including the level 
+  \item{header_info}{A list with header information, including the level
   name, full enrichment results, and raw enrichment results if available.}
 }
 }
 \description{
 This function processes the GSEA result for a specific level. It handles
 cases where the result contains `NA` values by adding a section break.
-Otherwise, it extracts the plot, plot size, and header information from 
+Otherwise, it extracts the plot, plot size, and header information from
 the result.
 }

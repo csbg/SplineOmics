@@ -1,10 +1,3 @@
-# This function of the SplineOmics package automates the process of exploratory
-# data analysis. Mandatory inputs are only data, meta, condition, and a list
-# with report infos, that will be placed on top of the HTML reports with the 
-# exploratory figures.
-
-
-
 # Exported function: explore_data () -------------------------------------------
 
 

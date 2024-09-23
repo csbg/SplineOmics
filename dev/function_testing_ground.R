@@ -19,7 +19,6 @@ library(dplyr)
 # meta <- read_excel(here::here("dev" ,"data",
 #                               "Time_course_PTX_metadata.xlsx"))
 
-
 data_excel <- readRDS(system.file(
   "extdata",
   "proteomics_data.rds",
@@ -173,17 +172,17 @@ spline_test_configs <- data.frame(
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(screen_limma_hyperparams)
-# screen_limma_hyperparams(
-#   splineomics,
-#   datas,
-#   datas_descr,
-#   metas,
-#   designs,
-#   spline_test_configs,
-#   report_dir,
-#   pthresholds,
-#   rna_seq_datas,
-#   )
+screen_limma_hyperparams(
+  splineomics,
+  datas,
+  datas_descr,
+  metas,
+  designs,
+  spline_test_configs,
+  report_dir,
+  pthresholds,
+  # rna_seq_datas,
+  )
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -205,11 +204,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-# plots <- create_limma_report(
-#   splineomics,
-#   adj_pthresh = 0.1,
-#   report_dir = report_dir
-# )
+plots <- create_limma_report(
+  splineomics,
+  adj_pthresh = 0.1,
+  report_dir = report_dir
+)
 
 
 ## Cluster hits ----------------------------------------------------------------
@@ -266,7 +265,8 @@ downloaded_dbs_filepath <-
 databases <- readr::read_tsv(downloaded_dbs_filepath, col_types = readr::cols())
 
 clusterProfiler_params <- list(
-  adj_p_value = 0.05,
+  pvalueCutoff = 0.05,
+  # adj_p_value = 0.05,
   pAdjustMethod = "BH",
   minGSSize = 10,
   maxGSSize = 500,

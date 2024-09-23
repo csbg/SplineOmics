@@ -2,11 +2,13 @@
 % Please edit documentation in R/download_enrichr_databases.R
 \name{download_enrichr_databases}
 \alias{download_enrichr_databases}
-\title{The exported function download_enrichr_databases allows to selects & 
-download Enrichr databases for local use with clusterProfiler.
-Download Enrichr Databases}
+\title{Download Enrichr Databases}
 \usage{
-download_enrichr_databases(gene_set_lib, output_dir = here::here())
+download_enrichr_databases(
+  gene_set_lib,
+  output_dir = here::here(),
+  filename = NULL
+)
 }
 \arguments{
 \item{gene_set_lib}{A character vector of database names to download from 
@@ -15,6 +17,10 @@ Enrichr.}
 \item{output_dir}{A character string specifying the output directory
 where the .tsv file will be saved. Defaults to the current
 working directory.}
+
+\item{filename}{Name of the output file (with file extension. Due to commas
+present in some terms, .tsv is recommendet). When ommited,
+the file is named all_databases_{timestamp}.tsv.}
 }
 \value{
 This function does not return a value but saves a .tsv file in the 

@@ -125,6 +125,10 @@ Useful links:
 }
 
 }
+\author{
+\strong{Maintainer}: Thomas Rauter \email{thomas.rauter@plus.ac.at}
+
+}
 \keyword{GSEA,}
 \keyword{HTML}
 \keyword{clustering,}
