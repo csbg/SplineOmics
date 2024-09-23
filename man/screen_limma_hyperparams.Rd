@@ -2,16 +2,7 @@
 % Please edit documentation in R/screen_limma_hyperparams.R
 \name{screen_limma_hyperparams}
 \alias{screen_limma_hyperparams}
-\title{screen_limma_hyperparams.R contains the exported package function 
-screen_limma_hyperparams  and all the functions that make up the 
-functionality of screen_limma_hyperparams. screen_limma_hyperparams runs the 
-other package function, run_limma_splines, for a time series omics dataset,
-for different hyperparameters. Such are for example degree of freedom of the
-spline, type of spline, limma design formula, and different versions of the 
-data (full data vs. outliers removed). This can result in several 
-combinations, and it is tedious analyzing the combination in an organised 
-and structured manner. Therefore, this function streamlines that process.
-Limma Hyperparameters Screening}
+\title{Limma Hyperparameters Screening}
 \usage{
 screen_limma_hyperparams(
   splineomics,

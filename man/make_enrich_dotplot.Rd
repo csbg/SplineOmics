@@ -7,7 +7,7 @@
 make_enrich_dotplot(enrichments_list, databases, title = "Title")
 }
 \arguments{
-\item{enrichments_list}{A list of enrichments containing data frames for 
+\item{enrichments_list}{A list of enrichments containing data frames for
 different databases.}
 
 \item{databases}{A character vector specifying the databases to be included.}
@@ -18,9 +18,9 @@ different databases.}
 A list containing:
 \describe{
   \item{p}{The ggplot object representing the dotplot.}
-  \item{dotplot_nrows}{An integer specifying the number of rows in the 
+  \item{dotplot_nrows}{An integer specifying the number of rows in the
                        dotplot.}
-  \item{full_enrich_results}{A data frame containing the full enrichments 
+  \item{full_enrich_results}{A data frame containing the full enrichments
                              results.}
 }
 }

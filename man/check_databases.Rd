@@ -10,7 +10,7 @@ check_databases(databases)
 \item{databases}{A dataframe to check.}
 }
 \value{
-None. This function stops execution and provides an 
+None. This function stops execution and provides an
         error message if the dataframe is not valid.
 }
 \description{

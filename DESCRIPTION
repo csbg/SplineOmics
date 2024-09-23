@@ -3,7 +3,7 @@ Type: Package
 Title: Streamlines the process of analysing omics timeseries data with splines
 Version: 0.1.0
 Date: 2024-08-13
-Author: Thomas Rauter
+Authors@R: person("Thomas", "Rauter", email = "thomas.rauter@plus.ac.at", role = c("aut", "cre"))
 Maintainer: Thomas Rauter <thomas.rauter@plus.ac.at>
 Description: Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.
 Depends: R (>= 4.3.0)

@@ -45,8 +45,6 @@ InputControl <- R6::R6Class("InputControl",
     #' - \code{self$check_data_and_meta()}
     #' - \code{self$check_datas_and_metas()}
     #' - \code{self$check_datas_descr()}
-    #' - \code{self$check_mode()}
-    #' - \code{self$check_modes()}
     #' - \code{self$check_design_formula()}
     #' - \code{self$check_designs_and_metas()}
     #' - \code{self$check_spline_params()}
@@ -70,8 +68,6 @@ InputControl <- R6::R6Class("InputControl",
       self$check_datas_and_metas()
       self$check_datas_descr()
       self$check_top_tables()
-      self$check_mode()
-      self$check_modes()
       self$check_design_formula()
       self$check_designs_and_metas()
       self$check_spline_params()
@@ -399,93 +395,7 @@ InputControl <- R6::R6Class("InputControl",
         }
       }
     },
-    
-    
-    #' Check Mode
-    #'
-    #' @description
-    #' Validates that the mode is either 'integrated' or 'isolated', which 
-    #' depends
-    #' on the design formula used in limma.
-    #'
-    #' @param mode A character string specifying the mode.
-    #'
-    #' @return A message indicating the chosen mode if valid; otherwise, an 
-    #' error
-    #' is thrown.
-    #'
-    #' @seealso
-    #' \code{\link{limma}}
-    #'
-    check_mode = function() {
 
-      mode <- self$args[["mode"]]
-      
-      required_args <- list(mode)
-      
-      if (any(sapply(required_args, is.null))) {
-        return(NULL)
-      }
-
-      if (!((mode == "integrated") || (mode == "isolated"))) {
-        stop(paste("mode must be either integrated or isolated. This is", 
-                   "dependent on the used limma design formula. For example,", 
-                   "this formula: ~ 1 + Phase*X + Reactor would require", 
-                   "mode = integrated, whereas this formula:", 
-                   "~ 1 + X + Reactor would require mode = isolated."),
-             call. = FALSE)
-      } else {
-        sprintf("Mode %s chosen.", mode)
-      }
-    },
-    
-    
-    #' Check Modes
-    #'
-    #' This method validates multiple modes by ensuring that the lengths of the 
-    #' modes and designs are the same. It then iterates through each mode, 
-    #' sets it 
-    #' in the class arguments, and calls \code{self$check_mode()} to perform 
-    #' the validation for each mode.
-    #'
-    #' @details
-    #' - The method first checks if the lengths of \code{designs} and 
-    #' \code{modes} 
-    #'   are equal. If not, it raises an error.
-    #' - It then checks if \code{modes} is \code{NULL}, and if so, the method
-    #'  returns 
-    #'   without performing any further checks.
-    #' - For each mode in \code{modes}, the method sets \code{self$args$mode} 
-    #' to the 
-    #'   current mode and calls \code{self$check_mode()}.
-    #'
-    #' @return NULL. The function is used for its side effects of validating 
-    #' each 
-    #' mode and raising errors if any validation fails.
-    #' 
-    check_modes = function() {
-      
-      modes <- self$args$modes
-      designs <- self$args$designs
-      
-      if (is.null(modes) || is.null(designs)) {
-        return(NULL)
-      }
-      
-      if (length(designs) != length(modes)) {
-        stop(paste("designs and modes must have the same length."),
-             call. = FALSE)
-      }
-      
-      storage <- self$args$mode
-      
-      for (mode in modes) {
-        self$args$mode <- mode
-        self$check_mode()
-      }
-      self$args$mode <- storage
-    },
-    
     
     #' Check Design Formula
     #'
@@ -1096,8 +1006,7 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      supported_methods <- c("holm", "hochberg", "hommel", "bonferroni", "BH",
-                             "BY", "fdr", "none")
+      supported_methods <- stats::p.adjust.methods
       if (!(is.character(padjust_method) &&
             padjust_method %in% supported_methods)) {
         stop(sprintf(paste("padjust_method must be a character and one of the",
@@ -1367,8 +1276,8 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
 
-      if (report != TRUE && report != FALSE) {
-        stop("report must be either Boolean TRUE or FALSE", call. = FALSE)
+      if (!rlang::is_bool(report)) {
+        stop_call_false("report must be either Boolean TRUE or FALSE")
       }
     }
   )

@@ -14,36 +14,36 @@ build_create_gsea_report(
 )
 }
 \arguments{
-\item{header_section}{A string containing the HTML content for the header 
+\item{header_section}{A string containing the HTML content for the header
 section of the report.}
 
 \item{plots}{A list of plots to be included in the report.}
 
 \item{plots_sizes}{A list of sizes for the plots.}
 
-\item{level_headers_info}{A list containing header information for each 
+\item{level_headers_info}{A list containing header information for each
 level of clustered hits.}
 
 \item{report_info}{A named list containg the report info fields. Here used
 for the email hotkey functionality.}
 
-\item{output_file_path}{A string specifying the file path where the report 
+\item{output_file_path}{A string specifying the file path where the report
 will be saved.}
 }
 \value{
-None. The function generates and writes an HTML report to the 
+None. The function generates and writes an HTML report to the
 specified output file path.
 }
 \description{
-Generates an HTML report for Gene Set Enrichment Analysis (GSEA) based on 
-provided plot data, header information, and other content. The report 
-includes sections for each level of clustered hits, along with a table of 
+Generates an HTML report for Gene Set Enrichment Analysis (GSEA) based on
+provided plot data, header information, and other content. The report
+includes sections for each level of clustered hits, along with a table of
 contents and various plots.
 }
 \details{
-The function first initializes the HTML content with the provided header 
-section and a placeholder for the table of contents (TOC). It then iterates 
-through the plots, generating sections for each level of clustered hits and 
-processing individual plots. The TOC is inserted into the HTML content, 
+The function first initializes the HTML content with the provided header
+section and a placeholder for the table of contents (TOC). It then iterates
+through the plots, generating sections for each level of clustered hits and
+processing individual plots. The TOC is inserted into the HTML content,
 which is then finalized and written to the specified output file.
 }

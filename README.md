@@ -298,6 +298,16 @@ library(compositions)
 clr_transformed_data <- clr(data_matrix)  # use as SplineOmics input
 ```
 
+The results from clr transformed data can be harder to understand and
+interpret however. If you prefer ease of interpretation and are fine
+that the results contain some artifacts due to the compositional nature
+of the data, log2 transform your data instead and use that as input for
+the `SplineOmics` package.
+
+``` r
+log2_transformed_data <- log2(data_matrix)  # use as SplineOmics input
+```
+
 ## 📦 Dependencies
 
 The `SplineOmics` package relies on several other R packages for its

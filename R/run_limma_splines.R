@@ -63,20 +63,12 @@ run_limma_splines <- function(
     func_type = "run_limma_splines"
   )
   
-  design <- splineomics[["design"]]
-  condition <- splineomics[["condition"]]
-  mode <- determine_analysis_mode(
-    design,
-    condition
-    )
-  
   args <- lapply(
     as.list(match.call()[-1]),
     eval,
     parent.frame()
     )
   
-  args$mode <- mode
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -86,20 +78,26 @@ run_limma_splines <- function(
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
   padjust_method <- splineomics[["padjust_method"]]
+  design <- splineomics[["design"]]
+  condition <- splineomics[["condition"]]
   
   feature_names <- rownames(data)
   
-  data_copy <- data
-  rownames(data_copy) <- NULL   # To just have numbers describing the rows
+  rownames(data) <- NULL   # To just have numbers describing the rows
 
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
+  
+  mode <- determine_analysis_mode(
+    design,
+    condition
+  )
   
   # Get hits for level (within level analysis) 
   process_level_with_params <- purrr::partial(
     within_level, 
     spline_params = spline_params,
-    data = data_copy, 
+    data = data, 
     rna_seq_data = rna_seq_data,
     meta = meta, 
     design = design, 
@@ -109,12 +107,18 @@ run_limma_splines <- function(
     mode = mode
     )
 
-  results_list <- purrr::map2(
-    levels, 
-    seq_along(levels), 
+  # results_list <- purrr::map2(
+  #   levels, 
+  #   seq_along(levels), 
+  #   process_level_with_params
+  #   )
+  # print(is.null(names(levels)))
+  
+  results_list <- purrr::imap(
+    levels,
     process_level_with_params
     )
-
+  
   within_level_top_table <- 
     stats::setNames(
       purrr::map(results_list, "top_table"), 
@@ -129,7 +133,7 @@ run_limma_splines <- function(
     level_combinations <- utils::combn(levels, 2, simplify = FALSE)
     for (lev_combo in level_combinations) {
       result <- between_level(
-        data = data_copy, 
+        data = data, 
         rna_seq_data = rna_seq_data,
         meta = meta, 
         design = design, 
@@ -173,7 +177,6 @@ run_limma_splines <- function(
 
   splineomics <- update_splineomics(
     splineomics = splineomics,
-    data = data,   
     limma_splines_result = limma_splines_result
  )
 }
@@ -524,8 +527,9 @@ process_within_level <- function(
 #'
 #' @return A tibble with feature indices and names included.
 #' 
-#' @importFrom tidyr as_tibble
+#' @importFrom tibble as_tibble
 #' @importFrom dplyr relocate last_col mutate
+#' @importFrom rlang .data
 #' 
 modify_limma_top_table <- function(
     top_table, 
@@ -551,17 +555,17 @@ modify_limma_top_table <- function(
     )
   }
   
-  top_table <- tidyr::as_tibble(
+  top_table <- tibble::as_tibble(
     top_table, 
     rownames = "feature_nr"
     )
   
-  feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
+  # feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
 
   # Convert feature_nr to integer
   top_table <- top_table |> 
-    dplyr::mutate(feature_nr = as.integer(feature_nr)) |>
-    dplyr::relocate(feature_nr, .after = dplyr::last_col())
+    dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
+    dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
   
   # Sort and add feature names based on the feature_nr
   sorted_feature_names <- feature_names[top_table$feature_nr]

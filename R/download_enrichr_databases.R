@@ -1,8 +1,3 @@
-#' The exported function download_enrichr_databases allows to selects & 
-#' download Enrichr databases for local use with clusterProfiler.
-
-
-
 # Exported function: download_enrichr_databases() ------------------------------
 
 
@@ -18,6 +13,9 @@
 #' @param output_dir A character string specifying the output directory
 #'                   where the .tsv file will be saved. Defaults to the current
 #'                   working directory.
+#' @param filename Name of the output file (with file extension. Due to commas
+#'                 present in some terms, .tsv is recommendet). When ommited,
+#'                 the file is named all_databases_{timestamp}.tsv.
 #'
 #' @return This function does not return a value but saves a .tsv file in the 
 #'         specified directory containing the gene sets from the specified 
@@ -30,12 +28,20 @@
 #'
 download_enrichr_databases <- function(
     gene_set_lib,
-    output_dir = here::here()
+    output_dir = here::here(),
+    filename = NULL
     ) {
   
   # Control the user inputs
   if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
-    stop(paste("gene_set_lib must be a character vector with length > 0"))
+    stop_call_false("gene_set_lib must be a character vector with length > 0")
+  }
+  
+  # Control the filename input (must be NULL or a valid string)
+  if (!is.null(filename) 
+      && (!is.character(filename) 
+          || length(filename) != 1)) {
+    stop_call_false("filename must be a single string or NULL.")
   }
   
   # Control the inputs
@@ -65,15 +71,17 @@ download_enrichr_databases <- function(
     showWarnings = FALSE
     )
   
-  timestamp <- format(
-    Sys.time(),
-    "%d_%m_%Y-%H_%M_%S"
+  # Create filename if not specified
+  if (is.null(filename)) {
+    timestamp <- format(
+      Sys.time(),
+      "%d_%m_%Y-%H_%M_%S"
     )
-  
-  filename <- paste0(
-    "all_databases_",
-    timestamp, ".tsv"
+    filename <- paste0(
+      "all_databases_",
+      timestamp, ".tsv"
     )
+  }
   
   filename_path <- here::here(
     output_dir,
@@ -89,7 +97,9 @@ download_enrichr_databases <- function(
     quote = FALSE       # Do not quote strings
   )
   
-  return(filename_path)
+  message("Download complete! The file has been saved as: ", filename_path)
+  
+  return(invisible(filename_path))
 }
 
 

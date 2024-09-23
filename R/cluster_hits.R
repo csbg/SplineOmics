@@ -100,14 +100,8 @@ cluster_hits <- function(
     splineomics = splineomics,
     func_type = "cluster_hits"
   )
-  
-  design <- splineomics[["design"]]
-  condition <- splineomics[["condition"]]
-  mode <- determine_analysis_mode(design,
-                                  condition)
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
-  args$mode <- mode
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -155,7 +149,12 @@ cluster_hits <- function(
     )
 
   huge_table_user_prompter(within_level_top_tables)
-
+  
+  mode <- determine_analysis_mode(
+    design,
+    condition
+  )
+  
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
     clusters = clusters,
@@ -579,8 +578,8 @@ make_clustering_report <- function(
     curve_values <- level_clustering$curve_values
 
     dendrogram <- plot_dendrogram(
-      level_clustering$hc,
-      clusters[q]
+      hc = level_clustering$hc,
+      k = clusters[q]
       )
 
     p_curves <- plot_all_mean_splines(
@@ -1277,7 +1276,8 @@ plot_dendrogram <- function(
   p_dend <- ggplot2::ggplot(ggdend) +
     ggplot2::labs(
       title = paste(
-        "Hierarchical Clustering Dendrogram Features (colors = clusters)"
+        "Hierarchical Clustering Dendrogram Features (colors = clusters", 
+        "(not matching legend plot below!))"
       ), 
       x = "",
       y = ""
@@ -1287,7 +1287,8 @@ plot_dendrogram <- function(
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank()
+      axis.ticks.y = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(size = 9)
     )
   
   return(p_dend)
@@ -1722,10 +1723,10 @@ plot_splines <- function(
     adj_pthreshold
     ) {
   
-  feature_names <- NULL   # dummy declaration for the lintr and R CMD.
+  # feature_names <- NULL   # dummy declaration for the lintr and R CMD.
   
   # Sort so that HTML reports are easier to read and comparisons are easier.
-  top_table <- top_table |> dplyr::arrange(feature_names)
+  top_table <- top_table |> dplyr::arrange(.data$feature_names)
 
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time

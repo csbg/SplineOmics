@@ -22,18 +22,6 @@ If any of these checks fail, an informative error message is returned.
 
 
 
-- The method first checks if the lengths of \code{designs} and 
-\code{modes} 
-  are equal. If not, it raises an error.
-- It then checks if \code{modes} is \code{NULL}, and if so, the method
- returns 
-  without performing any further checks.
-- For each mode in \code{modes}, the method sets \code{self$args$mode} 
-to the 
-  current mode and calls \code{self$check_mode()}.
-
-
-
 The function performs the following checks:
 - If `clusters` is an integer or a vector of integers. Otherwise, it 
   gives an error.
@@ -102,16 +90,6 @@ ranges.
 
 Check Top Tables
 
-\code{\link{limma}}
-
-Check Modes
-
-This method validates multiple modes by ensuring that the lengths of the 
-modes and designs are the same. It then iterates through each mode, 
-sets it 
-in the class arguments, and calls \code{self$check_mode()} to perform 
-the validation for each mode.
-
 \code{\link[stats]{model.matrix}}
 
 Check Multiple Designs and Metas
@@ -138,8 +116,6 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_datas_and_metas}{\code{InputControl$check_datas_and_metas()}}
 \item \href{#method-InputControl-check_datas_descr}{\code{InputControl$check_datas_descr()}}
 \item \href{#method-InputControl-check_top_tables}{\code{InputControl$check_top_tables()}}
-\item \href{#method-InputControl-check_mode}{\code{InputControl$check_mode()}}
-\item \href{#method-InputControl-check_modes}{\code{InputControl$check_modes()}}
 \item \href{#method-InputControl-check_design_formula}{\code{InputControl$check_design_formula()}}
 \item \href{#method-InputControl-check_designs_and_metas}{\code{InputControl$check_designs_and_metas()}}
 \item \href{#method-InputControl-check_spline_params}{\code{InputControl$check_spline_params()}}
@@ -209,8 +185,6 @@ The following validation methods are called in sequence:
 - \code{self$check_data_and_meta()}
 - \code{self$check_datas_and_metas()}
 - \code{self$check_datas_descr()}
-- \code{self$check_mode()}
-- \code{self$check_modes()}
 - \code{self$check_design_formula()}
 - \code{self$check_designs_and_metas()}
 - \code{self$check_spline_params()}
@@ -380,46 +354,6 @@ dataframe using the `check_dataframe` function.
 }
 \subsection{Returns}{
 No return value, called for side effects.
-
-Check Mode
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-InputControl-check_mode"></a>}}
-\if{latex}{\out{\hypertarget{method-InputControl-check_mode}{}}}
-\subsection{Method \code{check_mode()}}{
-Validates that the mode is either 'integrated' or 'isolated', which 
-depends
-on the design formula used in limma.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_mode()}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{mode}}{A character string specifying the mode.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A message indicating the chosen mode if valid; otherwise, an 
-error
-is thrown.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-InputControl-check_modes"></a>}}
-\if{latex}{\out{\hypertarget{method-InputControl-check_modes}{}}}
-\subsection{Method \code{check_modes()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_modes()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-NULL. The function is used for its side effects of validating 
-each 
-mode and raising errors if any validation fails.
 
 Check Design Formula
 }

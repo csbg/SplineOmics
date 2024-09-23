@@ -9,7 +9,7 @@ create_gsea_report_level(
   databases,
   params = NA,
   plot_title = "",
-  background = NULL
+  universe = NULL
 )
 }
 \arguments{
@@ -20,13 +20,13 @@ integer specifying the cluster.}
 \item{databases}{A dataframe containing the data of the downloaded Enrichr
 databases}
 
-\item{params}{A list specifying the clusterProfiler parameters for the 
+\item{params}{A list specifying the clusterProfiler parameters for the
 enrichment analysis.}
 
 \item{plot_title}{An optional string specifying the title of the plot. If not
 provided, a default title based on the analysis will be used.}
 
-\item{background}{An optional list of standard gene symbols to be used as the
+\item{universe}{An optional list of standard gene symbols to be used as the
 background for the enrichment analysis instead of the background chosen by
 the `enricher`. The default is an empty list, which implies the use of the
 default background set by the enrichment tool.}

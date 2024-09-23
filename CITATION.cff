@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the following work."
+title: "SplineOmics: A bioinformatics package for time-series omics data analysis"
+version: 1.0.0
+repository-code: https://github.com/csbg/SplineOmics
+license: MIT
+type: software
+
+authors:
+  - family-names: Rauter
+    given-names: Thomas
+    orcid: https://orcid.org/0000-0002-7350-4045
+    contribution: Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf.
+  - family-names: Fortelny
+    given-names: Nikolaus
+    orcid: https://orcid.org/0000-0003-4025-9968
+    contribution: Principal Investigator, provided guidance and support for the overall approach.
+  - family-names: Skafdasschaf
+    given-names: (insert-given-name)
+    contribution: Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.
+  - family-names: Schaepertoens
+    given-names: V.
+    contribution: Developed one internal plotting function, some exploratory data analysis plots, and the overall approach together with Thomas-Rauter.

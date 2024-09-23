@@ -54,7 +54,8 @@ and runs the GSEA analysis using the `create_gsea_report` function.</p>
 <span>  <span class="va">clustered_hits</span>,</span>
 <span>  <span class="va">level_name</span>,</span>
 <span>  <span class="va">databases</span>,</span>
-<span>  <span class="va">clusterProfiler_params</span></span>
+<span>  <span class="va">clusterProfiler_params</span>,</span>
+<span>  <span class="va">universe</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,6 +81,10 @@ specific level. It must include a column named `feature` to extract genes.</p></
 default is NA. Those include adj_p_value,
 pAdjustMethod, etc (see clusterProfiler
 documentation).</p></dd>
+
+
+<dt id="arg-universe">universe<a class="anchor" aria-label="anchor" href="#arg-universe"></a></dt>
+<dd><p>Enrichment background data, default is NULL.</p></dd>
 
 </dl></div>
     <div class="section level2">

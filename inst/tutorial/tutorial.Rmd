@@ -488,7 +488,7 @@ data2 <- data[, !(colnames(data) %in% c(
   )]
 
 # Adjust meta so that it matches data2
-meta2 <- meta[!meta$`Sample.ID` %in% c(
+meta2 <- meta[!meta$Sample.ID %in% c(
   "E12_TP05_Exponential", 
   "E10_TP10_Stationary"
   ), ]
@@ -713,7 +713,8 @@ output_dir  <- here::here(
 
 SplineOmics::download_enrichr_databases(
   gene_set_lib = gene_set_lib,
-  output_dir = output_dir
+  output_dir = output_dir,
+  filename = "databases.tsv"
   )
 ```
 
@@ -728,11 +729,10 @@ dotplots in R.
 
 ```{r run GSEA, eval = TRUE}
 # The file has a timestamp, but this code takes it irrespective of it.
-downloaded_dbs_filepath <- list.files(
-  path = output_dir,
-  pattern = "\\.tsv$",
-  full.names = TRUE
-  )[1]
+downloaded_dbs_filepath <- file.path(
+  output_dir,
+  "databases.tsv"
+  )
 
 databases <- readr::read_tsv(
   downloaded_dbs_filepath,
