@@ -74,6 +74,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_spline_test_configs()
       self$check_adj_pthresholds()
       self$check_clusters()
+      self$check_genes()
       self$check_plot_info()
       self$check_report_dir()
       self$check_padjust_method()
@@ -826,54 +827,56 @@ InputControl <- R6::R6Class("InputControl",
           )
       }
       
-      # Check treatment_labels
-      if (!any(is.na(plot_info$treatment_labels))) {
-        if (!is.character(plot_info$treatment_labels)) {
-          stop(
-            "treatment_labels must be either NA or a character vector",
-            call. = FALSE
+      if (!is.na(plot_info$treatment_labels)) {
+        # Check treatment_labels
+        if (!any(is.na(plot_info$treatment_labels))) {
+          if (!is.character(plot_info$treatment_labels)) {
+            stop(
+              "treatment_labels must be either NA or a character vector",
+              call. = FALSE
             )
+          }
+          if (any(nchar(plot_info$treatment_labels) > 10)) {
+            stop(
+              paste(
+                "Each element of treatment_labels must be maximally 10", 
+                "characters long"),
+              call. = FALSE
+            )
+          }
         }
-        if (any(nchar(plot_info$treatment_labels) > 10)) {
+        
+        # Check treatment_timepoints
+        if (!any(is.na(plot_info$treatment_timepoints))) {
+          if (!is.numeric(plot_info$treatment_timepoints)) {
+            stop(
+              "treatment_timepoints must be either NA or a numeric vector",
+              call. = FALSE
+            )
+          }
+          if (!any(is.na(plot_info$treatment_labels)) &&
+              length(plot_info$treatment_timepoints) !=
+              length(plot_info$treatment_labels)) {
+            stop(
+              paste(
+                "treatment_timepoints must have the same length as", 
+                "treatment_labels"),
+              call. = FALSE
+            )
+          }
+        }
+        
+        
+        max_time <- max(meta$Time, na.rm = TRUE)
+        
+        if (any(plot_info$treatment_timepoints > max_time)) {
           stop(
             paste(
-              "Each element of treatment_labels must be maximally 10", 
-              "characters long"),
+              "All treatment_timepoints must be before the last timepoint:",
+              max_time),
             call. = FALSE
-            )
+          )
         }
-      }
-
-      # Check treatment_timepoints
-      if (!any(is.na(plot_info$treatment_timepoints))) {
-        if (!is.numeric(plot_info$treatment_timepoints)) {
-          stop(
-            "treatment_timepoints must be either NA or a numeric vector",
-            call. = FALSE
-            )
-        }
-        if (!any(is.na(plot_info$treatment_labels)) &&
-            length(plot_info$treatment_timepoints) !=
-            length(plot_info$treatment_labels)) {
-          stop(
-            paste(
-              "treatment_timepoints must have the same length as", 
-              "treatment_labels"),
-            call. = FALSE
-            )
-        }
-      }
-      
-
-      max_time <- max(meta$Time, na.rm = TRUE)
-      
-      if (any(plot_info$treatment_timepoints > max_time)) {
-        stop(
-          paste(
-            "All treatment_timepoints must be before the last timepoint:",
-            max_time),
-          call. = FALSE
-        )
       }
     },
     
@@ -954,7 +957,7 @@ InputControl <- R6::R6Class("InputControl",
     #' or if the length of `genes` does not match the number of rows in `data`.
     #' 
     check_genes = function() {
-      
+
       data <- self$args$data
       genes <- self$args$genes
 
@@ -2322,7 +2325,6 @@ check_splineomics_elements <- function(
     "explore_data" = c(
       "data",
       "meta",
-      "annotation",
       "condition",
       "report_info"
       ),
@@ -2341,13 +2343,11 @@ check_splineomics_elements <- function(
     ),
     "create_limma_report" = c(
       "limma_splines_result",
-      "annotation",
       "report_info"
     ),
     "cluster_hits" = c(
       "data",
       "meta",
-      "annotation",
       "design",
       "condition",
       "spline_params",
