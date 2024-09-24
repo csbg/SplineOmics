@@ -4,7 +4,10 @@
 \alias{merge_annotation_all_levels_clustering}
 \title{Merge Annotation with All Top Tables}
 \usage{
-merge_annotation_all_levels_clustering(all_levels_clustering, annotation)
+merge_annotation_all_levels_clustering(
+  all_levels_clustering,
+  annotation = NULL
+)
 }
 \arguments{
 \item{all_levels_clustering}{A list where each element contains a `top_table`

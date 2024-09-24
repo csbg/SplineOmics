@@ -11,13 +11,14 @@ Cluster Hits from Top Tables}
 \usage{
 cluster_hits(
   splineomics,
-  genes,
+  clusters,
   adj_pthresholds = c(0.05),
-  clusters = c("auto"),
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05,
+  genes = NULL,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   report_dir = here::here(),
-  analysis_type = "time_effect",
   report = TRUE
 )
 }
@@ -44,14 +45,19 @@ necessary data and parameters for the analysis, including:
    'adj.P.Val' and expression data columns.
 }}
 
-\item{genes}{A character vector containing the gene names of the features to
-be analyzed.}
+\item{clusters}{Character or integer vector specifying the number of clusters}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering 
 hits in each top table.}
 
-\item{clusters}{Character or integer vector specifying the number of clusters
-or 'auto' for automatic estimation.}
+\item{adj_pthresh_avrg_diff_conditions}{p-value threshold for the results
+from the average difference of the condition limma result.}
+
+\item{adj_pthresh_interaction_condition_time}{p-value threshold for the 
+results from the interaction of condition and time limma result.}
+
+\item{genes}{A character vector containing the gene names of the features to
+be analyzed.}
 
 \item{plot_info}{List containing the elements y_axis_label (string), 
 time_unit (string), treatment_labels (character vector),
@@ -64,11 +70,6 @@ feeding, temperature shift, etc.).}
 
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}
-
-\item{analysis_type}{String specifying type of limma results (which of the 
-three categories: time_effect, avrg_diff_conditions,
-and interaction_condition_time (
-see limma_result_categories.pdf in inst/descriptions).}
 
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}

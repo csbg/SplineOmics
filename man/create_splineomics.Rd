@@ -15,6 +15,7 @@ create_splineomics(
   meta_batch2_column = NULL,
   feature_name_columns = NULL,
   design = NULL,
+  mode = NULL,
   spline_params = NULL,
   padjust_method = "BH"
 )
@@ -56,6 +57,11 @@ created. Use the same vector that was used to
 create the row headers for the data matrix!}
 
 \item{design}{A design matrix or similar object (optional).}
+
+\item{mode}{For the design formula, you must specify either 'isolated' or 
+'integrated'. Isolated means limma determines the results for each level 
+using only the data from that level. Integrated means limma determines the
+ results for all levels using the full dataset (from all levels).}
 
 \item{spline_params}{Parameters for spline functions (optional). Must contain
 the named elements spline_type, which must contain either the string "n" for

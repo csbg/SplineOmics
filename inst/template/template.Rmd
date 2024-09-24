@@ -99,6 +99,11 @@ designs <- c(
   "~ 1 + X + Your_Batch"  # Replace with your design formula
   ) 
 
+modes <- c(
+  "integrated",
+  "isolated"
+  )
+
 pthresholds <- c(
   0.05,
   0.1
@@ -126,6 +131,7 @@ SplineOmics::screen_limma_hyperparams(
   datas_descr = datas_descr,  # Replace with your data descriptions
   metas = metas,  # Replace with your metadata list
   designs = designs,  # Replace with your design formulas
+  modes = modes,
   spline_test_configs = spline_test_configs,  # Replace with your spline test configurations
   report_dir = report_dir,  # Replace with your report directory
   adj_pthresholds = pthresholds  # Replace with your adjusted p-value thresholds
@@ -145,6 +151,7 @@ splineomics <- SplineOmics::update_splineomics(
   data = data2,  # Replace with your data
   meta = meta2,  # Replace with your metadata
   design = "~ 1 + Phase*X + Reactor",  # Replace with your design formula
+  mode = "integrated",   # with this, limma uses full data for each level.
   spline_params = spline_params  # Replace with your spline parameters
 )
 ```
@@ -198,7 +205,6 @@ report_dir <- here::here(
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,  # Replace with your SplineOmics object
   genes = genes,  # Replace with your genes
-  analysis_type = "time_effect",  # Replace with your analysis type
   adj_pthresholds = adj_pthresholds,  # Replace with your adjusted p-value thresholds
   clusters = clusters,  # Replace with your clusters
   plot_info = plot_info,  # Replace with your plot information
@@ -250,7 +256,7 @@ report_dir <- here::here(
 )
 
 result <- SplineOmics::run_gsea(
-  levels_clustered_hits = clustering_results$clustered_hits_levels,  # Replace with your clustered hits levels
+  levels_clustered_hits = clustering_results$clustered_hits_levels, 
   databases = databases,  # Replace with your databases
   clusterProfiler_params = clusterProfiler_params,  
   report_info = report_info,  # Replace with your report information

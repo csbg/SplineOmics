@@ -48,16 +48,6 @@ If any of these checks fail, an informative error message is returned.
 
 
 
-The method performs the following checks:
-
-* Ensures that `analysis_mode` is provided and not NULL.
-* Confirms that `analysis_mode` is a character vector of length 1.
-* Validates that `analysis_mode` matches one of the allowed values.
-
-If any of these checks fail, an informative error message is returned.
-
-
-
 This function performs the following checks:
 1. Ensures `feature_name_columns` and `annotation` are not `NULL`.
 2. Verifies that each element in `feature_name_columns` is a character
@@ -92,7 +82,7 @@ Check Top Tables
 
 \code{\link[stats]{model.matrix}}
 
-Check Multiple Designs and Metas
+Validate and check all modes
 }
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{\link[SplineOmics:Level2Functions]{SplineOmics::Level2Functions}} -> \code{InputControl}
@@ -117,6 +107,8 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_datas_descr}{\code{InputControl$check_datas_descr()}}
 \item \href{#method-InputControl-check_top_tables}{\code{InputControl$check_top_tables()}}
 \item \href{#method-InputControl-check_design_formula}{\code{InputControl$check_design_formula()}}
+\item \href{#method-InputControl-check_modes}{\code{InputControl$check_modes()}}
+\item \href{#method-InputControl-check_mode}{\code{InputControl$check_mode()}}
 \item \href{#method-InputControl-check_designs_and_metas}{\code{InputControl$check_designs_and_metas()}}
 \item \href{#method-InputControl-check_spline_params}{\code{InputControl$check_spline_params()}}
 \item \href{#method-InputControl-check_spline_test_configs}{\code{InputControl$check_spline_test_configs()}}
@@ -128,7 +120,6 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_genes}{\code{InputControl$check_genes()}}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
 \item \href{#method-InputControl-check_report_info}{\code{InputControl$check_report_info()}}
-\item \href{#method-InputControl-check_analysis_type}{\code{InputControl$check_analysis_type()}}
 \item \href{#method-InputControl-check_feature_name_columns}{\code{InputControl$check_feature_name_columns()}}
 \item \href{#method-InputControl-check_report}{\code{InputControl$check_report()}}
 \item \href{#method-InputControl-clone}{\code{InputControl$clone()}}
@@ -186,6 +177,8 @@ The following validation methods are called in sequence:
 - \code{self$check_datas_and_metas()}
 - \code{self$check_datas_descr()}
 - \code{self$check_design_formula()}
+- \code{self$check_mode()}
+- \code{self$check_modes()}
 - \code{self$check_designs_and_metas()}
 - \code{self$check_spline_params()}
 - \code{self$check_spline_test_configs()}
@@ -384,6 +377,40 @@ columns present in the metadata.
 \subsection{Returns}{
 TRUE if the design formula is valid, otherwise an error is 
 thrown.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_modes"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_modes}{}}}
+\subsection{Method \code{check_modes()}}{
+This function iterates over the `modes` argument, sets each `mode` in 
+`self$args`, and calls `check_mode()` to validate each mode. After each 
+validation, the `mode` is removed from `self$args`.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_modes()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+NULL if `modes` is missing; otherwise, checks all modes.
+
+Check the mode argument for validity
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_mode"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_mode}{}}}
+\subsection{Method \code{check_mode()}}{
+This function checks if the `mode` argument is provided and validates 
+that it is either "isolated" or "integrated". If `mode` is missing or 
+invalid, an error is thrown.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_mode()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+NULL if `mode` is missing; otherwise, validates the mode.
+
+Check Multiple Designs and Metas
 }
 }
 \if{html}{\out{<hr>}}
@@ -677,28 +704,6 @@ and adheres to the required formats.
 \subsection{Returns}{
 TRUE if the report information is valid; otherwise, an error is
 thrown.
-
-Check Analysis Mode
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-InputControl-check_analysis_type"></a>}}
-\if{latex}{\out{\hypertarget{method-InputControl-check_analysis_type}{}}}
-\subsection{Method \code{check_analysis_type()}}{
-This method checks the validity of the `analysis_mode` argument.
-It ensures that
-`analysis_mode` is a character vector of length 1 and that it matches
- one of the
-allowed analysis modes: "time_effect", "avrg_diff_conditions", or
-"interaction_condition_time".
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_analysis_type()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-NULL if `analysis_mode` is not provided or invalid. Otherwise,
-performs checks
-and potentially raises errors if checks fail.
 
 Check Feature Name Columns
 }

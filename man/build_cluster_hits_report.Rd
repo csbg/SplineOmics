@@ -7,6 +7,7 @@
 build_cluster_hits_report(
   header_section,
   plots,
+  limma_result_2_and_3_plots,
   plots_sizes,
   level_headers_info,
   spline_params,
@@ -20,6 +21,11 @@ build_cluster_hits_report(
 \item{header_section}{A character string containing the HTML header section.}
 
 \item{plots}{A list of ggplot2 plot objects.}
+
+\item{limma_result_2_and_3_plots}{List containing the list of lists with all
+the plots for all the pairwise comparisons of the condition in terms of
+average spline diff and interaction condition time, and another list of lists
+where the respective names of each plot are stored.}
 
 \item{plots_sizes}{A list of integers specifying the size of each plot.}
 

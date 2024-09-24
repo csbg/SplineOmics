@@ -20,8 +20,8 @@ make_clustering_report(
   meta_batch_column,
   meta_batch2_column,
   plot_info,
-  analysis_type,
-  feature_name_columns
+  feature_name_columns,
+  spline_comp_plots
 )
 }
 \arguments{
@@ -68,12 +68,6 @@ and -timepoints are used to create vertical dashed lines,
 indicating the positions of the treatments (such as 
 feeding, temperature shift, etc.).}
 
-\item{analysis_type}{One of the strings "time_effect", "avrg_diff_conditions"
-, or "interaction_condition_time". Those represent the
-three different outputs of a limma analysis. For more
-info on those 3 "categories", see package dir inst/
-descriptions/limma_result_categories.pdf.}
-
 \item{feature_name_columns}{Character vector containing the column names of 
 the annotation info that describe the features.
 This argument is used to specify in the HTML 
@@ -81,6 +75,11 @@ report how exactly the feature names displayed
 above each individual spline plot have been
 created. Use the same vector that was used to 
 create the row headers for the data matrix!}
+
+\item{spline_comp_plots}{List containing the list of lists with all
+the plots for all the pairwise comparisons of the condition in terms of
+average spline diff and interaction condition time, and another list of lists
+where the respective names of each plot are stored.}
 }
 \value{
 No return value, called for side effects.

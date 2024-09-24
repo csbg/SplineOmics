@@ -12,6 +12,7 @@ generate_report_html(
   plots,
   plots_sizes,
   report_info,
+  limma_result_2_and_3_plots = NULL,
   data = NULL,
   meta = NA,
   topTables = NA,
@@ -21,7 +22,6 @@ generate_report_html(
   adj_pthresholds = NA,
   report_type = "explore_data",
   feature_name_columns = NA,
-  analysis_type = NA,
   mode = NA,
   filename = "report",
   timestamp = format(Sys.time(), "\%d_\%m_\%Y-\%H_\%M_\%S"),
@@ -34,6 +34,11 @@ generate_report_html(
 \item{plots_sizes}{A list of integers specifying the size of each plot.}
 
 \item{report_info}{A named list containing report information.}
+
+\item{limma_result_2_and_3_plots}{List containing the list of lists with all
+the plots for all the pairwise comparisons of the condition in terms of
+average spline diff and interaction condition time, and another list of lists
+where the respective names of each plot are stored.}
 
 \item{data}{A dataframe or a list of dataframes, containing data that should
 be directly embedded in the HTML report for downloading.}
@@ -65,12 +70,6 @@ plots where created. This is because those
 descriptions can be made up of several column
 values, and the specific columns are then stated
 in the HTML report on top (e.g gene_uniprotID).}
-
-\item{analysis_type}{One of the strings "time_effect", "avrg_diff_conditions"
-, or "interaction_condition_time". Those represent the
-three different outputs of a limma analysis. For more
-info on those 3 "categories", see package dir inst/
-descriptions/limma_result_categories.pdf.}
 
 \item{mode}{A character string specifying the mode 
 ('isolated' or 'integrated').}

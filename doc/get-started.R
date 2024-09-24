@@ -117,6 +117,11 @@ designs <- c(
   "~ 1 + X + Reactor"
   ) 
 
+modes <- c(
+  "integrated",
+  "isolated"
+  )
+
 # Specify the meta "level" column
 condition <- "Phase" 
 
@@ -150,14 +155,15 @@ print(spline_test_configs)
 
 ## ----Perform hyperparameter-screening, eval = FALSE---------------------------
 #  SplineOmics::screen_limma_hyperparams(
-#    splineomics,
-#    datas,
-#    datas_descr,
-#    metas,
-#    designs,
-#    spline_test_configs,
-#    report_dir,
-#    pthresholds,
+#    splineomics = splineomics,
+#    datas = datas,
+#    datas_descr = datas_descr,
+#    metas = metas,
+#    designs = designs,
+#    modes = modes,
+#    spline_test_configs = spline_test_configs,
+#    report_dir = report_dir,
+#    pthresholds = pthresholds,
 #    )
 #  
 
@@ -165,6 +171,7 @@ print(spline_test_configs)
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",  # best design formula
+  mode = "integrated",
   data = data2,   # data without "outliers" was better
   meta = meta2,  
   spline_params = list(
@@ -175,7 +182,7 @@ splineomics <- SplineOmics::update_splineomics(
 
 ## ----limma spline analysis, eval = TRUE---------------------------------------
 splineomics <- SplineOmics::run_limma_splines(
-  splineomics
+  splineomics = splineomics
   )
 
 ## ----build limma report, eval = FALSE-----------------------------------------
@@ -185,7 +192,7 @@ splineomics <- SplineOmics::run_limma_splines(
 #    )
 #  
 #  plots <- SplineOmics::create_limma_report(
-#    splineomics,
+#    splineomics = splineomics,
 #    report_dir = report_dir
 #    )
 
@@ -221,10 +228,6 @@ splineomics <- SplineOmics::run_limma_splines(
 #  
 #  clustering_results <- SplineOmics::cluster_hits(
 #    splineomics = splineomics,
-#    # Cluster the hits from the time_effect results. You can also cluster
-#    # the hits from the other two limma result categories by specifying
-#    # it here with this argument.
-#    analysis_type = "time_effect",
 #    adj_pthresholds = adj_pthresholds,
 #    clusters = clusters,
 #    genes = genes,

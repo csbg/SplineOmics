@@ -79,6 +79,7 @@ run_limma_splines <- function(
   spline_params <- splineomics[["spline_params"]]
   padjust_method <- splineomics[["padjust_method"]]
   design <- splineomics[["design"]]
+  mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
   
   feature_names <- rownames(data)
@@ -87,12 +88,7 @@ run_limma_splines <- function(
 
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
-  
-  mode <- determine_analysis_mode(
-    design,
-    condition
-  )
-  
+
   # Get hits for level (within level analysis) 
   process_level_with_params <- purrr::partial(
     within_level, 
@@ -155,8 +151,8 @@ run_limma_splines <- function(
   } else { # mode == "isolated"
     message(paste(
       "mode == 'integrated' necessary for between level",
-      "comparisons. Returning emtpy lists for ttslc_factor_only",
-      "and ttslc_factor_time (ttslc means 'top tables level comparison')."
+      "comparisons. Returning emtpy lists the limma result categories 2 and 3 
+      (avrg diff conditions, and interaction condition time)."
       ))
   }
   
