@@ -32,6 +32,11 @@
 #' @param metas A list of data frames containing metadata for each dataset in 
 #' `datas`.
 #' @param designs A character vector of design formulas for the limma analysis.
+#' @param modes A character vector that must have the same length as 'designs'.
+#' For each design formula, you must specify either 'isolated' or 'integrated'.
+#' Isolated means limma determines the results for each level using only the 
+#' data from that level. Integrated means limma determines the results for all
+#' levels using the full dataset (from all levels).
 #' @param spline_test_configs A configuration object for spline tests.
 #' @param report_dir A non-empty string specifying the report directory.
 #' @param adj_pthresholds A numeric vector of p-value thresholds for 
@@ -56,6 +61,7 @@ screen_limma_hyperparams <- function(
     datas_descr,
     metas, 
     designs, 
+    modes,
     spline_test_configs,
     report_dir = here::here(),
     adj_pthresholds = c(0.05),
@@ -89,16 +95,7 @@ screen_limma_hyperparams <- function(
   condition <- splineomics[["condition"]]
 
   feature_names <- rownames(datas[[1]])
-  
-  modes <- c()
-  for (design in designs) {
-    mode <- determine_analysis_mode(
-      design,
-      condition
-    )
-    modes <- c(modes, mode)
-  }
-  
+
   top_tables_combos <- 
     get_limma_combos_results(
       datas = datas, 

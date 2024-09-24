@@ -9,8 +9,7 @@ perform_clustering(top_tables, clusters, meta, condition, spline_params, mode)
 \arguments{
 \item{top_tables}{A list of top tables from limma analysis.}
 
-\item{clusters}{A list specifying clusters or "auto" for automatic
-estimation.}
+\item{clusters}{A list specifying clusters.}
 
 \item{meta}{A dataframe containing metadata.}
 

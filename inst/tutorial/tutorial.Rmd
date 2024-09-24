@@ -511,6 +511,11 @@ designs <- c(
   "~ 1 + X + Reactor"
   ) 
 
+modes <- c(
+  "integrated",
+  "isolated"
+  )
+
 # Specify the meta "level" column
 condition <- "Phase" 
 
@@ -548,14 +553,15 @@ test, we can run the `screen_limma_hyperparams()` function.
 
 ```{r Perform hyperparameter-screening, eval = TRUE}
 SplineOmics::screen_limma_hyperparams(
-  splineomics,
-  datas,
-  datas_descr,
-  metas,
-  designs,
-  spline_test_configs,
-  report_dir,
-  pthresholds,
+  splineomics = splineomics,
+  datas = datas,
+  datas_descr = datas_descr,
+  metas = metas,
+  designs = designs,
+  modes = modes,
+  spline_test_configs = spline_test_configs,
+  report_dir = report_dir,
+  pthresholds = pthresholds,
   )
 
 ```
@@ -572,10 +578,20 @@ cubic splines (n) with a dof of two seemed to fit the data best (not
 overfitting, but also not underfitting), which was the reason those
 spline parameters were chosen.
 
+For the design formula, you must specify either 'isolated' or 
+'integrated'. Isolated means limma determines the results for each level 
+using only the data from that level. Integrated means limma determines the
+results for all levels using the full dataset (from all levels). For the 
+integrated mode, there has to be for example an interaction effect (*) 
+between the X and the condition column (here Phase). Isolated means that limma
+only uses the part of the dataset that belongs to a level to obtain the results
+for that level.
+
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",  # best design formula
+  mode = "integrated",   # Use full data to get results for each level.
   data = data2,   # data without "outliers" was better
   meta = meta2,  
   spline_params = list(
@@ -673,7 +689,6 @@ clustering_results <- SplineOmics::cluster_hits(
   # Cluster the hits from the time_effect results. You can also cluster
   # the hits from the other two limma result categories by specifying
   # it here with this argument.
-  analysis_type = "time_effect",  
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
   genes = genes,

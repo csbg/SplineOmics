@@ -15,6 +15,10 @@
 #' @param plots A list of ggplot2 plot objects.
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param report_info A named list containing report information.
+#' @param limma_result_2_and_3_plots List containing the list of lists with all
+#' the plots for all the pairwise comparisons of the condition in terms of
+#' average spline diff and interaction condition time, and another list of lists
+#' where the respective names of each plot are stored.
 #' @param data A dataframe or a list of dataframes, containing data that should
 #'             be directly embedded in the HTML report for downloading.
 #' @param meta A dataframe, containing metadata that should
@@ -37,11 +41,6 @@
 #'                             descriptions can be made up of several column
 #'                             values, and the specific columns are then stated
 #'                             in the HTML report on top (e.g gene_uniprotID).
-#' @param analysis_type One of the strings "time_effect", "avrg_diff_conditions"
-#'                      , or "interaction_condition_time". Those represent the
-#'                      three different outputs of a limma analysis. For more
-#'                      info on those 3 "categories", see package dir inst/
-#'                      descriptions/limma_result_categories.pdf.
 #' @param mode A character string specifying the mode 
 #'            ('isolated' or 'integrated').
 #' @param filename A character string specifying the filename for the report.
@@ -62,6 +61,7 @@ generate_report_html <- function(
     plots, 
     plots_sizes, 
     report_info,
+    limma_result_2_and_3_plots = NULL,  # only for build_cluster_hits_report
     data = NULL,
     meta = NA,
     topTables = NA,
@@ -71,7 +71,6 @@ generate_report_html <- function(
     adj_pthresholds = NA,
     report_type = "explore_data",
     feature_name_columns = NA,  # only for cluster_hits()
-    analysis_type = NA,  # only for cluster_hits()
     mode = NA,
     filename = "report",
     timestamp = format(Sys.time(), 
@@ -94,7 +93,7 @@ generate_report_html <- function(
     title <- "limma report"
     
   } else if (report_type == "cluster_hits") {                         
-    title <- paste("clustered hits |", analysis_type)
+    title <- "clustered hits"
     feature_names_formula <- paste(
       feature_name_columns,
       collapse = "_"
@@ -316,6 +315,7 @@ generate_report_html <- function(
     build_cluster_hits_report(
       header_section = header_section, 
       plots = plots, 
+      limma_result_2_and_3_plots = limma_result_2_and_3_plots,
       plots_sizes = plots_sizes,
       level_headers_info = level_headers_info,
       spline_params = spline_params,
@@ -1108,7 +1108,10 @@ process_plots <- function(
   } else {
     # Process a single plot
     html_content <- add_plot_to_html(
-      html_content, plots_element, plots_size, header_index
+      html_content,
+      plots_element,
+      plots_size,
+      header_index
     )
   }
   

@@ -37,6 +37,7 @@ load("dev/data/e13_e20_nglycans.RData")
 names(meta)[names(meta) == "timepoint"] <- "Time"
 meta$Time <- as.numeric(meta$Time)
 condition <- "condition"
+
 # # Step 1: Sort the 'meta' data frame by the 'condition' column
 # meta <- meta[order(meta[[condition]]), ]
 # 
@@ -135,6 +136,7 @@ splineomics <- create_splineomics(
   data = log2_data.matrix,
   # rna_seq_data = voom_obj,
   meta = meta,
+  mode = "integrated",
   # annotation = annotation,
   # feature_name_columns = feature_name_columns,
   report_info = report_info,
@@ -166,6 +168,7 @@ report_dir <- here::here("results", "explore_data")
 # datas_descr <- c("full_data", "outliers_removed")
 # metas <- list(meta1, meta2)
 # designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
+# modes <- c("integrated", "integrated")
 # 
 # report_dir <- here::here("results", "hyperparams_screen_reports")
 # 
@@ -187,6 +190,7 @@ report_dir <- here::here("results", "explore_data")
 #   datas_descr,
 #   metas,
 #   designs,
+#   modes,
 #   spline_test_configs,
 #   report_dir,
 #   pthresholds,
@@ -222,7 +226,7 @@ report_dir <- here::here("results", "limma_reports")
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
-clusters <- c(6L, 3L)   
+clusters <- c(1L, 1L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
@@ -237,12 +241,13 @@ plot_info = list(
 # debug(cluster_hits)
 clustering_results <- cluster_hits(
   splineomics = splineomics,
-  analysis_type = "time_effect",
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
   # genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
+  adj_pthresh_avrg_diff_conditions = 0.99,
+  adj_pthresh_interaction_condition_time = 0.99
 )
 
 

@@ -46,6 +46,8 @@ InputControl <- R6::R6Class("InputControl",
     #' - \code{self$check_datas_and_metas()}
     #' - \code{self$check_datas_descr()}
     #' - \code{self$check_design_formula()}
+    #' - \code{self$check_mode()}
+    #' - \code{self$check_modes()}
     #' - \code{self$check_designs_and_metas()}
     #' - \code{self$check_spline_params()}
     #' - \code{self$check_spline_test_configs()}
@@ -69,6 +71,8 @@ InputControl <- R6::R6Class("InputControl",
       self$check_datas_descr()
       self$check_top_tables()
       self$check_design_formula()
+      self$check_mode()
+      self$check_modes()
       self$check_designs_and_metas()
       self$check_spline_params()
       self$check_spline_test_configs()
@@ -79,7 +83,6 @@ InputControl <- R6::R6Class("InputControl",
       self$check_report_dir()
       self$check_padjust_method()
       self$check_report_info()
-      self$check_analysis_type()
       self$check_report()
       self$check_feature_name_columns()
     },
@@ -454,8 +457,10 @@ InputControl <- R6::R6Class("InputControl",
       
       # Ensure the formula contains the intercept term 'X'
       if (!grepl("\\bX\\b", formula)) {
-        stop("The design formula must include the term 'X'.",
-             call. = FALSE)
+        stop_call_false(
+          "The design formula must include the term 'X', which stands",
+          "for the meta Time column"
+        )
       }
       
       # Extract terms from the formula (removing interactions and functions)
@@ -483,6 +488,62 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       return(TRUE)
+    },
+    
+    
+    #' Validate and check all modes
+    #'
+    #' @description
+    #' This function iterates over the `modes` argument, sets each `mode` in 
+    #' `self$args`, and calls `check_mode()` to validate each mode. After each 
+    #' validation, the `mode` is removed from `self$args`.
+    #'
+    #' @return NULL if `modes` is missing; otherwise, checks all modes.
+    #'
+    check_modes = function() {
+      
+      modes <- self$args[["modes"]]
+      
+      required_args <- list(modes)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      for (mode in modes) {
+        self$args$mode <- mode
+
+        self$check_mode()
+        
+        self$args$mode <- NULL
+      }
+    },
+    
+    
+    #' Check the mode argument for validity
+    #'
+    #' @description
+    #' This function checks if the `mode` argument is provided and validates 
+    #' that it is either "isolated" or "integrated". If `mode` is missing or 
+    #' invalid, an error is thrown.
+    #'
+    #' @return NULL if `mode` is missing; otherwise, validates the mode.
+    #'
+    check_mode = function() {
+      
+      mode <- self$args[["mode"]]
+      
+      required_args <- list(mode)
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+
+      if (mode != "isolated" && mode != "integrated") {
+        stop_call_false(
+          "mode must be either 'isolated' or 'integrated' and not '", mode, "'!"
+          )
+      }
     },
     
     
@@ -1136,58 +1197,6 @@ InputControl <- R6::R6Class("InputControl",
     },
     
     
-    #' Check Analysis Mode
-    #'
-    #' @description
-    #' This method checks the validity of the `analysis_mode` argument.
-    #' It ensures that
-    #' `analysis_mode` is a character vector of length 1 and that it matches
-    #'  one of the
-    #' allowed analysis modes: "time_effect", "avrg_diff_conditions", or
-    #' "interaction_condition_time".
-    #'
-    #' @details
-    #' The method performs the following checks:
-    #'
-    #' * Ensures that `analysis_mode` is provided and not NULL.
-    #' * Confirms that `analysis_mode` is a character vector of length 1.
-    #' * Validates that `analysis_mode` matches one of the allowed values.
-    #'
-    #' If any of these checks fail, an informative error message is returned.
-    #'
-    #' @return NULL if `analysis_mode` is not provided or invalid. Otherwise,
-    #' performs checks
-    #' and potentially raises errors if checks fail.
-    #'
-    check_analysis_type = function() {
-
-      analysis_mode <- self$args[["analysis_mode"]]
-
-      required_args <- list(analysis_mode)
-
-      if (any(sapply(required_args, is.null))) {
-        return(NULL)
-      }
-
-      if (!is.character(analysis_mode) || length(analysis_mode) != 1) {
-        stop(
-          "analysis_mode must be a character vector of length 1",
-          call. = FALSE
-          )
-      }
-
-      if (analysis_mode != "time_effect" ||
-          analysis_mode != "avrg_diff_conditions" ||
-          analysis_mode != "interaction_condition_time") {
-        stop(
-          "analysis_mode must be one of time_effect, avrg_diff_conditions,",
-          "or interaction_condition_time",
-          call. = FALSE
-          )
-      }
-    },
-
-
     #' Check Feature Name Columns
     #'
     #' @description
@@ -2337,6 +2346,7 @@ check_splineomics_elements <- function(
       "data",
       "meta",
       "design",
+      "mode",
       "condition",
       "spline_params",
       "padjust_method"
@@ -2349,6 +2359,7 @@ check_splineomics_elements <- function(
       "data",
       "meta",
       "design",
+      "mode",
       "condition",
       "spline_params",
       "limma_splines_result"

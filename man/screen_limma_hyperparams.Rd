@@ -10,6 +10,7 @@ screen_limma_hyperparams(
   datas_descr,
   metas,
   designs,
+  modes,
   spline_test_configs,
   report_dir = here::here(),
   adj_pthresholds = c(0.05),
@@ -44,6 +45,12 @@ necessary data and parameters for the analysis, including:
 `datas`.}
 
 \item{designs}{A character vector of design formulas for the limma analysis.}
+
+\item{modes}{A character vector that must have the same length as 'designs'.
+For each design formula, you must specify either 'isolated' or 'integrated'.
+Isolated means limma determines the results for each level using only the 
+data from that level. Integrated means limma determines the results for all
+levels using the full dataset (from all levels).}
 
 \item{spline_test_configs}{A configuration object for spline tests.}
 

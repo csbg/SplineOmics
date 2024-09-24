@@ -4,7 +4,7 @@
 \alias{bind_data_with_annotation}
 \title{Bind Data with Annotation}
 \usage{
-bind_data_with_annotation(data, annotation)
+bind_data_with_annotation(data, annotation = NULL)
 }
 \arguments{
 \item{data}{A matrix containing the numeric data.}

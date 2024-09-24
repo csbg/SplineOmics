@@ -44,6 +44,10 @@
 #' @param clusters Character or integer vector specifying the number of clusters
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
 #' hits in each top table.
+#' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
+#' from the average difference of the condition limma result.
+#' @param adj_pthresh_interaction_condition_time p-value threshold for the 
+#' results from the interaction of condition and time limma result.
 #' @param genes A character vector containing the gene names of the features to
 #'  be analyzed.
 #' @param plot_info List containing the elements y_axis_label (string), 
@@ -56,10 +60,6 @@
 #'                  feeding, temperature shift, etc.).
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved.
-#' @param analysis_type String specifying type of limma results (which of the 
-#'                      three categories: time_effect, avrg_diff_conditions,
-#'                      and interaction_condition_time (
-#'                      see limma_result_categories.pdf in inst/descriptions).
 #' @param report Boolean TRUE or FALSE value specifing if a report should be
 #' generated.
 #'
@@ -78,6 +78,8 @@ cluster_hits <- function(
     splineomics,
     clusters,
     adj_pthresholds = c(0.05),
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05,
     genes = NULL,       # Underlying genes of the features
     plot_info = list(
       y_axis_label = "Value",
@@ -86,7 +88,6 @@ cluster_hits <- function(
       treatment_timepoints = NA
       ),
     report_dir = here::here(),
-    analysis_type = "time_effect",
     report = TRUE
     ) {
 
@@ -105,11 +106,13 @@ cluster_hits <- function(
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
+  top_tables <- splineomics[['limma_splines_result']][['time_effect']]
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
   annotation <- splineomics[["annotation"]]
   report_info <- splineomics[["report_info"]]
   design <- splineomics[["design"]]
+  mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
   spline_params <- splineomics[["spline_params"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
@@ -123,23 +126,6 @@ cluster_hits <- function(
     adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
   }
   
-  
-  if (analysis_type == "time_effect") {
-    top_tables <- splineomics[['limma_splines_result']][['time_effect']]
-    
-  } else if (analysis_type == "avrg_diff_conditions") {
-    top_tables <- list(
-      splineomics[['limma_splines_result']][['time_effect']],
-      splineomics[['limma_splines_result']][['avrg_diff_conditions']]
-    )
-    
-  } else {   # analysis_type == "interaction_condition_time"
-    top_tables <- list(
-      splineomics[['limma_splines_result']][['time_effect']],
-      splineomics[['limma_splines_result']][['interaction_condition_time']]
-    )
-  }
-  
   within_level_top_tables <- filter_top_tables(
     top_tables = top_tables,
     adj_pthresholds = adj_pthresholds,
@@ -148,11 +134,6 @@ cluster_hits <- function(
     )
 
   huge_table_user_prompter(within_level_top_tables)
-  
-  mode <- determine_analysis_mode(
-    design,
-    condition
-  )
   
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
@@ -171,6 +152,16 @@ cluster_hits <- function(
     sep = ", "
     )
   
+  spline_comp_plots <- generate_spline_comparisons(
+    splineomics = splineomics,
+    all_levels_clustering = all_levels_clustering,
+    data = data,
+    meta = meta,
+    plot_info = plot_info,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction = adj_pthresh_interaction_condition_time
+  )
+
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
   }
@@ -192,8 +183,8 @@ cluster_hits <- function(
       meta_batch_column = meta_batch_column,
       meta_batch2_column = meta_batch2_column,
       plot_info = plot_info,
-      analysis_type = analysis_type,
-      feature_name_columns = feature_name_columns
+      feature_name_columns = feature_name_columns,
+      spline_comp_plots = spline_comp_plots
       )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
@@ -445,11 +436,6 @@ perform_clustering <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as 
 #'                  feeding, temperature shift, etc.).
-#' @param analysis_type One of the strings "time_effect", "avrg_diff_conditions"
-#'                      , or "interaction_condition_time". Those represent the
-#'                      three different outputs of a limma analysis. For more
-#'                      info on those 3 "categories", see package dir inst/
-#'                      descriptions/limma_result_categories.pdf.
 #' @param feature_name_columns Character vector containing the column names of 
 #'                             the annotation info that describe the features.
 #'                             This argument is used to specify in the HTML 
@@ -457,6 +443,10 @@ perform_clustering <- function(
 #'                             above each individual spline plot have been
 #'                             created. Use the same vector that was used to 
 #'                             create the row headers for the data matrix!
+#' @param spline_comp_plots List containing the list of lists with all
+#' the plots for all the pairwise comparisons of the condition in terms of
+#' average spline diff and interaction condition time, and another list of lists
+#' where the respective names of each plot are stored.
 #'
 #' @return No return value, called for side effects.
 #'
@@ -486,8 +476,8 @@ make_clustering_report <- function(
     meta_batch_column,
     meta_batch2_column,
     plot_info,
-    analysis_type,
-    feature_name_columns
+    feature_name_columns,
+    spline_comp_plots
     ) {
 
   # Optionally remove the batch-effect with the batch column and design matrix
@@ -703,6 +693,7 @@ make_clustering_report <- function(
 
   generate_report_html(
     plots = plots,
+    limma_result_2_and_3_plots = spline_comp_plots,
     plots_sizes = plots_sizes,
     level_headers_info = level_headers_info,
     spline_params = spline_params,
@@ -714,7 +705,6 @@ make_clustering_report <- function(
     adj_pthresholds = adj_pthresholds,
     report_type = "cluster_hits",
     feature_name_columns = feature_name_columns,
-    analysis_type = analysis_type,
     mode = mode,
     filename = "report_clustered_hits",
     report_dir = report_dir
@@ -722,6 +712,163 @@ make_clustering_report <- function(
 
   return(plots)
 }
+
+
+#' Generate spline comparison plots for all condition pairs
+#'
+#' @description
+#' This function generates spline comparison plots for all pairwise 
+#' combinations of conditions in the metadata. For each condition pair, it 
+#' compares the time effects of two conditions, plots the data points, and 
+#' overlays the fitted spline curves. The function only generates plots if 
+#' the adjusted p-values for the average difference between conditions and the 
+#' interaction between condition and time are below the specified thresholds.
+#'
+#' @param splineomics A list containing the splineomics results, including
+#'  time effects, 
+#' average difference between conditions, and interaction between condition 
+#' and time.
+#' @param all_levels_clustering A list containing the X matrices for each 
+#' condition, used 
+#' for spline fitting.
+#' @param data The data matrix containing the measurements.
+#' @param meta The metadata associated with the measurements, which includes
+#'  the condition.
+#' @param plot_info A list containing plotting information such as time unit 
+#' and axis labels.
+#' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
+#'  the average 
+#' difference between conditions.
+#' @param adj_pthresh_interaction The adjusted p-value threshold for the 
+#' interaction 
+#' between condition and time.
+#' 
+#' @return A list of lists containing the comparison plots and feature names
+#'         for each condition pair.
+#' 
+generate_spline_comparisons <- function(
+    splineomics,
+    all_levels_clustering,  # This list contains the X matrices
+    data,
+    meta,
+    plot_info,  
+    adj_pthresh_avrg_diff_conditions,  
+    adj_pthresh_interaction  
+) {
+  # Initialize the list that will store the results
+  comparison_plots <- list()
+  
+  # Check if all three elements are present
+  if (length(splineomics[['limma_splines_result']]) == 3) {
+    # Extract the three named elements
+    time_effect <- splineomics[['limma_splines_result']][['time_effect']]
+    avrg_diff_conditions <- 
+      splineomics[['limma_splines_result']][['avrg_diff_conditions']]
+    interaction_condition_time <- 
+      splineomics[['limma_splines_result']][['interaction_condition_time']]
+    
+    # Get the unique conditions from the meta data
+    conditions <- unique(meta$condition)
+    
+    # Generate all pairwise combinations of conditions
+    condition_pairs <- utils::combn(conditions, 2, simplify = FALSE)
+    
+    # Loop over all condition pairs and generate plots
+    for (pair in condition_pairs) {
+      condition_1 <- pair[1]
+      condition_2 <- pair[2]
+      
+      # Sort the current pair of conditions
+      sorted_conditions <- sort(c(condition_1, condition_2))
+      
+      # Initialize matched dataframes as NULL
+      matched_avrg_diff <- NULL
+      matched_interaction_cond_time <- NULL
+      
+      # Search for the correct dataframe in avrg_diff_conditions
+      for (df_name in names(avrg_diff_conditions)) {
+        # Extract the part after 'avrg_diff_' and split it by '_vs_'
+        conditions_in_df <- strsplit(sub(
+          "avrg_diff_",
+          "",
+          df_name
+          ),
+          "_vs_"
+          )[[1]]
+        
+        sorted_conditions_in_df <- sort(conditions_in_df)
+        
+        # Check if the sorted conditions in the dataframe match the current pair
+        if (identical(sorted_conditions, sorted_conditions_in_df)) {
+          matched_avrg_diff <- avrg_diff_conditions[[df_name]]
+          break
+        }
+      }
+
+      # Search for the correct dataframe in interaction_condition_time
+      for (df_name in names(interaction_condition_time)) {
+        # Extract the part after 'time_interaction_condition_'
+        # and split it by '_vs_'
+        conditions_in_df <- strsplit(sub(
+          "time_interaction_",
+          "", 
+          df_name
+          ),
+          "_vs_"
+          )[[1]]
+        
+        sorted_conditions_in_df <- sort(conditions_in_df)
+        
+        # Check if the sorted conditions in the dataframe match the
+        # current pair
+        if (identical(sorted_conditions, sorted_conditions_in_df)) {
+          matched_interaction_cond_time <- interaction_condition_time[[df_name]]
+          break
+        }
+      }
+      
+      # If both matched dataframes are found, generate plots
+      if (!is.null(matched_avrg_diff) 
+          && !is.null(matched_interaction_cond_time)) {
+        # Get the corresponding dataframes from time_effect
+        time_effect_1 <- time_effect[[paste0("condition_", condition_1)]]
+        time_effect_2 <- time_effect[[paste0("condition_", condition_2)]]
+        
+        # Get the respective X matrices from all_levels_clustering
+        X_1 <- all_levels_clustering[[paste0("condition_", condition_1)]]$X
+        X_2 <- all_levels_clustering[[paste0("condition_", condition_2)]]$X
+
+        # Call the plot function for this pair and store the result
+        plots_and_feature_names <- plot_spline_comparisons(
+          time_effect_1 = time_effect_1,
+          condition_1 = condition_1,
+          time_effect_2 = time_effect_2,
+          condition_2 = condition_2,
+          avrg_diff_conditions = matched_avrg_diff,
+          interaction_condition_time = matched_interaction_cond_time,
+          data = data,
+          meta = meta,
+          X_1 = X_1,
+          X_2 = X_2,
+          plot_info = plot_info,
+          adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+          adj_pthresh_interaction = adj_pthresh_interaction
+        )
+        
+        # Add the plot list to the comparison_plots list,
+        # naming it by the condition pair
+        plot_list_name <- paste0(condition_1, "_vs_", condition_2)
+        comparison_plots[[plot_list_name]] <- plots_and_feature_names
+      }
+    }
+  } else {
+    message("The required elements are not present in the splineomics list.")
+  }
+  
+  # Return the list containing all plot lists
+  return(comparison_plots)
+}
+
 
 
 #' Clean the Gene Symbols
@@ -1569,7 +1716,6 @@ plot_splines <- function(
 
   plot_list <- list()
 
-  ## Generate individual plots -------------------------------------------------
   for (hit in 1:nrow(top_table)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
@@ -1656,7 +1802,8 @@ plot_splines <- function(
             x = Time, 
             y = !!rlang::sym("Y"), 
             color = "Data"
-          )
+          ),
+          alpha = 0.5 # 50% transparent data dots.
         ) +
         ggplot2::geom_line(
           data = plot_spline, 
@@ -1796,6 +1943,188 @@ plot_splines <- function(
 }
 
 
+#' Create spline comparison plots for two conditions
+#'
+#' @description
+#' This function generates comparison plots for spline fits of two conditions 
+#' over time. It compares the time effects of two conditions, plots the data 
+#' points, and overlays the fitted spline curves. The function checks if the 
+#' adjusted p-values for the average difference between conditions and the 
+#' interaction between condition and time are below the specified thresholds 
+#' before generating plots.
+#'
+#' @param time_effect_1 A data frame containing the time effects for the first
+#'  condition.
+#' @param condition_1 The name of the first condition.
+#' @param time_effect_2 A data frame containing the time effects for the second
+#'  condition.
+#' @param condition_2 The name of the second condition.
+#' @param avrg_diff_conditions A data frame with the adjusted p-values for the
+#'  average difference 
+#' between conditions.
+#' @param interaction_condition_time A data frame with the adjusted p-values
+#'  for the interaction between 
+#' condition and time.
+#' @param data The data matrix containing the measurements.
+#' @param meta The metadata associated with the measurements.
+#' @param X_1 A matrix of spline basis values for the first condition.
+#' @param X_2 A matrix of spline basis values for the second condition.
+#' @param plot_info A list containing plotting information such as time unit 
+#' and axis labels.
+#' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for 
+#' the average difference 
+#' between conditions.
+#' @param adj_pthresh_interaction The adjusted p-value threshold for the 
+#' interaction between 
+#' condition and time.
+#' 
+#' @return A list containing:
+#' \describe{
+#'   \item{plots}{A list of ggplot2 plots comparing the two conditions.}
+#'   \item{feature_names}{A list of feature names for the plotted features.}
+#' }
+#' 
+#' @importFrom rlang .data
+#' 
+plot_spline_comparisons <- function(
+    time_effect_1,
+    condition_1,
+    time_effect_2,
+    condition_2,
+    avrg_diff_conditions,
+    interaction_condition_time,
+    data,
+    meta,
+    X_1,
+    X_2,
+    plot_info,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction
+) {
+
+  # Sort and prepare data
+  time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
+  time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
+
+  # Get relevant parameters
+  DoF <- which(names(time_effect_1) == "AveExpr") - 1
+  time_points <- meta$Time
+  titles <- data.frame(
+    FeatureID = time_effect_1$feature_nr,
+    feature_names = time_effect_1$feature_names
+  )
+
+  plot_list <- list()
+  feature_names_list <- list()
+
+  for (hit in 1:nrow(time_effect_1)) {
+    hit_index <- as.numeric(time_effect_1$feature_nr[hit])
+    y_values_1 <- data[hit_index, ]
+    y_values_2 <- data[hit_index, ]
+
+    intercept_1 <- time_effect_1$intercept[hit]
+    intercept_2 <- time_effect_2$intercept[hit]
+
+    spline_coeffs_1 <- as.numeric(time_effect_1[hit, 1:DoF])
+    spline_coeffs_2 <- as.numeric(time_effect_2[hit, 1:DoF])
+
+    Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 1000)
+    fitted_values_1 <- X_1 %*% spline_coeffs_1 + intercept_1
+    fitted_values_2 <- X_2 %*% spline_coeffs_2 + intercept_2
+
+    # Get the adjusted p-values for the current hit
+    avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
+    interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
+
+    if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions
+        && interaction_pval < adj_pthresh_interaction) {
+
+      # Use the conditions to split the data points
+      plot_data <- data.frame(
+        Time = time_points,
+        Y1 = ifelse(meta$condition == condition_1, y_values_1, NA),
+        Y2 = ifelse(meta$condition == condition_2, y_values_2, NA)
+      )
+
+      # Create the plot
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_point(
+          data = plot_data,
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Y1,
+            color = paste("Data", condition_1)
+            ),
+          na.rm = TRUE,
+          alpha = 0.5  # Make data dots transparent
+        ) +
+        ggplot2::geom_line(
+          data = data.frame(
+            Time = Time,
+            Fitted = fitted_values_1
+            ),
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Fitted,
+            color = paste("Spline", condition_1)
+            )
+        ) +
+        ggplot2::geom_point(
+          data = plot_data,
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Y2,
+            color = paste("Data", condition_2)
+            ),
+          na.rm = TRUE,
+          alpha = 0.5  # Make data dots transparent
+        ) +
+        ggplot2::geom_line(
+          data = data.frame(
+            Time = Time,
+            Fitted = fitted_values_2
+            ),
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Fitted,
+            color = paste("Spline", condition_2)
+            )
+        ) +
+        ggplot2::scale_color_manual(values = setNames(
+          c("orange", "orange", "purple", "purple"),
+          c(paste("Data", condition_1), paste("Spline", condition_1),
+            paste("Data", condition_2), paste("Spline", condition_2))
+        )) +
+        ggplot2::labs(
+          title = paste(
+            "\nadj.P.Val avrg_diff_conditions: ",
+            round(avrg_diff_conditions[hit, "adj.P.Val"], 4),
+            "\nadj.P.Val interaction_condition_time: ",
+            round(interaction_condition_time[hit, "adj.P.Val"], 4)
+          ),
+          x = paste0("Time [", plot_info$time_unit, "]"),
+          y = plot_info$y_axis_label
+        ) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(
+          legend.position = "right",
+          legend.title = element_blank(),
+          plot.title = ggplot2::element_text(size = 7)
+        )
+
+      plot_list[[length(plot_list) + 1]] <- p
+      feature_names_list[[length(feature_names_list) + 1]] <-
+        as.character(titles$feature_names[hit])
+    }
+  }
+
+  return(list(
+    plots = plot_list,
+    feature_names = feature_names_list
+  ))
+}
+
+
 #' Merge Annotation with All Top Tables
 #'
 #' @description
@@ -1905,6 +2234,10 @@ prepare_gene_lists_for_enrichr <- function(
 #'
 #' @param header_section A character string containing the HTML header section.
 #' @param plots A list of ggplot2 plot objects.
+#' @param limma_result_2_and_3_plots List containing the list of lists with all
+#' the plots for all the pairwise comparisons of the condition in terms of
+#' average spline diff and interaction condition time, and another list of lists
+#' where the respective names of each plot are stored.
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
@@ -1924,6 +2257,7 @@ prepare_gene_lists_for_enrichr <- function(
 build_cluster_hits_report <- function(
     header_section,
     plots,
+    limma_result_2_and_3_plots,
     plots_sizes,
     level_headers_info,
     spline_params,
@@ -1966,11 +2300,16 @@ build_cluster_hits_report <- function(
         
         level_index <- level_index + 1
         
+        time_effect_section_header <- paste(
+          "Time Effect of Condition:",
+          header_info$header_name
+        )
+        
         section_header <- sprintf(
           "<h2 style='%s' id='section%d'>%s</h2>",
           section_header_style,
           header_index,
-          header_info$header_name
+          time_effect_section_header
           )
 
         html_content <- paste(
@@ -2019,7 +2358,7 @@ build_cluster_hits_report <- function(
           "<li style='%s'><a href='#section%d'>%s</a></li>",
           toc_style,
           header_index,
-          header_info[[1]]
+          time_effect_section_header
           )
         toc <- paste(
           toc,
@@ -2132,6 +2471,106 @@ build_cluster_hits_report <- function(
     pb$tick()
   }
   
+  # Add sections for limma_result_2_and_3_plots
+  if (!is.null(limma_result_2_and_3_plots)) {
+    
+    # Create a new main header for the limma result plots
+    header_index <- header_index + 1
+    
+    # Add the main header and anchor it
+    limma_main_header <- sprintf(
+      "<h2 style='%s' id='section%d'>%s</h2>",
+      section_header_style,
+      header_index,
+      "Avrg diff conditions & interaction condition time"
+    )
+    
+    html_content <- paste(
+      html_content,
+      limma_main_header,
+      sep = "\n"
+    )
+    
+    # Add an entry in the table of contents for this new section
+    toc_entry <- sprintf(
+      "<li style='%s'><a href='#section%d'>%s</a></li>",
+      toc_style,
+      header_index,
+      "Avrg diff conditions & interaction condition time"
+    )
+    toc <- paste(
+      toc,
+      toc_entry,
+      sep = "\n"
+    )
+    
+    # Loop over each element in limma_result_2_and_3_plots
+    for (comparison_name in names(limma_result_2_and_3_plots)) {
+      
+      # Create a subheader for each comparison
+      header_index <- header_index + 1
+      subheader <- sprintf(
+        "<h3 style='%s' id='section%d'>%s</h3>",
+        section_header_style,
+        header_index,
+        comparison_name
+      )
+      
+      html_content <- paste(
+        html_content,
+        subheader,
+        sep = "\n"
+      )
+      
+      # Add an entry in the TOC for this subheader
+      toc_entry <- sprintf(
+        "<li style='%s;margin-left: 30px;'><a href='#section%d'>%s</a></li>",
+        toc_style,
+        header_index,
+        comparison_name
+      )
+      toc <- paste(
+        toc,
+        toc_entry,
+        sep = "\n"
+      )
+      
+      # Extract plot_list and feature_names_list for the current comparison
+      comparison <- limma_result_2_and_3_plots[[comparison_name]]
+      comparison_plots <- comparison$plots
+      comparison_feature_names <- comparison$feature_names
+      
+      # Iterate through each plot and its corresponding feature name
+      for (i in seq_along(comparison_plots)) {
+        # Add the feature name as a copyable text above the plot
+        feature_name_div <- sprintf(
+          '<div style="text-align: center; 
+          font-size: 36px; margin-bottom: 10px;">%s</div>',
+          comparison_feature_names[[i]]
+        )
+        
+        html_content <- paste(
+          html_content,
+          feature_name_div,  # Add the feature name above the plot
+          sep = "\n"
+        )
+        
+        # Now add the plot itself
+        result <- process_plots(
+          plots_element = comparison_plots[[i]],
+          plots_size = 1.5,  
+          html_content = html_content,
+          toc = toc,
+          header_index = header_index,
+          element_name = ""  
+        )
+        
+        html_content <- result$html_content
+        toc <- result$toc
+      }
+    }
+  }
+
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
