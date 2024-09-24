@@ -80,7 +80,7 @@ explore_data <- function(
     sep = ", "
     )
   timestamp = format(Sys.time(), "%d_%m_%Y-%H_%M_%S")
-  
+
   for (data_name in names(data_list)) {
     
     current_data <- data_list[[data_name]]
@@ -89,13 +89,13 @@ explore_data <- function(
       meta, 
       condition
       )
-    
+
     if (report) {
       generate_report_html(
         plots = plots_and_plots_sizes$plots,
         plots_sizes = plots_and_plots_sizes$plots_sizes,
         report_info = report_info,
-        data = bind_data_with_annotation(data, annotation),
+        data = data <- bind_data_with_annotation(data, annotation),
         meta = meta,
         filename = paste0("explore_", data_name),
         timestamp = timestamp,

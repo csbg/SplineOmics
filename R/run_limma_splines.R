@@ -106,13 +106,6 @@ run_limma_splines <- function(
     padjust_method = padjust_method, 
     mode = mode
     )
-
-  # results_list <- purrr::map2(
-  #   levels, 
-  #   seq_along(levels), 
-  #   process_level_with_params
-  #   )
-  # print(is.null(names(levels)))
   
   results_list <- purrr::imap(
     levels,
@@ -233,8 +226,9 @@ between_level <- function(
   
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
-  
-  meta <- subset(meta, meta[[condition]] %in% compared_levels)
+
+  # meta <- subset(meta, meta[[condition]] %in% compared_levels)
+  meta <- meta[meta[[condition]] %in% compared_levels, ]
   
   design_matrix <- design2design_matrix(
     meta = meta,

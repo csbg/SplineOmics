@@ -161,12 +161,14 @@ create_limma_report <- function(
     )
   names(all_top_tables) <- new_names
   
-  # Add annotation info into the top_tables
-  for (index in seq_along(all_top_tables)) {
-    all_top_tables[[index]] <- merge_top_table_with_annotation(
-      top_table = all_top_tables[[index]],
-      annotation = annotation
-    )
+  if (!is.null(annotation)) {
+    # Add annotation info into the top_tables
+    for (index in seq_along(all_top_tables)) {
+      all_top_tables[[index]] <- merge_top_table_with_annotation(
+        top_table = all_top_tables[[index]],
+        annotation = annotation
+      )
+    }
   }
 
   generate_report_html(

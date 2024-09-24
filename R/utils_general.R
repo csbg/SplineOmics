@@ -201,22 +201,29 @@ merge_top_table_with_annotation <- function(
 #'
 bind_data_with_annotation <- function(
     data,
-    annotation
+    annotation = NULL
 ) {
   
   data_df <- as.data.frame(data)
   
-  # Check if the number of rows match (additional check, just for safety)
-  if (nrow(data_df) != nrow(annotation)) {
-    stop("The number of rows in data and annotation must be the same.",
-         call. = FALSE)
-  }
-  
   # Add row names as the first column named feature_names
   combined_df <- cbind(
     feature_name = rownames(data_df),
-    data_df, annotation
+    data_df
   )
+  
+  # If annotation is not NULL, check row count and bind with annotation
+  if (!is.null(annotation)) {
+    if (nrow(data_df) != nrow(annotation)) {
+      stop("The number of rows in data and annotation must be the same.",
+           call. = FALSE)
+    }
+    
+    # Bind the annotation with the data
+    combined_df <- cbind(combined_df, annotation)
+  }
+  
+  return(combined_df)
 }
 
 

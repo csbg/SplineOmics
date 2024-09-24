@@ -41,12 +41,11 @@
 #'    a top table from differential expression analysis, containing at least 
 #'    'adj.P.Val' and expression data columns.
 #' }
-#' @param genes A character vector containing the gene names of the features to
-#'  be analyzed.
+#' @param clusters Character or integer vector specifying the number of clusters
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
 #' hits in each top table.
-#' @param clusters Character or integer vector specifying the number of clusters
-#'  or 'auto' for automatic estimation.
+#' @param genes A character vector containing the gene names of the features to
+#'  be analyzed.
 #' @param plot_info List containing the elements y_axis_label (string), 
 #'                  time_unit (string), treatment_labels (character vector),
 #'                  treatment_timepoints (integer vector). All can also be NA. 
@@ -77,9 +76,9 @@
 #'
 cluster_hits <- function(
     splineomics,
-    genes,       # Underlying genes of the features
+    clusters,
     adj_pthresholds = c(0.05),
-    clusters = c("auto"),
+    genes = NULL,       # Underlying genes of the features
     plot_info = list(
       y_axis_label = "Value",
       time_unit = "min",
@@ -172,7 +171,9 @@ cluster_hits <- function(
     sep = ", "
     )
   
-  genes <- clean_gene_symbols(genes)
+  if (!is.null(genes)) {
+    genes <- clean_gene_symbols(genes)
+  }
   
   if (report) {
     plots <- make_clustering_report(
@@ -222,15 +223,17 @@ cluster_hits <- function(
         clustering_level$clustered_hits
     }
   }
-
-  # Add gene column for the run_gsea() function.
-  clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
-    if (is.character(df)) {
-      return(df)  
-    }
-    df$gene <- genes[df$feature]
-    return(df)
-  })
+  
+  if (!is.null(genes)) {
+    # Add gene column for the run_gsea() function.
+    clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
+      if (is.character(df)) {
+        return(df)  
+      }
+      df$gene <- genes[df$feature]
+      return(df)
+    })
+  }
   
   print_info_message(
     message_prefix = "Clustering the hits",
@@ -367,8 +370,7 @@ huge_table_user_prompter <- function(tables) {
 #' for each level within a condition.
 #'
 #' @param top_tables A list of top tables from limma analysis.
-#' @param clusters A list specifying clusters or "auto" for automatic
-#' estimation.
+#' @param clusters A list specifying clusters.
 #' @param meta A dataframe containing metadata.
 #' @param condition A character string specifying the condition.
 #' @param spline_params A list of spline parameters for the analysis.
@@ -390,12 +392,6 @@ perform_clustering <- function(
     ) {
 
   levels <- unique(meta[[condition]])
-
-  if (is.character(clusters) && length(clusters) == 1 && clusters[1] == "auto")
-  {
-    clusters <- rep(clusters[1], length(levels))
-
-  }
 
   all_levels_clustering <- mapply(
     process_level_cluster,
@@ -472,6 +468,7 @@ perform_clustering <- function(
 #' @importFrom limma removeBatchEffect
 #' @importFrom dplyr filter
 #' @importFrom stats na.omit
+#' @importFrom rlang .data
 #'
 make_clustering_report <- function(
     all_levels_clustering,
@@ -603,7 +600,7 @@ make_clustering_report <- function(
       data_level <- datas[[i]]
     }
 
-    meta_level <- meta |> dplyr::filter(meta[[condition]] == levels[i])
+    meta_level <- meta |> dplyr::filter(.data[[condition]] == levels[i])
 
     clusters_spline_plots <- list()
     
@@ -687,11 +684,15 @@ make_clustering_report <- function(
     
     topTables[[element_name]] <- top_table_element
   }
-
-  enrichr_format <- prepare_gene_lists_for_enrichr(
-    all_levels_clustering,
-    genes
+  
+  if (!is.null(genes)) {
+    enrichr_format <- prepare_gene_lists_for_enrichr(
+      all_levels_clustering,
+      genes
     )
+  } else {
+    enrichr_format <- NA
+  }
   
   all_levels_clustering <- merge_annotation_all_levels_clustering(
     all_levels_clustering = all_levels_clustering,
@@ -706,10 +707,7 @@ make_clustering_report <- function(
     level_headers_info = level_headers_info,
     spline_params = spline_params,
     report_info = report_info,
-    data = bind_data_with_annotation(
-      data,
-      annotation
-      ),
+    data = bind_data_with_annotation(data, annotation),
     meta = meta,
     topTables = topTables,
     enrichr_format = enrichr_format,
@@ -1359,16 +1357,6 @@ plot_all_mean_splines <- function(
   
   time_unit_label = paste0("[", plot_info$time_unit, "]")
   
-  # Create a data frame for the treatment lines
-  treatment_df <- data.frame(
-    Time = plot_info$treatment_timepoints,
-    Label = plot_info$treatment_labels
-  )
-
-  treatment_labels <- plot_info$treatment_labels
-  distinct_colors <- scales::hue_pal()(length(treatment_labels))
-  names(distinct_colors) <- treatment_labels
-  
   cluster_colors <- scales::hue_pal()(length(unique(average_curves$cluster)))
   
   if (length(cluster_colors) > length(unique(average_curves$cluster))) {
@@ -1379,241 +1367,86 @@ plot_all_mean_splines <- function(
     levels(average_curves$cluster)
     )
   
-  # Combine the colors
-  color_values <- c(
-    cluster_colors,
-    distinct_colors
-    )
+  color_values <- c(cluster_colors)
+  distinct_colors <- c()
   
+  # Create the base plot
   p_curves <- ggplot2::ggplot(
     average_curves,
     ggplot2::aes(
       x = !!rlang::sym("Time"),
       y = !!rlang::sym("Value"),
       color = paste("Cluster", factor(!!rlang::sym("cluster")))
-      )
+    )
   ) +
     ggplot2::geom_line() +
     ggplot2::ggtitle("Average Splines by Cluster") +
     ggplot2::xlab(paste("Time", time_unit_label)) +
     ggplot2::ylab(paste("min-max norm.", plot_info$y_axis_label)) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +
-    # Add vertical dashed lines for treatment times
-    ggplot2::geom_vline(
-      data = treatment_df, 
-      ggplot2::aes(xintercept = .data$Time, color = .data$Label), 
-      linetype = "dashed", 
-      size = 0.5
-    ) +
-    ggplot2::geom_text(
-      data = treatment_df,
-      ggplot2::aes(
-        # Slightly offset from the vertical line
-        x = .data$Time - max(.data$Time) * 0.005,  
-        y = 1,  # Place the labels at the top of the plot
-        label = .data$Time,
-        color = .data$Label
-      ),  
-      angle = 90,  # Rotate the labels
-      vjust = 0,  # Position on the left side of the dashed line
-      hjust = 1,  
-      size = 3,  # Text size
-      show.legend = FALSE  # Prevent text labels from appearing in the legend
-    ) +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+  
+  # Conditionally add vertical dashed lines if treatment_labels is not NA
+  if (!all(is.na(plot_info$treatment_labels))) {
+    # Create a data frame for the treatment lines
+    treatment_df <- data.frame(
+      Time = plot_info$treatment_timepoints,
+      Label = plot_info$treatment_labels
+    )
+    
+    p_curves <- p_curves +
+      ggplot2::geom_vline(
+        data = treatment_df, 
+        ggplot2::aes(xintercept = .data$Time, color = .data$Label), 
+        linetype = "dashed", 
+        size = 0.5
+      ) +
+      ggplot2::geom_text(
+        data = treatment_df,
+        ggplot2::aes(
+          # Slightly offset from the vertical line
+          x = .data$Time - max(.data$Time) * 0.005,  
+          y = 1,  # Place the labels at the top of the plot
+          label = .data$Time,
+          color = .data$Label
+        ),  
+        angle = 90,  # Rotate the labels
+        vjust = 0,  # Position on the left side of the dashed line
+        hjust = 1,  
+        size = 3,  # Text size
+        show.legend = FALSE  # Prevent text labels from appearing in the legend
+      )
+    
+    treatment_labels <- na.omit(plot_info$treatment_labels)
+    distinct_colors <- scales::hue_pal()(length(treatment_labels))
+    names(distinct_colors) <- treatment_labels
+    color_values <- c(
+      cluster_colors,
+      distinct_colors
+      )
+  }
+  
+  # Finalize color scale and theme adjustments
+  p_curves <- p_curves +
     ggplot2::scale_color_manual(
       values = color_values,
       name = ggplot2::element_text("Cluster/Treatment"),
       guide = ggplot2::guide_legend(
         override.aes = list(
-          linetype = c(rep(
-            "solid",
-            length(cluster_colors)),
-            rep(
-              "dashed", 
-              length(distinct_colors))
-            ),
-          size = c(rep(
-            1,
-            length(cluster_colors)),
-            rep(
-              0.5,
-              length(distinct_colors))
-            )  
+          linetype = c(rep("solid", length(cluster_colors)),
+                       rep("dashed", length(distinct_colors))),
+          size = c(rep(1, length(cluster_colors)),
+                   rep(0.5, length(distinct_colors)))  
         )
       )
     ) +
-    # Adjust legend key sizes, specifically height to avoid overlapping
     ggplot2::theme(
       legend.key.size = grid::unit(0.6, "cm"),  
       legend.key.height = grid::unit(0.3, "cm"),
       legend.title = ggplot2::element_text(size = 8) 
     )
-  
+
   return(p_curves)
-}
-
-
-#' Plot Single and Mean Splines
-#'
-#' @description
-#' Generates a plot showing individual time series shapes and their consensus
-#' (mean) shape.
-#'
-#' @param time_series_data A dataframe or matrix with time series data.
-#' @param title A character string specifying the title of the plot.
-#' @param plot_info List containing the elements y_axis_label (string), 
-#'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
-#'                  time_unit is used to label the x-axis, and treatment_labels
-#'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
-#'                  feeding, temperature shift, etc.).
-#'
-#' @return A ggplot object representing the single and consensus shapes.
-#'
-#' @seealso
-#' \code{\link{ggplot2}}
-#'
-#' @importFrom dplyr arrange mutate
-#' @importFrom tibble rownames_to_column
-#' @importFrom tidyr pivot_longer
-#' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
-#'                     ggtitle aes labs element_rect
-#' @importFrom rlang sym .data
-#' @importFrom scales hue_pal
-#'
-plot_single_and_mean_splines <- function(
-    time_series_data,
-    title,
-    plot_info
-) {
-  
-  time_col <- rlang::sym("time")
-  feature_col <- rlang::sym("feature")
-  
-  # Convert data to long format with appropriate column names
-  df_long <- as.data.frame(t(time_series_data)) |>
-    tibble::rownames_to_column(var = "time") |>
-    tidyr::pivot_longer(
-      cols = -!!time_col,
-      names_to = "feature",
-      values_to = "intensity"
-    ) |>
-    dplyr::arrange(!!feature_col) |>
-    dplyr::mutate(time = as.numeric(.data$time))
-  
-  # Compute consensus (mean of each column)
-  consensus <- colMeans(
-    time_series_data,
-    na.rm = TRUE
-  )
-  
-  consensus_df <- data.frame(
-    time = as.numeric(
-      colnames(time_series_data)
-    ),
-    consensus = consensus
-  )
-  
-  time_unit_label = paste0("[", plot_info$time_unit, "]")
-  
-  # Generate colors for the treatments
-  treatment_labels <- plot_info$treatment_labels
-  distinct_colors <- scales::hue_pal()(length(treatment_labels))
-  names(distinct_colors) <- treatment_labels
-  
-  # Combine the colors for splines, consensus, and treatments
-  color_values <- c(
-    "Mean" = "darkblue",
-    "Spline" = "#6495ED",
-    distinct_colors
-    )
-  
-  # Create a data frame for treatment lines with positions and labels
-  treatment_df <- data.frame(
-    Time = plot_info$treatment_timepoints,
-    Label = treatment_labels
-    )
-  
-  p <- ggplot2::ggplot() +
-    ggplot2::geom_line(
-      data = df_long, 
-      ggplot2::aes(
-        x = !!rlang::sym("time"),
-        y = !!rlang::sym("intensity"),
-        group = !!rlang::sym("feature"),
-        colour = "Spline"
-      ), 
-      alpha = 0.3, linewidth = 0.5) +
-    ggplot2::geom_line(
-      data = consensus_df,
-      ggplot2::aes(
-        x = !!rlang::sym("time"),
-        y = consensus,
-        colour = "Mean"
-      ),
-      linewidth = 1.5) +
-    ggplot2::geom_vline(
-      data = treatment_df, 
-      ggplot2::aes(
-        xintercept = .data$Time,
-        color = .data$Label
-        ), 
-      linetype = "dashed", 
-      size = 0.5
-    ) +
-    ggplot2::geom_text(
-      data = treatment_df,
-      ggplot2::aes(
-        x = .data$Time - max(.data$Time) * 0.005,   # not touching line
-        y = 1,
-        label = .data$Time,
-        color = .data$Label
-        ),  
-      angle = 90,
-      vjust = 0,   # 0 = left side of the dashed line, 1 = right side
-      hjust = 1,  
-      size = 3,  # Adjust text size
-      show.legend = FALSE  # Prevent text labels from appearing in the legend
-    ) +
-    ggplot2::scale_colour_manual(
-      name = "",    # legend name
-      values = color_values,
-      guide = ggplot2::guide_legend(
-        override.aes = list(
-          size = c(1.5, 0.5, rep(0.5, length(treatment_labels)))  
-        )
-      )
-    ) +
-    ggplot2::coord_cartesian(clip = "off") +  # Allows drawing outside plot area
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = title,
-      x = paste(
-        "Time",
-        time_unit_label
-      ),
-      y = paste(
-        "min-max norm.",
-        plot_info$y_axis_label
-      )
-    ) +
-    ggplot2::ggtitle(title) +
-    ggplot2::theme(
-      plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),  
-      legend.position = "right",
-      legend.box = "vertical",
-      legend.title = ggplot2::element_text(size = 8), 
-      legend.background = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_text(size = 6),
-      plot.title = ggplot2::element_text(hjust = 0.5),
-      legend.key.size = grid::unit(0.6, "cm"),  
-      legend.key.height = grid::unit(0.3, "cm")  
-    )
-  
-  return(p)
 }
 
 
@@ -1722,8 +1555,6 @@ plot_splines <- function(
     plot_info,
     adj_pthreshold
     ) {
-  
-  # feature_names <- NULL   # dummy declaration for the lintr and R CMD.
   
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
@@ -1879,48 +1710,52 @@ plot_splines <- function(
           )
         )
       
-      # Create a data frame for the treatment lines
-      treatment_df <- data.frame(
-        Time = treatment_times,
-        Label = treatment_labels
-      )
-
-      p <- p + ggplot2::geom_vline(
-        data = treatment_df, 
-        ggplot2::aes(
-          xintercept = .data$Time, 
-          color = .data$Label
-        ), 
-        linetype = "dashed", 
-        size = 0.5
-      )
-
-      plot_build <- ggplot2::ggplot_build(p)
-      y_range <- plot_build$layout$panel_params[[1]]$y.range
-      
-      # Calculate a y-position slightly below the top of the y-axis range
-      y_position <- y_range[2] + diff(y_range) * 0.03  
-      
-      
-      # Add the geom_text for treatment labels at the top of the y-axis
-      p <- p + ggplot2::geom_text(
-        data = treatment_df,
-        ggplot2::aes(
-          x = Time - max(Time) * 0.005,  # Slightly offset from vertical line
-          y = y_position,  # Uniform y position just above the max y value
-          label = .data$Time,
-          color = .data$Label
-        ),
-        angle = 90,  # Rotate the labels
-        vjust = 0,  # Position on the left side of the dashed line
-        hjust = 1,  # Align the right side of  text with the adjusted x position
-        size = 3,  # Text size
-        show.legend = FALSE  # Prevent text labels from appearing in the legend
-      )
+      if (!all(is.na(treatment_labels))) {
+        # Create a data frame for the treatment lines
+        treatment_df <- data.frame(
+          Time = treatment_times,
+          Label = treatment_labels
+        )
+  
+        p <- p + ggplot2::geom_vline(
+          data = treatment_df, 
+          ggplot2::aes(
+            xintercept = .data$Time, 
+            color = .data$Label
+          ), 
+          linetype = "dashed", 
+          size = 0.5
+        )
+  
+        plot_build <- ggplot2::ggplot_build(p)
+        y_range <- plot_build$layout$panel_params[[1]]$y.range
+        
+        # Calculate a y-position slightly below the top of the y-axis range
+        y_position <- y_range[2] + diff(y_range) * 0.03  
+        
+        
+        # Add the geom_text for treatment labels at the top of the y-axis
+        p <- p + ggplot2::geom_text(
+          data = treatment_df,
+          ggplot2::aes(
+            x = Time - max(Time) * 0.005,  # Slightly offset from vertical line
+            y = y_position,  # Uniform y position just above the max y value
+            label = .data$Time,
+            color = .data$Label
+          ),
+          angle = 90,  # Rotate the labels
+          vjust = 0,  # Position on the left side of the dashed line
+          hjust = 1,  # Align the right side of text with the adjusted x pos
+          size = 3,  # Text size
+          show.legend = FALSE  # Stop text labels from appearing in the legend
+        )
+      }
   
       # Add title and annotations
-      matched_row <- dplyr::filter(titles, 
-                                   !!rlang::sym("FeatureID") == hit_index)
+      matched_row <- dplyr::filter(
+        titles, 
+        !!rlang::sym("FeatureID") == hit_index
+        )
       
       title <- as.character(matched_row$feature_name)
       
@@ -1976,13 +1811,14 @@ plot_splines <- function(
 #'
 merge_annotation_all_levels_clustering <- function(
     all_levels_clustering,
-    annotation
-    ) {
+    annotation = NULL
+) {
   
   all_levels_clustering <- lapply(
     all_levels_clustering,
     function(x) {
-      if (!is.logical(x)) {
+      # Check if x is not logical and annotation is not NULL
+      if (!is.logical(x) && !is.null(annotation)) {
         x$top_table <- merge_top_table_with_annotation(
           x$top_table,
           annotation
@@ -1991,6 +1827,8 @@ merge_annotation_all_levels_clustering <- function(
       return(x)
     }
   )
+  
+  return(all_levels_clustering)
 }
 
 
@@ -2444,14 +2282,11 @@ normalize_curves <- function(curve_values) {
 #' Hierarchical Clustering of Curve Values
 #'
 #' @description Performs hierarchical clustering on given curve values.
-#' It can automatically
-#' determine the optimal number of clusters using silhouette analysis or use a
-#' specified number. The function adjusts the provided top_table with cluster
+#' The function adjusts the provided top_table with cluster
 #' assignments.
 #'
 #' @param curve_values A matrix or data frame of curve values to cluster.
-#' @param k The number of clusters to use or "auto" to automatically determine
-#'          the optimal number using silhouette width analysis.
+#' @param k The number of clusters to use.
 #' @param smooth_timepoints Numeric vector of time points corresponding to
 #'                          columns in curve_values.
 #' @param top_table Data frame to be updated with cluster assignments.
@@ -2608,3 +2443,168 @@ truncate_row_names <- function(
     }
   })
 }
+
+
+#' Plot Single and Mean Splines
+#'
+#' @description
+#' Generates a plot showing individual time series shapes and their consensus
+#' (mean) shape.
+#'
+#' @param time_series_data A dataframe or matrix with time series data.
+#' @param title A character string specifying the title of the plot.
+#' @param plot_info List containing the elements y_axis_label (string), 
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA. 
+#'                  This list is used to add this info to the spline plots. 
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as 
+#'                  feeding, temperature shift, etc.).
+#'
+#' @return A ggplot object representing the single and consensus shapes.
+#'
+#' @seealso
+#' \code{\link{ggplot2}}
+#'
+#' @importFrom dplyr arrange mutate
+#' @importFrom tibble rownames_to_column
+#' @importFrom tidyr pivot_longer
+#' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
+#'                     ggtitle aes labs element_rect
+#' @importFrom rlang sym .data
+#' @importFrom scales hue_pal
+#'
+plot_single_and_mean_splines <- function(
+    time_series_data,
+    title,
+    plot_info
+) {
+  
+  time_col <- rlang::sym("time")
+  feature_col <- rlang::sym("feature")
+  
+  # Convert data to long format
+  df_long <- as.data.frame(t(time_series_data)) |>
+    tibble::rownames_to_column(var = "time") |>
+    tidyr::pivot_longer(
+      cols = -!!time_col,
+      names_to = "feature",
+      values_to = "intensity"
+    ) |>
+    dplyr::arrange(!!feature_col) |>
+    dplyr::mutate(time = as.numeric(.data$time))
+  
+  # Compute consensus (mean of each column)
+  consensus <- colMeans(time_series_data, na.rm = TRUE)
+  
+  consensus_df <- data.frame(
+    time = as.numeric(colnames(time_series_data)),
+    consensus = consensus
+  )
+  
+  time_unit_label = paste0("[", plot_info$time_unit, "]")
+  
+  color_values <- c(
+    "Mean" = "darkblue",
+    "Spline" = "#6495ED"
+  )
+  
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_line(
+      data = df_long, 
+      ggplot2::aes(
+        x = !!rlang::sym("time"),
+        y = !!rlang::sym("intensity"),
+        group = !!rlang::sym("feature"),
+        colour = "Spline"
+      ), 
+      alpha = 0.3, linewidth = 0.5) +
+    ggplot2::geom_line(
+      data = consensus_df,
+      ggplot2::aes(
+        x = !!rlang::sym("time"),
+        y = consensus,
+        colour = "Mean"
+      ),
+      linewidth = 1.5)
+  
+  # Conditionally add vertical dashed lines if treatment_labels is not NA
+  if (!all(is.na(plot_info$treatment_labels))) {
+    # Create a data frame for treatment lines
+    treatment_df <- data.frame(
+      Time = plot_info$treatment_timepoints,
+      Label = treatment_labels
+    )
+    
+    p <- p +
+      ggplot2::geom_vline(
+        data = treatment_df, 
+        ggplot2::aes(
+          xintercept = .data$Time,
+          color = .data$Label
+        ), 
+        linetype = "dashed", 
+        size = 0.5
+      ) +
+      ggplot2::geom_text(
+        data = treatment_df,
+        ggplot2::aes(
+          x = .data$Time - max(.data$Time) * 0.005,   # not touching line
+          y = 1,
+          label = .data$Time,
+          color = .data$Label
+        ),  
+        angle = 90,
+        vjust = 0,
+        hjust = 1,  
+        size = 3,  
+        show.legend = FALSE  
+      )
+    
+    # Generate colors for treatments
+    treatment_labels <- plot_info$treatment_labels
+    distinct_colors <- scales::hue_pal()(length(treatment_labels))
+    names(distinct_colors) <- treatment_labels
+    color_values <- c(color_values, distinct_colors)
+  }
+  
+  p <- p +
+    ggplot2::scale_colour_manual(
+      name = "",
+      values = color_values,
+      guide = ggplot2::guide_legend(
+        override.aes = list(
+          size = c(
+            1.5,
+            0.5,
+            rep(
+              0.5,
+              length(na.omit(plot_info$treatment_labels))
+              )
+            )  
+        )
+      )
+    ) +
+    ggplot2::coord_cartesian(clip = "off") +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = title,
+      x = paste("Time", time_unit_label),
+      y = paste("min-max norm.", plot_info$y_axis_label)
+    ) +
+    ggplot2::theme(
+      plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),  
+      legend.position = "right",
+      legend.box = "vertical",
+      legend.title = ggplot2::element_text(size = 8), 
+      legend.background = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_text(size = 6),
+      plot.title = ggplot2::element_text(hjust = 0.5),
+      legend.key.size = grid::unit(0.6, "cm"),  
+      legend.key.height = grid::unit(0.3, "cm")  
+    )
+  
+  return(p)
+}
+

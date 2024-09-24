@@ -78,7 +78,7 @@ generate_report_html <- function(
                       "%d_%m_%Y-%H_%M_%S"),
     report_dir = here::here()
     ) {
-  
+
   feature_names_formula <- NA
   
   if (report_type == "explore_data") {
@@ -190,7 +190,6 @@ generate_report_html <- function(
     )
 
   for (field in report_info_fields) {
-
     base64_df <- process_field(
       field,
       data,
@@ -604,6 +603,10 @@ get_header_section <- function(
     report_type,
     feature_names_formula
     ) {
+
+  if (feature_names_formula == "") {
+    feature_names_formula <- "No feature name columns provided!"
+  }
   
   if (Sys.getenv("DEVTOOLS_LOAD") == "true") {
     logo_path <- file.path(
@@ -834,6 +837,7 @@ encode_df_to_base64 <- function(
         )
     }
   } else {
+    browser()
     stop("Input must be a dataframe or a list of dataframes.")
   }
   

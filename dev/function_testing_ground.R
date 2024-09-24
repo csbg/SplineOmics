@@ -8,8 +8,6 @@ devtools::load_all()
 library(readxl)
 library(dplyr)
 
-# interactive_demo()
-
 
 # Load the data ----------------------------------------------------------------
 
@@ -18,29 +16,40 @@ library(dplyr)
 # 
 # meta <- read_excel(here::here("dev" ,"data",
 #                               "Time_course_PTX_metadata.xlsx"))
+# 
+# data_excel <- readRDS(system.file(
+#   "extdata",
+#   "proteomics_data.rds",
+#   package = "SplineOmics"
+# ))
+# 
+# meta <- read_excel(here::here(
+#   "inst",
+#   "extdata",
+#   "proteomics_meta.xlsx"
+# ))
+# 
+# annotation <- data_excel %>%
+#   select(39:ncol(data_excel)) %>%
+#   dplyr::slice(-c(1:3))
 
-data_excel <- readRDS(system.file(
-  "extdata",
-  "proteomics_data.rds",
-  package = "SplineOmics"
-))
+load("dev/data/e13_e20_nglycans.RData")
+names(meta)[names(meta) == "timepoint"] <- "Time"
+meta$Time <- as.numeric(meta$Time)
+condition <- "condition"
+# # Step 1: Sort the 'meta' data frame by the 'condition' column
+# meta <- meta[order(meta[[condition]]), ]
+# 
+# # Step 2: Sort the 'data' rows to match the new order of 'meta'
+# log2_data.matrix <- log2_data.matrix[, meta$sample_name]
 
-meta <- read_excel(here::here(
-  "inst",
-  "extdata",
-  "proteomics_meta.xlsx"
-))
-
-annotation <- data_excel %>%
-  select(39:ncol(data_excel)) %>%  
-  dplyr::slice(-c(1:3))  
 
 
 # Get the gene list ------------------------------------------------------------
 
-data_full <- as.data.frame(data_excel)
-gene_column_name <- "Gene_symbol"
-genes <- data_full[[gene_column_name]][4:nrow(data_full)]
+# data_full <- as.data.frame(data_excel)
+# gene_column_name <- "Gene_symbol"
+# genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 
 
@@ -52,14 +61,14 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 #                           "Positions within proteins")
 
 # feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-feature_name_columns <- c("Gene_name")
-
-# debug(extract_data)
-data <- extract_data(
-  data_excel,
-  feature_name_columns,
-  user_prompt = FALSE
-  )
+# feature_name_columns <- c("Gene_name")
+# 
+# # debug(extract_data)
+# data <- extract_data(
+#   data_excel,
+#   feature_name_columns,
+#   user_prompt = FALSE
+#   )
 
 
 # Remove outliers --------------------------------------------------------------
@@ -78,38 +87,38 @@ data <- extract_data(
 
 # Simulate RNA-seq data to test voom functionality -----------------------------
 
-generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
-  set.seed(123)  # For reproducibility
-
-  # Define sample and gene names
-  gene_names <- paste0("Gene", 1:n_genes)
-  sample_names <- paste0("Sample", 1:n_samples)
-
-  # Generate random raw RNA-seq counts (Poisson distributed)
-  # Base expression level with some variability
-  base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
-  counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
-
-  # Assign row and column names
-  rownames(counts_matrix) <- gene_names
-  colnames(counts_matrix) <- sample_names
-
-  return(counts_matrix)
-}
-
-# Example usage:
-n_genes <- 4162  # Adjust the number of genes as needed
-# data <- generate_rnaseq_data(n_genes = n_genes)
-
-voom_obj <- preprocess_rna_seq_data(
-  raw_counts = data,
-  meta = meta,
-  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                       dof = c(2L)),
-  design = "~ 1 + Phase*X + Reactor"
-)
-
-# data <- voom_obj$E
+# generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
+#   set.seed(123)  # For reproducibility
+# 
+#   # Define sample and gene names
+#   gene_names <- paste0("Gene", 1:n_genes)
+#   sample_names <- paste0("Sample", 1:n_samples)
+# 
+#   # Generate random raw RNA-seq counts (Poisson distributed)
+#   # Base expression level with some variability
+#   base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
+#   counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
+# 
+#   # Assign row and column names
+#   rownames(counts_matrix) <- gene_names
+#   colnames(counts_matrix) <- sample_names
+# 
+#   return(counts_matrix)
+# }
+# 
+# # Example usage:
+# n_genes <- 4162  # Adjust the number of genes as needed
+# # data <- generate_rnaseq_data(n_genes = n_genes)
+# 
+# voom_obj <- preprocess_rna_seq_data(
+#   raw_counts = data,
+#   meta = meta,
+#   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+#                        dof = c(2L)),
+#   design = "~ 1 + Phase*X + Reactor"
+# )
+# 
+# # data <- voom_obj$E
 
 # Explore data -----------------------------------------------------------------
 
@@ -123,14 +132,14 @@ report_info <- list(
 )
 
 splineomics <- create_splineomics(
-  data = data,
+  data = log2_data.matrix,
   # rna_seq_data = voom_obj,
   meta = meta,
-  annotation = annotation,
-  feature_name_columns = feature_name_columns,
+  # annotation = annotation,
+  # feature_name_columns = feature_name_columns,
   report_info = report_info,
-  condition = "Phase",
-  meta_batch_column = "Reactor",
+  condition = "condition",
+  # meta_batch_column = "experiment",
 )
 
 report_dir <- here::here("results", "explore_data")
@@ -144,54 +153,54 @@ report_dir <- here::here("results", "explore_data")
 
 
 # Prep input to hyperparams screen function ------------------------------------
-data1 <- data
-meta1 <- meta
-
-data2 <- data[, -c(1, 2)]
-meta2 <- meta[-c(1, 2),]
-# data2 <- data
-# meta2 <- meta
-
-datas <- list(data1, data2)
-# rna_seq_datas <- list(voom_obj, voom_obj)  # Just to test it.
-datas_descr <- c("full_data", "outliers_removed")
-metas <- list(meta1, meta2)
-designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
-
-report_dir <- here::here("results", "hyperparams_screen_reports")
-
-pthresholds <- c(0.05, 0.01)
-
-# Every row a combo to test.
-spline_test_configs <- data.frame(
-  spline_type = c("n", "n", "b", "b"),  
-  degree = c(NA, NA, 2L, 4L),
-  dof = c(2L, 3L, 3L, 4L)
-)
+# data1 <- data
+# meta1 <- meta
+# 
+# data2 <- data[, -c(1, 2)]
+# meta2 <- meta[-c(1, 2),]
+# # data2 <- data
+# # meta2 <- meta
+# 
+# datas <- list(data1, data2)
+# # rna_seq_datas <- list(voom_obj, voom_obj)  # Just to test it.
+# datas_descr <- c("full_data", "outliers_removed")
+# metas <- list(meta1, meta2)
+# designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
+# 
+# report_dir <- here::here("results", "hyperparams_screen_reports")
+# 
+# pthresholds <- c(0.05, 0.01)
+# 
+# # Every row a combo to test.
+# spline_test_configs <- data.frame(
+#   spline_type = c("n", "n", "b", "b"),  
+#   degree = c(NA, NA, 2L, 4L),
+#   dof = c(2L, 3L, 3L, 4L)
+# )
 
 
 # hyperparams screen limma -----------------------------------------------------
 # debug(screen_limma_hyperparams)
-screen_limma_hyperparams(
-  splineomics,
-  datas,
-  datas_descr,
-  metas,
-  designs,
-  spline_test_configs,
-  report_dir,
-  pthresholds,
-  # rna_seq_datas,
-  )
+# screen_limma_hyperparams(
+#   splineomics,
+#   datas,
+#   datas_descr,
+#   metas,
+#   designs,
+#   spline_test_configs,
+#   report_dir,
+#   pthresholds,
+#   # rna_seq_datas,
+#   )
 
 
 ## Run limma splines -----------------------------------------------------------
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor",
-  data = data2,
-  meta = meta2,
+  design = "~ 1 + condition*X",
+  # data = data2,
+  # meta = meta2,
   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
                        dof = c(2L))
 )
@@ -204,11 +213,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  adj_pthresh = 0.1,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   adj_pthresh = 0.1,
+#   report_dir = report_dir
+# )
 
 
 ## Cluster hits ----------------------------------------------------------------
@@ -219,8 +228,10 @@ report_dir <- here::here("results", "clustering_reports")
 plot_info = list(
   y_axis_label = "log2 intensity",
   time_unit = "min",
-  treatment_labels = c("Feeding", "Test"),
-  treatment_timepoints = c(10, 200)
+  treatment_labels = NA,
+  treatment_timepoints = NA
+  # treatment_labels = c("Feeding"),
+  # treatment_timepoints = c(200)
 )
 
 # debug(cluster_hits)
@@ -229,7 +240,7 @@ clustering_results <- cluster_hits(
   analysis_type = "time_effect",
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
-  genes = genes,
+  # genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
 )
