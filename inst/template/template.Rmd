@@ -111,9 +111,6 @@ spline_test_configs <- data.frame(
   spline_type = c("n", "n", "n", "n"),  # All should use natural splines (n)
   degree = c(NA, NA, NA, NA),  # Only needed for B-splines (spline_type = b)
   dof = c(2L, 3L, 4L, 5L),  # Test these variations of the DoF
-  # Per default, knots are placed automatically in a central fashion
-  knots = I(list(c(NA), c(NA), c(NA), c(NA))),
-  bknots = I(list(c(NA), c(NA), c(NA), c(NA)))
 )
 ```
 
@@ -237,7 +234,7 @@ databases <- readr::read_tsv(
 )
 
 clusterProfiler_params <- list(
-  adj_p_value = 0.05,  # Adjusted p-value threshold
+  pvalueCutoff = 0.05,  # Adjusted p-value threshold
   pAdjustMethod = "BH",  # P-value adjustment method
   minGSSize = 10,  # Minimum gene set size
   maxGSSize = 500,  # Maximum gene set size
@@ -252,11 +249,10 @@ report_dir <- here::here(
   "your_subdirectory"  # Replace with your subdirectory
 )
 
-result <- SplineOmics::create_gsea_report(
+result <- SplineOmics::run_gsea(
   levels_clustered_hits = clustering_results$clustered_hits_levels,  # Replace with your clustered hits levels
-  genes = genes,  # Replace with your genes
   databases = databases,  # Replace with your databases
-  params = clusterProfiler_params,  # Replace with your clusterProfiler parameters
+  clusterProfiler_params = clusterProfiler_params,  
   report_info = report_info,  # Replace with your report information
   report_dir = report_dir  # Replace with your report directory
 )
