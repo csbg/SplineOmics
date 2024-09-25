@@ -45,9 +45,11 @@
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
 #' hits in each top table.
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
-#' from the average difference of the condition limma result.
+#' from the average difference of the condition limma result. Per default 0 (
+#' turned off).
 #' @param adj_pthresh_interaction_condition_time p-value threshold for the 
-#' results from the interaction of condition and time limma result.
+#' results from the interaction of condition and time limma result. Per default 
+#' 0 (turned off).
 #' @param genes A character vector containing the gene names of the features to
 #'  be analyzed.
 #' @param plot_info List containing the elements y_axis_label (string), 
@@ -58,6 +60,8 @@
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as 
 #'                  feeding, temperature shift, etc.).
+#' @param plot_options List with specific fields (cluster_heatmap_columns = 
+#' Bool) that allow for customization of plotting behavior.
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved.
 #' @param report Boolean TRUE or FALSE value specifing if a report should be
@@ -78,8 +82,8 @@ cluster_hits <- function(
     splineomics,
     clusters,
     adj_pthresholds = c(0.05),
-    adj_pthresh_avrg_diff_conditions = 0.05,
-    adj_pthresh_interaction_condition_time = 0.05,
+    adj_pthresh_avrg_diff_conditions = 0,
+    adj_pthresh_interaction_condition_time = 0,
     genes = NULL,       # Underlying genes of the features
     plot_info = list(
       y_axis_label = "Value",
@@ -87,6 +91,10 @@ cluster_hits <- function(
       treatment_labels = NA,
       treatment_timepoints = NA
       ),
+    plot_options = list(
+      cluster_heatmap_columns = FALSE,
+      meta_replicate_column = NULL
+    ),
     report_dir = here::here(),
     report = TRUE
     ) {
@@ -183,6 +191,7 @@ cluster_hits <- function(
       meta_batch_column = meta_batch_column,
       meta_batch2_column = meta_batch2_column,
       plot_info = plot_info,
+      plot_options = plot_options,
       feature_name_columns = feature_name_columns,
       spline_comp_plots = spline_comp_plots
       )
@@ -436,6 +445,8 @@ perform_clustering <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as 
 #'                  feeding, temperature shift, etc.).
+#' @param plot_options List with specific fields (cluster_heatmap_columns = 
+#' Bool) that allow for customization of plotting behavior.
 #' @param feature_name_columns Character vector containing the column names of 
 #'                             the annotation info that describe the features.
 #'                             This argument is used to specify in the HTML 
@@ -476,6 +487,7 @@ make_clustering_report <- function(
     meta_batch_column,
     meta_batch2_column,
     plot_info,
+    plot_options,
     feature_name_columns,
     spline_comp_plots
     ) {
@@ -520,7 +532,8 @@ make_clustering_report <- function(
     mode = mode,
     condition = condition,
     all_levels_clustering = all_levels_clustering,
-    time_unit_label = time_unit_label
+    time_unit_label = time_unit_label,
+    cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]]
     )
 
   # log2_intensity_shape <- plot_log2_intensity_shapes()
@@ -620,7 +633,8 @@ make_clustering_report <- function(
         X = X,
         time_unit_label = time_unit_label,
         plot_info = plot_info,
-        adj_pthreshold = adj_pthresholds[i]
+        adj_pthreshold = adj_pthresholds[i],
+        replicate_column = plot_options[["meta_replicate_column"]]
         )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -1215,7 +1229,6 @@ remove_batch_effect_cluster_hits <- function(
         }
       }
 
-
       data_copy <- do.call(limma::removeBatchEffect, args)
 
       # For mode == "integrated", all elements are identical
@@ -1258,6 +1271,8 @@ remove_batch_effect_cluster_hits <- function(
 #' @param all_levels_clustering A list containing clustering results for each
 #' level within the condition.
 #' @param time_unit_label A character string specifying the time unit label.
+#' @param cluster_heatmap_columns Boolean specifying wether to cluster the 
+#' columns of the heatmap or not.
 #'
 #' @return A list of ComplexHeatmap heatmap objects for each level.
 #'
@@ -1277,7 +1292,8 @@ plot_heatmap <- function(
     mode,
     condition,
     all_levels_clustering,
-    time_unit_label
+    time_unit_label,
+    cluster_heatmap_columns
     ) {
 
   BASE_TEXT_SIZE_PT <- 5
@@ -1343,7 +1359,7 @@ plot_heatmap <- function(
           ),
         use_raster = TRUE,
         column_split = meta_level$Time,
-        cluster_columns = FALSE,
+        cluster_columns = cluster_heatmap_columns,
         row_split = clusters$cluster,
         cluster_rows = FALSE,
         heatmap_legend_param = list(
@@ -1682,6 +1698,9 @@ plot_cluster_mean_splines <- function(
 #'                  indicating the positions of the treatments (such as 
 #'                  feeding, temperature shift, etc.).
 #' @param adj_pthreshold Double > 0 and < 1 specifying the adj. p-val threshold.
+#' @param replicate_column String specifying the column of the meta dataframe
+#' that contains the labels of the replicate measurents. When that is not 
+#' given, this argument is NULL.
 #'
 #' @return A list containing the composite plot and the number of rows used in
 #' the plot layout.
@@ -1697,45 +1716,66 @@ plot_splines <- function(
     top_table,
     data,
     meta,
-    X,   # Was already created from spline_params before
+    X,   
     time_unit_label,
     plot_info,
-    adj_pthreshold
-    ) {
+    adj_pthreshold,
+    replicate_column
+) {
   
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
-
+  
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
-
+  
   titles <- data.frame(
     FeatureID = top_table$feature_nr,
     feature_names = top_table$feature_names
   )
-
+  
   plot_list <- list()
-
+  
   for (hit in 1:nrow(top_table)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
-
+    
     intercept <- top_table$intercept[hit]
-
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
-
+    
     Time <- seq(
       meta$Time[1],
       meta$Time[length(meta$Time)],
-      length.out = 1000   # To ensure smootheness of the curve
-      )
-
+      length.out = 1000   # To ensure smoothness of the curve
+    )
+    
     fitted_values <- X %*% spline_coeffs + intercept
-
+    
     plot_data <- data.frame(
       Time = time_points,
       Y = y_values
-      )
+    )
+    
+    # If replicate_column is specified (i.e., a string), use replicate info
+    if (!is.null(replicate_column) && is.character(replicate_column)) {
+      replicates <- meta[[replicate_column]]  # Get the replicate information
+      plot_data$Replicate <- replicates  # Add replicate info to plot data
+      
+      # Create color palette for replicates
+      replicate_colors <- scales::hue_pal()(length(unique(replicates)))
+      names(replicate_colors) <- unique(replicates)
+      
+      color_values <- c("Spline" = "red", replicate_colors)
+    } else {
+      color_values <- c("Data" = "blue", "Spline" = "red")
+    }
+    
+    treatment_labels <- plot_info$treatment_labels 
+    treatment_times <- plot_info$treatment_timepoints 
+    
+    distinct_colors <- scales::hue_pal()(length(treatment_labels))
+    names(distinct_colors) <- treatment_labels
+    color_values <- c(color_values, distinct_colors)
     
     # Get adjusted p-value and significance stars
     adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
@@ -1749,9 +1789,9 @@ plot_splines <- function(
           adj_p_value < adj_pthreshold,
           "*",
           ""
-          )
         )
       )
+    )
     
     # Use local environment to avoid unwanted updating dynamic legend label.
     p <- local({
@@ -1762,26 +1802,18 @@ plot_splines <- function(
         significance_stars,
         ")"
       )
-  
+      
       plot_spline <- data.frame(
         Time = Time,
         Fitted = fitted_values
-        )
-  
+      )
+      
       x_max <- as.numeric(max(time_points))
       x_extension <- x_max * 0.05
-  
-      treatment_times <- plot_info$treatment_timepoints 
-      treatment_labels <- plot_info$treatment_labels 
       
-      color_values <- c("Data" = "blue", "Spline" = "red")
-      distinct_colors <- scales::hue_pal()(length(treatment_labels))
-      names(distinct_colors) <- treatment_labels
-      color_values <- c(color_values, distinct_colors)
-  
       all_time_points <- unique(c(time_points))
-
-      # Filter out close labels based to avoid overlapping.
+      
+      # Filter out close labels to avoid overlapping.
       time_diffs <- diff(all_time_points)
       min_spacing <- x_max * 0.05  # keep all that are more than 5% apart.
       keep_labels <- c(TRUE, time_diffs > min_spacing)
@@ -1792,24 +1824,29 @@ plot_splines <- function(
           labels == "Spline",
           spline_label,
           labels
-          ))
+        ))
       }
-
+      
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
           data = plot_data, 
           ggplot2::aes(
             x = Time, 
-            y = !!rlang::sym("Y"), 
-            color = "Data"
+            y = .data$Y,
+            color = if (!is.null(replicate_column) 
+                        && is.character(replicate_column)) {
+              .data$Replicate
+            } else {
+              "Data"
+            }
           ),
-          alpha = 0.5 # 50% transparent data dots.
+          alpha = 0.5  # 50% transparent data dots
         ) +
         ggplot2::geom_line(
           data = plot_spline, 
           ggplot2::aes(
-            x = Time, 
-            y = !!rlang::sym("Fitted"), 
+            x = .data$Time, 
+            y = .data$Fitted, 
             color = "Spline"
           )
         ) +
@@ -1818,7 +1855,6 @@ plot_splines <- function(
           limits = c(min(time_points), x_max + x_extension),
           breaks = filtered_time_points,  
           labels = function(x) {
-
             x
           }
         ) +
@@ -1838,11 +1874,8 @@ plot_splines <- function(
           legend.title = ggplot2::element_blank(),  
           legend.text = ggplot2::element_text(
             size = 6, 
-            margin = ggplot2::margin(l = 0, r = 6)
+            margin = ggplot2::margin(t = 4, b = 4)
           ),
-          legend.spacing.x = unit(0.5, "cm"), 
-          legend.margin = ggplot2::margin(1, 1, 1, 1),  
-          legend.box.margin = ggplot2::margin(1, 1, 1, 1),
           axis.text.x = ggplot2::element_text(
             size = 8, 
             angle = 45,   # Tilt labels by 45 degrees
@@ -1863,7 +1896,7 @@ plot_splines <- function(
           Time = treatment_times,
           Label = treatment_labels
         )
-  
+        
         p <- p + ggplot2::geom_vline(
           data = treatment_df, 
           ggplot2::aes(
@@ -1873,7 +1906,7 @@ plot_splines <- function(
           linetype = "dashed", 
           size = 0.5
         )
-  
+        
         plot_build <- ggplot2::ggplot_build(p)
         y_range <- plot_build$layout$panel_params[[1]]$y.range
         
@@ -1897,12 +1930,12 @@ plot_splines <- function(
           show.legend = FALSE  # Stop text labels from appearing in the legend
         )
       }
-  
+      
       # Add title and annotations
       matched_row <- dplyr::filter(
         titles, 
         !!rlang::sym("FeatureID") == hit_index
-        )
+      )
       
       title <- as.character(matched_row$feature_name)
       
@@ -1922,7 +1955,7 @@ plot_splines <- function(
           plot.title = ggplot2::element_text(size = 6),
           axis.title.x = ggplot2::element_text(size = 8),
           axis.title.y = ggplot2::element_text(size = 8)
-          ) +
+        ) +
         ggplot2::annotate(
           "text",
           x = x_max + (x_extension / 2),
@@ -1933,12 +1966,13 @@ plot_splines <- function(
           size = 3.5,
           angle = 0,
           color = "black"
-          )
+        )
       p
     })
-
-    plot_list[[length(plot_list) + 1]] <- p
+    
+    plot_list[[hit]] <- p
   }
+  
   return(plot_list)
 }
 
@@ -2037,7 +2071,37 @@ plot_spline_comparisons <- function(
     interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
 
     if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions
-        && interaction_pval < adj_pthresh_interaction) {
+        || interaction_pval < adj_pthresh_interaction) {
+      
+      # Define the number of stars for avrg_diff_conditions
+      avrg_diff_stars <- ifelse(
+        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50, 
+        "***", 
+        ifelse(
+          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5, 
+          "**", 
+          ifelse(
+            avrg_diff_pval < adj_pthresh_avrg_diff_conditions, 
+            "*", 
+            ""
+          )
+        )
+      )
+      
+      # Define the number of stars for interaction_condition_time
+      interaction_stars <- ifelse(
+        interaction_pval < adj_pthresh_interaction / 50, 
+        "***", 
+        ifelse(
+          interaction_pval < adj_pthresh_interaction / 5, 
+          "**", 
+          ifelse(
+            interaction_pval < adj_pthresh_interaction, 
+            "*", 
+            ""
+          )
+        )
+      )
 
       # Use the conditions to split the data points
       plot_data <- data.frame(
@@ -2099,8 +2163,10 @@ plot_spline_comparisons <- function(
           title = paste(
             "\nadj.P.Val avrg_diff_conditions: ",
             round(avrg_diff_conditions[hit, "adj.P.Val"], 4),
+            avrg_diff_stars,
             "\nadj.P.Val interaction_condition_time: ",
-            round(interaction_condition_time[hit, "adj.P.Val"], 4)
+            round(interaction_condition_time[hit, "adj.P.Val"], 4),
+            interaction_stars
           ),
           x = paste0("Time [", plot_info$time_unit, "]"),
           y = plot_info$y_axis_label
@@ -2379,7 +2445,7 @@ build_cluster_hits_report <- function(
       "dendrogram",
       "cluster_mean_splines",
       "heatmap",
-      "individual_spline_plots1"
+      "individual_spline_plots"
     )
 
     if (element_name %in% header_levels) {
@@ -2398,7 +2464,7 @@ build_cluster_hits_report <- function(
           of the row;",
           "</div>"
         )
-      } else {  # element_name == "individual_spline_plots1"
+      } else {  # element_name == "individual_spline_plots"
         adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
         asterisks_definition <- paste(
@@ -2473,7 +2539,8 @@ build_cluster_hits_report <- function(
   
   # Add sections for limma_result_2_and_3_plots
   if (!is.null(limma_result_2_and_3_plots)) {
-    
+    adj_pthresh_avrg_diff_conditions <- 0.05
+    adj_pthresh_interaction_condition_time <- 0.05
     # Create a new main header for the limma result plots
     header_index <- header_index + 1
     
@@ -2488,6 +2555,72 @@ build_cluster_hits_report <- function(
     html_content <- paste(
       html_content,
       limma_main_header,
+      sep = "\n"
+    )
+    
+    # Define the asterisks definition for both adjusted p-values, 
+    # centered, with larger p-value text
+    asterisks_definition_avrg_diff <- paste(
+      "<div style='text-align:center; margin-bottom: 20px;'>",
+      "<b><span style='font-size:24pt;
+      '>Asterisks definition (Average Diff Conditions):</span></b><br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_avrg_diff_conditions,
+        "--> *</span>",
+        sep = " "
+        ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_avrg_diff_conditions / 5,
+        "--> **</span>",
+        sep = " "
+        ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_avrg_diff_conditions / 50,
+        "--> ***</span>",
+        sep = " "
+        ),
+      "</div>",
+      sep = "\n"
+    )
+    
+    asterisks_definition_interaction <- paste(
+      "<div style='text-align:center; margin-bottom: 40px;'>",  
+      "<b><span style='font-size:24pt;
+      '>Asterisks definition (Interaction):</span></b><br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_interaction_condition_time,
+        "--> *</span>",
+        sep = " "
+        ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_interaction_condition_time / 5,
+        "--> **</span>",
+        sep = " "
+        ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_interaction_condition_time / 50,
+        "--> ***</span>",
+        sep = " "
+        ),
+      "</div>",
+      sep = "\n"
+    )
+    
+    # Add the asterisks definitions to the HTML content
+    html_content <- paste(
+      html_content,
+      asterisks_definition_avrg_diff,
+      asterisks_definition_interaction,
       sep = "\n"
     )
     
@@ -2510,8 +2643,8 @@ build_cluster_hits_report <- function(
       # Create a subheader for each comparison
       header_index <- header_index + 1
       subheader <- sprintf(
-        "<h3 style='%s' id='section%d'>%s</h3>",
-        section_header_style,
+        "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
+        id='section%d'>%s</h3>",
         header_index,
         comparison_name
       )
@@ -2523,12 +2656,15 @@ build_cluster_hits_report <- function(
       )
       
       # Add an entry in the TOC for this subheader
-      toc_entry <- sprintf(
-        "<li style='%s;margin-left: 30px;'><a href='#section%d'>%s</a></li>",
-        toc_style,
-        header_index,
-        comparison_name
+      toc_entry <- paste0(
+        "<li style='margin-left: 30px; font-size: 30px;'>",
+        "<a href='#section",
+        header_index,  
+        "'>",
+        comparison_name, 
+        "</a></li>"
       )
+      
       toc <- paste(
         toc,
         toc_entry,
@@ -2970,6 +3106,7 @@ plot_single_and_mean_splines <- function(
   
   # Conditionally add vertical dashed lines if treatment_labels is not NA
   if (!all(is.na(plot_info$treatment_labels))) {
+    treatment_labels <- plot_info$treatment_labels
     # Create a data frame for treatment lines
     treatment_df <- data.frame(
       Time = plot_info$treatment_timepoints,
@@ -3002,7 +3139,6 @@ plot_single_and_mean_splines <- function(
       )
     
     # Generate colors for treatments
-    treatment_labels <- plot_info$treatment_labels
     distinct_colors <- scales::hue_pal()(length(treatment_labels))
     names(distinct_colors) <- treatment_labels
     color_values <- c(color_values, distinct_colors)

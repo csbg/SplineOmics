@@ -13,11 +13,12 @@ cluster_hits(
   splineomics,
   clusters,
   adj_pthresholds = c(0.05),
-  adj_pthresh_avrg_diff_conditions = 0.05,
-  adj_pthresh_interaction_condition_time = 0.05,
+  adj_pthresh_avrg_diff_conditions = 0,
+  adj_pthresh_interaction_condition_time = 0,
   genes = NULL,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
+  plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
   report_dir = here::here(),
   report = TRUE
 )
@@ -51,10 +52,12 @@ necessary data and parameters for the analysis, including:
 hits in each top table.}
 
 \item{adj_pthresh_avrg_diff_conditions}{p-value threshold for the results
-from the average difference of the condition limma result.}
+from the average difference of the condition limma result. Per default 0 (
+turned off).}
 
 \item{adj_pthresh_interaction_condition_time}{p-value threshold for the 
-results from the interaction of condition and time limma result.}
+results from the interaction of condition and time limma result. Per default 
+0 (turned off).}
 
 \item{genes}{A character vector containing the gene names of the features to
 be analyzed.}
@@ -67,6 +70,9 @@ time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
 indicating the positions of the treatments (such as 
 feeding, temperature shift, etc.).}
+
+\item{plot_options}{List with specific fields (cluster_heatmap_columns = 
+Bool) that allow for customization of plotting behavior.}
 
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}

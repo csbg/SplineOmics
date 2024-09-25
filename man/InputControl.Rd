@@ -114,6 +114,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_spline_test_configs}{\code{InputControl$check_spline_test_configs()}}
 \item \href{#method-InputControl-check_limma_top_tables}{\code{InputControl$check_limma_top_tables()}}
 \item \href{#method-InputControl-check_adj_pthresholds}{\code{InputControl$check_adj_pthresholds()}}
+\item \href{#method-InputControl-check_adj_pthresh_limma_category_2_3}{\code{InputControl$check_adj_pthresh_limma_category_2_3()}}
 \item \href{#method-InputControl-check_clusters}{\code{InputControl$check_clusters()}}
 \item \href{#method-InputControl-check_plot_info}{\code{InputControl$check_plot_info()}}
 \item \href{#method-InputControl-check_report_dir}{\code{InputControl$check_report_dir()}}
@@ -550,6 +551,24 @@ offending elements.
 \subsection{Returns}{
 Returns TRUE if all checks pass. Stops execution and returns an
 error message if any check fails.
+
+Check adjusted p-value thresholds for limma category 2 and 3
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_adj_pthresh_limma_category_2_3"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_adj_pthresh_limma_category_2_3}{}}}
+\subsection{Method \code{check_adj_pthresh_limma_category_2_3()}}{
+This function checks that both adjusted p-value thresholds for 
+average difference conditions and interaction condition time are 
+non-null, floats, and in the range [0, 1].
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_adj_pthresh_limma_category_2_3()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+`NULL` if either argument is `NULL` or invalid. 
+Otherwise, no return value (assumed valid inputs).
 
 Check Clusters
 }

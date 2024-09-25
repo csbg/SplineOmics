@@ -11,7 +11,8 @@ plot_splines(
   X,
   time_unit_label,
   plot_info,
-  adj_pthreshold
+  adj_pthreshold,
+  replicate_column
 )
 }
 \arguments{
@@ -41,6 +42,10 @@ indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).}
 
 \item{adj_pthreshold}{Double > 0 and < 1 specifying the adj. p-val threshold.}
+
+\item{replicate_column}{String specifying the column of the meta dataframe
+that contains the labels of the replicate measurents. When that is not 
+given, this argument is NULL.}
 }
 \value{
 A list containing the composite plot and the number of rows used in

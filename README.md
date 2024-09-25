@@ -82,34 +82,34 @@ With `SplineOmics`, you can:
   The `explore_data()` function generates an HTML report, containing
   various plots, such as density, PCA, and correlation heatmap plots
   ([example
-  report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html)).
+  report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
 
 - **Explore various limma splines hyperparameters:**
 
   Test combinations of hyperparameters, such as different datasets,
   `limma` design formulas, degrees of freedom, p-value thresholds, etc.,
   using the `screen_limma_hyperparams()` function ([example
-  report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
+  report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
   (along with the
-  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html))).
+  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html))).
 
 - **Perform limma spline analysis:**
 
   Use the `run_limma_splines()` function to perform the `limma` analysis
   with splines once the optimal hyperparameters are identified ([example
-  report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html)).
+  report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
 
 - **Cluster significant features:**
 
   Cluster the significant features (hits) identified in the spline
   analysis with the `cluster_hits()` function ([example
-  report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html)).
+  report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
 
 - **Run GSEA with clustered hits:**
 
   Perform gene set enrichment analysis (GSEA) using the clustered hits
   with the `create_gsea_report()` function ([example
-  report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html)).
+  report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html)).
 
 ## 🔧 Installation
 

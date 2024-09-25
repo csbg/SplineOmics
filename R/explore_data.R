@@ -926,28 +926,36 @@ make_pca_plot <- function(
     data, 
     meta, 
     condition
-    ) {
+) {
   
+  # Perform PCA
   pc <- stats::prcomp(t(data))
   pca_df <- data.frame(PC1 = pc$x[, 1], PC2 = pc$x[, 2])
   
-  # Get the labels and colors from the metadata
+  # Add labels and levels from the metadata
   pca_df$Labels <- colnames(data)
-  
   pca_df$Levels <- meta[[condition]]
+  
+  # Add time column for alpha transparency
+  pca_df$Time <- meta$Time
+  
+  # Normalize the Time column to a 0-1 range for alpha values
+  pca_df$Alpha <- scales::rescale(pca_df$Time, to = c(0.3, 1))
   
   # Calculate the variance explained
   variance_explained <- pc$sdev^2 / sum(pc$sdev^2)
   percent_variance_explained <- round(variance_explained * 100, digits = 1)
   
-  # Calculate the x-axis range and extend it
+  # Extend the x-axis range
   x_range <- range(pc$x[, 1])
   extended_x_max <- x_range[2] + (x_range[2] - x_range[1]) * 0.2
   
   # Create the PCA plot
-  pca_plot <- ggplot2::ggplot(pca_df, aes(x = !!rlang::sym("PC1"), 
-                                          y = !!rlang::sym("PC2"), 
-                                          color = !!rlang::sym("Levels"))) +
+  pca_plot <- ggplot2::ggplot(pca_df, aes(
+    x = !!rlang::sym("PC1"), 
+    y = !!rlang::sym("PC2"), 
+    color = !!rlang::sym("Levels"),
+    alpha = !!rlang::sym("Alpha"))) +
     ggplot2::geom_point() +
     ggrepel::geom_text_repel(aes(label = !!rlang::sym("Labels")), 
                              box.padding = 0.35, 
@@ -958,9 +966,13 @@ make_pca_plot <- function(
     ggplot2::xlab(paste("PC1 -", percent_variance_explained[1], "% variance")) +
     ggplot2::ylab(paste("PC2 -", percent_variance_explained[2], "% variance")) +
     ggplot2::labs(color = condition) +
+    ggplot2::scale_alpha(range = c(0.3, 1), guide = "none") + # Hide alpha 
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = element_text(hjust = 0.5))
+  
+  return(pca_plot)
 }
+
 
 
 #' Generate MDS Plot
@@ -985,21 +997,27 @@ make_mds_plot <- function(
     data,
     meta,
     condition
-    ) {
-
+) {
+  
+  # Perform MDS using limma's plotMDS function
   mds <- limma::plotMDS(
     x = data,
     plot = FALSE
-    )
+  )
   
   # Extract MDS coordinates
   mds_df <- data.frame(
     Dim1 = mds$x, 
     Dim2 = mds$y, 
     Labels = colnames(data)
-    )
+  )
   
+  # Add condition levels and time information from metadata
   mds_df$Levels <- meta[[condition]]
+  mds_df$Time <- meta$Time
+  
+  # Normalize the Time column to a 0-1 range for alpha values
+  mds_df$Alpha <- scales::rescale(mds_df$Time, to = c(0.3, 1))
   
   # Generate the MDS plot using ggplot2 and ggrepel
   mds_plot <- ggplot2::ggplot(
@@ -1007,23 +1025,28 @@ make_mds_plot <- function(
     ggplot2::aes(
       x = .data$Dim1, 
       y = .data$Dim2, 
-    label = .data$Labels,
-    color = .data$Levels)
-    ) +
+      label = .data$Labels,
+      color = .data$Levels,
+      alpha = .data$Alpha  # Use alpha for transparency
+    )
+  ) +
     ggplot2::geom_point() +
     ggrepel::geom_text_repel(
       box.padding = 0.35, 
       point.padding = 0.5, 
       max.overlaps = Inf,
       size = 2
-      ) +
+    ) +
+    ggplot2::scale_alpha(range = c(0.3, 1), guide = "none") + # Hide alpha 
     ggplot2::theme_minimal() +
     ggplot2::labs(
       x = "Dimension 1",
       y = "Dimension 2",
       color = condition
-      ) +
+    ) +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+  
+  return(mds_plot)
 }
 
 

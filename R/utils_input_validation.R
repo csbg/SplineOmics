@@ -77,6 +77,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_spline_params()
       self$check_spline_test_configs()
       self$check_adj_pthresholds()
+      self$check_adj_pthresh_limma_category_2_3()
       self$check_clusters()
       self$check_genes()
       self$check_plot_info()
@@ -733,7 +734,7 @@ InputControl <- R6::R6Class("InputControl",
     check_adj_pthresholds = function() {
       
       # Exploited argument slicing.
-      adj_pthresholds <- self$args$adj_pthresh
+      adj_pthresholds <- self$args[["adj_pthresh"]]
 
       required_args <- list(adj_pthresholds)
       
@@ -771,6 +772,47 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       return(TRUE)
+    },
+    
+    
+    #' Check adjusted p-value thresholds for limma category 2 and 3
+    #'
+    #' @description
+    #' This function checks that both adjusted p-value thresholds for 
+    #' average difference conditions and interaction condition time are 
+    #' non-null, floats, and in the range [0, 1].
+    #'
+    #' @return 
+    #' `NULL` if either argument is `NULL` or invalid. 
+    #' Otherwise, no return value (assumed valid inputs).
+    #'
+    check_adj_pthresh_limma_category_2_3 = function() {
+      
+      adj_pthresh_avrg_diff_conditions <- 
+        self$args[["adj_pthresh_avrg_diff_conditions"]]
+      
+      adj_pthresh_interaction_condition_time <- 
+        self$args[["adj_pthresh_interaction_condition_time"]]
+      
+      required_args <- list(
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction_condition_time
+        )
+      
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      # Check that both arguments are numeric and in the range [0, 1]
+      if (!all(sapply(required_args, function(arg) {
+        is.numeric(arg) && arg >= 0 && arg <= 1
+      }))) {
+        stop_call_false(
+          "Both adj_pthresh_avrg_diff_conditions and", 
+          "adj_pthresh_interaction_condition_time must", 
+          "be floats between 0 and 1."
+          )
+      }
     },
     
     
@@ -872,9 +914,9 @@ InputControl <- R6::R6Class("InputControl",
       
       # Check y_axis_label
       if (!is.character(plot_info$y_axis_label) ||
-          nchar(plot_info$y_axis_label) > 30) {
+          nchar(plot_info$y_axis_label) > 40) {
         stop(
-          "y_axis_label must be a string with maximally 30 characters",
+          "y_axis_label must be a string with maximally 40 characters",
           call. = FALSE
           )
       }

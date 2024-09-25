@@ -326,10 +326,10 @@ plots <- SplineOmics::explore_data(
 
 ```
 
-[Here](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html)
+[Here](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)
 you can see the HTML report of the explore_data() function with the NOT
 batch-corrected data, and
-[here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html)
 the report for the batch-corrected data.
 
 The EDA plots can tell you a range of things. The plots in the HTML
@@ -544,7 +544,7 @@ SplineOmics::screen_limma_hyperparams(
 As mentioned, this function generates a report for each comparison of
 the outer hyperparameters, which are too many to show here. You can view
 an example report
-[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
 
 This report contains the results for the comparison of the "outer"
 hyperparameters data 1 and design (formula) 1 compared against data 1
@@ -638,7 +638,7 @@ plots <- SplineOmics::create_limma_report(
 
 You can view the generated analysis report of the create_limma_report
 function
-[here](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html).
 
 # Cluster the hits (significant features)
 
@@ -690,7 +690,7 @@ clustering_results <- SplineOmics::cluster_hits(
 ```
 
 You can view the generated analysis report of the cluster_hits function
-[here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html).
 
 As discussed before, there are three limma result categories. The cluster_hits()
 report shows the results of all three, if they are present (category 2 and 3
@@ -777,7 +777,7 @@ result <- SplineOmics::run_gsea(
 ```
 
 You can view the generated analysis report of the cluster_hits function
-[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
 supported a term, in a tabular format. The table with all the terms with
