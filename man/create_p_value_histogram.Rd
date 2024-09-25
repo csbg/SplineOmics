@@ -4,18 +4,11 @@
 \alias{create_p_value_histogram}
 \title{Create a p-value histogram from a limma top_table}
 \usage{
-create_p_value_histogram(
-  top_table,
-  pthresh = 0.05,
-  title = "P-Value Histogram"
-)
+create_p_value_histogram(top_table, title = "P-Value Histogram")
 }
 \arguments{
 \item{top_table}{A data frame containing the limma top_table with
 a column named `P.Value` for unadjusted p-values.}
-
-\item{pthresh}{A numeric value for the adjusted p-value threshold
-(not used in this function, included for consistency).}
 
 \item{title}{A character string for the title of the histogram.}
 }

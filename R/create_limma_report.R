@@ -228,7 +228,6 @@ generate_time_effect_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      pthresh = adj_pthresh,
       title = title
       )
     
@@ -282,7 +281,6 @@ generate_avrg_diff_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      pthresh = adj_pthresh,
       title = title
       )
     
@@ -343,7 +341,6 @@ generate_interaction_plots <- function(
     
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
-      pthresh = adj_pthresh,
       title = title
       )
     
@@ -552,8 +549,6 @@ build_create_limma_report <- function(
 #'
 #' @param top_table A data frame containing the limma top_table with
 #'                  a column named `P.Value` for unadjusted p-values.
-#' @param pthresh A numeric value for the adjusted p-value threshold
-#'                    (not used in this function, included for consistency).
 #' @param title A character string for the title of the histogram.
 #'
 #' @return A ggplot2 object representing the histogram of unadjusted p-values.
@@ -563,91 +558,32 @@ build_create_limma_report <- function(
 #'
 create_p_value_histogram <- function(
     top_table,
-    pthresh = 0.05,
     title = "P-Value Histogram"
 ) {
-  
+
   # Check if the top_table has a P.Value column
   if (!"P.Value" %in% colnames(top_table)) {
     stop("The top_table must contain a column named 'P.Value'.")
   }
-  
-  below_thresh_count <- sum(top_table$P.Value < pthresh)
-  total_pvalues <- nrow(top_table)
-  below_thresh_percent <- (below_thresh_count / total_pvalues) * 100
-  
-  
+
   # Create the histogram
   p <- ggplot2::ggplot(
     top_table,
+    # aes(x = P.Value)
     aes(x = .data$P.Value)
   ) +
     ggplot2::geom_histogram(
-      binwidth = 0.025,
+      binwidth = 0.01,
       fill = "orange",
-      color = "black",
-      alpha = 0.7,
-      boundary = 0  # Ensure bins align with 0
-    ) +
-    # Add a red dashed line at the adjusted p-value threshold
-    ggplot2::geom_vline(
-      xintercept = pthresh,
-      linetype = "dashed",
-      color = "red",
-      size = 1
-    ) +
-    # Add a transparent mask over the area above the threshold
-    ggplot2::annotate(
-      "rect",
-      xmin = max(pthresh, 0),  # Ensure xmin is at least 0
-      xmax = 1,  # Ensure xmax is at most 1
-      ymin = 0,
-      ymax = Inf,
-      alpha = 0.3,
-      fill = "gray"
+      color = "black", alpha = 0.7
     ) +
     ggplot2::labs(
       title = title,
       x = "Unadjusted P-Value",
       y = "Frequency"
     ) +
-    ggplot2::theme_minimal() +
-    # Set x-axis limits to strictly stay between 0 and 1
-    ggplot2::scale_x_continuous(limits = c(0, 1))  # Strictly enforce x-axis limits
-  
-  # Extract y-axis limits and the maximum bin count to position the label
-  y_max <- max(ggplot2::ggplot_build(p)$data[[1]]$count)
-  
-  # Add a little buffer above the highest bar for the label
-  y_label_position <- y_max * 1.1  # 10% higher than the highest bar
-  
-  # Add the label for the adjusted p-value threshold at the correct y position
-  p <- p + 
-    ggplot2::annotate(
-      "text",
-      x = pthresh,
-      y = y_label_position,  # Just above the highest bar
-      label = paste("p-thresh:", pthresh),
-      color = "black",  # Change the font color to black
-      hjust = -0.1,
-      size = 3  # Slightly smaller font size
-    )
-  
-  # Add the count and percentage of p-values below the threshold
-  p <- p + 
-    ggplot2::annotate(
-      "text",
-      x = 0.5,  # Position in the middle of the plot
-      y = y_label_position,  # Just above the highest bar
-      label = paste(
-        "Count < p-thresh:", below_thresh_count, 
-        "(", round(below_thresh_percent, 2), "%)"
-      ),
-      color = "black",  # Black font color
-      size = 3,  # Same font size as the p-thresh label
-      hjust = 0.5  # Centered horizontally
-    )
-  
+    ggplot2::theme_minimal()
+
   return(p)
 }
 

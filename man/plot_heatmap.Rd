@@ -10,7 +10,8 @@ plot_heatmap(
   mode,
   condition,
   all_levels_clustering,
-  time_unit_label
+  time_unit_label,
+  cluster_heatmap_columns
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ analysed in isolation (no interaction effects))}
 level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
+
+\item{cluster_heatmap_columns}{Boolean specifying wether to cluster the 
+columns of the heatmap or not.}
 }
 \value{
 A list of ComplexHeatmap heatmap objects for each level.

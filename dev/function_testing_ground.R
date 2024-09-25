@@ -36,15 +36,13 @@ library(dplyr)
 load("dev/data/e13_e20_nglycans.RData")
 names(meta)[names(meta) == "timepoint"] <- "Time"
 meta$Time <- as.numeric(meta$Time)
+meta$batch <- ifelse(1:nrow(meta) <= 28, 1, 2)
+
+rows_to_keep <- !(meta$experiment %in% c("E16", "E17"))
+meta <- meta[rows_to_keep, ]
+log2_data.matrix <- log2_data.matrix[, rows_to_keep]
+
 condition <- "condition"
-
-# # Step 1: Sort the 'meta' data frame by the 'condition' column
-# meta <- meta[order(meta[[condition]]), ]
-# 
-# # Step 2: Sort the 'data' rows to match the new order of 'meta'
-# log2_data.matrix <- log2_data.matrix[, meta$sample_name]
-
-
 
 # Get the gene list ------------------------------------------------------------
 
@@ -124,9 +122,9 @@ condition <- "condition"
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
-  omics_data_type = "PTX",
-  data_description = "Proteomics data",
-  data_collection_date = "February 2024",
+  omics_data_type = "Glycan",
+  data_description = "Glycan data",
+  data_collection_date = "September 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX"
@@ -141,7 +139,7 @@ splineomics <- create_splineomics(
   # feature_name_columns = feature_name_columns,
   report_info = report_info,
   condition = "condition",
-  # meta_batch_column = "experiment",
+  meta_batch_column = "batch"
 )
 
 report_dir <- here::here("results", "explore_data")
@@ -202,7 +200,7 @@ report_dir <- here::here("results", "explore_data")
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + condition*X",
+  design = "~ 1 + condition*X + batch",
   # data = data2,
   # meta = meta2,
   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
@@ -219,7 +217,7 @@ report_dir <- here::here("results", "limma_reports")
 
 # plots <- create_limma_report(
 #   splineomics,
-#   adj_pthresh = 0.1,
+#   adj_pthresh = 0.05,
 #   report_dir = report_dir
 # )
 
@@ -230,12 +228,17 @@ clusters <- c(1L, 1L)
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
-  y_axis_label = "log2 intensity",
+  y_axis_label = "log2 transformed fractional abundance",
   time_unit = "min",
   treatment_labels = NA,
   treatment_timepoints = NA
   # treatment_labels = c("Feeding"),
   # treatment_timepoints = c(200)
+)
+
+plot_options = list(
+  meta_replicate_column = "experiment",
+  cluster_heatmap_columns = TRUE
 )
 
 # debug(cluster_hits)
@@ -245,11 +248,11 @@ clustering_results <- cluster_hits(
   clusters = clusters,
   # genes = genes,
   plot_info = plot_info,
+  plot_options = plot_options,
   report_dir = report_dir,
-  adj_pthresh_avrg_diff_conditions = 0.99,
-  adj_pthresh_interaction_condition_time = 0.99
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05
 )
-
 
 
 # Perform gsea -----------------------------------------------------------------

@@ -78,7 +78,7 @@ generate_report_html <- function(
     report_dir = here::here()
     ) {
 
-  feature_names_formula <- NA
+  feature_names_formula <- ""
   
   if (report_type == "explore_data") {
     if (filename == "explore_data") {

@@ -20,6 +20,7 @@ make_clustering_report(
   meta_batch_column,
   meta_batch2_column,
   plot_info,
+  plot_options,
   feature_name_columns,
   spline_comp_plots
 )
@@ -67,6 +68,9 @@ time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
 indicating the positions of the treatments (such as 
 feeding, temperature shift, etc.).}
+
+\item{plot_options}{List with specific fields (cluster_heatmap_columns = 
+Bool) that allow for customization of plotting behavior.}
 
 \item{feature_name_columns}{Character vector containing the column names of 
 the annotation info that describe the features.
