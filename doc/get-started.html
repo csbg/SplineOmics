@@ -1056,7 +1056,7 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co"># if you prefer to manually perform the enrichment. Those files are</span></span>
 <span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co"># embedded in the output HTML report and can be downloaded from there.</span></span>
 <span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>genes <span class="ot">&lt;-</span> data_excel[[gene_column_name]][<span class="dv">4</span><span class="sc">:</span><span class="fu">nrow</span>(data_excel)]</span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]]</span>
 <span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a></span>
 <span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
 <span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
