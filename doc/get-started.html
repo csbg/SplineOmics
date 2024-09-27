@@ -704,27 +704,25 @@ functions.</li>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">meta_batch_column =</span> <span class="st">&quot;Reactor&quot;</span>  <span class="co"># For batch effect removal</span></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">class</span>(splineomics)   <span class="co"># Show that the class is SplineOmics</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;SplineOmics&quot;</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co"># Special print.SplineOmics function leads to selective printing</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">print</span>(splineomics)   </span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; data:SplineOmics Object</span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; -------------------</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Number of features (rows): 4162 </span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Number of samples (columns): 36 </span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Meta data columns: 5 </span></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; First few meta columns:</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 5</span></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;   Sample.ID            Reactor Time.Point Phase        Time</span></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
-<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
-<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; Condition: Phase </span></span>
-<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; No RNA-seq data provided.</span></span>
-<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; Annotation provided with 4162 entries.</span></span>
-<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; No spline parameters set.</span></span>
-<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; P-value adjustment method: BH</span></span></code></pre></div>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># Special print.SplineOmics function leads to selective printing</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">print</span>(splineomics)   </span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; data:SplineOmics Object</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; -------------------</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; Number of features (rows): 4162 </span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Number of samples (columns): 36 </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Meta data columns: 5 </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; First few meta columns:</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 5</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;   Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; Condition: Phase </span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; No RNA-seq data provided.</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; Annotation provided with 4162 entries.</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; No spline parameters set.</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; P-value adjustment method: BH</span></span></code></pre></div>
 <p>Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">explore_data</span>(</span>

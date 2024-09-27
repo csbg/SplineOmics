@@ -75,7 +75,6 @@ splineomics <- SplineOmics::create_splineomics(
   meta_batch_column = "Reactor"  # For batch effect removal
 )
 
-class(splineomics)   # Show that the class is SplineOmics
 # Special print.SplineOmics function leads to selective printing
 print(splineomics)   
 
