@@ -28,7 +28,7 @@ The graphical abstract below shows the full workflow streamlined by `SplineOmics
 -   [📘 Introduction](#-introduction)
 -   [🔧 Installation](#-installation)
     -   [🐳 Docker Container](#-docker-container)
--   [🛠️️ Usage](#-usage)
+-   [▶️ Usage](#-usage)
     -   [Tutorial](#-tutorial)
     -   [Functions in Depth](#-functions-in-depth)
     -   [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
@@ -40,7 +40,7 @@ The graphical abstract below shows the full workflow streamlined by `SplineOmics
 -   [📜 License](#-license)
 -   [🎓 Citation](#-citation)
 -   [🌟 Contributors](#-contributors)
--   [🙏 Acknowledgements](#-ackknowledgements)
+-   [🙏 Acknowledgements](#-acknowledgements)
 
 ## 📘 Introduction
 
@@ -176,7 +176,7 @@ For instructions on downloading the image of the `SplineOmics` package and runni
 
 If you face "permission denied" issues on Linux distributions, check this [vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
-## 🛠️️ Usage
+## ▶ Usage
 
 ### Tutorial
 
