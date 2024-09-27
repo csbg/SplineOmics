@@ -13,6 +13,7 @@ plot_spline_comparisons(
   interaction_condition_time,
   data,
   meta,
+  condition,
   X_1,
   X_2,
   plot_info,
@@ -42,6 +43,9 @@ condition and time.}
 \item{data}{The data matrix containing the measurements.}
 
 \item{meta}{The metadata associated with the measurements.}
+
+\item{condition}{Column name of meta that contains the levels of the
+experiment.}
 
 \item{X_1}{A matrix of spline basis values for the first condition.}
 

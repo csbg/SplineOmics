@@ -1,4 +1,3 @@
-
 rm(list = ls(all.names = TRUE))
 
 # Setup ------------------------------------------------------------------------
@@ -11,77 +10,68 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-# data_excel <- read_excel(here::here("dev" ,"data", "PTX",
-#                                     "PTX_processed_table.xlsx"))
-# 
-# meta <- read_excel(here::here("dev" ,"data",
-#                               "Time_course_PTX_metadata.xlsx"))
-# 
-# data_excel <- readRDS(system.file(
-#   "extdata",
-#   "proteomics_data.rds",
-#   package = "SplineOmics"
-# ))
-# 
-# meta <- read_excel(here::here(
-#   "inst",
-#   "extdata",
-#   "proteomics_meta.xlsx"
-# ))
-# 
-# annotation <- data_excel %>%
-#   select(39:ncol(data_excel)) %>%
-#   dplyr::slice(-c(1:3))
+data_excel <- read_excel(here::here("dev" ,"data", "PTX",
+                                    "PTX_processed_table.xlsx"))
 
-load("dev/data/e13_e20_nglycans.RData")
-names(meta)[names(meta) == "timepoint"] <- "Time"
-meta$Time <- as.numeric(meta$Time)
-meta$batch <- ifelse(1:nrow(meta) <= 28, 1, 2)
+meta <- read_excel(here::here("dev" ,"data",
+                              "Time_course_PTX_metadata.xlsx"))
 
-rows_to_keep <- !(meta$experiment %in% c("E16", "E17"))
-meta <- meta[rows_to_keep, ]
-log2_data.matrix <- log2_data.matrix[, rows_to_keep]
+data_excel <- readRDS(system.file(
+  "extdata",
+  "proteomics_data.rds",
+  package = "SplineOmics"
+))
 
-condition <- "condition"
+meta <- read_excel(here::here(
+  "inst",
+  "extdata",
+  "proteomics_meta.xlsx"
+))
+
+annotation <- data_excel %>%
+  select(39:ncol(data_excel)) %>%
+  dplyr::slice(-c(1:3))
+
+
 
 # Get the gene list ------------------------------------------------------------
 
-# data_full <- as.data.frame(data_excel)
-# gene_column_name <- "Gene_symbol"
-# genes <- data_full[[gene_column_name]][4:nrow(data_full)]
+data_full <- as.data.frame(data_excel)
+gene_column_name <- "Gene_symbol"
+genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 
 
 
 # Automatically extract data matrix from excel/csv table -----------------------
 
-# feature_name_columns <- c("Unique identifier",
-#                           "Protein", 
-#                           "Positions within proteins")
+feature_name_columns <- c("Unique identifier",
+                          "Protein",
+                          "Positions within proteins")
 
-# feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-# feature_name_columns <- c("Gene_name")
-# 
-# # debug(extract_data)
-# data <- extract_data(
-#   data_excel,
-#   feature_name_columns,
-#   user_prompt = FALSE
-#   )
+feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
+feature_name_columns <- c("Gene_name")
+
+# debug(extract_data)
+data <- extract_data(
+  data_excel,
+  feature_name_columns,
+  user_prompt = FALSE
+  )
 
 
 # Remove outliers --------------------------------------------------------------
 
-# data <- data[, !(colnames(data) %in% c(  # Remove potential outliers
-#   "E12_TP05_Exponential",   
-#   "E10_TP10_Stationary"
-# )
-# )]
-# 
-# meta <- meta[!meta$`Sample.ID` %in% c(
-#   "E12_TP05_Exponential", 
-#   "E10_TP10_Stationary"
-# ), ]
+data <- data[, !(colnames(data) %in% c(  # Remove potential outliers
+  "E12_TP05_Exponential",
+  "E10_TP10_Stationary"
+)
+)]
+
+meta <- meta[!meta$`Sample.ID` %in% c(
+  "E12_TP05_Exponential",
+  "E10_TP10_Stationary"
+), ]
 
 
 # Simulate RNA-seq data to test voom functionality -----------------------------
@@ -122,8 +112,8 @@ condition <- "condition"
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
-  omics_data_type = "Glycan",
-  data_description = "Glycan data",
+  omics_data_type = "PTX",
+  data_description = "Proteomics data",
   data_collection_date = "September 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -131,15 +121,15 @@ report_info <- list(
 )
 
 splineomics <- create_splineomics(
-  data = log2_data.matrix,
+  data = data,
   # rna_seq_data = voom_obj,
   meta = meta,
   mode = "integrated",
   # annotation = annotation,
   # feature_name_columns = feature_name_columns,
   report_info = report_info,
-  condition = "condition",
-  meta_batch_column = "batch"
+  condition = "Phase",
+  meta_batch_column = "Reactor"
 )
 
 report_dir <- here::here("results", "explore_data")
@@ -153,31 +143,31 @@ report_dir <- here::here("results", "explore_data")
 
 
 # Prep input to hyperparams screen function ------------------------------------
-# data1 <- data
-# meta1 <- meta
-# 
-# data2 <- data[, -c(1, 2)]
-# meta2 <- meta[-c(1, 2),]
-# # data2 <- data
-# # meta2 <- meta
-# 
-# datas <- list(data1, data2)
-# # rna_seq_datas <- list(voom_obj, voom_obj)  # Just to test it.
-# datas_descr <- c("full_data", "outliers_removed")
-# metas <- list(meta1, meta2)
-# designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
-# modes <- c("integrated", "integrated")
-# 
-# report_dir <- here::here("results", "hyperparams_screen_reports")
-# 
-# pthresholds <- c(0.05, 0.01)
-# 
-# # Every row a combo to test.
-# spline_test_configs <- data.frame(
-#   spline_type = c("n", "n", "b", "b"),  
-#   degree = c(NA, NA, 2L, 4L),
-#   dof = c(2L, 3L, 3L, 4L)
-# )
+data1 <- data
+meta1 <- meta
+
+data2 <- data[, -c(1, 2)]
+meta2 <- meta[-c(1, 2),]
+# data2 <- data
+# meta2 <- meta
+
+datas <- list(data1, data2)
+# rna_seq_datas <- list(voom_obj, voom_obj)  # Just to test it.
+datas_descr <- c("full_data", "outliers_removed")
+metas <- list(meta1, meta2)
+designs <- c("~ 1 + Phase*X + Reactor", "~ 1 + Phase*X + Reactor")
+modes <- c("integrated", "integrated")
+
+report_dir <- here::here("results", "hyperparams_screen_reports")
+
+pthresholds <- c(0.05, 0.01)
+
+# Every row a combo to test.
+spline_test_configs <- data.frame(
+  spline_type = c("n", "n", "b", "b"),
+  degree = c(NA, NA, 2L, 4L),
+  dof = c(2L, 3L, 3L, 4L)
+)
 
 
 # hyperparams screen limma -----------------------------------------------------
@@ -200,12 +190,19 @@ report_dir <- here::here("results", "explore_data")
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + condition*X + batch",
+  design = "~ 1 + Phase*X + Reactor",
   # data = data2,
   # meta = meta2,
   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
                        dof = c(2L))
 )
+
+# methods(print)
+# getS3method("print", "SplineOmics")
+
+class(splineomics)
+print(splineomics)
+
 
 # debug(run_limma_splines)
 splineomics <- run_limma_splines(
@@ -224,21 +221,21 @@ report_dir <- here::here("results", "limma_reports")
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05, 0.05)   
-clusters <- c(1L, 1L)   
+clusters <- c(6L, 3L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
-  y_axis_label = "log2 transformed fractional abundance",
+  y_axis_label = "log2 intensity",
   time_unit = "min",
-  treatment_labels = NA,
-  treatment_timepoints = NA
-  # treatment_labels = c("Feeding"),
-  # treatment_timepoints = c(200)
+  # treatment_labels = NA,
+  # treatment_timepoints = NA
+  treatment_labels = c("Feeding"),
+  treatment_timepoints = c(0)
 )
 
 plot_options = list(
-  meta_replicate_column = "experiment",
-  cluster_heatmap_columns = TRUE
+  meta_replicate_column = "Time.Point",
+  cluster_heatmap_columns = FALSE
 )
 
 # debug(cluster_hits)
@@ -246,12 +243,13 @@ clustering_results <- cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
-  # genes = genes,
+  genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,
   report_dir = report_dir,
-  adj_pthresh_avrg_diff_conditions = 0.05,
-  adj_pthresh_interaction_condition_time = 0.05
+  report = TRUE,
+  # adj_pthresh_avrg_diff_conditions = 0,
+  # adj_pthresh_interaction_condition_time = 0.25
 )
 
 

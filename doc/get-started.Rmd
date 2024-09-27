@@ -313,6 +313,10 @@ splineomics <- SplineOmics::create_splineomics(
   condition = "Phase",  # Column of meta that contains the levels.
   meta_batch_column = "Reactor"  # For batch effect removal
 )
+
+class(splineomics)   # Show that the class is SplineOmics
+# Special print.SplineOmics function leads to selective printing
+print(splineomics)   
 ```
 
 Now that we have the SplineOmics object defined, we can perform our
@@ -326,10 +330,10 @@ plots <- SplineOmics::explore_data(
 
 ```
 
-[Here](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html)
+[Here](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)
 you can see the HTML report of the explore_data() function with the NOT
 batch-corrected data, and
-[here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html)
 the report for the batch-corrected data.
 
 The EDA plots can tell you a range of things. The plots in the HTML
@@ -503,7 +507,7 @@ report_dir <- here::here(
 meta_batch_column = "Reactor" 
 
 # Test out two different p-value thresholds (inner hyperparameter)
-pthresholds <- c(
+adj_pthresholds <- c(
   0.05,
   0.1
   )
@@ -536,7 +540,7 @@ SplineOmics::screen_limma_hyperparams(
   modes = modes,
   spline_test_configs = spline_test_configs,
   report_dir = report_dir,
-  pthresholds = pthresholds,
+  adj_pthresholds = adj_pthresholds,
   )
 
 ```
@@ -544,7 +548,7 @@ SplineOmics::screen_limma_hyperparams(
 As mentioned, this function generates a report for each comparison of
 the outer hyperparameters, which are too many to show here. You can view
 an example report
-[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
 
 This report contains the results for the comparison of the "outer"
 hyperparameters data 1 and design (formula) 1 compared against data 1
@@ -568,14 +572,14 @@ cubic splines (n) with a dof of two seemed to fit the data best (not
 overfitting, but also not underfitting), which was the reason those
 spline parameters were chosen.
 
-For the design formula, you must specify either 'isolated' or 
-'integrated'. Isolated means limma determines the results for each level 
-using only the data from that level. Integrated means limma determines the
-results for all levels using the full dataset (from all levels). For the 
-integrated mode, there has to be for example an interaction effect (*) 
-between the X and the condition column (here Phase). Isolated means that limma
-only uses the part of the dataset that belongs to a level to obtain the results
-for that level.
+For the design formula, you must specify either 'isolated' or
+'integrated'. Isolated means limma determines the results for each level
+using only the data from that level. Integrated means limma determines
+the results for all levels using the full dataset (from all levels). For
+the integrated mode, there has to be for example an interaction effect
+(\*) between the X and the condition column (here Phase). Isolated means
+that limma only uses the part of the dataset that belongs to a level to
+obtain the results for that level.
 
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
@@ -638,7 +642,7 @@ plots <- SplineOmics::create_limma_report(
 
 You can view the generated analysis report of the create_limma_report
 function
-[here](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html).
 
 # Cluster the hits (significant features)
 
@@ -686,15 +690,18 @@ clustering_results <- SplineOmics::cluster_hits(
   genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
+  adj_pthresh_avrg_diff_conditions = 0,
+  adj_pthresh_interaction_condition_time = 0.25
   )
 ```
 
 You can view the generated analysis report of the cluster_hits function
-[here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html).
 
-As discussed before, there are three limma result categories. The cluster_hits()
-report shows the results of all three, if they are present (category 2 and 3
-can only be generated when the design formula contains an interaction effect).
+As discussed before, there are three limma result categories. The
+cluster_hits() report shows the results of all three, if they are
+present (category 2 and 3 can only be generated when the design formula
+contains an interaction effect).
 
 # Perform gene set enrichment analysis (GSEA)
 
@@ -747,7 +754,7 @@ databases <- read.delim(
 
 # Specify the clusterProfiler parameters
 clusterProfiler_params <- list(
-  adj_p_value = 0.05,
+  pvalueCutoff = 0.05,
   pAdjustMethod = "BH",
   minGSSize = 10,
   maxGSSize = 500,
@@ -777,7 +784,7 @@ result <- SplineOmics::run_gsea(
 ```
 
 You can view the generated analysis report of the cluster_hits function
-[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html).
+[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
 supported a term, in a tabular format. The table with all the terms with

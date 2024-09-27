@@ -107,7 +107,7 @@ update_splineomics <- function(
     ) {
   
   if (!inherits(splineomics, "SplineOmics")) {
-    stop("The object must be of class 'SplineOmics'")
+    stop("The passed object must be of class 'SplineOmics'")
   }
   
   allowed_fields <- c(
@@ -136,4 +136,66 @@ update_splineomics <- function(
   }
   
   return(splineomics)
+}
+
+
+#' Print function for SplineOmics objects
+#'
+#' @description
+#' This function provides a summary print of the SplineOmics object, showing
+#' relevant information such as the number of features, samples, metadata, 
+#' RNA-seq data, annotation, and spline parameters.
+#'
+#' @param x A SplineOmics object created by the `create_splineomics` function.
+#' @param ... Additional arguments passed to or from other methods.
+#'
+#' @details
+#' This function is automatically called when a SplineOmics object is printed. 
+#' It provides a concise overview of the object's contents and attributes, 
+#' including the dimensions of the data, available metadata, and other relevant 
+#' information such as annotations and spline parameters.
+#'
+#' @return
+#' The function does not return a value. It prints a summary of 
+#' the SplineOmics object.
+#' 
+#' @importFrom utils head
+#'
+#' @export
+#' 
+print.SplineOmics <- function(x, ...) {
+  cat("data:")
+  cat("SplineOmics Object\n")
+  cat("-------------------\n")
+  
+  # Print summary information
+  cat("Number of features (rows):", nrow(x$data), "\n")
+  cat("Number of samples (columns):", ncol(x$data), "\n")
+  
+  cat("Meta data columns:", ncol(x$meta), "\n")
+  cat("First few meta columns:\n")
+  print(utils::head(x$meta, 3))
+  
+  cat("Condition:", x$condition, "\n")
+  
+  if (!is.null(x$rna_seq_data)) {
+    cat("RNA-seq data is provided.\n")
+  } else {
+    cat("No RNA-seq data provided.\n")
+  }
+  
+  if (!is.null(x$annotation)) {
+    cat("Annotation provided with", nrow(x$annotation), "entries.\n")
+  } else {
+    cat("No annotation provided.\n")
+  }
+  
+  if (!is.null(x$spline_params)) {
+    cat("Spline parameters are set:\n")
+    print(x$spline_params)  
+  } else {
+    cat("No spline parameters set.\n")
+  }
+  
+  cat("P-value adjustment method:", x$padjust_method, "\n")
 }

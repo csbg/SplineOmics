@@ -579,6 +579,7 @@ process_combo <- function(
     rna_seq_data = rna_seq_data,
     meta = meta,
     design = design,
+    mode = mode,
     spline_params = spline_params, 
     condition = condition,
   )
