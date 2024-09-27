@@ -227,7 +227,7 @@ splineomics <- SplineOmics::run_limma_splines(
 #  # if you prefer to manually perform the enrichment. Those files are
 #  # embedded in the output HTML report and can be downloaded from there.
 #  gene_column_name <- "Gene_symbol"
-#  genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
+#  genes <- annotation[[gene_column_name]]
 #  
 #  clustering_results <- SplineOmics::cluster_hits(
 #    splineomics = splineomics,

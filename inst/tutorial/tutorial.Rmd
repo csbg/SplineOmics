@@ -686,7 +686,7 @@ plot_info = list(  # For the spline plots
 # if you prefer to manually perform the enrichment. Those files are
 # embedded in the output HTML report and can be downloaded from there.
 gene_column_name <- "Gene_symbol"
-genes <- data_excel[[gene_column_name]][4:nrow(data_excel)]
+genes <- annotation[[gene_column_name]]
 
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
@@ -698,6 +698,8 @@ clustering_results <- SplineOmics::cluster_hits(
   genes = genes,
   plot_info = plot_info,
   report_dir = report_dir,
+  adj_pthresh_avrg_diff_conditions = 0,
+  adj_pthresh_interaction_condition_time = 0.25
   )
 ```
 
