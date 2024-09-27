@@ -702,16 +702,38 @@ functions.</li>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">report_info =</span> report_info,</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">condition =</span> <span class="st">&quot;Phase&quot;</span>,  <span class="co"># Column of meta that contains the levels.</span></span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">meta_batch_column =</span> <span class="st">&quot;Reactor&quot;</span>  <span class="co"># For batch effect removal</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">class</span>(splineomics)   <span class="co"># Show that the class is SplineOmics</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;SplineOmics&quot;</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co"># Special print.SplineOmics function leads to selective printing</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">print</span>(splineomics)   </span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; data:SplineOmics Object</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; -------------------</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Number of features (rows): 4162 </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Number of samples (columns): 36 </span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Meta data columns: 5 </span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; First few meta columns:</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 5</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;   Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; Condition: Phase </span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; No RNA-seq data provided.</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; Annotation provided with 4162 entries.</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; No spline parameters set.</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; P-value adjustment method: BH</span></span></code></pre></div>
 <p>Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>plots <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">explore_data</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,   <span class="co"># SplineOmics object</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  )</span></code></pre></div>
-<p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html">Here</a>
+<p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
 you can see the HTML report of the explore_data() function with the NOT
-batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html">here</a>
+batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html">here</a>
 the report for the batch-corrected data.</p>
 <p>The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
@@ -882,7 +904,7 @@ select the optimal hyperparameters for your analysis.</p>
 <span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
 <span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a></span>
 <span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a><span class="co"># Test out two different p-value thresholds (inner hyperparameter)</span></span>
-<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a>pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb7-53"><a href="#cb7-53" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
 <span id="cb7-54"><a href="#cb7-54" tabindex="-1"></a>  <span class="fl">0.1</span></span>
 <span id="cb7-55"><a href="#cb7-55" tabindex="-1"></a>  )</span>
@@ -917,11 +939,11 @@ function.</p>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">modes =</span> modes,</span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">spline_test_configs =</span> spline_test_configs,</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">pthresholds =</span> pthresholds,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
 <span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  )</span></code></pre></div>
 <p>As mentioned, this function generates a report for each comparison of
 the outer hyperparameters, which are too many to show here. You can view
-an example report <a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html">here</a></p>
+an example report <a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html">here</a></p>
 <p>This report contains the results for the comparison of the “outer”
 hyperparameters data 1 and design (formula) 1 compared against data 1
 and design 2. For both of those, all combinations of the “inner”
@@ -999,7 +1021,7 @@ histograms an volcano plots.</p>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
-function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">here</a>.</p>
 </div>
 <div id="cluster-the-hits-significant-features" class="section level1">
 <h1>Cluster the hits (significant features)</h1>
@@ -1045,9 +1067,11 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
 <span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
 <span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="dv">0</span>,</span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.25</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
-function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
 cluster_hits() report shows the results of all three, if they are
 present (category 2 and 3 can only be generated when the design formula
@@ -1097,7 +1121,7 @@ dotplots in R.</p>
 <span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a></span>
 <span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co"># Specify the clusterProfiler parameters</span></span>
 <span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>clusterProfiler_params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">adj_p_value =</span> <span class="fl">0.05</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">pvalueCutoff =</span> <span class="fl">0.05</span>,</span>
 <span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>,</span>
 <span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
 <span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span>,</span>
@@ -1121,7 +1145,7 @@ levels, and generates the HTML report:</p>
 <span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir</span>
 <span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
-function <a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html">here</a>.</p>
 <p>This report first shows all enrichment results, where more than 2
 genes supported a term, in a tabular format. The table with all the
 terms with &lt; 2 genes supporting it can be downloaded by clicking on a

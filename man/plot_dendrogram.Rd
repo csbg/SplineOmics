@@ -4,10 +4,13 @@
 \alias{plot_dendrogram}
 \title{Plot Dendrogram}
 \usage{
-plot_dendrogram(hc, k)
+plot_dendrogram(hc, clusters, k)
 }
 \arguments{
 \item{hc}{A hierarchical clustering object.}
+
+\item{clusters}{A numeric vector, specifying the cluster in which each hit is
+in. Index 1 is the cluster of hit nr. 1, index 2 of hit nr. 2, etc.}
 
 \item{k}{An integer specifying the number of clusters.}
 }

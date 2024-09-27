@@ -94,9 +94,18 @@ run_gsea <- function(
 
   # Extract the plots, plot sizes, and header info from the processed results
   plots <- purrr::flatten(map(processed_results, "plot"))
-  plots <- c("section_break", plots)
   plots_sizes <- unlist(map(processed_results, "plot_size"))
-  plots_sizes <- c(999, plots_sizes)
+  
+  insert_after_each <- function(lst, value) {
+    result <- vector("list", 2 * length(lst))  # Create a list twice the size
+    result[seq(1, length(result), by = 2)] <- lst  # Insert original elements at odd positions
+    result[seq(2, length(result), by = 2)] <- value  # Insert value at even positions
+    return(result)
+  }
+  
+  plots <- insert_after_each(plots, "section_break")
+  plots_sizes <- insert_after_each(plots_sizes, 999)
+
   level_headers_info <- map(processed_results, "header_info")
 
   names(level_headers_info) <- names(all_results)
@@ -410,13 +419,49 @@ build_create_gsea_report <- function(
       )
 
       html_content <- section_content$html_content
-      toc <- section_content$toc
+      # toc <- section_content$toc
 
       current_header_index <- current_header_index + 1
 
       pb$tick()
       next
     }
+    
+    # Add the section header and horizontal line just before the plot
+    section_info <- level_headers_info[[current_header_index]]
+    section_header <- sprintf(
+      "<h2 style='%s' id='section%d'>%s</h2>",
+      section_header_style,
+      index,
+      section_info$header_name
+    )
+    
+    horizontal_line <- ""
+    
+    if (current_header_index > 1) {
+      horizontal_line <- "<hr>"
+    }
+    
+    # Update the HTML content with the section header and horizontal line
+    html_content <- paste(
+      html_content,
+      horizontal_line,
+      section_header,
+      sep = "\n"
+    )
+    
+    toc_entry <- sprintf(
+      "<li style='%s'><a href='#section%d'>%s</a></li>",
+      toc_style,
+      index,
+      section_info$header_name
+    )
+    
+    toc <- paste(
+      toc,
+      toc_entry,
+      sep = "\n"
+      )
 
     result <- process_plots(
       plots_element = plots[[index]],
@@ -863,13 +908,6 @@ generate_section_content <- function(
     toc_style
 ) {
 
-  section_header <- sprintf(
-    "<h2 style='%s' id='section%d'>%s</h2>",
-    section_header_style,
-    index,
-    section_info$header_name
-  )
-
   if (any(is.na(section_info$full_enrich_results))) {
 
     no_results_message <- paste0(
@@ -881,33 +919,19 @@ generate_section_content <- function(
 
     html_content <- paste(
       html_content,
-      section_header,
       no_results_message,
       sep = "\n"
     )
 
-    toc_entry <- sprintf(
-      "<li style='%s'><a href='#section%d'>%s</a></li>",
-      toc_style,
-      index,
-      section_info$header_name
-    )
-
-    toc <- paste(
-      toc,
-      toc_entry,
-      sep = "\n"
-    )
-
     return(list(
-      html_content = html_content,
-      toc = toc
+      html_content = html_content
     ))
   }
 
   full_enrich_results_header <- paste0(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
-    "'>Enrichment Results</h3>")
+    "'>Enrichment Results</h3>"
+    )
 
   df <- section_info$full_enrich_results
 
@@ -935,7 +959,8 @@ generate_section_content <- function(
 
   raw_enrich_results_header <- paste0(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
-    "'>Count smaller 2 Enrichment Results</h3>")
+    "'>Count smaller 2 Enrichment Results</h3>"
+    )
 
   base64_df <- sprintf(
     '<a href="%s" download="count2small_results.xlsx">
@@ -948,7 +973,6 @@ generate_section_content <- function(
 
   html_content <- paste(
     html_content,
-    section_header,
     full_enrich_results_header,
     full_enrich_results_html,
     raw_enrich_results_header,
@@ -956,20 +980,8 @@ generate_section_content <- function(
     sep = "\n"
   )
 
-  toc_entry <- sprintf(
-    "<li style='%s'><a href='#section%d'>%s</a></li>",
-    toc_style,
-    index, section_info$header_name
-  )
-  toc <- paste(
-    toc,
-    toc_entry,
-    sep = "\n"
-  )
-
   list(
-    html_content = html_content,
-    toc = toc
+    html_content = html_content
   )
 }
 

@@ -28,7 +28,7 @@ The graphical abstract below shows the full workflow streamlined by `SplineOmics
 -   [📘 Introduction](#-introduction)
 -   [🔧 Installation](#-installation)
     -   [🐳 Docker Container](#-docker-container)
--   [▶️ Usage](#-usage)
+-   [🛠️️ Usage](#-usage)
     -   [Tutorial](#-tutorial)
     -   [Functions in Depth](#-functions-in-depth)
     -   [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
@@ -176,7 +176,7 @@ For instructions on downloading the image of the `SplineOmics` package and runni
 
 If you face "permission denied" issues on Linux distributions, check this [vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
-## ▶️ Usage
+## 🛠️️ Usage
 
 ### Tutorial
 
@@ -221,10 +221,7 @@ library(compositions)
 clr_transformed_data <- clr(data_matrix)  # use as SplineOmics input
 ```
 
-The results from clr transformed data can be harder to understand and interpret
-however. If you prefer ease of interpretation and are fine that the results
-contain some artifacts due to the compositional nature of the data, log2 
-transform your data instead and use that as input for the `SplineOmics` package.
+The results from clr transformed data can be harder to understand and interpret however. If you prefer ease of interpretation and are fine that the results contain some artifacts due to the compositional nature of the data, log2 transform your data instead and use that as input for the `SplineOmics` package.
 
 ``` r
 log2_transformed_data <- log2(data_matrix)  # use as SplineOmics input

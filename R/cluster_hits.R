@@ -160,15 +160,24 @@ cluster_hits <- function(
     sep = ", "
     )
   
-  spline_comp_plots <- generate_spline_comparisons(
-    splineomics = splineomics,
-    all_levels_clustering = all_levels_clustering,
-    data = data,
-    meta = meta,
-    plot_info = plot_info,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction = adj_pthresh_interaction_condition_time
-  )
+  
+  if (adj_pthresh_avrg_diff_conditions > 0 || 
+      adj_pthresh_interaction_condition_time > 0) {
+    
+    spline_comp_plots <- generate_spline_comparisons(
+      splineomics = splineomics,
+      all_levels_clustering = all_levels_clustering,
+      data = data,
+      meta = meta,
+      condition = condition,
+      plot_info = plot_info,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction = adj_pthresh_interaction_condition_time
+    )
+  } else {
+    spline_comp_plots <- NULL
+  }
+  
 
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
@@ -579,6 +588,7 @@ make_clustering_report <- function(
 
     dendrogram <- plot_dendrogram(
       hc = level_clustering$hc,
+      clusters = level_clustering[["clustered_hits"]][["cluster"]],
       k = clusters[q]
       )
 
@@ -748,6 +758,8 @@ make_clustering_report <- function(
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements, which includes
 #'  the condition.
+#' @param condition Column name of meta that contains the levels of the
+#' experiment.
 #' @param plot_info A list containing plotting information such as time unit 
 #' and axis labels.
 #' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
@@ -765,6 +777,7 @@ generate_spline_comparisons <- function(
     all_levels_clustering,  # This list contains the X matrices
     data,
     meta,
+    condition,
     plot_info,  
     adj_pthresh_avrg_diff_conditions,  
     adj_pthresh_interaction  
@@ -780,9 +793,9 @@ generate_spline_comparisons <- function(
       splineomics[['limma_splines_result']][['avrg_diff_conditions']]
     interaction_condition_time <- 
       splineomics[['limma_splines_result']][['interaction_condition_time']]
-    
+
     # Get the unique conditions from the meta data
-    conditions <- unique(meta$condition)
+    conditions <- unique(meta[[condition]])
     
     # Generate all pairwise combinations of conditions
     condition_pairs <- utils::combn(conditions, 2, simplify = FALSE)
@@ -840,17 +853,17 @@ generate_spline_comparisons <- function(
           break
         }
       }
-      
+
       # If both matched dataframes are found, generate plots
       if (!is.null(matched_avrg_diff) 
           && !is.null(matched_interaction_cond_time)) {
         # Get the corresponding dataframes from time_effect
-        time_effect_1 <- time_effect[[paste0("condition_", condition_1)]]
-        time_effect_2 <- time_effect[[paste0("condition_", condition_2)]]
+        time_effect_1 <- time_effect[[paste0(condition, "_", condition_1)]]
+        time_effect_2 <- time_effect[[paste0(condition, "_", condition_2)]]
         
         # Get the respective X matrices from all_levels_clustering
-        X_1 <- all_levels_clustering[[paste0("condition_", condition_1)]]$X
-        X_2 <- all_levels_clustering[[paste0("condition_", condition_2)]]$X
+        X_1 <- all_levels_clustering[[paste0(condition, "_", condition_1)]]$X
+        X_2 <- all_levels_clustering[[paste0(condition, "_", condition_2)]]$X
 
         # Call the plot function for this pair and store the result
         plots_and_feature_names <- plot_spline_comparisons(
@@ -862,6 +875,7 @@ generate_spline_comparisons <- function(
           interaction_condition_time = matched_interaction_cond_time,
           data = data,
           meta = meta,
+          condition = condition,
           X_1 = X_1,
           X_2 = X_2,
           plot_info = plot_info,
@@ -1391,6 +1405,8 @@ plot_heatmap <- function(
 #' colored by clusters.
 #'
 #' @param hc A hierarchical clustering object.
+#' @param clusters A numeric vector, specifying the cluster in which each hit is
+#' in. Index 1 is the cluster of hit nr. 1, index 2 of hit nr. 2, etc.
 #' @param k An integer specifying the number of clusters.
 #'
 #' @return A ggplot object representing the dendrogram.
@@ -1405,41 +1421,58 @@ plot_heatmap <- function(
 #'
 plot_dendrogram <- function(
     hc,
+    clusters,
     k
 ) {
-  
+
+  # Convert hc to dendrogram
   dend <- stats::as.dendrogram(hc)
+
+  # Get clusters based on cutree result
   clusters <- stats::cutree(hc, k)
-  
-  # Use scales::hue_pal for generating distinct colors
+
+  # Get the order of clusters as they appear in the dendrogram
+  cluster_order <- clusters[hc[["order"]]]
+
+  # Find the unique clusters in the order they appear in the dendrogram
+  unique_cluster_order <- unique(cluster_order)
+
+  # Generate distinct colors for the k clusters
   colors <- scales::hue_pal()(k)
-  
+
+  # Reorder the colors according to the appearance of clusters in the dendrogram
+  ordered_colors <- colors[match(
+    unique_cluster_order,
+    sort(unique(clusters))
+    )]
+
+  # Apply the reordered colors to the branches of the dendrogram
   dend_colored <- dendextend::color_branches(
     dend,
     k = k,
-    labels_colors = colors
+    col = ordered_colors
   )
-  
-  dend_colored <-
-    dendextend::set(
-      dend_colored,
-      "labels",
-      value = rep(
-        "",
-        length(dendextend::get_leaves_attr(
-          dend_colored,
-          "label"
-        ))
-      )
+
+  # Remove labels for the plot
+  dend_colored <- dendextend::set(
+    dend_colored,
+    "labels",
+    value = rep(
+      "",
+      length(dendextend::get_leaves_attr(dend_colored, "label"))
     )
-  
+  )
+
+  # Convert to ggplot-compatible dendrogram
   ggdend <- dendextend::as.ggdend(dend_colored)
+
+  # Create the plot
   p_dend <- ggplot2::ggplot(ggdend) +
     ggplot2::labs(
       title = paste(
-        "Hierarchical Clustering Dendrogram Features (colors = clusters", 
-        "(not matching legend plot below!))"
-      ), 
+        "Hierarchical Clustering Dendrogram Features (colors = clusters",
+        "(see legend plot below!))"
+      ),
       x = "",
       y = ""
     ) +
@@ -1451,10 +1484,9 @@ plot_dendrogram <- function(
       axis.ticks.y = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(size = 9)
     )
-  
+
   return(p_dend)
 }
-
 
 
 #' Plot All Mean Splines
@@ -2001,6 +2033,8 @@ plot_splines <- function(
 #' condition and time.
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements.
+#' @param condition Column name of meta that contains the levels of the
+#' experiment.
 #' @param X_1 A matrix of spline basis values for the first condition.
 #' @param X_2 A matrix of spline basis values for the second condition.
 #' @param plot_info A list containing plotting information such as time unit 
@@ -2029,6 +2063,7 @@ plot_spline_comparisons <- function(
     interaction_condition_time,
     data,
     meta,
+    condition,
     X_1,
     X_2,
     plot_info,
@@ -2106,8 +2141,8 @@ plot_spline_comparisons <- function(
       # Use the conditions to split the data points
       plot_data <- data.frame(
         Time = time_points,
-        Y1 = ifelse(meta$condition == condition_1, y_values_1, NA),
-        Y2 = ifelse(meta$condition == condition_2, y_values_2, NA)
+        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
+        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA)
       )
 
       # Create the plot
@@ -2159,6 +2194,13 @@ plot_spline_comparisons <- function(
           c(paste("Data", condition_1), paste("Spline", condition_1),
             paste("Data", condition_2), paste("Spline", condition_2))
         )) +
+        ggplot2::scale_x_continuous(
+          breaks = unique(meta$Time),  # Labels are placed at data points 
+          guide = ggplot2::guide_axis(
+            angle = 45,         # Tilt the labels 45 degrees
+            n.dodge = 2         # Prevent overlapping by dodging labels
+          )
+        ) +
         ggplot2::labs(
           title = paste(
             "\nadj.P.Val avrg_diff_conditions: ",

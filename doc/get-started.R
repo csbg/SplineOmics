@@ -75,6 +75,10 @@ splineomics <- SplineOmics::create_splineomics(
   meta_batch_column = "Reactor"  # For batch effect removal
 )
 
+class(splineomics)   # Show that the class is SplineOmics
+# Special print.SplineOmics function leads to selective printing
+print(splineomics)   
+
 ## ----Run EDA function, eval = FALSE-------------------------------------------
 #  plots <- SplineOmics::explore_data(
 #    splineomics = splineomics,   # SplineOmics object
@@ -134,7 +138,7 @@ report_dir <- here::here(
 meta_batch_column = "Reactor" 
 
 # Test out two different p-value thresholds (inner hyperparameter)
-pthresholds <- c(
+adj_pthresholds <- c(
   0.05,
   0.1
   )
@@ -163,7 +167,7 @@ print(spline_test_configs)
 #    modes = modes,
 #    spline_test_configs = spline_test_configs,
 #    report_dir = report_dir,
-#    pthresholds = pthresholds,
+#    adj_pthresholds = adj_pthresholds,
 #    )
 #  
 
@@ -233,6 +237,8 @@ splineomics <- SplineOmics::run_limma_splines(
 #    genes = genes,
 #    plot_info = plot_info,
 #    report_dir = report_dir,
+#    adj_pthresh_avrg_diff_conditions = 0,
+#    adj_pthresh_interaction_condition_time = 0.25
 #    )
 
 ## ----download Enrichr databases, eval = FALSE---------------------------------
@@ -269,7 +275,7 @@ splineomics <- SplineOmics::run_limma_splines(
 #  
 #  # Specify the clusterProfiler parameters
 #  clusterProfiler_params <- list(
-#    adj_p_value = 0.05,
+#    pvalueCutoff = 0.05,
 #    pAdjustMethod = "BH",
 #    minGSSize = 10,
 #    maxGSSize = 500,

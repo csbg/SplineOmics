@@ -9,6 +9,7 @@ generate_spline_comparisons(
   all_levels_clustering,
   data,
   meta,
+  condition,
   plot_info,
   adj_pthresh_avrg_diff_conditions,
   adj_pthresh_interaction
@@ -28,6 +29,9 @@ for spline fitting.}
 
 \item{meta}{The metadata associated with the measurements, which includes
 the condition.}
+
+\item{condition}{Column name of meta that contains the levels of the
+experiment.}
 
 \item{plot_info}{A list containing plotting information such as time unit 
 and axis labels.}

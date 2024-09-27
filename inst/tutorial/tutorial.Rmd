@@ -354,6 +354,10 @@ splineomics <- SplineOmics::create_splineomics(
   condition = "Phase",  # Column of meta that contains the levels.
   meta_batch_column = "Reactor"  # For batch effect removal
 )
+
+class(splineomics)   # Show that the class is SplineOmics
+# Special print.SplineOmics function leads to selective printing
+print(splineomics)   
 ```
 
 Now that we have the SplineOmics object defined, we can perform our exploratory
@@ -528,7 +532,7 @@ report_dir <- here::here(
 meta_batch_column = "Reactor" 
 
 # Test out two different p-value thresholds (inner hyperparameter)
-pthresholds <- c(
+adj_pthresholds <- c(
   0.05,
   0.1
   )
@@ -561,7 +565,7 @@ SplineOmics::screen_limma_hyperparams(
   modes = modes,
   spline_test_configs = spline_test_configs,
   report_dir = report_dir,
-  pthresholds = pthresholds,
+  adj_pthresholds = adj_pthresholds,
   )
 
 ```
@@ -756,7 +760,7 @@ databases <- readr::read_tsv(
 
 # Specify the clusterProfiler parameters
 clusterProfiler_params <- list(
-  adj_p_value = 0.05,
+  pvalueCutoff = 0.05,
   pAdjustMethod = "BH",
   minGSSize = 10,
   maxGSSize = 500,
