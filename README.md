@@ -126,75 +126,91 @@ GitHub repository into your R environment.
 
 #### Installation Steps
 
-1.  **Open RStudio** or your R console.
+> **Note for Windows Users:**
 
-2.  **Install `SplineOmics` from GitHub** with all dependencies.
+Note that some installation paths potentially are not writable on
+**Windows**. Therefore, it can be necessary to set up a library path and
+use that path for the installations.
 
-Copy and paste the following code block into your R console or run it as
-a script.
-
-> **Note for Windows Users:**  
-> Please read the text below this code block before running it!
+Alternatively, you can run `RStudio` as administrator once for the
+installation (which is however generally not recommended, because it is
+a security risk).
 
 ``` r
-# Function to ensure a package is installed
-ensure_installed <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg)
-  }
+# Create a directory to store R libraries if it doesn't exist
+custom_lib_path <- "~/Rlibs"  
+
+dir.create(
+  custom_lib_path,
+  showWarnings = FALSE,
+  recursive = TRUE
+  )
+
+# Set the library path to include the new directory
+.libPaths(c(custom_lib_path, .libPaths()))
+
+# Check if the new library path is added successfully
+if (custom_lib_path %in% .libPaths()) {
+  message("Library path set to: ", custom_lib_path)
+} else {
+  message("Failed to set library path.")
 }
+```
 
-# Install packages if not already available
-ensure_installed("BiocManager")
-ensure_installed("remotes")
+1.  **Open RStudio** or your R console.
 
-# Load packages
-library(BiocManager)
-library(remotes)
+2.  **Install `BiocManager`** for Bioconductor dependencies (if not
+    already installed)
 
-# Install Bioconductor dependencies
+``` r
+install.packages("BiocManager")
+```
+
+3.  **Install Bioconductor dependencies** separately using `BiocManager`
+
+``` r
+library(BiocManager)  # load the BiocManager package
 BiocManager::install(c(
   "ComplexHeatmap",
   "limma"
-  ), force = TRUE)
+  ), 
+  force = TRUE,
+  # Uncomment line below when specifying install path
+  # lib = custom_lib_path 
+  )
+```
 
-# Install SplineOmics from GitHub
+4.  **Install** the **`remotes`** package for GitHub downloads (if not
+    already installed)
+
+``` r
+install.packages("remotes")
+```
+
+5.  **Install** the **`SplineOmics`** package from GitHub and all its
+    non-Bioconductor dependencies, using `remotes`
+
+``` r
+library(remotes)  # load the remotes package
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
   ref = "0.1.0",       # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   force = TRUE,         # Force reinstallation
   upgrade = "always",   # Always upgrade dependencies
+  # Uncomment line below when specifying install path
+  # lib = custom_lib_path 
 )
+```
 
-# Verify the installation
+6.  **Verify** the **installation** of the `SplineOmics` package
+
+``` r
 if ("SplineOmics" %in% rownames(installed.packages())) {
   message("SplineOmics installed successfully.")
 } else {
   message("SplineOmics installation failed.")
 }
-```
-
-Note that when some installation paths are not writable on **Windows**,
-it is necessary running `RStudio` as administrator once for the
-installation. Otherwise, set up a library path (code block below) for
-the installation and (re)run the code block above.
-
-``` r
-# Create a directory for R libraries
-dir.create("~/Rlibs", showWarnings = FALSE)
-
-# Set the library path to include the new directory
-.libPaths(c("~/Rlibs", .libPaths()))
-```
-
-3.  **Load the `SplineOmics` package**:
-
-Once the installation is complete, load the `SplineOmics` package into
-your R session or script to start using it:
-
-``` r
-library(SplineOmics)
 ```
 
 #### Troubleshooting
