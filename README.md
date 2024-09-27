@@ -33,7 +33,7 @@ Workflow</figcaption>
   - [🐳 Docker Container](#-docker-container)
 - [▶️ Usage](#-usage)
   - [Tutorial](#-tutorial)
-  - [Functions in Depth](#-functions-in-depth)
+  - [Details](#-details)
   - [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
@@ -251,13 +251,13 @@ library(SplineOmics)
 open_template()
 ```
 
-### Functions in Depth
+### Details
 
 A detailed description of all arguments and outputs of all the functions
 in the package (exported and internal functions) can be found
 [here](https://csbg.github.io/SplineOmics/reference/).
 
-### Design `limma` design formula
+#### Design `limma` design formula
 
 A quick guide on how to design a `limma` design formula can be found
 [here](https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html)
