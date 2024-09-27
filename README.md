@@ -1,8 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
 
 # SplineOmics
 
@@ -25,35 +20,30 @@ The graphical abstract below shows the full workflow streamlined by
 `SplineOmics`:
 
 <figure>
-
-<img src="man/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"/>
-
-<figcaption aria-hidden="true">
-
-Graphical Abstract of SplineOmics Workflow
-
-</figcaption>
-
+<img src="man/figures/SplineOmics_graphical_abstract.png"
+alt="Graphical Abstract of SplineOmics Workflow" />
+<figcaption aria-hidden="true">Graphical Abstract of SplineOmics
+Workflow</figcaption>
 </figure>
 
 ## Table of Contents
 
--   [📘 Introduction](#-introduction)
--   [🔧 Installation](#-installation)
-    -   [🐳 Docker Container](#-docker-container)
--   [🛠️️ Usage](#-usage)
-    -   [Tutorial](#-tutorial)
-    -   [Functions in Depth](#-functions-in-depth)
-    -   [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
--   [📦 Dependencies](#-dependencies)
--   [📚 Further Reading](#-further-reading)
--   [❓ Getting Help](#-getting-help)
--   [🤝 Contributing](#-contributing)
--   [💬 Feedback](#-feedback)
--   [📜 License](#-license)
--   [🎓 Citation](#-citation)
--   [🌟 Contributors](#-contributors)
--   [🙏 Acknowledgements](#-ackknowledgements)
+- [📘 Introduction](#-introduction)
+- [🔧 Installation](#-installation)
+  - [🐳 Docker Container](#-docker-container)
+- [▶️ Usage](#-usage)
+  - [Tutorial](#-tutorial)
+  - [Functions in Depth](#-functions-in-depth)
+  - [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
+- [📦 Dependencies](#-dependencies)
+- [📚 Further Reading](#-further-reading)
+- [❓ Getting Help](#-getting-help)
+- [🤝 Contributing](#-contributing)
+- [💬 Feedback](#-feedback)
+- [📜 License](#-license)
+- [🎓 Citation](#-citation)
+- [🌟 Contributors](#-contributors)
+- [🙏 Acknowledgements](#-acknowledgements)
 
 ## 📘 Introduction
 
@@ -87,40 +77,39 @@ abundances, etc.).
 
 With `SplineOmics`, you can:
 
--   **Automatically perform exploratory data analysis:**
+- **Automatically perform exploratory data analysis:**
 
-    The `explore_data()` function generates an HTML report, containing
-    various plots, such as density, PCA, and correlation heatmap plots
-    ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
+  The `explore_data()` function generates an HTML report, containing
+  various plots, such as density, PCA, and correlation heatmap plots
+  ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
 
--   **Explore various limma splines hyperparameters:**
+- **Explore various limma splines hyperparameters:**
 
-    Test combinations of hyperparameters, such as different datasets,
-    `limma` design formulas, degrees of freedom, p-value thresholds,
-    etc., using the `screen_limma_hyperparams()` function ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
-    (along with the
-    [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html))).
+  Test combinations of hyperparameters, such as different datasets,
+  `limma` design formulas, degrees of freedom, p-value thresholds, etc.,
+  using the `screen_limma_hyperparams()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
+  (along with the
+  [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html))).
 
--   **Perform limma spline analysis:**
+- **Perform limma spline analysis:**
 
-    Use the `run_limma_splines()` function to perform the `limma`
-    analysis with splines once the optimal hyperparameters are
-    identified ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
+  Use the `run_limma_splines()` function to perform the `limma` analysis
+  with splines once the optimal hyperparameters are identified ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
 
--   **Cluster significant features:**
+- **Cluster significant features:**
 
-    Cluster the significant features (hits) identified in the spline
-    analysis with the `cluster_hits()` function ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
+  Cluster the significant features (hits) identified in the spline
+  analysis with the `cluster_hits()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
 
--   **Run GSEA with clustered hits:**
+- **Run GSEA with clustered hits:**
 
-    Perform gene set enrichment analysis (GSEA) using the clustered hits
-    with the `create_gsea_report()` function ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html)).
+  Perform gene set enrichment analysis (GSEA) using the clustered hits
+  with the `create_gsea_report()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html)).
 
 ## 🔧 Installation
 
@@ -129,11 +118,11 @@ GitHub repository into your R environment.
 
 #### Prerequisites
 
--   Ensure **R** is installed on your system. If not, download and
-    install it from [CRAN](https://cran.r-project.org/).
--   **RStudio** is recommended for a more user-friendly experience
-    with R. Download and install RStudio from
-    [posit.co](https://posit.co/download/rstudio-desktop/).
+- Ensure **R** is installed on your system. If not, download and install
+  it from [CRAN](https://cran.r-project.org/).
+- **RStudio** is recommended for a more user-friendly experience with R.
+  Download and install RStudio from
+  [posit.co](https://posit.co/download/rstudio-desktop/).
 
 #### Installation Steps
 
@@ -144,7 +133,7 @@ GitHub repository into your R environment.
 Copy and paste the following code block into your R console or run it as
 a script.
 
-> **Note for Windows Users:**\
+> **Note for Windows Users:**  
 > Please read the text below this code block before running it!
 
 ``` r
@@ -239,7 +228,7 @@ If you face “permission denied” issues on Linux distributions, check
 this
 [vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
-## 🛠️️ Usage
+## ▶ Usage
 
 ### Tutorial
 
@@ -327,46 +316,44 @@ be installed along with `SplineOmics`. If you already have these
 packages installed, ensure they are up to date to avoid any
 compatibility issues.
 
--   **ComplexHeatmap**: For creating complex heatmaps with advanced
-    features.
--   **base64enc**: For encoding/decoding base64.
--   **dendextend**: For extending `dendrogram` objects in R, allowing
-    for easier manipulation of dendrograms.
--   **dplyr**: For data manipulation.
--   **ggplot2**: For creating elegant data visualizations using the
-    grammar of graphics.
--   **ggrepel**: For better label placement in ggplot2.
--   **here**: For constructing paths to your project’s files.
--   **limma**: For linear models for microarray data.
--   **openxlsx**: For reading, writing, and editing xlsx files.
--   **patchwork**: For combining multiple ggplot objects into a single
-    plot.
--   **pheatmap**: For creating pretty heatmaps.
--   **progress**: For adding progress bars to your loops and apply
-    functions.
--   **purrr**: For functional programming tools.
--   **rlang**: For tools to work with core language features of R and
-    R’s base types.
--   **scales**: For scale functions for visualization.
--   **tibble**: For creating tidy data frames that are easy to work
-    with.
--   **tidyr**: For tidying your data.
--   **zip**: For combining files into a zip file.
+- **ComplexHeatmap**: For creating complex heatmaps with advanced
+  features.
+- **base64enc**: For encoding/decoding base64.
+- **dendextend**: For extending `dendrogram` objects in R, allowing for
+  easier manipulation of dendrograms.
+- **dplyr**: For data manipulation.
+- **ggplot2**: For creating elegant data visualizations using the
+  grammar of graphics.
+- **ggrepel**: For better label placement in ggplot2.
+- **here**: For constructing paths to your project’s files.
+- **limma**: For linear models for microarray data.
+- **openxlsx**: For reading, writing, and editing xlsx files.
+- **patchwork**: For combining multiple ggplot objects into a single
+  plot.
+- **pheatmap**: For creating pretty heatmaps.
+- **progress**: For adding progress bars to your loops and apply
+  functions.
+- **purrr**: For functional programming tools.
+- **rlang**: For tools to work with core language features of R and R’s
+  base types.
+- **scales**: For scale functions for visualization.
+- **tibble**: For creating tidy data frames that are easy to work with.
+- **tidyr**: For tidying your data.
+- **zip**: For combining files into a zip file.
 
 ### Optional dependencies
 
 These dependencies are only necessary for some functions:
 
--   **edgeR**: For preprocessing RNA-seq data in the run_limma_splines()
-    fun.
--   **clusterProfiler**: For the run_gsea() function (gene set
-    enrichment).
--   **rstudioapi**: For the open_tutorial() and open_template()
-    functions.
+- **edgeR**: For preprocessing RNA-seq data in the run_limma_splines()
+  fun.
+- **clusterProfiler**: For the run_gsea() function (gene set
+  enrichment).
+- **rstudioapi**: For the open_tutorial() and open_template() functions.
 
 ### R Version
 
--   Recommended: R 4.3.3 or higher
+- Recommended: R 4.3.3 or higher
 
 ## 📚 Further Reading
 
@@ -374,15 +361,15 @@ For those interested in gaining a deeper understanding of the
 methodologies used in the `SplineOmics` package, here are some
 recommended publications:
 
--   **Splines**: To learn more about splines, you can refer to this
-    [review](https://doi.org/10.1186/s12874-019-0666-3).
+- **Splines**: To learn more about splines, you can refer to this
+  [review](https://doi.org/10.1186/s12874-019-0666-3).
 
--   **limma**: To read about the `limma` R package, you can refer to
-    this [publication](https://doi.org/10.1093/nar/gkv007).
+- **limma**: To read about the `limma` R package, you can refer to this
+  [publication](https://doi.org/10.1093/nar/gkv007).
 
--   **Hierarchical clustering**: To get information about hierarchical
-    clustering, you can refer to this [web
-    article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
+- **Hierarchical clustering**: To get information about hierarchical
+  clustering, you can refer to this [web
+  article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
 
 ## ❓ Getting Help
 
@@ -432,12 +419,12 @@ inspire, and create.
 We appreciate your feedback! Besides raising issues, you can provide
 feedback in the following ways:
 
--   **Direct Email**: Send your feedback directly to [Thomas
-    Rauter](mailto:thomas.rauter@plus.ac.at).
+- **Direct Email**: Send your feedback directly to [Thomas
+  Rauter](mailto:thomas.rauter@plus.ac.at).
 
--   **Anonymous Feedback**: Use [this Google
-    Form](https://forms.gle/jocMXSxLf3GrGBdT9) to provide anonymous
-    feedback by answering questions.
+- **Anonymous Feedback**: Use [this Google
+  Form](https://forms.gle/jocMXSxLf3GrGBdT9) to provide anonymous
+  feedback by answering questions.
 
 Your feedback helps us improve the project and address any issues you
 may encounter.
@@ -467,19 +454,18 @@ of `SplineOmics`. Thank you for using our package!
 
 ## 🌟 Contributors
 
--   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
-    package, developed the approach together with VSchaepertoens under
-    guidance from nfortelny and skafdasschaf.
--   [nfortelny](https://github.com/nfortelny) - 🧠 Principal
-    Investigator, provided guidance and support for the overall
-    approach.
--   [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped
-    reviewing code, delivered improvement suggestions and scientific
-    guidance to develop the approach.
--   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed
-    one internal plotting function, as well as some code for the
-    exploratory data analysis plots, and the overall approach together
-    with Thomas-Rauter.
+- [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
+  package, developed the approach together with VSchaepertoens under
+  guidance from nfortelny and skafdasschaf.
+- [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator,
+  provided guidance and support for the overall approach.
+- [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing
+  code, delivered improvement suggestions and scientific guidance to
+  develop the approach.
+- [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed one
+  internal plotting function, as well as some code for the exploratory
+  data analysis plots, and the overall approach together with
+  Thomas-Rauter.
 
 ## 🙏 Acknowledgements
 
