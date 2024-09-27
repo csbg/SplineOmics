@@ -162,19 +162,23 @@ library(SplineOmics)
 
 If you encounter errors related to dependencies or package versions during installation, try updating your R and RStudio to the latest versions and repeat the installation steps.
 
-For issues specifically related to the `SplineOmics` package, check the [Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the GitHub repository for similar problems or to post a new issue.
+For issues specifically related to the `SplineOmics` package, check the 
+[Issues section](https://github.com/csbg/SplineOmics/issues)
+of the GitHub repository for similar problems or to post a new issue.
 
 ### 🐳 Docker Container
 
 Alternatively, you can run your analysis in a `Docker` container. The underlying `Docker` image encapsulates the `SplineOmics` package together with the necessary environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.
 
-More information about `Docker` containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
+More information about `Docker` containers can be found on the 
+[official Docker page](https://www.docker.com/resources/what-container/).
 
 For instructions on downloading the image of the `SplineOmics` package and running the container, please refer to the [Docker instructions](https://csbg.github.io/SplineOmics/articles/Docker-instructions.html).
 
 #### Troubleshooting
 
-If you face "permission denied" issues on Linux distributions, check this [vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
+If you face "permission denied" issues on Linux distributions, check this
+[vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
 ## ▶ Usage
 
@@ -278,9 +282,16 @@ For those interested in gaining a deeper understanding of the methodologies used
 
 ## ❓ Getting Help
 
-If you encounter a bug or have a suggestion for improving the `SplineOmics` package, we encourage you to [open an issue](https://github.com/csbg/SplineOmics/issues) on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.
+If you encounter a bug or have a suggestion for improving the `SplineOmics` 
+package, we encourage you to [open an issue](https://github.com/csbg/SplineOmics/issues)
+on our GitHub repository. Before opening a new issue, please check to see if 
+your question or bug has already been reported by another user. This helps avoid
+duplicate reports and ensures that we can address problems efficiently.
 
-For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the [GitHub Discussions](https://github.com/csbg/SplineOmics/discussions) page for `SplineOmics`.
+For more detailed questions, discussions, or contributions regarding the
+package’s use and development, please refer to the 
+[GitHub Discussions](https://github.com/csbg/SplineOmics/discussions) 
+page for `SplineOmics`.
 
 ## 🤝 Contributing
 
@@ -318,11 +329,16 @@ This package is licensed under the MIT License: [LICENSE](./LICENSE)
 
 The `SplineOmics` package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.
 
-To cite this package, you can use the citation information provided in the [`inst/CITATION.cff`](./inst/CITATION.cff) file.
+To cite this package, you can use the citation information provided in the
+[`CITATION.cff`](./CITATION.cff) file.
 
-You can also generate a citation in various formats using the `CITATION.cff` file by visiting the top right of this repo and clicking on the “Cite this repository” button.
+You can also generate a citation in various formats using the `CITATION.cff` 
+file by visiting the top right of this repo and clicking on the 
+“Cite this repository” button.
 
-Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of `SplineOmics`. Thank you for using our package!
+Also, if you like the package, consider giving the GitHub repository a star. 
+Your support helps us in the continued development and improvement of 
+`SplineOmics`. Thank you for using our package!
 
 ## 🌟 Contributors
 
@@ -333,4 +349,10 @@ Also, if you like the package, consider giving the GitHub repository a star. You
 
 ## 🙏 Acknowledgements
 
-This work was carried out in the context of the DigiTherapeutX project, which was funded by the Austrian Science Fund (FWF). The research was conducted under the supervision of Prof. Nikolaus Fortelny, who leads the Computational Systems Biology working group at the Paris Lodron University of Salzburg, Austria. You can find more information about Prof. Fortelny's research group [here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).
+This work was carried out in the context of the DigiTherapeutX project, 
+which was funded by the Austrian Science Fund (FWF). The research was 
+conducted under the supervision of Prof. Nikolaus Fortelny, who leads the 
+Computational Systems Biology working group at the Paris Lodron University 
+of Salzburg, Austria. You can find more information about Prof. Fortelny's 
+research group 
+[here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).

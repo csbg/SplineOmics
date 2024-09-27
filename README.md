@@ -203,7 +203,7 @@ during installation, try updating your R and RStudio to the latest
 versions and repeat the installation steps.
 
 For issues specifically related to the `SplineOmics` package, check the
-[Issues section](https://github.com/%3Cuser%3E/%3Crepo%3E/issues) of the
+[Issues section](https://github.com/csbg/SplineOmics/issues) of the
 GitHub repository for similar problems or to post a new issue.
 
 ### 🐳 Docker Container
@@ -442,7 +442,7 @@ scientific journal or similar outlet. However, if this package helped
 you in your work, consider citing this GitHub repository.
 
 To cite this package, you can use the citation information provided in
-the [`inst/CITATION.cff`](./inst/CITATION.cff) file.
+the [`CITATION.cff`](./CITATION.cff) file.
 
 You can also generate a citation in various formats using the
 `CITATION.cff` file by visiting the top right of this repo and clicking
