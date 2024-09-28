@@ -51,6 +51,7 @@ report information.</p>
 <span>  <span class="va">plots</span>,</span>
 <span>  <span class="va">plots_sizes</span>,</span>
 <span>  <span class="va">report_info</span>,</span>
+<span>  limma_result_2_and_3_plots <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  meta <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  topTables <span class="op">=</span> <span class="cn">NA</span>,</span>
@@ -60,7 +61,6 @@ report information.</p>
 <span>  adj_pthresholds <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  report_type <span class="op">=</span> <span class="st">"explore_data"</span>,</span>
 <span>  feature_name_columns <span class="op">=</span> <span class="cn">NA</span>,</span>
-<span>  analysis_type <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  filename <span class="op">=</span> <span class="st">"report"</span>,</span>
 <span>  timestamp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%d_%m_%Y-%H_%M_%S"</span><span class="op">)</span>,</span>
@@ -82,6 +82,13 @@ report information.</p>
 
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
 <dd><p>A named list containing report information.</p></dd>
+
+
+<dt id="arg-limma-result-and-plots">limma_result_2_and_3_plots<a class="anchor" aria-label="anchor" href="#arg-limma-result-and-plots"></a></dt>
+<dd><p>List containing the list of lists with all
+the plots for all the pairwise comparisons of the condition in terms of
+average spline diff and interaction condition time, and another list of lists
+where the respective names of each plot are stored.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
@@ -131,14 +138,6 @@ plots where created. This is because those
 descriptions can be made up of several column
 values, and the specific columns are then stated
 in the HTML report on top (e.g gene_uniprotID).</p></dd>
-
-
-<dt id="arg-analysis-type">analysis_type<a class="anchor" aria-label="anchor" href="#arg-analysis-type"></a></dt>
-<dd><p>One of the strings "time_effect", "avrg_diff_conditions"
-, or "interaction_condition_time". Those represent the
-three different outputs of a limma analysis. For more
-info on those 3 "categories", see package dir inst/
-descriptions/limma_result_categories.pdf.</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>

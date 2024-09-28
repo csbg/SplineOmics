@@ -2,7 +2,11 @@
 FROM rocker/rstudio:4.4.0
 
 # Create directories for the R package, data, output, and workspace
-RUN mkdir -p /home/rstudio/input /home/rstudio/output /app /log /renv/library
+RUN mkdir -p /home/rstudio/input /home/rstudio/output /app /log 
+
+# Ensure the rstudio user has ownership of input and output directories
+RUN chown -R rstudio:rstudio /home/rstudio/input /home/rstudio/output && \
+    chmod -R 755 /home/rstudio/input /home/rstudio/output
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -25,19 +29,19 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory 
 WORKDIR /app
 
-# Ensure BiocManager and remotes packages are installed
+# Ensure BiocManager and remotes packages are installed in the custom library
 RUN R -e "install.packages('BiocManager'); install.packages('remotes')" 2>&1 | tee /log/biocmanager_remotes_install_log.txt
 
-# Install the SplineOmics package from GitHub
+# Install the SplineOmics package from GitHub in the custom library
 RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.1.0', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
 
-# Install Bioconductor dependencies via BiocManager
+# Install Bioconductor dependencies via BiocManager in the custom library
 RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'edgeR', 'clusterProfiler'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
 
-# Install necessary R packages (conflicted, here, readxl, readr)
+# Install necessary R packages in the custom library
 RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))" 2>&1 | tee /log/required_packages_install_log.txt
 
-# Write installed R packages and versions to a file
+# Write installed R packages and versions to a file in the default library
 RUN R -e "installed_packages <- installed.packages(); write.csv(installed_packages, '/log/installed_r_packages.csv', row.names = FALSE)"
 
 # Write installed operating system packages to a file
@@ -47,5 +51,5 @@ RUN dpkg-query -Wf '${Package} ${Version}\n' > /log/installed_os_packages.txt
 CMD ["/init"]
 
 # To build the image, run the following command in the dir where this Dockerfile is located:
-# docker build -t thomasrauter/splineomics:0.1.0 .
+# docker build --no-cache -t thomasrauter/splineomics:0.1.0 .
 

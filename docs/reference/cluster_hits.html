@@ -70,13 +70,15 @@ compiled into an HTML report.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_hits</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
-<span>  <span class="va">genes</span>,</span>
+<span>  <span class="va">clusters</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
-<span>  clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span><span class="op">)</span>,</span>
+<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  genes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y_axis_label <span class="op">=</span> <span class="st">"Value"</span>, time_unit <span class="op">=</span> <span class="st">"min"</span>, treatment_labels <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>    treatment_timepoints <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  plot_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span>, meta_replicate_column <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  analysis_type <span class="op">=</span> <span class="st">"time_effect"</span>,</span>
 <span>  report <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -107,9 +109,8 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
 </ul></dd>
 
 
-<dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
-<dd><p>A character vector containing the gene names of the features to
-be analyzed.</p></dd>
+<dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
+<dd><p>Character or integer vector specifying the number of clusters</p></dd>
 
 
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
@@ -117,9 +118,21 @@ be analyzed.</p></dd>
 hits in each top table.</p></dd>
 
 
-<dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
-<dd><p>Character or integer vector specifying the number of clusters
-or 'auto' for automatic estimation.</p></dd>
+<dt id="arg-adj-pthresh-avrg-diff-conditions">adj_pthresh_avrg_diff_conditions<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-avrg-diff-conditions"></a></dt>
+<dd><p>p-value threshold for the results
+from the average difference of the condition limma result. Per default 0 (
+turned off).</p></dd>
+
+
+<dt id="arg-adj-pthresh-interaction-condition-time">adj_pthresh_interaction_condition_time<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-interaction-condition-time"></a></dt>
+<dd><p>p-value threshold for the
+results from the interaction of condition and time limma result. Per default
+0 (turned off).</p></dd>
+
+
+<dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
+<dd><p>A character vector containing the gene names of the features to
+be analyzed.</p></dd>
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>
@@ -133,16 +146,14 @@ indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).</p></dd>
 
 
+<dt id="arg-plot-options">plot_options<a class="anchor" aria-label="anchor" href="#arg-plot-options"></a></dt>
+<dd><p>List with specific fields (cluster_heatmap_columns =
+Bool) that allow for customization of plotting behavior.</p></dd>
+
+
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
 <dd><p>Character string specifying the directory path where the
 HTML report and any other output files should be saved.</p></dd>
-
-
-<dt id="arg-analysis-type">analysis_type<a class="anchor" aria-label="anchor" href="#arg-analysis-type"></a></dt>
-<dd><p>String specifying type of limma results (which of the
-three categories: time_effect, avrg_diff_conditions,
-and interaction_condition_time (
-see limma_result_categories.pdf in inst/descriptions).</p></dd>
 
 
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>

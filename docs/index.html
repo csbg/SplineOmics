@@ -83,7 +83,7 @@ Graphical Abstract of SplineOmics Workflow
 <a href="#id_-usage">▶️ Usage</a>
 <ul>
 <li><a href="#id_-tutorial">Tutorial</a></li>
-<li><a href="#id_-functions-in-depth">Functions in Depth</a></li>
+<li><a href="#id_-details">Details</a></li>
 <li><a href="#id_-rna-seq-and-glycan-data">RNA-seq and Glycan Data</a></li>
 </ul>
 </li>
@@ -95,7 +95,7 @@ Graphical Abstract of SplineOmics Workflow
 <li><a href="#id_-license">📜 License</a></li>
 <li><a href="#id_-citation">🎓 Citation</a></li>
 <li><a href="#id_-contributors">🌟 Contributors</a></li>
-<li><a href="#id_-ackknowledgements">🙏 Acknowledgements</a></li>
+<li><a href="#id_-acknowledgements">🙏 Acknowledgements</a></li>
 </ul>
 </div>
 <div class="section level2">
@@ -123,23 +123,23 @@ Graphical Abstract of SplineOmics Workflow
 <ul>
 <li>
 <p><strong>Automatically perform exploratory data analysis:</strong></p>
-<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html">example report</a>).</p>
+<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Explore various limma splines hyperparameters:</strong></p>
-<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html">encoding</a>)).</p>
+<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html">encoding</a>)).</p>
 </li>
 <li>
 <p><strong>Perform limma spline analysis:</strong></p>
-<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html">example report</a>).</p>
+<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Cluster significant features:</strong></p>
-<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html">example report</a>).</p>
+<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Run GSEA with clustered hits:</strong></p>
-<p>Perform gene set enrichment analysis (GSEA) using the clustered hits with the <code>create_gsea_report()</code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html">example report</a>).</p>
+<p>Perform gene set enrichment analysis (GSEA) using the clustered hits with the <code>create_gsea_report()</code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html">example report</a>).</p>
 </li>
 </ul>
 </div>
@@ -160,71 +160,89 @@ Graphical Abstract of SplineOmics Workflow
 <div class="section level4">
 <h4 id="installation-steps">Installation Steps<a class="anchor" aria-label="anchor" href="#installation-steps"></a>
 </h4>
+<blockquote>
+<p><strong>Note for Windows Users:</strong></p>
+</blockquote>
+<p>Note that some installation paths potentially are not writable on <strong>Windows</strong>. Therefore, it can be necessary to set up a library path and use that path for the installations.</p>
+<p>Alternatively, you can run <code>RStudio</code> as administrator once for the installation (which is however generally not recommended, because it is a security risk).</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create a directory to store R libraries if it doesn't exist</span></span>
+<span><span class="va">custom_lib_path</span> <span class="op">&lt;-</span> <span class="st">"~/Rlibs"</span>  </span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span></span>
+<span>  <span class="va">custom_lib_path</span>,</span>
+<span>  showWarnings <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  recursive <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Set the library path to include the new directory</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">custom_lib_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check if the new library path is added successfully</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">custom_lib_path</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Library path set to: "</span>, <span class="va">custom_lib_path</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Failed to set library path."</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <ol style="list-style-type: decimal">
 <li><p><strong>Open RStudio</strong> or your R console.</p></li>
-<li><p><strong>Install <code>SplineOmics</code> from GitHub</strong> with all dependencies.</p></li>
+<li><p><strong>Install <code>BiocManager</code></strong> for Bioconductor dependencies (if not already installed)</p></li>
 </ol>
-<p>Copy and paste the following code block into your R console or run it as a script.</p>
-<blockquote>
-<p><strong>Note for Windows Users:</strong><br>
-Please read the text below this code block before running it!</p>
-</blockquote>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Function to ensure a package is installed</span></span>
-<span><span class="va">ensure_installed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pkg</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="va">pkg</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="va">pkg</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Install packages if not already available</span></span>
-<span><span class="fu">ensure_installed</span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
-<span><span class="fu">ensure_installed</span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Load packages</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.github.io/BiocManager/" class="external-link">BiocManager</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Install Bioconductor dependencies</span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span></code></pre></div>
+<ol start="3" style="list-style-type: decimal">
+<li>
+<strong>Install Bioconductor dependencies</strong> separately using <code>BiocManager</code>
+</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.github.io/BiocManager/" class="external-link">BiocManager</a></span><span class="op">)</span>  <span class="co"># load the BiocManager package</span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"ComplexHeatmap"</span>,</span>
 <span>  <span class="st">"limma"</span></span>
-<span>  <span class="op">)</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Install SplineOmics from GitHub</span></span>
+<span>  <span class="op">)</span>, </span>
+<span>  force <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="co"># Uncomment line below when specifying install path</span></span>
+<span>  <span class="co"># lib = custom_lib_path </span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<ol start="4" style="list-style-type: decimal">
+<li>
+<strong>Install</strong> the <strong><code>remotes</code></strong> package for GitHub downloads (if not already installed)</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>
+<strong>Install</strong> the <strong><code>SplineOmics</code></strong> package from GitHub and all its non-Bioconductor dependencies, using <code>remotes</code>
+</li>
+</ol>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span>  <span class="co"># load the remotes package</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
-<span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># Install latest commit.</span></span>
+<span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># GitHub repository</span></span>
+<span>  ref <span class="op">=</span> <span class="st">"0.1.0"</span>,       <span class="co"># Specify the tag to install</span></span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Install all dependencies</span></span>
 <span>  force <span class="op">=</span> <span class="cn">TRUE</span>,         <span class="co"># Force reinstallation</span></span>
 <span>  upgrade <span class="op">=</span> <span class="st">"always"</span>,   <span class="co"># Always upgrade dependencies</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Verify the installation</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="st">"SplineOmics"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/installed.packages.html" class="external-link">installed.packages</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Uncomment line below when specifying install path</span></span>
+<span>  <span class="co"># lib = custom_lib_path </span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<ol start="6" style="list-style-type: decimal">
+<li>
+<strong>Verify</strong> the <strong>installation</strong> of the <code>SplineOmics</code> package</li>
+</ol>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="st">"SplineOmics"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/installed.packages.html" class="external-link">installed.packages</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"SplineOmics installed successfully."</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"SplineOmics installation failed."</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Note that when some installation paths are not writable on <strong>Windows</strong>, it is necessary running <code>RStudio</code> as administrator once for the installation. Otherwise, set up a library path (code block below) for the installation and (re)run the code block above.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create a directory for R libraries</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"~/Rlibs"</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Set the library path to include the new directory</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"~/Rlibs"</span>, <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<ol start="3" style="list-style-type: decimal">
-<li>
-<strong>Load the <code>SplineOmics</code> package</strong>:</li>
-</ol>
-<p>Once the installation is complete, load the <code>SplineOmics</code> package into your R session or script to start using it:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
 </h4>
 <p>If you encounter errors related to dependencies or package versions during installation, try updating your R and RStudio to the latest versions and repeat the installation steps.</p>
-<p>For issues specifically related to the <code>SplineOmics</code> package, check the <a href="https://github.com/%3Cuser%3E/%3Crepo%3E/issues" class="external-link">Issues section</a> of the GitHub repository for similar problems or to post a new issue.</p>
+<p>For issues specifically related to the <code>SplineOmics</code> package, check the <a href="https://github.com/csbg/SplineOmics/issues" class="external-link">Issues section</a> of the GitHub repository for similar problems or to post a new issue.</p>
 </div>
 <div class="section level3">
 <h3 id="id_-docker-container">🐳 Docker Container<a class="anchor" aria-label="anchor" href="#id_-docker-container"></a>
@@ -240,31 +258,31 @@ Please read the text below this code block before running it!</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_️-usage">▶️ Usage<a class="anchor" aria-label="anchor" href="#id_%EF%B8%8F-usage"></a>
+<h2 id="id_-usage">▶ Usage<a class="anchor" aria-label="anchor" href="#id_-usage"></a>
 </h2>
 <div class="section level3">
 <h3 id="tutorial">Tutorial<a class="anchor" aria-label="anchor" href="#tutorial"></a>
 </h3>
 <p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
 <p>To open an R Markdown file of the <strong>tutorial</strong> in <code>RStudio</code>, run:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/open_tutorial.html">open_tutorial</a></span><span class="op">(</span><span class="op">)</span>  </span></code></pre></div>
 <p>To open an R Markdown file in <code>RStudio</code> containing a <strong>template</strong> for your own analysis, run:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/open_template.html">open_template</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="functions-in-depth">Functions in Depth<a class="anchor" aria-label="anchor" href="#functions-in-depth"></a>
+<h3 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
 </h3>
 <p>A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found <a href="https://csbg.github.io/SplineOmics/reference/">here</a>.</p>
-</div>
-<div class="section level3">
-<h3 id="design-limma-design-formula">Design <code>limma</code> design formula<a class="anchor" aria-label="anchor" href="#design-limma-design-formula"></a>
-</h3>
+<div class="section level4">
+<h4 id="design-limma-design-formula">Design <code>limma</code> design formula<a class="anchor" aria-label="anchor" href="#design-limma-design-formula"></a>
+</h4>
 <p>A quick guide on how to design a <code>limma</code> design formula can be found <a href="https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html">here</a></p>
 <p>An explanation of the three different <code>limma</code> results is <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">here</a></p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="rna-seq-and-glycan-data">RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#rna-seq-and-glycan-data"></a>
@@ -278,11 +296,11 @@ Please read the text below this code block before running it!</p>
 <h4 id="glycan-fractional-abundance-data">Glycan fractional abundance data<a class="anchor" aria-label="anchor" href="#glycan-fractional-abundance-data"></a>
 </h4>
 <p>The glycan fractional abundance data matrix, where each row represents a type of glycan and the columns correspond to timepoints, must be transformed before analysis. This preprocessing step is essential due to the compositional nature of the data. In compositional data, an increase in the abundance of one component (glycan) necessarily results in a decrease in others, introducing a dependency among the variables that can bias the analysis. One way to address this issue is by applying the Centered Log Ratio (CLR) transformation to the data with the clr function from the compositions package:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://www.stat.boogaart.de/compositions/" class="external-link">compositions</a></span><span class="op">)</span></span>
 <span><span class="va">clr_transformed_data</span> <span class="op">&lt;-</span> <span class="fu">clr</span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 <p>The results from clr transformed data can be harder to understand and interpret however. If you prefer ease of interpretation and are fine that the results contain some artifacts due to the compositional nature of the data, log2 transform your data instead and use that as input for the <code>SplineOmics</code> package.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log2_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 </div>
 </div>
@@ -293,53 +311,55 @@ Please read the text below this code block before running it!</p>
 <p>The <code>SplineOmics</code> package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with <code>SplineOmics</code>. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.</p>
 <ul>
 <li>
-<strong>ComplexHeatmap</strong>: For creating complex heatmaps with advanced features.</li>
+<strong>ComplexHeatmap</strong> (&gt;= 2.18.0): For creating complex heatmaps with advanced features.</li>
 <li>
-<strong>base64enc</strong>: For encoding/decoding base64.</li>
+<strong>base64enc</strong> (&gt;= 0.1-3): For encoding/decoding base64.</li>
 <li>
-<strong>dendextend</strong>: For extending <code>dendrogram</code> objects in R, allowing for easier manipulation of dendrograms.</li>
+<strong>dendextend</strong> (&gt;= 1.17.1): For extending <code>dendrogram</code> objects, allowing for easier manipulation of dendrograms.</li>
 <li>
-<strong>dplyr</strong>: For data manipulation.</li>
+<strong>dplyr</strong> (&gt;= 1.1.4): For data manipulation.</li>
 <li>
-<strong>ggplot2</strong>: For creating elegant data visualizations using the grammar of graphics.</li>
+<strong>ggplot2</strong> (&gt;= 3.5.1): For creating elegant data visualizations using the grammar of graphics.</li>
 <li>
-<strong>ggrepel</strong>: For better label placement in ggplot2.</li>
+<strong>ggrepel</strong> (&gt;= 0.9.5): For better label placement in <code>ggplot2</code>.</li>
 <li>
-<strong>here</strong>: For constructing paths to your project’s files.</li>
+<strong>here</strong> (&gt;= 1.0.1): For constructing paths to your project’s files.</li>
 <li>
-<strong>limma</strong>: For linear models for microarray data.</li>
+<strong>limma</strong> (&gt;= 3.58.1): For linear models in microarray and RNA-seq analysis.</li>
 <li>
-<strong>openxlsx</strong>: For reading, writing, and editing xlsx files.</li>
+<strong>openxlsx</strong> (&gt;= 4.2.6.1): For reading, writing, and editing <code>.xlsx</code> files.</li>
 <li>
-<strong>patchwork</strong>: For combining multiple ggplot objects into a single plot.</li>
+<strong>patchwork</strong> (&gt;= 1.2.0): For combining multiple <code>ggplot</code> objects into a single plot.</li>
 <li>
-<strong>pheatmap</strong>: For creating pretty heatmaps.</li>
+<strong>pheatmap</strong> (&gt;= 1.0.12): For creating aesthetically pleasing heatmaps.</li>
 <li>
-<strong>progress</strong>: For adding progress bars to your loops and apply functions.</li>
+<strong>progress</strong> (&gt;= 1.2.3): For adding progress bars to loops and apply functions.</li>
 <li>
-<strong>purrr</strong>: For functional programming tools.</li>
+<strong>purrr</strong> (&gt;= 1.0.2): For functional programming tools.</li>
 <li>
-<strong>rlang</strong>: For tools to work with core language features of R and R’s base types.</li>
+<strong>rlang</strong> (&gt;= 1.1.4): For working with core language features of R.</li>
 <li>
-<strong>scales</strong>: For scale functions for visualization.</li>
+<strong>scales</strong> (&gt;= 1.3.0): For scale functions in visualizations.</li>
 <li>
-<strong>tibble</strong>: For creating tidy data frames that are easy to work with.</li>
+<strong>svglite</strong> (&gt;= 2.1.3): For creating high-quality vector graphics (SVG).</li>
 <li>
-<strong>tidyr</strong>: For tidying your data.</li>
+<strong>tibble</strong> (&gt;= 3.2.1): For creating tidy data frames.</li>
 <li>
-<strong>zip</strong>: For combining files into a zip file.</li>
+<strong>tidyr</strong> (&gt;= 1.3.1): For tidying data.</li>
+<li>
+<strong>zip</strong> (&gt;= 2.3.1): For compressing and combining files into zip archives.</li>
 </ul>
 <div class="section level3">
-<h3 id="optional-dependencies">Optional dependencies<a class="anchor" aria-label="anchor" href="#optional-dependencies"></a>
+<h3 id="optional-dependencies">Optional Dependencies<a class="anchor" aria-label="anchor" href="#optional-dependencies"></a>
 </h3>
-<p>These dependencies are only necessary for some functions:</p>
+<p>These packages are optional and are only needed for specific functionality:</p>
 <ul>
 <li>
-<strong>edgeR</strong>: For preprocessing RNA-seq data in the run_limma_splines() fun.</li>
+<strong>edgeR</strong> (&gt;= 4.0.16): For preprocessing RNA-seq data in the <code><a href="reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function.</li>
 <li>
-<strong>clusterProfiler</strong>: For the run_gsea() function (gene set enrichment).</li>
+<strong>clusterProfiler</strong> (&gt;= 4.10.1): For the <code><a href="reference/run_gsea.html">run_gsea()</a></code> function (gene set enrichment analysis).</li>
 <li>
-<strong>rstudioapi</strong>: For the open_tutorial() and open_template() functions.</li>
+<strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code><a href="reference/open_tutorial.html">open_tutorial()</a></code> and <code><a href="reference/open_template.html">open_template()</a></code> functions.</li>
 </ul>
 </div>
 <div class="section level3">
@@ -399,7 +419,7 @@ Please read the text below this code block before running it!</p>
 <h2 id="id_-citation">🎓 Citation<a class="anchor" aria-label="anchor" href="#id_-citation"></a>
 </h2>
 <p>The <code>SplineOmics</code> package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.</p>
-<p>To cite this package, you can use the citation information provided in the <a href="./inst/CITATION.cff"><code>inst/CITATION.cff</code></a> file.</p>
+<p>To cite this package, you can use the citation information provided in the <a href="./CITATION.cff"><code>CITATION.cff</code></a> file.</p>
 <p>You can also generate a citation in various formats using the <code>CITATION.cff</code> file by visiting the top right of this repo and clicking on the “Cite this repository” button.</p>
 <p>Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of <code>SplineOmics</code>. Thank you for using our package!</p>
 </div>

@@ -484,7 +484,27 @@ functions.</li>
 <span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
 <span>  condition <span class="op">=</span> <span class="st">"Phase"</span>,  <span class="co"># Column of meta that contains the levels.</span></span>
 <span>  meta_batch_column <span class="op">=</span> <span class="st">"Reactor"</span>  <span class="co"># For batch effect removal</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Special print.SplineOmics function leads to selective printing</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">splineomics</span><span class="op">)</span>   </span>
+<span><span class="co">#&gt; data:SplineOmics Object</span></span>
+<span><span class="co">#&gt; -------------------</span></span>
+<span><span class="co">#&gt; Number of features (rows): 4162 </span></span>
+<span><span class="co">#&gt; Number of samples (columns): 36 </span></span>
+<span><span class="co">#&gt; Meta data columns: 5 </span></span>
+<span><span class="co">#&gt; First few meta columns:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
+<span><span class="co">#&gt;   Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> E09_TP01_Exponential E09     TP01       Exponential   -<span style="color: #BB0000;">60</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> E10_TP01_Exponential E10     TP01       Exponential   -<span style="color: #BB0000;">60</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> E12_TP01_Exponential E12     TP01       Exponential   -<span style="color: #BB0000;">60</span></span></span>
+<span><span class="co">#&gt; Condition: Phase </span></span>
+<span><span class="co">#&gt; No RNA-seq data provided.</span></span>
+<span><span class="co">#&gt; Annotation provided with 4162 entries.</span></span>
+<span><span class="co">#&gt; No spline parameters set.</span></span>
+<span><span class="co">#&gt; P-value adjustment method: BH</span></span></code></pre></div>
 <p>Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -492,9 +512,9 @@ exploratory data analysis.</p>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,   <span class="co"># SplineOmics object</span></span>
 <span>  report_dir <span class="op">=</span> <span class="va">report_dir</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX_19_09_2024-13_43_21.html">Here</a>
+<p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
 you can see the HTML report of the explore_data() function with the NOT
-batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX_19_09_2024-13_43_21.html">here</a>
+batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html">here</a>
 the report for the batch-corrected data.</p>
 <p>The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
@@ -663,6 +683,11 @@ select the optimal hyperparameters for your analysis.</p>
 <span>  <span class="st">"~ 1 + X + Reactor"</span></span>
 <span>  <span class="op">)</span> </span>
 <span></span>
+<span><span class="va">modes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"integrated"</span>,</span>
+<span>  <span class="st">"isolated"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Specify the meta "level" column</span></span>
 <span><span class="va">condition</span> <span class="op">&lt;-</span> <span class="st">"Phase"</span> </span>
 <span></span>
@@ -675,7 +700,7 @@ select the optimal hyperparameters for your analysis.</p>
 <span><span class="va">meta_batch_column</span> <span class="op">=</span> <span class="st">"Reactor"</span> </span>
 <span></span>
 <span><span class="co"># Test out two different p-value thresholds (inner hyperparameter)</span></span>
-<span><span class="va">pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">0.05</span>,</span>
 <span>  <span class="fl">0.1</span></span>
 <span>  <span class="op">)</span></span>
@@ -703,18 +728,19 @@ want to test, we can run the <code><a href="../reference/screen_limma_hyperparam
 function.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/screen_limma_hyperparams.html">screen_limma_hyperparams</a></span><span class="op">(</span></span>
-<span>  <span class="va">splineomics</span>,</span>
-<span>  <span class="va">datas</span>,</span>
-<span>  <span class="va">datas_descr</span>,</span>
-<span>  <span class="va">metas</span>,</span>
-<span>  <span class="va">designs</span>,</span>
-<span>  <span class="va">spline_test_configs</span>,</span>
-<span>  <span class="va">report_dir</span>,</span>
-<span>  <span class="va">pthresholds</span>,</span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>  datas <span class="op">=</span> <span class="va">datas</span>,</span>
+<span>  datas_descr <span class="op">=</span> <span class="va">datas_descr</span>,</span>
+<span>  metas <span class="op">=</span> <span class="va">metas</span>,</span>
+<span>  designs <span class="op">=</span> <span class="va">designs</span>,</span>
+<span>  modes <span class="op">=</span> <span class="va">modes</span>,</span>
+<span>  spline_test_configs <span class="op">=</span> <span class="va">spline_test_configs</span>,</span>
+<span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
+<span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>As mentioned, this function generates a report for each comparison of
 the outer hyperparameters, which are too many to show here. You can view
-an example report <a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX_19_09_2024-13_44_10.html">here</a></p>
+an example report <a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html">here</a></p>
 <p>This report contains the results for the comparison of the “outer”
 hyperparameters data 1 and design (formula) 1 compared against data 1
 and design 2. For both of those, all combinations of the “inner”
@@ -737,10 +763,19 @@ choice depends on the analysis. For example, for this analysis, natural
 cubic splines (n) with a dof of two seemed to fit the data best (not
 overfitting, but also not underfitting), which was the reason those
 spline parameters were chosen.</p>
+<p>For the design formula, you must specify either ‘isolated’ or
+‘integrated’. Isolated means limma determines the results for each level
+using only the data from that level. Integrated means limma determines
+the results for all levels using the full dataset (from all levels). For
+the integrated mode, there has to be for example an interaction effect
+(*) between the X and the condition column (here Phase). Isolated means
+that limma only uses the part of the dataset that belongs to a level to
+obtain the results for that level.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  design <span class="op">=</span> <span class="st">"~ 1 + Phase*X + Reactor"</span>,  <span class="co"># best design formula</span></span>
+<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">data2</span>,   <span class="co"># data without "outliers" was better</span></span>
 <span>  meta <span class="op">=</span> <span class="va">meta2</span>,  </span>
 <span>  spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -752,10 +787,9 @@ spline parameters were chosen.</p>
 SplineOmics object:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
-<span>  <span class="va">splineomics</span></span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; Column 'Reactor' of meta will be used to remove the batch effect for the plotting</span></span>
-<span><span class="co">#&gt; Interaction terms identified in limma design formula. Selecting mode == integrated. This means that all levels are analysed using the full data.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
@@ -785,11 +819,11 @@ histograms an volcano plots.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_limma_report.html">create_limma_report</a></span><span class="op">(</span></span>
-<span>  <span class="va">splineomics</span>,</span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="va">report_dir</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
-function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX_19_09_2024-13_47_02.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">here</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="cluster-the-hits-significant-features">Cluster the hits (significant features)<a class="anchor" aria-label="anchor" href="#cluster-the-hits-significant-features"></a>
@@ -828,22 +862,24 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co"># if you prefer to manually perform the enrichment. Those files are</span></span>
 <span><span class="co"># embedded in the output HTML report and can be downloaded from there.</span></span>
 <span><span class="va">gene_column_name</span> <span class="op">&lt;-</span> <span class="st">"Gene_symbol"</span></span>
-<span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="va">data_excel</span><span class="op">[[</span><span class="va">gene_column_name</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">4</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">data_excel</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="va">annotation</span><span class="op">[[</span><span class="va">gene_column_name</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  <span class="co"># Cluster the hits from the time_effect results. You can also cluster</span></span>
-<span>  <span class="co"># the hits from the other two limma result categories by specifying</span></span>
-<span>  <span class="co"># it here with this argument.</span></span>
-<span>  analysis_type <span class="op">=</span> <span class="st">"time_effect"</span>,  </span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
 <span>  clusters <span class="op">=</span> <span class="va">clusters</span>,</span>
 <span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
 <span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
+<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.25</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
-function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX_19_09_2024-13_47_08.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
+<p>As discussed before, there are three limma result categories. The
+cluster_hits() report shows the results of all three, if they are
+present (category 2 and 3 can only be generated when the design formula
+contains an interaction effect).</p>
 </div>
 <div class="section level2">
 <h2 id="perform-gene-set-enrichment-analysis-gsea">Perform gene set enrichment analysis (GSEA)<a class="anchor" aria-label="anchor" href="#perform-gene-set-enrichment-analysis-gsea"></a>
@@ -892,7 +928,7 @@ dotplots in R.</p>
 <span></span>
 <span><span class="co"># Specify the clusterProfiler parameters</span></span>
 <span><span class="va">clusterProfiler_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  adj_p_value <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
 <span>  minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
@@ -917,7 +953,7 @@ levels, and generates the HTML report:</p>
 <span>  report_dir <span class="op">=</span> <span class="va">report_dir</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
-function <a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX_19_09_2024-13_47_33.html">here</a>.</p>
+function <a href="https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html">here</a>.</p>
 <p>This report first shows all enrichment results, where more than 2
 genes supported a term, in a tabular format. The table with all the
 terms with &lt; 2 genes supporting it can be downloaded by clicking on a

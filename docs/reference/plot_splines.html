@@ -63,7 +63,8 @@ them into a single composite plot. The function is internal and not exported.</p
 <span>  <span class="va">X</span>,</span>
 <span>  <span class="va">time_unit_label</span>,</span>
 <span>  <span class="va">plot_info</span>,</span>
-<span>  <span class="va">adj_pthreshold</span></span>
+<span>  <span class="va">adj_pthreshold</span>,</span>
+<span>  <span class="va">replicate_column</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -110,6 +111,12 @@ feeding, temperature shift, etc.).</p></dd>
 
 <dt id="arg-adj-pthreshold">adj_pthreshold<a class="anchor" aria-label="anchor" href="#arg-adj-pthreshold"></a></dt>
 <dd><p>Double &gt; 0 and &lt; 1 specifying the adj. p-val threshold.</p></dd>
+
+
+<dt id="arg-replicate-column">replicate_column<a class="anchor" aria-label="anchor" href="#arg-replicate-column"></a></dt>
+<dd><p>String specifying the column of the meta dataframe
+that contains the labels of the replicate measurents. When that is not
+given, this argument is NULL.</p></dd>
 
 </dl></div>
     <div class="section level2">
