@@ -50,6 +50,7 @@ spline parameter details, with a table of contents.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">build_cluster_hits_report</span><span class="op">(</span></span>
 <span>  <span class="va">header_section</span>,</span>
 <span>  <span class="va">plots</span>,</span>
+<span>  <span class="va">limma_result_2_and_3_plots</span>,</span>
 <span>  <span class="va">plots_sizes</span>,</span>
 <span>  <span class="va">level_headers_info</span>,</span>
 <span>  <span class="va">spline_params</span>,</span>
@@ -70,6 +71,13 @@ spline parameter details, with a table of contents.</p>
 
 <dt id="arg-plots">plots<a class="anchor" aria-label="anchor" href="#arg-plots"></a></dt>
 <dd><p>A list of ggplot2 plot objects.</p></dd>
+
+
+<dt id="arg-limma-result-and-plots">limma_result_2_and_3_plots<a class="anchor" aria-label="anchor" href="#arg-limma-result-and-plots"></a></dt>
+<dd><p>List containing the list of lists with all
+the plots for all the pairwise comparisons of the condition in terms of
+average spline diff and interaction condition time, and another list of lists
+where the respective names of each plot are stored.</p></dd>
 
 
 <dt id="arg-plots-sizes">plots_sizes<a class="anchor" aria-label="anchor" href="#arg-plots-sizes"></a></dt>

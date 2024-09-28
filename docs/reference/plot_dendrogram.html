@@ -47,7 +47,7 @@ colored by clusters.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_dendrogram</span><span class="op">(</span><span class="va">hc</span>, <span class="va">k</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_dendrogram</span><span class="op">(</span><span class="va">hc</span>, <span class="va">clusters</span>, <span class="va">k</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,6 +56,11 @@ colored by clusters.</p>
 
 <dl><dt id="arg-hc">hc<a class="anchor" aria-label="anchor" href="#arg-hc"></a></dt>
 <dd><p>A hierarchical clustering object.</p></dd>
+
+
+<dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
+<dd><p>A numeric vector, specifying the cluster in which each hit is
+in. Index 1 is the cluster of hit nr. 1, index 2 of hit nr. 2, etc.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>

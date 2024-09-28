@@ -67,7 +67,7 @@
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
-            <h4 data-toc-skip class="date">2024-09-23</h4>
+            <h4 data-toc-skip class="date">2024-09-28</h4>
       
 
       <div class="d-none name"><code>Docker-instructions.Rmd</code></div>
@@ -107,13 +107,12 @@ document.addEventListener("DOMContentLoaded", function() {
     var button = document.createElement("button");
     button.innerHTML = "Copy";
     button.className = "copy-btn";
+    block.style.position = "relative"; // Ensure button is correctly positioned
     block.appendChild(button);
 
     button.addEventListener("click", function() {
-      var code = Array.from(block.childNodes)
-                      .filter(node => node.nodeType === Node.TEXT_NODE)
-                      .map(node => node.textContent)
-                      .join('');
+      // Select only the code inside the block and not the button
+      var code = block.querySelector('code').innerText;
       navigator.clipboard.writeText(code).then(function() {
         button.innerHTML = "Copied!";
         setTimeout(function() {
@@ -127,8 +126,7 @@ document.addEventListener("DOMContentLoaded", function() {
 <h2 id="pulling-the-docker-container">Pulling the <code>Docker</code> Container<a class="anchor" aria-label="anchor" href="#pulling-the-docker-container"></a>
 </h2>
 <p>Pull <code>Docker</code> container:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Docker Hub repo still private, will make it public then</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">docker</span> pull thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>docker pull thomasrauter<span class="sc">/</span>splineomics<span class="sc">:</span><span class="dv">0</span>.<span class="fl">1.0</span></span></code></pre></div>
 <p>If you face ‘permission denied’ issues, check out <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html" class="external-link">this
 vignette</a></p>
 </div>
@@ -136,54 +134,143 @@ vignette</a></p>
 <h2 id="running-the-docker-container">Running the <code>Docker</code> Container<a class="anchor" aria-label="anchor" href="#running-the-docker-container"></a>
 </h2>
 <p>To run the <code>Docker</code> container, you can use one of the
-following commands, depending on your operating System. The respective
-command needs to be run in a folder where the subfolders
-<code>input</code> and <code>output</code> exist. Place your data and
-meta (and annotation) files in <code>input</code>, and receive your
-output from the container in the <code>output</code> folder.</p>
+following commands, depending on your operating system. Before running
+the command, ensure that you are in a directory containing two
+subfolders: <code>input</code> and <code>output</code>. These will be
+used to transfer files between your local machine and the Docker
+container.</p>
 <p>For Linux and macOS:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Bash</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-d</span> <span class="dt">\</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/input:/home/rstudio/input <span class="dt">\</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>/output:/home/rstudio/output <span class="dt">\</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=123 <span class="dt">\</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="at">--name</span> splineomics <span class="dt">\</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>docker run <span class="sc">-</span>it <span class="sc">-</span>d \</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="sc">-</span>v <span class="sc">$</span>(pwd)<span class="sc">/</span>input<span class="sc">:</span><span class="er">/</span>home<span class="sc">/</span>rstudio<span class="sc">/</span>input \</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="sc">-</span>v <span class="sc">$</span>(pwd)<span class="sc">/</span>output<span class="sc">:</span><span class="er">/</span>home<span class="sc">/</span>rstudio<span class="sc">/</span>output \</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="sc">-</span>p <span class="dv">8888</span><span class="sc">:</span><span class="dv">8787</span> \</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="sc">-</span>e PASSWORD<span class="ot">=</span><span class="dv">123</span> \</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="sc">--</span>name splineomics \</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    thomasrauter<span class="sc">/</span>splineomics<span class="sc">:</span><span class="dv">0</span>.<span class="fl">1.0</span></span></code></pre></div>
 <p>For Windows:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># PowerShell</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>docker run <span class="op">-</span>it <span class="op">-</span>d `</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>    <span class="op">-</span>v <span class="st">"</span><span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span><span class="st">\input:/home/rstudio/input"</span> `</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="op">-</span>v <span class="st">"</span><span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span><span class="st">\output:/home/rstudio/output"</span> `</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="op">-</span>p <span class="dv">8888</span><span class="op">:</span><span class="dv">8787</span> `</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="op">-</span>e PASSWORD<span class="op">=</span><span class="dv">123</span> `</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    <span class="op">--</span>name splineomics `</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    thomasrauter<span class="op">/</span>splineomics<span class="op">:</span><span class="dv">0.1</span><span class="op">.</span><span class="dv">0</span></span></code></pre></div>
-<p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Use
-rstudio as the username and the password you set with the -e
-PASSWORD=123 option.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># PowerShell</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>docker run <span class="sc">-</span>it <span class="sc">-</span>d <span class="st">`</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="at">    -v "${PWD}\input:/home/rstudio/input" </span><span class="st">`</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="sc">-</span>v <span class="st">"${PWD}\output:/home/rstudio/output"</span> <span class="st">`</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="at">    -p 8888:8787 </span><span class="st">`</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="sc">-</span>e PASSWORD<span class="ot">=</span><span class="dv">123</span> <span class="st">`</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="at">    --name splineomics </span><span class="st">`</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    thomasrauter<span class="sc">/</span>splineomics<span class="sc">:</span><span class="dv">0</span>.<span class="fl">1.0</span></span></code></pre></div>
+<p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Log
+in using the following credentials:</p>
+<ul>
+<li><p>Username: rstudio</p></li>
+<li><p>Password: The one you set with the -e PASSWORD=123 option (123 in
+this case)</p></li>
+</ul>
 <p>As long as the container is running, you can work on that localhost
 page with RStudio, where also the <code>SplineOmics</code> package is
 installed. <code>/home/rstudio/</code> is your R session working
 folder.</p>
-<p>Direct all generated results to <code>/home/rstudio/output</code>,
-which is mounted to your local folder <code>output</code>. Your results
-will be there.</p>
 <p>Stop the container:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">docker</span> stop splineomics</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>docker stop splineomics</span></code></pre></div>
 <p>Start the container again:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">docker</span> start splineomics</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>docker start splineomics</span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="inspect-docker-container-installations">Inspect Docker container installations<a class="anchor" aria-label="anchor" href="#inspect-docker-container-installations"></a>
+<h2 id="input-and-output-file-management">Input and Output File Management<a class="anchor" aria-label="anchor" href="#input-and-output-file-management"></a>
+</h2>
+<p>The <code>input</code> and <code>output</code> directories on your
+local machine are mounted to corresponding directories inside the Docker
+container. This allows seamless file transfer between your local machine
+and the container.</p>
+<ul>
+<li><p>Place your input files (e.g., data, metadata, annotation files)
+in the <code>input</code> directory on your local machine. These files
+will automatically appear in <code>/home/rstudio/input</code> inside the
+container.</p></li>
+<li><p>Any files generated by RStudio within the container should be
+saved to <code>/home/rstudio/output</code>. These files will
+automatically appear in the <code>output</code> directory on your local
+machine.</p></li>
+</ul>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="26%">
+<col width="27%">
+<col width="46%">
+</colgroup>
+<thead><tr class="header">
+<th><strong>Local Directory</strong></th>
+<th><strong>Docker Container Directory</strong></th>
+<th><strong>Description</strong></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td><code>/home/rstudio/</code></td>
+<td>Working directory in the RStudio session inside the container.</td>
+</tr>
+<tr class="even">
+<td><code>input/</code></td>
+<td><code>/home/rstudio/input/</code></td>
+<td>Place your input files here on your local machine.</td>
+</tr>
+<tr class="odd">
+<td><code>output/</code></td>
+<td><code>/home/rstudio/output/</code></td>
+<td>Files generated in the container will appear here locally.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="inspect-docker-container-installations">Inspect <code>Docker</code> container installations<a class="anchor" aria-label="anchor" href="#inspect-docker-container-installations"></a>
 </h2>
 <p>To see all the R packages and system installations that make up the
-Docker container, you can run the following command in the terminal of
-RStudio on your localhost browser page.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> /log home/rstudio/output</span></code></pre></div>
+<code>Docker</code> container, you can run the following command in the
+terminal of RStudio on your localhost browser page.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>cp <span class="sc">-</span>r <span class="sc">/</span>log home<span class="sc">/</span>rstudio<span class="sc">/</span>output</span></code></pre></div>
 <p>Because the <code>/home/rstudio/output</code> dir is mounted to your
 local filesystem, this will make the installation log files available
 there.</p>
+</div>
+<div class="section level2">
+<h2 id="installing-additional-r-packages-in-the-container">Installing additional R packages in the container<a class="anchor" aria-label="anchor" href="#installing-additional-r-packages-in-the-container"></a>
+</h2>
+<p>New R packages can be installed the normal way:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"package_name"</span><span class="op">)</span></span></code></pre></div>
+<p>However, note that any packages installed in the running container
+will be lost if the container is deleted or rebuilt.</p>
+</div>
+<div class="section level2">
+<h2 id="permanent-additions">Permanent additions<a class="anchor" aria-label="anchor" href="#permanent-additions"></a>
+</h2>
+<p>If you want to permanently add R packages, R scripts, or other files
+to the SplineOmics <code>Docker</code> image, you can use it as a base
+image for building a new image. This will ensure that all changes are
+saved into the new image, rather than being lost when the container is
+deleted.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Use the SplineOmics image as the base image</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>FROM thomasrauter<span class="sc">/</span>splineomics<span class="sc">:</span><span class="dv">0</span>.<span class="fl">1.0</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># Install the data.table package permanently</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>RUN R <span class="sc">-</span>e <span class="st">"install.packages('data.table')"</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># Optionally, add custom R scripts to the image</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>COPY your_script.R <span class="sc">/</span>home<span class="sc">/</span>rstudio<span class="sc">/</span>your_script.R</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co"># Set the working directory</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>WORKDIR <span class="sc">/</span>home<span class="sc">/</span>rstudio</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co"># Expose RStudio Server port</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>EXPOSE <span class="dv">8787</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co"># Start RStudio server</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>CMD [<span class="st">"/init"</span>]</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co"># Build new image:</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co"># docker build -t your_new_image_name .</span></span></code></pre></div>
+<p>Run the container of the new image with the commands described
+above.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

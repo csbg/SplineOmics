@@ -68,6 +68,7 @@ as part of a larger analysis workflow.</p>
 <span>  <span class="va">datas_descr</span>,</span>
 <span>  <span class="va">metas</span>,</span>
 <span>  <span class="va">designs</span>,</span>
+<span>  <span class="va">modes</span>,</span>
 <span>  <span class="va">spline_test_configs</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
@@ -113,6 +114,14 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>c
 
 <dt id="arg-designs">designs<a class="anchor" aria-label="anchor" href="#arg-designs"></a></dt>
 <dd><p>A character vector of design formulas for the limma analysis.</p></dd>
+
+
+<dt id="arg-modes">modes<a class="anchor" aria-label="anchor" href="#arg-modes"></a></dt>
+<dd><p>A character vector that must have the same length as 'designs'.
+For each design formula, you must specify either 'isolated' or 'integrated'.
+Isolated means limma determines the results for each level using only the
+data from that level. Integrated means limma determines the results for all
+levels using the full dataset (from all levels).</p></dd>
 
 
 <dt id="arg-spline-test-configs">spline_test_configs<a class="anchor" aria-label="anchor" href="#arg-spline-test-configs"></a></dt>
