@@ -9,64 +9,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{=html}
-<style>
-.sourceCode pre {
-  background-color: #f7f7f7;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  overflow-x: auto;
-  position: relative;
-}
-
-.copy-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: none;
-  background: #4CAF50;
-  color: white;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.copy-btn:hover {
-  background: #45a049;
-}
-</style>
-```
-```{=html}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  document.querySelectorAll(".sourceCode pre").forEach(function(block) {
-    var button = document.createElement("button");
-    button.innerHTML = "Copy";
-    button.className = "copy-btn";
-    block.appendChild(button);
-
-    button.addEventListener("click", function() {
-      var code = Array.from(block.childNodes)
-                      .filter(node => node.nodeType === Node.TEXT_NODE)
-                      .map(node => node.textContent)
-                      .join('');
-      navigator.clipboard.writeText(code).then(function() {
-        button.innerHTML = "Copied!";
-        setTimeout(function() {
-          button.innerHTML = "Copy";
-        }, 2000);
-      });
-    });
-  });
-});
-</script>
-```
 # Pulling the `Docker` Container
 
 Pull `Docker` container:
 
-``` sh
+```{r eval=FALSE}
 # Docker Hub repo still private, will make it public then
 docker pull thomasrauter/splineomics:0.1.0
 ```
@@ -79,7 +26,7 @@ To run the `Docker` container, you can use one of the following commands, depend
 
 For Linux and macOS:
 
-``` sh
+```{r eval=FALSE}
 # Bash
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
@@ -92,7 +39,7 @@ docker run -it -d \
 
 For Windows:
 
-``` powershell
+```{r eval=FALSE}
 # PowerShell
 docker run -it -d `
     -v "${PWD}\input:/home/rstudio/input" `
@@ -111,13 +58,13 @@ Direct all generated results to `/home/rstudio/output`, which is mounted to your
 
 Stop the container:
 
-``` sh
+```{r eval=FALSE}
 docker stop splineomics
 ```
 
 Start the container again:
 
-``` sh
+```{r eval=FALSE}
 docker start splineomics
 ```
 
@@ -125,7 +72,7 @@ docker start splineomics
 
 To see all the R packages and system installations that make up the Docker container, you can run the following command in the terminal of RStudio on your localhost browser page.
 
-``` sh
+```{r eval=FALSE}
 cp -r /log home/rstudio/output
 ```
 
