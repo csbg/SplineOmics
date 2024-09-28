@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function() {
 ```
 # Pulling the `Docker` Container
 
-Pull `Docker` container:
+To pull the Docker container, use the following command. Make sure to check for the newest version or the specific version you need by visiting the [Docker Hub repository](https://hub.docker.com/r/thomasrauter/splineomics).
 
 ```{r eval=FALSE}
 docker pull thomasrauter/splineomics:0.1.0
