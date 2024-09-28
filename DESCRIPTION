@@ -18,7 +18,7 @@ Imports:
     ggrepel(>= 0.9.5),
     here(>= 1.0.1),
     limma(>= 3.58.1),
-    openxlsx(>= 4.2.6.1),
+    openxlsx(>= 4.2.5.2),
     patchwork(>= 1.2.0),
     pheatmap(>= 1.0.12),
     progress(>= 1.2.3),
