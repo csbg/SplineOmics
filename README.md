@@ -1,6 +1,8 @@
 
 # SplineOmics
 
+<meta name="google-site-verification" content="5uRTmgQaaeR1Z7Ja4FnbaKQ8idvM1wSHoD7QZSaCZmw"/>
+
 ![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
@@ -130,32 +132,31 @@ GitHub repository into your R environment.
 
 Note that some installation paths potentially are not writable on
 **Windows**. Therefore, it can be necessary to set up a library path and
-use that path for the installations.
-
-Alternatively, you can run `RStudio` as administrator once for the
-installation (which is however generally not recommended, because it is
-a security risk).
+use that path for the installations:
 
 ``` r
-# Create a directory to store R libraries if it doesn't exist
-custom_lib_path <- "~/Rlibs"  
+# Define the custom library path and expand the tilde (~)
+custom_lib_path <- path.expand("~/Rlibs")
 
-dir.create(
-  custom_lib_path,
-  showWarnings = FALSE,
-  recursive = TRUE
-  )
+# Create the directory if it doesn't exist
+if (!dir.exists(custom_lib_path)) {
+    dir.create(custom_lib_path, showWarnings = FALSE, recursive = TRUE)
+}
 
 # Set the library path to include the new directory
 .libPaths(c(custom_lib_path, .libPaths()))
 
 # Check if the new library path is added successfully
 if (custom_lib_path %in% .libPaths()) {
-  message("Library path set to: ", custom_lib_path)
+    message("Library path set to: ", custom_lib_path)
 } else {
-  message("Failed to set library path.")
+    stop("Failed to set library path.")
 }
 ```
+
+Alternatively, you can run `RStudio` as administrator once for the
+installation (which is however generally not recommended, because it is
+a security risk).
 
 1.  **Open RStudio** or your R console.
 
@@ -163,7 +164,10 @@ if (custom_lib_path %in% .libPaths()) {
     already installed)
 
 ``` r
-install.packages("BiocManager")
+install.packages(
+  "BiocManager", 
+  # lib = custom_lib_path
+)
 ```
 
 3.  **Install Bioconductor dependencies** separately using `BiocManager`
@@ -175,7 +179,6 @@ BiocManager::install(c(
   "limma"
   ), 
   force = TRUE,
-  # Uncomment line below when specifying install path
   # lib = custom_lib_path 
   )
 ```
@@ -184,7 +187,10 @@ BiocManager::install(c(
     already installed)
 
 ``` r
-install.packages("remotes")
+install.packages(
+  "remotes",
+  # lib = custom_lib_path
+)
 ```
 
 5.  **Install** the **`SplineOmics`** package from GitHub and all its
@@ -198,7 +204,6 @@ remotes::install_github(
   dependencies = TRUE,  # Install all dependencies
   force = TRUE,         # Force reinstallation
   upgrade = "always",   # Always upgrade dependencies
-  # Uncomment line below when specifying install path
   # lib = custom_lib_path 
 )
 ```

@@ -837,7 +837,6 @@ encode_df_to_base64 <- function(
         )
     }
   } else {
-    browser()
     stop("Input must be a dataframe or a list of dataframes.")
   }
   
