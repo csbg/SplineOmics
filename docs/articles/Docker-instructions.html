@@ -67,7 +67,7 @@
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
-            <h4 data-toc-skip class="date">2024-09-28</h4>
+            <h4 data-toc-skip class="date">2024-10-01</h4>
       
 
       <div class="d-none name"><code>Docker-instructions.Rmd</code></div>
@@ -193,11 +193,11 @@ saved to <code>/home/rstudio/output</code>. These files will
 automatically appear in the <code>output</code> directory on your local
 machine.</p></li>
 </ul>
-<table style="width:100%;" class="table">
+<table class="table">
 <colgroup>
 <col width="26%">
 <col width="27%">
-<col width="46%">
+<col width="45%">
 </colgroup>
 <thead><tr class="header">
 <th><strong>Local Directory</strong></th>
@@ -274,6 +274,91 @@ deleted.</p>
 <span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co"># docker build -t your_new_image_name .</span></span></code></pre></div>
 <p>Run the container of the new image with the commands described
 above.</p>
+</div>
+<div class="section level2">
+<h2 id="creating-a-reproducible-docker-container-with-automated-analysis">Creating a Reproducible Docker Container with Automated
+Analysis<a class="anchor" aria-label="anchor" href="#creating-a-reproducible-docker-container-with-automated-analysis"></a>
+</h2>
+<p>When you have your final analysis script inside the Docker container
+of the <code>SplineOmics</code> package, and you want that other
+scientists can easily reproduce your results by running just one line of
+code, follow the guide below. This will instruct you how to create a new
+image based on your container, which you can save for example on
+<code>Docker Hub</code>. Others can download this image, and run the
+container to get the exact same results you got.</p>
+<div class="section level3">
+<h3 id="prepare-your-analysis-and-scripts">1. Prepare your analysis and scripts<a class="anchor" aria-label="anchor" href="#prepare-your-analysis-and-scripts"></a>
+</h3>
+<p>Ensure all analysis scripts and necessary files are saved in a
+dedicated directory inside the container (e.g.,
+<code>/home/rstudio/analysis/</code>). Your analysis script should take
+the input files from a directory like /home/rstudio/input/ (which is
+already inside the container and does not need to be mounted again when
+reproducing the analysis) and output all results to
+/home/rstudio/output/. The /home/rstudio/output/ directory is mounted to
+a local directory on the user’s machine, making the results accessible
+outside the container. Example directory structure:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="sc">/</span>home<span class="sc">/</span>rstudio<span class="sc">/</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>└── analysis<span class="sc">/</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    ├── final_analysis.R   <span class="co"># Main analysis script</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>    └── helper_functions.R <span class="co"># Supporting scripts</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="create-an-entry-point-script">2. Create an Entry Point Script<a class="anchor" aria-label="anchor" href="#create-an-entry-point-script"></a>
+</h3>
+<p>Create a bash script (run_analysis.sh) that runs your analysis
+automatically.</p>
+<p>Example run_analysis.sh:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#!/bin/bash</span></span>
+<span><span class="va">Rscript</span> <span class="op">/</span><span class="va">home</span><span class="op">/</span><span class="va">rstudio</span><span class="op">/</span><span class="va">analysis</span><span class="op">/</span><span class="va">final_analysis.R</span></span>
+<span><span class="va">tail</span> <span class="op">-</span><span class="va">f</span> <span class="op">/</span><span class="va">dev</span><span class="op">/</span><span class="va">null</span>  <span class="co"># Keep the container running after analysis</span></span></code></pre></div>
+<p>Save this script in <code>/home/rstudio/</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="commit-the-container-as-a-new-image-with-an-entry-point">3. Commit the Container as a New Image with an Entry Point<a class="anchor" aria-label="anchor" href="#commit-the-container-as-a-new-image-with-an-entry-point"></a>
+</h3>
+<p>Once your scripts are ready, commit the running container as a new
+image and set the new entry point to run the bash script
+automatically:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>docker commit \</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>    <span class="sc">--</span>change<span class="ot">=</span><span class="st">'CMD ["/bin/bash", "/home/rstudio/run_analysis.sh"]'</span> \</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>    <span class="sc">&lt;</span>container_id<span class="sc">&gt;</span> \</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>    thomasrauter<span class="sc">/</span>splineomics<span class="sc">-</span>analysis<span class="sc">:</span>v1</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="push-the-new-image-to-docker-hub">4. Push the New Image to <code>Docker Hub</code><a class="anchor" aria-label="anchor" href="#push-the-new-image-to-docker-hub"></a>
+</h3>
+<p>Push the new image to <code>Docker Hub</code> so others can easily
+pull and reproduce the analysis:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>docker push thomasrauter<span class="sc">/</span>splineomics<span class="sc">-</span>analysis<span class="sc">:</span>v1</span></code></pre></div>
+<p>Others can pull (download) the container with this command:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>docker pull thomasrauter<span class="sc">/</span>splineomics<span class="sc">-</span>analysis<span class="sc">:</span>v1</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="running-the-container-to-reproduce-the-results">5. Running the container to reproduce the results<a class="anchor" aria-label="anchor" href="#running-the-container-to-reproduce-the-results"></a>
+</h3>
+<p>To reproduce the results, you need to create a local directory where
+the results will be saved and then mount this directory to the
+container’s /home/rstudio/output/ directory.</p>
+<p>Use the following command to run the container and ensure that the
+results are saved to the local output directory (see commands in section
+Running the <code>Docker</code> Container above how to mount the
+<code>output</code> dir in the current working dir).</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>docker run <span class="sc">-</span>it \</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>    <span class="sc">-</span>v <span class="sc">/</span>path<span class="sc">/</span>to<span class="sc">/</span>local<span class="sc">/</span>output<span class="sc">:</span><span class="er">/</span>home<span class="sc">/</span>rstudio<span class="sc">/</span>output \</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>    thomasrauter<span class="sc">/</span>splineomics<span class="sc">-</span>analysis<span class="sc">:</span>v1</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="optional-getting-insights-into-the-full-analysis">(Optional) Getting insights into the full analysis<a class="anchor" aria-label="anchor" href="#optional-getting-insights-into-the-full-analysis"></a>
+</h3>
+<p>Start a new container and mount an empty local directory to the
+/home/rstudio/ directory inside the container. This allows you to
+directly access all the analysis files on your local machine.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>docker run <span class="sc">-</span>it \</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>    <span class="sc">-</span>v <span class="sc">/</span>path<span class="sc">/</span>to<span class="sc">/</span>local<span class="sc">/</span>dir<span class="sc">:</span><span class="er">/</span>home<span class="sc">/</span>rstudio \</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>    thomasrauter<span class="sc">/</span>splineomics<span class="sc">-</span>analysis<span class="sc">:</span>v1</span></code></pre></div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
