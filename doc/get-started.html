@@ -885,46 +885,51 @@ select the optimal hyperparameters for your analysis.</p>
 <span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  <span class="st">&quot;~ 1 + X + Reactor&quot;</span></span>
 <span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  ) </span>
 <span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a></span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a>modes <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>  <span class="st">&quot;integrated&quot;</span>,</span>
-<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>  <span class="st">&quot;isolated&quot;</span></span>
-<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a>  )</span>
-<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a></span>
-<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="co"># Specify the meta &quot;level&quot; column</span></span>
-<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
-<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a></span>
-<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
-<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a>  <span class="st">&quot;hyperparams_screen_reports&quot;</span></span>
-<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a>  ) </span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co"># &#39;Integrated means&#39; limma will use the full dataset to generate the results for</span></span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="co"># each condition. &#39;Isolated&#39; means limma will use only the respective part of </span></span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a><span class="co"># the dataset for each condition. Designs that contain the condition column </span></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="co"># (here Phase) must have mode &#39;integrated&#39;, because the full data is needed to</span></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="co"># include the different conditions into the design formula.</span></span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a>modes <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>  <span class="st">&quot;integrated&quot;</span>,</span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a>  <span class="st">&quot;isolated&quot;</span></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a>  )</span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a></span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="co"># Specify the meta &quot;level&quot; column</span></span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a>condition <span class="ot">&lt;-</span> <span class="st">&quot;Phase&quot;</span> </span>
 <span id="cb7-47"><a href="#cb7-47" tabindex="-1"></a></span>
-<span id="cb7-48"><a href="#cb7-48" tabindex="-1"></a><span class="co"># To remove the batch effect</span></span>
-<span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
-<span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a></span>
-<span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a><span class="co"># Test out two different p-value thresholds (inner hyperparameter)</span></span>
-<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-53"><a href="#cb7-53" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
-<span id="cb7-54"><a href="#cb7-54" tabindex="-1"></a>  <span class="fl">0.1</span></span>
-<span id="cb7-55"><a href="#cb7-55" tabindex="-1"></a>  )</span>
-<span id="cb7-56"><a href="#cb7-56" tabindex="-1"></a></span>
-<span id="cb7-57"><a href="#cb7-57" tabindex="-1"></a><span class="co"># Create a dataframe with combinations of spline parameters to test</span></span>
-<span id="cb7-58"><a href="#cb7-58" tabindex="-1"></a><span class="co"># (every row a combo to test)</span></span>
-<span id="cb7-59"><a href="#cb7-59" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb7-60"><a href="#cb7-60" tabindex="-1"></a>   <span class="co"># &#39;n&#39; stands for natural cubic splines, b for B-splines.</span></span>
-<span id="cb7-61"><a href="#cb7-61" tabindex="-1"></a>  <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;b&quot;</span>),  </span>
-<span id="cb7-62"><a href="#cb7-62" tabindex="-1"></a>  <span class="co"># Degree is not applicable (NA) for natural splines.</span></span>
-<span id="cb7-63"><a href="#cb7-63" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="dv">2</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>),           </span>
-<span id="cb7-64"><a href="#cb7-64" tabindex="-1"></a>  <span class="co"># Degrees of freedom (DoF) to test.</span></span>
-<span id="cb7-65"><a href="#cb7-65" tabindex="-1"></a>  <span class="co"># Higher dof means spline can fit more complex patterns.</span></span>
-<span id="cb7-66"><a href="#cb7-66" tabindex="-1"></a>  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>)         </span>
-<span id="cb7-67"><a href="#cb7-67" tabindex="-1"></a>)</span>
-<span id="cb7-68"><a href="#cb7-68" tabindex="-1"></a></span>
-<span id="cb7-69"><a href="#cb7-69" tabindex="-1"></a><span class="fu">print</span>(spline_test_configs)</span>
-<span id="cb7-70"><a href="#cb7-70" tabindex="-1"></a><span class="co">#&gt;   spline_type degree dof</span></span>
-<span id="cb7-71"><a href="#cb7-71" tabindex="-1"></a><span class="co">#&gt; 1           n     NA   2</span></span>
-<span id="cb7-72"><a href="#cb7-72" tabindex="-1"></a><span class="co">#&gt; 2           n     NA   3</span></span>
-<span id="cb7-73"><a href="#cb7-73" tabindex="-1"></a><span class="co">#&gt; 3           b      2   3</span></span>
-<span id="cb7-74"><a href="#cb7-74" tabindex="-1"></a><span class="co">#&gt; 4           b      4   4</span></span></code></pre></div>
+<span id="cb7-48"><a href="#cb7-48" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
+<span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a>  <span class="st">&quot;hyperparams_screen_reports&quot;</span></span>
+<span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a>  ) </span>
+<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a></span>
+<span id="cb7-53"><a href="#cb7-53" tabindex="-1"></a><span class="co"># To remove the batch effect</span></span>
+<span id="cb7-54"><a href="#cb7-54" tabindex="-1"></a>meta_batch_column <span class="ot">=</span> <span class="st">&quot;Reactor&quot;</span> </span>
+<span id="cb7-55"><a href="#cb7-55" tabindex="-1"></a></span>
+<span id="cb7-56"><a href="#cb7-56" tabindex="-1"></a><span class="co"># Test out two different p-value thresholds (inner hyperparameter)</span></span>
+<span id="cb7-57"><a href="#cb7-57" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-58"><a href="#cb7-58" tabindex="-1"></a>  <span class="fl">0.05</span>,</span>
+<span id="cb7-59"><a href="#cb7-59" tabindex="-1"></a>  <span class="fl">0.1</span></span>
+<span id="cb7-60"><a href="#cb7-60" tabindex="-1"></a>  )</span>
+<span id="cb7-61"><a href="#cb7-61" tabindex="-1"></a></span>
+<span id="cb7-62"><a href="#cb7-62" tabindex="-1"></a><span class="co"># Create a dataframe with combinations of spline parameters to test</span></span>
+<span id="cb7-63"><a href="#cb7-63" tabindex="-1"></a><span class="co"># (every row a combo to test)</span></span>
+<span id="cb7-64"><a href="#cb7-64" tabindex="-1"></a>spline_test_configs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-65"><a href="#cb7-65" tabindex="-1"></a>   <span class="co"># &#39;n&#39; stands for natural cubic splines, b for B-splines.</span></span>
+<span id="cb7-66"><a href="#cb7-66" tabindex="-1"></a>  <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;b&quot;</span>),  </span>
+<span id="cb7-67"><a href="#cb7-67" tabindex="-1"></a>  <span class="co"># Degree is not applicable (NA) for natural splines.</span></span>
+<span id="cb7-68"><a href="#cb7-68" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="dv">2</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>),           </span>
+<span id="cb7-69"><a href="#cb7-69" tabindex="-1"></a>  <span class="co"># Degrees of freedom (DoF) to test.</span></span>
+<span id="cb7-70"><a href="#cb7-70" tabindex="-1"></a>  <span class="co"># Higher dof means spline can fit more complex patterns.</span></span>
+<span id="cb7-71"><a href="#cb7-71" tabindex="-1"></a>  <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>)         </span>
+<span id="cb7-72"><a href="#cb7-72" tabindex="-1"></a>)</span>
+<span id="cb7-73"><a href="#cb7-73" tabindex="-1"></a></span>
+<span id="cb7-74"><a href="#cb7-74" tabindex="-1"></a><span class="fu">print</span>(spline_test_configs)</span>
+<span id="cb7-75"><a href="#cb7-75" tabindex="-1"></a><span class="co">#&gt;   spline_type degree dof</span></span>
+<span id="cb7-76"><a href="#cb7-76" tabindex="-1"></a><span class="co">#&gt; 1           n     NA   2</span></span>
+<span id="cb7-77"><a href="#cb7-77" tabindex="-1"></a><span class="co">#&gt; 2           n     NA   3</span></span>
+<span id="cb7-78"><a href="#cb7-78" tabindex="-1"></a><span class="co">#&gt; 3           b      2   3</span></span>
+<span id="cb7-79"><a href="#cb7-79" tabindex="-1"></a><span class="co">#&gt; 4           b      4   4</span></span></code></pre></div>
 <p>Now that we specified all the values for each hyperparameter that we
 want to test, we can run the <code>screen_limma_hyperparams()</code>
 function.</p>
@@ -967,14 +972,15 @@ spline parameters were chosen.</p>
 ‘integrated’. Isolated means limma determines the results for each level
 using only the data from that level. Integrated means limma determines
 the results for all levels using the full dataset (from all levels). For
-the integrated mode, there has to be for example an interaction effect
-(*) between the X and the condition column (here Phase). Isolated means
-that limma only uses the part of the dataset that belongs to a level to
-obtain the results for that level.</p>
+the integrated mode, the condition column (here Phase) must be included
+in the design. Isolated means that limma only uses the part of the
+dataset that belongs to a level to obtain the results for that
+level.</p>
+<p>To generate the limma result categories 2 and 3 ()</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>splineomics <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">update_splineomics</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">design =</span> <span class="st">&quot;~ 1 + Phase*X + Reactor&quot;</span>,  <span class="co"># best design formula</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;integrated&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;integrated&quot;</span>,  <span class="co"># means limma uses the full data for each condition.</span></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">data =</span> data2,   <span class="co"># data without &quot;outliers&quot; was better</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">meta =</span> meta2,  </span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">spline_params =</span> <span class="fu">list</span>(</span>
@@ -1007,8 +1013,8 @@ levels (which includes both time and the average differences)</p>
 </div>
 <div id="build-limma-report" class="section level1">
 <h1>Build limma report</h1>
-<p>The topTables of all three categories can be used to generate p-value
-histograms an volcano plots.</p>
+<p>The topTables of all three limma result categories can be used to
+generate p-value histograms an volcano plots.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="st">&quot;results&quot;</span>,</span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="st">&quot;create_limma_reports&quot;</span></span>
@@ -1020,6 +1026,14 @@ histograms an volcano plots.</p>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
 function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">here</a>.</p>
+<p>This report contains p-value histograms for all three limma result
+categories and a volcano plot for category 2. Embedded in this file are
+the downloadable limma topTables with the results for category 1 if the
+mode was ‘isolated’ and also with the results of category 2 and 3 if the
+mode was ‘integrated’.</p>
+<p>Note that in the upcoming cluster_hits() function report, the
+embedded file will only contain the clustered significant features from
+result category 1.</p>
 </div>
 <div id="cluster-the-hits-significant-features" class="section level1">
 <h1>Cluster the hits (significant features)</h1>

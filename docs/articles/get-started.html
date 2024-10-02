@@ -683,6 +683,11 @@ select the optimal hyperparameters for your analysis.</p>
 <span>  <span class="st">"~ 1 + X + Reactor"</span></span>
 <span>  <span class="op">)</span> </span>
 <span></span>
+<span><span class="co"># 'Integrated means' limma will use the full dataset to generate the results for</span></span>
+<span><span class="co"># each condition. 'Isolated' means limma will use only the respective part of </span></span>
+<span><span class="co"># the dataset for each condition. Designs that contain the condition column </span></span>
+<span><span class="co"># (here Phase) must have mode 'integrated', because the full data is needed to</span></span>
+<span><span class="co"># include the different conditions into the design formula.</span></span>
 <span><span class="va">modes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"integrated"</span>,</span>
 <span>  <span class="st">"isolated"</span></span>
@@ -767,15 +772,16 @@ spline parameters were chosen.</p>
 ‘integrated’. Isolated means limma determines the results for each level
 using only the data from that level. Integrated means limma determines
 the results for all levels using the full dataset (from all levels). For
-the integrated mode, there has to be for example an interaction effect
-(*) between the X and the condition column (here Phase). Isolated means
-that limma only uses the part of the dataset that belongs to a level to
-obtain the results for that level.</p>
+the integrated mode, the condition column (here Phase) must be included
+in the design. Isolated means that limma only uses the part of the
+dataset that belongs to a level to obtain the results for that
+level.</p>
+<p>To generate the limma result categories 2 and 3 ()</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  design <span class="op">=</span> <span class="st">"~ 1 + Phase*X + Reactor"</span>,  <span class="co"># best design formula</span></span>
-<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>,</span>
+<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>,  <span class="co"># means limma uses the full data for each condition.</span></span>
 <span>  data <span class="op">=</span> <span class="va">data2</span>,   <span class="co"># data without "outliers" was better</span></span>
 <span>  meta <span class="op">=</span> <span class="va">meta2</span>,  </span>
 <span>  spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -810,8 +816,8 @@ levels (which includes both time and the average differences)</p>
 <div class="section level2">
 <h2 id="build-limma-report">Build limma report<a class="anchor" aria-label="anchor" href="#build-limma-report"></a>
 </h2>
-<p>The topTables of all three categories can be used to generate p-value
-histograms an volcano plots.</p>
+<p>The topTables of all three limma result categories can be used to
+generate p-value histograms an volcano plots.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
@@ -824,6 +830,14 @@ histograms an volcano plots.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
 function <a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">here</a>.</p>
+<p>This report contains p-value histograms for all three limma result
+categories and a volcano plot for category 2. Embedded in this file are
+the downloadable limma topTables with the results for category 1 if the
+mode was ‘isolated’ and also with the results of category 2 and 3 if the
+mode was ‘integrated’.</p>
+<p>Note that in the upcoming cluster_hits() function report, the
+embedded file will only contain the clustered significant features from
+result category 1.</p>
 </div>
 <div class="section level2">
 <h2 id="cluster-the-hits-significant-features">Cluster the hits (significant features)<a class="anchor" aria-label="anchor" href="#cluster-the-hits-significant-features"></a>

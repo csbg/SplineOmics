@@ -20,6 +20,8 @@ generate_report_html(
   level_headers_info = NA,
   spline_params = NA,
   adj_pthresholds = NA,
+  adj_pthresh_avrg_diff_conditions = NA,
+  adj_pthresh_interaction_condition_time = NA,
   report_type = "explore_data",
   feature_name_columns = NA,
   mode = NA,
@@ -57,6 +59,10 @@ of background genes.}
 
 \item{adj_pthresholds}{Numeric vector with the values for the adj.p.tresholds
 for each level.}
+
+\item{adj_pthresh_avrg_diff_conditions}{Float, only for cluster_hits()}
+
+\item{adj_pthresh_interaction_condition_time}{Float, only for cluster_hits()}
 
 \item{report_type}{A character string specifying the report type 
 ('screen_limma_hyperparams' or 'cluster_hits').}

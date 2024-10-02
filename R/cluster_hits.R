@@ -193,6 +193,9 @@ cluster_hits <- function(
       genes = genes,
       spline_params = spline_params,
       adj_pthresholds = adj_pthresholds,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction_condition_time = 
+        adj_pthresh_interaction_condition_time,
       report_dir = report_dir,
       mode = mode,
       report_info = report_info,
@@ -438,6 +441,8 @@ perform_clustering <- function(
 #' @param adj_pthresholds Numeric vector, containing a float < 1 > 0 as each 
 #'                        value. There is one float for every level, and this is
 #'                        the adj. p-value threshold. 
+#' @param adj_pthresh_avrg_diff_conditions Float 
+#' @param adj_pthresh_interaction_condition_time Float
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
 #' ('isolated' or 'integrated').
@@ -489,6 +494,8 @@ make_clustering_report <- function(
     genes,
     spline_params,
     adj_pthresholds,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction_condition_time,
     report_dir,
     mode,
     report_info,
@@ -727,6 +734,9 @@ make_clustering_report <- function(
     topTables = topTables,
     enrichr_format = enrichr_format,
     adj_pthresholds = adj_pthresholds,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction_condition_time = 
+      adj_pthresh_interaction_condition_time,
     report_type = "cluster_hits",
     feature_name_columns = feature_name_columns,
     mode = mode,
@@ -1194,7 +1204,7 @@ remove_batch_effect_cluster_hits <- function(
         level <- unique_levels[level_index]
         level_columns <- which(meta[[condition]] == level)
         data_copy <- data[, level_columns]
-        meta_copy <- subset(meta, meta[[condition]] == level)
+        meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
       } else {
         data_copy <- data   # Take the full data for mode == "integrated"
         meta_copy <- meta
@@ -1229,7 +1239,7 @@ remove_batch_effect_cluster_hits <- function(
       if (mode == "isolated") {
         
         level <- unique_levels[level_index]
-        meta_copy <- subset(meta, meta[[condition]] == level)
+        meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
         
         if (!is.null(meta_batch2_column) &&
             length(unique(meta_copy[[meta_batch2_column]])) > 1) {
@@ -1243,10 +1253,16 @@ remove_batch_effect_cluster_hits <- function(
         }
       }
 
-      data_copy <- do.call(limma::removeBatchEffect, args)
+      data_copy <- do.call(
+        limma::removeBatchEffect,
+        args
+        )
 
       # For mode == "integrated", all elements are identical
-      datas <- c(datas, list(data_copy))
+      datas <- c(
+        datas,
+        list(data_copy)
+        )
     }
 
   } else {          # no meta batch column specified, just return right data
@@ -2071,9 +2087,13 @@ plot_spline_comparisons <- function(
     adj_pthresh_interaction
 ) {
 
-  # Sort and prepare data
+  # Sort and prepare data (sorting based on feature name for easy navigation)
   time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
   time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
+  avrg_diff_conditions <- 
+    avrg_diff_conditions |> dplyr::arrange(.data$feature_names)
+  interaction_condition_time <- 
+    interaction_condition_time |> dplyr::arrange(.data$feature_names)
 
   # Get relevant parameters
   DoF <- which(names(time_effect_1) == "AveExpr") - 1
@@ -2350,6 +2370,8 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
 #' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
+#' @param adj_pthresh_avrg_diff_conditions Float 
+#' @param adj_pthresh_interaction_condition_time Float
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
 #' @param report_info A named list containg the report info fields. Here used
@@ -2370,6 +2392,8 @@ build_cluster_hits_report <- function(
     level_headers_info,
     spline_params,
     adj_pthresholds,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction_condition_time,
     mode,
     report_info,
     output_file_path
@@ -2578,11 +2602,9 @@ build_cluster_hits_report <- function(
     
     pb$tick()
   }
-  
+
   # Add sections for limma_result_2_and_3_plots
-  if (!is.null(limma_result_2_and_3_plots)) {
-    adj_pthresh_avrg_diff_conditions <- 0.05
-    adj_pthresh_interaction_condition_time <- 0.05
+  if (length(limma_result_2_and_3_plots) > 0) {
     # Create a new main header for the limma result plots
     header_index <- header_index + 1
     

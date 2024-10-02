@@ -422,10 +422,17 @@ InputControl <- R6::R6Class("InputControl",
     check_design_formula = function() {
       
       formula <- self$args[["design"]]
-      meta <- self$args$meta
-      meta_index <- self$args$meta_index
+      meta <- self$args[["meta"]]
+      meta_index <- self$args[["meta_index"]]
       
-      required_args <- list(formula, meta)
+      # Not strictly required
+      meta_batch_column <- self$args[["meta_batch_column"]]
+      meta_batch2_column <- self$args[["meta_batch2_column"]]
+      
+      required_args <- list(
+        formula,
+        meta
+        )
       
       if (any(sapply(required_args, is.null))) {
         return(NULL)
@@ -475,16 +482,43 @@ InputControl <- R6::R6Class("InputControl",
       missing_columns <- setdiff(formula_terms, names(meta))
       if (length(missing_columns) > 0) {
         if (!is.null(meta_index)) {
-          stop(sprintf("%s (data/meta pair index: %s): %s",
+          stop_call_false(sprintf("%s (data/meta pair index: %s): %s",
                        "The following design columns are missing in meta",
                        meta_index,
-                       paste(missing_columns, collapse = ", ")),
-               call. = FALSE)
+                       paste(missing_columns, collapse = ", ")))
           
         } else {
-          stop(paste("The following design columns are missing in meta:",
-                     paste(missing_columns, collapse = ", ")),
-               call. = FALSE)
+          stop_call_false(paste("The following design columns are missing in meta:",
+                     paste(missing_columns, collapse = ", ")))
+        }
+      }
+      
+      # Convert formula to string for regex checking
+      formula_str <- as.character(formula)
+      
+      # Check if batch column is provided and validate its presence in the formula
+      if (!is.null(meta_batch_column)) {
+        if (!grepl(meta_batch_column, formula_str)) {
+          stop_call_false(
+            paste("The batch effect column", meta_batch_column, 
+                  "is provided but not present in the design formula. ",
+                  "Please ensure that if you specify a batch column, ",
+                  "it is included in the design formula to", 
+                  "remove batch effects.")
+          )
+        }
+      }
+      
+      # Check if the second batch column is provided and validate its presence
+      if (!is.null(meta_batch2_column)) {
+        if (!grepl(meta_batch2_column, formula_str)) {
+          stop_call_false(
+            paste("The second batch effect column", meta_batch2_column, 
+                  "is provided but not present in the design formula.",
+                  "Please ensure that if you specify a second batch column,",
+                  "it is included in the design formula", 
+                  "to remove batch effects.")
+          )
         }
       }
       

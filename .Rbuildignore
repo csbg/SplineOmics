@@ -10,6 +10,7 @@
 ^docs$
 ^tools$
 ^doc$
+^SplineOmics\.BiocCheck$
 ^Meta$
 ^docker$
 ^dev$
