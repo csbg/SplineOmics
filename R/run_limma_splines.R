@@ -247,6 +247,7 @@ between_level <- function(
     condition,
     compared_levels[2]
     )
+  
   condition_only <- limma::topTable(
     fit,
     coef = factor_only_contrast_coeff,
@@ -258,6 +259,7 @@ between_level <- function(
     top_table = condition_only,
     fit = fit
     )
+  
   top_table_condition_only <- process_top_table(
     condition_only_resuls, 
     feature_names
@@ -277,7 +279,7 @@ between_level <- function(
     ":X", 
     seq_len(num_matching_columns)
     )
-  
+
   condition_time <- limma::topTable(
     fit,
     coef = factor_time_contrast_coeffs,
@@ -342,11 +344,11 @@ within_level <- function(
     padjust_method, 
     mode
     ) {
-  
+
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
     data_copy <- data[, samples]
-    meta_copy <- subset(meta, meta[[condition]] == level)
+    meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
   } else { # mode == "integrated"
     data_copy <- data
     meta_copy <- meta

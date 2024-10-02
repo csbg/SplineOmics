@@ -12,6 +12,8 @@ build_cluster_hits_report(
   level_headers_info,
   spline_params,
   adj_pthresholds,
+  adj_pthresh_avrg_diff_conditions,
+  adj_pthresh_interaction_condition_time,
   mode,
   report_info,
   output_file_path
@@ -34,6 +36,10 @@ where the respective names of each plot are stored.}
 \item{spline_params}{A list of spline parameters.}
 
 \item{adj_pthresholds}{Float vector with values for any level for adj.p.tresh}
+
+\item{adj_pthresh_avrg_diff_conditions}{Float}
+
+\item{adj_pthresh_interaction_condition_time}{Float}
 
 \item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}

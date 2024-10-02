@@ -120,6 +120,11 @@ designs <- c(
   "~ 1 + X + Reactor"
   ) 
 
+# 'Integrated means' limma will use the full dataset to generate the results for
+# each condition. 'Isolated' means limma will use only the respective part of 
+# the dataset for each condition. Designs that contain the condition column 
+# (here Phase) must have mode 'integrated', because the full data is needed to
+# include the different conditions into the design formula.
 modes <- c(
   "integrated",
   "isolated"
@@ -174,7 +179,7 @@ print(spline_test_configs)
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*X + Reactor",  # best design formula
-  mode = "integrated",
+  mode = "integrated",  # means limma uses the full data for each condition.
   data = data2,   # data without "outliers" was better
   meta = meta2,  
   spline_params = list(

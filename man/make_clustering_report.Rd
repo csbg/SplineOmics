@@ -13,6 +13,8 @@ make_clustering_report(
   genes,
   spline_params,
   adj_pthresholds,
+  adj_pthresh_avrg_diff_conditions,
+  adj_pthresh_interaction_condition_time,
   report_dir,
   mode,
   report_info,
@@ -45,6 +47,10 @@ such as gene and uniprotID, for example.}
 \item{adj_pthresholds}{Numeric vector, containing a float < 1 > 0 as each 
 value. There is one float for every level, and this is
 the adj. p-value threshold.}
+
+\item{adj_pthresh_avrg_diff_conditions}{Float}
+
+\item{adj_pthresh_interaction_condition_time}{Float}
 
 \item{report_dir}{A character string specifying the report directory.}
 

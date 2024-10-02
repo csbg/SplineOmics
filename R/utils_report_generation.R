@@ -30,6 +30,8 @@
 #' @param spline_params A list of spline parameters, such as dof and type.
 #' @param adj_pthresholds Numeric vector with the values for the adj.p.tresholds
 #'                        for each level.
+#' @param adj_pthresh_avrg_diff_conditions Float, only for cluster_hits()
+#' @param adj_pthresh_interaction_condition_time Float, only for cluster_hits()
 #' @param report_type A character string specifying the report type 
 #'                    ('screen_limma_hyperparams' or 'cluster_hits').
 #' @param feature_name_columns Character vector with the column names of the
@@ -69,6 +71,8 @@ generate_report_html <- function(
     level_headers_info = NA,
     spline_params = NA,
     adj_pthresholds = NA,
+    adj_pthresh_avrg_diff_conditions = NA,  # only for cluster_hits()
+    adj_pthresh_interaction_condition_time = NA,  # only for cluster_hits()
     report_type = "explore_data",
     feature_name_columns = NA,  # only for cluster_hits()
     mode = NA,
@@ -79,7 +83,7 @@ generate_report_html <- function(
     ) {
 
   feature_names_formula <- ""
-  
+
   if (report_type == "explore_data") {
     if (filename == "explore_data") {
       title <- "explore data"
@@ -142,6 +146,7 @@ generate_report_html <- function(
     "meta_condition",
     "meta_batch",
     "limma_design",
+    "mode",
     "analyst_name", 
     "contact_info",
     "project_name",
@@ -187,7 +192,9 @@ generate_report_html <- function(
     '<hr><h2 style="font-size: 48px;">', 
     'Downloads \U0001F4E5</h2><table>'
     )
-
+  
+  report_info[["mode"]] <- mode  # Because mode is not part of report_info
+  
   for (field in report_info_fields) {
     base64_df <- process_field(
       field,
@@ -200,7 +207,12 @@ generate_report_html <- function(
       enrichr_format
       )
     
-    field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
+    field_display <- sprintf(
+      "%-*s",
+      max_field_length,
+      gsub("_", " ", field)
+      )
+    
     report_info_section <- paste(
       report_info_section,
       sprintf('<tr><td style="text-align: right;
@@ -320,6 +332,9 @@ generate_report_html <- function(
       level_headers_info = level_headers_info,
       spline_params = spline_params,
       adj_pthresholds = adj_pthresholds,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction_condition_time = 
+        adj_pthresh_interaction_condition_time,
       mode = mode,
       report_info = report_info,
       output_file_path = output_file_path
@@ -1189,7 +1204,8 @@ process_field <- function(
     # Create ZIP file for Enrichr_clustered_genes
     zip_base64 <- create_enrichr_zip(enrichr_format)
     base64_df <- sprintf(
-      '<a href="data:application/zip;base64,%s" download="Enrichr_clustered_genes.zip" class="embedded-file">
+      '<a href="data:application/zip;base64,%s"
+      download="Enrichr_clustered_genes.zip" class="embedded-file">
        <button>Download Enrichr_clustered_genes.zip</button></a>',
       zip_base64
     )
@@ -1199,7 +1215,8 @@ process_field <- function(
              !is.null(enrichr_format$background)) {
     
     base64_df <- sprintf(
-      '<a href="data:text/plain;base64,%s" download="Enrichr_background.txt" class="embedded-file">
+      '<a href="data:text/plain;base64,%s" download="Enrichr_background.txt" 
+      class="embedded-file">
        <button>Download Enrichr_background.txt</button></a>',
       base64enc::base64encode(charToRaw(enrichr_format$background))
     )

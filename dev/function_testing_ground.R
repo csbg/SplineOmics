@@ -124,7 +124,7 @@ splineomics <- create_splineomics(
   data = data,
   # rna_seq_data = voom_obj,
   meta = meta,
-  mode = "integrated",
+  mode = "isolated",
   # annotation = annotation,
   # feature_name_columns = feature_name_columns,
   report_info = report_info,
@@ -190,17 +190,13 @@ spline_test_configs <- data.frame(
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor",
+  design = "~ 1 + X + Reactor",
   # data = data2,
   # meta = meta2,
-  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                       dof = c(2L))
+  spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
+                       dof = c(2L, 2L))
 )
 
-# methods(print)
-# getS3method("print", "SplineOmics")
-
-class(splineomics)
 print(splineomics)
 
 
