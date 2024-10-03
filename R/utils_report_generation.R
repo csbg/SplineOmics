@@ -712,11 +712,11 @@ get_header_section <- function(
       "any plot in this report to save it as a .svg (vector graphic) file!",
       '<br><br>To understand the three limma result categories shown in this ',
       'report, please <a href="', 
-      system.file(
+      file.path(system.file(
         "descriptions",
-        "limma_result_categories.pdf",
+        "limma_result_categories.pdf", 
         package = "SplineOmics"
-        ), 
+        )),
       '" download>download and review this PDF document</a><br><br>
       The grey shaded areas of the plots in this report cover the
       non-significant features!</p>',
