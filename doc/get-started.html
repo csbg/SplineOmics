@@ -448,57 +448,70 @@ shown below.</p>
 <span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>((first_na_col <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(data)) <span class="sc">|&gt;</span></span>
 <span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>))</span>
 <span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="fu">print</span>(data)</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4,165 × 40</span></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;  1 Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;  2 Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;  3 Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;  4 &lt;NA&gt;        15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;  5 &lt;NA&gt;        15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;        14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
-<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;  7 &lt;NA&gt;        16.3… 16.4… 16.4… 16.4… 16.4… 16.4… 16.3… 16.3… 16.4… 16.4… 16.4…</span></span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;  8 &lt;NA&gt;        16.7… 16.7… 16.6… 16.7… 16.7… 16.7… 16.7… 16.7… 16.6… 16.6… 16.7…</span></span>
-<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;        13.8… 13.7… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9…</span></span>
-<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;        21.8… 21.7… 21.6… 21.8… 21.6… 21.5… 21.5… 21.6… 21.5… 21.6… 21.5…</span></span>
-<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; # ℹ 4,155 more rows</span></span>
-<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; # ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
-<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
-<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
-<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, Gene_symbol &lt;chr&gt;,</span></span>
-<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; #   Gene_name &lt;chr&gt;</span></span>
-<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
-<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
-<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
-<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
-<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
-<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
-<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
-<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
-<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
-<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
-<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
-<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
-<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
-<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span>
-<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
-<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4,162 × 2</span></span>
-<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="co">#&gt;    Gene_symbol  Gene_name                                              </span></span>
-<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;        &lt;chr&gt;                                                  </span></span>
-<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;  1 LOC113838844 cone-rod homeobox protein-like                         </span></span>
-<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;  2 Wdr83os      WD repeat domain 83 opposite strand                    </span></span>
-<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;  3 Cubn         cubilin                                                </span></span>
-<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;  4 Dynlt1       dynein light chain Tctex-type 1                        </span></span>
-<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt;  5 Ostc         oligosaccharyltransferase complex non-catalytic subunit</span></span>
-<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt;  6 Unc5cl       unc-5 family C-terminal like                           </span></span>
-<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a><span class="co">#&gt;  7 Cfl1         cofilin 1                                              </span></span>
-<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co">#&gt;  8 LOC100752202 HEN methyltransferase 1                                </span></span>
-<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co">#&gt;  9 LOC100755162 acyl-coenzyme A synthetase ACSM5, mitochondrial        </span></span>
-<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="co">#&gt; 10 LOC100768921 40S ribosomal protein S21                              </span></span>
-<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt; # ℹ 4,152 more rows</span></span></code></pre></div>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(data))</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 40</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;   `Sample ID`  `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 1 Reactor      E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 2 Time Point   TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 3 Phase of Fe… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; 4 &lt;NA&gt;         15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; 5 &lt;NA&gt;         15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt; 6 &lt;NA&gt;         14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; # ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; #   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt; #   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; #   `28` &lt;chr&gt;, `29` &lt;chr&gt;, `30` &lt;chr&gt;, `31` &lt;chr&gt;, `32` &lt;chr&gt;, `33` &lt;chr&gt;,</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; #   `34` &lt;chr&gt;, `35` &lt;chr&gt;, `36` &lt;chr&gt;, ...38 &lt;lgl&gt;, Gene_symbol &lt;chr&gt;,</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; #   Gene_name &lt;chr&gt;</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="fu">print</span>(meta)</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; # A tibble: 36 × 5</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt;    Sample.ID            Reactor Time.Point Phase        Time</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt;  1 E09_TP01_Exponential E09     TP01       Exponential   -60</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt;  2 E10_TP01_Exponential E10     TP01       Exponential   -60</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt;  3 E12_TP01_Exponential E12     TP01       Exponential   -60</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt;  4 E09_TP02_Exponential E09     TP02       Exponential    15</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt;  5 E10_TP02_Exponential E10     TP02       Exponential    15</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;  6 E12_TP02_Exponential E12     TP02       Exponential    15</span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt;  7 E09_TP03_Exponential E09     TP03       Exponential    60</span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt;  8 E10_TP03_Exponential E10     TP03       Exponential    60</span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;  9 E12_TP03_Exponential E12     TP03       Exponential    60</span></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt; 10 E09_TP04_Exponential E09     TP04       Exponential    90</span></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt; # ℹ 26 more rows</span></span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="fu">print</span>(annotation)</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4,162 × 2</span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt;    Gene_symbol  Gene_name                                              </span></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;        &lt;chr&gt;                                                  </span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt;  1 LOC113838844 cone-rod homeobox protein-like                         </span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt;  2 Wdr83os      WD repeat domain 83 opposite strand                    </span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt;  3 Cubn         cubilin                                                </span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="co">#&gt;  4 Dynlt1       dynein light chain Tctex-type 1                        </span></span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt;  5 Ostc         oligosaccharyltransferase complex non-catalytic subunit</span></span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;  6 Unc5cl       unc-5 family C-terminal like                           </span></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;  7 Cfl1         cofilin 1                                              </span></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;  8 LOC100752202 HEN methyltransferase 1                                </span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;  9 LOC100755162 acyl-coenzyme A synthetase ACSM5, mitochondrial        </span></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt; 10 LOC100768921 40S ribosomal protein S21                              </span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt; # ℹ 4,152 more rows</span></span></code></pre></div>
+<p>Two comments about the characteristics the input data should
+have:</p>
+<ul>
+<li><p>The data must not contain any NA values or other special values,
+and must consist only of numbers. For example, the original proteomics
+data contained some NA values, which were resolved in this case by
+imputation (replacing NA values with numbers).</p></li>
+<li><p>All features of the data should ideally be normally distributed
+when analyzed with <code>limma</code>, which fits a linear model to each
+feature. These models rely on statistical tests that assume normality.
+Although <code>limma</code> can still function if the data is not
+normally distributed, the resulting p-values may become less reliable.
+For this reason, it is strongly recommended to transform your data using
+techniques such as log2 transformation when the features deviate from
+normality. Proper transformation helps ensure that the assumptions
+underlying the statistical tests are met, leading to more accurate and
+trustworthy results.</p></li>
+</ul>
 <div id="bring-the-inputs-into-the-standardized-format" class="section level2">
 <h2>Bring the Inputs into the Standardized Format</h2>
 <p>Since <code>data</code> is not in the format required by the
@@ -984,8 +997,8 @@ level.</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">data =</span> data2,   <span class="co"># data without &quot;outliers&quot; was better</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">meta =</span> meta2,  </span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">spline_params =</span> <span class="fu">list</span>(</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),   <span class="co"># natural cubic splines</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">spline_type =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>),   <span class="co"># natural cubic splines (take these if unsure)</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="at">dof =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>)  <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    )</span>
 <span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>)</span></code></pre></div>
 <p>Run the <code>run_limma_splines()</code> function with the updated
@@ -1061,27 +1074,51 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>plot_info <span class="ot">=</span> <span class="fu">list</span>(  <span class="co"># For the spline plots</span></span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">&quot;log2 intensity&quot;</span>,</span>
 <span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;min&quot;</span>,  <span class="co"># our measurements were in minutes</span></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">c</span>(<span class="st">&quot;Feeding&quot;</span>),  </span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">c</span>(<span class="dv">0</span>)  <span class="co"># Feeding was at 0 minutes.</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">list</span>(<span class="at">all =</span> <span class="fu">c</span>(<span class="st">&quot;feeding&quot;</span>)),  <span class="co"># add this for all conditions</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">list</span>(<span class="at">all =</span> <span class="fu">c</span>(<span class="dv">0</span>))  <span class="co"># Feeding was at 0 minutes.</span></span>
 <span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>)</span>
 <span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a></span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co"># Get all the gene names. They are used for generating files</span></span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co"># which contents can be directly used as the input for the Enrichr webtool,</span></span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co"># if you prefer to manually perform the enrichment. Those files are</span></span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co"># embedded in the output HTML report and can be downloaded from there.</span></span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]]</span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a></span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="dv">0</span>,</span>
-<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.25</span></span>
-<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co"># Like this you can add individual treatment labels to your plots:</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co"># treatment_labels = list(</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#   exponential = &quot;treatment 1&quot;, # One treatment in exp</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#   stationary = c(&quot;treatment 2&quot;, &quot;treatment 3&quot;)  # Two treatments in stat</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#   additional_condition = NA  # No treatment in the hypothetical third condition</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#   ) </span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co"># treatment_timepoints = list(</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#   exponential = 0,</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#   stationary = C(100, 140),  # Two treatments also need two timepoints</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#   additional_condition = NA</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#   )  </span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co"># or set a treatment for ALL conditions (still always make a list):</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co"># treatment_labels = list(&quot;treatment&quot;)</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co"># treatment_timepoints = list(120)</span></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="co"># or set multiple treatments for ALL conditions:</span></span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a><span class="co"># treatment_labels = list(c(&quot;treatment1&quot;, &quot;treatment2&quot;))</span></span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a><span class="co"># treatment_timepoints = list(c(120, 90))</span></span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a></span>
+<span id="cb12-46"><a href="#cb12-46" tabindex="-1"></a></span>
+<span id="cb12-47"><a href="#cb12-47" tabindex="-1"></a><span class="co"># Get all the gene names. They are used for generating files</span></span>
+<span id="cb12-48"><a href="#cb12-48" tabindex="-1"></a><span class="co"># which contents can be directly used as the input for the Enrichr webtool,</span></span>
+<span id="cb12-49"><a href="#cb12-49" tabindex="-1"></a><span class="co"># if you prefer to manually perform the enrichment. Those files are</span></span>
+<span id="cb12-50"><a href="#cb12-50" tabindex="-1"></a><span class="co"># embedded in the output HTML report and can be downloaded from there.</span></span>
+<span id="cb12-51"><a href="#cb12-51" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
+<span id="cb12-52"><a href="#cb12-52" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]]</span>
+<span id="cb12-53"><a href="#cb12-53" tabindex="-1"></a></span>
+<span id="cb12-54"><a href="#cb12-54" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
+<span id="cb12-55"><a href="#cb12-55" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb12-56"><a href="#cb12-56" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb12-57"><a href="#cb12-57" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
+<span id="cb12-58"><a href="#cb12-58" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb12-59"><a href="#cb12-59" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
+<span id="cb12-60"><a href="#cb12-60" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb12-61"><a href="#cb12-61" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="dv">0</span>,</span>
+<span id="cb12-62"><a href="#cb12-62" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.25</span></span>
+<span id="cb12-63"><a href="#cb12-63" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The

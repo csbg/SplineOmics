@@ -192,21 +192,16 @@ shown below.</p>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">(</span><span class="va">first_na_col</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,165 × 40</span></span></span>
-<span><span class="co">#&gt;    `Sample ID` `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Reactor     E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Time Point  TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Phase of F… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #BB0000;">NA</span>          15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> <span style="color: #BB0000;">NA</span>          15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> <span style="color: #BB0000;">NA</span>          14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #BB0000;">NA</span>          16.3… 16.4… 16.4… 16.4… 16.4… 16.4… 16.3… 16.3… 16.4… 16.4… 16.4…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> <span style="color: #BB0000;">NA</span>          16.7… 16.7… 16.6… 16.7… 16.7… 16.7… 16.7… 16.7… 16.6… 16.6… 16.7…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #BB0000;">NA</span>          13.8… 13.7… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9… 13.9…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> <span style="color: #BB0000;">NA</span>          21.8… 21.7… 21.6… 21.8… 21.6… 21.5… 21.5… 21.6… 21.5… 21.6… 21.5…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,155 more rows</span></span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 40</span></span></span>
+<span><span class="co">#&gt;   `Sample ID`  `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`   `10`  `11` </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Reactor      E09   E10   E12   E09   E10   E12   E09   E10   E12   E09   E10  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Time Point   TP01  TP01  TP01  TP02  TP02  TP02  TP03  TP03  TP03  TP04  TP04 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Phase of Fe… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo… Expo…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> <span style="color: #BB0000;">NA</span>           15.2… 15.2… 15.3… 15.1… 15.2… 15.0… 15.2… 15.2… 15.2… 15.1… 15.2…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> <span style="color: #BB0000;">NA</span>           15.0… 15.1… 15.2… 15.1… 15.1… 15.2… 15.2… 15.3… 15.2… 15.1… 15.1…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> <span style="color: #BB0000;">NA</span>           14.5… 14.7… 14.6… 14.5… 14.6… 14.6… 14.5… 14.6… 14.7… 14.5… 14.6…</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 28 more variables: `12` &lt;chr&gt;, `13` &lt;chr&gt;, `14` &lt;chr&gt;, `15` &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   `16` &lt;chr&gt;, `17` &lt;chr&gt;, `18` &lt;chr&gt;, `19` &lt;chr&gt;, `20` &lt;chr&gt;, `21` &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   `22` &lt;chr&gt;, `23` &lt;chr&gt;, `24` &lt;chr&gt;, `25` &lt;chr&gt;, `26` &lt;chr&gt;, `27` &lt;chr&gt;,</span></span></span>
@@ -243,6 +238,24 @@ shown below.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> LOC100755162 acyl-coenzyme A synthetase ACSM5, mitochondrial        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> LOC100768921 40S ribosomal protein S21                              </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,152 more rows</span></span></span></code></pre></div>
+<p>Two comments about the characteristics the input data should
+have:</p>
+<ul>
+<li><p>The data must not contain any NA values or other special values,
+and must consist only of numbers. For example, the original proteomics
+data contained some NA values, which were resolved in this case by
+imputation (replacing NA values with numbers).</p></li>
+<li><p>All features of the data should ideally be normally distributed
+when analyzed with <code>limma</code>, which fits a linear model to each
+feature. These models rely on statistical tests that assume normality.
+Although <code>limma</code> can still function if the data is not
+normally distributed, the resulting p-values may become less reliable.
+For this reason, it is strongly recommended to transform your data using
+techniques such as log2 transformation when the features deviate from
+normality. Proper transformation helps ensure that the assumptions
+underlying the statistical tests are met, leading to more accurate and
+trustworthy results.</p></li>
+</ul>
 <div class="section level3">
 <h3 id="bring-the-inputs-into-the-standardized-format">Bring the Inputs into the Standardized Format<a class="anchor" aria-label="anchor" href="#bring-the-inputs-into-the-standardized-format"></a>
 </h3>
@@ -785,8 +798,8 @@ level.</p>
 <span>  data <span class="op">=</span> <span class="va">data2</span>,   <span class="co"># data without "outliers" was better</span></span>
 <span>  meta <span class="op">=</span> <span class="va">meta2</span>,  </span>
 <span>  spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>,   <span class="co"># natural cubic splines</span></span>
-<span>    dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span></span>
+<span>    spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>,   <span class="co"># natural cubic splines (take these if unsure)</span></span>
+<span>    dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span>  <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> function with the updated
@@ -867,9 +880,33 @@ clusters as we have specified for that specific level.</p>
 <span><span class="va">plot_info</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>  <span class="co"># For the spline plots</span></span>
 <span>  y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
 <span>  time_unit <span class="op">=</span> <span class="st">"min"</span>,  <span class="co"># our measurements were in minutes</span></span>
-<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Feeding"</span><span class="op">)</span>,  </span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>  <span class="co"># Feeding was at 0 minutes.</span></span>
+<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>all <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"feeding"</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># add this for all conditions</span></span>
+<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>all <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Feeding was at 0 minutes.</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Like this you can add individual treatment labels to your plots:</span></span>
+<span><span class="co"># treatment_labels = list(</span></span>
+<span><span class="co">#   exponential = "treatment 1", # One treatment in exp</span></span>
+<span><span class="co">#   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat</span></span>
+<span><span class="co">#   additional_condition = NA  # No treatment in the hypothetical third condition</span></span>
+<span><span class="co">#   ) </span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># treatment_timepoints = list(</span></span>
+<span><span class="co">#   exponential = 0,</span></span>
+<span><span class="co">#   stationary = C(100, 140),  # Two treatments also need two timepoints</span></span>
+<span><span class="co">#   additional_condition = NA</span></span>
+<span><span class="co">#   )  </span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># or set a treatment for ALL conditions (still always make a list):</span></span>
+<span><span class="co">#</span></span>
+<span><span class="co"># treatment_labels = list("treatment")</span></span>
+<span><span class="co"># treatment_timepoints = list(120)</span></span>
+<span><span class="co">#</span></span>
+<span><span class="co"># or set multiple treatments for ALL conditions:</span></span>
+<span><span class="co">#</span></span>
+<span><span class="co"># treatment_labels = list(c("treatment1", "treatment2"))</span></span>
+<span><span class="co"># treatment_timepoints = list(c(120, 90))</span></span>
+<span></span>
 <span></span>
 <span><span class="co"># Get all the gene names. They are used for generating files</span></span>
 <span><span class="co"># which contents can be directly used as the input for the Enrichr webtool,</span></span>

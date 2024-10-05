@@ -208,11 +208,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-# plots <- create_limma_report(
-#   splineomics,
-#   adj_pthresh = 0.05,
-#   report_dir = report_dir
-# )
+plots <- create_limma_report(
+  splineomics,
+  adj_pthresh = 0.05,
+  report_dir = report_dir
+)
 
 
 ## Cluster hits ----------------------------------------------------------------
@@ -225,12 +225,12 @@ plot_info = list(
   time_unit = "min",
   # treatment_labels = NA,
   # treatment_timepoints = NA
-  treatment_labels = c("Feeding"),
-  treatment_timepoints = c(0)
+  treatment_labels = list(all = c("feeding")),
+  treatment_timepoints = list(all = c(0))
 )
 
 plot_options = list(
-  meta_replicate_column = "Time.Point",
+  meta_replicate_column = "Reactor",
   cluster_heatmap_columns = FALSE
 )
 
