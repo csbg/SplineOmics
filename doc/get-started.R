@@ -33,7 +33,7 @@ annotation <- data |>
   dplyr::select((first_na_col + 1):ncol(data)) |>
   dplyr::slice(-c(1:3))
 
-print(data)
+print(head(data))
 print(meta)
 print(annotation)
 
@@ -183,8 +183,8 @@ splineomics <- SplineOmics::update_splineomics(
   data = data2,   # data without "outliers" was better
   meta = meta2,  
   spline_params = list(
-    spline_type = c("n"),   # natural cubic splines
-    dof = c(2L)
+    spline_type = c("n"),   # natural cubic splines (take these if unsure)
+    dof = c(2L)  # If you are unsure about which dof, start with 2 and increase
     )
 )
 
@@ -223,9 +223,33 @@ splineomics <- SplineOmics::run_limma_splines(
 #  plot_info = list(  # For the spline plots
 #    y_axis_label = "log2 intensity",
 #    time_unit = "min",  # our measurements were in minutes
-#    treatment_labels = c("Feeding"),
-#    treatment_timepoints = c(0)  # Feeding was at 0 minutes.
+#    treatment_labels = list(all = c("feeding")),  # add this for all conditions
+#    treatment_timepoints = list(all = c(0))  # Feeding was at 0 minutes.
 #  )
+#  
+#  # Like this you can add individual treatment labels to your plots:
+#  # treatment_labels = list(
+#  #   exponential = "treatment 1", # One treatment in exp
+#  #   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat
+#  #   additional_condition = NA  # No treatment in the hypothetical third condition
+#  #   )
+#  #
+#  # treatment_timepoints = list(
+#  #   exponential = 0,
+#  #   stationary = C(100, 140),  # Two treatments also need two timepoints
+#  #   additional_condition = NA
+#  #   )
+#  #
+#  # or set a treatment for ALL conditions (still always make a list):
+#  #
+#  # treatment_labels = list("treatment")
+#  # treatment_timepoints = list(120)
+#  #
+#  # or set multiple treatments for ALL conditions:
+#  #
+#  # treatment_labels = list(c("treatment1", "treatment2"))
+#  # treatment_timepoints = list(c(120, 90))
+#  
 #  
 #  # Get all the gene names. They are used for generating files
 #  # which contents can be directly used as the input for the Enrichr webtool,

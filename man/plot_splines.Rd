@@ -12,7 +12,8 @@ plot_splines(
   time_unit_label,
   plot_info,
   adj_pthreshold,
-  replicate_column
+  replicate_column,
+  level
 )
 }
 \arguments{

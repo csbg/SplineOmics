@@ -4,7 +4,7 @@
 \alias{plot_cluster_mean_splines}
 \title{Plot Consensus Shapes}
 \usage{
-plot_cluster_mean_splines(curve_values, plot_info)
+plot_cluster_mean_splines(curve_values, plot_info, level)
 }
 \arguments{
 \item{curve_values}{A dataframe containing curve values and cluster

@@ -1,8 +1,6 @@
 
 # SplineOmics
 
-<meta name="google-site-verification" content="5uRTmgQaaeR1Z7Ja4FnbaKQ8idvM1wSHoD7QZSaCZmw"/>
-
 ![Version](https://img.shields.io/badge/version-0.1.0-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
@@ -10,6 +8,8 @@ Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
 CMD
 Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
+![Dependencies](https://img.shields.io/badge/dependencies-19-blue)
+![Platforms](https://img.shields.io/badge/platforms-all-brightgreen)
 
 <img src="man/figures/hex_logo.png" align="left" width="65"/>
 
@@ -67,13 +67,14 @@ abundances, etc.).
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
-    time.
+    time. The data must have no NA values and should have normally
+    distributed features.
 
 2.  **Meta**: A table with metadata on the columns/samples of the data
     matrix (e.g., batch, time point, etc.)
 
-3.  **Annotation**: A table with identifiers on the rows/features of the
-    data matrix (e.g., gene and protein name).
+3.  **Annotation** (optional): A table with identifiers on the
+    rows/features of the data matrix (e.g., gene and protein name).
 
 ### Capabilities
 

@@ -4,7 +4,7 @@
 \alias{plot_single_and_mean_splines}
 \title{Plot Single and Mean Splines}
 \usage{
-plot_single_and_mean_splines(time_series_data, title, plot_info)
+plot_single_and_mean_splines(time_series_data, title, plot_info, level)
 }
 \arguments{
 \item{time_series_data}{A dataframe or matrix with time series data.}

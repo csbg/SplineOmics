@@ -4,7 +4,7 @@
 \alias{plot_all_mean_splines}
 \title{Plot All Mean Splines}
 \usage{
-plot_all_mean_splines(curve_values, plot_info)
+plot_all_mean_splines(curve_values, plot_info, level)
 }
 \arguments{
 \item{curve_values}{A dataframe containing curve values and cluster
@@ -18,6 +18,9 @@ time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
 indicating the positions of the treatments (such as 
 feeding, temperature shift, etc.).}
+
+\item{level}{One of the unique values of the meta condition column. This is
+a factor that separates the experiment.}
 }
 \value{
 A ggplot object representing the average curves by cluster.
