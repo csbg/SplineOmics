@@ -147,6 +147,7 @@ ranges.</p></li>
 <li><p><a href="#method-InputControl-check_adj_pthresh_limma_category_2_3"><code>InputControl$check_adj_pthresh_limma_category_2_3()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_clusters"><code>InputControl$check_clusters()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_plot_info"><code>InputControl$check_plot_info()</code></a></p></li>
+<li><p><a href="#method-InputControl-check_plot_options"><code>InputControl$check_plot_options()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_report_dir"><code>InputControl$check_report_dir()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_genes"><code>InputControl$check_genes()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_padjust_method"><code>InputControl$check_padjust_method()</code></a></p></li>
@@ -645,8 +646,22 @@ as `treatment_labels`.</p><div class="section">
 <p>NULL if `plot_info` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.</p>
-<p>Check and Create Report Directory</p>
+<p>Check plot options</p>
 </div>
+
+</div><p></p><hr><a id="method-InputControl-check_plot_options"></a><div class="section">
+<h3 id="method-check-plot-options-">Method <code>check_plot_options()</code><a class="anchor" aria-label="anchor" href="#method-check-plot-options-"></a></h3>
+<p>This method checks if the `plot_options` list contains the required
+elements
+`meta_replicate_column` and `cluster_heatmap_columns`. It validates that
+`cluster_heatmap_columns` is either TRUE or FALSE, and that
+`meta_replicate_column` is a valid column name in the `meta` dataframe.
+If the checks fail, the script stops with an error message.</p>
+<p>Check and Create Report Directory</p><div class="section">
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_plot_options</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
 
 </div><p></p><hr><a id="method-InputControl-check_report_dir"></a><div class="section">
 <h3 id="method-check-report-dir-">Method <code>check_report_dir()</code><a class="anchor" aria-label="anchor" href="#method-check-report-dir-"></a></h3>
@@ -658,7 +673,7 @@ warnings or
 errors during directory creation, the function stops execution and
 returns
 an error message.</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report_dir</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -687,7 +702,7 @@ within the `self$args` list. It ensures that `genes` is a character
 vector,
 that neither `data` nor `genes` is `NULL`, and that the length of `genes`
 matches the number of rows in `data`.</p><div class="section">
-<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_genes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -710,7 +725,7 @@ methods are:
 If the method
 is not one of these, the function stops execution and returns an error
  message.</p><div class="section">
-<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_padjust_method</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -739,7 +754,7 @@ returns an error message if the method is invalid.</p>
 <p>Validates the report information to ensure it contains all mandatory
 fields
 and adheres to the required formats.</p><div class="section">
-<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
+<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report_info</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -763,7 +778,7 @@ thrown.</p>
 <p>This function checks whether all elements of `feature_name_columns` are
 characters of length 1 and whether they are valid column names in the
 `annotation` data frame.</p><div class="section">
-<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_feature_name_columns</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -784,7 +799,7 @@ pass.</p>
 arguments.
 It checks if the `report` argument is present and validates its
 Boolean value.</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -792,7 +807,7 @@ Boolean value.</p><div class="section">
 </div><p></p><hr><a id="method-InputControl-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
+<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

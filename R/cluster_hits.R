@@ -113,7 +113,7 @@ cluster_hits <- function(
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-  
+
   top_tables <- splineomics[['limma_splines_result']][['time_effect']]
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
@@ -182,7 +182,7 @@ cluster_hits <- function(
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
   }
-  
+
   if (report) {
     plots <- make_clustering_report(
       all_levels_clustering = all_levels_clustering,
@@ -1382,7 +1382,11 @@ plot_heatmap <- function(
     meta_level <- meta[level_indices, ]
     
     row_labels <- truncate_row_names(rownames(data_level))
-
+    
+    if (is.null(cluster_heatmap_columns)) {  # set default value
+      cluster_heatmap_columns <- FALSE
+    }
+    
     ht <-
       ComplexHeatmap::Heatmap(
         z_score,
@@ -1620,7 +1624,7 @@ plot_all_mean_splines <- function(
   p_curves <- p_curves +
     ggplot2::scale_color_manual(
       values = all_colors,  # Combine both cluster and treatment colors
-      name = "Cluster/Treatment"
+      name = NULL   # No legend title
     ) +
     ggplot2::theme(
       legend.key.size = grid::unit(0.6, "cm"),  

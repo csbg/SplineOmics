@@ -18,6 +18,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/Level4Functions.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/NumericBlockFinder.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/SplineOmics-package.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/add_dashed_lines.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/add_feature_names.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/add_plot_to_html.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/ask_user.html</loc></url>
@@ -93,6 +94,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_pca_plot.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_violin_box_plots.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/manage_gsea_level.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/maybe_add_dashed_lines.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/merge_annotation_all_levels_clustering.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/merge_top_table_with_annotation.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/modify_limma_top_table.html</loc></url>

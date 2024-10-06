@@ -705,8 +705,8 @@ report_dir <- here::here(
 plot_info = list(  # For the spline plots
   y_axis_label = "log2 intensity",
   time_unit = "min",  # our measurements were in minutes
-  treatment_labels = list(all = c("feeding")),  # add this for all conditions
-  treatment_timepoints = list(all = c(0))  # Feeding was at 0 minutes.
+  treatment_labels = list("feeding"),  # add this for all conditions
+  treatment_timepoints = list(0)  # Feeding was at 0 minutes.
 )
 
 # Like this you can add individual treatment labels to your plots:
@@ -740,12 +740,19 @@ plot_info = list(  # For the spline plots
 gene_column_name <- "Gene_symbol"
 genes <- annotation[[gene_column_name]]
 
+plot_options = list(
+  # When meta_replicate_column is not there, all datapoints are blue.
+  meta_replicate_column = "Reactor",  # Colors the data points based on Reactor
+  cluster_heatmap_columns = FALSE   # Per default FALSE, just for demonstration
+)
+
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
   genes = genes,
   plot_info = plot_info,
+  plot_options = plot_options,
   report_dir = report_dir,
   adj_pthresh_avrg_diff_conditions = 0,
   adj_pthresh_interaction_condition_time = 0.25
