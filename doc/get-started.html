@@ -1074,8 +1074,8 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>plot_info <span class="ot">=</span> <span class="fu">list</span>(  <span class="co"># For the spline plots</span></span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">&quot;log2 intensity&quot;</span>,</span>
 <span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;min&quot;</span>,  <span class="co"># our measurements were in minutes</span></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">list</span>(<span class="at">all =</span> <span class="fu">c</span>(<span class="st">&quot;feeding&quot;</span>)),  <span class="co"># add this for all conditions</span></span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">list</span>(<span class="at">all =</span> <span class="fu">c</span>(<span class="dv">0</span>))  <span class="co"># Feeding was at 0 minutes.</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">treatment_labels =</span> <span class="fu">list</span>(<span class="st">&quot;feeding&quot;</span>),  <span class="co"># add this for all conditions</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">treatment_timepoints =</span> <span class="fu">list</span>(<span class="dv">0</span>)  <span class="co"># Feeding was at 0 minutes.</span></span>
 <span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>)</span>
 <span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a></span>
 <span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co"># Like this you can add individual treatment labels to your plots:</span></span>
@@ -1109,16 +1109,23 @@ clusters as we have specified for that specific level.</p>
 <span id="cb12-51"><a href="#cb12-51" tabindex="-1"></a>gene_column_name <span class="ot">&lt;-</span> <span class="st">&quot;Gene_symbol&quot;</span></span>
 <span id="cb12-52"><a href="#cb12-52" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[[gene_column_name]]</span>
 <span id="cb12-53"><a href="#cb12-53" tabindex="-1"></a></span>
-<span id="cb12-54"><a href="#cb12-54" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
-<span id="cb12-55"><a href="#cb12-55" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
-<span id="cb12-56"><a href="#cb12-56" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
-<span id="cb12-57"><a href="#cb12-57" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
-<span id="cb12-58"><a href="#cb12-58" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
-<span id="cb12-59"><a href="#cb12-59" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
-<span id="cb12-60"><a href="#cb12-60" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb12-61"><a href="#cb12-61" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="dv">0</span>,</span>
-<span id="cb12-62"><a href="#cb12-62" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.25</span></span>
-<span id="cb12-63"><a href="#cb12-63" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb12-54"><a href="#cb12-54" tabindex="-1"></a>plot_options <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb12-55"><a href="#cb12-55" tabindex="-1"></a>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
+<span id="cb12-56"><a href="#cb12-56" tabindex="-1"></a>  <span class="at">meta_replicate_column =</span> <span class="st">&quot;Reactor&quot;</span>,  <span class="co"># Colors the data points based on Reactor</span></span>
+<span id="cb12-57"><a href="#cb12-57" tabindex="-1"></a>  <span class="at">cluster_heatmap_columns =</span> <span class="cn">FALSE</span>   <span class="co"># Per default FALSE, just for demonstration</span></span>
+<span id="cb12-58"><a href="#cb12-58" tabindex="-1"></a>)</span>
+<span id="cb12-59"><a href="#cb12-59" tabindex="-1"></a></span>
+<span id="cb12-60"><a href="#cb12-60" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
+<span id="cb12-61"><a href="#cb12-61" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb12-62"><a href="#cb12-62" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb12-63"><a href="#cb12-63" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
+<span id="cb12-64"><a href="#cb12-64" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb12-65"><a href="#cb12-65" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
+<span id="cb12-66"><a href="#cb12-66" tabindex="-1"></a>  <span class="at">plot_options =</span> plot_options,</span>
+<span id="cb12-67"><a href="#cb12-67" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb12-68"><a href="#cb12-68" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="dv">0</span>,</span>
+<span id="cb12-69"><a href="#cb12-69" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.25</span></span>
+<span id="cb12-70"><a href="#cb12-70" tabindex="-1"></a>  )</span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The

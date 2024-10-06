@@ -81,6 +81,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_clusters()
       self$check_genes()
       self$check_plot_info()
+      self$check_plot_options()
       self$check_report_dir()
       self$check_padjust_method()
       self$check_report_info()
@@ -867,35 +868,53 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_clusters = function() {
       
-      clusters <- self$args$clusters
+      clusters <- self$args[["clusters"]]
+      meta <- self$args[["meta"]]
+      condition <- self$args[["condition"]]
       
-      required_args <- list(clusters)
+      required_args <- list(
+        clusters,
+        meta,
+        condition
+      )
       
       if (any(sapply(required_args, is.null))) {
         return(NULL)
       }
       
+      # Get the unique number of elements in the condition column
+      unique_conditions <- unique(meta[[condition]])
+      num_unique_conditions <- length(unique_conditions)
+      
       # Check if clusters is a single integer or a vector of integers
       if (is.numeric(clusters) && all(clusters == as.integer(clusters))) {
         
+        # Ensure clusters has as many elements as unique conditions
+        if (length(clusters) != num_unique_conditions) {
+          stop_call_false(
+            "The number of elements in 'clusters' must match the number", 
+            "of unique elements in the '",
+            condition, "' column of the meta dataframe ( There are",
+            num_unique_conditions, "unique elements = levels)"
+          )
+        }
+        
         # If clusters is a single integer, ensure it is positive
         if (length(clusters) == 1 && clusters <= 0) {
-          stop("clusters must be a positive integer.", call. = FALSE)
+          stop_call_false("clusters must be a positive integer.")
         }
         
         # If clusters is a vector of integers, ensure all are positive
         if (length(clusters) > 1 && any(clusters <= 0)) {
-          stop(
-            "All elements in clusters must be positive integers.",
-            call. = FALSE
-            )
+          stop_call_false("All elements in clusters must be positive integers.")
         }
+        
       } else {
-        stop(
-          "clusters must be a single integer or a vector of integers.",
-          call. = FALSE
+        stop_call_false(
+          "clusters must be a single integer or a vector of integers."
           )
       }
+      
     },
     
     
@@ -936,7 +955,7 @@ InputControl <- R6::R6Class("InputControl",
       
       plot_info <- self$args$plot_info
       meta <- self$args$meta
-      condition_column <- self$args[["condition"]]  # This is the column name
+      condition_column <- self$args[["condition"]] 
       
       required_args <- list(
         plot_info,
@@ -984,16 +1003,18 @@ InputControl <- R6::R6Class("InputControl",
         # If one has names, both must have names
         if (is.null(label_names) || is.null(timepoint_names)) {
           stop(
-            "Both treatment_labels and treatment_timepoints must be either fully named or not named",
+            "Both treatment_labels and treatment_timepoints must 
+            be either fully named or not named",
             call. = FALSE
           )
         }
         
-        # Check if the names are present in the specified condition column of meta
+        # Check if the names are present in the condition column of meta
         if (!all(label_names %in% meta[[condition_column]]) ||
             !all(timepoint_names %in% meta[[condition_column]])) {
           stop(
-            "All names in treatment_labels and treatment_timepoints must be present in the condition column of the meta data",
+            "All names in treatment_labels and treatment_timepoints must
+            be present in the condition column of the meta data",
             call. = FALSE
           )
         }
@@ -1001,7 +1022,8 @@ InputControl <- R6::R6Class("InputControl",
         # Ensure that both lists have the same names
         if (!identical(label_names, timepoint_names)) {
           stop(
-            "treatment_labels and treatment_timepoints must have identical names",
+            "treatment_labels and treatment_timepoints must have 
+            identical names",
             call. = FALSE
           )
         }
@@ -1009,9 +1031,11 @@ InputControl <- R6::R6Class("InputControl",
       } else {
         
         # If unnamed, ensure there's only one element
-        if (length(plot_info$treatment_labels) != 1 || length(plot_info$treatment_timepoints) != 1) {
+        if (length(plot_info$treatment_labels) != 1 
+            || length(plot_info$treatment_timepoints) != 1) {
           stop(
-            "If treatment_labels and treatment_timepoints are unnamed, they must contain only a single element",
+            "If treatment_labels and treatment_timepoints are unnamed,
+            they must contain only a single element",
             call. = FALSE
           )
         }
@@ -1022,7 +1046,8 @@ InputControl <- R6::R6Class("InputControl",
         if (!any(is.na(label))) {
           if (!is.character(label)) {
             stop(
-              "All elements of treatment_labels must be NA or character strings",
+              "All elements of treatment_labels must be NA or character
+              strings",
               call. = FALSE
             )
           }
@@ -1070,6 +1095,59 @@ InputControl <- R6::R6Class("InputControl",
     },
     
     
+    #' Check plot options
+    #'
+    #' @description
+    #' This method checks if the `plot_options` list contains the required 
+    #' elements 
+    #' `meta_replicate_column` and `cluster_heatmap_columns`. It validates that 
+    #' `cluster_heatmap_columns` is either TRUE or FALSE, and that 
+    #' `meta_replicate_column` is a valid column name in the `meta` dataframe.
+    #' If the checks fail, the script stops with an error message.
+    #'
+    check_plot_options = function() {
+      
+      plot_options <- self$args[["plot_options"]]
+      meta <- self$args[["meta"]]
+      
+      required_args <- list(
+        plot_options,
+        meta
+      )
+      
+      # Check if any required arguments are NULL
+      if (any(sapply(required_args, is.null))) {
+        return(NULL)
+      }
+      
+      # Ensure at least one of the required elements is present in plot_options
+      if (!any(c("meta_replicate_column", "cluster_heatmap_columns") %in% names(plot_options))) {
+        stop_call_false("At least one of 'meta_replicate_column' or 'cluster_heatmap_columns' must be present in plot_options")
+      }
+      
+      # Check if meta_replicate_column is present, and if so, validate it
+      if ("meta_replicate_column" %in% names(plot_options)) {
+        if (!is.character(plot_options[["meta_replicate_column"]]) || 
+            length(plot_options[["meta_replicate_column"]]) != 1) {
+          stop_call_false("'meta_replicate_column' must be a single string")
+        }
+        
+        if (!plot_options[["meta_replicate_column"]] %in% colnames(meta)) {
+          stop_call_false("The value of 'meta_replicate_column' does not exist in",
+                          "the meta dataframe")
+        }
+      }
+      
+      # Check if cluster_heatmap_columns is present, and if so, validate it
+      if ("cluster_heatmap_columns" %in% names(plot_options)) {
+        if (!is.logical(plot_options[["cluster_heatmap_columns"]]) || 
+            length(plot_options[["cluster_heatmap_columns"]]) != 1) {
+          stop_call_false("'cluster_heatmap_columns' must be TRUE or FALSE")
+        }
+      }
+    },
+    
+    
     #' Check and Create Report Directory
     #'
     #' @description
@@ -1110,21 +1188,24 @@ InputControl <- R6::R6Class("InputControl",
         tryCatch({
           dir.create(report_dir, recursive = TRUE)
         }, warning = function(w) {
-          stop(sprintf("Warning occurred while creating the directory: %s",
-                       w$message),
-               call. = FALSE)
+          stop_call_false(
+            sprintf("Warning occurred while creating the directory: %s", 
+                    w$message)
+            )
         }, error = function(e) {
-          stop(sprintf("Error occurred while creating the directory: %s",
-                       e$message),
-               call. = FALSE)
+          stop_call_false(
+            sprintf("Error occurred while creating the directory: %s", 
+                    e$message)
+            )
         })
       }
       
       # Verify that the directory exists and is a directory
       if (!file.exists(report_dir) || !file.info(report_dir)$isdir) {
-        stop(sprintf("The specified path is not a valid directory: %s",
-                     report_dir),
-             call. = FALSE)
+        stop_call_false(
+          sprintf("The specified path is not a valid directory: %s", 
+                  report_dir)
+          )
       }
       
       return(TRUE)

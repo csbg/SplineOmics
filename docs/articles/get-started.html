@@ -880,8 +880,8 @@ clusters as we have specified for that specific level.</p>
 <span><span class="va">plot_info</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>  <span class="co"># For the spline plots</span></span>
 <span>  y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
 <span>  time_unit <span class="op">=</span> <span class="st">"min"</span>,  <span class="co"># our measurements were in minutes</span></span>
-<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>all <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"feeding"</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># add this for all conditions</span></span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>all <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Feeding was at 0 minutes.</span></span>
+<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"feeding"</span><span class="op">)</span>,  <span class="co"># add this for all conditions</span></span>
+<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>  <span class="co"># Feeding was at 0 minutes.</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Like this you can add individual treatment labels to your plots:</span></span>
@@ -915,12 +915,19 @@ clusters as we have specified for that specific level.</p>
 <span><span class="va">gene_column_name</span> <span class="op">&lt;-</span> <span class="st">"Gene_symbol"</span></span>
 <span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="va">annotation</span><span class="op">[[</span><span class="va">gene_column_name</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
+<span><span class="va">plot_options</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
+<span>  meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>,  <span class="co"># Colors the data points based on Reactor</span></span>
+<span>  cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span>   <span class="co"># Per default FALSE, just for demonstration</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
 <span>  clusters <span class="op">=</span> <span class="va">clusters</span>,</span>
 <span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
 <span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>  plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.25</span></span>

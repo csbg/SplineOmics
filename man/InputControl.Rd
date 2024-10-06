@@ -117,6 +117,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_adj_pthresh_limma_category_2_3}{\code{InputControl$check_adj_pthresh_limma_category_2_3()}}
 \item \href{#method-InputControl-check_clusters}{\code{InputControl$check_clusters()}}
 \item \href{#method-InputControl-check_plot_info}{\code{InputControl$check_plot_info()}}
+\item \href{#method-InputControl-check_plot_options}{\code{InputControl$check_plot_options()}}
 \item \href{#method-InputControl-check_report_dir}{\code{InputControl$check_report_dir()}}
 \item \href{#method-InputControl-check_genes}{\code{InputControl$check_genes()}}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
@@ -609,8 +610,25 @@ NULL if `plot_info` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.
 
-Check and Create Report Directory
+Check plot options
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_plot_options"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_plot_options}{}}}
+\subsection{Method \code{check_plot_options()}}{
+This method checks if the `plot_options` list contains the required 
+elements 
+`meta_replicate_column` and `cluster_heatmap_columns`. It validates that 
+`cluster_heatmap_columns` is either TRUE or FALSE, and that 
+`meta_replicate_column` is a valid column name in the `meta` dataframe.
+If the checks fail, the script stops with an error message.
+
+Check and Create Report Directory
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_plot_options()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-InputControl-check_report_dir"></a>}}
