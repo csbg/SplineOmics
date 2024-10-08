@@ -1607,7 +1607,8 @@ plot_all_mean_splines <- function(
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 
-  # Call the wrapper function to conditionally add dashed lines and get treatment colors
+  # Call the wrapper function to conditionally add dashed lines and get 
+  # treatment colors
   result <- maybe_add_dashed_lines(
     p = p_curves,
     plot_info = plot_info,
@@ -3210,7 +3211,7 @@ maybe_add_dashed_lines <- function(
 
   # Initialize an empty vector to store treatment colors
   treatment_colors <- c()
-  
+
   # Check if there are treatment labels
   if (!all(is.na(plot_info$treatment_labels))) {
     

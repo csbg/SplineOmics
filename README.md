@@ -238,6 +238,11 @@ higher levels of reproducibility because the analysis is carried out in
 a consistent environment, independent of the operating system and its
 custom configurations.
 
+Please note that you must have the `Docker Engine` installed on your
+machine. For instructions on how to install it, consult the official
+[Docker Engine installation
+guide](https://docs.docker.com/engine/install/).
+
 More information about `Docker` containers can be found on the [official
 Docker page](https://www.docker.com/resources/what-container/).
 
