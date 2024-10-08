@@ -124,11 +124,13 @@ generate_report_html <- function(
       report_info[[field]] <- format_text(report_info[[field]])
     }
   }
-
+  
+  splineomics_version <- utils::packageVersion("SplineOmics")
   header_text <- paste(
     title, 
     paste("Omics-Datatype:", report_info$omics_data_type), 
-    paste("Date-Time:", timestamp), sep = " | "
+    paste("Date-Time:", timestamp), 
+    paste("SplineOmics Version:", splineomics_version), sep = " | "
     )
   header_text <- paste(header_text, "<br><br><br>")
   
@@ -166,10 +168,6 @@ generate_report_html <- function(
     "meta"
     )
   
-  # if (!all(is.na(topTables))) download_fields <- c(
-  #   download_fields,
-  #   "limma_topTables"
-  #   )
   if (!all(is.na(topTables))) {
     download_fields <- c(
       download_fields,
@@ -237,6 +235,7 @@ generate_report_html <- function(
   # Close the Report Info table
   report_info_section <- paste(report_info_section, "</table>", sep = "\n")
   
+  download_fields <- c(download_fields, "session_info")
   for (field in download_fields) {
 
     base64_df <- process_field(
@@ -742,17 +741,28 @@ get_header_section <- function(
       'background-color: #f00; color: #fff; padding:', 
       '10px 15px; font-size: 2em; font-weight: bold;', 
       'z-index: 1;">Note!</div>',
-      '<p style="font-size: 2em;">',
-      "Clustering of features that show", 
-      "significant changes over time (= hits).<br>", 
-      "Clustering was done based on the min-max normalized shape",
-      "of the spline.<br> For this, the spline parameters in the limma",
-      "topTable are used to generate 1000 curve datapoints between 0 and 1. ", 
-      "These  datapoints are used for hierarchical clustering. <br>", 
-      "Right-click on  any plot in this report to save it as a", 
-      ".svg (vector graphic) file! <br> If one level of ", 
-      "the experiment is not shown, it means it has < 2 hits!<br>",
-      "</p>",
+      '<p style="font-size: 1em;">',
+      '<ul style="font-size: 2em; padding-left: 20px;">',  # Keeps the default bullet points
+      '<li style="margin-bottom: 15px;">Clustering of features that show 
+      significant changes over time (= hits).</li>',
+      '<li style="margin-bottom: 15px;">Clustering was done based on the 
+      min-max normalized shape of the spline.</li>',
+      '<li style="margin-bottom: 15px;">For this, the spline parameters in 
+      the limma topTable are used to generate 1000 curve datapoints between
+      0 and 1.</li>',
+      '<li style="margin-bottom: 15px;">These datapoints are used for 
+      hierarchical clustering.</li>',
+      '<li style="margin-bottom: 15px;">Right-click on any plot in this 
+      report to save it as a .svg (vector graphic) file!</li>',
+      '<li style="margin-bottom: 15px;">If one level of the experiment is 
+      not shown, it means it has < 2 hits!</li>',
+      '<li style="margin-bottom: 15px;">The "avg CV" value on top of all 
+      individual spline plots is the average coefficient of variation across
+      all timepoints. For example, a value of 10% means that the timepoints, 
+      on average, have a standard deviation of 10% of the mean.</li>',
+      '</ul>',
+      '</p>',
+      '</div>',
       paste(
         '<span style="font-size:1.3em;">',
         'feature_name "formula": ', 
@@ -1240,6 +1250,19 @@ process_field <- function(
       class="embedded-file">
        <button>Download Enrichr_background.txt</button></a>',
       base64enc::base64encode(charToRaw(enrichr_format$background))
+    )
+    
+  } else if (field == "session_info") {
+    # Capture session info and encode to base64 on-the-fly
+    session_details <- sessionInfo()
+    session_info <- paste(capture.output(session_details), collapse = "\n")
+    base64_session_info <- base64enc::base64encode(charToRaw(session_info))
+    
+    base64_df <- sprintf(
+      '<a href="data:text/plain;base64,%s" download="session_info.txt" 
+      class="embedded-file">
+       <button>Download R Session Info</button></a>',
+      base64_session_info
     )
     
   } else {

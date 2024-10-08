@@ -1749,7 +1749,7 @@ plot_splines <- function(
     replicate_column,
     level
 ) {
-  
+
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
   
@@ -1792,13 +1792,16 @@ plot_splines <- function(
       replicate_colors <- scales::hue_pal()(length(unique(replicates)))
       names(replicate_colors) <- unique(replicates)
       
-      color_values <- c("Spline" = "red", replicate_colors)
+      color_values <- c(
+        "Spline" = "red",
+        replicate_colors
+        )
     } else {
-      color_values <- c("Data" = "blue", "Spline" = "red")
+      color_values <- c(
+        "Data" = "blue",
+        "Spline" = "red"
+        )
     }
-    
-    treatment_labels <- plot_info$treatment_labels 
-    treatment_times <- plot_info$treatment_timepoints 
 
     # Get adjusted p-value and significance stars
     adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
@@ -1816,17 +1819,14 @@ plot_splines <- function(
       )
     )
     
+    avg_cv <- calc_cv(
+      time_values = time_points,
+      response_values = y_values
+      )
+    
     # Use local environment to avoid unwanted updating dynamic legend label.
     p <- local({
-      
-      spline_label <- paste0(
-        "Spline\n(adj. p-val:\n",
-        round(adj_p_value, 4),
-        "\nAsterisk: ",
-        significance_stars,
-        ")"
-      )
-      
+
       plot_spline <- data.frame(
         Time = Time,
         Fitted = fitted_values
@@ -1834,23 +1834,7 @@ plot_splines <- function(
       
       x_max <- as.numeric(max(time_points))
       x_extension <- x_max * 0.05
-      
-      all_time_points <- unique(c(time_points))
-      
-      # Filter out close labels to avoid overlapping.
-      time_diffs <- diff(all_time_points)
-      min_spacing <- x_max * 0.05  # keep all that are more than 5% apart.
-      keep_labels <- c(TRUE, time_diffs > min_spacing)
-      filtered_time_points <- all_time_points[keep_labels]
-      
-      dynamic_label <- function(labels) {
-        return(ifelse(
-          labels == "Spline",
-          spline_label,
-          labels
-        ))
-      }
-      
+
       # Define color column outside aes()
       color_column_values <- if (!is.null(replicate_column) 
                           && is.character(replicate_column)) {
@@ -1882,7 +1866,7 @@ plot_splines <- function(
         ggplot2::theme_minimal() +
         ggplot2::scale_x_continuous(
           limits = c(min(time_points), x_max + x_extension),
-          breaks = filtered_time_points,  
+          breaks = filter_timepoints(time_points),  
           labels = function(x) {
             x
           }
@@ -1918,7 +1902,10 @@ plot_splines <- function(
           )
         )
       
-      y_pos = max(max(y_values, na.rm = TRUE), max(fitted_values, na.rm = TRUE))
+      y_pos = max(
+        max(y_values, na.rm = TRUE),
+        max(fitted_values, na.rm = TRUE)
+        )
       
       result <- maybe_add_dashed_lines(
         p = p, 
@@ -1957,7 +1944,11 @@ plot_splines <- function(
         ) +
         ggplot2::theme_minimal() +
         ggplot2::labs(
-          title = title,
+          title = paste(
+            "<b>", title, "</b>",
+            "<br>avg CV: ", round(avg_cv, 2), "%",
+            "  |  adj. p-val:", round(adj_p_value, 4), significance_stars, ""
+          ),
           x = paste("Time", time_unit_label),
           y = paste(plot_info$y_axis_label)
         ) +
@@ -1967,7 +1958,9 @@ plot_splines <- function(
           axis.title.y = ggplot2::element_text(size = 8),
           legend.key.size = grid::unit(0.6, "cm"),  
           legend.key.height = grid::unit(0.3, "cm"),
-          legend.title = ggplot2::element_text(size = 8)
+          legend.title = ggplot2::element_text(size = 8),
+          legend.text = ggplot2::element_text(size = 6),
+          axis.text.x = ggplot2::element_text(size = 6)
         )
       
       p
@@ -2119,6 +2112,17 @@ plot_spline_comparisons <- function(
         Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
         Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA)
       )
+      
+      # Calculate average CV for Y1 and Y2 across all time points
+      cv_1 <- calc_cv(
+        time_values = plot_data$Time, 
+        response_values = plot_data$Y1
+        )
+      
+      cv_2 <- calc_cv(
+        time_values = plot_data$Time,
+        response_values = plot_data$Y2
+        )
 
       # Create the plot
       p <- ggplot2::ggplot() +
@@ -2165,16 +2169,32 @@ plot_spline_comparisons <- function(
             )
         ) +
         ggplot2::scale_color_manual(values = setNames(
-          c("orange", "orange", "purple", "purple"),
-          c(paste("Data", condition_1), paste("Spline", condition_1),
-            paste("Data", condition_2), paste("Spline", condition_2))
+          c(
+            "orange",
+            "orange",
+            "purple",
+            "purple"
+            ),
+          c(paste(
+            "Data",
+            condition_1
+            ), 
+            paste(
+              "Spline",
+              condition_1
+              ),
+            paste(
+              "Data",
+              condition_2
+              ),
+            paste(
+              "Spline",
+              condition_2
+              )
+            )
         )) +
         ggplot2::scale_x_continuous(
-          breaks = unique(meta$Time),  # Labels are placed at data points 
-          guide = ggplot2::guide_axis(
-            angle = 45,         # Tilt the labels 45 degrees
-            n.dodge = 2         # Prevent overlapping by dodging labels
-          )
+          breaks = filter_timepoints(time_points) 
         ) +
         ggplot2::labs(
           title = paste(
@@ -2183,7 +2203,9 @@ plot_spline_comparisons <- function(
             avrg_diff_stars,
             "\nadj.P.Val interaction_condition_time: ",
             round(interaction_condition_time[hit, "adj.P.Val"], 4),
-            interaction_stars
+            interaction_stars,
+            "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
+            " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
           ),
           x = paste0("Time [", plot_info$time_unit, "]"),
           y = plot_info$y_axis_label
@@ -2192,7 +2214,11 @@ plot_spline_comparisons <- function(
         ggplot2::theme(
           legend.position = "right",
           legend.title = element_blank(),
-          plot.title = ggplot2::element_text(size = 7)
+          plot.title = ggplot2::element_text(size = 7),
+          legend.text = ggplot2::element_text(size = 6),
+          axis.title.x = ggplot2::element_text(size = 8),
+          axis.title.y = ggplot2::element_text(size = 8),
+          axis.text.x = ggplot2::element_text(size = 6)
         )
 
       plot_list[[length(plot_list) + 1]] <- p
@@ -3036,6 +3062,88 @@ truncate_row_names <- function(
       return(x)
     }
   })
+}
+
+
+filter_timepoints <- function(
+    time_points,
+    percentage_threshold = 0.05
+    ) {
+  
+  x_max <- as.numeric(max(time_points))
+  
+  # Calculate the minimum spacing based on the threshold
+  min_spacing <- x_max * percentage_threshold  
+  
+  all_time_points <- unique(c(time_points))
+  
+  # Calculate the differences between consecutive time points
+  time_diffs <- diff(all_time_points)
+  
+  # Keep labels that are more than the minimum spacing apart
+  keep_labels <- c(TRUE, time_diffs > min_spacing)
+  filtered_time_points <- all_time_points[keep_labels]
+  
+  return(filtered_time_points)
+}
+
+
+
+#' Calculate average CV across unique time points
+#'
+#' @description
+#' This function calculates the coefficient of variation (CV) for each unique 
+#' time point based on the provided time values and response values. It then 
+#' returns the average CV across all time points. The CV is only calculated if 
+#' there are more than one valid (non-NA) values for a given time point and 
+#' the mean of the values is non-zero.
+#'
+#' @param time_values A numeric vector containing the time points. Time points 
+#' may repeat across replicates.
+#' @param response_values A numeric vector of response values corresponding to 
+#' the time points.
+#'
+#' @return The average coefficient of variation (CV) across all time points. 
+#' Returns NA if all CVs are NA.
+#'
+calc_cv <- function(
+    time_values, 
+    response_values
+    ) {
+
+  time_data <- data.frame(
+    Time = time_values, 
+    Response = response_values
+  )
+  
+  unique_times <- unique(time_data$Time)
+  
+  cvs <- sapply(
+    unique_times,
+    function(t) 
+    {
+      # Subset for the specific time point
+      values_at_time <- time_data$Response[time_data$Time == t]
+      # Calculate CV if the mean is not zero and there are enough data points
+      if (mean(values_at_time, na.rm = TRUE) != 0 
+          && sum(!is.na(values_at_time)) > 1) {
+        (sd(
+          values_at_time, 
+          na.rm = TRUE
+        ) / 
+          mean(
+            values_at_time, 
+            na.rm = TRUE
+          )) * 100
+      } else {
+        NA  # Return NA for CV when mean is 0 or insufficient data points
+      }
+    })
+  # Return the average CV across time points
+  return(mean(
+    cvs,
+    na.rm = TRUE
+    ))
 }
 
 
