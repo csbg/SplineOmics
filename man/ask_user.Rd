@@ -13,7 +13,7 @@ ask_user(question)
 None.
 }
 \description{
-This function prompts the user with a yes/no question. If the user answers 
-"yes" (case insensitive), the code proceeds. If the user answers "no" or 
+This function prompts the user with a yes/no question. If the user answers
+"yes" (case insensitive), the code proceeds. If the user answers "no" or
 anything else, the code stops.
 }

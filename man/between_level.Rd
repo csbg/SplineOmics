@@ -9,6 +9,7 @@ between_level(
   rna_seq_data,
   meta,
   design,
+  dream_params,
   spline_params,
   condition,
   compared_levels,
@@ -19,12 +20,20 @@ between_level(
 \arguments{
 \item{data}{A matrix of data values.}
 
-\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
 such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
 \item{meta}{A dataframe containing metadata, including a 'Time' column.}
 
 \item{design}{A design formula or matrix for the LIMMA analysis.}
+
+\item{dream_params}{A named list or NULL. When not NULL, it must at least 
+contain the named element 'random_effects', which must contain a string that
+is a formula for the random effects of the mixed models by dream. 
+Additionally, it can contain the named elements dof, which must be a int
+bigger than 1, which is the degree of freedom for the dream topTable, and
+the named element KenwardRoger, which must be a bool, specifying whether
+to use that method or not.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
@@ -37,15 +46,15 @@ such as the output from `limma::voom` or a similar preprocessing pipeline.}
 \item{feature_names}{A non-empty character vector of feature names.}
 }
 \value{
-A list containing top tables for the factor only and factor-time 
+A list containing top tables for the factor only and factor-time
 contrast.
 }
 \description{
-Performs a between-level analysis using LIMMA to compare specified levels 
+Performs a between-level analysis using LIMMA to compare specified levels
 within a condition.
 }
 \seealso{
-\code{\link[splines]{bs}}, \code{\link[splines]{ns}}, 
-\code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}}, 
+\code{\link[splines]{bs}}, \code{\link[splines]{ns}},
+\code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}},
 \code{\link[limma]{topTable}}, \code{\link{modify_limma_top_table}}
 }

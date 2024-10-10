@@ -1,4 +1,4 @@
-#' utils scripts contains shared functions that are used by at least two package 
+#' utils scripts contains shared functions that are used by at least two package
 #' functions of the SplineOmics package.
 
 # Level 1 internal functions ---------------------------------------------------
@@ -9,9 +9,9 @@
 #' @description
 #' Creates a progress bar for tracking the progress of an iterable task.
 #'
-#' @param iterable An iterable object (e.g., list or vector) whose length 
+#' @param iterable An iterable object (e.g., list or vector) whose length
 #' determines the total number of steps.
-#' @param message A message to display with the progress bar 
+#' @param message A message to display with the progress bar
 #' (default is "Processing").
 #'
 #' @return A progress bar object from the 'progress' package.
@@ -20,12 +20,10 @@
 #'
 #' @seealso
 #' \code{\link{progress_bar}}
-#' 
+#'
 create_progress_bar <- function(
     iterable,
-    message = "Processing"
-) {
-  
+    message = "Processing") {
   # Create and return the progress bar
   pb <- progress::progress_bar$new(
     format = paste(" ", message, " [:bar] :percent :elapsed"),
@@ -33,7 +31,7 @@ create_progress_bar <- function(
     width = 60,
     clear = FALSE
   )
-  
+
   return(pb)
 }
 
@@ -42,20 +40,20 @@ create_progress_bar <- function(
 #' Create Design Matrix for Splines
 #'
 #' @description
-#' This function generates a design matrix using spline parameters and metadata. 
-#' It accommodates both B-splines and natural cubic splines based on the provided 
+#' This function generates a design matrix using spline parameters and metadata.
+#' It accommodates both B-splines and natural cubic splines based on the provided
 #' spline type and parameters.
 #'
 #' @param meta A dataframe containing the metadata, including the time column.
-#' @param spline_params A list containing the spline parameters. This list can 
-#' include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots), 
+#' @param spline_params A list containing the spline parameters. This list can
+#' include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots),
 #' `spline_type`, and `degree`.
-#' @param level_index An integer representing the current level index for which 
+#' @param level_index An integer representing the current level index for which
 #' the design matrix is being generated.
-#' @param design A character string representing the design formula to be used 
+#' @param design A character string representing the design formula to be used
 #' for generating the model matrix.
 #'
-#' @return A design matrix constructed using the specified spline parameters and 
+#' @return A design matrix constructed using the specified spline parameters and
 #' design formula.
 #'
 #' @importFrom splines bs ns
@@ -67,18 +65,18 @@ design2design_matrix <- function(
     level_index,
     design
     ) {
-
+  
   args <- list(
     x = meta$Time,
     intercept = FALSE
-    )   # Time column is mandatory
-  
+  ) # Time column is mandatory
+
   if (!is.null(spline_params$dof)) {
     args$df <- spline_params$dof[level_index]
   } else {
     args$knots <- spline_params$knots[[level_index]]
   }
-  
+
   if (!is.null(spline_params$bknots)) {
     args$Boundary.knots <- spline_params$bknots[[level_index]]
   }
@@ -86,14 +84,19 @@ design2design_matrix <- function(
   if (spline_params$spline_type[level_index] == "b") {
     args$degree <- spline_params$degree[level_index]
     meta$X <- do.call(splines::bs, args)
-  } else {                                          # natural cubic splines
+  } else { # natural cubic splines
     meta$X <- do.call(splines::ns, args)
   }
-  
+
   design_matrix <- stats::model.matrix(
     stats::as.formula(design),
     data = meta
-    )
+  )
+  
+  result <- list(
+    design_matrix = design_matrix,
+    meta = meta
+  )
 }
 
 
@@ -110,9 +113,7 @@ design2design_matrix <- function(
 #'
 merge_top_table_with_annotation <- function(
     top_table,
-    annotation
-) {
-  
+    annotation) {
   top_table$feature_nr <- as.numeric(as.character(top_table$feature_nr))
   annotation_rows <- annotation[top_table$feature_nr, ]
   top_table <- cbind(top_table, annotation_rows)
@@ -122,7 +123,7 @@ merge_top_table_with_annotation <- function(
 #' Bind Data with Annotation
 #'
 #' @description
-#' This function converts a matrix to a dataframe, adds row names as the first 
+#' This function converts a matrix to a dataframe, adds row names as the first
 #' column,
 #' and binds it with annotation data.
 #'
@@ -135,28 +136,27 @@ merge_top_table_with_annotation <- function(
 #'
 bind_data_with_annotation <- function(
     data,
-    annotation = NULL
-) {
-  
+    annotation = NULL) {
   data_df <- as.data.frame(data)
-  
+
   # Add row names as the first column named feature_names
   combined_df <- cbind(
     feature_name = rownames(data_df),
     data_df
   )
-  
+
   # If annotation is not NULL, check row count and bind with annotation
   if (!is.null(annotation)) {
     if (nrow(data_df) != nrow(annotation)) {
       stop("The number of rows in data and annotation must be the same.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
-    
+
     # Bind the annotation with the data
     combined_df <- cbind(combined_df, annotation)
   }
-  
+
   return(combined_df)
 }
 
@@ -164,53 +164,51 @@ bind_data_with_annotation <- function(
 #' Print Informational Message
 #'
 #' @description
-#' This function prints a nicely formatted informational message with a green "Info" label.
+#' This function prints a nicely formatted informational message with a green
+#'  "Info" label.
 #'
-#' @param message_prefix A custom message prefix to be displayed before the success message.
+#' @param message_prefix A custom message prefix to be displayed before the
+#' success message.
 #' @param report_dir The directory where the HTML reports are located.
 #'
 #' @return NULL
 #'
 print_info_message <- function(
     message_prefix,
-    report_dir
-    ) {
-  
+    report_dir) {
   # Green color code for "Info"
   green_info <- "\033[32mInfo\033[0m"
-  
+
   full_message <- paste(
     green_info, message_prefix, "completed successfully.\n",
     "Your HTML reports are located in the directory: ", report_dir, ".\n",
     "Please note that due to embedded files, the reports might be flagged as\n",
     "harmful by other software. Rest assured that they provide no harm.\n"
   )
-  
-  cat(full_message)
+
+  message(full_message)
 }
 
 
 #' Stop with custom message without call.
 #'
 #' @description
-#' A helper function that triggers an error with the specified message and 
-#' suppresses the function call in the error output. This function behaves 
-#' similarly to the base `stop()` function but automatically concatenates 
+#' A helper function that triggers an error with the specified message and
+#' suppresses the function call in the error output. This function behaves
+#' similarly to the base `stop()` function but automatically concatenates
 #' multiple message strings if provided.
 #'
-#' @param ... One or more character strings specifying the error message. 
-#'            If multiple strings are provided, they will be concatenated 
+#' @param ... One or more character strings specifying the error message.
+#'            If multiple strings are provided, they will be concatenated
 #'            with a space between them.
 #'
-#' @return This function does not return a value; it stops execution and 
+#' @return This function does not return a value; it stops execution and
 #'         throws an error.
 #'
 stop_call_false <- function(...) {
   # Concatenate all arguments into a single string
   message_text <- paste(..., sep = " ")
-  
+
   # Call stop with the concatenated message and call. = FALSE
   stop(message_text, call. = FALSE)
 }
-
-

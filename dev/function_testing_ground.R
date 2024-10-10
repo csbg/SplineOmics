@@ -225,8 +225,8 @@ plot_info = list(
   time_unit = "min",
   # treatment_labels = NA,
   # treatment_timepoints = NA
-  treatment_labels = list(all = c("feeding")),
-  treatment_timepoints = list(all = c(0))
+  treatment_labels = list("feeding"),
+  treatment_timepoints = list(0)
 )
 
 plot_options = list(
@@ -266,7 +266,9 @@ gene_set_lib <- c(
   "Human_Gene_Atlas"
 )
 
-# download_enrichr_databases(gene_set_lib)
+report_dir <- here::here("results", "enrichr_databases")
+
+download_enrichr_databases(gene_set_lib, output_dir = report_dir)
  
 downloaded_dbs_filepath <- 
   here::here(

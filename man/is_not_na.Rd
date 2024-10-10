@@ -10,7 +10,7 @@ is_not_na(x)
 \item{x}{An atomic vector or any other object.}
 }
 \value{
-TRUE if the vector contains at least one non-NA value or if the 
+TRUE if the vector contains at least one non-NA value or if the
 object is not atomic; FALSE otherwise.
 }
 \description{

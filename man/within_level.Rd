@@ -12,6 +12,7 @@ within_level(
   rna_seq_data,
   meta,
   design,
+  dream_params,
   condition,
   feature_names,
   padjust_method,
@@ -27,12 +28,20 @@ within_level(
 
 \item{data}{A matrix of data values.}
 
-\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
 such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
 \item{meta}{A dataframe containing the metadata for data.}
 
 \item{design}{A design formula or matrix for the limma analysis.}
+
+\item{dream_params}{A named list or NULL. When not NULL, it must at least 
+contain the named element 'random_effects', which must contain a string that
+is a formula for the random effects of the mixed models by dream. 
+Additionally, it can contain the named elements dof, which must be a int
+bigger than 1, which is the degree of freedom for the dream topTable, and
+the named element KenwardRoger, which must be a bool, specifying whether
+to use that method or not.}
 
 \item{condition}{A character string specifying the condition.}
 
@@ -40,15 +49,15 @@ such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
 \item{padjust_method}{A character string specifying the p-adjustment method.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
 }
 \value{
-A list containing the name of the results and the top table of 
+A list containing the name of the results and the top table of
          results.
 }
 \description{
-Processes a single level within a condition, performing limma analysis 
+Processes a single level within a condition, performing limma analysis
 and generating the top table of results.
 }
 \seealso{

@@ -16,7 +16,7 @@ dataframe with a `feature_nr` column. Some elements may be logical values.}
 \item{annotation}{A dataframe containing the annotation information.}
 }
 \value{
-A list with updated `top_table` dataframes containing merged 
+A list with updated `top_table` dataframes containing merged
 annotation information.
 }
 \description{

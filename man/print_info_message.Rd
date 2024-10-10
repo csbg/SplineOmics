@@ -7,10 +7,12 @@
 print_info_message(message_prefix, report_dir)
 }
 \arguments{
-\item{message_prefix}{A custom message prefix to be displayed before the success message.}
+\item{message_prefix}{A custom message prefix to be displayed before the
+success message.}
 
 \item{report_dir}{The directory where the HTML reports are located.}
 }
 \description{
-This function prints a nicely formatted informational message with a green "Info" label.
+This function prints a nicely formatted informational message with a green
+ "Info" label.
 }

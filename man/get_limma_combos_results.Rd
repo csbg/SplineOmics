@@ -37,14 +37,14 @@ derived from the limma::voom function.}
 
 \item{adj_pthresholds}{A numeric vector with elements > 0 and < 1.}
 
-\item{padjust_method}{A single character string specifying the p-adjustment 
+\item{padjust_method}{A single character string specifying the p-adjustment
 method.}
 }
 \value{
-A list of results for each combination of data, design, and spline 
+A list of results for each combination of data, design, and spline
 configuration.
 }
 \description{
-Computes results for various combinations of data, design matrices, and 
+Computes results for various combinations of data, design matrices, and
 spline configurations using the LIMMA method.
 }

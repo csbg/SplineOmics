@@ -19,6 +19,6 @@ add_plot_to_html(html_content, plot_element, plots_size, section_index)
 The updated HTML content as a character string.
 }
 \description{
-This function converts a plot to a base64 image and adds it to the 
+This function converts a plot to a base64 image and adds it to the
 HTML content.
 }

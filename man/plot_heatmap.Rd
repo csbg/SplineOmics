@@ -21,7 +21,7 @@ plot_heatmap(
 
 \item{mode}{A character vector with length 1, specifying the type of limma
 design formula (integrated for formulas with interaction effects
-between the levels, isolated for formulas where each level is 
+between the levels, isolated for formulas where each level is
 analysed in isolation (no interaction effects))}
 
 \item{condition}{A character string specifying the condition.}
@@ -31,7 +31,7 @@ level within the condition.}
 
 \item{time_unit_label}{A character string specifying the time unit label.}
 
-\item{cluster_heatmap_columns}{Boolean specifying wether to cluster the 
+\item{cluster_heatmap_columns}{Boolean specifying wether to cluster the
 columns of the heatmap or not.}
 }
 \value{

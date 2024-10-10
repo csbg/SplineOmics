@@ -6,8 +6,15 @@
 \usage{
 open_template()
 }
+\value{
+If successful, opens the `template.Rmd` file in RStudio for the user to
+interact with.
+If `rstudioapi` is not installed or available, or the template file is
+not found,
+an error is thrown with a corresponding message.
+}
 \description{
 This function opens the `template.Rmd` file in RStudio for
-interactive use. The template file provides a structure for users 
+interactive use. The template file provides a structure for users
 to quickly set up their personal analysis.
 }

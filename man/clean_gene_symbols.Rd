@@ -10,13 +10,13 @@ clean_gene_symbols(genes)
 \item{genes}{A character vector containing gene names to be cleaned.}
 }
 \value{
-A character vector of cleaned gene symbols (names) with the same 
-length as the input. The cleaned names will be in uppercase, and any 
+A character vector of cleaned gene symbols (names) with the same
+length as the input. The cleaned names will be in uppercase, and any
 invalid or empty gene names will be replaced with NA.
 }
 \description{
-This function preprocesses a vector of gene names by cleaning and 
-formatting them. It removes any non-alphanumeric characters after the 
-first block of alphanumeric characters and converts the remaining 
+This function preprocesses a vector of gene names by cleaning and
+formatting them. It removes any non-alphanumeric characters after the
+first block of alphanumeric characters and converts the remaining
 characters to uppercase.
 }

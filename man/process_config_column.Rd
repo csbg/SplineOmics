@@ -7,20 +7,20 @@
 process_config_column(config_column, index, num_levels, mode)
 }
 \arguments{
-\item{config_column}{A configuration column from the spline test 
+\item{config_column}{A configuration column from the spline test
 configurations.}
 
 \item{index}{Index of the configuration to process.}
 
 \item{num_levels}{Number of unique levels in the metadata condition.}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('integrated' or 'isolated').}
 }
 \value{
 A vector or list with the processed configuration values.
 }
 \description{
-Processes a configuration column based on the given mode and number of 
+Processes a configuration column based on the given mode and number of
 levels.
 }

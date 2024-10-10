@@ -11,17 +11,17 @@ make_correlation_heatmaps(data, meta, condition)
 
 \item{meta}{A dataframe containing the metadata.}
 
-\item{condition}{The column name in the metadata dataframe that contains the 
+\item{condition}{The column name in the metadata dataframe that contains the
 factor levels for generating individual heatmaps.}
 }
 \value{
-A list of `ComplexHeatmap` heatmap objects representing the 
-correlation 
+A list of `ComplexHeatmap` heatmap objects representing the
+correlation
 heatmaps.
 }
 \description{
-This function generates correlation heatmaps using Spearman correlation for 
-a given data matrix. It creates a combined heatmap for all levels and 
-individual heatmaps for each level specified in the condition column of the 
+This function generates correlation heatmaps using Spearman correlation for
+a given data matrix. It creates a combined heatmap for all levels and
+individual heatmaps for each level specified in the condition column of the
 metadata.
 }

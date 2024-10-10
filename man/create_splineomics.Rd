@@ -15,6 +15,7 @@ create_splineomics(
   meta_batch2_column = NULL,
   feature_name_columns = NULL,
   design = NULL,
+  dream_params = NULL,
   mode = NULL,
   spline_params = NULL,
   padjust_method = "BH"
@@ -22,7 +23,7 @@ create_splineomics(
 }
 \arguments{
 \item{data}{The actual omics data. In the case the rna_seq_data argument is
-used, still provide this argument. In that case, input the data matrix in 
+used, still provide this argument. In that case, input the data matrix in
 here (for example the $E part of the voom object). Assign your feature names
 as row headers (otherwise, just numbers will be your feature names).}
 
@@ -30,54 +31,54 @@ as row headers (otherwise, just numbers will be your feature names).}
 
 \item{condition}{A condition variable.}
 
-\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
-such as the output from `limma::voom` or a similar preprocessing pipeline. 
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
+such as the output from `limma::voom` or a similar preprocessing pipeline.
 This argument is not controlled by any function of the `SplineOmics` package.
 Rather, in that regard it relies on the input control from the `limma::lmfit`
 function.}
 
-\item{annotation}{A dataframe with the feature descriptions of data 
+\item{annotation}{A dataframe with the feature descriptions of data
 (optional).}
 
-\item{report_info}{A list containing report information such as omics data 
-type, data description, data collection date, analyst name, contact info, 
+\item{report_info}{A list containing report information such as omics data
+type, data description, data collection date, analyst name, contact info,
 and project name (optional).}
 
 \item{meta_batch_column}{Column for meta batch information (optional).}
 
-\item{meta_batch2_column}{Column for secondary meta batch information 
+\item{meta_batch2_column}{Column for secondary meta batch information
 (optional).}
 
-\item{feature_name_columns}{Character vector containing the column names of 
+\item{feature_name_columns}{Character vector containing the column names of
 the annotation info that describe the features.
-This argument is used to specify in the HTML 
+This argument is used to specify in the HTML
 report how exactly the feature names displayed
 above each individual spline plot have been
-created. Use the same vector that was used to 
+created. Use the same vector that was used to
 create the row headers for the data matrix!}
 
 \item{design}{A design matrix or similar object (optional).}
 
-\item{mode}{For the design formula, you must specify either 'isolated' or 
-'integrated'. Isolated means limma determines the results for each level 
+\item{mode}{For the design formula, you must specify either 'isolated' or
+'integrated'. Isolated means limma determines the results for each level
 using only the data from that level. Integrated means limma determines the
  results for all levels using the full dataset (from all levels).}
 
 \item{spline_params}{Parameters for spline functions (optional). Must contain
 the named elements spline_type, which must contain either the string "n" for
 natural cubic splines, or "b", for B-splines, the named element degree in the
-case of B-splines, that must contain only an integer, and the named element 
+case of B-splines, that must contain only an integer, and the named element
 dof, specifying the degree of freedom, containing an integer and required
 both for natural and B-splines.}
 
-\item{padjust_method}{Method for p-value adjustment, one of "none", "BH", 
-"BY", "holm", "bonferroni", "hochberg", or "hommel". 
+\item{padjust_method}{Method for p-value adjustment, one of "none", "BH",
+"BY", "holm", "bonferroni", "hochberg", or "hommel".
 Defaults to "BH" (Benjamini-Hochberg).}
 }
 \value{
 A SplineOmics object.
 }
 \description{
-Creates a SplineOmics object containing variables that are commonly used 
+Creates a SplineOmics object containing variables that are commonly used
 across multiple functions in the package.
 }

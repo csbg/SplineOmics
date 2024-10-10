@@ -25,14 +25,14 @@ build_create_limma_report(
 \item{report_info}{A named list containg the report info fields. Here used
 for the email hotkey functionality.}
 
-\item{output_file_path}{A character string specifying the path to save the 
+\item{output_file_path}{A character string specifying the path to save the
 HTML report.}
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-Generates an HTML report for clustered hits, including plots and 
+Generates an HTML report for clustered hits, including plots and
 spline parameter details, with a table of contents.
 }
 \seealso{

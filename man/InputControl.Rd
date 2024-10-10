@@ -23,7 +23,7 @@ If any of these checks fail, an informative error message is returned.
 
 
 The function performs the following checks:
-- If `clusters` is an integer or a vector of integers. Otherwise, it 
+- If `clusters` is an integer or a vector of integers. Otherwise, it
   gives an error.
 
 Check Plot Info
@@ -35,13 +35,13 @@ The method performs the following checks:
 * Ensures that `plot_info` is provided and not NULL.
 * Confirms that `y_axis_label` is a character vector with maximally 30
  characters.
-* Confirms that `time_unit` is a character vector with maximally 15 
+* Confirms that `time_unit` is a character vector with maximally 15
 characters.
 * Validates that `treatment_labels` is either `NA` or a character vector
- with each 
+ with each
   element being maximally 15 characters long.
-* Validates that `treatment_timepoints` is either `NA` or a numeric 
-vector with the 
+* Validates that `treatment_timepoints` is either `NA` or a numeric
+vector with the
   same length as `treatment_labels` if `treatment_labels` is not `NA`.
 
 If any of these checks fail, an informative error message is returned.
@@ -67,11 +67,11 @@ an error.
 }
 \section{Functions}{
 \itemize{
-\item \code{InputControl}: This method verifies the spline test configurations and associated 
+\item \code{InputControl}: This method verifies the spline test configurations and associated
 metadata
-within the object's arguments. It performs a series of checks on the 
-configurations, including column verification, spline type validation, 
-and ensuring that the degrees of freedom (dof) are within acceptable 
+within the object's arguments. It performs a series of checks on the
+configurations, including column verification, spline type validation,
+and ensuring that the degrees of freedom (dof) are within acceptable
 ranges.
 
 }}
@@ -82,7 +82,7 @@ Check Top Tables
 
 \code{\link[stats]{model.matrix}}
 
-Validate and check all modes
+Validate the `dream_params` argument
 }
 \section{Super classes}{
 \code{\link[SplineOmics:Level4Functions]{SplineOmics::Level4Functions}} -> \code{\link[SplineOmics:Level3Functions]{SplineOmics::Level3Functions}} -> \code{\link[SplineOmics:Level2Functions]{SplineOmics::Level2Functions}} -> \code{InputControl}
@@ -107,6 +107,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_datas_descr}{\code{InputControl$check_datas_descr()}}
 \item \href{#method-InputControl-check_top_tables}{\code{InputControl$check_top_tables()}}
 \item \href{#method-InputControl-check_design_formula}{\code{InputControl$check_design_formula()}}
+\item \href{#method-InputControl-check_dream_params}{\code{InputControl$check_dream_params()}}
 \item \href{#method-InputControl-check_modes}{\code{InputControl$check_modes()}}
 \item \href{#method-InputControl-check_mode}{\code{InputControl$check_mode()}}
 \item \href{#method-InputControl-check_designs_and_metas}{\code{InputControl$check_designs_and_metas()}}
@@ -167,9 +168,9 @@ A new instance of the InputControl class.
 
 Automatically Validate All Arguments
 
-This method automatically validates all arguments by sequentially 
+This method automatically validates all arguments by sequentially
 calling
-various validation methods defined within the class. Each validation 
+various validation methods defined within the class. Each validation
 method
 checks specific aspects of the input arguments and raises an error if the
 validation fails.
@@ -203,7 +204,7 @@ The following validation methods are called in sequence:
 }
 
 \subsection{Returns}{
-NULL. The function is used for its side effects of validating 
+NULL. The function is used for its side effects of validating
 input
 arguments and raising errors if any validation fails.
 
@@ -214,13 +215,13 @@ Check Data and Meta
 \if{html}{\out{<a id="method-InputControl-check_data_and_meta"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_data_and_meta}{}}}
 \subsection{Method \code{check_data_and_meta()}}{
-This function checks the validity of the data and meta objects, 
+This function checks the validity of the data and meta objects,
 ensuring that
-data is a matrix with numeric values and that meta is a dataframe 
+data is a matrix with numeric values and that meta is a dataframe
 containing
-the specified condition column. Additionally, it verifies that the 
+the specified condition column. Additionally, it verifies that the
 number of
-columns in the data matrix matches the number of rows in the meta 
+columns in the data matrix matches the number of rows in the meta
 dataframe.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_data_and_meta()}\if{html}{\out{</div>}}
@@ -231,7 +232,7 @@ dataframe.
 \describe{
 \item{\code{data}}{A matrix containing numeric values.}
 
-\item{\code{meta}}{A dataframe containing the metadata, including the 'Time' 
+\item{\code{meta}}{A dataframe containing the metadata, including the 'Time'
 column
 and the specified condition column.}
 
@@ -257,16 +258,16 @@ Check Annotation Consistency
 \if{html}{\out{<a id="method-InputControl-check_annotation"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_annotation}{}}}
 \subsection{Method \code{check_annotation()}}{
-This method checks the consistency of the annotation with the data. 
+This method checks the consistency of the annotation with the data.
 It ensures
-that the annotation is a dataframe and that it has the same number 
+that the annotation is a dataframe and that it has the same number
 of rows as the data.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_annotation()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-NULL if any required arguments are missing. Otherwise, performs 
+NULL if any required arguments are missing. Otherwise, performs
 checks and potentially raises errors if checks fail.
 
 Check Multiple Data and Meta Pairs
@@ -276,7 +277,7 @@ Check Multiple Data and Meta Pairs
 \if{html}{\out{<a id="method-InputControl-check_datas_and_metas"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_datas_and_metas}{}}}
 \subsection{Method \code{check_datas_and_metas()}}{
-Iterates over multiple data and meta pairs to validate each pair using 
+Iterates over multiple data and meta pairs to validate each pair using
 the `check_data_and_meta` function.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_datas_and_metas()}\if{html}{\out{</div>}}
@@ -289,15 +290,15 @@ the `check_data_and_meta` function.
 
 \item{\code{metas}}{A list of data frames containing metadata.}
 
-\item{\code{condition}}{A character string specifying the column name in the 
+\item{\code{condition}}{A character string specifying the column name in the
 meta dataframe to be checked.}
 
-\item{\code{meta_batch_column}}{An optional parameter specifying the column name 
+\item{\code{meta_batch_column}}{An optional parameter specifying the column name
 in the meta dataframe used to remove the batch effect. Default is NA.}
 
 \item{\code{meta_batch2_column}}{An optional parameter specifying the column
- name 
-in the meta dataframe used to remove the second batch effect. Default 
+ name
+in the meta dataframe used to remove the second batch effect. Default
 is NA.}
 }
 \if{html}{\out{</div>}}
@@ -312,8 +313,8 @@ Check Data Descriptions
 \if{html}{\out{<a id="method-InputControl-check_datas_descr"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_datas_descr}{}}}
 \subsection{Method \code{check_datas_descr()}}{
-Validates that the data descriptions are character vectors with each 
-element 
+Validates that the data descriptions are character vectors with each
+element
 not exceeding 80 characters in length.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_datas_descr()}\if{html}{\out{</div>}}
@@ -358,7 +359,7 @@ Check Design Formula
 \if{latex}{\out{\hypertarget{method-InputControl-check_design_formula}{}}}
 \subsection{Method \code{check_design_formula()}}{
 Validates the design formula ensuring it is a valid character string,
-contains allowed characters, includes the intercept term 'X', and 
+contains allowed characters, includes the intercept term 'X', and
 references
 columns present in the metadata.
 \subsection{Usage}{
@@ -377,16 +378,42 @@ columns present in the metadata.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-TRUE if the design formula is valid, otherwise an error is 
+TRUE if the design formula is valid, otherwise an error is
 thrown.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_dream_params"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_dream_params}{}}}
+\subsection{Method \code{check_dream_params()}}{
+This function checks the validity of the `dream_params` argument provided 
+in the class. If `dream_params` is present, it ensures that it contains  
+the required and optional elements in the correct format. 
+Specifically, `dream_params` must contain a named element 
+`random_effects`, 
+which is required and must be a string. It may also optionally contain 
+the 
+elements `dof`, which must be an integer greater than 1, and 
+`KenwardRoger`, 
+which must be a boolean. Unnamed elements or elements other than these 
+three are not allowed.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_dream_params()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns `TRUE` if `dream_params` passes all checks. Otherwise, stops the 
+function and returns an error message using `stop_call_false`.
+
+Validate and check all modes
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-InputControl-check_modes"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_modes}{}}}
 \subsection{Method \code{check_modes()}}{
-This function iterates over the `modes` argument, sets each `mode` in 
-`self$args`, and calls `check_mode()` to validate each mode. After each 
+This function iterates over the `modes` argument, sets each `mode` in
+`self$args`, and calls `check_mode()` to validate each mode. After each
 validation, the `mode` is removed from `self$args`.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_modes()}\if{html}{\out{</div>}}
@@ -402,8 +429,8 @@ Check the mode argument for validity
 \if{html}{\out{<a id="method-InputControl-check_mode"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_mode}{}}}
 \subsection{Method \code{check_mode()}}{
-This function checks if the `mode` argument is provided and validates 
-that it is either "isolated" or "integrated". If `mode` is missing or 
+This function checks if the `mode` argument is provided and validates
+that it is either "isolated" or "integrated". If `mode` is missing or
 invalid, an error is thrown.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_mode()}\if{html}{\out{</div>}}
@@ -428,7 +455,7 @@ to validate each pair using the `check_design_formula` function.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{designs}}{A vector of character strings representing design 
+\item{\code{designs}}{A vector of character strings representing design
 formulas.}
 
 \item{\code{metas}}{A list of data frames containing metadata.}
@@ -497,10 +524,10 @@ Returns `NULL` if any required arguments are mising, otherwise,
 
 Check Limma Top Tables Structure
 
-This function checks if the provided limma top tables data structure 
-is correctly formatted. It ensures that the data structure contains 
-exactly three named elements ('time_effect', 'avrg_diff_conditions', 
-and 'interaction_condition_time') and that each element contains 
+This function checks if the provided limma top tables data structure
+is correctly formatted. It ensures that the data structure contains
+exactly three named elements ('time_effect', 'avrg_diff_conditions',
+and 'interaction_condition_time') and that each element contains
 dataframes with the correct columns and data types.
 }
 }
@@ -520,7 +547,7 @@ dataframes with the correct columns and data types.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-This function does not return a value. It stops execution 
+This function does not return a value. It stops execution
 if the data structure does not match the expected format.
 
 Check Adjusted p-Thresholds
@@ -532,7 +559,7 @@ Check Adjusted p-Thresholds
 \subsection{Method \code{check_adj_pthresholds()}}{
 This function checks the validity of the adjusted p-thresholds vector,
 ensuring that
-all elements are numeric, greater than 0, and less than 1. If any of 
+all elements are numeric, greater than 0, and less than 1. If any of
 these
 conditions
 are not met, the function stops execution and returns an error message
@@ -560,15 +587,15 @@ Check adjusted p-value thresholds for limma category 2 and 3
 \if{html}{\out{<a id="method-InputControl-check_adj_pthresh_limma_category_2_3"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_adj_pthresh_limma_category_2_3}{}}}
 \subsection{Method \code{check_adj_pthresh_limma_category_2_3()}}{
-This function checks that both adjusted p-value thresholds for 
-average difference conditions and interaction condition time are 
+This function checks that both adjusted p-value thresholds for
+average difference conditions and interaction condition time are
 non-null, floats, and in the range [0, 1].
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_adj_pthresh_limma_category_2_3()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-`NULL` if either argument is `NULL` or invalid. 
+`NULL` if either argument is `NULL` or invalid.
 Otherwise, no return value (assumed valid inputs).
 
 Check Clusters
@@ -578,11 +605,11 @@ Check Clusters
 \if{html}{\out{<a id="method-InputControl-check_clusters"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_clusters}{}}}
 \subsection{Method \code{check_clusters()}}{
-This function verifies the cluster configurations within the object's 
+This function verifies the cluster configurations within the object's
 arguments.
-It checks if the clusters argument is present and performs validation 
-on its 
-content. If no clusters are specified, it defaults to automatic cluster 
+It checks if the clusters argument is present and performs validation
+on its
+content. If no clusters are specified, it defaults to automatic cluster
 estimation.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_clusters()}\if{html}{\out{</div>}}
@@ -593,20 +620,20 @@ estimation.
 \if{html}{\out{<a id="method-InputControl-check_plot_info"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_plot_info}{}}}
 \subsection{Method \code{check_plot_info()}}{
-This method checks the validity of the `plot_info` list. It ensures that 
-`y_axis_label` and `time_unit` meet the length constraints, 
-`treatment_labels` 
-is either `NA` or a character vector with elements meeting the length 
-constraint, 
-and `treatment_timepoints` is either `NA` or a numeric vector with the 
-same length 
+This method checks the validity of the `plot_info` list. It ensures that
+`y_axis_label` and `time_unit` meet the length constraints,
+`treatment_labels`
+is either `NA` or a character vector with elements meeting the length
+constraint,
+and `treatment_timepoints` is either `NA` or a numeric vector with the
+same length
 as `treatment_labels`.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_plot_info()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-NULL if `plot_info` is not provided or invalid. Otherwise, 
+NULL if `plot_info` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.
 
@@ -617,10 +644,10 @@ Check plot options
 \if{html}{\out{<a id="method-InputControl-check_plot_options"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_plot_options}{}}}
 \subsection{Method \code{check_plot_options()}}{
-This method checks if the `plot_options` list contains the required 
-elements 
-`meta_replicate_column` and `cluster_heatmap_columns`. It validates that 
-`cluster_heatmap_columns` is either TRUE or FALSE, and that 
+This method checks if the `plot_options` list contains the required
+elements
+`meta_replicate_column` and `cluster_heatmap_columns`. It validates that
+`cluster_heatmap_columns` is either TRUE or FALSE, and that
 `meta_replicate_column` is a valid column name in the `meta` dataframe.
 If the checks fail, the script stops with an error message.
 
@@ -639,7 +666,7 @@ valid directory.
 If the directory does not exist, it attempts to create it. If there are
  any
 warnings or
-errors during directory creation, the function stops execution and 
+errors during directory creation, the function stops execution and
 returns
 an error message.
 \subsection{Usage}{
@@ -667,19 +694,19 @@ Check Genes Validity
 \if{html}{\out{<a id="method-InputControl-check_genes"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_genes}{}}}
 \subsection{Method \code{check_genes()}}{
-This function checks the validity of the `data` and `genes` arguments 
-within the `self$args` list. It ensures that `genes` is a character 
-vector, 
-that neither `data` nor `genes` is `NULL`, and that the length of `genes` 
+This function checks the validity of the `data` and `genes` arguments
+within the `self$args` list. It ensures that `genes` is a character
+vector,
+that neither `data` nor `genes` is `NULL`, and that the length of `genes`
 matches the number of rows in `data`.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_genes()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Returns `TRUE` if all checks pass. Returns `NULL` if any required 
-arguments are `NULL`. Throws an error if `genes` is not a character 
-vector 
+Returns `TRUE` if all checks pass. Returns `NULL` if any required
+arguments are `NULL`. Throws an error if `genes` is not a character
+vector
 or if the length of `genes` does not match the number of rows in `data`.
 
 Check p-Adjustment Method
@@ -689,10 +716,10 @@ Check p-Adjustment Method
 \if{html}{\out{<a id="method-InputControl-check_padjust_method"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_padjust_method}{}}}
 \subsection{Method \code{check_padjust_method()}}{
-This function checks if the provided p-adjustment method is valid. The 
+This function checks if the provided p-adjustment method is valid. The
 valid
 methods are:
-"holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and 
+"holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and
 "none".
 If the method
 is not one of these, the function stops execution and returns an error
@@ -704,7 +731,7 @@ is not one of these, the function stops execution and returns an error
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{padjust_method}}{A character string specifying the p-adjustment 
+\item{\code{padjust_method}}{A character string specifying the p-adjustment
 method.
 Valid options
 are "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and
@@ -724,7 +751,7 @@ Check Report Information
 \if{html}{\out{<a id="method-InputControl-check_report_info"></a>}}
 \if{latex}{\out{\hypertarget{method-InputControl-check_report_info}{}}}
 \subsection{Method \code{check_report_info()}}{
-Validates the report information to ensure it contains all mandatory 
+Validates the report information to ensure it contains all mandatory
 fields
 and adheres to the required formats.
 \subsection{Usage}{

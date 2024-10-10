@@ -22,7 +22,7 @@ process_plots(
 
 \item{toc}{The current state of the table of contents (TOC).}
 
-\item{header_index}{An index to uniquely identify each section 
+\item{header_index}{An index to uniquely identify each section
 for anchoring.}
 
 \item{element_name}{A character string specifying the name of the element.}

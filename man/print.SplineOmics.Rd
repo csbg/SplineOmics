@@ -12,17 +12,17 @@
 \item{...}{Additional arguments passed to or from other methods.}
 }
 \value{
-The function does not return a value. It prints a summary of 
+The function does not return a value. It prints a summary of
 the SplineOmics object.
 }
 \description{
 This function provides a summary print of the SplineOmics object, showing
-relevant information such as the number of features, samples, metadata, 
+relevant information such as the number of features, samples, metadata,
 RNA-seq data, annotation, and spline parameters.
 }
 \details{
-This function is automatically called when a SplineOmics object is printed. 
-It provides a concise overview of the object's contents and attributes, 
-including the dimensions of the data, available metadata, and other relevant 
+This function is automatically called when a SplineOmics object is printed.
+It provides a concise overview of the object's contents and attributes,
+including the dimensions of the data, available metadata, and other relevant
 information such as annotations and spline parameters.
 }

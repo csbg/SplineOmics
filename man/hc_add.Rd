@@ -11,10 +11,10 @@ hc_add(hc_obj, top_table, params_id, condition = 1, threshold = 0.05)
 
 \item{top_table}{A dataframe containing the top table data.}
 
-\item{params_id}{A character string identifying the parameters 
+\item{params_id}{A character string identifying the parameters
 (max length 70).}
 
-\item{condition}{An integer (1 or 2) specifying the condition to which the 
+\item{condition}{An integer (1 or 2) specifying the condition to which the
 data belongs.}
 
 \item{threshold}{A numeric value specifying the adjusted p-value threshold.}

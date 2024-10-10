@@ -11,19 +11,19 @@ generate_explore_plots(data, meta, condition)
 
 \item{meta}{A data frame containing metadata associated with the data.}
 
-\item{condition}{A string specifying the column in the metadata that contains 
+\item{condition}{A string specifying the column in the metadata that contains
 the condition or grouping variable.}
 }
 \value{
 A list containing two elements:
 \describe{
   \item{plots}{A list of ggplot objects representing the generated plots.}
-  \item{plots_sizes}{A vector of numeric values indicating the sizes of the 
+  \item{plots_sizes}{A vector of numeric values indicating the sizes of the
   corresponding plots.}
 }
 }
 \description{
-This function generates various exploratory plots including density plots, 
-box plots, violin plots, PCA plots, and correlation heatmaps based on the 
+This function generates various exploratory plots including density plots,
+box plots, violin plots, PCA plots, and correlation heatmaps based on the
 provided data and metadata.
 }

@@ -67,8 +67,8 @@ abundances, etc.).
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
-    time. The data must have no NA values and should have normally
-    distributed features.
+    time. The data must have no NA values, should have normally
+    distributed features and no dependence between the samples.
 
 2.  **Meta**: A table with metadata on the columns/samples of the data
     matrix (e.g., batch, time point, etc.)
@@ -141,7 +141,11 @@ custom_lib_path <- path.expand("~/Rlibs")
 
 # Create the directory if it doesn't exist
 if (!dir.exists(custom_lib_path)) {
-    dir.create(custom_lib_path, showWarnings = FALSE, recursive = TRUE)
+    dir.create(
+      custom_lib_path,
+      showWarnings = FALSE,
+      recursive = TRUE
+      )
 }
 
 # Set the library path to include the new directory
@@ -401,6 +405,9 @@ recommended publications:
 
 - **limma**: To read about the `limma` R package, you can refer to this
   [publication](https://doi.org/10.1093/nar/gkv007).
+
+- **PCA**: To learn more about PCA, download and read this
+  [document](https://github.com/csbg/SplineOmics/raw/main/docs/Points_of_Significance_PCA.pdf).
 
 - **Hierarchical clustering**: To get information about hierarchical
   clustering, you can refer to this [web

@@ -26,7 +26,7 @@ process_combo(
 
 \item{design_index}{Index of the design in the designs list.}
 
-\item{spline_config_index}{Index of the spline configuration in the 
+\item{spline_config_index}{Index of the spline configuration in the
 spline_test_configs list.}
 
 \item{pthreshold}{The p-value threshold for significance.}
@@ -48,7 +48,7 @@ derived from the limma::voom function.}
 
 \item{feature_names}{A character vector of feature names.}
 
-\item{padjust_method}{A single character string specifying the p-adjustment 
+\item{padjust_method}{A single character string specifying the p-adjustment
 method.}
 
 \item{...}{Additional arguments.}
@@ -57,10 +57,10 @@ method.}
 A list of top tables from the LIMMA spline analysis.
 }
 \description{
-Processes a single combination of data, design, spline configuration, and 
+Processes a single combination of data, design, spline configuration, and
 p-threshold to generate LIMMA spline results.
 }
 \seealso{
-\code{\link{create_spline_params}}, 
+\code{\link{create_spline_params}},
 \code{\link{run_limma_splines}}
 }

@@ -137,3 +137,9 @@ contrast <- makeContrasts(
 - `~ 1 + factor1 + factor2`: Additive model with an intercept.
 - `~ 0 + factor1 * factor2`: Model with main effects and their interaction, no intercept.
 - `~ 1 + factor1 * factor2`: Model with intercept, main effects, and their interaction.
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

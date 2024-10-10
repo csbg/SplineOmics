@@ -9,22 +9,22 @@ design2design_matrix(meta, spline_params, level_index, design)
 \arguments{
 \item{meta}{A dataframe containing the metadata, including the time column.}
 
-\item{spline_params}{A list containing the spline parameters. This list can 
-include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots), 
+\item{spline_params}{A list containing the spline parameters. This list can
+include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots),
 `spline_type`, and `degree`.}
 
-\item{level_index}{An integer representing the current level index for which 
+\item{level_index}{An integer representing the current level index for which
 the design matrix is being generated.}
 
-\item{design}{A character string representing the design formula to be used 
+\item{design}{A character string representing the design formula to be used
 for generating the model matrix.}
 }
 \value{
-A design matrix constructed using the specified spline parameters and 
+A design matrix constructed using the specified spline parameters and
 design formula.
 }
 \description{
-This function generates a design matrix using spline parameters and metadata. 
-It accommodates both B-splines and natural cubic splines based on the provided 
+This function generates a design matrix using spline parameters and metadata.
+It accommodates both B-splines and natural cubic splines based on the provided
 spline type and parameters.
 }

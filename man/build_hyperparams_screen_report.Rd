@@ -17,20 +17,20 @@ build_hyperparams_screen_report(
 
 \item{plots}{A list of ggplot2 plot objects.}
 
-\item{plots_sizes}{A list of integers specifying the number of rows for each 
+\item{plots_sizes}{A list of integers specifying the number of rows for each
 plot.}
 
 \item{report_info}{A named list containg the report info fields. Here used
 for the email hotkey functionality.}
 
-\item{output_file_path}{A character string specifying the path to save the 
+\item{output_file_path}{A character string specifying the path to save the
 HTML report.}
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-Constructs an HTML report for hyperparameter screening by embedding plots 
+Constructs an HTML report for hyperparameter screening by embedding plots
 and their respective sizes into the provided header section.
 }
 \seealso{

@@ -7,18 +7,18 @@
 maybe_add_dashed_lines(p, plot_info, level, y_pos = 1)
 }
 \arguments{
-\item{p}{A ggplot object. The plot to which dashed lines and labels 
+\item{p}{A ggplot object. The plot to which dashed lines and labels
 will be added.}
 
-\item{plot_info}{A list containing the treatment timepoints and 
-treatment labels. Treatment timepoints and labels can either be 
-unnamed elements or named lists where each element corresponds 
+\item{plot_info}{A list containing the treatment timepoints and
+treatment labels. Treatment timepoints and labels can either be
+unnamed elements or named lists where each element corresponds
 to a different `level`.}
 
-\item{level}{A character string. Used to extract the treatment 
+\item{level}{A character string. Used to extract the treatment
 timepoints and labels when they are stored in named lists.}
 
-\item{y_pos}{A numeric value specifying the y-axis position where 
+\item{y_pos}{A numeric value specifying the y-axis position where
 the text labels should be placed. Defaults to 1.}
 }
 \value{
@@ -27,9 +27,9 @@ A list containing:
 - `treatment_colors`: A named vector of colors used for the treatment labels.
 }
 \description{
-This internal function checks whether there are valid treatment 
-timepoints and labels in the `plot_info` list. If found, it adds 
+This internal function checks whether there are valid treatment
+timepoints and labels in the `plot_info` list. If found, it adds
 dashed vertical lines and their corresponding x-axis values to the plot.
-The treatment timepoints and labels can either be named lists (for 
+The treatment timepoints and labels can either be named lists (for
 multiple levels) or unnamed single elements.
 }

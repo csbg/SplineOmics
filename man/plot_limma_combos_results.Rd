@@ -33,14 +33,14 @@ column.}
 
 \item{time_unit}{A single character, such as s, m, h, or d, specifying the
 time_unit that should be used for the plots (s = seconds, m = minutes,
-h = hours, d = days). This single character will be converted to a string 
+h = hours, d = days). This single character will be converted to a string
 that is a little bit more verbose, such as sec in square brackets for s.}
 }
 \value{
-A list of results including hit comparison plots and composite 
+A list of results including hit comparison plots and composite
 spline plots for each pair of combinations.
 }
 \description{
-Generates plots for pairwise comparisons of hyperparameter combinations 
+Generates plots for pairwise comparisons of hyperparameter combinations
 using limma results.
 }

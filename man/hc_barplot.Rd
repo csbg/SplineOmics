@@ -7,14 +7,14 @@
 hc_barplot(hc_obj)
 }
 \arguments{
-\item{hc_obj}{An object of class "hitcomp" containing hit data for two 
+\item{hc_obj}{An object of class "hitcomp" containing hit data for two
 conditions.}
 }
 \value{
 A ggplot2 object representing the barplot.
 }
 \description{
-Creates a barplot to visualize the number of significant features for each 
+Creates a barplot to visualize the number of significant features for each
 parameter set in the hit comparison object.
 }
 \seealso{

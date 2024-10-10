@@ -7,27 +7,27 @@
 get_level_hit_indices(between_level_top_tables, level, adj_pthresholds)
 }
 \arguments{
-\item{between_level_top_tables}{A list of data frames containing the 
+\item{between_level_top_tables}{A list of data frames containing the
 between-level top tables.}
 
-\item{level}{A string specifying the level to search for within the names 
+\item{level}{A string specifying the level to search for within the names
 of the data frames.}
 
-\item{adj_pthresholds}{A numeric vector of adjusted p-value thresholds for 
+\item{adj_pthresholds}{A numeric vector of adjusted p-value thresholds for
 each data frame in `between_level_top_tables`.}
 }
 \value{
-A vector of unique feature indices that meet the adjusted p-value 
+A vector of unique feature indices that meet the adjusted p-value
 threshold criteria for the specified level.
 }
 \description{
-This function retrieves unique feature indices from a list of between-level 
+This function retrieves unique feature indices from a list of between-level
 top tables for a specified level, based on adjusted p-value thresholds.
 }
 \details{
-The function iterates over each data frame in `between_level_top_tables`. For 
-each data frame whose name contains the specified level (case insensitive), 
-it identifies the rows where the adjusted p-value is below the corresponding 
-threshold. The function then extracts the feature indices from these rows and 
+The function iterates over each data frame in `between_level_top_tables`. For
+each data frame whose name contains the specified level (case insensitive),
+it identifies the rows where the adjusted p-value is below the corresponding
+threshold. The function then extracts the feature indices from these rows and
 compiles a unique list of these indices.
 }

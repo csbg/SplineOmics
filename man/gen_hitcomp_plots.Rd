@@ -10,14 +10,14 @@ gen_hitcomp_plots(combo_pair)
 \item{combo_pair}{A list containing two combinations of top tables.}
 }
 \value{
-A list containing the Venn heatmap plot, the number of hits divided 
+A list containing the Venn heatmap plot, the number of hits divided
 by 16, the barplot, and a length indicator for the barplot.
 }
 \description{
-Generates Venn heatmap and barplot for a given combination pair of top 
+Generates Venn heatmap and barplot for a given combination pair of top
 tables.
 }
 \seealso{
-\code{\link{hc_new}}, \code{\link{hc_add}}, \code{\link{hc_vennheatmap}}, 
+\code{\link{hc_new}}, \code{\link{hc_add}}, \code{\link{hc_vennheatmap}},
 \code{\link{hc_barplot}}
 }

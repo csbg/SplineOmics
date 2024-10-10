@@ -11,26 +11,26 @@ add_feature_names(data, clean_data, feature_name_columns)
 
 \item{clean_data}{A dataframe to which the feature names will be added.}
 
-\item{feature_name_columns}{A string specifying the name of the feature 
-columns in `data`. If `NA`, sequential numbers 
+\item{feature_name_columns}{A string specifying the name of the feature
+columns in `data`. If `NA`, sequential numbers
 will be used as feature names.}
 }
 \value{
 The `clean_data` dataframe with updated row names.
 }
 \description{
-This function assigns feature names to the rows of a dataframe based on a 
-specified column from another dataframe. If no column is specified, it 
+This function assigns feature names to the rows of a dataframe based on a
+specified column from another dataframe. If no column is specified, it
 assigns sequential numbers as feature names.
 }
 \details{
 The function performs the following operations:
 - Extracts feature names from the specified column in `data`, ignoring
  `NA` values.
-- Ensures the feature names are unique and match the number of rows in 
+- Ensures the feature names are unique and match the number of rows in
 `clean_data`.
 - Assigns the feature names to the rows of `clean_data`.
-- If `feature_name_column` is `NA`, assigns sequential numbers 
-(1, 2, 3, etc.) 
+- If `feature_name_column` is `NA`, assigns sequential numbers
+(1, 2, 3, etc.)
   as feature names and issues a message.
 }

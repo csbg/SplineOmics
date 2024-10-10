@@ -20,47 +20,47 @@
 #' specified directory and
 #' compiled into an HTML report.
 #'
-#' @param splineomics An S3 object of class `SplineOmics` that contains all the 
+#' @param splineomics An S3 object of class `SplineOmics` that contains all the
 #' necessary data and parameters for the analysis, including:
 #' \itemize{
-#'   \item \code{data}: The original expression dataset used for differential 
+#'   \item \code{data}: The original expression dataset used for differential
 #'   expression analysis.
-#'   \item \code{meta}: A dataframe containing metadata corresponding to the 
-#'   \code{data}, must include a 'Time' column and any columns specified by 
+#'   \item \code{meta}: A dataframe containing metadata corresponding to the
+#'   \code{data}, must include a 'Time' column and any columns specified by
 #'   \code{conditions}.
-#'   \item \code{design}: A character of length 1 representing the limma 
+#'   \item \code{design}: A character of length 1 representing the limma
 #'   design formula.
-#'   \item \code{condition}: Character of length 1 specifying the column name 
+#'   \item \code{condition}: Character of length 1 specifying the column name
 #'   in \code{meta} used to define groups for analysis.
 #'   \item \code{spline_params}: A list of spline parameters for the analysis.
-#'   \item \code{meta_batch_column}: A character string specifying the column 
+#'   \item \code{meta_batch_column}: A character string specifying the column
 #'   name in the metadata used for batch effect removal.
-#'   \item \code{meta_batch2_column}: A character string specifying the second 
+#'   \item \code{meta_batch2_column}: A character string specifying the second
 #'   column name in the metadata used for batch effect removal.
 #'   \item \code{limma_splines_result}: A list of data frames, each representing
-#'    a top table from differential expression analysis, containing at least 
+#'    a top table from differential expression analysis, containing at least
 #'    'adj.P.Val' and expression data columns.
 #' }
 #' @param clusters Character or integer vector specifying the number of clusters
-#' @param adj_pthresholds Numeric vector of p-value thresholds for filtering 
+#' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
 #' from the average difference of the condition limma result. Per default 0 (
 #' turned off).
-#' @param adj_pthresh_interaction_condition_time p-value threshold for the 
-#' results from the interaction of condition and time limma result. Per default 
+#' @param adj_pthresh_interaction_condition_time p-value threshold for the
+#' results from the interaction of condition and time limma result. Per default
 #' 0 (turned off).
 #' @param genes A character vector containing the gene names of the features to
 #'  be analyzed.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
-#' @param plot_options List with specific fields (cluster_heatmap_columns = 
+#' @param plot_options List with specific fields (cluster_heatmap_columns =
 #' Bool) that allow for customization of plotting behavior.
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved.
@@ -84,26 +84,24 @@ cluster_hits <- function(
     adj_pthresholds = c(0.05),
     adj_pthresh_avrg_diff_conditions = 0,
     adj_pthresh_interaction_condition_time = 0,
-    genes = NULL,       # Underlying genes of the features
+    genes = NULL, # Underlying genes of the features
     plot_info = list(
       y_axis_label = "Value",
       time_unit = "min",
       treatment_labels = NA,
       treatment_timepoints = NA
-      ),
+    ),
     plot_options = list(
       cluster_heatmap_columns = FALSE,
       meta_replicate_column = NULL
     ),
     report_dir = here::here(),
-    report = TRUE
-    ) {
-
+    report = TRUE) {
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
-    )
-  
+  )
+
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "cluster_hits"
@@ -114,7 +112,7 @@ cluster_hits <- function(
   input_control <- InputControl$new(args)
   input_control$auto_validate()
 
-  top_tables <- splineomics[['limma_splines_result']][['time_effect']]
+  top_tables <- splineomics[["limma_splines_result"]][["time_effect"]]
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
   annotation <- splineomics[["annotation"]]
@@ -129,20 +127,20 @@ cluster_hits <- function(
 
   # To set the default p-value threshold for ALL levels.
   if (is.numeric(adj_pthresholds) &&
-      length(adj_pthresholds) == 1 && adj_pthresholds[1] == 0.05) {
+    length(adj_pthresholds) == 1 && adj_pthresholds[1] == 0.05) {
     levels <- unique(meta[[condition]])
     adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
   }
-  
+
   within_level_top_tables <- filter_top_tables(
     top_tables = top_tables,
     adj_pthresholds = adj_pthresholds,
     meta = meta,
     condition = condition
-    )
+  )
 
   huge_table_user_prompter(within_level_top_tables)
-  
+
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
     clusters = clusters,
@@ -150,7 +148,7 @@ cluster_hits <- function(
     condition = condition,
     spline_params = spline_params,
     mode = mode
-    )
+  )
 
   report_info$limma_design <- c(design)
   report_info$meta_condition <- c(condition)
@@ -158,12 +156,11 @@ cluster_hits <- function(
     meta_batch_column,
     meta_batch2_column,
     sep = ", "
-    )
-  
-  
-  if (adj_pthresh_avrg_diff_conditions > 0 || 
-      adj_pthresh_interaction_condition_time > 0) {
-    
+  )
+
+
+  if (adj_pthresh_avrg_diff_conditions > 0 ||
+    adj_pthresh_interaction_condition_time > 0) {
     spline_comp_plots <- generate_spline_comparisons(
       splineomics = splineomics,
       all_levels_clustering = all_levels_clustering,
@@ -177,7 +174,7 @@ cluster_hits <- function(
   } else {
     spline_comp_plots <- NULL
   }
-  
+
 
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
@@ -194,7 +191,7 @@ cluster_hits <- function(
       spline_params = spline_params,
       adj_pthresholds = adj_pthresholds,
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction_condition_time = 
+      adj_pthresh_interaction_condition_time =
         adj_pthresh_interaction_condition_time,
       report_dir = report_dir,
       mode = mode,
@@ -206,7 +203,7 @@ cluster_hits <- function(
       plot_options = plot_options,
       feature_name_columns = feature_name_columns,
       spline_comp_plots = spline_comp_plots
-      )
+    )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
@@ -219,44 +216,43 @@ cluster_hits <- function(
       return(x)
     }
   })
-  
+
   clustered_hits_levels <- list()
-  
+
   for (i in seq_along(all_levels_clustering)) {
     clustering_level <- all_levels_clustering[[i]]
     element_name <- names(all_levels_clustering)[i]
-    
+
     if (any(is.character(clustering_level))) {
-      clustered_hits_levels[[element_name]] <- 
+      clustered_hits_levels[[element_name]] <-
         clustering_level
-    }
-    else {                                       # normal list result
-      clustered_hits_levels[[element_name]] <- 
+    } else { # normal list result
+      clustered_hits_levels[[element_name]] <-
         clustering_level$clustered_hits
     }
   }
-  
+
   if (!is.null(genes)) {
     # Add gene column for the run_gsea() function.
     clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
       if (is.character(df)) {
-        return(df)  
+        return(df)
       }
       df$gene <- genes[df$feature]
       return(df)
     })
   }
-  
+
   print_info_message(
     message_prefix = "Clustering the hits",
     report_dir = report_dir
   )
-  
+
   list(
     all_levels_clustering = all_levels_clustering,
     plots = plots,
     clustered_hits_levels = clustered_hits_levels
-    )
+  )
 }
 
 
@@ -268,37 +264,35 @@ filter_top_tables <- function(
     top_tables,
     adj_pthresholds,
     meta,
-    condition
-    ) {
-
+    condition) {
   result <- check_between_level_pattern(top_tables)
 
-  if (result$between_levels) {                     # between_level analysis
+  if (result$between_levels) { # between_level analysis
     if (result$index_with_pattern == 1) {
       within_level_top_tables_index <- 2
       between_level_top_tables_index <- 1
-    } else {                        # between level top_tables are at index 2
+    } else { # between level top_tables are at index 2
       within_level_top_tables_index <- 1
       between_level_top_tables_index <- 2
     }
 
     within_level_top_tables <- top_tables[[within_level_top_tables_index]]
     between_level_top_tables <- top_tables[[between_level_top_tables_index]]
-
-  } else {                                  # no between level analysis
+  } else { # no between level analysis
     within_level_top_tables <- top_tables
   }
 
   for (i in seq_along(within_level_top_tables)) {
-
     within_level_top_table <- within_level_top_tables[[i]]
     level <- unique(meta[[condition]])[i]
 
     if (result$between_levels) {
-      hit_indices <- get_level_hit_indices(between_level_top_tables,
-                                           level,
-                                           adj_pthresholds)
-    } else {    # within level
+      hit_indices <- get_level_hit_indices(
+        between_level_top_tables,
+        level,
+        adj_pthresholds
+      )
+    } else { # within level
       hit_indices <- within_level_top_table[["feature_nr"]][
         within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
       ]
@@ -306,16 +300,17 @@ filter_top_tables <- function(
 
     top_table_filtered <-
       within_level_top_table[within_level_top_table[["feature_nr"]]
-                             %in% hit_indices, ]
+      %in% hit_indices, ]
 
     if (nrow(top_table_filtered) < 2) {
-      message(paste("Level", level, "has < 2 hits. Skipping clustering for",
-                    "this level"))
+      message(paste(
+        "Level", level, "has < 2 hits. Skipping clustering for",
+        "this level"
+      ))
       within_level_top_tables[[i]] <- NA
     } else {
       within_level_top_tables[[i]] <- top_table_filtered
     }
-
   }
 
   if (all(is.na(within_level_top_tables))) {
@@ -326,7 +321,7 @@ filter_top_tables <- function(
 }
 
 
-#' Check if any table in a list has more than 300 rows and prompt user for 
+#' Check if any table in a list has more than 300 rows and prompt user for
 #' input.
 #'
 #' This function iterates over a list of tables and checks if any table has
@@ -334,40 +329,38 @@ filter_top_tables <- function(
 #' If such a table is found, it prompts the user to proceed or stop.
 #'
 #' @param tables A list of data frames.
-#' @return NULL. This function is used for its side effects (prompting the 
+#' @return NULL. This function is used for its side effects (prompting the
 #' user and potentially stopping the script).
-#' 
+#'
 huge_table_user_prompter <- function(tables) {
-  
   for (i in seq_along(tables)) {
-
     if (any(is.logical(tables[[i]]))) {
       next
     }
-    
+
     if (nrow(tables[[i]]) > 500) {
       # Prompt the user for input
       while (TRUE) {
         user_input <- readline(prompt = paste(
           "The table",
-          names(tables)[i], 
+          names(tables)[i],
           "has more than 500 rows. Do you want to proceed? (y/n): "
-          ))
+        ))
         user_input <- tolower(user_input)
-        
+
         # Check user input
-        if (user_input == 'y') {
+        if (user_input == "y") {
           # Proceed
           print("Proceeding...")
-          break  
-        } else if (user_input == 'n') {
-          stop("Script stopped. User chose not to proceed.", call. = FALSE)
+          break
+        } else if (user_input == "n") {
+          stop_call_false("Script stopped. User chose not to proceed.")
         } else {
           # Invalid input, ask the user again
-          cat(paste(
-            "Invalid input. Please type 'y' to proceed or 'n' to stop", 
-            "the script.\n"
-            ))
+          message(
+            "Invalid input. Please type 'y' to proceed or 'n' to stop",
+            "the script."
+          )
         }
       }
     }
@@ -400,9 +393,7 @@ perform_clustering <- function(
     meta,
     condition,
     spline_params,
-    mode
-    ) {
-
+    mode) {
   levels <- unique(meta[[condition]])
 
   all_levels_clustering <- mapply(
@@ -415,10 +406,10 @@ perform_clustering <- function(
       condition = condition,
       spline_params = spline_params,
       mode = mode
-      ),
+    ),
     SIMPLIFY = FALSE
-    )  # Return a list
-  
+  ) # Return a list
+
   return(all_levels_clustering)
 }
 
@@ -438,10 +429,10 @@ perform_clustering <- function(
 #'                   such as gene and uniprotID, for example.
 #' @param genes Character vector containing the genes of the features.
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param adj_pthresholds Numeric vector, containing a float < 1 > 0 as each 
+#' @param adj_pthresholds Numeric vector, containing a float < 1 > 0 as each
 #'                        value. There is one float for every level, and this is
-#'                        the adj. p-value threshold. 
-#' @param adj_pthresh_avrg_diff_conditions Float 
+#'                        the adj. p-value threshold.
+#' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
@@ -449,24 +440,24 @@ perform_clustering <- function(
 #' @param report_info An object containing report information.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
-#' @param meta_batch2_column A character string specifying the second meta 
+#' @param meta_batch2_column A character string specifying the second meta
 #'                           batch column.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
-#' @param plot_options List with specific fields (cluster_heatmap_columns = 
+#' @param plot_options List with specific fields (cluster_heatmap_columns =
 #' Bool) that allow for customization of plotting behavior.
-#' @param feature_name_columns Character vector containing the column names of 
+#' @param feature_name_columns Character vector containing the column names of
 #'                             the annotation info that describe the features.
-#'                             This argument is used to specify in the HTML 
+#'                             This argument is used to specify in the HTML
 #'                             report how exactly the feature names displayed
 #'                             above each individual spline plot have been
-#'                             created. Use the same vector that was used to 
+#'                             created. Use the same vector that was used to
 #'                             create the row headers for the data matrix!
 #' @param spline_comp_plots List containing the list of lists with all
 #' the plots for all the pairwise comparisons of the condition in terms of
@@ -505,9 +496,7 @@ make_clustering_report <- function(
     plot_info,
     plot_options,
     feature_name_columns,
-    spline_comp_plots
-    ) {
-
+    spline_comp_plots) {
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
@@ -520,15 +509,14 @@ make_clustering_report <- function(
     design = design,
     mode = mode,
     spline_params = spline_params
-    )
+  )
 
 
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
   for (i in seq_along(all_levels_clustering)) {
-
     if (is.null(all_levels_clustering[[i]]) ||
-        all(is.na(all_levels_clustering[[i]]))) {
+      all(is.na(all_levels_clustering[[i]]))) {
       next
     }
 
@@ -550,7 +538,7 @@ make_clustering_report <- function(
     all_levels_clustering = all_levels_clustering,
     time_unit_label = time_unit_label,
     cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]]
-    )
+  )
 
   # log2_intensity_shape <- plot_log2_intensity_shapes()
 
@@ -560,10 +548,9 @@ make_clustering_report <- function(
   q <- 0
 
   for (i in seq_along(all_levels_clustering)) {
-
     # When a level has < 2 hits
     if (is.null(all_levels_clustering[[i]]) ||
-        all(is.na(all_levels_clustering[[i]]))) {
+      all(is.na(all_levels_clustering[[i]]))) {
       next
     } else {
       q <- q + 1
@@ -574,19 +561,18 @@ make_clustering_report <- function(
     levels <- unique(meta[[condition]])
 
     if (length(levels) >= i) {
-
       level <- levels[i]
 
       # Construct header name
       header_name <- level
- 
+
       nr_hits <- nrow(level_clustering$clustered_hits)
 
       header_info <- list(
         header_name = header_name,
         nr_hits = nr_hits,
         adj_pvalue_threshold = adj_pthresholds[i]
-        )
+      )
 
       level_headers_info[[i]] <- header_info
     }
@@ -597,19 +583,19 @@ make_clustering_report <- function(
       hc = level_clustering$hc,
       clusters = level_clustering[["clustered_hits"]][["cluster"]],
       k = clusters[q]
-      )
+    )
 
     p_curves <- plot_all_mean_splines(
       curve_values = curve_values,
       plot_info = plot_info,
       level = level
-      )
+    )
 
     cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
       curve_values = curve_values,
       plot_info = plot_info,
       level = level
-      )
+    )
 
     top_table <- level_clustering$top_table
     levels <- as.character(unique(meta[[condition]]))
@@ -618,27 +604,26 @@ make_clustering_report <- function(
 
     if (mode == "integrated") {
       data_level <- datas[[i]][, col_indices]
-    } else {                                    # mode == "isolated"
+    } else { # mode == "isolated"
       data_level <- datas[[i]]
     }
 
     meta_level <- meta |> dplyr::filter(.data[[condition]] == levels[i])
 
     clusters_spline_plots <- list()
-    
-    for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
 
+    for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
       nr_of_hits <- sum(
         level_clustering$clustered_hits$cluster == nr_cluster,
         na.rm = TRUE
-        )
+      )
       main_title <- paste(
         "Cluster",
         nr_cluster,
         " | Hits:",
-        nr_of_hits, 
+        nr_of_hits,
         sep = " "
-        )
+      )
 
       top_table_cluster <- top_table |>
         dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
@@ -655,60 +640,59 @@ make_clustering_report <- function(
         adj_pthreshold = adj_pthresholds[i],
         replicate_column = plot_options[["meta_replicate_column"]],
         level = level
-        )
+      )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
         spline_plots = spline_plots,
         cluster_main_title = main_title
-        )
+      )
     }
 
     plots <- c(
       plots,
-      new_level = "level_header",    # is the signal for the plotting code
+      new_level = "level_header", # is the signal for the plotting code
       dendrogram = list(dendrogram),
       p_curves = list(p_curves),
       cluster_mean_splines = list(cluster_mean_splines),
       heatmap = heatmaps[[i]],
-      individual_spline_plots = clusters_spline_plots  # gets expanded like this
-      )
+      individual_spline_plots = clusters_spline_plots # gets expanded like this
+    )
 
     # For every plot in plots, this determines the size in the HTML
     plots_sizes <- c(
       plots_sizes,
-      999,               # dummy size for "next_level" signal
+      999, # dummy size for "next_level" signal
       1.5,
       1.5,
       1,
       1.5,
       rep(1, length(clusters_spline_plots))
-      )
+    )
   }
 
   topTables <- list()
 
   # Loop over each element in all_levels_clustering
   for (i in seq_along(all_levels_clustering)) {
-    
     if (is.logical(all_levels_clustering[[i]])) next
-    
+
     # Get the current element, which is a list
     current_element <- all_levels_clustering[[i]]
-    
+
     # Extract the top_table element
     top_table_element <- current_element$top_table
-    
+
     # Get the name of the outer list element
     element_name <- names(all_levels_clustering)[i]
-    
+
     # Trim the name to 30 characters if necessary
     if (nchar(element_name) > 30) {
       element_name <- substr(element_name, 1, 30)
     }
-    
+
     topTables[[element_name]] <- top_table_element
   }
-  
+
   if (!is.null(genes)) {
     enrichr_format <- prepare_gene_lists_for_enrichr(
       all_levels_clustering,
@@ -717,7 +701,7 @@ make_clustering_report <- function(
   } else {
     enrichr_format <- NA
   }
-  
+
   all_levels_clustering <- merge_annotation_all_levels_clustering(
     all_levels_clustering = all_levels_clustering,
     annotation = annotation
@@ -738,14 +722,14 @@ make_clustering_report <- function(
     enrichr_format = enrichr_format,
     adj_pthresholds = adj_pthresholds,
     adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction_condition_time = 
+    adj_pthresh_interaction_condition_time =
       adj_pthresh_interaction_condition_time,
     report_type = "cluster_hits",
     feature_name_columns = feature_name_columns,
     mode = mode,
     filename = "report_clustered_hits",
     report_dir = report_dir
-    )
+  )
 
   return(plots)
 }
@@ -754,90 +738,90 @@ make_clustering_report <- function(
 #' Generate spline comparison plots for all condition pairs
 #'
 #' @description
-#' This function generates spline comparison plots for all pairwise 
-#' combinations of conditions in the metadata. For each condition pair, it 
-#' compares the time effects of two conditions, plots the data points, and 
-#' overlays the fitted spline curves. The function only generates plots if 
-#' the adjusted p-values for the average difference between conditions and the 
+#' This function generates spline comparison plots for all pairwise
+#' combinations of conditions in the metadata. For each condition pair, it
+#' compares the time effects of two conditions, plots the data points, and
+#' overlays the fitted spline curves. The function only generates plots if
+#' the adjusted p-values for the average difference between conditions and the
 #' interaction between condition and time are below the specified thresholds.
 #'
 #' @param splineomics A list containing the splineomics results, including
-#'  time effects, 
-#' average difference between conditions, and interaction between condition 
+#'  time effects,
+#' average difference between conditions, and interaction between condition
 #' and time.
-#' @param all_levels_clustering A list containing the X matrices for each 
-#' condition, used 
+#' @param all_levels_clustering A list containing the X matrices for each
+#' condition, used
 #' for spline fitting.
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements, which includes
 #'  the condition.
 #' @param condition Column name of meta that contains the levels of the
 #' experiment.
-#' @param plot_info A list containing plotting information such as time unit 
+#' @param plot_info A list containing plotting information such as time unit
 #' and axis labels.
 #' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
-#'  the average 
+#'  the average
 #' difference between conditions.
-#' @param adj_pthresh_interaction The adjusted p-value threshold for the 
-#' interaction 
+#' @param adj_pthresh_interaction The adjusted p-value threshold for the
+#' interaction
 #' between condition and time.
-#' 
+#'
 #' @return A list of lists containing the comparison plots and feature names
 #'         for each condition pair.
-#' 
+#'
 generate_spline_comparisons <- function(
     splineomics,
-    all_levels_clustering,  # This list contains the X matrices
+    all_levels_clustering, # This list contains the X matrices
     data,
     meta,
     condition,
-    plot_info,  
-    adj_pthresh_avrg_diff_conditions,  
-    adj_pthresh_interaction  
-) {
+    plot_info,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction) {
   # Initialize the list that will store the results
   comparison_plots <- list()
-  
+
   # Check if all three elements are present
-  if (length(splineomics[['limma_splines_result']]) == 3) {
+  if (length(splineomics[["limma_splines_result"]]) == 3) {
     # Extract the three named elements
-    time_effect <- splineomics[['limma_splines_result']][['time_effect']]
-    avrg_diff_conditions <- 
-      splineomics[['limma_splines_result']][['avrg_diff_conditions']]
-    interaction_condition_time <- 
-      splineomics[['limma_splines_result']][['interaction_condition_time']]
+    time_effect <- splineomics[["limma_splines_result"]][["time_effect"]]
+    avrg_diff_conditions <-
+      splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
+    interaction_condition_time <-
+      splineomics[["limma_splines_result"]][["interaction_condition_time"]]
 
     # Get the unique conditions from the meta data
     conditions <- unique(meta[[condition]])
-    
+
     # Generate all pairwise combinations of conditions
     condition_pairs <- utils::combn(conditions, 2, simplify = FALSE)
-    
+
     # Loop over all condition pairs and generate plots
     for (pair in condition_pairs) {
       condition_1 <- pair[1]
       condition_2 <- pair[2]
-      
+
       # Sort the current pair of conditions
       sorted_conditions <- sort(c(condition_1, condition_2))
-      
+
       # Initialize matched dataframes as NULL
       matched_avrg_diff <- NULL
       matched_interaction_cond_time <- NULL
-      
+
       # Search for the correct dataframe in avrg_diff_conditions
       for (df_name in names(avrg_diff_conditions)) {
         # Extract the part after 'avrg_diff_' and split it by '_vs_'
-        conditions_in_df <- strsplit(sub(
-          "avrg_diff_",
-          "",
-          df_name
+        conditions_in_df <- strsplit(
+          sub(
+            "avrg_diff_",
+            "",
+            df_name
           ),
           "_vs_"
-          )[[1]]
-        
+        )[[1]]
+
         sorted_conditions_in_df <- sort(conditions_in_df)
-        
+
         # Check if the sorted conditions in the dataframe match the current pair
         if (identical(sorted_conditions, sorted_conditions_in_df)) {
           matched_avrg_diff <- avrg_diff_conditions[[df_name]]
@@ -849,16 +833,17 @@ generate_spline_comparisons <- function(
       for (df_name in names(interaction_condition_time)) {
         # Extract the part after 'time_interaction_condition_'
         # and split it by '_vs_'
-        conditions_in_df <- strsplit(sub(
-          "time_interaction_",
-          "", 
-          df_name
+        conditions_in_df <- strsplit(
+          sub(
+            "time_interaction_",
+            "",
+            df_name
           ),
           "_vs_"
-          )[[1]]
-        
+        )[[1]]
+
         sorted_conditions_in_df <- sort(conditions_in_df)
-        
+
         # Check if the sorted conditions in the dataframe match the
         # current pair
         if (identical(sorted_conditions, sorted_conditions_in_df)) {
@@ -868,12 +853,12 @@ generate_spline_comparisons <- function(
       }
 
       # If both matched dataframes are found, generate plots
-      if (!is.null(matched_avrg_diff) 
-          && !is.null(matched_interaction_cond_time)) {
+      if (!is.null(matched_avrg_diff) &&
+        !is.null(matched_interaction_cond_time)) {
         # Get the corresponding dataframes from time_effect
         time_effect_1 <- time_effect[[paste0(condition, "_", condition_1)]]
         time_effect_2 <- time_effect[[paste0(condition, "_", condition_2)]]
-        
+
         # Get the respective X matrices from all_levels_clustering
         X_1 <- all_levels_clustering[[paste0(condition, "_", condition_1)]]$X
         X_2 <- all_levels_clustering[[paste0(condition, "_", condition_2)]]$X
@@ -895,7 +880,7 @@ generate_spline_comparisons <- function(
           adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
           adj_pthresh_interaction = adj_pthresh_interaction
         )
-        
+
         # Add the plot list to the comparison_plots list,
         # naming it by the condition pair
         plot_list_name <- paste0(condition_1, "_vs_", condition_2)
@@ -905,25 +890,24 @@ generate_spline_comparisons <- function(
   } else {
     message("The required elements are not present in the splineomics list.")
   }
-  
+
   # Return the list containing all plot lists
   return(comparison_plots)
 }
 
 
-
 #' Clean the Gene Symbols
 #'
 #' @description
-#' This function preprocesses a vector of gene names by cleaning and 
-#' formatting them. It removes any non-alphanumeric characters after the 
-#' first block of alphanumeric characters and converts the remaining 
+#' This function preprocesses a vector of gene names by cleaning and
+#' formatting them. It removes any non-alphanumeric characters after the
+#' first block of alphanumeric characters and converts the remaining
 #' characters to uppercase.
 #'
 #' @param genes A character vector containing gene names to be cleaned.
 #'
-#' @return A character vector of cleaned gene symbols (names) with the same 
-#' length as the input. The cleaned names will be in uppercase, and any 
+#' @return A character vector of cleaned gene symbols (names) with the same
+#' length as the input. The cleaned names will be in uppercase, and any
 #' invalid or empty gene names will be replaced with NA.
 #'
 clean_gene_symbols <- function(genes) {
@@ -933,30 +917,30 @@ clean_gene_symbols <- function(genes) {
     "before the first whitespace or end of the string. The extracted ",
     "substring is then converted to uppercase.\033[0m"
   ))
-  
+
   message(paste0(
-    "\033[38;5;214mIf this does not produce valid gene symbols for your gene", 
+    "\033[38;5;214mIf this does not produce valid gene symbols for your gene",
     "set enrichment analysis, modify ",
     "the genes argument of this function (cluster_hits) accordingly!\033[0m"
   ))
-  
+
   # Apply cleaning process to each gene
-  cleaned_genes <- sapply(genes, function(gene_name) {
+  cleaned_genes <- vapply(genes, function(gene_name) {
     if (!is.na(gene_name) && gene_name != "") {
       # Replace all non-alphanumeric characters with whitespace
       gene_name <- gsub("[^A-Za-z0-9]", " ", gene_name)
-      
-      # Extract the first block of alphanumeric characters before the 
+
+      # Extract the first block of alphanumeric characters before the
       # first whitespace
       clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
-      
+
       # Convert to uppercase
       toupper(clean_gene_name)
     } else {
       NA
     }
-  })
-  
+  }, character(1))
+
   # Return cleaned genes, keeping the same index as input
   return(cleaned_genes)
 }
@@ -968,31 +952,30 @@ clean_gene_symbols <- function(genes) {
 #' Check for Between-Level Patterns in Top Tables
 #'
 #' @description
-#' This function checks if any of the elements within a list of top tables 
+#' This function checks if any of the elements within a list of top tables
 #' contain element names that match the specified between-level pattern.
 #'
-#' @param top_tables A list where each element is itself a list containing 
+#' @param top_tables A list where each element is itself a list containing
 #' named elements.
 #'
 #' @return A list with two elements:
 #' \describe{
-#'   \item{between_levels}{A logical value indicating whether any element names 
+#'   \item{between_levels}{A logical value indicating whether any element names
 #'   match the between-level pattern.}
-#'   \item{index_with_pattern}{The index of the first element in `top_tables` 
-#'   where all names match the between-level pattern, or NA if no match is 
+#'   \item{index_with_pattern}{The index of the first element in `top_tables`
+#'   where all names match the between-level pattern, or NA if no match is
 #'   found.}
 #' }
 #'
 #' @details
-#' The function iterates over each element in `top_tables`. For each element 
-#' that 
-#' is a list, it checks if all names within that inner list match the pattern 
-#' `".+_vs_.+"`. If a match is found, the function sets `between_levels` to TRUE 
-#' and records the index of the matching element. The search stops at the first 
+#' The function iterates over each element in `top_tables`. For each element
+#' that
+#' is a list, it checks if all names within that inner list match the pattern
+#' `".+_vs_.+"`. If a match is found, the function sets `between_levels` to TRUE
+#' and records the index of the matching element. The search stops at the first
 #' match.
-#' 
+#'
 check_between_level_pattern <- function(top_tables) {
-
   # Initialize variables
   between_levels <- FALSE
   index_with_pattern <- NA
@@ -1021,39 +1004,37 @@ check_between_level_pattern <- function(top_tables) {
   return(list(
     between_levels = between_levels,
     index_with_pattern = index_with_pattern
-    ))
+  ))
 }
 
 
 #' Get Hit Indices for a Specific Level
 #'
 #' @description
-#' This function retrieves unique feature indices from a list of between-level 
+#' This function retrieves unique feature indices from a list of between-level
 #' top tables for a specified level, based on adjusted p-value thresholds.
 #'
-#' @param between_level_top_tables A list of data frames containing the 
+#' @param between_level_top_tables A list of data frames containing the
 #' between-level top tables.
-#' @param level A string specifying the level to search for within the names 
+#' @param level A string specifying the level to search for within the names
 #' of the data frames.
-#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds for 
+#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds for
 #' each data frame in `between_level_top_tables`.
 #'
-#' @return A vector of unique feature indices that meet the adjusted p-value 
+#' @return A vector of unique feature indices that meet the adjusted p-value
 #' threshold criteria for the specified level.
 #'
 #' @details
-#' The function iterates over each data frame in `between_level_top_tables`. For 
-#' each data frame whose name contains the specified level (case insensitive), 
-#' it identifies the rows where the adjusted p-value is below the corresponding 
-#' threshold. The function then extracts the feature indices from these rows and 
+#' The function iterates over each data frame in `between_level_top_tables`. For
+#' each data frame whose name contains the specified level (case insensitive),
+#' it identifies the rows where the adjusted p-value is below the corresponding
+#' threshold. The function then extracts the feature indices from these rows and
 #' compiles a unique list of these indices.
-#' 
+#'
 get_level_hit_indices <- function(
     between_level_top_tables,
     level,
-    adj_pthresholds
-    ) {
-
+    adj_pthresholds) {
   unique_hit_indices <- c()
 
   # Loop through the elements of the list
@@ -1073,11 +1054,13 @@ get_level_hit_indices <- function(
       # Extract the feature indices from the identified rows
       feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
       feature_indices <- within_level_top_table[hit_indices,
-                                                "feature_nr", drop = TRUE]
+        "feature_nr",
+        drop = TRUE
+      ]
       unique_hit_indices <- c(
         unique_hit_indices,
         feature_indices
-        )
+      )
     }
   }
 
@@ -1115,14 +1098,12 @@ process_level_cluster <- function(
     meta,
     condition,
     spline_params,
-    mode
-    ) {
-
+    mode) {
   # means that it had < 2 hits.
   if (is.null(top_table) || all(is.na(top_table))) {
     return(NA)
   }
-  
+
   curve_results <- get_curve_values(
     top_table = top_table,
     level = level,
@@ -1130,7 +1111,7 @@ process_level_cluster <- function(
     condition = condition,
     spline_params = spline_params,
     mode = mode
-    )
+  )
 
   normalized_curves <- normalize_curves(curve_results$curve_values)
 
@@ -1140,7 +1121,7 @@ process_level_cluster <- function(
       k = cluster_size,
       smooth_timepoints = curve_results$smooth_timepoints,
       top_table = top_table
-      )
+    )
 
   clustering_result$X <- curve_results$X
   return(clustering_result)
@@ -1150,20 +1131,20 @@ process_level_cluster <- function(
 #' Remove Batch Effect from Cluster Hits
 #'
 #' @description
-#' This function removes batch effects from the data for each level specified 
-#' by the condition. It supports both isolated and integrated modes, with 
+#' This function removes batch effects from the data for each level specified
+#' by the condition. It supports both isolated and integrated modes, with
 #' optional handling for a second batch column.
 #'
 #' @param data A dataframe containing the main data.
 #' @param meta A dataframe containing meta information.
-#' @param condition A string specifying the column in `meta` that divides the 
+#' @param condition A string specifying the column in `meta` that divides the
 #' experiment into levels.
-#' @param meta_batch_column A string specifying the column in `meta` that 
+#' @param meta_batch_column A string specifying the column in `meta` that
 #' indicates batch information.
-#' @param meta_batch2_column A string specifying the second batch column in 
+#' @param meta_batch2_column A string specifying the second batch column in
 #' `meta`, if applicable.
 #' @param design A design matrix for the experiment.
-#' @param mode A string indicating the mode of operation: "isolated" or 
+#' @param mode A string indicating the mode of operation: "isolated" or
 #' "integrated".
 #' @param spline_params A list of spline parameters for the design matrix.
 #'
@@ -1172,16 +1153,16 @@ process_level_cluster <- function(
 #' @details
 #' The function operates in two modes:
 #' \describe{
-#'   \item{isolated}{Processes each level independently, using only data from 
+#'   \item{isolated}{Processes each level independently, using only data from
 #'   that level.}
 #'   \item{integrated}{Processes the entire dataset together.}
 #' }
-#' If `meta_batch_column` is specified, the function removes batch effects using 
-#' `removeBatchEffect`. If a second batch column (`meta_batch2_column`) is 
+#' If `meta_batch_column` is specified, the function removes batch effects using
+#' `removeBatchEffect`. If a second batch column (`meta_batch2_column`) is
 #' specified, it is also included in the batch effect removal.
 #'
 #' @importFrom limma removeBatchEffect
-#' 
+#'
 remove_batch_effect_cluster_hits <- function(
     data,
     meta,
@@ -1190,18 +1171,14 @@ remove_batch_effect_cluster_hits <- function(
     meta_batch2_column,
     design,
     mode,
-    spline_params
-    ) {
-
+    spline_params) {
   datas <- list()
   n <- length(unique(meta[[condition]]))
   level_indices <- as.integer(1:n)
   unique_levels <- unique(meta[[condition]])
 
   if (!is.null(meta_batch_column)) {
-
     for (level_index in level_indices) {
-
       # Take only the data from the level for mode == "isolated"
       if (mode == "isolated") {
         level <- unique_levels[level_index]
@@ -1209,17 +1186,19 @@ remove_batch_effect_cluster_hits <- function(
         data_copy <- data[, level_columns]
         meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
       } else {
-        data_copy <- data   # Take the full data for mode == "integrated"
+        data_copy <- data # Take the full data for mode == "integrated"
         meta_copy <- meta
-        level_index <- 1L   # spline_params here has only one set of params
+        level_index <- 1L # spline_params here has only one set of params
       }
 
-      design_matrix <- design2design_matrix(
+      result <- design2design_matrix(
         meta = meta_copy,
         spline_params = spline_params,
         level_index = level_index,
         design = design
-        )
+      )
+      
+      design_matrix <- result[["design_matrix"]]
 
       # The batch columns are not allowed to be in the design_matrix for
       # removeBatchEffect. Instead the batch column is specified with batch =
@@ -1227,10 +1206,10 @@ remove_batch_effect_cluster_hits <- function(
         paste0(
           "^",
           meta_batch_column
-          ),
+        ),
         colnames(design_matrix)
-        )
-      
+      )
+
       design_matrix <- design_matrix[, -batch_columns]
 
       args <- list(
@@ -1238,20 +1217,19 @@ remove_batch_effect_cluster_hits <- function(
         batch = meta_copy[[meta_batch_column]],
         design = design_matrix
       )
-      
+
       if (mode == "isolated") {
-        
         level <- unique_levels[level_index]
         meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
-        
+
         if (!is.null(meta_batch2_column) &&
-            length(unique(meta_copy[[meta_batch2_column]])) > 1) {
+          length(unique(meta_copy[[meta_batch2_column]])) > 1) {
           args$batch2 <- meta_copy[[meta_batch2_column]]
         }
-      } else {   # mode == integrated
-        
+      } else { # mode == integrated
+
         if (!is.null(meta_batch2_column) &&
-            length(unique(meta_copy[[meta_batch2_column]])) > 1) {
+          length(unique(meta_copy[[meta_batch2_column]])) > 1) {
           args$batch2 <- meta_copy[[meta_batch2_column]]
         }
       }
@@ -1259,26 +1237,24 @@ remove_batch_effect_cluster_hits <- function(
       data_copy <- do.call(
         limma::removeBatchEffect,
         args
-        )
+      )
 
       # For mode == "integrated", all elements are identical
       datas <- c(
         datas,
         list(data_copy)
-        )
+      )
     }
-
-  } else {          # no meta batch column specified, just return right data
+  } else { # no meta batch column specified, just return right data
 
     for (level_index in level_indices) {
-
       # Take only the data from the level for mode == "isolated"
       if (mode == "isolated") {
         level <- unique_levels[level_index]
         level_columns <- which(meta[[condition]] == level)
         data_copy <- data[, level_columns]
       } else {
-        data_copy <- data   # Take the full data for mode == "integrated"
+        data_copy <- data # Take the full data for mode == "integrated"
       }
 
       datas <- c(datas, list(data_copy))
@@ -1298,13 +1274,13 @@ remove_batch_effect_cluster_hits <- function(
 #' @param meta A dataframe containing metadata.
 #' @param mode A character vector with length 1, specifying the type of limma
 #'             design formula (integrated for formulas with interaction effects
-#'             between the levels, isolated for formulas where each level is 
+#'             between the levels, isolated for formulas where each level is
 #'             analysed in isolation (no interaction effects))
 #' @param condition A character string specifying the condition.
 #' @param all_levels_clustering A list containing clustering results for each
 #' level within the condition.
 #' @param time_unit_label A character string specifying the time unit label.
-#' @param cluster_heatmap_columns Boolean specifying wether to cluster the 
+#' @param cluster_heatmap_columns Boolean specifying wether to cluster the
 #' columns of the heatmap or not.
 #'
 #' @return A list of ComplexHeatmap heatmap objects for each level.
@@ -1326,9 +1302,7 @@ plot_heatmap <- function(
     condition,
     all_levels_clustering,
     time_unit_label,
-    cluster_heatmap_columns
-    ) {
-
+    cluster_heatmap_columns) {
   BASE_TEXT_SIZE_PT <- 5
 
   ht_opt(
@@ -1346,18 +1320,17 @@ plot_heatmap <- function(
     legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
     legend_border = FALSE
   )
-  
-  ht_opt$message = FALSE
+
+  ht_opt$message <- FALSE
 
   levels <- unique(meta[[condition]])
   heatmaps <- list()
-  
+
   # Generate a heatmap for every level
   for (i in seq_along(all_levels_clustering)) {
-
     # When a level has < 2 hits
     if (is.null(all_levels_clustering[[i]]) ||
-        all(is.na(all_levels_clustering[[i]]))) {
+      all(is.na(all_levels_clustering[[i]]))) {
       heatmaps[[length(heatmaps) + 1]] <- NA
       next
     }
@@ -1372,28 +1345,28 @@ plot_heatmap <- function(
 
     if (mode == "integrated") {
       data_level <- datas[[i]][, level_indices]
-    } else {                                    # mode == "isolated"
+    } else { # mode == "isolated"
       data_level <- datas[[i]]
     }
 
-    data_level <- data_level[as.numeric(clusters$feature),]
+    data_level <- data_level[as.numeric(clusters$feature), ]
     z_score <- t(scale(t(data_level)))
 
     meta_level <- meta[level_indices, ]
-    
+
     row_labels <- truncate_row_names(rownames(data_level))
-    
-    if (is.null(cluster_heatmap_columns)) {  # set default value
+
+    if (is.null(cluster_heatmap_columns)) { # set default value
       cluster_heatmap_columns <- FALSE
     }
-    
+
     ht <-
       ComplexHeatmap::Heatmap(
         z_score,
         name = paste0(
-          "left-labels = cluster,", 
+          "left-labels = cluster,",
           "top-labels = time"
-          ),
+        ),
         use_raster = TRUE,
         column_split = meta_level$Time,
         cluster_columns = cluster_heatmap_columns,
@@ -1402,7 +1375,7 @@ plot_heatmap <- function(
         heatmap_legend_param = list(
           title = "z-score of log2 values",
           title_position = "lefttop-rot"
-          ),
+        ),
         row_gap = unit(2, "pt"),
         column_gap = unit(2, "pt"),
         # width = unit(2, "mm") * ncol(z_score) +
@@ -1413,7 +1386,8 @@ plot_heatmap <- function(
         row_labels = row_labels,
         show_column_names = TRUE,
         column_names_rot = 70,
-        column_names_gp = gpar(fontsize = 5))
+        column_names_gp = gpar(fontsize = 5)
+      )
 
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
@@ -1445,9 +1419,7 @@ plot_heatmap <- function(
 plot_dendrogram <- function(
     hc,
     clusters,
-    k
-) {
-
+    k) {
   # Convert hc to dendrogram
   dend <- stats::as.dendrogram(hc)
 
@@ -1467,7 +1439,7 @@ plot_dendrogram <- function(
   ordered_colors <- colors[match(
     unique_cluster_order,
     sort(unique(clusters))
-    )]
+  )]
 
   # Apply the reordered colors to the branches of the dendrogram
   dend_colored <- dendextend::color_branches(
@@ -1505,7 +1477,8 @@ plot_dendrogram <- function(
       axis.ticks.x = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(size = 9)
+      plot.title = ggplot2::element_text(size = 9),
+      legend.position = "none"
     )
 
   return(p_dend)
@@ -1520,13 +1493,13 @@ plot_dendrogram <- function(
 #'
 #' @param curve_values A dataframe containing curve values and cluster
 #' assignments.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
 #' @param level One of the unique values of the meta condition column. This is
 #'              a factor that separates the experiment.
@@ -1541,9 +1514,7 @@ plot_dendrogram <- function(
 plot_all_mean_splines <- function(
     curve_values,
     plot_info,
-    level
-    ) {
-
+    level) {
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
 
   clusters <- unique(curve_values$cluster)
@@ -1554,43 +1525,44 @@ plot_all_mean_splines <- function(
     # Filter rows for the current cluster
     subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
     last_timepoint <- (which(names(curve_values) == "cluster")) - 1
-    average_curve <- colMeans(subset_hits[,1:last_timepoint])
+    average_curve <- colMeans(subset_hits[, 1:last_timepoint])
 
     # Create a data frame for the average curve with an additional 'Cluster'
     # column
     curve_df <- data.frame(
       Time = time, Value = average_curve,
       cluster = as.factor(current_cluster)
-      )
+    )
 
     # Bind the curve data frame to the cumulative data frame
     average_curves <- rbind(
       average_curves,
       curve_df
-      )
+    )
   }
 
   average_curves$cluster <- factor(
     average_curves$cluster,
     levels = sort(
-      unique(as.numeric(average_curves$cluster)))
+      unique(as.numeric(average_curves$cluster))
     )
-  
-  time_unit_label = paste0("[", plot_info$time_unit, "]")
-  
+  )
+
+  time_unit_label <- paste0("[", plot_info$time_unit, "]")
+
   cluster_colors <- scales::hue_pal()(length(unique(average_curves$cluster)))
-  
+
   if (length(cluster_colors) > length(unique(average_curves$cluster))) {
     cluster_colors <- cluster_colors[1:length(unique(average_curves$cluster))]
   }
   names(cluster_colors) <- paste(
     "Cluster",
     levels(average_curves$cluster)
-    )
-  
+  )
+
   color_values <- c(cluster_colors)
   distinct_colors <- c()
-  
+
   # Create the base plot
   p_curves <- ggplot2::ggplot(
     average_curves,
@@ -1607,32 +1579,32 @@ plot_all_mean_splines <- function(
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 
-  # Call the wrapper function to conditionally add dashed lines and get 
+  # Call the wrapper function to conditionally add dashed lines and get
   # treatment colors
   result <- maybe_add_dashed_lines(
     p = p_curves,
     plot_info = plot_info,
     level = level
-    )
-  
+  )
+
   p_curves <- result$p
   treatment_colors <- result$treatment_colors
-  
+
   # Combine cluster colors and treatment colors for a single color scale
   all_colors <- c(cluster_colors, treatment_colors)
-  
+
   # Finalize color scale and theme adjustments
   p_curves <- p_curves +
     ggplot2::scale_color_manual(
-      values = all_colors,  # Combine both cluster and treatment colors
-      name = NULL   # No legend title
+      values = all_colors, # Combine both cluster and treatment colors
+      name = NULL # No legend title
     ) +
     ggplot2::theme(
-      legend.key.size = grid::unit(0.6, "cm"),  
+      legend.key.size = grid::unit(0.6, "cm"),
       legend.key.height = grid::unit(0.3, "cm"),
       legend.title = ggplot2::element_text(size = 8)
     )
-  
+
   return(p_curves)
 }
 
@@ -1645,13 +1617,13 @@ plot_all_mean_splines <- function(
 #'
 #' @param curve_values A dataframe containing curve values and cluster
 #'  assignments.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
 #'
 #' @return A list containing a plot for every cluster
@@ -1662,9 +1634,7 @@ plot_all_mean_splines <- function(
 plot_cluster_mean_splines <- function(
     curve_values,
     plot_info,
-    level
-    ) {
-
+    level) {
   clusters <- sort(unique(curve_values$cluster))
 
   plots <- list()
@@ -1672,16 +1642,16 @@ plot_cluster_mean_splines <- function(
     subset_df <- subset(
       curve_values,
       curve_values$cluster == current_cluster
-      )
+    )
     subset_df$cluster <- NULL
     nr_of_hits <- nrow(subset_df)
     current_title <- paste(
       "Cluster",
-      current_cluster, 
+      current_cluster,
       "| Hits:",
       nr_of_hits,
       sep = " "
-      )
+    )
 
     plots[[length(plots) + 1]] <-
       plot_single_and_mean_splines(
@@ -1689,9 +1659,9 @@ plot_cluster_mean_splines <- function(
         current_title,
         plot_info = plot_info,
         level
-        )
+      )
   }
-  
+
   return(plots)
 }
 
@@ -1715,17 +1685,17 @@ plot_cluster_mean_splines <- function(
 #' @param X The limma design matrix that defines the experimental conditions.
 #' @param time_unit_label A string shown in the plots as the unit for the time,
 #' such as min or hours.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
 #' @param adj_pthreshold Double > 0 and < 1 specifying the adj. p-val threshold.
 #' @param replicate_column String specifying the column of the meta dataframe
-#' that contains the labels of the replicate measurents. When that is not 
+#' that contains the labels of the replicate measurents. When that is not
 #' given, this argument is NULL.
 #'
 #' @return A list containing the composite plot and the number of rows used in
@@ -1742,65 +1712,63 @@ plot_splines <- function(
     top_table,
     data,
     meta,
-    X,   
+    X,
     time_unit_label,
     plot_info,
     adj_pthreshold,
     replicate_column,
-    level
-) {
-
+    level) {
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
-  
+
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta$Time
-  
+
   titles <- data.frame(
     FeatureID = top_table$feature_nr,
     feature_names = top_table$feature_names
   )
-  
+
   plot_list <- list()
-  
+
   for (hit in 1:nrow(top_table)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
-    
+
     intercept <- top_table$intercept[hit]
     spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
-    
+
     Time <- seq(
       meta$Time[1],
       meta$Time[length(meta$Time)],
-      length.out = 1000   # To ensure smoothness of the curve
+      length.out = 1000 # To ensure smoothness of the curve
     )
-    
+
     fitted_values <- X %*% spline_coeffs + intercept
-    
+
     plot_data <- data.frame(
       Time = time_points,
       Y = y_values
     )
-    
+
     # If replicate_column is specified (i.e., a string), use replicate info
     if (!is.null(replicate_column) && is.character(replicate_column)) {
-      replicates <- meta[[replicate_column]]  # Get the replicate information
-      plot_data$Replicate <- replicates  # Add replicate info to plot data
-      
+      replicates <- meta[[replicate_column]] # Get the replicate information
+      plot_data$Replicate <- replicates # Add replicate info to plot data
+
       # Create color palette for replicates
       replicate_colors <- scales::hue_pal()(length(unique(replicates)))
       names(replicate_colors) <- unique(replicates)
-      
+
       color_values <- c(
         "Spline" = "red",
         replicate_colors
-        )
+      )
     } else {
       color_values <- c(
         "Data" = "blue",
         "Spline" = "red"
-        )
+      )
     }
 
     # Get adjusted p-value and significance stars
@@ -1818,122 +1786,123 @@ plot_splines <- function(
         )
       )
     )
-    
+
     avg_cv <- calc_cv(
       time_values = time_points,
       response_values = y_values
-      )
-    
+    )
+
     # Use local environment to avoid unwanted updating dynamic legend label.
     p <- local({
-
       plot_spline <- data.frame(
         Time = Time,
         Fitted = fitted_values
       )
-      
+
       x_max <- as.numeric(max(time_points))
       x_extension <- x_max * 0.05
 
       # Define color column outside aes()
-      color_column_values <- if (!is.null(replicate_column) 
-                          && is.character(replicate_column)) {
-        plot_data$Replicate  # Use replicate column if it exists
+      color_column_values <- if (!is.null(replicate_column) &&
+        is.character(replicate_column)) {
+        plot_data$Replicate # Use replicate column if it exists
       } else {
         rep("Data", nrow(plot_data))
       }
-      
+
       plot_data$color_column <- factor(color_column_values)
-      
+
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
-          data = plot_data, 
+          data = plot_data,
           ggplot2::aes(
-            x = Time, 
+            x = Time,
             y = .data$Y,
             color = color_column
           ),
-          alpha = 0.5  # 50% transparent data dots
+          alpha = 0.5 # 50% transparent data dots
         ) +
         ggplot2::geom_line(
-          data = plot_spline, 
+          data = plot_spline,
           ggplot2::aes(
-            x = .data$Time, 
-            y = .data$Fitted, 
+            x = .data$Time,
+            y = .data$Fitted,
             color = "Spline"
           )
         ) +
         ggplot2::theme_minimal() +
         ggplot2::scale_x_continuous(
           limits = c(min(time_points), x_max + x_extension),
-          breaks = filter_timepoints(time_points),  
+          breaks = filter_timepoints(time_points),
           labels = function(x) {
             x
           }
         ) +
         ggplot2::labs(
-          x = paste0("Time ", time_unit_label), 
+          x = paste0("Time ", time_unit_label),
           y = plot_info$y_axis_label
         ) +
         ggplot2::guides(
-          color = ggplot2::guide_legend(title = NULL)  # Remove the legend title
+          color = ggplot2::guide_legend(title = NULL) # Remove the legend title
         ) +
         ggplot2::theme(
-          legend.position = "right", 
+          legend.position = "right",
           legend.justification = "center",
-          legend.box = "vertical",   
-          legend.background = ggplot2::element_blank(),  
-          legend.title = ggplot2::element_blank(),  
+          legend.box = "vertical",
+          legend.background = ggplot2::element_blank(),
+          legend.title = ggplot2::element_blank(),
           legend.text = ggplot2::element_text(
-            size = 6, 
+            size = 6,
             margin = ggplot2::margin(t = 4, b = 4)
           ),
           axis.text.x = ggplot2::element_text(
-            size = 8, 
-            angle = 45,   # Tilt labels by 45 degrees
-            hjust = 1     # Adjust horizontal justification
+            size = 8,
+            angle = 45, # Tilt labels by 45 degrees
+            hjust = 1 # Adjust horizontal justification
           ),
           axis.title.y = ggplot2::element_text(
-            size = 8, 
+            size = 8,
             margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)
           ),
           axis.text.y = ggplot2::element_text(
             margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)
           )
         )
-      
-      y_pos = max(
+
+      y_pos <- max(
         max(y_values, na.rm = TRUE),
         max(fitted_values, na.rm = TRUE)
-        )
-      
+      )
+
       result <- maybe_add_dashed_lines(
-        p = p, 
+        p = p,
         plot_info = plot_info,
         level = level,
         y_pos = y_pos
-        )
+      )
 
-      p <- result$p  # Updated plot with dashed lines
-      treatment_colors <- result$treatment_colors  # Colors used for treatments
-      
+      p <- result$p # Updated plot with dashed lines
+      treatment_colors <- result$treatment_colors # Colors used for treatments
+
       color_values <- c(color_values, treatment_colors)
-      
+
       # Add title and annotations
       matched_row <- dplyr::filter(
         titles,
         !!rlang::sym("FeatureID") == hit_index
       )
-      
+
       title <- as.character(matched_row$feature_name)
-      
+
       if (nchar(title) > 100) {
         title_before <- title
         title <- paste0(substr(title, 1, 100), " ...")
-        message(paste("The feature ID", title_before, "is > 100 characters.",
-                      "Truncating it to 100 chars:", title))
+        message(paste(
+          "The feature ID", title_before, "is > 100 characters.",
+          "Truncating it to 100 chars:", title
+        ))
       }
-      
+
       if (is.na(title)) {
         title <- paste("feature:", hit_index)
       }
@@ -1956,19 +1925,19 @@ plot_splines <- function(
           plot.title = ggplot2::element_text(size = 6),
           axis.title.x = ggplot2::element_text(size = 8),
           axis.title.y = ggplot2::element_text(size = 8),
-          legend.key.size = grid::unit(0.6, "cm"),  
+          legend.key.size = grid::unit(0.6, "cm"),
           legend.key.height = grid::unit(0.3, "cm"),
           legend.title = ggplot2::element_text(size = 8),
           legend.text = ggplot2::element_text(size = 6),
           axis.text.x = ggplot2::element_text(size = 6)
         )
-      
+
       p
     })
-    
+
     plot_list[[hit]] <- p
   }
-  
+
   return(plot_list)
 }
 
@@ -1976,11 +1945,11 @@ plot_splines <- function(
 #' Create spline comparison plots for two conditions
 #'
 #' @description
-#' This function generates comparison plots for spline fits of two conditions 
-#' over time. It compares the time effects of two conditions, plots the data 
-#' points, and overlays the fitted spline curves. The function checks if the 
-#' adjusted p-values for the average difference between conditions and the 
-#' interaction between condition and time are below the specified thresholds 
+#' This function generates comparison plots for spline fits of two conditions
+#' over time. It compares the time effects of two conditions, plots the data
+#' points, and overlays the fitted spline curves. The function checks if the
+#' adjusted p-values for the average difference between conditions and the
+#' interaction between condition and time are below the specified thresholds
 #' before generating plots.
 #'
 #' @param time_effect_1 A data frame containing the time effects for the first
@@ -1990,10 +1959,10 @@ plot_splines <- function(
 #'  condition.
 #' @param condition_2 The name of the second condition.
 #' @param avrg_diff_conditions A data frame with the adjusted p-values for the
-#'  average difference 
+#'  average difference
 #' between conditions.
 #' @param interaction_condition_time A data frame with the adjusted p-values
-#'  for the interaction between 
+#'  for the interaction between
 #' condition and time.
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements.
@@ -2001,23 +1970,23 @@ plot_splines <- function(
 #' experiment.
 #' @param X_1 A matrix of spline basis values for the first condition.
 #' @param X_2 A matrix of spline basis values for the second condition.
-#' @param plot_info A list containing plotting information such as time unit 
+#' @param plot_info A list containing plotting information such as time unit
 #' and axis labels.
-#' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for 
-#' the average difference 
+#' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
+#' the average difference
 #' between conditions.
-#' @param adj_pthresh_interaction The adjusted p-value threshold for the 
-#' interaction between 
+#' @param adj_pthresh_interaction The adjusted p-value threshold for the
+#' interaction between
 #' condition and time.
-#' 
+#'
 #' @return A list containing:
 #' \describe{
 #'   \item{plots}{A list of ggplot2 plots comparing the two conditions.}
 #'   \item{feature_names}{A list of feature names for the plotted features.}
 #' }
-#' 
+#'
 #' @importFrom rlang .data
-#' 
+#'
 plot_spline_comparisons <- function(
     time_effect_1,
     condition_1,
@@ -2032,15 +2001,13 @@ plot_spline_comparisons <- function(
     X_2,
     plot_info,
     adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction
-) {
-
+    adj_pthresh_interaction) {
   # Sort and prepare data (sorting based on feature name for easy navigation)
   time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
   time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
-  avrg_diff_conditions <- 
+  avrg_diff_conditions <-
     avrg_diff_conditions |> dplyr::arrange(.data$feature_names)
-  interaction_condition_time <- 
+  interaction_condition_time <-
     interaction_condition_time |> dplyr::arrange(.data$feature_names)
 
   # Get relevant parameters
@@ -2073,34 +2040,33 @@ plot_spline_comparisons <- function(
     avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
     interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
 
-    if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions
-        || interaction_pval < adj_pthresh_interaction) {
-      
+    if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions ||
+      interaction_pval < adj_pthresh_interaction) {
       # Define the number of stars for avrg_diff_conditions
       avrg_diff_stars <- ifelse(
-        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50, 
-        "***", 
+        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
+        "***",
         ifelse(
-          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5, 
-          "**", 
+          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
+          "**",
           ifelse(
-            avrg_diff_pval < adj_pthresh_avrg_diff_conditions, 
-            "*", 
+            avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
+            "*",
             ""
           )
         )
       )
-      
+
       # Define the number of stars for interaction_condition_time
       interaction_stars <- ifelse(
-        interaction_pval < adj_pthresh_interaction / 50, 
-        "***", 
+        interaction_pval < adj_pthresh_interaction / 50,
+        "***",
         ifelse(
-          interaction_pval < adj_pthresh_interaction / 5, 
-          "**", 
+          interaction_pval < adj_pthresh_interaction / 5,
+          "**",
           ifelse(
-            interaction_pval < adj_pthresh_interaction, 
-            "*", 
+            interaction_pval < adj_pthresh_interaction,
+            "*",
             ""
           )
         )
@@ -2112,17 +2078,17 @@ plot_spline_comparisons <- function(
         Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
         Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA)
       )
-      
+
       # Calculate average CV for Y1 and Y2 across all time points
       cv_1 <- calc_cv(
-        time_values = plot_data$Time, 
+        time_values = plot_data$Time,
         response_values = plot_data$Y1
-        )
-      
+      )
+
       cv_2 <- calc_cv(
         time_values = plot_data$Time,
         response_values = plot_data$Y2
-        )
+      )
 
       # Create the plot
       p <- ggplot2::ggplot() +
@@ -2132,20 +2098,20 @@ plot_spline_comparisons <- function(
             x = .data$Time,
             y = .data$Y1,
             color = paste("Data", condition_1)
-            ),
+          ),
           na.rm = TRUE,
-          alpha = 0.5  # Make data dots transparent
+          alpha = 0.5 # Make data dots transparent
         ) +
         ggplot2::geom_line(
           data = data.frame(
             Time = Time,
             Fitted = fitted_values_1
-            ),
+          ),
           ggplot2::aes(
             x = .data$Time,
             y = .data$Fitted,
             color = paste("Spline", condition_1)
-            )
+          )
         ) +
         ggplot2::geom_point(
           data = plot_data,
@@ -2153,20 +2119,20 @@ plot_spline_comparisons <- function(
             x = .data$Time,
             y = .data$Y2,
             color = paste("Data", condition_2)
-            ),
+          ),
           na.rm = TRUE,
-          alpha = 0.5  # Make data dots transparent
+          alpha = 0.5 # Make data dots transparent
         ) +
         ggplot2::geom_line(
           data = data.frame(
             Time = Time,
             Fitted = fitted_values_2
-            ),
+          ),
           ggplot2::aes(
             x = .data$Time,
             y = .data$Fitted,
             color = paste("Spline", condition_2)
-            )
+          )
         ) +
         ggplot2::scale_color_manual(values = setNames(
           c(
@@ -2174,27 +2140,28 @@ plot_spline_comparisons <- function(
             "orange",
             "purple",
             "purple"
+          ),
+          c(
+            paste(
+              "Data",
+              condition_1
             ),
-          c(paste(
-            "Data",
-            condition_1
-            ), 
             paste(
               "Spline",
               condition_1
-              ),
+            ),
             paste(
               "Data",
               condition_2
-              ),
+            ),
             paste(
               "Spline",
               condition_2
-              )
             )
+          )
         )) +
         ggplot2::scale_x_continuous(
-          breaks = filter_timepoints(time_points) 
+          breaks = filter_timepoints(time_points)
         ) +
         ggplot2::labs(
           title = paste(
@@ -2244,14 +2211,12 @@ plot_spline_comparisons <- function(
 #' dataframe with a `feature_nr` column. Some elements may be logical values.
 #' @param annotation A dataframe containing the annotation information.
 #'
-#' @return A list with updated `top_table` dataframes containing merged 
+#' @return A list with updated `top_table` dataframes containing merged
 #' annotation information.
 #'
 merge_annotation_all_levels_clustering <- function(
     all_levels_clustering,
-    annotation = NULL
-) {
-  
+    annotation = NULL) {
   all_levels_clustering <- lapply(
     all_levels_clustering,
     function(x) {
@@ -2265,7 +2230,7 @@ merge_annotation_all_levels_clustering <- function(
       return(x)
     }
   )
-  
+
   return(all_levels_clustering)
 }
 
@@ -2273,8 +2238,8 @@ merge_annotation_all_levels_clustering <- function(
 #' Prepare Gene Lists for Enrichr and Return as String
 #'
 #' @description
-#' This function processes the clustered hits in each element of 
-#' `all_levels_clustering`, formats the gene names for easy copy-pasting into 
+#' This function processes the clustered hits in each element of
+#' `all_levels_clustering`, formats the gene names for easy copy-pasting into
 #' Enrichr, and returns the formatted gene lists as a string.
 #'
 #' @param all_levels_clustering A list where each element contains a dataframe
@@ -2285,47 +2250,44 @@ merge_annotation_all_levels_clustering <- function(
 #'
 prepare_gene_lists_for_enrichr <- function(
     all_levels_clustering,
-    genes
-) {
-
+    genes) {
   formatted_gene_lists <- list()
-  
+
   for (i in seq_along(all_levels_clustering)) {
-    
     if (is.logical(all_levels_clustering[[i]])) next
-    
+
     level_name <- names(all_levels_clustering)[i]
     clustered_hits <- all_levels_clustering[[i]]$clustered_hits
-    
+
     # Process each cluster
     clusters <- split(
       clustered_hits$feature,
       clustered_hits$cluster
     )
-    
+
     level_gene_lists <- list()
-    
+
     for (cluster_id in names(clusters)) {
       cluster_genes <- clusters[[cluster_id]]
 
       gene_list <- genes[cluster_genes]
-      gene_list <- na.omit(gene_list)  # Remove NAs if any
-      
+      gene_list <- na.omit(gene_list) # Remove NAs if any
+
       if (length(gene_list) > 0) {
-        level_gene_lists[[paste0("Cluster ", cluster_id)]] <- 
+        level_gene_lists[[paste0("Cluster ", cluster_id)]] <-
           paste(gene_list, collapse = "\n")
       }
     }
-    
+
     formatted_gene_lists[[level_name]] <- level_gene_lists
   }
-  
+
   # Prepare the background genes list using preprocessed genes
   background_gene_list <- paste(
     na.omit(genes),
     collapse = "\n"
-    )
-  
+  )
+
   return(list(
     gene_lists = formatted_gene_lists,
     background = background_gene_list
@@ -2351,7 +2313,7 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
 #' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
-#' @param adj_pthresh_avrg_diff_conditions Float 
+#' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
@@ -2377,13 +2339,11 @@ build_cluster_hits_report <- function(
     adj_pthresh_interaction_condition_time,
     mode,
     report_info,
-    output_file_path
-    ) {
-
+    output_file_path) {
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
-  
+
   toc <- create_toc()
-  
+
   styles <- define_html_styles()
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
@@ -2392,12 +2352,12 @@ build_cluster_hits_report <- function(
   j <- 0
   level_headers_info <- Filter(Negate(is.null), level_headers_info)
 
-  
+
   pb <- create_progress_bar(plots)
 
   header_index <- 0
   level_index <- 0
-  
+
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     header_index <- header_index + 1
@@ -2410,30 +2370,29 @@ build_cluster_hits_report <- function(
       # means this is the section of a new level
       # The very first level is also a new level
       if (names(plots)[index] == "new_level") {
-        
         level_index <- level_index + 1
-        
+
         time_effect_section_header <- paste(
           "Time Effect of Condition:",
           header_info$header_name
         )
-        
+
         section_header <- sprintf(
           "<h2 style='%s' id='section%d'>%s</h2>",
           section_header_style,
           header_index,
           time_effect_section_header
-          )
+        )
 
         html_content <- paste(
           html_content,
           section_header,
           sep = "\n"
-          )
+        )
 
         if (mode == "integrated") {
           j <- 1
-        } else {      # mode == "isolated" or mode == NA
+        } else { # mode == "isolated" or mode == NA
           j <- j + 1
         }
 
@@ -2441,13 +2400,13 @@ build_cluster_hits_report <- function(
           get_spline_params_info(
             spline_params = spline_params,
             j = j
-            )
+          )
 
         html_content <- paste(
           html_content,
           spline_params_info,
           sep = "\n"
-          )
+        )
 
         hits_info <- sprintf(
           paste0(
@@ -2465,19 +2424,19 @@ build_cluster_hits_report <- function(
           html_content,
           hits_info,
           sep = "\n"
-          )
+        )
 
         toc_entry <- sprintf(
           "<li style='%s'><a href='#section%d'>%s</a></li>",
           toc_style,
           header_index,
           time_effect_section_header
-          )
+        )
         toc <- paste(
           toc,
           toc_entry,
           sep = "\n"
-          )
+        )
 
         current_header_index <- current_header_index + 1
 
@@ -2496,14 +2455,13 @@ build_cluster_hits_report <- function(
     )
 
     if (element_name %in% header_levels) {
-      
       if (element_name == "dendrogram") {
         header_text <- "Overall Clustering"
       } else if (element_name == "cluster_mean_splines") {
         header_text <- "Min-max normalized individual and mean splines"
       } else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
-        
+
         heatmap_description <- paste(
           "<div style='text-align: center; font-size: 1.5em;'>",
           "Rows = features (labels on the right, cluster labels on the left),",
@@ -2511,7 +2469,7 @@ build_cluster_hits_report <- function(
           of the row;",
           "</div>"
         )
-      } else {  # element_name == "individual_spline_plots"
+      } else { # element_name == "individual_spline_plots"
         adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
         asterisks_definition <- paste(
@@ -2523,8 +2481,8 @@ build_cluster_hits_report <- function(
           sep = "<br>"
         )
       }
-      
-      # Add the main title as a section title with an anchor 
+
+      # Add the main title as a section title with an anchor
       # before the first plot
       header <- paste0(
         "<h2 id='section",
@@ -2534,9 +2492,9 @@ build_cluster_hits_report <- function(
         "</h2>",
         if (exists("heatmap_description")) heatmap_description else ""
       )
-      
+
       if (exists("heatmap_description")) rm(heatmap_description)
-      
+
       # Add the asterisks definition if it exists
       if (exists("asterisks_definition")) {
         header <- paste0(
@@ -2544,31 +2502,32 @@ build_cluster_hits_report <- function(
           "<div style='text-align: center;",
           "font-size: 1.5em;'>",
           asterisks_definition,
-          "</div>")
-        
-        rm(asterisks_definition)  # Otherwise, the next level has it everywhere
+          "</div>"
+        )
+
+        rm(asterisks_definition) # Otherwise, the next level has it everywhere
       }
-      
+
       html_content <- paste(
         html_content,
         header,
         sep = "\n"
       )
-      
+
       toc_entry <- paste0(
         "<li style='margin-left: 30px; font-size: 30px;'>",
         "<a href='#section",
         header_index,
         "'>",
-        header_text, 
+        header_text,
         "</a></li>"
       )
-      
+
       toc <- paste(toc, toc_entry, sep = "\n")
     }
-    
+
     header_index <- header_index + 1
-    
+
     result <- process_plots(
       plots_element = plots[[index]],
       element_name = names(plots)[index],
@@ -2576,11 +2535,11 @@ build_cluster_hits_report <- function(
       html_content = html_content,
       toc = toc,
       header_index = header_index
-      )
-    
+    )
+
     html_content <- result$html_content
     toc <- result$toc
-    
+
     pb$tick()
   }
 
@@ -2588,7 +2547,7 @@ build_cluster_hits_report <- function(
   if (length(limma_result_2_and_3_plots) > 0) {
     # Create a new main header for the limma result plots
     header_index <- header_index + 1
-    
+
     # Add the main header and anchor it
     limma_main_header <- sprintf(
       "<h2 style='%s' id='section%d'>%s</h2>",
@@ -2596,14 +2555,14 @@ build_cluster_hits_report <- function(
       header_index,
       "Avrg diff conditions & interaction condition time"
     )
-    
+
     html_content <- paste(
       html_content,
       limma_main_header,
       sep = "\n"
     )
-    
-    # Define the asterisks definition for both adjusted p-values, 
+
+    # Define the asterisks definition for both adjusted p-values,
     # centered, with larger p-value text
     asterisks_definition_avrg_diff <- paste(
       "<div style='text-align:center; margin-bottom: 20px;'>",
@@ -2614,27 +2573,27 @@ build_cluster_hits_report <- function(
         adj_pthresh_avrg_diff_conditions,
         "--> *</span>",
         sep = " "
-        ),
+      ),
       "<br>",
       paste(
         "<span style='font-size:18pt;'>Adj. p-value <",
         adj_pthresh_avrg_diff_conditions / 5,
         "--> **</span>",
         sep = " "
-        ),
+      ),
       "<br>",
       paste(
         "<span style='font-size:18pt;'>Adj. p-value <",
         adj_pthresh_avrg_diff_conditions / 50,
         "--> ***</span>",
         sep = " "
-        ),
+      ),
       "</div>",
       sep = "\n"
     )
-    
+
     asterisks_definition_interaction <- paste(
-      "<div style='text-align:center; margin-bottom: 40px;'>",  
+      "<div style='text-align:center; margin-bottom: 40px;'>",
       "<b><span style='font-size:24pt;
       '>Asterisks definition (Interaction):</span></b><br>",
       paste(
@@ -2642,25 +2601,25 @@ build_cluster_hits_report <- function(
         adj_pthresh_interaction_condition_time,
         "--> *</span>",
         sep = " "
-        ),
+      ),
       "<br>",
       paste(
         "<span style='font-size:18pt;'>Adj. p-value <",
         adj_pthresh_interaction_condition_time / 5,
         "--> **</span>",
         sep = " "
-        ),
+      ),
       "<br>",
       paste(
         "<span style='font-size:18pt;'>Adj. p-value <",
         adj_pthresh_interaction_condition_time / 50,
         "--> ***</span>",
         sep = " "
-        ),
+      ),
       "</div>",
       sep = "\n"
     )
-    
+
     # Add the asterisks definitions to the HTML content
     html_content <- paste(
       html_content,
@@ -2668,7 +2627,7 @@ build_cluster_hits_report <- function(
       asterisks_definition_interaction,
       sep = "\n"
     )
-    
+
     # Add an entry in the table of contents for this new section
     toc_entry <- sprintf(
       "<li style='%s'><a href='#section%d'>%s</a></li>",
@@ -2681,10 +2640,9 @@ build_cluster_hits_report <- function(
       toc_entry,
       sep = "\n"
     )
-    
+
     # Loop over each element in limma_result_2_and_3_plots
     for (comparison_name in names(limma_result_2_and_3_plots)) {
-      
       # Create a subheader for each comparison
       header_index <- header_index + 1
       subheader <- sprintf(
@@ -2693,59 +2651,59 @@ build_cluster_hits_report <- function(
         header_index,
         comparison_name
       )
-      
+
       html_content <- paste(
         html_content,
         subheader,
         sep = "\n"
       )
-      
+
       # Add an entry in the TOC for this subheader
       toc_entry <- paste0(
         "<li style='margin-left: 30px; font-size: 30px;'>",
         "<a href='#section",
-        header_index,  
+        header_index,
         "'>",
-        comparison_name, 
+        comparison_name,
         "</a></li>"
       )
-      
+
       toc <- paste(
         toc,
         toc_entry,
         sep = "\n"
       )
-      
+
       # Extract plot_list and feature_names_list for the current comparison
       comparison <- limma_result_2_and_3_plots[[comparison_name]]
       comparison_plots <- comparison$plots
       comparison_feature_names <- comparison$feature_names
-      
+
       # Iterate through each plot and its corresponding feature name
       for (i in seq_along(comparison_plots)) {
         # Add the feature name as a copyable text above the plot
         feature_name_div <- sprintf(
-          '<div style="text-align: center; 
+          '<div style="text-align: center;
           font-size: 36px; margin-bottom: 10px;">%s</div>',
           comparison_feature_names[[i]]
         )
-        
+
         html_content <- paste(
           html_content,
-          feature_name_div,  # Add the feature name above the plot
+          feature_name_div, # Add the feature name above the plot
           sep = "\n"
         )
-        
+
         # Now add the plot itself
         result <- process_plots(
           plots_element = comparison_plots[[i]],
-          plots_size = 1.5,  
+          plots_size = 1.5,
           html_content = html_content,
           toc = toc,
           header_index = header_index,
-          element_name = ""  
+          element_name = ""
         )
-        
+
         html_content <- result$html_content
         toc <- result$toc
       }
@@ -2799,23 +2757,20 @@ get_curve_values <- function(
     meta,
     condition,
     spline_params,
-    mode
-    ) {
-
+    mode) {
   subset_meta <- meta[meta[[condition]] == level, ]
 
   if (mode == "isolated") {
     level_index <- match(level, unique(meta[[condition]]))
-  }
-  else if (mode == "integrated") {
-    level_index <- 1   # Different spline params not supported for this mode
+  } else if (mode == "integrated") {
+    level_index <- 1 # Different spline params not supported for this mode
   }
 
   smooth_timepoints <- seq(
     subset_meta$Time[1],
     subset_meta$Time[length(subset_meta$Time)],
-    length.out = 1000   # To ensure smoothness of the curve.
-    )
+    length.out = 1000 # To ensure smoothness of the curve.
+  )
 
   args <- list(x = smooth_timepoints, intercept = FALSE)
 
@@ -2833,7 +2788,7 @@ get_curve_values <- function(
   if (spline_params$spline_type[level_index] == "b") {
     args$degree <- spline_params$degree[level_index]
     X <- do.call(splines::bs, args)
-  } else {                                          # natural cubic splines
+  } else { # natural cubic splines
     X <- do.call(splines::ns, args)
   }
 
@@ -2848,26 +2803,26 @@ get_curve_values <- function(
   curve_values <- matrix(
     nrow = nrow(splineCoeffs),
     ncol = length(smooth_timepoints)
-    )
+  )
 
-  for(i in 1:nrow(splineCoeffs)) {
+  for (i in 1:nrow(splineCoeffs)) {
     current_coeffs <- matrix(
       splineCoeffs[i, ],
       ncol = ncol(splineCoeffs),
       byrow = TRUE
-      )
+    )
 
     curve_values[i, ] <- current_coeffs %*% t(X)
   }
 
   curve_values <- as.data.frame(curve_values)
   rownames(curve_values) <- rownames(splineCoeffs)
-  
+
   list(
     curve_values = curve_values,
     smooth_timepoints = smooth_timepoints,
     X = X
-    )
+  )
 }
 
 
@@ -2888,13 +2843,12 @@ get_curve_values <- function(
 #'         has been normalized.
 #'
 normalize_curves <- function(curve_values) {
-
   normalized_curves <- apply(curve_values, 1, function(row) {
     (row - min(row)) / (max(row) - min(row))
   })
 
   normalized_curves <- t(normalized_curves)
-  curve_values[,] <- normalized_curves
+  curve_values[, ] <- normalized_curves
   curve_values
 }
 
@@ -2918,9 +2872,7 @@ hierarchical_clustering <- function(
     curve_values,
     k,
     smooth_timepoints,
-    top_table
-    ) {
-
+    top_table) {
   distance_matrix <- stats::dist(curve_values, method = "euclidean")
   hc <- stats::hclust(distance_matrix, method = "complete")
 
@@ -2944,7 +2896,7 @@ hierarchical_clustering <- function(
     curve_values = curve_values,
     top_table = top_table,
     clusters = k
-    )
+  )
 }
 
 
@@ -2974,46 +2926,45 @@ hierarchical_clustering <- function(
 #'
 get_spline_params_info <- function(
     spline_params,
-    j
-    ) {
-
+    j) {
   if (!is.null(spline_params$spline_type) &&
-      length(spline_params$spline_type) >= j) {
+    length(spline_params$spline_type) >= j) {
     spline_params$spline_type[j] <- spline_params$spline_type[j]
   } else {
     spline_params$spline_type[j] <- NA
   }
 
   if (!is.null(spline_params$degree) &&
-      length(spline_params$degree) >= j) {
+    length(spline_params$degree) >= j) {
     spline_params$degree[j] <- spline_params$degree[j]
   } else {
     spline_params$degree[j] <- NA
   }
 
   if (!is.null(spline_params$dof) &&
-      length(spline_params$dof) >= j) {
+    length(spline_params$dof) >= j) {
     spline_params$dof[j] <- spline_params$dof[j]
   } else {
     spline_params$dof[j] <- NA
   }
 
   if (!is.null(spline_params$knots) &&
-      length(spline_params$knots) >= j) {
+    length(spline_params$knots) >= j) {
     spline_params$knots[j] <- spline_params$knots[j]
   } else {
     spline_params$knots[j] <- NA
   }
 
   if (!is.null(spline_params$bknots) &&
-      length(spline_params$bknots) >= j) {
+    length(spline_params$bknots) >= j) {
     spline_params$bknots[j] <- spline_params$bknots[j]
   } else {
     spline_params$bknots[j] <- NA
   }
 
   if (spline_params$spline_type[j] == "b") {
-    spline_params_info <- sprintf("
+    spline_params_info <- sprintf(
+      "
     <p style='text-align: center; font-size: 30px;'>
         <span style='color: blue;'>Spline-type:</span> B-spline<br>
         <span style='color: blue;'>Degree:</span> %s<br>
@@ -3021,18 +2972,21 @@ get_spline_params_info <- function(
         <span style='color: blue;'>Knots:</span> %s<br>
         <span style='color: blue;'>Boundary-knots:</span> %s
     </p>",
-    spline_params$degree[j], spline_params$dof[j],
-    spline_params$knots[j], spline_params$bknots[j])
-  } else {    # spline_type == "n"
-    spline_params_info <- sprintf("
+      spline_params$degree[j], spline_params$dof[j],
+      spline_params$knots[j], spline_params$bknots[j]
+    )
+  } else { # spline_type == "n"
+    spline_params_info <- sprintf(
+      "
     <p style='text-align: center; font-size: 30px;'>
         <span style='color: blue;'>Spline-type:</span> Natural cubic spline<br>
         <span style='color: blue;'>DoF:</span> %s<br>
         <span style='color: blue;'>Knots:</span> %s<br>
         <span style='color: blue;'>Boundary-knots:</span> %s
     </p>",
-    spline_params$dof[j], spline_params$knots[j],
-    spline_params$bknots[j])
+      spline_params$dof[j], spline_params$knots[j],
+      spline_params$bknots[j]
+    )
   }
   return(spline_params_info)
 }
@@ -3053,97 +3007,92 @@ get_spline_params_info <- function(
 #'
 truncate_row_names <- function(
     names,
-    max_length = 40
-    ) {
-  sapply(names, function(x) {
+    max_length = 40) {
+  vapply(names, function(x) {
     if (nchar(x) > max_length) {
       return(paste0(substr(x, 1, max_length - 3), " ..."))
     } else {
       return(x)
     }
-  })
+  }, character(1))
 }
 
 
 filter_timepoints <- function(
     time_points,
-    percentage_threshold = 0.05
-    ) {
-  
+    percentage_threshold = 0.05) {
   x_max <- as.numeric(max(time_points))
-  
+
   # Calculate the minimum spacing based on the threshold
-  min_spacing <- x_max * percentage_threshold  
-  
+  min_spacing <- x_max * percentage_threshold
+
   all_time_points <- unique(c(time_points))
-  
+
   # Calculate the differences between consecutive time points
   time_diffs <- diff(all_time_points)
-  
+
   # Keep labels that are more than the minimum spacing apart
   keep_labels <- c(TRUE, time_diffs > min_spacing)
   filtered_time_points <- all_time_points[keep_labels]
-  
+
   return(filtered_time_points)
 }
-
 
 
 #' Calculate average CV across unique time points
 #'
 #' @description
-#' This function calculates the coefficient of variation (CV) for each unique 
-#' time point based on the provided time values and response values. It then 
-#' returns the average CV across all time points. The CV is only calculated if 
-#' there are more than one valid (non-NA) values for a given time point and 
+#' This function calculates the coefficient of variation (CV) for each unique
+#' time point based on the provided time values and response values. It then
+#' returns the average CV across all time points. The CV is only calculated if
+#' there are more than one valid (non-NA) values for a given time point and
 #' the mean of the values is non-zero.
 #'
-#' @param time_values A numeric vector containing the time points. Time points 
+#' @param time_values A numeric vector containing the time points. Time points
 #' may repeat across replicates.
-#' @param response_values A numeric vector of response values corresponding to 
+#' @param response_values A numeric vector of response values corresponding to
 #' the time points.
 #'
-#' @return The average coefficient of variation (CV) across all time points. 
+#' @return The average coefficient of variation (CV) across all time points.
 #' Returns NA if all CVs are NA.
 #'
 calc_cv <- function(
-    time_values, 
-    response_values
-    ) {
-
+    time_values,
+    response_values) {
   time_data <- data.frame(
-    Time = time_values, 
+    Time = time_values,
     Response = response_values
   )
-  
+
   unique_times <- unique(time_data$Time)
-  
-  cvs <- sapply(
+
+  cvs <- vapply(
     unique_times,
-    function(t) 
-    {
+    function(t) {
       # Subset for the specific time point
       values_at_time <- time_data$Response[time_data$Time == t]
       # Calculate CV if the mean is not zero and there are enough data points
-      if (mean(values_at_time, na.rm = TRUE) != 0 
-          && sum(!is.na(values_at_time)) > 1) {
+      if (mean(values_at_time, na.rm = TRUE) != 0 &&
+        sum(!is.na(values_at_time)) > 1) {
         (sd(
-          values_at_time, 
+          values_at_time,
           na.rm = TRUE
-        ) / 
+        ) /
           mean(
-            values_at_time, 
+            values_at_time,
             na.rm = TRUE
           )) * 100
       } else {
-        NA  # Return NA for CV when mean is 0 or insufficient data points
+        NA # Return NA for CV when mean is 0 or insufficient data points
       }
-    })
+    },
+    numeric(1)
+  )
   # Return the average CV across time points
   return(mean(
     cvs,
     na.rm = TRUE
-    ))
+  ))
 }
 
 
@@ -3155,13 +3104,13 @@ calc_cv <- function(
 #'
 #' @param time_series_data A dataframe or matrix with time series data.
 #' @param title A character string specifying the title of the plot.
-#' @param plot_info List containing the elements y_axis_label (string), 
+#' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA. 
-#'                  This list is used to add this info to the spline plots. 
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
 #'                  time_unit is used to label the x-axis, and treatment_labels
 #'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as 
+#'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
 #'
 #' @return A ggplot object representing the single and consensus shapes.
@@ -3181,12 +3130,10 @@ plot_single_and_mean_splines <- function(
     time_series_data,
     title,
     plot_info,
-    level
-) {
-  
+    level) {
   time_col <- rlang::sym("time")
   feature_col <- rlang::sym("feature")
-  
+
   # Convert data to long format
   df_long <- as.data.frame(t(time_series_data)) |>
     tibble::rownames_to_column(var = "time") |>
@@ -3197,32 +3144,33 @@ plot_single_and_mean_splines <- function(
     ) |>
     dplyr::arrange(!!feature_col) |>
     dplyr::mutate(time = as.numeric(.data$time))
-  
+
   # Compute consensus (mean of each column)
   consensus <- colMeans(time_series_data, na.rm = TRUE)
-  
+
   consensus_df <- data.frame(
     time = as.numeric(colnames(time_series_data)),
     consensus = consensus
   )
-  
-  time_unit_label = paste0("[", plot_info$time_unit, "]")
-  
+
+  time_unit_label <- paste0("[", plot_info$time_unit, "]")
+
   color_values <- c(
     "Mean" = "darkblue",
     "Spline" = "#6495ED"
   )
-  
+
   p <- ggplot2::ggplot() +
     ggplot2::geom_line(
-      data = df_long, 
+      data = df_long,
       ggplot2::aes(
         x = !!rlang::sym("time"),
         y = !!rlang::sym("intensity"),
         group = !!rlang::sym("feature"),
         colour = "Spline"
-      ), 
-      alpha = 0.3, linewidth = 0.5) +
+      ),
+      alpha = 0.3, linewidth = 0.5
+    ) +
     ggplot2::geom_line(
       data = consensus_df,
       ggplot2::aes(
@@ -3230,22 +3178,23 @@ plot_single_and_mean_splines <- function(
         y = consensus,
         colour = "Mean"
       ),
-      linewidth = 1.5)
-  
+      linewidth = 1.5
+    )
+
   treatment_labels <- NA
 
   result <- maybe_add_dashed_lines(
     p = p,
     plot_info = plot_info,
     level = level
-    )
-  
+  )
+
   p <- result$p
   treatment_colors <- result$treatment_colors
-  
+
   # Combine the original colors with the treatment colors
   color_values <- c(color_values, treatment_colors)
-  
+
   # Add the final scale for colors and adjust legend
   p <- p +
     ggplot2::scale_colour_manual(
@@ -3279,7 +3228,7 @@ plot_single_and_mean_splines <- function(
       legend.key.size = grid::unit(0.6, "cm"),
       legend.key.height = grid::unit(0.3, "cm")
     )
-  
+
   return(p)
 }
 
@@ -3287,21 +3236,21 @@ plot_single_and_mean_splines <- function(
 #' Conditionally add dashed lines for treatment timepoints
 #'
 #' @description
-#' This internal function checks whether there are valid treatment 
-#' timepoints and labels in the `plot_info` list. If found, it adds 
+#' This internal function checks whether there are valid treatment
+#' timepoints and labels in the `plot_info` list. If found, it adds
 #' dashed vertical lines and their corresponding x-axis values to the plot.
-#' The treatment timepoints and labels can either be named lists (for 
+#' The treatment timepoints and labels can either be named lists (for
 #' multiple levels) or unnamed single elements.
 #'
-#' @param p A ggplot object. The plot to which dashed lines and labels 
+#' @param p A ggplot object. The plot to which dashed lines and labels
 #' will be added.
-#' @param plot_info A list containing the treatment timepoints and 
-#' treatment labels. Treatment timepoints and labels can either be 
-#' unnamed elements or named lists where each element corresponds 
+#' @param plot_info A list containing the treatment timepoints and
+#' treatment labels. Treatment timepoints and labels can either be
+#' unnamed elements or named lists where each element corresponds
 #' to a different `level`.
-#' @param level A character string. Used to extract the treatment 
+#' @param level A character string. Used to extract the treatment
 #' timepoints and labels when they are stored in named lists.
-#' @param y_pos A numeric value specifying the y-axis position where 
+#' @param y_pos A numeric value specifying the y-axis position where
 #' the text labels should be placed. Defaults to 1.
 #'
 #' @return A list containing:
@@ -3309,68 +3258,60 @@ plot_single_and_mean_splines <- function(
 #' - `treatment_colors`: A named vector of colors used for the treatment labels.
 #'
 #' @importFrom scales hue_pal
-#' 
+#'
 maybe_add_dashed_lines <- function(
     p,
     plot_info,
     level,
-    y_pos = 1
-    ) {
-
+    y_pos = 1) {
   # Initialize an empty vector to store treatment colors
   treatment_colors <- c()
 
   # Check if there are treatment labels
   if (!all(is.na(plot_info$treatment_labels))) {
-    
     # Initialize variables to store treatment_timepoints and treatment_labels
     treatment_timepoints <- NULL
     treatment_labels <- NULL
-    
+
     # Case when there is a single unnamed element in the lists
     if (is.null(names(plot_info$treatment_labels))) {
-      
       # Take the single unnamed element
       treatment_timepoints <- plot_info$treatment_timepoints[[1]]
       treatment_labels <- plot_info$treatment_labels[[1]]
-      
     } else {
-      
       # Check if the key (level) is in the named lists
       if (level %in% names(plot_info$treatment_labels) &&
-          level %in% names(plot_info$treatment_timepoints)) {
-        
+        level %in% names(plot_info$treatment_timepoints)) {
         # Extract the corresponding named elements
         treatment_timepoints <- plot_info$treatment_timepoints[[level]]
         treatment_labels <- plot_info$treatment_labels[[level]]
       }
     }
-    
+
     # If we have valid treatment_timepoints and treatment_labels, add the dashed lines
-    if (!is.null(treatment_timepoints) && 
-        !is.null(treatment_labels) && 
-        all(!is.na(treatment_timepoints)) && 
-        all(!is.na(treatment_labels))) {
-      
+    if (!is.null(treatment_timepoints) &&
+      !is.null(treatment_labels) &&
+      all(!is.na(treatment_timepoints)) &&
+      all(!is.na(treatment_labels))) {
       # Generate colors for the treatment labels
       treatment_colors <- scales::hue_pal()(length(treatment_labels))
       names(treatment_colors) <- treatment_labels
-      
+
       # Call the function to add dashed lines
       p <- add_dashed_lines(
-        p = p, 
-        treatment_timepoints = treatment_timepoints, 
+        p = p,
+        treatment_timepoints = treatment_timepoints,
         treatment_labels = treatment_labels,
         y_pos = y_pos
       )
     }
   }
-  
+
   # Return both the updated plot and the treatment colors
   return(list(
     p = p,
     treatment_colors = treatment_colors
-    ))
+  ))
 }
 
 
@@ -3380,44 +3321,41 @@ maybe_add_dashed_lines <- function(
 #' Add dashed lines for treatment timepoints to a plot
 #'
 #' @description
-#' This internal function adds dashed vertical lines at specified 
-#' treatment timepoints to a plot, along with text labels that 
+#' This internal function adds dashed vertical lines at specified
+#' treatment timepoints to a plot, along with text labels that
 #' display the corresponding x-axis values.
 #'
-#' @param p A ggplot object. The plot to which dashed lines and labels 
+#' @param p A ggplot object. The plot to which dashed lines and labels
 #' will be added.
-#' @param treatment_timepoints A numeric vector of timepoints where 
+#' @param treatment_timepoints A numeric vector of timepoints where
 #' dashed lines should be drawn.
-#' @param treatment_labels A character vector of labels corresponding 
-#' to each treatment timepoint. These labels are used for coloring 
+#' @param treatment_labels A character vector of labels corresponding
+#' to each treatment timepoint. These labels are used for coloring
 #' the lines, but the x-axis coordinates are displayed as the labels.
-#' @param y_pos A numeric value specifying the y-axis position where 
+#' @param y_pos A numeric value specifying the y-axis position where
 #' the text labels should be placed.
 #'
 #' @return A ggplot object with added dashed lines and labels.
 #'
 #' @importFrom ggplot2 geom_vline geom_text aes
 #' @importFrom scales hue_pal
-#' 
+#'
 add_dashed_lines <- function(
-    p, 
-   treatment_timepoints, 
-   treatment_labels,
-   y_pos 
-   ) {
-  
+    p,
+    treatment_timepoints,
+    treatment_labels,
+    y_pos) {
   # Check if treatment labels and timepoints are valid
-  if (!is.null(treatment_timepoints) && 
-      !is.null(treatment_labels) && 
-      all(!is.na(treatment_timepoints)) && 
-      all(!is.na(treatment_labels))) {
-    
+  if (!is.null(treatment_timepoints) &&
+    !is.null(treatment_labels) &&
+    all(!is.na(treatment_timepoints)) &&
+    all(!is.na(treatment_labels))) {
     # Create a data frame for the treatment lines
     treatment_df <- data.frame(
       Time = treatment_timepoints,
       Label = treatment_labels
     )
-    
+
     # Generate distinct colors for the treatment labels
     treatment_colors <- scales::hue_pal()(length(treatment_labels))
     names(treatment_colors) <- treatment_labels
@@ -3436,18 +3374,18 @@ add_dashed_lines <- function(
       ggplot2::geom_text(
         data = treatment_df,
         ggplot2::aes(
-          x = Time - max(Time) * 0.005,  # Slight offset from the vertical line
-          y = y_pos, 
+          x = Time - max(Time) * 0.005, # Slight offset from the vertical line
+          y = y_pos,
           label = round(Time, 2),
           color = Label
         ),
-        angle = 90,  # Rotate the labels
+        angle = 90, # Rotate the labels
         vjust = 0,
         hjust = 1,
-        size = 3,  # Text size
-        show.legend = FALSE  # Prevent text labels from appearing in the legend
-      ) 
+        size = 3, # Text size
+        show.legend = FALSE # Prevent text labels from appearing in the legend
+      )
   }
-  
-  return(p)  # Return the updated plot object
+
+  return(p) # Return the updated plot object
 }

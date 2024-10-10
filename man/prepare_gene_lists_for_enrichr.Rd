@@ -16,7 +16,7 @@ prepare_gene_lists_for_enrichr(all_levels_clustering, genes)
 A character vector with the formatted gene lists for each cluster.
 }
 \description{
-This function processes the clustered hits in each element of 
-`all_levels_clustering`, formats the gene names for easy copy-pasting into 
+This function processes the clustered hits in each element of
+`all_levels_clustering`, formats the gene names for easy copy-pasting into
 Enrichr, and returns the formatted gene lists as a string.
 }

@@ -7,7 +7,7 @@
 explore_data(splineomics, report_dir = here::here(), report = TRUE)
 }
 \arguments{
-\item{splineomics}{A SplineOmics object, containing the data, meta, 
+\item{splineomics}{A SplineOmics object, containing the data, meta,
 condition, report_info, meta_batch_column, and
 meta_batch2_column;}
 
@@ -22,7 +22,7 @@ argument can be set to FALSE.}
 A list of ggplot objects representing various exploratory plots.
 }
 \description{
-This function takes a data matrix, checks its validity, and generates a list 
-of exploratory plots including density plots, boxplots, PCA plots, MDS plots, 
+This function takes a data matrix, checks its validity, and generates a list
+of exploratory plots including density plots, boxplots, PCA plots, MDS plots,
 variance explained plots, and violin plots.
 }

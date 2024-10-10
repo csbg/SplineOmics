@@ -21,16 +21,16 @@ gen_composite_spline_plots(
 
 \item{spline_test_configs}{A configuration object for spline tests.}
 
-\item{time_unit_label}{A character string specifying the time unit label 
+\item{time_unit_label}{A character string specifying the time unit label
 for plots.}
 }
 \value{
 A list containing the composite spline plots and their lengths.
 }
 \description{
-Creates composite spline plots for significant and non-significant features 
+Creates composite spline plots for significant and non-significant features
 across multiple levels within a condition.
-One half of one condition comparison HTML 
+One half of one condition comparison HTML
 (composite spline plots for one 'condition' inside one condition comparison)
 }
 \seealso{

@@ -64,3 +64,7 @@ sudo systemctl enable docker
 ```
 
 Following these steps will help you resolve permission issues and enable you to pull and run the Docker container without using `sudo`.
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

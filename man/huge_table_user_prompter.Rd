@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_hits.R
 \name{huge_table_user_prompter}
 \alias{huge_table_user_prompter}
-\title{Check if any table in a list has more than 300 rows and prompt user for 
+\title{Check if any table in a list has more than 300 rows and prompt user for
 input.}
 \usage{
 huge_table_user_prompter(tables)
@@ -11,7 +11,7 @@ huge_table_user_prompter(tables)
 \item{tables}{A list of data frames.}
 }
 \value{
-NULL. This function is used for its side effects (prompting the 
+NULL. This function is used for its side effects (prompting the
 user and potentially stopping the script).
 }
 \description{

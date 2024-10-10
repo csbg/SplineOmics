@@ -7,18 +7,18 @@
 create_volcano_plot(top_table, adj_pthresh, compared_levels)
 }
 \arguments{
-\item{top_table}{A data frame from limma containing 'logFC' and 'adj.P.Val' 
+\item{top_table}{A data frame from limma containing 'logFC' and 'adj.P.Val'
 columns.}
 
 \item{adj_pthresh}{A numeric value for the adjusted p-value threshold.}
 
-\item{compared_levels}{A character vector of length 2 specifying the 
+\item{compared_levels}{A character vector of length 2 specifying the
 compared levels.}
 }
 \value{
 A ggplot object representing the volcano plot.
 }
 \description{
-This function creates a volcano plot from a limma top table, plotting 
+This function creates a volcano plot from a limma top table, plotting
 log fold changes against the negative log10 of adjusted p-values.
 }

@@ -13,26 +13,26 @@ build_explore_data_report(
 )
 }
 \arguments{
-\item{header_section}{A string containing the HTML content for the header 
+\item{header_section}{A string containing the HTML content for the header
 section of the report.}
 
-\item{plots}{A list of ggplot objects representing the plots to be included 
+\item{plots}{A list of ggplot objects representing the plots to be included
 in the report.}
 
-\item{plots_sizes}{A list of sizes corresponding to each plot, defining the 
+\item{plots_sizes}{A list of sizes corresponding to each plot, defining the
 dimensions to be used when rendering the plots.}
 
 \item{report_info}{A named list containg the report info fields. Here used
 for the email hotkey functionality.}
 
-\item{output_file_path}{A string specifying the file path where the HTML 
+\item{output_file_path}{A string specifying the file path where the HTML
 report will be saved.}
 }
 \value{
 None. This function writes the HTML content to the specified file.
 }
 \description{
-This function generates an HTML report containing a header section, table of 
-contents, and a series of plots. Each plot is included in the report with 
+This function generates an HTML report containing a header section, table of
+contents, and a series of plots. Each plot is included in the report with
 specified sizes.
 }

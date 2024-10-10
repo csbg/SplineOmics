@@ -17,8 +17,8 @@ names based on the report_type.}
 A character string containing the base64 encoded CSV data.
 }
 \description{
-This function takes a dataframe as input and returns a base64 encoded 
-CSV object. The encoded object can be embedded into an HTML document 
-directly, with a button to download the file without pointing to a 
+This function takes a dataframe as input and returns a base64 encoded
+CSV object. The encoded object can be embedded into an HTML document
+directly, with a button to download the file without pointing to a
 local file.
 }

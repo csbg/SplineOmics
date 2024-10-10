@@ -12,7 +12,7 @@ plot_cv(data, meta, condition)
 \item{meta}{A data frame with sample metadata. Must contain a column "Time"
 and the condition column.}
 
-\item{condition}{The name of the column in the meta table that contains the 
+\item{condition}{The name of the column in the meta table that contains the
 condition information.}
 }
 \value{
@@ -20,11 +20,11 @@ A list of ggplot2 objects, each showing the distribution of CVs for
  one condition.
 }
 \description{
-This function takes a data frame with time series data 
+This function takes a data frame with time series data
 (rows as features and columns as samples),
-a meta table with sample information including time points and conditions, 
+a meta table with sample information including time points and conditions,
 computes the coefficient
-of variation (CV) for each feature for each condition level, and plots the 
+of variation (CV) for each feature for each condition level, and plots the
 distribution of these
 CVs.
 }

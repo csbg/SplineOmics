@@ -22,7 +22,7 @@ process_field(
 
 \item{meta}{A dataframe containing meta information.}
 
-\item{topTables}{A dataframe containing the results of differential 
+\item{topTables}{A dataframe containing the results of differential
 expression analysis.}
 
 \item{report_info}{A list containing additional report information.}
@@ -31,15 +31,15 @@ expression analysis.}
 
 \item{report_type}{A string specifying the type of report.}
 
-\item{enrichr_format}{A list with the formatted gene lists and background 
+\item{enrichr_format}{A list with the formatted gene lists and background
 gene list.}
 }
 \value{
-A string containing the HTML link for downloading the processed 
+A string containing the HTML link for downloading the processed
         field.
 }
 \description{
-This function processes a given field, encodes the associated data as base64, 
-and generates a download link for the report. It handles different types of 
+This function processes a given field, encodes the associated data as base64,
+and generates a download link for the report. It handles different types of
 fields including data, meta, top tables, and Enrichr formatted gene lists.
 }

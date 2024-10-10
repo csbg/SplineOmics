@@ -4,7 +4,7 @@
 \alias{NumericBlockFinder}
 \title{NumericBlockFinder: A class for finding numeric blocks in data}
 \description{
-This class provides methods to identify the upper-left and lower-right 
+This class provides methods to identify the upper-left and lower-right
 cells of a numeric block within a dataframe.
 }
 \section{Public fields}{
@@ -48,7 +48,7 @@ A new instance of the NumericBlockFinder class.
 
 Find the upper-left cell of the first 6x6 block of numeric values
 
-This method identifies the upper-left cell of the first 6x6 block of 
+This method identifies the upper-left cell of the first 6x6 block of
 numeric values in the dataframe.
 }
 }
@@ -61,9 +61,9 @@ numeric values in the dataframe.
 }
 
 \subsection{Returns}{
-A list containing the row and column indices of the upper-left 
+A list containing the row and column indices of the upper-left
         cell.
-        
+
 Find the lower-right cell of a block of contiguous non-NA values
 
 This method identifies the lower-right cell of a block of contiguous

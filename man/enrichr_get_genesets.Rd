@@ -7,12 +7,12 @@
 enrichr_get_genesets(databases)
 }
 \arguments{
-\item{databases}{A character vector of database names to download from 
+\item{databases}{A character vector of database names to download from
 Enrichr.}
 }
 \value{
 A named list of gene sets from the specified Enrichr databases. Each
-        database is represented as a list, with gene set names as list 
+        database is represented as a list, with gene set names as list
         names and vectors of human gene symbols as list elements.
 }
 \description{
