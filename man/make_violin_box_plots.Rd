@@ -17,7 +17,7 @@ make_violin_box_plots(data, meta, condition)
 A ggplot object representing the violin plot.
 }
 \description{
-This function generates a violin plot for a given data matrix. The violin 
-plot shows the distribution of the values in the data matrix across different 
+This function generates a violin plot for a given data matrix. The violin
+plot shows the distribution of the values in the data matrix across different
 variables, with each variable's distribution displayed as a separate violin.
 }

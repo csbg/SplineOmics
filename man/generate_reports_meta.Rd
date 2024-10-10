@@ -30,6 +30,6 @@ generate_reports_meta(
 No return value, called for side effects.
 }
 \description{
-Generates a metadata table for the LIMMA hyperparameter screen reports and 
+Generates a metadata table for the LIMMA hyperparameter screen reports and
 saves it as an HTML file with custom styling.
 }

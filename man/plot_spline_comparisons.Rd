@@ -33,11 +33,11 @@ condition.}
 \item{condition_2}{The name of the second condition.}
 
 \item{avrg_diff_conditions}{A data frame with the adjusted p-values for the
- average difference 
+ average difference
 between conditions.}
 
 \item{interaction_condition_time}{A data frame with the adjusted p-values
- for the interaction between 
+ for the interaction between
 condition and time.}
 
 \item{data}{The data matrix containing the measurements.}
@@ -51,15 +51,15 @@ experiment.}
 
 \item{X_2}{A matrix of spline basis values for the second condition.}
 
-\item{plot_info}{A list containing plotting information such as time unit 
+\item{plot_info}{A list containing plotting information such as time unit
 and axis labels.}
 
-\item{adj_pthresh_avrg_diff_conditions}{The adjusted p-value threshold for 
-the average difference 
+\item{adj_pthresh_avrg_diff_conditions}{The adjusted p-value threshold for
+the average difference
 between conditions.}
 
-\item{adj_pthresh_interaction}{The adjusted p-value threshold for the 
-interaction between 
+\item{adj_pthresh_interaction}{The adjusted p-value threshold for the
+interaction between
 condition and time.}
 }
 \value{
@@ -70,10 +70,10 @@ A list containing:
 }
 }
 \description{
-This function generates comparison plots for spline fits of two conditions 
-over time. It compares the time effects of two conditions, plots the data 
-points, and overlays the fitted spline curves. The function checks if the 
-adjusted p-values for the average difference between conditions and the 
-interaction between condition and time are below the specified thresholds 
+This function generates comparison plots for spline fits of two conditions
+over time. It compares the time effects of two conditions, plots the data
+points, and overlays the fitted spline curves. The function checks if the
+adjusted p-values for the average difference between conditions and the
+interaction between condition and time are below the specified thresholds
 before generating plots.
 }

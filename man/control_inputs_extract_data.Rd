@@ -9,22 +9,22 @@ control_inputs_extract_data(data, feature_name_columns)
 \arguments{
 \item{data}{A dataframe containing the input data.}
 
-\item{feature_name_columns}{A character vector specifying the names of the 
+\item{feature_name_columns}{A character vector specifying the names of the
 feature name columns. The columns must be present
-in the dataframe data. If `NA`, no column is 
+in the dataframe data. If `NA`, no column is
 checked.}
 }
 \description{
 This function checks the validity of input data and the feature name column.
-It ensures that the input data is a dataframe, the feature name column is 
+It ensures that the input data is a dataframe, the feature name column is
 specified correctly, and contains valid data.
 }
 \details{
 The function performs the following checks:
 - Ensures the input data is a dataframe.
-- Checks if the feature name column is a single string and exists in the 
+- Checks if the feature name column is a single string and exists in the
 data.
-- Ensures the specified feature name column does not contain only `NA` 
+- Ensures the specified feature name column does not contain only `NA`
 values.
 - Checks if the input dataframe is not empty.
 

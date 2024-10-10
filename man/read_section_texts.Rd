@@ -7,16 +7,16 @@
 read_section_texts(filename)
 }
 \arguments{
-\item{filename}{A character string specifying the name of the file 
-containing the section texts. The file should be located in the 
+\item{filename}{A character string specifying the name of the file
+containing the section texts. The file should be located in the
 `inst/descriptions` directory of the package.}
 }
 \value{
-A character vector where each element is a section of the text 
+A character vector where each element is a section of the text
 split by the delimiter `|`.
 }
 \description{
-This internal function reads the contents of a text file located in the 
-`inst/descriptions` directory of the package and splits it into individual 
+This internal function reads the contents of a text file located in the
+`inst/descriptions` directory of the package and splits it into individual
 sections based on a specified delimiter.
 }

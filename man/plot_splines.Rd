@@ -33,19 +33,19 @@ points.}
 \item{time_unit_label}{A string shown in the plots as the unit for the time,
 such as min or hours.}
 
-\item{plot_info}{List containing the elements y_axis_label (string), 
+\item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA. 
-This list is used to add this info to the spline plots. 
+treatment_timepoints (integer vector). All can also be NA.
+This list is used to add this info to the spline plots.
 time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as 
+indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).}
 
 \item{adj_pthreshold}{Double > 0 and < 1 specifying the adj. p-val threshold.}
 
 \item{replicate_column}{String specifying the column of the meta dataframe
-that contains the labels of the replicate measurents. When that is not 
+that contains the labels of the replicate measurents. When that is not
 given, this argument is NULL.}
 }
 \value{

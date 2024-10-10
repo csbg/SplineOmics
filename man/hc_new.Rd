@@ -7,14 +7,14 @@
 hc_new(cond1name = "Condition 1", cond2name = "Condition 2")
 }
 \arguments{
-\item{cond1name}{A character string for the first condition name 
+\item{cond1name}{A character string for the first condition name
 (max length 25).}
 
-\item{cond2name}{A character string for the second condition name 
+\item{cond2name}{A character string for the second condition name
 (max length 25).}
 }
 \value{
-An object of class "hitcomp" containing empty data lists 
+An object of class "hitcomp" containing empty data lists
 and condition names.
 }
 \description{

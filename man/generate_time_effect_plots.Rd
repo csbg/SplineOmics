@@ -7,17 +7,17 @@
 generate_time_effect_plots(time_effect, adj_pthresh)
 }
 \arguments{
-\item{time_effect}{A list of top tables from the LIMMA analysis representing 
+\item{time_effect}{A list of top tables from the LIMMA analysis representing
 the time effects.}
 
-\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold 
+\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold
 for significance.}
 }
 \value{
-A list containing the plots and their sizes, as well as the 
+A list containing the plots and their sizes, as well as the
 section header information.
 }
 \description{
-Creates p-value histograms for each time effect in the LIMMA analysis. This 
+Creates p-value histograms for each time effect in the LIMMA analysis. This
 function is used internally in the `create_limma_report` function.
 }

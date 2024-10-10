@@ -34,9 +34,7 @@ run_gsea <- function(
     clusterProfiler_params = NA,
     plot_titles = NA,
     universe = NULL,
-    report_dir = here::here()
-    ) {
-
+    report_dir = here::here()) {
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -45,21 +43,22 @@ run_gsea <- function(
   # Check report_info and report_dir
   args <- lapply(
     as.list(
-      match.call()[-1]),
+      match.call()[-1]
+    ),
     eval,
     parent.frame()
-    )
+  )
 
   input_control <- InputControl$new(args)
   input_control$auto_validate()
 
-  # Remove levels that
   levels_clustered_hits <- levels_clustered_hits[
-    !sapply(
+    !vapply(
       levels_clustered_hits,
-      is.character
-      )
-    ]
+      is.character,
+      logical(1)
+    )
+  ]
 
   # Control the test not covered by the InputControl class
   control_inputs_create_gsea_report(
@@ -68,9 +67,9 @@ run_gsea <- function(
     params = clusterProfiler_params,
     plot_titles = plot_titles,
     background = universe
-    )
+  )
 
-  ensure_clusterProfiler()  # Deals with clusterProfiler installation.
+  ensure_clusterProfiler() # Deals with clusterProfiler installation.
 
   all_results <- map2(
     levels_clustered_hits,
@@ -81,7 +80,7 @@ run_gsea <- function(
       databases,
       clusterProfiler_params,
       universe
-      )
+    )
   )
 
   names(all_results) <- names(levels_clustered_hits)
@@ -95,14 +94,14 @@ run_gsea <- function(
   # Extract the plots, plot sizes, and header info from the processed results
   plots <- purrr::flatten(map(processed_results, "plot"))
   plots_sizes <- unlist(map(processed_results, "plot_size"))
-  
+
   insert_after_each <- function(lst, value) {
-    result <- vector("list", 2 * length(lst))  # Create a list twice the size
-    result[seq(1, length(result), by = 2)] <- lst  # Insert original elements at odd positions
-    result[seq(2, length(result), by = 2)] <- value  # Insert value at even positions
+    result <- vector("list", 2 * length(lst))
+    result[seq(1, length(result), by = 2)] <- lst
+    result[seq(2, length(result), by = 2)] <- value
     return(result)
   }
-  
+
   plots <- insert_after_each(plots, "section_break")
   plots_sizes <- insert_after_each(plots_sizes, 999)
 
@@ -121,7 +120,7 @@ run_gsea <- function(
     report_type = "create_gsea_report",
     filename = "create_gsea_report",
     report_dir = report_dir
-    )
+  )
 
   print_info_message(
     message_prefix = "Gene set enrichment analysis",
@@ -155,9 +154,7 @@ control_inputs_create_gsea_report <- function(
     databases,
     params,
     plot_titles,
-    background
-    ) {
-
+    background) {
   check_clustered_hits(levels_clustered_hits)
 
   check_databases(databases)
@@ -166,11 +163,12 @@ control_inputs_create_gsea_report <- function(
 
 
   if (!is.na(plot_titles)) {
-
     if (!is.character(plot_titles) ||
-        length(plot_titles) != length(levels_clustered_hits)) {
-      stop(paste("plot_titles must be a character vector with length == length",
-                 "length levels_clustered_hits"), call. = FALSE)
+      length(plot_titles) != length(levels_clustered_hits)) {
+      stop(paste(
+        "plot_titles must be a character vector with length == length",
+        "length levels_clustered_hits"
+      ), call. = FALSE)
     }
   }
 
@@ -194,62 +192,17 @@ control_inputs_create_gsea_report <- function(
 #' is loaded for use.
 #'
 ensure_clusterProfiler <- function() {
-
-  # Check if clusterProfiler is installed; if not, prompt the user
+  # Check if clusterProfiler is installed; if not, inform the user
   if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
-    message("The 'clusterProfiler' package is not installed.")
-
-    # Prompt user for action
-    repeat {
-      user_input <- readline(
-        prompt = paste0(
-          "What would you like to do?\n",
-          "1: Automatically install clusterProfiler\n",
-          "2: Manually install clusterProfiler\n",
-          "3: Cancel\n",
-          "Please enter 1, 2, or 3: "
-        )
-      )
-
-      if (user_input == "1") {
-        # Try to install clusterProfiler automatically from Bioconductor
-        message(
-          "Attempting to install 'clusterProfiler' automatically
-          from Bioconductor..."
-          )
-
-        if (!requireNamespace("BiocManager", quietly = TRUE)) {
-          utils::install.packages("BiocManager")
-        }
-
-        tryCatch(
-          {
-            BiocManager::install("clusterProfiler", update = FALSE, ask = FALSE)
-          },
-          error = function(e) {
-            stop(
-              "Automatic installation of 'clusterProfiler' failed.
-              Please install it manually and try again.",
-              call. = FALSE
-              )
-          }
-        )
-        break  # Exit the loop if installation is successful
-      } else if (user_input == "2") {
-        stop(
-          "Please install 'clusterProfiler' manually
-          using BiocManager::install('clusterProfiler') and
-          then re-run the function.",
-          call. = FALSE
-          )
-      } else if (user_input == "3") {
-        stop("Operation canceled by the user.", call. = FALSE)
-      } else {
-        message("Invalid input. Please enter 1, 2, or 3.")
-      }
-    }
+    stop(
+      "The 'clusterProfiler' package is not installed. ",
+      "Please install it manually using", 
+      "BiocManager::install('clusterProfiler') ",
+      "and re-run the function."
+    )
   }
 }
+
 
 
 #' Manage GSEA Analysis for a Specific Level
@@ -277,15 +230,13 @@ manage_gsea_level <- function(
     level_name,
     databases,
     clusterProfiler_params,
-    universe
-    ) {
-
+    universe) {
   clustered_hits <- na.omit(clustered_hits)
 
   message(paste(
     "\n\n Running clusterProfiler for the level:",
     level_name
-    ))
+  ))
 
   result <- create_gsea_report_level(
     clustered_genes = clustered_hits,
@@ -293,7 +244,7 @@ manage_gsea_level <- function(
     params = clusterProfiler_params,
     plot_title = level_name,
     universe = universe
-    )
+  )
 }
 
 
@@ -318,9 +269,7 @@ manage_gsea_level <- function(
 #'
 process_result <- function(
     level_result,
-    level_name
-    ) {
-
+    level_name) {
   result <- list()
 
   if (any(is.na(level_result))) {
@@ -379,14 +328,12 @@ build_create_gsea_report <- function(
     plots_sizes,
     level_headers_info,
     report_info,
-    output_file_path
-    ) {
-
+    output_file_path) {
   html_content <- paste(
     header_section,
     "<!--TOC-->",
     sep = "\n"
-    )
+  )
 
   toc <- create_toc()
 
@@ -398,15 +345,13 @@ build_create_gsea_report <- function(
   level_headers_info <- Filter(
     Negate(is.null),
     level_headers_info
-    )
+  )
 
   pb <- create_progress_bar(plots)
   # Generate the sections and plots
   for (index in seq_along(plots)) {
-
     # means jump to next level
-    if (any(class(plots[[index]]) == "character")) {
-
+    if (any(is(plots[[index]], "character"))) {
       section_info <- level_headers_info[[current_header_index]]
 
       section_content <- generate_section_content(
@@ -426,7 +371,7 @@ build_create_gsea_report <- function(
       pb$tick()
       next
     }
-    
+
     # Add the section header and horizontal line just before the plot
     section_info <- level_headers_info[[current_header_index]]
     section_header <- sprintf(
@@ -435,13 +380,13 @@ build_create_gsea_report <- function(
       index,
       section_info$header_name
     )
-    
+
     horizontal_line <- ""
-    
+
     if (current_header_index > 1) {
       horizontal_line <- "<hr>"
     }
-    
+
     # Update the HTML content with the section header and horizontal line
     html_content <- paste(
       html_content,
@@ -449,19 +394,19 @@ build_create_gsea_report <- function(
       section_header,
       sep = "\n"
     )
-    
+
     toc_entry <- sprintf(
       "<li style='%s'><a href='#section%d'>%s</a></li>",
       toc_style,
       index,
       section_info$header_name
     )
-    
+
     toc <- paste(
       toc,
       toc_entry,
       sep = "\n"
-      )
+    )
 
     result <- process_plots(
       plots_element = plots[[index]],
@@ -505,38 +450,42 @@ build_create_gsea_report <- function(
 #'         if the conditions are not met.
 #'
 check_clustered_hits <- function(levels_clustered_hits) {
-
   if (!is.list(levels_clustered_hits)) {
     stop(paste("levels_clustered_hits must be a list"), call. = FALSE)
   }
 
   for (i in seq_along(levels_clustered_hits)) {
-
     clustered_hits <- levels_clustered_hits[[i]]
 
     # Check if clustered_hits is a dataframe
     if (!is.data.frame(clustered_hits)) {
-      stop(paste("Element", i ,"of levels_clustered_hits is not a dataframe",
-                 "but must be one."), call. = FALSE)
+      stop(paste(
+        "Element", i, "of levels_clustered_hits is not a dataframe",
+        "but must be one."
+      ), call. = FALSE)
     }
 
     # Check if the dataframe contains the columns 'gene' and 'cluster'
     required_columns <- c("feature", "cluster")
     if (!all(required_columns %in% colnames(clustered_hits))) {
-      stop(paste("The dataframe must contain the columns 'feature' and",
-                 "'cluster'."),
-           call. = FALSE)
+      stop(
+        paste(
+          "The dataframe must contain the columns 'feature' and",
+          "'cluster'."
+        ),
+        call. = FALSE
+      )
     }
 
     # Check if the 'feature' column contains only integers
     if (!is.integer(clustered_hits$feature) &&
-        !all(clustered_hits$feature == as.integer(clustered_hits$feature))) {
+      !all(clustered_hits$feature == as.integer(clustered_hits$feature))) {
       stop("The 'feature' column must contain only integers.", call. = FALSE)
     }
 
     # Check if the 'cluster' column contains only integers
     if (!is.integer(clustered_hits$cluster) &&
-        !all(clustered_hits$cluster == as.integer(clustered_hits$cluster))) {
+      !all(clustered_hits$cluster == as.integer(clustered_hits$cluster))) {
       stop("The 'cluster' column must contain only integers.", call. = FALSE)
     }
   }
@@ -560,14 +509,16 @@ check_clustered_hits <- function(levels_clustered_hits) {
 #'
 check_genes <- function(
     genes,
-    max_index_overall = NA
-    ) {
-
+    max_index_overall = NA) {
   if (!is.na(max_index_overall)) {
     if (length(genes) < max_index_overall) {
-      stop(paste("genes must at least have over", max_index_overall,
-                 "elements"),
-           call. = FALSE)
+      stop(
+        paste(
+          "genes must at least have over", max_index_overall,
+          "elements"
+        ),
+        call. = FALSE
+      )
     }
   }
 
@@ -581,10 +532,16 @@ check_genes <- function(
     first_invalid_index <- which(!valid)[1]
     first_invalid_value <- genes[first_invalid_index]
     num_invalid <- sum(!valid) - 1
-    stop(sprintf(paste("Invalid gene found at index %d: '%s'.",
-                 "There are %d more invalid elements."),
-                 first_invalid_index, first_invalid_value, num_invalid),
-         call. = FALSE)
+    stop(
+      sprintf(
+        paste(
+          "Invalid gene found at index %d: '%s'.",
+          "There are %d more invalid elements."
+        ),
+        first_invalid_index, first_invalid_value, num_invalid
+      ),
+      call. = FALSE
+    )
   }
 }
 
@@ -602,7 +559,6 @@ check_genes <- function(
 #'         error message if the dataframe is not valid.
 #'
 check_databases <- function(databases) {
-
   if (!is.data.frame(databases)) {
     stop("The input must be a dataframe.", call. = FALSE)
   }
@@ -614,12 +570,12 @@ check_databases <- function(databases) {
   expected_colnames <- c("DB", "Geneset", "Gene")
   if (!all(colnames(databases) == expected_colnames)) {
     stop("The dataframe must have columns named DB, Geneset, and Gene.",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
 
-  if (!all(sapply(databases, is.character))) {
-    stop("All columns in the dataframe must be of type character.",
-         call. = FALSE)
+  if (!all(vapply(databases, is.character, logical(1)))) {
+    stop_call_false("All columns in the dataframe must be of type character.")
   }
 }
 
@@ -640,11 +596,10 @@ check_databases <- function(databases) {
 #'
 #' @return This function does not return a value. It stops with an error message
 #'         if the conditions are not met.
-#' 
+#'
 #' @importFrom stats p.adjust
 #'
 check_params <- function(params) {
-
   required_params <- list(
     pvalueCutoff = "numeric",
     pAdjustMethod = "character",
@@ -675,9 +630,7 @@ check_params <- function(params) {
 
   # Check for required elements and their data types
   for (param in names(params)) {
-
     if (param %in% names(required_params)) {
-
       actual_value <- params[[param]]
       expected_type <- required_params[[param]]
       actual_type <- class(params[[param]])
@@ -687,18 +640,17 @@ check_params <- function(params) {
       }
 
       if (expected_type == "integer" && !is.integer(params[[param]])) {
-
         # Check if the value can be coerced to integer
         if (is.numeric(params[[param]]) &&
-            all(params[[param]] == as.integer(params[[param]]))) {
-
+          all(params[[param]] == as.integer(params[[param]]))) {
           actual_type <- "integer"
         }
       }
       if (expected_type != actual_type) {
-
         stop("The element '", param, "' must be of type ",
-             expected_type, ".", call. = FALSE)
+          expected_type, ".",
+          call. = FALSE
+        )
       }
     } else {
       stop(
@@ -706,18 +658,20 @@ check_params <- function(params) {
         param,
         "' in the list.",
         call. = FALSE
-        )
+      )
     }
 
-    if (param == 'pAdjustMethod') {
+    if (param == "pAdjustMethod") {
       if (!(actual_value %in% valid_adj_p_value_methods)) {
-        stop(paste("pAdjustMethod must be one of",
-                   valid_adj_p_value_methods, collapse = ", "),
-             call. = FALSE)
-
+        stop(
+          paste("pAdjustMethod must be one of",
+            valid_adj_p_value_methods,
+            collapse = ", "
+          ),
+          call. = FALSE
+        )
       }
     }
-
   }
 }
 
@@ -751,9 +705,7 @@ create_gsea_report_level <- function(
     databases,
     params = NA,
     plot_title = "",
-    universe = NULL
-    ) {
-
+    universe = NULL) {
   set_default_params(params)
 
   all_term2genes <- dbs_to_term2genes(databases)
@@ -795,7 +747,7 @@ create_gsea_report_level <- function(
     gene_list <- as.list(cluster_genes)
     gene_list <- unlist(gene_list)
 
-    at_least_one_result = FALSE
+    at_least_one_result <- FALSE
 
     # Run clusterProfiler and process output
     for (database_name in names(all_term2genes)) {
@@ -804,30 +756,30 @@ create_gsea_report_level <- function(
       message(paste(
         "\nDatabase:",
         database_name
-        ))
+      ))
 
       enrichment <-
         clusterProfiler::enricher(
           gene = gene_list,
-          pvalueCutoff  = params$pvalueCutoff,
+          pvalueCutoff = params$pvalueCutoff,
           pAdjustMethod = params$pAdjustMethod,
-          universe      = universe,
-          minGSSize     = params$minGSSize,
-          maxGSSize     = params$maxGSSize,
-          qvalueCutoff  = params$qvalueCutoff,
-          gson          = NULL,
-          TERM2GENE     = term2gene,
-          TERM2NAME     = NA
-          )
+          universe = universe,
+          minGSSize = params$minGSSize,
+          maxGSSize = params$maxGSSize,
+          qvalueCutoff = params$qvalueCutoff,
+          gson = NULL,
+          TERM2GENE = term2gene,
+          TERM2NAME = NA
+        )
 
       enrichment <- as.data.frame(enrichment)
 
       if (is.null(enrichment) || (nrow(enrichment) == 0 &
-                                  ncol(enrichment) == 0)) {
+        ncol(enrichment) == 0)) {
         next
       }
 
-      at_least_one_result = TRUE
+      at_least_one_result <- TRUE
 
       enrichment_results[[length(enrichment_results) + 1]] <- enrichment
 
@@ -836,15 +788,15 @@ create_gsea_report_level <- function(
         "cluster: %s, database: %s",
         cluster,
         database_name
-        )
+      )
 
       raw_results[[name]] <- enrichment
     }
 
     if (is.null(universe)) {
-      use_background = TRUE
+      use_background <- TRUE
     } else {
-      use_background = FALSE
+      use_background <- FALSE
     }
 
     if (at_least_one_result) {
@@ -862,7 +814,12 @@ create_gsea_report_level <- function(
   }
 
   # Make dotplot
-  any_result <- sapply(all_db_results, function(df) nrow(df) > 0)
+  any_result <- vapply(
+    all_db_results,
+    function(df) nrow(df) > 0,
+    logical(1)
+  )
+
   has_true <- any(any_result)
 
   if (has_true) {
@@ -870,7 +827,7 @@ create_gsea_report_level <- function(
       all_db_results,
       names(all_term2genes),
       plot_title
-      )
+    )
   } else {
     message("No database led to an enrichment result!")
     return(NA)
@@ -881,7 +838,7 @@ create_gsea_report_level <- function(
     dotplot_nrows = result[["dotplot_height"]],
     full_enrich_results = result[["full_enrich_results"]],
     raw_results = raw_results
-    )
+  )
 }
 
 
@@ -905,11 +862,8 @@ generate_section_content <- function(
     toc,
     html_content,
     section_header_style,
-    toc_style
-) {
-
+    toc_style) {
   if (any(is.na(section_info$full_enrich_results))) {
-
     no_results_message <- paste0(
       "<p style='font-size: 40px; color: #FF0000;'>",
       "No database specified led to identification of any enrichment ",
@@ -931,7 +885,7 @@ generate_section_content <- function(
   full_enrich_results_header <- paste0(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
     "'>Enrichment Results</h3>"
-    )
+  )
 
   df <- section_info$full_enrich_results
 
@@ -960,7 +914,7 @@ generate_section_content <- function(
   raw_enrich_results_header <- paste0(
     "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
     "'>Count smaller 2 Enrichment Results</h3>"
-    )
+  )
 
   base64_df <- sprintf(
     '<a href="%s" download="count2small_results.xlsx">
@@ -1004,7 +958,6 @@ generate_section_content <- function(
 #'         input `params` or with added default values for any missing elements.
 #'
 set_default_params <- function(params) {
-
   default_params <- list(
     pvalueCutoff = 0.05,
     pAdjustMethod = "BH",
@@ -1046,12 +999,10 @@ set_default_params <- function(params) {
 #'         contain gene names ('Gene') associated with each gene set.
 #'
 dbs_to_term2genes <- function(databases) {
-
   db_split <- split(databases, databases$DB)
 
   # Transform into long format
   all_term2genes <- lapply(db_split, function(db_df) {
-
     df_with_renamed_columns <- db_df[, c("Geneset", "Gene")]
     colnames(df_with_renamed_columns) <- c("term", "gene")
     return(df_with_renamed_columns)
@@ -1084,9 +1035,7 @@ process_enrichment_results <- function(
     adjP_threshold,
     column_name,
     count_column_name,
-    background = FALSE
-    ) {
-
+    background = FALSE) {
   column_indices <- list(2, 6, 3, 4, 9)
 
   # Process results for all databases.
@@ -1100,11 +1049,21 @@ process_enrichment_results <- function(
 
     term_list <- as.list(df[[column_indices[[1]]]])
     adjP_list <- as.list(df[[column_indices[[2]]]])
-    odds_ratio <- as.list(df[[column_indices[[3]]]])
 
-    odds_ratio <- sapply(odds_ratio, function(x) eval(parse(text = x)))
+    odds_ratio <- as.list(df[[column_indices[[3]]]])
+    odds_ratio <- vapply(
+      odds_ratio,
+      function(x) eval(parse(text = x)),
+      numeric(1)
+    )
+
     bg_ratio <- as.list(df[[column_indices[[4]]]])
-    bg_ratio <- sapply(bg_ratio, function(x) eval(parse(text = x)))
+    bg_ratio <- vapply(
+      bg_ratio,
+      function(x) eval(parse(text = x)),
+      numeric(1)
+    )
+
     odds_ratio <- mapply("/", odds_ratio, bg_ratio)
 
     gene_count_list <- as.list(df[[column_indices[[5]]]])
@@ -1112,7 +1071,7 @@ process_enrichment_results <- function(
     named_list <- list()
 
     # Loop through the terms
-    for(j in seq_along(term_list)) {
+    for (j in seq_along(term_list)) {
       # Create a sublist for each term with its adjP value and gene count
 
       # Skip terms that are just supported by one gene.
@@ -1128,7 +1087,6 @@ process_enrichment_results <- function(
     }
 
     for (name in names(named_list)) {
-
       if (!name %in% all_db_results[[i]]$BioProcess) {
         # Create a list with the same structure as your DataFrame
         row_index <- nrow(all_db_results[[i]]) + 1
@@ -1136,7 +1094,6 @@ process_enrichment_results <- function(
         all_db_results[[i]][row_index, column_name] <- named_list[[name]][[1]]
         all_db_results[[i]][row_index, count_column_name] <-
           named_list[[name]][[2]]
-
       } else {
         row_index <- which(all_db_results[[i]]$BioProcess == name)
         all_db_results[[i]][row_index, column_name] <- named_list[[name]][[1]]
@@ -1264,9 +1221,7 @@ process_enrichment_results <- function(
 make_enrich_dotplot <- function(
     enrichments_list,
     databases,
-    title = "Title"
-) {
-
+    title = "Title") {
   results <- prepare_plot_data(
     enrichments_list,
     databases
@@ -1280,7 +1235,7 @@ make_enrich_dotplot <- function(
   num_labels <- length(unique(top_plot_data$term))
   plot_height <- num_labels * height_per_label
 
-  if (plot_height < 0.70) {  # to always have a minimum size.
+  if (plot_height < 0.70) { # to always have a minimum size.
     plot_height <- 0.70
   }
 
@@ -1389,9 +1344,7 @@ make_enrich_dotplot <- function(
 #'
 prepare_plot_data <- function(
     enrichments_list,
-    databases
-    ) {
-
+    databases) {
   plot_data <-
     enrichments_list |>
     purrr::set_names(databases) |>
@@ -1413,7 +1366,7 @@ prepare_plot_data <- function(
     dplyr::arrange(
       dplyr::desc(.data$avg_odds_ratio),
       .data$db, .data$BioProcess
-      )
+    )
 
   # Initialize the cluster counts
   cluster_counts <-
@@ -1463,7 +1416,7 @@ prepare_plot_data <- function(
       # threshold. This step might seem redundant given the current logic but
       # could be adjusted for more complex conditions
       if (any(temp_cluster_counts <= min_threshold |
-              temp_cluster_counts > min_threshold)) {
+        temp_cluster_counts > min_threshold)) {
         # Commit the update if the combination is still eligible
         cluster_counts <- temp_cluster_counts
         selected_combos[[length(selected_combos) + 1]] <- combo
@@ -1474,18 +1427,18 @@ prepare_plot_data <- function(
     # Stop if all combos have been evaluated or the sum of cluster_counts
     # exceeds 5 times the number of clusters
     if (i == nrow(plot_data) || sum(cluster_counts) > 5 *
-        length(cluster_counts)) {
+      length(cluster_counts)) {
       break
     }
 
-    i <- i + length(cluster_counts)   # Jump to next combo
+    i <- i + length(cluster_counts) # Jump to next combo
   }
 
   # Combine selected combos into a dataframe
   top_combos <- do.call(
     rbind,
     selected_combos
-    )
+  )
 
   # Filter the original data to keep only rows matching the top 5 combinations
   top_plot_data <- plot_data |>
@@ -1494,8 +1447,8 @@ prepare_plot_data <- function(
       by = c(
         "db",
         "BioProcess"
-        )
       )
+    )
 
   full_enrich_results <- stats::na.omit(plot_data)
 
@@ -1505,15 +1458,15 @@ prepare_plot_data <- function(
       .data$BioProcess,
       col = "term",
       sep = ": "
-      )
+    )
 
   top_plot_data$term <- factor(
     top_plot_data$term,
     levels = rev(unique(top_plot_data$term))
-    )
+  )
 
   list(
     top_plot_data = top_plot_data,
     full_enrich_results = full_enrich_results
-    )
+  )
 }

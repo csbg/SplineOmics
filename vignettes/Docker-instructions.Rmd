@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 To pull the Docker container, use the following command. Make sure to check for the newest version or the specific version you need by visiting the [Docker Hub repository](https://hub.docker.com/r/thomasrauter/splineomics).
 
-```{r eval=FALSE}
+``` bash
 docker pull thomasrauter/splineomics:0.1.0
 ```
 
@@ -75,10 +75,9 @@ If you face 'permission denied' issues, check out [this vignette](https://raw.gi
 
 To run the `Docker` container, you can use one of the following commands, depending on your operating system. Before running the command, ensure that you are in a directory containing two subfolders: `input` and `output`. These will be used to transfer files between your local machine and the Docker container.
 
-For Linux and macOS:
+For Linux and macOS (`Bash`):
 
-```{r eval=FALSE}
-# Bash
+```bash
 docker run -it -d \
     -v $(pwd)/input:/home/rstudio/input \
     -v $(pwd)/output:/home/rstudio/output \
@@ -88,10 +87,9 @@ docker run -it -d \
     thomasrauter/splineomics:0.1.0
 ```
 
-For Windows:
+For Windows (`PowerShell`):
 
-```{r eval=FALSE}
-# PowerShell
+```powershell
 docker run -it -d `
     -v "${PWD}\input:/home/rstudio/input" `
     -v "${PWD}\output:/home/rstudio/output" `
@@ -111,13 +109,13 @@ As long as the container is running, you can work on that localhost page with RS
 
 Stop the container:
 
-```{r eval=FALSE}
+```bash
 docker stop splineomics
 ```
 
 Start the container again:
 
-```{r eval=FALSE}
+```bash
 docker start splineomics
 ```
 
@@ -139,7 +137,7 @@ The `input` and `output` directories on your local machine are mounted to corres
 
 To see all the R packages and system installations that make up the `Docker` container, you can run the following command in the terminal of RStudio on your localhost browser page.
 
-```{r eval=FALSE}
+```bash
 cp -r /log home/rstudio/output
 ```
 
@@ -161,7 +159,7 @@ If you want to permanently add R packages, R scripts, or other files to the Spli
 
 For example:
 
-```{r eval=FALSE}
+```bash
 # Use the SplineOmics image as the base image
 FROM thomasrauter/splineomics:0.1.0
 
@@ -194,7 +192,7 @@ When you have your final analysis script inside the Docker container of the `Spl
 
 Ensure all analysis scripts and necessary files are saved in a dedicated directory inside the container (e.g., `/home/rstudio/analysis/`). Your analysis script should take the input files from a directory like /home/rstudio/input/ (which is already inside the container and does not need to be mounted again when reproducing the analysis) and output all results to /home/rstudio/output/. The /home/rstudio/output/ directory is mounted to a local directory on the user’s machine, making the results accessible outside the container. Example directory structure:
 
-```{r eval=FALSE}
+```bash
 /home/rstudio/
 └── analysis/
     ├── final_analysis.R   # Main analysis script
@@ -207,7 +205,7 @@ Create a bash script (run_analysis.sh) that runs your analysis automatically.
 
 Example run_analysis.sh:
 
-```{r eval=FALSE}
+```bash
 #!/bin/bash
 Rscript /home/rstudio/analysis/final_analysis.R
 tail -f /dev/null  # Keep the container running after analysis
@@ -219,7 +217,7 @@ Save this script in `/home/rstudio/`.
 
 Once your scripts are ready, commit the running container as a new image and set the new entry point to run the bash script automatically:
 
-```{r eval=FALSE}
+```bash
 docker commit \
     --change='CMD ["/bin/bash", "/home/rstudio/run_analysis.sh"]' \
     <container_id> \
@@ -230,13 +228,13 @@ docker commit \
 
 Push the new image to `Docker Hub` so others can easily pull and reproduce the analysis:
 
-```{r eval=FALSE}
+```bash
 docker push thomasrauter/splineomics-analysis:v1
 ```
 
 Others can pull (download) the container with this command:
 
-```{r eval=FALSE}
+```bash
 docker pull thomasrauter/splineomics-analysis:v1
 ```
 
@@ -246,7 +244,7 @@ To reproduce the results, you need to create a local directory where the results
 
 Use the following command to run the container and ensure that the results are saved to the local output directory (see commands in section Running the `Docker` Container above how to mount the `output` dir in the current working dir).
 
-```{r eval=FALSE}
+```bash
 docker run -it \
     -v /path/to/local/output:/home/rstudio/output \
     thomasrauter/splineomics-analysis:v1
@@ -256,7 +254,7 @@ docker run -it \
 
 Start a new container and mount an empty local directory to the /home/rstudio/ directory inside the container. This allows you to directly access all the analysis files on your local machine.
 
-```{r eval=FALSE}
+```bash
 docker run -it \
     -v /path/to/local/dir:/home/rstudio \
     thomasrauter/splineomics-analysis:v1

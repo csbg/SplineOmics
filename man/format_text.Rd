@@ -14,7 +14,7 @@ A character vector with formatted text containing line breaks.
 }
 \description{
 This function takes a character vector `text` and splits it into individual
-characters. It then iterates over the characters and builds lines not 
+characters. It then iterates over the characters and builds lines not
 exceeding
 a specified character limit (default 70). Newlines are inserted between lines
 using the `<br>` tag, suitable for HTML display.

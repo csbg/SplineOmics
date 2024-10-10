@@ -1,64 +1,38 @@
-# This function is exported, but not part of the functionality of the 
-# SplineOmics package. Rather, it provides a convenient way of opening the 
-# tutorial for the SplineOmics package in a R Markdown file, which
-# provides an interactive experience.
-
-
 #' Interactive Tutorial for Getting Started
 #'
 #' @description
 #' This function opens the `tutorial.Rmd` file in RStudio for
 #' interactive use. Users can then run each code chunk step by step.
-#' 
+#'
+#' @return
+#' If successful, opens the `tutorial.Rmd` file in RStudio for the user to
+#' interact with.
+#' If `rstudioapi` is not installed or available, or the tutorial file is
+#' not found,
+#' an error is thrown with a corresponding message.
+#'
 #' @export
-#' 
+#'
 open_tutorial <- function() {
-  
   # Check if rstudioapi is installed
-  if (!requireNamespace(
-    "rstudioapi",
-    quietly = TRUE
-  )) {
-    repeat {
-      # Prompt the user for action
-      cat("The 'rstudioapi' package is not installed.\n")
-      cat("1: Install 'rstudioapi'\n")
-      cat("2: Do not install and quit\n")
-      cat("3: Resolve manually and retry\n")
-      choice <- readline(prompt = "Please enter your choice (1, 2, or 3): ")
-      
-      # Check user input and take appropriate action
-      if (choice == "1") {
-        utils::install.packages("rstudioapi")
-        break
-      } else if (choice == "2") {
-        stop(
-          "User chose not to install 'rstudioapi'. Exiting function.",
-          call. = FALSE
-          )
-      } else if (choice == "3") {
-        stop(
-          "Please install 'rstudioapi' manually and retry.",
-          call. = FALSE)
-      } else {
-        cat("Invalid choice. Please enter 1, 2, or 3.\n")
-      }
-    }
-  }
-  
-  file <- system.file(
-    "tutorial",
-    "tutorial.Rmd",
-    package = "SplineOmics"
+  if (!requireNamespace("rstudioapi", quietly = TRUE)) {
+    stop_call_false(
+      "The 'rstudioapi' package is not installed. ",
+      "Please install it manually with: install.packages('rstudioapi')."
     )
+  }
+
+  # Find the tutorial file
+  file <- system.file("tutorial", "tutorial.Rmd", package = "SplineOmics")
+
   if (file != "") {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)
     } else {
-      stop("RStudio API not available. Cannot open tutorial.")
+      stop_call_false("RStudio API not available. Cannot open tutorial.")
     }
   } else {
-    stop("tutorial.Rmd file not found under inst/tutorial")
+    stop_call_false("tutorial.Rmd file not found under inst/tutorial")
   }
 }
 
@@ -67,59 +41,38 @@ open_tutorial <- function() {
 #'
 #' @description
 #' This function opens the `template.Rmd` file in RStudio for
-#' interactive use. The template file provides a structure for users 
+#' interactive use. The template file provides a structure for users
 #' to quickly set up their personal analysis.
-#' 
+#'
+#' @return
+#' If successful, opens the `template.Rmd` file in RStudio for the user to
+#' interact with.
+#' If `rstudioapi` is not installed or available, or the template file is
+#' not found,
+#' an error is thrown with a corresponding message.
+#'
 #' @export
-#' 
+#'
 open_template <- function() {
-  
   # Check if rstudioapi is installed
-  if (!requireNamespace(
-    "rstudioapi",
-    quietly = TRUE
-    )) {
-    repeat {
-      # Prompt the user for action
-      cat("The 'rstudioapi' package is not installed.\n")
-      cat("1: Install 'rstudioapi'\n")
-      cat("2: Do not install and quit\n")
-      cat("3: Resolve manually and retry\n")
-      choice <- readline(prompt = "Please enter your choice (1, 2, or 3): ")
-      
-      # Check user input and take appropriate action
-      if (choice == "1") {
-        utils::install.packages("rstudioapi")
-        break
-      } else if (choice == "2") {
-        stop(
-          "User chose not to install 'rstudioapi'. Exiting function.",
-          call. = FALSE
-        )
-      } else if (choice == "3") {
-        stop(
-          "Please install 'rstudioapi' manually and retry.",
-          call. = FALSE)
-      } else {
-        cat("Invalid choice. Please enter 1, 2, or 3.\n")
-      }
-    }
+  if (!requireNamespace("rstudioapi", quietly = TRUE)) {
+    stop(
+      "The 'rstudioapi' package is not installed. ",
+      "Please install it manually with: install.packages('rstudioapi').",
+      call. = FALSE
+    )
   }
-  
-  file <- system.file(
-    "template",
-    "template.Rmd",
-    package = "SplineOmics"
-  )
+
+  # Find the template file
+  file <- system.file("template", "template.Rmd", package = "SplineOmics")
+
   if (file != "") {
     if (rstudioapi::isAvailable()) {
       rstudioapi::navigateToFile(file)
     } else {
-      stop("RStudio API not available. Cannot open template.")
+      stop("RStudio API not available. Cannot open template.", call. = FALSE)
     }
   } else {
-    stop("template.Rmd file not found under inst/template")
+    stop("template.Rmd file not found under inst/template", call. = FALSE)
   }
 }
-
-

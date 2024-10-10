@@ -9,17 +9,17 @@ generate_and_write_html(toc, html_content, report_info, output_file_path)
 \arguments{
 \item{toc}{A string containing the table of contents in HTML format.}
 
-\item{html_content}{A string containing the main HTML content with a 
+\item{html_content}{A string containing the main HTML content with a
 placeholder for the table of contents.}
 
-\item{report_info}{A list containing report information such as 
+\item{report_info}{A list containing report information such as
 `contact_info` and `analyst_name`.}
 
-\item{output_file_path}{A string specifying the path where the final 
+\item{output_file_path}{A string specifying the path where the final
 HTML file will be written.}
 }
 \description{
 This function generates an HTML report by inserting a table of contents,
-embedding necessary JavaScript files, and writing the final HTML content 
+embedding necessary JavaScript files, and writing the final HTML content
 to a specified output file.
 }

@@ -2,34 +2,34 @@
 % Please edit documentation in R/extract_data.R
 \name{extract_data}
 \alias{extract_data}
-\title{extract_data.R contains the exported package function extract_data. This 
+\title{extract_data.R contains the exported package function extract_data. This
 function automatically recognises the data field in a table and returns the
-data matrix, that serves as input for the other functions of this package. 
+data matrix, that serves as input for the other functions of this package.
 This is for convenience only.
 Extract Numeric Matrix from Dataframe}
 \usage{
 extract_data(data, feature_name_columns = NA, user_prompt = TRUE)
 }
 \arguments{
-\item{data}{A dataframe loaded from a tabular file, potentially containing a 
+\item{data}{A dataframe loaded from a tabular file, potentially containing a
 rectangular or quadratic area with numeric data amidst other values.}
 
 \item{feature_name_columns}{(Optional) A character vector, specifying the
-columns of the dataframe data, that should be 
+columns of the dataframe data, that should be
 used to construct the feature names. If ommited,
 the feature names are just numbers (stored as
 characters) starting from 1 (1, 2, 3, etc.)}
 
-\item{user_prompt}{Boolean specifying whether the user prompt about the 
+\item{user_prompt}{Boolean specifying whether the user prompt about the
 correct format of the input data should be shown.}
 }
 \value{
 A numeric matrix with row headers and appropriate column names.
 }
 \description{
-This function takes a dataframe and identifies a rectangular or quadratic 
-area containing numeric data, starting from the first occurrence of a 
-6x6 block of numeric values. It then extracts this area into a matrix, 
-ensuring that each row contains only numeric values. Rows with any NA values 
+This function takes a dataframe and identifies a rectangular or quadratic
+area containing numeric data, starting from the first occurrence of a
+6x6 block of numeric values. It then extracts this area into a matrix,
+ensuring that each row contains only numeric values. Rows with any NA values
 are removed from the resulting matrix.
 }

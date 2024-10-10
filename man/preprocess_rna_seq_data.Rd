@@ -21,18 +21,18 @@ columns).}
 \item{spline_params}{Parameters for spline functions (optional). Must contain
 the named elements spline_type, which must contain either the string "n" for
 natural cubic splines, or "b", for B-splines, the named element degree in the
-case of B-splines, that must contain only an integer, and the named element 
+case of B-splines, that must contain only an integer, and the named element
 dof, specifying the degree of freedom, containing an integer and required
 both for natural and B-splines.}
 
-\item{design}{A design formula for the limma analysis, such as 
+\item{design}{A design formula for the limma analysis, such as
 '~ 1 + Phase*X + Reactor'.}
 
-\item{normalize_func}{An optional normalization function. If provided, this 
+\item{normalize_func}{An optional normalization function. If provided, this
 function will be used to normalize the `DGEList` object. If not provided,
 TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
 Must take as
-input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y 
+input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 with the normalized counts.}
 }
 \value{
@@ -42,7 +42,7 @@ A `voom` object, which includes the log2-counts per million (logCPM)
 \description{
 The `preprocess_rna_seq_data()` function performs essential preprocessing
 steps for raw RNA-seq counts. This includes creating a `DGEList` object,
-normalizing the counts using the default TMM (Trimmed Mean of M-values) 
+normalizing the counts using the default TMM (Trimmed Mean of M-values)
 normalization via the `edgeR::calcNormFactors` function, and applying the
 `voom` transformation from the `limma` package to obtain log-transformed
 counts per million (logCPM) with associated precision weights. If you

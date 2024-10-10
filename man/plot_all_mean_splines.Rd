@@ -10,13 +10,13 @@ plot_all_mean_splines(curve_values, plot_info, level)
 \item{curve_values}{A dataframe containing curve values and cluster
 assignments.}
 
-\item{plot_info}{List containing the elements y_axis_label (string), 
+\item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA. 
-This list is used to add this info to the spline plots. 
+treatment_timepoints (integer vector). All can also be NA.
+This list is used to add this info to the spline plots.
 time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as 
+indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).}
 
 \item{level}{One of the unique values of the meta condition column. This is

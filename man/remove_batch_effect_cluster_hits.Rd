@@ -20,18 +20,18 @@ remove_batch_effect_cluster_hits(
 
 \item{meta}{A dataframe containing meta information.}
 
-\item{condition}{A string specifying the column in `meta` that divides the 
+\item{condition}{A string specifying the column in `meta` that divides the
 experiment into levels.}
 
-\item{meta_batch_column}{A string specifying the column in `meta` that 
+\item{meta_batch_column}{A string specifying the column in `meta` that
 indicates batch information.}
 
-\item{meta_batch2_column}{A string specifying the second batch column in 
+\item{meta_batch2_column}{A string specifying the second batch column in
 `meta`, if applicable.}
 
 \item{design}{A design matrix for the experiment.}
 
-\item{mode}{A string indicating the mode of operation: "isolated" or 
+\item{mode}{A string indicating the mode of operation: "isolated" or
 "integrated".}
 
 \item{spline_params}{A list of spline parameters for the design matrix.}
@@ -40,18 +40,18 @@ indicates batch information.}
 A list of dataframes with batch effects removed for each level.
 }
 \description{
-This function removes batch effects from the data for each level specified 
-by the condition. It supports both isolated and integrated modes, with 
+This function removes batch effects from the data for each level specified
+by the condition. It supports both isolated and integrated modes, with
 optional handling for a second batch column.
 }
 \details{
 The function operates in two modes:
 \describe{
-  \item{isolated}{Processes each level independently, using only data from 
+  \item{isolated}{Processes each level independently, using only data from
   that level.}
   \item{integrated}{Processes the entire dataset together.}
 }
-If `meta_batch_column` is specified, the function removes batch effects using 
-`removeBatchEffect`. If a second batch column (`meta_batch2_column`) is 
+If `meta_batch_column` is specified, the function removes batch effects using
+`removeBatchEffect`. If a second batch column (`meta_batch2_column`) is
 specified, it is also included in the batch effect removal.
 }

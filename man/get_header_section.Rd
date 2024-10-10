@@ -9,13 +9,13 @@ get_header_section(title, header_text, report_type, feature_names_formula)
 \arguments{
 \item{title}{A string specifying the title of the HTML document.}
 
-\item{header_text}{A string specifying the text to be displayed in the 
+\item{header_text}{A string specifying the text to be displayed in the
 header of the report.}
 
 \item{report_type}{A character specifying the type of HTML report.}
 
-\item{feature_names_formula}{String describing which columns of the 
-annotation info, such as gene and uniprotID, 
+\item{feature_names_formula}{String describing which columns of the
+annotation info, such as gene and uniprotID,
 where used to construct the description above
 the individual spline plots. This is placed in
 the beginning of the output HTML reports.}
@@ -24,14 +24,14 @@ the beginning of the output HTML reports.}
 A string containing the HTML header section.
 }
 \description{
-Generates the HTML header section for a report, including the title, header 
-text, and logo. This section also includes the styling for the table and 
+Generates the HTML header section for a report, including the title, header
+text, and logo. This section also includes the styling for the table and
 other HTML elements.
 }
 \details{
-The function checks the `DEVTOOLS_LOAD` environment variable to determine 
-the path to the logo image. The logo image is then converted to a base64 
-data URI and included in the HTML. The header section includes styles for 
-tables, table cells, and header elements to ensure proper formatting and 
+The function checks the `DEVTOOLS_LOAD` environment variable to determine
+the path to the logo image. The logo image is then converted to a base64
+data URI and included in the HTML. The header section includes styles for
+tables, table cells, and header elements to ensure proper formatting and
 alignment.
 }

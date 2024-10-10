@@ -9,6 +9,7 @@ process_within_level(
   rna_seq_data,
   meta,
   design,
+  dream_params,
   spline_params,
   level_index,
   padjust_method
@@ -17,12 +18,20 @@ process_within_level(
 \arguments{
 \item{data}{A matrix of data values.}
 
-\item{rna_seq_data}{An object containing the preprocessed RNA-seq data, 
+\item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
 such as the output from `limma::voom` or a similar preprocessing pipeline.}
 
 \item{meta}{A dataframe containing metadata, including a 'Time' column.}
 
 \item{design}{A design formula or matrix for the limma analysis.}
+
+\item{dream_params}{A named list or NULL. When not NULL, it must at least 
+contain the named element 'random_effects', which must contain a string that
+is a formula for the random effects of the mixed models by dream. 
+Additionally, it can contain the named elements dof, which must be a int
+bigger than 1, which is the degree of freedom for the dream topTable, and
+the named element KenwardRoger, which must be a bool, specifying whether
+to use that method or not.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
@@ -31,15 +40,15 @@ such as the output from `limma::voom` or a similar preprocessing pipeline.}
 \item{padjust_method}{A character string specifying the p-adjustment method.}
 }
 \value{
-A list containing the top table and the fit object from the limma 
+A list containing the top table and the fit object from the limma
 analysis.
 }
 \description{
-Performs a within-level analysis using limma to generate top tables and fit 
-objects based on the specified spline parameters. Performs the limma spline 
+Performs a within-level analysis using limma to generate top tables and fit
+objects based on the specified spline parameters. Performs the limma spline
 analysis for a selected level of a factor
 }
 \seealso{
-\link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit}, 
+\link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit},
 \link[limma]{eBayes}, \link[limma]{topTable}
 }

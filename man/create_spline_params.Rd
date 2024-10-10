@@ -21,7 +21,7 @@ create_spline_params(spline_test_configs, index, meta, condition, mode)
 A list of processed spline parameters.
 }
 \description{
-Generates spline parameters based on the configuration, metadata, condition, 
+Generates spline parameters based on the configuration, metadata, condition,
 and mode.
 }
 \seealso{

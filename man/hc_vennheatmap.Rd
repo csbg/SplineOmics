@@ -7,14 +7,14 @@
 hc_vennheatmap(hc_obj)
 }
 \arguments{
-\item{hc_obj}{An object of class "hitcomp" containing hit data for two 
+\item{hc_obj}{An object of class "hitcomp" containing hit data for two
 conditions.}
 }
 \value{
 A list containing the Venn heatmap plot and the number of hits.
 }
 \description{
-Creates a Venn heatmap to visualize the overlap of hits between two 
+Creates a Venn heatmap to visualize the overlap of hits between two
 conditions stored in a hit comparison object.
 }
 \seealso{

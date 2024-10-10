@@ -23,14 +23,14 @@ remove_batch_effect(
 column.}
 
 \item{condition}{A character vector of length 1, specifying the column name
-of the meta dataframe, that contains the levels that 
+of the meta dataframe, that contains the levels that
 separate the experiment.}
 }
 \value{
 A list of matrices with batch effects removed where applicable.
 }
 \description{
-Removes batch effects from the data matrices using the specified batch 
+Removes batch effects from the data matrices using the specified batch
 column in the metadata.
 }
 \seealso{

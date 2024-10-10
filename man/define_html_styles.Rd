@@ -10,6 +10,6 @@ define_html_styles()
 A list containing the styles for section headers and TOC entries.
 }
 \description{
-Defines the CSS styles for section headers and Table of Contents (TOC) 
+Defines the CSS styles for section headers and Table of Contents (TOC)
 entries used in the GSEA report generation.
 }

@@ -5,10 +5,10 @@
 #'
 #' @description
 #' This function downloads gene sets from specified Enrichr databases and saves
-#'  them to a specified output directory as a .tsv file. The file is named with 
+#'  them to a specified output directory as a .tsv file. The file is named with
 #'  a timestamp to ensure uniqueness.
 #'
-#' @param gene_set_lib A character vector of database names to download from 
+#' @param gene_set_lib A character vector of database names to download from
 #'                     Enrichr.
 #' @param output_dir A character string specifying the output directory
 #'                   where the .tsv file will be saved. Defaults to the current
@@ -17,33 +17,31 @@
 #'                 present in some terms, .tsv is recommendet). When ommited,
 #'                 the file is named all_databases_{timestamp}.tsv.
 #'
-#' @return This function does not return a value but saves a .tsv file in the 
-#'         specified directory containing the gene sets from the specified 
+#' @return This function does not return a value but saves a .tsv file in the
+#'         specified directory containing the gene sets from the specified
 #'         Enrichr databases.
 #'
 #' @importFrom here here
 #' @importFrom rlang .data
-#' 
+#'
 #' @export
 #'
 download_enrichr_databases <- function(
     gene_set_lib,
     output_dir = here::here(),
-    filename = NULL
-    ) {
-  
+    filename = NULL) {
   # Control the user inputs
   if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
     stop_call_false("gene_set_lib must be a character vector with length > 0")
   }
-  
+
   # Control the filename input (must be NULL or a valid string)
-  if (!is.null(filename) 
-      && (!is.character(filename) 
-          || length(filename) != 1)) {
+  if (!is.null(filename) &&
+    (!is.character(filename) ||
+      length(filename) != 1)) {
     stop_call_false("filename must be a single string or NULL.")
   }
-  
+
   # Control the inputs
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
@@ -51,7 +49,7 @@ download_enrichr_databases <- function(
   input_control$auto_validate()
 
   genesets <- enrichr_get_genesets(databases = gene_set_lib)
-  
+
   genesets <- do.call(rbind, lapply(names(genesets), function(db.nam) {
     do.call(rbind, lapply(names(genesets[[db.nam]]), function(set.nam) {
       tibble::tibble(
@@ -61,16 +59,16 @@ download_enrichr_databases <- function(
       )
     }))
   }))
-  
+
   genesets <- genesets |>
     mutate(Gene = gsub(",.+$", "", .data$Gene))
-  
+
   dir.create(
     output_dir,
     recursive = TRUE,
     showWarnings = FALSE
-    )
-  
+  )
+
   # Create filename if not specified
   if (is.null(filename)) {
     timestamp <- format(
@@ -82,23 +80,23 @@ download_enrichr_databases <- function(
       timestamp, ".tsv"
     )
   }
-  
+
   filename_path <- here::here(
     output_dir,
     filename
-    )
+  )
 
   utils::write.table(
     x = genesets,
     file = filename_path,
-    sep = "\t",  
-    row.names = FALSE,  
-    col.names = TRUE,   
-    quote = FALSE       # Do not quote strings
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE # Do not quote strings
   )
-  
+
   message("Download complete! The file has been saved as: ", filename_path)
-  
+
   return(invisible(filename_path))
 }
 
@@ -113,48 +111,46 @@ download_enrichr_databases <- function(
 #' It returns a list where each element is a list corresponding to a database,
 #' with each element containing a vector of human gene symbols for a gene set.
 #'
-#' @param databases A character vector of database names to download from 
+#' @param databases A character vector of database names to download from
 #'                  Enrichr.
 #'
 #' @return A named list of gene sets from the specified Enrichr databases. Each
-#'         database is represented as a list, with gene set names as list 
+#'         database is represented as a list, with gene set names as list
 #'         names and vectors of human gene symbols as list elements.
 #'
 enrichr_get_genesets <- function(databases) {
-  
   pb <- create_progress_bar(
     databases,
     message = "Downloading"
-    )
-  
+  )
+
   setNames(lapply(databases, function(dbx) {
-    
     # Update the progress bar
     pb$tick()
-    
+
     fpath <- paste0(
-      "http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?", 
+      "http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?",
       "mode=text&libraryName=",
       dbx
-      )
-    
+    )
+
     fhandle <- file(fpath)
-    dblines <- tryCatch({
-      readLines(con = fhandle)
-    }, error = function(e){
-      message(e, "\nFailed reading database: ", dbx)
-      NULL
-    })
+    dblines <- tryCatch(
+      {
+        readLines(con = fhandle)
+      },
+      error = function(e) {
+        message(e, "\nFailed reading database: ", dbx)
+        NULL
+      }
+    )
     close(fhandle)
-    
+
     if (is.null(dblines)) {
-      
       return(list())
-      
     } else {
-      
       res <- strsplit(dblines, "\t")
-      names(res) <- sapply(res, function(x) x[1])
+      names(res) <- vapply(res, function(x) x[1], character(1))
       res <- lapply(res, function(x) x[3:length(x)])
       return(res)
     }

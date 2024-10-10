@@ -17,7 +17,7 @@ A dataframe with `data` and `annotation` combined, and the row names
 as the first column named `feature_names`.
 }
 \description{
-This function converts a matrix to a dataframe, adds row names as the first 
+This function converts a matrix to a dataframe, adds row names as the first
 column,
 and binds it with annotation data.
 }

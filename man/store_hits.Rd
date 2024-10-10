@@ -7,14 +7,14 @@
 store_hits(condition)
 }
 \arguments{
-\item{condition}{A list containing dataframes and parameters for each 
+\item{condition}{A list containing dataframes and parameters for each
 condition.}
 }
 \value{
-A list where each element is a vector of feature indices that meet 
+A list where each element is a vector of feature indices that meet
 the significance threshold.
 }
 \description{
-Stores the feature indices for significant hits based on the adjusted p-value 
+Stores the feature indices for significant hits based on the adjusted p-value
 threshold for each condition.
 }

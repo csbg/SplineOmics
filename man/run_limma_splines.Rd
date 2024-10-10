@@ -7,25 +7,25 @@
 run_limma_splines(splineomics)
 }
 \arguments{
-\item{splineomics}{An S3 object of class `SplineOmics` that contains the 
+\item{splineomics}{An S3 object of class `SplineOmics` that contains the
 following elements:
 \itemize{
   \item \code{data}: The matrix of the omics dataset, with the feature
   names optionally as row headers.
-  \item \code{rna_seq_data}: An object containing the preprocessed 
-  RNA-seq data, 
+  \item \code{rna_seq_data}: An object containing the preprocessed
+  RNA-seq data,
   such as the output from `limma::voom` or a similar preprocessing pipeline.
-  \item \code{meta}: A dataframe containing metadata corresponding to the 
-  \code{data}, must include a 'Time' column and the column specified by 
+  \item \code{meta}: A dataframe containing metadata corresponding to the
+  \code{data}, must include a 'Time' column and the column specified by
   \code{condition}.
-  \item \code{design}: A character string representing the limma design 
+  \item \code{design}: A character string representing the limma design
   formula.
-  \item \code{condition}: A character string specifying the column name 
+  \item \code{condition}: A character string specifying the column name
   in \code{meta} used to define groups for analysis.
-  \item \code{spline_params}: A list of spline parameters used in the 
+  \item \code{spline_params}: A list of spline parameters used in the
   analysis, including:
     \itemize{
-      \item \code{spline_type}: The type of spline (e.g., "n" for natural 
+      \item \code{spline_type}: The type of spline (e.g., "n" for natural
       splines or "b" for B-splines).
       \item \code{dof}: Degrees of freedom for the spline.
       \item \code{knots}: Positions of the internal knots (for B-splines).
@@ -35,21 +35,21 @@ following elements:
 }}
 }
 \value{
-The SplineOmics object, updated with a list with three elements: 
+The SplineOmics object, updated with a list with three elements:
         - `time_effect`: A list of top tables for each level with the time
                          effect.
         - `avrg_diff_conditions`: A list of top tables for each comparison
-                                 between the levels. The comparison is the 
+                                 between the levels. The comparison is the
                                  average difference of the values.
-        - `interaction_condition_time`: A list of top tables for each 
-                                        comparison between levels. The 
+        - `interaction_condition_time`: A list of top tables for each
+                                        comparison between levels. The
                                         comparison is the interaction between
                                         the condition and the time.
 }
 \description{
 This function performs a limma spline analysis to identify significant
-time-dependent changes in features (e.g., proteins) within an omics 
-time-series dataset. It evaluates features within each condition level 
-and between levels by comparing average differences and interactions 
+time-dependent changes in features (e.g., proteins) within an omics
+time-series dataset. It evaluates features within each condition level
+and between levels by comparing average differences and interactions
 between time and condition.
 }

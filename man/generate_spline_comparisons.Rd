@@ -17,12 +17,12 @@ generate_spline_comparisons(
 }
 \arguments{
 \item{splineomics}{A list containing the splineomics results, including
- time effects, 
-average difference between conditions, and interaction between condition 
+ time effects,
+average difference between conditions, and interaction between condition
 and time.}
 
-\item{all_levels_clustering}{A list containing the X matrices for each 
-condition, used 
+\item{all_levels_clustering}{A list containing the X matrices for each
+condition, used
 for spline fitting.}
 
 \item{data}{The data matrix containing the measurements.}
@@ -33,15 +33,15 @@ the condition.}
 \item{condition}{Column name of meta that contains the levels of the
 experiment.}
 
-\item{plot_info}{A list containing plotting information such as time unit 
+\item{plot_info}{A list containing plotting information such as time unit
 and axis labels.}
 
 \item{adj_pthresh_avrg_diff_conditions}{The adjusted p-value threshold for
- the average 
+ the average
 difference between conditions.}
 
-\item{adj_pthresh_interaction}{The adjusted p-value threshold for the 
-interaction 
+\item{adj_pthresh_interaction}{The adjusted p-value threshold for the
+interaction
 between condition and time.}
 }
 \value{
@@ -49,10 +49,10 @@ A list of lists containing the comparison plots and feature names
         for each condition pair.
 }
 \description{
-This function generates spline comparison plots for all pairwise 
-combinations of conditions in the metadata. For each condition pair, it 
-compares the time effects of two conditions, plots the data points, and 
-overlays the fitted spline curves. The function only generates plots if 
-the adjusted p-values for the average difference between conditions and the 
+This function generates spline comparison plots for all pairwise
+combinations of conditions in the metadata. For each condition pair, it
+compares the time effects of two conditions, plots the data points, and
+overlays the fitted spline curves. The function only generates plots if
+the adjusted p-values for the average difference between conditions and the
 interaction between condition and time are below the specified thresholds.
 }

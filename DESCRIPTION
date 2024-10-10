@@ -3,44 +3,67 @@ Type: Package
 Title: Streamlines the process of analysing omics timeseries data with splines
 Version: 0.1.0
 Date: 2024-08-13
-Authors@R: person("Thomas", "Rauter", email = "thomas.rauter@plus.ac.at", role = c("aut", "cre"))
-Maintainer: Thomas Rauter <thomas.rauter@plus.ac.at>
-Description: Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.
-Depends: R (>= 4.3.0)
+Authors@R: person("Thomas", "Rauter", 
+                  email = "thomas.rauter@plus.ac.at", 
+                  role = c("aut", "cre"),
+                  comment = c(ORCID = "0009-0004-5578-3628"))
+Description: SplineOmics streamlines the analysis of time-series omics data
+ by fitting spline curves and using limma for hypothesis testing. It requires 
+ a data matrix with features (e.g., proteins, metabolites) in rows and time 
+ point samples in columns, with no missing values. Metadata about the samples 
+ can be provided through a separate meta table, and an optional annotation 
+ table can supply additional feature identifiers. The package provides several 
+ capabilities: exploratory data analysis through HTML reports with plots like 
+ PCA and heatmaps, hyperparameter screening for limma splines, and spline-based 
+ limma analysis to identify significant features. Users can cluster these 
+ significant features and perform gene set enrichment analysis (GSEA) on the 
+ clusters. All results are presented in HTML reports to facilitate easy 
+ interpretation and visualization.
 License: MIT + file LICENSE
 URL: https://csbg.github.io/SplineOmics
+BugReports: https://github.com/csbg/SplineOmics/issues
+biocViews: TimeCourse, GeneExpression, Proteomics, Metabolomics, Transcriptomics,
+           Clustering, StatisticalMethod, Visualization, Software, GeneSetEnrichment
+Depends: R (>= 4.3.0)
 Imports:
-    ComplexHeatmap(>= 2.18.0),
-    base64enc(>= 0.1-3),
-    dendextend(>= 1.17.1),
-    dplyr(>= 1.1.4),
-    ggplot2(>= 3.5.1),
-    ggrepel(>= 0.9.5),
-    here(>= 1.0.1),
-    limma(>= 3.58.1),
-    openxlsx(>= 4.2.5.2),
-    patchwork(>= 1.2.0),
-    pheatmap(>= 1.0.12),
-    progress(>= 1.2.3),
-    purrr(>= 1.0.2),
-    rlang(>= 1.1.4),
-    scales(>= 1.3.0),
-    svglite(>= 2.1.3),
-    tibble(>= 3.2.1),
-    tidyr(>= 1.3.1),
-    zip(>= 2.3.1)
+    ComplexHeatmap (>= 2.18.0),
+    base64enc (>= 0.1-3),
+    dendextend (>= 1.17.1),
+    dplyr (>= 1.1.4),
+    ggplot2 (>= 3.5.1),
+    ggrepel (>= 0.9.5),
+    here (>= 1.0.1),
+    limma (>= 3.58.1),
+    openxlsx (>= 4.2.5.2),
+    patchwork (>= 1.2.0),
+    pheatmap (>= 1.0.12),
+    progress (>= 1.2.3),
+    purrr (>= 1.0.2),
+    rlang (>= 1.1.4),
+    scales (>= 1.3.0),
+    svglite (>= 2.1.3),
+    tibble (>= 3.2.1),
+    tidyr (>= 1.3.1),
+    variancePartition (>= 1.14.0),
+    zip (>= 2.3.1),
+    grDevices,
+    grid,
+    splines,
+    stats,
+    tools,
+    utils
 Suggests:
     BiocManager,
-    edgeR(>= 4.0.16),
-    clusterProfiler(>= 4.10.1),
+    edgeR (>= 4.0.16),
+    clusterProfiler (>= 4.10.1),
     rmarkdown (>= 2.7),
     knitr,
     testthat,
     readxl,
-    rstudioapi(>= 0.16.0),
+    rstudioapi (>= 0.16.0),
     conflicted (>= 1.2.0)
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 VignetteBuilder: knitr

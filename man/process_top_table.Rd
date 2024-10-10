@@ -7,8 +7,8 @@
 process_top_table(process_within_level_result, feature_names)
 }
 \arguments{
-\item{process_within_level_result}{List of lists containing the limma 
-topTable, and fit. All of this is from 
+\item{process_within_level_result}{List of lists containing the limma
+topTable, and fit. All of this is from
 one specific level.}
 
 \item{feature_names}{A non-empty character vector of feature names.}
@@ -17,7 +17,7 @@ one specific level.}
 A dataframe containing the processed top table with added intercepts.
 }
 \description{
-Processes the top table from a LIMMA analysis, adding feature names and 
+Processes the top table from a LIMMA analysis, adding feature names and
 intercepts.
 }
 \seealso{

@@ -9,14 +9,14 @@ shorten_names(name, unique_values)
 \arguments{
 \item{name}{A string representing the name to be shortened.}
 
-\item{unique_values}{A vector of unique values whose abbreviations will 
+\item{unique_values}{A vector of unique values whose abbreviations will
 replace their occurrences in the name.}
 }
 \value{
 A string with the unique values replaced by their abbreviations.
 }
 \description{
-Replaces occurrences of unique values within a name with their first three 
-characters. This function is useful for abbreviating long condition names 
+Replaces occurrences of unique values within a name with their first three
+characters. This function is useful for abbreviating long condition names
 in a dataset.
 }

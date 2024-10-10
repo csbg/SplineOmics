@@ -15,6 +15,6 @@ remove_prefix(string, prefix)
 A string with the prefix removed.
 }
 \description{
-Removes a specified prefix from the beginning of a string. This function 
+Removes a specified prefix from the beginning of a string. This function
 is useful for cleaning or standardizing strings by removing known prefixes.
 }

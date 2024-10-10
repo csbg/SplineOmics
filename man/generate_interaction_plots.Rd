@@ -7,19 +7,19 @@
 generate_interaction_plots(interaction_condition_time, adj_pthresh)
 }
 \arguments{
-\item{interaction_condition_time}{A list of top tables from the LIMMA 
-analysis 
+\item{interaction_condition_time}{A list of top tables from the LIMMA
+analysis
 representing the interaction effects between condition and time.}
 
-\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold 
+\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold
 for significance.}
 }
 \value{
-A list containing the plots and their sizes, as well as the 
+A list containing the plots and their sizes, as well as the
 section header information.
 }
 \description{
-Creates p-value histograms for each interaction condition in the 
-interaction of condition and time. This function is used internally in the 
+Creates p-value histograms for each interaction condition in the
+interaction of condition and time. This function is used internally in the
 `create_limma_report` function.
 }

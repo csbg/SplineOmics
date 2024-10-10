@@ -24,7 +24,7 @@ representation in the HTML.}
 \item{base_height_per_row}{A numeric value specifying the base height per
 row in inches.}
 
-\item{units}{A character string specifying the units for the width and 
+\item{units}{A character string specifying the units for the width and
 height.}
 
 \item{html_img_width}{A character string specifying the width of the image
@@ -35,7 +35,7 @@ A character string containing an HTML img tag with the Base64-encoded
  plot.
 }
 \description{
-Converts a ggplot2 plot to a Base64-encoded PNG image and returns an HTML 
+Converts a ggplot2 plot to a Base64-encoded PNG image and returns an HTML
 img tag for embedding in a report.
 }
 \seealso{

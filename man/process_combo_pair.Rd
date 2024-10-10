@@ -13,7 +13,7 @@ process_combo_pair(
 )
 }
 \arguments{
-\item{combo_pair}{A list containing hit comparison and composite spline 
+\item{combo_pair}{A list containing hit comparison and composite spline
 plots.}
 
 \item{combo_pair_name}{A character string for naming the combination pair.}
@@ -28,7 +28,7 @@ plots.}
 No return value, called for side effects.
 }
 \description{
-Processes a combination pair to generate plots and compile them into an 
+Processes a combination pair to generate plots and compile them into an
 HTML report.
 }
 \seealso{

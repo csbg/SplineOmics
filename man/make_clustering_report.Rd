@@ -44,7 +44,7 @@ such as gene and uniprotID, for example.}
 
 \item{spline_params}{A list of spline parameters for the analysis.}
 
-\item{adj_pthresholds}{Numeric vector, containing a float < 1 > 0 as each 
+\item{adj_pthresholds}{Numeric vector, containing a float < 1 > 0 as each
 value. There is one float for every level, and this is
 the adj. p-value threshold.}
 
@@ -63,27 +63,27 @@ the adj. p-value threshold.}
 
 \item{meta_batch_column}{A character string specifying the meta batch column.}
 
-\item{meta_batch2_column}{A character string specifying the second meta 
+\item{meta_batch2_column}{A character string specifying the second meta
 batch column.}
 
-\item{plot_info}{List containing the elements y_axis_label (string), 
+\item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA. 
-This list is used to add this info to the spline plots. 
+treatment_timepoints (integer vector). All can also be NA.
+This list is used to add this info to the spline plots.
 time_unit is used to label the x-axis, and treatment_labels
 and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as 
+indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).}
 
-\item{plot_options}{List with specific fields (cluster_heatmap_columns = 
+\item{plot_options}{List with specific fields (cluster_heatmap_columns =
 Bool) that allow for customization of plotting behavior.}
 
-\item{feature_name_columns}{Character vector containing the column names of 
+\item{feature_name_columns}{Character vector containing the column names of
 the annotation info that describe the features.
-This argument is used to specify in the HTML 
+This argument is used to specify in the HTML
 report how exactly the feature names displayed
 above each individual spline plot have been
-created. Use the same vector that was used to 
+created. Use the same vector that was used to
 create the row headers for the data matrix!}
 
 \item{spline_comp_plots}{List containing the list of lists with all

@@ -24,26 +24,26 @@ plot_composite_splines(
 
 \item{top_table}{A dataframe containing the top table results.}
 
-\item{top_table_name}{A character string specifying the name of the 
+\item{top_table_name}{A character string specifying the name of the
 top table.}
 
 \item{indices}{A vector of indices specifying which features to plot.}
 
-\item{type}{A character string specifying the type of features ('significant' 
+\item{type}{A character string specifying the type of features ('significant'
 or 'not_significant').}
 
 \item{time_unit_label}{A string shown in the plots as the unit for the time,
 such as min or hours.}
 }
 \value{
-A list containing the composite plot and its length if plots are 
+A list containing the composite plot and its length if plots are
 generated, FALSE otherwise.
 }
 \description{
-Generates composite spline plots for significant and non-significant 
+Generates composite spline plots for significant and non-significant
 features based on the specified indices.
 }
 \seealso{
-\link[splines]{bs}, \link[splines]{ns}, \link[ggplot2]{ggplot2}, 
+\link[splines]{bs}, \link[splines]{ns}, \link[ggplot2]{ggplot2},
 \link[patchwork]{wrap_plots}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_report_generation.R
 \name{generate_report_html}
 \alias{generate_report_html}
-\title{utils scripts contains shared functions that are used by at least two package 
+\title{utils scripts contains shared functions that are used by at least two package
 functions of the SplineOmics package. The level separation is only valid
 internally in this script, and has no connection to the script level of the
 respective exported functions scripts.
@@ -64,20 +64,20 @@ for each level.}
 
 \item{adj_pthresh_interaction_condition_time}{Float, only for cluster_hits()}
 
-\item{report_type}{A character string specifying the report type 
+\item{report_type}{A character string specifying the report type
 ('screen_limma_hyperparams' or 'cluster_hits').}
 
 \item{feature_name_columns}{Character vector with the column names of the
-annotation information, such as the columns 
+annotation information, such as the columns
 containing the gene names. These column names
 are used to put the info in the HTML reports on
 how the descriptions above the individual spline
-plots where created. This is because those 
+plots where created. This is because those
 descriptions can be made up of several column
 values, and the specific columns are then stated
 in the HTML report on top (e.g gene_uniprotID).}
 
-\item{mode}{A character string specifying the mode 
+\item{mode}{A character string specifying the mode
 ('isolated' or 'integrated').}
 
 \item{filename}{A character string specifying the filename for the report.}
@@ -90,10 +90,10 @@ in the HTML report on top (e.g gene_uniprotID).}
 No return value, called for side effects.
 }
 \description{
-Generates an HTML report with the provided plots, spline parameters, and 
+Generates an HTML report with the provided plots, spline parameters, and
 report information.
 }
 \seealso{
-\code{\link{build_hyperparams_screen_report}}, 
+\code{\link{build_hyperparams_screen_report}},
 \code{\link{build_cluster_hits_report}}
 }
