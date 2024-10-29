@@ -71,7 +71,7 @@ explore_data <- function(
 
   all_plots <- list()
   report_info$meta_condition <- c(condition)
-  report_info$meta_batch <- paste(
+  report_info[["plot_data_batch_correction"]] <- paste(
     meta_batch_column,
     meta_batch2_column,
     sep = ", "

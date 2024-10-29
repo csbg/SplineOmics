@@ -119,6 +119,7 @@ Initialize an InputControl object}
 \item \href{#method-InputControl-check_clusters}{\code{InputControl$check_clusters()}}
 \item \href{#method-InputControl-check_plot_info}{\code{InputControl$check_plot_info()}}
 \item \href{#method-InputControl-check_plot_options}{\code{InputControl$check_plot_options()}}
+\item \href{#method-InputControl-check_raw_data}{\code{InputControl$check_raw_data()}}
 \item \href{#method-InputControl-check_report_dir}{\code{InputControl$check_report_dir()}}
 \item \href{#method-InputControl-check_genes}{\code{InputControl$check_genes()}}
 \item \href{#method-InputControl-check_padjust_method}{\code{InputControl$check_padjust_method()}}
@@ -188,6 +189,7 @@ The following validation methods are called in sequence:
 - \code{self$check_adj_pthresholds()}
 - \code{self$check_clusters()}
 - \code{self$check_time_unit()}
+- \code{self$check_raw_data()}
 - \code{self$check_report_dir()}
 - \code{self$check_padjust_method()}
 - \code{self$check_report_info()}
@@ -651,11 +653,31 @@ elements
 `meta_replicate_column` is a valid column name in the `meta` dataframe.
 If the checks fail, the script stops with an error message.
 
-Check and Create Report Directory
+Check Raw Data Validity
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{InputControl$check_plot_options()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-InputControl-check_raw_data"></a>}}
+\if{latex}{\out{\hypertarget{method-InputControl-check_raw_data}{}}}
+\subsection{Method \code{check_raw_data()}}{
+This function verifies the `raw_data` argument to ensure that it is a 
+numeric matrix with the same dimensions as `data`. NA values are permitted 
+within `raw_data`. If `raw_data` is not a numeric matrix or does not match 
+the dimensions of `data`, the function stops execution with an error.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{InputControl$check_raw_data()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns NULL if either `data` or `raw_data` is not provided or if 
+all checks pass. Stops execution and raises an error if `raw_data` does 
+not meet the criteria.
+
+Check and Create Report Directory
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-InputControl-check_report_dir"></a>}}

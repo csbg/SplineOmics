@@ -81,7 +81,9 @@ generate_report_html <- function(
       Sys.time(),
       "%d_%m_%Y-%H_%M_%S"
     ),
-    report_dir = here::here()) {
+    report_dir = here::here()
+    ) {
+  
   feature_names_formula <- ""
 
   if (report_type == "explore_data") {
@@ -147,8 +149,9 @@ generate_report_html <- function(
     "data_description",
     "data_collection_date",
     "meta_condition",
-    "meta_batch",
-    "limma_design",
+    "plot_data_batch_correction",
+    "Fixed effects (design)",
+    "Random effects",
     "mode",
     "analyst_name",
     "contact_info",
@@ -184,7 +187,6 @@ generate_report_html <- function(
     )
   }
 
-
   if (!all(is.na(enrichr_format))) {
     download_fields <- c(
       download_fields,
@@ -207,8 +209,9 @@ generate_report_html <- function(
     '<hr><h2 style="font-size: 48px;">',
     "Downloads \U0001F4E5</h2><table>"
   )
-
-  report_info[["mode"]] <- mode # Because mode is not part of report_info
+  
+  # Because these are not part of report_info already.
+  report_info[["mode"]] <- mode 
 
   for (field in report_info_fields) {
     base64_df <- process_field(
@@ -1077,10 +1080,21 @@ process_plots <- function(
     # Convert each individual plot to base64 and store in a list
     base64_list <- lapply(spline_plots, function(plot) {
       title <- plot$labels$title
+      
       # Remove the title from the plot (so that it is not there twice)
       plot <- plot + ggplot2::labs(title = NULL)
+      
+      # Remove HTML elements of the title, to add it back after removing
+      plain_text_title <- gsub("<[^>]+>", "", title)
+      plain_text_title <- sub("^\\s+", "", plain_text_title)
+      plain_text_title <- sub(" ", "  | ", plain_text_title, fixed = TRUE)
+      plot <- plot + ggplot2::labs(title = plain_text_title)
+      
 
-      base64_plot <- plot2base64(plot, height = plots_size)
+      base64_plot <- plot2base64(
+        plot,
+        height = plots_size
+        )
 
       list(
         title = title,
@@ -1182,7 +1196,9 @@ process_field <- function(
     report_info,
     encode_df_to_base64,
     report_type,
-    enrichr_format) {
+    enrichr_format
+    ) {
+  
   if (field == "data_with_annotation") {
     base64_df <- sprintf(
       '<a href="%s" download="data.xlsx" class="embedded-file">

@@ -10,23 +10,30 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-data_excel <- read_excel(here::here("dev" ,"data", "PTX",
-                                    "PTX_processed_table.xlsx"))
+data <- read_excel(here::here("dev" ,"data", "PPTX",
+                                    "2 PPTX new filtered (equal to no imputation).xlsx"))
+
+# data <- read_excel(here::here("dev" ,"data", "PPTX",
+#                                     "PPTX_processed_no_imputation.xlsx"))
+
+
+data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
+                                   "PPTX_processed_with_imputation.xlsx"))
 
 meta <- read_excel(here::here("dev" ,"data",
-                              "Time_course_PTX_metadata.xlsx"))
+                              "Time_course_PPTX_old_metadata.xlsx"))
 
 data_excel <- readRDS(system.file(
   "extdata",
   "proteomics_data.rds",
   package = "SplineOmics"
 ))
-
-meta <- read_excel(here::here(
-  "inst",
-  "extdata",
-  "proteomics_meta.xlsx"
-))
+# 
+# meta <- read_excel(here::here(
+#   "inst",
+#   "extdata",
+#   "proteomics_meta.xlsx"
+# ))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%
@@ -45,19 +52,80 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 # Automatically extract data matrix from excel/csv table -----------------------
 
+# feature_name_columns <- c("Unique identifier",
+#                           "Protein",
+#                           "Positions within proteins")
+
 feature_name_columns <- c("Unique identifier",
-                          "Protein",
+                          "Protein names",
                           "Positions within proteins")
 
-feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-feature_name_columns <- c("Gene_name")
+# feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
+# feature_name_columns <- c("Gene_name")
 
 # debug(extract_data)
-data <- extract_data(
-  data_excel,
+data_imputed <- extract_data(
+  data_imputed,
   feature_name_columns,
   user_prompt = FALSE
   )
+
+
+# Plot the raw data ------------------------------------------------------------
+
+# data <- data[4:3035, 2:35]  # 3036
+# data <- as.matrix(data)
+# rownames(data) <- rownames(data_imputed)
+# # data <- data[1:10, 1:34]
+# 
+# meta <- meta[!meta$`Sample ID` %in% c(
+#   "E10_TP09_Stationary",
+#   "E12_TP09_Stationary"
+# ), ]
+# 
+# # Extract first 18 columns from data
+# data_exp <- data[, 1:18]
+# 
+# # Extract the remaining columns from data
+# data_stat <- data[, 19:ncol(data)]
+# 
+# # Extract first 18 rows from meta
+# meta_exp <- meta[1:18, ]
+# 
+# # Extract the remaining rows from meta
+# meta_stat <- meta[19:nrow(meta), ]
+# 
+# make_scatter_plot_html(
+#   data_exp,
+#   meta_exp,
+#   here::here("results", "PPTX_processed_no_imputation_scatter_plots.html"),
+#   meta_replicate_column = "Reactor"
+# )
+
+
+data <- data[4:3035, 2:37]  # 3036
+data <- as.matrix(data)
+rownames(data) <- rownames(data_imputed)
+# data <- data[1:10, 1:34]
+
+# Extract first 18 columns from data
+data_exp <- data[, 1:18]
+
+# Extract the remaining columns from data
+data_stat <- data[, 19:ncol(data)]
+
+# Extract first 18 rows from meta
+meta_exp <- meta[1:18, ]
+
+# Extract the remaining rows from meta
+meta_stat <- meta[19:nrow(meta), ]
+
+make_scatter_plot_html(
+  data_exp,
+  meta_exp,
+  here::here("results", "2 PPTX new filtered (equal to no imputation)_scatter_plots.html"),
+  meta_replicate_column = "Reactor"
+)
 
 
 # Remove outliers --------------------------------------------------------------

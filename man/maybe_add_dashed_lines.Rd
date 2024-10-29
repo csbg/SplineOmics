@@ -4,7 +4,13 @@
 \alias{maybe_add_dashed_lines}
 \title{Conditionally add dashed lines for treatment timepoints}
 \usage{
-maybe_add_dashed_lines(p, plot_info, level, y_pos = 1)
+maybe_add_dashed_lines(
+  p,
+  plot_info,
+  level,
+  y_pos = 1,
+  horizontal_labels = FALSE
+)
 }
 \arguments{
 \item{p}{A ggplot object. The plot to which dashed lines and labels
@@ -20,6 +26,9 @@ timepoints and labels when they are stored in named lists.}
 
 \item{y_pos}{A numeric value specifying the y-axis position where
 the text labels should be placed. Defaults to 1.}
+
+\item{horizontal_labels}{Boolean flag indicating whether to have a vertical
+label (default) or horizontal label.}
 }
 \value{
 A list containing:

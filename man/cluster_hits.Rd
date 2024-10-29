@@ -19,6 +19,7 @@ cluster_hits(
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
+  raw_data = NULL,
   report_dir = here::here(),
   report = TRUE
 )
@@ -73,6 +74,10 @@ feeding, temperature shift, etc.).}
 
 \item{plot_options}{List with specific fields (cluster_heatmap_columns =
 Bool) that allow for customization of plotting behavior.}
+
+\item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
+containing NA values. When provided, it highlights the datapoints in the 
+spline plots that originally where NA and that were imputed.}
 
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved.}
