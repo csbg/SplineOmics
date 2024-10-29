@@ -13,7 +13,8 @@ plot_splines(
   plot_info,
   adj_pthreshold,
   replicate_column,
-  level
+  level,
+  raw_data
 )
 }
 \arguments{
@@ -47,6 +48,13 @@ feeding, temperature shift, etc.).}
 \item{replicate_column}{String specifying the column of the meta dataframe
 that contains the labels of the replicate measurents. When that is not
 given, this argument is NULL.}
+
+\item{level}{Unique value of the meta condition column, such as 'treatment' 
+or 'control'.}
+
+\item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
+containing NA values. When provided, it highlights the datapoints in the 
+spline plots that originally where NA and that were imputed.}
 }
 \value{
 A list containing the composite plot and the number of rows used in
@@ -56,6 +64,5 @@ the plot layout.
 This function generates plots for each feature listed in the
 top table using spline
 interpolation for fitted values. It creates individual plots for each feature
-and combines
-them into a single composite plot. The function is internal and not exported.
+and combines them into a single composite plot.
 }

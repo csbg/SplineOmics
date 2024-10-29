@@ -55,7 +55,9 @@
 #' @export
 #'
 run_limma_splines <- function(
-    splineomics) {
+    splineomics
+    ) {
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "run_limma_splines"

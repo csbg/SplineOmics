@@ -62,6 +62,9 @@
 #'                  feeding, temperature shift, etc.).
 #' @param plot_options List with specific fields (cluster_heatmap_columns =
 #' Bool) that allow for customization of plotting behavior.
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
+#' containing NA values. When provided, it highlights the datapoints in the 
+#' spline plots that originally where NA and that were imputed.
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved.
 #' @param report Boolean TRUE or FALSE value specifing if a report should be
@@ -95,8 +98,11 @@ cluster_hits <- function(
       cluster_heatmap_columns = FALSE,
       meta_replicate_column = NULL
     ),
+    raw_data = NULL,
     report_dir = here::here(),
-    report = TRUE) {
+    report = TRUE
+    ) {
+  
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -149,10 +155,16 @@ cluster_hits <- function(
     spline_params = spline_params,
     mode = mode
   )
-
-  report_info$limma_design <- c(design)
-  report_info$meta_condition <- c(condition)
-  report_info$meta_batch <- paste(
+  
+  dream_params <- splineomics[["dream_params"]]
+  
+  # Put them in there under those names, so that the report generation fun
+  # can access them directly like this.
+  report_info[["Fixed effects (design)"]] <- splineomics[["design"]] 
+  report_info[["Random effects"]] <- dream_params[["random_effects"]] 
+  # report_info$limma_design <- c(design)
+  report_info[["meta_condition"]] <- c(condition)
+  report_info[["plot_data_batch_correction"]] <- paste(
     meta_batch_column,
     meta_batch2_column,
     sep = ", "
@@ -202,7 +214,8 @@ cluster_hits <- function(
       plot_info = plot_info,
       plot_options = plot_options,
       feature_name_columns = feature_name_columns,
-      spline_comp_plots = spline_comp_plots
+      spline_comp_plots = spline_comp_plots,
+      raw_data = raw_data
     )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
@@ -463,6 +476,9 @@ perform_clustering <- function(
 #' the plots for all the pairwise comparisons of the condition in terms of
 #' average spline diff and interaction condition time, and another list of lists
 #' where the respective names of each plot are stored.
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
+#' containing NA values. When provided, it highlights the datapoints in the 
+#' spline plots that originally where NA and that were imputed.
 #'
 #' @return No return value, called for side effects.
 #'
@@ -496,7 +512,10 @@ make_clustering_report <- function(
     plot_info,
     plot_options,
     feature_name_columns,
-    spline_comp_plots) {
+    spline_comp_plots,
+    raw_data
+    ) {
+  
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
@@ -639,7 +658,8 @@ make_clustering_report <- function(
         plot_info = plot_info,
         adj_pthreshold = adj_pthresholds[i],
         replicate_column = plot_options[["meta_replicate_column"]],
-        level = level
+        level = level,
+        raw_data = raw_data
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -878,7 +898,8 @@ generate_spline_comparisons <- function(
           X_2 = X_2,
           plot_info = plot_info,
           adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-          adj_pthresh_interaction = adj_pthresh_interaction
+          adj_pthresh_interaction = adj_pthresh_interaction,
+          raw_data = raw_data
         )
 
         # Add the plot list to the comparison_plots list,
@@ -1671,8 +1692,7 @@ plot_cluster_mean_splines <- function(
 #' @description This function generates plots for each feature listed in the
 #' top table using spline
 #' interpolation for fitted values. It creates individual plots for each feature
-#' and combines
-#' them into a single composite plot. The function is internal and not exported.
+#' and combines them into a single composite plot.
 #'
 #' @param top_table A dataframe containing the indices and names of features,
 #' along with their
@@ -1697,6 +1717,11 @@ plot_cluster_mean_splines <- function(
 #' @param replicate_column String specifying the column of the meta dataframe
 #' that contains the labels of the replicate measurents. When that is not
 #' given, this argument is NULL.
+#' @param level Unique value of the meta condition column, such as 'treatment' 
+#' or 'control'.
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
+#' containing NA values. When provided, it highlights the datapoints in the 
+#' spline plots that originally where NA and that were imputed.
 #'
 #' @return A list containing the composite plot and the number of rows used in
 #' the plot layout.
@@ -1717,7 +1742,10 @@ plot_splines <- function(
     plot_info,
     adj_pthreshold,
     replicate_column,
-    level) {
+    level,
+    raw_data
+    ) {
+
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
 
@@ -1728,6 +1756,9 @@ plot_splines <- function(
     FeatureID = top_table$feature_nr,
     feature_names = top_table$feature_names
   )
+  
+  # 16 = circle, 17 = triangle
+  shape_values <- c("Original" = 16, "Imputed" = 17) 
 
   plot_list <- list()
 
@@ -1751,6 +1782,16 @@ plot_splines <- function(
       Y = y_values
     )
 
+    # Mark original NA values from raw_data if available
+    if (!is.null(raw_data)) {
+      # Identify NA positions and mark them as "Imputed" in `plot_data`
+      na_indices <- which(is.na(raw_data[hit_index, ]))
+      plot_data$IsNA <- "Original"
+      plot_data$IsNA[na_indices] <- "Imputed"
+    } else {
+      plot_data$IsNA <- "Original"
+    }
+
     # If replicate_column is specified (i.e., a string), use replicate info
     if (!is.null(replicate_column) && is.character(replicate_column)) {
       replicates <- meta[[replicate_column]] # Get the replicate information
@@ -1771,18 +1812,23 @@ plot_splines <- function(
       )
     }
 
+
     # Get adjusted p-value and significance stars
     adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
     significance_stars <- ifelse(
-      adj_p_value < adj_pthreshold / 50,
-      "***",
+      adj_p_value < adj_pthreshold / 500,
+      "****",
       ifelse(
-        adj_p_value < adj_pthreshold / 5,
-        "**",
+        adj_p_value < adj_pthreshold / 50,
+        "***",
         ifelse(
-          adj_p_value < adj_pthreshold,
-          "*",
-          ""
+          adj_p_value < adj_pthreshold / 5,
+          "**",
+          ifelse(
+            adj_p_value < adj_pthreshold,
+            "*",
+            ""
+          )
         )
       )
     )
@@ -1799,8 +1845,9 @@ plot_splines <- function(
         Fitted = fitted_values
       )
 
-      x_max <- as.numeric(max(time_points))
-      x_extension <- x_max * 0.05
+      x_min <- min(time_points)
+      x_max <- max(time_points)
+      x_extension <- (x_max - x_min) * 0.001  # Etxtension on each side
 
       # Define color column outside aes()
       color_column_values <- if (!is.null(replicate_column) &&
@@ -1811,6 +1858,10 @@ plot_splines <- function(
       }
 
       plot_data$color_column <- factor(color_column_values)
+      
+      y_max <- max(c(y_values, fitted_values), na.rm = TRUE)
+      y_min <- min(c(y_values, fitted_values), na.rm = TRUE)
+      y_extension <- (y_max - y_min) * 0.1
 
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
@@ -1818,7 +1869,8 @@ plot_splines <- function(
           ggplot2::aes(
             x = Time,
             y = .data$Y,
-            color = color_column
+            color = color_column,
+            shape = factor(IsNA)  # Map shape to "Data" or "Imputed"
           ),
           alpha = 0.5 # 50% transparent data dots
         ) +
@@ -1830,20 +1882,27 @@ plot_splines <- function(
             color = "Spline"
           )
         ) +
+        ggplot2::scale_shape_manual(values = shape_values) + 
         ggplot2::theme_minimal() +
         ggplot2::scale_x_continuous(
-          limits = c(min(time_points), x_max + x_extension),
+          limits = c(x_min - x_extension, x_max + x_extension), 
           breaks = filter_timepoints(time_points),
           labels = function(x) {
             x
           }
         ) +
+        ggplot2::coord_cartesian(ylim = c(y_min, y_max + y_extension)) +
         ggplot2::labs(
           x = paste0("Time ", time_unit_label),
           y = plot_info$y_axis_label
         ) +
         ggplot2::guides(
-          color = ggplot2::guide_legend(title = NULL) # Remove the legend title
+          color = ggplot2::guide_legend(title = NULL),
+          shape = if (any(plot_data$IsNA == "Imputed")) {
+            ggplot2::guide_legend(title = NULL)
+          } else {
+            "none" # Completely remove shape legend when no "Imputed" points
+          }
         ) +
         ggplot2::theme(
           legend.position = "right",
@@ -1868,17 +1927,15 @@ plot_splines <- function(
             margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)
           )
         )
-
-      y_pos <- max(
-        max(y_values, na.rm = TRUE),
-        max(fitted_values, na.rm = TRUE)
-      )
+      
+      y_pos_label <- y_max + y_extension * 0.5
 
       result <- maybe_add_dashed_lines(
         p = p,
         plot_info = plot_info,
         level = level,
-        y_pos = y_pos
+        y_pos = y_pos_label,
+        horizontal_labels = TRUE
       )
 
       p <- result$p # Updated plot with dashed lines
@@ -1916,7 +1973,8 @@ plot_splines <- function(
           title = paste(
             "<b>", title, "</b>",
             "<br>avg CV: ", round(avg_cv, 2), "%",
-            "  |  adj. p-val:", round(adj_p_value, 4), significance_stars, ""
+            "  |  adj. p-val:", signif(adj_p_value, digits = 2),
+            significance_stars, ""
           ),
           x = paste("Time", time_unit_label),
           y = paste(plot_info$y_axis_label)
@@ -1978,6 +2036,9 @@ plot_splines <- function(
 #' @param adj_pthresh_interaction The adjusted p-value threshold for the
 #' interaction between
 #' condition and time.
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
+#' containing NA values. When provided, it highlights the datapoints in the 
+#' spline plots that originally where NA and that were imputed.
 #'
 #' @return A list containing:
 #' \describe{
@@ -2001,7 +2062,10 @@ plot_spline_comparisons <- function(
     X_2,
     plot_info,
     adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction) {
+    adj_pthresh_interaction,
+    raw_data
+    ) {
+  
   # Sort and prepare data (sorting based on feature name for easy navigation)
   time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
   time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
@@ -2017,7 +2081,10 @@ plot_spline_comparisons <- function(
     FeatureID = time_effect_1$feature_nr,
     feature_names = time_effect_1$feature_names
   )
-
+  
+  # Circle for Original, Triangle for Imputed
+  shape_values <- c("Original" = 16, "Imputed" = 17)  
+  
   plot_list <- list()
   feature_names_list <- list()
 
@@ -2025,6 +2092,34 @@ plot_spline_comparisons <- function(
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     y_values_1 <- data[hit_index, ]
     y_values_2 <- data[hit_index, ]
+
+    # Identify NA values from raw_data for imputation labeling
+    if (!is.null(raw_data)) {
+      na_indices_1 <- which(is.na(raw_data[hit_index, ]))
+      plot_data <- data.frame(
+        Time = time_points,
+        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
+        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA),
+        IsImputed1 = ifelse(
+          seq_along(y_values_1) %in% na_indices_1,
+          "Imputed",
+          "Original"
+          ),
+        IsImputed2 = ifelse(
+          seq_along(y_values_2) %in% na_indices_1,
+          "Imputed",
+          "Original"
+          )
+      )
+    } else {
+      plot_data <- data.frame(
+        Time = time_points,
+        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
+        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA),
+        IsImputed1 = "Original",
+        IsImputed2 = "Original"
+      )
+    }
 
     intercept_1 <- time_effect_1$intercept[hit]
     intercept_2 <- time_effect_2$intercept[hit]
@@ -2044,39 +2139,40 @@ plot_spline_comparisons <- function(
       interaction_pval < adj_pthresh_interaction) {
       # Define the number of stars for avrg_diff_conditions
       avrg_diff_stars <- ifelse(
-        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
-        "***",
+        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 500,
+        "****",
         ifelse(
-          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
-          "**",
+          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
+          "***",
           ifelse(
-            avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
-            "*",
-            ""
+            avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
+            "**",
+            ifelse(
+              avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
+              "*",
+              ""
+            )
           )
         )
       )
-
+      
       # Define the number of stars for interaction_condition_time
       interaction_stars <- ifelse(
-        interaction_pval < adj_pthresh_interaction / 50,
-        "***",
+        interaction_pval < adj_pthresh_interaction / 500,
+        "****",
         ifelse(
-          interaction_pval < adj_pthresh_interaction / 5,
-          "**",
+          interaction_pval < adj_pthresh_interaction / 50,
+          "***",
           ifelse(
-            interaction_pval < adj_pthresh_interaction,
-            "*",
-            ""
+            interaction_pval < adj_pthresh_interaction / 5,
+            "**",
+            ifelse(
+              interaction_pval < adj_pthresh_interaction,
+              "*",
+              ""
+            )
           )
         )
-      )
-
-      # Use the conditions to split the data points
-      plot_data <- data.frame(
-        Time = time_points,
-        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
-        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA)
       )
 
       # Calculate average CV for Y1 and Y2 across all time points
@@ -2097,7 +2193,8 @@ plot_spline_comparisons <- function(
           ggplot2::aes(
             x = .data$Time,
             y = .data$Y1,
-            color = paste("Data", condition_1)
+            color = paste("Data", condition_1),
+            shape = .data$IsImputed1
           ),
           na.rm = TRUE,
           alpha = 0.5 # Make data dots transparent
@@ -2110,7 +2207,7 @@ plot_spline_comparisons <- function(
           ggplot2::aes(
             x = .data$Time,
             y = .data$Fitted,
-            color = paste("Spline", condition_1)
+            color = paste("Spline", condition_1),
           )
         ) +
         ggplot2::geom_point(
@@ -2118,7 +2215,8 @@ plot_spline_comparisons <- function(
           ggplot2::aes(
             x = .data$Time,
             y = .data$Y2,
-            color = paste("Data", condition_2)
+            color = paste("Data", condition_2),
+            shape = .data$IsImputed2
           ),
           na.rm = TRUE,
           alpha = 0.5 # Make data dots transparent
@@ -2160,16 +2258,27 @@ plot_spline_comparisons <- function(
             )
           )
         )) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(title = NULL),
+          shape = if (any(plot_data$IsImputed1 == "Imputed") ||
+                      any(plot_data$IsImputed2 == "Imputed")) {
+            ggplot2::guide_legend(title = NULL)
+          } else {
+            "none"
+          }
+        ) +
+        ggplot2::scale_shape_manual(values = shape_values) +
         ggplot2::scale_x_continuous(
           breaks = filter_timepoints(time_points)
         ) +
         ggplot2::labs(
           title = paste(
+            titles$feature_names[hit],
             "\nadj.P.Val avrg_diff_conditions: ",
-            round(avrg_diff_conditions[hit, "adj.P.Val"], 4),
+            signif(avrg_diff_conditions[hit, "adj.P.Val"], digits = 2),
             avrg_diff_stars,
             "\nadj.P.Val interaction_condition_time: ",
-            round(interaction_condition_time[hit, "adj.P.Val"], 4),
+            signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
             interaction_stars,
             "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
             " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
@@ -2350,8 +2459,10 @@ build_cluster_hits_report <- function(
 
   current_header_index <- 1
   j <- 0
-  level_headers_info <- Filter(Negate(is.null), level_headers_info)
-
+  level_headers_info <- Filter(
+    Negate(is.null),
+    level_headers_info
+    )
 
   pb <- create_progress_bar(plots)
 
@@ -2478,6 +2589,7 @@ build_cluster_hits_report <- function(
           paste("Adj. p-value <", adjusted_p_val, "--> *", sep = " "),
           paste("Adj. p-value <", adjusted_p_val / 5, "--> **", sep = " "),
           paste("Adj. p-value <", adjusted_p_val / 50, "--> ***", sep = " "),
+          paste("Adj. p-value <", adjusted_p_val / 500, "--> ****", sep = " "),
           sep = "<br>"
         )
       }
@@ -2588,6 +2700,13 @@ build_cluster_hits_report <- function(
         "--> ***</span>",
         sep = " "
       ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_avrg_diff_conditions / 500,
+        "--> ****</span>",
+        sep = " "
+      ),
       "</div>",
       sep = "\n"
     )
@@ -2614,6 +2733,13 @@ build_cluster_hits_report <- function(
         "<span style='font-size:18pt;'>Adj. p-value <",
         adj_pthresh_interaction_condition_time / 50,
         "--> ***</span>",
+        sep = " "
+      ),
+      "<br>",
+      paste(
+        "<span style='font-size:18pt;'>Adj. p-value <",
+        adj_pthresh_interaction_condition_time / 500,
+        "--> ****</span>",
         sep = " "
       ),
       "</div>",
@@ -3252,6 +3378,8 @@ plot_single_and_mean_splines <- function(
 #' timepoints and labels when they are stored in named lists.
 #' @param y_pos A numeric value specifying the y-axis position where
 #' the text labels should be placed. Defaults to 1.
+#' @param horizontal_labels Boolean flag indicating whether to have a vertical
+#' label (default) or horizontal label.
 #'
 #' @return A list containing:
 #' - `p`: The ggplot object with possibly added dashed lines and labels.
@@ -3263,7 +3391,10 @@ maybe_add_dashed_lines <- function(
     p,
     plot_info,
     level,
-    y_pos = 1) {
+    y_pos = 1,
+    horizontal_labels = FALSE
+    ) {
+  
   # Initialize an empty vector to store treatment colors
   treatment_colors <- c()
 
@@ -3288,7 +3419,8 @@ maybe_add_dashed_lines <- function(
       }
     }
 
-    # If we have valid treatment_timepoints and treatment_labels, add the dashed lines
+    # If we have valid treatment_timepoints and treatment_labels, 
+    # add the dashed lines
     if (!is.null(treatment_timepoints) &&
       !is.null(treatment_labels) &&
       all(!is.na(treatment_timepoints)) &&
@@ -3302,7 +3434,8 @@ maybe_add_dashed_lines <- function(
         p = p,
         treatment_timepoints = treatment_timepoints,
         treatment_labels = treatment_labels,
-        y_pos = y_pos
+        y_pos = y_pos,
+        horizontal_labels = horizontal_labels
       )
     }
   }
@@ -3334,6 +3467,8 @@ maybe_add_dashed_lines <- function(
 #' the lines, but the x-axis coordinates are displayed as the labels.
 #' @param y_pos A numeric value specifying the y-axis position where
 #' the text labels should be placed.
+#' @param horizontal_labels Boolean flag indicating whether to have a vertical
+#' label (default) or horizontal label.
 #'
 #' @return A ggplot object with added dashed lines and labels.
 #'
@@ -3344,7 +3479,10 @@ add_dashed_lines <- function(
     p,
     treatment_timepoints,
     treatment_labels,
-    y_pos) {
+    y_pos = 1,
+    horizontal_labels = FALSE
+    ) {
+  
   # Check if treatment labels and timepoints are valid
   if (!is.null(treatment_timepoints) &&
     !is.null(treatment_labels) &&
@@ -3374,14 +3512,16 @@ add_dashed_lines <- function(
       ggplot2::geom_text(
         data = treatment_df,
         ggplot2::aes(
-          x = Time - max(Time) * 0.005, # Slight offset from the vertical line
+          x = 
+            if (horizontal_labels) Time + max(treatment_timepoints) * 0.04 
+            else Time - max(treatment_timepoints) * 0.005, 
           y = y_pos,
           label = round(Time, 2),
           color = Label
         ),
-        angle = 90, # Rotate the labels
-        vjust = 0,
-        hjust = 1,
+        angle = if (horizontal_labels) 0 else 90,  
+        vjust = if (horizontal_labels) -0.2 else 0,  
+        hjust = if (horizontal_labels) 0.5 else 1,  
         size = 3, # Text size
         show.legend = FALSE # Prevent text labels from appearing in the legend
       )

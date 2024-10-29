@@ -18,7 +18,8 @@ plot_spline_comparisons(
   X_2,
   plot_info,
   adj_pthresh_avrg_diff_conditions,
-  adj_pthresh_interaction
+  adj_pthresh_interaction,
+  raw_data
 )
 }
 \arguments{
@@ -61,6 +62,10 @@ between conditions.}
 \item{adj_pthresh_interaction}{The adjusted p-value threshold for the
 interaction between
 condition and time.}
+
+\item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
+containing NA values. When provided, it highlights the datapoints in the 
+spline plots that originally where NA and that were imputed.}
 }
 \value{
 A list containing:

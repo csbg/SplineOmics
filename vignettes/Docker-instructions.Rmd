@@ -119,6 +119,10 @@ Start the container again:
 docker start splineomics
 ```
 
+# Using the Docker Desktop gui instead
+
+Instead of pasting commands into the Power- or Bashshell, you can also do all of this with the graphical user interface of Docker Desktop. 
+
 # Input and Output File Management
 
 The `input` and `output` directories on your local machine are mounted to corresponding directories inside the Docker container. This allows seamless file transfer between your local machine and the container.

@@ -52,8 +52,7 @@ If you have -omics data over time, the package will help you to run `limma` with
 
 ### What do I need precisely?
 
-1.  **Data**: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values, should have normally distributed features and no 
-dependence between the samples.
+1.  **Data**: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values, should have normally distributed features and no dependence between the samples.
 
 2.  **Meta**: A table with metadata on the columns/samples of the data matrix (e.g., batch, time point, etc.)
 
@@ -191,9 +190,7 @@ For issues specifically related to the `SplineOmics` package, check the [Issues 
 
 Alternatively, you can run your analysis in a `Docker` container. The underlying `Docker` image encapsulates the `SplineOmics` package together with the necessary environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.
 
-Please note that you must have the `Docker Engine` installed on your machine. 
-For instructions on how to install it, consult the official 
-[Docker Engine installation guide](https://docs.docker.com/engine/install/).
+Please note that you must have the `Docker Engine` installed on your machine. For instructions on how to install it, consult the official [Docker Engine installation guide](https://docs.docker.com/engine/install/).
 
 More information about `Docker` containers can be found on the [official Docker page](https://www.docker.com/resources/what-container/).
 

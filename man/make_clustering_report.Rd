@@ -24,7 +24,8 @@ make_clustering_report(
   plot_info,
   plot_options,
   feature_name_columns,
-  spline_comp_plots
+  spline_comp_plots,
+  raw_data
 )
 }
 \arguments{
@@ -90,6 +91,10 @@ create the row headers for the data matrix!}
 the plots for all the pairwise comparisons of the condition in terms of
 average spline diff and interaction condition time, and another list of lists
 where the respective names of each plot are stored.}
+
+\item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
+containing NA values. When provided, it highlights the datapoints in the 
+spline plots that originally where NA and that were imputed.}
 }
 \value{
 No return value, called for side effects.
