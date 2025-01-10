@@ -1,7 +1,8 @@
 # Export functions definitions -------------------------------------------------
 
 
-#' Generate a GSEA Report
+#' Performs gene set enrichment analysis of the clustered hits using
+#' clusterProfiler
 #'
 #' @description
 #' This function generates a Gene Set Enrichment Analysis (GSEA) report based
@@ -136,6 +137,8 @@ run_gsea <- function(
 
 
 #' Control Inputs for GSEA Report
+#' 
+#' @noRd
 #'
 #' @description
 #' Validates the inputs for generating a GSEA report, including clustered
@@ -184,6 +187,8 @@ control_inputs_create_gsea_report <- function(
 
 
 #' Ensure 'clusterProfiler' is installed and loaded
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if the 'clusterProfiler' package is installed.
@@ -206,6 +211,8 @@ ensure_clusterProfiler <- function() {
 
 
 #' Manage GSEA Analysis for a Specific Level
+#' 
+#' @noRd
 #'
 #' @description
 #' This function manages the GSEA analysis for a specific level. It extracts
@@ -249,6 +256,8 @@ manage_gsea_level <- function(
 
 
 #' Process GSEA Result for a Specific Level
+#' 
+#' @noRd
 #'
 #' @description
 #' This function processes the GSEA result for a specific level. It handles
@@ -294,6 +303,8 @@ process_result <- function(
 
 
 #' Build GSEA Report
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates an HTML report for Gene Set Enrichment Analysis (GSEA) based on
@@ -435,6 +446,8 @@ build_create_gsea_report <- function(
 
 
 #' Check Clustered Genes Dataframe for Required Conditions
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if a given dataframe `clustered_genes` contains the
@@ -493,6 +506,8 @@ check_clustered_hits <- function(levels_clustered_hits) {
 
 
 #' Check Valid Gene IDs
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks whether a character vector `genes`
@@ -547,6 +562,8 @@ check_genes <- function(
 
 
 #' Check Valid Databases Dataframe
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if the dataframe has exactly three columns
@@ -581,6 +598,8 @@ check_databases <- function(databases) {
 
 
 #' Check Params List for Required Conditions
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if a given list `params` contains only the allowed
@@ -677,7 +696,10 @@ check_params <- function(params) {
 
 
 #' Perform Gene Set Enrichment Analysis and plot it.
+#' 
+#' @noRd
 #'
+#' @description
 #' This function conducts a Gene Set Enrichment Analysis (GSEA) using either the
 #' clusterProfiler package. Afterwards, it plots the results.
 #' It allows for customization of enrichment parameters, selection of databases,
@@ -843,6 +865,8 @@ create_gsea_report_level <- function(
 
 
 #' Generate Section Content
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates the HTML content for a section, including headers and enrichment
@@ -944,6 +968,8 @@ generate_section_content <- function(
 
 
 #' Set Default Parameters
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if the provided `params` list is `NA` or missing any
@@ -981,7 +1007,10 @@ set_default_params <- function(params) {
 
 
 #' Convert Database File to TERM2GENE List
+#' 
+#' @noRd
 #'
+#' @description
 #' Reads a specified .tsv file containing information about databases,
 #' gene sets, and genes. The file should have three columns: 'DB' for database
 #' names, Geneset' for gene set identifiers, and 'Gene' for gene names. This
@@ -1015,7 +1044,10 @@ dbs_to_term2genes <- function(databases) {
 
 
 #' Process Enrichment Results
+#' 
+#' @noRd
 #'
+#' @description
 #' Process enrichment results for visualization.
 #'
 #' @param all_db_results A list of data frames containing enrichment results
@@ -1107,7 +1139,10 @@ process_enrichment_results <- function(
 
 
 #' Make Enrich Dotplot
+#' 
+#' @noRd
 #'
+#' @description
 #' Make an enriched dotplot for visualization.
 #'
 #' @param enrichments_list A list of enrichments containing data frames for
@@ -1129,95 +1164,6 @@ process_enrichment_results <- function(
 #' @importFrom scales oob_squish
 #' @importFrom rlang .data
 #'
-# make_enrich_dotplot <- function(
-#     enrichments_list,
-#     databases,
-#     title = "Title"
-# ) {
-#
-#   results <- prepare_plot_data(
-#     enrichments_list,
-#     databases
-#   )
-#
-#   top_plot_data <- results$top_plot_data
-#   full_enrich_results <- results$full_enrich_results
-#
-#   # Calculate plot height based on the number of y-axis labels
-#   height_per_label <- 0.13
-#   num_labels <- length(unique(top_plot_data$term))
-#   plot_height <- num_labels * height_per_label
-#
-#   if (plot_height > 0.9) {  # to always have a minimum size.
-#     plot_height <- 0.9
-#   }
-#
-#   # Ensure term labels are truncated to a maximum of 100 characters
-#   top_plot_data$term <- as.character(top_plot_data$term)
-#   top_plot_data$term <- ifelse(
-#     nchar(top_plot_data$term) > 100,
-#     paste0(substr(top_plot_data$term, 1, 97), "..."),
-#     top_plot_data$term
-#   )
-#
-#   p <- ggplot2::ggplot(
-#     top_plot_data,
-#     ggplot2::aes(
-#       .data$cluster,
-#       .data$term,
-#       size = -log10(.data$adj.p_value)
-#     )
-#   ) +
-#     ggplot2::geom_point(
-#       aes(color = .data$odds_ratios),
-#       na.rm = TRUE
-#     ) +
-#     ggplot2::geom_blank(aes(
-#       .data$cluster,
-#       .data$term
-#     )) + # Ensure all columns are shown
-#     ggplot2::ylab("database: term") +
-#     ggplot2::scale_color_gradient(
-#       "odds\nratio",
-#       low = "blue",
-#       high = "red",
-#       labels = function(x) round(x, 2),
-#       guide = ggplot2::guide_colorbar(
-#         barheight = unit(12, "mm"),
-#         barwidth = unit(2, "mm"),
-#         ticks = FALSE
-#       )
-#     ) +
-#     ggplot2::scale_size_area(
-#       max_size = 3,
-#       limits = c(0, 2),
-#       breaks = c(0, 1, 2),
-#       labels = c("0", "1", "2 or higher"),
-#       oob = scales::oob_squish
-#     ) +
-#     ggplot2::theme_bw() +
-#     ggplot2::theme(
-#       panel.grid = ggplot2::element_blank(),
-#       plot.title = ggplot2::element_text(size = 12, hjust = 0.5),
-#       axis.text.y = ggplot2::element_text(size = 5),
-#       axis.text.x = ggplot2::element_text(size = 5),
-#       legend.text = ggplot2::element_text(size = 5),
-#       legend.title = ggplot2::element_text(size = 6),
-#       legend.key.height = unit(4, "mm"),
-#       legend.key.width = unit(3, "mm"),
-#       legend.spacing = ggplot2::unit(4, "mm"),
-#       plot.margin = ggplot2::unit(c(2, 2, 2, 2), "mm")
-#     ) +
-#     ggplot2::labs(title = title) +
-#     ggplot2::scale_y_discrete(expand = expansion(mult = c(0.01, 0.01))) +
-#     ggplot2::coord_cartesian(clip = "off")
-#
-#   list(
-#     dotplot = p,
-#     dotplot_height = plot_height,
-#     full_enrich_results = full_enrich_results
-#   )
-# }
 make_enrich_dotplot <- function(
     enrichments_list,
     databases,
@@ -1318,7 +1264,10 @@ make_enrich_dotplot <- function(
 
 
 #' Prepare Plot Data
+#' 
+#' @noRd
 #'
+#' @description
 #' This function prepares plot data for visualization based on enrichments
 #' lists and specified databases.
 #'
@@ -1382,13 +1331,6 @@ prepare_plot_data <- function(
   while (i <= nrow(plot_data)) {
     combo <- plot_data[i, ]
 
-    # Get the relevant rows from the original data
-    # relevant_rows <-
-    #   dplyr::filter(
-    #     plot_data,
-    #     db == combo$db,
-    #     BioProcess == combo$BioProcess
-    #     )
     relevant_rows <-
       dplyr::filter(
         plot_data,

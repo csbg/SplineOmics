@@ -1,0 +1,407 @@
+---
+title: "RNA_seq_analysis"
+author: "Thomas Rauter"
+date: "10 January, 2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{RNA_seq_analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# About this vignette
+
+This tutorial intends to showcase and explain the capabilities of the
+**SplineOmics** package by walking through a real and complete RNA-seq
+example, from start to finish. **SplineOmics** is explained in more detail in 
+the **get-started** vignette, where a proteomics example is covered. This 
+vignette is more focused on showing how RNA-seq data can be used, and because
+of this, less details about the overall package are provided here.
+
+## Data Overview
+
+This dataset originates from a **time-series RNA-seq experiment**
+designed to study Chinese Hamster Ovary (CHO) cells. The experiment
+involved cultivating cells in **eight bioreactors**, with **four
+bioreactors** subjected to a temperature shift after 146 hours
+(experimental condition) and the remaining **four bioreactors**
+maintained without a temperature shift (control condition).
+
+Samples were collected at **17 distinct time points** throughout the
+experiment, specifically: `"72h"`, `"76h"`, `"96h"`, `"120h"`, `"124h"`,
+`"144h"`, `"148h"`, `"152h"`, `"168h"`, `"192h"`, `"216h"`, `"220h"`,
+`"240h"`, `"264h"`, `"268h"`, `"288h"`, and `"312h"` after cultivation
+start. Each time point was sampled from all eight bioreactors, resulting
+in a total of **136 samples**.
+
+The data matrix comprises **genes as rows** and **samples as columns**,
+providing gene expression measurements for all time points. Each sample
+was initially sequenced in **three technical replicates** across **two
+NovaSeq X flow cells**. These technical replicates were collapsed to
+generate the final dataset used in this analysis.
+
+The goal of this experiment is to investigate the effect of a
+temperature shift during CHO cell cultivation on gene expression
+dynamics over time.
+
+Note: This is not the original dataset, as it has not yet been published
+at the time of this vignette's creation. For demonstration purposes, the
+genes have been randomly shuffled, and only a subset of the data has
+been included to reduce the dataset size.
+
+## Analysis Goals
+
+The main objectives of this analysis are:
+
+-   **Identify genes with significant temporal changes**: Among the
+    thousands of genes measured, the goal is to identify those that
+    exhibit significant changes in expression over time.
+
+-   **Cluster genes based on temporal patterns**: Genes showing
+    significant temporal changes (hits) will be grouped into clusters
+    based on their time-dependent expression patterns.
+
+-   **Perform gene set enrichment analysis**: For each cluster, a gene
+    set enrichment analysis will be conducted to identify whether
+    specific biological pathways or processes are up- or downregulated
+    in response to feeding and how these processes are influenced by the
+    temperature shift.
+
+-   **Assess the impact of temperature shifts on temporal patterns**:
+    The analysis will determine whether the temporal patterns of gene
+    expression are affected by the temperature shift, i.e., whether gene
+    expression dynamics differ over time under temperature shift
+    conditions compared to controls.
+
+# Load the packages
+
+```{r setup, eval = TRUE}
+library(SplineOmics)
+library(readr)
+library(here)  # For managing filepaths
+library(dplyr) # For data manipulation
+```
+
+# Load the files
+
+```{r load the files, eval = TRUE}
+data <- readRDS(xzfile(system.file(
+  "extdata",
+  "rna_seq_data.rds.xz",
+  package = "SplineOmics"
+)))
+
+meta <- readr::read_csv(
+  system.file(
+    "extdata",
+    "rna_seq_meta.csv",
+    package = "SplineOmics"
+  )
+)
+```
+
+**data**: A numeric matrix where each row represents a gene (features)
+and each column corresponds to a sample. The row names of the matrix
+contain the gene identifiers, while the columns are aligned with the
+sample metadata in meta. The matrix contains expression values for 136
+samples. 
+
+**meta**: A data frame containing metadata information about
+the samples in data. Each row in meta corresponds to a column in data,
+ensuring a 1:1 alignment between metadata entries and expression data
+samples. The columns in meta describe various attributes of the samples,
+such as SampleNr, Reactor, Time, Condition, and Plate.
+
+# Preprocess the data
+
+```{r Filter data rows (genes) with zero counts across all samples, eval = TRUE}
+data <- data[rowSums(data) > 0, ]
+```
+
+# Perform EDA (exploratory data analysis)
+
+```{r Define EDA arguments, eval = TRUE}
+report_info <- list(
+  omics_data_type = "RNA",
+  data_description = "RNA-seq data of CHO cells",
+  data_collection_date = "December 2024",
+  analyst_name = "Thomas Rauter",
+  contact_info = "thomas.rauter@plus.ac.at",
+  project_name = "DGTX"
+)
+
+report_dir <- here::here(
+  "results",
+  "explore_data"
+)
+```
+
+```{r Create the SplineOmics object, eval = TRUE}
+splineomics <- SplineOmics::create_splineomics(
+  data = data,
+  meta = meta,
+  # annotation = annotation,
+  report_info = report_info,
+  condition = "Condition", # Column of meta that contains the levels.
+  meta_batch_column = "Plate" # For batch effect removal
+)
+```
+
+```{r Run EDA function, eval = FALSE}
+plots <- SplineOmics::explore_data(
+  splineomics = splineomics, 
+  report_dir = report_dir
+)
+```
+
+[Here](https://drive.google.com/uc?export=view&id=1mE7FFXFO9ZZ907in3M5Cf1w7yRxRFHiy)
+you can see the HTML report of the explore_data() function with the NOT
+batch-corrected data, and
+[here](https://drive.google.com/uc?export=view&id=1g_Lt4kO4H79GnVh_f7KfXqIzxfTnMrmq)
+the report for the batch-corrected data.
+
+
+# Run limma spline analysis
+
+In this example, we are skipping finding the best hyperparameters with the
+screen_limma_hyperparams() function, because we already have a clear idea of 
+what do use.
+
+```{r Preprocess RNA-seq data with voom, eval = TRUE}
+voom_obj <- preprocess_rna_seq_data(
+  raw_counts = data,
+  meta = meta,
+  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                       dof = c(2L)),
+  design = "~ 1 + Condition*X + Plate"
+)
+
+data <- voom_obj$E
+```
+
+```{r Update the SplineOmics object, eval = TRUE}
+splineomics <- SplineOmics::update_splineomics(
+  splineomics = splineomics,
+  data = data,
+  rna_seq_data = voom_obj,
+  design = "~ 1 + Condition*X + Plate", 
+  mode = "integrated", # means limma uses the full data for each condition.
+  spline_params = list(
+    spline_type = c("n"),    # natural cubic splines
+    dof = c(2L)              # Degree of freedom of 2 for the splines.
+  )
+)
+```
+
+Run the `run_limma_splines()` function with the updated SplineOmics
+object:
+
+```{r limma spline analysis, eval = TRUE}
+splineomics <- SplineOmics::run_limma_splines(
+  splineomics = splineomics
+)
+```
+
+The output of the function run_limma_splines() is a named list, where
+each element is a specific "category" of results. Refer to [this
+document](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
+for an explanation of the different result categories. Each of those
+elements is a list, containing as elements the respective limma
+topTables, either for each level or each comparison between two levels.
+
+The element "time_effect" is a list, where each element is the topTable
+where the p-value for each feature for the respective level are
+reported.
+
+The element "avrg_diff_conditions" is a list that contains as elements
+the topTables, that represent the comparison of the average differences
+of the levels.
+
+The element "interaction_condition_time" is a list that contains as
+elements the topTables, that represent the interaction between the
+levels (which includes both time and the average differences)
+
+# Build limma report
+
+The topTables of all three limma result categories can be used to
+generate p-value histograms an volcano plots.
+
+```{r build limma report, eval = FALSE}
+report_dir <- here::here(
+  "results",
+  "create_limma_reports"
+)
+
+plots <- SplineOmics::create_limma_report(
+  splineomics = splineomics,
+  report_dir = report_dir
+)
+```
+
+You can view the generated analysis report of the create_limma_report
+function
+[here](https://drive.google.com/uc?export=view&id=1hvKloiaHQA5CO4Y6io8qC2lOpBJ54ypJ).
+
+# Cluster the hits (significant features)
+
+After we obtained the limma spline results, we can cluster the hits
+based on their temporal pattern (their spline shape). We define what a
+hit is by setting an adj. p-value threshold for every level. Hits are
+features (e.g. proteins) that have an adj. p-value below the threshold.
+Hierarchical clustering is used to place every hit in one of as many
+clusters as we have specified for that specific level.
+
+```{r cluster the hits, eval = FALSE}
+# Note: The low adj. p-values are to have less results, so that the HTML report
+# is smaller in file size.
+adj_pthresholds <- c( # 0.05 for both levels
+  0.00001, # constant (temperature)    
+  0.00001  # temp_shift
+)
+
+clusters <- c(
+  4L,  # 4 clusters for constant
+  4L   # 4 clusters for temp_shift
+)
+
+report_dir <- here::here(
+  "results",
+  "clustering_reports"
+)
+
+plot_info <- list( # For the spline plots
+  y_axis_label = "log2 intensity",
+  time_unit = "min", # our measurements were in minutes
+  treatment_labels = list("temp_shift"), # add this for all conditions
+  treatment_timepoints = list(146) # Feeding was at 0 minutes.
+)
+
+genes <- rownames(data)
+
+plot_options <- list(
+  # When meta_replicate_column is not there, all datapoints are blue.
+  meta_replicate_column = "Reactor", # Colors the data points based on Reactor
+  cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
+)
+
+clustering_results <- SplineOmics::cluster_hits(
+  splineomics = splineomics,
+  adj_pthresholds = adj_pthresholds,
+  clusters = clusters,
+  genes = genes,
+  plot_info = plot_info,
+  plot_options = plot_options,
+  report_dir = report_dir,
+  adj_pthresh_avrg_diff_conditions = 0.00001,
+  adj_pthresh_interaction_condition_time = 0.00001
+)
+```
+
+You can view the generated analysis report of the cluster_hits function
+[here](https://drive.google.com/uc?export=view&id=1EvPiEwHyGnBQFxRets00s87tochgyGK4).
+
+As discussed before, there are three limma result categories. The
+cluster_hits() report shows the results of all three, if they are
+present (category 2 and 3 can only be generated when the design formula
+contains an interaction effect).
+
+# Perform gene set enrichment analysis (GSEA)
+
+Usually, the final step in such a bioinformatics analysis is GSEA. To
+each clustered hit, the respective gene can be assigned and GSEA
+performed. For this, the Enrichr databases of choice have to be
+downloaded:
+
+```{r download Enrichr databases, eval = FALSE}
+# Specify which databases you want to download from Enrichr
+gene_set_lib <- c(
+  "WikiPathways_2019_Human",
+  "NCI-Nature_2016",
+  "TRRUST_Transcription_Factors_2019",
+  "MSigDB_Hallmark_2020",
+  "GO_Cellular_Component_2018",
+  "CORUM",
+  "KEGG_2019_Human",
+  "TRANSFAC_and_JASPAR_PWMs",
+  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+  "GO_Biological_Process_2018",
+  "GO_Molecular_Function_2018",
+  "Human_Gene_Atlas"
+)
+
+SplineOmics::download_enrichr_databases(
+  gene_set_lib = gene_set_lib,
+  filename = "databases.tsv"
+)
+```
+
+Per default the file is placed in the current working directory, which
+is the root dir of the R project.
+
+To run GSEA, the downloaded database file has to be loaded as a
+dataframe. Further, optionally, the clusterProfiler parameters and the
+report dir can be specified. The function create_gsea_report() runs GSEA
+using clusterProfiler, generates an HTML report and returns the GSEA
+dotplots in R.
+
+```{r prepare arguments for GSEA, eval = FALSE}
+# Specify the filepath of the TSV file with the database info
+downloaded_dbs_filepath <- here::here("databases.tsv")
+
+# Load the file
+databases <- read.delim(
+  downloaded_dbs_filepath,
+  sep = "\t",
+  stringsAsFactors = FALSE
+)
+
+# Specify the clusterProfiler parameters
+clusterProfiler_params <- list(
+  pvalueCutoff = 0.05,
+  pAdjustMethod = "BH",
+  minGSSize = 10,
+  maxGSSize = 500,
+  qvalueCutoff = 0.2
+)
+
+report_dir <- here::here(
+  "results",
+  "gsea_reports"
+)
+```
+
+The function below runs the clusterProfiler for all clusters and all
+levels, and generates the HTML report:
+
+```{r run GSEA, eval = FALSE}
+result <- SplineOmics::run_gsea(
+  # A dataframe with three columns: feature, cluster, and gene. Feature contains
+  # the integer index of the feature, cluster the integer specifying the cluster
+  # number, and gene the string of the gene, such as "CLSTN2".
+  levels_clustered_hits = clustering_results$clustered_hits_levels,
+  databases = databases,
+  clusterProfiler_params = clusterProfiler_params,
+  report_info = report_info,
+  report_dir = report_dir
+)
+```
+
+You can view the generated analysis report of the run_gsea function
+[here](https://drive.google.com/uc?export=view&id=1EvPiEwHyGnBQFxRets00s87tochgyGK4).
+
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

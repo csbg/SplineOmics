@@ -1,7 +1,7 @@
 # Exported function: explore_data () -------------------------------------------
 
 
-#' Generate Exploratory Plots
+#' Generates exploratory plots of the data matrix such as PCA
 #'
 #' @description
 #' This function takes a data matrix, checks its validity, and generates a list
@@ -64,7 +64,10 @@ explore_data <- function(
       args$batch2 <- meta[[meta_batch2_column]]
     }
 
-    batch_corrected_data <- do.call(removeBatchEffect, args)
+    batch_corrected_data <- do.call(
+      removeBatchEffect,
+      args
+      )
 
     data_list$batch_corrected_data <- batch_corrected_data
   }
@@ -115,6 +118,8 @@ explore_data <- function(
 
 
 #' Generate exploratory plots
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates various exploratory plots including density plots,
@@ -159,7 +164,10 @@ generate_explore_plots <- function(
     )
   }
 
-  plot_results <- lapply(plot_functions_and_sizes, apply_plot_function)
+  plot_results <- lapply(
+    plot_functions_and_sizes,
+    apply_plot_function
+    )
 
   all_plots <- list()
   all_plots_sizes <- c()
@@ -198,6 +206,8 @@ generate_explore_plots <- function(
 
 
 #' Build Explore Data Report
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates an HTML report containing a header section, table of
@@ -385,6 +395,8 @@ build_explore_data_report <- function(
 
 
 #' Generate Density Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a density plot for a given data matrix. The density
@@ -480,6 +492,8 @@ make_density_plots <- function(
 
 
 #' Generate Violin Box Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a violin plot for a given data matrix. The violin
@@ -560,6 +574,8 @@ make_violin_box_plots <- function(
 
 
 #' Mean Correlation with Time Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a data frame with time series data
@@ -581,7 +597,9 @@ make_violin_box_plots <- function(
 plot_mean_correlation_with_time <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
   plot_list <- list()
 
   # Loop through each level of the condition
@@ -593,7 +611,17 @@ plot_mean_correlation_with_time <- function(
 
     # Compute correlation of each feature with time
     correlations <- apply(data_subset, 1, function(feature) {
-      cor(feature, time_subset, use = "complete.obs")
+      # Check if either feature or time_subset has zero variance
+      if (sd(feature, na.rm = TRUE) == 0 
+          || sd(time_subset, na.rm = TRUE) == 0) {
+        return(NA) # Assign NA if variance is zero
+      } else {
+        return(cor(
+          feature,
+          time_subset,
+          use = "complete.obs"
+          ))
+      }
     })
 
     # Create a data frame for plotting, ensuring row names are set
@@ -605,6 +633,9 @@ plot_mean_correlation_with_time <- function(
       Feature = rownames(data),
       Correlation = correlations
     )
+    
+    # Remove non-finite values from the correlation data
+    cor_data <- cor_data[is.finite(cor_data$Correlation), ]
 
     # Generate the plot
     p <- ggplot2::ggplot(cor_data, aes(x = .data$Correlation)) +
@@ -628,6 +659,8 @@ plot_mean_correlation_with_time <- function(
 
 
 #' First Lag Autocorrelation Coefficients Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a data frame with time series data
@@ -653,7 +686,9 @@ plot_mean_correlation_with_time <- function(
 plot_first_lag_autocorrelation <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
   # Initialize a list to store the plots
   plot_list <- list()
 
@@ -671,6 +706,11 @@ plot_first_lag_autocorrelation <- function(
       # Compute autocorrelation
       stats::acf(lag_diff, plot = FALSE)$acf[2]
     })
+    
+    # Remove non-finite values from autocorrelations
+    valid_indices <- which(is.finite(autocorrelations)) # Find valid rows
+    autocorrelations <- autocorrelations[valid_indices]
+    data_subset <- data_subset[valid_indices, ] # Subset data to valid rows
 
     # Calculate mean and standard deviation of autocorrelations
     mean_autocorrelation <- mean(autocorrelations, na.rm = TRUE)
@@ -678,7 +718,7 @@ plot_first_lag_autocorrelation <- function(
 
     # Create a data frame for plotting
     cor_data <- data.frame(
-      Feature = 1:nrow(data),
+      Feature = valid_indices,
       Autocorrelation = autocorrelations
     )
 
@@ -715,6 +755,8 @@ plot_first_lag_autocorrelation <- function(
 
 
 #' Lag-1 Differences Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a data frame with time series data
@@ -781,10 +823,19 @@ plot_lag1_differences <- function(
       stats::sd,
       na.rm = TRUE
     )
+    
+    # Identify rows with finite mean_lag1_diff
+    valid_indices <- which(is.finite(mean_lag1_diff))
+    
+    # Subset all related data to ensure consistency
+    mean_lag1_diff <- mean_lag1_diff[valid_indices]
+    std_lag1_diff <- std_lag1_diff[valid_indices]
+    
+    binwidth <- max(0.05, diff(range(mean_lag1_diff, na.rm = TRUE)) / 30)
 
     # Create a data frame for plotting
     diff_data <- data.frame(
-      Feature = 1:nrow(data),
+      Feature = valid_indices,
       Mean_Lag1_Difference = mean_lag1_diff,
       Std_Lag1_Difference = std_lag1_diff
     )
@@ -795,7 +846,7 @@ plot_lag1_differences <- function(
       aes(x = .data$Mean_Lag1_Difference)
     ) +
       ggplot2::geom_histogram(
-        binwidth = 0.005,
+        binwidth = binwidth,
         fill = "#ff7f0e",
         color = "black"
       ) +
@@ -827,6 +878,8 @@ plot_lag1_differences <- function(
 
 
 #' Coefficient of Variation (CV) Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a data frame with time series data
@@ -864,16 +917,23 @@ plot_cv <- function(
     # Calculate mean and standard deviation of CVs
     mean_cv <- mean(cvs, na.rm = TRUE)
     std_cv <- stats::sd(cvs, na.rm = TRUE)
-
+    
+    # Remove non-finite values from CVs and adjust related data
+    valid_indices <- which(is.finite(cvs)) # Find valid rows
+    cvs <- cvs[valid_indices]             # Subset CVs to valid rows
+    data_subset <- data_subset[valid_indices, ] # Subset data to valid rows
+    
+    binwidth <- max(0.01, diff(range(cvs, na.rm = TRUE)) / 30)
+    
     # Create a data frame for plotting
     cv_data <- data.frame(
-      Feature = seq_len(nrow(data)),
+      Feature = valid_indices,
       CV = cvs
     )
 
     p <- ggplot2::ggplot(cv_data, aes(x = .data$CV)) +
       ggplot2::geom_histogram(
-        binwidth = 0.01,
+        binwidth = binwidth,
         fill = "#e377c2",
         color = "black"
       ) +
@@ -905,6 +965,8 @@ plot_cv <- function(
 
 
 #' Generate PCA Plot with Dynamic Coloring
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a PCA plot from a data matrix, dynamically coloring
@@ -976,6 +1038,8 @@ make_pca_plot <- function(
 
 
 #' Generate MDS Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a multidimensional scaling (MDS) plot for a given
@@ -1049,6 +1113,8 @@ make_mds_plot <- function(
 
 
 #' Generate Correlation Heatmaps
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates correlation heatmaps using Spearman correlation for
@@ -1179,6 +1245,8 @@ make_correlation_heatmaps <- function(
 
 
 #' Get Plot Explanations
+#' 
+#' @noRd
 #'
 #' @description
 #' This function returns a vector of text explanations for various types of

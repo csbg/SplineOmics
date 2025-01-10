@@ -1,12 +1,6 @@
-#' extract_data.R contains the exported package function extract_data. This
-#' function automatically recognises the data field in a table and returns the
-#' data matrix, that serves as input for the other functions of this package.
-#' This is for convenience only.
-
-
 # Exported function: extract_data ----------------------------------------------
 
-#' Extract Numeric Matrix from Dataframe
+#' Optional convenience function for extracting a numeric matrix from dataframe
 #'
 #' @description
 #' This function takes a dataframe and identifies a rectangular or quadratic
@@ -121,7 +115,10 @@ extract_data <- function(
 
 
 #' NumericBlockFinder: A class for finding numeric blocks in data
-#'
+#' 
+#' @noRd
+#'  
+#' @description
 #' This class provides methods to identify the upper-left and lower-right
 #' cells of a numeric block within a dataframe.
 #'
@@ -238,6 +235,8 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
 
 
 #' Control Inputs for Extracting Data
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks the validity of input data and the feature name column.
@@ -305,6 +304,8 @@ control_inputs_extract_data <- function(
 
 
 #' Prompt the user with a yes/no question
+#' 
+#' @noRd
 #'
 #' @description
 #' This function prompts the user with a yes/no question. If the user answers
@@ -327,6 +328,8 @@ ask_user <- function(question) {
 
 
 #' Add Feature Names to Data
+#' 
+#' @noRd
 #'
 #' @description
 #' This function assigns feature names to the rows of a dataframe based on a

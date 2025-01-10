@@ -17,8 +17,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Streamlines the process of analysing omics timeseries data with splines">
-<meta name="description" content="Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.">
-<meta property="og:description" content="Timeseries analysis of omics data can be carried out by fitting spline curves to the data and using limma for hypothesis testing. For this, the right spline freedom and further hyperparameters must be identified, and the obtained hits clustered based on the spline shape.The R package splinetime streamlines this whole process and generates reports.">
+<meta name="description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
+<meta property="og:description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -45,6 +45,7 @@
     <li><a class="dropdown-item" href="articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
   </ul>
 </li>
       </ul>
@@ -52,6 +53,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/csbg/SplineOmics/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -111,7 +113,7 @@ Graphical Abstract of SplineOmics Workflow
 <h3 id="what-do-i-need-precisely">What do I need precisely?<a class="anchor" aria-label="anchor" href="#what-do-i-need-precisely"></a>
 </h3>
 <ol style="list-style-type: decimal">
-<li><p><strong>Data</strong>: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values and should have normally distributed features.</p></li>
+<li><p><strong>Data</strong>: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values, should have normally distributed features and no dependence between the samples.</p></li>
 <li><p><strong>Meta</strong>: A table with metadata on the columns/samples of the data matrix (e.g., batch, time point, etc.)</p></li>
 <li><p><strong>Annotation</strong> (optional): A table with identifiers on the rows/features of the data matrix (e.g., gene and protein name).</p></li>
 </ol>
@@ -170,7 +172,11 @@ Graphical Abstract of SplineOmics Workflow
 <span></span>
 <span><span class="co"># Create the directory if it doesn't exist</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">custom_lib_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">custom_lib_path</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span></span>
+<span>      <span class="va">custom_lib_path</span>,</span>
+<span>      showWarnings <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>      recursive <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      <span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Set the library path to include the new directory</span></span>
@@ -381,6 +387,7 @@ Graphical Abstract of SplineOmics Workflow
 <ul>
 <li><p><strong>Splines</strong>: To learn more about splines, you can refer to this <a href="https://doi.org/10.1186/s12874-019-0666-3" class="external-link">review</a>.</p></li>
 <li><p><strong>limma</strong>: To read about the <code>limma</code> R package, you can refer to this <a href="https://doi.org/10.1093/nar/gkv007" class="external-link">publication</a>.</p></li>
+<li><p><strong>PCA</strong>: To learn more about PCA, download and read this <a href="https://github.com/csbg/SplineOmics/raw/main/docs/Points_of_Significance_PCA.pdf" class="external-link">document</a>.</p></li>
 <li><p><strong>Hierarchical clustering</strong>: To get information about hierarchical clustering, you can refer to this <a href="https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec" class="external-link">web article</a>.</p></li>
 </ul>
 </div>
@@ -447,7 +454,15 @@ Graphical Abstract of SplineOmics Workflow
 <p>This work was carried out in the context of the DigiTherapeutX project, which was funded by the Austrian Science Fund (FWF). The research was conducted under the supervision of Prof. Nikolaus Fortelny, who leads the Computational Systems Biology working group at the Paris Lodron University of Salzburg, Austria. You can find more information about Prof. Fortelny’s research group <a href="https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/" class="external-link">here</a>.</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/csbg/SplineOmics/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/csbg/SplineOmics/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
@@ -473,7 +488,7 @@ Graphical Abstract of SplineOmics Workflow
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Thomas Rauter <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Thomas Rauter <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0009-0004-5578-3628" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 
@@ -488,7 +503,7 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

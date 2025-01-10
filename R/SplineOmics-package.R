@@ -1,5 +1,7 @@
 #' Package Name: SplineOmics
 #'
+#' @noRd
+#'
 #' @description
 #' The R package SplineOmics finds the significant features (hits) of
 #' time-series -omics data by using splines and limma for hypothesis testing.

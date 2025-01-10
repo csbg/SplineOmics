@@ -24,9 +24,11 @@ InputControl: A class for controlling and validating inputs"></head><body>
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/csbg/SplineOmics/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -36,7 +38,7 @@ InputControl: A class for controlling and validating inputs"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>InputControl: A class for controlling and validating inputs</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/R/utils_input_validation.R" class="external-link"><code>R/utils_input_validation.R</code></a></small>
       <div class="d-none name"><code>InputControl.Rd</code></div>
     </div>
 
@@ -108,7 +110,7 @@ ranges.</p></li>
     <div class="dont-index"><p><code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></code> for error handling.</p>
 <p>Check Top Tables</p>
 <p><code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></code></p>
-<p>Validate and check all modes</p></div>
+<p>Validate the `dream_params` argument</p></div>
     </div>
     <div class="section level2">
     <h2 id="super-classes">Super classes<a class="anchor" aria-label="anchor" href="#super-classes"></a></h2>
@@ -137,6 +139,7 @@ ranges.</p></li>
 <li><p><a href="#method-InputControl-check_datas_descr"><code>InputControl$check_datas_descr()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_top_tables"><code>InputControl$check_top_tables()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_design_formula"><code>InputControl$check_design_formula()</code></a></p></li>
+<li><p><a href="#method-InputControl-check_dream_params"><code>InputControl$check_dream_params()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_modes"><code>InputControl$check_modes()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_mode"><code>InputControl$check_mode()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_designs_and_metas"><code>InputControl$check_designs_and_metas()</code></a></p></li>
@@ -148,6 +151,7 @@ ranges.</p></li>
 <li><p><a href="#method-InputControl-check_clusters"><code>InputControl$check_clusters()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_plot_info"><code>InputControl$check_plot_info()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_plot_options"><code>InputControl$check_plot_options()</code></a></p></li>
+<li><p><a href="#method-InputControl-check_raw_data"><code>InputControl$check_raw_data()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_report_dir"><code>InputControl$check_report_dir()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_genes"><code>InputControl$check_genes()</code></a></p></li>
 <li><p><a href="#method-InputControl-check_padjust_method"><code>InputControl$check_padjust_method()</code></a></p></li>
@@ -208,6 +212,7 @@ validation fails.</p>
 - <code>self$check_adj_pthresholds()</code>
 - <code>self$check_clusters()</code>
 - <code>self$check_time_unit()</code>
+- <code>self$check_raw_data()</code>
 - <code>self$check_report_dir()</code>
 - <code>self$check_padjust_method()</code>
 - <code>self$check_report_info()</code>
@@ -417,17 +422,41 @@ columns present in the metadata.</p><div class="section">
 thrown.</p>
 </div>
 
+</div><p></p><hr><a id="method-InputControl-check_dream_params"></a><div class="section">
+<h3 id="method-check-dream-params-">Method <code>check_dream_params()</code><a class="anchor" aria-label="anchor" href="#method-check-dream-params-"></a></h3>
+<p>This function checks the validity of the `dream_params` argument provided
+in the class. If `dream_params` is present, it ensures that it contains
+the required and optional elements in the correct format.
+Specifically, `dream_params` must contain a named element
+`random_effects`,
+which is required and must be a string. It may also optionally contain
+the
+elements `dof`, which must be an integer greater than 1, and
+`KenwardRoger`,
+which must be a boolean. Unnamed elements or elements other than these
+three are not allowed.</p><div class="section">
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_dream_params</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<p>Returns `TRUE` if `dream_params` passes all checks. Otherwise, stops the
+function and returns an error message using `stop_call_false`.</p>
+<p>Validate and check all modes</p>
+</div>
+
 </div><p></p><hr><a id="method-InputControl-check_modes"></a><div class="section">
 <h3 id="method-check-modes-">Method <code>check_modes()</code><a class="anchor" aria-label="anchor" href="#method-check-modes-"></a></h3>
 <p>This function iterates over the `modes` argument, sets each `mode` in
 `self$args`, and calls `check_mode()` to validate each mode. After each
 validation, the `mode` is removed from `self$args`.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_modes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>NULL if `modes` is missing; otherwise, checks all modes.</p>
 <p>Check the mode argument for validity</p>
 </div>
@@ -437,12 +466,12 @@ validation, the `mode` is removed from `self$args`.</p><div class="section">
 <p>This function checks if the `mode` argument is provided and validates
 that it is either "isolated" or "integrated". If `mode` is missing or
 invalid, an error is thrown.</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_mode</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>NULL if `mode` is missing; otherwise, validates the mode.</p>
 <p>Check Multiple Designs and Metas</p>
 </div>
@@ -451,7 +480,7 @@ invalid, an error is thrown.</p><div class="section">
 <h3 id="method-check-designs-and-metas-">Method <code>check_designs_and_metas()</code><a class="anchor" aria-label="anchor" href="#method-check-designs-and-metas-"></a></h3>
 <p>Iterates over multiple design formulas and corresponding metadata
 to validate each pair using the `check_design_formula` function.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_designs_and_metas</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -473,7 +502,7 @@ formulas.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>NULL if any check fails, otherwise returns TRUE.</p>
 <p>Check Spline Parameters</p>
 </div>
@@ -482,7 +511,7 @@ formulas.</p></dd>
 <h3 id="method-check-spline-params-">Method <code>check_spline_params()</code><a class="anchor" aria-label="anchor" href="#method-check-spline-params-"></a></h3>
 <p>Validates the spline parameters both generally and depending on the
 specified mode.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_spline_params</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -508,7 +537,7 @@ specified mode.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>Returns `NULL` if any required arguments are mising, otherwise,
         called for side effects.</p>
 <p>Check Spline Test Configurations</p>
@@ -518,7 +547,7 @@ specified mode.</p><div class="section">
 <h3 id="method-check-spline-test-configs-">Method <code>check_spline_test_configs()</code><a class="anchor" aria-label="anchor" href="#method-check-spline-test-configs-"></a></h3>
 
 <div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_spline_test_configs</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -535,7 +564,7 @@ specified mode.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>Returns `NULL` if any required arguments are mising, otherwise,
         called for side effects.</p>
 <p>Check Limma Top Tables Structure</p>
@@ -550,7 +579,7 @@ dataframes with the correct columns and data types.</p>
 <h3 id="method-check-limma-top-tables-">Method <code>check_limma_top_tables()</code><a class="anchor" aria-label="anchor" href="#method-check-limma-top-tables-"></a></h3>
 
 <div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_limma_top_tables</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -563,7 +592,7 @@ dataframes with the correct columns and data types.</p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
 <p>This function does not return a value. It stops execution
 if the data structure does not match the expected format.</p>
 <p>Check Adjusted p-Thresholds</p>
@@ -579,7 +608,7 @@ conditions
 are not met, the function stops execution and returns an error message
 indicating the
 offending elements.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_adj_pthresholds</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -592,7 +621,7 @@ offending elements.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
 <p>Returns TRUE if all checks pass. Stops execution and returns an
 error message if any check fails.</p>
 <p>Check adjusted p-value thresholds for limma category 2 and 3</p>
@@ -603,12 +632,12 @@ error message if any check fails.</p>
 <p>This function checks that both adjusted p-value thresholds for
 average difference conditions and interaction condition time are
 non-null, floats, and in the range [0, 1].</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_adj_pthresh_limma_category_2_3</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
+<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>`NULL` if either argument is `NULL` or invalid.
 Otherwise, no return value (assumed valid inputs).</p>
 <p>Check Clusters</p>
@@ -622,7 +651,7 @@ It checks if the clusters argument is present and performs validation
 on its
 content. If no clusters are specified, it defaults to automatic cluster
 estimation.</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_clusters</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -637,12 +666,12 @@ constraint,
 and `treatment_timepoints` is either `NA` or a numeric vector with the
 same length
 as `treatment_labels`.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_plot_info</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
+<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
 <p>NULL if `plot_info` is not provided or invalid. Otherwise,
 performs checks
 and potentially raises errors if checks fail.</p>
@@ -657,11 +686,29 @@ elements
 `cluster_heatmap_columns` is either TRUE or FALSE, and that
 `meta_replicate_column` is a valid column name in the `meta` dataframe.
 If the checks fail, the script stops with an error message.</p>
-<p>Check and Create Report Directory</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<p>Check Raw Data Validity</p><div class="section">
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_plot_options</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+
+</div><p></p><hr><a id="method-InputControl-check_raw_data"></a><div class="section">
+<h3 id="method-check-raw-data-">Method <code>check_raw_data()</code><a class="anchor" aria-label="anchor" href="#method-check-raw-data-"></a></h3>
+<p>This function verifies the `raw_data` argument to ensure that it is a
+numeric matrix with the same dimensions as `data`. NA values are permitted
+within `raw_data`. If `raw_data` is not a numeric matrix or does not match
+the dimensions of `data`, the function stops execution with an error.</p><div class="section">
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_raw_data</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-18">Returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<p>Returns NULL if either `data` or `raw_data` is not provided or if
+all checks pass. Stops execution and raises an error if `raw_data` does
+not meet the criteria.</p>
+<p>Check and Create Report Directory</p>
+</div>
 
 </div><p></p><hr><a id="method-InputControl-check_report_dir"></a><div class="section">
 <h3 id="method-check-report-dir-">Method <code>check_report_dir()</code><a class="anchor" aria-label="anchor" href="#method-check-report-dir-"></a></h3>
@@ -673,7 +720,7 @@ warnings or
 errors during directory creation, the function stops execution and
 returns
 an error message.</p><div class="section">
-<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
+<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report_dir</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -687,7 +734,7 @@ directory.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<h4 id="returns-19">Returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
 <p>Returns TRUE if the directory exists or is successfully created.
 Stops execution
 and returns an error message if the directory cannot be created or is not
@@ -702,12 +749,12 @@ within the `self$args` list. It ensures that `genes` is a character
 vector,
 that neither `data` nor `genes` is `NULL`, and that the length of `genes`
 matches the number of rows in `data`.</p><div class="section">
-<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_genes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-18">Returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<h4 id="returns-20">Returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
 <p>Returns `TRUE` if all checks pass. Returns `NULL` if any required
 arguments are `NULL`. Throws an error if `genes` is not a character
 vector
@@ -725,7 +772,7 @@ methods are:
 If the method
 is not one of these, the function stops execution and returns an error
  message.</p><div class="section">
-<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_padjust_method</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -742,7 +789,7 @@ are "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-19">Returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
+<h4 id="returns-21">Returns<a class="anchor" aria-label="anchor" href="#returns-21"></a></h4>
 <p>Returns TRUE if the p-adjustment method is valid. Stops execution
  and
 returns an error message if the method is invalid.</p>
@@ -754,7 +801,7 @@ returns an error message if the method is invalid.</p>
 <p>Validates the report information to ensure it contains all mandatory
 fields
 and adheres to the required formats.</p><div class="section">
-<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report_info</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -767,7 +814,7 @@ and adheres to the required formats.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-20">Returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
+<h4 id="returns-22">Returns<a class="anchor" aria-label="anchor" href="#returns-22"></a></h4>
 <p>TRUE if the report information is valid; otherwise, an error is
 thrown.</p>
 <p>Check Feature Name Columns</p>
@@ -778,12 +825,12 @@ thrown.</p>
 <p>This function checks whether all elements of `feature_name_columns` are
 characters of length 1 and whether they are valid column names in the
 `annotation` data frame.</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_feature_name_columns</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-21">Returns<a class="anchor" aria-label="anchor" href="#returns-21"></a></h4>
+<h4 id="returns-23">Returns<a class="anchor" aria-label="anchor" href="#returns-23"></a></h4>
 <p>Returns `NULL` if any required arguments are missing. Throws
 an error
 if any element of `feature_name_columns` is not a character of length 1
@@ -799,7 +846,7 @@ pass.</p>
 arguments.
 It checks if the `report` argument is present and validates its
 Boolean value.</p><div class="section">
-<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
+<h4 id="usage-26">Usage<a class="anchor" aria-label="anchor" href="#usage-26"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">check_report</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -807,7 +854,7 @@ Boolean value.</p><div class="section">
 </div><p></p><hr><a id="method-InputControl-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
+<h4 id="usage-27">Usage<a class="anchor" aria-label="anchor" href="#usage-27"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">InputControl</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -833,7 +880,7 @@ Boolean value.</p><div class="section">
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

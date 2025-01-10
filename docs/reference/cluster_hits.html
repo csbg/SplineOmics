@@ -38,9 +38,11 @@ compiled into an HTML report."></head><body>
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/csbg/SplineOmics/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -50,7 +52,7 @@ compiled into an HTML report."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>cluster_hits.R contains the exported package function cluster_hits and all the functions that make up the functionality of cluster_hits. cluster_hits clusters the hits of a time series omics datasets (the features that were significantly changed over the time course) with hierarchical clustering of the spline shape. Cluster Hits from Top Tables</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/R/cluster_hits.R" class="external-link"><code>R/cluster_hits.R</code></a></small>
       <div class="d-none name"><code>cluster_hits.Rd</code></div>
     </div>
 
@@ -78,6 +80,7 @@ compiled into an HTML report.</p>
 <span>  plot_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y_axis_label <span class="op">=</span> <span class="st">"Value"</span>, time_unit <span class="op">=</span> <span class="st">"min"</span>, treatment_labels <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>    treatment_timepoints <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  plot_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span>, meta_replicate_column <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>  raw_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  report <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -151,6 +154,12 @@ feeding, temperature shift, etc.).</p></dd>
 Bool) that allow for customization of plotting behavior.</p></dd>
 
 
+<dt id="arg-raw-data">raw_data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
+<dd><p>Optional. Data matrix with the raw (unimputed) data, still
+containing NA values. When provided, it highlights the datapoints in the
+spline plots that originally where NA and that were imputed.</p></dd>
+
+
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
 <dd><p>Character string specifying the directory path where the
 HTML report and any other output files should be saved.</p></dd>
@@ -184,7 +193,7 @@ the clustering results,
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

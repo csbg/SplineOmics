@@ -90,6 +90,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Data and Meta
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the validity of the data and meta objects,
@@ -162,6 +164,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Annotation Consistency
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This method checks the consistency of the annotation with the data.
@@ -208,6 +212,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Multiple Data and Meta Pairs
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Iterates over multiple data and meta pairs to validate each pair using
@@ -267,6 +273,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Data Descriptions
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates that the data descriptions are character vectors with each
@@ -305,6 +313,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Top Tables
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates that the top tables are a list of dataframes and checks each
@@ -412,6 +422,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Design Formula
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the design formula ensuring it is a valid character string,
@@ -546,6 +558,8 @@ InputControl <- R6::R6Class("InputControl",
     
     
     #' Validate the `dream_params` argument
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the validity of the `dream_params` argument provided 
@@ -625,6 +639,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Validate and check all modes
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function iterates over the `modes` argument, sets each `mode` in
@@ -653,6 +669,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check the mode argument for validity
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks if the `mode` argument is provided and validates
@@ -675,10 +693,21 @@ InputControl <- R6::R6Class("InputControl",
           "mode must be either 'isolated' or 'integrated' and not '", mode, "'!"
         )
       }
+      
+      message(
+        "Make sure that the design formula contains no interaction ",
+        "between the condition and time (X) for mode == isolated, and that ",
+        "it contains an interaction for mode == integrated. Otherwise, ",
+        "you will get an uncaught error of 'coefficients not estimable' or ",
+        "'subscript out of bounds'."
+      )
+      
     },
 
 
     #' Check Multiple Designs and Metas
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Iterates over multiple design formulas and corresponding metadata
@@ -713,6 +742,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Spline Parameters
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the spline parameters both generally and depending on the
@@ -755,6 +786,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Spline Test Configurations
+    #' 
+    #' @noRd
     #'
     #' @describeIn InputControl
     #' This method verifies the spline test configurations and associated
@@ -794,7 +827,10 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Limma Top Tables Structure
+    #' 
+    #' @noRd
     #'
+    #' @description
     #' This function checks if the provided limma top tables data structure
     #' is correctly formatted. It ensures that the data structure contains
     #' exactly three named elements ('time_effect', 'avrg_diff_conditions',
@@ -847,6 +883,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Adjusted p-Thresholds
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the validity of the adjusted p-thresholds vector,
@@ -916,6 +954,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check adjusted p-value thresholds for limma category 2 and 3
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks that both adjusted p-value thresholds for
@@ -956,6 +996,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Clusters
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function verifies the cluster configurations within the object's
@@ -1019,6 +1061,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Plot Info
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This method checks the validity of the `plot_info` list. It ensures that
@@ -1350,6 +1394,8 @@ InputControl <- R6::R6Class("InputControl",
 
     #' Check plot options
     #'
+    #' @noRd
+    #'
     #' @description
     #' This method checks if the `plot_options` list contains the required
     #' elements
@@ -1403,6 +1449,8 @@ InputControl <- R6::R6Class("InputControl",
     
     
     #' Check Raw Data Validity
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function verifies the `raw_data` argument to ensure that it is a 
@@ -1441,6 +1489,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check and Create Report Directory
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks if the specified report directory exists and is a
@@ -1514,6 +1564,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Genes Validity
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the validity of the `data` and `genes` arguments
@@ -1548,6 +1600,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check p-Adjustment Method
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks if the provided p-adjustment method is valid. The
@@ -1594,6 +1648,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Report Information
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the report information to ensure it contains all mandatory
@@ -1717,6 +1773,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Feature Name Columns
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks whether all elements of `feature_name_columns` are
@@ -1783,6 +1841,8 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Report
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function verifies the `report` argument within the object's
@@ -1818,7 +1878,10 @@ InputControl <- R6::R6Class("InputControl",
 
 
 #' Level2Functions: A class providing level 2 functionalities
+#' 
+#' @noRd
 #'
+#' @description
 #' This class provides various level 2 functionalities, including
 #' methods to check dataframes and spline parameters.
 #'
@@ -1873,18 +1936,19 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
       # Check for non-negative values
       if (any(data < 0)) {
-        stop(
+        message(
           self$create_error_message(
             paste(
-              "All elements of data must be non-negative. The elements should",
-              "represent concentrations, abundances, or",
-              "intensities (which are inherently non-negative)."
+              "Hint: The data contains negative values. This may occur if the", 
+              "data has been transformed (e.g., log-transformed or normalized)",
+              "and is valid in such cases. Ensure that the data preprocessing",
+              " aligns with your analysis requirements."
             ),
             data_meta_index
-          ),
-          call. = FALSE
+          )
         )
       }
+      
 
       # Check for rows with all zeros
       if (any(rowSums(data) == 0)) {
@@ -1927,6 +1991,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Metadata
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the validity of the metadata dataframe, ensuring it
@@ -2085,6 +2151,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Dataframe
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates that the dataframe contains all required columns with the
@@ -2135,6 +2203,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Spline Parameters Generally
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the general structure and contents of spline parameters.
@@ -2223,6 +2293,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Spline Parameters Mode Dependent
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the spline parameters depending on the specified mode.
@@ -2319,6 +2391,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Columns in Spline Test Configurations
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates that the spline test configurations contain the required columns
@@ -2372,6 +2446,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Spline Type Column
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates that the 'spline_type' column in the spline test configurations
@@ -2402,6 +2478,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Spline Type Parameters
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the parameters for each row in the spline test configurations
@@ -2471,6 +2549,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Maximum and Minimum Degrees of Freedom
+    #' 
+    #' @noRd
     #'
     #' @description
     #' Validates the degrees of freedom (DoF) for each row in the spline test
@@ -2526,7 +2606,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
     #' Check Dataframe Columns
+    #' 
+    #' @noRd
     #'
+    #' @description
     #' This function checks if the columns of a dataframe match the expected
     #' column names and their respective data types.
     #'
@@ -2568,7 +2651,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
 
 #' Level3Functions: A class for level 3 utility functions
+#' 
+#' @noRd
 #'
+#' @description
 #' This class provides methods for creating error messages and checking
 #' batch columns.
 #'
@@ -2579,6 +2665,8 @@ Level3Functions <- R6::R6Class("Level3Functions",
   public = list(
 
     #' Check the structure of a voom object
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks the structure of a `voom` object to ensure that it
@@ -2693,6 +2781,8 @@ Level3Functions <- R6::R6Class("Level3Functions",
 
 
     #' Check Batch Column
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This method checks the batch column in the metadata and provides
@@ -2755,6 +2845,8 @@ Level3Functions <- R6::R6Class("Level3Functions",
 
 
     #' Check Condition Time Consistency
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This function checks whether the values in the `condition` column
@@ -2831,7 +2923,10 @@ Level3Functions <- R6::R6Class("Level3Functions",
 # Level4Functions class --------------------------------------------------------
 
 #' Level4Functions: A class for level 3 utility functions
+#' 
+#' @noRd
 #'
+#' @description
 #' This class provides methods for creating error messages and checking
 #' batch columns.
 #'
@@ -2841,6 +2936,8 @@ Level4Functions <- R6::R6Class("Level4Functions",
   public = list(
 
     #' Create Error Message
+    #' 
+    #' @noRd
     #'
     #' @description
     #' This method creates a formatted error message that includes the index of
@@ -2876,6 +2973,8 @@ Level4Functions <- R6::R6Class("Level4Functions",
 
 
 #' Check for Required Elements in the SplineOmics Object
+#' 
+#' @noRd
 #'
 #' @description
 #' This function checks if the given object contains all the required named
@@ -2960,7 +3059,10 @@ check_splineomics_elements <- function(
 
 
 #' Check for NULL Elements in Arguments
+#' 
+#' @noRd
 #'
+#' @description
 #' This function checks if any elements in the provided list of arguments
 #' are `NULL`.
 #' If any `NULL` elements are found, it stops the execution and returns

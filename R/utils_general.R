@@ -5,6 +5,8 @@
 
 
 #' Create Progress Bar
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates a progress bar for tracking the progress of an iterable task.
@@ -38,6 +40,8 @@ create_progress_bar <- function(
 
 
 #' Create Design Matrix for Splines
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a design matrix using spline parameters and metadata.
@@ -101,6 +105,8 @@ design2design_matrix <- function(
 
 
 #' Merge Annotation with a Single Top Table
+#' 
+#' @noRd
 #'
 #' @description
 #' This function merges annotation information into a single `top_table`
@@ -121,6 +127,8 @@ merge_top_table_with_annotation <- function(
 
 
 #' Bind Data with Annotation
+#' 
+#' @noRd
 #'
 #' @description
 #' This function converts a matrix to a dataframe, adds row names as the first
@@ -162,6 +170,8 @@ bind_data_with_annotation <- function(
 
 
 #' Print Informational Message
+#' 
+#' @noRd
 #'
 #' @description
 #' This function prints a nicely formatted informational message with a green
@@ -191,6 +201,8 @@ print_info_message <- function(
 
 
 #' Stop with custom message without call.
+#' 
+#' @noRd
 #'
 #' @description
 #' A helper function that triggers an error with the specified message and

@@ -1,7 +1,7 @@
 # Exported function: screen_limma_hyperparams() --------------------------------
 
 
-#' Limma Hyperparameters Screening
+#' Allows to test different "hyperparameters" in a semi-combinatorial way
 #'
 #' This function screens through various combinations of hyperparameters for
 #' limma analysis,
@@ -158,6 +158,8 @@ screen_limma_hyperparams <- function(
 
 
 #' Generate LIMMA Combination Results
+#' 
+#' @noRd
 #'
 #' @description
 #' Computes results for various combinations of data, design matrices, and
@@ -227,6 +229,8 @@ get_limma_combos_results <- function(
 
 
 #' Plot limma Combination Results
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates plots for pairwise comparisons of hyperparameter combinations
@@ -338,6 +342,8 @@ plot_limma_combos_results <- function(
 
 
 #' Generate Reports
+#' 
+#' @noRd
 #'
 #' @description
 #' Builds HTML reports for all pairwise hyperparameter combination comparisons.
@@ -374,6 +380,8 @@ generate_reports <- function(
 
 
 #' Generate Reports Metadata
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates a metadata table for the LIMMA hyperparameter screen reports and
@@ -499,6 +507,8 @@ generate_reports_meta <- function(
 
 
 #' Process Combination
+#' 
+#' @noRd
 #'
 #' @description
 #' Processes a single combination of data, design, spline configuration, and
@@ -584,6 +594,8 @@ process_combo <- function(
 
 
 #' Remove Batch Effect
+#' 
+#' @noRd
 #'
 #' @description
 #' Removes batch effects from the data matrices using the specified batch
@@ -637,6 +649,8 @@ remove_batch_effect <- function(
 
 
 #' Create New Hit Comparison Object
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates a new hit comparison object with specified condition names.
@@ -672,6 +686,8 @@ hc_new <- function(
 
 
 #' Add Data to Hit Comparison Object
+#' 
+#' @noRd
 #'
 #' @description
 #' Adds a new entry to the hit comparison object for a specified condition.
@@ -720,6 +736,8 @@ hc_add <- function(
 
 
 #' Generate Venn Heatmap
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates a Venn heatmap to visualize the overlap of hits between two
@@ -853,6 +871,8 @@ hc_vennheatmap <- function(hc_obj) {
 
 
 #' Generate Barplot for Hit Comparison Object
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates a barplot to visualize the number of significant features for each
@@ -919,6 +939,8 @@ hc_barplot <- function(hc_obj) {
 
 
 #' Generate Hit Comparison Plots
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates Venn heatmap and barplot for a given combination pair of top
@@ -991,6 +1013,8 @@ gen_hitcomp_plots <- function(combo_pair) {
 
 
 #' Generate Composite Spline Plots
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates composite spline plots for significant and non-significant features
@@ -1098,6 +1122,8 @@ gen_composite_spline_plots <- function(
 
 
 #' Process Combination Pair
+#' 
+#' @noRd
 #'
 #' @description
 #' Processes a combination pair to generate plots and compile them into an
@@ -1163,6 +1189,8 @@ process_combo_pair <- function(
 
 
 #' Create Spline Parameters
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates spline parameters based on the configuration, metadata, condition,
@@ -1199,6 +1227,8 @@ create_spline_params <- function(
 
 
 #' Flatten Spline Configurations
+#' 
+#' @noRd
 #'
 #' @description
 #' Flattens and formats spline configurations into a list of formatted strings.
@@ -1241,6 +1271,8 @@ flatten_spline_configs <- function(spline_configs) {
 
 
 #' Check if Not All Values are NA
+#' 
+#' @noRd
 #'
 #' @description
 #' Determines if a given atomic vector contains at least one non-NA value.
@@ -1260,6 +1292,8 @@ is_not_na <- function(x) {
 
 
 #' Process Configuration Column
+#' 
+#' @noRd
 #'
 #' @description
 #' Processes a configuration column based on the given mode and number of
@@ -1296,6 +1330,8 @@ process_config_column <- function(
 
 
 #' Store Hits
+#' 
+#' @noRd
 #'
 #' @description
 #' Stores the feature indices for significant hits based on the adjusted p-value
@@ -1328,6 +1364,8 @@ store_hits <- function(condition) {
 
 
 #' Plot Composite Splines
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates composite spline plots for significant and non-significant
@@ -1479,6 +1517,8 @@ plot_composite_splines <- function(
 
 
 #' Build Hyperparameters Screening Report
+#' 
+#' @noRd
 #'
 #' @description
 #' Constructs an HTML report for hyperparameter screening by embedding plots
