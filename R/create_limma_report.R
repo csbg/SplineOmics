@@ -8,7 +8,8 @@
 # Exported function: create_limma_report() -------------------------------------
 
 
-#' Create a limma report
+#' Shows the limma results with p-value histograms and volcano plots in an HTML 
+#' report
 #'
 #' @description
 #' Generates an HTML report based on the results of a limma analysis with
@@ -181,7 +182,7 @@ create_limma_report <- function(
     topTables = all_top_tables,
     level_headers_info = section_headers_info,
     report_type = "create_limma_report",
-    filename = "create_limma_report",
+    filename = "limma_report",
     report_dir = report_dir
   )
 
@@ -199,6 +200,8 @@ create_limma_report <- function(
 
 
 #' Generate Plots for Time Effect
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates p-value histograms for each time effect in the LIMMA analysis. This
@@ -248,6 +251,8 @@ generate_time_effect_plots <- function(
 
 
 #' Generate Plots for Average Difference Conditions
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates p-value histograms and volcano plots for each condition in the
@@ -304,6 +309,8 @@ generate_avrg_diff_plots <- function(
 
 
 #' Generate Plots for Interaction of Condition and Time
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates p-value histograms for each interaction condition in the
@@ -354,6 +361,8 @@ generate_interaction_plots <- function(
 
 
 #' Shorten Names
+#' 
+#' @noRd
 #'
 #' @description
 #' Replaces occurrences of unique values within a name with their first three
@@ -378,6 +387,8 @@ shorten_names <- function(
 
 
 #' Build Cluster Hits Report
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates an HTML report for clustered hits, including plots and
@@ -403,7 +414,9 @@ build_create_limma_report <- function(
     plots_sizes,
     level_headers_info,
     report_info,
-    output_file_path = here::here()) {
+    output_file_path = here::here()
+    ) {
+  
   # Read the text file and split it into blocks
   descriptions_path <- system.file(
     "descriptions",
@@ -533,6 +546,8 @@ build_create_limma_report <- function(
 
 
 #' Create a p-value histogram from a limma top_table
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates a histogram of the unadjusted p-values from a
@@ -578,6 +593,8 @@ create_p_value_histogram <- function(
 
 
 #' Create a Volcano Plot
+#' 
+#' @noRd
 #'
 #' @description
 #' This function creates a volcano plot from a limma top table, plotting
@@ -739,6 +756,8 @@ create_volcano_plot <- function(
 
 
 #' Remove Prefix from String
+#' 
+#' @noRd
 #'
 #' @description
 #' Removes a specified prefix from the beginning of a string. This function

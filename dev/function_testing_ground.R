@@ -10,30 +10,30 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-data <- read_excel(here::here("dev" ,"data", "PPTX",
-                                    "2 PPTX new filtered (equal to no imputation).xlsx"))
+# data <- read_excel(here::here("dev" ,"data", "PPTX",
+#                                     "2 PPTX new filtered (equal to no imputation).xlsx"))
 
 # data <- read_excel(here::here("dev" ,"data", "PPTX",
 #                                     "PPTX_processed_no_imputation.xlsx"))
 
 
-data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
-                                   "PPTX_processed_with_imputation.xlsx"))
-
-meta <- read_excel(here::here("dev" ,"data",
-                              "Time_course_PPTX_old_metadata.xlsx"))
+# data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
+#                                    "PPTX_processed_with_imputation.xlsx"))
+# 
+# meta <- read_excel(here::here("dev" ,"data",
+#                               "Time_course_PPTX_old_metadata.xlsx"))
 
 data_excel <- readRDS(system.file(
   "extdata",
   "proteomics_data.rds",
   package = "SplineOmics"
 ))
-# 
-# meta <- read_excel(here::here(
-#   "inst",
-#   "extdata",
-#   "proteomics_meta.xlsx"
-# ))
+
+meta <- read_excel(here::here(
+  "inst",
+  "extdata",
+  "proteomics_meta.xlsx"
+))
 
 annotation <- data_excel %>%
   select(39:ncol(data_excel)) %>%
@@ -56,16 +56,16 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 #                           "Protein",
 #                           "Positions within proteins")
 
-feature_name_columns <- c("Unique identifier",
-                          "Protein names",
-                          "Positions within proteins")
+# feature_name_columns <- c("Unique identifier",
+#                           "Protein names",
+#                           "Positions within proteins")
 
 # feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-# feature_name_columns <- c("Gene_name")
+feature_name_columns <- c("Gene_name")
 
 # debug(extract_data)
-data_imputed <- extract_data(
-  data_imputed,
+data <- extract_data(
+  data_full,
   feature_name_columns,
   user_prompt = FALSE
   )
@@ -103,29 +103,29 @@ data_imputed <- extract_data(
 # )
 
 
-data <- data[4:3035, 2:37]  # 3036
-data <- as.matrix(data)
-rownames(data) <- rownames(data_imputed)
-# data <- data[1:10, 1:34]
-
-# Extract first 18 columns from data
-data_exp <- data[, 1:18]
-
-# Extract the remaining columns from data
-data_stat <- data[, 19:ncol(data)]
-
-# Extract first 18 rows from meta
-meta_exp <- meta[1:18, ]
-
-# Extract the remaining rows from meta
-meta_stat <- meta[19:nrow(meta), ]
-
-make_scatter_plot_html(
-  data_exp,
-  meta_exp,
-  here::here("results", "2 PPTX new filtered (equal to no imputation)_scatter_plots.html"),
-  meta_replicate_column = "Reactor"
-)
+# data <- data[4:3035, 2:37]  # 3036
+# data <- as.matrix(data)
+# rownames(data) <- rownames(data_imputed)
+# # data <- data[1:10, 1:34]
+# 
+# # Extract first 18 columns from data
+# data_exp <- data[, 1:18]
+# 
+# # Extract the remaining columns from data
+# data_stat <- data[, 19:ncol(data)]
+# 
+# # Extract first 18 rows from meta
+# meta_exp <- meta[1:18, ]
+# 
+# # Extract the remaining rows from meta
+# meta_stat <- meta[19:nrow(meta), ]
+# 
+# make_scatter_plot_html(
+#   data_exp,
+#   meta_exp,
+#   here::here("results", "2 PPTX new filtered (equal to no imputation)_scatter_plots.html"),
+#   meta_replicate_column = "Reactor"
+# )
 
 
 # Remove outliers --------------------------------------------------------------
@@ -144,45 +144,45 @@ meta <- meta[!meta$`Sample.ID` %in% c(
 
 # Simulate RNA-seq data to test voom functionality -----------------------------
 
-# generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
-#   set.seed(123)  # For reproducibility
-# 
-#   # Define sample and gene names
-#   gene_names <- paste0("Gene", 1:n_genes)
-#   sample_names <- paste0("Sample", 1:n_samples)
-# 
-#   # Generate random raw RNA-seq counts (Poisson distributed)
-#   # Base expression level with some variability
-#   base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
-#   counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
-# 
-#   # Assign row and column names
-#   rownames(counts_matrix) <- gene_names
-#   colnames(counts_matrix) <- sample_names
-# 
-#   return(counts_matrix)
-# }
-# 
-# # Example usage:
-# n_genes <- 4162  # Adjust the number of genes as needed
-# # data <- generate_rnaseq_data(n_genes = n_genes)
-# 
-# voom_obj <- preprocess_rna_seq_data(
-#   raw_counts = data,
-#   meta = meta,
-#   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-#                        dof = c(2L)),
-#   design = "~ 1 + Phase*X + Reactor"
-# )
-# 
-# # data <- voom_obj$E
+generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
+  set.seed(123)  # For reproducibility
+
+  # Define sample and gene names
+  gene_names <- paste0("Gene", 1:n_genes)
+  sample_names <- paste0("Sample", 1:n_samples)
+
+  # Generate random raw RNA-seq counts (Poisson distributed)
+  # Base expression level with some variability
+  base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
+  counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
+
+  # Assign row and column names
+  rownames(counts_matrix) <- gene_names
+  colnames(counts_matrix) <- sample_names
+
+  return(counts_matrix)
+}
+
+# Example usage:
+n_genes <- 4162  # Adjust the number of genes as needed
+# data <- generate_rnaseq_data(n_genes = n_genes)
+
+voom_obj <- preprocess_rna_seq_data(
+  raw_counts = data,
+  meta = meta,
+  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                       dof = c(2L)),
+  design = "~ 1 + Phase*X + Reactor"
+)
+
+# data <- voom_obj$E
 
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
-  omics_data_type = "PTX",
-  data_description = "Proteomics data",
-  data_collection_date = "September 2024",
+  omics_data_type = "PPTX",
+  data_description = "Phosphoproteomics data",
+  data_collection_date = "Februar 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX"
@@ -190,11 +190,11 @@ report_info <- list(
 
 splineomics <- create_splineomics(
   data = data,
-  # rna_seq_data = voom_obj,
+  rna_seq_data = voom_obj,
   meta = meta,
-  mode = "isolated",
-  # annotation = annotation,
-  # feature_name_columns = feature_name_columns,
+  mode = "integrated",
+  annotation = annotation,
+  feature_name_columns = feature_name_columns,
   report_info = report_info,
   condition = "Phase",
   meta_batch_column = "Reactor"
@@ -203,11 +203,11 @@ splineomics <- create_splineomics(
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-# plots <- explore_data(
-#   splineomics,
-#   report_dir = report_dir,
-#   report = TRUE
-#   )
+plots <- explore_data(
+  splineomics,
+  report_dir = report_dir,
+  report = TRUE
+  )
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -239,26 +239,26 @@ spline_test_configs <- data.frame(
 
 
 # hyperparams screen limma -----------------------------------------------------
-# debug(screen_limma_hyperparams)
-# screen_limma_hyperparams(
-#   splineomics,
-#   datas,
-#   datas_descr,
-#   metas,
-#   designs,
-#   modes,
-#   spline_test_configs,
-#   report_dir,
-#   pthresholds,
-#   # rna_seq_datas,
-#   )
+debug(screen_limma_hyperparams)
+screen_limma_hyperparams(
+  splineomics,
+  datas,
+  datas_descr,
+  metas,
+  designs,
+  modes,
+  spline_test_configs,
+  report_dir,
+  pthresholds,
+  # rna_seq_datas,
+  )
 
 
 ## Run limma splines -----------------------------------------------------------
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + X + Reactor",
+  design = "~ 1 + Phase*X + Reactor",
   # data = data2,
   # meta = meta2,
   spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters

@@ -3,6 +3,9 @@ template:
 
 url: https://csbg.github.io/SplineOmics/
 
+pkgdown:
+  title: SplineOmics
+
 navbar:
   structure:
     left:
@@ -10,7 +13,28 @@ navbar:
       - reference
       - articles
       - news
-      
+
+reference:
+  - title: User Available Functions
+    desc: This section contains the documentation for all functions available 
+    to the user in the SplineOmics package.
+    contents:
+      - cluster_hits
+      - create_limma_report
+      - create_splineomics
+      - download_enrichr_databases
+      - explore_data
+      - extract_data
+      - make_scatter_plot_html
+      - open_template
+      - open_tutorial
+      - preprocess_rna_seq_data
+      - print.SplineOmics
+      - run_gsea
+      - run_limma_splines
+      - screen_limma_hyperparams
+      - update_splineomics
+
 extra_files:
   - googleabfeff244193b2bc.html
 

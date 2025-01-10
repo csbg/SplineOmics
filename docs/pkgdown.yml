@@ -1,12 +1,13 @@
 pandoc: 3.1.11
-pkgdown: 2.1.0
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   design_limma_design_formula: design_limma_design_formula.html
   Docker_permission_denied: Docker_permission_denied.html
   Docker-instructions: Docker-instructions.html
   get-started: get-started.html
-last_built: 2024-10-08T09:30Z
+  RNA_seq_analysis: RNA_seq_analysis.html
+last_built: 2025-01-10T15:47Z
 urls:
   reference: https://csbg.github.io/SplineOmics/reference
   article: https://csbg.github.io/SplineOmics/articles

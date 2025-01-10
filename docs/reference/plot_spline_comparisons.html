@@ -32,9 +32,11 @@ before generating plots."></head><body>
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/csbg/SplineOmics/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -44,7 +46,7 @@ before generating plots."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create spline comparison plots for two conditions</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/R/cluster_hits.R" class="external-link"><code>R/cluster_hits.R</code></a></small>
       <div class="d-none name"><code>plot_spline_comparisons.Rd</code></div>
     </div>
 
@@ -73,7 +75,8 @@ before generating plots.</p>
 <span>  <span class="va">X_2</span>,</span>
 <span>  <span class="va">plot_info</span>,</span>
 <span>  <span class="va">adj_pthresh_avrg_diff_conditions</span>,</span>
-<span>  <span class="va">adj_pthresh_interaction</span></span>
+<span>  <span class="va">adj_pthresh_interaction</span>,</span>
+<span>  <span class="va">raw_data</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -148,6 +151,12 @@ between conditions.</p></dd>
 interaction between
 condition and time.</p></dd>
 
+
+<dt id="arg-raw-data">raw_data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
+<dd><p>Optional. Data matrix with the raw (unimputed) data, still
+containing NA values. When provided, it highlights the datapoints in the
+spline plots that originally where NA and that were imputed.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -169,7 +178,7 @@ condition and time.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

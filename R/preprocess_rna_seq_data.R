@@ -1,7 +1,4 @@
-# Exported function: preprocess_rna_seq_data() ---------------------------------
-
-
-#' Perform default preprocessing of raw RNA-seq counts
+#' Perform default preprocessing of raw RNA-seq counts using limma::voom
 #'
 #' @description
 #' The `preprocess_rna_seq_data()` function performs essential preprocessing
@@ -42,7 +39,8 @@ preprocess_rna_seq_data <- function(
     meta,
     spline_params,
     design,
-    normalize_func = NULL) {
+    normalize_func = NULL
+    ) {
   
   message("Preprocessing RNA-seq data (normalization + voom)...")
 
@@ -61,7 +59,7 @@ preprocess_rna_seq_data <- function(
     level_index = 1,
     design = design
   )
-
+  
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
 
@@ -76,7 +74,7 @@ preprocess_rna_seq_data <- function(
   # Step 3: Apply voom transformation to get logCPM values and weights
   voom_obj <- limma::voom(
     y,
-    design_matrix
+    design_matrix[["design_matrix"]]
   )
 
   return(voom_obj)

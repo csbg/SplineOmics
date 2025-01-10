@@ -24,9 +24,11 @@ within a condition."></head><body>
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/csbg/SplineOmics/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -36,7 +38,7 @@ within a condition."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Between Level Analysis</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/R/run_limma_splines.R" class="external-link"><code>R/run_limma_splines.R</code></a></small>
       <div class="d-none name"><code>between_level.Rd</code></div>
     </div>
 
@@ -52,6 +54,7 @@ within a condition.</p>
 <span>  <span class="va">rna_seq_data</span>,</span>
 <span>  <span class="va">meta</span>,</span>
 <span>  <span class="va">design</span>,</span>
+<span>  <span class="va">dream_params</span>,</span>
 <span>  <span class="va">spline_params</span>,</span>
 <span>  <span class="va">condition</span>,</span>
 <span>  <span class="va">compared_levels</span>,</span>
@@ -79,6 +82,16 @@ such as the output from `limma::voom` or a similar preprocessing pipeline.</p></
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
 <dd><p>A design formula or matrix for the LIMMA analysis.</p></dd>
+
+
+<dt id="arg-dream-params">dream_params<a class="anchor" aria-label="anchor" href="#arg-dream-params"></a></dt>
+<dd><p>A named list or NULL. When not NULL, it must at least
+contain the named element 'random_effects', which must contain a string that
+is a formula for the random effects of the mixed models by dream.
+Additionally, it can contain the named elements dof, which must be a int
+bigger than 1, which is the degree of freedom for the dream topTable, and
+the named element KenwardRoger, which must be a bool, specifying whether
+to use that method or not.</p></dd>
 
 
 <dt id="arg-spline-params">spline_params<a class="anchor" aria-label="anchor" href="#arg-spline-params"></a></dt>
@@ -122,7 +135,7 @@ contrast.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

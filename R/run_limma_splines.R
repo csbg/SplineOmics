@@ -1,7 +1,7 @@
 # Exported function: run_limma_splines() ---------------------------------------
 
 
-#' Run limma analysis with splines
+#' Central function of the package that runs a limma analysis with splines
 #'
 #' @description
 #' This function performs a limma spline analysis to identify significant
@@ -179,6 +179,8 @@ run_limma_splines <- function(
 
 
 #' Between Level Analysis
+#' 
+#' @noRd
 #'
 #' @description
 #' Performs a between-level analysis using LIMMA to compare specified levels
@@ -227,7 +229,7 @@ between_level <- function(
     padjust_method,
     feature_names
     ) {
-  
+
   samples <- which(meta[[condition]] %in% compared_levels)
   data <- data[, samples]
 
@@ -308,7 +310,7 @@ between_level <- function(
     )
     
     fit <- limma::eBayes(fit)
-  
+
     condition_only <- limma::topTable(
       fit,
       coef = condition_only_contrast_coeff,
@@ -351,6 +353,8 @@ between_level <- function(
 
 
 #' Within level analysis
+#' 
+#' @noRd
 #'
 #' @description
 #' Processes a single level within a condition, performing limma analysis
@@ -446,6 +450,8 @@ within_level <- function(
 
 
 #' Process Top Table
+#' 
+#' @noRd
 #'
 #' @description
 #' Processes the top table from a LIMMA analysis, adding feature names and
@@ -483,6 +489,8 @@ process_top_table <- function(
 
 
 #' Process Within Level
+#' 
+#' @noRd
 #'
 #' @description
 #' Performs a within-level analysis using limma to generate top tables and fit
@@ -606,6 +614,8 @@ process_within_level <- function(
 
 
 #' Remove intercept from a formula
+#' 
+#' @noRd
 #'
 #' @description
 #' This function modifies a given formula by replacing the first occurrence
@@ -638,6 +648,8 @@ remove_intercept <- function(formula) {
 
 
 #' Modify limma Top Table
+#' 
+#' @noRd
 #'
 #' @description
 #' Modifies the limma top table to include feature indices and names.

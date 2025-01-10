@@ -96,11 +96,11 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.
 
 ```{r load the files}
-data <- readRDS(system.file(
+data <- readRDS(xzfile(system.file(
   "extdata",
-  "proteomics_data.rds",
+  "proteomics_data.rds.xz",
   package = "SplineOmics"
-))
+)))
 
 
 meta <- read_excel(
@@ -848,7 +848,7 @@ result <- SplineOmics::run_gsea(
 )
 ```
 
-You can view the generated analysis report of the cluster_hits function
+You can view the generated analysis report of the run_gsea function
 [here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes

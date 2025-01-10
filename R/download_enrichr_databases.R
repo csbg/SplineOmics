@@ -1,7 +1,7 @@
 # Exported function: download_enrichr_databases() ------------------------------
 
 
-#' Download Enrichr Databases
+#' Downloads specified Enrichr databases from the web
 #'
 #' @description
 #' This function downloads gene sets from specified Enrichr databases and saves
@@ -105,6 +105,8 @@ download_enrichr_databases <- function(
 
 
 #' Get Enrichr Gene Sets
+#' 
+#' @noRd
 #'
 #' @description
 #' This function downloads gene sets from specified Enrichr databases.

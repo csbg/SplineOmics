@@ -5,12 +5,11 @@
 <url><loc>https://csbg.github.io/SplineOmics/LICENSE-text.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/Docker-instructions.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/articles/RNA_seq_analysis.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/get-started.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/index.html</loc></url>
-<url><loc>https://csbg.github.io/SplineOmics/articles/limma_result_categories.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/authors.html</loc></url>
-<url><loc>https://csbg.github.io/SplineOmics/googleabfeff244193b2bc.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/index.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/InputControl.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/Level2Functions.html</loc></url>
@@ -18,6 +17,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/Level4Functions.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/NumericBlockFinder.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/SplineOmics-package.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/SplineOmics.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/add_dashed_lines.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/add_feature_names.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/add_plot_to_html.html</loc></url>
@@ -29,6 +29,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/build_create_limma_report.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/build_explore_data_report.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/build_hyperparams_screen_report.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/calc_cv.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/check_between_level_pattern.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/check_clustered_hits.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/check_databases.html</loc></url>
@@ -92,6 +93,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_enrich_dotplot.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_mds_plot.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_pca_plot.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/make_scatter_plot_html.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_violin_box_plots.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/manage_gsea_level.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/maybe_add_dashed_lines.html</loc></url>
@@ -134,6 +136,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/read_section_texts.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/remove_batch_effect.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/remove_batch_effect_cluster_hits.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/remove_intercept.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/remove_prefix.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/run_gsea.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/run_limma_splines.html</loc></url>

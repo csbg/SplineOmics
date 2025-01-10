@@ -7,6 +7,8 @@
 
 
 #' Generate Report HTML
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates an HTML report with the provided plots, spline parameters, and
@@ -95,7 +97,7 @@ generate_report_html <- function(
   } else if (report_type == "screen_limma_hyperparams") {
     title <- paste("hyperparams screen |", filename)
   } else if (report_type == "create_limma_report") {
-    title <- "limma report"
+    title <- "l(m)m report"
   } else if (report_type == "cluster_hits") {
     title <- "clustered hits"
     feature_names_formula <- paste(
@@ -103,7 +105,7 @@ generate_report_html <- function(
       collapse = "_"
     )
   } else if (report_type == "create_gsea_report") {
-    title <- "gsea"
+    title <- "gsea report"
   } else {
     stop(
       paste(
@@ -215,14 +217,13 @@ generate_report_html <- function(
 
   for (field in report_info_fields) {
     base64_df <- process_field(
-      field,
-      data,
-      meta,
-      topTables,
-      report_info,
-      encode_df_to_base64,
-      report_type,
-      enrichr_format
+      field = field,
+      data = data,
+      meta = meta,
+      topTables = topTables,
+      report_info = report_info,
+      encode_df_to_base64 = encode_df_to_base64,
+      enrichr_format = enrichr_format
     )
 
     field_display <- sprintf(
@@ -247,16 +248,17 @@ generate_report_html <- function(
   report_info_section <- paste(report_info_section, "</table>", sep = "\n")
 
   download_fields <- c(download_fields, "session_info")
+  download_fields <- c(download_fields, "analysis_script")
+  
   for (field in download_fields) {
     base64_df <- process_field(
-      field,
-      data,
-      meta,
-      topTables,
-      report_info,
-      encode_df_to_base64,
-      report_type,
-      enrichr_format
+      field = field,
+      data = data,
+      meta = meta,
+      topTables = topTables,
+      report_info = report_info,
+      encode_df_to_base64 = encode_df_to_base64,
+      enrichr_format = enrichr_format
     )
 
     field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
@@ -359,6 +361,8 @@ generate_report_html <- function(
 
 
 #' Generate and Write HTML Report
+#' 
+#' @noRd
 #'
 #' @description
 #' This function generates an HTML report by inserting a table of contents,
@@ -534,6 +538,8 @@ generate_and_write_html <- function(
 
 
 #' Read and split section texts from a file
+#' 
+#' @noRd
 #'
 #' @description
 #' This internal function reads the contents of a text file located in the
@@ -566,6 +572,8 @@ read_section_texts <- function(filename) {
 
 
 #' Format text
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a character vector `text` and splits it into individual
@@ -596,6 +604,8 @@ format_text <- function(text) {
 
 
 #' Get Header Section
+#' 
+#' @noRd
 #'
 #' @description
 #' Generates the HTML header section for a report, including the title, header
@@ -811,6 +821,8 @@ get_header_section <- function(
 
 
 #' Encode DataFrame to Base64 for HTML Embedding
+#' 
+#' @noRd
 #'
 #' @description
 #' This function takes a dataframe as input and returns a base64 encoded
@@ -911,6 +923,8 @@ encode_df_to_base64 <- function(
 
 
 #' Convert Plot to Base64
+#' 
+#' @noRd
 #'
 #' @description
 #' Converts a ggplot2 plot to a Base64-encoded PNG image and returns an HTML
@@ -986,6 +1000,8 @@ plot2base64 <- function(
 
 
 #' Create Table of Contents
+#' 
+#' @noRd
 #'
 #' @description
 #' Creates the HTML content for the Table of Contents.
@@ -1006,6 +1022,8 @@ create_toc <- function() {
 
 
 #' Define HTML Styles
+#' 
+#' @noRd
 #'
 #' @description
 #' Defines the CSS styles for section headers and Table of Contents (TOC)
@@ -1025,6 +1043,8 @@ define_html_styles <- function() {
 
 
 #' Process Plots
+#' 
+#' @noRd
 #'
 #' @description
 #' Converts plots to base64 and appends them to the HTML content.
@@ -1166,6 +1186,8 @@ process_plots <- function(
 
 
 #' Process and Encode Data Field for Report
+#' 
+#' @noRd
 #'
 #' @description
 #' This function processes a given field, encodes the associated data as base64,
@@ -1179,7 +1201,6 @@ process_plots <- function(
 #'                  expression analysis.
 #' @param report_info A list containing additional report information.
 #' @param encode_df_to_base64 A function to encode a dataframe to base64.
-#' @param report_type A string specifying the type of report.
 #' @param enrichr_format A list with the formatted gene lists and background
 #'                       gene list.
 #'
@@ -1187,6 +1208,7 @@ process_plots <- function(
 #'         field.
 #'
 #' @importFrom base64enc base64encode
+#' @importFrom rstudioapi isAvailable getSourceEditorContext
 #'
 process_field <- function(
     field,
@@ -1195,7 +1217,6 @@ process_field <- function(
     topTables,
     report_info,
     encode_df_to_base64,
-    report_type,
     enrichr_format
     ) {
   
@@ -1261,11 +1282,34 @@ process_field <- function(
        <button>Download R Session Info</button></a>',
       base64_session_info
     )
+  } else if (field == "analysis_script") {
+    # Capture the analysis script content if available (in RStudio)
+    if (rstudioapi::isAvailable()) {
+      script_content <- rstudioapi::getSourceEditorContext()$contents
+      base64_script <- base64enc::base64encode(
+        charToRaw(
+          paste(
+            script_content,
+            collapse = "\n"
+            )
+          )
+        )
+      
+      base64_df <- sprintf(
+        '<a href="data:text/plain;base64,%s" download="analysis_script.txt"
+        class="embedded-file">
+         <button>Download Analysis Script</button></a>',
+        base64_script
+      )
+    } else {
+      base64_df <- "Analysis script is unavailable."
+    }
+    
   } else {
     base64_df <- ifelse(
       is.null(report_info[[field]]),
       "NA", report_info[[field]]
-    )
+      )
   }
   return(base64_df)
 }
@@ -1275,6 +1319,36 @@ process_field <- function(
 # Level 3 internal functions ---------------------------------------------------
 
 
+#' Extract and Combine Substrings from a String
+#' 
+#' @noRd
+#'
+#' @description
+#' The `extract_and_combine()` function extracts specific substrings from an 
+#' input string based on predefined patterns, combines them with a whitespace 
+#' in between, and optionally truncates the result to 30 characters.
+#'
+#' @param input A character string containing the substrings to be extracted. 
+#'   The string should follow a specific format where the desired substrings 
+#'   are marked by the patterns `cluster:` and `database:`.
+#'
+#' @details
+#' The function performs the following steps:
+#' 1. Extracts the substring that appears after `cluster:` and before the next 
+#'    comma (`,`).
+#' 2. Extracts the substring that appears after `database:` and before the next 
+#'    comma (`,`).
+#' 3. Combines the two extracted substrings with a whitespace between them.
+#' 4. If the combined string exceeds 30 characters, it is truncated to the 
+#'    first 30 characters.
+#'
+#' This is useful for processing structured input strings and formatting the 
+#' results for display or further analysis.
+#'
+#' @return
+#' A character string combining the extracted substrings, truncated to 
+#' 30 characters if necessary.
+#'
 extract_and_combine <- function(input) {
   # Extract substring after 'cluster:' and before the next ','
   cluster_match <- regmatches(
@@ -1309,6 +1383,8 @@ extract_and_combine <- function(input) {
 
 
 #' Create a ZIP File for Enrichr Gene Lists
+#' 
+#' @noRd
 #'
 #' @description
 #' This function creates a ZIP file containing directories for each level of
@@ -1364,6 +1440,8 @@ create_enrichr_zip <- function(enrichr_format) {
 
 
 #' Add Plot to HTML Content
+#' 
+#' @noRd
 #'
 #' @description
 #' This function converts a plot to a base64 image and adds it to the

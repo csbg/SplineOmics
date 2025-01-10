@@ -1,7 +1,8 @@
 # Exported functions -----------------------------------------------------------
 
 
-#' Create a SplineOmics object
+#' Creates a SplineOmics object, which holds common variables used by several
+#' functions of the package
 #'
 #' @description
 #' Creates a SplineOmics object containing variables that are commonly used
@@ -91,7 +92,8 @@ create_splineomics <- function(
 }
 
 
-#' Update a SplineOmics object
+#' Update a SplineOmics object with new values for stored variables or add new
+#' variables
 #'
 #' @description
 #' Updates a SplineOmics object by modifying existing fields or adding new ones.
