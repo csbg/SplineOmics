@@ -2,7 +2,7 @@
 % Please edit documentation in R/open_tutorial_and_template.R
 \name{open_template}
 \alias{open_template}
-\title{Open Template for Quick Setup}
+\title{Open template for SplineOmics analysis for quick setup}
 \usage{
 open_template()
 }

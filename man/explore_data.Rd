@@ -2,7 +2,7 @@
 % Please edit documentation in R/explore_data.R
 \name{explore_data}
 \alias{explore_data}
-\title{Generate Exploratory Plots}
+\title{Generates exploratory plots of the data matrix such as PCA}
 \usage{
 explore_data(splineomics, report_dir = here::here(), report = TRUE)
 }

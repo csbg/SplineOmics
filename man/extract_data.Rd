@@ -2,11 +2,7 @@
 % Please edit documentation in R/extract_data.R
 \name{extract_data}
 \alias{extract_data}
-\title{extract_data.R contains the exported package function extract_data. This
-function automatically recognises the data field in a table and returns the
-data matrix, that serves as input for the other functions of this package.
-This is for convenience only.
-Extract Numeric Matrix from Dataframe}
+\title{Optional convenience function for extracting a numeric matrix from dataframe}
 \usage{
 extract_data(data, feature_name_columns = NA, user_prompt = TRUE)
 }

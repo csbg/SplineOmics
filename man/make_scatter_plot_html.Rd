@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_raw_data.R
 \name{make_scatter_plot_html}
 \alias{make_scatter_plot_html}
-\title{Generate Scatter Plot Report for Each Feature with Embedded Base64 Images}
+\title{Generate scatter plot report for rach feature with embedded base64 images}
 \usage{
 make_scatter_plot_html(
   data,
@@ -21,5 +21,5 @@ column "Time".}
 \item{output_file}{The name of the HTML output file.}
 }
 \description{
-Generate Scatter Plot Report for Each Feature with Embedded Base64 Images
+Generate scatter plot report for rach feature with embedded base64 images
 }
