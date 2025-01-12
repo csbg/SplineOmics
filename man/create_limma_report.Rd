@@ -2,7 +2,8 @@
 % Please edit documentation in R/create_limma_report.R
 \name{create_limma_report}
 \alias{create_limma_report}
-\title{Create a limma report}
+\title{Shows the limma results with p-value histograms and volcano plots in an HTML 
+report}
 \usage{
 create_limma_report(splineomics, adj_pthresh = 0.05, report_dir = here::here())
 }

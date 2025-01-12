@@ -139,9 +139,15 @@ Three comments about the characteristics the input data should have:
     from normality. Proper transformation helps ensure that the
     assumptions underlying the statistical tests are met, leading to
     more accurate and trustworthy results.
-    
--   The samples in the data should be independent of each other. Linear models,       such as those used in limma, assume that the observations (samples) are           independent. If there is a dependency between samples (e.g., repeated             measurements of the same subject), this assumption is violated, which can
-    lead to incorrect statistical inferences. 
+
+-   The samples in the data should be independent of each other. Linear
+    models,\
+    such as those used in limma, assume that the observations (samples)
+    are\
+    independent. If there is a dependency between samples (e.g.,
+    repeated\
+    measurements of the same subject), this assumption is violated,
+    which can lead to incorrect statistical inferences.
 
 ## Bring the Inputs into the Standardized Format
 
@@ -712,13 +718,13 @@ plot_info <- list( # For the spline plots
 # Like this you can add individual treatment labels to your plots:
 # treatment_labels = list(
 #   exponential = "treatment 1", # One treatment in exp
-#   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat
+#   stationary = c("treatment 2", "treatment 3"),  # Two treatments in stat
 #   additional_condition = NA  # No treatment in the hypothetical third condition
 #   )
 #
 # treatment_timepoints = list(
 #   exponential = 0,
-#   stationary = C(100, 140),  # Two treatments also need two timepoints
+#   stationary = c(100, 140),  # Two treatments also need two timepoints
 #   additional_condition = NA
 #   )
 #

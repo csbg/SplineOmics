@@ -23,10 +23,11 @@ knitr::opts_chunk$set(
 
 This tutorial intends to showcase and explain the capabilities of the
 **SplineOmics** package by walking through a real and complete RNA-seq
-example, from start to finish. **SplineOmics** is explained in more detail in 
-the **get-started** vignette, where a proteomics example is covered. This 
-vignette is more focused on showing how RNA-seq data can be used, and because
-of this, less details about the overall package are provided here.
+example, from start to finish. **SplineOmics** is explained in more
+detail in the **get-started** vignette, where a proteomics example is
+covered. This vignette is more focused on showing how RNA-seq data can
+be used, and because of this, less details about the overall package are
+provided here.
 
 ## Data Overview
 
@@ -43,6 +44,12 @@ experiment, specifically: `"72h"`, `"76h"`, `"96h"`, `"120h"`, `"124h"`,
 `"240h"`, `"264h"`, `"268h"`, `"288h"`, and `"312h"` after cultivation
 start. Each time point was sampled from all eight bioreactors, resulting
 in a total of **136 samples**.
+
+There are two batch effects: Reactor and Plate. Different bioreactors,
+where the cells are cultivated, can show big variablity. Plate refers to
+two different plates used in the RNA-seq analysis of the samples. A
+fully random design was used to distribute the samples to the two
+plates. In this vignette, we will just remove the plate batch effect.
 
 The data matrix comprises **genes as rows** and **samples as columns**,
 providing gene expression measurements for all time points. Each sample
@@ -86,10 +93,13 @@ The main objectives of this analysis are:
 # Load the packages
 
 ```{r setup, eval = TRUE}
-library(SplineOmics)
-library(readr)
+# library(SplineOmics)
+library(devtools)
+load_all()
+library(readr) # For reading the meta CSV file
 library(here)  # For managing filepaths
 library(dplyr) # For data manipulation
+library(knitr) # For Showing the head of the data and the meta tables.
 ```
 
 # Load the files
@@ -106,21 +116,28 @@ meta <- readr::read_csv(
     "extdata",
     "rna_seq_meta.csv",
     package = "SplineOmics"
-  )
+  ),
+  show_col_types = FALSE
 )
+
+cat("### Head of RNA-Seq Data\n")
+kable(head(data), format = "markdown")
+
+cat("\n### Head of Metadata\n")
+kable(head(meta), format = "markdown")
 ```
 
 **data**: A numeric matrix where each row represents a gene (features)
 and each column corresponds to a sample. The row names of the matrix
 contain the gene identifiers, while the columns are aligned with the
 sample metadata in meta. The matrix contains expression values for 136
-samples. 
+samples.
 
-**meta**: A data frame containing metadata information about
-the samples in data. Each row in meta corresponds to a column in data,
-ensuring a 1:1 alignment between metadata entries and expression data
-samples. The columns in meta describe various attributes of the samples,
-such as SampleNr, Reactor, Time, Condition, and Plate.
+**meta**: A data frame containing metadata information about the samples
+in data. Each row in meta corresponds to a column in data, ensuring a
+1:1 alignment between metadata entries and expression data samples. The
+columns in meta describe various attributes of the samples, such as
+SampleNr, Reactor, Time, Condition, and Plate.
 
 # Preprocess the data
 
@@ -150,10 +167,9 @@ report_dir <- here::here(
 splineomics <- SplineOmics::create_splineomics(
   data = data,
   meta = meta,
-  # annotation = annotation,
   report_info = report_info,
-  condition = "Condition", # Column of meta that contains the levels.
-  meta_batch_column = "Plate" # For batch effect removal
+  condition = "Condition",    # Column of meta that contains the levels.
+  meta_batch_column = "Plate" # Remove batch effect for plotting.
 )
 ```
 
@@ -170,12 +186,11 @@ batch-corrected data, and
 [here](https://drive.google.com/uc?export=view&id=1g_Lt4kO4H79GnVh_f7KfXqIzxfTnMrmq)
 the report for the batch-corrected data.
 
-
 # Run limma spline analysis
 
-In this example, we are skipping finding the best hyperparameters with the
-screen_limma_hyperparams() function, because we already have a clear idea of 
-what do use.
+In this example, we are skipping finding the best hyperparameters with
+the screen_limma_hyperparams() function, because we already have a clear
+idea of what do use.
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
 voom_obj <- preprocess_rna_seq_data(
@@ -257,16 +272,35 @@ function
 After we obtained the limma spline results, we can cluster the hits
 based on their temporal pattern (their spline shape). We define what a
 hit is by setting an adj. p-value threshold for every level. Hits are
-features (e.g. proteins) that have an adj. p-value below the threshold.
+features (genes here) that have an adj. p-value below the threshold.
 Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
+
+Note that for this dataset, we have a vast amount of hits. Because it is
+not useful to have thousands of individual plots, and also it takes a
+long time to compute and the resulting HTML is very large in size, we
+want to limit the hits that are plotted. We have several options:
+
+-   **Use a very low adjusted p-value**: This approach filters for the
+    most significant features (genes) before proceeding with analysis
+    and visualization.
+
+-   **Access and customize the data**: Modify the dataframes inside the
+    `SplineOmics` object by removing all but a selected set of features
+    (genes) for plotting.
+
+-   **Optimize clustering without generating a report**: Set the
+    `report` argument in the `cluster_hits()` function to `FALSE`
+    (default is `TRUE`). This skips the generation of an HTML report,
+    significantly speeding up computation by omitting the creation and
+    export of plots.
 
 ```{r cluster the hits, eval = FALSE}
 # Note: The low adj. p-values are to have less results, so that the HTML report
 # is smaller in file size.
 adj_pthresholds <- c( # 0.05 for both levels
-  0.00001, # constant (temperature)    
-  0.00001  # temp_shift
+  0.0000001, # constant (temperature)    0.00001
+  0.0000001  # temp_shift
 )
 
 clusters <- c(
@@ -279,19 +313,42 @@ report_dir <- here::here(
   "clustering_reports"
 )
 
+# Note: The treatment_labels and treatment_timepoints variable can be defined
+# much simpler for this experiment, because all plots should have the same 
+# treatment line (it can be done like shown by the commented out arguments of
+# plot_info below). The reason why this is done in the explicit way here is to
+# show how it is possible to potentially have different treatment lines for the
+# "double spline" plots (the ones that compare limma result category 2 and 3). 
+# constant_temp_shift is the first condition of the double spline plot and the
+# second condition separated by an underscore (it must be exactly like this,
+# otherwise it does not work. The first condition is always the one that occurs
+# first from the top in the respective meta column).
+treatment_labels = list(
+  constant = "temp shift", 
+  temp_shift = "temp shift",  
+  constant_temp_shift = "temp shift" 
+  )
+
+treatment_timepoints = list(
+  constant = 146,
+  temp_shift = 146,  
+  constant_temp_shift = 146
+  )
+
 plot_info <- list( # For the spline plots
   y_axis_label = "log2 intensity",
   time_unit = "min", # our measurements were in minutes
-  treatment_labels = list("temp_shift"), # add this for all conditions
-  treatment_timepoints = list(146) # Feeding was at 0 minutes.
+  # treatment_labels = list("temp shift"), # add this for all conditions
+  # treatment_timepoints = list(146)       # temp shift was at 146 hours.
+  treatment_labels = treatment_labels,
+  treatment_timepoints = treatment_timepoints
 )
 
 genes <- rownames(data)
 
 plot_options <- list(
   # When meta_replicate_column is not there, all datapoints are blue.
-  meta_replicate_column = "Reactor", # Colors the data points based on Reactor
-  cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
+  meta_replicate_column = "Reactor" # Colors the data points based on Reactor
 )
 
 clustering_results <- SplineOmics::cluster_hits(
@@ -302,8 +359,8 @@ clustering_results <- SplineOmics::cluster_hits(
   plot_info = plot_info,
   plot_options = plot_options,
   report_dir = report_dir,
-  adj_pthresh_avrg_diff_conditions = 0.00001,
-  adj_pthresh_interaction_condition_time = 0.00001
+  adj_pthresh_avrg_diff_conditions = 0.0000001,
+  adj_pthresh_interaction_condition_time = 0.0000001
 )
 ```
 
@@ -398,7 +455,6 @@ result <- SplineOmics::run_gsea(
 
 You can view the generated analysis report of the run_gsea function
 [here](https://drive.google.com/uc?export=view&id=1EvPiEwHyGnBQFxRets00s87tochgyGK4).
-
 
 # Session Info
 

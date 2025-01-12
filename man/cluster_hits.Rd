@@ -2,12 +2,7 @@
 % Please edit documentation in R/cluster_hits.R
 \name{cluster_hits}
 \alias{cluster_hits}
-\title{cluster_hits.R contains the exported package function cluster_hits and all
-the functions that make up the functionality of cluster_hits. cluster_hits
-clusters the hits of a time series omics datasets (the features that were
-significantly changed over the time course) with hierarchical clustering of
-the spline shape.
-Cluster Hits from Top Tables}
+\title{Cluster hits (significant features) based on the spline shape}
 \usage{
 cluster_hits(
   splineomics,

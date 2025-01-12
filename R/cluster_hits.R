@@ -137,8 +137,14 @@ cluster_hits <- function(
     meta = meta,
     condition = condition
   )
-
-  huge_table_user_prompter(within_level_top_tables)
+  
+  all_limma_result_tables <- filter_and_append_limma_results(
+    splineomics = splineomics,  
+    within_level_tables = within_level_top_tables,  
+    pthresh_avg_diff = adj_pthresh_avrg_diff_conditions,  
+    pthresh_interact = adj_pthresh_interaction_condition_time 
+  )
+  huge_table_user_prompter(all_limma_result_tables)
 
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
@@ -272,13 +278,13 @@ cluster_hits <- function(
 #' @noRd
 #'
 #' @description
-#' Filters a set of LIMMA top tables based on adjusted p-value thresholds 
+#' Filters a set of limma top tables based on adjusted p-value thresholds 
 #' and metadata levels. This function supports both within-level and 
 #' between-level analyses. It removes hits that do not meet the specified 
 #' criteria and ensures that clustering can only proceed for levels with 
 #' at least two hits.
 #'
-#' @param top_tables A list of LIMMA top tables, where each top table corresponds 
+#' @param top_tables A list of limma top tables, where each top table corresponds 
 #'   to a specific level or comparison.
 #' @param adj_pthresholds A numeric vector of adjusted p-value thresholds, 
 #'   one for each level in the condition.
@@ -311,7 +317,9 @@ filter_top_tables <- function(
     top_tables,
     adj_pthresholds,
     meta,
-    condition) {
+    condition
+    ) {
+  
   result <- check_between_level_pattern(top_tables)
 
   if (result$between_levels) { # between_level analysis
@@ -368,54 +376,127 @@ filter_top_tables <- function(
 }
 
 
-#' Check if any table in a list has more than 300 rows and prompt user for
-#' input.
-#' 
+#' Filter and Append LIMMA Results to a List
+#'
 #' @noRd
 #'
 #' @description
-#' This function iterates over a list of tables and checks if any table has
-#' more than 300 rows.
-#' If such a table is found, it prompts the user to proceed or stop.
+#' This function filters the `avrg_diff_condition` and 
+#' `interactin_condition_time` data frames within a 
+#' `splineomics$limma_splines_results` object based on specified 
+#' adjusted p-value thresholds. The filtered data frames are then appended to 
+#' a given list of data frames, creating a new combined list while keeping 
+#' the original list intact.
 #'
-#' @param tables A list of data frames.
-#' @return NULL. This function is used for its side effects (prompting the
-#' user and potentially stopping the script).
+#' @param splineomics A list containing the results of LIMMA splines analysis.
+#'   It must include the nested list `limma_splines_results` with the data 
+#'   frames `avrg_diff_condition` and `interactin_condition_time`.
+#' @param within_level_top_tables A list of data frames to which the filtered 
+#'   results will be appended.
+#' @param adj_pthresh_avrg_diff_conditions A numeric value specifying the 
+#'   adjusted p-value threshold for filtering rows in the 
+#'   `avrg_diff_condition` data frame.
+#' @param adj_pthresh_interaction_condition_time A numeric value specifying the 
+#'   adjusted p-value threshold for filtering rows in the 
+#'   `interactin_condition_time` data frame.
 #'
+#' @return A new list that combines the original `within_level_top_tables` list 
+#'   and the filtered data frames (`filtered_avrg_diff_condition` and 
+#'   `filtered_interaction_condition_time`).
+#'
+#' @export
+filter_and_append_limma_results <- function(
+    splineomics,
+    within_level_tables,
+    pthresh_avg_diff = 0.05,
+    pthresh_interact = 0.05
+) {
+  # Initialize lists for filtered results
+  filtered_avg_diff <- list()
+  filtered_interact <- list()
+  
+  # Filter all elements in avrg_diff_condition and assign names
+  for (name in names(splineomics$limma_splines_result$avrg_diff_condition)) {
+    avg_diff_df <- splineomics$limma_splines_result$avrg_diff_condition[[name]]
+    filtered_avg_diff[[name]] <- as.data.frame(
+      avg_diff_df[avg_diff_df$adj.P.Val < pthresh_avg_diff, ]
+    )
+  }
+  
+  # Filter all elements in interaction_condition_time and assign names
+  for (name in names(splineomics$limma_splines_result$interaction_condition_time)) {
+    interact_df <- splineomics$limma_splines_result$interaction_condition_time[[name]]
+    filtered_interact[[name]] <- as.data.frame(
+      interact_df[interact_df$adj.P.Val < pthresh_interact, ]
+    )
+  }
+  
+  # Combine all results into a single list
+  all_tables <- c(
+    within_level_tables,
+    filtered_avg_diff,
+    filtered_interact
+  )
+  
+  return(all_tables)
+}
+
+
+#' Prompt User if Tables in a List Have More Than 500 Rows
+#'
+#' @noRd
+#'
+#' @description
+#' This function checks all tables in a list and identifies those with more
+#' than 500 rows. If such tables are found, the user is presented with an
+#' informative message listing these tables and the number of rows they
+#' contain. The user must confirm (type 'y') to proceed; otherwise, the script
+#' stops.
+#'
+#' @param tables A named list of data frames.
+#' @return NULL. The function either proceeds with execution or stops the
+#' script based on user input.
 huge_table_user_prompter <- function(tables) {
-  for (i in seq_along(tables)) {
-    if (any(is.logical(tables[[i]]))) {
-      next
+  # Identify tables with more than 500 rows
+  large_tables <- lapply(names(tables), function(name) {
+    if (!is.logical(tables[[name]]) && nrow(tables[[name]]) > 500) {
+      list(name = name, rows = nrow(tables[[name]]))
+    } else {
+      NULL
     }
+  })
+  
+  large_tables <- do.call(rbind, large_tables)
 
-    if (nrow(tables[[i]]) > 500) {
-      # Prompt the user for input
-      while (TRUE) {
-        user_input <- readline(prompt = paste(
-          "The table",
-          names(tables)[i],
-          "has more than 500 rows (",
-          nrow(tables[[i]]),
-          "), which means the plot generation can take longer.", 
-          "Do you want to proceed? (y/n): "
-        ))
-        user_input <- tolower(user_input)
-
-        # Check user input
-        if (user_input == "y") {
-          # Proceed
-          print("Proceeding...")
-          break
-        } else if (user_input == "n") {
-          stop_call_false("Script stopped. User chose not to proceed.")
-        } else {
-          # Invalid input, ask the user again
-          message(
-            "Invalid input. Please type 'y' to proceed or 'n' to stop",
-            "the script."
-          )
-        }
-      }
+  # If no large tables, return immediately
+  if (is.null(large_tables)) {
+    message("All tables have 500 rows or fewer. Proceeding without user prompt.")
+    return(NULL)
+  }
+  
+  # Create an informative message
+  table_info <- paste(
+    apply(large_tables, 1, function(row) {
+      paste(row[["name"]], "(", row[["rows"]], "rows)")
+    }),
+    collapse = "\n"
+  )
+  
+  # Prompt the user
+  while (TRUE) {
+    cat("\nThe following tables have more than 500 rows:\n")
+    cat(table_info, "\n\n")
+    cat("This may result in long computations and large HTML output.\n\n")
+    user_input <- readline(prompt = "Do you want to proceed? (y/n): ")
+    user_input <- tolower(user_input)
+    
+    if (user_input == "y") {
+      message("User chose to proceed. Continuing execution...")
+      break
+    } else if (user_input == "n") {
+      stop("Script stopped. User chose not to proceed.", call. = FALSE)
+    } else {
+      message("Invalid input. Please type 'y' to proceed or 'n' to stop.")
     }
   }
 }
@@ -1622,7 +1703,9 @@ plot_dendrogram <- function(
 plot_all_mean_splines <- function(
     curve_values,
     plot_info,
-    level) {
+    level
+    ) {
+  
   time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
 
   clusters <- unique(curve_values$cluster)
@@ -2023,7 +2106,7 @@ plot_splines <- function(
         )
       
       y_pos_label <- y_max + y_extension * 0.5
-
+      
       result <- maybe_add_dashed_lines(
         p = p,
         plot_info = plot_info,
@@ -2281,117 +2364,159 @@ plot_spline_comparisons <- function(
         time_values = plot_data$Time,
         response_values = plot_data$Y2
       )
-
-      # Create the plot
-      p <- ggplot2::ggplot() +
-        ggplot2::geom_point(
-          data = plot_data,
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Y1,
-            color = paste("Data", condition_1),
-            shape = .data$IsImputed1
-          ),
-          na.rm = TRUE,
-          alpha = 0.5 # Make data dots transparent
-        ) +
-        ggplot2::geom_line(
-          data = data.frame(
-            Time = Time,
-            Fitted = fitted_values_1
-          ),
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Fitted,
-            color = paste("Spline", condition_1),
-          )
-        ) +
-        ggplot2::geom_point(
-          data = plot_data,
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Y2,
-            color = paste("Data", condition_2),
-            shape = .data$IsImputed2
-          ),
-          na.rm = TRUE,
-          alpha = 0.5 # Make data dots transparent
-        ) +
-        ggplot2::geom_line(
-          data = data.frame(
-            Time = Time,
-            Fitted = fitted_values_2
-          ),
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Fitted,
-            color = paste("Spline", condition_2)
-          )
-        ) +
-        ggplot2::scale_color_manual(values = setNames(
-          c(
-            "orange",
-            "orange",
-            "purple",
-            "purple"
-          ),
-          c(
-            paste(
-              "Data",
-              condition_1
+      
+      p <- local({
+        # Create the plot
+        p <- ggplot2::ggplot() +
+          ggplot2::geom_point(
+            data = plot_data,
+            ggplot2::aes(
+              x = .data$Time,
+              y = .data$Y1,
+              color = paste("Data", condition_1),
+              shape = .data$IsImputed1
             ),
-            paste(
-              "Spline",
-              condition_1
+            na.rm = TRUE,
+            alpha = 0.5 # Make data dots transparent
+          ) +
+          ggplot2::geom_line(
+            data = data.frame(
+              Time = Time,
+              Fitted = fitted_values_1
             ),
-            paste(
-              "Data",
-              condition_2
-            ),
-            paste(
-              "Spline",
-              condition_2
+            ggplot2::aes(
+              x = .data$Time,
+              y = .data$Fitted,
+              color = paste("Spline", condition_1),
             )
+          ) +
+          ggplot2::geom_point(
+            data = plot_data,
+            ggplot2::aes(
+              x = .data$Time,
+              y = .data$Y2,
+              color = paste("Data", condition_2),
+              shape = .data$IsImputed2
+            ),
+            na.rm = TRUE,
+            alpha = 0.5 # Make data dots transparent
+          ) +
+          ggplot2::geom_line(
+            data = data.frame(
+              Time = Time,
+              Fitted = fitted_values_2
+            ),
+            ggplot2::aes(
+              x = .data$Time,
+              y = .data$Fitted,
+              color = paste("Spline", condition_2)
+            )
+          ) +
+          # ggplot2::scale_color_manual(values = setNames(
+          #   c(
+          #     "orange",
+          #     "orange",
+          #     "purple",
+          #     "purple"
+          #   ),
+          #   c(
+          #     paste(
+          #       "Data",
+          #       condition_1
+          #     ),
+          #     paste(
+          #       "Spline",
+          #       condition_1
+          #     ),
+          #     paste(
+          #       "Data",
+          #       condition_2
+          #     ),
+          #     paste(
+          #       "Spline",
+          #       condition_2
+          #     )
+          #   )
+          # )) +
+          ggplot2::guides(
+            color = ggplot2::guide_legend(title = NULL),
+            shape = if (any(plot_data$IsImputed1 == "Imputed") ||
+                        any(plot_data$IsImputed2 == "Imputed")) {
+              ggplot2::guide_legend(title = NULL)
+            } else {
+              "none"
+            }
+          ) +
+          ggplot2::scale_shape_manual(values = shape_values) +
+          ggplot2::scale_x_continuous(
+            breaks = filter_timepoints(time_points)
+          ) +
+          ggplot2::labs(
+            title = paste(
+              titles$feature_names[hit],
+              "\nadj.P.Val avrg_diff_conditions: ",
+              signif(avrg_diff_conditions[hit, "adj.P.Val"], digits = 2),
+              avrg_diff_stars,
+              "\nadj.P.Val interaction_condition_time: ",
+              signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
+              interaction_stars,
+              "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
+              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+            ),
+            x = paste0("Time [", plot_info$time_unit, "]"),
+            y = plot_info$y_axis_label
+          ) +
+          ggplot2::theme_minimal() +
+          ggplot2::theme(
+            legend.position = "right",
+            legend.title = element_blank(),
+            plot.title = ggplot2::element_text(size = 7),
+            legend.text = ggplot2::element_text(size = 6),
+            axis.title.x = ggplot2::element_text(size = 8),
+            axis.title.y = ggplot2::element_text(size = 8),
+            axis.text.x = ggplot2::element_text(size = 6)
           )
-        )) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(title = NULL),
-          shape = if (any(plot_data$IsImputed1 == "Imputed") ||
-                      any(plot_data$IsImputed2 == "Imputed")) {
-            ggplot2::guide_legend(title = NULL)
-          } else {
-            "none"
-          }
-        ) +
-        ggplot2::scale_shape_manual(values = shape_values) +
-        ggplot2::scale_x_continuous(
-          breaks = filter_timepoints(time_points)
-        ) +
-        ggplot2::labs(
-          title = paste(
-            titles$feature_names[hit],
-            "\nadj.P.Val avrg_diff_conditions: ",
-            signif(avrg_diff_conditions[hit, "adj.P.Val"], digits = 2),
-            avrg_diff_stars,
-            "\nadj.P.Val interaction_condition_time: ",
-            signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
-            interaction_stars,
-            "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
-            " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
-          ),
-          x = paste0("Time [", plot_info$time_unit, "]"),
-          y = plot_info$y_axis_label
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(
-          legend.position = "right",
-          legend.title = element_blank(),
-          plot.title = ggplot2::element_text(size = 7),
-          legend.text = ggplot2::element_text(size = 6),
-          axis.title.x = ggplot2::element_text(size = 8),
-          axis.title.y = ggplot2::element_text(size = 8),
-          axis.text.x = ggplot2::element_text(size = 6)
+        
+        level <- paste(
+          condition_1,
+          condition_2,
+          sep = "_"
+          )
+        
+        y_combined <- c(plot_data$Y1, plot_data$Y2)  # Combine all values
+        y_max <- max(y_combined, na.rm = TRUE)  # Find the maximum value
+        y_min <- min(y_combined, na.rm = TRUE)  # Find the minimum value
+        y_extension <- (y_max - y_min) * 0.1  # Calculate 10% extension
+        y_pos_label <- y_max + y_extension * 0.5  # Adjust label position
+        
+        result <- maybe_add_dashed_lines(
+          p = p,
+          plot_info = plot_info,
+          level = level,
+          y_pos = y_pos_label,
+          horizontal_labels = TRUE
         )
+        
+        p <- result$p # Updated plot with dashed lines
+        treatment_colors <- result$treatment_colors # Colors used for treatments
+        
+        # Merge default colors with treatment_colors
+        color_values <- setNames(
+          c("orange", "orange", "purple", "purple"),
+          c(
+            paste("Data", condition_1),
+            paste("Spline", condition_1),
+            paste("Data", condition_2),
+            paste("Spline", condition_2)
+          )
+        )
+        color_values <- c(color_values, treatment_colors)
+        
+        # Apply scale_color_manual with merged color values
+        p <- p + ggplot2::scale_color_manual(values = color_values)
+        
+        p
+      })
 
       plot_list[[length(plot_list) + 1]] <- p
       feature_names_list[[length(feature_names_list) + 1]] <-
@@ -3555,7 +3680,7 @@ maybe_add_dashed_lines <- function(
     y_pos = 1,
     horizontal_labels = FALSE
     ) {
-  
+
   # Initialize an empty vector to store treatment colors
   treatment_colors <- c()
 
