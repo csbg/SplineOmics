@@ -98,8 +98,7 @@ Follow the steps below to install the `SplineOmics` package from the GitHub repo
 Note that some installation paths potentially are not writable on **Windows**. Therefore, it can be necessary to set up a library path and use that path for the installations:
 
 ``` r
-# Define the custom library path and expand the tilde (~)
-custom_lib_path <- path.expand("~/Rlibs")
+custom_lib_path <- "C:/Rlibs"  # Replace with your desired path
 
 # Create the directory if it doesn't exist
 if (!dir.exists(custom_lib_path)) {

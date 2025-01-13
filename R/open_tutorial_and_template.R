@@ -17,8 +17,14 @@ open_tutorial <- function() {
   # Check if rstudioapi is installed
   if (!requireNamespace("rstudioapi", quietly = TRUE)) {
     stop_call_false(
-      "The 'rstudioapi' package is not installed. ",
-      "Please install it manually with: install.packages('rstudioapi')."
+      "The 'rstudioapi' package is not installed.\n",
+      "Please install it manually (to your custom_lib_path) using the command", 
+      "below and re-run the function:\n\n",
+      "  install.packages('rstudioapi')\n\n",
+      "This is an optional dependency of the SplineOmics package, ",
+      "only needed for optional functionality and not part of the core", 
+      "package, which is why it must be installed manually if this function", 
+      "is used."
     )
   }
 
@@ -56,10 +62,15 @@ open_tutorial <- function() {
 open_template <- function() {
   # Check if rstudioapi is installed
   if (!requireNamespace("rstudioapi", quietly = TRUE)) {
-    stop(
-      "The 'rstudioapi' package is not installed. ",
-      "Please install it manually with: install.packages('rstudioapi').",
-      call. = FALSE
+    stop_call_false(
+      "The 'rstudioapi' package is not installed.\n",
+      "Please install it manually (to your custom_lib_path) using the", 
+      "command below and re-run the function:\n\n",
+      "  install.packages('rstudioapi')\n\n",
+      "This is an optional dependency of the SplineOmics package, ",
+      "only needed for optional functionality and not part of the", 
+      "core package, ",
+      "which is why it must be installed manually if this function is used."
     )
   }
 
