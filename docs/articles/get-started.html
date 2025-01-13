@@ -43,7 +43,7 @@
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq%20analysis.html">RNA-seq analysis</a></li>
   </ul>
 </li>
       </ul>
@@ -259,10 +259,13 @@ normality. Proper transformation helps ensure that the assumptions
 underlying the statistical tests are met, leading to more accurate and
 trustworthy results.</p></li>
 <li><p>The samples in the data should be independent of each other.
-Linear models, such as those used in limma, assume that the observations
-(samples) are independent. If there is a dependency between samples
-(e.g., repeated measurements of the same subject), this assumption is
-violated, which can lead to incorrect statistical inferences.</p></li>
+Linear models,<br>
+such as those used in limma, assume that the observations (samples)
+are<br>
+independent. If there is a dependency between samples (e.g.,
+repeated<br>
+measurements of the same subject), this assumption is violated, which
+can lead to incorrect statistical inferences.</p></li>
 </ul>
 <div class="section level3">
 <h3 id="bring-the-inputs-into-the-standardized-format">Bring the Inputs into the Standardized Format<a class="anchor" aria-label="anchor" href="#bring-the-inputs-into-the-standardized-format"></a>
@@ -896,13 +899,13 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co"># Like this you can add individual treatment labels to your plots:</span></span>
 <span><span class="co"># treatment_labels = list(</span></span>
 <span><span class="co">#   exponential = "treatment 1", # One treatment in exp</span></span>
-<span><span class="co">#   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat</span></span>
+<span><span class="co">#   stationary = c("treatment 2", "treatment 3"),  # Two treatments in stat</span></span>
 <span><span class="co">#   additional_condition = NA  # No treatment in the hypothetical third condition</span></span>
 <span><span class="co">#   )</span></span>
 <span><span class="co">#</span></span>
 <span><span class="co"># treatment_timepoints = list(</span></span>
 <span><span class="co">#   exponential = 0,</span></span>
-<span><span class="co">#   stationary = C(100, 140),  # Two treatments also need two timepoints</span></span>
+<span><span class="co">#   stationary = c(100, 140),  # Two treatments also need two timepoints</span></span>
 <span><span class="co">#   additional_condition = NA</span></span>
 <span><span class="co">#   )</span></span>
 <span><span class="co">#</span></span>

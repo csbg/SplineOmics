@@ -25,7 +25,7 @@ library(dplyr)
 
 data_excel <- readRDS(system.file(
   "extdata",
-  "proteomics_data.rds",
+  "proteomics_data.rds.xz",
   package = "SplineOmics"
 ))
 
@@ -144,36 +144,36 @@ meta <- meta[!meta$`Sample.ID` %in% c(
 
 # Simulate RNA-seq data to test voom functionality -----------------------------
 
-generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
-  set.seed(123)  # For reproducibility
-
-  # Define sample and gene names
-  gene_names <- paste0("Gene", 1:n_genes)
-  sample_names <- paste0("Sample", 1:n_samples)
-
-  # Generate random raw RNA-seq counts (Poisson distributed)
-  # Base expression level with some variability
-  base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
-  counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
-
-  # Assign row and column names
-  rownames(counts_matrix) <- gene_names
-  colnames(counts_matrix) <- sample_names
-
-  return(counts_matrix)
-}
-
-# Example usage:
-n_genes <- 4162  # Adjust the number of genes as needed
-# data <- generate_rnaseq_data(n_genes = n_genes)
-
-voom_obj <- preprocess_rna_seq_data(
-  raw_counts = data,
-  meta = meta,
-  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                       dof = c(2L)),
-  design = "~ 1 + Phase*X + Reactor"
-)
+# generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
+#   set.seed(123)  # For reproducibility
+# 
+#   # Define sample and gene names
+#   gene_names <- paste0("Gene", 1:n_genes)
+#   sample_names <- paste0("Sample", 1:n_samples)
+# 
+#   # Generate random raw RNA-seq counts (Poisson distributed)
+#   # Base expression level with some variability
+#   base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
+#   counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
+# 
+#   # Assign row and column names
+#   rownames(counts_matrix) <- gene_names
+#   colnames(counts_matrix) <- sample_names
+# 
+#   return(counts_matrix)
+# }
+# 
+# # Example usage:
+# n_genes <- 4162  # Adjust the number of genes as needed
+# # data <- generate_rnaseq_data(n_genes = n_genes)
+# 
+# voom_obj <- preprocess_rna_seq_data(
+#   raw_counts = data,
+#   meta = meta,
+#   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+#                        dof = c(2L)),
+#   design = "~ 1 + Phase*X + Reactor"
+# )
 
 # data <- voom_obj$E
 

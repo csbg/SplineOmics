@@ -24,14 +24,14 @@ namespace_packages <- gsub("import\\((.*)\\)", "\\1", namespace_packages)
 namespace_packages <- gsub(" ", "", namespace_packages)
 
 # Get versions of packages that are in the NAMESPACE file
-package_versions <- sapply(namespace_packages, function(pkg) {
+package_versions <- vapply(namespace_packages, function(pkg) {
   if (pkg %in% names(packages)) {
     version <- packages[[pkg]]$Version
     paste(pkg, "(>= ", version, ")", sep = "")
   } else {
-    NA
+    NA_character_
   }
-}, USE.NAMES = FALSE)
+}, FUN.VALUE = character(1), USE.NAMES = FALSE)
 
 # Remove NAs if any package is not found in the lock file
 package_versions <- package_versions[!is.na(package_versions)]

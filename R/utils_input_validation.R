@@ -1117,7 +1117,7 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       # Check that each element of plot_info can be NULL (so absent)
-      if (all(sapply(plot_info, is.null))) {
+      if (all(vapply(plot_info, is.null, logical(1)))) {
         stop("At least one element of plot_info must be non-NULL",
              call. = FALSE)
       }

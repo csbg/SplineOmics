@@ -22,7 +22,7 @@
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq%20analysis.html">RNA-seq analysis</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -41,7 +41,7 @@
     <div class="section level2">
       <h2 id="user-available-functions">User Available Functions<a class="anchor" aria-label="anchor" href="#user-available-functions"></a></h2>
 
-      <div class="section-desc"><p>This section contains the documentation for all functions available to the user in the SplineOmics package. These are the main functions available for users to interact with the package.</p></div>
+      <div class="section-desc"><p>This section contains the documentation for all functions available to the user in the SplineOmics package.</p></div>
 
 
     </div><div class="section level2">
@@ -54,61 +54,61 @@
           <code><a href="cluster_hits.html">cluster_hits()</a></code>
 
         </dt>
-        <dd>cluster_hits.R contains the exported package function cluster_hits and all the functions that make up the functionality of cluster_hits. cluster_hits clusters the hits of a time series omics datasets (the features that were significantly changed over the time course) with hierarchical clustering of the spline shape. Cluster Hits from Top Tables</dd>
+        <dd>Cluster hits (significant features) based on the spline shape</dd>
       </dl><dl><dt>
 
           <code><a href="create_limma_report.html">create_limma_report()</a></code>
 
         </dt>
-        <dd>Create a limma report</dd>
+        <dd>Shows the limma results with p-value histograms and volcano plots in an HTML report</dd>
       </dl><dl><dt>
 
           <code><a href="create_splineomics.html">create_splineomics()</a></code>
 
         </dt>
-        <dd>Create a SplineOmics object</dd>
+        <dd>Creates a SplineOmics object, which holds common variables used by several functions of the package</dd>
       </dl><dl><dt>
 
           <code><a href="download_enrichr_databases.html">download_enrichr_databases()</a></code>
 
         </dt>
-        <dd>Download Enrichr Databases</dd>
+        <dd>Downloads specified Enrichr databases from the web</dd>
       </dl><dl><dt>
 
           <code><a href="explore_data.html">explore_data()</a></code>
 
         </dt>
-        <dd>Generate Exploratory Plots</dd>
+        <dd>Generates exploratory plots of the data matrix such as PCA</dd>
       </dl><dl><dt>
 
           <code><a href="extract_data.html">extract_data()</a></code>
 
         </dt>
-        <dd>extract_data.R contains the exported package function extract_data. This function automatically recognises the data field in a table and returns the data matrix, that serves as input for the other functions of this package. This is for convenience only. Extract Numeric Matrix from Dataframe</dd>
+        <dd>Optional convenience function for extracting a numeric matrix from dataframe</dd>
       </dl><dl><dt>
 
           <code><a href="make_scatter_plot_html.html">make_scatter_plot_html()</a></code>
 
         </dt>
-        <dd>Generate Scatter Plot Report for Each Feature with Embedded Base64 Images</dd>
+        <dd>Generate scatter plot report for rach feature with embedded base64 images</dd>
       </dl><dl><dt>
 
           <code><a href="open_template.html">open_template()</a></code>
 
         </dt>
-        <dd>Open Template for Quick Setup</dd>
+        <dd>Open template for SplineOmics analysis for quick setup</dd>
       </dl><dl><dt>
 
           <code><a href="open_tutorial.html">open_tutorial()</a></code>
 
         </dt>
-        <dd>Interactive Tutorial for Getting Started</dd>
+        <dd>Opens the get-started vignette as an editable .Rmd file in RStudio</dd>
       </dl><dl><dt>
 
           <code><a href="preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code>
 
         </dt>
-        <dd>Perform default preprocessing of raw RNA-seq counts</dd>
+        <dd>Perform default preprocessing of raw RNA-seq counts using limma::voom</dd>
       </dl><dl><dt>
 
           <code><a href="print.SplineOmics.html">print(<i>&lt;SplineOmics&gt;</i>)</a></code>
@@ -120,25 +120,25 @@
           <code><a href="run_gsea.html">run_gsea()</a></code>
 
         </dt>
-        <dd>Generate a GSEA Report</dd>
+        <dd>Performs gene set enrichment analysis of the clustered hits using clusterProfiler</dd>
       </dl><dl><dt>
 
           <code><a href="run_limma_splines.html">run_limma_splines()</a></code>
 
         </dt>
-        <dd>Run limma analysis with splines</dd>
+        <dd>Central function of the package that runs a limma analysis with splines</dd>
       </dl><dl><dt>
 
           <code><a href="screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code>
 
         </dt>
-        <dd>Limma Hyperparameters Screening</dd>
+        <dd>Allows to test different "hyperparameters" in a semi-combinatorial way</dd>
       </dl><dl><dt>
 
           <code><a href="update_splineomics.html">update_splineomics()</a></code>
 
         </dt>
-        <dd>Update a SplineOmics object</dd>
+        <dd>Update a SplineOmics object with new values for stored variables or add new variables</dd>
       </dl></div>
   </main></div>
 
