@@ -129,29 +129,26 @@ Alternatively, you can run `RStudio` as administrator once for the installation 
 
 ``` r
 install.packages(
-  "BiocManager", 
-  # lib = custom_lib_path
+  "BiocManager"
+  # lib = custom_lib_path 
 )
 ```
 
 3.  **Install Bioconductor dependencies** separately using `BiocManager`
 
 ``` r
-library(BiocManager)  # load the BiocManager package
-BiocManager::install(c(
-  "ComplexHeatmap",
-  "limma"
-  ), 
-  force = TRUE,
+BiocManager::install(
+  c("ComplexHeatmap", "limma")
+  # force = TRUE   # when encountering issues
   # lib = custom_lib_path 
-  )
+)
 ```
 
 4.  **Install** the **`remotes`** package for GitHub downloads (if not already installed)
 
 ``` r
 install.packages(
-  "remotes",
+  "remotes"
   # lib = custom_lib_path
 )
 ```
@@ -159,13 +156,12 @@ install.packages(
 5.  **Install** the **`SplineOmics`** package from GitHub and all its non-Bioconductor dependencies, using `remotes`
 
 ``` r
-library(remotes)  # load the remotes package
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.1.0",       # Specify the tag to install
+  ref = "0.1.0",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
-  force = TRUE,         # Force reinstallation
-  upgrade = "always",   # Always upgrade dependencies
+  upgrade = "always"    # Always upgrade dependencies
+  # force = TRUE        # when encountering issues
   # lib = custom_lib_path 
 )
 ```
@@ -173,10 +169,11 @@ remotes::install_github(
 6.  **Verify** the **installation** of the `SplineOmics` package
 
 ``` r
+# Verify the installation of the SplineOmics package
 if ("SplineOmics" %in% rownames(installed.packages())) {
-  message("SplineOmics installed successfully.")
+  message("SplineOmics was installed successfully.")
 } else {
-  message("SplineOmics installation failed.")
+  message("SplineOmics installation failed. Please check for errors during installation.")
 }
 ```
 
