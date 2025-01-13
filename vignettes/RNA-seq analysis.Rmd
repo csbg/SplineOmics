@@ -1,10 +1,10 @@
 ---
-title: "RNA_seq_analysis"
+title: "RNA-seq analysis"
 author: "Thomas Rauter"
-date: "10 January, 2025"
+date: "13 January, 2025"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RNA_seq_analysis}
+  %\VignetteIndexEntry{RNA-seq analysis}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -93,9 +93,7 @@ The main objectives of this analysis are:
 # Load the packages
 
 ```{r setup, eval = TRUE}
-# library(SplineOmics)
-library(devtools)
-load_all()
+library(SplineOmics)
 library(readr) # For reading the meta CSV file
 library(here)  # For managing filepaths
 library(dplyr) # For data manipulation
@@ -119,19 +117,35 @@ meta <- readr::read_csv(
   ),
   show_col_types = FALSE
 )
+```
+## Show top rows of data
 
-cat("### Head of RNA-Seq Data\n")
-kable(head(data), format = "markdown")
-
-cat("\n### Head of Metadata\n")
-kable(head(meta), format = "markdown")
+```{r Show data head, eval = TRUE}
+kable(
+  head(data),
+  format = "markdown"
+  )
 ```
 
 **data**: A numeric matrix where each row represents a gene (features)
 and each column corresponds to a sample. The row names of the matrix
 contain the gene identifiers, while the columns are aligned with the
 sample metadata in meta. The matrix contains expression values for 136
-samples.
+samples. 
+
+Note that the study was conducted in a blinded manner, with samples randomly distributed across two plates for RNA-seq analysis. As a result, the sample numbers (e.g., 1, 2, 3, etc.) are not in sequential order with respect to time, condition, or plate.
+
+For the data analysis involving splines over time, it is essential to sort the samples based on time to establish a valid temporal sequence. Additionally, organizing the data in this way improves clarity and ensures consistency. Within each time point, samples were further sorted by condition (e.g., constant before `temp_shift`) and, subsequently, by plate (e.g., `plate_1` before `plate_2`).
+
+
+## Show top rows of meta
+
+```{r Show meta head, eval = TRUE}
+kable(
+  head(meta),
+  format = "markdown"
+  )
+```
 
 **meta**: A data frame containing metadata information about the samples
 in data. Each row in meta corresponds to a column in data, ensuring a
@@ -141,8 +155,24 @@ SampleNr, Reactor, Time, Condition, and Plate.
 
 # Preprocess the data
 
-```{r Filter data rows (genes) with zero counts across all samples, eval = TRUE}
+Filter out data rows (genes) with zero counts across all samples. This step is a standard preprocessing procedure in RNA-seq data analysis, as genes with zero 
+counts in all samples provide no information for downstream analyses.
+
+```{r Filter data rows, eval = TRUE}
+rows_before <- nrow(data)
+
+# Filter data rows
 data <- data[rowSums(data) > 0, ]
+
+rows_after <- nrow(data)
+rows_removed <- rows_before - rows_after
+
+cat(sprintf(
+  "Rows before filtering: %d\nRows after filtering: %d\nRows removed: %d\n", 
+  rows_before,
+  rows_after,
+  rows_removed
+  ))
 ```
 
 # Perform EDA (exploratory data analysis)
@@ -193,16 +223,26 @@ the screen_limma_hyperparams() function, because we already have a clear
 idea of what do use.
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
+spline_params = list(
+  spline_type = c("n"),    # natural cubic splines
+  dof = c(3L)              # Degree of freedom of 2 for the splines.
+)
+
 voom_obj <- preprocess_rna_seq_data(
   raw_counts = data,
   meta = meta,
-  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-                       dof = c(2L)),
+  spline_params = spline_params,
   design = "~ 1 + Condition*X + Plate"
 )
 
 data <- voom_obj$E
 ```
+
+You can customize the normalization method by providing a specific normalization function through the `normalize_func` argument in the `preprocess_rna_seq_data()` function. For details on how to use this feature, please refer to the function documentation available under 'References' on the website.
+
+Additionally, the use of `preprocess_rna_seq_data()` is optional for your RNA-seq data. Alternatively, you can use the `limma::voom` function directly and pass the resulting `voom` object to the `rna_seq_data` argument of `create_splineomics()` or `update_splineomics()`. Alongside this, you must pass the `$E` data matrix as the `data` argument.
+
+In general, as long as the `data` argument contains the actual data matrix and the `rna_seq_data` argument contains an object compatible with `limma`, your data will be correctly processed.
 
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
@@ -211,10 +251,7 @@ splineomics <- SplineOmics::update_splineomics(
   rna_seq_data = voom_obj,
   design = "~ 1 + Condition*X + Plate", 
   mode = "integrated", # means limma uses the full data for each condition.
-  spline_params = list(
-    spline_type = c("n"),    # natural cubic splines
-    dof = c(2L)              # Degree of freedom of 2 for the splines.
-  )
+  spline_params = spline_params
 )
 ```
 
@@ -254,7 +291,7 @@ generate p-value histograms an volcano plots.
 ```{r build limma report, eval = FALSE}
 report_dir <- here::here(
   "results",
-  "create_limma_reports"
+  "limma_reports"
 )
 
 plots <- SplineOmics::create_limma_report(
@@ -398,7 +435,8 @@ gene_set_lib <- c(
 
 SplineOmics::download_enrichr_databases(
   gene_set_lib = gene_set_lib,
-  filename = "databases.tsv"
+  output_dir = here::here(),   # output into the current working dir (default)
+  filename = "databases.tsv"   # just the name of the file, not the full path
 )
 ```
 
@@ -413,7 +451,9 @@ dotplots in R.
 
 ```{r prepare arguments for GSEA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
-downloaded_dbs_filepath <- here::here("databases.tsv")
+downloaded_dbs_filepath <- here::here(
+  "databases.tsv"
+  )
 
 # Load the file
 databases <- read.delim(

@@ -424,8 +424,11 @@ filter_and_append_limma_results <- function(
   }
   
   # Filter all elements in interaction_condition_time and assign names
-  for (name in names(splineomics$limma_splines_result$interaction_condition_time)) {
-    interact_df <- splineomics$limma_splines_result$interaction_condition_time[[name]]
+  for (
+    name in names(splineomics$limma_splines_result$interaction_condition_time)
+    ) {
+    interact_df <- 
+      splineomics$limma_splines_result$interaction_condition_time[[name]]
     filtered_interact[[name]] <- as.data.frame(
       interact_df[interact_df$adj.P.Val < pthresh_interact, ]
     )
@@ -470,7 +473,6 @@ huge_table_user_prompter <- function(tables) {
 
   # If no large tables, return immediately
   if (is.null(large_tables)) {
-    message("All tables have 500 rows or fewer. Proceeding without user prompt.")
     return(NULL)
   }
   

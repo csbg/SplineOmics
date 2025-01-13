@@ -17,7 +17,7 @@ navbar:
 reference:
   - title: User Available Functions
     desc: This section contains the documentation for all functions available 
-    to the user in the SplineOmics package.
+          to the user in the SplineOmics package.
     contents:
       - cluster_hits
       - create_limma_report

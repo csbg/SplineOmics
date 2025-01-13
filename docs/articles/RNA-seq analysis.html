@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>RNA_seq_analysis • SplineOmics</title>
+<title>RNA-seq analysis • SplineOmics</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="RNA_seq_analysis">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="RNA-seq analysis">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -36,14 +36,14 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a Limma Design Formula</a></li>
     <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA_seq_analysis.html">RNA_seq_analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq%20analysis.html">RNA-seq analysis</a></li>
   </ul>
 </li>
       </ul>
@@ -65,14 +65,14 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>RNA_seq_analysis</h1>
+      <h1>RNA-seq analysis</h1>
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
             <h4 data-toc-skip class="date">13 January, 2025</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/RNA_seq_analysis.Rmd" class="external-link"><code>vignettes/RNA_seq_analysis.Rmd</code></a></small>
-      <div class="d-none name"><code>RNA_seq_analysis.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/RNA-seq%20analysis.Rmd" class="external-link"><code>vignettes/RNA-seq analysis.Rmd</code></a></small>
+      <div class="d-none name"><code>RNA-seq analysis.Rmd</code></div>
     </div>
 
     
@@ -162,7 +162,7 @@ shift conditions compared to controls.</p></li>
 <span><span class="co">#&gt; 'variancePartition::topTable' when loading 'SplineOmics'</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readr.tidyverse.org" class="external-link">readr</a></span><span class="op">)</span> <span class="co"># For reading the meta CSV file</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span>  <span class="co"># For managing filepaths</span></span>
-<span><span class="co">#&gt; here() starts at /home/thomas/Documents/PhD/projects/DGTX/R_packages/SplineOmics</span></span>
+<span><span class="co">#&gt; here() starts at /tmp/Rtmp1Tttgy</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
@@ -1321,6 +1321,17 @@ gene (features) and each column corresponds to a sample. The row names
 of the matrix contain the gene identifiers, while the columns are
 aligned with the sample metadata in meta. The matrix contains expression
 values for 136 samples.</p>
+<p>Note that the study was conducted in a blinded manner, with samples
+randomly distributed across two plates for RNA-seq analysis. As a
+result, the sample numbers (e.g., 1, 2, 3, etc.) are not in sequential
+order with respect to time, condition, or plate.</p>
+<p>For the data analysis involving splines over time, it is essential to
+sort the samples based on time to establish a valid temporal sequence.
+Additionally, organizing the data in this way improves clarity and
+ensures consistency. Within each time point, samples were further sorted
+by condition (e.g., constant before <code>temp_shift</code>) and,
+subsequently, by plate (e.g., <code>plate_1</code> before
+<code>plate_2</code>).</p>
 </div>
 <div class="section level3">
 <h3 id="show-top-rows-of-meta">Show top rows of meta<a class="anchor" aria-label="anchor" href="#show-top-rows-of-meta"></a>

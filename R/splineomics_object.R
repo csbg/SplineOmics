@@ -16,7 +16,7 @@
 #' @param condition A condition variable.
 #' @param rna_seq_data An object containing the preprocessed RNA-seq data,
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
-#' This argument is not controlled by any function of the `SplineOmics` package.
+#' This argument is not subjected to input control.
 #' Rather, in that regard it relies on the input control from the `limma::lmfit`
 #' function.
 #' @param annotation A dataframe with the feature descriptions of data

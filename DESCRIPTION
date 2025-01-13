@@ -23,7 +23,8 @@ License: MIT + file LICENSE
 URL: https://csbg.github.io/SplineOmics
 BugReports: https://github.com/csbg/SplineOmics/issues
 biocViews: TimeCourse, GeneExpression, Proteomics, Metabolomics, Transcriptomics,
-           Clustering, StatisticalMethod, Visualization, Software, GeneSetEnrichment
+           Clustering, StatisticalMethod, Visualization, Software, GeneSetEnrichment, 
+           DifferentialExpression, BatchEffect
 Depends: R (>= 4.3.0)
 Imports:
     ComplexHeatmap (>= 2.18.0),
