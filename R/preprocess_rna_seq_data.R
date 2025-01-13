@@ -46,11 +46,15 @@ preprocess_rna_seq_data <- function(
 
   # Check if edgeR is installed; if not, inform the user
   if (!requireNamespace("edgeR", quietly = TRUE)) {
-    stop(
-      "The 'edgeR' package is not installed. ",
-      "Please install it manually using BiocManager::install('edgeR') ",
-      "and re-run the function."
+    stop_call_false(
+      "The 'edgeR' package is not installed.\n",
+      "Please install it manually (to your custom_lib_path) using the command", 
+      " below and re-run the function:\n\n",
+      "  BiocManager::install('edgeR')\n\n",
+      "This is an optional dependency of the SplineOmics package, ",
+      "only needed when working with RNA-seq data."
     )
+    
   }
 
   design_matrix <- design2design_matrix(

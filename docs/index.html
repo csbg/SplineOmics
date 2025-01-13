@@ -68,8 +68,8 @@
 <p><img src="reference/figures/hex_logo.png" align="left" width="65"></p>
 <p>The R package <code>SplineOmics</code> finds the significant features (hits) of time-series -omics data by using splines and <code>limma</code> for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.</p>
 <p>The graphical abstract below shows the full workflow streamlined by <code>SplineOmics</code>:</p>
-<figure><p><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"></p>
-<figcaption aria-hidden="true"><p>Graphical Abstract of SplineOmics Workflow</p>
+<figure><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"><figcaption aria-hidden="true">
+Graphical Abstract of SplineOmics Workflow
 </figcaption></figure><div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
@@ -167,8 +167,7 @@
 </blockquote>
 <p>Note that some installation paths potentially are not writable on <strong>Windows</strong>. Therefore, it can be necessary to set up a library path and use that path for the installations:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Define the custom library path and expand the tilde (~)</span></span>
-<span><span class="va">custom_lib_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span><span class="st">"~/Rlibs"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">custom_lib_path</span> <span class="op">&lt;-</span> <span class="st">"C:/Rlibs"</span>  <span class="co"># Replace with your desired path</span></span>
 <span></span>
 <span><span class="co"># Create the directory if it doesn't exist</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">custom_lib_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>

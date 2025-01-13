@@ -954,10 +954,10 @@ contains an interaction effect).</p>
 <div class="section level2">
 <h2 id="perform-gene-set-enrichment-analysis-gsea">Perform gene set enrichment analysis (GSEA)<a class="anchor" aria-label="anchor" href="#perform-gene-set-enrichment-analysis-gsea"></a>
 </h2>
-<p>Usually, the final step in such a bioinformatics analysis is GSEA. To
-each clustered hit, the respective gene can be assigned and GSEA
-performed. For this, the Enrichr databases of choice have to be
-downloaded:</p>
+<p>Once the clustered hits are identified, a subsequent step to gain
+biological insights is to perform GSEA. For this, the respective genes
+can be assigned to each clustered hit, and GSEA can be carried out. To
+proceed, the Enrichr databases of choice need to be downloaded:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify which databases you want to download from Enrichr</span></span>
 <span><span class="va">gene_set_lib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>

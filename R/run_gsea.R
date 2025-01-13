@@ -178,7 +178,7 @@ control_inputs_create_gsea_report <- function(
 
   if (!is.null(background)) {
     if (!is.character(background)) {
-      stop("background must be a character vector or NULL.", call. = FALSE)
+      stop_call_false("background must be a character vector or NULL.")
     } else {
       check_genes(background)
     }
@@ -199,11 +199,15 @@ control_inputs_create_gsea_report <- function(
 ensure_clusterProfiler <- function() {
   # Check if clusterProfiler is installed; if not, inform the user
   if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
-    stop(
-      "The 'clusterProfiler' package is not installed. ",
-      "Please install it manually using", 
-      "BiocManager::install('clusterProfiler') ",
-      "and re-run the function."
+    stop_call_false(
+      "The 'clusterProfiler' package is not installed.\n",
+      "Please install it manually (to your custom_lib_path) using the", 
+      "command below and re-run the function:\n\n",
+      "  BiocManager::install('clusterProfiler')\n\n",
+      "This is an optional dependency of the SplineOmics package, ",
+      "only needed for optional functionality and not part of the core", 
+      "package, ",
+      "which is why it must be installed manually if this function is used."
     )
   }
 }

@@ -775,10 +775,10 @@ contains an interaction effect).
 
 # Perform gene set enrichment analysis (GSEA)
 
-Usually, the final step in such a bioinformatics analysis is GSEA. To
-each clustered hit, the respective gene can be assigned and GSEA
-performed. For this, the Enrichr databases of choice have to be
-downloaded:
+Once the clustered hits are identified, a subsequent step to gain biological 
+insights is to perform GSEA. For this, the respective genes can be assigned to 
+each clustered hit, and GSEA can be carried out. To proceed, the Enrichr 
+databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
 # Specify which databases you want to download from Enrichr
