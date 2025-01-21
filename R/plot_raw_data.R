@@ -1,3 +1,6 @@
+#' make_scatter_plot_html()
+#' 
+#' @description
 #' Generate scatter plot report for rach feature with embedded base64 images
 #'
 #' @param data A matrix with features as rows and samples as columns. 

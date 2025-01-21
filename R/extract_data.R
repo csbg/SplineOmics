@@ -1,6 +1,4 @@
-# Exported function: extract_data ----------------------------------------------
-
-#' Optional convenience function for extracting a numeric matrix from dataframe
+#' extract_data()
 #'
 #' @description
 #' This function takes a dataframe and identifies a rectangular or quadratic

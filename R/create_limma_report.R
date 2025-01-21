@@ -1,15 +1,4 @@
-# The function create_limma_report() takes the top_tables of the three different
-# categories (within level time diff, between level average diff, and
-# between level average and time diff) and makes histogram and vulcano plots
-# and places them into a nice HTML report.
-
-
-
-# Exported function: create_limma_report() -------------------------------------
-
-
-#' Shows the limma results with p-value histograms and volcano plots in an HTML 
-#' report
+#' create_limma_report()
 #'
 #' @description
 #' Generates an HTML report based on the results of a limma analysis with

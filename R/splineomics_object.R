@@ -1,12 +1,12 @@
 # Exported functions -----------------------------------------------------------
 
 
-#' Creates a SplineOmics object, which holds common variables used by several
-#' functions of the package
+#' create_splineomics()
 #'
 #' @description
 #' Creates a SplineOmics object containing variables that are commonly used
-#' across multiple functions in the package.
+#' across multiple functions in the package. This object is then passed as an
+#' argument to the other functions of this package. 
 #'
 #' @param data The actual omics data. In the case the rna_seq_data argument is
 #' used, still provide this argument. In that case, input the data matrix in
@@ -92,8 +92,7 @@ create_splineomics <- function(
 }
 
 
-#' Update a SplineOmics object with new values for stored variables or add new
-#' variables
+#' update_splineomics()
 #'
 #' @description
 #' Updates a SplineOmics object by modifying existing fields or adding new ones.

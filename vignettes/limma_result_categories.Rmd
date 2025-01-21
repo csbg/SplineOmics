@@ -1,0 +1,149 @@
+---
+title: "limma_result_categories"
+author: "Thomas Rauter"
+date: "2025-01-21"
+output: html_document
+---
+
+# limma Result Categories
+
+limma analysis results can be divided into three categories, which are defined in this document:
+
+1.  **Time Effect**: This category focuses on the changes of the feature (e.g. protein) value that occur over time within a single condition.
+
+2.  **Average Difference Between Conditions**: This category compares the average feature values for levels within a condition, regardless of time.
+
+3.  **Interaction Between Condition and Time**: This category examines the interaction between time and condition. It identifies features whose value changes differently over time depending on the condition.
+
+------------------------------------------------------------------------
+
+### Legend:
+
+-   **A hit** is a feature (e.g. a protein) that is significantly changed over time.
+-   **Levels** are the different factors of a condition of the experiment. For example, bioreactor phase is a condition, and exponential and stationary are levels within that condition.
+
+## Category 1 (time effect)
+
+Temporal pattern within level for a given feature → Hit
+
+#### Example of a Hit
+
+A hit is a feature that shows a clear temporal pattern over time.
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Clear temporal pattern over time"}
+x <- seq(1, 10, length.out = 500)  # More data points for smoother curve
+y <- 10 + 5 * (sin(x) + 1) / 2  # Scale sin(x) to range [10, 15]
+
+plot(x, y, type = "l", lwd = 2, col = "blue", ylim = c(10, 15), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 1: Hit")
+
+```
+
+#### Example of No Hit
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="No clear temporal pattern"}
+plot(1:10, rep(5, 10), type = "l", lwd = 2, col = "red", ylab = "Feature Value", xlab = "Time", main = "Category 1: No Hit")
+```
+
+## Category 2 (average difference conditions)
+
+Overall mean difference between levels for a given feature → Hit
+
+#### Example of a Hit
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="No clear temporal pattern for both levels but overall mean difference between them"}
+x <- seq(1, 10, length.out = 500)  # More data points for smoother curves
+y1 <- 12 + 0.1 * sin(x / 2)  # Slightly wavy, almost horizontal line for Level 1
+y2 <- 13 + 0.1 * sin(x / 2)  # Slightly wavy, almost horizontal line for Level 2
+
+# Adjust margins to create space for the legend
+par(mar = c(5, 4, 4, 8))  # Increase the right margin
+
+plot(x, y1, type = "l", lwd = 2, col = "blue", ylim = c(10, 15), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 2: Hit")
+lines(x, y2, lwd = 2, col = "red")
+
+# Add legend outside the plotting area
+legend("topright", inset = c(-0.4, 0), legend = c("Level 1", "Level 2"), 
+       col = c("blue", "red"), lty = 1, lwd = 2, xpd = TRUE)
+```
+
+#### Example of No Hit
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Clear temporal pattern for both levels but no overall mean difference in feature value between them."}
+x <- seq(1, 10, length.out = 100)  # More data points for smooth lines
+y1 <- 10 + 5 * (sin(x) + 1) / 2    # Scale sin(x) to range [10, 15]
+y2 <- 10 + 5 * (cos(x) + 1) / 2    # Scale cos(x) to range [10, 15]
+
+# Adjusting margins to create space for the legend
+par(mar = c(5, 4, 4, 8))  # Increase the right margin
+
+plot(x, y1, type = "l", lwd = 2, col = "blue", ylim = c(10, 15), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 2: No Hit")
+lines(x, y2, lwd = 2, col = "red")
+
+# Add legend outside the plotting area
+legend("topright", inset = c(-0.4, 0), legend = c("Level 1", "Level 2"), 
+       col = c("blue", "red"), lty = 1, lwd = 2, xpd = TRUE)
+```
+
+## Category 3 (interaction condition & time)
+
+Treatment interacting with time for a feature (time effect changing with treatment, the feature must have different temporal patterns in both conditions/levels) → Hit
+
+#### Examples of Hits
+
+Different temporal patterns are observed for each level --\> hit in category 3.
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Different temporal patterns of the feature for both levels."}
+x <- seq(1, 10, length.out = 100)  # More data points for smooth lines
+y1 <- 10 + 5 * (sin(x) + 1) / 2    # Scale sin(x) to range [10, 15]
+y2 <- 10 + 5 * (cos(x) + 1) / 2    # Scale cos(x) to range [10, 15]
+
+# Adjusting margins to create space for the legend
+par(mar = c(5, 4, 4, 8))  # Increase the right margin
+
+plot(x, y1, type = "l", lwd = 2, col = "blue", ylim = c(10, 15), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 3: Hit")
+lines(x, y2, lwd = 2, col = "red")
+
+# Add legend outside the plotting area
+legend("topright", inset = c(-0.4, 0), legend = c("Level 1", "Level 2"), 
+       col = c("blue", "red"), lty = 1, lwd = 2, xpd = TRUE)
+```
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Different temporal patterns of the feature for both levels."}
+x <- seq(1, 10, length.out = 100)  # More data points for smooth lines
+y1 <- 0.25 + 0.75 * (x / max(x))  # Straight upward trend
+y2 <- 0.75 - 0.75 * (x / max(x))  # Straight downward trend
+
+# Adjust margins to create space for the legend
+par(mar = c(5, 4, 4, 8))  # Increase the right margin
+
+plot(x, y1, type = "l", lwd = 2, col = "blue", ylim = c(0, 1), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 3: Hit")
+lines(x, y2, lwd = 2, col = "red")
+
+# Add legend outside the plotting area
+legend("topright", inset = c(-0.4, 0), legend = c("Level 1", "Level 2"), 
+       col = c("blue", "red"), lty = 1, lwd = 2, xpd = TRUE)
+```
+
+#### Example of No Hit
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Overall the same temporal pattern of a feature for both levels."}
+x <- seq(1, 10, length.out = 100)  # More data points for smooth lines
+y1 <- 0.75 - 0.5 * (x / max(x))  # First downward trend
+y2 <- 0.65 - 0.4 * (x / max(x))  # Second downward trend with a slightly different slope
+
+# Adjust margins to create space for the legend
+par(mar = c(5, 4, 4, 8))  # Increase the right margin
+
+plot(x, y1, type = "l", lwd = 2, col = "red", ylim = c(0, 1), 
+     ylab = "Feature Value", xlab = "Time", main = "Category 3: No Hit")
+lines(x, y2, lwd = 2, col = "blue")
+
+# Add legend outside the plotting area
+legend("topright", inset = c(-0.4, 0), legend = c("Line 1", "Line 2"), 
+       col = c("red", "blue"), lty = 1, lwd = 2, xpd = TRUE)
+```

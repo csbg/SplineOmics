@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_hits.R
 \name{cluster_hits}
 \alias{cluster_hits}
-\title{Cluster hits (significant features) based on the spline shape}
+\title{cluster_hits()}
 \usage{
 cluster_hits(
   splineomics,

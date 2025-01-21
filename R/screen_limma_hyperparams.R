@@ -1,7 +1,4 @@
-# Exported function: screen_limma_hyperparams() --------------------------------
-
-
-#' Allows to test different "hyperparameters" in a semi-combinatorial way
+#' screen_limma_hyperparams()
 #'
 #' This function screens through various combinations of hyperparameters for
 #' limma analysis,

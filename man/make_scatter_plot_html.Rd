@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_raw_data.R
 \name{make_scatter_plot_html}
 \alias{make_scatter_plot_html}
-\title{Generate scatter plot report for rach feature with embedded base64 images}
+\title{make_scatter_plot_html()}
 \usage{
 make_scatter_plot_html(
   data,

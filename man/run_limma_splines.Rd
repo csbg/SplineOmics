@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_limma_splines.R
 \name{run_limma_splines}
 \alias{run_limma_splines}
-\title{Central function of the package that runs a limma analysis with splines}
+\title{run_limma_splines()}
 \usage{
 run_limma_splines(splineomics)
 }

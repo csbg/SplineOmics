@@ -1,7 +1,4 @@
-# Exported function: run_limma_splines() ---------------------------------------
-
-
-#' Central function of the package that runs a limma analysis with splines
+#' run_limma_splines()
 #'
 #' @description
 #' This function performs a limma spline analysis to identify significant

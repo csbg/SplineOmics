@@ -1,4 +1,4 @@
-#' Perform default preprocessing of raw RNA-seq counts using limma::voom
+#' preprocess_rna_seq_data()
 #'
 #' @description
 #' The `preprocess_rna_seq_data()` function performs essential preprocessing
