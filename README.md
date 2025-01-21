@@ -34,9 +34,9 @@ Workflow</figcaption>
 - [🔧 Installation](#-installation)
   - [🐳 Docker Container](#-docker-container)
 - [▶️ Usage](#-usage)
-  - [Tutorial](#-tutorial)
-  - [Details](#-details)
-  - [RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
+  - [🎓 Tutorial](#-tutorial)
+  - [📋 Details](#-details)
+  - [🧬 RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
@@ -162,6 +162,13 @@ Alternatively, you can run `RStudio` as administrator once for the
 installation (which is however generally not recommended, because it is
 a security risk).
 
+> **Additional note for Windows Users:**
+
+During the installation on Windows, you might see a message indicating
+that Rtools is not installed, which is typically required for compiling
+R packages from source. However, for this installation, Rtools is not
+necessary, and you can safely ignore this message.
+
 1.  **Open RStudio** or your R console.
 
 2.  **Install `BiocManager`** for Bioconductor dependencies (if not
@@ -256,9 +263,9 @@ If you face “permission denied” issues on Linux distributions, check
 this
 [vignette](https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html).
 
-## ▶ Usage
+## ▶️ Usage
 
-### Tutorial
+### 🎓 Tutorial
 
 [This
 tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html)
@@ -279,7 +286,7 @@ library(SplineOmics)
 open_template()
 ```
 
-### Details
+### 📋 Details
 
 A detailed description of all arguments and outputs of all the functions
 in the package (exported and internal functions) can be found
@@ -293,7 +300,7 @@ A quick guide on how to design a `limma` design formula can be found
 An explanation of the three different `limma` results is
 [here](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
 
-### RNA-seq and Glycan Data
+### 🧬 RNA-seq and Glycan Data
 
 #### RNA-seq data
 
@@ -308,6 +315,10 @@ as the final object and matrix are compatible with limma. One way to
 preprocess your RNA-seq data is by using the `preprocess_rna_seq_data()`
 function included in the `SplineOmics` package (see
 [documentation](https://csbg.github.io/SplineOmics/reference/preprocess_rna_seq_data.html)).
+
+[Here](https://csbg.github.io/SplineOmics/articles/RNA-seq%20analysis.html)
+you can find an example analysis of RNA-seq data with the SplineOmics
+package.
 
 #### Glycan fractional abundance data
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/open_tutorial_and_template.R
 \name{open_tutorial}
 \alias{open_tutorial}
-\title{Opens the get-started vignette as an editable .Rmd file in RStudio}
+\title{open_tutorial()}
 \usage{
 open_tutorial()
 }

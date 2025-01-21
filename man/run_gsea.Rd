@@ -2,8 +2,7 @@
 % Please edit documentation in R/run_gsea.R
 \name{run_gsea}
 \alias{run_gsea}
-\title{Performs gene set enrichment analysis of the clustered hits using
-clusterProfiler}
+\title{run_gsea()}
 \usage{
 run_gsea(
   levels_clustered_hits,

@@ -1,8 +1,4 @@
-# Export functions definitions -------------------------------------------------
-
-
-#' Performs gene set enrichment analysis of the clustered hits using
-#' clusterProfiler
+#' run_gsea()
 #'
 #' @description
 #' This function generates a Gene Set Enrichment Analysis (GSEA) report based

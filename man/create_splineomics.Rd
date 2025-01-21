@@ -2,8 +2,7 @@
 % Please edit documentation in R/splineomics_object.R
 \name{create_splineomics}
 \alias{create_splineomics}
-\title{Creates a SplineOmics object, which holds common variables used by several
-functions of the package}
+\title{create_splineomics()}
 \usage{
 create_splineomics(
   data,
@@ -81,5 +80,6 @@ A SplineOmics object.
 }
 \description{
 Creates a SplineOmics object containing variables that are commonly used
-across multiple functions in the package.
+across multiple functions in the package. This object is then passed as an
+argument to the other functions of this package.
 }

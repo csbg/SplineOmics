@@ -585,7 +585,7 @@ hyperparameters are generated (every possible combination of all
 specified adj. p-value thresholds and spline configs).
 
 The encoding used in the reports and the titles is
-[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html)
 (This is part of the output of the screen_limma_hyperparams function).
 
 # Run limma spline analysis
@@ -775,10 +775,10 @@ contains an interaction effect).
 
 # Perform gene set enrichment analysis (GSEA)
 
-Once the clustered hits are identified, a subsequent step to gain biological 
-insights is to perform GSEA. For this, the respective genes can be assigned to 
-each clustered hit, and GSEA can be carried out. To proceed, the Enrichr 
-databases of choice need to be downloaded:
+Once the clustered hits are identified, a subsequent step to gain
+biological insights is to perform GSEA. For this, the respective genes
+can be assigned to each clustered hit, and GSEA can be carried out. To
+proceed, the Enrichr databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
 # Specify which databases you want to download from Enrichr

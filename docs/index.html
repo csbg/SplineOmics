@@ -45,6 +45,7 @@
     <li><a class="dropdown-item" href="articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
     <li><a class="dropdown-item" href="articles/Docker-instructions.html">Docker-instructions</a></li>
     <li><a class="dropdown-item" href="articles/get-started.html">get-started</a></li>
+    <li><a class="dropdown-item" href="articles/limma_result_categories.html">limma_result_categories</a></li>
     <li><a class="dropdown-item" href="articles/RNA-seq%20analysis.html">RNA-seq analysis</a></li>
   </ul>
 </li>
@@ -84,9 +85,9 @@ Graphical Abstract of SplineOmics Workflow
 <li>
 <a href="#id_-usage">▶️ Usage</a>
 <ul>
-<li><a href="#id_-tutorial">Tutorial</a></li>
-<li><a href="#id_-details">Details</a></li>
-<li><a href="#id_-rna-seq-and-glycan-data">RNA-seq and Glycan Data</a></li>
+<li><a href="#id_-tutorial">🎓 Tutorial</a></li>
+<li><a href="#id_-details">📋 Details</a></li>
+<li><a href="#id_-rna-seq-and-glycan-data">🧬 RNA-seq and Glycan Data</a></li>
 </ul>
 </li>
 <li><a href="#id_-dependencies">📦 Dependencies</a></li>
@@ -188,6 +189,10 @@ Graphical Abstract of SplineOmics Workflow
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"Failed to set library path."</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Alternatively, you can run <code>RStudio</code> as administrator once for the installation (which is however generally not recommended, because it is a security risk).</p>
+<blockquote>
+<p><strong>Additional note for Windows Users:</strong></p>
+</blockquote>
+<p>During the installation on Windows, you might see a message indicating that Rtools is not installed, which is typically required for compiling R packages from source. However, for this installation, Rtools is not necessary, and you can safely ignore this message.</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Open RStudio</strong> or your R console.</p></li>
 <li><p><strong>Install <code>BiocManager</code></strong> for Bioconductor dependencies (if not already installed)</p></li>
@@ -264,10 +269,10 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_-usage">▶ Usage<a class="anchor" aria-label="anchor" href="#id_-usage"></a>
+<h2 id="id_️-usage">▶️ Usage<a class="anchor" aria-label="anchor" href="#id_%EF%B8%8F-usage"></a>
 </h2>
 <div class="section level3">
-<h3 id="tutorial">Tutorial<a class="anchor" aria-label="anchor" href="#tutorial"></a>
+<h3 id="id_-tutorial">🎓 Tutorial<a class="anchor" aria-label="anchor" href="#id_-tutorial"></a>
 </h3>
 <p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
 <p>To open an R Markdown file of the <strong>tutorial</strong> in <code>RStudio</code>, run:</p>
@@ -280,7 +285,7 @@ Graphical Abstract of SplineOmics Workflow
 <span><span class="fu"><a href="reference/open_template.html">open_template</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
+<h3 id="id_-details">📋 Details<a class="anchor" aria-label="anchor" href="#id_-details"></a>
 </h3>
 <p>A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found <a href="https://csbg.github.io/SplineOmics/reference/">here</a>.</p>
 <div class="section level4">
@@ -291,12 +296,13 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level3">
-<h3 id="rna-seq-and-glycan-data">RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#rna-seq-and-glycan-data"></a>
+<h3 id="id_-rna-seq-and-glycan-data">🧬 RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#id_-rna-seq-and-glycan-data"></a>
 </h3>
 <div class="section level4">
 <h4 id="rna-seq-data">RNA-seq data<a class="anchor" aria-label="anchor" href="#rna-seq-data"></a>
 </h4>
 <p>Transcriptomics data must be preprocessed for <code>limma</code>. You need to provide an appropriate object, such as a <code>voom</code> object, in the <code>rna_seq_data</code> argument of the <code>SplineOmics</code> object (see <a href="https://csbg.github.io/SplineOmics/reference/create_splineomics.html">documentation</a>). Along with this, the normalized matrix (e.g., the <code>$E</code> slot of the <code>voom</code> object) must be passed to the <code>data</code> argument. This allows flexibility in preprocessing; you can use any method you prefer as long as the final object and matrix are compatible with limma. One way to preprocess your RNA-seq data is by using the <code><a href="reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function included in the <code>SplineOmics</code> package (see <a href="https://csbg.github.io/SplineOmics/reference/preprocess_rna_seq_data.html">documentation</a>).</p>
+<p><a href="https://csbg.github.io/SplineOmics/articles/RNA-seq%20analysis.html">Here</a> you can find an example analysis of RNA-seq data with the SplineOmics package.</p>
 </div>
 <div class="section level4">
 <h4 id="glycan-fractional-abundance-data">Glycan fractional abundance data<a class="anchor" aria-label="anchor" href="#glycan-fractional-abundance-data"></a>

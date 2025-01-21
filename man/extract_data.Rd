@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract_data.R
 \name{extract_data}
 \alias{extract_data}
-\title{Optional convenience function for extracting a numeric matrix from dataframe}
+\title{extract_data()}
 \usage{
 extract_data(data, feature_name_columns = NA, user_prompt = TRUE)
 }

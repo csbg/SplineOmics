@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess_rna_seq_data.R
 \name{preprocess_rna_seq_data}
 \alias{preprocess_rna_seq_data}
-\title{Perform default preprocessing of raw RNA-seq counts using limma::voom}
+\title{preprocess_rna_seq_data()}
 \usage{
 preprocess_rna_seq_data(
   raw_counts,

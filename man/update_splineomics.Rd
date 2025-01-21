@@ -2,8 +2,7 @@
 % Please edit documentation in R/splineomics_object.R
 \name{update_splineomics}
 \alias{update_splineomics}
-\title{Update a SplineOmics object with new values for stored variables or add new
-variables}
+\title{update_splineomics()}
 \usage{
 update_splineomics(splineomics, ...)
 }

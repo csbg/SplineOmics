@@ -1,4 +1,4 @@
-#' Opens the get-started vignette as an editable .Rmd file in RStudio
+#' open_tutorial()
 #'
 #' @description
 #' This function opens the `tutorial.Rmd` file in RStudio for
@@ -43,7 +43,7 @@ open_tutorial <- function() {
 }
 
 
-#' Open template for SplineOmics analysis for quick setup
+#' open_template()
 #'
 #' @description
 #' This function opens the `template.Rmd` file in RStudio for

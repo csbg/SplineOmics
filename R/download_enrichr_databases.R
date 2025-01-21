@@ -1,7 +1,4 @@
-# Exported function: download_enrichr_databases() ------------------------------
-
-
-#' Downloads specified Enrichr databases from the web
+#' download_enrichr_databases()
 #'
 #' @description
 #' This function downloads gene sets from specified Enrichr databases and saves

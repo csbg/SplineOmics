@@ -1,17 +1,21 @@
-# Exported function: explore_data () -------------------------------------------
-
-
-#' Generates exploratory plots of the data matrix such as PCA
+#' explore_data()
 #'
 #' @description
-#' This function takes a data matrix, checks its validity, and generates a list
-#' of exploratory plots including density plots, boxplots, PCA plots, MDS plots,
-#' variance explained plots, and violin plots.
+#' This function automatically generates exploratory data analysis (EDA) plots 
+#' from the provided data. These include density plots, boxplots, PCA plots, 
+#' MDS plots, variance explained plots, violin plots, mean correlation with 
+#' time, first lag autocorrelation, lag1 differences, and coefficient of 
+#' variation. The function returns all EDA plots as a list and, by default, 
+#' creates an HTML report containing the plots, saving it to the specified 
+#' report directory.
 #'
 #' @param splineomics A SplineOmics object, containing the data, meta,
 #'                    condition, report_info, meta_batch_column, and
-#'                    meta_batch2_column;
-#' @param report_dir A non-empty string specifying the report directory.
+#'                    meta_batch2_column.
+#' @param report_dir A non-empty string specifying the report directory. The
+#'                   output HTML reports will be placed there. Default is the
+#'                   current working dir, determined with the here library:
+#'                   here::here().
 #' @param report A Boolean TRUE or FALSE value, specifying if a report should
 #'               be generated or not. A report is generated per default, but
 #'               when only the plots as plot objects inside R are desired, this
@@ -24,7 +28,9 @@
 explore_data <- function(
     splineomics,
     report_dir = here::here(),
-    report = TRUE) {
+    report = TRUE
+    ) {
+  
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE

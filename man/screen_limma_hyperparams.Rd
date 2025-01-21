@@ -2,7 +2,7 @@
 % Please edit documentation in R/screen_limma_hyperparams.R
 \name{screen_limma_hyperparams}
 \alias{screen_limma_hyperparams}
-\title{Allows to test different "hyperparameters" in a semi-combinatorial way}
+\title{screen_limma_hyperparams()}
 \usage{
 screen_limma_hyperparams(
   splineomics,

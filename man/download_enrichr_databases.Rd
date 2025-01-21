@@ -2,7 +2,7 @@
 % Please edit documentation in R/download_enrichr_databases.R
 \name{download_enrichr_databases}
 \alias{download_enrichr_databases}
-\title{Downloads specified Enrichr databases from the web}
+\title{download_enrichr_databases()}
 \usage{
 download_enrichr_databases(
   gene_set_lib,
