@@ -20,6 +20,13 @@
 #'   \code{condition}.
 #'   \item \code{design}: A character string representing the limma design
 #'   formula.
+#'   \idem\code{dream_params}: A named list or NULL. When not NULL, it must at
+#'    least contain the named element 'random_effects', which must contain a 
+#'    string that is a formula for the random effects of the mixed models by 
+#'    dream. Additionally, it can contain the named elements dof, which must be
+#'     a int bigger than 1, which is the degree of freedom for the dream 
+#'     topTable, and the named element KenwardRoger, which must be a bool, 
+#'     specifying whether to use that method or not.
 #'   \item \code{condition}: A character string specifying the column name
 #'   in \code{meta} used to define groups for analysis.
 #'   \item \code{spline_params}: A list of spline parameters used in the
@@ -79,7 +86,13 @@ run_limma_splines <- function(
   dream_params <- splineomics[["dream_params"]]
   mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
-
+  
+  # Because at first I enforced that X in the design formula stands for the time
+  # and I heavily oriented my code towards that. But then I realised that it is
+  # nonsense to encode the time as X, and now it is explicitly "Time" (because
+  # meta must contain the exact name "Time" for this respective column).
+  design <- gsub("Time", "X", design)  
+  
   feature_names <- rownames(data)
 
   rownames(data) <- NULL # To just have numbers describing the rows
@@ -249,7 +262,7 @@ between_level <- function(
     condition,
     compared_levels[2]
   )
-  
+
   num_matching_columns <- sum(
     grepl(
       "^X\\d+$",
@@ -266,7 +279,6 @@ between_level <- function(
 
   if (!is.null(dream_params)) {
     colnames(data) <- rownames(meta)  # dream requires this format
-    meta <- result$meta  # Only do it after, new meta has more columns
     
     # Apply the Kenward-Roger method if specified
     if (isTRUE(dream_params[["KenwardRoger"]])) {
@@ -278,11 +290,11 @@ between_level <- function(
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
-      data = meta,
       random.formula = stats::as.formula(dream_params[["random_effects"]]),
+      data = result$meta,    # Spline transformed meta.
       ddf = method
     )
-    
+
     fit <- variancePartition::eBayes(fit)
 
     condition_only <- variancePartition::topTable(
@@ -398,7 +410,9 @@ within_level <- function(
     condition,
     feature_names,
     padjust_method,
-    mode) {
+    mode
+    ) {
+  
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
     data_copy <- data[, samples]

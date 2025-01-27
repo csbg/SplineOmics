@@ -33,3 +33,10 @@ Examples:
 - **Changed**: Modified the default parameters for `normalizeData()`.
 
 ---
+
+### [0.1.1] - YYYY-MM-DD
+
+### Changed
+- The design formula must now contain the string 'Time' rather than 'X' like it was before. X from
+  before stood for the time. This change is intendet to make the design formula more explicit and 
+  self explanatory.

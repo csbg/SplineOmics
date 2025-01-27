@@ -185,7 +185,7 @@ install.packages(
 
 ``` r
 BiocManager::install(
-  c("ComplexHeatmap", "limma")
+  c("ComplexHeatmap", "limma", "variancePartition")
   # force = TRUE   # when encountering issues
   # lib = custom_lib_path 
 )
@@ -295,10 +295,10 @@ in the package (exported and internal functions) can be found
 #### Design `limma` design formula
 
 A quick guide on how to design a `limma` design formula can be found
-[here](https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html)
+[here](https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html).
 
 An explanation of the three different `limma` results is
-[here](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
+[here](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html).
 
 ### 🧬 RNA-seq and Glycan Data
 

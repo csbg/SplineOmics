@@ -35,6 +35,13 @@
 #'                             created. Use the same vector that was used to
 #'                             create the row headers for the data matrix!
 #' @param design A design matrix or similar object (optional).
+#' @param dream_params A named list or NULL. When not NULL, it must at least 
+#' contain the named element 'random_effects', which must contain a string that
+#' is a formula for the random effects of the mixed models by dream. 
+#' Additionally, it can contain the named elements dof, which must be a int
+#' bigger than 1, which is the degree of freedom for the dream topTable, and
+#' the named element KenwardRoger, which must be a bool, specifying whether
+#' to use that method or not.
 #' @param mode For the design formula, you must specify either 'isolated' or
 #' 'integrated'. Isolated means limma determines the results for each level
 #' using only the data from that level. Integrated means limma determines the
