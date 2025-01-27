@@ -158,7 +158,6 @@ cluster_hits <- function(
   # can access them directly like this.
   report_info[["Fixed effects (design)"]] <- splineomics[["design"]] 
   report_info[["Random effects"]] <- dream_params[["random_effects"]] 
-  # report_info$limma_design <- c(design)
   report_info[["meta_condition"]] <- c(condition)
   report_info[["plot_data_batch_correction"]] <- paste(
     meta_batch_column,
@@ -683,13 +682,12 @@ make_clustering_report <- function(
     cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]]
   )
 
-  # log2_intensity_shape <- plot_log2_intensity_shapes()
-
   level_headers_info <- list()
   plots <- list()
   plots_sizes <- list()
   q <- 0
-
+  
+  
   for (i in seq_along(all_levels_clustering)) {
     # When a level has < 2 hits
     if (is.null(all_levels_clustering[[i]]) ||

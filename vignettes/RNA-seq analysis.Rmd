@@ -38,6 +38,8 @@ bioreactors** subjected to a temperature shift after 146 hours
 (experimental condition) and the remaining **four bioreactors**
 maintained without a temperature shift (control condition).
 
+### Timepoints
+
 Samples were collected at **17 distinct time points** throughout the
 experiment, specifically: `"72h"`, `"76h"`, `"96h"`, `"120h"`, `"124h"`,
 `"144h"`, `"148h"`, `"152h"`, `"168h"`, `"192h"`, `"216h"`, `"220h"`,
@@ -45,11 +47,25 @@ experiment, specifically: `"72h"`, `"76h"`, `"96h"`, `"120h"`, `"124h"`,
 start. Each time point was sampled from all eight bioreactors, resulting
 in a total of **136 samples**.
 
-There are two batch effects: Reactor and Plate. Different bioreactors,
-where the cells are cultivated, can show big variablity. Plate refers to
-two different plates used in the RNA-seq analysis of the samples. A
-fully random design was used to distribute the samples to the two
-plates. In this vignette, we will just remove the plate batch effect.
+### Effects in the Experiment: Reactor and Plate
+
+In this experiment, there are two effects to consider: **Reactor** and **Plate**.
+
+1. **Reactor**:
+   - This refers to the different bioreactors used for cell cultivation, which can exhibit substantial variability.
+   - Each reactor was assigned a single condition: either constant temperature or temperature-shifted. As a result, **condition and reactor are confounded**.
+   - Reactor should not be treated as a fixed effect to simply remove its influence. Instead, it is treated as a **random effect**, which allows us to model its variability appropriately.
+
+2. **Plate**:
+   - This refers to the two separate plates used during the RNA-seq analysis of the samples.
+   - A fully random design was employed to distribute samples across the two plates, ensuring no bias in their assignment.
+   - Plate is considered a **batch effect** with respect to the condition (constant temperature vs. temperature-shifted).
+
+Since condition and reactor are confounded, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+
+In this vignette, we will demonstrate how to use linear mixed models to address these challenges and properly account for both reactor and plate effects.
+
+### Further info
 
 The data matrix comprises **genes as rows** and **samples as columns**,
 providing gene expression measurements for all time points. Each sample
@@ -93,7 +109,9 @@ The main objectives of this analysis are:
 # Load the packages
 
 ```{r setup, eval = TRUE}
-library(SplineOmics)
+# library(SplineOmics)
+library(devtools)
+devtools::load_all()
 library(readr) # For reading the meta CSV file
 library(here)  # For managing filepaths
 library(dplyr) # For data manipulation
@@ -225,14 +243,20 @@ idea of what do use.
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
 spline_params = list(
   spline_type = c("n"),    # natural cubic splines
-  dof = c(3L)              # Degree of freedom of 2 for the splines.
+  dof = c(3L)              # Degree of freedom of 3 for the splines.
 )
 
-voom_obj <- preprocess_rna_seq_data(
+design <- "~ 1 + Condition*Time + Plate"
+dream_params <- list(random_effects = "(1|Reactor)")
+
+voom_obj <- SplineOmics::preprocess_rna_seq_data(
   raw_counts = data,
   meta = meta,
   spline_params = spline_params,
-  design = "~ 1 + Condition*X + Plate"
+  # Interaction of Condition with Time (X), Plate is batch effect and Reactor is
+  # random effect.
+  design = design,
+  dream_params = dream_params     # Because we have a random effect.
 )
 
 data <- voom_obj$E
@@ -249,7 +273,8 @@ splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   data = data,
   rna_seq_data = voom_obj,
-  design = "~ 1 + Condition*X + Plate", 
+  design = design, 
+  dream_params = dream_params,
   mode = "integrated", # means limma uses the full data for each condition.
   spline_params = spline_params
 )

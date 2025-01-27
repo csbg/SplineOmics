@@ -510,8 +510,8 @@ metas <- list(meta1, meta2)
 
 # Test two different limma designs
 designs <- c(
-  "~ 1 + Phase*X + Reactor",
-  "~ 1 + X + Reactor"
+  "~ 1 + Phase*Time + Reactor",
+  "~ 1 + Time + Reactor"
 )
 
 # 'Integrated means' limma will use the full dataset to generate the results for
@@ -613,7 +613,7 @@ To generate the limma result categories 2 and 3 ()
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor", # best design formula
+  design = "~ 1 + Phase*Time + Reactor", # best design formula
   mode = "integrated", # means limma uses the full data for each condition.
   data = data2, # data without "outliers" was better
   meta = meta2,

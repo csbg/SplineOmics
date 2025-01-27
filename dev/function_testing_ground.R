@@ -190,7 +190,7 @@ report_info <- list(
 
 splineomics <- create_splineomics(
   data = data,
-  rna_seq_data = voom_obj,
+  # rna_seq_data = voom_obj,
   meta = meta,
   mode = "integrated",
   annotation = annotation,
@@ -203,11 +203,11 @@ splineomics <- create_splineomics(
 report_dir <- here::here("results", "explore_data")
 
 # debug(explore_data)
-plots <- explore_data(
-  splineomics,
-  report_dir = report_dir,
-  report = TRUE
-  )
+# plots <- explore_data(
+#   splineomics,
+#   report_dir = report_dir,
+#   report = TRUE
+#   )
 
 
 # Prep input to hyperparams screen function ------------------------------------
@@ -239,19 +239,19 @@ spline_test_configs <- data.frame(
 
 
 # hyperparams screen limma -----------------------------------------------------
-debug(screen_limma_hyperparams)
-screen_limma_hyperparams(
-  splineomics,
-  datas,
-  datas_descr,
-  metas,
-  designs,
-  modes,
-  spline_test_configs,
-  report_dir,
-  pthresholds,
-  # rna_seq_datas,
-  )
+# debug(screen_limma_hyperparams)
+# screen_limma_hyperparams(
+#   splineomics,
+#   datas,
+#   datas_descr,
+#   metas,
+#   designs,
+#   modes,
+#   spline_test_configs,
+#   report_dir,
+#   pthresholds,
+#   # rna_seq_datas,
+#   )
 
 
 ## Run limma splines -----------------------------------------------------------
@@ -276,11 +276,11 @@ splineomics <- run_limma_splines(
 
 report_dir <- here::here("results", "limma_reports")
 
-plots <- create_limma_report(
-  splineomics,
-  adj_pthresh = 0.05,
-  report_dir = report_dir
-)
+# plots <- create_limma_report(
+#   splineomics,
+#   adj_pthresh = 0.05,
+#   report_dir = report_dir
+# )
 
 
 ## Cluster hits ----------------------------------------------------------------

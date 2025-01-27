@@ -21,6 +21,13 @@
 #' both for natural and B-splines.
 #' @param design A design formula for the limma analysis, such as
 #' '~ 1 + Phase*X + Reactor'.
+#' @param dream_params A named list or NULL. When not NULL, it must at least 
+#' contain the named element 'random_effects', which must contain a string that
+#' is a formula for the random effects of the mixed models by dream. 
+#' Additionally, it can contain the named elements dof, which must be a int
+#' bigger than 1, which is the degree of freedom for the dream topTable, and
+#' the named element KenwardRoger, which must be a bool, specifying whether
+#' to use that method or not.
 #' @param normalize_func An optional normalization function. If provided, this
 #' function will be used to normalize the `DGEList` object. If not provided,
 #' TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
@@ -39,8 +46,25 @@ preprocess_rna_seq_data <- function(
     meta,
     spline_params,
     design,
+    dream_params = NULL,
     normalize_func = NULL
     ) {
+  
+  args <- lapply(
+    as.list(match.call()[-1]),
+    eval,
+    parent.frame()
+  )
+  
+  check_null_elements(args)
+  input_control <- InputControl$new(args)
+  input_control$auto_validate()
+
+  # Because at first I enforced that X in the design formula stands for the time
+  # and I heavily oriented my code towards that. But then I realised that it is
+  # nonsense to encode the time as X, and now it is explicitly "Time" (because
+  # meta must contain the exact name "Time" for this respective column).
+  design <- gsub("Time", "X", design)  
   
   message("Preprocessing RNA-seq data (normalization + voom)...")
 
@@ -56,13 +80,6 @@ preprocess_rna_seq_data <- function(
     )
     
   }
-
-  design_matrix <- design2design_matrix(
-    meta = meta,
-    spline_params = spline_params,
-    level_index = 1,
-    design = design
-  )
   
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
@@ -74,12 +91,35 @@ preprocess_rna_seq_data <- function(
     # Default: Normalize the counts using TMM normalization
     y <- edgeR::calcNormFactors(y)
   }
-
-  # Step 3: Apply voom transformation to get logCPM values and weights
-  voom_obj <- limma::voom(
-    y,
-    design_matrix[["design_matrix"]]
+  
+  # Step 3: Create design matrix
+  result <- design2design_matrix(
+    meta = meta,
+    spline_params = spline_params,
+    level_index = 1,
+    design = design
   )
+
+  # Step 4: Apply voom transformation to get logCPM values and weights
+  if (!is.null(dream_params)) {
+    full_formula <- paste(
+      design,
+      dream_params[["random_effects"]],
+      sep = " + "
+      )
+    voom_obj <- variancePartition::voomWithDreamWeights(
+      counts = y,
+      formula = stats::as.formula(full_formula),
+      # random.formula = stats::as.formula(dream_params[["random_effects"]]),
+      data = result[["meta"]]    # spline transformed meta.
+    )
+  }
+  else {
+    voom_obj <- limma::voom(
+      counts = y,
+      design = result[["design_matrix"]]
+    )
+  }
 
   return(voom_obj)
 }

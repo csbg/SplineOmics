@@ -64,7 +64,9 @@ screen_limma_hyperparams <- function(
     adj_pthresholds = c(0.05),
     rna_seq_datas = NULL,
     time_unit = "min", # For the plot labels
-    padjust_method = "BH") {
+    padjust_method = "BH"
+    ) {
+  
   if (is.null(rna_seq_datas)) { # Set the default value.
     rna_seq_datas <- vector("list", length(datas))
   }
@@ -88,6 +90,12 @@ screen_limma_hyperparams <- function(
   meta_batch_column <- splineomics[["meta_batch_column"]]
   meta_batch2_column <- splineomics[["meta_batch2_column"]]
   condition <- splineomics[["condition"]]
+  
+  # Because at first I enforced that X in the design formula stands for the time
+  # and I heavily oriented my code towards that. But then I realised that it is
+  # nonsense to encode the time as X, and now it is explicitly "Time" (because
+  # meta must contain the exact name "Time" for this respective column).
+  designs <- gsub("Time", "X", designs)
 
   feature_names <- rownames(datas[[1]])
 

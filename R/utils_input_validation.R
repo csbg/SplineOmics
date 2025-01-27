@@ -487,10 +487,9 @@ InputControl <- R6::R6Class("InputControl",
       }
 
       # Ensure the formula contains the intercept term 'X'
-      if (!grepl("\\bX\\b", formula)) {
+      if (!grepl("\\bTime\\b", formula)) {
         stop_call_false(
-          "The design formula must include the term 'X', which stands",
-          "for the meta Time column"
+          "The design formula must include the term 'Time' as a fixed effect"
         )
       }
 
