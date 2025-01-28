@@ -25,7 +25,10 @@
 #'             be directly embedded in the HTML report for downloading.
 #' @param meta A dataframe, containing metadata that should
 #'             be directly embedded in the HTML report for downloading.
-#' @param topTables List of limma topTables
+#' @param topTables List of limma topTables.
+#' @param category_2_and_3_hits List of dataframes, where each df is the part
+#' of the toptable that contains the significant features of the respective 
+#' limma result category (2 or 3).
 #' @param enrichr_format List, containing two lists: The gene list and the list
 #'                       of background genes.
 #' @param level_headers_info A list of header information for each level.
@@ -69,6 +72,7 @@ generate_report_html <- function(
     data = NULL,
     meta = NA,
     topTables = NA,
+    category_2_and_3_hits = NA,  # only for cluster_hits()
     enrichr_format = NA,
     level_headers_info = NA,
     spline_params = NA,
@@ -188,6 +192,14 @@ generate_report_html <- function(
       }
     )
   }
+  
+  if (!all(is.na(category_2_and_3_hits))) {
+    download_fields <- c(
+      download_fields,
+      "limma_topTables_avrg_diff_conditions_hits",
+      "limma_topTables_interaction_condition_time_hits"
+    )
+  }
 
   if (!all(is.na(enrichr_format))) {
     download_fields <- c(
@@ -250,12 +262,19 @@ generate_report_html <- function(
   download_fields <- c(download_fields, "session_info")
   download_fields <- c(download_fields, "analysis_script")
   
+  category_2_and_3_hit_counts <- count_hits(category_2_and_3_hits)
+  
+  # Truncate all df names so that they are <= 30 chars (required for sheet 
+  # names of Excel files) --> every df becomes a sheet.
+  category_2_and_3_hits <- truncate_nested_list_names(category_2_and_3_hits)
+  
   for (field in download_fields) {
     base64_df <- process_field(
       field = field,
       data = data,
       meta = meta,
       topTables = topTables,
+      category_2_and_3_hits = category_2_and_3_hits,
       report_info = report_info,
       encode_df_to_base64 = encode_df_to_base64,
       enrichr_format = enrichr_format
@@ -352,6 +371,7 @@ generate_report_html <- function(
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction_condition_time =
         adj_pthresh_interaction_condition_time,
+      category_2_and_3_hit_counts = category_2_and_3_hit_counts,
       mode = mode,
       report_info = report_info,
       output_file_path = output_file_path
@@ -841,7 +861,9 @@ get_header_section <- function(
 #'
 encode_df_to_base64 <- function(
     df,
-    report_type = NA) {
+    report_type = NA
+    ) {
+  
   temp_file <- tempfile(fileext = ".xlsx")
   wb <- openxlsx::createWorkbook()
 
@@ -919,6 +941,141 @@ encode_df_to_base64 <- function(
   unlink(temp_file)
 
   return(data_uri)
+}
+
+
+#' Count Rows in Dataframes and Create Nested Dictionary
+#'
+#' @description
+#' This function processes the nested list of `category_2_and_3_hits` to count
+#' the rows in each dataframe. It organizes the counts into a nested list where:
+#' - The outer keys are `category_2` and `category_3`.
+#' - The inner keys are substrings of dataframe names after the second
+#'   underscore.
+#' - The values are the row counts of the corresponding dataframe.
+#'
+#' @param nested_list A nested list (e.g., category_2_and_3_hits) containing
+#'   lists of named dataframes.
+#'
+#' @return A nested dictionary (list) with row counts.
+#'
+#' @examples
+#' category_2_and_3_hits <- list(
+#'   category_2_hits = list(
+#'     "very_long_name_with_substring_ABC_vs_XYZ" = data.frame(A = 1:5),
+#'     "another_long_name_DEF_vs_GHI" = data.frame(B = 6:10)
+#'   ),
+#'   category_3_hits = list(
+#'     "extremely_long_name_with_substring_PQR_vs_STU" = data.frame(C = 11:15)
+#'   )
+#' )
+#' row_counts_dict <- count_hits(category_2_and_3_hits)
+count_hits <- function(nested_list) {
+  # Initialize the output dictionary
+  row_counts_dict <- list(
+    category_2 = list(),
+    category_3 = list()
+  )
+  
+  # Helper function to extract substring after the second underscore
+  extract_after_second_underscore <- function(name) {
+    parts <- unlist(strsplit(name, "_"))
+    if (length(parts) > 2) {
+      paste(parts[3:length(parts)], collapse = "_")
+    } else {
+      name  # Return the full name if there aren't enough parts
+    }
+  }
+  
+  # Iterate over the outer list
+  for (outer_key in names(nested_list)) {
+    # Determine if we are processing category_2 or category_3
+    category_key <- ifelse(
+      outer_key == "category_2_hits", "category_2", "category_3"
+      )
+    inner_list <- nested_list[[outer_key]]
+    
+    # Iterate over the inner list of dataframes
+    for (df_name in names(inner_list)) {
+      # Get the substring after the second underscore
+      extracted_name <- extract_after_second_underscore(df_name)
+      
+      # Count the rows in the dataframe
+      row_count <- nrow(inner_list[[df_name]])
+      
+      # Store the result in the dictionary
+      row_counts_dict[[category_key]][[extracted_name]] <- row_count
+    }
+  }
+  
+  return(row_counts_dict)
+}
+
+
+#' Truncate Dataframe Names in Nested Lists
+#'
+#' @noRd
+#'
+#' @description
+#' This function processes a nested list (like category_2_and_3_hits) where each
+#' element is a list of named dataframes. It ensures all dataframe names are
+#' ≤ 30 characters, truncating them evenly for `_substring_vs_substring`.
+#'
+#' @param nested_list A list of lists containing named dataframes.
+#'
+#' @return The same nested list, but with dataframe names adjusted to meet the
+#'         naming logic.
+#'
+#' @examples
+#' category_2_and_3_hits <- list(
+#'   category_2_hits = list(
+#'     "very_long_name_with_substring_ABC_vs_XYZ" = data.frame(A = 1:5),
+#'     "short_name" = data.frame(B = 6:10)
+#'   ),
+#'   category_3_hits = list(
+#'     "extremely_long_name_with_substring_PQR_vs_STU" = data.frame(C = 11:15)
+#'   )
+#' )
+#' result <- truncate_nested_list_names(category_2_and_3_hits)
+truncate_nested_list_names <- function(nested_list) {
+  
+  # Helper function to truncate a single dataframe name
+  truncate_name <- function(name) {
+    max_length <- 30
+    
+    # Check if the name matches the special pattern
+    if (grepl("_.*_vs_.*$", name)) {
+      # Extract the base name and substrings
+      base <- sub("(.*)_(.*)_vs_(.*)$", "\\1", name)
+      substring1 <- sub("(.*)_(.*)_vs_(.*)$", "\\2", name)
+      substring2 <- sub("(.*)_(.*)_vs_(.*)$", "\\3", name)
+      
+      # Calculate available length for substrings
+      base_length <- nchar(base)
+      remaining_length <- max_length - base_length - 5  # 5 for "_vs_"
+      
+      # Ensure there's space for both substrings
+      if (remaining_length > 0) {
+        trunc_length <- floor(remaining_length / 2)
+        substring1 <- substr(substring1, 1, trunc_length)
+        substring2 <- substr(substring2, 1, trunc_length)
+        return(paste0(base, "_", substring1, "_vs_", substring2))
+      } else {
+        # If no space for substrings, truncate the entire name
+        return(substr(name, 1, max_length))
+      }
+    } else {
+      # For names that don't match the pattern, truncate normally
+      return(substr(name, 1, max_length))
+    }
+  }
+  
+  # Process each inner list and truncate the names of its dataframes
+  lapply(nested_list, function(inner_list) {
+    # Update the names of the dataframes in the inner list
+    names(inner_list) <- sapply(names(inner_list), truncate_name)
+    inner_list
+  })
 }
 
 
@@ -1203,6 +1360,9 @@ process_plots <- function(
 #' @param encode_df_to_base64 A function to encode a dataframe to base64.
 #' @param enrichr_format A list with the formatted gene lists and background
 #'                       gene list.
+#' @param category_2_and_3_hits List of dataframes, where each df is the part
+#' of the toptable that contains the significant features of the respective 
+#' limma result category (2 or 3). Default is NA.
 #'
 #' @return A string containing the HTML link for downloading the processed
 #'         field.
@@ -1217,7 +1377,8 @@ process_field <- function(
     topTables,
     report_info,
     encode_df_to_base64,
-    enrichr_format
+    enrichr_format,
+    category_2_and_3_hits = NA
     ) {
   
   if (field == "data_with_annotation") {
@@ -1249,6 +1410,23 @@ process_field <- function(
       '<a href="%s" download="limma_topTables.xlsx" class="embedded-file">
        <button>Download limma_topTables.xlsx</button></a>',
       encode_df_to_base64(topTables)
+    )
+  } else if (field == "limma_topTables_avrg_diff_conditions_hits") {
+    base64_df <- sprintf(
+      '<a href="%s" download="limma_topTables_avrg_diff_conditions_hits.xlsx"
+      class="embedded-file">
+       <button>Download limma_topTables_avrg_diff_conditions_hits.xlsx
+      </button></a>',
+      encode_df_to_base64(category_2_and_3_hits[[1]])   # category 2
+    )
+  } else if (field == "limma_topTables_interaction_condition_time_hits") {
+    base64_df <- sprintf(
+      '<a href="%s" 
+      download="limma_topTables_interaction_condition_time_hits.xlsx"
+      class="embedded-file">
+       <button>Download limma_topTables_interaction_condition_time_hits.xlsx
+      </button></a>',
+      encode_df_to_base64(category_2_and_3_hits[[2]])   # category 3
     )
   } else if (field == "Enrichr_clustered_genes" &&
     !any(is.na(enrichr_format)) &&

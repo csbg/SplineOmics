@@ -4,29 +4,41 @@
 \alias{preprocess_rna_seq_data}
 \title{preprocess_rna_seq_data()}
 \usage{
-preprocess_rna_seq_data(
-  raw_counts,
-  meta,
-  spline_params,
-  design,
-  normalize_func = NULL
-)
+preprocess_rna_seq_data(splineomics, normalize_func = NULL)
 }
 \arguments{
-\item{raw_counts}{A matrix of raw RNA-seq counts (genes as rows, samples as
-columns).}
-
-\item{meta}{A dataframe containing the metadata for data.}
-
-\item{spline_params}{Parameters for spline functions (optional). Must contain
-the named elements spline_type, which must contain either the string "n" for
-natural cubic splines, or "b", for B-splines, the named element degree in the
-case of B-splines, that must contain only an integer, and the named element
-dof, specifying the degree of freedom, containing an integer and required
-both for natural and B-splines.}
-
-\item{design}{A design formula for the limma analysis, such as
-'~ 1 + Phase*X + Reactor'.}
+\item{splineomics}{An S3 object of class `SplineOmics` that must contain the 
+following elements:
+\itemize{
+  \item \code{data}: A matrix of the omics dataset, with feature names 
+  optionally as row headers (genes as rows, samples as columns).
+  \item \code{meta}: A dataframe containing metadata corresponding to the 
+  \code{data}. The dataframe must include a 'Time' column and a column 
+  specified by the \code{condition}.
+  \item \code{design}: A character string representing the design formula 
+  for the limma analysis (e.g., \code{'~ 1 + Phase*X + Reactor'}).
+  \item \code{spline_params}: A list of spline parameters used in the 
+  analysis. This can include:
+    \itemize{
+      \item \code{spline_type}: A character string specifying the type of 
+      spline. Must be either \code{'n'} for natural cubic splines or 
+      \code{'b'} for B-splines.
+      \item \code{dof}: An integer specifying the degrees of freedom. 
+      Required for both natural cubic splines and B-splines.
+      \item \code{degree}: An integer specifying the degree of the spline 
+      (for B-splines only).
+      \item \code{knots}: Positions of the internal knots (for B-splines).
+      \item \code{bknots}: Boundary knots (for B-splines).
+    }
+  \item \code{dream_params}: A named list or \code{NULL}. When not 
+  \code{NULL}, it can contain:
+    \itemize{
+      \item \code{dof}: An integer greater than 1, specifying the degrees 
+      of freedom for the dream topTable.
+      \item \code{KenwardRoger}: A boolean indicating whether to use the 
+      Kenward-Roger method.
+    }
+}}
 
 \item{normalize_func}{An optional normalization function. If provided, this
 function will be used to normalize the `DGEList` object. If not provided,

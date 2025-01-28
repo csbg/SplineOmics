@@ -20,6 +20,13 @@ following elements:
   \code{condition}.
   \item \code{design}: A character string representing the limma design
   formula.
+  \idem\code{dream_params}: A named list or NULL. When not NULL, it must at
+   least contain the named element 'random_effects', which must contain a 
+   string that is a formula for the random effects of the mixed models by 
+   dream. Additionally, it can contain the named elements dof, which must be
+    a int bigger than 1, which is the degree of freedom for the dream 
+    topTable, and the named element KenwardRoger, which must be a bool, 
+    specifying whether to use that method or not.
   \item \code{condition}: A character string specifying the column name
   in \code{meta} used to define groups for analysis.
   \item \code{spline_params}: A list of spline parameters used in the

@@ -313,7 +313,7 @@ clustering_results <- cluster_hits(
   report_dir = report_dir,
   report = TRUE,
   # adj_pthresh_avrg_diff_conditions = 0,
-  # adj_pthresh_interaction_condition_time = 0.25
+  adj_pthresh_interaction_condition_time = 0.25
 )
 
 
