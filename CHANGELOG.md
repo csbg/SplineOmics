@@ -38,5 +38,7 @@ Examples:
 
 ### Changed
 - The design formula must now contain the string 'Time' rather than 'X' like it was before. X from
-  before stood for the time. This change is intendet to make the design formula more explicit and 
+  before stood for the time. This change is intended to make the design formula more explicit and 
   self explanatory.
+- Random effects can now be directly be specified in the design formula, rather
+  than being passed as part of the dream_params.

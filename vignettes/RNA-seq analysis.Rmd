@@ -240,26 +240,28 @@ In this example, we are skipping finding the best hyperparameters with
 the screen_limma_hyperparams() function, because we already have a clear
 idea of what do use.
 
-```{r Preprocess RNA-seq data with voom, eval = TRUE}
+```{r Update the SplineOmics object, eval = TRUE}
 spline_params = list(
   spline_type = c("n"),    # natural cubic splines
   dof = c(3L)              # Degree of freedom of 3 for the splines.
 )
 
-design <- "~ 1 + Condition*Time + Plate"
-dream_params <- list(random_effects = "(1|Reactor)")
+design <- "~ 1 + Condition*Time + Plate + (1|Reactor)"
 
-voom_obj <- SplineOmics::preprocess_rna_seq_data(
-  raw_counts = data,
-  meta = meta,
-  spline_params = spline_params,
-  # Interaction of Condition with Time (X), Plate is batch effect and Reactor is
-  # random effect.
-  design = design,
-  dream_params = dream_params     # Because we have a random effect.
+splineomics <- SplineOmics::update_splineomics(
+  splineomics = splineomics,
+  data = data,
+  design = design, 
+  dream_params = dream_params,
+  mode = "integrated", # means limma uses the full data for each condition.
+  spline_params = spline_params
 )
+```
 
-data <- voom_obj$E
+```{r Preprocess RNA-seq data with voom, eval = TRUE}
+voom_obj <- SplineOmics::preprocess_rna_seq_data(
+  splineomics = splineomics
+)
 ```
 
 You can customize the normalization method by providing a specific normalization function through the `normalize_func` argument in the `preprocess_rna_seq_data()` function. For details on how to use this feature, please refer to the function documentation available under 'References' on the website.
@@ -268,15 +270,11 @@ Additionally, the use of `preprocess_rna_seq_data()` is optional for your RNA-se
 
 In general, as long as the `data` argument contains the actual data matrix and the `rna_seq_data` argument contains an object compatible with `limma`, your data will be correctly processed.
 
-```{r Update the SplineOmics object, eval = TRUE}
+```{r Insert preprocessed rna seq data into SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  data = data,
-  rna_seq_data = voom_obj,
-  design = design, 
-  dream_params = dream_params,
-  mode = "integrated", # means limma uses the full data for each condition.
-  spline_params = spline_params
+  data = voom_obj$E,
+  rna_seq_data = voom_obj
 )
 ```
 
