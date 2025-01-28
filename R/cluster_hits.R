@@ -2672,7 +2672,9 @@ build_cluster_hits_report <- function(
     adj_pthresh_interaction_condition_time,
     mode,
     report_info,
-    output_file_path) {
+    output_file_path
+    ) {
+  
   html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
 
   toc <- create_toc()
@@ -2746,13 +2748,15 @@ build_cluster_hits_report <- function(
         hits_info <- sprintf(
           paste0(
             "<p style='text-align: center; font-size: 30px;'>",
-            "adj.p-value threshold: %.3f</p>",
+            "adj.p-value threshold: %.4g</p>",
             "<p style='text-align: center; font-size: 30px;'>",
             "Number of hits: %d</p>",
+            "<div style='text-align: center; font-size: 30px;'>%s</div>",
             "<hr>"
           ),
           adj_pvalue_threshold,
-          nr_hits
+          nr_hits,
+          generate_asterisks_definition(adj_pvalue_threshold)
         )
 
         html_content <- paste(
@@ -2760,7 +2764,7 @@ build_cluster_hits_report <- function(
           hits_info,
           sep = "\n"
         )
-
+        
         toc_entry <- sprintf(
           "<li style='%s'><a href='#section%d'>%s</a></li>",
           toc_style,
@@ -2807,15 +2811,7 @@ build_cluster_hits_report <- function(
       } else { # element_name == "individual_spline_plots"
         adjusted_p_val <- adj_pthresholds[level_index]
         header_text <- "Individual Significant Features (Hits) Splines"
-        asterisks_definition <- paste(
-          "<b><span style='font-size:20pt; margin-bottom: 0;'>
-          Asterisks definition:</span></b>",
-          paste("Adj. p-value <", adjusted_p_val, "--> *", sep = " "),
-          paste("Adj. p-value <", adjusted_p_val / 5, "--> **", sep = " "),
-          paste("Adj. p-value <", adjusted_p_val / 50, "--> ***", sep = " "),
-          paste("Adj. p-value <", adjusted_p_val / 500, "--> ****", sep = " "),
-          sep = "<br>"
-        )
+        asterisks_definition <- generate_asterisks_definition(adjusted_p_val)
       }
 
       # Add the main title as a section title with an anchor
@@ -3731,6 +3727,35 @@ maybe_add_dashed_lines <- function(
     treatment_colors = treatment_colors
   ))
 }
+
+
+#' Generate Asterisks Definition HTML
+#'
+#' @noRd
+#'
+#' @description
+#' This function generates an HTML string that defines the asterisk notation
+#' based on the adjusted p-value threshold.
+#'
+#' @param adj_pvalue_threshold Numeric. The adjusted p-value threshold.
+#'
+#' @return A character string containing the HTML definition for the asterisks.
+#'
+#' @examples
+#' generate_asterisks_definition(0.05)
+#' # Returns an HTML string for the asterisk definitions.
+generate_asterisks_definition <- function(adj_pvalue_threshold) {
+  paste(
+    "<b><span style='font-size:20pt; margin-bottom: 0;'>",
+    "Asterisks definition:</span></b>",
+    paste("Adj. p-value <", adj_pvalue_threshold, "--> *", sep = " "),
+    paste("Adj. p-value <", adj_pvalue_threshold / 5, "--> **", sep = " "),
+    paste("Adj. p-value <", adj_pvalue_threshold / 50, "--> ***", sep = " "),
+    paste("Adj. p-value <", adj_pvalue_threshold / 500, "--> ****", sep = " "),
+    sep = "<br>"
+  )
+}
+
 
 
 # Level 4 internal functions ---------------------------------------------------

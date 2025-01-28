@@ -258,7 +258,7 @@ spline_test_configs <- data.frame(
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor",
+  design = "~ 1 + Phase*Time + Reactor",
   # data = data2,
   # meta = meta2,
   spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
