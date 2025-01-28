@@ -173,6 +173,7 @@ cluster_hits <- function(
       data = data,
       meta = meta,
       condition = condition,
+      replicate_column = plot_options[["meta_replicate_column"]],
       plot_info = plot_info,
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
@@ -977,6 +978,10 @@ make_clustering_report <- function(
 #'  the condition.
 #' @param condition Column name of meta that contains the levels of the
 #' experiment.
+#' @param replicate_column Column name of the meta column that specifies the
+#' replicates per timepoint. For example Reactor with the unique values: 
+#' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
+#' running this experiment and each timepoint has one sample from each reactor.
 #' @param plot_info A list containing plotting information such as time unit
 #' and axis labels.
 #' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
@@ -998,6 +1003,7 @@ generate_spline_comparisons <- function(
     data,
     meta,
     condition,
+    replicate_column,
     plot_info,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
@@ -1104,6 +1110,7 @@ generate_spline_comparisons <- function(
           data = data,
           meta = meta,
           condition = condition,
+          replicate_column = replicate_column,
           X_1 = X_1,
           X_2 = X_2,
           plot_info = plot_info,
@@ -2260,7 +2267,7 @@ plot_splines <- function(
 #' points, and overlays the fitted spline curves. The function checks if the
 #' adjusted p-values for the average difference between conditions and the
 #' interaction between condition and time are below the specified thresholds
-#' before generating plots.
+#' before generating plots. (this function generates the double spline plots).
 #'
 #' @param time_effect_1 A data frame containing the time effects for the first
 #'  condition.
@@ -2278,6 +2285,10 @@ plot_splines <- function(
 #' @param meta The metadata associated with the measurements.
 #' @param condition Column name of meta that contains the levels of the
 #' experiment.
+#' @param replicate_column Column name of the meta column that specifies the
+#' replicates per timepoint. For example Reactor with the unique values: 
+#' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
+#' running this experiment and each timepoint has one sample from each reactor.
 #' @param X_1 A matrix of spline basis values for the first condition.
 #' @param X_2 A matrix of spline basis values for the second condition.
 #' @param plot_info A list containing plotting information such as time unit
@@ -2310,6 +2321,7 @@ plot_spline_comparisons <- function(
     data,
     meta,
     condition,
+    replicate_column,
     X_1,
     X_2,
     plot_info,
@@ -2318,6 +2330,14 @@ plot_spline_comparisons <- function(
     raw_data
     ) {
   
+  if (!is.null(replicate_column)) {
+    # Create a mapping of unique replicate values to numeric labels
+    replicate_mapping <- setNames(
+      seq_along(unique(meta[[replicate_column]])),
+      unique(meta[[replicate_column]])
+    )
+  }
+
   # Sort and prepare data (sorting based on feature name for easy navigation)
   time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
   time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
@@ -2356,12 +2376,12 @@ plot_spline_comparisons <- function(
           seq_along(y_values_1) %in% na_indices_1,
           "Imputed",
           "Measured"
-          ),
+        ),
         IsImputed2 = ifelse(
           seq_along(y_values_2) %in% na_indices_1,
           "Imputed",
           "Measured"
-          )
+        )
       )
     } else {
       plot_data <- data.frame(
@@ -2371,6 +2391,12 @@ plot_spline_comparisons <- function(
         IsImputed1 = "Measured",
         IsImputed2 = "Measured"
       )
+    }
+    
+    # If replicate_column is not NULL, add Replicate and ReplicateLabel columns
+    if (!is.null(replicate_column)) {
+      plot_data$Replicate <- meta[[replicate_column]]  # Add replicates
+      plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
     }
 
     intercept_1 <- time_effect_1$intercept[hit]
@@ -2437,7 +2463,7 @@ plot_spline_comparisons <- function(
         time_values = plot_data$Time,
         response_values = plot_data$Y2
       )
-      
+
       p <- local({
         # Create the plot
         p <- ggplot2::ggplot() +
@@ -2485,32 +2511,6 @@ plot_spline_comparisons <- function(
               color = paste("Spline", condition_2)
             )
           ) +
-          # ggplot2::scale_color_manual(values = setNames(
-          #   c(
-          #     "orange",
-          #     "orange",
-          #     "purple",
-          #     "purple"
-          #   ),
-          #   c(
-          #     paste(
-          #       "Data",
-          #       condition_1
-          #     ),
-          #     paste(
-          #       "Spline",
-          #       condition_1
-          #     ),
-          #     paste(
-          #       "Data",
-          #       condition_2
-          #     ),
-          #     paste(
-          #       "Spline",
-          #       condition_2
-          #     )
-          #   )
-          # )) +
           ggplot2::guides(
             color = ggplot2::guide_legend(title = NULL),
             shape = if (any(plot_data$IsImputed1 == "Imputed") ||
@@ -2534,7 +2534,20 @@ plot_spline_comparisons <- function(
               signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
               interaction_stars,
               "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
-              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%",
+              if (!is.null(replicate_column)) {
+                paste(
+                  "\nReplicate (", replicate_column, ") mapping: ",
+                  paste(
+                    replicate_mapping,
+                    names(replicate_mapping),
+                    sep = " -> ",
+                    collapse = "; "
+                  )
+                )
+              } else {
+                ""  # Add nothing if replicate_column is NULL
+              }
             ),
             x = paste0("Time [", plot_info$time_unit, "]"),
             y = plot_info$y_axis_label
@@ -2549,6 +2562,44 @@ plot_spline_comparisons <- function(
             axis.title.y = ggplot2::element_text(size = 8),
             axis.text.x = ggplot2::element_text(size = 6)
           )
+        
+        if (!is.null(replicate_column)) {
+          # Filter plot_data for non-NA Y1 values (for condition_1)
+          plot_data_filtered_Y1 <- plot_data %>%
+            dplyr::filter(!is.na(Y1))
+          
+          # Add labels for condition_1
+          p <- p +
+            ggplot2::geom_text(
+              data = plot_data_filtered_Y1,
+              ggplot2::aes(
+                x = .data$Time,
+                y = .data$Y1,
+                label = .data$ReplicateLabel
+              ),
+              size = 1.5,  # Small text size
+              hjust = -0.5, # Position to the right of the points
+              vjust = 0     # Keep at the same vertical level as the points
+            )
+          
+          # Filter plot_data for non-NA Y2 values (for condition_2)
+          plot_data_filtered_Y2 <- plot_data %>%
+            dplyr::filter(!is.na(Y2))
+          
+          # Add labels for condition_2
+          p <- p +
+            ggplot2::geom_text(
+              data = plot_data_filtered_Y2,
+              ggplot2::aes(
+                x = .data$Time,
+                y = .data$Y2,
+                label = .data$ReplicateLabel
+              ),
+              size = 1.5,  # Small text size
+              hjust = -0.5, # Position to the right of the points
+              vjust = 0     # Keep at the same vertical level as the points
+            )
+        }
         
         level <- paste(
           condition_1,

@@ -298,7 +298,7 @@ plot_info = list(
 )
 
 plot_options = list(
-  meta_replicate_column = "Reactor",
+  # meta_replicate_column = "Reactor",
   cluster_heatmap_columns = FALSE
 )
 
