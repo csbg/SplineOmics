@@ -182,10 +182,15 @@ cluster_hits <- function(
     spline_comp_plots <- NULL
   }
 
-
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
   }
+
+  category_2_and_3_hits <- get_category_2_and_3_hits(
+    splineomics = splineomics,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction = adj_pthresh_interaction_condition_time
+  )
 
   if (report) {
     plots <- make_clustering_report(
@@ -200,6 +205,7 @@ cluster_hits <- function(
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction_condition_time =
         adj_pthresh_interaction_condition_time,
+      category_2_and_3_hits = category_2_and_3_hits,
       report_dir = report_dir,
       mode = mode,
       report_info = report_info,
@@ -547,6 +553,65 @@ perform_clustering <- function(
 }
 
 
+#' Get Category 2 and 3 Hits
+#'
+#' @description
+#' This function filters the `limma` top tables in the `splineomics` object
+#' based on adjusted p-value thresholds for the average difference between
+#' conditions (`adj_pthresh_avrg_diff_conditions`) and the interaction between
+#' condition and time (`adj_pthresh_interaction`).
+#'
+#' @param splineomics An S3 object containing the limma top tables. It must
+#' include the elements `avrg_diff_conditions` and `interaction_condition_time`,
+#' which are lists of dataframes.
+#' @param adj_pthresh_avrg_diff_conditions Numeric. Threshold for adjusted
+#' p-value for average differences between conditions.
+#' @param adj_pthresh_interaction Numeric. Threshold for adjusted p-value for
+#' the interaction between condition and time.
+#'
+#' @return A list with two elements:
+#' \itemize{
+#'   \item \code{category_2_hits}: A list of filtered dataframes from
+#'   `avrg_diff_conditions`.
+#'   \item \code{category_3_hits}: A list of filtered dataframes from
+#'   `interaction_condition_time`.
+#' }
+#'
+#' @examples
+#' category_2_and_3_hits <- get_category_2_and_3_hits(
+#'   splineomics = splineomics,
+#'   adj_pthresh_avrg_diff_conditions = 0.05,
+#'   adj_pthresh_interaction = 0.01
+#' )
+get_category_2_and_3_hits <- function(
+    splineomics,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction
+) {
+  # Extract the top tables from splineomics
+  avrg_diff_conditions <- 
+    splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
+  interaction_condition_time <- 
+    splineomics[["limma_splines_result"]][["interaction_condition_time"]]
+  
+  # Filter each dataframe in avrg_diff_conditions
+  category_2_hits <- lapply(avrg_diff_conditions, function(df) {
+    df[df$adj.P.Val < adj_pthresh_avrg_diff_conditions, ]
+  })
+  
+  # Filter each dataframe in interaction_condition_time
+  category_3_hits <- lapply(interaction_condition_time, function(df) {
+    df[df$adj.P.Val < adj_pthresh_interaction, ]
+  })
+  
+  # Return the filtered dataframes as a list
+  return(list(
+    category_2_hits = category_2_hits,
+    category_3_hits = category_3_hits
+  ))
+}
+
+
 #' Make Clustering Report
 #' 
 #' @noRd
@@ -555,6 +620,9 @@ perform_clustering <- function(
 #' Generates a detailed clustering report including heatmaps, dendrograms,
 #' curve plots, and consensus shapes for each level within a condition.
 #'
+#' @param splineomics A list containing the splineomics results, including
+#' time effects, average difference between conditions, and interaction between
+#' condition and time.
 #' @param all_levels_clustering A list containing clustering results for each
 #' level within a condition.
 #' @param condition A character string specifying the condition.
@@ -569,6 +637,9 @@ perform_clustering <- function(
 #'                        the adj. p-value threshold.
 #' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
+#' @param category_2_and_3_hits List of dataframes, where each df is the part
+#' of the toptable that contains the significant features of the respective 
+#' limma result category (2 or 3).
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
 #' ('isolated' or 'integrated').
@@ -625,6 +696,7 @@ make_clustering_report <- function(
     adj_pthresholds,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction_condition_time,
+    category_2_and_3_hits,
     report_dir,
     mode,
     report_info,
@@ -863,6 +935,7 @@ make_clustering_report <- function(
     data = bind_data_with_annotation(data, annotation),
     meta = meta,
     topTables = topTables,
+    category_2_and_3_hits = category_2_and_3_hits,
     enrichr_format = enrichr_format,
     adj_pthresholds = adj_pthresholds,
     adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
@@ -884,6 +957,7 @@ make_clustering_report <- function(
 #' @noRd
 #'
 #' @description
+#' Generates the "double spline plots" (limma result categories 2 & 3).
 #' This function generates spline comparison plots for all pairwise
 #' combinations of conditions in the metadata. For each condition pair, it
 #' compares the time effects of two conditions, plots the data points, and
@@ -2648,6 +2722,12 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
 #' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
+#' @param row_counts_dict A nested list containing row counts for dataframes 
+#'   from `category_2_and_3_hits`. The outer keys are `"category_2"` and 
+#'   `"category_3"`, representing the two sublists. The inner keys are derived 
+#'   from the portion of each dataframe name after the second underscore (`_`), 
+#'   or the full name if fewer than two underscores exist. The values are 
+#'   integers representing the number of rows in each dataframe.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
 #' @param report_info A named list containg the report info fields. Here used
@@ -2670,6 +2750,7 @@ build_cluster_hits_report <- function(
     adj_pthresholds,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction_condition_time,
+    category_2_and_3_hit_counts,
     mode,
     report_info,
     output_file_path
@@ -2792,7 +2873,7 @@ build_cluster_hits_report <- function(
       "heatmap",
       "individual_spline_plots"
     )
-
+    
     if (element_name %in% header_levels) {
       if (element_name == "dendrogram") {
         header_text <- "Overall Clustering"
@@ -2997,10 +3078,30 @@ build_cluster_hits_report <- function(
         header_index,
         comparison_name
       )
+      
+      # Access row counts for the current comparison_name
+      avrg_diff_hits <- 
+        category_2_and_3_hit_counts$category_2[[comparison_name]]
+      interaction_hits <- 
+        category_2_and_3_hit_counts$category_3[[comparison_name]]
 
+      # Create the HTML for hits
+      hits_info <- sprintf(
+        paste0(
+          "<p style='font-size: 2em; text-align: center;'>",
+          "Avrg diff conditions hits: %d</p>",
+          "<p style='font-size: 2em; text-align: center;'>",
+          "Interaction condition time hits: %d</p>",
+          "<hr>"
+        ),
+        avrg_diff_hits,
+        interaction_hits
+      )
+      
       html_content <- paste(
         html_content,
         subheader,
+        hits_info,
         sep = "\n"
       )
 

@@ -34,7 +34,7 @@ Examples:
 
 ---
 
-### [0.1.1] - YYYY-MM-DD
+### [0.1.1] - 2025-MM-DD
 
 ### Changed
 - The design formula must now contain the string 'Time' rather than 'X' like it was before. X from
@@ -42,3 +42,18 @@ Examples:
   self explanatory.
 - Random effects can now be directly be specified in the design formula, rather
   than being passed as part of the dream_params.
+  
+### Added
+- Raw data plotting function
+- Imputed values are marked with triangle symbols in cluster_hits() spline
+  plots if raw data is passed.
+- Package version is written in each HTML report (the tag) and the session info
+  is added as an embedded text file.
+- Standard error written on top of "double spline" plots (limma result category
+  2 and 3). 
+- Added linear mixed models for modeling random effects. The variancePartition
+  package is used for that --> voomWithDreamWeights for RNA-seq data processing,
+  and dream as the replacement for limma. 
+- Used analysis script is embedded as a text file in the reports.
+- The mode (integrated or isolated) is written on top of the reports in a 
+  separate field.
