@@ -92,7 +92,7 @@ cluster_hits <- function(
     report_dir = here::here(),
     report = TRUE
     ) {
-  
+
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -151,13 +151,12 @@ cluster_hits <- function(
     spline_params = spline_params,
     mode = mode
   )
-  
-  dream_params <- splineomics[["dream_params"]]
-  
+
   # Put them in there under those names, so that the report generation fun
   # can access them directly like this.
-  report_info[["Fixed effects (design)"]] <- splineomics[["design"]] 
-  report_info[["Random effects"]] <- dream_params[["random_effects"]] 
+  effects <- extract_effects(design)
+  report_info[["Fixed effects"]] <- effects[["fixed_effects"]] 
+  report_info[["Random effects"]] <- effects[["random_effects"]] 
   report_info[["meta_condition"]] <- c(condition)
   report_info[["plot_data_batch_correction"]] <- paste(
     meta_batch_column,
@@ -639,6 +638,9 @@ make_clustering_report <- function(
     raw_data
     ) {
   
+  design <- gsub("Time", "X", design)  
+  effects <- extract_effects(design)
+  
   # Optionally remove the batch-effect with the batch column and design matrix
   # For mode == "integrated", the batch-effect is removed from the whole data
   # For mode == "isolated", the batch-effect is removed for every level
@@ -648,7 +650,7 @@ make_clustering_report <- function(
     condition = condition,
     meta_batch_column = meta_batch_column,
     meta_batch2_column = meta_batch2_column,
-    design = design,
+    design = effects[["fixed_effects"]],
     mode = mode,
     spline_params = spline_params
   )

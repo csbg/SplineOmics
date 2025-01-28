@@ -457,6 +457,8 @@ InputControl <- R6::R6Class("InputControl",
       if (any(vapply(required_args, is.null, logical(1)))) {
         return(NULL)
       }
+      
+      effects <- extract_effects(design)
 
       # Check if the formula is a valid character string
       if (!is.character(formula) || length(formula) != 1) {
@@ -466,7 +468,7 @@ InputControl <- R6::R6Class("InputControl",
       }
 
       # Ensure the formula contains allowed characters only
-      allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-]*$"
+      allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-|]*$"
       if (!grepl(allowed_chars, formula)) {
         stop("The design formula contains invalid characters.",
           call. = FALSE
@@ -492,13 +494,18 @@ InputControl <- R6::R6Class("InputControl",
           "The design formula must include the term 'Time' as a fixed effect"
         )
       }
-
+      
+      formatted_formula <- gsub("1\\|", "", formula) 
       # Extract terms from the formula (removing interactions and functions)
-      formula_terms <- unlist(strsplit(gsub("[~+*:()]", " ", formula), " "))
+      formula_terms <- unlist(strsplit(gsub(
+        "[~+*:()]",
+        " ",
+        formatted_formula
+        ), " "))
       formula_terms <- formula_terms[formula_terms != ""]
 
       # Remove '1' and 'X' from terms since they are not columns
-      formula_terms <- setdiff(formula_terms, c("1", "X"))
+      formula_terms <- setdiff(formula_terms, c("1"))
 
       # Check if the terms are present in the dataframe
       missing_columns <- setdiff(formula_terms, names(meta))
@@ -2894,6 +2901,12 @@ check_splineomics_elements <- function(
       "condition",
       "report_info",
       "padjust_method"
+    ),
+    "preprocess_rna_seq_data" = c(
+      "data",
+      "meta",
+      "spline_params",
+      "design"
     ),
     "run_limma_splines" = c(
       "data",

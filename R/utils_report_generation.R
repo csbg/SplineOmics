@@ -152,7 +152,7 @@ generate_report_html <- function(
     "data_collection_date",
     "meta_condition",
     "plot_data_batch_correction",
-    "Fixed effects (design)",
+    "Fixed effects",
     "Random effects",
     "mode",
     "analyst_name",

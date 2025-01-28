@@ -244,12 +244,14 @@ between_level <- function(
   data <- data[, samples]
 
   meta <- meta[meta[[condition]] %in% compared_levels, ]
-
+  
+  effects <- extract_effects(design)
+  
   result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
     level_index = 1,
-    design = design
+    design = effects[["fixed_effects"]]
   )
   
   design_matrix <- result$design_matrix
@@ -277,7 +279,7 @@ between_level <- function(
     seq_len(num_matching_columns)
   )
 
-  if (!is.null(dream_params)) {
+  if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream requires this format
     
     # Apply the Kenward-Roger method if specified
@@ -290,8 +292,7 @@ between_level <- function(
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
-      random.formula = stats::as.formula(dream_params[["random_effects"]]),
-      data = result$meta,    # Spline transformed meta.
+      data = result[["meta"]],    # Spline transformed meta.
       ddf = method
     )
 
@@ -513,10 +514,8 @@ process_top_table <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
-#' @param dream_params A named list or NULL. When not NULL, it must at least 
-#' contain the named element 'random_effects', which must contain a string that
-#' is a formula for the random effects of the mixed models by dream. 
-#' Additionally, it can contain the named elements dof, which must be a int
+#' @param dream_params A named list or NULL. When not NULL, it it can contain 
+#' the named elements dof, which must be a int
 #' bigger than 1, which is the degree of freedom for the dream topTable, and
 #' the named element KenwardRoger, which must be a bool, specifying whether
 #' to use that method or not.
@@ -547,34 +546,34 @@ process_within_level <- function(
     padjust_method
     ) {
   
+  effects <- extract_effects(design)
+  
   result <- design2design_matrix(
     meta,
     spline_params,
     level_index,
-    design
+    design = effects[["fixed_effects"]]
   )
   
-  design_matrix <- result$design_matrix
+  design_matrix <- result[["design_matrix"]]
 
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data
   }
 
-  if (!is.null(dream_params)) {
+  if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream wants it like this.
-    meta <- result$meta  # Only do it after, new meta has more columns
 
     if (isTRUE(dream_params[["KenwardRoger"]])) {
       method <- "Kenward-Roger"
     } else {
       method = NULL
     }
-    
+
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
-      data = meta,
-      random.formula = stats::as.formula(dream_params[["random_effects"]]),
+      data = result[["meta"]],
       ddf = method
     )
     

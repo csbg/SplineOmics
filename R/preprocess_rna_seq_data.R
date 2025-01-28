@@ -10,24 +10,38 @@
 #' require a different normalization method, you can supply your own
 #' custom normalization function.
 #'
-#' @param raw_counts A matrix of raw RNA-seq counts (genes as rows, samples as
-#'  columns).
-#' @param meta A dataframe containing the metadata for data.
-#' @param spline_params Parameters for spline functions (optional). Must contain
-#' the named elements spline_type, which must contain either the string "n" for
-#' natural cubic splines, or "b", for B-splines, the named element degree in the
-#' case of B-splines, that must contain only an integer, and the named element
-#' dof, specifying the degree of freedom, containing an integer and required
-#' both for natural and B-splines.
-#' @param design A design formula for the limma analysis, such as
-#' '~ 1 + Phase*X + Reactor'.
-#' @param dream_params A named list or NULL. When not NULL, it must at least 
-#' contain the named element 'random_effects', which must contain a string that
-#' is a formula for the random effects of the mixed models by dream. 
-#' Additionally, it can contain the named elements dof, which must be a int
-#' bigger than 1, which is the degree of freedom for the dream topTable, and
-#' the named element KenwardRoger, which must be a bool, specifying whether
-#' to use that method or not.
+#' @param splineomics An S3 object of class `SplineOmics` that must contain the 
+#' following elements:
+#' \itemize{
+#'   \item \code{data}: A matrix of the omics dataset, with feature names 
+#'   optionally as row headers (genes as rows, samples as columns).
+#'   \item \code{meta}: A dataframe containing metadata corresponding to the 
+#'   \code{data}. The dataframe must include a 'Time' column and a column 
+#'   specified by the \code{condition}.
+#'   \item \code{design}: A character string representing the design formula 
+#'   for the limma analysis (e.g., \code{'~ 1 + Phase*X + Reactor'}).
+#'   \item \code{spline_params}: A list of spline parameters used in the 
+#'   analysis. This can include:
+#'     \itemize{
+#'       \item \code{spline_type}: A character string specifying the type of 
+#'       spline. Must be either \code{'n'} for natural cubic splines or 
+#'       \code{'b'} for B-splines.
+#'       \item \code{dof}: An integer specifying the degrees of freedom. 
+#'       Required for both natural cubic splines and B-splines.
+#'       \item \code{degree}: An integer specifying the degree of the spline 
+#'       (for B-splines only).
+#'       \item \code{knots}: Positions of the internal knots (for B-splines).
+#'       \item \code{bknots}: Boundary knots (for B-splines).
+#'     }
+#'   \item \code{dream_params}: A named list or \code{NULL}. When not 
+#'   \code{NULL}, it can contain:
+#'     \itemize{
+#'       \item \code{dof}: An integer greater than 1, specifying the degrees 
+#'       of freedom for the dream topTable.
+#'       \item \code{KenwardRoger}: A boolean indicating whether to use the 
+#'       Kenward-Roger method.
+#'     }
+#' }
 #' @param normalize_func An optional normalization function. If provided, this
 #' function will be used to normalize the `DGEList` object. If not provided,
 #' TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
@@ -37,18 +51,21 @@
 #' @return A `voom` object, which includes the log2-counts per million (logCPM)
 #'  matrix and observation-specific weights.
 #'
+#' @importFrom edgeR DGEList calcNormFactors
 #' @importFrom limma voom
+#' @importFrom variancePartition voomWithDreamWeights
 #'
 #' @export
 #'
 preprocess_rna_seq_data <- function(
-    raw_counts,
-    meta,
-    spline_params,
-    design,
-    dream_params = NULL,
+    splineomics,
     normalize_func = NULL
     ) {
+  
+  check_splineomics_elements(
+    splineomics = splineomics,
+    func_type = "preprocess_rna_seq_data"
+  )
   
   args <- lapply(
     as.list(match.call()[-1]),
@@ -59,6 +76,11 @@ preprocess_rna_seq_data <- function(
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
+  
+  raw_counts <- splineomics[["data"]]
+  meta <- splineomics[["meta"]]
+  spline_params <- splineomics[["spline_params"]]
+  design <- splineomics[["design"]]
 
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -66,6 +88,8 @@ preprocess_rna_seq_data <- function(
   # meta must contain the exact name "Time" for this respective column).
   design <- gsub("Time", "X", design)  
   
+  effects <- extract_effects(design)
+
   message("Preprocessing RNA-seq data (normalization + voom)...")
 
   # Check if edgeR is installed; if not, inform the user
@@ -81,6 +105,9 @@ preprocess_rna_seq_data <- function(
     
   }
   
+  # voomWithDreamWeights wants it like this
+  colnames(raw_counts) <- rownames(meta)  
+  
   # Step 1: Create DGEList object from raw counts
   y <- edgeR::DGEList(counts = raw_counts)
 
@@ -91,26 +118,20 @@ preprocess_rna_seq_data <- function(
     # Default: Normalize the counts using TMM normalization
     y <- edgeR::calcNormFactors(y)
   }
-  
+
   # Step 3: Create design matrix
   result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
     level_index = 1,
-    design = design
+    design = effects[["fixed_effects"]]
   )
 
   # Step 4: Apply voom transformation to get logCPM values and weights
-  if (!is.null(dream_params)) {
-    full_formula <- paste(
-      design,
-      dream_params[["random_effects"]],
-      sep = " + "
-      )
+  if (effects[["random_effects"]] != "") {
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
-      formula = stats::as.formula(full_formula),
-      # random.formula = stats::as.formula(dream_params[["random_effects"]]),
+      formula = stats::as.formula(design),
       data = result[["meta"]]    # spline transformed meta.
     )
   }
