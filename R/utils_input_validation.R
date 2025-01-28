@@ -458,7 +458,7 @@ InputControl <- R6::R6Class("InputControl",
         return(NULL)
       }
       
-      effects <- extract_effects(design)
+      effects <- extract_effects(formula)
 
       # Check if the formula is a valid character string
       if (!is.character(formula) || length(formula) != 1) {

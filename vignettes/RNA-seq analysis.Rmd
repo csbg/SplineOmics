@@ -240,6 +240,8 @@ In this example, we are skipping finding the best hyperparameters with
 the screen_limma_hyperparams() function, because we already have a clear
 idea of what do use.
 
+Lets define our parameters and put them into the SplineOmics object:
+
 ```{r Update the SplineOmics object, eval = TRUE}
 spline_params = list(
   spline_type = c("n"),    # natural cubic splines
@@ -257,6 +259,8 @@ splineomics <- SplineOmics::update_splineomics(
   spline_params = spline_params
 )
 ```
+
+
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
 voom_obj <- SplineOmics::preprocess_rna_seq_data(
@@ -358,8 +362,8 @@ want to limit the hits that are plotted. We have several options:
 ```{r cluster the hits, eval = FALSE}
 # Note: The low adj. p-values are to have less results, so that the HTML report
 # is smaller in file size.
-adj_pthresholds <- c( # 0.05 for both levels
-  0.0000001, # constant (temperature)    0.00001
+adj_pthresholds <- c(   # 0.0000001 for both levels
+  0.0000001, # constant (temperature)   
   0.0000001  # temp_shift
 )
 
