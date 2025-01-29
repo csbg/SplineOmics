@@ -15,7 +15,7 @@ between time and condition."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,15 @@ following elements:</p><ul><li><p><code>data</code>: The matrix of the omics dat
   <code>data</code>, must include a 'Time' column and the column specified by
   <code>condition</code>.</p></li>
 <li><p><code>design</code>: A character string representing the limma design
-  formula.</p></li>
+  formula.
+  <code>dream_params</code>: #' A named list or NULL. When not NULL, it can contain the following named
+     elements:
+     - `dof`: An integer greater than 1, specifying the degrees of freedom for
+     the dream topTable.
+     - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
+     approximation for mixed models.
+     Note that random effects are now directly specified in the design formula
+     and not in `dream_params`.</p></li>
 <li><p><code>condition</code>: A character string specifying the column name
   in <code>meta</code> used to define groups for analysis.</p></li>
 <li><p><code>spline_params</code>: A list of spline parameters used in the

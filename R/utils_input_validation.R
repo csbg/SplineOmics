@@ -570,15 +570,8 @@ InputControl <- R6::R6Class("InputControl",
     #' @description
     #' This function checks the validity of the `dream_params` argument provided 
     #' in the class. If `dream_params` is present, it ensures that it contains  
-    #' the required and optional elements in the correct format. 
-    #' Specifically, `dream_params` must contain a named element 
-    #' `random_effects`, 
-    #' which is required and must be a string. It may also optionally contain 
-    #' the 
-    #' elements `dof`, which must be an integer greater than 1, and 
-    #' `KenwardRoger`, 
-    #' which must be a boolean. Unnamed elements or elements other than these 
-    #' three are not allowed.
+    #' only the allowed optional elements `dof` and `KenwardRoger` in the correct 
+    #' format. Unnamed elements or elements other than these two are not allowed.
     #'
     #' @return
     #' Returns `TRUE` if `dream_params` passes all checks. Otherwise, stops the 
@@ -599,23 +592,12 @@ InputControl <- R6::R6Class("InputControl",
       }
       
       # Define allowed elements and check for unexpected elements
-      allowed_elements <- c("random_effects", "dof", "KenwardRoger")
+      allowed_elements <- c("dof", "KenwardRoger")
       if (!all(names(dream_params) %in% allowed_elements)) {
         stop_call_false(
-          "dream_params contains invalid elements.
-          Only 'random_effects', 'dof', and 'KenwardRoger'
-          are allowed."
-          )
-      }
-      
-      # Check that random_effects is present and is a string
-      if (!"random_effects" %in% names(dream_params) 
-          || !is.character(dream_params[["random_effects"]]) 
-          || length(dream_params[["random_effects"]]) != 1) {
-        stop_call_false(
-          "'random_effects' must be a string and must be present in
-          dream_params."
-          )
+          "dream_params contains invalid elements. Only 'dof' and 'KenwardRoger'
+      are allowed."
+        )
       }
       
       # If 'dof' is provided, check that it is an integer greater than 1
@@ -2699,7 +2681,8 @@ Level3Functions <- R6::R6Class("Level3Functions",
         meta,
         meta_batch_column,
         data_meta_index) {
-      if (!is.null(meta_batch_column) && !(meta_batch_column %in% names(meta))) {
+      if (!is.null(meta_batch_column) 
+          && !(meta_batch_column %in% names(meta))) {
         stop(
           self$create_error_message(
             sprintf(

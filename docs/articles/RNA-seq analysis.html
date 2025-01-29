@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
-            <h4 data-toc-skip class="date">13 January, 2025</h4>
+            <h4 data-toc-skip class="date">29 January, 2025</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/RNA-seq%20analysis.Rmd" class="external-link"><code>vignettes/RNA-seq analysis.Rmd</code></a></small>
       <div class="d-none name"><code>RNA-seq analysis.Rmd</code></div>
@@ -99,6 +99,9 @@ bioreactors</strong>, with <strong>four bioreactors</strong> subjected
 to a temperature shift after 146 hours (experimental condition) and the
 remaining <strong>four bioreactors</strong> maintained without a
 temperature shift (control condition).</p>
+<div class="section level4">
+<h4 id="timepoints">Timepoints<a class="anchor" aria-label="anchor" href="#timepoints"></a>
+</h4>
 <p>Samples were collected at <strong>17 distinct time points</strong>
 throughout the experiment, specifically: <code>"72h"</code>,
 <code>"76h"</code>, <code>"96h"</code>, <code>"120h"</code>,
@@ -109,12 +112,52 @@ throughout the experiment, specifically: <code>"72h"</code>,
 <code>"312h"</code> after cultivation start. Each time point was sampled
 from all eight bioreactors, resulting in a total of <strong>136
 samples</strong>.</p>
-<p>There are two batch effects: Reactor and Plate. Different
-bioreactors, where the cells are cultivated, can show big variablity.
-Plate refers to two different plates used in the RNA-seq analysis of the
-samples. A fully random design was used to distribute the samples to the
-two plates. In this vignette, we will just remove the plate batch
-effect.</p>
+</div>
+<div class="section level4">
+<h4 id="effects-in-the-experiment-reactor-and-plate">Effects in the Experiment: Reactor and Plate<a class="anchor" aria-label="anchor" href="#effects-in-the-experiment-reactor-and-plate"></a>
+</h4>
+<p>In this experiment, there are two effects to consider:
+<strong>Reactor</strong> and <strong>Plate</strong>.</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Reactor</strong>:
+<ul>
+<li>This refers to the different bioreactors used for cell cultivation,
+which can exhibit substantial variability.</li>
+<li>Each reactor was assigned a single condition: either constant
+temperature or temperature-shifted. As a result, <strong>condition and
+reactor are confounded</strong>.</li>
+<li>Reactor should not be treated as a fixed effect to simply remove its
+influence. Instead, it is treated as a <strong>random effect</strong>,
+which allows us to model its variability appropriately.</li>
+</ul>
+</li>
+<li>
+<strong>Plate</strong>:
+<ul>
+<li>This refers to the two separate plates used during the RNA-seq
+analysis of the samples.</li>
+<li>A fully random design was employed to distribute samples across the
+two plates, ensuring no bias in their assignment.</li>
+<li>Plate is considered a <strong>batch effect</strong> with respect to
+the condition (constant temperature vs. temperature-shifted).</li>
+</ul>
+</li>
+</ol>
+<p>Since condition and reactor are confounded, the variability due to
+the reactors cannot be directly separated from the condition. Instead,
+<strong>linear mixed models (LMMs)</strong> are used to attribute the
+reactor as a random effect, allowing us to account for its variability
+while isolating the effects of the condition. This approach ensures that
+the analysis appropriately handles the hierarchical structure of the
+data and avoids incorrect conclusions.</p>
+<p>In this vignette, we will demonstrate how to use linear mixed models
+to address these challenges and properly account for both reactor and
+plate effects.</p>
+</div>
+<div class="section level4">
+<h4 id="further-info">Further info<a class="anchor" aria-label="anchor" href="#further-info"></a>
+</h4>
 <p>The data matrix comprises <strong>genes as rows</strong> and
 <strong>samples as columns</strong>, providing gene expression
 measurements for all time points. Each sample was initially sequenced in
@@ -128,6 +171,7 @@ dynamics over time.</p>
 published at the time of this vignette’s creation. For demonstration
 purposes, the genes have been randomly shuffled, and only a subset of
 the data has been included to reduce the dataset size.</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="analysis-goals">Analysis Goals<a class="anchor" aria-label="anchor" href="#analysis-goals"></a>
@@ -163,7 +207,7 @@ shift conditions compared to controls.</p></li>
 <span><span class="co">#&gt; 'variancePartition::topTable' when loading 'SplineOmics'</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readr.tidyverse.org" class="external-link">readr</a></span><span class="op">)</span> <span class="co"># For reading the meta CSV file</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span>  <span class="co"># For managing filepaths</span></span>
-<span><span class="co">#&gt; here() starts at /tmp/RtmpLm9rTd</span></span>
+<span><span class="co">#&gt; here() starts at /tmp/Rtmpu0eWqB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
@@ -1469,21 +1513,48 @@ the report for the batch-corrected data.</p>
 <p>In this example, we are skipping finding the best hyperparameters
 with the screen_limma_hyperparams() function, because we already have a
 clear idea of what do use.</p>
+<p>Lets define our parameters and put them into the
+<code>SplineOmics</code> object:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spline_params</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>,    <span class="co"># natural cubic splines</span></span>
-<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span><span class="op">)</span>              <span class="co"># Degree of freedom of 2 for the splines.</span></span>
+<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span><span class="op">)</span>              <span class="co"># Degree of freedom of 3 for the splines.</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">voom_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data</a></span><span class="op">(</span></span>
-<span>  raw_counts <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  meta <span class="op">=</span> <span class="va">meta</span>,</span>
-<span>  spline_params <span class="op">=</span> <span class="va">spline_params</span>,</span>
-<span>  design <span class="op">=</span> <span class="st">"~ 1 + Condition*X + Plate"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Preprocessing RNA-seq data (normalization + voom)...</span></span>
+<span><span class="va">design</span> <span class="op">&lt;-</span> <span class="st">"~ 1 + Condition*Time + Plate + (1|Reactor)"</span></span>
 <span></span>
-<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">voom_obj</span><span class="op">$</span><span class="va">E</span></span></code></pre></div>
+<span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>  design <span class="op">=</span> <span class="va">design</span>, </span>
+<span>  <span class="co"># dream_params = dream_params,   if we would want to adjust dream()</span></span>
+<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
+<span>  spline_params <span class="op">=</span> <span class="va">spline_params</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Preprocess the RNA-seq data with <code><a href="https://rdrr.io/pkg/limma/man/voom.html" class="external-link">limma::voom</a></code>. This
+method transforms raw RNA-seq counts into log-counts per million
+(logCPM) while modeling the mean-variance relationship. It assigns
+precision weights to each observation, ensuring accurate linear modeling
+of RNA-seq data, which often exhibits heteroscedasticity (varying
+variance across expression levels). To normalize the data, TMM (Trimmed
+Mean of M-values) normalization is applied using a <code>DGEList</code>
+object from the <strong>edgeR</strong> package, correcting for library
+size differences and compositional biases.</p>
+<p>When random effects are included in the design, the function
+automatically uses <code>voomWithDreamWeights</code> from the
+<strong>variancePartition</strong> package instead. This method extends
+<code>voom</code> by incorporating random effects into the model,
+allowing for precise handling of complex experimental designs such as
+repeated measures or hierarchical structures. The calculated weights
+account for both fixed and random effects, providing robust results for
+differential expression analysis.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">voom_obj</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data</a></span><span class="op">(</span></span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Column 'Plate' of meta will be used to remove the batch effect for the plotting</span></span>
+<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time (X) for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
+<span><span class="co">#&gt; Preprocessing RNA-seq data (normalization + voom)...</span></span></code></pre></div>
 <p>You can customize the normalization method by providing a specific
 normalization function through the <code>normalize_func</code> argument
 in the <code><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function. For details on
@@ -1500,18 +1571,15 @@ Alongside this, you must pass the <code>$E</code> data matrix as the
 actual data matrix and the <code>rna_seq_data</code> argument contains
 an object compatible with <code>limma</code>, your data will be
 correctly processed.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  rna_seq_data <span class="op">=</span> <span class="va">voom_obj</span>,</span>
-<span>  design <span class="op">=</span> <span class="st">"~ 1 + Condition*X + Plate"</span>, </span>
-<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
-<span>  spline_params <span class="op">=</span> <span class="va">spline_params</span></span>
+<span>  data <span class="op">=</span> <span class="va">voom_obj</span><span class="op">$</span><span class="va">E</span>,</span>
+<span>  rna_seq_data <span class="op">=</span> <span class="va">voom_obj</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> function with the updated
 SplineOmics object:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
@@ -1540,7 +1608,7 @@ levels (which includes both time and the average differences)</p>
 </h2>
 <p>The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"limma_reports"</span></span>
@@ -1579,11 +1647,11 @@ function to <code>FALSE</code> (default is <code>TRUE</code>). This
 skips the generation of an HTML report, significantly speeding up
 computation by omitting the creation and export of plots.</p></li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Note: The low adj. p-values are to have less results, so that the HTML report</span></span>
 <span><span class="co"># is smaller in file size.</span></span>
-<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="co"># 0.05 for both levels</span></span>
-<span>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)    0.00001</span></span>
+<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>   <span class="co"># 0.0000001 for both levels</span></span>
+<span>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)   </span></span>
 <span>  <span class="fl">0.0000001</span>  <span class="co"># temp_shift</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -1660,7 +1728,7 @@ contains an interaction effect).</p>
 biological insights is to perform GSEA. For this, the respective genes
 can be assigned to each clustered hit, and GSEA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify which databases you want to download from Enrichr</span></span>
 <span><span class="va">gene_set_lib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"WikiPathways_2019_Human"</span>,</span>
@@ -1689,7 +1757,7 @@ dataframe. Further, optionally, the clusterProfiler parameters and the
 report dir can be specified. The function create_gsea_report() runs GSEA
 using clusterProfiler, generates an HTML report and returns the GSEA
 dotplots in R.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
 <span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"databases.tsv"</span></span>
@@ -1717,7 +1785,7 @@ dotplots in R.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_gsea.html">run_gsea</a></span><span class="op">(</span></span>
 <span>  <span class="co"># A dataframe with three columns: feature, cluster, and gene. Feature contains</span></span>
 <span>  <span class="co"># the integer index of the feature, cluster the integer specifying the cluster</span></span>
@@ -1758,7 +1826,7 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] knitr_1.48        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.1.0</span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.1.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.16.0        jsonlite_1.8.9          </span></span>
@@ -1788,8 +1856,8 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt;  [73] ggrepel_0.9.6            foreach_1.5.2            pillar_1.9.0            </span></span>
 <span><span class="co">#&gt;  [76] stringr_1.5.1            vroom_1.6.5              limma_3.58.1            </span></span>
 <span><span class="co">#&gt;  [79] circlize_0.4.16          splines_4.3.3            lattice_0.22-5          </span></span>
-<span><span class="co">#&gt;  [82] renv_1.0.10              bit_4.5.0                tidyselect_1.2.1        </span></span>
-<span><span class="co">#&gt;  [85] locfit_1.5-9.10          ComplexHeatmap_2.18.0    gridExtra_2.3           </span></span>
+<span><span class="co">#&gt;  [82] bit_4.5.0                renv_1.0.10              tidyselect_1.2.1        </span></span>
+<span><span class="co">#&gt;  [85] ComplexHeatmap_2.18.0    locfit_1.5-9.10          gridExtra_2.3           </span></span>
 <span><span class="co">#&gt;  [88] IRanges_2.36.0           edgeR_4.0.16             svglite_2.1.3           </span></span>
 <span><span class="co">#&gt;  [91] RhpcBLASctl_0.23-42      stats4_4.3.3             xfun_0.48               </span></span>
 <span><span class="co">#&gt;  [94] Biobase_2.62.0           statmod_1.5.0            matrixStats_1.4.1       </span></span>

@@ -65,8 +65,10 @@ create_limma_report <- function(
   
   # Put them in there under those names, so that the report generation fun
   # can access them directly like this.
-  report_info[["Fixed effects (design)"]] <- splineomics[["design"]] 
-  report_info[["Random effects"]] <- dream_params[["random_effects"]] 
+  design <- splineomics[["design"]] 
+  effects <- extract_effects(design)
+  report_info[["Fixed effects"]] <- effects[["fixed_effects"]]
+  report_info[["Random effects"]] <- effects[["random_effects"]] 
 
   # Get the top_tables of the three limma analysis categories
   time_effect <- limma_splines_result$time_effect

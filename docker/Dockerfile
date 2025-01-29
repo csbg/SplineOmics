@@ -38,7 +38,7 @@ RUN R -e "install.packages('BiocManager'); install.packages('remotes')" 2>&1 | t
 RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'edgeR', 'clusterProfiler'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
 
 # Install the SplineOmics package from GitHub in the custom library
-RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.1.0', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
+RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.1.1', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
 
 # Install necessary R packages in the custom library
 RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))" 2>&1 | tee /log/required_packages_install_log.txt
@@ -52,6 +52,7 @@ RUN dpkg-query -Wf '${Package} ${Version}\n' > /log/installed_os_packages.txt
 # Default command to start RStudio Server
 CMD ["/init"]
 
-# To build the image, run the following command in the dir where this Dockerfile is located:
-# docker build --no-cache -t thomasrauter/splineomics:0.1.0 .
+# To build the image, run the following command in the Bash shell in the dir 
+# where this Dockerfile is located (./docker):
+# docker build --no-cache -t thomasrauter/splineomics:0.1.1 .
 

@@ -59,13 +59,14 @@ create the row headers for the data matrix!}
 
 \item{design}{A design matrix or similar object (optional).}
 
-\item{dream_params}{A named list or NULL. When not NULL, it must at least 
-contain the named element 'random_effects', which must contain a string that
-is a formula for the random effects of the mixed models by dream. 
-Additionally, it can contain the named elements dof, which must be a int
-bigger than 1, which is the degree of freedom for the dream topTable, and
-the named element KenwardRoger, which must be a bool, specifying whether
-to use that method or not.}
+\item{dream_params}{#' A named list or NULL. When not NULL, it can contain
+ the following named elements:
+- `dof`: An integer greater than 1, specifying the degrees of freedom for 
+  the dream topTable.
+- `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
+  approximation for mixed models.
+Note that random effects are now directly specified in the design formula 
+and not in `dream_params`.}
 
 \item{mode}{For the design formula, you must specify either 'isolated' or
 'integrated'. Isolated means limma determines the results for each level

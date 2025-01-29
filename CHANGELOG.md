@@ -44,16 +44,29 @@ Examples:
   than being passed as part of the dream_params.
   
 ### Added
-- Raw data plotting function
+- Added linear mixed models for modeling random effects. The variancePartition
+  package is used for that --> voomWithDreamWeights for RNA-seq data processing,
+  and dream as the replacement for limma. For example, if you Reactor is your
+  random effect, you can write the design formula like this:
+  design <- "~ 1 + Condition*Time + Plate + (1|Reactor)" and SplineOmics will
+  automatically run the variancePartition functions voomWithDreamWeights() and
+  dream() instead of the limma::voom and lmfit. dream() has additional
+  parameters, such as the method and the degree of freedom (different than the
+  degree of freedom used for the splines in this package) and you can pass these
+  with the dream_params argument. See RNA-seq analysis vignette or the
+  respective function references for more info.
+- Raw data plotting function --> make_scatter_plot_html()  --> see references.
 - Imputed values are marked with triangle symbols in cluster_hits() spline
   plots if raw data is passed.
 - Package version is written in each HTML report (the tag) and the session info
   is added as an embedded text file.
 - Standard error written on top of "double spline" plots (limma result category
   2 and 3). 
-- Added linear mixed models for modeling random effects. The variancePartition
-  package is used for that --> voomWithDreamWeights for RNA-seq data processing,
-  and dream as the replacement for limma. 
 - Used analysis script is embedded as a text file in the reports.
 - The mode (integrated or isolated) is written on top of the reports in a 
   separate field.
+- Now there are 4 significance stars.
+- Treatment lines for the double spline plots (limma result category 2 and 3).
+
+#### Fixed
+- A few smaller visual things for the HTML reports.

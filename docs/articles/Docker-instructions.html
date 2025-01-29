@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
-            <h4 data-toc-skip class="date">2025-01-21</h4>
+            <h4 data-toc-skip class="date">2025-01-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/Docker-instructions.Rmd" class="external-link"><code>vignettes/Docker-instructions.Rmd</code></a></small>
       <div class="d-none name"><code>Docker-instructions.Rmd</code></div>
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
 check for the newest version or the specific version you need by
 visiting the <a href="https://hub.docker.com/r/thomasrauter/splineomics" class="external-link">Docker Hub
 repository</a>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">docker</span> pull thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">docker</span> pull thomasrauter/splineomics:0.1.1</span></code></pre></div>
 <p>If you face ‘permission denied’ issues, check out <a href="https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html" class="external-link">this
 vignette</a></p>
 </div>
@@ -152,7 +152,7 @@ container.</p>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=123 <span class="dt">\</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="at">--name</span> splineomics <span class="dt">\</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    thomasrauter/splineomics:0.1.0</span></code></pre></div>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    thomasrauter/splineomics:0.1.1</span></code></pre></div>
 <p>For Windows (<code>PowerShell</code>):</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>docker run <span class="op">-</span>it <span class="op">-</span>d `</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>    <span class="op">-</span>v <span class="st">"</span><span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span><span class="st">\input:/home/rstudio/input"</span> `</span>
@@ -160,7 +160,7 @@ container.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="op">-</span>p <span class="dv">8888</span><span class="op">:</span><span class="dv">8787</span> `</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="op">-</span>e PASSWORD<span class="op">=</span><span class="dv">123</span> `</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="op">--</span>name splineomics `</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    thomasrauter<span class="op">/</span>splineomics<span class="op">:</span><span class="dv">0.1</span><span class="op">.</span><span class="dv">0</span></span></code></pre></div>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    thomasrauter<span class="op">/</span>splineomics<span class="op">:</span><span class="dv">0.1</span><span class="op">.</span><span class="dv">1</span></span></code></pre></div>
 <p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Log
 in using the following credentials:</p>
 <ul>
@@ -261,7 +261,7 @@ saved into the new image, rather than being lost when the container is
 deleted.</p>
 <p>For example:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Use the SplineOmics image as the base image</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">FROM</span> thomasrauter/splineomics:0.1.0</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">FROM</span> thomasrauter/splineomics:0.1.1</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># Install the data.table package permanently</span></span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">RUN</span> R <span class="at">-e</span> <span class="st">"install.packages('data.table')"</span></span>
