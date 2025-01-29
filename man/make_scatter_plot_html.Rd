@@ -21,5 +21,7 @@ column "Time".}
 \item{output_file}{The name of the HTML output file.}
 }
 \description{
-Generate scatter plot report for rach feature with embedded base64 images
+This function is used to make scatter plots for the raw data of all the 
+features. It generates an HTML report in the fashion of the other functions
+of the SplineOmics package which contains all the scatter plots.
 }

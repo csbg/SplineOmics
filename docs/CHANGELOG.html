@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,6 +74,30 @@
 <ul><li>Any security-related updates or patches.</li>
 </ul><p>Examples: - <strong>Added</strong>: Introduced a new plotting function <code>plotTimeSeries()</code>. - <strong>Fixed</strong>: Resolved an issue causing crashes when input data was missing values. - <strong>Changed</strong>: Modified the default parameters for <code>normalizeData()</code>.</p>
 <hr></div>
+</div>
+<div class="section level3">
+<h3 id="id_011---2025-mm-dd">[0.1.1] - 2025-MM-DD<a class="anchor" aria-label="anchor" href="#id_011---2025-mm-dd"></a></h3>
+</div>
+<div class="section level3">
+<h3 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a></h3>
+<ul><li>The design formula must now contain the string ‘Time’ rather than ‘X’ like it was before. X from before stood for the time. This change is intended to make the design formula more explicit and self explanatory.</li>
+<li>Random effects can now be directly be specified in the design formula, rather than being passed as part of the dream_params.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a></h3>
+<ul><li>Added linear mixed models for modeling random effects. The variancePartition package is used for that –&gt; voomWithDreamWeights for RNA-seq data processing, and dream as the replacement for limma. For example, if you Reactor is your random effect, you can write the design formula like this: design &lt;- “~ 1 + Condition*Time + Plate + (1|Reactor)” and SplineOmics will automatically run the variancePartition functions voomWithDreamWeights() and dream() instead of the limma::voom and lmfit. dream() has additional parameters, such as the method and the degree of freedom (different than the degree of freedom used for the splines in this package) and you can pass these with the dream_params argument. See RNA-seq analysis vignette or the respective function references for more info.</li>
+<li>Raw data plotting function –&gt; make_scatter_plot_html() –&gt; see references.</li>
+<li>Imputed values are marked with triangle symbols in cluster_hits() spline plots if raw data is passed.</li>
+<li>Package version is written in each HTML report (the tag) and the session info is added as an embedded text file.</li>
+<li>Standard error written on top of “double spline” plots (limma result category 2 and 3).</li>
+<li>Used analysis script is embedded as a text file in the reports.</li>
+<li>The mode (integrated or isolated) is written on top of the reports in a separate field.</li>
+<li>Now there are 4 significance stars.</li>
+<li>Treatment lines for the double spline plots (limma result category 2 and 3).</li>
+</ul><div class="section level4">
+<h4 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a></h4>
+<ul><li>A few smaller visual things for the HTML reports.</li>
+</ul></div>
 </div>
 </div>
 </div>

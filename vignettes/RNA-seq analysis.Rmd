@@ -1,7 +1,7 @@
 ---
 title: "RNA-seq analysis"
 author: "Thomas Rauter"
-date: "13 January, 2025"
+date: "29 January, 2025"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{RNA-seq analysis}
@@ -109,9 +109,7 @@ The main objectives of this analysis are:
 # Load the packages
 
 ```{r setup, eval = TRUE}
-# library(SplineOmics)
-library(devtools)
-devtools::load_all()
+library(SplineOmics)
 library(readr) # For reading the meta CSV file
 library(here)  # For managing filepaths
 library(dplyr) # For data manipulation
@@ -240,7 +238,7 @@ In this example, we are skipping finding the best hyperparameters with
 the screen_limma_hyperparams() function, because we already have a clear
 idea of what do use.
 
-Lets define our parameters and put them into the SplineOmics object:
+Lets define our parameters and put them into the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
 spline_params = list(
@@ -254,13 +252,28 @@ splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   data = data,
   design = design, 
-  dream_params = dream_params,
+  # dream_params = dream_params,   if we would want to adjust dream()
   mode = "integrated", # means limma uses the full data for each condition.
   spline_params = spline_params
 )
 ```
 
+Preprocess the RNA-seq data with `limma::voom`. This method transforms raw RNA-seq 
+counts into log-counts per million (logCPM) while modeling the mean-variance 
+relationship. It assigns precision weights to each observation, ensuring 
+accurate linear modeling of RNA-seq data, which often exhibits 
+heteroscedasticity (varying variance across expression levels). To normalize 
+the data, TMM (Trimmed Mean of M-values) normalization is applied using a 
+`DGEList` object from the **edgeR** package, correcting for library size 
+differences and compositional biases.
 
+When random effects are included in the design, the function automatically 
+uses `voomWithDreamWeights` from the **variancePartition** package instead. 
+This method extends `voom` by incorporating random effects into the model, 
+allowing for precise handling of complex experimental designs such as repeated 
+measures or hierarchical structures. The calculated weights account for both 
+fixed and random effects, providing robust results for differential expression 
+analysis.
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
 voom_obj <- SplineOmics::preprocess_rna_seq_data(

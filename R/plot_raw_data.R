@@ -1,7 +1,9 @@
 #' make_scatter_plot_html()
 #' 
 #' @description
-#' Generate scatter plot report for rach feature with embedded base64 images
+#' This function is used to make scatter plots for the raw data of all the 
+#' features. It generates an HTML report in the fashion of the other functions
+#' of the SplineOmics package which contains all the scatter plots.
 #'
 #' @param data A matrix with features as rows and samples as columns. 
 #' Row names should be feature names.

@@ -102,7 +102,6 @@ preprocess_rna_seq_data <- function(
       "This is an optional dependency of the SplineOmics package, ",
       "only needed when working with RNA-seq data."
     )
-    
   }
   
   # voomWithDreamWeights wants it like this

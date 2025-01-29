@@ -946,6 +946,8 @@ encode_df_to_base64 <- function(
 
 #' Count Rows in Dataframes and Create Nested Dictionary
 #'
+#' @noRd
+#'
 #' @description
 #' This function processes the nested list of `category_2_and_3_hits` to count
 #' the rows in each dataframe. It organizes the counts into a nested list where:

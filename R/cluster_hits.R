@@ -556,6 +556,8 @@ perform_clustering <- function(
 
 #' Get Category 2 and 3 Hits
 #'
+#' @noRd
+#'
 #' @description
 #' This function filters the `limma` top tables in the `splineomics` object
 #' based on adjusted p-value thresholds for the average difference between

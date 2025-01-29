@@ -228,6 +228,8 @@ stop_call_false <- function(...) {
 
 #' Extract fixed and random effects from a model formula string.
 #'
+#' @noRd
+#'
 #' @description
 #' This function processes a model formula string by separating it into 
 #' fixed effects and random effects. Random effects are substrings in the

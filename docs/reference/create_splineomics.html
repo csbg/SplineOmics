@@ -11,7 +11,7 @@ argument to the other functions of this package."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,6 +130,17 @@ create the row headers for the data matrix!</p></dd>
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
 <dd><p>A design matrix or similar object (optional).</p></dd>
+
+
+<dt id="arg-dream-params">dream_params<a class="anchor" aria-label="anchor" href="#arg-dream-params"></a></dt>
+<dd><p>#' A named list or NULL. When not NULL, it can contain
+ the following named elements:
+- `dof`: An integer greater than 1, specifying the degrees of freedom for
+  the dream topTable.
+- `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
+  approximation for mixed models.
+Note that random effects are now directly specified in the design formula
+and not in `dream_params`.</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
