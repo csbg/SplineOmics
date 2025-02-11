@@ -1,3 +1,12 @@
+---
+title: "Changelog"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Changelog}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -33,6 +42,7 @@ Examples:
 - **Changed**: Modified the default parameters for `normalizeData()`.
 
 ---
+
 
 ### [0.1.2] - 2025-02-11
 
