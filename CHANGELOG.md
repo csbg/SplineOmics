@@ -34,7 +34,26 @@ Examples:
 
 ---
 
-### [0.1.1] - 2025-MM-DD
+### [0.1.2] - 2025-02-11
+
+#### Added
+- Level name in title of overall spline plots.
+
+#### Fixed
+- Small bug that made it impossible having no treatment label for a condition.
+- mode == isolated for RNA-seq data. Before, it caused an error, because it
+  splits up the meta into the different conditions, but does not do so for the 
+  data. Now, it informs the user that it cannot do this, and the user has to
+  split up the data himself outside (just for RNA-seq data).
+
+#### Removed
+- open_template() function. This was a function that opened a template for your
+  own analysis. I removed it, because otherwise, whenever I change the code, I
+  have to update the get-started vignette (tutorial) and this, which is twice
+  the maintainance effort.
+
+
+### [0.1.1] - 2025-01-29
 
 ### Changed
 - The design formula must now contain the string 'Time' rather than 'X' like it was before. X from

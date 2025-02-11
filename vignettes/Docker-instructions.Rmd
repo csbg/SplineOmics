@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function() {
 To pull the Docker container, use the following command. Make sure to check for the newest version or the specific version you need by visiting the [Docker Hub repository](https://hub.docker.com/r/thomasrauter/splineomics).
 
 ``` bash
-docker pull thomasrauter/splineomics:0.1.1
+docker pull thomasrauter/splineomics:latest
 ```
 
 If you face 'permission denied' issues, check out [this vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html)
@@ -84,7 +84,7 @@ docker run -it -d \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    thomasrauter/splineomics:0.1.1
+    thomasrauter/splineomics:0.1.2
 ```
 
 For Windows (`PowerShell`):
@@ -96,7 +96,7 @@ docker run -it -d `
     -p 8888:8787 `
     -e PASSWORD=123 `
     --name splineomics `
-    thomasrauter/splineomics:0.1.1
+    thomasrauter/splineomics:0.1.2
 ```
 
 Once the container is running, open a web browser and navigate to <http://localhost:8888>. Log in using the following credentials:
@@ -165,7 +165,7 @@ For example:
 
 ```bash
 # Use the SplineOmics image as the base image
-FROM thomasrauter/splineomics:0.1.1
+FROM thomasrauter/splineomics:latest
 
 # Install the data.table package permanently
 RUN R -e "install.packages('data.table')"
@@ -262,4 +262,10 @@ Start a new container and mount an empty local directory to the /home/rstudio/ d
 docker run -it \
     -v /path/to/local/dir:/home/rstudio \
     thomasrauter/splineomics-analysis:v1
+```
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
 ```

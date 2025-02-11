@@ -14,8 +14,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Streamlines the process of analysing omics timeseries data with splines">
 <meta name="description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
 <meta property="og:description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,12 +65,12 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="splineomics">SplineOmics<a class="anchor" aria-label="anchor" href="#splineomics"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/version-0.1.1-blue" alt="Version"><a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"><img src="https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen" alt="R CMD Check"><a href="https://hub.docker.com/r/thomasrauter/splineomics" class="external-link"><img src="https://img.shields.io/badge/docker-pull-blue" alt="Docker"></a> <img src="https://img.shields.io/badge/dependencies-19-blue" alt="Dependencies"><img src="https://img.shields.io/badge/platforms-all-brightgreen" alt="Platforms"></p>
+<p><img src="https://img.shields.io/badge/version-0.1.2-blue" alt="Version"><a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"><img src="https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen" alt="R CMD Check"><a href="https://hub.docker.com/r/thomasrauter/splineomics" class="external-link"><img src="https://img.shields.io/badge/docker-pull-blue" alt="Docker"></a> <img src="https://img.shields.io/badge/dependencies-19-blue" alt="Dependencies"><img src="https://img.shields.io/badge/platforms-all-brightgreen" alt="Platforms"></p>
 <p><img src="reference/figures/hex_logo.png" align="left" width="65"></p>
 <p>The R package <code>SplineOmics</code> finds the significant features (hits) of time-series -omics data by using splines and <code>limma</code> for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.</p>
 <p>The graphical abstract below shows the full workflow streamlined by <code>SplineOmics</code>:</p>
-<figure><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"><figcaption aria-hidden="true">
-Graphical Abstract of SplineOmics Workflow
+<figure><p><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"></p>
+<figcaption aria-hidden="true"><p>Graphical Abstract of SplineOmics Workflow</p>
 </figcaption></figure><div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
@@ -230,7 +230,7 @@ Graphical Abstract of SplineOmics Workflow
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
 <span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># GitHub repository</span></span>
-<span>  ref <span class="op">=</span> <span class="st">"0.1.1"</span>,        <span class="co"># Specify the tag to install</span></span>
+<span>  ref <span class="op">=</span> <span class="st">"0.1.2"</span>,        <span class="co"># Specify the tag to install</span></span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Install all dependencies</span></span>
 <span>  upgrade <span class="op">=</span> <span class="st">"always"</span>    <span class="co"># Always upgrade dependencies</span></span>
 <span>  <span class="co"># force = TRUE        # when encountering issues</span></span>
@@ -279,10 +279,6 @@ Graphical Abstract of SplineOmics Workflow
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/open_tutorial.html">open_tutorial</a></span><span class="op">(</span><span class="op">)</span>  </span></code></pre></div>
-<p>To open an R Markdown file in <code>RStudio</code> containing a <strong>template</strong> for your own analysis, run:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/open_template.html">open_template</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="id_-details">📋 Details<a class="anchor" aria-label="anchor" href="#id_-details"></a>
@@ -308,11 +304,11 @@ Graphical Abstract of SplineOmics Workflow
 <h4 id="glycan-fractional-abundance-data">Glycan fractional abundance data<a class="anchor" aria-label="anchor" href="#glycan-fractional-abundance-data"></a>
 </h4>
 <p>The glycan fractional abundance data matrix, where each row represents a type of glycan and the columns correspond to timepoints, must be transformed before analysis. This preprocessing step is essential due to the compositional nature of the data. In compositional data, an increase in the abundance of one component (glycan) necessarily results in a decrease in others, introducing a dependency among the variables that can bias the analysis. One way to address this issue is by applying the Centered Log Ratio (CLR) transformation to the data with the clr function from the compositions package:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://www.stat.boogaart.de/compositions/" class="external-link">compositions</a></span><span class="op">)</span></span>
 <span><span class="va">clr_transformed_data</span> <span class="op">&lt;-</span> <span class="fu">clr</span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 <p>The results from clr transformed data can be harder to understand and interpret however. If you prefer ease of interpretation and are fine that the results contain some artifacts due to the compositional nature of the data, log2 transform your data instead and use that as input for the <code>SplineOmics</code> package.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log2_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 </div>
 </div>
@@ -371,7 +367,7 @@ Graphical Abstract of SplineOmics Workflow
 <li>
 <strong>clusterProfiler</strong> (&gt;= 4.10.1): For the <code><a href="reference/run_gsea.html">run_gsea()</a></code> function (gene set enrichment analysis).</li>
 <li>
-<strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code><a href="reference/open_tutorial.html">open_tutorial()</a></code> and <code><a href="reference/open_template.html">open_template()</a></code> functions.</li>
+<strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code><a href="reference/open_tutorial.html">open_tutorial()</a></code> function.</li>
 </ul>
 </div>
 <div class="section level3">

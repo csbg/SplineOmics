@@ -889,10 +889,6 @@ working in R Studio (which is recommendet) you can easily check out the
 values of the individual variables and generate the output reports
 yourself.
 
-When you run the function `open_template()` you get a minimal R Markdown
-file, where the code is written so that you can use it as a skeleton to
-plug in your own data and run it.
-
 We hope that the SplineOmics package makes your scientific data analysis
 easier. If you face any problems (bugs in the code) or are not satisfied
 with the documentation, open an issue on GitHub or check out the other

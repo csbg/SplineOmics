@@ -1,7 +1,7 @@
 
 # SplineOmics
 
-![Version](https://img.shields.io/badge/version-0.1.1-blue) [![License:
+![Version](https://img.shields.io/badge/version-0.1.2-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
@@ -207,7 +207,7 @@ install.packages(
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.1.1",        # Specify the tag to install
+  ref = "0.1.2",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
@@ -276,14 +276,6 @@ To open an R Markdown file of the **tutorial** in `RStudio`, run:
 ``` r
 library(SplineOmics)
 open_tutorial()  
-```
-
-To open an R Markdown file in `RStudio` containing a **template** for
-your own analysis, run:
-
-``` r
-library(SplineOmics)
-open_template()
 ```
 
 ### 📋 Details
@@ -394,8 +386,7 @@ functionality:
   `preprocess_rna_seq_data()` function.
 - **clusterProfiler** (\>= 4.10.1): For the `run_gsea()` function (gene
   set enrichment analysis).
-- **rstudioapi** (\>= 0.16.0): For the `open_tutorial()` and
-  `open_template()` functions.
+- **rstudioapi** (\>= 0.16.0): For the `open_tutorial()` function.
 
 ### R Version
 

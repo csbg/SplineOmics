@@ -669,8 +669,14 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_mode = function() {
       mode <- self$args[["mode"]]
+      meta <- self$args[["meta"]]
+      condition <- self$args[["condition"]]
 
-      required_args <- list(mode)
+      required_args <- list(
+        mode,
+        meta,
+        condition
+        )
 
       if (any(vapply(required_args, is.null, logical(1)))) {
         return(NULL)
@@ -684,7 +690,7 @@ InputControl <- R6::R6Class("InputControl",
       
       message(
         "Make sure that the design formula contains no interaction ",
-        "between the condition and time (X) for mode == isolated, and that ",
+        "between the condition and time for mode == isolated, and that ",
         "it contains an interaction for mode == integrated. Otherwise, ",
         "you will get an uncaught error of 'coefficients not estimable' or ",
         "'subscript out of bounds'."
@@ -1190,7 +1196,7 @@ InputControl <- R6::R6Class("InputControl",
             warning_message <- paste0(
               warning_message,
               "Note: If these elements belong to the double spline plots, this", 
-              " is acceptable.\n"
+              " is acceptable and this warning can be ignored!\n"
             )
             
             message(warning_message)
@@ -1228,17 +1234,23 @@ InputControl <- R6::R6Class("InputControl",
             }
           }
         }
+
+        # Extract treatment_timepoints
+        treatment_timepoints <- plot_info$treatment_timepoints
         
-        # Check elements of treatment_timepoints
-        for (timepoint in plot_info$treatment_timepoints) {
-          if (!any(!is.na(timepoint))) {
-            if (!is.numeric(timepoint)) {
-              stop(
-                "All elements of treatment_timepoints must be NA or numeric",
-                call. = FALSE
-              )
-            }
-          }
+        # Check if each element is either numeric or NA
+        is_valid <- vapply(
+          treatment_timepoints,
+          function(x) is.numeric(x) || is.na(x),
+          FUN.VALUE = logical(1)  # Ensure output is always a logical value
+        )
+        
+        # Ensure all elements pass the check
+        if (!all(is_valid)) {
+          stop(
+            "All elements of treatment_timepoints must be NA or numeric",
+            call. = FALSE
+          )
         }
         
         # Ensure that the lengths match if both are non-NA
@@ -1256,17 +1268,22 @@ InputControl <- R6::R6Class("InputControl",
         
         # Ensure treatment_timepoints are within valid range
         max_time <- max(meta$Time, na.rm = TRUE)
-        for (timepoint in plot_info$treatment_timepoints) {
-          if (!any(!is.na(timepoint)) && timepoint > max_time) {
-            stop(
-              paste(
-                "All treatment_timepoints must be before the last timepoint:",
-                max_time
-              ),
-              call. = FALSE
-            )
-          }
+        
+        # Exclude NA values from the check
+        valid_timepoints <- 
+          plot_info$treatment_timepoints[!is.na(plot_info$treatment_timepoints)]
+        
+        # Check if any valid timepoints exceed max_time
+        if (any(valid_timepoints > max_time)) {
+          stop(
+            paste(
+              "All treatment_timepoints must be before the last timepoint:",
+              max_time
+            ),
+            call. = FALSE
+          )
         }
+        
         
       }
     },
@@ -1905,7 +1922,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
         condition,
         meta_batch_column = NULL,
         meta_batch2_column = NULL,
-        data_meta_index = NULL) {
+        data_meta_index = NULL
+        ) {
+      
       if (!is.data.frame(meta) ||
         !"Time" %in% names(meta) ||
         !is.numeric(meta[["Time"]])) {

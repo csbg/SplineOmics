@@ -924,7 +924,7 @@ generate_section_content <- function(
   html_table <- paste0(html_table, "</tr></thead><tbody>")
 
   # Add the table rows
-  for (i in 1:nrow(df)) {
+  for (i in seq_len(nrow(df))) {
     html_table <- paste0(html_table, "<tr>")
     for (j in 1:ncol(df)) {
       html_table <- paste0(html_table, "<td>", df[i, j], "</td>")

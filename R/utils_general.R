@@ -257,11 +257,11 @@ extract_effects <- function(formula_string) {
   # If there are random effects, clean them
   if (length(substrings) > 0) {
     # Remove one non-whitespace character before and after each match
-    cleaned_random_effects <- sapply(substrings, function(substring) {
+    cleaned_random_effects <- vapply(substrings, function(substring) {
       substring <- sub("\\S\\(", "(", substring)
       substring <- sub("\\)\\S", ")", substring)
       return(substring)
-    }, USE.NAMES = FALSE)
+    }, FUN.VALUE = character(1))
     
     # Concatenate random effects into a single string
     random_effects <- paste(cleaned_random_effects, collapse = " ")
