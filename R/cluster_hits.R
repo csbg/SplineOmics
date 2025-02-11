@@ -1914,7 +1914,7 @@ plot_cluster_mean_splines <- function(
     plot_info,
     level
     ) {
-  
+
   clusters <- sort(unique(curve_values$cluster))
 
   plots <- list()

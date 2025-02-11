@@ -41,6 +41,7 @@ Examples:
 
 #### Fixed
 - Small bug that made it impossible having no treatment label for a condition.
+- Small bug that did not allow to specify two treatment labels.
 - mode == isolated for RNA-seq data. Before, it caused an error, because it
   splits up the meta into the different conditions, but does not do so for the 
   data. Now, it informs the user that it cannot do this, and the user has to
