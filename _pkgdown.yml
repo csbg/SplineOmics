@@ -13,6 +13,12 @@ navbar:
       - reference
       - articles
       - news
+      - changelog
+  
+  components:
+    changelog:
+      text: "Changelog"
+      href: articles/CHANGELOG.html
 
 reference:
   - title: User Available Functions
