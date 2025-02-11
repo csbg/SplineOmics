@@ -1075,7 +1075,11 @@ truncate_nested_list_names <- function(nested_list) {
   # Process each inner list and truncate the names of its dataframes
   lapply(nested_list, function(inner_list) {
     # Update the names of the dataframes in the inner list
-    names(inner_list) <- sapply(names(inner_list), truncate_name)
+    names(inner_list) <- vapply(
+      names(inner_list),
+      truncate_name,
+      FUN.VALUE = character(1)
+      )
     inner_list
   })
 }

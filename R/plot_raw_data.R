@@ -65,7 +65,7 @@ make_scatter_plot_html <- function(
   )
   
   # Loop through each feature (row) and generate plots
-  for (i in 1:total_iterations) {
+  for (i in seq_len(total_iterations)) {
     feature_name <- rownames(data)[i]
     feature_values <- data[i, ]
     

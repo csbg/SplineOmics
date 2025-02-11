@@ -2,7 +2,11 @@
 title: "limma_result_categories"
 author: "Thomas Rauter"
 date: "2025-01-21"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{limma_result_categories}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # limma Result Categories
@@ -146,4 +150,10 @@ lines(x, y2, lwd = 2, col = "blue")
 # Add legend outside the plotting area
 legend("topright", inset = c(-0.4, 0), legend = c("Line 1", "Line 2"), 
        col = c("red", "blue"), lty = 1, lwd = 2, xpd = TRUE)
+```
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
 ```

@@ -632,7 +632,7 @@ plot_mean_correlation_with_time <- function(
 
     # Create a data frame for plotting, ensuring row names are set
     if (is.null(rownames(data))) {
-      rownames(data) <- paste0("Feature", 1:nrow(data))
+      rownames(data) <- paste0("Feature", seq_len(nrow(data)))
     }
 
     cor_data <- data.frame(

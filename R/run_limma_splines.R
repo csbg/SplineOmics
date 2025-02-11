@@ -62,7 +62,7 @@
 run_limma_splines <- function(
     splineomics
     ) {
-  
+
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "run_limma_splines"
@@ -115,7 +115,7 @@ run_limma_splines <- function(
     padjust_method = padjust_method,
     mode = mode
   )
-
+  
   results_list <- purrr::imap(
     levels,
     process_level_with_params
@@ -430,6 +430,19 @@ within_level <- function(
     level_index <- 1L
   }
 
+  if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
+    stop_call_false(
+      "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
+      " columns, but meta_copy has ", nrow(meta_copy), " rows. The most likely",
+      "cause for this is that you selected mode == isolated, but passed the ",
+      "full data in rna_seq_data. For RNA-seq data, you must pass the ",
+      "respective datasets of the different conditions individually (for all ",
+      "other omics datasets, this is handleded implicitly by SplineOmics: it ",
+      "splits up the data and meta into the different conditions. However, ",
+      "that is not possible with the RNA-seq data objects"
+    )
+  }
+  
   result <- process_within_level(
     data = data_copy,
     rna_seq_data = rna_seq_data,
@@ -546,7 +559,7 @@ process_within_level <- function(
     level_index,
     padjust_method
     ) {
-  
+
   effects <- extract_effects(design)
   
   result <- design2design_matrix(

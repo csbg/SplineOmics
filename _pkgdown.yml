@@ -26,7 +26,6 @@ reference:
       - explore_data
       - extract_data
       - make_scatter_plot_html
-      - open_template
       - open_tutorial
       - preprocess_rna_seq_data
       - print.SplineOmics

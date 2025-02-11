@@ -1421,10 +1421,12 @@ remove_batch_effect_cluster_hits <- function(
     meta_batch2_column,
     design,
     mode,
-    spline_params) {
+    spline_params
+    ) {
+  
   datas <- list()
   n <- length(unique(meta[[condition]]))
-  level_indices <- as.integer(1:n)
+  level_indices <- seq_len(n)
   unique_levels <- unique(meta[[condition]])
 
   if (!is.null(meta_batch_column)) {
@@ -1798,7 +1800,7 @@ plot_all_mean_splines <- function(
     # Filter rows for the current cluster
     subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
     last_timepoint <- (which(names(curve_values) == "cluster")) - 1
-    average_curve <- colMeans(subset_hits[, 1:last_timepoint])
+    average_curve <- colMeans(subset_hits[, seq_len(last_timepoint)])
 
     # Create a data frame for the average curve with an additional 'Cluster'
     # column
@@ -1826,7 +1828,8 @@ plot_all_mean_splines <- function(
   cluster_colors <- scales::hue_pal()(length(unique(average_curves$cluster)))
 
   if (length(cluster_colors) > length(unique(average_curves$cluster))) {
-    cluster_colors <- cluster_colors[1:length(unique(average_curves$cluster))]
+    cluster_colors <- 
+      cluster_colors[seq_len(length(unique(average_curves$cluster)))]
   }
   names(cluster_colors) <- paste(
     "Cluster",
@@ -1846,7 +1849,7 @@ plot_all_mean_splines <- function(
     )
   ) +
     ggplot2::geom_line() +
-    ggplot2::ggtitle("Average Splines by Cluster") +
+    ggplot2::ggtitle(sprintf("Average Splines by Cluster - %s", level)) +
     ggplot2::xlab(paste("Time", time_unit_label)) +
     ggplot2::ylab(paste("min-max norm.", plot_info$y_axis_label)) +
     ggplot2::theme_minimal() +
@@ -1909,7 +1912,9 @@ plot_all_mean_splines <- function(
 plot_cluster_mean_splines <- function(
     curve_values,
     plot_info,
-    level) {
+    level
+    ) {
+  
   clusters <- sort(unique(curve_values$cluster))
 
   plots <- list()
@@ -1925,6 +1930,8 @@ plot_cluster_mean_splines <- function(
       current_cluster,
       "| Hits:",
       nr_of_hits,
+      "|",
+      level,
       sep = " "
     )
 
@@ -2021,12 +2028,12 @@ plot_splines <- function(
 
   plot_list <- list()
 
-  for (hit in 1:nrow(top_table)) {
+  for (hit in seq_len(nrow(top_table))) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
 
     intercept <- top_table$intercept[hit]
-    spline_coeffs <- as.numeric(top_table[hit, 1:DoF])
+    spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
 
     Time <- seq(
       meta$Time[1],
@@ -2362,7 +2369,7 @@ plot_spline_comparisons <- function(
   plot_list <- list()
   feature_names_list <- list()
 
-  for (hit in 1:nrow(time_effect_1)) {
+  for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     y_values_1 <- data[hit_index, ]
     y_values_2 <- data[hit_index, ]
@@ -2404,8 +2411,8 @@ plot_spline_comparisons <- function(
     intercept_1 <- time_effect_1$intercept[hit]
     intercept_2 <- time_effect_2$intercept[hit]
 
-    spline_coeffs_1 <- as.numeric(time_effect_1[hit, 1:DoF])
-    spline_coeffs_2 <- as.numeric(time_effect_2[hit, 1:DoF])
+    spline_coeffs_1 <- as.numeric(time_effect_1[hit, seq_len(DoF)])
+    spline_coeffs_2 <- as.numeric(time_effect_2[hit, seq_len(DoF)])
 
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 1000)
     fitted_values_1 <- X_1 %*% spline_coeffs_1 + intercept_1
@@ -2926,7 +2933,7 @@ build_cluster_hits_report <- function(
       "heatmap",
       "individual_spline_plots"
     )
-    
+
     if (element_name %in% header_levels) {
       if (element_name == "dendrogram") {
         header_text <- "Overall Clustering"
@@ -2934,7 +2941,7 @@ build_cluster_hits_report <- function(
         header_text <- "Min-max normalized individual and mean splines"
       } else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
-
+      
         heatmap_description <- paste(
           "<div style='text-align: center; font-size: 1.5em;'>",
           "Rows = features (labels on the right, cluster labels on the left),",
@@ -3299,7 +3306,7 @@ get_curve_values <- function(
   # columns_to_select <- 1:DoF
 
   splineCoeffs <- top_table |>
-    dplyr::select(all_of(1:DoF)) |>
+    dplyr::select(all_of(seq_len(DoF))) |>
     as.matrix()
 
   curve_values <- matrix(
@@ -3307,7 +3314,7 @@ get_curve_values <- function(
     ncol = length(smooth_timepoints)
   )
 
-  for (i in 1:nrow(splineCoeffs)) {
+  for (i in seq_len(nrow(splineCoeffs))) {
     current_coeffs <- matrix(
       splineCoeffs[i, ],
       ncol = ncol(splineCoeffs),
@@ -3412,7 +3419,7 @@ hierarchical_clustering <- function(
   curve_values$cluster <- cluster_assignments
 
   top_table$cluster <- NA
-  top_table$cluster[1:nrow(clustered_hits)] <-
+  top_table$cluster[seq_len(nrow(clustered_hits))] <-
     as.integer(clustered_hits$cluster)
 
   group_clustering <- list(

@@ -88,7 +88,7 @@ extract_data <- function(
 
   # Extract headers for each column above the identified block
   headers <- vapply(upper_left_col:lower_right_col, function(col_idx) {
-    header_values <- data[1:(upper_left_row - 1), col_idx]
+    header_values <- data[seq_len((upper_left_row - 1)), col_idx]
     header_values <- header_values[!is.na(header_values)]
     paste(header_values, collapse = "_")
   }, character(1))
@@ -154,8 +154,8 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
       num_rows <- nrow(self$data)
       num_cols <- ncol(self$data)
 
-      for (i in 1:(num_rows - 5)) {
-        for (j in 1:(num_cols - 5)) {
+      for (i in seq_len((num_rows - 5))) {
+        for (j in seq_len((num_cols - 5))) {
           block <- self$data[i:(i + 5), j:(j + 5)]
           block_num <- suppressWarnings(as.numeric(as.matrix(block)))
           if (all(!is.na(block_num)) && (all(is.numeric(block_num)))) {

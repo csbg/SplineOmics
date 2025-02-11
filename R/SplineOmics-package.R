@@ -72,7 +72,7 @@
 #'
 #' -   **edgeR**: For preprocessing RNA-seq data in the run_limma_splines() fun.
 #' -   **clusterProfiler**: For the run_gsea() function (gene set enrichment).
-#' -   **rstudioapi**: For the open_tutorial() and open_template() functions.
+#' -   **rstudioapi**: For the open_tutorial() function.
 #'
 #' @section Authors:
 #' - [Thomas-Rauter](https://github.com/Thomas-Rauter) - Wrote the package and

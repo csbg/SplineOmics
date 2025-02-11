@@ -14,8 +14,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="RNA-seq analysis">
 </head>
 <body>
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,7 +207,7 @@ shift conditions compared to controls.</p></li>
 <span><span class="co">#&gt; 'variancePartition::topTable' when loading 'SplineOmics'</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readr.tidyverse.org" class="external-link">readr</a></span><span class="op">)</span> <span class="co"># For reading the meta CSV file</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span>  <span class="co"># For managing filepaths</span></span>
-<span><span class="co">#&gt; here() starts at /tmp/Rtmpu0eWqB</span></span>
+<span><span class="co">#&gt; here() starts at /tmp/RtmpNyn5PS</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
@@ -1528,7 +1528,8 @@ clear idea of what do use.</p>
 <span>  data <span class="op">=</span> <span class="va">data</span>,</span>
 <span>  design <span class="op">=</span> <span class="va">design</span>, </span>
 <span>  <span class="co"># dream_params = dream_params,   if we would want to adjust dream()</span></span>
-<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
+<span>  <span class="co"># means limma "borrows" statistical power from the other levels</span></span>
+<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, </span>
 <span>  spline_params <span class="op">=</span> <span class="va">spline_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Preprocess the RNA-seq data with <code><a href="https://rdrr.io/pkg/limma/man/voom.html" class="external-link">limma::voom</a></code>. This
@@ -1553,7 +1554,7 @@ differential expression analysis.</p>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Column 'Plate' of meta will be used to remove the batch effect for the plotting</span></span>
-<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time (X) for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
+<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
 <span><span class="co">#&gt; Preprocessing RNA-seq data (normalization + voom)...</span></span></code></pre></div>
 <p>You can customize the normalization method by providing a specific
 normalization function through the <code>normalize_func</code> argument
@@ -1585,7 +1586,7 @@ SplineOmics object:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Hint: The data contains negative values. This may occur if the data has been transformed (e.g., log-transformed or normalized) and is valid in such cases. Ensure that the data preprocessing  aligns with your analysis requirements.</span></span>
 <span><span class="co">#&gt; Column 'Plate' of meta will be used to remove the batch effect for the plotting</span></span>
-<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time (X) for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
+<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> limma spline analysis completed successfully</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
@@ -1647,73 +1648,79 @@ function to <code>FALSE</code> (default is <code>TRUE</code>). This
 skips the generation of an HTML report, significantly speeding up
 computation by omitting the creation and export of plots.</p></li>
 </ul>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Note: The low adj. p-values are to have less results, so that the HTML report</span></span>
-<span><span class="co"># is smaller in file size.</span></span>
-<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>   <span class="co"># 0.0000001 for both levels</span></span>
-<span>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)   </span></span>
-<span>  <span class="fl">0.0000001</span>  <span class="co"># temp_shift</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">4L</span>,  <span class="co"># 4 clusters for constant</span></span>
-<span>  <span class="fl">4L</span>   <span class="co"># 4 clusters for temp_shift</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
-<span>  <span class="st">"results"</span>,</span>
-<span>  <span class="st">"clustering_reports"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Note: The treatment_labels and treatment_timepoints variable can be defined</span></span>
-<span><span class="co"># much simpler for this experiment, because all plots should have the same </span></span>
-<span><span class="co"># treatment line (it can be done like shown by the commented out arguments of</span></span>
-<span><span class="co"># plot_info below). The reason why this is done in the explicit way here is to</span></span>
-<span><span class="co"># show how it is possible to potentially have different treatment lines for the</span></span>
-<span><span class="co"># "double spline" plots (the ones that compare limma result category 2 and 3). </span></span>
-<span><span class="co"># constant_temp_shift is the first condition of the double spline plot and the</span></span>
-<span><span class="co"># second condition separated by an underscore (it must be exactly like this,</span></span>
-<span><span class="co"># otherwise it does not work. The first condition is always the one that occurs</span></span>
-<span><span class="co"># first from the top in the respective meta column).</span></span>
-<span><span class="va">treatment_labels</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  constant <span class="op">=</span> <span class="st">"temp shift"</span>, </span>
-<span>  temp_shift <span class="op">=</span> <span class="st">"temp shift"</span>,  </span>
-<span>  constant_temp_shift <span class="op">=</span> <span class="st">"temp shift"</span> </span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="va">treatment_timepoints</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  constant <span class="op">=</span> <span class="fl">146</span>,</span>
-<span>  temp_shift <span class="op">=</span> <span class="fl">146</span>,  </span>
-<span>  constant_temp_shift <span class="op">=</span> <span class="fl">146</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="co"># For the spline plots</span></span>
-<span>  y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
-<span>  time_unit <span class="op">=</span> <span class="st">"min"</span>, <span class="co"># our measurements were in minutes</span></span>
-<span>  <span class="co"># treatment_labels = list("temp shift"), # add this for all conditions</span></span>
-<span>  <span class="co"># treatment_timepoints = list(146)       # temp shift was at 146 hours.</span></span>
-<span>  treatment_labels <span class="op">=</span> <span class="va">treatment_labels</span>,</span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="va">treatment_timepoints</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">plot_options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
-<span>  meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span> <span class="co"># Colors the data points based on Reactor</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
-<span>  clusters <span class="op">=</span> <span class="va">clusters</span>,</span>
-<span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
-<span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
-<span>  plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
-<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.0000001</span>,</span>
-<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.0000001</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Note: The low adj. p-values are to have less results, so that the HTML report</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># is smaller in file size.</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(   <span class="co"># 0.0000001 for both levels</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)   </span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="fl">0.0000001</span>  <span class="co"># temp_shift</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="dv">4</span><span class="dt">L</span>,  <span class="co"># 4 clusters for constant</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="dv">4</span><span class="dt">L</span>   <span class="co"># 4 clusters for temp_shift</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>)</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="st">"results"</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="st">"clustering_reports"</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>)</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co"># treatment_labels allows to place vertical dashed lines into the plots, that</span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co"># indicate a treatment, such as "temp shift" in this experiment. For each level,</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co"># the treatment can be specified individually. For the "double spline plots", </span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co"># where two levels are combined into one plot, treatment lines can also be </span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co"># defined. The correct fieldname for those is {first_level}_{second_level}, </span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co"># with first_level being the level of the two occuring first in the respective</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co"># meta column, and second_level the one that occurs after. </span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co"># Here, we don't want a treatment line for the constant level, since no </span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co"># treatment was applied. To achieve that, we simply set it to NA or leave it</span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co"># out. </span></span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>treatment_labels <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a>  <span class="co"># constant = NA, </span></span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>  <span class="at">temp_shift =</span> <span class="st">"temp shift"</span>,  </span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  <span class="at">constant_temp_shift =</span> <span class="st">"temp shift"</span> </span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>  )</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a><span class="co"># treatment_timepoints allows to specify the timepoint, at which the vertical</span></span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a><span class="co"># dashed treatment line is placed. Again, for the constant level, we don't</span></span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a><span class="co"># have a treatment, so we also do not specify a timepoint.</span></span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a>treatment_timepoints <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a>  <span class="co"># constant = NA,</span></span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a>  <span class="at">temp_shift =</span> <span class="dv">146</span>,  </span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a>  <span class="at">constant_temp_shift =</span> <span class="dv">146</span></span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a>  )</span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a>plot_info <span class="ot">&lt;-</span> <span class="fu">list</span>( <span class="co"># For the spline plots</span></span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">"log2 counts"</span>,</span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">"min"</span>, <span class="co"># our measurements were in minutes</span></span>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a>  <span class="co"># When you simply want to add a given treatment line to all conditions (</span></span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a>  <span class="co"># including all double spline plot comparisons) then you can do it in the </span></span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a>  <span class="co"># following way (commented out here): </span></span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a>  )</span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a>  <span class="co"># treatment_labels = list("temp shift"), # add for all conditions</span></span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a>  <span class="co"># treatment_timepoints = list(146)       # temp shift was at 146 hours.</span></span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a>  treatment_labels <span class="ot">=</span> treatment_labels,</span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a>  treatment_timepoints <span class="ot">=</span> treatment_timepoints</span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a><span class="er">)</span></span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a></span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">rownames</span>(data)</span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a></span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a>plot_options <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a>  <span class="at">meta_replicate_column =</span> <span class="st">"Reactor"</span> <span class="co"># Colors the data points based on Reactor</span></span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a>)</span>
+<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a></span>
+<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
+<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
+<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
+<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
+<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
+<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
+<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a>  <span class="at">plot_options =</span> plot_options,</span>
+<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
+<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="fl">0.0000001</span>,</span>
+<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.0000001</span></span>
+<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a>)</span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?export=view&amp;id=1EvPiEwHyGnBQFxRets00s87tochgyGK4" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
@@ -1825,53 +1832,53 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] knitr_1.48        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.1.1</span></span>
+<span><span class="co">#&gt; [1] knitr_1.49        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.1.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.16.0        jsonlite_1.8.9          </span></span>
-<span><span class="co">#&gt;   [4] shape_1.4.6.1            magrittr_2.0.3           farver_2.1.2            </span></span>
-<span><span class="co">#&gt;   [7] nloptr_2.1.1             rmarkdown_2.28           GlobalOptions_0.1.2     </span></span>
-<span><span class="co">#&gt;  [10] fs_1.6.4                 ragg_1.3.3               vctrs_0.6.5             </span></span>
-<span><span class="co">#&gt;  [13] minqa_1.2.8              base64enc_0.1-3          htmltools_0.5.8.1       </span></span>
-<span><span class="co">#&gt;  [16] progress_1.2.3           broom_1.0.7              variancePartition_1.32.5</span></span>
-<span><span class="co">#&gt;  [19] sass_0.4.9               KernSmooth_2.23-22       bslib_0.8.0             </span></span>
-<span><span class="co">#&gt;  [22] htmlwidgets_1.6.4        desc_1.4.3               pbkrtest_0.5.3          </span></span>
-<span><span class="co">#&gt;  [25] plyr_1.8.9               cachem_1.1.0             lifecycle_1.0.4         </span></span>
-<span><span class="co">#&gt;  [28] iterators_1.0.14         pkgconfig_2.0.3          Matrix_1.6-5            </span></span>
-<span><span class="co">#&gt;  [31] R6_2.5.1                 fastmap_1.2.0            rbibutils_2.3           </span></span>
-<span><span class="co">#&gt;  [34] clue_0.3-65              digest_0.6.37            numDeriv_2016.8-1.1     </span></span>
-<span><span class="co">#&gt;  [37] colorspace_2.1-1         patchwork_1.3.0          S4Vectors_0.40.2        </span></span>
-<span><span class="co">#&gt;  [40] rprojroot_2.0.4          textshaping_0.4.0        fansi_1.0.6             </span></span>
-<span><span class="co">#&gt;  [43] compiler_4.3.3           withr_3.0.1              bit64_4.5.2             </span></span>
-<span><span class="co">#&gt;  [46] aod_1.3.3                doParallel_1.0.17        backports_1.5.0         </span></span>
-<span><span class="co">#&gt;  [49] BiocParallel_1.36.0      viridis_0.6.5            dendextend_1.18.0       </span></span>
-<span><span class="co">#&gt;  [52] gplots_3.2.0             MASS_7.3-60.0.1          rjson_0.2.23            </span></span>
-<span><span class="co">#&gt;  [55] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          </span></span>
-<span><span class="co">#&gt;  [58] tools_4.3.3              zip_2.3.1                remaCor_0.0.18          </span></span>
-<span><span class="co">#&gt;  [61] glue_1.8.0               nlme_3.1-164             grid_4.3.3              </span></span>
-<span><span class="co">#&gt;  [64] cluster_2.1.6            reshape2_1.4.4           generics_0.1.3          </span></span>
-<span><span class="co">#&gt;  [67] gtable_0.3.5             tzdb_0.4.0               tidyr_1.3.1             </span></span>
-<span><span class="co">#&gt;  [70] hms_1.1.3                utf8_1.2.4               BiocGenerics_0.48.1     </span></span>
-<span><span class="co">#&gt;  [73] ggrepel_0.9.6            foreach_1.5.2            pillar_1.9.0            </span></span>
-<span><span class="co">#&gt;  [76] stringr_1.5.1            vroom_1.6.5              limma_3.58.1            </span></span>
-<span><span class="co">#&gt;  [79] circlize_0.4.16          splines_4.3.3            lattice_0.22-5          </span></span>
-<span><span class="co">#&gt;  [82] bit_4.5.0                renv_1.0.10              tidyselect_1.2.1        </span></span>
-<span><span class="co">#&gt;  [85] ComplexHeatmap_2.18.0    locfit_1.5-9.10          gridExtra_2.3           </span></span>
-<span><span class="co">#&gt;  [88] IRanges_2.36.0           edgeR_4.0.16             svglite_2.1.3           </span></span>
-<span><span class="co">#&gt;  [91] RhpcBLASctl_0.23-42      stats4_4.3.3             xfun_0.48               </span></span>
-<span><span class="co">#&gt;  [94] Biobase_2.62.0           statmod_1.5.0            matrixStats_1.4.1       </span></span>
-<span><span class="co">#&gt;  [97] pheatmap_1.0.12          stringi_1.8.4            yaml_2.3.10             </span></span>
-<span><span class="co">#&gt; [100] boot_1.3-29              evaluate_1.0.0           codetools_0.2-19        </span></span>
-<span><span class="co">#&gt; [103] tibble_3.2.1             BiocManager_1.30.25      cli_3.6.3               </span></span>
-<span><span class="co">#&gt; [106] systemfonts_1.1.0        Rdpack_2.6.1             munsell_0.5.1           </span></span>
-<span><span class="co">#&gt; [109] jquerylib_0.1.4          Rcpp_1.0.13              EnvStats_3.0.0          </span></span>
-<span><span class="co">#&gt; [112] png_0.1-8                parallel_4.3.3           pkgdown_2.1.1           </span></span>
-<span><span class="co">#&gt; [115] ggplot2_3.5.1            prettyunits_1.2.0        bitops_1.0-9            </span></span>
-<span><span class="co">#&gt; [118] lme4_1.1-35.5            viridisLite_0.4.2        mvtnorm_1.3-1           </span></span>
-<span><span class="co">#&gt; [121] lmerTest_3.1-3           scales_1.3.0             openxlsx_4.2.7.1        </span></span>
-<span><span class="co">#&gt; [124] purrr_1.0.2              crayon_1.5.3             fANCOVA_0.6-1           </span></span>
-<span><span class="co">#&gt; [127] GetoptLong_1.0.5         rlang_1.1.4</span></span></code></pre>
+<span><span class="co">#&gt;   [1] Rdpack_2.6.2             bitops_1.0-9             gridExtra_2.3           </span></span>
+<span><span class="co">#&gt;   [4] rlang_1.1.5              magrittr_2.0.3           clue_0.3-66             </span></span>
+<span><span class="co">#&gt;   [7] GetoptLong_1.0.5         matrixStats_1.5.0        compiler_4.3.3          </span></span>
+<span><span class="co">#&gt;  [10] reshape2_1.4.4           png_0.1-8                systemfonts_1.2.1       </span></span>
+<span><span class="co">#&gt;  [13] vctrs_0.6.5              stringr_1.5.1            pkgconfig_2.0.3         </span></span>
+<span><span class="co">#&gt;  [16] shape_1.4.6.1            crayon_1.5.3             fastmap_1.2.0           </span></span>
+<span><span class="co">#&gt;  [19] backports_1.5.0          caTools_1.18.3           rmarkdown_2.29          </span></span>
+<span><span class="co">#&gt;  [22] tzdb_0.4.0               nloptr_2.1.1             ragg_1.3.3              </span></span>
+<span><span class="co">#&gt;  [25] bit_4.5.0.1              purrr_1.0.4              xfun_0.50               </span></span>
+<span><span class="co">#&gt;  [28] cachem_1.1.0             jsonlite_1.8.9           progress_1.2.3          </span></span>
+<span><span class="co">#&gt;  [31] EnvStats_3.0.0           remaCor_0.0.18           BiocParallel_1.36.0     </span></span>
+<span><span class="co">#&gt;  [34] broom_1.0.7              parallel_4.3.3           prettyunits_1.2.0       </span></span>
+<span><span class="co">#&gt;  [37] cluster_2.1.6            R6_2.5.1                 bslib_0.9.0             </span></span>
+<span><span class="co">#&gt;  [40] stringi_1.8.4            RColorBrewer_1.1-3       limma_3.58.1            </span></span>
+<span><span class="co">#&gt;  [43] boot_1.3-29              numDeriv_2016.8-1.1      jquerylib_0.1.4         </span></span>
+<span><span class="co">#&gt;  [46] Rcpp_1.0.14              iterators_1.0.14         base64enc_0.1-3         </span></span>
+<span><span class="co">#&gt;  [49] IRanges_2.36.0           Matrix_1.6-5             splines_4.3.3           </span></span>
+<span><span class="co">#&gt;  [52] tidyselect_1.2.1         rstudioapi_0.17.1        yaml_2.3.10             </span></span>
+<span><span class="co">#&gt;  [55] viridis_0.6.5            doParallel_1.0.17        gplots_3.2.0            </span></span>
+<span><span class="co">#&gt;  [58] codetools_0.2-19         plyr_1.8.9               lmerTest_3.1-3          </span></span>
+<span><span class="co">#&gt;  [61] lattice_0.22-5           tibble_3.2.1             withr_3.0.2             </span></span>
+<span><span class="co">#&gt;  [64] Biobase_2.62.0           evaluate_1.0.3           desc_1.4.3              </span></span>
+<span><span class="co">#&gt;  [67] zip_2.3.2                circlize_0.4.16          pillar_1.10.1           </span></span>
+<span><span class="co">#&gt;  [70] BiocManager_1.30.25      KernSmooth_2.23-22       renv_1.1.1              </span></span>
+<span><span class="co">#&gt;  [73] foreach_1.5.2            stats4_4.3.3             reformulas_0.4.0        </span></span>
+<span><span class="co">#&gt;  [76] generics_0.1.3           vroom_1.6.5              rprojroot_2.0.4         </span></span>
+<span><span class="co">#&gt;  [79] S4Vectors_0.40.2         hms_1.1.3                ggplot2_3.5.1           </span></span>
+<span><span class="co">#&gt;  [82] munsell_0.5.1            scales_1.3.0             aod_1.3.3               </span></span>
+<span><span class="co">#&gt;  [85] minqa_1.2.8              gtools_3.9.5             RhpcBLASctl_0.23-42     </span></span>
+<span><span class="co">#&gt;  [88] glue_1.8.0               pheatmap_1.0.12          tools_4.3.3             </span></span>
+<span><span class="co">#&gt;  [91] fANCOVA_0.6-1            dendextend_1.19.0        variancePartition_1.32.5</span></span>
+<span><span class="co">#&gt;  [94] lme4_1.1-36              openxlsx_4.2.8           locfit_1.5-9.11         </span></span>
+<span><span class="co">#&gt;  [97] mvtnorm_1.3-3            fs_1.6.5                 grid_4.3.3              </span></span>
+<span><span class="co">#&gt; [100] tidyr_1.3.1              rbibutils_2.3            edgeR_4.0.16            </span></span>
+<span><span class="co">#&gt; [103] colorspace_2.1-1         nlme_3.1-164             patchwork_1.3.0         </span></span>
+<span><span class="co">#&gt; [106] cli_3.6.3                textshaping_1.0.0        viridisLite_0.4.2       </span></span>
+<span><span class="co">#&gt; [109] svglite_2.1.3            ComplexHeatmap_2.18.0    corpcor_1.6.10          </span></span>
+<span><span class="co">#&gt; [112] gtable_0.3.6             sass_0.4.9               digest_0.6.37           </span></span>
+<span><span class="co">#&gt; [115] BiocGenerics_0.48.1      pbkrtest_0.5.3           ggrepel_0.9.6           </span></span>
+<span><span class="co">#&gt; [118] rjson_0.2.23             htmlwidgets_1.6.4        farver_2.1.2            </span></span>
+<span><span class="co">#&gt; [121] htmltools_0.5.8.1        pkgdown_2.1.1            lifecycle_1.0.4         </span></span>
+<span><span class="co">#&gt; [124] GlobalOptions_0.1.2      statmod_1.5.0            bit64_4.6.0-1           </span></span>
+<span><span class="co">#&gt; [127] MASS_7.3-60.0.1</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
