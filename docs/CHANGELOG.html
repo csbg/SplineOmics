@@ -76,11 +76,16 @@
 <hr></div>
 </div>
 <div class="section level3">
-<h3 id="id_012---2025-02-10">[0.1.2] - 2025-02-10<a class="anchor" aria-label="anchor" href="#id_012---2025-02-10"></a></h3>
+<h3 id="id_012---2025-02-11">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#id_012---2025-02-11"></a></h3>
+<div class="section level4">
+<h4 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a></h4>
+<ul><li>Level name in title of overall spline plots.</li>
+</ul></div>
 <div class="section level4">
 <h4 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a></h4>
 <ul><li>Small bug that made it impossible having no treatment label for a condition.</li>
-<li>Mode == isolated for RNA-seq data. Before, it caused an error, because it splits up the meta into the different conditions, but does not do so for the data. Now, it informs the user that it cannot do this, and the user has to split up the data himself outside (just for RNA-seq data).</li>
+<li>Small bug that did not allow to specify two treatment labels.</li>
+<li>mode == isolated for RNA-seq data. Before, it caused an error, because it splits up the meta into the different conditions, but does not do so for the data. Now, it informs the user that it cannot do this, and the user has to split up the data himself outside (just for RNA-seq data).</li>
 </ul></div>
 <div class="section level4">
 <h4 id="removed-1">Removed<a class="anchor" aria-label="anchor" href="#removed-1"></a></h4>
@@ -96,7 +101,7 @@
 <li>Random effects can now be directly be specified in the design formula, rather than being passed as part of the dream_params.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a></h3>
+<h3 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a></h3>
 <ul><li>Added linear mixed models for modeling random effects. The variancePartition package is used for that –&gt; voomWithDreamWeights for RNA-seq data processing, and dream as the replacement for limma. For example, if you Reactor is your random effect, you can write the design formula like this: design &lt;- “~ 1 + Condition*Time + Plate + (1|Reactor)” and SplineOmics will automatically run the variancePartition functions voomWithDreamWeights() and dream() instead of the limma::voom and lmfit. dream() has additional parameters, such as the method and the degree of freedom (different than the degree of freedom used for the splines in this package) and you can pass these with the dream_params argument. See RNA-seq analysis vignette or the respective function references for more info.</li>
 <li>Raw data plotting function –&gt; make_scatter_plot_html() –&gt; see references.</li>
 <li>Imputed values are marked with triangle symbols in cluster_hits() spline plots if raw data is passed.</li>

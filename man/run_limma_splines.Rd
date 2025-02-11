@@ -20,7 +20,7 @@ following elements:
   \code{condition}.
   \item \code{design}: A character string representing the limma design
   formula.
-  \idem\code{dream_params}: #' A named list or NULL. When not NULL, it can contain the following named 
+  \item\code{dream_params}: #' A named list or NULL. When not NULL, it can contain the following named 
      elements:
      - `dof`: An integer greater than 1, specifying the degrees of freedom for 
      the dream topTable.

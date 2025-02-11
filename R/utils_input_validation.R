@@ -1272,9 +1272,9 @@ InputControl <- R6::R6Class("InputControl",
         # Exclude NA values from the check
         valid_timepoints <- 
           plot_info$treatment_timepoints[!is.na(plot_info$treatment_timepoints)]
-        
+
         # Check if any valid timepoints exceed max_time
-        if (any(valid_timepoints > max_time)) {
+        if (any(unlist(valid_timepoints) > max_time)) {
           stop(
             paste(
               "All treatment_timepoints must be before the last timepoint:",
@@ -1283,7 +1283,6 @@ InputControl <- R6::R6Class("InputControl",
             call. = FALSE
           )
         }
-        
         
       }
     },
