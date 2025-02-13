@@ -482,9 +482,9 @@ generate_reports_meta <- function(
   html_table <- paste0(html_table, "</tr></thead><tbody>")
 
   # Add table rows
-  for (i in 1:nrow(table_df)) {
+  for (i in seq_len(nrow(table_df))) {
     html_table <- paste0(html_table, "<tr>")
-    for (j in 1:ncol(table_df)) {
+    for (j in seq_len(ncol(table_df))) {
       html_table <- paste0(html_table, "<td>", table_df[i, j], "</td>")
     }
     html_table <- paste0(html_table, "</tr>")
@@ -978,7 +978,7 @@ gen_hitcomp_plots <- function(combo_pair) {
   }, character(1))
 
   condition_nr <- 1L
-  for (i in 1:length(combo_pair_combined)) {
+  for (i in seq_len(length(combo_pair_combined))) {
     combo_top_tables <- combo_pair_combined[[i]]
     combo_name <- combo_names[i]
     # Extract the part where DoF and p-value threshold are written.
@@ -1246,7 +1246,7 @@ flatten_spline_configs <- function(spline_configs) {
   formatted_layers <- list()
 
   names_of_spline_configs <- names(spline_configs)
-  for (i in 1:length(spline_configs$spline_type)) {
+  for (i in seq_len(length(spline_configs$spline_type))) {
     ith_elements <- lapply(spline_configs, function(x) x[[i]])
 
     formatted_strings <- list()
@@ -1433,7 +1433,7 @@ plot_composite_splines <- function(
     DoF <- which(names(top_table) == "AveExpr") - 1
     spline_coeffs <-
       as.numeric(top_table[top_table$feature_nr ==
-        index, paste0("X", 1:DoF)])
+        index, paste0("X", seq_len(DoF))])
 
     intercept <-
       as.numeric(top_table$intercept[top_table$feature_nr == index])

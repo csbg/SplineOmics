@@ -51,7 +51,7 @@
 #' @return A `voom` object, which includes the log2-counts per million (logCPM)
 #'  matrix and observation-specific weights.
 #'
-#' @importFrom edgeR DGEList calcNormFactors
+#' @seealso \code{\link[edgeR]{DGEList}}, \code{\link[edgeR]{calcNormFactors}}
 #' @importFrom limma voom
 #' @importFrom variancePartition voomWithDreamWeights
 #'

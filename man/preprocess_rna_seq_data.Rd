@@ -61,3 +61,6 @@ counts per million (logCPM) with associated precision weights. If you
 require a different normalization method, you can supply your own
 custom normalization function.
 }
+\seealso{
+\code{\link[edgeR]{DGEList}}, \code{\link[edgeR]{calcNormFactors}}
+}

@@ -63,7 +63,6 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 
 ```{r setup, eval = TRUE}
 library(SplineOmics)
-library(readxl) # for loading Excel files
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 ```
@@ -102,13 +101,13 @@ data <- readRDS(xzfile(system.file(
   package = "SplineOmics"
 )))
 
-
-meta <- read_excel(
+meta <- read.csv(
   system.file(
     "extdata",
-    "proteomics_meta.xlsx",
+    "proteomics_meta.csv",
     package = "SplineOmics"
-  )
+  ),
+  stringsAsFactors = FALSE
 )
 
 # Extract the annotation part from the dataframe.

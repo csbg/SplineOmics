@@ -12,14 +12,15 @@ download_enrichr_databases(
 }
 \arguments{
 \item{gene_set_lib}{A character vector of database names to download from
-Enrichr.}
+Enrichr, for example: c("WikiPathways_2019_Human",
+"NCI-Nature_2016",)}
 
 \item{output_dir}{A character string specifying the output directory
 where the .tsv file will be saved. Defaults to the current
 working directory.}
 
 \item{filename}{Name of the output file (with file extension. Due to commas
-present in some terms, .tsv is recommendet). When ommited,
+present in some terms, .tsv is recommended). When left out,
 the file is named all_databases_{timestamp}.tsv.}
 }
 \value{
@@ -29,6 +30,8 @@ This function does not return a value but saves a .tsv file in the
 }
 \description{
 This function downloads gene sets from specified Enrichr databases and saves
- them to a specified output directory as a .tsv file. The file is named with
- a timestamp to ensure uniqueness.
+them to a specified output directory as a .tsv file per default. The file is
+named with a timestamp per default to ensure uniqueness (all databases are
+stored in a single file). This file has 3 columns: DB containing the database
+name, Geneset, with the genesets, and Gene, with the gene names.
 }

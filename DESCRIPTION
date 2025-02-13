@@ -62,7 +62,8 @@ Suggests:
     knitr,
     testthat,
     readxl,
-    conflicted (>= 1.2.0)
+    conflicted (>= 1.2.0),
+    readr
 Encoding: UTF-8
 LazyData: false
 RoxygenNote: 7.3.2

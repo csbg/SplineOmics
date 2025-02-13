@@ -41,7 +41,7 @@ Examples:
 - **Fixed**: Resolved an issue causing crashes when input data was missing values.
 - **Changed**: Modified the default parameters for `normalizeData()`.
 
----
+--------------------------------------------------------------------------------
 
 
 ### [0.1.2] - 2025-02-11
@@ -63,6 +63,7 @@ Examples:
   have to update the get-started vignette (tutorial) and this, which is twice
   the maintainance effort.
 
+--------------------------------------------------------------------------------
 
 ### [0.1.1] - 2025-01-29
 
@@ -100,3 +101,10 @@ Examples:
 
 #### Fixed
 - A few smaller visual things for the HTML reports.
+
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
