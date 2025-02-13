@@ -1,0 +1,360 @@
+---
+title: "Glycan-analysis"
+author: "Thomas Rauter"
+date: "13 February, 2024"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Glycan-analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# About this vignette
+
+This tutorial intends to showcase and explain the capabilities of the
+**SplineOmics** package by walking through a real and complete glycan analysis
+example, from start to finish. **SplineOmics** is explained in more
+detail in the **get-started** vignette, where a proteomics example is
+covered. This vignette is more focused on showing how glycan data can
+be used, and because of this, less details about the overall package are
+provided here.
+
+## Data Overview
+
+This dataset originates from a **time-series glycan experiment**
+designed to study Chinese Hamster Ovary (CHO) cells. The experiment
+involved cultivating cells in **eight bioreactors**, with **four
+bioreactors** subjected to a temperature shift after 146 hours
+(experimental condition) and the remaining **four bioreactors**
+maintained without a temperature shift (control condition).
+
+### Timepoints
+
+Samples were collected at **7 distinct time points** throughout the
+experiment, specifically: `"120h"`, `"144h"`, `"168h"`, `"192h"`, `"216h"`,
+`"288h"`, and `"336h"` after cultivation
+start. Each time point was sampled from all eight bioreactors, but E17_336 is 
+missing, therefore resulting in a total of **55 samples**.
+
+### Effects in the Experiment: Reactor and Batch
+
+In this experiment, there are two effects to consider: **Reactor** and 
+**Batch**.
+
+1. **Reactor**:
+   - This refers to the different bioreactors used for cell cultivation, which can exhibit substantial variability.
+   - Each reactor was assigned a single condition: either constant temperature or temperature-shifted. As a result, **condition and reactor are confounded**.
+   - Reactor should not be treated as a fixed effect to simply remove its influence. Instead, it is treated as a **random effect**, which allows us to model its variability appropriately.
+
+2. **Batch**:
+   - This refers to the two separate glycan analysis batches.
+   - Batch is considered a **batch effect** with respect to the condition 
+   (constant temperature vs. temperature-shifted).
+
+Since Condition and Reactor are confounded, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+
+In this vignette, we will demonstrate how to use linear mixed models to address these challenges and properly account for both reactor and plate effects.
+
+### Further info
+
+The data matrix comprises **glycoforms as rows** (such as G0/G0 and none/G0F) and
+**samples as columns**, providing glycoform measurements for all time points. Each
+glycoform as a row stands for a combination of sugars (glycans) that can be attached to the 
+left and right side of the product antibody, that we produced in our CHO cell 
+cultivation. For example G0/G0 means that the glycan G0 was attached to both 
+sides, and none/G0F means at the left side, there was no glycan, and on the 
+right side, there was the G0F glycan.
+
+The goal of this experiment is to investigate the effect of a
+temperature shift during CHO cell cultivation on the antibody glycan
+dynamics over time.
+
+Note: This is not the original dataset, as it has not yet been published
+at the time of this vignette's creation. For demonstration purposes, the
+glycans have been randomly shuffled, and 2% has been randomly added or 
+substracted off each value.
+
+## Analysis Goals
+
+The main objectives of this analysis are:
+
+-   **Identify glycans with significant temporal changes**: Among the
+    glycoforms measured, the goal is to identify those that
+    exhibit significant changes in abundance over time.
+
+-   **Cluster glycans based on temporal patterns**: Glycoforms showing
+    significant temporal changes (hits) will be grouped into clusters
+    based on their time-dependent expression patterns.
+
+-   **Assess the impact of temperature shifts on temporal patterns**:
+    The analysis will determine whether the temporal patterns of glycoform
+    abundance are affected by the temperature shift, i.e., whether glycoform
+    abundance dynamics differ over time under temperature shift
+    conditions compared to controls.
+
+### Note
+
+The documentation of all the **SplineOmics** package functions can be
+viewed [here](https://csbg.github.io/SplineOmics/reference)
+
+# Load the packages
+
+```{r setup, eval = TRUE}
+# library(SplineOmics)
+library(devtools)
+devtools::load_all()
+library(here) # For managing filepaths
+library(dplyr) # For data manipulation
+library(knitr) # For Showing the head of the data and the meta tables.
+```
+
+# Load the files
+
+```{r load the files}
+data <- read.csv(
+  system.file(
+    "extdata",
+    "glycan_data.csv",
+    package = "SplineOmics"
+  ),
+  stringsAsFactors = FALSE
+)
+
+meta <- read.csv(
+  system.file(
+    "extdata",
+    "glycan_meta.csv",
+    package = "SplineOmics"
+  ),
+  stringsAsFactors = FALSE
+)
+
+# Set the first column as row names and remove it from the dataframe
+rownames(data) <- data[[1]]  # Assign first column as row names
+data <- data[-1]  # Remove the first column
+
+
+# Make data to a numeric matrix (required by SplineOmics)
+data <- data.matrix(data)   
+```
+
+## Show top rows of data
+
+```{r Show data head, eval = TRUE}
+knitr::kable(
+  head(data),
+  format = "markdown"
+  )
+```
+
+## Show top rows of meta
+
+```{r Show meta head, eval = TRUE}
+knitr::kable(
+  head(meta),
+  format = "markdown"
+  )
+```
+
+# Perform EDA (exploratory data analysis)
+
+```{r Load EDA arguments, eval = TRUE}
+# Those fields are mandatory, because we believe that when such a report is
+# opened after half a year, those infos can be very helpful.
+report_info <- list(
+  omics_data_type = "Glycan",
+  data_description = "Glycoform data of CHO cells",
+  data_collection_date = "September 2024",
+  analyst_name = "Thomas Rauter",
+  contact_info = "thomas.rauter@plus.ac.at",
+  project_name = "DGTX"
+)
+
+report_dir <- here::here(
+  "results",
+  "explore_data"
+)
+```
+
+```{r Create the SplineOmics object, eval = TRUE}
+# splineomics now contains the SplineOmics object.
+splineomics <- SplineOmics::create_splineomics(
+  data = data,
+  meta = meta,
+  report_info = report_info,
+  condition = "Condition", # Column of meta that contains the levels.
+  meta_batch_column = "Batch" # For batch effect removal in the plots
+)
+
+# Special print.SplineOmics function leads to selective printing
+print(splineomics)
+```
+
+```{r Run EDA function, eval = FALSE}
+plots <- SplineOmics::explore_data(
+  splineomics = splineomics, # SplineOmics object
+  report_dir = report_dir
+)
+```
+
+[Here](https://drive.google.com/uc?id=1h4aOSwxUHAp5KAoAYVOlL_IRotV4EtY0)
+you can see the HTML report of the explore_data() function with the NOT
+batch-corrected data, and
+[here](https://drive.google.com/uc?id=1op3oCt7eNhrUaofIkAyNJrSqpschU78b)
+the report for the batch-corrected data.
+
+# Run limma spline analysis
+
+In this example, we are skipping finding the best hyperparameters with
+the screen_limma_hyperparams() function, because we already have a clear
+idea of what do use.
+
+Lets define our parameters and put them into the `SplineOmics` object:
+
+```{r Update the SplineOmics object, eval = TRUE}
+splineomics <- SplineOmics::update_splineomics(
+  splineomics = splineomics,
+  # Reactor as mixed effect.
+  design = "~ 1 + Condition*Time + Batch + (1|Reactor)", 
+  mode = "integrated", # means limma uses the full data for each condition.
+  spline_params = list(
+    spline_type = c("n"), # natural cubic splines (take these if unsure)
+    dof = c(2L) # If you are unsure about which dof, start with 2 and increase
+  )
+)
+```
+
+Run the `run_limma_splines()` function with the updated SplineOmics
+object:
+
+```{r limma spline analysis, eval = TRUE}
+splineomics <- SplineOmics::run_limma_splines(
+  splineomics = splineomics
+)
+```
+
+# Build limma report
+
+The topTables of all three limma result categories can be used to
+generate p-value histograms an volcano plots.
+
+```{r build limma report, eval = FALSE}
+report_dir <- here::here(
+  "results",
+  "create_limma_reports"
+)
+
+plots <- SplineOmics::create_limma_report(
+  splineomics = splineomics,
+  report_dir = report_dir
+)
+```
+
+You can view the generated analysis report of the create_limma_report
+function
+[here](https://drive.google.com/uc?id=1jgE8d5Gs12xnMATaitXxp28j2nAKCX1Y).
+
+# Cluster the hits (significant features)
+
+After we obtained the limma spline results, we can cluster the hits
+based on their temporal pattern (their spline shape). We define what a
+hit is by setting an adj. p-value threshold for every level. Hits are
+features (e.g. proteins) that have an adj. p-value below the threshold.
+Hierarchical clustering is used to place every hit in one of as many
+clusters as we have specified for that specific level.
+
+```{r cluster the hits, eval = FALSE}
+adj_pthresholds <- c( # 0.05 for both levels
+  0.05, # exponential
+  0.05 # stationary
+)
+
+clusters <- c(
+  2L, # 6 clusters for the exponential phase level
+  2L # 3 clusters for the stationary phase level
+)
+
+report_dir <- here::here(
+  "results",
+  "clustering_reports"
+)
+
+# treatment_labels allows to place vertical dashed lines into the plots, that
+# indicate a treatment, such as "temp shift" in this experiment. For each level,
+# the treatment can be specified individually. For the "double spline plots", 
+# where two levels are combined into one plot, treatment lines can also be 
+# defined. The correct fieldname for those is {first_level}_{second_level}, 
+# with first_level being the level of the two occuring first in the respective
+# meta column, and second_level the one that occurs after. 
+# Here, we don't want a treatment line for the constant level, since no 
+# treatment was applied. To achieve that, we simply set it to NA or leave it
+# out. 
+treatment_labels = list(
+  # constant = NA, 
+  tshifted = "temp shift",  
+  constant_tshifted = "temp shift" 
+  )
+
+# treatment_timepoints allows to specify the timepoint, at which the vertical
+# dashed treatment line is placed. Again, for the constant level, we don't
+# have a treatment, so we also do not specify a timepoint.
+treatment_timepoints = list(
+  # constant = NA,
+  tshifted = 146,  
+  constant_tshifted = 146
+  )
+
+plot_info <- list( # For the spline plots
+  y_axis_label = "Glycan fractional abundance",
+  time_unit = "hours", # our measurements were in minutes
+  treatment_labels = treatment_labels,
+  treatment_timepoints = treatment_timepoints
+)
+
+# Those are not genes for this glycan analysis here, but this argument expects
+# the feature names (which usually are gene names, which is why it is called 
+# like this.
+genes <- rownames(data)
+
+plot_options <- list(
+  # When meta_replicate_column is not there, all datapoints are blue.
+  meta_replicate_column = "Reactor", # Colors the data points based on Reactor
+  cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
+)
+
+clustering_results <- SplineOmics::cluster_hits(
+  splineomics = splineomics,
+  adj_pthresholds = adj_pthresholds,
+  clusters = clusters,
+  genes = genes,
+  plot_info = plot_info,
+  plot_options = plot_options,
+  report_dir = report_dir,
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05
+)
+```
+
+You can view the generated analysis report of the cluster_hits function
+[here](https://drive.google.com/uc?id=1HXKoyOniO6-tDC-uCiGgpaQcjUQ9-zyl).
+
+As discussed before, there are three limma result categories. The
+cluster_hits() report shows the results of all three, if they are
+present (category 2 and 3 can only be generated when the design formula
+contains an interaction effect).
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

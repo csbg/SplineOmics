@@ -2,22 +2,54 @@
 #'
 #' @description
 #' This function generates a Gene Set Enrichment Analysis (GSEA) report based
-#' on clustered hit levels, gene data, and specified databases. It processes
-#' the input data, manages GSEA levels, and produces an HTML report with plots.
+#' on clustered hit levels, gene data, and specified databases. It accomplishes 
+#' this by using the R package clusterProfiler. As output, you will receive a
+#' list of the plot objects it generated, and an HTML report with embedded files
+#' containing the enrichment results, and dotplots visualizing the enrichment.
 #'
-#' @param levels_clustered_hits A list of clustered hits at different levels.
-#' @param databases A list of databases for the gene set enrichment analysis.
-#' @param report_info A list containing information for the report generation.
-#' @param clusterProfiler_params Additional parameters for the GSEA analysis,
-#'                               default is NA. Those include adj_p_value,
-#'                               pAdjustMethod, etc (see clusterProfiler
-#'                               documentation).
-#' @param plot_titles Titles for the plots, default is NA.
-#' @param universe Enrichment background data, default is NULL.
+#' @param levels_clustered_hits A list of dataframes that contain the clustered
+#' hits of the different levels. When clustering_results is the variable that 
+#' collects the output of the SplineOmics::cluster_hits() function, then an 
+#' easy way to get this is clustering_results$clustered_hits_levels. Every 
+#' element of that list is a dataframe, with the three columns feature, cluster,
+#' gene. feature contains the index number of the feature (for example a protein
+#' ), cluster is an integer specifying in which cluster this feature was placed,
+#' and gene contains the gene name. It is essential that the gene name matches
+#' the gene names used in the databases that are used for this enrichment here.
+#' @param databases A dataframe with the three columns: DB containing the 
+#' database name, Geneset containng the name of the geneset, and Gene, 
+#' containing the name of the gene. This dataframe can be obtained by specifying
+#' the desired Enrichr databases and downloading them to a for example .tsv file
+#' with the help of the SplineOmics::download_enrichr_databases function, and 
+#' then loading this .tsv file as a dataframe. In essence, this dataframe then
+#' contains all the database info used for the gene set enrichment analysis with
+#' clusterProfiler in this function. 
+#' @param report_info A list containing information for the report generation,
+#' such as omics_data_type and data_description (this is the list used for all
+#' report generating functions of this package).
+#' @param clusterProfiler_params A list that specifies the parameters for the 
+#' clusterProfiler, such as for example: clusterProfiler_params <- list(
+#'   pvalueCutoff = 0.05,
+#'   pAdjustMethod = "BH",
+#'   minGSSize = 10,
+#'   maxGSSize = 500,
+#'   qvalueCutoff = 0.2
+#' )
+#' (Those are all the parameters that can be controlled here). The names are 
+#' equivalent to the argument names of clusterProfiler, therefore, check out the 
+#' documentation of clusterProfiler for their description. When this argument is
+#' not specified, it is per default NULL, in which case default parameters for
+#' those are selected, which are equivalent to the parameter values shown in the 
+#' example definition above.
+#' @param plot_titles Titles for the enrichment dotplots generated in the HTML
+#' report, default is NA.
+#' @param universe Enrichment background data, default is NULL. This is a
+#' parameter of clusterProfiler, for the documentation, please check the 
+#' documentation of the clusterProfiler R package.
 #' @param report_dir Directory where the report will be saved, default is
 #' `here::here()`.
 #'
-#' @return A list of plots generated for the GSEA report.
+#' @return A list of all plot objects, generated for the GSEA report.
 #'
 #' @importFrom purrr map2 flatten
 #' @importFrom here here
@@ -237,7 +269,9 @@ manage_gsea_level <- function(
     level_name,
     databases,
     clusterProfiler_params,
-    universe) {
+    universe
+    ) {
+  
   clustered_hits <- na.omit(clustered_hits)
 
   message(paste(
@@ -727,7 +761,9 @@ create_gsea_report_level <- function(
     databases,
     params = NA,
     plot_title = "",
-    universe = NULL) {
+    universe = NULL
+    ) {
+  
   set_default_params(params)
 
   all_term2genes <- dbs_to_term2genes(databases)
@@ -831,7 +867,7 @@ create_gsea_report_level <- function(
         background = use_background
       )
     } else {
-      print(paste0("No enrichment results for cluster", cluster))
+      message(paste0("No enrichment results for cluster", cluster))
     }
   }
 
@@ -926,7 +962,7 @@ generate_section_content <- function(
   # Add the table rows
   for (i in seq_len(nrow(df))) {
     html_table <- paste0(html_table, "<tr>")
-    for (j in 1:ncol(df)) {
+    for (j in seq_len(ncol(df))) {
       html_table <- paste0(html_table, "<td>", df[i, j], "</td>")
     }
     html_table <- paste0(html_table, "</tr>")

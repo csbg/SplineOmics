@@ -581,7 +581,7 @@ process_within_level <- function(
     if (isTRUE(dream_params[["KenwardRoger"]])) {
       method <- "Kenward-Roger"
     } else {
-      method = NULL
+      method <- "adaptive"  # Kenward-Roger for < 20 samples, else Satterthwaite
     }
 
     fit <- variancePartition::dream(
@@ -599,7 +599,7 @@ process_within_level <- function(
     if (!is.null(dream_params[["dof"]])) {
       dof <- dream_params[["dof"]]
     } else {
-      dof = Inf
+      dof <- Inf
     }
 
     top_table <- variancePartition::topTable(

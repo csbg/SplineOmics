@@ -1,10 +1,10 @@
 ---
-title: "RNA-seq analysis"
+title: "RNA-seq-analysis"
 author: "Thomas Rauter"
 date: "29 January, 2025"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RNA-seq analysis}
+  %\VignetteIndexEntry{RNA-seq-analysis}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -105,6 +105,11 @@ The main objectives of this analysis are:
     expression are affected by the temperature shift, i.e., whether gene
     expression dynamics differ over time under temperature shift
     conditions compared to controls.
+
+### Note
+
+The documentation of all the **SplineOmics** package functions can be
+viewed [here](https://csbg.github.io/SplineOmics/reference)
 
 # Load the packages
 
@@ -418,7 +423,7 @@ treatment_timepoints = list(
 
 plot_info <- list( # For the spline plots
   y_axis_label = "log2 counts",
-  time_unit = "min", # our measurements were in minutes
+  time_unit = "hours", # our measurements were in minutes
   # When you simply want to add a given treatment line to all conditions (
   # including all double spline plot comparisons) then you can do it in the 
   # following way (commented out here): 

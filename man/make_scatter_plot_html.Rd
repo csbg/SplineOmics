@@ -19,9 +19,25 @@ Row names should be feature names.}
 column "Time".}
 
 \item{output_file}{The name of the HTML output file.}
+
+\item{meta_replicate_column}{Column name of the column in meta that contains
+the info about the replicates, such as reactor.}
 }
 \description{
 This function is used to make scatter plots for the raw data of all the 
 features. It generates an HTML report in the fashion of the other functions
 of the SplineOmics package which contains all the scatter plots.
+}
+\examples{
+\dontrun{
+# Example Data
+data <- matrix(rnorm(50), nrow = 5)
+meta <- data.frame(Time = seq(1, 10, length.out = 10))
+
+# Generate HTML report (only if you want to test it)
+make_scatter_plot_html(data, meta, "scatter_report.html")
+}
+}
+\seealso{
+\code{\link[rmarkdown]{render}}
 }

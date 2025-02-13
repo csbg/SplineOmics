@@ -134,7 +134,7 @@ cluster_hits <- function(
     meta = meta,
     condition = condition
   )
-  
+
   all_limma_result_tables <- filter_and_append_limma_results(
     splineomics = splineomics,  
     within_level_tables = within_level_top_tables,  
@@ -406,13 +406,13 @@ filter_top_tables <- function(
 #'   and the filtered data frames (`filtered_avrg_diff_condition` and 
 #'   `filtered_interaction_condition_time`).
 #'
-#' @export
 filter_and_append_limma_results <- function(
     splineomics,
     within_level_tables,
     pthresh_avg_diff = 0.05,
     pthresh_interact = 0.05
 ) {
+  
   # Initialize lists for filtered results
   filtered_avg_diff <- list()
   filtered_interact <- list()
@@ -488,9 +488,9 @@ huge_table_user_prompter <- function(tables) {
   
   # Prompt the user
   while (TRUE) {
-    cat("\nThe following tables have more than 500 rows:\n")
-    cat(table_info, "\n\n")
-    cat("This may result in long computations and large HTML output.\n\n")
+    message("\nThe following tables have more than 500 rows:")
+    message(table_info, "\n")
+    message("This may result in long computations and large HTML output.\n")
     user_input <- readline(prompt = "Do you want to proceed? (y/n): ")
     user_input <- tolower(user_input)
     
@@ -926,7 +926,7 @@ make_clustering_report <- function(
     annotation = annotation
   )
 
-  print("Generating report. This takes a few seconds.")
+  message("Generating report. This takes a few seconds.")
 
   generate_report_html(
     plots = plots,
@@ -1011,7 +1011,7 @@ generate_spline_comparisons <- function(
     adj_pthresh_interaction,
     raw_data
     ) {
-  
+
   # Initialize the list that will store the results
   comparison_plots <- list()
 
@@ -2368,7 +2368,36 @@ plot_spline_comparisons <- function(
   
   plot_list <- list()
   feature_names_list <- list()
-
+  
+  # Check if all dataframes have the same number of rows
+  if (!(nrow(time_effect_1) == nrow(avrg_diff_conditions) &&
+        nrow(time_effect_1) == nrow(interaction_condition_time))) {
+    stop_call_false(
+      "Error: The topTables do not have the same number of rows! Did you 
+      filter just some of them?"
+      )
+  }
+  
+  # Function to check if all elements of a column in df2 are present in df1
+  check_column_presence <- function(df1, df2, column_name) {
+    missing_values <- setdiff(df2[[column_name]], df1[[column_name]])
+    if (length(missing_values) > 0) {
+      stop(paste("Error: The following values in column", column_name, 
+                 "of", deparse(substitute(df2)), 
+                 "are missing in", deparse(substitute(df1)), ":\n",
+                 paste(missing_values, collapse = ", ")))
+    }
+  }
+  
+  # Run checks for both feature_names and feature_nr columns
+  check_column_presence(time_effect_1, avrg_diff_conditions, "feature_names")
+  check_column_presence(time_effect_1, avrg_diff_conditions, "feature_nr")
+  check_column_presence(time_effect_1, interaction_condition_time,
+                        "feature_names")
+  check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
+  
+  # Hit is just an index, but time_effect_1 and 2 and avrg_diff_conditions and
+  # interaction_condition_time were sorted before.
   for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     y_values_1 <- data[hit_index, ]
@@ -2417,7 +2446,7 @@ plot_spline_comparisons <- function(
     Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 1000)
     fitted_values_1 <- X_1 %*% spline_coeffs_1 + intercept_1
     fitted_values_2 <- X_2 %*% spline_coeffs_2 + intercept_2
-
+    
     # Get the adjusted p-values for the current hit
     avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
     interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
