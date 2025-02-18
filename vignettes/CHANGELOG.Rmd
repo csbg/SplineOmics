@@ -41,6 +41,20 @@ Examples:
 - **Fixed**: Resolved an issue causing crashes when input data was missing values.
 - **Changed**: Modified the default parameters for `normalizeData()`.
 
+
+--------------------------------------------------------------------------------
+
+
+### [0.1.3] - 2025-02-11
+(In preparation)
+
+#### Fixed
+- Bug that prevented the generation of the double spline plots when the 
+  condition column of meta was a factor instead of a string. This is now solved
+  (it internally in the code converts it to a string), so having the condition
+  column as a factor now does not cause problems anymore (as having it as 
+  factor is perfectly valid).
+
 --------------------------------------------------------------------------------
 
 
