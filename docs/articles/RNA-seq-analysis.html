@@ -1657,79 +1657,79 @@ function to <code>FALSE</code> (default is <code>TRUE</code>). This
 skips the generation of an HTML report, significantly speeding up
 computation by omitting the creation and export of plots.</p></li>
 </ul>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Note: The low adj. p-values are to have less results, so that the HTML report</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># is smaller in file size.</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>adj_pthresholds <span class="ot">&lt;-</span> <span class="fu">c</span>(   <span class="co"># 0.0000001 for both levels</span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)   </span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="fl">0.0000001</span>  <span class="co"># temp_shift</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>)</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="dv">4</span><span class="dt">L</span>,  <span class="co"># 4 clusters for constant</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="dv">4</span><span class="dt">L</span>   <span class="co"># 4 clusters for temp_shift</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>)</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>report_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="st">"results"</span>,</span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="st">"clustering_reports"</span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>)</span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a></span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co"># treatment_labels allows to place vertical dashed lines into the plots, that</span></span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co"># indicate a treatment, such as "temp shift" in this experiment. For each level,</span></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co"># the treatment can be specified individually. For the "double spline plots", </span></span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co"># where two levels are combined into one plot, treatment lines can also be </span></span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co"># defined. The correct fieldname for those is {first_level}_{second_level}, </span></span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co"># with first_level being the level of the two occuring first in the respective</span></span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co"># meta column, and second_level the one that occurs after. </span></span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co"># Here, we don't want a treatment line for the constant level, since no </span></span>
-<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co"># treatment was applied. To achieve that, we simply set it to NA or leave it</span></span>
-<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co"># out. </span></span>
-<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>treatment_labels <span class="ot">=</span> <span class="fu">list</span>(</span>
-<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a>  <span class="co"># constant = NA, </span></span>
-<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>  <span class="at">temp_shift =</span> <span class="st">"temp shift"</span>,  </span>
-<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  <span class="at">constant_temp_shift =</span> <span class="st">"temp shift"</span> </span>
-<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>  )</span>
-<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a></span>
-<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a><span class="co"># treatment_timepoints allows to specify the timepoint, at which the vertical</span></span>
-<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a><span class="co"># dashed treatment line is placed. Again, for the constant level, we don't</span></span>
-<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a><span class="co"># have a treatment, so we also do not specify a timepoint.</span></span>
-<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a>treatment_timepoints <span class="ot">=</span> <span class="fu">list</span>(</span>
-<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a>  <span class="co"># constant = NA,</span></span>
-<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a>  <span class="at">temp_shift =</span> <span class="dv">146</span>,  </span>
-<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a>  <span class="at">constant_temp_shift =</span> <span class="dv">146</span></span>
-<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a>  )</span>
-<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a></span>
-<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a>plot_info <span class="ot">&lt;-</span> <span class="fu">list</span>( <span class="co"># For the spline plots</span></span>
-<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a>  <span class="at">y_axis_label =</span> <span class="st">"log2 counts"</span>,</span>
-<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">"hours"</span>, <span class="co"># our measurements were in minutes</span></span>
-<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a>  <span class="co"># When you simply want to add a given treatment line to all conditions (</span></span>
-<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a>  <span class="co"># including all double spline plot comparisons) then you can do it in the </span></span>
-<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a>  <span class="co"># following way (commented out here): </span></span>
-<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a>  )</span>
-<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a>  <span class="co"># treatment_labels = list("temp shift"), # add for all conditions</span></span>
-<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a>  <span class="co"># treatment_timepoints = list(146)       # temp shift was at 146 hours.</span></span>
-<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a>  treatment_labels <span class="ot">=</span> treatment_labels,</span>
-<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a>  treatment_timepoints <span class="ot">=</span> treatment_timepoints</span>
-<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a><span class="er">)</span></span>
-<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a></span>
-<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">rownames</span>(data)</span>
-<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a></span>
-<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a>plot_options <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
-<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a>  <span class="at">meta_replicate_column =</span> <span class="st">"Reactor"</span> <span class="co"># Colors the data points based on Reactor</span></span>
-<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a>)</span>
-<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a></span>
-<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a>clustering_results <span class="ot">&lt;-</span> SplineOmics<span class="sc">::</span><span class="fu">cluster_hits</span>(</span>
-<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a>  <span class="at">splineomics =</span> splineomics,</span>
-<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a>  <span class="at">adj_pthresholds =</span> adj_pthresholds,</span>
-<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a>  <span class="at">clusters =</span> clusters,</span>
-<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a>  <span class="at">genes =</span> genes,</span>
-<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a>  <span class="at">plot_info =</span> plot_info,</span>
-<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a>  <span class="at">plot_options =</span> plot_options,</span>
-<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a>  <span class="at">report_dir =</span> report_dir,</span>
-<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a>  <span class="at">adj_pthresh_avrg_diff_conditions =</span> <span class="fl">0.0000001</span>,</span>
-<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a>  <span class="at">adj_pthresh_interaction_condition_time =</span> <span class="fl">0.0000001</span></span>
-<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Note: The low adj. p-values are to have less results, so that the HTML report</span></span>
+<span><span class="co"># is smaller in file size.</span></span>
+<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>   <span class="co"># 0.0000001 for both levels</span></span>
+<span>  <span class="fl">0.0000001</span>, <span class="co"># constant (temperature)   </span></span>
+<span>  <span class="fl">0.0000001</span>  <span class="co"># temp_shift</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fl">4L</span>,  <span class="co"># 4 clusters for constant</span></span>
+<span>  <span class="fl">4L</span>   <span class="co"># 4 clusters for temp_shift</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span>  <span class="st">"results"</span>,</span>
+<span>  <span class="st">"clustering_reports"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># treatment_labels allows to place vertical dashed lines into the plots, that</span></span>
+<span><span class="co"># indicate a treatment, such as "temp shift" in this experiment. For each level,</span></span>
+<span><span class="co"># the treatment can be specified individually. For the "double spline plots", </span></span>
+<span><span class="co"># where two levels are combined into one plot, treatment lines can also be </span></span>
+<span><span class="co"># defined. The correct fieldname for those is {first_level}_{second_level}, </span></span>
+<span><span class="co"># with first_level being the level of the two occuring first in the respective</span></span>
+<span><span class="co"># meta column, and second_level the one that occurs after. </span></span>
+<span><span class="co"># Here, we don't want a treatment line for the constant level, since no </span></span>
+<span><span class="co"># treatment was applied. To achieve that, we simply set it to NA or leave it</span></span>
+<span><span class="co"># out. </span></span>
+<span><span class="va">treatment_labels</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="co"># constant = NA, </span></span>
+<span>  temp_shift <span class="op">=</span> <span class="st">"temp shift"</span>,  </span>
+<span>  constant_temp_shift <span class="op">=</span> <span class="st">"temp shift"</span> </span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># treatment_timepoints allows to specify the timepoint, at which the vertical</span></span>
+<span><span class="co"># dashed treatment line is placed. Again, for the constant level, we don't</span></span>
+<span><span class="co"># have a treatment, so we also do not specify a timepoint.</span></span>
+<span><span class="va">treatment_timepoints</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="co"># constant = NA,</span></span>
+<span>  temp_shift <span class="op">=</span> <span class="fl">146</span>,  </span>
+<span>  constant_temp_shift <span class="op">=</span> <span class="fl">146</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="co"># For the spline plots</span></span>
+<span>  y_axis_label <span class="op">=</span> <span class="st">"log2 counts"</span>,</span>
+<span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>, </span>
+<span>  <span class="co"># When you simply want to add a given treatment line to all conditions (</span></span>
+<span>  <span class="co"># including all double spline plot comparisons) then you can do it in the </span></span>
+<span>  <span class="co"># following way (commented out here): </span></span>
+<span>  <span class="co"># treatment_labels = list("temp shift"), # add for all conditions</span></span>
+<span>  <span class="co"># treatment_timepoints = list(146)       # temp shift was at 146 hours.</span></span>
+<span>  treatment_labels <span class="op">=</span> <span class="va">treatment_labels</span>,</span>
+<span>  treatment_timepoints <span class="op">=</span> <span class="va">treatment_timepoints</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">plot_options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
+<span>  meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span> <span class="co"># Colors the data points based on Reactor</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
+<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
+<span>  clusters <span class="op">=</span> <span class="va">clusters</span>,</span>
+<span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
+<span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>  plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
+<span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
+<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.0000001</span>,</span>
+<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.0000001</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?export=view&amp;id=1EvPiEwHyGnBQFxRets00s87tochgyGK4" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
@@ -1855,7 +1855,7 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt;  [22] htmlwidgets_1.6.4        desc_1.4.3               pbkrtest_0.5.3          </span></span>
 <span><span class="co">#&gt;  [25] plyr_1.8.9               cachem_1.1.0             lifecycle_1.0.4         </span></span>
 <span><span class="co">#&gt;  [28] iterators_1.0.14         pkgconfig_2.0.3          Matrix_1.6-5            </span></span>
-<span><span class="co">#&gt;  [31] R6_2.5.1                 fastmap_1.2.0            rbibutils_2.3           </span></span>
+<span><span class="co">#&gt;  [31] R6_2.6.1                 fastmap_1.2.0            rbibutils_2.3           </span></span>
 <span><span class="co">#&gt;  [34] clue_0.3-66              digest_0.6.37            numDeriv_2016.8-1.1     </span></span>
 <span><span class="co">#&gt;  [37] colorspace_2.1-1         patchwork_1.3.0          S4Vectors_0.40.2        </span></span>
 <span><span class="co">#&gt;  [40] rprojroot_2.0.4          textshaping_1.0.0        compiler_4.3.3          </span></span>
@@ -1879,7 +1879,7 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt;  [94] statmod_1.5.0            matrixStats_1.5.0        pheatmap_1.0.12         </span></span>
 <span><span class="co">#&gt;  [97] stringi_1.8.4            yaml_2.3.10              boot_1.3-29             </span></span>
 <span><span class="co">#&gt; [100] evaluate_1.0.3           codetools_0.2-19         tibble_3.2.1            </span></span>
-<span><span class="co">#&gt; [103] BiocManager_1.30.25      cli_3.6.3                systemfonts_1.2.1       </span></span>
+<span><span class="co">#&gt; [103] BiocManager_1.30.25      cli_3.6.4                systemfonts_1.2.1       </span></span>
 <span><span class="co">#&gt; [106] Rdpack_2.6.2             munsell_0.5.1            jquerylib_0.1.4         </span></span>
 <span><span class="co">#&gt; [109] Rcpp_1.0.14              EnvStats_3.0.0           png_0.1-8               </span></span>
 <span><span class="co">#&gt; [112] parallel_4.3.3           pkgdown_2.1.1            ggplot2_3.5.1           </span></span>

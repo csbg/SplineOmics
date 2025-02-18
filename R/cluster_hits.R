@@ -1025,6 +1025,9 @@ generate_spline_comparisons <- function(
       splineomics[["limma_splines_result"]][["interaction_condition_time"]]
 
     # Get the unique conditions from the meta data
+    # Make it to character, because it can also be for example a factor, and
+    # when it is a factor, it causes problems in the string matching below.
+    meta[[condition]] <- as.character(meta[[condition]])
     conditions <- unique(meta[[condition]])
 
     # Generate all pairwise combinations of conditions

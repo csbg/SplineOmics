@@ -423,11 +423,10 @@ treatment_timepoints = list(
 
 plot_info <- list( # For the spline plots
   y_axis_label = "log2 counts",
-  time_unit = "hours", # our measurements were in minutes
+  time_unit = "hours", 
   # When you simply want to add a given treatment line to all conditions (
   # including all double spline plot comparisons) then you can do it in the 
   # following way (commented out here): 
-  )
   # treatment_labels = list("temp shift"), # add for all conditions
   # treatment_timepoints = list(146)       # temp shift was at 146 hours.
   treatment_labels = treatment_labels,
