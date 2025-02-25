@@ -55,6 +55,14 @@ Examples:
   column as a factor now does not cause problems anymore (as having it as 
   factor is perfectly valid).
 
+#### Changed
+- Replicates in the double spline plots (limma result category 2 and 3) are now
+  shown with shapes instead of numbers besides the data points. This is now 
+  possible because the imputed values are not anymore shown with shapes in 
+  those plots, like in the single spline plots (limma result category 1), but 
+  with colors (red = imputed values for condition 1, deepskyblue = imputed
+  values for condition 2).
+
 --------------------------------------------------------------------------------
 
 
