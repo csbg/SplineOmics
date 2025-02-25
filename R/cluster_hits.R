@@ -780,6 +780,12 @@ make_clustering_report <- function(
 
     if (length(levels) >= i) {
       level <- levels[i]
+      
+      # Get indices of columns in meta that match the given level (condition)
+      condition_indices <- which(meta[["condition"]] == level)
+      
+      # Subset raw_data to only include these columns (keeping all rows)
+      raw_data_level <- raw_data[, condition_indices, drop = FALSE]
 
       # Construct header name
       header_name <- level
@@ -858,7 +864,7 @@ make_clustering_report <- function(
         adj_pthreshold = adj_pthresholds[i],
         replicate_column = plot_options[["meta_replicate_column"]],
         level = level,
-        raw_data = raw_data
+        raw_data = raw_data_level
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -2366,9 +2372,6 @@ plot_spline_comparisons <- function(
     feature_names = time_effect_1$feature_names
   )
   
-  # Circle for Measured, Triangle for Imputed
-  shape_values <- c("Measured" = 16, "Imputed" = 17)  
-  
   plot_list <- list()
   feature_names_list <- list()
   
@@ -2398,37 +2401,51 @@ plot_spline_comparisons <- function(
   check_column_presence(time_effect_1, interaction_condition_time,
                         "feature_names")
   check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
-  
+
   # Hit is just an index, but time_effect_1 and 2 and avrg_diff_conditions and
   # interaction_condition_time were sorted before.
   for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
-    y_values_1 <- data[hit_index, ]
-    y_values_2 <- data[hit_index, ]
+    row_values <- data[hit_index, ]
 
     # Identify NA values from raw_data for imputation labeling
     if (!is.null(raw_data)) {
-      na_indices_1 <- which(is.na(raw_data[hit_index, ]))
+      # Identify which columns in raw_data belong to each condition
+      columns_condition_1 <- which(meta[[condition]] == condition_1)
+      columns_condition_2 <- which(meta[[condition]] == condition_2)
+      
+      # Now directly find NA indices within those specific columns
+      na_indices_cond1 <- columns_condition_1[
+        which(is.na(raw_data[hit_index, columns_condition_1]))
+        ]
+      na_indices_cond2 <- columns_condition_2[
+        which(is.na(raw_data[hit_index, columns_condition_2]))
+        ]
+      
       plot_data <- data.frame(
         Time = time_points,
-        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
-        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA),
+        Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
+        Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
         IsImputed1 = ifelse(
-          seq_along(y_values_1) %in% na_indices_1,
+          seq_along(row_values) %in% na_indices_cond1,
           "Imputed",
           "Measured"
         ),
         IsImputed2 = ifelse(
-          seq_along(y_values_2) %in% na_indices_1,
+          seq_along(row_values) %in% na_indices_cond2,
           "Imputed",
           "Measured"
         )
       )
+
+      # Check if there are imputed values for each condition
+      has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
+      has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
     } else {
       plot_data <- data.frame(
         Time = time_points,
-        Y1 = ifelse(meta[[condition]] == condition_1, y_values_1, NA),
-        Y2 = ifelse(meta[[condition]] == condition_2, y_values_2, NA),
+        Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
+        Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
         IsImputed1 = "Measured",
         IsImputed2 = "Measured"
       )
@@ -2438,6 +2455,20 @@ plot_spline_comparisons <- function(
     if (!is.null(replicate_column)) {
       plot_data$Replicate <- meta[[replicate_column]]  # Add replicates
       plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
+      # Get unique replicate values
+      unique_replicates <- unique(plot_data$Replicate)
+      
+      # Define a set of distinct shapes
+      # Triangles, squares, diamonds, X, +
+      distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)  
+      # Default to open circles if needed (overflow)
+      fallback_shapes <- rep(1, 100) 
+      
+      # Create a shape mapping that prioritizes distinct shapes first
+      shape_mapping <- setNames(
+        c(distinct_shapes, fallback_shapes)[seq_along(unique_replicates)], 
+        unique_replicates
+      )
     }
 
     intercept_1 <- time_effect_1$intercept[hit]
@@ -2504,6 +2535,18 @@ plot_spline_comparisons <- function(
         time_values = plot_data$Time,
         response_values = plot_data$Y2
       )
+      
+      plot_data$ColorLabel1 <- ifelse(
+        plot_data$IsImputed1 == "Imputed",
+        paste("Imputed data", condition_1),  # Dynamic label
+        paste("Data", condition_1)
+      )
+      
+      plot_data$ColorLabel2 <- ifelse(
+        plot_data$IsImputed2 == "Imputed",
+        paste("Imputed data", condition_2),  # Dynamic label
+        paste("Data", condition_2)
+      )
 
       p <- local({
         # Create the plot
@@ -2513,11 +2556,11 @@ plot_spline_comparisons <- function(
             ggplot2::aes(
               x = .data$Time,
               y = .data$Y1,
-              color = paste("Data", condition_1),
-              shape = .data$IsImputed1
+              color = .data$ColorLabel1,
+              shape = if (!is.null(replicate_column)) .data$Replicate else NULL
             ),
             na.rm = TRUE,
-            alpha = 0.5 # Make data dots transparent
+            alpha = 0.5 # Make data dots transparent to see overlapping ones.
           ) +
           ggplot2::geom_line(
             data = data.frame(
@@ -2535,12 +2578,12 @@ plot_spline_comparisons <- function(
             ggplot2::aes(
               x = .data$Time,
               y = .data$Y2,
-              color = paste("Data", condition_2),
-              shape = .data$IsImputed2
+              color = .data$ColorLabel2,
+              shape = if (!is.null(replicate_column)) .data$Replicate else NULL
             ),
             na.rm = TRUE,
-            alpha = 0.5 # Make data dots transparent
-          ) +
+            alpha = 0.5
+          ) + 
           ggplot2::geom_line(
             data = data.frame(
               Time = Time,
@@ -2554,14 +2597,9 @@ plot_spline_comparisons <- function(
           ) +
           ggplot2::guides(
             color = ggplot2::guide_legend(title = NULL),
-            shape = if (any(plot_data$IsImputed1 == "Imputed") ||
-                        any(plot_data$IsImputed2 == "Imputed")) {
-              ggplot2::guide_legend(title = NULL)
-            } else {
-              "none"
-            }
+            shape = ggplot2::guide_legend(title = "Replicate")  
           ) +
-          ggplot2::scale_shape_manual(values = shape_values) +
+          # ggplot2::scale_shape_manual(values = shape_values) +
           ggplot2::scale_x_continuous(
             breaks = filter_timepoints(time_points)
           ) +
@@ -2575,72 +2613,32 @@ plot_spline_comparisons <- function(
               signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
               interaction_stars,
               "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
-              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%",
-              if (!is.null(replicate_column)) {
-                paste(
-                  "\nReplicate (", replicate_column, ") mapping: ",
-                  paste(
-                    replicate_mapping,
-                    names(replicate_mapping),
-                    sep = " -> ",
-                    collapse = "; "
-                  )
-                )
-              } else {
-                ""  # Add nothing if replicate_column is NULL
-              }
+              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
             ),
             x = paste0("Time [", plot_info$time_unit, "]"),
             y = plot_info$y_axis_label
-          ) +
-          ggplot2::theme_minimal() +
+          ) 
+        
+        # Conditionally add shape scale only if replicates exist
+        if (!is.null(replicate_column)) {
+          p <- p + ggplot2::scale_shape_manual(
+            values = shape_mapping,
+            name = "Replicate"
+          )
+        }
+          
+        p <- p + ggplot2::theme_minimal() +
           ggplot2::theme(
             legend.position = "right",
             legend.title = element_blank(),
             plot.title = ggplot2::element_text(size = 7),
-            legend.text = ggplot2::element_text(size = 6),
+            legend.text = ggplot2::element_text(size = 5),
+            legend.key.height = ggplot2::unit(0.3, "cm"),  
+            legend.key.width = ggplot2::unit(0.7, "cm"),    
             axis.title.x = ggplot2::element_text(size = 8),
             axis.title.y = ggplot2::element_text(size = 8),
             axis.text.x = ggplot2::element_text(size = 6)
           )
-        
-        if (!is.null(replicate_column)) {
-          # Filter plot_data for non-NA Y1 values (for condition_1)
-          plot_data_filtered_Y1 <- plot_data %>%
-            dplyr::filter(!is.na(Y1))
-          
-          # Add labels for condition_1
-          p <- p +
-            ggplot2::geom_text(
-              data = plot_data_filtered_Y1,
-              ggplot2::aes(
-                x = .data$Time,
-                y = .data$Y1,
-                label = .data$ReplicateLabel
-              ),
-              size = 1.5,  # Small text size
-              hjust = -0.5, # Position to the right of the points
-              vjust = 0     # Keep at the same vertical level as the points
-            )
-          
-          # Filter plot_data for non-NA Y2 values (for condition_2)
-          plot_data_filtered_Y2 <- plot_data %>%
-            dplyr::filter(!is.na(Y2))
-          
-          # Add labels for condition_2
-          p <- p +
-            ggplot2::geom_text(
-              data = plot_data_filtered_Y2,
-              ggplot2::aes(
-                x = .data$Time,
-                y = .data$Y2,
-                label = .data$ReplicateLabel
-              ),
-              size = 1.5,  # Small text size
-              hjust = -0.5, # Position to the right of the points
-              vjust = 0     # Keep at the same vertical level as the points
-            )
-        }
         
         level <- paste(
           condition_1,
@@ -2663,23 +2661,58 @@ plot_spline_comparisons <- function(
         )
         
         p <- result$p # Updated plot with dashed lines
-        treatment_colors <- result$treatment_colors # Colors used for treatments
+        treatment_colors <- result$treatment_colors 
         
-        # Merge default colors with treatment_colors
         color_values <- setNames(
-          c("orange", "orange", "purple", "purple"),
+          c(
+            "orange",
+            "orange",
+            "purple",
+            "purple",
+            "red",
+            "deepskyblue"
+            ),
           c(
             paste("Data", condition_1),
             paste("Spline", condition_1),
             paste("Data", condition_2),
-            paste("Spline", condition_2)
+            paste("Spline", condition_2),
+            paste("Imputed data", condition_1),
+            paste("Imputed data", condition_2)
           )
         )
-        color_values <- c(color_values, treatment_colors)
+
+        # Filter to include only legend entries that exist in the data
+        filtered_labels <- c(
+          paste("Data", condition_1),
+          paste("Spline", condition_1),
+          paste("Data", condition_2),
+          paste("Spline", condition_2)
+        )
+        
+        # Add imputed labels only if they exist
+        if (has_imputed_1) {
+          filtered_labels <- c(
+            filtered_labels,
+            paste("Imputed data", condition_1)
+            )
+        }
+        if (has_imputed_2) {
+          filtered_labels <- c(
+            filtered_labels,
+            paste("Imputed data", condition_2)
+            )
+        }
+        
+        # Keep only necessary color mappings
+        color_values <- c(
+          color_values[names(color_values) %in% filtered_labels],
+          treatment_colors
+        )
         
         # Apply scale_color_manual with merged color values
         p <- p + ggplot2::scale_color_manual(values = color_values)
-        
+
         p
       })
 
