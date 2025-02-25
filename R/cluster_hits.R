@@ -2407,7 +2407,7 @@ plot_spline_comparisons <- function(
   for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     row_values <- data[hit_index, ]
-
+    
     # Identify NA values from raw_data for imputation labeling
     if (!is.null(raw_data)) {
       # Identify which columns in raw_data belong to each condition
@@ -2449,6 +2449,9 @@ plot_spline_comparisons <- function(
         IsImputed1 = "Measured",
         IsImputed2 = "Measured"
       )
+      
+      has_imputed_1 <- FALSE
+      has_imputed_2 <- FALSE
     }
     
     # If replicate_column is not NULL, add Replicate and ReplicateLabel columns
@@ -2670,7 +2673,7 @@ plot_spline_comparisons <- function(
             "purple",
             "purple",
             "red",
-            "deepskyblue"
+            "dodgerblue"
             ),
           c(
             paste("Data", condition_1),

@@ -676,48 +676,168 @@ get_header_section <- function(
     )
   }
 
-  logo_base64 <- base64enc::dataURI(file = logo_path, mime = "image/png")
+  logo_base64 <- base64enc::dataURI(
+    file = logo_path,
+    mime = "image/png"
+    )
 
   header_section <- paste(
     "<html><head><title>", title, "</title>",
     "<meta charset=\"UTF-8\">", # Ensure UTF-8 encoding (JavaScript issues)
     "<style>",
-    "table {",
-    "  font-size: 30px;",
-    "}",
-    "td {",
-    "  padding: 8px;", # Adds padding to table cells for better readability
-    "  text-align: left;", # Ensures text in cells is left-aligned
-    "}",
-    "td:first-child {",
-    "  text-align: right;", # Right aligns the first column
-    "  color: blue;", # Sets the color of the first column to blue
-    "}",
+    
+    # Existing Table Styles
+    "table { font-size: 30px; }",
+    "td { padding: 8px; text-align: left; }",
+    "td:first-child { text-align: right; color: blue; }",
+    
+    # Header and Logo Styles
     "h1 {",
-    "  color: #333333;", # Dark gray color for the title
+    "  color: #333333;",
     "  display: flex;",
-    "  align-items: center;", # Aligns items vertically in the center
-    "  justify-content: space-between;", # Ensures the logo is on the far right
-    "  margin-top: 0; margin-bottom: 0;", # Reset margin to ensure no extra space
+    "  align-items: center;",
+    "  justify-content: space-between;",
+    "  margin-top: 0;",
+    "  margin-bottom: 0;",
     "}",
     ".logo {",
-    "  position: absolute;", # Position the logo absolutely
-    "  top: 60px;", # Adjust the top position to move the logo down
-    "  right: 0;", # Align with the right of the h1
-    "  width: 400px;", # Adjust the width to make the logo smaller
-    "  height: auto;", # Maintain aspect ratio
+    "  position: absolute;",
+    "  top: 60px;",
+    "  right: 0;",
+    "  width: 400px;",
+    "  height: auto;",
     "}",
+    
+    # Horizontal Rule
     "hr {",
-    "  margin-top: 20px;", # Space above the line
-    "  margin-bottom: 20px;", # Space below the line
+    "  margin-top: 20px;",
+    "  margin-bottom: 20px;",
     "}",
+    
+    # Zoom Container
+    ".zoom-container {",
+    "  display: block;",
+    "  text-align: center;",
+    "  margin: 10px auto;",
+    "  position: relative;",
+    "}",
+    
+    # Zoomable Image
+    ".zoomable-image {",
+    "  width: 100%;",
+    "  max-width: 800px;",
+    "  cursor: zoom-in;",
+    "  transition: transform 0.3s ease;",
+    "}",
+    
+    # Zoom Button
+    ".zoom-button {",
+    "  position: absolute;",
+    "  top: 10px;",
+    "  right: 10px;",
+    "  background: rgba(0, 0, 0, 0.6);",
+    "  color: white;",
+    "  border: none;",
+    "  padding: 8px 12px;",
+    "  border-radius: 50%;",
+    "  cursor: pointer;",
+    "  font-size: 18px;",
+    "}",
+    
+    # Zoom Button Hover Effect
+    ".zoom-button:hover {",
+    "  background: rgba(0, 0, 0, 0.8);",
+    "}",
+
+    ".zoom-container.zoom-active .zoomable-image { cursor: zoom-out; }",
+    
+    "</style>",
+    
+    "<script>",
+    "document.addEventListener('DOMContentLoaded', function() {",
+    "  console.log('JavaScript is running!');",
+    "  document.querySelectorAll('.zoom-container').forEach(container => {",
+    "    console.log('Zoom container found');",
+    "    const img = container.querySelector('.zoomable-image');",
+    "    let scale = 1, zoomActive = false, isDragging = false;",
+    "    let startX = 0, startY = 0, translateX = 0, translateY = 0;",
+    "    let imgOffsetX = 0, imgOffsetY = 0;",
+    "",
+    "    img.addEventListener('click', function(event) {",
+    "      zoomActive = !zoomActive;",
+    "      console.log('Zoom toggled:', zoomActive);",
+    "",
+    "      if (!zoomActive) {",
+    "        scale = 1; imgOffsetX = 0; imgOffsetY = 0;", 
+    "        img.style.transform = 'scale(1) translate(0px, 0px)';",  
+    "        img.style.cursor = 'zoom-in'; img.style.zIndex = '1';",
+    "      } else {",
+    "        img.style.cursor = 'grab'; img.style.zIndex = '1000';",
+    "        img.style.position = 'relative';",
+    "      }",
+    "    });",
+    "",
+    "    img.addEventListener('wheel', function(event) {",
+    "      if (!zoomActive) return;",
+    "      event.preventDefault();",
+    "      let rect = img.getBoundingClientRect();",
+    "      let mouseX = (event.clientX - rect.left) / rect.width;",
+    "      let mouseY = (event.clientY - rect.top) / rect.height;",
+    "",
+    "      scale += event.deltaY * -0.01;",  
+    "      scale = Math.min(Math.max(1, scale), 5);",  
+    "      imgOffsetX = (0.5 - mouseX) * 100 * (scale - 1);", 
+    "      imgOffsetY = (0.5 - mouseY) * 100 * (scale - 1);",
+    "",
+    "      img.style.transform = `scale(${scale}) translate(${imgOffsetX}px,", 
+    "        ${imgOffsetY}px)`;",
+    "      img.style.transformOrigin = 'center center';",
+    "      console.log('Zooming:', scale, 'Offset:', imgOffsetX, imgOffsetY);",
+    "    });",
+    "",
+    "    img.addEventListener('mousedown', function(event) {",
+    "      if (!zoomActive || scale === 1) return;",
+    "      isDragging = true;",
+    "      startX = event.clientX; startY = event.clientY;",
+    "      img.style.cursor = 'grabbing';",
+    "    });",
+    "",
+    "    document.addEventListener('mousemove', function(event) {",
+    "      if (!isDragging) return;",
+    "      event.preventDefault();",
+    "      let dx = (event.clientX - startX) / scale;",
+    "      let dy = (event.clientY - startY) / scale;",
+    "      imgOffsetX += dx; imgOffsetY += dy;",
+    "",
+    "      img.style.transform = `scale(${scale}) translate(${imgOffsetX}px,", 
+    "        ${imgOffsetY}px)`;",
+    "      startX = event.clientX; startY = event.clientY;",
+    "    });",
+    "",
+    "    document.addEventListener('mouseup', function() {",
+    "      isDragging = false;",
+    "      if (zoomActive) img.style.cursor = 'grab';",
+    "    });",
+    "  });",
+    "});",
+    "</script>",
+
+    "</head><body>",
+    
     "</style>",
     "</head><body>",
-    "<h1>", header_text, "<img src='",
-    logo_base64, "' alt='Logo' class='logo'></h1>",
+    
+    # Add the Title with Logo
+    "<h1>", 
+    header_text,
+    "<img src='",
+    logo_base64,
+    "' alt='Logo' class='logo'></h1>",
     "<table>",
+    
     sep = ""
   )
+  
 
   note <- switch(report_type,
     "explore_data" = paste(
@@ -1152,10 +1272,18 @@ plot2base64 <- function(
   # Delete the temporary SVG file
   unlink(img_file)
 
-  # Return the HTML img tag with the base64 string and a fixed width
+  # # Return the HTML img tag with the base64 string and a fixed width
+  # return(
+  #   sprintf(
+  #     '<img src="%s" alt="Plot" style="width:%s;">',
+  #     svg_base64, html_img_width
+  #   )
+  # Return HTML with zoom functionality
   return(
     sprintf(
-      '<img src="%s" alt="Plot" style="width:%s;">',
+      '<div class="zoom-container">
+         <img src="%s" alt="Plot" class="zoomable-image" style="width:%s;">
+       </div>',
       svg_base64, html_img_width
     )
   )
