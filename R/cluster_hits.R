@@ -462,17 +462,25 @@ filter_and_append_limma_results <- function(
 #' @return NULL. The function either proceeds with execution or stops the
 #' script based on user input.
 huge_table_user_prompter <- function(tables) {
-  # Identify tables with more than 500 rows
+  # Identify tables with more than 500 rows after filtering NAs in "adj.P.Val"
   large_tables <- lapply(names(tables), function(name) {
-    if (!is.logical(tables[[name]]) && nrow(tables[[name]]) > 500) {
-      list(name = name, rows = nrow(tables[[name]]))
+    if (!is.logical(tables[[name]])) {
+      # Remove rows where "adj.P.Val" is NA
+      filtered_table <- tables[[name]][!is.na(tables[[name]][["adj.P.Val"]]), ]
+      
+      # Check if the filtered table has more than 500 rows
+      if (nrow(filtered_table) > 500) {
+        list(name = name, rows = nrow(filtered_table))
+      } else {
+        NULL
+      }
     } else {
       NULL
     }
   })
   
   large_tables <- do.call(rbind, large_tables)
-
+  
   # If no large tables, return immediately
   if (is.null(large_tables)) {
     return(NULL)
@@ -488,7 +496,7 @@ huge_table_user_prompter <- function(tables) {
   
   # Prompt the user
   while (TRUE) {
-    message("\nThe following tables have more than 500 rows:")
+    message("\nThe following tables have more than 500 rows (after filtering NAs in 'adj.P.Val'):")
     message(table_info, "\n")
     message("This may result in long computations and large HTML output.\n")
     user_input <- readline(prompt = "Do you want to proceed? (y/n): ")
@@ -504,6 +512,7 @@ huge_table_user_prompter <- function(tables) {
     }
   }
 }
+
 
 
 #' Perform Clustering
@@ -2140,10 +2149,10 @@ plot_splines <- function(
 
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
-          data = plot_data,
+          data = dplyr::filter(plot_data, !is.na(Y)),
           ggplot2::aes(
             x = Time,
-            y = .data$Y,
+            y = Y,
             color = color_column,
             shape = factor(IsNA)  # Map shape to "Data" or "Imputed"
           ),
@@ -2487,7 +2496,8 @@ plot_spline_comparisons <- function(
     # Get the adjusted p-values for the current hit
     avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
     interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
-
+    if (is.na(avrg_diff_pval) || is.na(interaction_pval)) next
+    
     if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions ||
       interaction_pval < adj_pthresh_interaction) {
       # Define the number of stars for avrg_diff_conditions

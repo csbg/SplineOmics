@@ -63,7 +63,16 @@ Examples:
   with colors (red = imputed values for condition 1, dodgerblue = imputed
   values for condition 2).
 - The images in the HTML reports are now considerably smaller, but zoomable, 
-  with the option to drag within the zoomed image.
+  with the option to drag within the zoomed image. A single left-click with the 
+  mouse starts the zoom process. Then, you can zoom with the mouse wheel. If you
+  reach the max zoom, you can move in the image by further zooming with the 
+  mouse wheel but placing the mouse in one of the corners. Further, one can zoom
+  by holding left-click pressed and dragging (you can then also let go).
+- SplineOmics can now handle datasets with NA values. limma can do that, and 
+  since SplineOmics is based on limma, it can in principle do it to. The issue 
+  before was just that there were checks in place that prevented NA values from
+  entering the pipeline, and also other steps in the code caused problems,
+  raised warnings, or stopped the execution when facing NA values.
 
 --------------------------------------------------------------------------------
 
