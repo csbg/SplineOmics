@@ -1819,57 +1819,57 @@ Level2Functions <- R6::R6Class("Level2Functions",
         )
       }
 
-      # Check for missing values
+      # Check for missing values (only warn instead of stopping execution)
       if (any(is.na(data))) {
-        stop(
-          self$create_error_message(
-            "data must not contain missing values.",
-            data_meta_index
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Check for non-negative values
-      if (any(data < 0)) {
         message(
           self$create_error_message(
             paste(
-              "Hint: The data contains negative values. This may occur if the", 
-              "data has been transformed (e.g., log-transformed or normalized)",
-              "and is valid in such cases. Ensure that the data preprocessing",
-              " aligns with your analysis requirements."
+              "Warning: The data contains missing values (NA).",
+              "Ensure that imputation or handling of missing values",
+              "aligns with your analysis requirements."
             ),
             data_meta_index
           )
         )
       }
       
-
-      # Check for rows with all zeros
-      if (any(rowSums(data) == 0)) {
-        stop(
-          self$create_error_message(
-            "data must not contain rows with all zeros!",
-            data_meta_index
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Check for columns with all zeros
-      if (any(colSums(data) == 0)) {
-        stop(
+      # Check for non-negative values, allowing NAs
+      if (any(data < 0, na.rm = TRUE)) {  # Ignore NA values in the check
+        message(
           self$create_error_message(
             paste(
-              "data must not contain columns with all zeros!"
+              "Hint: The data contains negative values. This may occur if the",
+              "data has been transformed (e.g., log-transformed or normalized)",
+              "and is valid in such cases. Ensure that the data preprocessing",
+              "aligns with your analysis requirements."
             ),
+            data_meta_index
+          )
+        )
+      }
+      
+      # Check for rows with all zeros, ignoring NAs
+      if (any(rowSums(data, na.rm = TRUE) == 0)) {  # Sum only non-NA values
+        stop(
+          self$create_error_message(
+            "Data must not contain rows with all zeros!",
             data_meta_index
           ),
           call. = FALSE
         )
       }
-
+      
+      # Check for columns with all zeros, ignoring NAs
+      if (any(colSums(data, na.rm = TRUE) == 0)) {  # Sum only non-NA values
+        stop(
+          self$create_error_message(
+            "Data must not contain columns with all zeros!",
+            data_meta_index
+          ),
+          call. = FALSE
+        )
+      }
+      
       # Check if row headers (rownames) are present and non-null
       row_headers <- rownames(data)
       if (is.null(row_headers)) {

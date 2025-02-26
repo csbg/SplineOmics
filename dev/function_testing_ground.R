@@ -10,40 +10,57 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-# data <- read_excel(here::here("dev" ,"data", "PPTX",
-#                                     "2 PPTX new filtered (equal to no imputation).xlsx"))
+# data <- read_excel(here::here(
+#   "dev",
+#   "data",
+#   "PPTX",
+#   "2 PPTX new filtered (equal to no imputation).xlsx")
+#   )
 
-# data <- read_excel(here::here("dev" ,"data", "PPTX",
-#                                     "PPTX_processed_no_imputation.xlsx"))
+data <- read_excel(here::here(
+  "dev",
+  "data",
+  "PPTX",
+  "filteredfor100percentin1tpoverallwithNA.xlsx")
+  )
 
 
 # data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
 #                                    "PPTX_processed_with_imputation.xlsx"))
 # 
-# meta <- read_excel(here::here("dev" ,"data",
-#                               "Time_course_PPTX_old_metadata.xlsx"))
-
-data_excel <- readRDS(system.file(
-  "extdata",
-  "proteomics_data.rds.xz",
-  package = "SplineOmics"
-))
-
 meta <- read_excel(here::here(
-  "inst",
-  "extdata",
-  "proteomics_meta.xlsx"
-))
+  "dev",
+  "data",
+  "PPTX",
+  "Time course PPTX metadata 25022025.xlsx")
+  )
 
-annotation <- data_excel %>%
-  select(39:ncol(data_excel)) %>%
+# data_excel <- readRDS(system.file(
+#   "extdata",
+#   "proteomics_data.rds.xz",
+#   package = "SplineOmics"
+# ))
+# 
+# meta <- read_excel(here::here(
+#   "inst",
+#   "extdata",
+#   "proteomics_meta.xlsx"
+# ))
+
+annotation <- data %>%
+  select(38:ncol(data)) %>%
   dplyr::slice(-c(1:3))
+
+data <- data[1:(nrow(data) - 3), ]
+data <- data[, 1:36]
+data <- as.matrix(sapply(data, as.numeric))
+rownames(data) <- seq_len(nrow(data))
 
 
 
 # Get the gene list ------------------------------------------------------------
 
-data_full <- as.data.frame(data_excel)
+data_full <- as.data.frame(data)
 gene_column_name <- "Gene_symbol"
 genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
@@ -61,14 +78,14 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 #                           "Positions within proteins")
 
 # feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-feature_name_columns <- c("Gene_name")
+feature_name_columns <- c("T: Gene", "T: Index")
 
-# debug(extract_data)
-data <- extract_data(
-  data_full,
-  feature_name_columns,
-  user_prompt = FALSE
-  )
+# # debug(extract_data)
+# data <- extract_data(
+#   data_full,
+#   feature_name_columns,
+#   user_prompt = FALSE
+#   )
 
 
 # Plot the raw data ------------------------------------------------------------
@@ -141,41 +158,6 @@ meta <- meta[!meta$`Sample.ID` %in% c(
   "E10_TP10_Stationary"
 ), ]
 
-
-# Simulate RNA-seq data to test voom functionality -----------------------------
-
-# generate_rnaseq_data <- function(n_genes = 1000, n_samples = 36) {
-#   set.seed(123)  # For reproducibility
-# 
-#   # Define sample and gene names
-#   gene_names <- paste0("Gene", 1:n_genes)
-#   sample_names <- paste0("Sample", 1:n_samples)
-# 
-#   # Generate random raw RNA-seq counts (Poisson distributed)
-#   # Base expression level with some variability
-#   base_expression <- rpois(n_genes, lambda = 20)  # Baseline counts
-#   counts_matrix <- sapply(1:n_samples, function(x) rpois(n_genes, lambda = base_expression))
-# 
-#   # Assign row and column names
-#   rownames(counts_matrix) <- gene_names
-#   colnames(counts_matrix) <- sample_names
-# 
-#   return(counts_matrix)
-# }
-# 
-# # Example usage:
-# n_genes <- 4162  # Adjust the number of genes as needed
-# # data <- generate_rnaseq_data(n_genes = n_genes)
-# 
-# voom_obj <- preprocess_rna_seq_data(
-#   raw_counts = data,
-#   meta = meta,
-#   spline_params = list(spline_type = c("n"),   # Chosen spline parameters
-#                        dof = c(2L)),
-#   design = "~ 1 + Phase*X + Reactor"
-# )
-
-# data <- voom_obj$E
 
 # Explore data -----------------------------------------------------------------
 
@@ -307,13 +289,13 @@ clustering_results <- cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
-  genes = genes,
+  # genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,
   report_dir = report_dir,
   report = TRUE,
-  # adj_pthresh_avrg_diff_conditions = 0,
-  adj_pthresh_interaction_condition_time = 0.25
+  adj_pthresh_avrg_diff_conditions = 0,
+  adj_pthresh_interaction_condition_time = 0.05
 )
 
 
