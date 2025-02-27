@@ -1114,7 +1114,7 @@ count_hits <- function(nested_list) {
     # Determine if we are processing category_2 or category_3
     category_key <- ifelse(
       outer_key == "category_2_hits", "category_2", "category_3"
-      )
+    )
     inner_list <- nested_list[[outer_key]]
     
     # Iterate over the inner list of dataframes
@@ -1122,8 +1122,17 @@ count_hits <- function(nested_list) {
       # Get the substring after the second underscore
       extracted_name <- extract_after_second_underscore(df_name)
       
-      # Count the rows in the dataframe
-      row_count <- nrow(inner_list[[df_name]])
+      # Get the dataframe
+      df <- inner_list[[df_name]]
+      
+      # Check if the adj.P.Val column exists
+      if ("adj.P.Val" %in% colnames(df)) {
+        # Remove rows with NA in adj.P.Val before counting
+        df <- df[!is.na(df$adj.P.Val), ]
+      }
+      
+      # Count the rows after filtering
+      row_count <- nrow(df)
       
       # Store the result in the dictionary
       row_counts_dict[[category_key]][[extracted_name]] <- row_count

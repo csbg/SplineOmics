@@ -3216,7 +3216,7 @@ build_cluster_hits_report <- function(
         header_index,
         comparison_name
       )
-      
+
       # Access row counts for the current comparison_name
       avrg_diff_hits <- 
         category_2_and_3_hit_counts$category_2[[comparison_name]]

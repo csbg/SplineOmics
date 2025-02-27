@@ -17,12 +17,51 @@ library(dplyr)
 #   "2 PPTX new filtered (equal to no imputation).xlsx")
 #   )
 
-data <- read_excel(here::here(
+data_exp <- read_excel(here::here(
   "dev",
   "data",
-  "PPTX",
-  "filteredfor100percentin1tpoverallwithNA.xlsx")
+  "PPTXTimecourse25022025",
+  "2EXPonly",
+  "EXPonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
   )
+
+data_stat <- read_excel(here::here(
+  "dev",
+  "data",
+  "PPTXTimecourse25022025",
+  "3STATonly",
+  "STATonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+)
+
+feature_name_columns <- c(
+  "T: Gene",
+  "T: Index"
+  )
+
+data_exp_matrix_only <- extract_data(
+  data_exp,
+  feature_name_columns,
+  user_prompt = FALSE
+)
+
+data_stat_matrix_only <- extract_data(
+  data_stat,
+  feature_name_columns,
+  user_prompt = FALSE
+)
+
+
+# Identify common row names
+common_rows <- intersect(rownames(data_exp_matrix_only), rownames(data_stat_matrix_only))
+
+# Subset both matrices to only include matching rows
+data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
+data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
+
+# Combine matrices by columns
+data <- cbind(data_exp_filtered, data_stat_filtered)
+
+genes <- rownames(data)
 
 
 # data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
@@ -47,22 +86,22 @@ meta <- read_excel(here::here(
 #   "proteomics_meta.xlsx"
 # ))
 
-annotation <- data %>%
-  select(38:ncol(data)) %>%
-  dplyr::slice(-c(1:3))
-
-data <- data[1:(nrow(data) - 3), ]
-data <- data[, 1:36]
-data <- as.matrix(sapply(data, as.numeric))
-rownames(data) <- seq_len(nrow(data))
-
-
-
-# Get the gene list ------------------------------------------------------------
-
-data_full <- as.data.frame(data)
-gene_column_name <- "Gene_symbol"
-genes <- data_full[[gene_column_name]][4:nrow(data_full)]
+# annotation <- data %>%
+#   select(38:ncol(data)) %>%
+#   dplyr::slice(-c(1:3))
+# 
+# data <- data[1:(nrow(data) - 3), ]
+# data <- data[, 1:36]
+# data <- as.matrix(sapply(data, as.numeric))
+# rownames(data) <- seq_len(nrow(data))
+# 
+# 
+# 
+# # Get the gene list ------------------------------------------------------------
+# 
+# data_full <- as.data.frame(data)
+# gene_column_name <- "Gene_symbol"
+# genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 
 
 
@@ -78,9 +117,9 @@ genes <- data_full[[gene_column_name]][4:nrow(data_full)]
 #                           "Positions within proteins")
 
 # feature_name_columns <- c("First.Protein.Description", "Protein.Ids")
-feature_name_columns <- c("T: Gene", "T: Index")
-
-# # debug(extract_data)
+# feature_name_columns <- c("T: Gene", "T: Index")
+# 
+# # # debug(extract_data)
 # data <- extract_data(
 #   data_full,
 #   feature_name_columns,
@@ -147,24 +186,24 @@ feature_name_columns <- c("T: Gene", "T: Index")
 
 # Remove outliers --------------------------------------------------------------
 
-data <- data[, !(colnames(data) %in% c(  # Remove potential outliers
-  "E12_TP05_Exponential",
-  "E10_TP10_Stationary"
-)
-)]
-
-meta <- meta[!meta$`Sample.ID` %in% c(
-  "E12_TP05_Exponential",
-  "E10_TP10_Stationary"
-), ]
+# data <- data[, !(colnames(data) %in% c(  # Remove potential outliers
+#   "E12_TP05_Exponential",
+#   "E10_TP10_Stationary"
+# )
+# )]
+# 
+# meta <- meta[!meta$`Sample.ID` %in% c(
+#   "E12_TP05_Exponential",
+#   "E10_TP10_Stationary"
+# ), ]
 
 
 # Explore data -----------------------------------------------------------------
 
 report_info <- list(
   omics_data_type = "PPTX",
-  data_description = "Phosphoproteomics data",
-  data_collection_date = "Februar 2024",
+  data_description = "Phosphoproteomics data 2025",
+  data_collection_date = "2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
   project_name = "DGTX"
@@ -175,7 +214,7 @@ splineomics <- create_splineomics(
   # rna_seq_data = voom_obj,
   meta = meta,
   mode = "integrated",
-  annotation = annotation,
+  # annotation = annotation,
   feature_name_columns = feature_name_columns,
   report_info = report_info,
   condition = "Phase",
@@ -280,7 +319,7 @@ plot_info = list(
 )
 
 plot_options = list(
-  # meta_replicate_column = "Reactor",
+  meta_replicate_column = "Reactor",
   cluster_heatmap_columns = FALSE
 )
 
@@ -289,7 +328,7 @@ clustering_results <- cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
   clusters = clusters,
-  # genes = genes,
+  genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,
   report_dir = report_dir,

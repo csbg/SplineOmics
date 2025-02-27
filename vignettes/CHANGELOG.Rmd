@@ -73,6 +73,8 @@ Examples:
   before was just that there were checks in place that prevented NA values from
   entering the pipeline, and also other steps in the code caused problems,
   raised warnings, or stopped the execution when facing NA values.
+- Changed extract_data() function so that it can handle missing values 
+  correctly.
 
 --------------------------------------------------------------------------------
 

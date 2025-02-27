@@ -51,7 +51,6 @@ extract_data <- function(
   lower_right_row <- lower_right_cell$lower_right_row
   lower_right_col <- lower_right_cell$lower_right_col
 
-
   # Extract the numeric data block
   numeric_data <- data[
     upper_left_row:lower_right_row,
@@ -74,7 +73,7 @@ extract_data <- function(
       "right of the numeric data, not on the left."
     ))
   }
-
+  
   # Remove rows and columns that are entirely NA
   numeric_data <- numeric_data[
     rowSums(is.na(numeric_data)) != ncol(numeric_data),
@@ -83,9 +82,6 @@ extract_data <- function(
     , colSums(is.na(numeric_data)) != nrow(numeric_data)
   ]
 
-  # Remove rows with any NA values
-  clean_data <- numeric_data[stats::complete.cases(numeric_data), ]
-
   # Extract headers for each column above the identified block
   headers <- vapply(upper_left_col:lower_right_col, function(col_idx) {
     header_values <- data[seq_len((upper_left_row - 1)), col_idx]
@@ -93,16 +89,16 @@ extract_data <- function(
     paste(header_values, collapse = "_")
   }, character(1))
 
-  colnames(clean_data) <- headers
+  colnames(numeric_data) <- headers
 
-  clean_data <- add_feature_names(
+  numeric_data <- add_feature_names(
     data = data,
-    clean_data = clean_data,
+    clean_data = numeric_data,
     feature_name_columns = feature_name_columns
   )
 
-  clean_matrix <- as.matrix(clean_data)
-  rownames(clean_matrix) <- rownames(clean_data)
+  clean_matrix <- as.matrix(numeric_data)
+  rownames(clean_matrix) <- rownames(numeric_data)
 
   clean_matrix
 }
@@ -153,12 +149,18 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
       upper_left_col <- NA
       num_rows <- nrow(self$data)
       num_cols <- ncol(self$data)
-
+      
       for (i in seq_len((num_rows - 5))) {
         for (j in seq_len((num_cols - 5))) {
           block <- self$data[i:(i + 5), j:(j + 5)]
           block_num <- suppressWarnings(as.numeric(as.matrix(block)))
-          if (all(!is.na(block_num)) && (all(is.numeric(block_num)))) {
+          
+          # Allow NA values but ensure at least 70% of the block is numeric
+          num_numeric <- sum(!is.na(block_num) & is.numeric(block_num))
+          total_values <- length(block_num)
+          
+          # At least 10% must be numeric
+          if ((num_numeric / total_values) >= 0.1) {  
             upper_left_row <- i
             upper_left_col <- j
             break
@@ -166,13 +168,13 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
         }
         if (!is.na(upper_left_row)) break
       }
-
+      
       if (is.na(upper_left_row) || is.na(upper_left_col)) {
-        stop("No at least 6x6 block of numeric values found.",
-          call. = FALSE
+        stop("No at least 6x6 block of mostly numeric values found.",
+             call. = FALSE
         )
       }
-
+      
       self$upper_left_cell <- list(
         upper_left_row = upper_left_row,
         upper_left_col = upper_left_col
@@ -196,30 +198,31 @@ NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
           "Call find_upper_left_cell first."
         ), call. = FALSE)
       }
-
+      
       upper_left_row <- self$upper_left_cell$upper_left_row
       upper_left_col <- self$upper_left_cell$upper_left_col
       num_rows <- nrow(self$data)
       num_cols <- ncol(self$data)
-
-      # Expand the block vertically
+      
+      # Expand the block vertically, allowing some NA values
+      # At least 1/6 values must be present
       lower_right_row <- upper_left_row
       for (i in (upper_left_row + 1):num_rows) {
-        if (is.na(self$data[i, upper_left_col])) {
+        if (sum(!is.na(self$data[i, upper_left_col])) < 1) {  
           break
         }
         lower_right_row <- i
       }
-
-      # Expand the block horizontally
+      
+      # Expand the block horizontally, allowing some NA values
       lower_right_col <- upper_left_col
       for (j in (upper_left_col + 1):num_cols) {
-        if (is.na(self$data[upper_left_row, j])) {
+        if (sum(!is.na(self$data[upper_left_row, j])) < 1) { 
           break
         }
         lower_right_col <- j
       }
-
+      
       list(
         lower_right_row = lower_right_row,
         lower_right_col = lower_right_col
@@ -353,9 +356,12 @@ ask_user <- function(question) {
 #'
 #' @return The `clean_data` dataframe with updated row names.
 #'
-add_feature_names <- function(data,
-                              clean_data,
-                              feature_name_columns) {
+add_feature_names <- function(
+    data,
+    clean_data,
+    feature_name_columns
+    ) {
+  
   if (!any(is.na(feature_name_columns))) {
     non_na_index <- which(apply(
       data[feature_name_columns], 1,
