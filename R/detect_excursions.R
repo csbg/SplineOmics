@@ -1,8 +1,51 @@
+# Level 1 function definitions -------------------------------------------------
+
+
+#' Detect Excursions in Time-Series Omics Data
+#'
+#' @description
+#' This function identifies excursions in time-series omics data by performing
+#' adjacency-based pairwise comparisons between consecutive timepoints using
+#' limma's moderated t-test. Excursions are defined as timepoints that are
+#' significantly different from both their adjacent neighbors, with their mean
+#' being either higher or lower than both neighbors. All p-values are converted
+#' to one-tailed values to enhance sensitivity.
+#'
+#' @param data A numeric matrix, where rows correspond to features (e.g., genes, 
+#' proteins, metabolites) and columns correspond to samples.
+#' @param meta A data frame containing metadata for the samples. Must include
+#' a column named `"Time"` that specifies the timepoint for each sample.
+#' @param alpha A numeric value specifying the significance threshold for 
+#' excursion detection. Defaults to `0.05`.
+#'
+#' @return A list containing two elements:
+#' \describe{
+#'   \item{`results_df`}{A data frame with binary indicators for excursions
+#'   at each timepoint for each feature. Rows correspond to features, columns
+#'   correspond to timepoints, and values are `1` (excursion) or `0` 
+#'   (no excursion).}
+#'   \item{`pairwise_pvals`}{A matrix of one-tailed adjusted p-values from 
+#'   limma's moderated t-test for pairwise comparisons between consecutive 
+#'   timepoints.}
+#' }
+#'
+#' @details
+#' - The function first fits a linear model to the data using limma.
+#' - It then computes pairwise comparisons between adjacent timepoints.
+#' - All p-values are adjusted using the Benjamini-Hochberg method for false
+#' discovery rate (FDR) correction and subsequently divided by `2` to 
+#' reflect a one-tailed test.
+#' - Excursions are identified if a timepoint exhibits significant differences 
+#' from both its neighbors and is either higher or lower than both.
+#'
+#' @importFrom limma lmFit makeContrasts contrasts.fit eBayes topTable
+#' @importFrom stats model.matrix
+#' 
 detect_excursions <- function(
     data,
     meta,
     alpha = 0.05
-    ) {
+) {
   
   # Extract unique timepoints in sorted order
   unique_timepoints <- sort(unique(meta$Time))
@@ -20,51 +63,53 @@ detect_excursions <- function(
   time_factor <- factor(
     meta$Time,
     levels = unique_timepoints
-    )
+  )
   design <- stats::model.matrix(~ 0 + time_factor)
   colnames(design) <- valid_timepoints  
   
   # Fit limma model
-  fit <- lmFit(data, design)
+  fit <- limma::lmFit(
+    data,
+    design
+    )
   
-  # Store pairwise p-values
+  # Compute pairwise comparisons
   pairwise_pvals <- matrix(
     NA, 
     nrow = nrow(data),
     ncol = num_timepoints - 1
-    )
+  )
   rownames(pairwise_pvals) <- rownames(data)
   colnames(pairwise_pvals) <- paste0(
     unique_timepoints[-1],
     "_vs_",
     unique_timepoints[-num_timepoints]
-    )
+  )
   
-  # Compute pairwise comparisons
   for (t in 1:(num_timepoints - 1)) {
     contrast_name <- paste(
       valid_timepoints[t + 1],
       "-", valid_timepoints[t]
-      )
+    )
     contrast_matrix <- limma::makeContrasts(
       contrasts = contrast_name,
       levels = design
-      )
+    )
     
     fit2 <- limma::contrasts.fit(
       fit,
       contrast_matrix
-      )
+    )
     fit2 <- limma::eBayes(fit2)
     
-    # Store adjusted p-values
+    # Store adjusted p-values (two-tailed, but we'll convert them)
     pairwise_pvals[, t] <- limma::topTable(
       fit2,
       coef = 1,
       number = Inf,
       adjust.method = "fdr",
       sort.by = "none"
-      )[, "adj.P.Val"]
+    )[, "adj.P.Val"] / 2  # Convert to one-tailed
   }
   
   # Initialize excursion matrix
@@ -72,15 +117,16 @@ detect_excursions <- function(
     0,
     nrow = nrow(data),
     ncol = num_timepoints
-    )
+  )
   rownames(excursion_matrix) <- rownames(data)
   colnames(excursion_matrix) <- unique_timepoints
   
   # Detect excursions
   for (i in 1:nrow(data)) {
     for (t in 2:(num_timepoints - 1)) {
-      p_prev <- pairwise_pvals[i, t - 1]  # t-1 vs t
-      p_next <- pairwise_pvals[i, t]  # t vs t+1
+      
+      p_prev <- pairwise_pvals[i, t - 1]  # T1 vs. T2 (now one-tailed)
+      p_next <- pairwise_pvals[i, t]  # T2 vs. T3 (now one-tailed)
       
       prev_mean <- mean(data[i, which(meta$Time == unique_timepoints[t - 1])])
       curr_mean <- mean(data[i, which(meta$Time == unique_timepoints[t])])
@@ -89,6 +135,8 @@ detect_excursions <- function(
       prev_change <- curr_mean - prev_mean
       next_change <- next_mean - curr_mean
       
+      # Excursion condition: Significant changes in both directions &
+      # both higher or lower
       if (p_prev < alpha & p_next < alpha) {
         if ((prev_change > 0 & next_change < 0) |
             (prev_change < 0 & next_change > 0)) {
@@ -101,15 +149,50 @@ detect_excursions <- function(
   results_df <- data.frame(
     feature_nr = rownames(excursion_matrix),
     excursion_matrix
-    )
+  )
   
   return(list(
     results_df = results_df,
     pairwise_pvals = pairwise_pvals
-    ))
+  ))
 }
 
 
+#' Plot Excursions in Time-Series Omics Data
+#'
+#' @description
+#' This function generates scatter plots for features that exhibit excursions
+#' in time-series omics data. Excursion points are highlighted in red, while 
+#' normal points remain grey. Significance stars are added to indicate the 
+#' statistical significance of adjacent pairwise comparisons.
+#'
+#' @param results A list returned from `detect_excursions()`, containing 
+#' `results_df` (excursion matrix) and `pairwise_pvals` (one-tailed p-values).
+#' @param data A numeric matrix, where rows correspond to features (e.g., genes, 
+#' proteins, metabolites) and columns correspond to samples.
+#' @param meta A data frame containing metadata for the samples. Must include
+#' a column named `"Time"` that specifies the timepoint for each sample.
+#' @param meta_replicates_column A character string specifying the column name 
+#' in `meta` that indicates biological replicates.
+#'
+#' @return A named list of ggplot objects, where each element corresponds to a 
+#' feature with detected excursions. Each plot displays the expression levels 
+#' across timepoints, with replicates distinguished by different shapes.
+#'
+#' @details
+#' - The function first extracts features with at least one excursion.
+#' - Each feature's expression is plotted across time using `ggplot2`.
+#' - Replicates are displayed with distinct shapes, while excursion points 
+#'   are highlighted in red.
+#' - Significance stars (`*`, `**`, `***`, `****`) are placed between 
+#'   adjacent timepoints if their pairwise comparison is significant.
+#' - The significance stars are positioned above horizontal lines, with 
+#'   right-side comparisons always placed slightly higher for clarity.
+#'
+#' @importFrom ggplot2 ggplot aes geom_point scale_shape_manual 
+#' @importFrom ggplot2 scale_color_manual geom_segment geom_text labs 
+#'                     theme_minimal
+#' 
 plot_excursions <- function(
     results,
     data,
@@ -128,8 +211,8 @@ plot_excursions <- function(
   num_replicates <- length(unique_replicates)
   
   # Define symbols dynamically based on the number of replicates
-  symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)  # Various empty shapes
-  symbols <- symbols_available[1:num_replicates]  # Assign only as many as needed
+  symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)  
+  symbols <- symbols_available[1:num_replicates]  
   
   plots <- list()
   
@@ -305,7 +388,7 @@ plot_excursions <- function(
           ),
         x = "Time",
         y = "Expression Level",
-        color = "Excursion Status",
+        color = "Pattern",
         shape = "Replicate"
         ) +
       ggplot2::theme_minimal()
@@ -315,13 +398,4 @@ plot_excursions <- function(
   
   return(plots)
 }
-
-
-
-
-
-
-
-
-
 
