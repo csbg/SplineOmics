@@ -10,58 +10,89 @@ library(dplyr)
 
 # Load the data ----------------------------------------------------------------
 
-# data <- read_excel(here::here(
-#   "dev",
-#   "data",
-#   "PPTX",
-#   "2 PPTX new filtered (equal to no imputation).xlsx")
-#   )
-
-data_exp <- read_excel(here::here(
+data <- read_excel(here::here(
   "dev",
   "data",
   "PPTXTimecourse25022025",
-  "2EXPonly",
-  "EXPonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+  "1Bothphasesforfiltering",
+  "standardinpute1point8downshift.xlsx")
   )
-
-data_stat <- read_excel(here::here(
-  "dev",
-  "data",
-  "PPTXTimecourse25022025",
-  "3STATonly",
-  "STATonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
-)
 
 feature_name_columns <- c(
   "T: Gene",
   "T: Index"
   )
 
-data_exp_matrix_only <- extract_data(
-  data_exp,
-  feature_name_columns,
-  user_prompt = FALSE
-)
-
-data_stat_matrix_only <- extract_data(
-  data_stat,
+data <- extract_data(
+  data,
   feature_name_columns,
   user_prompt = FALSE
 )
 
 
-# Identify common row names
-common_rows <- intersect(rownames(data_exp_matrix_only), rownames(data_stat_matrix_only))
+# data_exp <- read_excel(here::here(
+#   "dev",
+#   "data",
+#   "PPTXTimecourse25022025",
+#   "2EXPonly",
+#   "EXPonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+#   )
+# 
+# data_stat <- read_excel(here::here(
+#   "dev",
+#   "data",
+#   "PPTXTimecourse25022025",
+#   "3STATonly",
+#   "STATonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+# )
+# 
+# feature_name_columns <- c(
+#   "T: Gene",
+#   "T: Index"
+#   )
+# 
+# data_exp_matrix_only <- extract_data(
+#   data_exp,
+#   feature_name_columns,
+#   user_prompt = FALSE
+# )
+# 
+# data_stat_matrix_only <- extract_data(
+#   data_stat,
+#   feature_name_columns,
+#   user_prompt = FALSE
+# )
 
-# Subset both matrices to only include matching rows
-data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
-data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
+# Check stat messyness ---------------------------------------------------------
+# Compute per-gene variance
+# var_exp <- apply(data_exp_matrix_only, 1, var, na.rm = TRUE)
+# var_stat <- apply(data_stat_matrix_only, 1, var, na.rm = TRUE)
+# summary(var_exp)
+# summary(var_stat)
+# 
+# var_test <- var.test(var_exp, var_stat)
+# print(var_test)
 
-# Combine matrices by columns
-data <- cbind(data_exp_filtered, data_stat_filtered)
 
-genes <- rownames(data)
+# ------------------------------------------------------------------------------
+# Combine the data
+
+# # Identify common row names
+# common_rows <- intersect(
+#   rownames(data_exp_matrix_only),
+#   rownames(data_stat_matrix_only)
+#   )
+# 
+# # Subset both matrices to only include matching rows
+# data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
+# data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
+# 
+# # Combine matrices by columns
+# data <- cbind(data_exp_filtered, data_stat_filtered)
+
+# ------------------------------------------------------------------------------
+
+
 
 
 # data_imputed <- read_excel(here::here("dev" ,"data", "PPTX",
@@ -73,6 +104,26 @@ meta <- read_excel(here::here(
   "PPTX",
   "Time course PPTX metadata 25022025.xlsx")
   )
+
+# Get the indices **before filtering meta**
+indices <- which(meta$Phase == "Stationary")
+
+# Subset meta **after** getting correct indices
+meta <- meta[indices, , drop = FALSE]
+
+# Select the corresponding columns in `data`
+data <- data[, indices, drop = FALSE]
+
+# Remove rows where all values are NA
+data <- data[rowSums(is.na(data)) < ncol(data), , drop = FALSE]
+
+
+# Add test row -----------------------------------------------------------------
+data[1, 7:9] <- data[1, 7:9] + 4
+# ------------------------------------------------------------------------------
+
+
+genes <- rownames(data)
 
 # data_excel <- readRDS(system.file(
 #   "extdata",
@@ -202,7 +253,8 @@ meta <- read_excel(here::here(
 
 report_info <- list(
   omics_data_type = "PPTX",
-  data_description = "Phosphoproteomics data 2025",
+  data_description = "Phosphoproteomics data 2025
+  standardinpute1point8downshift.xlsx    stat phase",
   data_collection_date = "2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -213,7 +265,7 @@ splineomics <- create_splineomics(
   data = data,
   # rna_seq_data = voom_obj,
   meta = meta,
-  mode = "integrated",
+  mode = "isolated",
   # annotation = annotation,
   feature_name_columns = feature_name_columns,
   report_info = report_info,
@@ -279,11 +331,16 @@ spline_test_configs <- data.frame(
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*Time + Reactor",
+  # design = "~ 1 + Phase*Time + Reactor",
+  design = "~ 1 + Time + Reactor",
+  # mode = "integrated",
+  mode = "isolated",
   # data = data2,
   # meta = meta2,
-  spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
-                       dof = c(2L, 2L))
+  # spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
+  #                      dof = c(2L, 2L))
+  spline_params = list(spline_type = c("n"),   # Chosen spline parameters
+                       dof = c(2L))
 )
 
 print(splineomics)
@@ -293,6 +350,22 @@ print(splineomics)
 splineomics <- run_limma_splines(
   splineomics
 )
+
+# testing ground for outlash detection -----------------------------------------
+
+results <- detect_excursions(data, meta)
+excursion_plots <- plot_excursions(
+  results, 
+  data,
+  meta,
+  meta_replicates_column = "Reactor"
+  )
+
+# Show all plots
+for (p in excursion_plots) print(p)
+
+# ------------------------------------------------------------------------------
+
 
 
 report_dir <- here::here("results", "limma_reports")
@@ -305,8 +378,8 @@ report_dir <- here::here("results", "limma_reports")
 
 
 ## Cluster hits ----------------------------------------------------------------
-adj_pthresholds <- c(0.05, 0.05)   
-clusters <- c(6L, 3L)   
+adj_pthresholds <- c(0.05)   
+clusters <- c(1L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(
@@ -387,3 +460,50 @@ result <- run_gsea(
   report_info = report_info,
   report_dir = report_dir
 )
+
+
+
+
+
+
+
+
+
+
+# test random stuff ------------------------------------------------------------
+
+# Load limma
+library(limma)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Fixed baseline value
+baseline <- 10
+
+# Case 1: Replicates have the same mean as baseline (10) with Gaussian noise
+replicates_case1 <- rnorm(4, mean = 10, sd = 1)
+
+# Case 2: Replicates have a mean of 12 with Gaussian noise
+replicates_case2 <- rnorm(4, mean = 12, sd = 1)
+
+# Create expression matrix (one row per case)
+expr_matrix <- matrix(c(replicates_case1, replicates_case2), nrow = 2, byrow = TRUE)
+
+# Center the data around the baseline (subtract it)
+expr_matrix_centered <- expr_matrix - baseline
+
+# Define design matrix (intercept-only model)
+design <- matrix(1, ncol = 1, nrow = ncol(expr_matrix))
+
+# Fit linear model
+fit <- lmFit(expr_matrix_centered, design)
+
+# Apply empirical Bayes moderation
+fit <- eBayes(fit)
+
+# Get top results
+topTable(fit, coef = 1)
+
+
+

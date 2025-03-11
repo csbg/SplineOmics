@@ -54,6 +54,11 @@ Examples:
   (it internally in the code converts it to a string), so having the condition
   column as a factor now does not cause problems anymore (as having it as 
   factor is perfectly valid).
+- Bug that occured in the internal clean_gene_symbols() function when one of 
+  the gene names was NA. Now, this does not cause a problem anymore and instead
+  of the gene name on the respective spline plot it will write NA.
+- The error message when more clusters where specified than hits in a condition
+  was very cryptic. Now, it gives a message that is easy to understand.
 
 #### Changed
 - Replicates in the double spline plots (limma result category 2 and 3) are now
