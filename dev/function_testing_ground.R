@@ -354,6 +354,7 @@ splineomics <- run_limma_splines(
 # testing ground for outlash detection -----------------------------------------
 
 results <- detect_excursions(data, meta)
+
 excursion_plots <- plot_excursions(
   results, 
   data,
