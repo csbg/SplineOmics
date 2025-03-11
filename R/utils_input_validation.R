@@ -1826,7 +1826,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
             paste(
               "Warning: The data contains missing values (NA).",
               "Ensure that imputation or handling of missing values",
-              "aligns with your analysis requirements."
+              "aligns with your analysis requirements. Note that limma can",
+              " handle missing values (it just ignores them), and therefore",
+              " also SplineOmics can handle them."
             ),
             data_meta_index
           )
@@ -1977,9 +1979,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
           call. = FALSE
         )
       }
-
-      # Check condition and time pattern consistency
-      self$check_condition_time_consistency(meta, condition)
 
       if (!is.character(meta_batch2_column)) {
         meta_batch2_column <- NULL
@@ -2740,79 +2739,6 @@ Level3Functions <- R6::R6Class("Level3Functions",
           message("Batch effect will NOT be removed for plotting!")
         }
       }
-    },
-
-
-    #' Check Condition Time Consistency
-    #' 
-    #' @noRd
-    #'
-    #' @description
-    #' This function checks whether the values in the `condition` column
-    #' have unique values for each block of identical `Time` values in the
-    #' `meta` dataframe.
-    #' Additionally, it ensures that every new block of a given time has a
-    #' new value
-    #' in the `condition` column.
-    #'
-    #' @param meta A dataframe containing the metadata, including the `Time`
-    #'  column.
-    #' @param condition A character string specifying the column name in `meta`
-    #'                  used to define groups for analysis.
-    #'
-    #' @return Logical TRUE if the condition values are consistent with the
-    #'  time series pattern.
-    #'
-    check_condition_time_consistency = function(
-        meta,
-        condition) {
-      # Get the unique times in the order they appear
-      unique_times <- unique(meta[["Time"]])
-
-      # Initialize a list to store previously seen conditions for each time
-      # segment
-      seen_conditions <- list()
-
-      # Iterate through each block of unique times
-      for (time in unique_times) {
-        # Get the indices for the current time segment
-        current_indices <- which(meta[["Time"]] == time)
-
-        # Get the condition values for the current time segment
-        current_conditions <- meta[current_indices, condition, drop = TRUE]
-
-        # Ensure that all conditions in the current segment are the same
-        if (length(unique(current_conditions)) != 2) {
-          stop(
-            paste(
-              "Every block of identical time values in meta must",
-              "have unique values in the column", condition
-            ),
-            call. = FALSE
-          )
-        }
-
-        # Check if the condition value has been seen before for this time segment
-        if (!is.null(seen_conditions[[as.character(time)]])) {
-          if (current_conditions[1] %in% seen_conditions[[as.character(time)]]) {
-            stop(sprintf(
-              "Condition '%s' for time '%s' has been seen before.",
-              current_conditions[1], time
-            ), call. = FALSE)
-          }
-        }
-
-        # Update the seen conditions for the current time segment
-        if (is.null(seen_conditions[[as.character(time)]])) {
-          seen_conditions[[as.character(time)]] <- character(0)
-        }
-        seen_conditions[[as.character(time)]] <- c(
-          seen_conditions[[as.character(time)]],
-          current_conditions[1]
-        )
-      }
-
-      return(TRUE)
     }
   )
 )

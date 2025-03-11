@@ -164,9 +164,11 @@ cluster_hits <- function(
     sep = ", "
   )
 
-
-  if (adj_pthresh_avrg_diff_conditions > 0 ||
-    adj_pthresh_interaction_condition_time > 0) {
+  if (
+    (mode != "isolated") &&
+    (adj_pthresh_avrg_diff_conditions > 0 ||
+    adj_pthresh_interaction_condition_time > 0)
+    ) {
     spline_comp_plots <- generate_spline_comparisons(
       splineomics = splineomics,
       all_levels_clustering = all_levels_clustering,
@@ -1171,6 +1173,7 @@ generate_spline_comparisons <- function(
 #' invalid or empty gene names will be replaced with NA.
 #'
 clean_gene_symbols <- function(genes) {
+  
   message(paste0(
     "\033[33m\nGene symbols: Transforming all non-alphanumeric characters to ",
     "whitespace, then extracting the substring of alphanumeric characters ",
@@ -1197,7 +1200,7 @@ clean_gene_symbols <- function(genes) {
       # Convert to uppercase
       toupper(clean_gene_name)
     } else {
-      NA
+      as.character(NA)
     }
   }, character(1))
 
@@ -1364,7 +1367,9 @@ process_level_cluster <- function(
     meta,
     condition,
     spline_params,
-    mode) {
+    mode
+    ) {
+  
   # means that it had < 2 hits.
   if (is.null(top_table) || all(is.na(top_table))) {
     return(NA)
@@ -1386,7 +1391,8 @@ process_level_cluster <- function(
       curve_values = normalized_curves,
       k = cluster_size,
       smooth_timepoints = curve_results$smooth_timepoints,
-      top_table = top_table
+      top_table = top_table,
+      condition = condition
     )
 
   clustering_result$X <- curve_results$X
@@ -3463,15 +3469,20 @@ hierarchical_clustering <- function(
     curve_values,
     k,
     smooth_timepoints,
-    top_table
+    top_table,
+    condition
     ) {
-  
+
   if (nrow(curve_values) < k) {   # To avoid cryptic stats::hclust error.
     stop_call_false(paste(
-      "Error: The number of rows in 'curve_values' must be at least",
-      "equal to 'k'."
-      ))
+      "For condition '", condition, "':",
+      "the number of requested clusters (", k, ") is greater than",
+      "the number of hits (", nrow(curve_values), ").",
+      "Please choose fewer clusters."
+    ))
   }
+  
+  
   
   distance_matrix <- stats::dist(
     curve_values,
