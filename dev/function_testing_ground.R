@@ -30,48 +30,48 @@ data <- extract_data(
 )
 
 
-# data_exp <- read_excel(here::here(
-#   "dev",
-#   "data",
-#   "PPTXTimecourse25022025",
-#   "2EXPonly",
-#   "EXPonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
-#   )
-# 
-# data_stat <- read_excel(here::here(
-#   "dev",
-#   "data",
-#   "PPTXTimecourse25022025",
-#   "3STATonly",
-#   "STATonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
-# )
-# 
-# feature_name_columns <- c(
-#   "T: Gene",
-#   "T: Index"
-#   )
-# 
-# data_exp_matrix_only <- extract_data(
-#   data_exp,
-#   feature_name_columns,
-#   user_prompt = FALSE
-# )
-# 
-# data_stat_matrix_only <- extract_data(
-#   data_stat,
-#   feature_name_columns,
-#   user_prompt = FALSE
-# )
+data_exp <- read_excel(here::here(
+  "dev",
+  "data",
+  "PPTXTimecourse25022025",
+  "2EXPonly",
+  "EXPonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+  )
+
+data_stat <- read_excel(here::here(
+  "dev",
+  "data",
+  "PPTXTimecourse25022025",
+  "3STATonly",
+  "STATonlyfilteredfor100percentin1tpoverallwithNA.xlsx")
+)
+
+feature_name_columns <- c(
+  "T: Gene",
+  "T: Index"
+  )
+
+data_exp_matrix_only <- extract_data(
+  data_exp,
+  feature_name_columns,
+  user_prompt = FALSE
+)
+
+data_stat_matrix_only <- extract_data(
+  data_stat,
+  feature_name_columns,
+  user_prompt = FALSE
+)
 
 # Check stat messyness ---------------------------------------------------------
 # Compute per-gene variance
-# var_exp <- apply(data_exp_matrix_only, 1, var, na.rm = TRUE)
-# var_stat <- apply(data_stat_matrix_only, 1, var, na.rm = TRUE)
-# summary(var_exp)
-# summary(var_stat)
-# 
-# var_test <- var.test(var_exp, var_stat)
-# print(var_test)
+var_exp <- apply(data_exp_matrix_only, 1, var, na.rm = TRUE)
+var_stat <- apply(data_stat_matrix_only, 1, var, na.rm = TRUE)
+summary(var_exp)
+summary(var_stat)
+
+var_test <- var.test(var_exp, var_stat)
+print(var_test)
 
 
 # ------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ data <- data[rowSums(is.na(data)) < ncol(data), , drop = FALSE]
 
 
 # Add test row -----------------------------------------------------------------
-data[1, 7:9] <- data[1, 7:9] + 4
+data[1, 7:9] <- data[1, 7:9] + 6
 # ------------------------------------------------------------------------------
 
 
@@ -351,19 +351,58 @@ splineomics <- run_limma_splines(
   splineomics
 )
 
-# testing ground for outlash detection -----------------------------------------
+# testing ground for excursion detection ---------------------------------------
 
-results <- detect_excursions(data, meta)
 
-excursion_plots <- plot_excursions(
-  results, 
-  data,
-  meta,
-  meta_replicates_column = "Reactor"
-  )
+# results <- peaks_valleys_uit(
+#   data,
+#   meta
+# )
+# 
+# 
+# num_excursions <- sum(rowSums(results$results_df[, -1]) > 0) 
+# 
+# 
+# 
+# 
+# # print(create_contrast_vector(c(-1, 1), 6, 1))
+# # print(create_contrast_vector(c(1, -1), 6, 1))
+# 
+# 
+# 
+# # patterns <- list(
+# #   c(-1, 1),
+# #   c(1, -1)
+# # )
+# # 
+# # results <- detect_patterns(
+# #   data,
+# #   meta,
+# #   patterns
+# #   # test_mode = "two-step"
+# #   )
+# 
+# # Extract significant excursions
+# # results$excursion_matrices
+# 
+# excursion_plots <- plot_peaks_valleys(
+#   results, 
+#   data,
+#   meta,
+#   meta_replicates_column = "Reactor"
+#   )
+
+excursion_plots <- find_peaks_valleys(
+  splineomics = splineomics
+)
 
 # Show all plots
-for (p in excursion_plots) print(p)
+for (p in head(excursion_plots, 25)) print(p)
+
+
+
+# testing ground for outlier detection -----------------------------------------
+
 
 # ------------------------------------------------------------------------------
 

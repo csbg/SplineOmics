@@ -2844,6 +2844,11 @@ check_splineomics_elements <- function(
       "spline_params",
       "padjust_method"
     ),
+    "find_peaks_valleys" = c(
+      "data",
+      "meta",
+      "meta_batch_column"
+    ),
     "create_limma_report" = c(
       "limma_splines_result",
       "report_info"
