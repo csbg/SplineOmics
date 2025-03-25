@@ -130,8 +130,8 @@ data <- data[rowSums(is.na(data)) < ncol(data), , drop = FALSE]
 
 
 # Add test row -----------------------------------------------------------------
-data[1, 7:9] <- data[1, 7:9] + 6
-data[1, 4:6] <- data[1, 4:6] + 4.5
+# data[1, 7:9] <- data[1, 7:9] + 6
+# data[1, 4:6] <- data[1, 4:6] + 4.5
 # ------------------------------------------------------------------------------
 
 
@@ -367,6 +367,7 @@ splineomics <- run_limma_splines(
 # testing ground for excursion detection ---------------------------------------
 
 
+
 # results <- peaks_valleys_uit(
 #   data,
 #   meta
@@ -383,34 +384,37 @@ splineomics <- run_limma_splines(
 # 
 # 
 # 
-# # patterns <- list(
-# #   c(-1, 1),
-# #   c(1, -1)
-# # )
-# # 
-# # results <- detect_patterns(
-# #   data,
-# #   meta,
-# #   patterns
-# #   # test_mode = "two-step"
-# #   )
+# patterns <- list(
+#   c(-1, 1),
+#   c(1, -1)
+# )
 # 
-# # Extract significant excursions
-# # results$excursion_matrices
-# 
+# results <- detect_patterns(
+#   data,
+#   meta,
+#   patterns
+#   )
+
+# Extract significant excursions
+# results$excursion_matrices
+
 # excursion_plots <- plot_peaks_valleys(
-#   results, 
+#   results,
 #   data,
 #   meta,
 #   meta_replicates_column = "Reactor"
 #   )
 
-# excursion_plots <- find_peaks_valleys(
-#   splineomics = splineomics
-# )
-# 
-# # Show all plots
-# for (p in head(excursion_plots, 104)) print(p)
+excursion_plots <- find_peaks_valleys(
+  splineomics = splineomics
+)
+
+# Get the second condition level (actual plot list)
+second_level_plots <- excursion_plots[[2]]
+
+# Print the first 10 plots from that level
+for (p in head(second_level_plots, 10)) print(p)
+
 
 
 
