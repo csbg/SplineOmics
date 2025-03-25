@@ -20,14 +20,15 @@
 #'   \code{condition}.
 #'   \item \code{design}: A character string representing the limma design
 #'   formula.
-#'   \item\code{dream_params}: #' A named list or NULL. When not NULL, it can contain the following named 
+#'   \item\code{dream_params}: #' A named list or NULL. When not NULL, it can 
+#'                                contain the following named 
 #'      elements:
-#'      - `dof`: An integer greater than 1, specifying the degrees of freedom for 
-#'      the dream topTable.
+#'      - `dof`: An integer greater than 1, specifying the degrees of freedom 
+#'      for  the dream topTable.
 #'      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
 #'      approximation for mixed models.
-#'      Note that random effects are now directly specified in the design formula 
-#'      and not in `dream_params`.
+#'      Note that random effects are now directly specified in the design 
+#'      formula and not in `dream_params`.
 #'   \item \code{condition}: A character string specifying the column name
 #'   in \code{meta} used to define groups for analysis.
 #'   \item \code{spline_params}: A list of spline parameters used in the
@@ -87,6 +88,7 @@ run_limma_splines <- function(
   dream_params <- splineomics[["dream_params"]]
   mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
+  robust_fit <- splineomics[["robust_fit"]]
   
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -144,7 +146,8 @@ run_limma_splines <- function(
         condition = condition,
         compared_levels = lev_combo,
         padjust_method = padjust_method,
-        feature_names = feature_names
+        feature_names = feature_names,
+        robust_fit = robust_fit
       )
 
       between_level_condition_only[[
@@ -194,14 +197,14 @@ run_limma_splines <- function(
 #' @noRd
 #'
 #' @description
-#' Performs a between-level analysis using LIMMA to compare specified levels
+#' Performs a between-level analysis using limma to compare specified levels
 #' within a condition.
 #'
 #' @param data A matrix of data values.
 #' @param rna_seq_data An object containing the preprocessed RNA-seq data,
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
-#' @param design A design formula or matrix for the LIMMA analysis.
+#' @param design A design formula or matrix for the limma analysis.
 #' @param dream_params A named list or NULL. When not NULL, it must at least 
 #' contain the named element 'random_effects', which must contain a string that
 #' is a formula for the random effects of the mixed models by dream. 
@@ -238,13 +241,16 @@ between_level <- function(
     condition,
     compared_levels,
     padjust_method,
-    feature_names
+    feature_names,
+    robust_fit = NULL
     ) {
-
-  samples <- which(meta[[condition]] %in% compared_levels)
-  data <- data[, samples]
-
-  meta <- meta[meta[[condition]] %in% compared_levels, ]
+  
+  if (is.null(rna_seq_data)) {
+    # Only subset for non-RNA-seq data (e.g., proteomics)
+    samples <- which(meta[[condition]] %in% compared_levels)
+    data <- data[, samples]   # sub-part of data of the two compared levels
+    meta <- meta[meta[[condition]] %in% compared_levels, ]
+  }
   
   effects <- extract_effects(design)
   
@@ -258,9 +264,21 @@ between_level <- function(
   design_matrix <- result$design_matrix
 
   if (!is.null(rna_seq_data)) {
-    data <- rna_seq_data
-  }
+    data <- rna_seq_data   # Just having one variable makes the code easier
+  } 
   
+  # For RNA-seq data, this is handled when calling limma::voom (happens before)
+  # This here is the implicit fall-back logic when the user has not explicitly 
+  # decided whether to robust_fit or not
+  if (is.null(rna_seq_data) && is.null(robust_fit)) {
+    robust_fit <- check_homoscedasticity_violation(
+      data = data,
+      meta = meta,
+      condition = condition,
+      compared_levels = compared_levels
+    )
+  }
+
   condition_only_contrast_coeff <- paste0(
     condition,
     compared_levels[2]
@@ -289,25 +307,49 @@ between_level <- function(
     } else {
       method <- NULL
     }
-
-    fit <- variancePartition::dream(
-      exprObj = data,
-      formula = stats::as.formula(design),
-      data = result[["meta"]],    # Spline transformed meta.
-      ddf = method
-    )
-
-    fit <- variancePartition::eBayes(fit)
+    
+    if (robust_fit) {
+      aw <- limma::arrayWeights(      # vector of length = # samples
+        object = data,
+        design = design_matrix
+        ) 
+      weights_matrix <- matrix(
+        rep(aw, each = nrow(data)),
+        nrow = nrow(data),
+        byrow = TRUE
+      )
+      fit <- variancePartition::dream(
+        exprObj = data,
+        formula = stats::as.formula(design),
+        data = result[["meta"]],
+        ddf = method,
+        useWeights = TRUE,
+        weightsMatrix = weights_matrix
+      )
+      fit <- variancePartition::eBayes(
+        fit = fit,
+        robust = TRUE
+        ) 
+    } else {
+      fit <- variancePartition::dream(
+        exprObj = data,
+        formula = stats::as.formula(design),
+        data = result[["meta"]],    # Spline transformed meta.
+        ddf = method
+      )
+      
+      fit <- variancePartition::eBayes(fit = fit) 
+    }
 
     condition_only <- variancePartition::topTable(
-      fit,
+      fit = fit,
       coef = condition_only_contrast_coeff,
       adjust.method = padjust_method,
       number = Inf
     )
     
     condition_time <- variancePartition::topTable(
-      fit,
+      fit = fit,
       coef = interaction_condition_time_contrast_coeffs,
       adjust.method = padjust_method,
       number = Inf,
@@ -315,22 +357,37 @@ between_level <- function(
     )
     
   } else {
-    fit <- limma::lmFit(
-      data,
-      design_matrix
-    )
+    if (robust_fit) {
+      weights <- limma::arrayWeights(
+        object = data,
+        design = design_matrix
+        )
+      fit <- limma::lmFit(
+        object = data,
+        design = design_matrix,
+        weights = weights
+        )
+      fit <- limma::eBayes(
+        fit = fit,
+        robust = TRUE
+        )
+    } else {
+      fit <- limma::lmFit(
+        object = data,
+        design = design_matrix
+        )
+      fit <- limma::eBayes(fit = fit)
+    }
     
-    fit <- limma::eBayes(fit)
-
     condition_only <- limma::topTable(
-      fit,
+      fit = fit,
       coef = condition_only_contrast_coeff,
       adjust.method = padjust_method,
       number = Inf
     )
   
     condition_time <- limma::topTable(
-      fit,
+      fit = fit,
       coef = interaction_condition_time_contrast_coeffs,
       adjust.method = padjust_method,
       number = Inf

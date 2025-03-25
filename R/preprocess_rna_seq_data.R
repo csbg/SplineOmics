@@ -81,6 +81,7 @@ preprocess_rna_seq_data <- function(
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
   design <- splineomics[["design"]]
+  robust_fit <- splineomics[["robust_fit"]]
 
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -128,17 +129,81 @@ preprocess_rna_seq_data <- function(
 
   # Step 4: Apply voom transformation to get logCPM values and weights
   if (effects[["random_effects"]] != "") {
+    if (!is.null(robust_fit) && robust_fit == TRUE) {
+      message(
+        "⚠️  robust_fit = TRUE is ignored for mixed model RNA-seq.\n",
+        "voomWithDreamWeights already handles heteroscedasticity internally."
+        )
+    }
+    
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
       formula = stats::as.formula(design),
-      data = result[["meta"]]    # spline transformed meta.
+      data = result[["meta"]]
     )
   }
   else {
-    voom_obj <- limma::voom(
-      counts = y,
-      design = result[["design_matrix"]]
-    )
+    design_matrix <- result[["design_matrix"]]
+    
+    if (is.null(robust_fit)) {     # means fallback to implicit handling
+      # Step 1: run voom normally
+      voom_obj <- limma::voom(
+        counts = y,
+        design = design_matrix
+      )
+
+      # Step 2: Generate all unique pairwise combinations of the condition 
+      # levels
+      condition_col <- splineomics[["condition"]]
+      all_levels <- unique(meta[[condition_col]])
+      level_pairs <- combn(
+        all_levels,
+        2,
+        simplify = FALSE
+        )
+      
+      # Step 3: Run heteroscedasticity check on each pair
+      violation <- FALSE
+      for (pair in level_pairs) {
+        message(sprintf(
+          "Testing for heteroscedasticity: %s vs %s",
+          pair[1],
+          pair[2]
+          ))
+        violation <- check_homoscedasticity_violation(
+          data = voom_obj$E,
+          meta = meta,
+          condition = condition_col,
+          compared_levels = pair,
+          data_type = "rna-seq"
+        )
+        if (violation) {
+          break
+        }
+      }
+      
+      # Step 4: If any pair was violated, rerun with robust weights
+      if (violation) {
+        message(
+        "↪ Rerunning with voomWithQualityWeights() due to detected variance
+        differences."
+        )
+        voom_obj <- limma::voomWithQualityWeights(
+          counts = y,
+          design = design_matrix
+        )
+      }
+    } else if (robust_fit == TRUE) {
+      voom_obj <- limma::voomWithQualityWeights(
+        counts = y,
+        design = design_matrix
+      )
+    } else {   # robust_fit == FALSE
+      voom_obj <- limma::voom(
+        counts = y,
+        design = design_matrix
+      )
+    }
   }
 
   return(voom_obj)

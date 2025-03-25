@@ -288,3 +288,102 @@ extract_effects <- function(formula_string) {
   ))
 }
 
+
+#' Check for Violation of Homoscedasticity in Linear Model Inputs
+#'
+#' This internal helper function tests whether the assumption of 
+#' homoscedasticity (equal variances) is violated across two levels of a given
+#' experimental condition. It performs a paired Wilcoxon signed-rank test on 
+#' per-feature (e.g., gene or protein) sample variances across the two groups.
+#' If the test is significant, it suggests that variance differs systematically 
+#' between conditions, which may bias linear model fits.
+#'
+#' @param data A numeric matrix of expression values (rows = features, 
+#'             columns = samples). Should already be log-transformed or 
+#'             otherwise variance-stabilized if required.
+#' @param meta A data frame of sample metadata. Must have one row per column 
+#'             in `data`.
+#' @param condition A character string indicating the name of the column in
+#'                  `meta` representing the condition of interest.
+#' @param compared_levels A character vector of length 2 indicating the two
+#'                        condition levels to compare (e.g., c("exp", "stat")).
+#' @param data_type String specifying if rna-seq data is passed, or other omics
+#'                  data. Based on this, the message displayed in case of a 
+#'                  significant violation of homoscedasticity informing about
+#'                  the strategy to mitigate the issue will change (different
+#'                  strategy for rna-seq and other omics data).
+#' @param p_threshold Numeric. Significance threshold for the Wilcoxon test
+#'                    (default is 0.05).
+#'
+#' @return A logical value indicating whether a statistically significant 
+#'         difference in variance was detected (`TRUE` = assumption violated,
+#'         `FALSE` = no violation). A summary of the test result is also printed
+#'         to the console.
+#'
+check_homoscedasticity_violation <- function(
+    data,
+    meta,
+    condition,
+    compared_levels,
+    data_type = "other-omics",
+    p_threshold = 0.05
+) {
+  
+  # Get column indices for each level
+  level1_samples <- which(meta[[condition]] == compared_levels[1])
+  level2_samples <- which(meta[[condition]] == compared_levels[2])
+  
+  # Subset data
+  data_level1 <- data[, level1_samples]
+  data_level2 <- data[, level2_samples]
+  
+  # Compute per-row (feature) variance across samples in each group
+  var_level1 <- apply(
+    data_level1,
+    1,
+    var,
+    na.rm = TRUE
+  )
+  var_level2 <- apply(
+    data_level2,
+    1,
+    var,
+    na.rm = TRUE
+  )
+  
+  # Paired Wilcoxon test
+  var_test <- wilcox.test(
+    var_level1,
+    var_level2,
+    paired = TRUE,
+    alternative = "two.sided"
+  )
+  
+  print(var_test)
+  
+  
+  # Determine result
+  violation <- var_test$p.value < p_threshold
+  
+  if (violation) {
+    cat("❗ Linear model assumption of homoscedasticity is likely violated.\n")
+    
+    if (data_type == "rna-seq") {
+      cat(
+        "➡️  Using robust RNA-seq strategy: voomWithQualityWeights() to
+      downweight noisy samples.\n"
+      )
+    } else {    # data_type == "other-omics"
+      cat(
+        "➡️  Using robust modeling: arrayWeights() and eBayes(robust = TRUE
+        ) to stabilize variance.\n"
+      )
+    } 
+  }
+  else {
+    cat("✅ No strong evidence for heteroscedasticity. Proceeding as usual.\n")
+  }
+  cat("------------------------------------------------------------\n")
+  
+  return(violation)
+}

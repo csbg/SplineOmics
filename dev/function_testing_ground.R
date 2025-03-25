@@ -65,30 +65,41 @@ data_stat_matrix_only <- extract_data(
 
 # Check stat messyness ---------------------------------------------------------
 # Compute per-gene variance
-var_exp <- apply(data_exp_matrix_only, 1, var, na.rm = TRUE)
-var_stat <- apply(data_stat_matrix_only, 1, var, na.rm = TRUE)
+# Compute per-protein variance across samples in each condition
+var_exp <- apply(data[, 1:18], 1, var, na.rm = TRUE)
+var_stat <- apply(data[, 19:36], 1, var, na.rm = TRUE)
+
+# Optional: summary stats for diagnostics
 summary(var_exp)
 summary(var_stat)
 
-var_test <- var.test(var_exp, var_stat)
+# Wilcoxon signed-rank test: two-sided
+var_test <- wilcox.test(
+  var_exp,
+  var_stat,
+  paired = TRUE,
+  alternative = "two.sided"
+)
+
 print(var_test)
+
 
 
 # ------------------------------------------------------------------------------
 # Combine the data
 
-# # Identify common row names
-# common_rows <- intersect(
-#   rownames(data_exp_matrix_only),
-#   rownames(data_stat_matrix_only)
-#   )
-# 
-# # Subset both matrices to only include matching rows
-# data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
-# data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
-# 
-# # Combine matrices by columns
-# data <- cbind(data_exp_filtered, data_stat_filtered)
+# Identify common row names
+common_rows <- intersect(
+  rownames(data_exp_matrix_only),
+  rownames(data_stat_matrix_only)
+  )
+
+# Subset both matrices to only include matching rows
+data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
+data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
+
+# Combine matrices by columns
+data <- cbind(data_exp_filtered, data_stat_filtered)
 
 # ------------------------------------------------------------------------------
 
@@ -104,22 +115,23 @@ meta <- read_excel(here::here(
   "PPTX",
   "Time course PPTX metadata 25022025.xlsx")
   )
-
-# Get the indices **before filtering meta**
-indices <- which(meta$Phase == "Stationary")
-
-# Subset meta **after** getting correct indices
-meta <- meta[indices, , drop = FALSE]
-
-# Select the corresponding columns in `data`
-data <- data[, indices, drop = FALSE]
-
-# Remove rows where all values are NA
+# 
+# # Get the indices **before filtering meta**
+# indices <- which(meta$Phase == "Stationary")
+# 
+# # Subset meta **after** getting correct indices
+# meta <- meta[indices, , drop = FALSE]
+# 
+# # Select the corresponding columns in `data`
+# data <- data[, indices, drop = FALSE]
+# 
+# # Remove rows where all values are NA
 data <- data[rowSums(is.na(data)) < ncol(data), , drop = FALSE]
 
 
 # Add test row -----------------------------------------------------------------
 data[1, 7:9] <- data[1, 7:9] + 6
+data[1, 4:6] <- data[1, 4:6] + 4.5
 # ------------------------------------------------------------------------------
 
 
@@ -331,10 +343,11 @@ spline_test_configs <- data.frame(
 
 splineomics <- update_splineomics(
   splineomics = splineomics,
-  # design = "~ 1 + Phase*Time + Reactor",
-  design = "~ 1 + Time + Reactor",
+  # design = "~ 1 + Phase*Time + (1|Reactor)",
+  design = "~ 1 + Phase*Time + Reactor",
+  robust_fit = TRUE,
   # mode = "integrated",
-  mode = "isolated",
+  mode = "integrated",
   # data = data2,
   # meta = meta2,
   # spline_params = list(spline_type = c("n", "n"),   # Chosen spline parameters
@@ -343,7 +356,7 @@ splineomics <- update_splineomics(
                        dof = c(2L))
 )
 
-print(splineomics)
+# print(splineomics)
 
 
 # debug(run_limma_splines)
@@ -397,7 +410,7 @@ excursion_plots <- find_peaks_valleys(
 )
 
 # Show all plots
-for (p in head(excursion_plots, 25)) print(p)
+for (p in head(excursion_plots, 104)) print(p)
 
 
 
