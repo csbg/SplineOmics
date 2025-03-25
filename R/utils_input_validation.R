@@ -68,6 +68,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_datas_descr()
       self$check_top_tables()
       self$check_design_formula()
+      self$check_robust_fit()
       self$check_dream_params()
       self$check_mode()
       self$check_modes()
@@ -563,6 +564,32 @@ InputControl <- R6::R6Class("InputControl",
     },
     
     
+    #' Check validity of the `robust_fit` argument
+    #' 
+    #' @noRd
+    #'
+    #' @description
+    #' This internal method validates the `robust_fit` argument provided to the
+    #' function. It ensures that the value is either `TRUE`, `FALSE`, or `NULL`,
+    #' which control whether robust modeling should be applied in downstream 
+    #' analysis.
+    #'
+    #' If the value is not one of these types, the function halts execution 
+    #' using `stop_call_false()` with an informative error message.
+    #'
+    #' @return No return value. Called for its side effect of input validation.
+    #'
+    check_robust_fit = function() {
+      robust_fit <- self$args[["robust_fit"]]
+      
+      if (!is.null(robust_fit) && !is.logical(robust_fit)) {
+        stop_call_false(
+          "'robust_fit' must be either TRUE, FALSE, or NULL."
+        )
+      }
+    },
+    
+      
     #' Validate the `dream_params` argument
     #' 
     #' @noRd
@@ -1315,8 +1342,14 @@ InputControl <- R6::R6Class("InputControl",
       }
 
       # Ensure at least one of the required elements is present in plot_options
-      if (!any(c("meta_replicate_column", "cluster_heatmap_columns") %in% names(plot_options))) {
-        stop_call_false("At least one of 'meta_replicate_column' or 'cluster_heatmap_columns' must be present in plot_options")
+      if (!any(c(
+        "meta_replicate_column",
+        "cluster_heatmap_columns"
+        ) %in% names(plot_options))) {
+        stop_call_false(
+        "At least one of 'meta_replicate_column' or 'cluster_heatmap_columns' 
+        must be present in plot_options"
+        )
       }
 
       # Check if meta_replicate_column is present, and if so, validate it
@@ -2292,8 +2325,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
     #' @noRd
     #'
     #' @description
-    #' Validates that the spline test configurations contain the required columns
-    #' in the correct order.
+    #' Validates that the spline test configurations contain the required 
+    #' columns in the correct order.
     #'
     #' @param spline_test_configs A dataframe containing spline test
     #'  configurations.
@@ -2536,7 +2569,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
       )
       actual_classes <- vapply(df, class, character(1))
       if (!all(actual_classes == expected_classes)) {
-        stop_call_false("Dataframe column classes do not match expected classes")
+        stop_call_false(
+          "Dataframe column classes do not match expected classes"
+          )
       }
     }
   )
@@ -2773,8 +2808,9 @@ Level4Functions <- R6::R6Class("Level4Functions",
     #' @param data_meta_index An optional parameter specifying the index of the
     #' data/meta pair for the error message. Default is NA.
     #'
-    #' @return Returns a formatted error message string. If an index is provided,
-    #' the message includes the index; otherwise, it returns the message as is.
+    #' @return Returns a formatted error message string. If an index is 
+    #' provided, the message includes the index; otherwise, it returns the 
+    #' message as is.
     #'
     create_error_message = function(
         message,

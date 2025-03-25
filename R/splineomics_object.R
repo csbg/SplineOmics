@@ -132,6 +132,7 @@ update_splineomics <- function(
     "meta_batch2_column",
     "feature_name_columns",
     "design",
+    "robust_fit",
     "dream_params",
     "mode",
     "spline_params",

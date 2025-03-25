@@ -20,14 +20,15 @@ following elements:
   \code{condition}.
   \item \code{design}: A character string representing the limma design
   formula.
-  \item\code{dream_params}: #' A named list or NULL. When not NULL, it can contain the following named 
+  \item\code{dream_params}: #' A named list or NULL. When not NULL, it can 
+                               contain the following named 
      elements:
-     - `dof`: An integer greater than 1, specifying the degrees of freedom for 
-     the dream topTable.
+     - `dof`: An integer greater than 1, specifying the degrees of freedom 
+     for  the dream topTable.
      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
      approximation for mixed models.
-     Note that random effects are now directly specified in the design formula 
-     and not in `dream_params`.
+     Note that random effects are now directly specified in the design 
+     formula and not in `dream_params`.
   \item \code{condition}: A character string specifying the column name
   in \code{meta} used to define groups for analysis.
   \item \code{spline_params}: A list of spline parameters used in the
