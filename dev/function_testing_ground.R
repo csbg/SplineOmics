@@ -405,12 +405,12 @@ splineomics <- run_limma_splines(
 #   meta_replicates_column = "Reactor"
 #   )
 
-excursion_plots <- find_peaks_valleys(
-  splineomics = splineomics
-)
-
-# Show all plots
-for (p in head(excursion_plots, 104)) print(p)
+# excursion_plots <- find_peaks_valleys(
+#   splineomics = splineomics
+# )
+# 
+# # Show all plots
+# for (p in head(excursion_plots, 104)) print(p)
 
 
 
@@ -432,7 +432,7 @@ report_dir <- here::here("results", "limma_reports")
 
 ## Cluster hits ----------------------------------------------------------------
 adj_pthresholds <- c(0.05)   
-clusters <- c(1L)   
+clusters <- c(2L, 2L)   
 report_dir <- here::here("results", "clustering_reports")
 
 plot_info = list(

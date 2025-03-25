@@ -129,42 +129,27 @@ run_limma_splines <- function(
       purrr::map_chr(results_list, "name")
     )
 
-  # Factor and Factor:Time comparisons between levels
-  between_level_condition_only <- list()
-  between_level_condition_time <- list() # Factor AND time
-
   if (mode == "integrated") {
-    level_combinations <- utils::combn(levels, 2, simplify = FALSE)
-    for (lev_combo in level_combinations) {
-      result <- between_level(
-        data = data,
-        rna_seq_data = rna_seq_data,
-        meta = meta,
-        design = design,
-        dream_params = dream_params,
-        spline_params = spline_params,
-        condition = condition,
-        compared_levels = lev_combo,
-        padjust_method = padjust_method,
-        feature_names = feature_names,
-        robust_fit = robust_fit
-      )
+    # Step 1: Fit the global model once
+    fit_obj <- fit_global_model(
+      data = data,
+      rna_seq_data = rna_seq_data,
+      meta = meta,
+      design = design,
+      dream_params = dream_params,
+      spline_params = spline_params,
+      condition = condition,
+      padjust_method = padjust_method,
+      feature_names = feature_names,
+      robust_fit = robust_fit
+    )
 
-      between_level_condition_only[[
-        paste0(
-          "avrg_diff_", lev_combo[1],
-          "_vs_", lev_combo[2]
-        )
-      ]] <- result$condition_only
+    # Step 2: Extract pairwise contrasts for all level combinations
+    contrast_results <- extract_between_level_contrasts(
+      fit_obj = fit_obj,
+      condition = condition
+    )
 
-      between_level_condition_time[[
-        paste0(
-          "time_interaction_",
-          lev_combo[1],
-          "_vs_", lev_combo[2]
-        )
-      ]] <- result$condition_time
-    }
   } else { # mode == "isolated"
     message(paste(
       "mode == 'integrated' necessary for between level",
@@ -177,8 +162,8 @@ run_limma_splines <- function(
 
   limma_splines_result <- list(
     time_effect = within_level_top_table,
-    avrg_diff_conditions = between_level_condition_only,
-    interaction_condition_time = between_level_condition_time
+    avrg_diff_conditions = contrast_results$condition_only,
+    interaction_condition_time = contrast_results$condition_time
   )
 
   splineomics <- update_splineomics(
@@ -190,234 +175,6 @@ run_limma_splines <- function(
 
 
 # Level 1 internal functions ---------------------------------------------------
-
-
-#' Between Level Analysis
-#' 
-#' @noRd
-#'
-#' @description
-#' Performs a between-level analysis using limma to compare specified levels
-#' within a condition.
-#'
-#' @param data A matrix of data values.
-#' @param rna_seq_data An object containing the preprocessed RNA-seq data,
-#' such as the output from `limma::voom` or a similar preprocessing pipeline.
-#' @param meta A dataframe containing metadata, including a 'Time' column.
-#' @param design A design formula or matrix for the limma analysis.
-#' @param dream_params A named list or NULL. When not NULL, it must at least 
-#' contain the named element 'random_effects', which must contain a string that
-#' is a formula for the random effects of the mixed models by dream. 
-#' Additionally, it can contain the named elements dof, which must be a int
-#' bigger than 1, which is the degree of freedom for the dream topTable, and
-#' the named element KenwardRoger, which must be a bool, specifying whether
-#' to use that method or not.
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param condition A character string specifying the condition.
-#' @param compared_levels A vector of levels within the condition to compare.
-#' @param padjust_method A character string specifying the p-adjustment method.
-#' @param feature_names A non-empty character vector of feature names.
-#'
-#' @return A list containing top tables for the factor only and factor-time
-#' contrast.
-#'
-#' @seealso
-#' \code{\link[splines]{bs}}, \code{\link[splines]{ns}},
-#' \code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}},
-#' \code{\link[limma]{topTable}}, \code{\link{modify_limma_top_table}}
-#'
-#' @importFrom splines bs ns
-#' @importFrom stats as.formula model.matrix
-#' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream eBayes topTable
-#'
-between_level <- function(
-    data,
-    rna_seq_data,
-    meta,
-    design,
-    dream_params,
-    spline_params,
-    condition,
-    compared_levels,
-    padjust_method,
-    feature_names,
-    robust_fit = NULL
-    ) {
-  
-  if (is.null(rna_seq_data)) {
-    # Only subset for non-RNA-seq data (e.g., proteomics)
-    samples <- which(meta[[condition]] %in% compared_levels)
-    data <- data[, samples]   # sub-part of data of the two compared levels
-    meta <- meta[meta[[condition]] %in% compared_levels, ]
-  }
-  
-  effects <- extract_effects(design)
-  
-  result <- design2design_matrix(
-    meta = meta,
-    spline_params = spline_params,
-    level_index = 1,
-    design = effects[["fixed_effects"]]
-  )
-  
-  design_matrix <- result$design_matrix
-
-  if (!is.null(rna_seq_data)) {
-    data <- rna_seq_data   # Just having one variable makes the code easier
-  } 
-  
-  # For RNA-seq data, this is handled when calling limma::voom (happens before)
-  # This here is the implicit fall-back logic when the user has not explicitly 
-  # decided whether to robust_fit or not
-  if (is.null(rna_seq_data) && is.null(robust_fit)) {
-    robust_fit <- check_homoscedasticity_violation(
-      data = data,
-      meta = meta,
-      condition = condition,
-      compared_levels = compared_levels
-    )
-  }
-
-  condition_only_contrast_coeff <- paste0(
-    condition,
-    compared_levels[2]
-  )
-
-  num_matching_columns <- sum(
-    grepl(
-      "^X\\d+$",
-      colnames(design_matrix)
-    )
-  )
-  
-  interaction_condition_time_contrast_coeffs <- paste0(
-    condition,
-    compared_levels[2],
-    ":X",
-    seq_len(num_matching_columns)
-  )
-
-  if (effects[["random_effects"]] != "") {
-    colnames(data) <- rownames(meta)  # dream requires this format
-
-    # Apply the Kenward-Roger method if specified
-    if (isTRUE(dream_params[["KenwardRoger"]])) {
-      method <- "Kenward-Roger"
-    } else {
-      method <- NULL
-    }
-    
-    if (robust_fit) {
-      aw <- limma::arrayWeights(      # vector of length = # samples
-        object = data,
-        design = design_matrix
-        ) 
-      weights_matrix <- matrix(
-        rep(aw, each = nrow(data)),
-        nrow = nrow(data),
-        byrow = TRUE
-      )
-      fit <- variancePartition::dream(
-        exprObj = data,
-        formula = stats::as.formula(design),
-        data = result[["meta"]],
-        ddf = method,
-        useWeights = TRUE,
-        weightsMatrix = weights_matrix
-      )
-      fit <- variancePartition::eBayes(
-        fit = fit,
-        robust = TRUE
-        ) 
-    } else {
-      fit <- variancePartition::dream(
-        exprObj = data,
-        formula = stats::as.formula(design),
-        data = result[["meta"]],    # Spline transformed meta.
-        ddf = method
-      )
-      
-      fit <- variancePartition::eBayes(fit = fit) 
-    }
-
-    condition_only <- variancePartition::topTable(
-      fit = fit,
-      coef = condition_only_contrast_coeff,
-      adjust.method = padjust_method,
-      number = Inf
-    )
-    
-    condition_time <- variancePartition::topTable(
-      fit = fit,
-      coef = interaction_condition_time_contrast_coeffs,
-      adjust.method = padjust_method,
-      number = Inf,
-      sort.by = "F"
-    )
-    
-  } else {
-    if (robust_fit) {
-      weights <- limma::arrayWeights(
-        object = data,
-        design = design_matrix
-        )
-      fit <- limma::lmFit(
-        object = data,
-        design = design_matrix,
-        weights = weights
-        )
-      fit <- limma::eBayes(
-        fit = fit,
-        robust = TRUE
-        )
-    } else {
-      fit <- limma::lmFit(
-        object = data,
-        design = design_matrix
-        )
-      fit <- limma::eBayes(fit = fit)
-    }
-    
-    condition_only <- limma::topTable(
-      fit = fit,
-      coef = condition_only_contrast_coeff,
-      adjust.method = padjust_method,
-      number = Inf
-    )
-  
-    condition_time <- limma::topTable(
-      fit = fit,
-      coef = interaction_condition_time_contrast_coeffs,
-      adjust.method = padjust_method,
-      number = Inf
-    )
-  }
-  
-  condition_only_resuls <- list(
-    top_table = condition_only,
-    fit = fit
-  )
-  
-  top_table_condition_only <- process_top_table(
-    condition_only_resuls,
-    feature_names
-  )
-  
-  condition_and_time_results <- list(
-    top_table = condition_time,
-    fit = fit
-  )
-  top_table_condition_and_time <- process_top_table(
-    condition_and_time_results,
-    feature_names
-  )
-
-  list(
-    condition_only = top_table_condition_only,
-    condition_time = top_table_condition_and_time
-  )
-}
 
 
 #' Within level analysis
@@ -525,6 +282,233 @@ within_level <- function(
   list(
     name = results_name,
     top_table = top_table
+  )
+}
+
+
+#' Between Level Analysis
+#' 
+#' @noRd
+#'
+#' @description
+#' Performs a between-level analysis using limma to compare specified levels
+#' within a condition.
+#'
+#' @param data A matrix of data values.
+#' @param rna_seq_data An object containing the preprocessed RNA-seq data,
+#' such as the output from `limma::voom` or a similar preprocessing pipeline.
+#' @param meta A dataframe containing metadata, including a 'Time' column.
+#' @param design A design formula or matrix for the limma analysis.
+#' @param dream_params A named list or NULL. When not NULL, it must at least 
+#' contain the named element 'random_effects', which must contain a string that
+#' is a formula for the random effects of the mixed models by dream. 
+#' Additionally, it can contain the named elements dof, which must be a int
+#' bigger than 1, which is the degree of freedom for the dream topTable, and
+#' the named element KenwardRoger, which must be a bool, specifying whether
+#' to use that method or not.
+#' @param spline_params A list of spline parameters for the analysis.
+#' @param condition A character string specifying the condition.
+#' @param padjust_method A character string specifying the p-adjustment method.
+#' @param feature_names A non-empty character vector of feature names.
+#'
+#' @return A list containing top tables for the factor only and factor-time
+#' contrast.
+#'
+#' @seealso
+#' \code{\link[splines]{bs}}, \code{\link[splines]{ns}},
+#' \code{\link[limma]{lmFit}}, \code{\link[limma]{eBayes}},
+#' \code{\link[limma]{topTable}}, \code{\link{modify_limma_top_table}}
+#'
+#' @importFrom splines bs ns
+#' @importFrom stats as.formula model.matrix
+#' @importFrom limma lmFit eBayes topTable
+#' @importFrom variancePartition dream eBayes topTable
+#'
+fit_global_model <- function(
+    data,
+    rna_seq_data,
+    meta,
+    design,
+    dream_params,
+    spline_params,
+    condition,
+    padjust_method,
+    feature_names,
+    robust_fit = NULL
+) {
+
+  effects <- extract_effects(design)
+  
+  result <- design2design_matrix(
+    meta = meta,
+    spline_params = spline_params,
+    level_index = 1,
+    design = effects[["fixed_effects"]]
+  )
+  
+  design_matrix <- result$design_matrix
+  
+  if (!is.null(rna_seq_data)) {
+    data <- rna_seq_data   # Just having one variable makes the code easier
+  } 
+  
+  # For RNA-seq data, this is handled when calling limma::voom (happens before)
+  # This here is the implicit fall-back logic when the user has not explicitly 
+  # decided whether to robust_fit or not
+  if (is.null(rna_seq_data) && is.null(robust_fit)) {
+    robust_fit <- check_homoscedasticity_violation(
+      data = data,
+      meta = meta,
+      condition = condition
+    )
+  }
+  
+  if (effects[["random_effects"]] != "") {
+    colnames(data) <- rownames(meta)  # dream requires this format
+    
+    # Apply the Kenward-Roger method if specified
+    if (isTRUE(dream_params[["KenwardRoger"]])) {
+      method <- "Kenward-Roger"
+    } else {
+      method <- NULL
+    }
+    
+    if (robust_fit) {
+      aw <- limma::arrayWeights(      # vector of length = # samples
+        object = data,
+        design = design_matrix
+      ) 
+      weights_matrix <- matrix(
+        rep(aw, each = nrow(data)),
+        nrow = nrow(data),
+        byrow = TRUE
+      )
+      fit <- variancePartition::dream(
+        exprObj = data,
+        formula = stats::as.formula(design),
+        data = result[["meta"]],
+        ddf = method,
+        useWeights = TRUE,
+        weightsMatrix = weights_matrix
+      )
+      fit <- variancePartition::eBayes(
+        fit = fit,
+        robust = TRUE
+      ) 
+    } else {
+      fit <- variancePartition::dream(
+        exprObj = data,
+        formula = stats::as.formula(design),
+        data = result[["meta"]],    # Spline transformed meta.
+        ddf = method
+      )
+      
+      fit <- variancePartition::eBayes(fit = fit) 
+    }
+  } else {
+    if (robust_fit) {
+      weights <- limma::arrayWeights(
+        object = data,
+        design = design_matrix
+      )
+      fit <- limma::lmFit(
+        object = data,
+        design = design_matrix,
+        weights = weights
+      )
+      fit <- limma::eBayes(
+        fit = fit,
+        robust = TRUE
+      )
+    } else {
+      fit <- limma::lmFit(
+        object = data,
+        design = design_matrix
+      )
+      fit <- limma::eBayes(fit = fit)
+    }
+  }
+  
+  list(
+    fit = fit,
+    design_matrix = design_matrix,
+    meta = result[["meta"]],
+    feature_names = feature_names,
+    condition = condition,
+    padjust_method = padjust_method
+  )
+}
+
+
+#' Extract pairwise contrasts for a condition from a fitted limma model
+#'
+#' Internal helper function that extracts condition-only and interaction
+#' contrasts for all pairwise combinations of levels within a condition
+#' factor. Works with fitted limma or dream models stored in a structured
+#' list returned by a global model fitting function.
+#'
+#' @param fit_obj A list containing:
+#'   - `fit`: fitted model object from `lmFit()` or `dream()`
+#'   - `meta`: sample metadata used in the model
+#'   - `design_matrix`: the design matrix used for fitting
+#'   - `feature_names`: optional row annotations
+#'   - `condition`: the condition factor used
+#'   - `padjust_method`: method for p-value adjustment
+#'
+#' @param condition A string indicating the column in `meta` that contains
+#'   the condition factor for which pairwise contrasts should be extracted.
+#'
+#' @return A named list with two elements:
+#'   - `condition_only`: average condition-level differences
+#'   - `condition_time`: condition × time interaction effects
+#'
+#' Each is itself a list of results for all level combinations.
+#'
+extract_between_level_contrasts <- function(
+    fit_obj,
+    condition
+) {
+  
+  meta <- fit_obj$meta
+  levels <- unique(meta[[condition]])
+  level_combinations <- utils::combn(
+    levels,
+    2,
+    simplify = FALSE
+    )
+  
+  between_level_condition_only <- list()
+  between_level_condition_time <- list()
+
+  for (lev_combo in level_combinations) {
+    contrast_result <- extract_contrast_for_pair(
+      fit_obj = fit_obj,
+      condition = condition,
+      level_pair = lev_combo
+    )
+    
+    between_level_condition_only[[
+      paste0(
+        "avrg_diff_",
+        lev_combo[1],
+        "_vs_",
+        lev_combo[2]
+        )
+    ]] <- contrast_result$condition_only
+    
+    between_level_condition_time[[
+      paste0(
+        "time_interaction_",
+        lev_combo[1],
+        "_vs_",
+        lev_combo[2]
+        )
+    ]] <- contrast_result$condition_time
+  }
+  
+  list(
+    condition_only = between_level_condition_only,
+    condition_time = between_level_condition_time
   )
 }
 
@@ -725,6 +709,90 @@ remove_intercept <- function(formula) {
 }
 
 
+#' Extract contrasts for a single pair of condition levels
+#'
+#' Extracts both the condition-only and condition-time interaction
+#' contrasts for a given pair of condition levels from a fitted limma
+#' model. Designed to be called from a wrapper function that loops over
+#' all pairwise combinations.
+#'
+#' @param fit_obj A list containing:
+#'   - `fit`: fitted model object from `lmFit()` or `dream()`
+#'   - `design_matrix`: the design matrix used in fitting
+#'   - `feature_names`: optional row annotations
+#'   - `padjust_method`: method for p-value adjustment
+#'
+#' @param condition A string giving the name of the condition factor used
+#'   in the design.
+#'
+#' @param level_pair A character vector of length 2 giving the levels to
+#'   compare.
+#'
+#' @return A named list with two elements:
+#'   - `condition_only`: the top table for the condition effect
+#'   - `condition_time`: the top table for the interaction effect
+#'   
+extract_contrast_for_pair <- function(
+    fit_obj,
+    condition,
+    level_pair
+    ) {
+  
+  fit <- fit_obj$fit
+  design_matrix <- fit_obj$design_matrix
+  feature_names <- fit_obj$feature_names
+  padjust_method <- fit_obj$padjust_method
+  
+  # Get properly constructed contrasts
+  contrasts <- build_contrasts_for_pair(
+    condition = condition,
+    level_pair = level_pair,
+    design_matrix = design_matrix
+  )
+
+  # Extract condition-only top table
+  condition_only <- limma::topTable(
+    fit,
+    coef = contrasts$condition,
+    adjust.method = padjust_method,
+    number = Inf
+  )
+
+  # Extract condition-time interaction top table
+  condition_time <- limma::topTable(
+    fit,
+    coef = contrasts$interaction,
+    adjust.method = padjust_method,
+    number = Inf,
+    sort.by = "F"
+  )
+  
+  # Wrap results in lists to pass through process_top_table
+  condition_only_result <- list(
+    top_table = condition_only,
+    fit = fit
+  )
+  condition_time_result <- list(
+    top_table = condition_time,
+    fit = fit
+  )
+  
+  list(
+    condition_only = process_top_table(
+      condition_only_result,
+      feature_names
+      ),
+    condition_time = process_top_table(
+      condition_time_result,
+      feature_names
+      )
+  )
+}
+
+
+
+
+
 # Level 3 internal functions ---------------------------------------------------
 
 
@@ -789,4 +857,72 @@ modify_limma_top_table <- function(
   top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
 
   return(top_table)
+}
+
+
+#' Construct contrast names for a pair of condition levels
+#'
+#' Builds the coefficient names used for extracting the condition-only and
+#' condition-time interaction effects between two condition levels. Assumes
+#' a design matrix where one condition level is used as the reference.
+#'
+#' @param condition A string giving the name of the condition factor.
+#'
+#' @param level_pair A character vector of length 2 specifying the two levels
+#'   to be compared.
+#'
+#' @param design_matrix The design matrix used for model fitting, whose column
+#'   names determine which condition level is modeled explicitly.
+#'
+#' @return A named list with two elements:
+#'   - `condition`: name of the coefficient for the condition-only effect
+#'   - `interaction`: vector of coefficient names for the interaction terms
+#'   
+build_contrasts_for_pair <- function(
+    condition,
+    level_pair,
+    design_matrix
+    ) {
+  
+  cols <- colnames(design_matrix)
+  
+  # Try each level
+  level1 <- make.names(paste0(
+    condition,
+    level_pair[1]
+    ))
+  level2 <- make.names(paste0(
+    condition, level_pair[2]
+    ))
+  
+  if (any(grepl(level1, cols))) {
+    modeled_level <- level_pair[1]
+  } else if (any(grepl(level2, cols))) {
+    modeled_level <- level_pair[2]
+  } else {
+    stop("Neither level appears in design_matrix columns.")
+  }
+  
+  # Build contrasts
+  condition_contrast <- make.names(paste0(
+    condition,
+    modeled_level
+    ))
+  
+  # Time interaction columns like X1, X2
+  spline_cols <- grep(
+    "^X\\d+$",
+    cols,
+    value = TRUE
+    )
+  interaction_contrasts <- paste0(
+    condition_contrast,
+    ":",
+    spline_cols
+    )
+  
+  list(
+    condition = condition_contrast,
+    interaction = interaction_contrasts
+  )
 }

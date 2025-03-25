@@ -8,7 +8,6 @@ check_homoscedasticity_violation(
   data,
   meta,
   condition,
-  compared_levels,
   data_type = "other-omics",
   p_threshold = 0.05
 )
@@ -23,9 +22,6 @@ in `data`.}
 
 \item{condition}{A character string indicating the name of the column in
 `meta` representing the condition of interest.}
-
-\item{compared_levels}{A character vector of length 2 indicating the two
-condition levels to compare (e.g., c("exp", "stat")).}
 
 \item{data_type}{String specifying if rna-seq data is passed, or other omics
 data. Based on this, the message displayed in case of a 

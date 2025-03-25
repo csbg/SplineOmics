@@ -305,8 +305,6 @@ extract_effects <- function(formula_string) {
 #'             in `data`.
 #' @param condition A character string indicating the name of the column in
 #'                  `meta` representing the condition of interest.
-#' @param compared_levels A character vector of length 2 indicating the two
-#'                        condition levels to compare (e.g., c("exp", "stat")).
 #' @param data_type String specifying if rna-seq data is passed, or other omics
 #'                  data. Based on this, the message displayed in case of a 
 #'                  significant violation of homoscedasticity informing about
@@ -324,66 +322,57 @@ check_homoscedasticity_violation <- function(
     data,
     meta,
     condition,
-    compared_levels,
     data_type = "other-omics",
     p_threshold = 0.05
 ) {
+  levels <- unique(meta[[condition]])
+  level_combinations <- utils::combn(levels, 2, simplify = FALSE)
+  violation <- FALSE
   
-  # Get column indices for each level
-  level1_samples <- which(meta[[condition]] == compared_levels[1])
-  level2_samples <- which(meta[[condition]] == compared_levels[2])
-  
-  # Subset data
-  data_level1 <- data[, level1_samples]
-  data_level2 <- data[, level2_samples]
-  
-  # Compute per-row (feature) variance across samples in each group
-  var_level1 <- apply(
-    data_level1,
-    1,
-    var,
-    na.rm = TRUE
-  )
-  var_level2 <- apply(
-    data_level2,
-    1,
-    var,
-    na.rm = TRUE
-  )
-  
-  # Paired Wilcoxon test
-  var_test <- wilcox.test(
-    var_level1,
-    var_level2,
-    paired = TRUE,
-    alternative = "two.sided"
-  )
-  
-  print(var_test)
-  
-  
-  # Determine result
-  violation <- var_test$p.value < p_threshold
+  for (pair in level_combinations) {
+    level1_samples <- which(meta[[condition]] == pair[1])
+    level2_samples <- which(meta[[condition]] == pair[2])
+    
+    data_level1 <- data[, level1_samples]
+    data_level2 <- data[, level2_samples]
+    
+    var_level1 <- apply(data_level1, 1, var, na.rm = TRUE)
+    var_level2 <- apply(data_level2, 1, var, na.rm = TRUE)
+    
+    var_test <- wilcox.test(
+      var_level1,
+      var_level2,
+      paired = TRUE,
+      alternative = "two.sided"
+    )
+    
+    message(sprintf("Testing variance between %s and %s", pair[1], pair[2]))
+    print(var_test)
+    
+    if (var_test$p.value < p_threshold) {
+      violation <- TRUE
+      break
+    }
+  }
   
   if (violation) {
-    cat("❗ Linear model assumption of homoscedasticity is likely violated.\n")
+    message(
+      "\u2757 Linear model assumption of homoscedasticity is likely violated."
+      )
     
     if (data_type == "rna-seq") {
-      cat(
-        "➡️  Using robust RNA-seq strategy: voomWithQualityWeights() to
-      downweight noisy samples.\n"
-      )
-    } else {    # data_type == "other-omics"
-      cat(
-        "➡️  Using robust modeling: arrayWeights() and eBayes(robust = TRUE
-        ) to stabilize variance.\n"
-      )
-    } 
+      message("\u27A1\uFE0F  Using robust RNA-seq strategy:")
+      message("       voomWithQualityWeights() to downweight noisy samples.")
+    } else {
+      message("\u27A1\uFE0F  Using robust modeling strategy:")
+      message("arrayWeights() and eBayes(robust = TRUE) to stabilize variance.")
+    }
+  } else {
+    message("\u2705 No strong evidence for heteroscedasticity.")
+    message("Proceeding as usual.")
   }
-  else {
-    cat("✅ No strong evidence for heteroscedasticity. Proceeding as usual.\n")
-  }
-  cat("------------------------------------------------------------\n")
+  message("------------------------------------------------------------")
   
   return(violation)
 }
+
