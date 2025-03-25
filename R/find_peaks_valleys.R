@@ -47,7 +47,7 @@ find_peaks_valleys <- function(
     alpha = 0.05,
     padjust_method = "BH"
 ) {
-  
+
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "find_peaks_valleys"
@@ -65,29 +65,49 @@ find_peaks_valleys <- function(
   
   data <- splineomics[["data"]]
   meta <- splineomics[["meta"]]
+  condition <- splineomics[["condition"]]
+  meta_batch_column <- splineomics[["meta_batch_column"]]
   
-  uit_output <- peaks_valleys_uit(
-    data = data,
-    meta = meta,
-    alpha = alpha,
-    padjust_method = padjust_method
-  )
-
-  message(
-    "Found ",
-    sum(uit_output$results_df[, -1]),
-    " peak/valley hits."
+  # Get all unique condition levels
+  condition_levels <- unique(meta[[condition]])
+  
+  # Initialize output list
+  all_plots <- list()
+  
+  for (cond_level in condition_levels) {
+    # Select samples for this condition level
+    selected_samples <- meta[[condition]] == cond_level
+    sub_data <- data[, selected_samples, drop = FALSE]
+    sub_meta <- meta[selected_samples, , drop = FALSE]
+    
+    # Run peak/valley detection on the subset
+    uit_output <- peaks_valleys_uit(
+      data = sub_data,
+      meta = sub_meta,
+      alpha = alpha,
+      padjust_method = padjust_method
     )
-
-  plots <- plot_peaks_valleys(
-    uit_output = uit_output,
-    data,
-    meta,
-    meta_batch_column = splineomics[["meta_batch_column"]],
-    alpha = alpha  
-  )
+    
+    message(
+      "Found ",
+      sum(uit_output$results_df[, -1]),
+      " peak/valley hits for condition level: ",
+      cond_level
+    )
+    
+    # Plot results
+    plots <- plot_peaks_valleys(
+      uit_output = uit_output,
+      data = sub_data,
+      meta = sub_meta,
+      meta_batch_column = meta_batch_column,
+      alpha = alpha
+    )
+    
+    all_plots[[as.character(cond_level)]] <- plots
+  }
   
-  return(plots)
+  return(all_plots)
 }
 
 
@@ -150,7 +170,7 @@ peaks_valleys_uit <- function(
   )
   design <- stats::model.matrix(~ 0 + time_factor)
   colnames(design) <- valid_timepoints
-  
+
   # Fit limma model
   fit <- limma::lmFit(
     data,
@@ -217,10 +237,12 @@ peaks_valleys_uit <- function(
       next_change <- next_mean - curr_mean
       
       # Excursion condition: UIT significant & T2 is strictly higher or lower
-      if (p_uit < alpha) {
-        if ((prev_change > 0 & next_change < 0) |
-            (prev_change < 0 & next_change > 0)) {
-          excursion_matrix[i, t] <- 1
+      if (!is.na(p_uit) && p_uit < alpha) {
+        if (!is.na(prev_change) && !is.na(next_change)) {
+          if ((prev_change > 0 && next_change < 0) ||
+              (prev_change < 0 && next_change > 0)) {
+            excursion_matrix[i, t] <- 1
+          }
         }
       }
     }
