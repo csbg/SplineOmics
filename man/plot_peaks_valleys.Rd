@@ -5,9 +5,21 @@
 \alias{plot_peaks_valleys}
 \title{Plot Excursions in Time-Series Omics Data}
 \usage{
-plot_peaks_valleys(uit_output, data, meta, meta_batch_column, alpha = 0.05)
+plot_peaks_valleys(
+  peak_valley_pvals,
+  data,
+  meta,
+  meta_batch_column,
+  alpha = 0.05
+)
 
-plot_peaks_valleys(uit_output, data, meta, meta_batch_column, alpha = 0.05)
+plot_peaks_valleys(
+  peak_valley_pvals,
+  data,
+  meta,
+  meta_batch_column,
+  alpha = 0.05
+)
 }
 \arguments{
 \item{data}{A numeric matrix, where rows correspond to features (e.g., genes, 

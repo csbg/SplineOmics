@@ -325,6 +325,7 @@ check_homoscedasticity_violation <- function(
     data_type = "other-omics",
     p_threshold = 0.05
 ) {
+  
   levels <- unique(meta[[condition]])
   level_combinations <- utils::combn(levels, 2, simplify = FALSE)
   violation <- FALSE

@@ -66,22 +66,22 @@ data_stat_matrix_only <- extract_data(
 # Check stat messyness ---------------------------------------------------------
 # Compute per-gene variance
 # Compute per-protein variance across samples in each condition
-var_exp <- apply(data[, 1:18], 1, var, na.rm = TRUE)
-var_stat <- apply(data[, 19:36], 1, var, na.rm = TRUE)
-
-# Optional: summary stats for diagnostics
-summary(var_exp)
-summary(var_stat)
-
-# Wilcoxon signed-rank test: two-sided
-var_test <- wilcox.test(
-  var_exp,
-  var_stat,
-  paired = TRUE,
-  alternative = "two.sided"
-)
-
-print(var_test)
+# var_exp <- apply(data[, 1:18], 1, var, na.rm = TRUE)
+# var_stat <- apply(data[, 19:36], 1, var, na.rm = TRUE)
+# 
+# # Optional: summary stats for diagnostics
+# summary(var_exp)
+# summary(var_stat)
+# 
+# # Wilcoxon signed-rank test: two-sided
+# var_test <- wilcox.test(
+#   var_exp,
+#   var_stat,
+#   paired = TRUE,
+#   alternative = "two.sided"
+# )
+# 
+# print(var_test)
 
 
 
@@ -384,16 +384,16 @@ splineomics <- run_limma_splines(
 # 
 # 
 # 
-# patterns <- list(
-#   c(-1, 1),
-#   c(1, -1)
-# )
-# 
-# results <- detect_patterns(
-#   data,
-#   meta,
-#   patterns
-#   )
+patterns <- list(
+  c(-1, 1),
+  c(1, -1)
+)
+
+results <- detect_patterns(
+  data,
+  meta,
+  patterns
+  )
 
 # Extract significant excursions
 # results$excursion_matrices
@@ -405,15 +405,7 @@ splineomics <- run_limma_splines(
 #   meta_replicates_column = "Reactor"
 #   )
 
-excursion_plots <- find_peaks_valleys(
-  splineomics = splineomics
-)
 
-# Get the second condition level (actual plot list)
-second_level_plots <- excursion_plots[[2]]
-
-# Print the first 10 plots from that level
-for (p in head(second_level_plots, 10)) print(p)
 
 
 

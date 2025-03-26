@@ -239,7 +239,7 @@ detect_patterns <- function(
     )
     
     # Convert to one-tailed p-values
-    one_tailed_pvals <- raw_pvals[, "P.Value"] / 2  # Divide by 2 first
+    one_tailed_pvals <- raw_pvals[, "P.Value"] / 1  # Divide by 2 first
     
     # Apply multiple testing correction AFTER one-tailed conversion
     adj_pvals <- p.adjust(one_tailed_pvals, method = "fdr")
@@ -262,8 +262,10 @@ detect_patterns <- function(
     
     for (start_idx in 1:(num_timepoints - pattern_length)) {
       
-      window_pvals <- pairwise_pvals[, start_idx:(start_idx + pattern_length - 1), drop = FALSE]
-      window_logFCs <- pairwise_logFC[, start_idx:(start_idx + pattern_length - 1), drop = FALSE]
+      window_pvals <- pairwise_pvals[
+        , start_idx:(start_idx + pattern_length - 1), drop = FALSE]
+      window_logFCs <- pairwise_logFC[
+        , start_idx:(start_idx + pattern_length - 1), drop = FALSE]
       
       is_significant <- rep(TRUE, nrow(data))
       
@@ -286,11 +288,13 @@ detect_patterns <- function(
       }
       
       # If the pattern is detected, mark the middle timepoint
-      excursion_matrix[, start_idx + 1] <- ifelse(is_significant, 1, excursion_matrix[, start_idx + 1])
+      excursion_matrix[, start_idx + 1] <- ifelse(
+        is_significant, 1, excursion_matrix[, start_idx + 1])
     }
   }
   
-  results_df <- data.frame(feature_nr = rownames(excursion_matrix), excursion_matrix)
+  results_df <- data.frame(
+    feature_nr = rownames(excursion_matrix), excursion_matrix)
   
   return(list(
     results_df = results_df,
@@ -301,134 +305,134 @@ detect_patterns <- function(
 
 
 
-# plot_excursions2 <- function(
-#     results,
-#     data,
-#     meta,
-#     meta_replicates_column
-# ) {
-#   results_df <- results$results_df
-#   pairwise_pvals <- results$pairwise_pvals
-#   
-#   unique_timepoints <- sort(unique(meta$Time))
-#   num_timepoints <- length(unique_timepoints)
-#   
-#   unique_replicates <- unique(meta[[meta_replicates_column]])
-#   num_replicates <- length(unique_replicates)
-#   
-#   symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)  
-#   symbols <- symbols_available[1:num_replicates]  
-#   
-#   plots <- list()
-#   
-#   for (protein_index in which(rowSums(results_df[, -1]) > 0)) {
-#     
-#     feature_name <- results_df$feature_nr[protein_index]
-#     protein_data <- data[feature_name, ]
-#     
-#     plot_data <- data.frame(
-#       Time = meta$Time, 
-#       Expression = as.numeric(protein_data), 
-#       Replicate = as.factor(meta[[meta_replicates_column]])
-#     )  
-#     
-#     excursion_flags <- as.numeric(results_df[protein_index, -1])
-#     timepoints_numeric <- sort(unique(meta$Time))
-#     
-#     # Mark all timepoints participating in a detected pattern
-#     plot_data$Excursion <- ifelse(
-#       plot_data$Time %in% timepoints_numeric[which(excursion_flags == 1)],
-#       1, 0
-#     )
-#     
-#     plot_data$Excursion[is.na(plot_data$Excursion)] <- 0  
-#     
-#     plot_data$Point_Type <- factor(
-#       ifelse(plot_data$Excursion == 1, "Excursion", "Normal"),
-#       levels = c("Normal", "Excursion")
-#     )
-#     
-#     sig_df <- data.frame(Time = numeric(0), Label = character(0), y_pos = numeric(0))
-#     sig_lines <- data.frame(x_start = numeric(0), x_end = numeric(0), y = numeric(0))
-#     
-#     # Identify all time windows where an excursion was found
-#     excursion_indices <- which(excursion_flags == 1)
-#     
-#     for (t in excursion_indices) {
-#       if (t < num_timepoints) {
-#         p_prev <- pairwise_pvals[protein_index, t - 1]
-#         p_next <- pairwise_pvals[protein_index, t]
-#         
-#         get_stars <- function(p) {
-#           if (p < 0.0001) return("****")
-#           else if (p < 0.001) return("***")
-#           else if (p < 0.01) return("**")
-#           else if (p < 0.05) return("*")
-#           else return("")
-#         }
-#         
-#         sig_prev <- get_stars(p_prev)
-#         sig_next <- get_stars(p_next)
-#         
-#         max_value <- max(plot_data$Expression[
-#           plot_data$Time %in% c(unique_timepoints[t - 1], unique_timepoints[t], unique_timepoints[t + 1])
-#         ], na.rm = TRUE)
-#         
-#         base_y <- max_value + 0.5
-#         left_y <- base_y  
-#         right_y <- base_y + 0.3  
-#         star_offset <- 0.2  
-#         
-#         if (sig_prev != "") {
-#           sig_df <- rbind(sig_df, data.frame(
-#             Time = mean(c(unique_timepoints[t - 1], unique_timepoints[t])),
-#             Label = sig_prev, 
-#             y_pos = left_y + star_offset
-#           ))
-#           
-#           sig_lines <- rbind(sig_lines, data.frame(
-#             x_start = unique_timepoints[t - 1], 
-#             x_end = unique_timepoints[t] - 0.05,  
-#             y = left_y)
-#           )
-#         }
-#         
-#         if (sig_next != "") {
-#           sig_df <- rbind(sig_df, data.frame(
-#             Time = mean(c(unique_timepoints[t], unique_timepoints[t + 1])),
-#             Label = sig_next, 
-#             y_pos = right_y + star_offset
-#           ))
-#           
-#           sig_lines <- rbind(sig_lines, data.frame(
-#             x_start = unique_timepoints[t] + 0.05,  
-#             x_end = unique_timepoints[t + 1], 
-#             y = right_y
-#           ))
-#         }
-#       }
-#     }
-#     
-#     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Time, y = Expression)) +
-#       ggplot2::geom_point(ggplot2::aes(shape = Replicate, color = Point_Type), size = 3, stroke = 1.2, fill = "white") +  
-#       ggplot2::scale_shape_manual(values = symbols) +
-#       ggplot2::scale_color_manual(values = c("Normal" = "grey40", "Excursion" = "red")) +  
-#       ggplot2::geom_segment(data = sig_lines, ggplot2::aes(x = x_start, xend = x_end, y = y, yend = y), size = 0.7) +
-#       ggplot2::geom_text(data = sig_df, aes(x = Time, y = y_pos, label = Label), size = 5, hjust = 0.5) +
-#       ggplot2::labs(
-#         title = paste("Expression of", feature_name),
-#         x = "Time",
-#         y = "Expression Level",
-#         color = "Pattern",
-#         shape = "Replicate"
-#       ) +
-#       ggplot2::theme_minimal()
-#     
-#     plots[[feature_name]] <- p
-#   }
-#   
-#   return(plots)
-# }
+plot_excursions2 <- function(
+    results,
+    data,
+    meta,
+    meta_replicates_column
+) {
+  results_df <- results$results_df
+  pairwise_pvals <- results$pairwise_pvals
+
+  unique_timepoints <- sort(unique(meta$Time))
+  num_timepoints <- length(unique_timepoints)
+
+  unique_replicates <- unique(meta[[meta_replicates_column]])
+  num_replicates <- length(unique_replicates)
+
+  symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)
+  symbols <- symbols_available[1:num_replicates]
+
+  plots <- list()
+
+  for (protein_index in which(rowSums(results_df[, -1]) > 0)) {
+
+    feature_name <- results_df$feature_nr[protein_index]
+    protein_data <- data[feature_name, ]
+
+    plot_data <- data.frame(
+      Time = meta$Time,
+      Expression = as.numeric(protein_data),
+      Replicate = as.factor(meta[[meta_replicates_column]])
+    )
+
+    excursion_flags <- as.numeric(results_df[protein_index, -1])
+    timepoints_numeric <- sort(unique(meta$Time))
+
+    # Mark all timepoints participating in a detected pattern
+    plot_data$Excursion <- ifelse(
+      plot_data$Time %in% timepoints_numeric[which(excursion_flags == 1)],
+      1, 0
+    )
+
+    plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
+
+    plot_data$Point_Type <- factor(
+      ifelse(plot_data$Excursion == 1, "Excursion", "Normal"),
+      levels = c("Normal", "Excursion")
+    )
+
+    sig_df <- data.frame(Time = numeric(0), Label = character(0), y_pos = numeric(0))
+    sig_lines <- data.frame(x_start = numeric(0), x_end = numeric(0), y = numeric(0))
+
+    # Identify all time windows where an excursion was found
+    excursion_indices <- which(excursion_flags == 1)
+
+    for (t in excursion_indices) {
+      if (t < num_timepoints) {
+        p_prev <- pairwise_pvals[protein_index, t - 1]
+        p_next <- pairwise_pvals[protein_index, t]
+
+        get_stars <- function(p) {
+          if (p < 0.0001) return("****")
+          else if (p < 0.001) return("***")
+          else if (p < 0.01) return("**")
+          else if (p < 0.05) return("*")
+          else return("")
+        }
+
+        sig_prev <- get_stars(p_prev)
+        sig_next <- get_stars(p_next)
+
+        max_value <- max(plot_data$Expression[
+          plot_data$Time %in% c(unique_timepoints[t - 1], unique_timepoints[t], unique_timepoints[t + 1])
+        ], na.rm = TRUE)
+
+        base_y <- max_value + 0.5
+        left_y <- base_y
+        right_y <- base_y + 0.3
+        star_offset <- 0.2
+
+        if (sig_prev != "") {
+          sig_df <- rbind(sig_df, data.frame(
+            Time = mean(c(unique_timepoints[t - 1], unique_timepoints[t])),
+            Label = sig_prev,
+            y_pos = left_y + star_offset
+          ))
+
+          sig_lines <- rbind(sig_lines, data.frame(
+            x_start = unique_timepoints[t - 1],
+            x_end = unique_timepoints[t] - 0.05,
+            y = left_y)
+          )
+        }
+
+        if (sig_next != "") {
+          sig_df <- rbind(sig_df, data.frame(
+            Time = mean(c(unique_timepoints[t], unique_timepoints[t + 1])),
+            Label = sig_next,
+            y_pos = right_y + star_offset
+          ))
+
+          sig_lines <- rbind(sig_lines, data.frame(
+            x_start = unique_timepoints[t] + 0.05,
+            x_end = unique_timepoints[t + 1],
+            y = right_y
+          ))
+        }
+      }
+    }
+
+    p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Time, y = Expression)) +
+      ggplot2::geom_point(ggplot2::aes(shape = Replicate, color = Point_Type), size = 3, stroke = 1.2, fill = "white") +
+      ggplot2::scale_shape_manual(values = symbols) +
+      ggplot2::scale_color_manual(values = c("Normal" = "grey40", "Excursion" = "red")) +
+      ggplot2::geom_segment(data = sig_lines, ggplot2::aes(x = x_start, xend = x_end, y = y, yend = y), size = 0.7) +
+      ggplot2::geom_text(data = sig_df, aes(x = Time, y = y_pos, label = Label), size = 5, hjust = 0.5) +
+      ggplot2::labs(
+        title = paste("Expression of", feature_name),
+        x = "Time",
+        y = "Expression Level",
+        color = "Pattern",
+        shape = "Replicate"
+      ) +
+      ggplot2::theme_minimal()
+
+    plots[[feature_name]] <- p
+  }
+
+  return(plots)
+}
 
 
 
