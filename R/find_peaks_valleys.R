@@ -72,49 +72,96 @@ find_peaks_valleys <- function(
   condition_levels <- unique(meta[[condition]])
   
   # Initialize output list
-  all_plots <- list()
+  results <- list()
   
-  for (cond_level in condition_levels) {
+  for (level in condition_levels) {
     # Select samples for this condition level
-    selected_samples <- meta[[condition]] == cond_level
+    selected_samples <- meta[[condition]] == level
     sub_data <- data[, selected_samples, drop = FALSE]
     sub_meta <- meta[selected_samples, , drop = FALSE]
     
     # Run peak/valley detection on the subset
-    uit_output <- peaks_valleys_uit(
+    peak_valley_pvals <- peak_valley_test(
       data = sub_data,
       meta = sub_meta,
       alpha = alpha,
       padjust_method = padjust_method
     )
-    
-    message(
-      "Found ",
-      sum(uit_output$results_df[, -1]),
-      " peak/valley hits for condition level: ",
-      cond_level
+
+    labels <- classify_excursions(
+      data = sub_data,
+      meta = sub_meta,
+      peak_valley_pvals = peak_valley_pvals,
+      alpha = alpha
     )
     
+    results[[as.character(level)]][["peak_valley_pvals"]] <- peak_valley_pvals
+    results[[as.character(level)]][["labels"]] <- labels
+
+    # Count each label type per column (i.e., per timepoint)
+    pattern_counts <- apply(
+      labels,
+      2,
+      function(col) table(factor(col, levels = c("p", "v", "b", "t")))
+    )
+    
+    # Convert to data frame for easier aggregation
+    pattern_df <- as.data.frame(pattern_counts)
+    pattern_summary <- rowSums(pattern_df)
+    total_hits <- sum(pattern_summary)
+    
+    # Compose message
+    message(
+      "\n\nDetected ",
+      total_hits,
+      " total pattern hits for condition level: ",
+      level,
+      "\n\n",
+      "Summary by pattern type:\n",
+      paste(
+        names(pattern_summary),
+        pattern_summary,
+        sep = ": ", 
+        collapse = ", "
+        ), 
+      "\n\n",
+      "Breakdown by timepoint:\n",
+      paste(
+        colnames(pattern_df),
+        apply(
+          pattern_df,
+          2,
+          function(x) paste(
+            names(x),
+            x,
+            sep = "=",
+            collapse = "; "
+            )),
+        sep = ": ",
+        collapse = "\n"
+      )
+    )
+
     # Plot results
     plots <- plot_peaks_valleys(
-      uit_output = uit_output,
+      peak_valley_pvals = peak_valley_pvals,
       data = sub_data,
       meta = sub_meta,
       meta_batch_column = meta_batch_column,
       alpha = alpha
     )
-    
-    all_plots[[as.character(cond_level)]] <- plots
+
+    results[[as.character(level)]][["plots"]] <- plots
   }
   
-  return(all_plots)
+  return(results)
 }
 
 
 # Level 1 function definitions -------------------------------------------------
 
 
-#' Detect Excursions in Time-Series Omics Data Using Union-Intersection Testing
+#' Detect peaks/valleys in time-series omics using compound contrasts in limma
 #'
 #' @description
 #' This function identifies excursions in time-series omics data using a 
@@ -129,6 +176,8 @@ find_peaks_valleys <- function(
 #' a column named `"Time"` that specifies the timepoint for each sample.
 #' @param alpha A numeric value specifying the significance threshold for 
 #' excursion detection. Defaults to `0.05`.
+#' @param padjust_method Method to correct the p-values for multiple hypothesis
+#'                       testing.
 #'
 #' @return A list containing two elements:
 #' \describe{
@@ -144,7 +193,7 @@ find_peaks_valleys <- function(
 #' @importFrom limma lmFit makeContrasts contrasts.fit eBayes topTable
 #' @importFrom stats model.matrix
 #'
-peaks_valleys_uit <- function(
+peak_valley_test <- function(
     data,
     meta,
     alpha = 0.05,
@@ -157,106 +206,172 @@ peaks_valleys_uit <- function(
   
   # Ensure there are at least 3 timepoints for meaningful comparisons
   if (num_timepoints < 3) {
-    stop("Not enough timepoints for UIT-based comparisons.")
+    stop("Not enough timepoints for compound-contrast-based comparisons.")
   }
   
   # Create valid timepoint names for model matrix
   valid_timepoints <- make.names(as.character(unique_timepoints))
   
   # Design matrix for linear modeling
-  time_factor <- factor(
-    meta$Time,
-    levels = unique_timepoints
-  )
+  time_factor <- factor(meta$Time, levels = unique_timepoints)
   design <- stats::model.matrix(~ 0 + time_factor)
   colnames(design) <- valid_timepoints
-
-  # Fit limma model
-  fit <- limma::lmFit(
-    data,
-    design
-    )
   
-  # Initialize matrix to store pairwise p-values
-  pairwise_pvals <- matrix(
+  # Fit base limma model
+  fit <- limma::lmFit(data, design)
+  
+  # Initialize matrix to store compound contrast p-values
+  peak_valley_pvals <- matrix(
     NA,
     nrow = nrow(data),
     ncol = num_timepoints - 2
   )
-  rownames(pairwise_pvals) <- rownames(data)
-  colnames(pairwise_pvals) <- paste0(
+  rownames(peak_valley_pvals) <- rownames(data)
+  colnames(peak_valley_pvals) <- paste0(
     unique_timepoints[-c(1, num_timepoints)],
     "_vs_neighbors"
   )
   
-  # Compute rolling-window UIT-based comparisons
-  for (t in 2:(num_timepoints - 1)) {  # Rolling window, skipping first & last
-    
-    contrast_name <- paste0(
+  # Loop over internal timepoints to compute compound contrast p-values
+  for (t in 2:(num_timepoints - 1)) {
+    compound_contrast <- paste0(
       "(", valid_timepoints[t], "-", valid_timepoints[t - 1], ") + ",
       "(", valid_timepoints[t], "-", valid_timepoints[t + 1], ")"
     )
     
     contrast_matrix <- limma::makeContrasts(
-      contrasts = contrast_name,
+      contrasts = compound_contrast,
       levels = design
     )
     
     fit2 <- limma::contrasts.fit(fit, contrast_matrix)
     fit2 <- limma::eBayes(fit2)
     
-    pairwise_pvals[, t - 1] <- limma::topTable(
+    peak_valley_pvals[, t - 1] <- limma::topTable(
       fit2,
       coef = 1,
       number = Inf,
       adjust.method = padjust_method,
       sort.by = "none"
-    )[, "adj.P.Val"]
+    )[,"adj.P.Val"]
   }
   
-  # Initialize excursion matrix
-  excursion_matrix <- matrix(
-    0,
+  return(peak_valley_pvals)
+}
+
+
+#' Classify Peaks, Valleys, and Cliffs from Compound Contrast P-values
+#'
+#' Assigns a label to each internal timepoint (T₂ to Tₙ₋₁) indicating 
+#' whether it is a peak (\code{"p"}), valley (\code{"v"}), top of a 
+#' cliff (\code{"t"}), or bottom of a cliff (\code{"b"}). Timepoints 
+#' that are not statistically significant or cannot be classified are 
+#' labeled as \code{"."}.
+#'
+#' The classification is based on compound contrast p-values from the 
+#' \code{peak_valley_test()} function, as well as the relative symmetry 
+#' of changes between adjacent timepoints.
+#'
+#' @param data A numeric matrix or data frame of expression values, with 
+#' rows as features and columns matching \code{meta$Time}.
+#' @param meta A data frame containing metadata with at least a column 
+#' \code{Time} indicating timepoint assignment.
+#' @param peak_valley_pvals A matrix of adjusted p-values from a compound 
+#' contrast test, with rows matching \code{data} and columns corresponding 
+#' to internal timepoints (i.e., excluding first and last timepoints).
+#' @param alpha Significance threshold for p-value filtering. Only 
+#' timepoints with \code{p < alpha} are considered for classification.
+#' @param symmetry_ratio Minimum ratio of the smaller to larger slope 
+#' required to consider a pattern symmetric enough to be a peak or valley 
+#' (default: 0.3). Values below this threshold are classified as cliffs.
+#'
+#' @return A data frame with the same number of rows as \code{data} and 
+#' one column per timepoint. Each entry is a character label: \code{"p"}, 
+#' \code{"v"}, \code{"t"}, \code{"b"}, or \code{"."} for no signal.
+#' 
+classify_excursions <- function(
+    data,
+    meta,
+    peak_valley_pvals,
+    alpha = 0.05,
+    symmetry_ratio = 0.3
+) {
+
+  # Extract sorted timepoints
+  unique_timepoints <- sort(unique(meta$Time))
+  num_timepoints <- length(unique_timepoints)
+  
+  # Initialize label matrix with "."
+  peak_valley_labels <- matrix(
+    ".", 
     nrow = nrow(data),
     ncol = num_timepoints
   )
-  rownames(excursion_matrix) <- rownames(data)
-  colnames(excursion_matrix) <- unique_timepoints
-  
-  # Detect excursions based on UIT
+  rownames(peak_valley_labels) <- rownames(data)
+  colnames(peak_valley_labels) <- unique_timepoints
+
+  # Classification logic for each triplet
   for (i in 1:nrow(data)) {
     for (t in 2:(num_timepoints - 1)) {
+      p_val <- peak_valley_pvals[i, t - 1]
       
-      p_uit <- pairwise_pvals[i, t - 1]  # UIT p-value for T2 vs. neighbors
-      
-      prev_mean <- mean(data[i, which(meta$Time == unique_timepoints[t - 1])])
-      curr_mean <- mean(data[i, which(meta$Time == unique_timepoints[t])])
-      next_mean <- mean(data[i, which(meta$Time == unique_timepoints[t + 1])])
+      # Skip if NA or not significant
+      if (is.na(p_val) || p_val >= alpha) next
+
+      # Extract timepoint means
+      prev_mean <- mean(
+        data[i, which(meta$Time == unique_timepoints[t - 1])],
+        na.rm = TRUE
+        )
+      curr_mean <- mean(
+        data[i, which(meta$Time == unique_timepoints[t])],
+        na.rm = TRUE
+        )
+      next_mean <- mean(
+        data[i, which(meta$Time == unique_timepoints[t + 1])],
+        na.rm = TRUE
+        )
       
       prev_change <- curr_mean - prev_mean
-      next_change <- next_mean - curr_mean
+      next_change <- curr_mean - next_mean
       
-      # Excursion condition: UIT significant & T2 is strictly higher or lower
-      if (!is.na(p_uit) && p_uit < alpha) {
-        if (!is.na(prev_change) && !is.na(next_change)) {
-          if ((prev_change > 0 && next_change < 0) ||
-              (prev_change < 0 && next_change > 0)) {
-            excursion_matrix[i, t] <- 1
+      if (!is.na(prev_change) && !is.na(next_change)) {
+        same_direction <- sign(prev_change) == sign(next_change)
+        if (same_direction) {
+          abs_prev <- abs(prev_change)
+          abs_next <- abs(next_change)
+          smaller <- min(abs_prev, abs_next)
+          larger  <- max(abs_prev, abs_next)
+          
+          if (smaller / larger >= symmetry_ratio) {
+            if (prev_change > 0) {
+              peak_valley_labels[i, t] <- "p"
+            } else {
+              peak_valley_labels[i, t] <- "v"
+            }
+          } else {
+            peak_valley_labels[i, t] <- classify_cliff(
+              prev_change,
+              next_change
+              )
           }
+        } else {
+          peak_valley_labels[i, t] <- classify_cliff(
+            prev_change,
+            next_change
+            )
         }
       }
     }
   }
-  
+
+  # Return as data.frame for compatibility
   results_df <- data.frame(
-    feature_nr = rownames(excursion_matrix),
-    excursion_matrix
+    peak_valley_labels,
+    check.names = FALSE
   )
   
-  return(list(
-    results_df = results_df,
-    pairwise_pvals = pairwise_pvals
-  ))
+  return(results_df)
 }
 
 
@@ -287,18 +402,21 @@ peaks_valleys_uit <- function(
 #'
 #' @importFrom ggplot2 ggplot aes geom_point scale_shape_manual 
 #'             scale_color_manual geom_text labs theme_minimal
-
+#'
 plot_peaks_valleys <- function(
-    uit_output,
+    peak_valley_pvals,
     data,
     meta,
     meta_batch_column,
     alpha = 0.05  
 ) {
   
-  results_df <- uit_output$results_df
-  pairwise_pvals <- uit_output$pairwise_pvals
-  
+  peak_valley_flags <- ifelse(
+    is.na(peak_valley_pvals), 
+    0, 
+    ifelse(peak_valley_pvals < alpha, 1, 0)
+  )
+
   unique_timepoints <- sort(unique(meta$Time))
   num_timepoints <- length(unique_timepoints)
   
@@ -310,9 +428,8 @@ plot_peaks_valleys <- function(
   
   plots <- list()
   
-  for (protein_index in which(rowSums(results_df[, -1]) > 0)) {
-    
-    feature_name <- results_df$feature_nr[protein_index]
+  for (protein_index in which(rowSums(peak_valley_flags) > 0)) {
+    feature_name <- rownames(peak_valley_flags)[protein_index]
     protein_data <- data[feature_name, ]
     
     plot_data <- data.frame(
@@ -321,13 +438,19 @@ plot_peaks_valleys <- function(
       Replicate = as.factor(meta[[meta_batch_column]])
     )  
     
-    excursion_flags <- as.numeric(results_df[protein_index, -1])
-    timepoints_numeric <- sort(unique(meta$Time))
-    plot_data$Excursion <- excursion_flags[match(
-      plot_data$Time,
-      timepoints_numeric
-    )]
-    plot_data$Excursion[is.na(plot_data$Excursion)] <- 0  
+    excursion_flags <- as.numeric(peak_valley_flags[protein_index, ])
+
+    # Step 1: define internal timepoints
+    internal_timepoints <- unique_timepoints[2:(num_timepoints - 1)]
+    
+    # Step 2: map excursion flags to only internal timepoints
+    named_flags <- excursion_flags
+    names(named_flags) <- as.character(internal_timepoints)
+    
+    # Step 3: assign only to matching timepoints
+    plot_data$Excursion <- named_flags[as.character(plot_data$Time)]
+    plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
+    
     
     plot_data$Point_Type <- factor(
       ifelse(
@@ -356,33 +479,37 @@ plot_peaks_valleys <- function(
       else return("")
     }
     
+    # Loop over internal timepoints
     for (t in 2:(num_timepoints - 1)) {
-      if (excursion_flags[t] == 1) {
-        p_val <- pairwise_pvals[protein_index, t - 1]
+      timepoint <- unique_timepoints[t]
+      
+      # excursion_flags is aligned to internal timepoints:
+      # T₂ → [1], T₃ → [2], ...
+      flag_index <- t - 1
+      
+      if (excursion_flags[flag_index] == 1) {
+        p_val <- peak_valley_pvals[protein_index, flag_index]
+        
         if (p_val < alpha) {
-          stars <- get_stars(
-            p_val,
-            alpha
-            )
+          stars <- get_stars(p_val, alpha)
           
-          # Compute the max expression at this excursion timepoint
           max_expr <- max(
-            plot_data$Expression[plot_data$Time == unique_timepoints[t]],
+            plot_data$Expression[plot_data$Time == timepoint],
             na.rm = TRUE
-            )
+          )
           
           sig_df <- rbind(
             sig_df,
             data.frame(
-              Time = unique_timepoints[t],
+              Time = timepoint,
               Label = stars,
-              y_pos = max_expr + 0.3
+              y_pos = max_expr + 0.01 * max_expr
             )
           )
         }
       }
     }
-    
+
     p <- ggplot2::ggplot(
       plot_data,
       ggplot2::aes(
@@ -434,3 +561,39 @@ plot_peaks_valleys <- function(
 
 
 # Level 2 function definitions -------------------------------------------------
+
+
+#' Classify Cliff Pattern as Top or Bottom
+#'
+#' Determines whether a significant excursion that is not a peak or valley 
+#' represents the top or bottom of a cliff, based on the direction and 
+#' magnitude of changes before and after a timepoint.
+#'
+#' @param prev_change Numeric value representing the change from the previous 
+#'                    timepoint to the current timepoint.
+#' @param next_change Numeric value representing the change from the current 
+#'                    timepoint to the next timepoint.
+#'
+#' @return A single character: \code{"t"} for top of a cliff (upward into or 
+#' downward out of the timepoint),
+#' or \code{"b"} for bottom of a cliff (downward into or upward out of the 
+#' timepoint).
+#'
+#' @examples
+#' classify_cliff(-2, 0.5)  # returns "b" (bottom of a cliff)
+#' classify_cliff(1.5, -3)  # returns "t" (top of a cliff)
+#'
+classify_cliff <- function(
+    prev_change,
+    next_change
+    ) {
+  
+  abs_prev <- abs(prev_change)
+  abs_next <- abs(next_change)
+  
+  if (abs_prev > abs_next) {
+    return(ifelse(prev_change < 0, "b", "t"))  # drop into point → bottom
+  } else {
+    return(ifelse(next_change < 0, "t", "b"))  # drop after point → top
+  }
+}
