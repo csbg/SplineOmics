@@ -163,12 +163,24 @@ preprocess_rna_seq_data <- function(
         )
       
       # Step 3: Run heteroscedasticity check on each pair
-      violation <- check_homoscedasticity_violation(
-        data = voom_obj$E,
-        meta = meta,
-        condition = condition_col,
-        data_type = "rna-seq"
-      )
+      violation <- FALSE
+      for (pair in level_pairs) {
+        message(sprintf(
+          "Testing for heteroscedasticity: %s vs %s",
+          pair[1],
+          pair[2]
+          ))
+        violation <- check_homoscedasticity_violation(
+          data = voom_obj$E,
+          meta = meta,
+          condition = condition_col,
+          compared_levels = pair,
+          data_type = "rna-seq"
+        )
+        if (violation) {
+          break
+        }
+      }
       
       # Step 4: If any pair was violated, rerun with robust weights
       if (violation) {

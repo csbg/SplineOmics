@@ -35,14 +35,14 @@
 #' 
 #' - Performs internal input validation via `check_splineomics_elements()` and 
 #'   `InputControl`.
-#' - Detects local excursions using the `peaks_valleys_uit()` function.
+#' - Detects local excursions using the `pvc_test()` function.
 #' - Displays the number of total excursion hits found.
-#' - Generates plots using `plot_peaks_valleys()`, with each excursion point 
+#' - Generates plots using `plot_pvc()`, with each excursion point 
 #'   evaluated for significance based on the provided `alpha`.
 #'
 #' @export
 #' 
-find_peaks_valleys <- function(
+find_pvc <- function(
     splineomics,
     alpha = 0.05,
     padjust_method = "BH"
@@ -81,7 +81,7 @@ find_peaks_valleys <- function(
     sub_meta <- meta[selected_samples, , drop = FALSE]
     
     # Run peak/valley detection on the subset
-    peak_valley_pvals <- peak_valley_test(
+    pvc_pvals <- pvc_test(
       data = sub_data,
       meta = sub_meta,
       alpha = alpha,
@@ -91,11 +91,11 @@ find_peaks_valleys <- function(
     labels <- classify_excursions(
       data = sub_data,
       meta = sub_meta,
-      peak_valley_pvals = peak_valley_pvals,
+      pvc_pvals = pvc_pvals,
       alpha = alpha
     )
     
-    results[[as.character(level)]][["peak_valley_pvals"]] <- peak_valley_pvals
+    results[[as.character(level)]][["pvc_pvals"]] <- pvc_pvals
     results[[as.character(level)]][["labels"]] <- labels
 
     # Count each label type per column (i.e., per timepoint)
@@ -143,8 +143,8 @@ find_peaks_valleys <- function(
     )
 
     # Plot results
-    plots <- plot_peaks_valleys(
-      peak_valley_pvals = peak_valley_pvals,
+    plots <- plot_pvc(
+      pvc_pvals = pvc_pvals,
       data = sub_data,
       meta = sub_meta,
       meta_batch_column = meta_batch_column,
@@ -193,7 +193,7 @@ find_peaks_valleys <- function(
 #' @importFrom limma lmFit makeContrasts contrasts.fit eBayes topTable
 #' @importFrom stats model.matrix
 #'
-peak_valley_test <- function(
+pvc_test <- function(
     data,
     meta,
     alpha = 0.05,
@@ -292,7 +292,7 @@ peak_valley_test <- function(
 classify_excursions <- function(
     data,
     meta,
-    peak_valley_pvals,
+    pvc_pvals,
     alpha = 0.05,
     symmetry_ratio = 0.3
 ) {
@@ -313,7 +313,7 @@ classify_excursions <- function(
   # Classification logic for each triplet
   for (i in 1:nrow(data)) {
     for (t in 2:(num_timepoints - 1)) {
-      p_val <- peak_valley_pvals[i, t - 1]
+      p_val <- pvc_pvals[i, t - 1]
       
       # Skip if NA or not significant
       if (is.na(p_val) || p_val >= alpha) next
@@ -403,8 +403,8 @@ classify_excursions <- function(
 #' @importFrom ggplot2 ggplot aes geom_point scale_shape_manual 
 #'             scale_color_manual geom_text labs theme_minimal
 #'
-plot_peaks_valleys <- function(
-    peak_valley_pvals,
+plot_pvc <- function(
+    pvc_pvals,
     data,
     meta,
     meta_batch_column,
@@ -412,9 +412,9 @@ plot_peaks_valleys <- function(
 ) {
   
   peak_valley_flags <- ifelse(
-    is.na(peak_valley_pvals), 
+    is.na(pvc_pvals), 
     0, 
-    ifelse(peak_valley_pvals < alpha, 1, 0)
+    ifelse(pvc_pvals < alpha, 1, 0)
   )
 
   unique_timepoints <- sort(unique(meta$Time))
@@ -488,7 +488,7 @@ plot_peaks_valleys <- function(
       flag_index <- t - 1
       
       if (excursion_flags[flag_index] == 1) {
-        p_val <- peak_valley_pvals[protein_index, flag_index]
+        p_val <- pvc_pvals[protein_index, flag_index]
         
         if (p_val < alpha) {
           stars <- get_stars(p_val, alpha)

@@ -32,7 +32,7 @@ provided here.
 ## Data Overview
 
 This dataset originates from a **time-series glycan experiment**
-designed to study Chinese Hamster Ovary (CHO) cells. The experiment
+designed to study Chinese Hamster Ovary (CHO) cells. The data is compositional, meaning that the observed glycoform abundances represent parts of a whole and are constrained by a constant-sum constraint, making standard statistical analyses inappropriate without appropriate log-ratio transformations. The experiment
 involved cultivating cells in **eight bioreactors**, with **four
 bioreactors** subjected to a temperature shift after 146 hours
 (experimental condition) and the remaining **four bioreactors**
@@ -116,6 +116,7 @@ devtools::load_all()
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
+library(compositions)  # For clr transforming the glycan data
 ```
 
 # Load the files
@@ -141,7 +142,7 @@ meta <- read.csv(
 
 # Set the first column as row names and remove it from the dataframe
 rownames(data) <- data[[1]]  # Assign first column as row names
-data <- data[-1]  # Remove the first column
+data <- data[, -1]  # Remove the first column
 
 
 # Make data to a numeric matrix (required by SplineOmics)
@@ -173,7 +174,7 @@ knitr::kable(
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
   omics_data_type = "Glycan",
-  data_description = "Glycoform data of CHO cells",
+  data_description = "clr transformed timeseries fractional abundance glycoform data of CHO cells, batch corrected",
   data_collection_date = "September 2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -186,10 +187,26 @@ report_dir <- here::here(
 )
 ```
 
+Compositional data, such as glycan profiles expressed as relative abundances, are inherently constrained by a constant sum and therefore reside in a simplex rather than Euclidean space. This violates the assumptions of standard statistical methods. To address this, we applied a centered log-ratio (CLR) transformation, which appropriately maps the data into real space by accounting for the compositional structure. While some studies apply a simple log-transformation to stabilize variance, this approach ignores the relative nature of the data and may lead to biased or misleading results. CLR transformation is thus the more appropriate and statistically sound choice for downstream modeling.
+
+```{r clr transform the data, eval = TRUE}
+# TRANSPOSE: make samples rows, features columns
+data_t <- t(data)
+
+# Handle zeros (simple pseudocount, crude but common)
+data_t[data_t == 0] <- 1e-6
+
+# Apply CLR
+clr_data_t <- compositions::clr(data_t)
+
+# Transpose back to original shape: features as rows, samples as columns
+clr_data <- t(clr_data_t)
+```
+
 ```{r Create the SplineOmics object, eval = TRUE}
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
-  data = data,
+  data = clr_data,
   meta = meta,
   report_info = report_info,
   condition = "Condition", # Column of meta that contains the levels.
@@ -224,7 +241,7 @@ Lets define our parameters and put them into the `SplineOmics` object:
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  # Reactor as mixed effect.
+  # Reactor as random effect.
   design = "~ 1 + Condition*Time + Batch + (1|Reactor)", 
   mode = "integrated", # means limma uses the full data for each condition.
   spline_params = list(
@@ -234,6 +251,9 @@ splineomics <- SplineOmics::update_splineomics(
 )
 ```
 
+The term '(1|Reactor)' in the design formula are the random effects. Therefore,
+the linear mixed models that we use will model Reactor as a random effect.
+
 Run the `run_limma_splines()` function with the updated SplineOmics
 object:
 
@@ -242,6 +262,15 @@ splineomics <- SplineOmics::run_limma_splines(
   splineomics = splineomics
 )
 ```
+
+Note that for our dataset, the Wilcoxon signed rank exact test revealed that we
+have a problem of heteroscedasticity for our data. This means that the variance
+between the samples is significantly higher in the stationary phase compared to
+the exponential phase. This is a violation for the assumption of homoscedasticity of linear models, which means that the derived p-values are not
+trustworthy. To adress this issue, limma has a function (arrayWeights) which 
+downweights samples with higher variance, which we then use here automatically.
+Further, the eBayes function of limma with the robust = TRUE argument avoids
+using variance "outliers" for the variance shrinkage.
 
 # Build limma report
 
@@ -280,8 +309,8 @@ adj_pthresholds <- c( # 0.05 for both levels
 )
 
 clusters <- c(
-  2L, # 6 clusters for the exponential phase level
-  2L # 3 clusters for the stationary phase level
+  2L,   # clusters for the exponential level
+  2L    # clusters for the stationary level
 )
 
 report_dir <- here::here(

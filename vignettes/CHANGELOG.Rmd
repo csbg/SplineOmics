@@ -45,7 +45,7 @@ Examples:
 --------------------------------------------------------------------------------
 
 
-### [0.2.0] - 2025-02-11
+### [0.2.0] - 2025-03-31
 (In preparation)
 
 #### Fixed
@@ -54,11 +54,16 @@ Examples:
   (it internally in the code converts it to a string), so having the condition
   column as a factor now does not cause problems anymore (as having it as 
   factor is perfectly valid).
+  
 - Bug that occured in the internal clean_gene_symbols() function when one of 
   the gene names was NA. Now, this does not cause a problem anymore and instead
   of the gene name on the respective spline plot it will write NA.
+  
 - The error message when more clusters where specified than hits in a condition
   was very cryptic. Now, it gives a message that is easy to understand.
+
+- A bug in input control that threw an error indicating that there are rows in 
+  the dataset that contains just zeros, even though this was not true.
 
 #### Changed
 - Replicates in the double spline plots (limma result category 2 and 3) are now
@@ -67,19 +72,52 @@ Examples:
   those plots, like in the single spline plots (limma result category 1), but 
   with colors (red = imputed values for condition 1, dodgerblue = imputed
   values for condition 2).
+  
 - The images in the HTML reports are now considerably smaller, but zoomable, 
   with the option to drag within the zoomed image. A single left-click with the 
   mouse starts the zoom process. Then, you can zoom with the mouse wheel. If you
   reach the max zoom, you can move in the image by further zooming with the 
   mouse wheel but placing the mouse in one of the corners. Further, one can zoom
   by holding left-click pressed and dragging (you can then also let go).
+  
 - SplineOmics can now handle datasets with NA values. limma can do that, and 
   since SplineOmics is based on limma, it can in principle do it to. The issue 
   before was just that there were checks in place that prevented NA values from
   entering the pipeline, and also other steps in the code caused problems,
   raised warnings, or stopped the execution when facing NA values.
+  
 - Changed extract_data() function so that it can handle missing values 
   correctly.
+  
+### Added
+- find_pvc() function. This function performs a compount contrast for every 
+  timepoint triple in the data (adjacent timepoints) to find peaks, valley, and
+  cliffs as a form of local temporal patterns. It generates an HTML report
+  containing all findings in files and also containing the plots.
+  
+- Implicit (default) and explicit heteroscedasticity handling of the linear 
+  model input. Controlled by the robust_fit Boolean flag indicating if the 
+  robust fit strategy to deal with heteroscedasticity should be used or not. If
+  ommited (parameter value is NULL) then this is handeled implicitly based on 
+  the result of the Wilcoxon signed exact test (tests if there is a significant 
+  differene in the variance across samples between at least two levels of the 
+  experiment). If this test is significant for at least one pairwise comparison,
+  then the robust strategy is applied. The robust strategy uses the function                    voomWithQualityWeights for RNA-seq data instead of the normal voom function. 
+  For other, non-count-based data, the function limma::arrayWeights is used 
+  instead, combined with setting the robust argument to TRUE for the 
+  limma::eBayes function. In summary, the strategy employed by those functions
+  is to downweights samples with higher variance. This can be neccessary, 
+  because linear models have the assumption of homoscedasticity, which means 
+  that the variance is (approx.) the same across all datapoints where the linear
+  model is fitted. If this is violated, then the resulting p-values cannot be 
+  trusted (common statistical wisdom).
+  
+- New note in the HTML reports, that informs the user that the splines shown in
+  the plots can appear to have the wrong intercept. This can occur when a batch 
+  effect and/or random effect is modeled with limma or the linear mixed models,
+  but the plotting data is batch corrected only with the dedicated limma batch 
+  correction function. For a reason, there is a gap. The results are fine! Just 
+  the plotting is off!
 
 --------------------------------------------------------------------------------
 

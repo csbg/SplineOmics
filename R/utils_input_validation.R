@@ -1883,22 +1883,26 @@ Level2Functions <- R6::R6Class("Level2Functions",
         )
       }
       
-      # Check for rows with all zeros, ignoring NAs
-      if (any(rowSums(data, na.rm = TRUE) == 0)) {  # Sum only non-NA values
+      all_zero <- function(x) {
+        apply(x, 1, function(row) all(row == 0))
+      }
+      
+      # Check for all-zero rows
+      if (any(all_zero(data))) {
         stop(
           self$create_error_message(
-            "Data must not contain rows with all zeros!",
+            "Data must not contain rows where all values are zero!",
             data_meta_index
           ),
           call. = FALSE
         )
       }
       
-      # Check for columns with all zeros, ignoring NAs
-      if (any(colSums(data, na.rm = TRUE) == 0)) {  # Sum only non-NA values
+      # Check for all-zero columns
+      if (any(all_zero(t(data)))) {
         stop(
           self$create_error_message(
-            "Data must not contain columns with all zeros!",
+            "Data must not contain columns where all values are zero!",
             data_meta_index
           ),
           call. = FALSE
