@@ -168,7 +168,8 @@ run_limma_splines <- function(
 
   splineomics <- update_splineomics(
     splineomics = splineomics,
-    limma_splines_result = limma_splines_result
+    limma_splines_result = limma_splines_result,
+    robust_fit = fit_obj[["robust_fit"]]
   )
 }
 
@@ -435,7 +436,8 @@ fit_global_model <- function(
     meta = result[["meta"]],
     feature_names = feature_names,
     condition = condition,
-    padjust_method = padjust_method
+    padjust_method = padjust_method,
+    robust_fit = robust_fit
   )
 }
 
@@ -738,10 +740,10 @@ extract_contrast_for_pair <- function(
     level_pair
     ) {
   
-  fit <- fit_obj$fit
-  design_matrix <- fit_obj$design_matrix
-  feature_names <- fit_obj$feature_names
-  padjust_method <- fit_obj$padjust_method
+  fit <- fit_obj[["fit"]]
+  design_matrix <- fit_obj[["design_matrix"]]
+  feature_names <- fit_obj[["feature_names"]]
+  padjust_method <- fit_obj[["padjust_method"]]
   
   # Get properly constructed contrasts
   contrasts <- build_contrasts_for_pair(

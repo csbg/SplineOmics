@@ -163,6 +163,7 @@ cluster_hits <- function(
     meta_batch2_column,
     sep = ", "
   )
+  report_info[["robust_fit"]] <- splineomics[["robust_fit"]]
 
   if (
     (mode != "isolated") &&

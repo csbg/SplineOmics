@@ -159,6 +159,7 @@ generate_report_html <- function(
     "Fixed effects",
     "Random effects",
     "mode",
+    "robust_fit",
     "analyst_name",
     "contact_info",
     "project_name",
@@ -908,6 +909,12 @@ get_header_section <- function(
       individual spline plots is the average coefficient of variation across
       all timepoints. For example, a value of 10% means that the timepoints,
       on average, have a standard deviation of 10% of the mean.</li>',
+      '<li style="margin-bottom: 15px;">Note that the splines in the plots
+      can appear to be at the wrong intercept. This can occur when a batch  
+      effect and/or random effect is modeled with limma or the linear mixed
+      models, but the plotting data is batch corrected only with the 
+      dedicated limma batch correction function. For a reason, there is a gap.
+      The results are fine! Just the plotting is off!</li>',
       "</ul>",
       "</p>",
       "</div>",
