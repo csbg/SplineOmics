@@ -146,47 +146,24 @@ preprocess_rna_seq_data <- function(
     design_matrix <- result[["design_matrix"]]
     
     if (is.null(robust_fit)) {     # means fallback to implicit handling
-      # Step 1: run voom normally
+      # Run voom normally first
       voom_obj <- limma::voom(
         counts = y,
         design = design_matrix
       )
-
-      # Step 2: Generate all unique pairwise combinations of the condition 
-      # levels
-      condition_col <- splineomics[["condition"]]
-      all_levels <- unique(meta[[condition_col]])
-      level_pairs <- combn(
-        all_levels,
-        2,
-        simplify = FALSE
-        )
       
-      # Step 3: Run heteroscedasticity check on each pair
-      violation <- FALSE
-      for (pair in level_pairs) {
-        message(sprintf(
-          "Testing for heteroscedasticity: %s vs %s",
-          pair[1],
-          pair[2]
-          ))
-        violation <- check_homoscedasticity_violation(
-          data = voom_obj$E,
-          meta = meta,
-          condition = condition_col,
-          compared_levels = pair,
-          data_type = "rna-seq"
-        )
-        if (violation) {
-          break
-        }
-      }
+      violation <- check_homoscedasticity_violation(
+        data = voom_obj$E,
+        meta = meta,
+        condition = splineomics[["condition"]],
+        data_type = "rna-seq"
+      )
       
       # Step 4: If any pair was violated, rerun with robust weights
       if (violation) {
         message(
-        "↪ Rerunning with voomWithQualityWeights() due to detected variance
-        differences."
+        "Using voomWithQualityWeights() due to detected violation of the 
+        assumption of homoscedasticity."
         )
         voom_obj <- limma::voomWithQualityWeights(
           counts = y,

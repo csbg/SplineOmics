@@ -352,7 +352,7 @@ fit_global_model <- function(
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data   # Just having one variable makes the code easier
   } 
-  
+
   # For RNA-seq data, this is handled when calling limma::voom (happens before)
   # This here is the implicit fall-back logic when the user has not explicitly 
   # decided whether to robust_fit or not
@@ -363,7 +363,7 @@ fit_global_model <- function(
       condition = condition
     )
   }
-  
+
   if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream requires this format
     

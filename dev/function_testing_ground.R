@@ -345,7 +345,7 @@ splineomics <- update_splineomics(
   splineomics = splineomics,
   # design = "~ 1 + Phase*Time + (1|Reactor)",
   design = "~ 1 + Phase*Time + Reactor",
-  robust_fit = TRUE,
+  # robust_fit = TRUE,
   # mode = "integrated",
   mode = "integrated",
   # data = data2,
