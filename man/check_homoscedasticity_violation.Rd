@@ -9,7 +9,8 @@ check_homoscedasticity_violation(
   meta,
   condition,
   data_type = "other-omics",
-  p_threshold = 0.05
+  p_threshold = 0.05,
+  fraction_threshold = 0.1
 )
 }
 \arguments{
@@ -18,31 +19,59 @@ columns = samples). Should already be log-transformed or
 otherwise variance-stabilized if required.}
 
 \item{meta}{A data frame of sample metadata. Must have one row per column 
-in `data`.}
+in `data`, and must contain a numeric `Time` column indicating 
+the timepoint for each sample.}
 
 \item{condition}{A character string indicating the name of the column in
-`meta` representing the condition of interest.}
+`meta` representing the condition of interest. Currently
+only used for consistency; not directly used in this test.}
 
-\item{data_type}{String specifying if rna-seq data is passed, or other omics
-data. Based on this, the message displayed in case of a 
-significant violation of homoscedasticity informing about
-the strategy to mitigate the issue will change (different
-strategy for rna-seq and other omics data).}
+\item{data_type}{String specifying the omics data type ("rna-seq" or 
+"other-omics"). Used to determine the recommendation
+message in case of heteroscedasticity.}
 
-\item{p_threshold}{Numeric. Significance threshold for the Wilcoxon test
-(default is 0.05).}
+\item{p_threshold}{Numeric. Significance threshold for the Breusch–Pagan 
+test per feature (default is 0.05).}
+
+\item{fraction_threshold}{Numeric. Proportion of features that must violate 
+the homoscedasticity assumption (p < p_threshold) 
+to consider the whole dataset heteroscedastic 
+(default is 0.1, i.e., 10%).}
 }
 \value{
 A logical value indicating whether a statistically significant 
-        difference in variance was detected (`TRUE` = assumption violated,
-        `FALSE` = no violation). A summary of the test result is also printed
-        to the console.
+        violation of homoscedasticity was detected in the dataset 
+        (`TRUE` = assumption violated, `FALSE` = no violation). 
+        A summary message is printed to the console.
 }
 \description{
 This internal helper function tests whether the assumption of 
-homoscedasticity (equal variances) is violated across two levels of a given
-experimental condition. It performs a paired Wilcoxon signed-rank test on 
-per-feature (e.g., gene or protein) sample variances across the two groups.
-If the test is significant, it suggests that variance differs systematically 
-between conditions, which may bias linear model fits.
+homoscedasticity (equal variance of residuals) is violated across time 
+for each feature (e.g., gene or protein).
+}
+\details{
+For each feature independently, the function fits a linear model of the 
+form `expression ~ time`, where the `time` variable is extracted from 
+`meta[["Time"]]` and assumed to be numeric. The residuals from this model 
+are then tested for heteroscedasticity using the Breusch–Pagan test.
+
+The Breusch–Pagan test evaluates whether the variance of residuals 
+systematically depends on the fitted values from the model. Under the null 
+hypothesis, the residual variance is constant across all fitted values 
+(i.e., homoscedasticity). Under the alternative hypothesis, the residual 
+variance increases or decreases with the predicted expression values 
+(i.e., heteroscedasticity).
+
+The test does this by regressing the squared residuals onto the fitted 
+values and checking whether this auxiliary regression explains significantly 
+more variance than expected by chance. A small p-value indicates that the 
+residual variance is not constant and thus violates the assumption of 
+homoscedasticity.
+
+This function applies the Breusch–Pagan test across all features 
+independently and counts how many features yield a p-value below the 
+specified `p_threshold`. If the fraction of violating features exceeds 
+`fraction_threshold`, the function concludes that the dataset likely 
+violates the homoscedasticity assumption and suggests switching to a 
+more robust modeling strategy.
 }

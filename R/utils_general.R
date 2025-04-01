@@ -292,88 +292,109 @@ extract_effects <- function(formula_string) {
 #' Check for Violation of Homoscedasticity in Linear Model Inputs
 #'
 #' This internal helper function tests whether the assumption of 
-#' homoscedasticity (equal variances) is violated across two levels of a given
-#' experimental condition. It performs a paired Wilcoxon signed-rank test on 
-#' per-feature (e.g., gene or protein) sample variances across the two groups.
-#' If the test is significant, it suggests that variance differs systematically 
-#' between conditions, which may bias linear model fits.
+#' homoscedasticity (equal variance of residuals) is violated across time 
+#' for each feature (e.g., gene or protein). 
+#' 
+#' For each feature independently, the function fits a linear model of the 
+#' form `expression ~ time`, where the `time` variable is extracted from 
+#' `meta[["Time"]]` and assumed to be numeric. The residuals from this model 
+#' are then tested for heteroscedasticity using the Breusch–Pagan test.
+#' 
+#' The Breusch–Pagan test evaluates whether the variance of residuals 
+#' systematically depends on the fitted values from the model. Under the null 
+#' hypothesis, the residual variance is constant across all fitted values 
+#' (i.e., homoscedasticity). Under the alternative hypothesis, the residual 
+#' variance increases or decreases with the predicted expression values 
+#' (i.e., heteroscedasticity).
+#' 
+#' The test does this by regressing the squared residuals onto the fitted 
+#' values and checking whether this auxiliary regression explains significantly 
+#' more variance than expected by chance. A small p-value indicates that the 
+#' residual variance is not constant and thus violates the assumption of 
+#' homoscedasticity.
+#' 
+#' This function applies the Breusch–Pagan test across all features 
+#' independently and counts how many features yield a p-value below the 
+#' specified `p_threshold`. If the fraction of violating features exceeds 
+#' `fraction_threshold`, the function concludes that the dataset likely 
+#' violates the homoscedasticity assumption and suggests switching to a 
+#' more robust modeling strategy.
 #'
 #' @param data A numeric matrix of expression values (rows = features, 
 #'             columns = samples). Should already be log-transformed or 
 #'             otherwise variance-stabilized if required.
 #' @param meta A data frame of sample metadata. Must have one row per column 
-#'             in `data`.
+#'             in `data`, and must contain a numeric `Time` column indicating 
+#'             the timepoint for each sample.
 #' @param condition A character string indicating the name of the column in
-#'                  `meta` representing the condition of interest.
-#' @param data_type String specifying if rna-seq data is passed, or other omics
-#'                  data. Based on this, the message displayed in case of a 
-#'                  significant violation of homoscedasticity informing about
-#'                  the strategy to mitigate the issue will change (different
-#'                  strategy for rna-seq and other omics data).
-#' @param p_threshold Numeric. Significance threshold for the Wilcoxon test
-#'                    (default is 0.05).
+#'                  `meta` representing the condition of interest. Currently
+#'                  only used for consistency; not directly used in this test.
+#' @param data_type String specifying the omics data type ("rna-seq" or 
+#'                  "other-omics"). Used to determine the recommendation
+#'                  message in case of heteroscedasticity.
+#' @param p_threshold Numeric. Significance threshold for the Breusch–Pagan 
+#'                    test per feature (default is 0.05).
+#' @param fraction_threshold Numeric. Proportion of features that must violate 
+#'                           the homoscedasticity assumption (p < p_threshold) 
+#'                           to consider the whole dataset heteroscedastic 
+#'                           (default is 0.1, i.e., 10%).
 #'
 #' @return A logical value indicating whether a statistically significant 
-#'         difference in variance was detected (`TRUE` = assumption violated,
-#'         `FALSE` = no violation). A summary of the test result is also printed
-#'         to the console.
+#'         violation of homoscedasticity was detected in the dataset 
+#'         (`TRUE` = assumption violated, `FALSE` = no violation). 
+#'         A summary message is printed to the console.
 #'
 check_homoscedasticity_violation <- function(
     data,
     meta,
     condition,
     data_type = "other-omics",
-    p_threshold = 0.05
+    p_threshold = 0.05,
+    fraction_threshold = 0.1  
 ) {
   
-  levels <- unique(meta[[condition]])
-  level_combinations <- utils::combn(levels, 2, simplify = FALSE)
-  violation <- FALSE
+  message(paste(
+    "\nRunning Breusch-Pagan test to check for violation of homoscedasticity",
+    "of each feature..."
+    ))
+
+  # Run Breusch–Pagan test per feature (row)
+  bp_pvals <- apply(data, 1, function(y) {
+    fit <- lm(y ~ meta[["Time"]])
+    lmtest::bptest(fit)$p.value
+  })
   
-  for (pair in level_combinations) {
-    level1_samples <- which(meta[[condition]] == pair[1])
-    level2_samples <- which(meta[[condition]] == pair[2])
-    
-    data_level1 <- data[, level1_samples]
-    data_level2 <- data[, level2_samples]
-    
-    var_level1 <- apply(data_level1, 1, var, na.rm = TRUE)
-    var_level2 <- apply(data_level2, 1, var, na.rm = TRUE)
-    
-    var_test <- wilcox.test(
-      var_level1,
-      var_level2,
-      paired = TRUE,
-      alternative = "two.sided"
-    )
-    
-    message(sprintf("Testing variance between %s and %s", pair[1], pair[2]))
-    print(var_test)
-    
-    if (var_test$p.value < p_threshold) {
-      violation <- TRUE
-      break
-    }
-  }
+  # Determine fraction of features violating homoscedasticity
+  violation_flags <- bp_pvals < p_threshold
+  fraction_violated <- mean(violation_flags)
+  
+  
+  message("\n------------------------------------------------------------")
+  message(sprintf(
+    "Fraction of features violating homoscedasticity (p < %.3f): %.2f%%",
+    p_threshold,
+    100 * fraction_violated
+  ))
+  
+  violation <- fraction_violated >= fraction_threshold
   
   if (violation) {
     message(
       "\u2757 Linear model assumption of homoscedasticity is likely violated."
       )
-    
     if (data_type == "rna-seq") {
       message("\u27A1\uFE0F  Using robust RNA-seq strategy:")
-      message("       voomWithQualityWeights() to downweight noisy samples.")
+      message("voomWithQualityWeights() to downweight noisy samples.")
     } else {
       message("\u27A1\uFE0F  Using robust modeling strategy:")
       message("arrayWeights() and eBayes(robust = TRUE) to stabilize variance.")
     }
   } else {
     message("\u2705 No strong evidence for heteroscedasticity.")
-    message("Proceeding as usual.")
+    message("Proceeding WITHOUT using robust strategy")
   }
-  message("------------------------------------------------------------")
+  
+  message("------------------------------------------------------------\n")
   
   return(violation)
 }
-

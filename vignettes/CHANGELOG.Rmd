@@ -112,7 +112,8 @@ Examples:
   model is fitted. If this is violated, then the resulting p-values cannot be 
   trusted (common statistical wisdom).
   
-- New note in the HTML reports, that informs the user that the splines shown in
+- New note in the HTML report of the cluster_hits() function, that informs the 
+  user that the splines shown in
   the plots can appear to have the wrong intercept. This can occur when a batch 
   effect and/or random effect is modeled with limma or the linear mixed models,
   but the plotting data is batch corrected only with the dedicated limma batch 
