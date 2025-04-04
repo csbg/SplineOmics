@@ -4,28 +4,35 @@
 \alias{extract_data}
 \title{extract_data()}
 \usage{
-extract_data(data, feature_name_columns = NA, user_prompt = TRUE)
+extract_data(
+  data,
+  top_row,
+  bottom_row,
+  left_col,
+  right_col,
+  feature_name_columns = NA
+)
 }
 \arguments{
-\item{data}{A dataframe loaded from a tabular file, potentially containing a
-rectangular or quadratic area with numeric data amidst other values.}
+\item{data}{A dataframe containing tabular data.}
 
-\item{feature_name_columns}{(Optional) A character vector, specifying the
-columns of the dataframe data, that should be
-used to construct the feature names. If ommited,
-the feature names are just numbers (stored as
-characters) starting from 1 (1, 2, 3, etc.)}
+\item{top_row}{Integer indicating the first row of the data block.}
 
-\item{user_prompt}{Boolean specifying whether the user prompt about the
-correct format of the input data should be shown.}
+\item{bottom_row}{Integer indicating the last row of the data block.}
+
+\item{left_col}{Column name or index (letter or number) for the left-most column.}
+
+\item{right_col}{Column name or index (letter or number) for the right-most column.}
+
+\item{feature_name_columns}{Optional character vector for feature names.}
+
+\item{user_prompt}{Logical, whether to show a user prompt.}
 }
 \value{
-A numeric matrix with row headers and appropriate column names.
+A numeric matrix with cleaned values and appropriate column names.
 }
 \description{
-This function takes a dataframe and identifies a rectangular or quadratic
-area containing numeric data, starting from the first occurrence of a
-6x6 block of numeric values. It then extracts this area into a matrix,
-ensuring that each row contains only numeric values. Rows with any NA values
-are removed from the resulting matrix.
+This function extracts a rectangular block from a dataframe using user-specified
+top/bottom row indices and left/right column identifiers (numeric or Excel-style letters).
+It ensures the block contains only numeric values or NAs, and returns a cleaned matrix.
 }

@@ -63,43 +63,22 @@ data_stat_matrix_only <- extract_data(
   user_prompt = FALSE
 )
 
-# Check stat messyness ---------------------------------------------------------
-# Compute per-gene variance
-# Compute per-protein variance across samples in each condition
-# var_exp <- apply(data[, 1:18], 1, var, na.rm = TRUE)
-# var_stat <- apply(data[, 19:36], 1, var, na.rm = TRUE)
-# 
-# # Optional: summary stats for diagnostics
-# summary(var_exp)
-# summary(var_stat)
-# 
-# # Wilcoxon signed-rank test: two-sided
-# var_test <- wilcox.test(
-#   var_exp,
-#   var_stat,
-#   paired = TRUE,
-#   alternative = "two.sided"
-# )
-# 
-# print(var_test)
-
-
 
 # ------------------------------------------------------------------------------
 # Combine the data
 
-# Identify common row names
-common_rows <- intersect(
-  rownames(data_exp_matrix_only),
-  rownames(data_stat_matrix_only)
-  )
-
-# Subset both matrices to only include matching rows
-data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
-data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
-
-# Combine matrices by columns
-data <- cbind(data_exp_filtered, data_stat_filtered)
+# # Identify common row names
+# common_rows <- intersect(
+#   rownames(data_exp_matrix_only),
+#   rownames(data_stat_matrix_only)
+#   )
+# 
+# # Subset both matrices to only include matching rows
+# data_exp_filtered <- data_exp_matrix_only[common_rows, , drop = FALSE]
+# data_stat_filtered <- data_stat_matrix_only[common_rows, , drop = FALSE]
+# 
+# # Combine matrices by columns
+# data <- cbind(data_exp_filtered, data_stat_filtered)
 
 # ------------------------------------------------------------------------------
 
@@ -128,10 +107,10 @@ meta <- read_excel(here::here(
 # # Remove rows where all values are NA
 data <- data[rowSums(is.na(data)) < ncol(data), , drop = FALSE]
 
+# Remove features with more than 50% NA  values.
+data <- data[rowMeans(is.na(data)) <= 0.5, , drop = FALSE]
 
-# Add test row -----------------------------------------------------------------
-# data[1, 7:9] <- data[1, 7:9] + 6
-# data[1, 4:6] <- data[1, 4:6] + 4.5
+
 # ------------------------------------------------------------------------------
 
 
@@ -266,7 +245,7 @@ genes <- rownames(data)
 report_info <- list(
   omics_data_type = "PPTX",
   data_description = "Phosphoproteomics data 2025
-  standardinpute1point8downshift.xlsx    stat phase",
+  standardinpute1point8downshift.xlsx",
   data_collection_date = "2024",
   analyst_name = "Thomas Rauter",
   contact_info = "thomas.rauter@plus.ac.at",
@@ -520,39 +499,4 @@ result <- run_gsea(
 
 
 # test random stuff ------------------------------------------------------------
-
-# Load limma
-library(limma)
-
-# Set seed for reproducibility
-set.seed(42)
-
-# Fixed baseline value
-baseline <- 10
-
-# Case 1: Replicates have the same mean as baseline (10) with Gaussian noise
-replicates_case1 <- rnorm(4, mean = 10, sd = 1)
-
-# Case 2: Replicates have a mean of 12 with Gaussian noise
-replicates_case2 <- rnorm(4, mean = 12, sd = 1)
-
-# Create expression matrix (one row per case)
-expr_matrix <- matrix(c(replicates_case1, replicates_case2), nrow = 2, byrow = TRUE)
-
-# Center the data around the baseline (subtract it)
-expr_matrix_centered <- expr_matrix - baseline
-
-# Define design matrix (intercept-only model)
-design <- matrix(1, ncol = 1, nrow = ncol(expr_matrix))
-
-# Fit linear model
-fit <- lmFit(expr_matrix_centered, design)
-
-# Apply empirical Bayes moderation
-fit <- eBayes(fit)
-
-# Get top results
-topTable(fit, coef = 1)
-
-
 

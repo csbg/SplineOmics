@@ -134,6 +134,9 @@ cluster_hits <- function(
     meta = meta,
     condition = condition
   )
+  if (is.null(within_level_top_tables)) {   # when <2 hits for all levels
+    return(NULL)
+  }
 
   all_limma_result_tables <- filter_and_append_limma_results(
     splineomics = splineomics,  
@@ -374,7 +377,8 @@ filter_top_tables <- function(
   }
 
   if (all(is.na(within_level_top_tables))) {
-    stop("All levels have < 2 hits. Cannot run clustering.", call. = FALSE)
+    message("All levels have < 2 hits. Cannot run clustering. Stopping.")
+    return(NULL)
   }
 
   within_level_top_tables
