@@ -7,7 +7,6 @@
 check_homoscedasticity_violation(
   data,
   meta,
-  condition,
   data_type = "other-omics",
   p_threshold = 0.05,
   fraction_threshold = 0.1
@@ -21,10 +20,6 @@ otherwise variance-stabilized if required.}
 \item{meta}{A data frame of sample metadata. Must have one row per column 
 in `data`, and must contain a numeric `Time` column indicating 
 the timepoint for each sample.}
-
-\item{condition}{A character string indicating the name of the column in
-`meta` representing the condition of interest. Currently
-only used for consistency; not directly used in this test.}
 
 \item{data_type}{String specifying the omics data type ("rna-seq" or 
 "other-omics"). Used to determine the recommendation

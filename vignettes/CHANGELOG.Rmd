@@ -88,6 +88,22 @@ Examples:
   
 - Changed extract_data() function so that it can handle missing values 
   correctly.
+
+- When there where less than two hits in all levels for the cluster_hits()
+  function, then this function provided a message that informed about this and
+  threw an error. This was fine when just running the function to generate one
+  result. However, when using this function in an outside loop to generate
+  multiple results, this behavior is suboptimal, because it then must be 
+  captured with a tryCatch clause. Now, if there are less than two hits in all
+  levels, it simply returns NULL, which is a cleaner behavior that does not 
+  break loops if one result cannot be generated.
+
+- extract_data() function, so that now it does not work with an implicit logic,
+  but instead with an explicit logic. Before, it tried to automatically find the
+  numeric matrix field. Now, it requires to specific the top- and bottom row,
+  and the left and right column. This then marks the field where the matrix is.
+  The rest of the logic (the logic about the row name columns) is still the
+  same.
   
 ### Added
 - find_pvc() function. This function performs a compount contrast for every 
@@ -95,22 +111,8 @@ Examples:
   cliffs as a form of local temporal patterns. It generates an HTML report
   containing all findings in files and also containing the plots.
   
-- Implicit (default) and explicit heteroscedasticity handling of the linear 
-  model input. Controlled by the robust_fit Boolean flag indicating if the 
-  robust fit strategy to deal with heteroscedasticity should be used or not. If
-  ommited (parameter value is NULL) then this is handeled implicitly based on 
-  the result of the Wilcoxon signed exact test (tests if there is a significant 
-  differene in the variance across samples between at least two levels of the 
-  experiment). If this test is significant for at least one pairwise comparison,
-  then the robust strategy is applied. The robust strategy uses the function                    voomWithQualityWeights for RNA-seq data instead of the normal voom function. 
-  For other, non-count-based data, the function limma::arrayWeights is used 
-  instead, combined with setting the robust argument to TRUE for the 
-  limma::eBayes function. In summary, the strategy employed by those functions
-  is to downweights samples with higher variance. This can be neccessary, 
-  because linear models have the assumption of homoscedasticity, which means 
-  that the variance is (approx.) the same across all datapoints where the linear
-  model is fitted. If this is violated, then the resulting p-values cannot be 
-  trusted (common statistical wisdom).
+- Implicit (default) and explicit heteroscedasticity handling of the linear model input. Controlled by the `robust_fit` Boolean flag indicating whether the robust modeling strategy should be used to account for heteroscedasticity. If omitted (i.e., `robust_fit = NULL`), the decision is made implicitly based on the result of the Breusch–Pagan test, which is applied independently to each feature. This test fits a linear model of the form `expression ~ time` and checks whether the residual variance systematically depends on the fitted values. If a significant violation of homoscedasticity is detected in a sufficient fraction of features (default: 10%), the robust strategy is applied. For RNA-seq data, this means using `voomWithQualityWeights()` instead of the standard `voom()` function. For other, non-count-based data, `limma::arrayWeights()` is used during model fitting, combined with `robust = TRUE` in `limma::eBayes()`. These strategies downweight samples with higher residual variance to prevent bias in the linear modeling step, as violations of the homoscedasticity assumption can lead to misleading p-values and unreliable inference.
+
   
 - New note in the HTML report of the cluster_hits() function, that informs the 
   user that the splines shown in

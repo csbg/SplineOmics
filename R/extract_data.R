@@ -1,278 +1,203 @@
 #' extract_data()
 #'
 #' @description
-#' This function takes a dataframe and identifies a rectangular or quadratic
-#' area containing numeric data, starting from the first occurrence of a
-#' 6x6 block of numeric values. It then extracts this area into a matrix,
-#' ensuring that each row contains only numeric values. Rows with any NA values
-#' are removed from the resulting matrix.
+#' This function extracts a rectangular block from a dataframe using 
+#' user-specified
+#' top/bottom row indices and left/right column identifiers (numeric or 
+#' Excel-style letters).
+#' It ensures the block contains only numeric values or NAs, and returns a 
+#' cleaned matrix.
 #'
-#' @param data A dataframe loaded from a tabular file, potentially containing a
-#' rectangular or quadratic area with numeric data amidst other values.
-#' @param feature_name_columns (Optional) A character vector, specifying the
-#'                             columns of the dataframe data, that should be
-#'                             used to construct the feature names. If ommited,
-#'                             the feature names are just numbers (stored as
-#'                             characters) starting from 1 (1, 2, 3, etc.)
-#' @param user_prompt Boolean specifying whether the user prompt about the
-#' correct format of the input data should be shown.
+#' @param data A dataframe containing the full input, including annotation
+#' columns and the numeric block to extract.
 #'
-#' @return A numeric matrix with row headers and appropriate column names.
+#' @param top_row Integer. Specifies the first (top) row of the numeric data
+#' block. Row indexing is 1-based.
 #'
-#' @importFrom stats complete.cases
+#' @param bottom_row Integer. Specifies the last (bottom) row of the numeric
+#' data block. Must be >= `top_row`.
 #'
+#' @param left_col Column specifier for the left-most column of the data block.
+#' Can be either:
+#'   - An integer index (e.g., 2 for the second column), or
+#'   - A character string using Excel-style letters (e.g., "A", "AB").
+#'
+#' Column names (e.g., "age") are **not** allowed here. Only letters or numeric
+#' indices are accepted.
+#'
+#' @param right_col Same format as `left_col`. Specifies the right-most column
+#' of the numeric block. Must be >= `left_col` after conversion.
+#'
+#' @param feature_name_columns Optional character vector specifying columns in
+#' `data` to be used as row (feature) names in the output. If `NA`, generic
+#' feature names are used.
+#'
+#' @return A numeric matrix with cleaned values and appropriate column names.
+#' 
 #' @export
-#'
+#' 
 extract_data <- function(
     data,
-    feature_name_columns = NA,
-    user_prompt = TRUE) {
+    top_row,
+    bottom_row,
+    left_col,
+    right_col,
+    feature_name_columns = NA
+) {
+  
   control_inputs_extract_data(
     data = data,
+    top_row = top_row,
+    bottom_row = bottom_row,
+    left_col = left_col,
+    right_col = right_col,
     feature_name_columns = feature_name_columns
   )
+  
+  # Convert Excel-style letters to column indices if needed
+  left_col_idx <- excel_col_to_index(left_col)
+  right_col_idx <- excel_col_to_index(right_col)
 
-  if (user_prompt) {
-    ask_user(paste(
-      "Is the data matrix on the left, the annotation info on the right,",
-      "separated by an empty column? "
-    ))
-  }
-
+  # Extract the data block
   data <- as.data.frame(data)
-
-  numeric_block_finder <- NumericBlockFinder$new(data)
-  upper_left_cell <- numeric_block_finder$find_upper_left_cell()
-  lower_right_cell <- numeric_block_finder$find_lower_right_cell()
-
-  upper_left_row <- upper_left_cell$upper_left_row
-  upper_left_col <- upper_left_cell$upper_left_col
-
-  lower_right_row <- lower_right_cell$lower_right_row
-  lower_right_col <- lower_right_cell$lower_right_col
-
-  # Extract the numeric data block
-  numeric_data <- data[
-    upper_left_row:lower_right_row,
-    upper_left_col:lower_right_col
-  ]
-
-  numeric_data[] <-
-    lapply(numeric_data, function(col) {
-      suppressWarnings(
-        as.numeric(as.character(col))
+  numeric_data <- data[top_row:bottom_row, left_col_idx:right_col_idx]
+  
+  # Coerce to numeric
+  numeric_data[] <- lapply(numeric_data, function(col) {
+    suppressWarnings(as.numeric(as.character(col)))
+  })
+  
+  # Check that all values are numeric or NA
+  valid_block <- all(vapply(numeric_data, function(col) {
+    all(is.numeric(col) | is.na(col))
+  }, logical(1)))
+  
+  if (!valid_block) {
+    stop_call_false(
+      "The selected block must contain only numeric values or NAs."
       )
-    })
-
-  # Check if every element of numeric_data is numeric
-  if (any(vapply(numeric_data, function(col) all(is.na(col)), logical(1)))) {
-    stop_call_false(paste(
-      "All elements of the data field must be numeric. Please",
-      "ensure there is an empty column between the numeric data and",
-      "the annotation information, which, if present, must be on the",
-      "right of the numeric data, not on the left."
-    ))
   }
   
-  # Remove rows and columns that are entirely NA
+  # Remove empty rows and columns
   numeric_data <- numeric_data[
     rowSums(is.na(numeric_data)) != ncol(numeric_data),
   ]
   numeric_data <- numeric_data[
     , colSums(is.na(numeric_data)) != nrow(numeric_data)
   ]
-
-  # Extract headers for each column above the identified block
-  headers <- vapply(upper_left_col:lower_right_col, function(col_idx) {
-    header_values <- data[seq_len((upper_left_row - 1)), col_idx]
+  
+  # Extract headers above numeric block
+  headers <- vapply(left_col_idx:right_col_idx, function(col_idx) {
+    header_values <- data[seq_len(top_row - 1), col_idx]
     header_values <- header_values[!is.na(header_values)]
     paste(header_values, collapse = "_")
   }, character(1))
-
+  
   colnames(numeric_data) <- headers
-
+  
   numeric_data <- add_feature_names(
     data = data,
     clean_data = numeric_data,
     feature_name_columns = feature_name_columns
   )
-
+  
   clean_matrix <- as.matrix(numeric_data)
   rownames(clean_matrix) <- rownames(numeric_data)
-
+  
   clean_matrix
 }
-
-
-
-# Class NumericBlockFinder -----------------------------------------------------
-
-
-#' NumericBlockFinder: A class for finding numeric blocks in data
-#' 
-#' @noRd
-#'  
-#' @description
-#' This class provides methods to identify the upper-left and lower-right
-#' cells of a numeric block within a dataframe.
-#'
-#' @field data A dataframe containing the input data.
-#' @field upper_left_cell A list containing the row and column indices of the
-#'                        upper-left cell.
-#'
-NumericBlockFinder <- R6::R6Class("NumericBlockFinder",
-  public = list(
-    data = NULL,
-    upper_left_cell = NULL,
-
-
-    #' Initialize a NumericBlockFinder object
-    #'
-    #' @param data A dataframe containing the input data.
-    #' @return A new instance of the NumericBlockFinder class.
-    #'
-    initialize = function(data) {
-      self$data <- as.data.frame(data)
-    },
-
-
-    #' Find the upper-left cell of the first 6x6 block of numeric values
-    #'
-    #' This method identifies the upper-left cell of the first 6x6 block of
-    #' numeric values in the dataframe.
-    #'
-    #' @return A list containing the row and column indices of the upper-left
-    #'         cell.
-    #'
-    find_upper_left_cell = function() {
-      upper_left_row <- NA
-      upper_left_col <- NA
-      num_rows <- nrow(self$data)
-      num_cols <- ncol(self$data)
-      
-      for (i in seq_len((num_rows - 5))) {
-        for (j in seq_len((num_cols - 5))) {
-          block <- self$data[i:(i + 5), j:(j + 5)]
-          block_num <- suppressWarnings(as.numeric(as.matrix(block)))
-          
-          # Allow NA values but ensure at least 70% of the block is numeric
-          num_numeric <- sum(!is.na(block_num) & is.numeric(block_num))
-          total_values <- length(block_num)
-          
-          # At least 10% must be numeric
-          if ((num_numeric / total_values) >= 0.1) {  
-            upper_left_row <- i
-            upper_left_col <- j
-            break
-          }
-        }
-        if (!is.na(upper_left_row)) break
-      }
-      
-      if (is.na(upper_left_row) || is.na(upper_left_col)) {
-        stop("No at least 6x6 block of mostly numeric values found.",
-             call. = FALSE
-        )
-      }
-      
-      self$upper_left_cell <- list(
-        upper_left_row = upper_left_row,
-        upper_left_col = upper_left_col
-      )
-      return(self$upper_left_cell)
-    },
-
-
-    #' Find the lower-right cell of a block of contiguous non-NA values
-    #'
-    #' This method identifies the lower-right cell of a block of contiguous
-    #' non-NA values starting from a given upper-left cell in the dataframe.
-    #'
-    #' @return A list containing the row and column indices of the lower-right
-    #'         cell.
-    #'
-    find_lower_right_cell = function() {
-      if (is.null(self$upper_left_cell)) {
-        stop(paste(
-          "Upper-left cell has not been identified.",
-          "Call find_upper_left_cell first."
-        ), call. = FALSE)
-      }
-      
-      upper_left_row <- self$upper_left_cell$upper_left_row
-      upper_left_col <- self$upper_left_cell$upper_left_col
-      num_rows <- nrow(self$data)
-      num_cols <- ncol(self$data)
-      
-      # Expand the block vertically, allowing some NA values
-      # At least 1/6 values must be present
-      lower_right_row <- upper_left_row
-      for (i in (upper_left_row + 1):num_rows) {
-        if (sum(!is.na(self$data[i, upper_left_col])) < 1) {  
-          break
-        }
-        lower_right_row <- i
-      }
-      
-      # Expand the block horizontally, allowing some NA values
-      lower_right_col <- upper_left_col
-      for (j in (upper_left_col + 1):num_cols) {
-        if (sum(!is.na(self$data[upper_left_row, j])) < 1) { 
-          break
-        }
-        lower_right_col <- j
-      }
-      
-      list(
-        lower_right_row = lower_right_row,
-        lower_right_col = lower_right_col
-      )
-    }
-  )
-)
 
 
 # Level 1 internal functions ---------------------------------------------------
 
 
 #' Control Inputs for Extracting Data
-#' 
+#'
 #' @noRd
 #'
 #' @description
-#' This function checks the validity of input data and the feature name column.
-#' It ensures that the input data is a dataframe, the feature name column is
-#' specified correctly, and contains valid data.
+#' This function checks the validity of input data, user-defined row and column
+#' boundaries, and the feature name columns. Ensures the selected block is valid
+#' and the inputs are correctly specified.
 #'
 #' @param data A dataframe containing the input data.
-#' @param feature_name_columns A character vector specifying the names of the
-#'                             feature name columns. The columns must be present
-#'                             in the dataframe data. If `NA`, no column is
-#'                             checked.
-#'
-#' @details
-#' The function performs the following checks:
-#' - Ensures the input data is a dataframe.
-#' - Checks if the feature name column is a single string and exists in the
-#' data.
-#' - Ensures the specified feature name column does not contain only `NA`
-#' values.
-#' - Checks if the input dataframe is not empty.
-#'
-#' If any of these checks fail, the function stops with an error message.
+#' @param top_row Integer specifying the top-most row of the numeric block.
+#' @param bottom_row Integer specifying the bottom-most row of the numeric block.
+#' @param left_col Column identifier (letter or numeric) for the left-most column.
+#' @param right_col Column identifier (letter or numeric) for the right-most column.
+#' @param feature_name_columns A character vector specifying the feature name
+#' columns, or NA.
 #'
 control_inputs_extract_data <- function(
     data,
-    feature_name_columns) {
+    top_row,
+    bottom_row,
+    left_col,
+    right_col,
+    feature_name_columns
+) {
+  
   if (!is.data.frame(data)) {
     stop("Input data must be a dataframe.", call. = FALSE)
   }
-
+  
+  if (nrow(data) == 0 || ncol(data) == 0) {
+    stop("Input dataframe is empty or has no columns.", call. = FALSE)
+  }
+  
+  # Validate row inputs
+  if (!is.numeric(top_row) || !is.numeric(bottom_row)) {
+    stop("top_row and bottom_row must be numeric.", call. = FALSE)
+  }
+  if (top_row <= 0 || bottom_row <= 0 ||
+      top_row != floor(top_row) ||
+      bottom_row != floor(bottom_row)) {
+    stop("top_row and bottom_row must be positive integers.", call. = FALSE)
+  }
+  if (top_row > bottom_row) {
+    stop("top_row cannot be greater than bottom_row.", call. = FALSE)
+  }
+  if (bottom_row > nrow(data)) {
+    stop("bottom_row exceeds number of rows in data.", call. = FALSE)
+  }
+  
+  # Validate column inputs
+  excel_col_to_index <- function(col) {
+    if (is.numeric(col)) return(as.integer(col))
+    col <- toupper(as.character(col))
+    sapply(col, function(cname) {
+      chars <- strsplit(cname, "")[[1]]
+      int_vals <- utf8ToInt(chars) - 64
+      powers <- 26 ^ (rev(seq_along(chars)) - 1)
+      sum(int_vals * powers)
+    })
+  }
+  
+  left_col_idx <- excel_col_to_index(left_col)
+  right_col_idx <- excel_col_to_index(right_col)
+  
+  if (any(is.na(c(left_col_idx, right_col_idx)))) {
+    stop("Invalid column reference in left_col or right_col.", call. = FALSE)
+  }
+  
+  if (left_col_idx <= 0 || right_col_idx <= 0) {
+    stop("Column indices must be positive integers.", call. = FALSE)
+  }
+  
+  if (left_col_idx > right_col_idx) {
+    stop("left_col cannot be after right_col.", call. = FALSE)
+  }
+  
+  if (right_col_idx > ncol(data)) {
+    stop("right_col exceeds number of columns in data.", call. = FALSE)
+  }
+  
+  # Validate feature name columns
   if (!any(is.na(feature_name_columns))) {
     if (!is.character(feature_name_columns)) {
       stop("feature_name_columns should be a character vector.", call. = FALSE)
     }
-
+    
     missing_columns <- setdiff(feature_name_columns, colnames(data))
     if (length(missing_columns) > 0) {
       stop(
@@ -283,48 +208,51 @@ control_inputs_extract_data <- function(
         call. = FALSE
       )
     }
-
-
-    if (!any(is.na(feature_name_columns))) {
-      if (all(is.na(data[feature_name_columns]))) {
-        stop(
-          paste("Columns '", paste(feature_name_columns, collapse = ", "),
-            "' contain only NA values.",
-            sep = ""
-          ),
-          call. = FALSE
-        )
-      }
+    
+    if (all(is.na(data[feature_name_columns]))) {
+      stop(
+        paste0("Columns '", paste(feature_name_columns, collapse = ", "),
+               "' contain only NA values."),
+        call. = FALSE
+      )
     }
-  }
-
-  if (nrow(data) == 0) {
-    stop("Input dataframe is empty.", call. = FALSE)
   }
 }
 
 
-#' Prompt the user with a yes/no question
-#' 
-#' @noRd
+#' Convert Excel-style column letters to numeric indices
 #'
 #' @description
-#' This function prompts the user with a yes/no question. If the user answers
-#' "yes" (case insensitive), the code proceeds. If the user answers "no" or
-#' anything else, the code stops.
+#' Converts Excel-style column letters (e.g., "A", "Z", "AA", "AZ") into the 
+#' corresponding
+#' numeric column indices. This is useful for allowing users to input column 
+#' references
+#' in a more familiar format.
 #'
-#' @param question A string of the question to ask the user.
+#' @param col A character vector of column letters (e.g., "A", "BC") or numeric 
+#' column indices.
+#'            If numeric, the input is returned unchanged (as integers).
 #'
-#' @return None.
+#' @return An integer vector of column indices corresponding to the input 
+#' letters.
 #'
-ask_user <- function(question) {
-  message(question, " (yes/no):")
-  response <- readline()
-  if (tolower(response) == "yes") {
-    message("Proceeding...")
-  } else {
-    stop("Please make sure that this is the case!", call. = FALSE)
-  }
+#' @examples
+#' excel_col_to_index("A")   # returns 1
+#' excel_col_to_index("Z")   # returns 26
+#' excel_col_to_index("AA")  # returns 27
+#' excel_col_to_index("AZ")  # returns 52
+#' excel_col_to_index(c("A", "B", "Z", "AA", "AZ"))  # returns 
+#' c(1, 2, 26, 27, 52)
+#' excel_col_to_index(5)     # returns 5 (numeric input is returned as-is)
+#'
+#' @noRd
+#' 
+excel_col_to_index <- function(col) {
+  if (is.numeric(col)) return(as.integer(col))
+  col <- toupper(as.character(col))
+  sapply(col, function(cname) {
+    sum((utf8ToInt(cname) - 64) * 26 ^ (rev(seq_along(cname)) - 1))
+  })
 }
 
 

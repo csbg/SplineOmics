@@ -128,6 +128,10 @@ run_limma_splines <- function(
       purrr::map(results_list, "top_table"),
       purrr::map_chr(results_list, "name")
     )
+  
+  limma_splines_result <- list(
+    time_effect = within_level_top_table
+  )
 
   if (mode == "integrated") {
     # Step 1: Fit the global model once
@@ -149,27 +153,27 @@ run_limma_splines <- function(
       fit_obj = fit_obj,
       condition = condition
     )
+    
+    # Add contrast-based results
+    limma_splines_result[["avrg_diff_conditions"]] <- 
+      contrast_results[["condition_only"]]
+    limma_splines_result[["interaction_condition_time"]] <- 
+      contrast_results[["condition_time"]]
 
   } else { # mode == "isolated"
     message(paste(
       "mode == 'integrated' necessary for between level",
-      "comparisons. Returning emtpy lists the limma result categories 2 and 3
-      (avrg diff conditions, and interaction condition time)."
+      "comparisons. Returning emtpy lists the limma result categories 2 and 3",
+      "(avrg diff conditions, and interaction condition time)."
     ))
   }
 
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
 
-  limma_splines_result <- list(
-    time_effect = within_level_top_table,
-    avrg_diff_conditions = contrast_results$condition_only,
-    interaction_condition_time = contrast_results$condition_time
-  )
-
   splineomics <- update_splineomics(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
-    robust_fit = fit_obj[["robust_fit"]]
+    robust_fit = if (exists("fit_obj")) fit_obj[["robust_fit"]] else NULL
   )
 }
 
@@ -359,8 +363,7 @@ fit_global_model <- function(
   if (is.null(rna_seq_data) && is.null(robust_fit)) {
     robust_fit <- check_homoscedasticity_violation(
       data = data,
-      meta = meta,
-      condition = condition
+      meta = meta
     )
   }
 

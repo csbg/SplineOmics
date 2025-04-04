@@ -155,7 +155,6 @@ preprocess_rna_seq_data <- function(
       violation <- check_homoscedasticity_violation(
         data = voom_obj$E,
         meta = meta,
-        condition = splineomics[["condition"]],
         data_type = "rna-seq"
       )
       

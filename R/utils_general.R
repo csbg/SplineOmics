@@ -326,9 +326,6 @@ extract_effects <- function(formula_string) {
 #' @param meta A data frame of sample metadata. Must have one row per column 
 #'             in `data`, and must contain a numeric `Time` column indicating 
 #'             the timepoint for each sample.
-#' @param condition A character string indicating the name of the column in
-#'                  `meta` representing the condition of interest. Currently
-#'                  only used for consistency; not directly used in this test.
 #' @param data_type String specifying the omics data type ("rna-seq" or 
 #'                  "other-omics"). Used to determine the recommendation
 #'                  message in case of heteroscedasticity.
@@ -347,7 +344,6 @@ extract_effects <- function(formula_string) {
 check_homoscedasticity_violation <- function(
     data,
     meta,
-    condition,
     data_type = "other-omics",
     p_threshold = 0.05,
     fraction_threshold = 0.1  

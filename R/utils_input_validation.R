@@ -2297,8 +2297,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
         num_levels <- length(unique(meta[[condition]]))
         if (any(vapply(spline_params, length, integer(1)) != num_levels)) {
           stop_call_false(paste(
-            "Each vector or list in spline_params must have as many",
-            "elements as there are unique elements in the ", condition,
+            "Each vector in spline_params must have as many",
+            "elements as there are unique elements in the",
+            condition,
             "column of meta when mode is 'isolated'."
           ))
         }
