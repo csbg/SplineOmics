@@ -10,29 +10,46 @@ extract_data(
   bottom_row,
   left_col,
   right_col,
-  feature_name_columns = NA
+  feature_name_columns = NA,
+  use_row_index = FALSE
 )
 }
 \arguments{
-\item{data}{A dataframe containing tabular data.}
+\item{data}{A dataframe containing the full input, including annotation
+columns and the numeric block to extract.}
 
-\item{top_row}{Integer indicating the first row of the data block.}
+\item{top_row}{Integer. Specifies the first (top) row of the numeric data
+block. Row indexing is 1-based.}
 
-\item{bottom_row}{Integer indicating the last row of the data block.}
+\item{bottom_row}{Integer. Specifies the last (bottom) row of the numeric
+data block. Must be >= `top_row`.}
 
-\item{left_col}{Column name or index (letter or number) for the left-most column.}
+\item{left_col}{Column specifier for the left-most column of the data block.
+Can be either:
+  - An integer index (e.g., 2 for the second column), or
+  - A character string using Excel-style letters (e.g., "A", "AB").
 
-\item{right_col}{Column name or index (letter or number) for the right-most column.}
+Column names (e.g., "age") are **not** allowed here. Only letters or numeric
+indices are accepted.}
 
-\item{feature_name_columns}{Optional character vector for feature names.}
+\item{right_col}{Same format as `left_col`. Specifies the right-most column
+of the numeric block. Must be >= `left_col` after conversion.}
 
-\item{user_prompt}{Logical, whether to show a user prompt.}
+\item{feature_name_columns}{Optional character vector specifying columns in
+`data` to be used as row (feature) names in the output. If `NA`, generic
+feature names are used.}
+
+\item{use_row_index}{Logical. If \code{TRUE}, prepend the row index to each
+combined feature name to ensure uniqueness. Defaults to \code{FALSE}.}
 }
 \value{
 A numeric matrix with cleaned values and appropriate column names.
 }
 \description{
-This function extracts a rectangular block from a dataframe using user-specified
-top/bottom row indices and left/right column identifiers (numeric or Excel-style letters).
-It ensures the block contains only numeric values or NAs, and returns a cleaned matrix.
+This function extracts a rectangular block from a dataframe using 
+user-specified
+top/bottom row indices and left/right column identifiers (numeric or 
+Excel-style letters).
+It ensures the block contains only numeric values or NAs, and returns a 
+cleaned matrix.
 }
