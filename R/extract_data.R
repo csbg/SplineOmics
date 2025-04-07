@@ -31,6 +31,8 @@
 #' @param feature_name_columns Optional character vector specifying columns in
 #' `data` to be used as row (feature) names in the output. If `NA`, generic
 #' feature names are used.
+#' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
+#'  combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
 #'
 #' @return A numeric matrix with cleaned values and appropriate column names.
 #' 
@@ -42,7 +44,8 @@ extract_data <- function(
     bottom_row,
     left_col,
     right_col,
-    feature_name_columns = NA
+    feature_name_columns = NA,
+    use_row_index = FALSE
 ) {
   
   control_inputs_extract_data(
@@ -51,7 +54,8 @@ extract_data <- function(
     bottom_row = bottom_row,
     left_col = left_col,
     right_col = right_col,
-    feature_name_columns = feature_name_columns
+    feature_name_columns = feature_name_columns,
+    use_row_index = use_row_index
   )
   
   # Convert Excel-style letters to column indices if needed
@@ -77,28 +81,31 @@ extract_data <- function(
       "The selected block must contain only numeric values or NAs."
       )
   }
-  
-  # Remove empty rows and columns
-  numeric_data <- numeric_data[
-    rowSums(is.na(numeric_data)) != ncol(numeric_data),
-  ]
-  numeric_data <- numeric_data[
-    , colSums(is.na(numeric_data)) != nrow(numeric_data)
-  ]
-  
-  # Extract headers above numeric block
+
   headers <- vapply(left_col_idx:right_col_idx, function(col_idx) {
+    if (top_row == 1) {
+      # Just return existing column name
+      return(colnames(data)[col_idx])
+    }
+    
+    # Otherwise: build header from all non-NA entries above the data block
     header_values <- data[seq_len(top_row - 1), col_idx]
     header_values <- header_values[!is.na(header_values)]
+    
+    if (length(header_values) == 0) {
+      return(paste0("X", col_idx))  # Fallback if nothing usable
+    }
+    
     paste(header_values, collapse = "_")
   }, character(1))
   
-  colnames(numeric_data) <- headers
+    colnames(numeric_data) <- headers
   
   numeric_data <- add_feature_names(
     data = data,
-    clean_data = numeric_data,
-    feature_name_columns = feature_name_columns
+    data_matrix = numeric_data,
+    feature_name_columns = feature_name_columns,
+    use_row_index = use_row_index
   )
   
   clean_matrix <- as.matrix(numeric_data)
@@ -127,6 +134,8 @@ extract_data <- function(
 #' @param right_col Column identifier (letter or numeric) for the right-most column.
 #' @param feature_name_columns A character vector specifying the feature name
 #' columns, or NA.
+#' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
+#'  combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
 #'
 control_inputs_extract_data <- function(
     data,
@@ -134,7 +143,8 @@ control_inputs_extract_data <- function(
     bottom_row,
     left_col,
     right_col,
-    feature_name_columns
+    feature_name_columns,
+    use_row_index
 ) {
   
   if (!is.data.frame(data)) {
@@ -160,19 +170,7 @@ control_inputs_extract_data <- function(
   if (bottom_row > nrow(data)) {
     stop("bottom_row exceeds number of rows in data.", call. = FALSE)
   }
-  
-  # Validate column inputs
-  excel_col_to_index <- function(col) {
-    if (is.numeric(col)) return(as.integer(col))
-    col <- toupper(as.character(col))
-    sapply(col, function(cname) {
-      chars <- strsplit(cname, "")[[1]]
-      int_vals <- utf8ToInt(chars) - 64
-      powers <- 26 ^ (rev(seq_along(chars)) - 1)
-      sum(int_vals * powers)
-    })
-  }
-  
+
   left_col_idx <- excel_col_to_index(left_col)
   right_col_idx <- excel_col_to_index(right_col)
   
@@ -216,6 +214,15 @@ control_inputs_extract_data <- function(
         call. = FALSE
       )
     }
+    
+    # Validate use_row_index argument
+    if (!is.logical(use_row_index) ||
+        length(use_row_index) != 1 ||
+        is.na(use_row_index)) {
+      stop_call_false(
+        "'use_row_index' must be either TRUE or FALSE")
+    }
+    
   }
 }
 
@@ -251,7 +258,9 @@ excel_col_to_index <- function(col) {
   if (is.numeric(col)) return(as.integer(col))
   col <- toupper(as.character(col))
   sapply(col, function(cname) {
-    sum((utf8ToInt(cname) - 64) * 26 ^ (rev(seq_along(cname)) - 1))
+    letters <- strsplit(cname, split = "")[[1]]
+    nums <- sapply(letters, function(l) utf8ToInt(l) - 64)
+    sum(nums * 26 ^ (rev(seq_along(nums)) - 1))
   })
 }
 
@@ -266,76 +275,88 @@ excel_col_to_index <- function(col) {
 #' assigns sequential numbers as feature names.
 #'
 #' @param data A dataframe containing the original data with feature names.
-#' @param clean_data A dataframe to which the feature names will be added.
+#' @param data_matrix A dataframe to which the feature names will be added.
 #' @param feature_name_columns A string specifying the name of the feature
 #'                             columns in `data`. If `NA`, sequential numbers
 #'                             will be used as feature names.
+#' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
+#'  combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
 #'
 #' @details
 #' The function performs the following operations:
 #' - Extracts feature names from the specified column in `data`, ignoring
 #'  `NA` values.
 #' - Ensures the feature names are unique and match the number of rows in
-#' `clean_data`.
-#' - Assigns the feature names to the rows of `clean_data`.
+#' `data_matrix`.
+#' - Assigns the feature names to the rows of `data_matrix`.
 #' - If `feature_name_column` is `NA`, assigns sequential numbers
 #' (1, 2, 3, etc.)
 #'   as feature names and issues a message.
 #'
-#' @return The `clean_data` dataframe with updated row names.
+#' @return The `data_matrix` dataframe with updated row names.
 #'
 add_feature_names <- function(
     data,
-    clean_data,
-    feature_name_columns
+    data_matrix,
+    feature_name_columns,
+    use_row_index = FALSE
     ) {
-  
+
   if (!any(is.na(feature_name_columns))) {
     non_na_index <- which(apply(
       data[feature_name_columns], 1,
       function(row) all(!is.na(row))
     ))[1]
     data_filtered <- data[non_na_index:nrow(data), , drop = FALSE]
-    clean_data_filtered <- clean_data[non_na_index:nrow(clean_data), ,
-      drop = FALSE
-    ]
 
     # Extract and combine the feature names from specified columns
     feature_names <- apply(
       data_filtered[feature_name_columns], 1,
-      function(row) paste(row, collapse = "_")
+      function(row) paste(
+        row,
+        collapse = "_"
+        )
     )
 
     # Check for NA values in combined feature names
     feature_names <- as.character(feature_names)
     feature_names <- feature_names[!is.na(feature_names)]
+    
+    # Optionally prepend row index
+    if (use_row_index) {
+      row_indices <- seq_len(length(feature_names))
+      feature_names <- paste(
+        row_indices,
+        feature_names,
+        sep = "_"
+        )
+    }
 
     # Ensure unique feature names
     if (length(feature_names) != length(unique(feature_names))) {
-      stop("Combined feature names must be unique, ignoring NA values.",
-        call. = FALSE
+      stop_call_false(
+        "Combined feature names must be unique, ignoring NA values."
       )
     }
 
-    # Ensure the length matches the number of rows in clean_data
-    if (length(feature_names) != nrow(clean_data)) {
-      stop(
+    # Ensure the length matches the number of rows in data_matrix
+    if (length(feature_names) != nrow(data_matrix)) {
+      stop_call_false(
         paste(
           "Length of combined feature names does not match the number of",
-          "rows in clean_data."
-        ),
-        call. = FALSE
+          "rows in data_matrix"
+        )
       )
     }
 
     # Assign combined feature names as row names
-    rownames(clean_data) <- feature_names
+    rownames(data_matrix) <- feature_names
   } else {
-    rownames(clean_data) <- as.character(seq_len(nrow(clean_data)))
+    rownames(data_matrix) <- as.character(seq_len(nrow(data_matrix)))
     message(paste(
       "No feature_name column specified. Setting numbers 1, 2, 3,",
       "etc. as the feature names"
     ))
   }
-  return(clean_data)
+  return(data_matrix)
 }

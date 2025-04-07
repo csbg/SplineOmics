@@ -27,159 +27,156 @@
 #' }
 #' @export
 #'
-make_scatter_plot_html <- function(
+make_scatter_plots_html <- function(
     data,
     meta,
-    output_file = "scatter_plots_base64.html",
-    meta_replicate_column = NULL
+    output_file = "scatter_report",  # no .html suffix anymore
+    meta_replicate_column = NULL,
+    features_per_file = 500
 ) {
-  # Check if meta contains the Time column
+  
   if (!"Time" %in% colnames(meta)) {
-    stop("The meta data must contain a 'Time' column.")
+    stop_call_false("The meta data must contain a 'Time' column.")
   }
   
-  # Ensure the number of columns in 'data' matches the number of rows in 'meta'
   if (ncol(data) != nrow(meta)) {
-    stop(
+    stop_call_false(
       "The number of columns in 'data' must match the number of rows in 'meta'."
     )
   }
   
-  # Check if meta_replicate_column exists in the meta data
-  if (!is.null(meta_replicate_column) && !(meta_replicate_column %in% colnames(meta))) {
-    stop(paste("The meta data must contain the column:", meta_replicate_column))
+  if (!is.null(meta_replicate_column) &&
+      !(meta_replicate_column %in% colnames(meta))) {
+    stop_call_false(paste(
+      "The meta data must contain the column:",
+      meta_replicate_column
+    ))
   }
   
-  # Sort data by feature names
   data <- data[order(rownames(data)), ]
+  total_features <- nrow(data)
+  total_chunks <- ceiling(total_features / features_per_file)
   
-  # Create a temporary RMarkdown file for the report
-  rmd_file <- base::tempfile(fileext = ".Rmd")
+  message("Total features: ", total_features)
+  message(
+    "Generating ",
+    total_chunks,
+    " HTML reports in chunks of ",
+    features_per_file
+    )
   
-  # Initialize content list
-  content <- c(
-    "---",
-    "title: 'Feature Scatter Plots'",
-    "output: html_document",
-    "---",
-    "",
-    "## Scatter Plots by Feature",
-    ""
-  )
-  
-  # Total number of iterations
-  total_iterations <- nrow(data)
-  
-  # Initialize progress bar with iteration count
-  pb <- progress::progress_bar$new(
-    format = "  Generating plots [:bar] :current/:total (:percent) in :elapsed",
-    total = total_iterations, clear = FALSE, width = 60
-  )
-  
-  # Loop through each feature (row) and generate plots
-  for (i in seq_len(total_iterations)) {
-    feature_name <- rownames(data)[i]
-    feature_values <- data[i, ]
+  for (chunk_index in seq_len(total_chunks)) {
+    feature_start <- (chunk_index - 1) * features_per_file + 1
+    feature_end <- min(chunk_index * features_per_file, total_features)
     
-    # Check if all values are NA for the feature
-    if (all(is.na(feature_values))) {
-      content <- c(
-        content,
-        paste0(
-          "### ",
-          feature_name,
-          " (no plot shown because all values are NA)\n"
-        )
-      )
-    } else {
-      # Filter out NA values from feature_values and corresponding Time values
-      valid_idx <- !is.na(feature_values)
-      valid_values <- feature_values[valid_idx]
-      valid_time <- meta$Time[valid_idx]
-      
-      # Create a valid data frame for ggplot
-      valid_data <- data.frame(Time = valid_time, Value = valid_values)
-      valid_data$Value <- as.numeric(valid_data$Value)
-      
-      # Check if replicates are provided and set up coloring
-      if (!is.null(meta_replicate_column)) {
-        valid_replicates <- meta[[meta_replicate_column]][valid_idx]
-        valid_data$Replicate <- factor(valid_replicates)
-        aes_params <- ggplot2::aes(x = Time, y = Value, color = Replicate)
-        color_label <- meta_replicate_column
-      } else {
-        aes_params <- ggplot2::aes(x = Time, y = Value)  # No coloring
-        color_label <- NULL
-      }
-      
-      p <- ggplot2::ggplot(valid_data, aes_params) +
-        ggplot2::geom_point(size = 0.5, alpha = 0.7, shape = 16, na.rm = TRUE) + 
-        ggplot2::scale_y_continuous(
-          labels = scales::label_number(signif = TRUE, digits = 4),
-          breaks = scales::pretty_breaks(n = 5)
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(
-          axis.text = ggplot2::element_text(size = 5),
-          axis.title = ggplot2::element_text(size = 6),
-          plot.margin = ggplot2::margin(1, 1, 1, 1),
-          panel.grid.major.y = ggplot2::element_line(
-            size = 0.2,
-            linetype = "solid",
-            color = "gray"
-          ),
-          panel.grid.minor.y = ggplot2::element_blank(),
-          legend.text = ggplot2::element_text(size = 3),
-          legend.title = ggplot2::element_text(size = 3),
-          legend.key.size = ggplot2::unit(0.2, "cm")
-        )
-      
-      
-      # Add a legend if replicates are provided
-      if (!is.null(meta_replicate_column)) {
-        p <- p + ggplot2::labs(color = meta_replicate_column)
-      }
-      
-      
-      # Convert the plot to base64 using the provided plot2base64 function
-      plot_base64 <- plot2base64(
-        plot = p,
-        height = 1,
-        width = 2,
-        base_height_per_row = 1
-      )
-      
-      # Add the feature name and plot to the content
-      content <- c(
-        content,
-        paste0(
-          "### ",
-          feature_name
+    chunk_data <- data[feature_start:feature_end, , drop = FALSE]
+    
+    rmd_file <- tempfile(fileext = ".Rmd")
+    con <- file(rmd_file, open = "wt")
+    
+    # Write RMarkdown header
+    writeLines(c(
+      "---",
+      paste0("title: 'Feature Scatter Plots (Chunk ", chunk_index, ")'"),
+      "output: html_document",
+      "---",
+      "",
+      paste0("## Features ", feature_start, " to ", feature_end),
+      ""
+    ), con)
+    
+    pb <- progress::progress_bar$new(
+      format = paste0(
+        "  Chunk ",
+        chunk_index,
+        " [:bar] :current/:total (:percent) in :elapsed"
         ),
-        plot_base64,
-        "\n"
-      )
+      total = nrow(chunk_data), clear = FALSE, width = 60
+    )
+    
+    for (i in seq_len(nrow(chunk_data))) {
+      feature_name <- rownames(chunk_data)[i]
+      feature_values <- chunk_data[i, ]
+      
+      if (all(is.na(feature_values))) {
+        writeLines(
+          paste0(
+            "### ",
+            feature_name,
+            " (no plot shown because all values are NA)\n"
+            ),
+          con
+          )
+      } else {
+        valid_idx <- !is.na(feature_values)
+        valid_values <- feature_values[valid_idx]
+        valid_time <- meta$Time[valid_idx]
+        valid_data <- data.frame(Time = valid_time, Value = valid_values)
+        valid_data$Value <- as.numeric(valid_data$Value)
+        
+        if (!is.null(meta_replicate_column)) {
+          valid_replicates <- meta[[meta_replicate_column]][valid_idx]
+          valid_data$Replicate <- factor(valid_replicates)
+          aes_params <- ggplot2::aes(x = Time, y = Value, color = Replicate)
+        } else {
+          aes_params <- ggplot2::aes(x = Time, y = Value)
+        }
+        
+        p <- ggplot2::ggplot(valid_data, aes_params) +
+          ggplot2::geom_point(
+            size = 0.5,
+            alpha = 0.7,
+            shape = 16,
+            na.rm = TRUE
+            ) +
+          ggplot2::scale_y_continuous(
+            labels = scales::label_number(signif = TRUE, digits = 4),
+            breaks = scales::pretty_breaks(n = 5)
+          ) +
+          ggplot2::theme_minimal() +
+          ggplot2::theme(
+            axis.text = ggplot2::element_text(size = 5),
+            axis.title = ggplot2::element_text(size = 6),
+            plot.margin = ggplot2::margin(1, 1, 1, 1),
+            panel.grid.major.y = ggplot2::element_line(
+              size = 0.2,
+              linetype = "solid",
+              color = "gray"
+              ),
+            panel.grid.minor.y = ggplot2::element_blank(),
+            legend.text = ggplot2::element_text(size = 3),
+            legend.title = ggplot2::element_text(size = 3),
+            legend.key.size = ggplot2::unit(0.2, "cm")
+          )
+        
+        if (!is.null(meta_replicate_column)) {
+          p <- p + ggplot2::labs(color = meta_replicate_column)
+        }
+        
+        plot_base64 <- plot2base64(
+          plot = p,
+          height = 1,
+          width = 2,
+          base_height_per_row = 1
+        )
+
+        writeLines(paste0("### ", feature_name), con)
+        writeLines("```{=html}", con)
+        writeLines(plot_base64, con)
+        writeLines("```", con)
+        writeLines("", con)
+        
+      }
+      pb$tick()
     }
     
-    # Update progress bar
-    pb$tick()
+    close(con)
+    
+    chunk_output <- paste0(output_file, "_chunk_", chunk_index, ".html")
+    rmarkdown::render(rmd_file, output_file = chunk_output, envir = new.env())
+    message("✔ Rendered: ", chunk_output)
   }
   
-  # Write the content to the RMarkdown file
-  base::writeLines(
-    content,
-    con = rmd_file
-  )
-  
-  # Render the RMarkdown file to HTML
-  rmarkdown::render(
-    rmd_file,
-    output_file = output_file
-  )
-  
-  # Notify the user
-  base::message(
-    "Report generated: ",
-    output_file
-  )
+  message("✅ All reports generated successfully.")
 }
+

@@ -87,7 +87,8 @@ Examples:
   raised warnings, or stopped the execution when facing NA values.
   
 - Changed extract_data() function so that it can handle missing values 
-  correctly.
+  correctly, and so that it now is fully explicit and does not do any internal
+  magic.
 
 - When there where less than two hits in all levels for the cluster_hits()
   function, then this function provided a message that informed about this and
@@ -104,6 +105,8 @@ Examples:
   and the left and right column. This then marks the field where the matrix is.
   The rest of the logic (the logic about the row name columns) is still the
   same.
+
+- make_scatter_plot_html() (now renamed to make_scatter_plots_html()).
   
 ### Added
 - find_pvc() function. This function performs a compount contrast for every 
