@@ -89,7 +89,7 @@ generate_report_html <- function(
     ),
     report_dir = here::here()
     ) {
-  
+
   feature_names_formula <- ""
 
   if (report_type == "explore_data") {
@@ -102,6 +102,8 @@ generate_report_html <- function(
     title <- paste("hyperparams screen |", filename)
   } else if (report_type == "create_limma_report") {
     title <- "l(m)m report"
+  } else if (report_type == "find_pvc") {
+    title <- "pvc report"
   } else if (report_type == "cluster_hits") {
     title <- "clustered hits"
     feature_names_formula <- paste(
@@ -111,12 +113,11 @@ generate_report_html <- function(
   } else if (report_type == "create_gsea_report") {
     title <- "gsea report"
   } else {
-    stop(
+    stop_call_false(
       paste(
         "report_type must be explore_hits, screen_limma_hyperparams,",
-        "create_limma_report, or cluster_hits"
-      ),
-      call. = FALSE
+        "create_limma_report, find_pvc, or cluster_hits"
+      )
     )
   }
 
@@ -268,7 +269,7 @@ generate_report_html <- function(
   # Truncate all df names so that they are <= 30 chars (required for sheet 
   # names of Excel files) --> every df becomes a sheet.
   category_2_and_3_hits <- truncate_nested_list_names(category_2_and_3_hits)
-  
+
   for (field in download_fields) {
     base64_df <- process_field(
       field = field,
@@ -317,15 +318,28 @@ generate_report_html <- function(
     )
   }
 
-  file_name <- sprintf(
-    "%s_%s_%s.html",
-    filename,
-    report_info$omics_data_type,
-    timestamp
-  )
-
-  output_file_path <- here::here(report_dir, file_name)
-
+  file_name <- if (
+    is.null(report_info$omics_data_type) ||
+    is.na(report_info$omics_data_type)) {
+    sprintf(
+      "%s_%s.html",
+      filename,
+      timestamp
+      )
+  } else {
+    sprintf(
+      "%s_%s_%s.html",
+      filename,
+      report_info$omics_data_type,
+      timestamp
+      )
+  }
+  
+  output_file_path <- here::here(
+    report_dir,
+    file_name
+    )
+  
   if (report_type == "explore_data") {
     build_explore_data_report(
       header_section = header_section,
@@ -351,8 +365,17 @@ generate_report_html <- function(
       report_info = report_info,
       output_file_path = output_file_path
     )
+  } else if (report_type == "find_pvc") {
+    build_pvc_report(
+      header_section = header_section,
+      plots = plots,
+      plots_sizes = plots_sizes,
+      level_headers_info = level_headers_info,
+      report_info = report_info,
+      output_file_path = output_file_path
+    )
   } else if (report_type == "create_gsea_report") {
-    build_create_gsea_report(
+    build_create_ora_report(
       header_section = header_section,
       plots = plots,
       plots_sizes = plots_sizes,
@@ -402,7 +425,9 @@ generate_and_write_html <- function(
     toc,
     html_content,
     report_info,
-    output_file_path) {
+    output_file_path
+    ) {
+  
   output_file_path <- normalizePath(
     output_file_path,
     mustWork = FALSE
@@ -446,17 +471,24 @@ generate_and_write_html <- function(
     js_file_path,
     encoding = "UTF-8"
   )
+  safe_replace <- function(x) {
+    if (is.null(x) || is.na(x) || length(x) == 0) {
+      return("")
+    }
+    as.character(x)
+  }
+  
   js_content <- gsub(
     "\\{\\{email\\}\\}",
-    report_info$contact_info,
+    safe_replace(report_info$contact_info),
     js_content
-  )
+    )
   js_content <- gsub(
     "\\{\\{name\\}\\}",
-    report_info$analyst_name,
+    safe_replace(report_info$analyst_name),
     js_content
-  )
-
+    )
+  
   # Read the content of JSZip and FileSaver JavaScript files as text
   jszip_path <- normalizePath(
     system.file(
@@ -474,10 +506,16 @@ generate_and_write_html <- function(
   )
 
   if (!file.exists(jszip_path)) {
-    stop("JSZip file not found at: ", jszip_path)
+    stop(
+      "JSZip file not found at: ",
+      jszip_path
+      )
   }
   if (!file.exists(filesaver_path)) {
-    stop("FileSaver.js file not found at: ", filesaver_path)
+    stop(
+      "FileSaver.js file not found at: ",
+      filesaver_path
+      )
   }
 
   jszip_content <- readLines(
@@ -990,7 +1028,7 @@ encode_df_to_base64 <- function(
     df,
     report_type = NA
     ) {
-  
+
   temp_file <- tempfile(fileext = ".xlsx")
   wb <- openxlsx::createWorkbook()
 
@@ -1530,7 +1568,7 @@ process_field <- function(
     enrichr_format,
     category_2_and_3_hits = NA
     ) {
-  
+
   if (field == "data_with_annotation") {
     base64_df <- sprintf(
       '<a href="%s" download="data.xlsx" class="embedded-file">

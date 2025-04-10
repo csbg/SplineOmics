@@ -61,7 +61,6 @@ create_limma_report <- function(
   condition <- splineomics[["condition"]]
   annotation <- splineomics[["annotation"]]
   report_info <- splineomics[["report_info"]]
-  dream_params <- splineomics[["dream_params"]]
   
   # Put them in there under those names, so that the report generation fun
   # can access them directly like this.

@@ -1,7 +1,7 @@
-#' run_gsea()
+#' run_ora()
 #'
 #' @description
-#' This function generates a Gene Set Enrichment Analysis (GSEA) report based
+#' This function generates a overrepresentation analysis report based
 #' on clustered hit levels, gene data, and specified databases. It accomplishes 
 #' this by using the R package clusterProfiler. As output, you will receive a
 #' list of the plot objects it generated, and an HTML report with embedded files
@@ -49,14 +49,14 @@
 #' @param report_dir Directory where the report will be saved, default is
 #' `here::here()`.
 #'
-#' @return A list of all plot objects, generated for the GSEA report.
+#' @return A list of all plot objects, generated for the ora report.
 #'
 #' @importFrom purrr map2 flatten
 #' @importFrom here here
 #'
 #' @export
 #'
-run_gsea <- function(
+run_ora <- function(
     levels_clustered_hits,
     databases,
     report_info,
@@ -90,7 +90,7 @@ run_gsea <- function(
   ]
 
   # Control the test not covered by the InputControl class
-  control_inputs_create_gsea_report(
+  control_inputs_create_ora_report(
     levels_clustered_hits = levels_clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
@@ -103,7 +103,7 @@ run_gsea <- function(
   all_results <- map2(
     levels_clustered_hits,
     names(levels_clustered_hits),
-    ~ manage_gsea_level(
+    ~ manage_ora_level(
       .x,
       .y,
       databases,
@@ -146,8 +146,8 @@ run_gsea <- function(
     plots_sizes = plots_sizes,
     report_info = report_info,
     level_headers_info = level_headers_info,
-    report_type = "create_gsea_report",
-    filename = "create_gsea_report",
+    report_type = "create_ora_report",
+    filename = "create_ora_report",
     report_dir = report_dir
   )
 
@@ -164,23 +164,23 @@ run_gsea <- function(
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Control Inputs for GSEA Report
+#' Control Inputs for ora Report
 #' 
 #' @noRd
 #'
 #' @description
-#' Validates the inputs for generating a GSEA report, including clustered
+#' Validates the inputs for generating a ora report, including clustered
 #' hits, genes, databases, parameters, plot titles, and background genes.
 #'
 #' @param levels_clustered_hits A list containing clustered hits at various
 #' levels.
-#' @param databases A list of databases to be used in the GSEA analysis.
-#' @param params A list of parameters for the GSEA analysis.
+#' @param databases A list of databases to be used in the ora analysis.
+#' @param params A list of parameters for the ora analysis.
 #' @param plot_titles A character vector of titles for the plots, with length
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
 #'
-control_inputs_create_gsea_report <- function(
+control_inputs_create_ora_report <- function(
     levels_clustered_hits,
     databases,
     params,
@@ -242,29 +242,29 @@ ensure_clusterProfiler <- function() {
 
 
 
-#' Manage GSEA Analysis for a Specific Level
+#' Manage ora Analysis for a Specific Level
 #' 
 #' @noRd
 #'
 #' @description
-#' This function manages the GSEA analysis for a specific level. It extracts
+#' This function manages the ora analysis for a specific level. It extracts
 #' genes associated with the clustered hits, removes rows with `NA` values,
-#' and runs the GSEA analysis using the `create_gsea_report` function.
+#' and runs the ora analysis using the `create_ora_report` function.
 #'
 #' @param clustered_hits A dataframe containing the clustered hits for a
 #' specific level. It must include a column named `feature` to extract genes.
 #' @param level_name A character string representing the name of the level.
 #' @param databases A list of databases for the gene set enrichment analysis.
-#' @param clusterProfiler_params Additional parameters for the GSEA analysis,
+#' @param clusterProfiler_params Additional parameters for the ora analysis,
 #'                               default is NA. Those include adj_p_value,
 #'                               pAdjustMethod, etc (see clusterProfiler
 #'                               documentation).
 #' @param universe Enrichment background data, default is NULL.
 #'
-#' @return The result of the `create_gsea_report` function, which typically
+#' @return The result of the `create_ora_report` function, which typically
 #'         includes various plots and enrichment results.
 #'
-manage_gsea_level <- function(
+manage_ora_level <- function(
     clustered_hits,
     level_name,
     databases,
@@ -279,7 +279,7 @@ manage_gsea_level <- function(
     level_name
   ))
 
-  result <- create_gsea_report_level(
+  result <- create_ora_report_level(
     clustered_genes = clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
@@ -289,17 +289,17 @@ manage_gsea_level <- function(
 }
 
 
-#' Process GSEA Result for a Specific Level
+#' Process ora Result for a Specific Level
 #' 
 #' @noRd
 #'
 #' @description
-#' This function processes the GSEA result for a specific level. It handles
+#' This function processes the ora result for a specific level. It handles
 #' cases where the result contains `NA` values by adding a section break.
 #' Otherwise, it extracts the plot, plot size, and header information from
 #' the result.
 #'
-#' @param level_result A list containing the GSEA result for a specific level.
+#' @param level_result A list containing the ora result for a specific level.
 #' @param level_name A character string representing the name of the level.
 #'
 #' @return A list with the following components:
@@ -336,12 +336,12 @@ process_result <- function(
 }
 
 
-#' Build GSEA Report
+#' Build ora Report
 #' 
 #' @noRd
 #'
 #' @description
-#' Generates an HTML report for Gene Set Enrichment Analysis (GSEA) based on
+#' Generates an HTML report for Gene Set Enrichment Analysis (ora) based on
 #' provided plot data, header information, and other content. The report
 #' includes sections for each level of clustered hits, along with a table of
 #' contents and various plots.
@@ -367,7 +367,7 @@ process_result <- function(
 #' processing individual plots. The TOC is inserted into the HTML content,
 #' which is then finalized and written to the specified output file.
 #'
-build_create_gsea_report <- function(
+build_create_ora_report <- function(
     header_section,
     plots,
     plots_sizes,
@@ -734,7 +734,7 @@ check_params <- function(params) {
 #' @noRd
 #'
 #' @description
-#' This function conducts a Gene Set Enrichment Analysis (GSEA) using either the
+#' This function conducts a Gene Set Enrichment Analysis (ora) using either the
 #' clusterProfiler package. Afterwards, it plots the results.
 #' It allows for customization of enrichment parameters, selection of databases,
 #' and optionally specifying a custom plot title and background gene list.
@@ -756,7 +756,7 @@ check_params <- function(params) {
 #' @return An object containing the results of the Gene Set Enrichment Analysis,
 #' including any plots generated during the analysis.
 #'
-create_gsea_report_level <- function(
+create_ora_report_level <- function(
     clustered_genes,
     databases,
     params = NA,
@@ -981,7 +981,7 @@ generate_section_content <- function(
   <button>Download count2small_results.xlsx</button></a>',
     encode_df_to_base64(
       section_info$raw_enrich_results,
-      "create_gsea_report"
+      "create_ora_report"
     )
   )
 
