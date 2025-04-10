@@ -144,7 +144,7 @@ cluster_hits <- function(
     pthresh_avg_diff = adj_pthresh_avrg_diff_conditions,  
     pthresh_interact = adj_pthresh_interaction_condition_time 
   )
-  huge_table_user_prompter(all_limma_result_tables)
+  report && huge_table_user_prompter(all_limma_result_tables)
 
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,

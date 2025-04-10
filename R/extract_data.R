@@ -40,14 +40,14 @@
 #' 
 extract_data <- function(
     data,
-    top_row,
     bottom_row,
-    left_col,
     right_col,
+    top_row = 1,
+    left_col = 1,
     feature_name_columns = NA,
     use_row_index = FALSE
 ) {
-  
+
   control_inputs_extract_data(
     data = data,
     top_row = top_row,
@@ -148,81 +148,134 @@ control_inputs_extract_data <- function(
 ) {
   
   if (!is.data.frame(data)) {
-    stop("Input data must be a dataframe.", call. = FALSE)
+    stop_call_false(paste0(
+      "Input 'data' must be a dataframe, but got: ",
+      class(data)
+      ))
   }
   
   if (nrow(data) == 0 || ncol(data) == 0) {
-    stop("Input dataframe is empty or has no columns.", call. = FALSE)
+    stop_call_false(paste0(
+      "Input dataframe is empty or has no columns (nrow = ",
+      nrow(data),
+      ", ncol = ",
+      ncol(data), ")."
+      ))
   }
   
   # Validate row inputs
   if (!is.numeric(top_row) || !is.numeric(bottom_row)) {
-    stop("top_row and bottom_row must be numeric.", call. = FALSE)
+    stop_call_false(paste0(
+      "'top_row' and 'bottom_row' must be numeric. Got: top_row = ",
+      top_row, 
+      ", bottom_row = ",
+      bottom_row
+      ))
   }
-  if (top_row <= 0 || bottom_row <= 0 ||
+  if (top_row <= 0 ||
+      bottom_row <= 0 ||
       top_row != floor(top_row) ||
       bottom_row != floor(bottom_row)) {
-    stop("top_row and bottom_row must be positive integers.", call. = FALSE)
+    stop_call_false(paste0(
+      "'top_row' and 'bottom_row' must be positive integers. Got: top_row = ",
+      top_row, ",
+      bottom_row = ",
+      bottom_row
+      ))
   }
   if (top_row > bottom_row) {
-    stop("top_row cannot be greater than bottom_row.", call. = FALSE)
+    stop_call_false(paste0(
+      "'top_row' cannot be greater than 'bottom_row'. Got: top_row = ",
+      top_row, ",
+      bottom_row = ",
+      bottom_row
+      ))
   }
   if (bottom_row > nrow(data)) {
-    stop("bottom_row exceeds number of rows in data.", call. = FALSE)
+    stop_call_false(paste0(
+      "'bottom_row' (",
+      bottom_row,
+      ") exceeds number of rows in data (nrow = ",
+      nrow(data),
+      ")."
+      ))
   }
-
+  
   left_col_idx <- excel_col_to_index(left_col)
   right_col_idx <- excel_col_to_index(right_col)
   
   if (any(is.na(c(left_col_idx, right_col_idx)))) {
-    stop("Invalid column reference in left_col or right_col.", call. = FALSE)
+    stop_call_false(paste0(
+      "Invalid column reference(s). Got: left_col = '",
+      left_col,
+      "', right_col = '",
+      right_col,
+      "'"
+      ))
   }
   
   if (left_col_idx <= 0 || right_col_idx <= 0) {
-    stop("Column indices must be positive integers.", call. = FALSE)
+    stop_call_false(paste0(
+      "Column indices must be positive integers. Got: left_col_idx = ",
+      left_col_idx,
+      ", right_col_idx = ",
+      right_col_idx
+      ))
   }
   
   if (left_col_idx > right_col_idx) {
-    stop("left_col cannot be after right_col.", call. = FALSE)
+    stop_call_false(paste0(
+      "'left_col' index (", 
+      left_col_idx,
+      ") cannot be after 'right_col' index (",
+      right_col_idx,
+      ")."
+      ))
   }
   
   if (right_col_idx > ncol(data)) {
-    stop("right_col exceeds number of columns in data.", call. = FALSE)
+    stop_call_false(paste0(
+      "'right_col' index (",
+      right_col_idx,
+      ") exceeds number of columns in data (ncol = ",
+      ncol(data),
+      ")."
+      ))
   }
   
   # Validate feature name columns
   if (!any(is.na(feature_name_columns))) {
     if (!is.character(feature_name_columns)) {
-      stop("feature_name_columns should be a character vector.", call. = FALSE)
+      stop_call_false(paste0(
+        "'feature_name_columns' must be a character vector. Got: ",
+        class(feature_name_columns)
+        ))
     }
     
     missing_columns <- setdiff(feature_name_columns, colnames(data))
     if (length(missing_columns) > 0) {
-      stop(
-        paste(
-          "The following feature_name_columns are not present in the data:",
-          paste(missing_columns, collapse = ", ")
-        ),
-        call. = FALSE
-      )
+      stop_call_false(paste0(
+        "The following 'feature_name_columns' are not present in the data: ",
+        paste(missing_columns, collapse = ", ")
+      ))
     }
     
     if (all(is.na(data[feature_name_columns]))) {
-      stop(
-        paste0("Columns '", paste(feature_name_columns, collapse = ", "),
-               "' contain only NA values."),
-        call. = FALSE
-      )
+      stop_call_false(paste0(
+        "Columns '", paste(feature_name_columns, collapse = ", "),
+        "' contain only NA values."
+      ))
     }
-    
-    # Validate use_row_index argument
-    if (!is.logical(use_row_index) ||
-        length(use_row_index) != 1 ||
-        is.na(use_row_index)) {
-      stop_call_false(
-        "'use_row_index' must be either TRUE or FALSE")
-    }
-    
+  }
+  
+  # Validate use_row_index argument
+  if (!is.logical(use_row_index) ||
+      length(use_row_index) != 1 ||
+      is.na(use_row_index)) {
+    stop_call_false(paste0(
+      "'use_row_index' must be either TRUE or FALSE. Got: ",
+      use_row_index
+      ))
   }
 }
 

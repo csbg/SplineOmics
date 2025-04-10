@@ -45,7 +45,7 @@ Examples:
 --------------------------------------------------------------------------------
 
 
-### [0.2.0] - 2025-03-31
+### [0.2.0] - 2025-04-10
 (In preparation)
 
 #### Fixed
@@ -64,6 +64,11 @@ Examples:
 
 - A bug in input control that threw an error indicating that there are rows in 
   the dataset that contains just zeros, even though this was not true.
+
+- When running cluster_hits() with report = FALSE, but there where many hits, it
+  anyways warned the user that the report generation will take long. This was
+  fixed, because when report = FALSE, no report is generated, which means the 
+  user does not have to be warned then (that would just confuse the user).
 
 #### Changed
 - Replicates in the double spline plots (limma result category 2 and 3) are now
@@ -107,6 +112,10 @@ Examples:
   same.
 
 - make_scatter_plot_html() (now renamed to make_scatter_plots_html()).
+
+- renamed run_gsea() to run_ora(), because the function uses clusterProfiler,
+  which performs ora (overrepresentation analysis) and not gsea (gene set 
+  enrichment analysis) in the stricter sense.
   
 ### Added
 - find_pvc() function. This function performs a compount contrast for every 

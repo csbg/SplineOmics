@@ -45,7 +45,8 @@
 find_pvc <- function(
     splineomics,
     alpha = 0.05,
-    padjust_method = "BH"
+    padjust_method = "BH",
+    report_dir = here::here()
 ) {
 
   check_splineomics_elements(
@@ -64,9 +65,11 @@ find_pvc <- function(
   input_control$auto_validate()
   
   data <- splineomics[["data"]]
+  annotation <- splineomics[["annotation"]]
   meta <- splineomics[["meta"]]
   condition <- splineomics[["condition"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
+  report_info <- splineomics[["report_info"]]
   
   # Get all unique condition levels
   condition_levels <- unique(meta[[condition]])
@@ -153,6 +156,22 @@ find_pvc <- function(
 
     results[[as.character(level)]][["plots"]] <- plots
   }
+
+  generate_report_html(
+    plots = results,
+    plots_sizes = 1,
+    report_info,
+    data = bind_data_with_annotation(data, annotation),
+    meta = meta,
+    report_type = "find_pvc",
+    filename = "pvc_report",
+    report_dir = report_dir
+  )
+  
+  print_info_message(
+    message_prefix = "PVC report generation",
+    report_dir = report_dir
+  )
   
   return(results)
 }
@@ -557,6 +576,110 @@ plot_pvc <- function(
   }
   
   return(plots)
+}
+
+
+build_pvc_report <- function(
+    header_section,
+    plots,
+    plots_sizes,
+    level_headers_info,
+    report_info,
+    output_file_path = here::here()
+) {
+
+  html_content <- paste(
+    header_section,
+    "<!--TOC-->",
+    sep = "\n"
+  )
+  
+  toc <- create_toc()
+  
+  styles <- define_html_styles()
+  section_header_style <- styles$section_header_style
+  toc_style <- styles$toc_style
+  
+  current_header_index <- 1
+  
+  # Flatten the nested structure into a list of (header_name, plot) pairs
+  flattened_plots <- list()
+  for (header_name in names(plots)) {
+    subplots <- plots[[header_name]]$plots
+    for (i in seq_along(subplots)) {
+      flattened_plots[[length(flattened_plots) + 1]] <- list(
+        header_name = header_name,
+        plot = subplots[[i]]
+      )
+    }
+  }
+  
+  # Clean up header info
+  header_names <- names(plots)
+  n_plots_per_header <- vapply(plots, function(x) length(x$plots), integer(1))
+  
+  # Track current section and plot offset
+  current_header_index <- 1
+  plots_processed_in_section <- 0
+  
+  # Create progress bar
+  pb <- create_progress_bar(flattened_plots)
+
+  for (index in seq_along(flattened_plots)) {
+    if (plots_processed_in_section == 0) {
+      # Insert section header
+      header_name <- header_names[[current_header_index]]
+      
+      section_header <- sprintf(
+        "<h2 style='%s' id='section%d'>%s</h2>",
+        section_header_style,
+        index,
+        header_name
+      )
+      html_content <- paste(html_content, section_header, sep = "\n")
+      
+      hits_info <- "<p style='text-align: center; font-size: 30px;'>"
+      html_content <- paste(html_content, hits_info, sep = "\n")
+      
+      toc_entry <- sprintf(
+        "<li style='%s'><a href='#section%d'>%s</a></li>",
+        toc_style,
+        index,
+        header_name
+      )
+      toc <- paste(
+        toc,
+        toc_entry,
+        sep = "\n"
+        )
+    }
+
+    result <- process_plots(
+      plots_element = flattened_plots[[index]]$plot,
+      plots_size = 2,
+      html_content = html_content,
+      toc = toc,
+      header_index = current_header_index
+    )
+    html_content <- result$html_content
+    toc <- result$toc
+    
+    # Update section counters
+    plots_processed_in_section <- plots_processed_in_section + 1
+    if (plots_processed_in_section >= n_plots_per_header[[current_header_index]]) {
+      current_header_index <- current_header_index + 1
+      plots_processed_in_section <- 0
+    }
+    
+    pb$tick()
+  }
+
+  generate_and_write_html(
+    toc = toc,
+    html_content = html_content,
+    report_info = report_info,
+    output_file_path = output_file_path
+  )
 }
 
 
