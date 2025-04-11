@@ -6,10 +6,10 @@
 \usage{
 extract_data(
   data,
-  top_row,
   bottom_row,
-  left_col,
   right_col,
+  top_row = 1,
+  left_col = 1,
   feature_name_columns = NA,
   use_row_index = FALSE
 )
@@ -18,11 +18,14 @@ extract_data(
 \item{data}{A dataframe containing the full input, including annotation
 columns and the numeric block to extract.}
 
-\item{top_row}{Integer. Specifies the first (top) row of the numeric data
-block. Row indexing is 1-based.}
-
 \item{bottom_row}{Integer. Specifies the last (bottom) row of the numeric
 data block. Must be >= `top_row`.}
+
+\item{right_col}{Same format as `left_col`. Specifies the right-most column
+of the numeric block. Must be >= `left_col` after conversion.}
+
+\item{top_row}{Integer. Specifies the first (top) row of the numeric data
+block. Row indexing is 1-based.}
 
 \item{left_col}{Column specifier for the left-most column of the data block.
 Can be either:
@@ -31,9 +34,6 @@ Can be either:
 
 Column names (e.g., "age") are **not** allowed here. Only letters or numeric
 indices are accepted.}
-
-\item{right_col}{Same format as `left_col`. Specifies the right-most column
-of the numeric block. Must be >= `left_col` after conversion.}
 
 \item{feature_name_columns}{Optional character vector specifying columns in
 `data` to be used as row (feature) names in the output. If `NA`, generic

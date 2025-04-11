@@ -4,7 +4,12 @@
 \alias{find_pvc}
 \title{Find Peaks and Valleys in Time-Series Omics Data}
 \usage{
-find_pvc(splineomics, alpha = 0.05, padjust_method = "BH")
+find_pvc(
+  splineomics,
+  alphas = 0.05,
+  padjust_method = "BH",
+  report_dir = here::here()
+)
 }
 \arguments{
 \item{splineomics}{A list containing the preprocessed time-series input data. 
@@ -13,11 +18,16 @@ data frame with a `"Time"` column), `"meta_batch_column"` (name of the column
 in `meta` identifying replicates or batches), and `"padjust_method"` (a 
 string specifying the method for p-value adjustment).}
 
-\item{alpha}{A numeric significance threshold used to identify excursion 
-points. Defaults to `0.05`.}
-
 \item{padjust_method}{A character string specifying the method for multiple 
 testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
+
+\item{alpha}{A single numeric value or a named list of numeric thresholds 
+used to identify significant excursion points. If a single value is provided
+(either as a numeric scalar or a list of length 1), the same threshold is 
+applied to all condition levels. If a named list is provided, it must contain
+one numeric 
+value per condition level, with names matching the condition levels exactly. 
+This input is normalized internally to ensure consistent per-level access.}
 }
 \value{
 A named list of ggplot objects, where each element corresponds to a 
