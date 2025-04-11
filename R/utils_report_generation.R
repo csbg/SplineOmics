@@ -202,6 +202,14 @@ generate_report_html <- function(
       "limma_topTables_interaction_condition_time_hits"
     )
   }
+  
+  if (report_type == "find_pvc") {
+    download_fields <- c(
+      download_fields,
+      "pvc_adj_pvals",
+      "pvc_pattern_summary"
+    )
+  }
 
   if (!all(is.na(enrichr_format))) {
     download_fields <- c(
@@ -236,7 +244,6 @@ generate_report_html <- function(
       meta = meta,
       topTables = topTables,
       report_info = report_info,
-      encode_df_to_base64 = encode_df_to_base64,
       enrichr_format = enrichr_format
     )
 
@@ -278,7 +285,7 @@ generate_report_html <- function(
       topTables = topTables,
       category_2_and_3_hits = category_2_and_3_hits,
       report_info = report_info,
-      encode_df_to_base64 = encode_df_to_base64,
+      pvc_results = plots,
       enrichr_format = enrichr_format
     )
 
@@ -369,7 +376,6 @@ generate_report_html <- function(
     build_pvc_report(
       header_section = header_section,
       plots = plots,
-      plots_sizes = plots_sizes,
       level_headers_info = level_headers_info,
       report_info = report_info,
       output_file_path = output_file_path
@@ -919,6 +925,24 @@ get_header_section <- function(
       non-significant features!</p>',
       "</div>"
     ),
+    "find_pvc" = paste(
+      '<div style="border: 2px solid #f00; padding: 15px; position: relative;',
+      "margin-bottom: 20px; background-color: #fee; font-family: Arial,",
+      'sans-serif; width: 65%;">',
+      '<div style="position: absolute; top: -25px; right: -25px; transform:',
+      "rotate(45deg); background-color: #f00; color: #fff; padding: 10px 15px;",
+      'font-size: 2em; font-weight: bold; z-index: 1;">Note!</div>',
+      '<p style="font-size: 2em;">',
+      "This HTML report contains plots visualizing the results from",
+      "the PVC test. <br> Right-click on",
+      "any plot in this report to save it as a .svg (vector graphic) file!",
+      "<br><br>The PVC test is a compound contrast test carried out with limma",
+      ".<br> It tests if a given timepoint T is significantly higher or lower",
+      "than both neighbor timepoints (that is why it is NOT carried out for",
+      "the first and last timepoint). Tests whether 2·Tₙ − Tₙ₋₁ ",
+      "- Tₙ₊₁ ≠ 0 (significantly).",
+      "</div>"
+    ),
     "cluster_hits" = paste(
       '<div style="border: 2px solid #f00; padding: 15px;',
       "position: relative; margin-bottom: 20px;",
@@ -1294,7 +1318,9 @@ plot2base64 <- function(
     width = 7,
     base_height_per_row = 2.5,
     units = "in",
-    html_img_width = "100%") {
+    html_img_width = "100%"
+    ) {
+  
   additional_height_per_row <- 2.1
   height <- base_height_per_row + (height - 1) * additional_height_per_row
 
@@ -1303,7 +1329,11 @@ plot2base64 <- function(
   # specify the quality.
   img_file <- tempfile(fileext = ".svg")
 
-  svglite::svglite(file = img_file, width = width, height = height)
+  svglite::svglite(
+    file = img_file,
+    width = width,
+    height = height
+    )
 
   # Draw the plot
   print(plot)
@@ -1312,10 +1342,16 @@ plot2base64 <- function(
   dev.off()
 
   # Read the SVG file content
-  svg_content <- readLines(img_file, warn = FALSE)
+  svg_content <- readLines(
+    img_file,
+    warn = FALSE
+    )
 
   # Convert the SVG content to a single string
-  svg_string <- paste(svg_content, collapse = "\n")
+  svg_string <- paste(
+    svg_content,
+    collapse = "\n"
+    )
 
   # Encode the SVG content as base64
   svg_base64 <- base64enc::dataURI(
@@ -1326,12 +1362,6 @@ plot2base64 <- function(
   # Delete the temporary SVG file
   unlink(img_file)
 
-  # # Return the HTML img tag with the base64 string and a fixed width
-  # return(
-  #   sprintf(
-  #     '<img src="%s" alt="Plot" style="width:%s;">',
-  #     svg_base64, html_img_width
-  #   )
   # Return HTML with zoom functionality
   return(
     sprintf(
@@ -1410,7 +1440,9 @@ process_plots <- function(
     html_content,
     toc,
     header_index,
-    element_name = NA) {
+    element_name = NA
+    ) {
+  
   if (
     !is.na(element_name) &&
       startsWith(
@@ -1545,7 +1577,6 @@ process_plots <- function(
 #' @param topTables A dataframe containing the results of differential
 #'                  expression analysis.
 #' @param report_info A list containing additional report information.
-#' @param encode_df_to_base64 A function to encode a dataframe to base64.
 #' @param enrichr_format A list with the formatted gene lists and background
 #'                       gene list.
 #' @param category_2_and_3_hits List of dataframes, where each df is the part
@@ -1564,7 +1595,7 @@ process_field <- function(
     meta,
     topTables,
     report_info,
-    encode_df_to_base64,
+    pvc_results,
     enrichr_format,
     category_2_and_3_hits = NA
     ) {
@@ -1615,6 +1646,37 @@ process_field <- function(
        <button>Download limma_topTables_interaction_condition_time_hits.xlsx
       </button></a>',
       encode_df_to_base64(category_2_and_3_hits[[2]])   # category 3
+    )
+  } else if (field == "pvc_adj_pvals") {
+
+    pvc_pval_dfs <- lapply(names(pvc_results), function(name) {
+      mat <- pvc_results[[name]][["pvc_adj_pvals"]]
+      as.data.frame(mat)
+    })
+    names(pvc_pval_dfs) <- names(pvc_results)
+
+    base64_df <- sprintf(
+      '<a href="%s" 
+      download="pvc_adj_pvals.xlsx"
+      class="embedded-file">
+       <button>Download pvc_adj_pvals.xlsx
+      </button></a>',
+      encode_df_to_base64(pvc_pval_dfs)  
+    )
+  } else if (field == "pvc_pattern_summary") {
+    
+    pvc_pattern_summary_dfs <- lapply(names(pvc_results), function(name) {
+      df <- pvc_results[[name]][["pvc_pattern_summary"]]
+    })
+    names(pvc_pattern_summary_dfs) <- names(pvc_results)
+
+    base64_df <- sprintf(
+      '<a href="%s" 
+      download="pvc_pattern_summary.xlsx"
+      class="embedded-file">
+       <button>Download pvc_pattern_summary.xlsx
+      </button></a>',
+      encode_df_to_base64(pvc_pattern_summary_dfs)  
     )
   } else if (field == "Enrichr_clustered_genes" &&
     !any(is.na(enrichr_format)) &&
@@ -1824,7 +1886,9 @@ add_plot_to_html <- function(
     html_content,
     plot_element,
     plots_size,
-    section_index) {
+    section_index
+    ) {
+  
   img_tag <- plot2base64(
     plot_element,
     height = plots_size

@@ -1553,7 +1553,7 @@ InputControl <- R6::R6Class("InputControl",
     #' returns an error message if the method is invalid.
     #'
     check_padjust_method = function() {
-      padjust_method <- self$args$padjust_method
+      padjust_method <- self[["args"]][["padjust_method"]]
 
       required_args <- list(padjust_method)
 
