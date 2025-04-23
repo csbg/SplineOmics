@@ -11,7 +11,7 @@
 #' data frame with a `"Time"` column), `"meta_batch_column"` (name of the column 
 #' in `meta` identifying replicates or batches), and `"padjust_method"` (a 
 #' string specifying the method for p-value adjustment).
-#' @param alpha A single numeric value or a named list of numeric thresholds 
+#' @param alphas A single numeric value or a named list of numeric thresholds 
 #' used to identify significant excursion points. If a single value is provided
 #' (either as a numeric scalar or a list of length 1), the same threshold is 
 #' applied to all condition levels. If a named list is provided, it must contain
@@ -20,6 +20,16 @@
 #' This input is normalized internally to ensure consistent per-level access.
 #' @param padjust_method A character string specifying the method for multiple 
 #' testing correction. Defaults to `"BH"` (Benjamini-Hochberg).
+#' @param plot_info List containing the elements y_axis_label (string),
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as
+#'                  feeding, temperature shift, etc.).
+#' @param report_dir Character string specifying the directory path where the
+#' HTML report and any other output files should be saved.
 #'
 #' @return A named list of ggplot objects, where each element corresponds to a 
 #' feature with at least one detected peak or valley. Each plot shows expression 
@@ -27,13 +37,14 @@
 #' statistically significant excursions with significance stars.
 #'
 #' @details
-#' A **peak** or **valley** is defined as a timepoint whose expression value is 
+#' A peak or valley is defined as a timepoint whose expression value is 
 #' significantly different from both its immediate neighbors and deviates in 
 #' the same direction — i.e., it is either significantly higher than both 
 #' (a peak) or significantly lower than both (a valley).  
 #' 
 #' Statistically, this is tested using a compound contrast in limma:  
-#' \deqn{(T - T_{prev}) + (T - T_{next}) = 2T - T_{prev} - T_{next}}  
+#' $$(T - T_{\text{prev}}) + (T - T_{\text{next}}) = 
+#' 2T - T_{\text{prev}} - T_{\text{next}}$$
 #' This compound contrast has power only when the timepoint `T` is an outlier 
 #' compared to both neighbors in the same direction. The resulting p-value is 
 #' FDR-adjusted and compared to the `alpha` threshold.
@@ -51,6 +62,12 @@ find_pvc <- function(
     splineomics,
     alphas = 0.05,
     padjust_method = "BH",
+    plot_info = list(
+      y_axis_label = "Value",
+      time_unit = "min",
+      treatment_labels = NA,
+      treatment_timepoints = NA
+    ),
     report_dir = here::here()
 ) {
 
@@ -86,7 +103,9 @@ find_pvc <- function(
   # Initialize output list
   results <- list()
   
-  for (level in condition_levels) {
+  for (level_index in seq_along(condition_levels)) {
+    level <- condition_levels[[level_index]]
+    
     # Select samples for this condition level
     selected_samples <- meta[[condition]] == level
     sub_data <- data[, selected_samples, drop = FALSE]
@@ -159,7 +178,9 @@ find_pvc <- function(
       data = sub_data,
       meta = sub_meta,
       meta_batch_column = meta_batch_column,
-      alpha = alpha
+      alpha = alpha,
+      plot_info = plot_info,
+      level = level
     )
 
     results[[as.character(level)]][["plots"]] <- plots
@@ -482,6 +503,14 @@ classify_excursions <- function(
 #' in `meta` that indicates biological replicates.
 #' @param alpha A numeric value specifying the significance threshold 
 #' for displaying stars above excursion points. Defaults to `0.05`.
+#' @param plot_info List containing the elements y_axis_label (string),
+#'                  time_unit (string), treatment_labels (character vector),
+#'                  treatment_timepoints (integer vector). All can also be NA.
+#'                  This list is used to add this info to the spline plots.
+#'                  time_unit is used to label the x-axis, and treatment_labels
+#'                  and -timepoints are used to create vertical dashed lines,
+#'                  indicating the positions of the treatments (such as
+#'                  feeding, temperature shift, etc.).
 #'
 #' @return A named list of ggplot objects, where each element corresponds to a 
 #' feature with at least one detected excursion. Each plot displays the 
@@ -495,7 +524,9 @@ plot_pvc <- function(
     data,
     meta,
     meta_batch_column,
-    alpha = 0.05  
+    alpha = 0.05,
+    plot_info,
+    level
 ) {
   
   peak_valley_flags <- ifelse(
@@ -521,7 +552,7 @@ plot_pvc <- function(
     
     plot_data <- data.frame(
       Time = meta$Time, 
-      Expression = as.numeric(protein_data), 
+      Feature_value = as.numeric(protein_data), 
       Replicate = as.factor(meta[[meta_batch_column]])
     )  
     
@@ -580,8 +611,8 @@ plot_pvc <- function(
         if (p_val < alpha) {
           stars <- get_stars(p_val, alpha)
           
-          max_expr <- max(
-            plot_data$Expression[plot_data$Time == timepoint],
+          max_value <- max(
+            plot_data$Feature_value[plot_data$Time == timepoint],
             na.rm = TRUE
           )
           
@@ -590,14 +621,14 @@ plot_pvc <- function(
             data.frame(
               Time = timepoint,
               Label = stars,
-              y_pos = max_expr + 0.01 * max_expr,
+              max_value = max_value,
               PValue = p_val
             )
           )
         }
       }
     }
-    
+
     # Build the p-value string if any are significant
     if (nrow(sig_df) > 0) {
       pval_str <- paste0(
@@ -617,7 +648,7 @@ plot_pvc <- function(
       plot_data,
       ggplot2::aes(
         x = Time,
-        y = Expression
+        y = Feature_value
         )
     ) +
       ggplot2::geom_point(
@@ -631,29 +662,59 @@ plot_pvc <- function(
         na.rm = TRUE
       ) +
       ggplot2::scale_shape_manual(values = symbols) +
-      ggplot2::scale_color_manual(values = c(
-        "Normal" = "grey40",
-        "Excursion" = "red"
-        )) +
       ggplot2::geom_text(
         data = sig_df,
         ggplot2::aes(
           x = Time, 
-          y = y_pos,
+          y = max_value,
           label = Label
           ),
         size = 5,
-        hjust = 0.5
+        hjust = 0.5,
+        vjust = -0.5   # Positions the significance stars a bit above datapoint
       ) +
       ggplot2::labs(
         title = plot_title,
-        x = "Time",
-        y = "Feature Value",
-        color = "Pattern",
-        shape = "Replicate"
+        x = paste0("Time [", plot_info[["time_unit"]], "]"),
+        y = plot_info[["y_axis_label"]],
+        color = "Timepoints",
+        shape = "Replicates"
       ) +
       ggplot2::theme_minimal()
     
+    y_min <- min(plot_data$Feature_value, na.rm = TRUE)
+    y_max <- max(plot_data$Feature_value, na.rm = TRUE)
+    y_extension <- (y_max - y_min) * 0.1
+    y_pos <- y_max + y_extension
+
+    result <- maybe_add_dashed_lines(   
+      p = p,
+      plot_info = plot_info,
+      level = level,
+      y_pos = y_pos
+    )
+    
+    p <- result$p
+    treatment_colors <- result$treatment_colors
+    
+    color_values <- c(
+      "Normal" = "grey40",
+      "Excursion" = "red",
+      treatment_colors
+    )
+    
+    p <- p + ggplot2::scale_color_manual(
+      values = color_values,
+      guide = ggplot2::guide_legend(
+        override.aes = list(
+          size = c(
+            rep(1.5, 2),  # Point sizes for Normal and Excursion
+            rep(0.5, length(treatment_colors))  # Line size for treatments
+          )
+        )
+      )
+    )
+
     plots[[feature_name]] <- p
   }
   

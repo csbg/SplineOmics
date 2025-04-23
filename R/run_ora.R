@@ -90,7 +90,7 @@ run_ora <- function(
   ]
 
   # Control the test not covered by the InputControl class
-  control_inputs_create_ora_report(
+  control_inputs_run_ora(
     levels_clustered_hits = levels_clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
@@ -146,8 +146,8 @@ run_ora <- function(
     plots_sizes = plots_sizes,
     report_info = report_info,
     level_headers_info = level_headers_info,
-    report_type = "create_ora_report",
-    filename = "create_ora_report",
+    report_type = "run_ora",
+    filename = "run_ora_report",
     report_dir = report_dir
   )
 
@@ -180,7 +180,7 @@ run_ora <- function(
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
 #'
-control_inputs_create_ora_report <- function(
+control_inputs_run_ora <- function(
     levels_clustered_hits,
     databases,
     params,
@@ -249,7 +249,7 @@ ensure_clusterProfiler <- function() {
 #' @description
 #' This function manages the ora analysis for a specific level. It extracts
 #' genes associated with the clustered hits, removes rows with `NA` values,
-#' and runs the ora analysis using the `create_ora_report` function.
+#' and runs the ora analysis using the `run_ora` function.
 #'
 #' @param clustered_hits A dataframe containing the clustered hits for a
 #' specific level. It must include a column named `feature` to extract genes.
@@ -261,7 +261,7 @@ ensure_clusterProfiler <- function() {
 #'                               documentation).
 #' @param universe Enrichment background data, default is NULL.
 #'
-#' @return The result of the `create_ora_report` function, which typically
+#' @return The result of the `run_ora` function, which typically
 #'         includes various plots and enrichment results.
 #'
 manage_ora_level <- function(
@@ -279,7 +279,7 @@ manage_ora_level <- function(
     level_name
   ))
 
-  result <- create_ora_report_level(
+  result <- run_ora_level(
     clustered_genes = clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
@@ -367,7 +367,7 @@ process_result <- function(
 #' processing individual plots. The TOC is inserted into the HTML content,
 #' which is then finalized and written to the specified output file.
 #'
-build_create_ora_report <- function(
+build_run_ora_report <- function(
     header_section,
     plots,
     plots_sizes,
@@ -756,7 +756,7 @@ check_params <- function(params) {
 #' @return An object containing the results of the Gene Set Enrichment Analysis,
 #' including any plots generated during the analysis.
 #'
-create_ora_report_level <- function(
+run_ora_level <- function(
     clustered_genes,
     databases,
     params = NA,
@@ -981,7 +981,7 @@ generate_section_content <- function(
   <button>Download count2small_results.xlsx</button></a>',
     encode_df_to_base64(
       section_info$raw_enrich_results,
-      "create_ora_report"
+      "run_ora"
     )
   )
 

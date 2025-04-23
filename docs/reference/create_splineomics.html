@@ -11,7 +11,7 @@ argument to the other functions of this package."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@ argument to the other functions of this package."></head><body>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
@@ -67,6 +68,7 @@ argument to the other functions of this package.</p>
 <span>  meta_batch2_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  feature_name_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  design <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  robust_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dream_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spline_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -133,6 +135,24 @@ create the row headers for the data matrix!</p></dd>
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
 <dd><p>A design matrix or similar object (optional).</p></dd>
+
+
+<dt id="arg-robust-fit">robust_fit<a class="anchor" aria-label="anchor" href="#arg-robust-fit"></a></dt>
+<dd><p>Boolean flag indicating if the robust fit strategy to deal
+with heteroscedasticity should be used or not. If ommited (parameter value
+is NULL) then this is handeled implicitly based on the result of the Wilcoxon
+signed exact test (tests if there is a significant differene in the variance
+across samples between at least two levels of the experiment). If this test
+is significant for at least one pairwise comparison, then the robust strategy
+is applied. The robust strategy uses the function voomWithQualityWeights for
+RNA-seq data instead of the normal voom function. For other, non-count-based
+data, the function limma::arrayWeights is used instead, combined with setting
+the robust argument to TRUE for the limma::eBayes function. In summary, the
+strategy employed by those functions is to downweights samples with higher
+variance. This can be neccessary, because linear models have the assumption
+of homoscedasticity, which means that the variance is (approx.) the same
+across all datapoints where the linear model is fitted. If this is violated,
+then the resulting p-values cannot be trusted (common statistical wisdom).</p></dd>
 
 
 <dt id="arg-dream-params">dream_params<a class="anchor" aria-label="anchor" href="#arg-dream-params"></a></dt>

@@ -31,11 +31,12 @@ reference:
       - download_enrichr_databases
       - explore_data
       - extract_data
-      - make_scatter_plot_html
+      - find_pvc
+      - make_scatter_plots_html
       - open_tutorial
       - preprocess_rna_seq_data
       - print.SplineOmics
-      - run_gsea
+      - run_ora
       - run_limma_splines
       - screen_limma_hyperparams
       - update_splineomics

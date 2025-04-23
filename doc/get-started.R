@@ -6,24 +6,23 @@ knitr::opts_chunk$set(
 
 ## ----setup, eval = TRUE-------------------------------------------------------
 library(SplineOmics)
-library(readxl) # for loading Excel files
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 
 ## ----load the files-----------------------------------------------------------
-data <- readRDS(system.file(
+data <- readRDS(xzfile(system.file(
   "extdata",
-  "proteomics_data.rds",
+  "proteomics_data.rds.xz",
   package = "SplineOmics"
-))
+)))
 
-
-meta <- read_excel(
+meta <- read.csv(
   system.file(
     "extdata",
-    "proteomics_meta.xlsx",
+    "proteomics_meta.csv",
     package = "SplineOmics"
-  )
+  ),
+  stringsAsFactors = FALSE
 )
 
 # Extract the annotation part from the dataframe.
@@ -42,8 +41,10 @@ data <- SplineOmics::extract_data(
   data = data,
   # Use this annotation column for the feature names.
   feature_name_columns = c("Gene_name"),
-  # When TRUE, you must confirm that data is in the required format.
-  user_prompt = FALSE
+  top_row = 4,
+  bottom_row = 4165,
+  right_col = 37,
+  left_col = 2
 )
 
 ## ----Load EDA arguments, eval = TRUE------------------------------------------
@@ -78,10 +79,10 @@ splineomics <- SplineOmics::create_splineomics(
 print(splineomics)
 
 ## ----Run EDA function, eval = FALSE-------------------------------------------
-#  plots <- SplineOmics::explore_data(
-#    splineomics = splineomics, # SplineOmics object
-#    report_dir = report_dir
-#  )
+# plots <- SplineOmics::explore_data(
+#   splineomics = splineomics, # SplineOmics object
+#   report_dir = report_dir
+# )
 
 ## ----Load hyperparameter-screening args, eval = TRUE--------------------------
 data1 <- data
@@ -114,8 +115,8 @@ metas <- list(meta1, meta2)
 
 # Test two different limma designs
 designs <- c(
-  "~ 1 + Phase*X + Reactor",
-  "~ 1 + X + Reactor"
+  "~ 1 + Phase*Time + Reactor",
+  "~ 1 + Time + Reactor"
 )
 
 # 'Integrated means' limma will use the full dataset to generate the results for
@@ -160,22 +161,22 @@ spline_test_configs <- data.frame(
 print(spline_test_configs)
 
 ## ----Perform hyperparameter-screening, eval = FALSE---------------------------
-#  SplineOmics::screen_limma_hyperparams(
-#    splineomics = splineomics,
-#    datas = datas,
-#    datas_descr = datas_descr,
-#    metas = metas,
-#    designs = designs,
-#    modes = modes,
-#    spline_test_configs = spline_test_configs,
-#    report_dir = report_dir,
-#    adj_pthresholds = adj_pthresholds,
-#  )
+# SplineOmics::screen_limma_hyperparams(
+#   splineomics = splineomics,
+#   datas = datas,
+#   datas_descr = datas_descr,
+#   metas = metas,
+#   designs = designs,
+#   modes = modes,
+#   spline_test_configs = spline_test_configs,
+#   report_dir = report_dir,
+#   adj_pthresholds = adj_pthresholds,
+# )
 
 ## ----Update the SplineOmics object, eval = TRUE-------------------------------
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor", # best design formula
+  design = "~ 1 + Phase*Time + Reactor", # best design formula
   mode = "integrated", # means limma uses the full data for each condition.
   data = data2, # data without "outliers" was better
   meta = meta2,
@@ -191,146 +192,146 @@ splineomics <- SplineOmics::run_limma_splines(
 )
 
 ## ----build limma report, eval = FALSE-----------------------------------------
-#  report_dir <- here::here(
-#    "results",
-#    "create_limma_reports"
-#  )
-#  
-#  plots <- SplineOmics::create_limma_report(
-#    splineomics = splineomics,
-#    report_dir = report_dir
-#  )
+# report_dir <- here::here(
+#   "results",
+#   "create_limma_reports"
+# )
+# 
+# plots <- SplineOmics::create_limma_report(
+#   splineomics = splineomics,
+#   report_dir = report_dir
+# )
 
 ## ----cluster the hits, eval = FALSE-------------------------------------------
-#  adj_pthresholds <- c( # 0.05 for both levels
-#    0.05, # exponential
-#    0.05 # stationary
-#  )
-#  
-#  clusters <- c(
-#    6L, # 6 clusters for the exponential phase level
-#    3L # 3 clusters for the stationary phase level
-#  )
-#  
-#  report_dir <- here::here(
-#    "results",
-#    "clustering_reports"
-#  )
-#  
-#  plot_info <- list( # For the spline plots
-#    y_axis_label = "log2 intensity",
-#    time_unit = "min", # our measurements were in minutes
-#    treatment_labels = list("feeding"), # add this for all conditions
-#    treatment_timepoints = list(0) # Feeding was at 0 minutes.
-#  )
-#  
-#  # Like this you can add individual treatment labels to your plots:
-#  # treatment_labels = list(
-#  #   exponential = "treatment 1", # One treatment in exp
-#  #   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat
-#  #   additional_condition = NA  # No treatment in the hypothetical third condition
-#  #   )
-#  #
-#  # treatment_timepoints = list(
-#  #   exponential = 0,
-#  #   stationary = C(100, 140),  # Two treatments also need two timepoints
-#  #   additional_condition = NA
-#  #   )
-#  #
-#  # or set a treatment for ALL conditions (still always make a list):
-#  #
-#  # treatment_labels = list("treatment")
-#  # treatment_timepoints = list(120)
-#  #
-#  # or set multiple treatments for ALL conditions:
-#  #
-#  # treatment_labels = list(c("treatment1", "treatment2"))
-#  # treatment_timepoints = list(c(120, 90))
-#  
-#  
-#  # Get all the gene names. They are used for generating files
-#  # which contents can be directly used as the input for the Enrichr webtool,
-#  # if you prefer to manually perform the enrichment. Those files are
-#  # embedded in the output HTML report and can be downloaded from there.
-#  gene_column_name <- "Gene_symbol"
-#  genes <- annotation[[gene_column_name]]
-#  
-#  plot_options <- list(
-#    # When meta_replicate_column is not there, all datapoints are blue.
-#    meta_replicate_column = "Reactor", # Colors the data points based on Reactor
-#    cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
-#  )
-#  
-#  clustering_results <- SplineOmics::cluster_hits(
-#    splineomics = splineomics,
-#    adj_pthresholds = adj_pthresholds,
-#    clusters = clusters,
-#    genes = genes,
-#    plot_info = plot_info,
-#    plot_options = plot_options,
-#    report_dir = report_dir,
-#    adj_pthresh_avrg_diff_conditions = 0,
-#    adj_pthresh_interaction_condition_time = 0.25
-#  )
+# adj_pthresholds <- c( # 0.05 for both levels
+#   0.05, # exponential
+#   0.05 # stationary
+# )
+# 
+# clusters <- c(
+#   6L, # 6 clusters for the exponential phase level
+#   3L # 3 clusters for the stationary phase level
+# )
+# 
+# report_dir <- here::here(
+#   "results",
+#   "clustering_reports"
+# )
+# 
+# plot_info <- list( # For the spline plots
+#   y_axis_label = "log2 intensity",
+#   time_unit = "min", # our measurements were in minutes
+#   treatment_labels = list("feeding"), # add this for all conditions
+#   treatment_timepoints = list(0) # Feeding was at 0 minutes.
+# )
+# 
+# # Like this you can add individual treatment labels to your plots:
+# # treatment_labels = list(
+# #   exponential = "treatment 1", # One treatment in exp
+# #   stationary = c("treatment 2", "treatment 3"),  # Two treatments in stat
+# #   additional_condition = NA  # No treatment in the hypothetical third condition
+# #   )
+# #
+# # treatment_timepoints = list(
+# #   exponential = 0,
+# #   stationary = c(100, 140),  # Two treatments also need two timepoints
+# #   additional_condition = NA
+# #   )
+# #
+# # or set a treatment for ALL conditions (still always make a list):
+# #
+# # treatment_labels = list("treatment")
+# # treatment_timepoints = list(120)
+# #
+# # or set multiple treatments for ALL conditions:
+# #
+# # treatment_labels = list(c("treatment1", "treatment2"))
+# # treatment_timepoints = list(c(120, 90))
+# 
+# 
+# # Get all the gene names. They are used for generating files
+# # which contents can be directly used as the input for the Enrichr webtool,
+# # if you prefer to manually perform the enrichment. Those files are
+# # embedded in the output HTML report and can be downloaded from there.
+# gene_column_name <- "Gene_symbol"
+# genes <- annotation[[gene_column_name]]
+# 
+# plot_options <- list(
+#   # When meta_replicate_column is not there, all datapoints are blue.
+#   meta_replicate_column = "Reactor", # Colors the data points based on Reactor
+#   cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
+# )
+# 
+# clustering_results <- SplineOmics::cluster_hits(
+#   splineomics = splineomics,
+#   adj_pthresholds = adj_pthresholds,
+#   clusters = clusters,
+#   genes = genes,
+#   plot_info = plot_info,
+#   plot_options = plot_options,
+#   report_dir = report_dir,
+#   adj_pthresh_avrg_diff_conditions = 0,
+#   adj_pthresh_interaction_condition_time = 0.25
+# )
 
 ## ----download Enrichr databases, eval = FALSE---------------------------------
-#  # Specify which databases you want to download from Enrichr
-#  gene_set_lib <- c(
-#    "WikiPathways_2019_Human",
-#    "NCI-Nature_2016",
-#    "TRRUST_Transcription_Factors_2019",
-#    "MSigDB_Hallmark_2020",
-#    "GO_Cellular_Component_2018",
-#    "CORUM",
-#    "KEGG_2019_Human",
-#    "TRANSFAC_and_JASPAR_PWMs",
-#    "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
-#    "GO_Biological_Process_2018",
-#    "GO_Molecular_Function_2018",
-#    "Human_Gene_Atlas"
-#  )
-#  
-#  SplineOmics::download_enrichr_databases(
-#    gene_set_lib = gene_set_lib,
-#    filename = "databases.tsv"
-#  )
+# # Specify which databases you want to download from Enrichr
+# gene_set_lib <- c(
+#   "WikiPathways_2019_Human",
+#   "NCI-Nature_2016",
+#   "TRRUST_Transcription_Factors_2019",
+#   "MSigDB_Hallmark_2020",
+#   "GO_Cellular_Component_2018",
+#   "CORUM",
+#   "KEGG_2019_Human",
+#   "TRANSFAC_and_JASPAR_PWMs",
+#   "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+#   "GO_Biological_Process_2018",
+#   "GO_Molecular_Function_2018",
+#   "Human_Gene_Atlas"
+# )
+# 
+# SplineOmics::download_enrichr_databases(
+#   gene_set_lib = gene_set_lib,
+#   filename = "databases.tsv"
+# )
 
 ## ----prepare arguments for GSEA, eval = FALSE---------------------------------
-#  # Specify the filepath of the TSV file with the database info
-#  downloaded_dbs_filepath <- here::here("databases.tsv")
-#  
-#  # Load the file
-#  databases <- read.delim(
-#    downloaded_dbs_filepath,
-#    sep = "\t",
-#    stringsAsFactors = FALSE
-#  )
-#  
-#  # Specify the clusterProfiler parameters
-#  clusterProfiler_params <- list(
-#    pvalueCutoff = 0.05,
-#    pAdjustMethod = "BH",
-#    minGSSize = 10,
-#    maxGSSize = 500,
-#    qvalueCutoff = 0.2
-#  )
-#  
-#  report_dir <- here::here(
-#    "results",
-#    "gsea_reports"
-#  )
+# # Specify the filepath of the TSV file with the database info
+# downloaded_dbs_filepath <- here::here("databases.tsv")
+# 
+# # Load the file
+# databases <- read.delim(
+#   downloaded_dbs_filepath,
+#   sep = "\t",
+#   stringsAsFactors = FALSE
+# )
+# 
+# # Specify the clusterProfiler parameters
+# clusterProfiler_params <- list(
+#   pvalueCutoff = 0.05,
+#   pAdjustMethod = "BH",
+#   minGSSize = 10,
+#   maxGSSize = 500,
+#   qvalueCutoff = 0.2
+# )
+# 
+# report_dir <- here::here(
+#   "results",
+#   "gsea_reports"
+# )
 
 ## ----run GSEA, eval = FALSE---------------------------------------------------
-#  result <- SplineOmics::run_gsea(
-#    # A dataframe with three columns: feature, cluster, and gene. Feature contains
-#    # the integer index of the feature, cluster the integer specifying the cluster
-#    # number, and gene the string of the gene, such as "CLSTN2".
-#    levels_clustered_hits = clustering_results$clustered_hits_levels,
-#    databases = databases,
-#    clusterProfiler_params = clusterProfiler_params,
-#    report_info = report_info,
-#    report_dir = report_dir
-#  )
+# result <- SplineOmics::run_gsea(
+#   # A dataframe with three columns: feature, cluster, and gene. Feature contains
+#   # the integer index of the feature, cluster the integer specifying the cluster
+#   # number, and gene the string of the gene, such as "CLSTN2".
+#   levels_clustered_hits = clustering_results$clustered_hits_levels,
+#   databases = databases,
+#   clusterProfiler_params = clusterProfiler_params,
+#   report_info = report_info,
+#   report_dir = report_dir
+# )
 
 ## ----sessionInfo, echo=FALSE--------------------------------------------------
 sessionInfo()

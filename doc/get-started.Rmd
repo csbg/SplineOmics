@@ -63,7 +63,6 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 
 ```{r setup, eval = TRUE}
 library(SplineOmics)
-library(readxl) # for loading Excel files
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 ```
@@ -96,19 +95,19 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.
 
 ```{r load the files}
-data <- readRDS(system.file(
+data <- readRDS(xzfile(system.file(
   "extdata",
-  "proteomics_data.rds",
+  "proteomics_data.rds.xz",
   package = "SplineOmics"
-))
+)))
 
-
-meta <- read_excel(
+meta <- read.csv(
   system.file(
     "extdata",
-    "proteomics_meta.xlsx",
+    "proteomics_meta.csv",
     package = "SplineOmics"
-  )
+  ),
+  stringsAsFactors = FALSE
 )
 
 # Extract the annotation part from the dataframe.
@@ -139,9 +138,16 @@ Three comments about the characteristics the input data should have:
     from normality. Proper transformation helps ensure that the
     assumptions underlying the statistical tests are met, leading to
     more accurate and trustworthy results.
-    
--   The samples in the data should be independent of each other. Linear models,       such as those used in limma, assume that the observations (samples) are           independent. If there is a dependency between samples (e.g., repeated             measurements of the same subject), this assumption is violated, which can
-    lead to incorrect statistical inferences. 
+
+-   The samples in the data should be independent of each other. Linear
+    models,\
+    such as those used in limma, assume that the observations (samples)
+    are\
+    independent. If there is a dependency between samples (e.g.,
+    repeated\
+    measurements of the same subject), this assumption is violated,
+    which can lead to incorrect statistical inferences.
+
 
 ## Bring the Inputs into the Standardized Format
 
@@ -150,22 +156,14 @@ package, it needs some processing. The SplineOmics package requires data
 to be a numeric matrix, so no element is allowed to be anything else
 than a number. This can be done with a few commands in R, but if your
 file has a specific structure, the function `extract_data()` can handle
-this automatically.
-
-### File Structure Requirements
-
-If your file looks like the one used here, where:
-
--   The **data matrix field** is on the left
--   The **annotation info** is on the right
--   These fields are separated by one empty column
+this more easily
 
 ### Usage of the extract_data() function
 
-Then, `extract_data()` can:
+`extract_data()` can:
 
--   **Identify the data matrix field** and return it as a numeric
-    matrix.
+-   **Extract the data matrix field** by specifying the location of the corners 
+    of the matrix.
 -   **Create column headers** from the information written in the cells
     above the respective columns of the data matrix field.
 -   **Assign rowheaders**:
@@ -188,8 +186,10 @@ data <- SplineOmics::extract_data(
   data = data,
   # Use this annotation column for the feature names.
   feature_name_columns = c("Gene_name"),
-  # When TRUE, you must confirm that data is in the required format.
-  user_prompt = FALSE
+  top_row = 4,
+  bottom_row = 4165,
+  right_col = 37,
+  left_col = 2
 )
 ```
 
@@ -504,8 +504,8 @@ metas <- list(meta1, meta2)
 
 # Test two different limma designs
 designs <- c(
-  "~ 1 + Phase*X + Reactor",
-  "~ 1 + X + Reactor"
+  "~ 1 + Phase*Time + Reactor",
+  "~ 1 + Time + Reactor"
 )
 
 # 'Integrated means' limma will use the full dataset to generate the results for
@@ -579,7 +579,7 @@ hyperparameters are generated (every possible combination of all
 specified adj. p-value thresholds and spline configs).
 
 The encoding used in the reports and the titles is
-[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table_19_09_2024-13_44_10.html)
+[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html)
 (This is part of the output of the screen_limma_hyperparams function).
 
 # Run limma spline analysis
@@ -607,7 +607,7 @@ To generate the limma result categories 2 and 3 ()
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
-  design = "~ 1 + Phase*X + Reactor", # best design formula
+  design = "~ 1 + Phase*Time + Reactor", # best design formula
   mode = "integrated", # means limma uses the full data for each condition.
   data = data2, # data without "outliers" was better
   meta = meta2,
@@ -712,13 +712,13 @@ plot_info <- list( # For the spline plots
 # Like this you can add individual treatment labels to your plots:
 # treatment_labels = list(
 #   exponential = "treatment 1", # One treatment in exp
-#   stationary = c("treatment 2", "treatment 3")  # Two treatments in stat
+#   stationary = c("treatment 2", "treatment 3"),  # Two treatments in stat
 #   additional_condition = NA  # No treatment in the hypothetical third condition
 #   )
 #
 # treatment_timepoints = list(
 #   exponential = 0,
-#   stationary = C(100, 140),  # Two treatments also need two timepoints
+#   stationary = c(100, 140),  # Two treatments also need two timepoints
 #   additional_condition = NA
 #   )
 #
@@ -769,10 +769,10 @@ contains an interaction effect).
 
 # Perform gene set enrichment analysis (GSEA)
 
-Usually, the final step in such a bioinformatics analysis is GSEA. To
-each clustered hit, the respective gene can be assigned and GSEA
-performed. For this, the Enrichr databases of choice have to be
-downloaded:
+Once the clustered hits are identified, a subsequent step to gain
+biological insights is to perform GSEA. For this, the respective genes
+can be assigned to each clustered hit, and GSEA can be carried out. To
+proceed, the Enrichr databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
 # Specify which databases you want to download from Enrichr
@@ -848,7 +848,7 @@ result <- SplineOmics::run_gsea(
 )
 ```
 
-You can view the generated analysis report of the cluster_hits function
+You can view the generated analysis report of the run_gsea function
 [here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
@@ -883,16 +883,13 @@ working in R Studio (which is recommendet) you can easily check out the
 values of the individual variables and generate the output reports
 yourself.
 
-When you run the function `open_template()` you get a minimal R Markdown
-file, where the code is written so that you can use it as a skeleton to
-plug in your own data and run it.
-
 We hope that the SplineOmics package makes your scientific data analysis
 easier. If you face any problems (bugs in the code) or are not satisfied
 with the documentation, open an issue on GitHub or check out the other
 options under the Feedback section of the README on GitHub. Thank you!
 
+# Session Info
+
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()
 ```
-
