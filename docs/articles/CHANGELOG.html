@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul>
 </li>
@@ -143,27 +144,128 @@ Resolved an issue causing crashes when input data was missing values. -
 </div>
 </div>
 <div class="section level4">
-<h4 id="section">[0.1.3] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section"></a>
+<h4 id="section">[0.2.0] - 2025-04-10<a class="anchor" aria-label="anchor" href="#section"></a>
 </h4>
 <p>(In preparation)</p>
 <div class="section level5">
 <h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
 </h5>
 <ul>
-<li>Bug that prevented the generation of the double spline plots when
+<li><p>Bug that prevented the generation of the double spline plots when
 the condition column of meta was a factor instead of a string. This is
 now solved (it internally in the code converts it to a string), so
 having the condition column as a factor now does not cause problems
-anymore (as having it as factor is perfectly valid).</li>
+anymore (as having it as factor is perfectly valid).</p></li>
+<li><p>Bug that occured in the internal clean_gene_symbols() function
+when one of the gene names was NA. Now, this does not cause a problem
+anymore and instead of the gene name on the respective spline plot it
+will write NA.</p></li>
+<li><p>The error message when more clusters where specified than hits in
+a condition was very cryptic. Now, it gives a message that is easy to
+understand.</p></li>
+<li><p>A bug in input control that threw an error indicating that there
+are rows in the dataset that contains just zeros, even though this was
+not true.</p></li>
+<li><p>When running cluster_hits() with report = FALSE, but there where
+many hits, it anyways warned the user that the report generation will
+take long. This was fixed, because when report = FALSE, no report is
+generated, which means the user does not have to be warned then (that
+would just confuse the user).</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+</h5>
+<ul>
+<li><p>Replicates in the double spline plots (limma result category 2
+and 3) are now shown with shapes instead of numbers besides the data
+points. This is now possible because the imputed values are not anymore
+shown with shapes in those plots, like in the single spline plots (limma
+result category 1), but with colors (red = imputed values for condition
+1, dodgerblue = imputed values for condition 2).</p></li>
+<li><p>The images in the HTML reports are now considerably smaller, but
+zoomable, with the option to drag within the zoomed image. A single
+left-click with the mouse starts the zoom process. Then, you can zoom
+with the mouse wheel. If you reach the max zoom, you can move in the
+image by further zooming with the mouse wheel but placing the mouse in
+one of the corners. Further, one can zoom by holding left-click pressed
+and dragging (you can then also let go).</p></li>
+<li><p>SplineOmics can now handle datasets with NA values. limma can do
+that, and since SplineOmics is based on limma, it can in principle do it
+to. The issue before was just that there were checks in place that
+prevented NA values from entering the pipeline, and also other steps in
+the code caused problems, raised warnings, or stopped the execution when
+facing NA values.</p></li>
+<li><p>Changed extract_data() function so that it can handle missing
+values correctly, and so that it now is fully explicit and does not do
+any internal magic.</p></li>
+<li><p>When there where less than two hits in all levels for the
+cluster_hits() function, then this function provided a message that
+informed about this and threw an error. This was fine when just running
+the function to generate one result. However, when using this function
+in an outside loop to generate multiple results, this behavior is
+suboptimal, because it then must be captured with a tryCatch clause.
+Now, if there are less than two hits in all levels, it simply returns
+NULL, which is a cleaner behavior that does not break loops if one
+result cannot be generated.</p></li>
+<li><p>extract_data() function, so that now it does not work with an
+implicit logic, but instead with an explicit logic. Before, it tried to
+automatically find the numeric matrix field. Now, it requires to
+specific the top- and bottom row, and the left and right column. This
+then marks the field where the matrix is. The rest of the logic (the
+logic about the row name columns) is still the same.</p></li>
+<li><p>make_scatter_plot_html() (now renamed to
+make_scatter_plots_html()).</p></li>
+<li><p>renamed run_gsea() to run_ora(), because the function uses
+clusterProfiler, which performs ora (overrepresentation analysis) and
+not gsea (gene set enrichment analysis) in the stricter sense.</p></li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+</h4>
+<ul>
+<li><p>find_pvc() function. This function performs a compount contrast
+for every timepoint triple in the data (adjacent timepoints) to find
+peaks, valley, and cliffs as a form of local temporal patterns. It
+generates an HTML report containing all findings in files and also
+containing the plots.</p></li>
+<li><p>New vignette showcasing the find_pvc() function.</p></li>
+<li><p>Implicit (default) and explicit heteroscedasticity handling of
+the linear model input. Controlled by the <code>robust_fit</code>
+Boolean flag indicating whether the robust modeling strategy should be
+used to account for heteroscedasticity. If omitted (i.e.,
+<code>robust_fit = NULL</code>), the decision is made implicitly based
+on the result of the Breusch–Pagan test, which is applied independently
+to each feature. This test fits a linear model of the form
+<code>expression ~ time</code> and checks whether the residual variance
+systematically depends on the fitted values. If a significant violation
+of homoscedasticity is detected in a sufficient fraction of features
+(default: 10%), the robust strategy is applied. For RNA-seq data, this
+means using <code>voomWithQualityWeights()</code> instead of the
+standard <code>voom()</code> function. For other, non-count-based data,
+<code><a href="https://rdrr.io/pkg/limma/man/arrayWeights.html" class="external-link">limma::arrayWeights()</a></code> is used during model fitting,
+combined with <code>robust = TRUE</code> in
+<code><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">limma::eBayes()</a></code>. These strategies downweight samples with
+higher residual variance to prevent bias in the linear modeling step, as
+violations of the homoscedasticity assumption can lead to misleading
+p-values and unreliable inference.</p></li>
+<li><p>New note in the HTML report of the cluster_hits() function, that
+informs the user that the splines shown in the plots can appear to have
+the wrong intercept. This can occur when a batch effect and/or random
+effect is modeled with limma or the linear mixed models, but the
+plotting data is batch corrected only with the dedicated limma batch
+correction function. For a reason, there is a gap. The results are fine!
+Just the plotting is off!</p></li>
 </ul>
 <hr>
-</div>
 </div>
 <div class="section level4">
 <h4 id="section-1">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
 </h5>
 <ul>
 <li>Level name in title of overall spline plots.</li>
@@ -200,7 +302,7 @@ and this, which is twice the maintainance effort.</li>
 </h4>
 </div>
 <div class="section level4">
-<h4 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+<h4 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
 </h4>
 <ul>
 <li>The design formula must now contain the string ‘Time’ rather than
@@ -212,7 +314,7 @@ formula, rather than being passed as part of the dream_params.</li>
 </ul>
 </div>
 <div class="section level4">
-<h4 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
+<h4 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
 </h4>
 <ul>
 <li>Added linear mixed models for modeling random effects. The

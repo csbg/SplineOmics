@@ -148,6 +148,7 @@ Three comments about the characteristics the input data should have:
     measurements of the same subject), this assumption is violated,
     which can lead to incorrect statistical inferences.
 
+
 ## Bring the Inputs into the Standardized Format
 
 Since `data` is not in the format required by the **SplineOmics**
@@ -155,22 +156,14 @@ package, it needs some processing. The SplineOmics package requires data
 to be a numeric matrix, so no element is allowed to be anything else
 than a number. This can be done with a few commands in R, but if your
 file has a specific structure, the function `extract_data()` can handle
-this automatically.
-
-### File Structure Requirements
-
-If your file looks like the one used here, where:
-
--   The **data matrix field** is on the left
--   The **annotation info** is on the right
--   These fields are separated by one empty column
+this more easily
 
 ### Usage of the extract_data() function
 
-Then, `extract_data()` can:
+`extract_data()` can:
 
--   **Identify the data matrix field** and return it as a numeric
-    matrix.
+-   **Extract the data matrix field** by specifying the location of the corners 
+    of the matrix.
 -   **Create column headers** from the information written in the cells
     above the respective columns of the data matrix field.
 -   **Assign rowheaders**:
@@ -193,8 +186,10 @@ data <- SplineOmics::extract_data(
   data = data,
   # Use this annotation column for the feature names.
   feature_name_columns = c("Gene_name"),
-  # When TRUE, you must confirm that data is in the required format.
-  user_prompt = FALSE
+  top_row = 4,
+  bottom_row = 4165,
+  right_col = 37,
+  left_col = 2
 )
 ```
 
@@ -616,6 +611,12 @@ splineomics <- SplineOmics::update_splineomics(
   mode = "integrated", # means limma uses the full data for each condition.
   data = data2, # data without "outliers" was better
   meta = meta2,
+  # States explicitly that there is no problem of heteroscedasticity and 
+  # therefore, this does not need to be adressed. Setting it to TRUE would mean
+  # the opposite, and when setting it to NULL, it means it should be handled 
+  # implicitly (based on a Breusch-Pagan test). For details, see Reference
+  # documentation of the create_splineomics() function.
+  robust_fit = FALSE,
   spline_params = list(
     spline_type = c("n"), # natural cubic splines (take these if unsure)
     dof = c(2L) # If you are unsure about which dof, start with 2 and increase

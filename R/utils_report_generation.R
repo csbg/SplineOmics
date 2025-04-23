@@ -110,13 +110,13 @@ generate_report_html <- function(
       feature_name_columns,
       collapse = "_"
     )
-  } else if (report_type == "create_gsea_report") {
-    title <- "gsea report"
+  } else if (report_type == "run_ora") {
+    title <- "ora report"
   } else {
     stop_call_false(
       paste(
         "report_type must be explore_hits, screen_limma_hyperparams,",
-        "create_limma_report, find_pvc, or cluster_hits"
+        "create_limma_report, find_pvc, run_ora, or cluster_hits"
       )
     )
   }
@@ -244,7 +244,8 @@ generate_report_html <- function(
       meta = meta,
       topTables = topTables,
       report_info = report_info,
-      enrichr_format = enrichr_format
+      enrichr_format = enrichr_format,
+      pvc_results = NULL,
     )
 
     field_display <- sprintf(
@@ -314,7 +315,7 @@ generate_report_html <- function(
   )
 
 
-  if (report_type == "create_gsea_report") {
+  if (report_type == "run_ora") {
     databases_text <- paste(report_info$databases, collapse = ", ")
     header_section <- paste(
       header_section,
@@ -380,8 +381,8 @@ generate_report_html <- function(
       report_info = report_info,
       output_file_path = output_file_path
     )
-  } else if (report_type == "create_gsea_report") {
-    build_create_ora_report(
+  } else if (report_type == "run_ora") {
+    build_run_ora_report(
       header_section = header_section,
       plots = plots,
       plots_sizes = plots_sizes,
@@ -990,7 +991,7 @@ get_header_section <- function(
       ),
       "</div>"
     ),
-    "create_gsea_report" = '<p style="font-size: 2em;"></p>'
+    "run_ora_report" = '<p style="font-size: 2em;"></p>'
   )
 
   hotkeys_box <- paste(
@@ -1072,7 +1073,7 @@ encode_df_to_base64 <- function(
     # Convert list of dataframes to Excel with multiple sheets
 
     if (!is.na(report_type)) {
-      if (report_type == "create_gsea_report") {
+      if (report_type == "run_ora") {
         all_names <- names(df)
         sheet_names <- vapply(
           all_names,
@@ -1402,7 +1403,7 @@ create_toc <- function() {
 #'
 #' @description
 #' Defines the CSS styles for section headers and Table of Contents (TOC)
-#' entries used in the GSEA report generation.
+#' entries used in the ORA report generation.
 #'
 #' @return A list containing the styles for section headers and TOC entries.
 #'

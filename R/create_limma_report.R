@@ -605,7 +605,9 @@ create_p_value_histogram <- function(
 create_volcano_plot <- function(
     top_table,
     adj_pthresh,
-    compared_levels) {
+    compared_levels
+    ) {
+
   logFC <- NULL
   adj.P.Val <- NULL
 

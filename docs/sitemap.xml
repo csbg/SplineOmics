@@ -6,6 +6,7 @@
 <url><loc>https://csbg.github.io/SplineOmics/articles/CHANGELOG.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/Docker-instructions.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/Docker_permission_denied.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/articles/PVC_analysis.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/RNA-seq analysis.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/RNA-seq-analysis.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/articles/design_limma_design_formula.html</loc></url>
@@ -21,13 +22,16 @@
 <url><loc>https://csbg.github.io/SplineOmics/reference/download_enrichr_databases.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/explore_data.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/extract_data.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/find_pvc.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/index.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/make_scatter_plot_html.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/make_scatter_plots_html.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/open_tutorial.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/preprocess_rna_seq_data.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/print.SplineOmics.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/run_gsea.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/run_limma_splines.html</loc></url>
+<url><loc>https://csbg.github.io/SplineOmics/reference/run_ora.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/screen_limma_hyperparams.html</loc></url>
 <url><loc>https://csbg.github.io/SplineOmics/reference/update_splineomics.html</loc></url>
 </urlset>

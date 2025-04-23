@@ -122,10 +122,11 @@ Examples:
   timepoint triple in the data (adjacent timepoints) to find peaks, valley, and
   cliffs as a form of local temporal patterns. It generates an HTML report
   containing all findings in files and also containing the plots.
+
+- New vignette showcasing the find_pvc() function.
   
 - Implicit (default) and explicit heteroscedasticity handling of the linear model input. Controlled by the `robust_fit` Boolean flag indicating whether the robust modeling strategy should be used to account for heteroscedasticity. If omitted (i.e., `robust_fit = NULL`), the decision is made implicitly based on the result of the Breusch–Pagan test, which is applied independently to each feature. This test fits a linear model of the form `expression ~ time` and checks whether the residual variance systematically depends on the fitted values. If a significant violation of homoscedasticity is detected in a sufficient fraction of features (default: 10%), the robust strategy is applied. For RNA-seq data, this means using `voomWithQualityWeights()` instead of the standard `voom()` function. For other, non-count-based data, `limma::arrayWeights()` is used during model fitting, combined with `robust = TRUE` in `limma::eBayes()`. These strategies downweight samples with higher residual variance to prevent bias in the linear modeling step, as violations of the homoscedasticity assumption can lead to misleading p-values and unreliable inference.
 
-  
 - New note in the HTML report of the cluster_hits() function, that informs the 
   user that the splines shown in
   the plots can appear to have the wrong intercept. This can occur when a batch 

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul>
 </li>
@@ -309,7 +310,7 @@ Graphical Abstract of SplineOmics Workflow
 <p>The glycan fractional abundance data matrix, where each row represents a type of glycan and the columns correspond to timepoints, must be transformed before analysis. This preprocessing step is essential due to the compositional nature of the data. In compositional data, an increase in the abundance of one component (glycan) necessarily results in a decrease in others, introducing a dependency among the variables that can bias the analysis. One way to address this issue is by applying the Centered Log Ratio (CLR) transformation to the data with the clr function from the compositions package:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://www.stat.boogaart.de/compositions/" class="external-link">compositions</a></span><span class="op">)</span></span>
-<span><span class="va">clr_transformed_data</span> <span class="op">&lt;-</span> <span class="fu">clr</span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
+<span><span class="va">clr_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/compositions/man/clr.html" class="external-link">clr</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 <p>The results from clr transformed data can be harder to understand and interpret however. If you prefer ease of interpretation and are fine that the results contain some artifacts due to the compositional nature of the data, log2 transform your data instead and use that as input for the <code>SplineOmics</code> package.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log2_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
@@ -368,7 +369,7 @@ Graphical Abstract of SplineOmics Workflow
 <li>
 <strong>edgeR</strong> (&gt;= 4.0.16): For preprocessing RNA-seq data in the <code><a href="reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function.</li>
 <li>
-<strong>clusterProfiler</strong> (&gt;= 4.10.1): For the <code><a href="reference/run_gsea.html">run_gsea()</a></code> function (gene set enrichment analysis).</li>
+<strong>clusterProfiler</strong> (&gt;= 4.10.1): For the <code>run_gsea()</code> function (gene set enrichment analysis).</li>
 <li>
 <strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code><a href="reference/open_tutorial.html">open_tutorial()</a></code> function.</li>
 </ul>

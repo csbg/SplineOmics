@@ -15,7 +15,7 @@ between time and condition."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,7 @@ between time and condition."></head><body>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
@@ -81,14 +82,15 @@ following elements:</p><ul><li><p><code>data</code>: The matrix of the omics dat
   <code>condition</code>.</p></li>
 <li><p><code>design</code>: A character string representing the limma design
   formula.</p></li>
-<li><p><code>dream_params</code>: #' A named list or NULL. When not NULL, it can contain the following named
+<li><p><code>dream_params</code>: #' A named list or NULL. When not NULL, it can
+                               contain the following named
      elements:
-     - `dof`: An integer greater than 1, specifying the degrees of freedom for
-     the dream topTable.
+     - `dof`: An integer greater than 1, specifying the degrees of freedom
+     for  the dream topTable.
      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
      approximation for mixed models.
-     Note that random effects are now directly specified in the design formula
-     and not in `dream_params`.</p></li>
+     Note that random effects are now directly specified in the design
+     formula and not in `dream_params`.</p></li>
 <li><p><code>condition</code>: A character string specifying the column name
   in <code>meta</code> used to define groups for analysis.</p></li>
 <li><p><code>spline_params</code>: A list of spline parameters used in the

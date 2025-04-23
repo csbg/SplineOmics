@@ -14,17 +14,8 @@
 #' the info about the replicates, such as reactor.
 #'
 #' @import ggplot2
-#' @seealso \code{\link[rmarkdown]{render}}
 #' @importFrom progress progress_bar
-#' @examples
-#' \dontrun{
-#' # Example Data
-#' data <- matrix(rnorm(50), nrow = 5)
-#' meta <- data.frame(Time = seq(1, 10, length.out = 10))
-#'
-#' # Generate HTML report (only if you want to test it)
-#' make_scatter_plot_html(data, meta, "scatter_report.html")
-#' }
+#' 
 #' @export
 #'
 make_scatter_plots_html <- function(

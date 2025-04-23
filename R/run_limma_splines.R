@@ -327,7 +327,7 @@ within_level <- function(
 #' @importFrom splines bs ns
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream eBayes topTable
+#' @importFrom variancePartition dream eBayes
 #'
 fit_global_model <- function(
     data,
@@ -447,6 +447,9 @@ fit_global_model <- function(
 
 #' Extract pairwise contrasts for a condition from a fitted limma model
 #'
+#' @noRd
+#'
+#' @description
 #' Internal helper function that extracts condition-only and interaction
 #' contrasts for all pairwise combinations of levels within a condition
 #' factor. Works with fitted limma or dream models stored in a structured
@@ -474,8 +477,7 @@ extract_between_level_contrasts <- function(
     condition
 ) {
   
-  meta <- fit_obj$meta
-  levels <- unique(meta[[condition]])
+  levels <- unique(fit_obj$meta[[condition]])
   level_combinations <- utils::combn(
     levels,
     2,
@@ -593,7 +595,7 @@ process_top_table <- function(
 #' @importFrom splines bs ns
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream eBayes topTable
+#' @importFrom variancePartition dream eBayes
 #'
 process_within_level <- function(
     data,
@@ -716,6 +718,9 @@ remove_intercept <- function(formula) {
 
 #' Extract contrasts for a single pair of condition levels
 #'
+#' @noRd
+#'
+#' @description
 #' Extracts both the condition-only and condition-time interaction
 #' contrasts for a given pair of condition levels from a fitted limma
 #' model. Designed to be called from a wrapper function that loops over
@@ -867,6 +872,9 @@ modify_limma_top_table <- function(
 
 #' Construct contrast names for a pair of condition levels
 #'
+#' @noRd
+#'
+#' @description
 #' Builds the coefficient names used for extracting the condition-only and
 #' condition-time interaction effects between two condition levels. Assumes
 #' a design matrix where one condition level is used as the reference.

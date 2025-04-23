@@ -8,6 +8,8 @@ find_pvc(
   splineomics,
   alphas = 0.05,
   padjust_method = "BH",
+  plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
+    treatment_timepoints = NA),
   report_dir = here::here()
 )
 }
@@ -18,16 +20,28 @@ data frame with a `"Time"` column), `"meta_batch_column"` (name of the column
 in `meta` identifying replicates or batches), and `"padjust_method"` (a 
 string specifying the method for p-value adjustment).}
 
-\item{padjust_method}{A character string specifying the method for multiple 
-testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
-
-\item{alpha}{A single numeric value or a named list of numeric thresholds 
+\item{alphas}{A single numeric value or a named list of numeric thresholds 
 used to identify significant excursion points. If a single value is provided
 (either as a numeric scalar or a list of length 1), the same threshold is 
 applied to all condition levels. If a named list is provided, it must contain
 one numeric 
 value per condition level, with names matching the condition levels exactly. 
 This input is normalized internally to ensure consistent per-level access.}
+
+\item{padjust_method}{A character string specifying the method for multiple 
+testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
+
+\item{plot_info}{List containing the elements y_axis_label (string),
+time_unit (string), treatment_labels (character vector),
+treatment_timepoints (integer vector). All can also be NA.
+This list is used to add this info to the spline plots.
+time_unit is used to label the x-axis, and treatment_labels
+and -timepoints are used to create vertical dashed lines,
+indicating the positions of the treatments (such as
+feeding, temperature shift, etc.).}
+
+\item{report_dir}{Character string specifying the directory path where the
+HTML report and any other output files should be saved.}
 }
 \value{
 A named list of ggplot objects, where each element corresponds to a 

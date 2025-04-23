@@ -291,13 +291,16 @@ extract_effects <- function(formula_string) {
 
 #' Check for Violation of Homoscedasticity in Linear Model Inputs
 #'
+#' @noRd
+#'
+#' @description
 #' This internal helper function tests whether the assumption of 
 #' homoscedasticity (equal variance of residuals) is violated across time 
 #' for each feature (e.g., gene or protein). 
 #' 
 #' For each feature independently, the function fits a linear model of the 
-#' form `expression ~ time`, where the `time` variable is extracted from 
-#' `meta[["Time"]]` and assumed to be numeric. The residuals from this model 
+#' form `feature_value ~ time`, where the `time` variable is extracted from 
+#' `meta[["Time"]]`. The residuals from this model 
 #' are then tested for heteroscedasticity using the Breusch–Pagan test.
 #' 
 #' The Breusch–Pagan test evaluates whether the variance of residuals 

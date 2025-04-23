@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul>
 </li>
@@ -139,8 +140,6 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: replacing previous import 'limma::topTable' by</span></span>
-<span><span class="co">#&gt; 'variancePartition::topTable' when loading 'SplineOmics'</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span> <span class="co"># For managing filepaths</span></span>
 <span><span class="co">#&gt; here() starts at /home/thomas/Documents/PhD/projects/DGTX/SplineOmics_hub/SplineOmics</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
@@ -301,25 +300,15 @@ can lead to incorrect statistical inferences.</p></li>
 SplineOmics package requires data to be a numeric matrix, so no element
 is allowed to be anything else than a number. This can be done with a
 few commands in R, but if your file has a specific structure, the
-function <code><a href="../reference/extract_data.html">extract_data()</a></code> can handle this automatically.</p>
-<div class="section level4">
-<h4 id="file-structure-requirements">File Structure Requirements<a class="anchor" aria-label="anchor" href="#file-structure-requirements"></a>
-</h4>
-<p>If your file looks like the one used here, where:</p>
-<ul>
-<li>The <strong>data matrix field</strong> is on the left</li>
-<li>The <strong>annotation info</strong> is on the right</li>
-<li>These fields are separated by one empty column</li>
-</ul>
-</div>
+function <code><a href="../reference/extract_data.html">extract_data()</a></code> can handle this more easily</p>
 <div class="section level4">
 <h4 id="usage-of-the-extract_data-function">Usage of the extract_data() function<a class="anchor" aria-label="anchor" href="#usage-of-the-extract_data-function"></a>
 </h4>
-<p>Then, <code><a href="../reference/extract_data.html">extract_data()</a></code> can:</p>
+<p><code><a href="../reference/extract_data.html">extract_data()</a></code> can:</p>
 <ul>
 <li>
-<strong>Identify the data matrix field</strong> and return it as a
-numeric matrix.</li>
+<strong>Extract the data matrix field</strong> by specifying the
+location of the corners of the matrix.</li>
 <li>
 <strong>Create column headers</strong> from the information written
 in the cells above the respective columns of the data matrix field.</li>
@@ -352,8 +341,10 @@ feature.</li>
 <span>  data <span class="op">=</span> <span class="va">data</span>,</span>
 <span>  <span class="co"># Use this annotation column for the feature names.</span></span>
 <span>  feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene_name"</span><span class="op">)</span>,</span>
-<span>  <span class="co"># When TRUE, you must confirm that data is in the required format.</span></span>
-<span>  user_prompt <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  top_row <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  bottom_row <span class="op">=</span> <span class="fl">4165</span>,</span>
+<span>  right_col <span class="op">=</span> <span class="fl">37</span>,</span>
+<span>  left_col <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -832,6 +823,12 @@ level.</p>
 <span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
 <span>  data <span class="op">=</span> <span class="va">data2</span>, <span class="co"># data without "outliers" was better</span></span>
 <span>  meta <span class="op">=</span> <span class="va">meta2</span>,</span>
+<span>  <span class="co"># States explicitly that there is no problem of heteroscedasticity and </span></span>
+<span>  <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would mean</span></span>
+<span>  <span class="co"># the opposite, and when setting it to NULL, it means it should be handled </span></span>
+<span>  <span class="co"># implicitly (based on a Breusch-Pagan test). For details, see Reference</span></span>
+<span>  <span class="co"># documentation of the create_splineomics() function.</span></span>
+<span>  robust_fit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>, <span class="co"># natural cubic splines (take these if unsure)</span></span>
 <span>    dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span> <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
@@ -1037,7 +1034,7 @@ dotplots in R.</p>
 <p>The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_gsea.html">run_gsea</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu">run_gsea</span><span class="op">(</span></span>
 <span>  <span class="co"># A dataframe with three columns: feature, cluster, and gene. Feature contains</span></span>
 <span>  <span class="co"># the integer index of the feature, cluster the integer specifying the cluster</span></span>
 <span>  <span class="co"># number, and gene the string of the gene, such as "CLSTN2".</span></span>
@@ -1111,7 +1108,7 @@ Thank you!</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] dplyr_1.1.4       here_1.0.1        SplineOmics_0.1.2</span></span>
+<span><span class="co">#&gt; [1] dplyr_1.1.4       here_1.0.1        SplineOmics_0.2.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] Rdpack_2.6.2             bitops_1.0-9             gridExtra_2.3           </span></span>

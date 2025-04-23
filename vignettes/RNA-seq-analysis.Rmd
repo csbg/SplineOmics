@@ -297,6 +297,12 @@ In general, as long as the `data` argument contains the actual data matrix and t
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   data = voom_obj$E,
+  # States explicitly that there is no problem of heteroscedasticity and 
+  # therefore, this does not need to be adressed. Setting it to TRUE would mean
+  # the opposite, and when setting it to NULL, it means it should be handled 
+  # implicitly (based on a Breusch-Pagan test). For details, see Reference
+  # documentation of the create_splineomics() function.
+  robust_fit = FALSE,
   rna_seq_data = voom_obj
 )
 ```

@@ -25,8 +25,9 @@ feature_name_columns <- c(
 
 data <- extract_data(
   data,
-  feature_name_columns,
-  user_prompt = FALSE
+  feature_name_columns = feature_name_columns,
+  bottom_row = 15095,
+  right_col = 36
 )
 
 
@@ -53,14 +54,16 @@ feature_name_columns <- c(
 
 data_exp_matrix_only <- extract_data(
   data_exp,
-  feature_name_columns,
-  user_prompt = FALSE
+  feature_name_columns = feature_name_columns,
+  bottom_row = 13183,
+  right_col = 18
 )
 
 data_stat_matrix_only <- extract_data(
   data_stat,
-  feature_name_columns,
-  user_prompt = FALSE
+  feature_name_columns = feature_name_columns,
+  bottom_row = 12045,
+  right_col = 18
 )
 
 
@@ -324,7 +327,7 @@ splineomics <- update_splineomics(
   splineomics = splineomics,
   # design = "~ 1 + Phase*Time + (1|Reactor)",
   design = "~ 1 + Phase*Time + Reactor",
-  # robust_fit = TRUE,
+  robust_fit = FALSE,
   # mode = "integrated",
   mode = "integrated",
   # data = data2,
@@ -363,16 +366,16 @@ splineomics <- run_limma_splines(
 # 
 # 
 # 
-patterns <- list(
-  c(-1, 1),
-  c(1, -1)
-)
-
-results <- detect_patterns(
-  data,
-  meta,
-  patterns
-  )
+# patterns <- list(
+#   c(-1, 1),
+#   c(1, -1)
+# )
+# 
+# results <- detect_patterns(
+#   data,
+#   meta,
+#   patterns
+#   )
 
 # Extract significant excursions
 # results$excursion_matrices
@@ -480,8 +483,7 @@ clusterProfiler_params <- list(
 
 report_dir <- here::here("results", "gsea_reports")
 
-# debug(run_gsea)
-result <- run_gsea(
+result <- run_ora(
   levels_clustered_hits = clustering_results$clustered_hits_levels,
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,

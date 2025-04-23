@@ -144,7 +144,9 @@ cluster_hits <- function(
     pthresh_avg_diff = adj_pthresh_avrg_diff_conditions,  
     pthresh_interact = adj_pthresh_interaction_condition_time 
   )
-  report && huge_table_user_prompter(all_limma_result_tables)
+  if (report) {   # only make this check if the user actually wants a report
+    huge_table_user_prompter(all_limma_result_tables)
+  }
 
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
@@ -468,6 +470,7 @@ filter_and_append_limma_results <- function(
 #' @param tables A named list of data frames.
 #' @return NULL. The function either proceeds with execution or stops the
 #' script based on user input.
+#' 
 huge_table_user_prompter <- function(tables) {
   # Identify tables with more than 500 rows after filtering NAs in "adj.P.Val"
   large_tables <- lapply(names(tables), function(name) {
@@ -519,7 +522,6 @@ huge_table_user_prompter <- function(tables) {
     }
   }
 }
-
 
 
 #' Perform Clustering
@@ -4058,7 +4060,8 @@ add_dashed_lines <- function(
     # Create a data frame for the treatment lines
     treatment_df <- data.frame(
       Time = treatment_timepoints,
-      Label = treatment_labels
+      Label = treatment_labels,
+      y_pos = y_pos
     )
 
     # Generate distinct colors for the treatment labels
@@ -4082,7 +4085,7 @@ add_dashed_lines <- function(
           x = 
             if (horizontal_labels) Time + max(treatment_timepoints) * 0.04 
             else Time - max(treatment_timepoints) * 0.005, 
-          y = y_pos,
+          y = .data$y_pos,
           label = round(Time, 2),
           color = Label
         ),

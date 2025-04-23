@@ -9,8 +9,9 @@ articles:
   get-started: get-started.html
   glycan-analysis: glycan-analysis.html
   limma_result_categories: limma_result_categories.html
+  PVC_analysis: PVC_analysis.html
   RNA-seq-analysis: RNA-seq-analysis.html
-last_built: 2025-02-18T11:47Z
+last_built: 2025-04-23T15:27Z
 urls:
   reference: https://csbg.github.io/SplineOmics/reference
   article: https://csbg.github.io/SplineOmics/articles
