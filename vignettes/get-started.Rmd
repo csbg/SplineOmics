@@ -65,6 +65,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 library(SplineOmics)
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
+library(knitr) # For Showing the head of the data and the meta tables.
 ```
 
 # Load the files
@@ -115,10 +116,33 @@ first_na_col <- which(is.na(data[1, ]))[1]
 annotation <- data |>
   dplyr::select((first_na_col + 1):ncol(data)) |>
   dplyr::slice(-c(1:3))
+```
 
-print(head(data))
-print(meta)
-print(annotation)
+## Show top rows of data
+
+```{r Show data head, eval = TRUE}
+kable(
+  head(data),
+  format = "markdown"
+  )
+```
+
+## Show top rows of meta
+
+```{r Show meta head, eval = TRUE}
+kable(
+  head(meta),
+  format = "markdown"
+  )
+```
+
+## Show top rows of annotation
+
+```{r Show meta head, eval = TRUE}
+kable(
+  head(annotation),
+  format = "markdown"
+  )
 ```
 
 Three comments about the characteristics the input data should have:

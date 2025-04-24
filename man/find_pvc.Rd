@@ -8,6 +8,7 @@ find_pvc(
   splineomics,
   alphas = 0.05,
   padjust_method = "BH",
+  support = 1,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   report_dir = here::here()
@@ -30,6 +31,13 @@ This input is normalized internally to ensure consistent per-level access.}
 
 \item{padjust_method}{A character string specifying the method for multiple 
 testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
+
+\item{support}{Minimum amount of non-NA values in each timepoint that 
+influenced a PVC-test result. For example, when the timepoints are 10, 15,
+20, etc. and support = 1, then for timepoint 15 for a given feature, the 
+timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
+more of those timepoints for that feature don't meet this criterium, then the
+p-value for that timepoint 15 and feature is set to NA.}
 
 \item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
@@ -56,13 +64,14 @@ function wraps the detection and plotting steps, returning visualizations of
 all features with at least one excursion.
 }
 \details{
-A **peak** or **valley** is defined as a timepoint whose expression value is 
+A peak or valley is defined as a timepoint whose expression value is 
 significantly different from both its immediate neighbors and deviates in 
 the same direction — i.e., it is either significantly higher than both 
 (a peak) or significantly lower than both (a valley).  
 
 Statistically, this is tested using a compound contrast in limma:  
-\deqn{(T - T_{prev}) + (T - T_{next}) = 2T - T_{prev} - T_{next}}  
+$$(T - T_{\text{prev}}) + (T - T_{\text{next}}) = 
+2T - T_{\text{prev}} - T_{\text{next}}$$
 This compound contrast has power only when the timepoint `T` is an outlier 
 compared to both neighbors in the same direction. The resulting p-value is 
 FDR-adjusted and compared to the `alpha` threshold.

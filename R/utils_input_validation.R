@@ -64,6 +64,7 @@ InputControl <- R6::R6Class("InputControl",
     auto_validate = function() {
       self$check_data_and_meta()
       self$check_annotation()
+      self$check_alphas()
       self$check_datas_and_metas()
       self$check_datas_descr()
       self$check_top_tables()
@@ -86,6 +87,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_padjust_method()
       self$check_report_info()
       self$check_report()
+      self$check_support()
       self$check_feature_name_columns()
     },
 
@@ -210,7 +212,71 @@ InputControl <- R6::R6Class("InputControl",
         )
       }
     },
-
+    
+    
+    #' Check Alphas Argument
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' This method validates the `alphas` argument, ensuring it is either a 
+    #' single numeric threshold or a named list of numeric thresholds to be used
+    #' for determining significance levels.
+    #'
+    #' @details
+    #' The method performs the following checks:
+    #'
+    #' * Accepts either a numeric scalar or a named list of numeric values.
+    #' * If a list is provided, it must be named with non-empty names.
+    #' * All values must be between 0 and 1 and not `NA`.
+    #'
+    #' If any of these checks fail, an informative error is raised.
+    #'
+    #' @return NULL if `alphas` is not provided. Otherwise, performs
+    #' validation checks and raises errors if checks fail.
+    #' 
+    check_alphas = function() {
+      alphas <- self$args[["alphas"]]
+      
+      if (is.null(alphas)) {
+        return(NULL)
+      }
+      
+      if (is.numeric(alphas)) {
+        if (length(alphas) != 1 || is.na(alphas) || alphas < 0 || alphas > 1) {
+          stop_call_false(
+            "alphas must be a single numeric value between 0 and 1."
+            )
+        }
+      } else if (is.list(alphas)) {
+        if (length(alphas) == 0 ||
+            any(!vapply(alphas, is.numeric, logical(1)))) {
+          stop_call_false(
+            "alphas must be a named list of numeric values."
+            )
+        }
+        
+        if (any(is.na(unlist(alphas))) ||
+            any(unlist(alphas) < 0) ||
+            any(unlist(alphas) > 1)) {
+          stop_call_false(
+            "All values in the alphas list must be numeric & between 0 and 1."
+            )
+        }
+        
+        if (is.null(names(alphas)) || any(names(alphas) == "")) {
+          stop_call_false(
+            "alphas list must be named and contain no empty names."
+            )
+        }
+      } else {
+        stop_call_false(paste0(
+          "alphas must be either a numeric scalar or a named list of numeric", 
+          "values."
+        ))
+      }
+    },
+    
 
     #' Check Multiple Data and Meta Pairs
     #' 
@@ -1797,10 +1863,56 @@ InputControl <- R6::R6Class("InputControl",
       if (!rlang::is_bool(report)) {
         stop_call_false("report must be either Boolean TRUE or FALSE")
       }
+    },
+    
+    
+    #' Check Support Argument
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' This method validates the `support` argument to ensure it is a properly
+    #' formatted, non-negative integer. This argument is typically used to 
+    #' control thresholds for data completeness or filtering criteria.
+    #'
+    #' @details
+    #' The method performs the following checks:
+    #'
+    #' * Ensures that `support` is provided.
+    #' * Confirms that `support` is a numeric scalar.
+    #' * Verifies that `support` is an integer (not a float or character).
+    #' * Checks that `support` is non-negative.
+    #'
+    #' If any of these checks fail, an informative error message is returned.
+    #'
+    #' @return NULL if `support` is not provided. Otherwise, performs
+    #' checks and potentially raises errors if checks fail.
+    #' 
+    check_support = function() {
+      support <- self$args[["support"]]
+      
+      if (is.null(support)) {
+        return(NULL)
+      }
+      
+      if (!is.numeric(support) 
+          || length(support) != 1 
+          || support != as.integer(support)) {
+        stop(
+          "support must be a single integer value!",
+          call. = FALSE
+        )
+      }
+      
+      if (support < 0) {
+        stop(
+          "support must be non-negative!",
+          call. = FALSE
+        )
+      }
     }
   )
 )
-
 
 
 # Level2Functions class --------------------------------------------------------

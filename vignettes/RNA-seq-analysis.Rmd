@@ -139,6 +139,7 @@ meta <- readr::read_csv(
   show_col_types = FALSE
 )
 ```
+
 ## Show top rows of data
 
 ```{r Show data head, eval = TRUE}
