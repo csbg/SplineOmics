@@ -20,6 +20,12 @@
 #' This input is normalized internally to ensure consistent per-level access.
 #' @param padjust_method A character string specifying the method for multiple 
 #' testing correction. Defaults to `"BH"` (Benjamini-Hochberg).
+#' @param support Minimum amount of non-NA values in each timepoint that 
+#' influenced a PVC-test result. For example, when the timepoints are 10, 15,
+#' 20, etc. and support = 1, then for timepoint 15 for a given feature, the 
+#' timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
+#' more of those timepoints for that feature don't meet this criterium, then the
+#' p-value for that timepoint 15 and feature is set to NA.
 #' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
 #'                  treatment_timepoints (integer vector). All can also be NA.
@@ -62,6 +68,7 @@ find_pvc <- function(
     splineomics,
     alphas = 0.05,
     padjust_method = "BH",
+    support = 1,
     plot_info = list(
       y_axis_label = "Value",
       time_unit = "min",
@@ -75,7 +82,7 @@ find_pvc <- function(
     splineomics = splineomics,
     func_type = "find_peaks_valleys"
   )
-  
+
   args <- lapply(
     as.list(match.call()[-1]),
     eval,
@@ -92,6 +99,7 @@ find_pvc <- function(
   condition <- splineomics[["condition"]]
   meta_batch_column <- splineomics[["meta_batch_column"]]
   report_info <- splineomics[["report_info"]]
+  feature_name_columns <- splineomics[["feature_name_columns"]]
   
   # Get all unique condition levels
   condition_levels <- unique(meta[[condition]])
@@ -112,14 +120,21 @@ find_pvc <- function(
     sub_meta <- meta[selected_samples, , drop = FALSE]
     
     alpha <- alphas[[level]]
-    
+
     # Run peak/valley detection on the subset
     pvc_pvals <- pvc_test(
       data = sub_data,
       meta = sub_meta,
       padjust_method = padjust_method
     )
-
+    
+    pvc_pvals <- filter_pvals_by_support(
+      pvc_pvals,
+      sub_data,
+      sub_meta,
+      support
+      )
+    
     labels <- classify_excursions(
       data = sub_data,
       meta = sub_meta,
@@ -192,7 +207,8 @@ find_pvc <- function(
   level_headers_info <- list(
     pvc_settings = list(
       adj_value_thresh = alphas,
-      padjust_method = padjust_method
+      padjust_method = padjust_method,
+      support = support
     )
   )
 
@@ -205,6 +221,7 @@ find_pvc <- function(
     meta = meta,
     level_headers_info = level_headers_info,
     report_type = "find_pvc",
+    feature_name_columns = feature_name_columns,
     filename = "pvc_report",
     report_dir = report_dir
   )
@@ -360,6 +377,115 @@ pvc_test <- function(
   }
   
   return(peak_valley_pvals)
+}
+
+
+#' Filter p-values Based on Support Across Neighboring Timepoints
+#'
+#' @noRd
+#'
+#' @description
+#' This function filters a p-value matrix by evaluating the data support
+#' for each feature (row) and timepoint (column). A p-value is considered
+#' valid only if the corresponding feature has at least a specified number
+#' of non-NA values (`support`) across the current, previous, and next
+#' timepoints.
+#'
+#' @details
+#' Timepoint information is taken from the `Time` column in `sub_meta`,
+#' which must be numeric. For each column in `pvc_pvals`, the function:
+#'
+#' * Extracts the timepoint from the column name (before the first underscore).
+#' * Identifies the previous and next unique timepoints from `sub_meta$Time`.
+#' * Finds all columns in `sub_data` associated with each of these timepoints.
+#' * Checks if the feature has at least `support` non-NA values in each group.
+#'
+#' If any of the three groups (previous, current, next) fails the support
+#' threshold, the corresponding p-value is replaced with `1`.
+#'
+#' Timepoints at the beginning or end of the time series (i.e., with no
+#' previous or next timepoint) are treated as invalid and all their p-values
+#' are set to `1`.
+#'
+#' @param pvc_pvals A numeric matrix of p-values. Each column corresponds to
+#' a specific timepoint (with replicates), and each row to a feature.
+#' @param sub_data A numeric matrix of feature data. Rows are features and
+#' columns are samples. Column order must align with rows in `sub_meta`.
+#' @param sub_meta A `data.frame` containing metadata for `sub_data` columns.
+#' Must include a numeric `Time` column indicating sample timepoints.
+#' @param support A non-negative integer specifying the minimum number of
+#' non-NA values required for each of the three timepoint groups.
+#'
+#' @return A modified version of `pvc_pvals` where p-values are replaced with
+#' `1` if support criteria are not met.
+#' 
+filter_pvals_by_support <- function(
+    pvc_pvals,
+    sub_data,
+    sub_meta,
+    support
+) {
+  
+  # Ensure Time is numeric and sorted
+  time_values <- sub_meta$Time
+  if (!is.numeric(time_values)) {
+    stop("sub_meta$Time must be numeric for sorting and comparison.")
+  }
+  
+  # Get unique sorted timepoints
+  unique_times <- sort(unique(time_values))
+  
+  # Create a lookup for each timepoint -> column indices in sub_data
+  time_to_indices <- lapply(unique_times, function(t) which(time_values == t))
+  names(time_to_indices) <- as.character(unique_times)
+  
+  # Initialize result
+  filtered_pvals <- pvc_pvals
+  
+  # Loop over each column in pvc_pvals (each timepoint)
+  for (col_idx in seq_len(ncol(pvc_pvals))) {
+    # Extract timepoint t from column name (before first underscore)
+    col_name <- colnames(pvc_pvals)[col_idx]
+    t <- as.numeric(sub("_.*", "", col_name))
+    if (is.na(t)) next  # skip if invalid timepoint
+    
+    # Identify previous and next timepoints
+    t_pos <- which(unique_times == t)
+    if (length(t_pos) == 0) next  # timepoint not found
+    
+    # Skip if t is the first or last (no prev/next)
+    if (t_pos == 1 || t_pos == length(unique_times)) {
+      filtered_pvals[, col_idx] <- 1
+      next
+    }
+    
+    t_prev <- unique_times[t_pos - 1]
+    t_next <- unique_times[t_pos + 1]
+    
+    # Get column indices in sub_data for each group
+    idx_prev <- time_to_indices[[as.character(t_prev)]]
+    idx_curr <- time_to_indices[[as.character(t)]]
+    idx_next <- time_to_indices[[as.character(t_next)]]
+    
+    # Combine data per feature (i.e., per row)
+    for (row_idx in seq_len(nrow(pvc_pvals))) {
+      vals_prev <- sub_data[row_idx, idx_prev]
+      vals_curr <- sub_data[row_idx, idx_curr]
+      vals_next <- sub_data[row_idx, idx_next]
+      
+      non_na_prev <- sum(!is.na(vals_prev))
+      non_na_curr <- sum(!is.na(vals_curr))
+      non_na_next <- sum(!is.na(vals_next))
+      
+      if (non_na_prev < support 
+          || non_na_curr < support 
+          || non_na_next < support) {
+        filtered_pvals[row_idx, col_idx] <- 1
+      }
+    }
+  }
+  
+  return(filtered_pvals)
 }
 
 
@@ -733,7 +859,7 @@ plot_pvc <- function(
 #' the specified output file path.
 #'
 #' @param header_section A character string of HTML content that represents the 
-#'   top-level header section of the report (e.g., title, description, metadata).
+#'   top-level header section of the report (e.g., title, description, metadata)
 #' @param plots A named list of plot objects, each containing a `plots` field 
 #'   (itself a named list of ggplot2 objects). The names define report sections.
 #' @param level_headers_info A list of metadata associated with each report 
@@ -793,6 +919,7 @@ build_pvc_report <- function(
   
   # Create progress bar
   pb <- create_progress_bar(flattened_plots)
+  nr_of_hits <- length(flattened_plots)
 
   for (index in seq_along(flattened_plots)) {
     if (plots_processed_in_section == 0) {
@@ -805,7 +932,8 @@ build_pvc_report <- function(
           level = levels[[current_header_index]],
           index = index,
           section_header_style = section_header_style,
-          level_headers_info = level_headers_info
+          level_headers_info = level_headers_info,
+          nr_of_hits = nr_of_hits
         ),
         sep = "\n"
       )
@@ -946,7 +1074,8 @@ generate_section_header_block <- function(
     level,
     index,
     section_header_style,
-    level_headers_info
+    level_headers_info,
+    nr_of_hits
 ) {
   
   # Access per-level alpha threshold
@@ -955,6 +1084,7 @@ generate_section_header_block <- function(
   
   # Access global padjust_method
   padjust_method <- level_headers_info[["pvc_settings"]][["padjust_method"]]
+  support <- level_headers_info[["pvc_settings"]][["support"]]
   
   # Format alpha threshold smartly
   format_alpha <- function(x) {
@@ -997,7 +1127,9 @@ generate_section_header_block <- function(
   info_block <- sprintf(
     "<div style='text-align: center; font-size: 24px; margin-bottom: 20px;'>
        <p><strong>Adjusted p-value threshold:</strong> %s<br>
-       <strong>p-adjustment method:</strong> %s</p>
+       <strong>p-adjustment method:</strong> %s<br>
+       <strong>Support (min nr non-NA in all timepoints of hit):</strong> %s</p>
+       <strong>Number of hits:</strong> %s</p>
        <p style='margin-top: 15px; font-size: 22px;'>
          <strong>Significance stars:</strong><br>
          <span>*</span> : p &lt; %s<br>
@@ -1009,6 +1141,8 @@ generate_section_header_block <- function(
      </div>",
     alpha_thresh_formatted,
     padjust_method,
+    support,
+    nr_of_hits,
     thresholds_formatted["*"],
     thresholds_formatted["**"],
     thresholds_formatted["***"],

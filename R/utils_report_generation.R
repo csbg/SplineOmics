@@ -80,7 +80,7 @@ generate_report_html <- function(
     adj_pthresh_avrg_diff_conditions = NA, # only for cluster_hits()
     adj_pthresh_interaction_condition_time = NA, # only for cluster_hits()
     report_type = "explore_data",
-    feature_name_columns = NA, # only for cluster_hits()
+    feature_name_columns = NA, # only for cluster_hits() and find_pvc()
     mode = NA,
     filename = "report",
     timestamp = format(
@@ -104,6 +104,10 @@ generate_report_html <- function(
     title <- "l(m)m report"
   } else if (report_type == "find_pvc") {
     title <- "pvc report"
+    feature_names_formula <- paste(
+      feature_name_columns,
+      collapse = "_"
+    )
   } else if (report_type == "cluster_hits") {
     title <- "clustered hits"
     feature_names_formula <- paste(
@@ -703,7 +707,9 @@ get_header_section <- function(
     title,
     header_text,
     report_type,
-    feature_names_formula) {
+    feature_names_formula
+    ) {
+  
   if (feature_names_formula == "") {
     feature_names_formula <- "No feature name columns provided!"
   }
@@ -942,6 +948,17 @@ get_header_section <- function(
       "than both neighbor timepoints (that is why it is NOT carried out for",
       "the first and last timepoint). Tests whether 2·Tₙ − Tₙ₋₁ ",
       "- Tₙ₊₁ ≠ 0 (significantly).",
+      "</ul>",
+      "</p>",
+      "</div>",
+      paste(
+        '<span style="font-size:1.3em;">',
+        'feature_name "formula": ',
+        "{annotation-column-x}_{annotation-column-y}_ ... :",
+        "<br><b>",
+        feature_names_formula,
+        "</b></span>"
+      ),
       "</div>"
     ),
     "cluster_hits" = paste(
