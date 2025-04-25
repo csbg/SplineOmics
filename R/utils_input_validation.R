@@ -65,6 +65,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_data_and_meta()
       self$check_annotation()
       self$check_alphas()
+      self$check_batch_effects()
       self$check_datas_and_metas()
       self$check_datas_descr()
       self$check_top_tables()
@@ -274,6 +275,51 @@ InputControl <- R6::R6Class("InputControl",
           "alphas must be either a numeric scalar or a named list of numeric", 
           "values."
         ))
+      }
+    },
+    
+    
+    #' Check Batch Effects Argument
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' This method validates the `batch_effects` argument of the `find_pvc()`
+    #' function. It ensures that the argument is either `FALSE` or a character
+    #' vector containing up to two valid column names for batch correction.
+    #'
+    #' @details
+    #' The method performs the following checks:
+    #'
+    #' * Accepts either `FALSE` (no batch correction), or a character vector.
+    #' * If a character vector is provided, it must have length 1 or 2.
+    #' * All entries must be non-empty strings.
+    #'
+    #' This validation does not check whether the provided names exist in
+    #' the metadata, as that depends on runtime context.
+    #'
+    #' @return NULL if `batch_effects` is `FALSE`. Otherwise, performs
+    #' validation checks and raises an error if checks fail.
+    #'
+    check_batch_effects = function() {
+      batch_effects <- self$args[["batch_effects"]]
+      
+      if (identical(batch_effects, FALSE)) {
+        return(NULL)
+      }
+      
+      if (!is.character(batch_effects)) {
+        stop_call_false(
+          "batch_effects must be either FALSE or a character vector."
+          )
+      }
+      
+      if (length(batch_effects) < 1 || length(batch_effects) > 2) {
+        stop_call_false("batch_effects must have one or two elements.")
+      }
+      
+      if (any(batch_effects == "") || any(is.na(batch_effects))) {
+        stop_call_false("batch_effects must not contain empty or NA entries.")
       }
     },
     
@@ -542,18 +588,18 @@ InputControl <- R6::R6Class("InputControl",
         )
       }
 
-      # Ensure that the formula begins with an intercept (~ 1)
-      # Ignore whitespace, check the start of the string
-      if (!grepl("^\\s*~\\s*1", formula)) {
-        stop(
-          paste(
-            "The design formula must start with an intercept term '~ 1'.",
-            "This is because spline curves are plotted onto the data",
-            "which is not possible without an intercept"
-          ),
-          call. = FALSE
-        )
-      }
+      # # Ensure that the formula begins with an intercept (~ 1)
+      # # Ignore whitespace, check the start of the string
+      # if (!grepl("^\\s*~\\s*1", formula)) {
+      #   stop(
+      #     paste(
+      #       "The design formula must start with an intercept term '~ 1'.",
+      #       "This is because spline curves are plotted onto the data",
+      #       "which is not possible without an intercept"
+      #     ),
+      #     call. = FALSE
+      #   )
+      # }
 
       # Ensure the formula contains the intercept term 'X'
       if (!grepl("\\bTime\\b", formula)) {
