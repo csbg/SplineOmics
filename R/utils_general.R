@@ -25,7 +25,9 @@
 #'
 create_progress_bar <- function(
     iterable,
-    message = "Processing") {
+    message = "Processing"
+    ) {
+  
   # Create and return the progress bar
   pb <- progress::progress_bar$new(
     format = paste(" ", message, " [:bar] :percent :elapsed"),

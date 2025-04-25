@@ -9,35 +9,42 @@ find_pvc(
   alphas = 0.05,
   padjust_method = "BH",
   support = 1,
+  batch_effects = FALSE,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   report_dir = here::here()
 )
 }
 \arguments{
-\item{splineomics}{A list containing the preprocessed time-series input data. 
-Must include named elements `"data"` (a numeric matrix), `"meta"` (a metadata 
-data frame with a `"Time"` column), `"meta_batch_column"` (name of the column 
-in `meta` identifying replicates or batches), and `"padjust_method"` (a 
-string specifying the method for p-value adjustment).}
+\item{splineomics}{A list containing the preprocessed time-series input data.
+Must include named elements `"data"` (a numeric matrix), `"meta"` (a metadata
+data frame with a `"Time"` column), `"meta_batch_column"` (name of the column
+in `meta` identifying replicates or batches (for plotting purposes only)), 
+and `"padjust_method"` (a string specifying the method for p-value adjustment
+).}
 
-\item{alphas}{A single numeric value or a named list of numeric thresholds 
+\item{alphas}{A single numeric value or a named list of numeric thresholds
 used to identify significant excursion points. If a single value is provided
-(either as a numeric scalar or a list of length 1), the same threshold is 
+(either as a numeric scalar or a list of length 1), the same threshold is
 applied to all condition levels. If a named list is provided, it must contain
-one numeric 
-value per condition level, with names matching the condition levels exactly. 
+one numeric
+value per condition level, with names matching the condition levels exactly.
 This input is normalized internally to ensure consistent per-level access.}
 
-\item{padjust_method}{A character string specifying the method for multiple 
+\item{padjust_method}{A character string specifying the method for multiple
 testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
 
-\item{support}{Minimum amount of non-NA values in each timepoint that 
+\item{support}{Minimum amount of non-NA values in each timepoint that
 influenced a PVC-test result. For example, when the timepoints are 10, 15,
-20, etc. and support = 1, then for timepoint 15 for a given feature, the 
+20, etc. and support = 1, then for timepoint 15 for a given feature, the
 timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
 more of those timepoints for that feature don't meet this criterium, then the
 p-value for that timepoint 15 and feature is set to NA.}
+
+\item{batch_effects}{A character vector of 1 or 2 elements specifying the 
+meta column names that should be used for batch effect removal. The batch
+effect(s) are removed with the limma::removeBatchEffect() function. Per 
+default FALSE (means it will not remove any batch effects).}
 
 \item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
@@ -52,34 +59,34 @@ feeding, temperature shift, etc.).}
 HTML report and any other output files should be saved.}
 }
 \value{
-A named list of ggplot objects, where each element corresponds to a 
-feature with at least one detected peak or valley. Each plot shows expression 
-profiles across timepoints, highlights excursion points in red, and annotates 
+A named list of ggplot objects, where each element corresponds to a
+feature with at least one detected peak or valley. Each plot shows expression
+profiles across timepoints, highlights excursion points in red, and annotates
 statistically significant excursions with significance stars.
 }
 \description{
-Identifies significant local peaks or valleys (excursions) in time-series 
-omics data using a Union-Intersection Test (UIT)-based approach. This 
-function wraps the detection and plotting steps, returning visualizations of 
+Identifies significant local peaks or valleys (excursions) in time-series
+omics data using a Union-Intersection Test (UIT)-based approach. This
+function wraps the detection and plotting steps, returning visualizations of
 all features with at least one excursion.
 }
 \details{
-A peak or valley is defined as a timepoint whose expression value is 
-significantly different from both its immediate neighbors and deviates in 
-the same direction — i.e., it is either significantly higher than both 
-(a peak) or significantly lower than both (a valley).  
+A peak or valley is defined as a timepoint whose expression value is
+significantly different from both its immediate neighbors and deviates in
+the same direction — i.e., it is either significantly higher than both
+(a peak) or significantly lower than both (a valley).
 
-Statistically, this is tested using a compound contrast in limma:  
-$$(T - T_{\text{prev}}) + (T - T_{\text{next}}) = 
+Statistically, this is tested using a compound contrast in limma:
+$$(T - T_{\text{prev}}) + (T - T_{\text{next}}) =
 2T - T_{\text{prev}} - T_{\text{next}}$$
-This compound contrast has power only when the timepoint `T` is an outlier 
-compared to both neighbors in the same direction. The resulting p-value is 
+This compound contrast has power only when the timepoint `T` is an outlier
+compared to both neighbors in the same direction. The resulting p-value is
 FDR-adjusted and compared to the `alpha` threshold.
 
-- Performs internal input validation via `check_splineomics_elements()` and 
+- Performs internal input validation via `check_splineomics_elements()` and
   `InputControl`.
 - Detects local excursions using the `pvc_test()` function.
 - Displays the number of total excursion hits found.
-- Generates plots using `plot_pvc()`, with each excursion point 
+- Generates plots using `plot_pvc()`, with each excursion point
   evaluated for significance based on the provided `alpha`.
 }

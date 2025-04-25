@@ -140,7 +140,7 @@ find_pvc <- function(
       meta = sub_meta,
       batch_effects = batch_effects,
       padjust_method = padjust_method
-    )
+      )
 
     pvc_pvals <- filter_pvals_by_support(
       pvc_pvals,
@@ -222,7 +222,8 @@ find_pvc <- function(
     pvc_settings = list(
       adj_value_thresh = alphas,
       padjust_method = padjust_method,
-      support = support
+      support = support,
+      batch_effects = batch_effects
     )
   )
 
@@ -955,16 +956,21 @@ build_pvc_report <- function(
   # Create progress bar
   pb <- create_progress_bar(flattened_plots)
   nr_of_hits <- length(flattened_plots)
+  last_header_name <- NULL
 
   for (index in seq_along(flattened_plots)) {
-    if (plots_processed_in_section == 0) {
-      # Insert section header
-      level <- levels[[current_header_index]]
+    current_plot_info <- flattened_plots[[index]]
+    
+    # Insert a new header if header_name changes
+    if (is.null(last_header_name) ||
+        current_plot_info$header_name != last_header_name) {
+      
+      level <- current_plot_info$header_name
 
       html_content <- paste(
         html_content,
         generate_section_header_block(
-          level = levels[[current_header_index]],
+          level = level,
           index = index,
           section_header_style = section_header_style,
           level_headers_info = level_headers_info,
@@ -1120,6 +1126,7 @@ generate_section_header_block <- function(
   # Access global padjust_method
   padjust_method <- level_headers_info[["pvc_settings"]][["padjust_method"]]
   support <- level_headers_info[["pvc_settings"]][["support"]]
+  batch_effects <- level_headers_info[["pvc_settings"]][["batch_effects"]]
 
   # Format alpha threshold smartly
   format_alpha <- function(x) {
@@ -1157,6 +1164,12 @@ generate_section_header_block <- function(
     index,
     level
   )
+  
+  batch_effects_formatted <- if (isFALSE(batch_effects)) {
+    "None"
+  } else {
+    paste(batch_effects, collapse = ", ")
+  }
 
   # Generate info block
   info_block <- sprintf(
@@ -1164,6 +1177,7 @@ generate_section_header_block <- function(
        <p><strong>Adjusted p-value threshold:</strong> %s<br>
        <strong>p-adjustment method:</strong> %s<br>
        <strong>Support (min nr non-NA in all timepoints of hit):</strong> %s</p>
+       <strong>Batch effects removed:</strong> %s</p>
        <strong>Number of hits:</strong> %s</p>
        <p style='margin-top: 15px; font-size: 22px;'>
          <strong>Significance stars:</strong><br>
@@ -1177,6 +1191,7 @@ generate_section_header_block <- function(
     alpha_thresh_formatted,
     padjust_method,
     support,
+    batch_effects_formatted,
     nr_of_hits,
     thresholds_formatted["*"],
     thresholds_formatted["**"],
