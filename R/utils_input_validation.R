@@ -303,8 +303,8 @@ InputControl <- R6::R6Class("InputControl",
     #'
     check_batch_effects = function() {
       batch_effects <- self$args[["batch_effects"]]
-      
-      if (identical(batch_effects, FALSE)) {
+
+      if (identical(batch_effects, FALSE) || is.null(batch_effects)) {
         return(NULL)
       }
       
