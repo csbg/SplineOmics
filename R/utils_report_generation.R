@@ -164,7 +164,7 @@ generate_report_html <- function(
     "Fixed effects",
     "Random effects",
     "mode",
-    "robust_fit",
+    "heteroscedasticity",
     "analyst_name",
     "contact_info",
     "project_name",
@@ -223,7 +223,11 @@ generate_report_html <- function(
     )
   }
 
-  max_field_length <- max(nchar(gsub("_", " ", report_info_fields)))
+  max_field_length <- max(nchar(gsub(
+    "_",
+    " ",
+    report_info_fields
+    )))
 
   report_info_section <- paste(
     '<hr style="border: none; height: 3px;',
@@ -320,7 +324,10 @@ generate_report_html <- function(
 
 
   if (report_type == "run_ora") {
-    databases_text <- paste(report_info$databases, collapse = ", ")
+    databases_text <- paste(
+      report_info$databases,
+      collapse = ", "
+      )
     header_section <- paste(
       header_section,
       "<p style='font-size: 20px;'>Databases used: ",
@@ -995,6 +1002,9 @@ get_header_section <- function(
       models, but the plotting data is batch corrected only with the 
       dedicated limma batch correction function. For a reason, there is a gap.
       The results are fine! Just the plotting is off!</li>',
+      '<li style="margin-bottom: 15px;">If a ⚠️ symbol appears at the beginning
+      of a plot title, it indicates that the feature violates
+      the homoscedasticity assumption of linear models.</li>',
       "</ul>",
       "</p>",
       "</div>",
