@@ -86,6 +86,11 @@ With `SplineOmics`, you can:
 
 Follow the steps below to install the `SplineOmics` package from the GitHub repository into your R environment.
 
+> **Note**
+Carefully read the terminal messages of the installations. It can happen that 
+installations fail due to missing dependencies, which you then must resolve
+using other commands not necessarily written down here.
+
 #### Prerequisites
 
 -   Ensure **R** is installed on your system. If not, download and install it from [CRAN](https://cran.r-project.org/).

@@ -88,7 +88,7 @@ run_limma_splines <- function(
   dream_params <- splineomics[["dream_params"]]
   mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
-  robust_fit <- splineomics[["robust_fit"]]
+  use_array_weights <- splineomics[["use_array_weights"]]
   
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -145,7 +145,7 @@ run_limma_splines <- function(
       condition = condition,
       padjust_method = padjust_method,
       feature_names = feature_names,
-      robust_fit = robust_fit
+      use_array_weights = use_array_weights
     )
 
     # Step 2: Extract pairwise contrasts for all level combinations
@@ -173,7 +173,8 @@ run_limma_splines <- function(
   splineomics <- update_splineomics(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
-    robust_fit = if (exists("fit_obj")) fit_obj[["robust_fit"]] else NULL
+    homosc_violation_result = 
+      if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL
   )
 }
 
@@ -339,7 +340,7 @@ fit_global_model <- function(
     condition,
     padjust_method,
     feature_names,
-    robust_fit = NULL
+    use_array_weights = NULL
 ) {
 
   effects <- extract_effects(design)
@@ -360,11 +361,15 @@ fit_global_model <- function(
   # For RNA-seq data, this is handled when calling limma::voom (happens before)
   # This here is the implicit fall-back logic when the user has not explicitly 
   # decided whether to robust_fit or not
-  if (is.null(rna_seq_data) && is.null(robust_fit)) {
-    robust_fit <- check_homoscedasticity_violation(
+  if (is.null(rna_seq_data) && is.null(use_array_weights)) {
+    homosc_violation_result <- check_homoscedasticity_violation(
       data = data,
       meta = meta
     )
+    
+    use_array_weights <- homosc_violation_result[["violation"]]
+  } else{
+    homosc_violation_result <- NULL
   }
 
   if (effects[["random_effects"]] != "") {
@@ -377,7 +382,7 @@ fit_global_model <- function(
       method <- NULL
     }
     
-    if (robust_fit) {
+    if (use_array_weights) {
       aw <- limma::arrayWeights(      # vector of length = # samples
         object = data,
         design = design_matrix
@@ -410,7 +415,7 @@ fit_global_model <- function(
       fit <- variancePartition::eBayes(fit = fit) 
     }
   } else {
-    if (robust_fit) {
+    if (use_array_weights) {
       weights <- limma::arrayWeights(
         object = data,
         design = design_matrix
@@ -440,7 +445,7 @@ fit_global_model <- function(
     feature_names = feature_names,
     condition = condition,
     padjust_method = padjust_method,
-    robust_fit = robust_fit
+    homosc_violation_result = homosc_violation_result
   )
 }
 

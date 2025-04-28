@@ -168,7 +168,8 @@ cluster_hits <- function(
     meta_batch2_column,
     sep = ", "
   )
-  report_info[["robust_fit"]] <- splineomics[["robust_fit"]]
+  report_info[["homosc_violation_result"]] <-
+    splineomics[["homosc_violation_result"]]
 
   if (
     (mode != "isolated") &&
@@ -664,7 +665,8 @@ get_category_2_and_3_hits <- function(
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
 #' ('isolated' or 'integrated').
-#' @param report_info An object containing report information.
+#' @param report_info A named list containing report information such as analyst
+#'                    name, fixed and random effects, etc.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param meta_batch2_column A character string specifying the second meta
@@ -882,7 +884,8 @@ make_clustering_report <- function(
         adj_pthreshold = adj_pthresholds[i],
         replicate_column = plot_options[["meta_replicate_column"]],
         level = level,
-        raw_data = raw_data_level
+        raw_data = raw_data_level,
+        report_info = report_info
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -2016,6 +2019,8 @@ plot_cluster_mean_splines <- function(
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
+#' @param report_info A named list containing report information such as analyst
+#'                    name, fixed and random effects, etc.
 #'
 #' @return A list containing the composite plot and the number of rows used in
 #' the plot layout.
@@ -2037,7 +2042,8 @@ plot_splines <- function(
     adj_pthreshold,
     replicate_column,
     level,
-    raw_data
+    raw_data,
+    report_info
     ) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
@@ -2062,6 +2068,10 @@ plot_splines <- function(
   for (hit in seq_len(nrow(top_table))) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
+    
+    heteroscedasticity <- 
+      report_info[["homosc_violation_result"]][["violation_flags"]][hit_index]
+    
 
     intercept <- top_table$intercept[hit]
     spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
@@ -2238,7 +2248,10 @@ plot_splines <- function(
       p <- result$p # Updated plot with dashed lines
       treatment_colors <- result$treatment_colors # Colors used for treatments
 
-      color_values <- c(color_values, treatment_colors)
+      color_values <- c(
+        color_values,
+        treatment_colors
+        )
 
       # Add title and annotations
       matched_row <- dplyr::filter(
@@ -2247,6 +2260,11 @@ plot_splines <- function(
       )
 
       title <- as.character(matched_row$feature_name)
+      title_prefix <- if (heteroscedasticity) "\u26A0\uFE0F " else ""
+      title <- paste0(
+        title_prefix,
+        title
+        )
 
       if (nchar(title) > 100) {
         title_before <- title

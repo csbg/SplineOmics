@@ -152,11 +152,12 @@ preprocess_rna_seq_data <- function(
         design = design_matrix
       )
       
-      violation <- check_homoscedasticity_violation(
+      result <- check_homoscedasticity_violation(
         data = voom_obj$E,
         meta = meta,
         data_type = "rna-seq"
       )
+      violation <- result[["violation"]]
       
       # Step 4: If any pair was violated, rerun with robust weights
       if (violation) {

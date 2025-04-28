@@ -341,11 +341,22 @@ extract_effects <- function(formula_string) {
 #'                           to consider the whole dataset heteroscedastic 
 #'                           (default is 0.1, i.e., 10%).
 #'
-#' @return A logical value indicating whether a statistically significant 
-#'         violation of homoscedasticity was detected in the dataset 
-#'         (`TRUE` = assumption violated, `FALSE` = no violation). 
-#'         A summary message is printed to the console.
-#'
+#' @return A list with two elements:
+#' \describe{
+#'   \item{violation}{A single logical value (`TRUE` or `FALSE`) indicating 
+#'                    whether a statistically significant 
+#'                    violation of homoscedasticity was detected across the 
+#'                    dataset 
+#'                    (based on the specified `p_threshold` and 
+#'                    `fraction_threshold`).}
+#'   \item{violation_flags}{A logical vector indicating, for each feature, 
+#'                          whether it individually violates 
+#'                          the assumption of homoscedasticity 
+#'                          (`TRUE` = violation, `FALSE` = no violation).}
+#' }
+#' A summary message about the detected violations and recommended next steps is
+#' printed to the console.
+#' 
 check_homoscedasticity_violation <- function(
     data,
     meta,
@@ -397,5 +408,8 @@ check_homoscedasticity_violation <- function(
   
   message("------------------------------------------------------------\n")
   
-  return(violation)
+  return(list(
+    violation = violation,               # Single Boolean flag
+    violation_flags = violation_flags    # Boolean flag for every feature
+    ))
 }
