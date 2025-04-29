@@ -26,7 +26,7 @@
 create_progress_bar <- function(
     iterable,
     message = "Processing"
-    ) {
+) {
   
   # Create and return the progress bar
   pb <- progress::progress_bar$new(
@@ -35,7 +35,7 @@ create_progress_bar <- function(
     width = 60,
     clear = FALSE
   )
-
+  
   return(pb)
 }
 
@@ -70,30 +70,30 @@ design2design_matrix <- function(
     spline_params,
     level_index,
     design
-    ) {
+) {
   
   args <- list(
     x = meta$Time,
     intercept = FALSE
   ) # Time column is mandatory
-
+  
   if (!is.null(spline_params$dof)) {
     args$df <- spline_params$dof[level_index]
   } else {
     args$knots <- spline_params$knots[[level_index]]
   }
-
+  
   if (!is.null(spline_params$bknots)) {
     args$Boundary.knots <- spline_params$bknots[[level_index]]
   }
-
+  
   if (spline_params$spline_type[level_index] == "b") {
     args$degree <- spline_params$degree[level_index]
     meta$X <- do.call(splines::bs, args)
   } else { # natural cubic splines
     meta$X <- do.call(splines::ns, args)
   }
-
+  
   design_matrix <- stats::model.matrix(
     stats::as.formula(design),
     data = meta
@@ -148,25 +148,25 @@ bind_data_with_annotation <- function(
     data,
     annotation = NULL) {
   data_df <- as.data.frame(data)
-
+  
   # Add row names as the first column named feature_names
   combined_df <- cbind(
     feature_name = rownames(data_df),
     data_df
   )
-
+  
   # If annotation is not NULL, check row count and bind with annotation
   if (!is.null(annotation)) {
     if (nrow(data_df) != nrow(annotation)) {
       stop("The number of rows in data and annotation must be the same.",
-        call. = FALSE
+           call. = FALSE
       )
     }
-
+    
     # Bind the annotation with the data
     combined_df <- cbind(combined_df, annotation)
   }
-
+  
   return(combined_df)
 }
 
@@ -190,14 +190,14 @@ print_info_message <- function(
     report_dir) {
   # Green color code for "Info"
   green_info <- "\033[32mInfo\033[0m"
-
+  
   full_message <- paste(
     green_info, message_prefix, "completed successfully.\n",
     "Your HTML reports are located in the directory: ", report_dir, ".\n",
     "Please note that due to embedded files, the reports might be flagged as\n",
     "harmful by other software. Rest assured that they provide no harm.\n"
   )
-
+  
   message(full_message)
 }
 
@@ -222,7 +222,7 @@ print_info_message <- function(
 stop_call_false <- function(...) {
   # Concatenate all arguments into a single string
   message_text <- paste(..., sep = " ")
-
+  
   # Call stop with the concatenated message and call. = FALSE
   stop(message_text, call. = FALSE)
 }
@@ -291,39 +291,30 @@ extract_effects <- function(formula_string) {
 }
 
 
-#' Check for Violation of Homoscedasticity in Linear Model Inputs
+#' Check for Violation of Homoscedasticity in Linear (or Mixed) Model Inputs
 #'
 #' @noRd
 #'
 #' @description
 #' This internal helper function tests whether the assumption of 
-#' homoscedasticity (equal variance of residuals) is violated across time 
-#' for each feature (e.g., gene or protein). 
+#' homoscedasticity (constant variance of residuals) is violated across 
+#' experimental conditions for each feature (e.g., gene, protein, metabolite).
 #' 
-#' For each feature independently, the function fits a linear model of the 
-#' form `feature_value ~ time`, where the `time` variable is extracted from 
-#' `meta[["Time"]]`. The residuals from this model 
-#' are then tested for heteroscedasticity using the Breusch–Pagan test.
+#' For each feature independently, the function fits either the spline model
+#' with limma or in case of random effects with dream. The model residuals are 
+#' then tested for heteroscedasticity using Levene's test.
 #' 
-#' The Breusch–Pagan test evaluates whether the variance of residuals 
-#' systematically depends on the fitted values from the model. Under the null 
-#' hypothesis, the residual variance is constant across all fitted values 
-#' (i.e., homoscedasticity). Under the alternative hypothesis, the residual 
-#' variance increases or decreases with the predicted expression values 
-#' (i.e., heteroscedasticity).
+#' Levene's test evaluates whether the variance of residuals differs between 
+#' groups defined by the experimental condition (supplied via the `condition`
+#' parameter). Under the null hypothesis, the residual variance is equal 
+#' across groups (homoscedasticity). A small p-value indicates that the 
+#' residual variance differs between groups (heteroscedasticity).
 #' 
-#' The test does this by regressing the squared residuals onto the fitted 
-#' values and checking whether this auxiliary regression explains significantly 
-#' more variance than expected by chance. A small p-value indicates that the 
-#' residual variance is not constant and thus violates the assumption of 
-#' homoscedasticity.
-#' 
-#' This function applies the Breusch–Pagan test across all features 
-#' independently and counts how many features yield a p-value below the 
-#' specified `p_threshold`. If the fraction of violating features exceeds 
-#' `fraction_threshold`, the function concludes that the dataset likely 
-#' violates the homoscedasticity assumption and suggests switching to a 
-#' more robust modeling strategy.
+#' This function applies Levene's test across all features independently and 
+#' counts how many features yield a p-value below the specified `p_threshold`. 
+#' If the fraction of violating features exceeds `fraction_threshold`, the 
+#' function concludes that the dataset likely violates the homoscedasticity 
+#' assumption and suggests switching to a more robust modeling strategy.
 #'
 #' @param data A numeric matrix of expression values (rows = features, 
 #'             columns = samples). Should already be log-transformed or 
@@ -331,6 +322,14 @@ extract_effects <- function(formula_string) {
 #' @param meta A data frame of sample metadata. Must have one row per column 
 #'             in `data`, and must contain a numeric `Time` column indicating 
 #'             the timepoint for each sample.
+#' @param design A design formula or matrix for the limma analysis.
+#' @param design2design_matrix_result The direct output of the internal function
+#'                                    design2design_matrix (see source code
+#'                                    of that function).
+#' @param condition A character string of the column name of meta that contains
+#'                  the levels of the experimental condition.
+#' @param random_effects Boolean flag specifying if random effects are in the 
+#'                       design formula.
 #' @param data_type String specifying the omics data type ("rna-seq" or 
 #'                  "other-omics"). Used to determine the recommendation
 #'                  message in case of heteroscedasticity.
@@ -360,26 +359,74 @@ extract_effects <- function(formula_string) {
 check_homoscedasticity_violation <- function(
     data,
     meta,
+    design,
+    design2design_matrix_result,
+    condition,
+    random_effects = FALSE,
     data_type = "other-omics",
     p_threshold = 0.05,
     fraction_threshold = 0.1  
 ) {
   
   message(paste(
-    "\nRunning Breusch-Pagan test to check for violation of homoscedasticity",
+    "\nRunning Levene’s test to check for violation of homoscedasticity",
     "of each feature..."
-    ))
-
-  # Run Breusch–Pagan test per feature (row)
-  bp_pvals <- apply(data, 1, function(y) {
-    fit <- lm(y ~ meta[["Time"]])
-    lmtest::bptest(fit)$p.value
+  ))
+  
+  if (random_effects) {
+    message("Random effects detected: fitting model with dream()...")
+    
+    colnames(data) <- rownames(meta)   # dream requires this format
+    
+    # Fit dream model
+    fit <- variancePartition::dream(
+      exprObj = data,
+      formula = stats::as.formula(design),
+      data = design2design_matrix_result[["meta"]],        
+      ddf = NULL
+    )
+    fit <- variancePartition::eBayes(fit = fit)
+    
+  } else {
+    message("No random effects: fitting model with lmFit()...")
+    
+    # Fit limma model
+    fit <- limma::lmFit(
+      object = data,
+      design = design2design_matrix_result[["design_matrix"]]
+    )
+    fit <- limma::eBayes(fit = fit)
+  }
+  
+  # 2. Extract residuals   (# residuals: features x samples)
+  residuals_matrix <- stats::residuals(fit, y = data)  
+  
+  # 3. Define group/condition labels
+  if (!condition %in% colnames(meta)) {
+    stop(sprintf("Condition '%s' not found in meta columns.", condition))
+  }
+  Phase <- as.factor(meta[[condition]])  # flexible group assignment
+  
+  # 4. Run Levene's test per feature
+  bp_pvals <- apply(residuals_matrix, 1, function(res) {
+    group_vars <- tapply(res, Phase, var, na.rm = TRUE)
+    
+    # Skip if any group has zero variance (not testable)
+    if (any(group_vars == 0) || length(group_vars) < 2) {
+      return(NA)
+    }
+    
+    car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
   })
   
-  # Determine fraction of features violating homoscedasticity
-  violation_flags <- bp_pvals < p_threshold
-  fraction_violated <- mean(violation_flags)
+  # 5. Clean p-values (remove NAs)
+  bp_pvals_clean <- bp_pvals[!is.na(bp_pvals)]
   
+  # 6. Determine fraction of features violating homoscedasticity
+  violation_flags <- rep(FALSE, length(bp_pvals)) # Initialize
+  violation_flags[!is.na(bp_pvals)] <- bp_pvals_clean < p_threshold
+  
+  fraction_violated <- mean(violation_flags, na.rm = TRUE)
   
   message("\n------------------------------------------------------------")
   message(sprintf(
@@ -393,7 +440,7 @@ check_homoscedasticity_violation <- function(
   if (violation) {
     message(
       "\u2757 Linear model assumption of homoscedasticity is likely violated."
-      )
+    )
     if (data_type == "rna-seq") {
       message("\u27A1\uFE0F  Using robust RNA-seq strategy:")
       message("voomWithQualityWeights() to downweight noisy samples.")
@@ -410,6 +457,6 @@ check_homoscedasticity_violation <- function(
   
   return(list(
     violation = violation,               # Single Boolean flag
-    violation_flags = violation_flags    # Boolean flag for every feature
-    ))
+    violation_flags = violation_flags    # Boolean vector for every feature
+  ))
 }

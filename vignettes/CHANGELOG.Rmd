@@ -135,11 +135,6 @@ Examples:
   correction function. For a reason, there is a gap. The results are fine! Just 
   the plotting is off!
 
-- Features violating assumption of homoscedasticity of linear models are 
-  indicated with a warning symbol (this happens only if the argument: 
-  use_array_weights is set to NULL, because then it performs the Breusch-Pagan
-  test to check for the homoscedasticity violations for each feature).
-
 --------------------------------------------------------------------------------
 
 

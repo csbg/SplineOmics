@@ -3032,7 +3032,8 @@ check_splineomics_elements <- function(
       "data",
       "meta",
       "spline_params",
-      "design"
+      "design",
+      "condition"
     ),
     "run_limma_splines" = c(
       "data",

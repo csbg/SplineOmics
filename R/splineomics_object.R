@@ -35,7 +35,8 @@
 #'                             created. Use the same vector that was used to
 #'                             create the row headers for the data matrix!
 #' @param design A design matrix or similar object (optional).
-#' @param robust_fit Boolean flag indicating if the robust fit strategy to deal
+#' @param use_array_weights Boolean flag indicating if the robust fit strategy 
+#' to deal
 #' with heteroscedasticity should be used or not. If ommited (parameter value
 #' is NULL) then this is handeled implicitly based on the result of the Wilcoxon
 #' signed exact test (tests if there is a significant differene in the variance

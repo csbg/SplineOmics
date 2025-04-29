@@ -62,23 +62,23 @@
 #'
 run_limma_splines <- function(
     splineomics
-    ) {
-
+) {
+  
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "run_limma_splines"
   )
-
+  
   args <- lapply(
     as.list(match.call()[-1]),
     eval,
     parent.frame()
   )
-
+  
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-
+  
   data <- splineomics[["data"]]
   rna_seq_data <- splineomics[["rna_seq_data"]]
   meta <- splineomics[["meta"]]
@@ -97,12 +97,12 @@ run_limma_splines <- function(
   design <- gsub("Time", "X", design)  
   
   feature_names <- rownames(data)
-
+  
   rownames(data) <- NULL # To just have numbers describing the rows
-
+  
   meta[[condition]] <- factor(meta[[condition]])
   levels <- levels(meta[[condition]])
-
+  
   # Get hits for level (within level analysis)
   process_level_with_params <- purrr::partial(
     within_level,
@@ -122,7 +122,7 @@ run_limma_splines <- function(
     levels,
     process_level_with_params
   )
-
+  
   within_level_top_table <-
     stats::setNames(
       purrr::map(results_list, "top_table"),
@@ -132,7 +132,7 @@ run_limma_splines <- function(
   limma_splines_result <- list(
     time_effect = within_level_top_table
   )
-
+  
   if (mode == "integrated") {
     # Step 1: Fit the global model once
     fit_obj <- fit_global_model(
@@ -147,7 +147,7 @@ run_limma_splines <- function(
       feature_names = feature_names,
       use_array_weights = use_array_weights
     )
-
+    
     # Step 2: Extract pairwise contrasts for all level combinations
     contrast_results <- extract_between_level_contrasts(
       fit_obj = fit_obj,
@@ -159,7 +159,7 @@ run_limma_splines <- function(
       contrast_results[["condition_only"]]
     limma_splines_result[["interaction_condition_time"]] <- 
       contrast_results[["condition_time"]]
-
+    
   } else { # mode == "isolated"
     message(paste(
       "mode == 'integrated' necessary for between level",
@@ -167,9 +167,9 @@ run_limma_splines <- function(
       "(avrg diff conditions, and interaction condition time)."
     ))
   }
-
+  
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
-
+  
   splineomics <- update_splineomics(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
@@ -233,7 +233,7 @@ within_level <- function(
     feature_names,
     padjust_method,
     mode
-    ) {
+) {
   
   if (mode == "isolated") {
     samples <- which(meta[[condition]] == level)
@@ -249,7 +249,7 @@ within_level <- function(
     # spline_params must be uniform across all levels for integrated mode.
     level_index <- 1L
   }
-
+  
   if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
     stop_call_false(
       "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
@@ -273,18 +273,18 @@ within_level <- function(
     level_index = level_index,
     padjust_method = padjust_method
   )
-
+  
   top_table <- process_top_table(
     result,
     feature_names
   )
-
+  
   results_name <- paste(
     condition,
     level,
     sep = "_"
   )
-
+  
   list(
     name = results_name,
     top_table = top_table
@@ -313,7 +313,8 @@ within_level <- function(
 #' the named element KenwardRoger, which must be a bool, specifying whether
 #' to use that method or not.
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param condition A character string specifying the condition.
+#' @param condition A character string of the column name of meta that contains
+#'                  the levels of the experimental condition.
 #' @param padjust_method A character string specifying the p-adjustment method.
 #' @param feature_names A non-empty character vector of feature names.
 #'
@@ -342,36 +343,41 @@ fit_global_model <- function(
     feature_names,
     use_array_weights = NULL
 ) {
-
+  
   effects <- extract_effects(design)
   
-  result <- design2design_matrix(
+  design2design_matrix_result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
     level_index = 1,
     design = effects[["fixed_effects"]]
   )
   
-  design_matrix <- result$design_matrix
+  design_matrix <- design2design_matrix_result[["design_matrix"]]
   
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data   # Just having one variable makes the code easier
   } 
-
+  
   # For RNA-seq data, this is handled when calling limma::voom (happens before)
   # This here is the implicit fall-back logic when the user has not explicitly 
-  # decided whether to robust_fit or not
+  # decided whether to use the array_weights strategy or not (is NULL)
   if (is.null(rna_seq_data) && is.null(use_array_weights)) {
     homosc_violation_result <- check_homoscedasticity_violation(
       data = data,
-      meta = meta
+      meta = meta,
+      design = design,
+      design2design_matrix_result = design2design_matrix_result,
+      condition = condition,
+      random_effects = effects[["random_effects"]] != ""  # Boolean flag
     )
     
+    # If there is a considerable violation, select use_array_weights strategy
     use_array_weights <- homosc_violation_result[["violation"]]
   } else{
     homosc_violation_result <- NULL
   }
-
+  
   if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream requires this format
     
@@ -395,7 +401,7 @@ fit_global_model <- function(
       fit <- variancePartition::dream(
         exprObj = data,
         formula = stats::as.formula(design),
-        data = result[["meta"]],
+        data = design2design_matrix_result[["meta"]], # Spline transformed meta.
         ddf = method,
         useWeights = TRUE,
         weightsMatrix = weights_matrix
@@ -408,7 +414,7 @@ fit_global_model <- function(
       fit <- variancePartition::dream(
         exprObj = data,
         formula = stats::as.formula(design),
-        data = result[["meta"]],    # Spline transformed meta.
+        data = design2design_matrix_result[["meta"]], # Spline transformed meta.
         ddf = method
       )
       
@@ -441,7 +447,7 @@ fit_global_model <- function(
   list(
     fit = fit,
     design_matrix = design_matrix,
-    meta = result[["meta"]],
+    meta = design2design_matrix_result[["meta"]],
     feature_names = feature_names,
     condition = condition,
     padjust_method = padjust_method,
@@ -487,11 +493,11 @@ extract_between_level_contrasts <- function(
     levels,
     2,
     simplify = FALSE
-    )
+  )
   
   between_level_condition_only <- list()
   between_level_condition_time <- list()
-
+  
   for (lev_combo in level_combinations) {
     contrast_result <- extract_contrast_for_pair(
       fit_obj = fit_obj,
@@ -505,7 +511,7 @@ extract_between_level_contrasts <- function(
         lev_combo[1],
         "_vs_",
         lev_combo[2]
-        )
+      )
     ]] <- contrast_result$condition_only
     
     between_level_condition_time[[
@@ -514,7 +520,7 @@ extract_between_level_contrasts <- function(
         lev_combo[1],
         "_vs_",
         lev_combo[2]
-        )
+      )
     ]] <- contrast_result$condition_time
   }
   
@@ -553,16 +559,16 @@ process_top_table <- function(
     feature_names) {
   top_table <- process_within_level_result$top_table
   fit <- process_within_level_result$fit
-
+  
   top_table <- modify_limma_top_table(
     top_table,
     feature_names
   )
-
+  
   intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
   intercepts_ordered <- intercepts[top_table$feature_nr, , drop = FALSE]
   top_table$intercept <- intercepts_ordered[, 1]
-
+  
   top_table
 }
 
@@ -611,8 +617,8 @@ process_within_level <- function(
     spline_params,
     level_index,
     padjust_method
-    ) {
-
+) {
+  
   effects <- extract_effects(design)
   
   result <- design2design_matrix(
@@ -623,20 +629,20 @@ process_within_level <- function(
   )
   
   design_matrix <- result[["design_matrix"]]
-
+  
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data
   }
-
+  
   if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream wants it like this.
-
+    
     if (isTRUE(dream_params[["KenwardRoger"]])) {
       method <- "Kenward-Roger"
     } else {
       method <- "adaptive"  # Kenward-Roger for < 20 samples, else Satterthwaite
     }
-
+    
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
@@ -654,7 +660,7 @@ process_within_level <- function(
     } else {
       dof <- Inf
     }
-
+    
     top_table <- variancePartition::topTable(
       fit,
       adjust.method = padjust_method,
@@ -680,9 +686,9 @@ process_within_level <- function(
       coef = coeffs
     )
   }
-
+  
   attr(top_table, "adjust.method") <- padjust_method
-
+  
   list(
     top_table = top_table,
     fit = fit
@@ -751,7 +757,7 @@ extract_contrast_for_pair <- function(
     fit_obj,
     condition,
     level_pair
-    ) {
+) {
   
   fit <- fit_obj[["fit"]]
   design_matrix <- fit_obj[["design_matrix"]]
@@ -764,7 +770,7 @@ extract_contrast_for_pair <- function(
     level_pair = level_pair,
     design_matrix = design_matrix
   )
-
+  
   # Extract condition-only top table
   condition_only <- limma::topTable(
     fit,
@@ -772,7 +778,7 @@ extract_contrast_for_pair <- function(
     adjust.method = padjust_method,
     number = Inf
   )
-
+  
   # Extract condition-time interaction top table
   condition_time <- limma::topTable(
     fit,
@@ -796,11 +802,11 @@ extract_contrast_for_pair <- function(
     condition_only = process_top_table(
       condition_only_result,
       feature_names
-      ),
+    ),
     condition_time = process_top_table(
       condition_time_result,
       feature_names
-      )
+    )
   )
 }
 
@@ -833,7 +839,7 @@ modify_limma_top_table <- function(
   is_integer_string <- function(x) {
     return(grepl("^[0-9]+$", x))
   }
-
+  
   # Because the row headers of a potential rna_seq_data object were not
   # converted to ints (written as strings) beforehand. This is run only when
   # the row headers are still "real" strings.
@@ -854,23 +860,23 @@ modify_limma_top_table <- function(
       character(1)
     )
   }
-
+  
   top_table <- tibble::as_tibble(
     top_table,
     rownames = "feature_nr"
   )
-
+  
   # feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
-
+  
   # Convert feature_nr to integer
   top_table <- top_table |>
     dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
     dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
-
+  
   # Sort and add feature names based on the feature_nr
   sorted_feature_names <- feature_names[top_table$feature_nr]
   top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
-
+  
   return(top_table)
 }
 
@@ -900,7 +906,7 @@ build_contrasts_for_pair <- function(
     condition,
     level_pair,
     design_matrix
-    ) {
+) {
   
   cols <- colnames(design_matrix)
   
@@ -908,10 +914,10 @@ build_contrasts_for_pair <- function(
   level1 <- make.names(paste0(
     condition,
     level_pair[1]
-    ))
+  ))
   level2 <- make.names(paste0(
     condition, level_pair[2]
-    ))
+  ))
   
   if (any(grepl(level1, cols))) {
     modeled_level <- level_pair[1]
@@ -925,19 +931,19 @@ build_contrasts_for_pair <- function(
   condition_contrast <- make.names(paste0(
     condition,
     modeled_level
-    ))
+  ))
   
   # Time interaction columns like X1, X2
   spline_cols <- grep(
     "^X\\d+$",
     cols,
     value = TRUE
-    )
+  )
   interaction_contrasts <- paste0(
     condition_contrast,
     ":",
     spline_cols
-    )
+  )
   
   list(
     condition = condition_contrast,
