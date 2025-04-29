@@ -60,22 +60,6 @@ create the row headers for the data matrix!}
 
 \item{design}{A design matrix or similar object (optional).}
 
-\item{robust_fit}{Boolean flag indicating if the robust fit strategy to deal
-with heteroscedasticity should be used or not. If ommited (parameter value
-is NULL) then this is handeled implicitly based on the result of the Wilcoxon
-signed exact test (tests if there is a significant differene in the variance
-across samples between at least two levels of the experiment). If this test
-is significant for at least one pairwise comparison, then the robust strategy
-is applied. The robust strategy uses the function voomWithQualityWeights for
-RNA-seq data instead of the normal voom function. For other, non-count-based
-data, the function limma::arrayWeights is used instead, combined with setting
-the robust argument to TRUE for the limma::eBayes function. In summary, the
-strategy employed by those functions is to downweights samples with higher
-variance. This can be neccessary, because linear models have the assumption
-of homoscedasticity, which means that the variance is (approx.) the same 
-across all datapoints where the linear model is fitted. If this is violated,
-then the resulting p-values cannot be trusted (common statistical wisdom).}
-
 \item{dream_params}{#' A named list or NULL. When not NULL, it can contain
  the following named elements:
 - `dof`: An integer greater than 1, specifying the degrees of freedom for 
@@ -100,6 +84,23 @@ both for natural and B-splines.}
 \item{padjust_method}{Method for p-value adjustment, one of "none", "BH",
 "BY", "holm", "bonferroni", "hochberg", or "hommel".
 Defaults to "BH" (Benjamini-Hochberg).}
+
+\item{use_array_weights}{Boolean flag indicating if the robust fit strategy 
+to deal
+with heteroscedasticity should be used or not. If ommited (parameter value
+is NULL) then this is handeled implicitly based on the result of the Wilcoxon
+signed exact test (tests if there is a significant differene in the variance
+across samples between at least two levels of the experiment). If this test
+is significant for at least one pairwise comparison, then the robust strategy
+is applied. The robust strategy uses the function voomWithQualityWeights for
+RNA-seq data instead of the normal voom function. For other, non-count-based
+data, the function limma::arrayWeights is used instead, combined with setting
+the robust argument to TRUE for the limma::eBayes function. In summary, the
+strategy employed by those functions is to downweights samples with higher
+variance. This can be neccessary, because linear models have the assumption
+of homoscedasticity, which means that the variance is (approx.) the same 
+across all datapoints where the linear model is fitted. If this is violated,
+then the resulting p-values cannot be trusted (common statistical wisdom).}
 }
 \value{
 A SplineOmics object.

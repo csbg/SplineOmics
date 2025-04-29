@@ -6,6 +6,7 @@ devtools::load_all()
 
 library(readxl)
 library(dplyr)
+library(car)
 
 
 # Load the data ----------------------------------------------------------------

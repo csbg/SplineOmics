@@ -2260,11 +2260,13 @@ plot_splines <- function(
       )
 
       title <- as.character(matched_row$feature_name)
-      title_prefix <- if (heteroscedasticity) "\u26A0\uFE0F " else ""
-      title <- paste0(
-        title_prefix,
-        title
+      if (!is.null(heteroscedasticity)) {
+        title_prefix <- if (heteroscedasticity) "\u26A0\uFE0F " else ""
+        title <- paste0(
+          title_prefix,
+          title
         )
+      }
 
       if (nchar(title) > 100) {
         title_before <- title

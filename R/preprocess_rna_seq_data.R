@@ -81,7 +81,8 @@ preprocess_rna_seq_data <- function(
   meta <- splineomics[["meta"]]
   spline_params <- splineomics[["spline_params"]]
   design <- splineomics[["design"]]
-  robust_fit <- splineomics[["robust_fit"]]
+  condition <- splineomics[["condition"]]
+  use_array_weights <- splineomics[["use_array_weights"]]
 
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -120,7 +121,7 @@ preprocess_rna_seq_data <- function(
   }
 
   # Step 3: Create design matrix
-  result <- design2design_matrix(
+  design2design_matrix_result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
     level_index = 1,
@@ -128,54 +129,57 @@ preprocess_rna_seq_data <- function(
   )
 
   # Step 4: Apply voom transformation to get logCPM values and weights
-  if (effects[["random_effects"]] != "") {
-    if (!is.null(robust_fit) && robust_fit == TRUE) {
+  if (effects[["random_effects"]] != "") {  # use the variancePartition fun()
+    
+    if (!is.null(use_array_weights) && use_array_weights == TRUE) {
       message(
-        "⚠️  robust_fit = TRUE is ignored for mixed model RNA-seq.\n",
+        "⚠️  use_array_weights = TRUE is ignored for mixed model RNA-seq.\n",
         "voomWithDreamWeights already handles heteroscedasticity internally."
         )
     }
-    
+
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
       formula = stats::as.formula(design),
-      data = result[["meta"]]
+      data = design2design_matrix_result[["meta"]]
     )
-  }
-  else {
-    design_matrix <- result[["design_matrix"]]
     
-    if (is.null(robust_fit)) {     # means fallback to implicit handling
+  }
+  else {   # use the functions from limma
+    design_matrix <- design2design_matrix_result[["design_matrix"]]
+    
+    if (is.null(use_array_weights)) {     # means fallback to implicit handling
       # Run voom normally first
       voom_obj <- limma::voom(
         counts = y,
         design = design_matrix
       )
-      
-      result <- check_homoscedasticity_violation(
+
+      homosc_violation_result <- check_homoscedasticity_violation(
         data = voom_obj$E,
         meta = meta,
+        design = design,
+        design2design_matrix_result = design2design_matrix_result,
+        condition = condition,
         data_type = "rna-seq"
       )
-      violation <- result[["violation"]]
+      use_array_weights <- homosc_violation_result[["violation"]]
       
       # Step 4: If any pair was violated, rerun with robust weights
-      if (violation) {
+      if (use_array_weights) {
         message(
         "Using voomWithQualityWeights() due to detected violation of the 
         assumption of homoscedasticity."
         )
-        voom_obj <- limma::voomWithQualityWeights(
-          counts = y,
-          design = design_matrix
-        )
       }
-    } else if (robust_fit == TRUE) {
+    }
+      
+    if (use_array_weights == TRUE) {
       voom_obj <- limma::voomWithQualityWeights(
         counts = y,
         design = design_matrix
       )
-    } else {   # robust_fit == FALSE
+    } else {   # use_array_weights == FALSE
       voom_obj <- limma::voom(
         counts = y,
         design = design_matrix
