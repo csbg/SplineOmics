@@ -1004,7 +1004,9 @@ get_header_section <- function(
       The results are fine! Just the plotting is off!</li>',
       '<li style="margin-bottom: 15px;">If a ⚠️ symbol appears at the beginning
       of a plot title, it indicates that the feature violates
-      the homoscedasticity assumption of linear models.</li>',
+      the homoscedasticity assumption of linear models. It is followed by
+      the condition, written in brackets, which had the higher variance of the
+      residuals.</li>',
       "</ul>",
       "</p>",
       "</div>",
