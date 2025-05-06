@@ -2,6 +2,7 @@
 
 S3method(print,SplineOmics)
 export(cluster_hits)
+export(correlate_results)
 export(create_limma_report)
 export(create_splineomics)
 export(download_enrichr_databases)

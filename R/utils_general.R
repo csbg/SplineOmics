@@ -358,6 +358,7 @@ extract_effects <- function(formula_string) {
 #'                             the threshold (i.e. it violates 
 #'                             homoscedasticity).}
 #'     }
+#'   }
 #' }
 #' A summary message about the detected violations and recommended next steps is
 #' printed to the console.
