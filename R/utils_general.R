@@ -348,10 +348,16 @@ extract_effects <- function(formula_string) {
 #'                    dataset 
 #'                    (based on the specified `p_threshold` and 
 #'                    `fraction_threshold`).}
-#'   \item{violation_flags}{A logical vector indicating, for each feature, 
-#'                          whether it individually violates 
-#'                          the assumption of homoscedasticity 
-#'                          (`TRUE` = violation, `FALSE` = no violation).}
+#'   \item{bp_df}{A data frame with one row per feature, containing:
+#'     \describe{
+#'       \item{pval}{The p-value from Levene's test for each feature.}
+#'       \item{max_var_group}{The group (condition) with the highest residual
+#'                            variance.}
+#'       \item{max_var}{The value of the maximum group variance.}
+#'       \item{violation_flag}{Logical: `TRUE` if the feature's p-value is below
+#'                             the threshold (i.e. it violates 
+#'                             homoscedasticity).}
+#'     }
 #' }
 #' A summary message about the detected violations and recommended next steps is
 #' printed to the console.
@@ -408,25 +414,36 @@ check_homoscedasticity_violation <- function(
   Phase <- as.factor(meta[[condition]])  # flexible group assignment
   
   # 4. Run Levene's test per feature
-  bp_pvals <- apply(residuals_matrix, 1, function(res) {
-    group_vars <- tapply(res, Phase, var, na.rm = TRUE)
+  bp_results <- apply(residuals_matrix, 1, function(res) {
+    group_vars <- tapply(
+      res,
+      Phase,
+      var,
+      na.rm = TRUE
+      )
     
     # Skip if any group has zero variance (not testable)
     if (any(group_vars == 0) || length(group_vars) < 2) {
       return(NA)
     }
     
-    car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
+    # car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
+    pval <- car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
+    max_group <- names(which.max(group_vars))
+    max_var <- max(group_vars)
+    
+    list(
+      pval = pval,
+      max_var_group = max_group,
+      max_var = max_var
+      )
   })
   
-  # 5. Clean p-values (remove NAs)
-  bp_pvals_clean <- bp_pvals[!is.na(bp_pvals)]
+  bp_df <- do.call(rbind, lapply(bp_results, as.data.frame))
+  rownames(bp_df) <- rownames(residuals_matrix)  # keep feature names
   
-  # 6. Determine fraction of features violating homoscedasticity
-  violation_flags <- rep(FALSE, length(bp_pvals)) # Initialize
-  violation_flags[!is.na(bp_pvals)] <- bp_pvals_clean < p_threshold
-  
-  fraction_violated <- mean(violation_flags, na.rm = TRUE)
+  bp_df$violation_flag <- with(bp_df, !is.na(pval) & pval < p_threshold)
+  fraction_violated <- mean(bp_df$violation_flag)
   
   message("\n------------------------------------------------------------")
   message(sprintf(
@@ -434,6 +451,26 @@ check_homoscedasticity_violation <- function(
     p_threshold,
     100 * fraction_violated
   ))
+  
+  # Summarize max variance group among violating features
+  group_contributions <- table(bp_df$max_var_group[bp_df$violation_flag])
+  group_fractions <- prop.table(group_contributions)
+  
+  if (length(group_contributions) > 0) {
+    message(
+      "Among the violating features, the group contributing most to variance:"
+      )
+    for (i in seq_along(group_contributions)) {
+      message(sprintf(
+        "- %s: %.2f%% of heteroscedastic features",
+        names(group_contributions)[i],
+        100 * group_fractions[i]
+      ))
+    }
+  } else {
+    message("No specific group dominates among heteroscedastic features.")
+  }
+  message("------------------------------------------------------------\n")
   
   violation <- fraction_violated >= fraction_threshold
   
@@ -457,6 +494,6 @@ check_homoscedasticity_violation <- function(
   
   return(list(
     violation = violation,               # Single Boolean flag
-    violation_flags = violation_flags    # Boolean vector for every feature
+    bp_df = bp_df    
   ))
 }

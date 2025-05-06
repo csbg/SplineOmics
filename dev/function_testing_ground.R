@@ -95,8 +95,8 @@ data_stat_matrix_only <- extract_data(
 meta <- read_excel(here::here(
   "dev",
   "data",
-  "PPTX",
-  "Time course PPTX metadata 25022025.xlsx")
+  "PPTXTimecourse25022025",
+  "Time course PPTX metadata 25022025_corrected.xlsx")
   )
 # 
 # # Get the indices **before filtering meta**
@@ -327,7 +327,7 @@ spline_test_configs <- data.frame(
 splineomics <- update_splineomics(
   splineomics = splineomics,
   # design = "~ 1 + Phase*Time + (1|Reactor)",
-  design = "~ 1 + Phase*Time + Reactor",
+  design = "~ 1 + Phase*Time + Reactor + HPLC_column",
   use_array_weights = NULL,
   # mode = "integrated",
   mode = "integrated",

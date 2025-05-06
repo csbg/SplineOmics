@@ -2068,10 +2068,10 @@ plot_splines <- function(
   for (hit in seq_len(nrow(top_table))) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     y_values <- data[hit_index, ]
-    
-    heteroscedasticity <- 
-      report_info[["homosc_violation_result"]][["violation_flags"]][hit_index]
-    
+
+    homosc_result <- report_info[["homosc_violation_result"]][["bp_df"]]
+    heteroscedasticity <- homosc_result$violation_flag[hit_index]
+    high_var_group <- homosc_result$max_var_group[hit_index]
 
     intercept <- top_table$intercept[hit]
     spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
@@ -2260,13 +2260,21 @@ plot_splines <- function(
       )
 
       title <- as.character(matched_row$feature_name)
-      if (!is.null(heteroscedasticity)) {
-        title_prefix <- if (heteroscedasticity) "\u26A0\uFE0F " else ""
-        title <- paste0(
-          title_prefix,
-          title
-        )
+
+      if (isTRUE(heteroscedasticity)) {
+        if (!is.na(high_var_group)) {
+          title_prefix <- paste0("\u26A0\uFE0F (↑", high_var_group, ") | ")
+        } else {
+          title_prefix <- "\u26A0\uFE0F "
+        }
+      } else {
+        title_prefix <- ""
       }
+      
+      title <- paste0(
+        title_prefix,
+        title
+      )
 
       if (nchar(title) > 100) {
         title_before <- title

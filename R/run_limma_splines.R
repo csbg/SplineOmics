@@ -429,7 +429,8 @@ fit_global_model <- function(
       fit <- limma::lmFit(
         object = data,
         design = design_matrix,
-        weights = weights
+        weights = weights,
+        method = "robust"
       )
       fit <- limma::eBayes(
         fit = fit,
