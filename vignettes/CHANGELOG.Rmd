@@ -134,6 +134,10 @@ Examples:
   but the plotting data is batch corrected only with the dedicated limma batch 
   correction function. For a reason, there is a gap. The results are fine! Just 
   the plotting is off!
+  
+- New user-available function that allows to correlate the topTable results from
+  two SplineOmics results (for example intergrated vs. isolated approach with
+  the same data).
 
 --------------------------------------------------------------------------------
 
