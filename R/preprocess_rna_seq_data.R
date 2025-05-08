@@ -133,7 +133,8 @@ preprocess_rna_seq_data <- function(
     
     if (!is.null(use_array_weights) && use_array_weights == TRUE) {
       message(
-        "⚠️  use_array_weights = TRUE is ignored for mixed model RNA-seq.\n",
+        "[WARNING] use_array_weights = TRUE is ignored for mixed model",
+        "RNA-seq.\n",
         "voomWithDreamWeights already handles heteroscedasticity internally."
         )
     }

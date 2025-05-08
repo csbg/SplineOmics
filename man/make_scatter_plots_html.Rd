@@ -23,6 +23,10 @@ column "Time".}
 
 \item{meta_replicate_column}{Column name of the column in meta that contains
 the info about the replicates, such as reactor.}
+
+\item{features_per_file}{Integer specifying how many features (for example
+proteins) should be plotted per file. Per default
+500.}
 }
 \description{
 This function is used to make scatter plots for the raw data of all the 

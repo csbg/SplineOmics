@@ -1,7 +1,5 @@
 #' Correlate and compare hits between two SplineOmics results
 #'
-#' @noRd
-#'
 #' @description
 #' Compares adjusted p-values from two SplineOmics result objects across
 #' standard categories. Calculates Spearman correlation globally and for

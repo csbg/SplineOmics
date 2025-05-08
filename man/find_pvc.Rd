@@ -66,12 +66,11 @@ all features with at least one excursion.
 \details{
 A peak or valley is defined as a timepoint whose expression value is 
 significantly different from both its immediate neighbors and deviates in 
-the same direction — i.e., it is either significantly higher than both 
+the same direction - i.e., it is either significantly higher than both 
 (a peak) or significantly lower than both (a valley).  
 
 Statistically, this is tested using a compound contrast in limma:  
-$$(T - T_{\text{prev}}) + (T - T_{\text{next}}) = 
-2T - T_{\text{prev}} - T_{\text{next}}$$
+(T - T_prev) + (T - T_next) = 2T - T_prev - T_next
 This compound contrast has power only when the timepoint `T` is an outlier 
 compared to both neighbors in the same direction. The resulting p-value is 
 FDR-adjusted and compared to the `alpha` threshold.

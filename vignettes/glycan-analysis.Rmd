@@ -110,9 +110,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 # Load the packages
 
 ```{r setup, eval = TRUE}
-# library(SplineOmics)
-library(devtools)
-devtools::load_all()
+library(SplineOmics)
 library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
@@ -241,6 +239,7 @@ Lets define our parameters and put them into the `SplineOmics` object:
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
+  use_array_weights = FALSE,
   # Reactor as random effect.
   design = "~ 1 + Condition*Time + Batch + (1|Reactor)", 
   mode = "integrated", # means limma uses the full data for each condition.

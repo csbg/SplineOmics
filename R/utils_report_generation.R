@@ -953,8 +953,8 @@ get_header_section <- function(
       "<br><br>The PVC test is a compound contrast test carried out with limma",
       ".<br> It tests if a given timepoint T is significantly higher or lower",
       "than both neighbor timepoints (that is why it is NOT carried out for",
-      "the first and last timepoint). Tests whether 2·Tₙ − Tₙ₋₁ ",
-      "- Tₙ₊₁ ≠ 0 (significantly).",
+      "the first and last timepoint). Tests whether 2 * Tn - Tn-1",
+      "- Tn+1 != 0 (significantly).",
       "</ul>",
       "</p>",
       "</div>",
@@ -1002,8 +1002,8 @@ get_header_section <- function(
       models, but the plotting data is batch corrected only with the 
       dedicated limma batch correction function. For a reason, there is a gap.
       The results are fine! Just the plotting is off!</li>',
-      '<li style="margin-bottom: 15px;">If a ⚠️ symbol appears at the beginning
-      of a plot title, it indicates that the feature violates
+      '<li style="margin-bottom: 15px;">If a [WARNING] symbol appears at the
+      beginning of a plot title, it indicates that the feature violates
       the homoscedasticity assumption of linear models. It is followed by
       the condition, written in brackets, which had the higher variance of the
       residuals.</li>',
@@ -1249,7 +1249,7 @@ count_hits <- function(nested_list) {
 #' @description
 #' This function processes a nested list (like category_2_and_3_hits) where each
 #' element is a list of named dataframes. It ensures all dataframe names are
-#' ≤ 30 characters, truncating them evenly for `_substring_vs_substring`.
+#' <= 30 characters, truncating them evenly for `_substring_vs_substring`.
 #'
 #' @param nested_list A list of lists containing named dataframes.
 #'

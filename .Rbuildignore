@@ -7,13 +7,13 @@
 ^inst/reports$
 ^results$
 ^dev$
+^dev/
 ^docs$
 ^tools$
 ^doc$
 ^SplineOmics\.BiocCheck$
 ^Meta$
 ^docker$
-^dev$
 ^CODE_OF_CONDUCT\.md$
 ^inst/CITATION\.cff$
 ^pkgdown$

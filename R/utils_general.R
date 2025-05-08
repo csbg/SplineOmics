@@ -333,7 +333,7 @@ extract_effects <- function(formula_string) {
 #' @param data_type String specifying the omics data type ("rna-seq" or 
 #'                  "other-omics"). Used to determine the recommendation
 #'                  message in case of heteroscedasticity.
-#' @param p_threshold Numeric. Significance threshold for the Breusch–Pagan 
+#' @param p_threshold Numeric. Significance threshold for the Breusch-Pagan
 #'                    test per feature (default is 0.05).
 #' @param fraction_threshold Numeric. Proportion of features that must violate 
 #'                           the homoscedasticity assumption (p < p_threshold) 
@@ -363,6 +363,8 @@ extract_effects <- function(formula_string) {
 #' A summary message about the detected violations and recommended next steps is
 #' printed to the console.
 #' 
+#' @importFrom car leveneTest
+#' 
 check_homoscedasticity_violation <- function(
     data,
     meta,
@@ -376,23 +378,34 @@ check_homoscedasticity_violation <- function(
 ) {
   
   message(paste(
-    "\nRunning Levene’s test to check for violation of homoscedasticity",
+    "\nRunning Levene's test to check for violation of homoscedasticity",
     "of each feature..."
   ))
   
   if (random_effects) {
-    message("Random effects detected: fitting model with dream()...")
-    
-    colnames(data) <- rownames(meta)   # dream requires this format
-    
-    # Fit dream model
-    fit <- variancePartition::dream(
-      exprObj = data,
-      formula = stats::as.formula(design),
-      data = design2design_matrix_result[["meta"]],        
-      ddf = NULL
+    message(
+      "Checking for heteroscedasticity violation with Levene's test in
+      the presence of random effects is currently out of order. Hopefully,
+      it will be available in future versions of SplineOmics"
     )
-    fit <- variancePartition::eBayes(fit = fit)
+    
+    return(list(
+      violation = FALSE,               # Single Boolean flag
+      bp_df = NULL    
+    ))
+    
+    # message("Random effects detected: fitting model with dream()...")
+    # 
+    # colnames(data) <- rownames(meta)   # dream requires this format
+    # 
+    # # Fit dream model
+    # fit <- variancePartition::dream(
+    #   exprObj = data,
+    #   formula = stats::as.formula(design),
+    #   data = design2design_matrix_result[["meta"]],        
+    #   ddf = NULL
+    # )
+    # fit <- variancePartition::eBayes(fit = fit)
     
   } else {
     message("No random effects: fitting model with lmFit()...")
@@ -404,9 +417,12 @@ check_homoscedasticity_violation <- function(
     )
     fit <- limma::eBayes(fit = fit)
   }
-  
+
   # 2. Extract residuals   (# residuals: features x samples)
-  residuals_matrix <- stats::residuals(fit, y = data)  
+  residuals_matrix <- stats::residuals(
+    fit,
+    y = data
+    )
   
   # 3. Define group/condition labels
   if (!condition %in% colnames(meta)) {
@@ -425,7 +441,11 @@ check_homoscedasticity_violation <- function(
     
     # Skip if any group has zero variance (not testable)
     if (any(group_vars == 0) || length(group_vars) < 2) {
-      return(NA)
+      return(list(
+        pval = NA,
+        max_var_group = NA,
+        max_var = NA
+        ))
     }
     
     # car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
@@ -440,10 +460,11 @@ check_homoscedasticity_violation <- function(
       )
   })
   
-  bp_df <- do.call(rbind, lapply(bp_results, as.data.frame))
+  # Convert list of named lists into a clean data frame
+  bp_df <- as.data.frame(do.call(rbind, bp_results), stringsAsFactors = FALSE)
   rownames(bp_df) <- rownames(residuals_matrix)  # keep feature names
   
-  bp_df$violation_flag <- with(bp_df, !is.na(pval) & pval < p_threshold)
+  bp_df$violation_flag <- !is.na(bp_df$pval) & bp_df$pval < p_threshold
   fraction_violated <- mean(bp_df$violation_flag)
   
   message("\n------------------------------------------------------------")
