@@ -98,10 +98,10 @@ preprocess_rna_seq_data <- function(
   if (!requireNamespace("edgeR", quietly = TRUE)) {
     stop_call_false(
       "The 'edgeR' package is not installed.\n",
-      "Please install it manually (to your custom_lib_path) using the command", 
+      "Please install it manually using the command \n", 
       " below and re-run the function:\n\n",
       "  BiocManager::install('edgeR')\n\n",
-      "This is an optional dependency of the SplineOmics package, ",
+      "This is an optional dependency of the SplineOmics package, \n",
       "only needed when working with RNA-seq data."
     )
   }

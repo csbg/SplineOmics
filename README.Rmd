@@ -100,65 +100,35 @@ using other commands not necessarily written down here.
 
 > **Note for Windows Users:**
 
-Note that some installation paths potentially are not writable on **Windows**. Therefore, it can be necessary to set up a library path and use that path for the installations:
-
-``` r
-custom_lib_path <- "C:/Rlibs"  # Replace with your desired path
-
-# Create the directory if it doesn't exist
-if (!dir.exists(custom_lib_path)) {
-    dir.create(
-      custom_lib_path,
-      showWarnings = FALSE,
-      recursive = TRUE
-      )
-}
-
-# Set the library path to include the new directory
-.libPaths(c(custom_lib_path, .libPaths()))
-
-# Check if the new library path is added successfully
-if (custom_lib_path %in% .libPaths()) {
-    message("Library path set to: ", custom_lib_path)
-} else {
-    stop("Failed to set library path.")
-}
-```
-
-Alternatively, you can run `RStudio` as administrator once for the installation (which is however generally not recommended, because it is a security risk).
-
-> **Additional note for Windows Users:**
-
 During the installation on Windows, you might see a message indicating that Rtools is not installed, which is typically required for compiling R packages from source. However, for this installation, Rtools is not necessary, and you can safely ignore this message.
 
-1.  **Open RStudio** or your R console.
+1.  **Open RStudio** or your R console in a new or existing project folder.
 
-2.  **Install `BiocManager`** for Bioconductor dependencies (if not already installed)
+2. Create a **virtual environment** with `renv`
 
 ``` r
-install.packages(
-  "BiocManager"
-  # lib = custom_lib_path 
-)
+renv::init()
 ```
 
-3.  **Install Bioconductor dependencies** separately using `BiocManager`
+3.  **Install `BiocManager`** for Bioconductor dependencies (if not already installed)
+
+``` r
+install.packages("BiocManager")
+```
+
+4. Install required Bioconductor packages
 
 ``` r
 BiocManager::install(
   c("ComplexHeatmap", "limma", "variancePartition")
   # force = TRUE   # when encountering issues
-  # lib = custom_lib_path 
 )
 ```
 
-4.  **Install** the **`remotes`** package for GitHub downloads (if not already installed)
+5.  Install `remotes` for GitHub package installation
 
 ``` r
-install.packages(
-  "remotes"
-  # lib = custom_lib_path
-)
+install.packages("remotes")
 ```
 
 5.  **Install** the **`SplineOmics`** package from GitHub and all its non-Bioconductor dependencies, using `remotes`
@@ -170,7 +140,6 @@ remotes::install_github(
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
-  # lib = custom_lib_path 
 )
 ```
 

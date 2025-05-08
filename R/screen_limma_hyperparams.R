@@ -95,7 +95,6 @@ screen_limma_hyperparams <- function(
   # and I heavily oriented my code towards that. But then I realised that it is
   # nonsense to encode the time as X, and now it is explicitly "Time" (because
   # meta must contain the exact name "Time" for this respective column).
-  designs <- gsub("Time", "X", designs)
 
   feature_names <- rownames(datas[[1]])
 
