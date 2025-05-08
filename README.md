@@ -1,7 +1,7 @@
 
 # SplineOmics
 
-![Version](https://img.shields.io/badge/version-0.1.2-blue) [![License:
+![Version](https://img.shields.io/badge/version-0.2.0-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
@@ -212,7 +212,7 @@ install.packages(
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.1.2",        # Specify the tag to install
+  ref = "0.2.0",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues

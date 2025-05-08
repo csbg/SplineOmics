@@ -182,7 +182,7 @@ kable(
 
 ## Show top rows of annotation
 
-```{r Show meta head, eval = TRUE}
+```{r Show annotation head, eval = TRUE}
 kable(
   head(annotation),
   format = "markdown"

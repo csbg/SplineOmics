@@ -45,12 +45,11 @@
 #' @details
 #' A peak or valley is defined as a timepoint whose expression value is 
 #' significantly different from both its immediate neighbors and deviates in 
-#' the same direction — i.e., it is either significantly higher than both 
+#' the same direction - i.e., it is either significantly higher than both 
 #' (a peak) or significantly lower than both (a valley).  
 #' 
 #' Statistically, this is tested using a compound contrast in limma:  
-#' $$(T - T_{\text{prev}}) + (T - T_{\text{next}}) = 
-#' 2T - T_{\text{prev}} - T_{\text{next}}$$
+#' (T - T_prev) + (T - T_next) = 2T - T_prev - T_next
 #' This compound contrast has power only when the timepoint `T` is an outlier 
 #' compared to both neighbors in the same direction. The resulting p-value is 
 #' FDR-adjusted and compared to the `alpha` threshold.
@@ -522,7 +521,7 @@ filter_pvals_by_support <- function(
 #' @noRd
 #'
 #' @description
-#' Assigns a label to each internal timepoint (T₂ to Tₙ₋₁) indicating 
+#' Assigns a label to each internal timepoint (T2 to Tn-1) indicating
 #' whether it is a peak (\code{"p"}), valley (\code{"v"}), top of a 
 #' cliff (\code{"t"}), or bottom of a cliff (\code{"b"}). Timepoints 
 #' that are not statistically significant or cannot be classified are 
@@ -756,7 +755,7 @@ plot_pvc <- function(
       timepoint <- unique_timepoints[t]
       
       # excursion_flags is aligned to internal timepoints:
-      # T₂ → [1], T₃ → [2], ...
+      # T2 -> [1], T3 -> [2], ...
       flag_index <- t - 1
       
       if (excursion_flags[flag_index] == 1) {
@@ -788,7 +787,7 @@ plot_pvc <- function(
       pval_str <- paste0(
         "adj.p-val: ",
         paste0(
-          "T=", sig_df$Time, " → ", 
+          "T=", sig_df$Time, " -> ", 
           formatC(sig_df$PValue, format = "fg", digits = 4),
           collapse = "; "
         )
@@ -1068,9 +1067,9 @@ classify_cliff <- function(
   abs_next <- abs(next_change)
   
   if (abs_prev > abs_next) {
-    return(ifelse(prev_change < 0, "b", "t"))  # drop into point → bottom
+    return(ifelse(prev_change < 0, "b", "t"))  # drop into point -> bottom
   } else {
-    return(ifelse(next_change < 0, "t", "b"))  # drop after point → top
+    return(ifelse(next_change < 0, "t", "b"))  # drop after point -> top
   }
 }
 

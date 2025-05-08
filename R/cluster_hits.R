@@ -2263,7 +2263,7 @@ plot_splines <- function(
 
       if (isTRUE(heteroscedasticity)) {
         if (!is.na(high_var_group)) {
-          title_prefix <- paste0("\u26A0\uFE0F (↑", high_var_group, ") | ")
+          title_prefix <- paste0("\u26A0 (", high_var_group, " \u2191) | ")
         } else {
           title_prefix <- "\u26A0\uFE0F "
         }

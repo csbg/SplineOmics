@@ -12,6 +12,9 @@
 #' @param output_file The name of the HTML output file.
 #' @param meta_replicate_column Column name of the column in meta that contains
 #' the info about the replicates, such as reactor.
+#' @param features_per_file Integer specifying how many features (for example
+#'                          proteins) should be plotted per file. Per default
+#'                          500.
 #'
 #' @import ggplot2
 #' @importFrom progress progress_bar
@@ -165,9 +168,8 @@ make_scatter_plots_html <- function(
     
     chunk_output <- paste0(output_file, "_chunk_", chunk_index, ".html")
     rmarkdown::render(rmd_file, output_file = chunk_output, envir = new.env())
-    message("✔ Rendered: ", chunk_output)
+    message("[DONE] Rendered: ", chunk_output)
   }
   
-  message("✅ All reports generated successfully.")
+  message("All reports generated successfully.")
 }
-
