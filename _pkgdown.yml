@@ -25,6 +25,7 @@ reference:
     desc: This section contains the documentation for all functions available 
           to the user in the SplineOmics package.
     contents:
+      - compare_results
       - cluster_hits
       - create_limma_report
       - create_splineomics

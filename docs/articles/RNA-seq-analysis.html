@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>RNA-seq-analysis • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -1493,7 +1492,7 @@ information for downstream analyses.</p>
 <span>  project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"explore_data"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -1587,9 +1586,9 @@ correctly processed.</p>
 <span>  <span class="co"># States explicitly that there is no problem of heteroscedasticity and </span></span>
 <span>  <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would mean</span></span>
 <span>  <span class="co"># the opposite, and when setting it to NULL, it means it should be handled </span></span>
-<span>  <span class="co"># implicitly (based on a Breusch-Pagan test). For details, see Reference</span></span>
+<span>  <span class="co"># implicitly. For details, see Reference</span></span>
 <span>  <span class="co"># documentation of the create_splineomics() function.</span></span>
-<span>  robust_fit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  use_array_weights <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  rna_seq_data <span class="op">=</span> <span class="va">voom_obj</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> function with the updated
@@ -1624,7 +1623,7 @@ levels (which includes both time and the average differences)</p>
 <p>The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"limma_reports"</span></span>
 <span><span class="op">)</span></span>
@@ -1675,7 +1674,7 @@ computation by omitting the creation and export of plots.</p></li>
 <span>  <span class="fl">4L</span>   <span class="co"># 4 clusters for temp_shift</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"clustering_reports"</span></span>
 <span><span class="op">)</span></span>
@@ -1768,7 +1767,7 @@ proceed, the Enrichr databases of choice need to be downloaded:</p>
 <span></span>
 <span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_enrichr_databases.html">download_enrichr_databases</a></span><span class="op">(</span></span>
 <span>  gene_set_lib <span class="op">=</span> <span class="va">gene_set_lib</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,   <span class="co"># output into the current working dir (default)</span></span>
+<span>  output_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,   <span class="co"># output into the current working dir (default)</span></span>
 <span>  filename <span class="op">=</span> <span class="st">"databases.tsv"</span>   <span class="co"># just the name of the file, not the full path</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
@@ -1780,7 +1779,7 @@ using clusterProfiler, generates an HTML report and returns the GSEA
 dotplots in R.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
-<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"databases.tsv"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
@@ -1800,7 +1799,7 @@ dotplots in R.</p>
 <span>  qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"gsea_reports"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -1846,53 +1845,54 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] knitr_1.49        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
+<span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
 <span><span class="co">#&gt; [5] SplineOmics_0.2.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_1.8.9          </span></span>
+<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_2.0.0          </span></span>
 <span><span class="co">#&gt;   [4] shape_1.4.6.1            magrittr_2.0.3           farver_2.1.2            </span></span>
-<span><span class="co">#&gt;   [7] nloptr_2.1.1             rmarkdown_2.29           GlobalOptions_0.1.2     </span></span>
-<span><span class="co">#&gt;  [10] fs_1.6.5                 ragg_1.3.3               vctrs_0.6.5             </span></span>
+<span><span class="co">#&gt;   [7] nloptr_2.2.1             rmarkdown_2.29           GlobalOptions_0.1.2     </span></span>
+<span><span class="co">#&gt;  [10] fs_1.6.6                 ragg_1.4.0               vctrs_0.6.5             </span></span>
 <span><span class="co">#&gt;  [13] minqa_1.2.8              base64enc_0.1-3          htmltools_0.5.8.1       </span></span>
-<span><span class="co">#&gt;  [16] progress_1.2.3           broom_1.0.7              variancePartition_1.32.5</span></span>
-<span><span class="co">#&gt;  [19] sass_0.4.9               KernSmooth_2.23-22       bslib_0.9.0             </span></span>
-<span><span class="co">#&gt;  [22] htmlwidgets_1.6.4        desc_1.4.3               pbkrtest_0.5.3          </span></span>
-<span><span class="co">#&gt;  [25] plyr_1.8.9               cachem_1.1.0             lifecycle_1.0.4         </span></span>
-<span><span class="co">#&gt;  [28] iterators_1.0.14         pkgconfig_2.0.3          Matrix_1.6-5            </span></span>
-<span><span class="co">#&gt;  [31] R6_2.6.1                 fastmap_1.2.0            rbibutils_2.3           </span></span>
-<span><span class="co">#&gt;  [34] clue_0.3-66              digest_0.6.37            numDeriv_2016.8-1.1     </span></span>
-<span><span class="co">#&gt;  [37] colorspace_2.1-1         patchwork_1.3.0          S4Vectors_0.40.2        </span></span>
-<span><span class="co">#&gt;  [40] rprojroot_2.0.4          textshaping_1.0.0        compiler_4.3.3          </span></span>
-<span><span class="co">#&gt;  [43] withr_3.0.2              bit64_4.6.0-1            aod_1.3.3               </span></span>
-<span><span class="co">#&gt;  [46] doParallel_1.0.17        backports_1.5.0          BiocParallel_1.36.0     </span></span>
-<span><span class="co">#&gt;  [49] viridis_0.6.5            dendextend_1.19.0        gplots_3.2.0            </span></span>
-<span><span class="co">#&gt;  [52] MASS_7.3-60.0.1          rjson_0.2.23             corpcor_1.6.10          </span></span>
-<span><span class="co">#&gt;  [55] gtools_3.9.5             caTools_1.18.3           tools_4.3.3             </span></span>
-<span><span class="co">#&gt;  [58] zip_2.3.2                remaCor_0.0.18           glue_1.8.0              </span></span>
-<span><span class="co">#&gt;  [61] nlme_3.1-164             grid_4.3.3               cluster_2.1.6           </span></span>
-<span><span class="co">#&gt;  [64] reshape2_1.4.4           generics_0.1.3           gtable_0.3.6            </span></span>
-<span><span class="co">#&gt;  [67] tzdb_0.4.0               tidyr_1.3.1              hms_1.1.3               </span></span>
-<span><span class="co">#&gt;  [70] BiocGenerics_0.48.1      ggrepel_0.9.6            foreach_1.5.2           </span></span>
-<span><span class="co">#&gt;  [73] pillar_1.10.1            stringr_1.5.1            vroom_1.6.5             </span></span>
-<span><span class="co">#&gt;  [76] limma_3.58.1             circlize_0.4.16          splines_4.3.3           </span></span>
-<span><span class="co">#&gt;  [79] lattice_0.22-5           renv_1.1.1               bit_4.5.0.1             </span></span>
-<span><span class="co">#&gt;  [82] tidyselect_1.2.1         ComplexHeatmap_2.18.0    locfit_1.5-9.11         </span></span>
-<span><span class="co">#&gt;  [85] reformulas_0.4.0         gridExtra_2.3            IRanges_2.36.0          </span></span>
-<span><span class="co">#&gt;  [88] edgeR_4.0.16             svglite_2.1.3            RhpcBLASctl_0.23-42     </span></span>
-<span><span class="co">#&gt;  [91] stats4_4.3.3             xfun_0.50                Biobase_2.62.0          </span></span>
-<span><span class="co">#&gt;  [94] statmod_1.5.0            matrixStats_1.5.0        pheatmap_1.0.12         </span></span>
-<span><span class="co">#&gt;  [97] stringi_1.8.4            yaml_2.3.10              boot_1.3-29             </span></span>
-<span><span class="co">#&gt; [100] evaluate_1.0.3           codetools_0.2-19         tibble_3.2.1            </span></span>
-<span><span class="co">#&gt; [103] BiocManager_1.30.25      cli_3.6.4                systemfonts_1.2.1       </span></span>
-<span><span class="co">#&gt; [106] Rdpack_2.6.2             munsell_0.5.1            jquerylib_0.1.4         </span></span>
-<span><span class="co">#&gt; [109] Rcpp_1.0.14              EnvStats_3.0.0           png_0.1-8               </span></span>
-<span><span class="co">#&gt; [112] parallel_4.3.3           pkgdown_2.1.1            ggplot2_3.5.1           </span></span>
-<span><span class="co">#&gt; [115] prettyunits_1.2.0        bitops_1.0-9             lme4_1.1-36             </span></span>
-<span><span class="co">#&gt; [118] viridisLite_0.4.2        mvtnorm_1.3-3            lmerTest_3.1-3          </span></span>
-<span><span class="co">#&gt; [121] scales_1.3.0             openxlsx_4.2.8           purrr_1.0.4             </span></span>
-<span><span class="co">#&gt; [124] crayon_1.5.3             fANCOVA_0.6-1            GetoptLong_1.0.5        </span></span>
-<span><span class="co">#&gt; [127] rlang_1.1.5</span></span></code></pre>
+<span><span class="co">#&gt;  [16] progress_1.2.3           broom_1.0.8              Formula_1.2-5           </span></span>
+<span><span class="co">#&gt;  [19] variancePartition_1.32.5 sass_0.4.10              KernSmooth_2.23-26      </span></span>
+<span><span class="co">#&gt;  [22] bslib_0.9.0              htmlwidgets_1.6.4        desc_1.4.3              </span></span>
+<span><span class="co">#&gt;  [25] pbkrtest_0.5.4           plyr_1.8.9               cachem_1.1.0            </span></span>
+<span><span class="co">#&gt;  [28] lifecycle_1.0.4          iterators_1.0.14         pkgconfig_2.0.3         </span></span>
+<span><span class="co">#&gt;  [31] Matrix_1.6-5             R6_2.6.1                 fastmap_1.2.0           </span></span>
+<span><span class="co">#&gt;  [34] rbibutils_2.3            clue_0.3-66              digest_0.6.37           </span></span>
+<span><span class="co">#&gt;  [37] numDeriv_2016.8-1.1      colorspace_2.1-1         patchwork_1.3.0         </span></span>
+<span><span class="co">#&gt;  [40] S4Vectors_0.40.2         rprojroot_2.0.4          textshaping_1.0.1       </span></span>
+<span><span class="co">#&gt;  [43] abind_1.4-8              compiler_4.3.3           withr_3.0.2             </span></span>
+<span><span class="co">#&gt;  [46] bit64_4.6.0-1            aod_1.3.3                doParallel_1.0.17       </span></span>
+<span><span class="co">#&gt;  [49] backports_1.5.0          BiocParallel_1.36.0      carData_3.0-5           </span></span>
+<span><span class="co">#&gt;  [52] viridis_0.6.5            dendextend_1.19.0        gplots_3.2.0            </span></span>
+<span><span class="co">#&gt;  [55] MASS_7.3-60.0.1          rjson_0.2.23             corpcor_1.6.10          </span></span>
+<span><span class="co">#&gt;  [58] gtools_3.9.5             caTools_1.18.3           tools_4.3.3             </span></span>
+<span><span class="co">#&gt;  [61] zip_2.3.3                remaCor_0.0.18           glue_1.8.0              </span></span>
+<span><span class="co">#&gt;  [64] nlme_3.1-168             grid_4.3.3               cluster_2.1.8.1         </span></span>
+<span><span class="co">#&gt;  [67] reshape2_1.4.4           generics_0.1.4           gtable_0.3.6            </span></span>
+<span><span class="co">#&gt;  [70] tzdb_0.5.0               tidyr_1.3.1              hms_1.1.3               </span></span>
+<span><span class="co">#&gt;  [73] car_3.1-3                BiocGenerics_0.48.1      ggrepel_0.9.6           </span></span>
+<span><span class="co">#&gt;  [76] foreach_1.5.2            pillar_1.10.2            stringr_1.5.1           </span></span>
+<span><span class="co">#&gt;  [79] vroom_1.6.5              limma_3.58.1             circlize_0.4.16         </span></span>
+<span><span class="co">#&gt;  [82] splines_4.3.3            lattice_0.22-7           renv_1.1.4              </span></span>
+<span><span class="co">#&gt;  [85] bit_4.6.0                tidyselect_1.2.1         locfit_1.5-9.12         </span></span>
+<span><span class="co">#&gt;  [88] ComplexHeatmap_2.18.0    reformulas_0.4.1         gridExtra_2.3           </span></span>
+<span><span class="co">#&gt;  [91] IRanges_2.36.0           edgeR_4.0.16             svglite_2.2.1           </span></span>
+<span><span class="co">#&gt;  [94] RhpcBLASctl_0.23-42      stats4_4.3.3             xfun_0.52               </span></span>
+<span><span class="co">#&gt;  [97] Biobase_2.62.0           statmod_1.5.0            matrixStats_1.5.0       </span></span>
+<span><span class="co">#&gt; [100] pheatmap_1.0.12          stringi_1.8.7            yaml_2.3.10             </span></span>
+<span><span class="co">#&gt; [103] boot_1.3-31              evaluate_1.0.3           codetools_0.2-20        </span></span>
+<span><span class="co">#&gt; [106] tibble_3.2.1             BiocManager_1.30.25      cli_3.6.5               </span></span>
+<span><span class="co">#&gt; [109] systemfonts_1.2.3        Rdpack_2.6.4             jquerylib_0.1.4         </span></span>
+<span><span class="co">#&gt; [112] Rcpp_1.0.14              EnvStats_3.1.0           png_0.1-8               </span></span>
+<span><span class="co">#&gt; [115] parallel_4.3.3           pkgdown_2.1.3            ggplot2_3.5.2           </span></span>
+<span><span class="co">#&gt; [118] prettyunits_1.2.0        bitops_1.0-9             lme4_1.1-37             </span></span>
+<span><span class="co">#&gt; [121] viridisLite_0.4.2        mvtnorm_1.3-3            lmerTest_3.1-3          </span></span>
+<span><span class="co">#&gt; [124] scales_1.4.0             openxlsx_4.2.8           purrr_1.0.4             </span></span>
+<span><span class="co">#&gt; [127] crayon_1.5.3             fANCOVA_0.6-1            GetoptLong_1.0.5        </span></span>
+<span><span class="co">#&gt; [130] rlang_1.1.6</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -1905,7 +1905,7 @@ levels, and generates the HTML report:</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

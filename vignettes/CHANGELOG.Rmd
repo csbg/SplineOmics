@@ -45,8 +45,11 @@ Examples:
 --------------------------------------------------------------------------------
 
 
-### [0.2.0] - 2025-04-10
-(In preparation)
+### [0.2.1] - (in preparation)
+
+
+
+### [0.2.0] - 2025-05-08
 
 #### Fixed
 - Bug that prevented the generation of the double spline plots when the 
@@ -135,9 +138,9 @@ Examples:
   correction function. For a reason, there is a gap. The results are fine! Just 
   the plotting is off!
   
-- New user-available function that allows to correlate the topTable results from
-  two SplineOmics results (for example intergrated vs. isolated approach with
-  the same data).
+- New user-available function called compare_results() that allows to correlate
+  the topTable results from two SplineOmics results (for example intergrated 
+  vs. isolated approach with the same data).
 
 --------------------------------------------------------------------------------
 

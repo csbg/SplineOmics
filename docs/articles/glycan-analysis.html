@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Glycan-analysis • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -207,19 +206,12 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <h2 id="load-the-packages">Load the packages<a class="anchor" aria-label="anchor" href="#load-the-packages"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># library(SplineOmics)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: usethis</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">SplineOmics</span></span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span> <span class="co"># For managing filepaths</span></span>
 <span><span class="co">#&gt; here() starts at /home/thomas/Documents/PhD/projects/DGTX/SplineOmics_hub/SplineOmics</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:testthat':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     matches</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     filter, lag</span></span>
@@ -232,9 +224,6 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span><span class="co">#&gt; Find an intro with "? compositions"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'compositions'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:SplineOmics':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     cor, dist</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     anova, cor, cov, dist, var</span></span>
@@ -829,7 +818,7 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span>  project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"explore_data"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -904,6 +893,7 @@ clear idea of what do use.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>  use_array_weights <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="co"># Reactor as random effect.</span></span>
 <span>  design <span class="op">=</span> <span class="st">"~ 1 + Condition*Time + Batch + (1|Reactor)"</span>, </span>
 <span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
@@ -924,15 +914,6 @@ SplineOmics object:</p>
 <span><span class="co">#&gt; Hint: The data contains negative values. This may occur if the data has been transformed (e.g., log-transformed or normalized) and is valid in such cases. Ensure that the data preprocessing aligns with your analysis requirements.</span></span>
 <span><span class="co">#&gt; Column 'Batch' of meta will be used to remove the batch effect for the plotting</span></span>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds'.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Running Breusch-Pagan test to check for violation of homoscedasticity of each feature...</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Fraction of features violating homoscedasticity (p &lt; 0.050): 10.00%</span></span>
-<span><span class="co">#&gt; ❗ Linear model assumption of homoscedasticity is likely violated.</span></span>
-<span><span class="co">#&gt; ➡️  Using robust modeling strategy:</span></span>
-<span><span class="co">#&gt; arrayWeights() and eBayes(robust = TRUE) to stabilize variance.</span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> limma spline analysis completed successfully</span></span></code></pre></div>
 <p>Note that for our dataset, the Wilcoxon signed rank exact test
 revealed that we have a problem of heteroscedasticity for our data. This
@@ -951,7 +932,7 @@ variance “outliers” for the variance shrinkage.</p>
 <p>The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"create_limma_reports"</span></span>
 <span><span class="op">)</span></span>
@@ -983,7 +964,7 @@ clusters as we have specified for that specific level.</p>
 <span>  <span class="fl">2L</span>    <span class="co"># clusters for the stationary level</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
+<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>,</span>
 <span>  <span class="st">"clustering_reports"</span></span>
 <span><span class="op">)</span></span>
@@ -1075,58 +1056,53 @@ contains an interaction effect).</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] compositions_2.0-8 knitr_1.49         dplyr_1.1.4        here_1.0.1        </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.2.0  testthat_3.2.3     devtools_2.4.5     usethis_3.1.0     </span></span>
+<span><span class="co">#&gt; [1] compositions_2.0-8 knitr_1.50         dplyr_1.1.4        here_1.0.1        </span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.2.0 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       tensorA_0.36.2.1         rstudioapi_0.17.1       </span></span>
-<span><span class="co">#&gt;   [4] jsonlite_1.8.9           shape_1.4.6.1            magrittr_2.0.3          </span></span>
-<span><span class="co">#&gt;   [7] nloptr_2.1.1             farver_2.1.2             rmarkdown_2.29          </span></span>
-<span><span class="co">#&gt;  [10] GlobalOptions_0.1.2      fs_1.6.5                 ragg_1.3.3              </span></span>
-<span><span class="co">#&gt;  [13] vctrs_0.6.5              minqa_1.2.8              memoise_2.0.1           </span></span>
-<span><span class="co">#&gt;  [16] base64enc_0.1-3          htmltools_0.5.8.1        progress_1.2.3          </span></span>
-<span><span class="co">#&gt;  [19] broom_1.0.7              variancePartition_1.32.5 sass_0.4.9              </span></span>
-<span><span class="co">#&gt;  [22] KernSmooth_2.23-22       bslib_0.9.0              htmlwidgets_1.6.4       </span></span>
-<span><span class="co">#&gt;  [25] desc_1.4.3               plyr_1.8.9               pbkrtest_0.5.3          </span></span>
-<span><span class="co">#&gt;  [28] zoo_1.8-13               cachem_1.1.0             mime_0.12               </span></span>
-<span><span class="co">#&gt;  [31] lifecycle_1.0.4          iterators_1.0.14         pkgconfig_2.0.3         </span></span>
-<span><span class="co">#&gt;  [34] Matrix_1.6-5             R6_2.6.1                 fastmap_1.2.0           </span></span>
-<span><span class="co">#&gt;  [37] rbibutils_2.3            shiny_1.10.0             clue_0.3-66             </span></span>
-<span><span class="co">#&gt;  [40] numDeriv_2016.8-1.1      digest_0.6.37            colorspace_2.1-1        </span></span>
-<span><span class="co">#&gt;  [43] patchwork_1.3.0          S4Vectors_0.40.2         rprojroot_2.0.4         </span></span>
-<span><span class="co">#&gt;  [46] pkgload_1.4.0            textshaping_1.0.0        compiler_4.3.3          </span></span>
-<span><span class="co">#&gt;  [49] remotes_2.5.0            aod_1.3.3                withr_3.0.2             </span></span>
-<span><span class="co">#&gt;  [52] doParallel_1.0.17        backports_1.5.0          BiocParallel_1.36.0     </span></span>
-<span><span class="co">#&gt;  [55] viridis_0.6.5            dendextend_1.19.0        pkgbuild_1.4.6          </span></span>
-<span><span class="co">#&gt;  [58] gplots_3.2.0             bayesm_3.1-6             MASS_7.3-60.0.1         </span></span>
-<span><span class="co">#&gt;  [61] sessioninfo_1.2.3        rjson_0.2.23             corpcor_1.6.10          </span></span>
-<span><span class="co">#&gt;  [64] gtools_3.9.5             caTools_1.18.3           tools_4.3.3             </span></span>
-<span><span class="co">#&gt;  [67] lmtest_0.9-40            zip_2.3.2                httpuv_1.6.15           </span></span>
-<span><span class="co">#&gt;  [70] remaCor_0.0.18           glue_1.8.0               nlme_3.1-164            </span></span>
-<span><span class="co">#&gt;  [73] promises_1.3.2           grid_4.3.3               reshape2_1.4.4          </span></span>
-<span><span class="co">#&gt;  [76] cluster_2.1.6            generics_0.1.3           gtable_0.3.6            </span></span>
-<span><span class="co">#&gt;  [79] tidyr_1.3.1              hms_1.1.3                BiocGenerics_0.48.1     </span></span>
-<span><span class="co">#&gt;  [82] stringr_1.5.1            ggrepel_0.9.6            foreach_1.5.2           </span></span>
-<span><span class="co">#&gt;  [85] pillar_1.10.1            limma_3.58.1             later_1.4.1             </span></span>
-<span><span class="co">#&gt;  [88] robustbase_0.99-4-1      circlize_0.4.16          splines_4.3.3           </span></span>
-<span><span class="co">#&gt;  [91] lattice_0.22-5           renv_1.1.1               tidyselect_1.2.1        </span></span>
-<span><span class="co">#&gt;  [94] ComplexHeatmap_2.18.0    miniUI_0.1.1.1           reformulas_0.4.0        </span></span>
-<span><span class="co">#&gt;  [97] gridExtra_2.3            IRanges_2.36.0           svglite_2.1.3           </span></span>
-<span><span class="co">#&gt; [100] RhpcBLASctl_0.23-42      stats4_4.3.3             xfun_0.50               </span></span>
-<span><span class="co">#&gt; [103] Biobase_2.62.0           statmod_1.5.0            brio_1.1.5              </span></span>
-<span><span class="co">#&gt; [106] matrixStats_1.5.0        DEoptimR_1.1-3-1         pheatmap_1.0.12         </span></span>
-<span><span class="co">#&gt; [109] stringi_1.8.4            yaml_2.3.10              boot_1.3-29             </span></span>
-<span><span class="co">#&gt; [112] evaluate_1.0.3           codetools_0.2-19         tibble_3.2.1            </span></span>
-<span><span class="co">#&gt; [115] BiocManager_1.30.25      cli_3.6.4                xtable_1.8-4            </span></span>
-<span><span class="co">#&gt; [118] systemfonts_1.2.1        Rdpack_2.6.2             munsell_0.5.1           </span></span>
-<span><span class="co">#&gt; [121] jquerylib_0.1.4          Rcpp_1.0.14              EnvStats_3.0.0          </span></span>
-<span><span class="co">#&gt; [124] png_0.1-8                parallel_4.3.3           ellipsis_0.3.2          </span></span>
-<span><span class="co">#&gt; [127] pkgdown_2.1.1            ggplot2_3.5.1            prettyunits_1.2.0       </span></span>
-<span><span class="co">#&gt; [130] profvis_0.4.0            urlchecker_1.0.1         bitops_1.0-9            </span></span>
-<span><span class="co">#&gt; [133] lme4_1.1-36              mvtnorm_1.3-3            viridisLite_0.4.2       </span></span>
-<span><span class="co">#&gt; [136] lmerTest_3.1-3           scales_1.3.0             openxlsx_4.2.8          </span></span>
-<span><span class="co">#&gt; [139] purrr_1.0.4              crayon_1.5.3             fANCOVA_0.6-1           </span></span>
-<span><span class="co">#&gt; [142] GetoptLong_1.0.5         rlang_1.1.5</span></span></code></pre>
+<span><span class="co">#&gt;   [4] jsonlite_2.0.0           shape_1.4.6.1            magrittr_2.0.3          </span></span>
+<span><span class="co">#&gt;   [7] farver_2.1.2             nloptr_2.2.1             rmarkdown_2.29          </span></span>
+<span><span class="co">#&gt;  [10] GlobalOptions_0.1.2      fs_1.6.6                 ragg_1.4.0              </span></span>
+<span><span class="co">#&gt;  [13] vctrs_0.6.5              minqa_1.2.8              base64enc_0.1-3         </span></span>
+<span><span class="co">#&gt;  [16] htmltools_0.5.8.1        progress_1.2.3           broom_1.0.8             </span></span>
+<span><span class="co">#&gt;  [19] Formula_1.2-5            variancePartition_1.32.5 sass_0.4.10             </span></span>
+<span><span class="co">#&gt;  [22] KernSmooth_2.23-26       bslib_0.9.0              htmlwidgets_1.6.4       </span></span>
+<span><span class="co">#&gt;  [25] desc_1.4.3               pbkrtest_0.5.4           plyr_1.8.9              </span></span>
+<span><span class="co">#&gt;  [28] cachem_1.1.0             lifecycle_1.0.4          iterators_1.0.14        </span></span>
+<span><span class="co">#&gt;  [31] pkgconfig_2.0.3          Matrix_1.6-5             R6_2.6.1                </span></span>
+<span><span class="co">#&gt;  [34] fastmap_1.2.0            rbibutils_2.3            clue_0.3-66             </span></span>
+<span><span class="co">#&gt;  [37] digest_0.6.37            numDeriv_2016.8-1.1      colorspace_2.1-1        </span></span>
+<span><span class="co">#&gt;  [40] patchwork_1.3.0          S4Vectors_0.40.2         rprojroot_2.0.4         </span></span>
+<span><span class="co">#&gt;  [43] textshaping_1.0.1        abind_1.4-8              compiler_4.3.3          </span></span>
+<span><span class="co">#&gt;  [46] withr_3.0.2              aod_1.3.3                doParallel_1.0.17       </span></span>
+<span><span class="co">#&gt;  [49] backports_1.5.0          BiocParallel_1.36.0      carData_3.0-5           </span></span>
+<span><span class="co">#&gt;  [52] viridis_0.6.5            dendextend_1.19.0        gplots_3.2.0            </span></span>
+<span><span class="co">#&gt;  [55] MASS_7.3-60.0.1          bayesm_3.1-6             rjson_0.2.23            </span></span>
+<span><span class="co">#&gt;  [58] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          </span></span>
+<span><span class="co">#&gt;  [61] tools_4.3.3              zip_2.3.3                remaCor_0.0.18          </span></span>
+<span><span class="co">#&gt;  [64] glue_1.8.0               nlme_3.1-168             grid_4.3.3              </span></span>
+<span><span class="co">#&gt;  [67] cluster_2.1.8.1          reshape2_1.4.4           generics_0.1.4          </span></span>
+<span><span class="co">#&gt;  [70] gtable_0.3.6             tidyr_1.3.1              hms_1.1.3               </span></span>
+<span><span class="co">#&gt;  [73] car_3.1-3                BiocGenerics_0.48.1      ggrepel_0.9.6           </span></span>
+<span><span class="co">#&gt;  [76] foreach_1.5.2            pillar_1.10.2            stringr_1.5.1           </span></span>
+<span><span class="co">#&gt;  [79] limma_3.58.1             robustbase_0.99-4-1      circlize_0.4.16         </span></span>
+<span><span class="co">#&gt;  [82] splines_4.3.3            lattice_0.22-7           renv_1.1.4              </span></span>
+<span><span class="co">#&gt;  [85] tidyselect_1.2.1         ComplexHeatmap_2.18.0    reformulas_0.4.1        </span></span>
+<span><span class="co">#&gt;  [88] gridExtra_2.3            IRanges_2.36.0           svglite_2.2.1           </span></span>
+<span><span class="co">#&gt;  [91] RhpcBLASctl_0.23-42      stats4_4.3.3             xfun_0.52               </span></span>
+<span><span class="co">#&gt;  [94] Biobase_2.62.0           statmod_1.5.0            matrixStats_1.5.0       </span></span>
+<span><span class="co">#&gt;  [97] DEoptimR_1.1-3-1         pheatmap_1.0.12          stringi_1.8.7           </span></span>
+<span><span class="co">#&gt; [100] yaml_2.3.10              boot_1.3-31              evaluate_1.0.3          </span></span>
+<span><span class="co">#&gt; [103] codetools_0.2-20         tibble_3.2.1             BiocManager_1.30.25     </span></span>
+<span><span class="co">#&gt; [106] cli_3.6.5                systemfonts_1.2.3        Rdpack_2.6.4            </span></span>
+<span><span class="co">#&gt; [109] jquerylib_0.1.4          Rcpp_1.0.14              EnvStats_3.1.0          </span></span>
+<span><span class="co">#&gt; [112] png_0.1-8                parallel_4.3.3           pkgdown_2.1.3           </span></span>
+<span><span class="co">#&gt; [115] ggplot2_3.5.2            prettyunits_1.2.0        bitops_1.0-9            </span></span>
+<span><span class="co">#&gt; [118] lme4_1.1-37              viridisLite_0.4.2        mvtnorm_1.3-3           </span></span>
+<span><span class="co">#&gt; [121] lmerTest_3.1-3           scales_1.4.0             openxlsx_4.2.8          </span></span>
+<span><span class="co">#&gt; [124] purrr_1.0.4              crayon_1.5.3             fANCOVA_0.6-1           </span></span>
+<span><span class="co">#&gt; [127] GetoptLong_1.0.5         rlang_1.1.6</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -1139,7 +1115,7 @@ contains an interaction effect).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

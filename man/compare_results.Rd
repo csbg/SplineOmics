@@ -2,7 +2,7 @@
 % Please edit documentation in R/compare_results.R
 \name{compare_results}
 \alias{compare_results}
-\title{Correlate and compare hits between two SplineOmics results}
+\title{Compare hits between two SplineOmics results}
 \usage{
 compare_results(
   splineomics1,

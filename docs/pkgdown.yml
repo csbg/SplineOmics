@@ -1,5 +1,5 @@
-pandoc: 3.1.11
-pkgdown: 2.1.1
+pandoc: '3.4'
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   CHANGELOG: CHANGELOG.html
@@ -11,7 +11,7 @@ articles:
   limma_result_categories: limma_result_categories.html
   PVC_analysis: PVC_analysis.html
   RNA-seq-analysis: RNA-seq-analysis.html
-last_built: 2025-04-23T15:27Z
+last_built: 2025-06-02T10:45Z
 urls:
   reference: https://csbg.github.io/SplineOmics/reference
   article: https://csbg.github.io/SplineOmics/articles

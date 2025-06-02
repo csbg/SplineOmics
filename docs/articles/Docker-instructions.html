@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Docker-instructions • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -74,7 +73,7 @@
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
-            <h4 data-toc-skip class="date">2025-04-23</h4>
+            <h4 data-toc-skip class="date">2025-06-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/Docker-instructions.Rmd" class="external-link"><code>vignettes/Docker-instructions.Rmd</code></a></small>
       <div class="d-none name"><code>Docker-instructions.Rmd</code></div>
@@ -156,7 +155,7 @@ container.</p>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">-p</span> 8888:8787 <span class="dt">\</span></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">-e</span> PASSWORD=123 <span class="dt">\</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="at">--name</span> splineomics <span class="dt">\</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    thomasrauter/splineomics:0.1.2</span></code></pre></div>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    thomasrauter/splineomics:latest</span></code></pre></div>
 <p>For Windows (<code>PowerShell</code>):</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>docker run <span class="op">-</span>it <span class="op">-</span>d `</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>    <span class="op">-</span>v <span class="st">"</span><span class="pp">${</span><span class="va">PWD</span><span class="pp">}</span><span class="st">\input:/home/rstudio/input"</span> `</span>
@@ -164,7 +163,7 @@ container.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="op">-</span>p <span class="dv">8888</span><span class="op">:</span><span class="dv">8787</span> `</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="op">-</span>e PASSWORD<span class="op">=</span><span class="dv">123</span> `</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="op">--</span>name splineomics `</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    thomasrauter<span class="op">/</span>splineomics<span class="op">:</span><span class="dv">0.1</span><span class="op">.</span><span class="dv">2</span></span></code></pre></div>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    thomasrauter<span class="op">/</span>splineomics<span class="op">:</span>latest</span></code></pre></div>
 <p>Once the container is running, open a web browser and navigate to <a href="http://localhost:8888" class="external-link uri">http://localhost:8888</a>. Log
 in using the following credentials:</p>
 <ul>
@@ -185,8 +184,10 @@ folder.</p>
 <h2 id="using-the-docker-desktop-gui-instead">Using the Docker Desktop gui instead<a class="anchor" aria-label="anchor" href="#using-the-docker-desktop-gui-instead"></a>
 </h2>
 <p>Instead of pasting commands into the Power- or Bashshell, you can
-also do all of this with the graphical user interface of Docker
-Desktop.</p>
+also do all of this with the graphical user interface of Docker Desktop.
+When you do that and still want to use the link to the localhost page
+provided above, set the port to 8888 (or otherwise, you have to change
+the link so that it points to your port).</p>
 </div>
 <div class="section level2">
 <h2 id="input-and-output-file-management">Input and Output File Management<a class="anchor" aria-label="anchor" href="#input-and-output-file-management"></a>
@@ -398,15 +399,15 @@ directly access all the analysis files on your local machine.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##  [1] digest_0.6.37       desc_1.4.3          R6_2.6.1           </span></span>
-<span><span class="co">##  [4] fastmap_1.2.0       xfun_0.50           cachem_1.1.0       </span></span>
-<span><span class="co">##  [7] knitr_1.49          htmltools_0.5.8.1   rmarkdown_2.29     </span></span>
-<span><span class="co">## [10] lifecycle_1.0.4     cli_3.6.4           sass_0.4.9         </span></span>
-<span><span class="co">## [13] pkgdown_2.1.1       textshaping_1.0.0   jquerylib_0.1.4    </span></span>
-<span><span class="co">## [16] renv_1.1.1          systemfonts_1.2.1   compiler_4.3.3     </span></span>
-<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.3.3         ragg_1.3.3         </span></span>
+<span><span class="co">##  [4] fastmap_1.2.0       xfun_0.52           cachem_1.1.0       </span></span>
+<span><span class="co">##  [7] knitr_1.50          htmltools_0.5.8.1   rmarkdown_2.29     </span></span>
+<span><span class="co">## [10] lifecycle_1.0.4     cli_3.6.5           sass_0.4.10        </span></span>
+<span><span class="co">## [13] pkgdown_2.1.3       textshaping_1.0.1   jquerylib_0.1.4    </span></span>
+<span><span class="co">## [16] renv_1.1.4          systemfonts_1.2.3   compiler_4.3.3     </span></span>
+<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.3.3         ragg_1.4.0         </span></span>
 <span><span class="co">## [22] bslib_0.9.0         evaluate_1.0.3      yaml_2.3.10        </span></span>
-<span><span class="co">## [25] BiocManager_1.30.25 jsonlite_1.8.9      htmlwidgets_1.6.4  </span></span>
-<span><span class="co">## [28] rlang_1.1.5         fs_1.6.5</span></span></code></pre>
+<span><span class="co">## [25] BiocManager_1.30.25 jsonlite_2.0.0      htmlwidgets_1.6.4  </span></span>
+<span><span class="co">## [28] rlang_1.1.6         fs_1.6.6</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -419,7 +420,7 @@ directly access all the analysis files on your local machine.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>
