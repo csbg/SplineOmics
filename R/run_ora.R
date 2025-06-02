@@ -229,7 +229,7 @@ ensure_clusterProfiler <- function() {
   if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
     stop_call_false(
       "The 'clusterProfiler' package is not installed.\n",
-      "Please install it manually (to your custom_lib_path) using the", 
+      "Please install it manually using the", 
       "command below and re-run the function:\n\n",
       "  BiocManager::install('clusterProfiler')\n\n",
       "This is an optional dependency of the SplineOmics package, ",

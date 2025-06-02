@@ -448,7 +448,6 @@ check_homoscedasticity_violation <- function(
         ))
     }
     
-    # car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
     pval <- car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
     max_group <- names(which.max(group_vars))
     max_var <- max(group_vars)
@@ -461,7 +460,13 @@ check_homoscedasticity_violation <- function(
   })
   
   # Convert list of named lists into a clean data frame
-  bp_df <- as.data.frame(do.call(rbind, bp_results), stringsAsFactors = FALSE)
+  bp_df <- as.data.frame(
+    do.call(
+      rbind,
+      bp_results
+      ),
+    stringsAsFactors = FALSE
+    )
   rownames(bp_df) <- rownames(residuals_matrix)  # keep feature names
   
   bp_df$violation_flag <- !is.na(bp_df$pval) & bp_df$pval < p_threshold
@@ -479,18 +484,16 @@ check_homoscedasticity_violation <- function(
   group_fractions <- prop.table(group_contributions)
   
   if (length(group_contributions) > 0) {
-    message(
-      "Among the violating features, the group contributing most to variance:"
-      )
+    message("Distribution of max variance groups among violating features:")
     for (i in seq_along(group_contributions)) {
       message(sprintf(
-        "- %s: %.2f%% of heteroscedastic features",
+        "- %s: %.2f%% of violating features",
         names(group_contributions)[i],
         100 * group_fractions[i]
       ))
     }
   } else {
-    message("No specific group dominates among heteroscedastic features.")
+    message("No violating features found.")
   }
   message("------------------------------------------------------------\n")
   

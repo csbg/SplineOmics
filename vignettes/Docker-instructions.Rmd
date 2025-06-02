@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 ```
+
 # Pulling the `Docker` Container
 
 To pull the Docker container, use the following command. Make sure to check for the newest version or the specific version you need by visiting the [Docker Hub repository](https://hub.docker.com/r/thomasrauter/splineomics).
@@ -84,7 +85,7 @@ docker run -it -d \
     -p 8888:8787 \
     -e PASSWORD=123 \
     --name splineomics \
-    thomasrauter/splineomics:0.1.2
+    thomasrauter/splineomics:latest
 ```
 
 For Windows (`PowerShell`):
@@ -96,7 +97,7 @@ docker run -it -d `
     -p 8888:8787 `
     -e PASSWORD=123 `
     --name splineomics `
-    thomasrauter/splineomics:0.1.2
+    thomasrauter/splineomics:latest
 ```
 
 Once the container is running, open a web browser and navigate to <http://localhost:8888>. Log in using the following credentials:
@@ -121,7 +122,7 @@ docker start splineomics
 
 # Using the Docker Desktop gui instead
 
-Instead of pasting commands into the Power- or Bashshell, you can also do all of this with the graphical user interface of Docker Desktop. 
+Instead of pasting commands into the Power- or Bashshell, you can also do all of this with the graphical user interface of Docker Desktop. When you do that and still want to use the link to the localhost page provided above, set the port to 8888 (or otherwise, you have to change the link so that it points to your port).
 
 # Input and Output File Management
 

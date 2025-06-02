@@ -1,5 +1,5 @@
 # Use the rocker RStudio image
-FROM rocker/rstudio:4.4.0
+FROM rocker/rstudio:4.5.0
 
 # Create directories for the R package, data, output, and workspace
 RUN mkdir -p /home/rstudio/input /home/rstudio/output /app /log 
@@ -35,12 +35,12 @@ WORKDIR /app
 RUN R -e "install.packages('BiocManager'); install.packages('remotes')" 2>&1 | tee /log/biocmanager_remotes_install_log.txt
 
 # Install Bioconductor dependencies via BiocManager in the custom library
-RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'edgeR', 'clusterProfiler'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
+RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'variancePartition'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
 
 # Install the SplineOmics package from GitHub in the custom library
-RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.1.2', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
+RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.2.0', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
 
-# Install necessary R packages in the custom library
+# Install R packages often used in bioinformatics analysises.
 RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))" 2>&1 | tee /log/required_packages_install_log.txt
 
 # Write installed R packages and versions to a file in the default library
@@ -54,5 +54,5 @@ CMD ["/init"]
 
 # To build the image, run the following command in the Bash shell in the dir 
 # where this Dockerfile is located (./docker):
-# docker build --no-cache -t thomasrauter/splineomics:0.1.2 .
+# docker build --no-cache -t thomasrauter/splineomics:0.2.0 .
 

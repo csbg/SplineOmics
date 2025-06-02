@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Streamlines the process of analysing omics timeseries data with splines • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -69,7 +68,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="splineomics">SplineOmics<a class="anchor" aria-label="anchor" href="#splineomics"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/version-0.1.2-blue" alt="Version"><a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"><img src="https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen" alt="R CMD Check"><a href="https://hub.docker.com/r/thomasrauter/splineomics" class="external-link"><img src="https://img.shields.io/badge/docker-pull-blue" alt="Docker"></a> <img src="https://img.shields.io/badge/dependencies-19-blue" alt="Dependencies"><img src="https://img.shields.io/badge/platforms-all-brightgreen" alt="Platforms"></p>
+<p><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"><a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg" alt="Maintained? Yes"><img src="https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen" alt="R CMD Check"><a href="https://hub.docker.com/r/thomasrauter/splineomics" class="external-link"><img src="https://img.shields.io/badge/docker-pull-blue" alt="Docker"></a> <img src="https://img.shields.io/badge/dependencies-19-blue" alt="Dependencies"><img src="https://img.shields.io/badge/platforms-all-brightgreen" alt="Platforms"></p>
 <p><img src="reference/figures/hex_logo.png" align="left" width="65"></p>
 <p>The R package <code>SplineOmics</code> finds the significant features (hits) of time-series -omics data by using splines and <code>limma</code> for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.</p>
 <p>The graphical abstract below shows the full workflow streamlined by <code>SplineOmics</code>:</p>
@@ -106,7 +105,7 @@ Graphical Abstract of SplineOmics Workflow
 </ul>
 </div>
 <div class="section level2">
-<h2 id="id_-introduction">📘 Introduction<a class="anchor" aria-label="anchor" href="#id_-introduction"></a>
+<h2 id="blue_book-introduction">📘 Introduction<a class="anchor" aria-label="anchor" href="#blue_book-introduction"></a>
 </h2>
 <p>Welcome to <code>SplineOmics</code>, an R package designed to streamline the analysis of -omics time-series data, followed by automated HTML report generation.</p>
 <div class="section level3">
@@ -152,9 +151,12 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_-installation">🔧 Installation<a class="anchor" aria-label="anchor" href="#id_-installation"></a>
+<h2 id="wrench-installation">🔧 Installation<a class="anchor" aria-label="anchor" href="#wrench-installation"></a>
 </h2>
 <p>Follow the steps below to install the <code>SplineOmics</code> package from the GitHub repository into your R environment.</p>
+<blockquote>
+<p><strong>Note</strong> Carefully read the terminal messages of the installations. It can happen that installations fail due to missing dependencies, which you then must resolve using other commands not necessarily written down here.</p>
+</blockquote>
 <div class="section level4">
 <h4 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
 </h4>
@@ -170,62 +172,32 @@ Graphical Abstract of SplineOmics Workflow
 <blockquote>
 <p><strong>Note for Windows Users:</strong></p>
 </blockquote>
-<p>Note that some installation paths potentially are not writable on <strong>Windows</strong>. Therefore, it can be necessary to set up a library path and use that path for the installations:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">custom_lib_path</span> <span class="op">&lt;-</span> <span class="st">"C:/Rlibs"</span>  <span class="co"># Replace with your desired path</span></span>
-<span></span>
-<span><span class="co"># Create the directory if it doesn't exist</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">custom_lib_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span></span>
-<span>      <span class="va">custom_lib_path</span>,</span>
-<span>      showWarnings <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>      recursive <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>      <span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Set the library path to include the new directory</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">custom_lib_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check if the new library path is added successfully</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="va">custom_lib_path</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Library path set to: "</span>, <span class="va">custom_lib_path</span><span class="op">)</span></span>
-<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"Failed to set library path."</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>Alternatively, you can run <code>RStudio</code> as administrator once for the installation (which is however generally not recommended, because it is a security risk).</p>
-<blockquote>
-<p><strong>Additional note for Windows Users:</strong></p>
-</blockquote>
 <p>During the installation on Windows, you might see a message indicating that Rtools is not installed, which is typically required for compiling R packages from source. However, for this installation, Rtools is not necessary, and you can safely ignore this message.</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Open RStudio</strong> or your R console.</p></li>
-<li><p><strong>Install <code>BiocManager</code></strong> for Bioconductor dependencies (if not already installed)</p></li>
+<li><p><strong>Open RStudio</strong> or your R console in a new or existing project folder.</p></li>
+<li><p>Create a <strong>virtual environment</strong> with <code>renv</code></p></li>
 </ol>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
-<span>  <span class="st">"BiocManager"</span></span>
-<span>  <span class="co"># lib = custom_lib_path </span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <ol start="3" style="list-style-type: decimal">
 <li>
-<strong>Install Bioconductor dependencies</strong> separately using <code>BiocManager</code>
-</li>
+<strong>Install <code>BiocManager</code></strong> for Bioconductor dependencies (if not already installed)</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span></code></pre></div>
+<ol start="4" style="list-style-type: decimal">
+<li>Install required Bioconductor packages</li>
 </ol>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ComplexHeatmap"</span>, <span class="st">"limma"</span>, <span class="st">"variancePartition"</span><span class="op">)</span></span>
 <span>  <span class="co"># force = TRUE   # when encountering issues</span></span>
-<span>  <span class="co"># lib = custom_lib_path </span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<ol start="4" style="list-style-type: decimal">
-<li>
-<strong>Install</strong> the <strong><code>remotes</code></strong> package for GitHub downloads (if not already installed)</li>
+<ol start="5" style="list-style-type: decimal">
+<li>Install <code>remotes</code> for GitHub package installation</li>
 </ol>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
-<span>  <span class="st">"remotes"</span></span>
-<span>  <span class="co"># lib = custom_lib_path</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span></code></pre></div>
 <ol start="5" style="list-style-type: decimal">
 <li>
 <strong>Install</strong> the <strong><code>SplineOmics</code></strong> package from GitHub and all its non-Bioconductor dependencies, using <code>remotes</code>
@@ -234,11 +206,10 @@ Graphical Abstract of SplineOmics Workflow
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
 <span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># GitHub repository</span></span>
-<span>  ref <span class="op">=</span> <span class="st">"0.1.2"</span>,        <span class="co"># Specify the tag to install</span></span>
+<span>  ref <span class="op">=</span> <span class="st">"0.2.0"</span>,        <span class="co"># Specify the tag to install</span></span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Install all dependencies</span></span>
 <span>  upgrade <span class="op">=</span> <span class="st">"always"</span>    <span class="co"># Always upgrade dependencies</span></span>
 <span>  <span class="co"># force = TRUE        # when encountering issues</span></span>
-<span>  <span class="co"># lib = custom_lib_path </span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <ol start="6" style="list-style-type: decimal">
 <li>
@@ -259,7 +230,7 @@ Graphical Abstract of SplineOmics Workflow
 <p>For issues specifically related to the <code>SplineOmics</code> package, check the <a href="https://github.com/csbg/SplineOmics/issues" class="external-link">Issues section</a> of the GitHub repository for similar problems or to post a new issue.</p>
 </div>
 <div class="section level3">
-<h3 id="id_-docker-container">🐳 Docker Container<a class="anchor" aria-label="anchor" href="#id_-docker-container"></a>
+<h3 id="whale-docker-container">🐳 Docker Container<a class="anchor" aria-label="anchor" href="#whale-docker-container"></a>
 </h3>
 <p>Alternatively, you can run your analysis in a <code>Docker</code> container. The underlying <code>Docker</code> image encapsulates the <code>SplineOmics</code> package together with the necessary environment and dependencies. This ensures higher levels of reproducibility because the analysis is carried out in a consistent environment, independent of the operating system and its custom configurations.</p>
 <p>Please note that you must have the <code>Docker Engine</code> installed on your machine. For instructions on how to install it, consult the official <a href="https://docs.docker.com/engine/install/" class="external-link">Docker Engine installation guide</a>.</p>
@@ -273,10 +244,10 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_️-usage">▶️ Usage<a class="anchor" aria-label="anchor" href="#id_%EF%B8%8F-usage"></a>
+<h2 id="arrow_forward-usage">▶️ Usage<a class="anchor" aria-label="anchor" href="#arrow_forward-usage"></a>
 </h2>
 <div class="section level3">
-<h3 id="id_-tutorial">🎓 Tutorial<a class="anchor" aria-label="anchor" href="#id_-tutorial"></a>
+<h3 id="mortar_board-tutorial">🎓 Tutorial<a class="anchor" aria-label="anchor" href="#mortar_board-tutorial"></a>
 </h3>
 <p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
 <p>To open an R Markdown file of the <strong>tutorial</strong> in <code>RStudio</code>, run:</p>
@@ -285,7 +256,7 @@ Graphical Abstract of SplineOmics Workflow
 <span><span class="fu"><a href="reference/open_tutorial.html">open_tutorial</a></span><span class="op">(</span><span class="op">)</span>  </span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="id_-details">📋 Details<a class="anchor" aria-label="anchor" href="#id_-details"></a>
+<h3 id="clipboard-details">📋 Details<a class="anchor" aria-label="anchor" href="#clipboard-details"></a>
 </h3>
 <p>A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found <a href="https://csbg.github.io/SplineOmics/reference/">here</a>.</p>
 <div class="section level4">
@@ -296,7 +267,7 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level3">
-<h3 id="id_-rna-seq-and-glycan-data">🧬 RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#id_-rna-seq-and-glycan-data"></a>
+<h3 id="dna-rna-seq-and-glycan-data">🧬 RNA-seq and Glycan Data<a class="anchor" aria-label="anchor" href="#dna-rna-seq-and-glycan-data"></a>
 </h3>
 <div class="section level4">
 <h4 id="rna-seq-data">RNA-seq data<a class="anchor" aria-label="anchor" href="#rna-seq-data"></a>
@@ -318,7 +289,7 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_-dependencies">📦 Dependencies<a class="anchor" aria-label="anchor" href="#id_-dependencies"></a>
+<h2 id="package-dependencies">📦 Dependencies<a class="anchor" aria-label="anchor" href="#package-dependencies"></a>
 </h2>
 <p>The <code>SplineOmics</code> package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with <code>SplineOmics</code>. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.</p>
 <ul>
@@ -383,7 +354,7 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 </div>
 <div class="section level2">
-<h2 id="id_-further-reading">📚 Further Reading<a class="anchor" aria-label="anchor" href="#id_-further-reading"></a>
+<h2 id="books-further-reading">📚 Further Reading<a class="anchor" aria-label="anchor" href="#books-further-reading"></a>
 </h2>
 <p>For those interested in gaining a deeper understanding of the methodologies used in the <code>SplineOmics</code> package, here are some recommended publications:</p>
 <ul>
@@ -394,13 +365,13 @@ Graphical Abstract of SplineOmics Workflow
 </ul>
 </div>
 <div class="section level2">
-<h2 id="id_-getting-help">❓ Getting Help<a class="anchor" aria-label="anchor" href="#id_-getting-help"></a>
+<h2 id="question-getting-help">❓ Getting Help<a class="anchor" aria-label="anchor" href="#question-getting-help"></a>
 </h2>
 <p>If you encounter a bug or have a suggestion for improving the <code>SplineOmics</code> package, we encourage you to <a href="https://github.com/csbg/SplineOmics/issues" class="external-link">open an issue</a> on our GitHub repository. Before opening a new issue, please check to see if your question or bug has already been reported by another user. This helps avoid duplicate reports and ensures that we can address problems efficiently.</p>
 <p>For more detailed questions, discussions, or contributions regarding the package’s use and development, please refer to the <a href="https://github.com/csbg/SplineOmics/discussions" class="external-link">GitHub Discussions</a> page for <code>SplineOmics</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="id_-contributing">🤝 Contributing<a class="anchor" aria-label="anchor" href="#id_-contributing"></a>
+<h2 id="handshake-contributing">🤝 Contributing<a class="anchor" aria-label="anchor" href="#handshake-contributing"></a>
 </h2>
 <p>We welcome contributions to the <code>SplineOmics</code> package! Whether you’re interested in fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.</p>
 <p>Here’s how you can contribute:</p>
@@ -413,7 +384,7 @@ Graphical Abstract of SplineOmics Workflow
 <p>Thank you for considering contributing to <code>SplineOmics</code>. Your efforts are what make the open-source community a fantastic place to learn, inspire, and create.</p>
 </div>
 <div class="section level2">
-<h2 id="id_-feedback">💬 Feedback<a class="anchor" aria-label="anchor" href="#id_-feedback"></a>
+<h2 id="speech_balloon-feedback">💬 Feedback<a class="anchor" aria-label="anchor" href="#speech_balloon-feedback"></a>
 </h2>
 <p>We appreciate your feedback! Besides raising issues, you can provide feedback in the following ways:</p>
 <ul>
@@ -423,13 +394,13 @@ Graphical Abstract of SplineOmics Workflow
 <p>Your feedback helps us improve the project and address any issues you may encounter.</p>
 </div>
 <div class="section level2">
-<h2 id="id_-license">📜 License<a class="anchor" aria-label="anchor" href="#id_-license"></a>
+<h2 id="scroll-license">📜 License<a class="anchor" aria-label="anchor" href="#scroll-license"></a>
 </h2>
 <p>This package is licensed under the MIT License: <a href="./LICENSE">LICENSE</a></p>
 <p>© 2024 Thomas Rauter. All rights reserved.</p>
 </div>
 <div class="section level2">
-<h2 id="id_-citation">🎓 Citation<a class="anchor" aria-label="anchor" href="#id_-citation"></a>
+<h2 id="mortar_board-citation">🎓 Citation<a class="anchor" aria-label="anchor" href="#mortar_board-citation"></a>
 </h2>
 <p>The <code>SplineOmics</code> package is currently not published in a peer-reviewed scientific journal or similar outlet. However, if this package helped you in your work, consider citing this GitHub repository.</p>
 <p>To cite this package, you can use the citation information provided in the <a href="./CITATION.cff"><code>CITATION.cff</code></a> file.</p>
@@ -437,7 +408,7 @@ Graphical Abstract of SplineOmics Workflow
 <p>Also, if you like the package, consider giving the GitHub repository a star. Your support helps us in the continued development and improvement of <code>SplineOmics</code>. Thank you for using our package!</p>
 </div>
 <div class="section level2">
-<h2 id="id_-contributors">🌟 Contributors<a class="anchor" aria-label="anchor" href="#id_-contributors"></a>
+<h2 id="star2-contributors">🌟 Contributors<a class="anchor" aria-label="anchor" href="#star2-contributors"></a>
 </h2>
 <ul>
 <li>
@@ -451,7 +422,7 @@ Graphical Abstract of SplineOmics Workflow
 </ul>
 </div>
 <div class="section level2">
-<h2 id="id_-acknowledgements">🙏 Acknowledgements<a class="anchor" aria-label="anchor" href="#id_-acknowledgements"></a>
+<h2 id="pray-acknowledgements">🙏 Acknowledgements<a class="anchor" aria-label="anchor" href="#pray-acknowledgements"></a>
 </h2>
 <p>This work was carried out in the context of the DigiTherapeutX project, which was funded by the Austrian Science Fund (FWF). The research was conducted under the supervision of Prof. Nikolaus Fortelny, who leads the Computational Systems Biology working group at the Paris Lodron University of Salzburg, Austria. You can find more information about Prof. Fortelny’s research group <a href="https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/" class="external-link">here</a>.</p>
 </div>
@@ -490,7 +461,7 @@ Graphical Abstract of SplineOmics Workflow
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Thomas Rauter <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0009-0004-5578-3628" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Thomas Rauter <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0009-0004-5578-3628" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -505,7 +476,7 @@ Graphical Abstract of SplineOmics Workflow
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

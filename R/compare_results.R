@@ -1,4 +1,4 @@
-#' Correlate and compare hits between two SplineOmics results
+#' Compare hits between two SplineOmics results
 #'
 #' @description
 #' Compares adjusted p-values from two SplineOmics result objects across
@@ -25,6 +25,8 @@
 #'   \item{hits_summary}{Data frame with hit counts, overlap, and Jaccard index}
 #' }
 #' 
+#' @importFrom stats cor
+#' 
 #' @export
 #' 
 compare_results <- function(
@@ -45,11 +47,12 @@ compare_results <- function(
     adj_p_tresh2
   )
   
-  categories <- c(    # limma result categories
+  categories <- c(    # The three limma result categories
     "time_effect",
     "avrg_diff_conditions",
     "interaction_condition_time"
     )
+  
   
   # Initialize final return data structures
   correlation_summary <- data.frame(
@@ -66,6 +69,7 @@ compare_results <- function(
     stringsAsFactors = FALSE
   )
   
+  
   log10_thresh1 <- -log10(adj_p_tresh1 + 1e-16)
   log10_thresh2 <- -log10(adj_p_tresh2 + 1e-16)
   
@@ -73,12 +77,12 @@ compare_results <- function(
     list1 <- splineomics1[["limma_splines_result"]][[cat]]
     list2 <- splineomics2[["limma_splines_result"]][[cat]]
     
-    if (!is.list(list1) || !is.list(list2)) {
+    if (!is.list(list1) || !is.list(list2)) {  # Can be NA when result not there
       message(sprintf("Category '%s' missing or not a list", cat))
       next
     }
     
-    shared_names <- intersect(
+    shared_names <- intersect(   # Those are the names of the conditions/groups
       names(list1),
       names(list2)
       )
@@ -98,7 +102,7 @@ compare_results <- function(
       }
       
       # Full correlation ----
-      corr <- cor(
+      corr <- stats::cor(
         merged$adj.P.Val_1,
         merged$adj.P.Val_2,
         method = "spearman",
@@ -118,7 +122,11 @@ compare_results <- function(
       plot_list[[paste0(cat, "_", subcat)]] <- plot_pval_correlation(
         df = merged,
         title = paste0(cat, " > ", subcat),
-        subtitle = paste("Spearman rho:", round(corr, 3), "(all features)"),
+        subtitle = paste(
+          "Spearman rho:",
+          round(corr, 3),
+          "(all features, red dashed lines = adj.pval cutoff)"
+          ),
         log10_thresh1 = log10_thresh1,
         log10_thresh2 = log10_thresh2,
         splineomics1_description = splineomics1_description,
@@ -127,14 +135,14 @@ compare_results <- function(
       )
       
       # Hits only ----
-      sig_hits <- get_hits_only(
+      hits <- get_hits_only(
         merged,
         adj_p_tresh1,
         adj_p_tresh2
       )
       
       hit_info <- compute_hit_overlap(
-        sig_hits,
+        hits,
         adj_p_tresh1,
         adj_p_tresh2
       )
@@ -146,23 +154,31 @@ compare_results <- function(
         jaccard_index = round(hit_info$jaccard, 3)
       ))
 
-      if (nrow(sig_hits) >= 3) {
-        corr_hits_only <- cor(
-          sig_hits$adj.P.Val_1,
-          sig_hits$adj.P.Val_2,
+      if (nrow(hits) >= 3) {
+        corr_hits_only <- stats::cor(
+          hits$adj.P.Val_1,
+          hits$adj.P.Val_2,
           method = "spearman",
           use = "complete.obs"
           )
         correlation_summary$correlation_hits_only[nrow(correlation_summary)] <-
           round(corr_hits_only, 3)
         correlation_summary$n_hits_common[nrow(correlation_summary)] <-
-          nrow(sig_hits)
+          nrow(hits)
         
         plot_list[[paste0(cat, "_", subcat, "_hits_only")]] <- 
           plot_pval_correlation(
-            df = sig_hits,
-            title = paste0(cat, " > ", subcat, " (significant only)"),
-            subtitle = paste("Spearman rho:", round(corr_hits_only, 3)),
+            df = hits,
+            title = paste0(
+              cat,
+              " > ",
+              subcat
+              ),
+            subtitle = paste(
+              "Spearman rho:",
+              round(corr_hits_only, 3),
+              "(significant only (union), red dashed lines = adj.pval cutoff)"
+              ),
             log10_thresh1 = log10_thresh1,
             log10_thresh2 = log10_thresh2,
             splineomics1_description = splineomics1_description,
@@ -258,6 +274,9 @@ validate_compare_inputs <- function(
 #' @param splineomics2_description Character. Label for y-axis.
 #' @param point_color Character. Color of plotted points (default: "black").
 #'
+#' @importFrom ggplot2 ggplot aes geom_point geom_abline geom_vline geom_hline
+#'                     labs theme_minimal
+#'
 #' @return A ggplot object showing the correlation with threshold lines.
 #' 
 plot_pval_correlation <- function(
@@ -295,8 +314,8 @@ plot_pval_correlation <- function(
     ggplot2::labs(
       title = title,
       subtitle = subtitle,
-      x = bquote(-log[10](adj.P.Val[1]) ~ .(splineomics1_description)),
-      y = bquote(-log[10](adj.P.Val[2]) ~ .(splineomics2_description))
+      x = paste0("-log10(adj.P.Val) ", splineomics1_description),
+      y = paste0("-log10(adj.P.Val) ", splineomics2_description)
     ) +
     ggplot2::theme_minimal()
 }
@@ -366,8 +385,8 @@ compute_hit_overlap <- function(
   sig2 <- merged$feature_names[merged$adj.P.Val_2 < adj_p_tresh2]
   overlap <- intersect(sig1, sig2)
   union_set <- union(sig1, sig2)
-  jaccard <- if (length(union_set) > 0) 
-    length(overlap) / length(union_set) else NA_real_
+  jaccard <- if (length(union_set) > 0)          # jaccard = intersection/union
+    length(overlap) / length(union_set) else NA_real_   
   
   list(
     sig1 = sig1,
@@ -393,7 +412,8 @@ compute_hit_overlap <- function(
 #' @param adj_p_tresh2 Numeric. Significance threshold for the second analysis.
 #'
 #' @return A filtered data frame with only significant features 
-#'         (in either analysis).
+#'         (in either analysis = the union of significant features across
+#'         both topTables).
 #'
 get_hits_only <- function(
     merged, 
@@ -401,7 +421,7 @@ get_hits_only <- function(
     adj_p_tresh2
     ) {
   
-  merged[
+  merged[         # union of hits of both topTable results
     merged$adj.P.Val_1 < adj_p_tresh1 
     | merged$adj.P.Val_2 < adj_p_tresh2, ]
 }
