@@ -187,12 +187,17 @@ bind_data_with_annotation <- function(
 #'
 print_info_message <- function(
     message_prefix,
-    report_dir) {
+    report_dir
+    ) {
+  
   # Green color code for "Info"
   green_info <- "\033[32mInfo\033[0m"
   
   full_message <- paste(
-    green_info, message_prefix, "completed successfully.\n",
+    "\n",
+    green_info,
+    message_prefix,
+    "completed successfully.\n",
     "Your HTML reports are located in the directory: ", report_dir, ".\n",
     "Please note that due to embedded files, the reports might be flagged as\n",
     "harmful by other software. Rest assured that they provide no harm.\n"

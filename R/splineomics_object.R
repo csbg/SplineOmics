@@ -162,7 +162,7 @@ update_splineomics <- function(
 
   for (name in names(args)) {
     if (!(name %in% allowed_fields)) {
-      stop(paste("Field", name, "is not allowed."))
+      stop(paste0("Field '", name, "' is not allowed."))
     }
     splineomics[[name]] <- args[[name]]
   }
