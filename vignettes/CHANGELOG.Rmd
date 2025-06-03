@@ -47,7 +47,15 @@ Examples:
 
 ### [0.2.1] - (in preparation)
 
+#### Fixed
+- run_ora() printed out the wrong databases for the filtered terms. Additionally
+  , a bug occured only in the Docker container, but not locally. Both things are
+  now fixed. On the occasion, the run_ora() function has been refactored in
+  part. Now, much of the core code is considerably cleaner, because the core
+  datastructure with the clusterProfiler results was replaced by a much better
+  structure.
 
+--------------------------------------------------------------------------------
 
 ### [0.2.0] - 2025-05-08
 

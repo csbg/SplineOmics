@@ -716,7 +716,7 @@ features (e.g. proteins) that have an adj. p-value below the threshold.
 Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
-```{r cluster the hits, eval = FALSE}
+```{r prepare cluster_hits() arguments, eval = TRUE}
 adj_pthresholds <- c( # 0.05 for both levels
   0.05, # exponential
   0.05 # stationary
@@ -775,7 +775,11 @@ plot_options <- list(
   meta_replicate_column = "Reactor", # Colors the data points based on Reactor
   cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
 )
+```
 
+Run the function:
+
+```{r cluster the hits, eval = FALSE}
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
@@ -797,11 +801,11 @@ cluster_hits() report shows the results of all three, if they are
 present (category 2 and 3 can only be generated when the design formula
 contains an interaction effect).
 
-# Perform gene set enrichment analysis (GSEA)
+# Perform overrepresentation analysis (ORA)
 
 Once the clustered hits are identified, a subsequent step to gain
-biological insights is to perform GSEA. For this, the respective genes
-can be assigned to each clustered hit, and GSEA can be carried out. To
+biological insights is to perform ORA For this, the respective genes
+can be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
@@ -830,13 +834,13 @@ SplineOmics::download_enrichr_databases(
 Per default the file is placed in the current working directory, which
 is the root dir of the R project.
 
-To run GSEA, the downloaded database file has to be loaded as a
+To run ORA, the downloaded database file has to be loaded as a
 dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function create_gsea_report() runs GSEA
-using clusterProfiler, generates an HTML report and returns the GSEA
+report dir can be specified. The function run_ora() runs ORA
+using clusterProfiler, generates an HTML report and returns the ORA
 dotplots in R.
 
-```{r prepare arguments for GSEA, eval = FALSE}
+```{r prepare arguments for ORA, eval = TRUE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- here::here("databases.tsv")
 
@@ -858,15 +862,15 @@ clusterProfiler_params <- list(
 
 report_dir <- here::here(
   "results",
-  "gsea_reports"
+  "ora_reports"
 )
 ```
 
 The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
-```{r run GSEA, eval = FALSE}
-result <- SplineOmics::run_gsea(
+```{r run ORA, eval = FALSE}
+result <- SplineOmics::run_ora(
   # A dataframe with three columns: feature, cluster, and gene. Feature contains
   # the integer index of the feature, cluster the integer specifying the cluster
   # number, and gene the string of the gene, such as "CLSTN2".
@@ -878,8 +882,8 @@ result <- SplineOmics::run_gsea(
 )
 ```
 
-You can view the generated analysis report of the run_gsea function
-[here](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html).
+You can view the generated analysis report of the run_ora function
+[here](https://csbg.github.io/SplineOmics_html_reports/run_ora_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
 supported a term, in a tabular format. The table with all the terms with
