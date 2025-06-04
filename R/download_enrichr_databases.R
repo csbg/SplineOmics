@@ -97,7 +97,10 @@ download_enrichr_databases <- function(
     quote = FALSE # Do not quote strings
   )
 
-  message("Download complete! The file has been saved as: ", filename_path)
+  message(
+    "Download complete! The file has been saved as: ",
+    filename_path
+    )
 
   return(invisible(filename_path))
 }
@@ -123,6 +126,7 @@ download_enrichr_databases <- function(
 #'         names and vectors of human gene symbols as list elements.
 #'
 enrichr_get_genesets <- function(databases) {
+  
   pb <- create_progress_bar(
     databases,
     message = "Downloading"

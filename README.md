@@ -4,9 +4,8 @@
 ![Version](https://img.shields.io/badge/version-0.2.0-blue) [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
-Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg) ![R
-CMD
-Check](https://img.shields.io/badge/R%20CMD%20check-passed-brightgreen)
+Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)
+[![R-CMD-check](https://github.com/csbg/SplineOmics/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/csbg/SplineOmics/actions/workflows/R-CMD-check.yaml)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
 ![Dependencies](https://img.shields.io/badge/dependencies-19-blue)
 ![Platforms](https://img.shields.io/badge/platforms-all-brightgreen)

@@ -7,38 +7,38 @@
 #' Create Progress Bar
 #' 
 #' @noRd
-#'
+#' 
 #' @description
 #' Creates a progress bar for tracking the progress of an iterable task.
-#'
+#' 
 #' @param iterable An iterable object (e.g., list or vector) whose length
 #' determines the total number of steps.
 #' @param message A message to display with the progress bar
 #' (default is "Processing").
-#'
+#' 
 #' @return A progress bar object from the 'progress' package.
-#'
+#' 
 #' @importFrom progress progress_bar
-#'
+#' 
 #' @seealso
 #' \code{\link{progress_bar}}
-#'
+#' 
 create_progress_bar <- function(
     iterable,
     message = "Processing"
 ) {
-  
+
   # Create and return the progress bar
   pb <- progress::progress_bar$new(
     format = paste(" ", message, " [:bar] :percent :elapsed"),
     total = length(iterable),
     width = 60,
-    clear = FALSE
+    clear = FALSE,
+    stream = stdout()  # <- force stdout
   )
-  
+
   return(pb)
 }
-
 
 
 #' Create Design Matrix for Splines

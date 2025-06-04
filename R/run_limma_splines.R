@@ -832,7 +832,9 @@ extract_contrast_for_pair <- function(
 #'
 modify_limma_top_table <- function(
     top_table,
-    feature_names) {
+    feature_names
+    ) {
+  
   is_integer_string <- function(x) {
     return(grepl("^[0-9]+$", x))
   }
@@ -862,13 +864,11 @@ modify_limma_top_table <- function(
     top_table,
     rownames = "feature_nr"
   )
-  
-  # feature_nr <- NULL  # dummy declaration for the lintr and R CMD.
-  
+
   # Convert feature_nr to integer
   top_table <- top_table |>
     dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
-    dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
+    dplyr::relocate(feature_nr, .after = dplyr::last_col())
   
   # Sort and add feature names based on the feature_nr
   sorted_feature_names <- feature_names[top_table$feature_nr]
