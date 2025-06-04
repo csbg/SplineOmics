@@ -1,4 +1,4 @@
-test_that("run_limma_splines adds limma_splines_result correctly", {
+test_that("run_limma_splines() works correctly", {
   data <- readRDS(xzfile(system.file(
     "extdata",
     "proteomics_data.rds.xz",
@@ -51,8 +51,6 @@ test_that("run_limma_splines adds limma_splines_result correctly", {
     # design = "~ 1 + Phase*Time + Reactor", # best design formula
     design = "~ 1 + Time + Reactor",
     mode = "isolated", # means limma uses the full data for each condition.
-    data = data2, # data without "outliers" was better
-    meta = meta2,
     spline_params = list(
       spline_type = c("n", "n"), # natural cubic splines (take these if unsure)
       dof = c(2L, 2L) # If you are unsure about which dof, start with 2 and increase

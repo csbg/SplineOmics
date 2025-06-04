@@ -15,7 +15,7 @@
 #'                   working directory.
 #' @param filename Name of the output file (with file extension. Due to commas
 #'                 present in some terms, .tsv is recommended). When left out,
-#'                 the file is named all_databases_{timestamp}.tsv.
+#'                 the file is named all_databases_timestamp.tsv.
 #'
 #' @return This function does not return a value but saves a .tsv file in the
 #'         specified directory containing the gene sets from the specified

@@ -878,6 +878,7 @@ result <- SplineOmics::run_ora(
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
+  cluster_hits_report_name = "not meaningfully filled out in this demo",
   report_dir = report_dir
 )
 ```

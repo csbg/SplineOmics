@@ -1,4 +1,4 @@
-test_that("cluster_hits returns correctly structured result", {
+test_that("cluster_hits() returns correctly structured result", {
   # Setup
   data <- readRDS(xzfile(system.file(
     "extdata", "proteomics_data.rds.xz", package = "SplineOmics"
@@ -75,7 +75,6 @@ test_that("cluster_hits returns correctly structured result", {
     genes = genes,
     plot_info = plot_info,
     plot_options = plot_options,
-    report_dir = report_dir,
     raw_data = raw_data,
     report = FALSE,
     adj_pthresh_avrg_diff_conditions = 0,

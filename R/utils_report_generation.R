@@ -214,6 +214,14 @@ generate_report_html <- function(
       "pvc_pattern_summary"
     )
   }
+  
+  if (report_type == "run_ora") {
+    download_fields <- c(
+      download_fields,
+      "foreground_genes",
+      "background_genes"
+    )
+  }
 
   if (!all(is.na(enrichr_format))) {
     download_fields <- c(
@@ -328,11 +336,36 @@ generate_report_html <- function(
       report_info$databases,
       collapse = ", "
       )
+    # Convert the list into a single string like: pvalueCutoff=0.05,
+    # pAdjustMethod=BH, ...
+    params_text <- paste(
+      paste0(
+        names(report_info$clusterProfiler_params),
+        " = ",
+        report_info$clusterProfiler_params
+        ),
+      collapse = ", "
+    )
+    
     header_section <- paste(
       header_section,
-      "<p style='font-size: 20px;'>Databases used: ",
-      databases_text,
-      "</p>",
+      "<hr>",
+      paste0(
+        "<p style='font-size: 20px;'><strong>Databases used:</strong> ",
+        databases_text,
+        "</p>"
+      ),
+      paste0(
+        "<p style='font-size: 20px;'>",
+        "<strong>cluster_hits() report name:</strong> ",
+        report_info$cluster_hits_report_name,
+        "</p>"
+      ),
+      paste0(
+        "<p style='font-size: 20px;'><strong>clusterProfiler params:</strong> ",
+        params_text,
+        "</p>"
+      ),
       sep = "\n"
     )
   }
@@ -1762,7 +1795,33 @@ process_field <- function(
     } else {
       base64_df <- "Analysis script is unavailable."
     }
+  } else if (field == "foreground_genes") {
+    foreground_genes_dfs <- report_info$levels_clustered_hits
+    names(foreground_genes_dfs) <- names(foreground_genes_dfs)
     
+    base64_df <- sprintf(
+      '<a href="%s" download="foreground_genes.xlsx" class="embedded-file">
+       <button>Download foreground_genes.xlsx</button></a>',
+      encode_df_to_base64(foreground_genes_dfs)
+    )
+  } else if (field == "background_genes") {
+    if (is.null(report_info$background_genes)) {
+      background_genes_df <- data.frame(
+        note = "All genes from the respective genesets were used as background",
+        stringsAsFactors = FALSE
+      )
+    } else {
+      background_genes_df <- data.frame(
+        gene = report_info$background_genes,
+        stringsAsFactors = FALSE
+      )
+    }
+    
+    base64_df <- sprintf(
+      '<a href="%s" download="background_genes.xlsx" class="embedded-file">
+     <button>Download background_genes.xlsx</button></a>',
+      encode_df_to_base64(background_genes_df)
+    )
   } else {
     base64_df <- ifelse(
       is.null(report_info[[field]]),
