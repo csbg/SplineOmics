@@ -22,3 +22,4 @@ _pkgdown.yml$
 ^CHANGELOG\.md$
 ^SplineOmics.BiocCheck$
 
+^\.github$

@@ -2954,7 +2954,7 @@ build_cluster_hits_report <- function(
 
   header_index <- 0
   level_index <- 0
-
+  
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     header_index <- header_index + 1
