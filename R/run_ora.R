@@ -64,13 +64,13 @@ run_ora <- function(
     plot_titles = NA,
     universe = NULL,
     report_dir = here::here()
-    ) {
+) {
   
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
   )
-
+  
   # Check report_info and report_dir
   args <- lapply(
     as.list(
@@ -79,10 +79,10 @@ run_ora <- function(
     eval,
     parent.frame()
   )
-
+  
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-
+  
   levels_clustered_hits <- levels_clustered_hits[
     !vapply(
       levels_clustered_hits,
@@ -90,7 +90,7 @@ run_ora <- function(
       logical(1)
     )
   ]
-
+  
   # Control the test not covered by the InputControl class
   control_inputs_run_ora(
     levels_clustered_hits = levels_clustered_hits,
@@ -99,9 +99,9 @@ run_ora <- function(
     plot_titles = plot_titles,
     background = universe
   )
-
+  
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
-
+  
   all_results <- map2(
     levels_clustered_hits,
     names(levels_clustered_hits),
@@ -113,34 +113,44 @@ run_ora <- function(
       universe
     )
   )
-
-  names(all_results) <- names(levels_clustered_hits)
-
+  
   processed_results <- map2(
     all_results,
     names(all_results),
     process_result
   )
-
+  
   # Extract the plots, plot sizes, and header info from the processed results
-  plots <- purrr::flatten(map(processed_results, "plot"))
-  plots_sizes <- unlist(map(processed_results, "plot_size"))
-
+  plots <- purrr::flatten(map(
+    processed_results,
+    "plot"
+  ))
+  plots_sizes <- unlist(map(
+    processed_results,
+    "plot_size"
+  ))
+  
   insert_after_each <- function(lst, value) {
     result <- vector("list", 2 * length(lst))
     result[seq(1, length(result), by = 2)] <- lst
     result[seq(2, length(result), by = 2)] <- value
     return(result)
   }
-
-  plots <- insert_after_each(plots, "section_break")
+  
+  plots <- insert_after_each(
+    plots,
+    "section_break"
+  )
   plots_sizes <- insert_after_each(plots_sizes, 999)
-
-  level_headers_info <- map(processed_results, "header_info")
-
+  
+  level_headers_info <- map(
+    processed_results,
+    "header_info"
+  )
+  
   names(level_headers_info) <- names(all_results)
-
-
+  
+  
   report_info$databases <- unique(databases[["DB"]])
   
   if (all(vapply(plots, is.character, logical(1)))) {
@@ -162,7 +172,7 @@ run_ora <- function(
     filename = "run_ora_report",
     report_dir = report_dir
   )
-
+  
   return(Filter(function(x) !is.character(x), plots))
 }
 
@@ -194,23 +204,23 @@ control_inputs_run_ora <- function(
     plot_titles,
     background) {
   check_clustered_hits(levels_clustered_hits)
-
+  
   check_databases(databases)
-
+  
   check_params(params)
-
-
+  
+  
   if (!is.na(plot_titles)) {
     if (!is.character(plot_titles) ||
-      length(plot_titles) != length(levels_clustered_hits)) {
+        length(plot_titles) != length(levels_clustered_hits)) {
       stop(paste(
         "plot_titles must be a character vector with length == length",
         "length levels_clustered_hits"
       ), call. = FALSE)
     }
   }
-
-
+  
+  
   if (!is.null(background)) {
     if (!is.character(background)) {
       stop_call_false("background must be a character vector or NULL.")
@@ -248,8 +258,7 @@ ensure_clusterProfiler <- function() {
 }
 
 
-
-#' Manage ora Analysis for a Specific Level
+#' Manage ORA Analysis for a Specific Level
 #' 
 #' @noRd
 #'
@@ -277,15 +286,15 @@ manage_ora_level <- function(
     databases,
     clusterProfiler_params,
     universe
-    ) {
+) {
   
   clustered_hits <- na.omit(clustered_hits)
-
+  
   message(paste(
-    "\n\n Running clusterProfiler for the level:",
+    "\n\n\n Running clusterProfiler for the level:",
     level_name
   ))
-
+  
   result <- run_ora_level(
     clustered_genes = clustered_hits,
     databases = databases,
@@ -296,17 +305,17 @@ manage_ora_level <- function(
 }
 
 
-#' Process ora Result for a Specific Level
+#' Process ORA Result for a Specific Level
 #' 
 #' @noRd
 #'
 #' @description
-#' This function processes the ora result for a specific level. It handles
+#' This function processes the ORA result for a specific level. It handles
 #' cases where the result contains `NA` values by adding a section break.
 #' Otherwise, it extracts the plot, plot size, and header information from
 #' the result.
 #'
-#' @param level_result A list containing the ora result for a specific level.
+#' @param level_result A list containing the ORA result for a specific level.
 #' @param level_name A character string representing the name of the level.
 #'
 #' @return A list with the following components:
@@ -319,9 +328,11 @@ manage_ora_level <- function(
 #'
 process_result <- function(
     level_result,
-    level_name) {
+    level_name
+) {
+  
   result <- list()
-
+  
   if (any(is.na(level_result))) {
     result$plot <- "section_break"
     result$plot_size <- 999
@@ -334,16 +345,15 @@ process_result <- function(
     result$plot_size <- level_result$dotplot_nrows
     result$header_info <- list(
       header_name = level_name,
-      full_enrich_results = level_result$full_enrich_results,
-      raw_enrich_results = level_result$raw_results
+      ora_results = level_result$ora_results
     )
   }
-
+  
   return(result)
 }
 
 
-#' Build ora Report
+#' Build ORA Report
 #' 
 #' @noRd
 #'
@@ -381,33 +391,33 @@ build_run_ora_report <- function(
     level_headers_info,
     report_info,
     output_file_path
-    ) {
+) {
   
   html_content <- paste(
     header_section,
     "<!--TOC-->",
     sep = "\n"
   )
-
+  
   toc <- create_toc()
-
+  
   styles <- define_html_styles()
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
-
+  
   current_header_index <- 1
   level_headers_info <- Filter(
     Negate(is.null),
     level_headers_info
   )
-
+  
   pb <- create_progress_bar(plots)
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     # means jump to next level
     if (any(is(plots[[index]], "character"))) {
       section_info <- level_headers_info[[current_header_index]]
-
+      
       section_content <- generate_section_content(
         section_info,
         index,
@@ -416,16 +426,15 @@ build_run_ora_report <- function(
         section_header_style,
         toc_style
       )
-
+      
       html_content <- section_content$html_content
-      # toc <- section_content$toc
-
+      
       current_header_index <- current_header_index + 1
-
+      
       pb$tick()
       next
     }
-
+    
     # Add the section header and horizontal line just before the plot
     section_info <- level_headers_info[[current_header_index]]
     section_header <- sprintf(
@@ -434,13 +443,13 @@ build_run_ora_report <- function(
       index,
       section_info$header_name
     )
-
+    
     horizontal_line <- ""
-
+    
     if (current_header_index > 1) {
       horizontal_line <- "<hr>"
     }
-
+    
     # Update the HTML content with the section header and horizontal line
     html_content <- paste(
       html_content,
@@ -448,20 +457,20 @@ build_run_ora_report <- function(
       section_header,
       sep = "\n"
     )
-
+    
     toc_entry <- sprintf(
       "<li style='%s'><a href='#section%d'>%s</a></li>",
       toc_style,
       index,
       section_info$header_name
     )
-
+    
     toc <- paste(
       toc,
       toc_entry,
       sep = "\n"
     )
-
+    
     result <- process_plots(
       plots_element = plots[[index]],
       plots_size = plots_sizes[[index]],
@@ -471,10 +480,10 @@ build_run_ora_report <- function(
     )
     html_content <- result$html_content
     toc <- result$toc
-
+    
     pb$tick()
   }
-
+  
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
@@ -509,10 +518,10 @@ check_clustered_hits <- function(levels_clustered_hits) {
   if (!is.list(levels_clustered_hits)) {
     stop(paste("levels_clustered_hits must be a list"), call. = FALSE)
   }
-
+  
   for (i in seq_along(levels_clustered_hits)) {
     clustered_hits <- levels_clustered_hits[[i]]
-
+    
     # Check if clustered_hits is a dataframe
     if (!is.data.frame(clustered_hits)) {
       stop(paste(
@@ -520,7 +529,7 @@ check_clustered_hits <- function(levels_clustered_hits) {
         "but must be one."
       ), call. = FALSE)
     }
-
+    
     # Check if the dataframe contains the columns 'gene' and 'cluster'
     required_columns <- c("feature", "cluster")
     if (!all(required_columns %in% colnames(clustered_hits))) {
@@ -532,16 +541,16 @@ check_clustered_hits <- function(levels_clustered_hits) {
         call. = FALSE
       )
     }
-
+    
     # Check if the 'feature' column contains only integers
     if (!is.integer(clustered_hits$feature) &&
-      !all(clustered_hits$feature == as.integer(clustered_hits$feature))) {
+        !all(clustered_hits$feature == as.integer(clustered_hits$feature))) {
       stop("The 'feature' column must contain only integers.", call. = FALSE)
     }
-
+    
     # Check if the 'cluster' column contains only integers
     if (!is.integer(clustered_hits$cluster) &&
-      !all(clustered_hits$cluster == as.integer(clustered_hits$cluster))) {
+        !all(clustered_hits$cluster == as.integer(clustered_hits$cluster))) {
       stop("The 'cluster' column must contain only integers.", call. = FALSE)
     }
   }
@@ -579,12 +588,12 @@ check_genes <- function(
       )
     }
   }
-
-
+  
+  
   if (!is.character(genes)) {
     stop("genes must be a character vector", call. = FALSE)
   }
-
+  
   valid <- grepl("^[a-zA-Z0-9]+$", genes) | is.na(genes)
   if (any(!valid)) {
     first_invalid_index <- which(!valid)[1]
@@ -622,18 +631,18 @@ check_databases <- function(databases) {
   if (!is.data.frame(databases)) {
     stop("The input must be a dataframe.", call. = FALSE)
   }
-
+  
   if (ncol(databases) != 3) {
     stop("The dataframe must have exactly three columns.", call. = FALSE)
   }
-
+  
   expected_colnames <- c("DB", "Geneset", "Gene")
   if (!all(colnames(databases) == expected_colnames)) {
     stop("The dataframe must have columns named DB, Geneset, and Gene.",
-      call. = FALSE
+         call. = FALSE
     )
   }
-
+  
   if (!all(vapply(databases, is.character, logical(1)))) {
     stop_call_false("All columns in the dataframe must be of type character.")
   }
@@ -669,12 +678,12 @@ check_params <- function(params) {
     maxGSSize = "numeric",
     qvalueCutoff = "numeric"
   )
-
+  
   # Check if params is a list
   if (!is.list(params)) {
     stop("The input must be a list.", call. = FALSE)
   }
-
+  
   # Check for extra elements
   extra_params <- setdiff(names(params), names(required_params))
   if (length(extra_params) > 0) {
@@ -687,31 +696,31 @@ check_params <- function(params) {
       )
     )
   }
-
+  
   valid_adj_p_value_methods <- stats::p.adjust.methods
-
+  
   # Check for required elements and their data types
   for (param in names(params)) {
     if (param %in% names(required_params)) {
       actual_value <- params[[param]]
       expected_type <- required_params[[param]]
       actual_type <- class(params[[param]])
-
+      
       if (is.null(actual_value)) {
         next
       }
-
+      
       if (expected_type == "integer" && !is.integer(params[[param]])) {
         # Check if the value can be coerced to integer
         if (is.numeric(params[[param]]) &&
-          all(params[[param]] == as.integer(params[[param]]))) {
+            all(params[[param]] == as.integer(params[[param]]))) {
           actual_type <- "integer"
         }
       }
       if (expected_type != actual_type) {
         stop("The element '", param, "' must be of type ",
-          expected_type, ".",
-          call. = FALSE
+             expected_type, ".",
+             call. = FALSE
         )
       }
     } else {
@@ -722,13 +731,13 @@ check_params <- function(params) {
         call. = FALSE
       )
     }
-
+    
     if (param == "pAdjustMethod") {
       if (!(actual_value %in% valid_adj_p_value_methods)) {
         stop(
           paste("pAdjustMethod must be one of",
-            valid_adj_p_value_methods,
-            collapse = ", "
+                valid_adj_p_value_methods,
+                collapse = ", "
           ),
           call. = FALSE
         )
@@ -771,63 +780,40 @@ run_ora_level <- function(
     params = NA,
     plot_title = "",
     universe = NULL
-    ) {
+) {
   
   set_default_params(params)
-
-  all_term2genes <- dbs_to_term2genes(databases)
-
-
-  ## Prepare objects
+  gene_set_collections <- dbs_to_term2genes(databases)
+  
   unique_clusters <- sort(unique(clustered_genes$cluster))
-
-  all_db_results <- vector("list", length(all_term2genes))
-
-  for (i in seq_along(all_db_results)) {
-    all_db_results[[i]] <- data.frame(BioProcess = character())
-  }
-
-  raw_results <- list()
-
+  
+  ora_results <- list()   # stores all the results from clusterProfiler
+  
   for (cluster in unique_clusters) {
-    enrichment_results <- list()
-
-    for (i in seq_along(all_db_results)) {
-      column_name <- paste("Cluster", cluster, sep = "_")
-      count_column_name <- paste0(column_name, "_odds_ratios")
-
-      # Initialize the column as an empty vector for the df if it has no rows
-      if (nrow(all_db_results[[i]]) == 0) {
-        all_db_results[[i]][[column_name]] <- vector("logical", length = 0)
-        all_db_results[[i]][[count_column_name]] <-
-          vector("logical", length = 0)
-      } else {
-        all_db_results[[i]][[column_name]] <- NA
-        all_db_results[[i]][[count_column_name]] <- NA
-      }
-    }
-
-    # Select rows where 'Cluster' equals the current cluster number
-    selected_rows <- clustered_genes[clustered_genes$cluster == cluster, ]
-
-    cluster_genes <- selected_rows$gene
-    gene_list <- as.list(cluster_genes)
-    gene_list <- unlist(gene_list)
-
+    cluster_label <- paste0("cluster_", cluster)
+    ora_results[[cluster_label]] <- list()
+    
+    foreground_genes <- 
+      as.character(clustered_genes$gene[clustered_genes$cluster == cluster])
+    
     at_least_one_result <- FALSE
-
+    
     # Run clusterProfiler and process output
-    for (database_name in names(all_term2genes)) {
-      term2gene <- all_term2genes[[database_name]]
-
-      message(paste(
+    for (gene_set_name in names(gene_set_collections)) {
+      gene_set_map <- gene_set_collections[[gene_set_name]]
+      
+      # There can be a problem with a database, and that potential message is 
+      # not coming from the SplineOmics code. That is why here always the 
+      # database is send as a message, so that the problems can be connected
+      # to a specific database.
+      message(paste(    
         "\nDatabase:",
-        database_name
+        gene_set_name
       ))
-
-      enrichment <-
+      
+      ora_result <-
         clusterProfiler::enricher(
-          gene = gene_list,
+          gene = foreground_genes,
           pvalueCutoff = params$pvalueCutoff,
           pAdjustMethod = params$pAdjustMethod,
           universe = universe,
@@ -835,76 +821,42 @@ run_ora_level <- function(
           maxGSSize = params$maxGSSize,
           qvalueCutoff = params$qvalueCutoff,
           gson = NULL,
-          TERM2GENE = term2gene,
+          TERM2GENE = gene_set_map,
           TERM2NAME = NA
         )
-
-      enrichment <- as.data.frame(enrichment)
-
-      if (is.null(enrichment) || (nrow(enrichment) == 0 &
-        ncol(enrichment) == 0)) {
-        next
+      
+      ora_result_df <- as.data.frame(ora_result)
+      if (nrow(ora_result_df) == 0) {
+        ora_result_df <- NA  # Mark explicitly
       }
-
-      at_least_one_result <- TRUE
-
-      enrichment_results[[length(enrichment_results) + 1]] <- enrichment
-
-      # Store all for returning in the end.
-      name <- sprintf(
-        "cluster: %s, database: %s",
-        cluster,
-        database_name
-      )
-
-      raw_results[[name]] <- enrichment
-    }
-
-    if (is.null(universe)) {
-      use_background <- TRUE
-    } else {
-      use_background <- FALSE
-    }
-
-    if (at_least_one_result) {
-      all_db_results <- process_enrichment_results(
-        all_db_results,
-        enrichment_results,
-        params$pvalueCutoff,
-        column_name,
-        count_column_name,
-        background = use_background
-      )
-    } else {
-      message(paste0("No enrichment results for cluster", cluster))
+      
+      ora_results[[cluster_label]][[gene_set_name]] <- ora_result_df
     }
   }
-
-  # Make dotplot
-  any_result <- vapply(
-    all_db_results,
-    function(df) nrow(df) > 0,
-    logical(1)
-  )
-
-  has_true <- any(any_result)
-
-  if (has_true) {
+  
+  ora_results <- add_odds_ratios_to_ora(ora_results)
+  
+  # Check if any enrichment results exist
+  any_result <- any(sapply(ora_results, function(cluster_entry) {
+    any(sapply(cluster_entry, function(res) {
+      is.data.frame(res) && nrow(res) > 0
+    }))
+  }))
+  
+  if (any_result) {
     result <- make_enrich_dotplot(
-      all_db_results,
-      names(all_term2genes),
+      ora_results,
       plot_title
     )
   } else {
-    message("No database led to an enrichment result!")
+    message("No cluster led to an enrichment result!")
     return(NA)
   }
-
+  
   list(
     dotplot = result[["dotplot"]],
     dotplot_nrows = result[["dotplot_height"]],
-    full_enrich_results = result[["full_enrich_results"]],
-    raw_results = raw_results
+    ora_results = ora_results
   )
 }
 
@@ -925,87 +877,91 @@ run_ora_level <- function(
 #' @param toc_style The CSS style for the TOC entries.
 #'
 #' @return A list with updated HTML content and TOC.
+#' 
 generate_section_content <- function(
     section_info,
     index,
     toc,
     html_content,
     section_header_style,
-    toc_style) {
-  if (any(is.na(section_info$full_enrich_results))) {
+    toc_style
+) {
+  
+  ora_results <- section_info$ora_results
+  
+  # Filtered results (only Count ≥ 2 and adjusted p < 0.05)
+  top_df <- prepare_plot_data(ora_results)
+  
+  if (nrow(top_df) == 0) {
     no_results_message <- paste0(
       "<p style='font-size: 40px; color: #FF0000;'>",
-      "No database specified led to identification of any enrichment ",
-      "terms.",
+      "No gene set showed statistically significant ",
+      "overrepresentation in any cluster.",
       "</p>"
     )
-
+    
     html_content <- paste(
       html_content,
       no_results_message,
       sep = "\n"
     )
-
-    return(list(
-      html_content = html_content
-    ))
+    
+    return(list(html_content = html_content))
   }
-
-  full_enrich_results_header <- paste0(
-    "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
-    "'>Enrichment Results</h3>"
+  
+  # Full unfiltered results
+  full_df <- flatten_ora_results(ora_results)
+  
+  # Header for filtered ORA results shown in HTML
+  ora_results_header <- paste0(
+    "<h3 style='font-size: 30px; font-weight: bold; color: #333;'>",
+    "Filtered Overrepresentation Analysis (ORA) Results</h3>"
   )
-
-  df <- section_info$full_enrich_results
-
-  # Start the HTML table with the specified attributes
+  
+  # Create HTML table for filtered results
   html_table <- "<table style='width:100%;border-collapse:collapse;'>"
-
-  # Add the table header
   html_table <- paste0(html_table, "<thead><tr>")
-  for (header in colnames(df)) {
+  for (header in colnames(top_df)) {
     html_table <- paste0(html_table, "<th>", header, "</th>")
   }
   html_table <- paste0(html_table, "</tr></thead><tbody>")
-
-  # Add the table rows
-  for (i in seq_len(nrow(df))) {
+  
+  for (i in seq_len(nrow(top_df))) {
     html_table <- paste0(html_table, "<tr>")
-    for (j in seq_len(ncol(df))) {
-      html_table <- paste0(html_table, "<td>", df[i, j], "</td>")
+    for (j in seq_len(ncol(top_df))) {
+      html_table <- paste0(html_table, "<td>", top_df[i, j], "</td>")
     }
     html_table <- paste0(html_table, "</tr>")
   }
-
-  # Close the table body and the table tag
-  full_enrich_results_html <- paste0(html_table, "</tbody></table>")
-
-  raw_enrich_results_header <- paste0(
-    "<h3 style='font-size: 30px; font-weight: bold; color: #333;",
-    "'>Count smaller 2 Enrichment Results</h3>"
+  
+  ora_results_html <- paste0(html_table, "</tbody></table>")
+  
+  # Header for Excel download of full ORA results
+  full_ora_header <- paste0(
+    "<h3 style='font-size: 30px; font-weight: bold; color: #333;'>",
+    "Full ORA Results (including terms supported by < 2 genes)</h3>"
   )
-
+  
+  # Generate base64 download for full ORA result
   base64_df <- sprintf(
-    '<a href="%s" download="count2small_results.xlsx">
-  <button>Download count2small_results.xlsx</button></a>',
+    '<a href="%s" download="full_ora_results.xlsx">
+  <button>Download full_ora_results.xlsx</button></a>',
     encode_df_to_base64(
-      section_info$raw_enrich_results,
+      full_df,
       "run_ora"
     )
   )
-
+  
   html_content <- paste(
     html_content,
-    full_enrich_results_header,
-    full_enrich_results_html,
-    raw_enrich_results_header,
+    ora_results_header,
+    ora_results_html,
+    full_ora_header,
     base64_df,
     sep = "\n"
   )
-
-  list(
-    html_content = html_content
-  )
+  
+  list(html_content = html_content)
 }
 
 
@@ -1036,7 +992,7 @@ set_default_params <- function(params) {
     maxGSSize = 500,
     qvalueCutoff = 0.2
   )
-
+  
   if (any(is.na(params))) {
     params <- default_params
   } else {
@@ -1046,7 +1002,7 @@ set_default_params <- function(params) {
       params[[param]] <- default_params[[param]]
     }
   }
-
+  
   return(params)
 }
 
@@ -1074,186 +1030,157 @@ set_default_params <- function(params) {
 #'
 dbs_to_term2genes <- function(databases) {
   db_split <- split(databases, databases$DB)
-
+  
   # Transform into long format
   all_term2genes <- lapply(db_split, function(db_df) {
     df_with_renamed_columns <- db_df[, c("Geneset", "Gene")]
+    # Remove duplicate terms
+    df_with_renamed_columns <- unique(df_with_renamed_columns) 
     colnames(df_with_renamed_columns) <- c("term", "gene")
     return(df_with_renamed_columns)
   })
-
+  
   names(all_term2genes) <- names(db_split)
-
+  
   return(all_term2genes)
 }
 
 
-#' Process Enrichment Results
-#' 
+#' Add Odds Ratios to ORA Results
+#'
 #' @noRd
 #'
 #' @description
-#' Process enrichment results for visualization.
+#' Computes and adds odds ratio values to each enrichment result data
+#' frame within a nested ORA result structure. This function parses the
+#' \code{GeneRatio} and \code{BgRatio} columns returned by
+#' \code{clusterProfiler::enricher()}, calculates the odds ratio for each
+#' term, and stores the result in a new column \code{odds_ratio}.
 #'
-#' @param all_db_results A list of data frames containing enrichment results
-#'                       for all databases.
-#' @param enrichment_results A list of data frames containing enrichment
-#'                           results for individual databases.
-#' @param adjP_threshold The threshold for adjusted p-values.
-#' @param column_name The name of the column to store adjusted p-values.
-#' @param count_column_name The name of the column to store gene counts.
-#' @param background Logical indicating whether background ratios are included.
+#' The odds ratio is computed as:
+#' \deqn{ (a / b) / (c / d) }
+#' where \code{a/b} is the gene ratio (number of foreground genes in term
+#' over total foreground genes), and \code{c/d} is the background ratio
+#' (number of background genes in term over total background genes).
 #'
-#' @return A list of data frames containing processed enrichment results.
+#' @param ora_results A nested list of ORA results. Each top-level element
+#'   represents a gene cluster. Each sub-list contains enrichment result
+#'   data frames for specific gene sets. Data frames must include
+#'   \code{GeneRatio} and \code{BgRatio} columns in "x/y" string format.
 #'
-process_enrichment_results <- function(
-    all_db_results,
-    enrichment_results,
-    adjP_threshold,
-    column_name,
-    count_column_name,
-    background = FALSE) {
-  column_indices <- list(2, 6, 3, 4, 9)
-
-  # Process results for all databases.
-  for (i in seq_along(enrichment_results)) {
-    df <- enrichment_results[[i]]
-    df <- subset(df, df[[column_indices[[2]]]] < adjP_threshold)
-
-    if (nrow(df) == 0) {
-      next
-    }
-
-    term_list <- as.list(df[[column_indices[[1]]]])
-    adjP_list <- as.list(df[[column_indices[[2]]]])
-
-    odds_ratio <- as.list(df[[column_indices[[3]]]])
-    odds_ratio <- vapply(
-      odds_ratio,
-      function(x) eval(parse(text = x)),
-      numeric(1)
-    )
-
-    bg_ratio <- as.list(df[[column_indices[[4]]]])
-    bg_ratio <- vapply(
-      bg_ratio,
-      function(x) eval(parse(text = x)),
-      numeric(1)
-    )
-
-    odds_ratio <- mapply("/", odds_ratio, bg_ratio)
-
-    gene_count_list <- as.list(df[[column_indices[[5]]]])
-
-    named_list <- list()
-
-    # Loop through the terms
-    for (j in seq_along(term_list)) {
-      # Create a sublist for each term with its adjP value and gene count
-
-      # Skip terms that are just supported by one gene.
-      if (gene_count_list[j] < 2) {
-        next
-      }
-
-      sublist <- list(adjP_list[j], odds_ratio[j])
-
-      # Assign this sublist to named_list with the term as its name
-      term <- as.character(term_list[j])
-      named_list[[term]] <- sublist
-    }
-
-    for (name in names(named_list)) {
-      if (!name %in% all_db_results[[i]]$BioProcess) {
-        # Create a list with the same structure as your DataFrame
-        row_index <- nrow(all_db_results[[i]]) + 1
-        all_db_results[[i]][row_index, "BioProcess"] <- name
-        all_db_results[[i]][row_index, column_name] <- named_list[[name]][[1]]
-        all_db_results[[i]][row_index, count_column_name] <-
-          named_list[[name]][[2]]
-      } else {
-        row_index <- which(all_db_results[[i]]$BioProcess == name)
-        all_db_results[[i]][row_index, column_name] <- named_list[[name]][[1]]
-        all_db_results[[i]][row_index, count_column_name] <-
-          named_list[[name]][[2]]
+#' @return A nested list with the same structure as \code{ora_results}, but
+#'   with an additional numeric column \code{odds_ratio} in each result data
+#'   frame, if applicable.
+#'
+#' @seealso \code{\link{make_enrich_dotplot}} for visualizing the results,
+#'   and \code{\link{prepare_plot_data}} to extract filtered plot-ready data.
+#'
+#' @importFrom stats setNames
+#' 
+add_odds_ratios_to_ora <- function(ora_results) {
+  
+  for (cluster in names(ora_results)) {
+    for (gene_set_name in names(ora_results[[cluster]])) {
+      df <- ora_results[[cluster]][[gene_set_name]]
+      
+      if (
+        is.data.frame(df) &&
+        "GeneRatio" %in% colnames(df) &&
+        "BgRatio" %in% colnames(df)
+      ) {
+        # Parse GeneRatio
+        gene_ratio_parts <- strsplit(df$GeneRatio, "/")
+        gene_numer <- as.numeric(sapply(gene_ratio_parts, function(x) x[1]))
+        gene_denom <- as.numeric(sapply(gene_ratio_parts, function(x) x[2]))
+        gene_ratios <- gene_numer / gene_denom
+        
+        # Parse BgRatio
+        bg_ratio_parts <- strsplit(df$BgRatio, "/")
+        bg_numer <- as.numeric(sapply(bg_ratio_parts, function(x) x[1]))
+        bg_denom <- as.numeric(sapply(bg_ratio_parts, function(x) x[2]))
+        bg_ratios <- bg_numer / bg_denom
+        
+        # Compute odds ratio
+        odds_ratios <- gene_ratios / bg_ratios
+        df$odds_ratio <- odds_ratios
+        
+        ora_results[[cluster]][[gene_set_name]] <- df
       }
     }
   }
-  return(all_db_results)
+  
+  return(ora_results)
 }
 
 
-#' Make Enrich Dotplot
-#' 
+#' Create Dotplot of ORA Results by Cluster and Gene Set
+#'
 #' @noRd
 #'
 #' @description
-#' Make an enriched dotplot for visualization.
+#' Generates a dotplot visualizing overrepresentation analysis (ORA)
+#' results across multiple gene clusters and gene set databases. This
+#' function consumes a nested ORA result structure and uses significance
+#' and odds ratio information to represent enriched terms per cluster.
 #'
-#' @param enrichments_list A list of enrichments containing data frames for
-#'                         different databases.
-#' @param databases A character vector specifying the databases to be included.
-#' @param title A character string specifying the title of the dotplot.
+#' The function relies on \code{prepare_plot_data()} to extract and filter
+#' top enrichment results. Only terms with adjusted p-values below 0.05
+#' and supported by at least two genes are shown. Term names are truncated
+#' for readability if longer than 100 characters.
 #'
-#' @return A list containing:
+#' @param ora_results A nested list of ORA results, where each top-level
+#'   element corresponds to a gene cluster, and each sub-list contains
+#'   enrichment result data frames for specific gene set databases. These
+#'   data frames must include columns \code{p.adjust}, \code{Description},
+#'   \code{odds_ratio}, and \code{Count}.
+#' @param title A character string used as the plot title. Defaults to
+#'   \code{"Title"}.
+#'
+#' @return A named list with two elements:
 #' \describe{
-#'   \item{p}{The ggplot object representing the dotplot.}
-#'   \item{dotplot_nrows}{An integer specifying the number of rows in the
-#'                        dotplot.}
-#'   \item{full_enrich_results}{A data frame containing the full enrichments
-#'                              results.}
+#'   \item{dotplot}{A \code{ggplot2} object representing the ORA dotplot.}
+#'   \item{dotplot_height}{A numeric value for the optimal plot height, based
+#'   on the number of unique terms.}
 #' }
 #'
-#' @importFrom ggplot2 ggplot aes geom_point ylab coord_fixed guide_colorbar
-#'                     theme_bw theme element_blank element_text labs
-#' @importFrom scales oob_squish
-#' @importFrom rlang .data
+#' @seealso \code{\link{prepare_plot_data}} for preparing the filtered input,
+#'   and \code{\link{add_odds_ratios_to_ora}} to precompute odds ratios.
 #'
+#' @importFrom ggplot2 ggplot aes geom_point geom_blank ylab 
+#'   scale_color_gradient scale_size_area theme_bw theme element_blank   
+#'   element_text labs coord_cartesian scale_y_discrete guide_colorbar
+#' @importFrom scales oob_squish
+#' @importFrom grid unit
+#' @importFrom rlang .data
+#' 
 make_enrich_dotplot <- function(
-    enrichments_list,
-    databases,
-    title = "Title") {
-  results <- prepare_plot_data(
-    enrichments_list,
-    databases
-  )
-
-  top_plot_data <- results$top_plot_data
-  full_enrich_results <- results$full_enrich_results
-
-  # Calculate plot height based on the number of y-axis labels
+    ora_results,
+    title = "Title"
+) {
+  
+  top_plot_data <- prepare_plot_data(ora_results)
+  
   height_per_label <- 0.1
   num_labels <- length(unique(top_plot_data$term))
-  plot_height <- num_labels * height_per_label
-
-  if (plot_height < 0.70) { # to always have a minimum size.
-    plot_height <- 0.70
-  }
-
-  # Ensure term labels are truncated to a maximum of 100 characters
+  plot_height <- max(num_labels * height_per_label, 0.70)
+  
   top_plot_data$term <- as.character(top_plot_data$term)
   top_plot_data$term <- ifelse(
     nchar(top_plot_data$term) > 100,
     paste0(substr(top_plot_data$term, 1, 97), "..."),
     top_plot_data$term
   )
-
+  
   p <- ggplot2::ggplot(
     top_plot_data,
     ggplot2::aes(
-      .data$cluster,
-      .data$term,
+      x = .data$cluster,
+      y = .data$term,
       size = -log10(.data$adj.p_value)
     )
   ) +
-    ggplot2::geom_point(
-      aes(color = .data$odds_ratios),
-      na.rm = TRUE
-    ) +
-    ggplot2::geom_blank(aes(
-      .data$cluster,
-      .data$term
-    )) + # Ensure all columns are shown
+    ggplot2::geom_point(aes(color = .data$odds_ratio), na.rm = TRUE) +
+    ggplot2::geom_blank(aes(.data$cluster, .data$term)) +
     ggplot2::ylab("database: term") +
     ggplot2::scale_color_gradient(
       "odds\nratio",
@@ -1295,165 +1222,123 @@ make_enrich_dotplot <- function(
     ggplot2::labs(title = title) +
     ggplot2::scale_y_discrete(expand = expansion(mult = c(0.1, 0.1))) +
     ggplot2::coord_cartesian(clip = "off")
-
+  
   list(
     dotplot = p,
-    dotplot_height = plot_height,
-    full_enrich_results = full_enrich_results
+    dotplot_height = plot_height
   )
 }
 
+
+#' Flatten Nested ORA Results
+#'
+#' @noRd
+#'
+#' @description
+#' Converts a nested ORA results list into a tidy long-format data frame. This
+#' function extracts all result data frames from a structure like
+#' \code{ora_results[[cluster]][[gene_set]]}, appends the cluster and gene set
+#' as metadata columns, and returns a combined data frame.
+#'
+#' @param ora_results A nested list of ORA results. The first level of keys
+#'   represents cluster names, and each sub-list contains result data frames
+#'   from ORA against specific gene set databases.
+#'
+#' @return A data frame combining all ORA results, with additional columns:
+#' \describe{
+#'   \item{cluster}{The name of the cluster (character).}
+#'   \item{gene_set}{The name of the gene set database.}
+#'   \item{term}{A combined label of \code{gene_set: Description}.}
+#' }
+#'
+#' Data frames that are \code{NULL}, \code{NA}, or have 0 rows are skipped.
+#'
+#' @importFrom dplyr bind_rows
+#' 
+flatten_ora_results <- function(ora_results) {
+  
+  rows <- list()
+  
+  for (cluster in names(ora_results)) {
+    for (gene_set in names(ora_results[[cluster]])) {
+      df <- ora_results[[cluster]][[gene_set]]
+      
+      if (is.data.frame(df) && nrow(df) > 0) {
+        df$cluster <- cluster
+        df$gene_set <- gene_set
+        df$term <- paste(gene_set, df$Description, sep = ": ")
+        rows[[length(rows) + 1]] <- df
+      }
+    }
+  }
+  
+  if (length(rows) == 0) {
+    return(data.frame())
+  }
+  
+  dplyr::bind_rows(rows)
+}
 
 
 # Level 4 internal functions ---------------------------------------------------
 
 
-#' Prepare Plot Data
-#' 
+#' Prepare Plot Data from Nested ORA Results
+#'
 #' @noRd
 #'
 #' @description
-#' This function prepares plot data for visualization based on enrichments
-#' lists and specified databases.
+#' Flattens a nested ORA result list into a tidy data frame for plotting. The
+#' input should be a list of clusters, each containing a list of gene set
+#' names mapped to enrichment result data frames. This function extracts all
+#' results, adds cluster and gene set metadata, and filters for terms that are
+#' statistically significant and supported by at least two genes.
 #'
-#' @param enrichments_list A list of enrichments containing data frames for
-#'        different databases.
-#' @param databases A character vector specifying the databases to be included.
+#' @param ora_results A nested list of ORA results. Each top-level entry
+#'   corresponds to a gene cluster (e.g., "cluster_1") and contains a named
+#'   list of enrichment result data frames (one per gene set). Data frames
+#'   must include the columns \code{p.adjust}, \code{Description}, \code{Count},
+#'   and \code{odds_ratio}.
 #'
-#' @return A list containing two data frames:
+#' @return A data frame with the following columns:
 #' \describe{
-#'   \item{top_plot_data}{A data frame containing the prepared plot data for
-#'                          visualization of top combinations.}
-#'   \item{full_enrich_results}{A data frame containing the full enrichments
-#'                               results.}
+#'   \item{cluster}{Cluster identifier (character).}
+#'   \item{term}{Combined gene set and term description label.}
+#'   \item{adj.p_value}{Adjusted p-value for the enrichment term.}
+#'   \item{odds_ratio}{Odds ratio of the enrichment.}
 #' }
 #'
-#' @importFrom purrr set_names keep
-#' @importFrom dplyr bind_rows starts_with mutate group_by ungroup arrange
-#'                   semi_join filter
-#' @importFrom tidyr pivot_longer separate_wider_regex replace_na pivot_wider
-#'                   unite
-#' @importFrom stats na.omit
-#' @importFrom rlang .data
+#' Only rows with \code{p.adjust < 0.05} and \code{Count >= 2} are included in
+#' the result. This output is intended for dotplot visualizations.
 #'
-prepare_plot_data <- function(
-    enrichments_list,
-    databases) {
-  plot_data <-
-    enrichments_list |>
-    purrr::set_names(databases) |>
-    purrr::keep(is.data.frame) |>
-    dplyr::bind_rows(.id = "db") |>
-    tidyr::pivot_longer(dplyr::starts_with("Cluster"), names_to = "p_odd") |>
-    tidyr::separate_wider_regex(
-      .data$p_odd,
-      c("Cluster_", cluster = "\\d+", "_", type = ".*"),
-      too_few = "align_start"
-    ) |>
-    tidyr::replace_na(list(type = "adj.p_value")) |>
-    tidyr::pivot_wider(names_from = .data$type, values_from = .data$value)
-
-  plot_data <- plot_data |>
-    dplyr::group_by(.data$db, .data$BioProcess) |>
-    dplyr::mutate(avg_odds_ratio = mean(.data$odds_ratios, na.rm = TRUE)) |>
-    dplyr::ungroup() |>
-    dplyr::arrange(
-      dplyr::desc(.data$avg_odds_ratio),
-      .data$db, .data$BioProcess
-    )
-
-  # Initialize the cluster counts
-  cluster_counts <-
-    vector("integer", length = max(plot_data$cluster, na.rm = TRUE))
-  names(cluster_counts) <- as.character(seq_along(cluster_counts))
-
-  selected_combos <- list()
-
-  min_threshold <- 5
-
-  # Iterate through combinations
-  i <- 1
-  while (i <= nrow(plot_data)) {
-    combo <- plot_data[i, ]
-
-    relevant_rows <-
-      dplyr::filter(
-        plot_data,
-        plot_data[["db"]] == combo[["db"]],
-        plot_data[["BioProcess"]] == combo[["BioProcess"]]
-      )
-
-    # Update counts for non-NA odds_ratios clusters
-    update_counts <-
-      table(relevant_rows$cluster[!is.na(relevant_rows$odds_ratios)])
-
-    # Identify clusters in the current combination
-    combo_clusters <- as.numeric(names(update_counts))
-
-    # Check if any cluster in the combination is below the threshold
-    include_combo <- any(cluster_counts[combo_clusters] < min_threshold)
-
-    if (include_combo) {
-      # Temporarily update cluster counts for evaluation
-      temp_cluster_counts <- cluster_counts
-      temp_cluster_counts[combo_clusters] <-
-        temp_cluster_counts[combo_clusters] + update_counts
-
-      # Final check to ensure we don't exclude necessary clusters under the
-      # threshold. This step might seem redundant given the current logic but
-      # could be adjusted for more complex conditions
-      if (any(temp_cluster_counts <= min_threshold |
-        temp_cluster_counts > min_threshold)) {
-        # Commit the update if the combination is still eligible
-        cluster_counts <- temp_cluster_counts
-        selected_combos[[length(selected_combos) + 1]] <- combo
+#' @seealso \code{\link{add_odds_ratios_to_ora}},
+#'   \code{\link{make_enrich_dotplot}}
+#' 
+prepare_plot_data <- function(ora_results) {
+  all_rows <- list()
+  
+  for (cluster in names(ora_results)) {
+    for (gene_set in names(ora_results[[cluster]])) {
+      df <- ora_results[[cluster]][[gene_set]]
+      if (is.data.frame(df) && nrow(df) > 0) {
+        df$cluster <- cluster
+        df$gene_set <- gene_set
+        df$term <- paste(
+          gene_set,
+          df$Description,
+          sep = ": "
+        )
+        all_rows[[length(all_rows) + 1]] <- df
       }
     }
-
-    # Check stopping conditions
-    # Stop if all combos have been evaluated or the sum of cluster_counts
-    # exceeds 5 times the number of clusters
-    if (i == nrow(plot_data) || sum(cluster_counts) > 5 *
-      length(cluster_counts)) {
-      break
-    }
-
-    i <- i + length(cluster_counts) # Jump to next combo
   }
-
-  # Combine selected combos into a dataframe
-  top_combos <- do.call(
-    rbind,
-    selected_combos
-  )
-
-  # Filter the original data to keep only rows matching the top 5 combinations
-  top_plot_data <- plot_data |>
-    dplyr::semi_join(
-      top_combos,
-      by = c(
-        "db",
-        "BioProcess"
-      )
-    )
-
-  full_enrich_results <- stats::na.omit(plot_data)
-
-  top_plot_data <- top_plot_data |>
-    tidyr::unite(
-      .data$db,
-      .data$BioProcess,
-      col = "term",
-      sep = ": "
-    )
-
-  top_plot_data$term <- factor(
-    top_plot_data$term,
-    levels = rev(unique(top_plot_data$term))
-  )
-
-  list(
-    top_plot_data = top_plot_data,
-    full_enrich_results = full_enrich_results
-  )
+  
+  full_df <- do.call(rbind, all_rows)
+  
+  # Filter for top plot: only significant and supported by ≥2 genes
+  top_df <- full_df[full_df$p.adjust < 0.05 & full_df$Count >= 2, ]
+  top_df <- top_df[, c("cluster", "term", "p.adjust", "odds_ratio")]
+  colnames(top_df) <- c("cluster", "term", "adj.p_value", "odds_ratio")
+  
+  top_df
 }

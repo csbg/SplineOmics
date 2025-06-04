@@ -9,4 +9,4 @@
 library(testthat)
 library(SplineOmics)
 
-# test_check("SplineOmics")
+test_check("SplineOmics")

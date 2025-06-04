@@ -840,7 +840,7 @@ report dir can be specified. The function run_ora() runs ORA
 using clusterProfiler, generates an HTML report and returns the ORA
 dotplots in R.
 
-```{r prepare arguments for ORA, eval = TRUE}
+```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- here::here("databases.tsv")
 
