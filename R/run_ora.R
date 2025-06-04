@@ -27,6 +27,10 @@
 #' @param report_info A list containing information for the report generation,
 #' such as omics_data_type and data_description (this is the list used for all
 #' report generating functions of this package).
+#' @param cluster_hits_report_name Single character string specifying the name 
+#' of the cluster_hits() function report, that contains the results that were
+#' used for the overprepresentation analysis here. Must be specified, because
+#' otherwise, the connection is not documented.
 #' @param clusterProfiler_params A list that specifies the parameters for the 
 #' clusterProfiler, such as for example: clusterProfiler_params <- list(
 #'   pvalueCutoff = 0.05,
@@ -60,6 +64,7 @@ run_ora <- function(
     levels_clustered_hits,
     databases,
     report_info,
+    cluster_hits_report_name,
     clusterProfiler_params = NA,
     plot_titles = NA,
     universe = NULL,
@@ -97,7 +102,8 @@ run_ora <- function(
     databases = databases,
     params = clusterProfiler_params,
     plot_titles = plot_titles,
-    background = universe
+    background = universe,
+    cluster_hits_report_name = cluster_hits_report_name
   )
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
@@ -151,7 +157,12 @@ run_ora <- function(
   names(level_headers_info) <- names(all_results)
   
   
+  # Move them to the report by shipping them inside report_info: Convenience.
   report_info$databases <- unique(databases[["DB"]])
+  report_info$clusterProfiler_params <- clusterProfiler_params
+  report_info$cluster_hits_report_name <- cluster_hits_report_name
+  report_info$levels_clustered_hits <- levels_clustered_hits
+  report_info$background_genes <- universe
   
   if (all(vapply(plots, is.character, logical(1)))) {
     message("No results --> Not generating a report and returning NULL.")
@@ -196,13 +207,20 @@ run_ora <- function(
 #' @param plot_titles A character vector of titles for the plots, with length
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
+#' @param cluster_hits_report_name Single character string specifying the name 
+#' of the cluster_hits() function report, that contains the results that were
+#' used for the overprepresentation analysis here. Must be specified, because
+#' otherwise, the connection is not documented.
 #'
 control_inputs_run_ora <- function(
     levels_clustered_hits,
     databases,
     params,
     plot_titles,
-    background) {
+    background,
+    cluster_hits_report_name
+    ) {
+  
   check_clustered_hits(levels_clustered_hits)
   
   check_databases(databases)
@@ -228,6 +246,14 @@ control_inputs_run_ora <- function(
       check_genes(background)
     }
   }
+  
+  if (!is.character(cluster_hits_report_name) 
+      || length(cluster_hits_report_name) != 1) {
+    stop_call_false(
+      "`cluster_hits_report_name` must be a single character string."
+      )
+  }
+  
 }
 
 
