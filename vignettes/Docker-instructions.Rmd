@@ -122,7 +122,9 @@ docker start splineomics
 
 # Using the Docker Desktop gui instead
 
-Instead of pasting commands into the Power- or Bashshell, you can also do all of this with the graphical user interface of Docker Desktop. When you do that and still want to use the link to the localhost page provided above, set the port to 8888 (or otherwise, you have to change the link so that it points to your port).
+Instead of pasting commands into the Power- or Bashshell, you can also do all of this with the graphical user interface of Docker Desktop. When you do that and still want to use the link to the localhost page provided above, set the port to 8888 (or otherwise, you have to change the link so that it points to your port). Additionally, if you don't set
+a passwort when starting the container using the GUI, then your password is 
+generated randomly and is written in red in the logs of that container.
 
 # Input and Output File Management
 

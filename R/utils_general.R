@@ -33,8 +33,7 @@ create_progress_bar <- function(
     format = paste(" ", message, " [:bar] :percent :elapsed"),
     total = length(iterable),
     width = 60,
-    clear = FALSE,
-    stream = stdout()  # <- force stdout
+    clear = FALSE
   )
 
   return(pb)
