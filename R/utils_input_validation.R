@@ -2366,15 +2366,16 @@ Level2Functions <- R6::R6Class("Level2Functions",
       # Check if dof exists and is an integer vector
       if ("dof" %in% names(spline_params)) {
         if (!all(spline_params$dof == as.integer(spline_params$dof))) {
-          stop("dof must be an integer vector in spline_params.", call. = FALSE)
+          stop_call_false("dof must be an integer vector in spline_params.")
         }
-        # Check for B-splines that dof is greater than 2
+        # B-spline DoF must be > 2 — but only if not zero (i.e., not auto)
         for (i in seq_along(spline_params$spline_type)) {
           if (spline_params$spline_type[i] == "b" &&
-            spline_params$dof[i] < 3) {
-            stop(
-              paste("B-splines require DoF > 2 for spline_type at index", i),
-              call. = FALSE
+              spline_params$dof[i] != 0 &&
+              spline_params$dof[i] < 3) {
+            stop_call_false(
+              paste("B-splines require DoF > 2 at index", i,
+                    "unless auto-selection (DoF = 0) is used.")
             )
           }
         }

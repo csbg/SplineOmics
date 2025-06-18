@@ -24,7 +24,9 @@
 #'                                contain the following named 
 #'      elements:
 #'      - `dof`: An integer greater than 1, specifying the degrees of freedom 
-#'      for  the dream topTable.
+#'      for  the dream topTable. If set to 0, then the best dof is automatically
+#'      found with the help of leave-one-out-crossvalidation (loocv). The dof 
+#'      with the lowest error on the loocv is chosen.
 #'      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
 #'      approximation for mixed models.
 #'      Note that random effects are now directly specified in the design 
@@ -94,7 +96,11 @@ run_limma_splines <- function(
   # and I heavily oriented my code towards that. But then I realised that it is
   # nonsense to encode the time as X, and now it is explicitly "Time" (because
   # meta must contain the exact name "Time" for this respective column).
-  design <- gsub("Time", "X", design)  
+  design <- gsub(
+    "Time",
+    "X",
+    design
+    )  
   
   feature_names <- rownames(data)
   
@@ -135,7 +141,7 @@ run_limma_splines <- function(
   
   if (mode == "integrated") {
     # Step 1: Fit the global model once
-    fit_obj <- fit_global_model(
+    fit_obj <- fit_global_model( 
       data = data,
       rna_seq_data = rna_seq_data,
       meta = meta,
@@ -160,6 +166,8 @@ run_limma_splines <- function(
     limma_splines_result[["interaction_condition_time"]] <- 
       contrast_results[["condition_time"]]
     
+    spline_params <- fit_obj[["spline_params"]]   # auto-dof can change dof
+    
   } else { # mode == "isolated"
     message(paste(
       "mode == 'integrated' necessary for between level",
@@ -174,7 +182,8 @@ run_limma_splines <- function(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
     homosc_violation_result = 
-      if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL
+      if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL,
+    spline_params = spline_params   # auto-dof can change dof
   )
 }
 
@@ -346,6 +355,17 @@ fit_global_model <- function(
   
   effects <- extract_effects(design)
   
+  if (spline_params[["dof"]][1] == 0) {
+    best_dof <- select_spline_dof_loocv(   
+      data = data,
+      meta = meta,
+      spline_params = spline_params,
+      level_index = 1,
+      fixed_effects = effects[["fixed_effects"]]
+    )
+    spline_params$dof[1] <- best_dof
+  }
+  
   design2design_matrix_result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
@@ -378,7 +398,7 @@ fit_global_model <- function(
     homosc_violation_result <- NULL
   }
   
-  if (effects[["random_effects"]] != "") {
+  if (effects[["random_effects"]] != "") {    # variancePartition approach
     colnames(data) <- rownames(meta)  # dream requires this format
     
     # Apply the Kenward-Roger method if specified
@@ -420,7 +440,7 @@ fit_global_model <- function(
       
       fit <- variancePartition::eBayes(fit = fit) 
     }
-  } else {
+  } else {                         # limma approach
     if (use_array_weights) {
       weights <- limma::arrayWeights(
         object = data,
@@ -451,7 +471,8 @@ fit_global_model <- function(
     feature_names = feature_names,
     condition = condition,
     padjust_method = padjust_method,
-    homosc_violation_result = homosc_violation_result
+    homosc_violation_result = homosc_violation_result,
+    spline_params = spline_params
   )
 }
 
@@ -621,10 +642,21 @@ process_within_level <- function(
   
   effects <- extract_effects(design)
   
+  if (spline_params[["dof"]][level_index] == 0) {
+    best_dof <- select_spline_dof_loocv(   
+      data = data,
+      meta = meta,
+      spline_params = spline_params,
+      level_index = level_index,
+      fixed_effects = effects[["fixed_effects"]]
+    )
+    spline_params$dof[level_index] <- best_dof
+  }
+  
   result <- design2design_matrix(
-    meta,
-    spline_params,
-    level_index,
+    meta = meta,
+    spline_params = spline_params,
+    level_index = level_index,
     design = effects[["fixed_effects"]]
   )
   
@@ -811,6 +843,86 @@ extract_contrast_for_pair <- function(
 }
 
 
+#' Select Optimal Spline Degrees of Freedom via Analytical LOOCV
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function selects the optimal number of degrees of 
+#' freedom (DoF) for a spline-based time model by minimizing the average 
+#' analytical leave-one-out cross-validation (LOOCV) error across all features
+#' (e.g., genes).
+#'
+#' The method assumes that spline basis functions are included in a linear model
+#' and uses \code{lm()} to fit each feature individually. The DoF that minimizes
+#' the average LOOCV error across all features is returned.
+#'
+#' @param data A numeric matrix with features (e.g., genes) in rows and samples
+#'   in columns.
+#' @param meta A data frame containing sample metadata. Must include a
+#'   \code{Time} column.
+#' @param spline_params A list of spline parameters. Must include
+#'   \code{spline_type} and \code{dof}. The entry at \code{level_index} must be
+#'   set to \code{"auto"} to trigger optimization.
+#' @param level_index Integer index specifying which element in
+#'   \code{spline_params$dof} to update.
+#' @param fixed_effects A formula or character string specifying the fixed
+#'   effects for model construction.
+#'
+#' @return An integer giving the optimal degrees of freedom selected via LOOCV.
+#' 
+select_spline_dof_loocv <- function(
+    data,
+    meta,
+    spline_params,
+    level_index,
+    fixed_effects
+) {
+
+  candidate_dofs <- 2:min(10, length(unique(meta$Time)))
+  avg_loocv_errors <- numeric(length(candidate_dofs))
+  
+  pb <- progress_bar$new(
+    format = "  Optimizing DoF [:bar] :current/:total (:percent) ETA: :eta",
+    total = length(candidate_dofs),
+    clear = FALSE,
+    width = 60
+  )
+  
+  for (i in seq_along(candidate_dofs)) {
+    dof_i <- candidate_dofs[i]
+    spline_params_i <- spline_params
+    spline_params_i$dof <- numeric(length(spline_params$dof))
+    spline_params_i$dof[level_index] <- as.numeric(dof_i)
+    
+    design_result <- design2design_matrix(
+      meta = meta,
+      spline_params = spline_params_i,
+      level_index = level_index,
+      design = fixed_effects
+    )
+    design_matrix_i <- design_result$design_matrix
+    
+    loocv_errors <- apply(
+      data,
+      1,
+      analytic_loocv,
+      design_matrix = design_matrix_i
+      )
+    avg_loocv_errors[i] <- mean(
+      loocv_errors,
+      na.rm = TRUE
+      )
+    pb$tick()
+  }
+  
+  best_dof <- candidate_dofs[which.min(avg_loocv_errors)]
+  message(sprintf("Selected optimal spline DoF = %d", best_dof))
+  
+  return(best_dof)
+}
+
+
 # Level 3 internal functions ---------------------------------------------------
 
 
@@ -946,4 +1058,32 @@ build_contrasts_for_pair <- function(
     condition = condition_contrast,
     interaction = interaction_contrasts
   )
+}
+
+
+#' Analytical Leave-One-Out Cross-Validation computation
+#'
+#' @noRd
+#'
+#' @description
+#' Computes the analytical Leave-One-Out Cross-Validation (LOOCV) error
+#' for a given expression vector and design matrix using a linear model.
+#' This function uses the hat matrix and residuals to avoid repeated model
+#' fitting and provides a fast estimate of predictive error.
+#'
+#' @param expr_vec A numeric vector of expression values for a single feature.
+#' @param design_matrix A numeric design matrix (no intercept column) used to
+#'   model the time trend or other covariates.
+#'
+#' @return A numeric scalar representing the LOOCV error.
+#'
+analytic_loocv <- function(
+    expr_vec,
+    design_matrix
+    ) {
+  
+  fit <- lm(expr_vec ~ design_matrix - 1)  # no intercept, already included
+  h <- hatvalues(fit)
+  r <- residuals(fit)
+  mean((r / (1 - h))^2)
 }
