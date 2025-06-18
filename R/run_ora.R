@@ -219,7 +219,7 @@ control_inputs_run_ora <- function(
     plot_titles,
     background,
     cluster_hits_report_name
-    ) {
+) {
   
   check_clustered_hits(levels_clustered_hits)
   
@@ -251,7 +251,7 @@ control_inputs_run_ora <- function(
       || length(cluster_hits_report_name) != 1) {
     stop_call_false(
       "`cluster_hits_report_name` must be a single character string."
-      )
+    )
   }
   
 }

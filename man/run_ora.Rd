@@ -8,6 +8,7 @@ run_ora(
   levels_clustered_hits,
   databases,
   report_info,
+  cluster_hits_report_name,
   clusterProfiler_params = NA,
   plot_titles = NA,
   universe = NULL,
@@ -37,6 +38,11 @@ clusterProfiler in this function.}
 \item{report_info}{A list containing information for the report generation,
 such as omics_data_type and data_description (this is the list used for all
 report generating functions of this package).}
+
+\item{cluster_hits_report_name}{Single character string specifying the name 
+of the cluster_hits() function report, that contains the results that were
+used for the overprepresentation analysis here. Must be specified, because
+otherwise, the connection is not documented.}
 
 \item{clusterProfiler_params}{A list that specifies the parameters for the 
 clusterProfiler, such as for example: clusterProfiler_params <- list(
