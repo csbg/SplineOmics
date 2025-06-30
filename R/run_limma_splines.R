@@ -142,12 +142,26 @@ run_limma_splines <- function(
     )
 
   } else if (mode == "integrated") {
+    effects <- extract_effects(design)
+    
+    if (spline_params[["dof"]][1] == 0) {   # auto-dof.
+      best_dof <- select_spline_dof_loocv(   
+        data = data,
+        meta = meta,
+        spline_params = spline_params,
+        level_index = 1,
+        fixed_effects = effects[["fixed_effects"]]
+      )
+      spline_params$dof[1] <- best_dof
+    }
+    
     # Step 1: Fit the global model once
     fit_obj <- fit_global_model( 
       data = data,
       rna_seq_data = rna_seq_data,
       meta = meta,
       design = design,
+      effects = effects,
       dream_params = dream_params,
       spline_params = spline_params,
       condition = condition,
@@ -161,7 +175,8 @@ run_limma_splines <- function(
       fit_obj = fit_obj,
       condition = condition,
       feature_names = feature_names,
-      dof = fit_obj[["spline_params"]][["dof"]]
+      dof = spline_params[["dof"]],
+      effects = effects
       )
     
     # Step 3: Extract pairwise contrasts for all level combinations
@@ -177,9 +192,6 @@ run_limma_splines <- function(
       contrast_results[["condition_only"]]
     limma_splines_result[["interaction_condition_time"]] <- 
       contrast_results[["condition_time"]]
-    
-    spline_params <- fit_obj[["spline_params"]]   # auto-dof can change dof
-    
   }
   
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
@@ -189,6 +201,7 @@ run_limma_splines <- function(
     limma_splines_result = limma_splines_result,
     homosc_violation_result = 
       if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL,
+    fit = if (exists("fit_obj")) fit_obj[["fit"]] else NULL,
     spline_params = spline_params   # auto-dof can change dof
   )
 }
@@ -305,6 +318,7 @@ fit_within_condition_isolated <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
+#' @param effects 
 #' @param dream_params A named list or NULL. When not NULL, it must at least 
 #' contain the named element 'random_effects', which must contain a string that
 #' is a formula for the random effects of the mixed models by dream. 
@@ -336,6 +350,7 @@ fit_global_model <- function(
     rna_seq_data,
     meta,
     design,
+    effects,
     dream_params,
     spline_params,
     condition,
@@ -343,19 +358,6 @@ fit_global_model <- function(
     feature_names,
     use_array_weights = NULL
 ) {
-  
-  effects <- extract_effects(design)
-  
-  if (spline_params[["dof"]][1] == 0) {
-    best_dof <- select_spline_dof_loocv(   
-      data = data,
-      meta = meta,
-      spline_params = spline_params,
-      level_index = 1,
-      fixed_effects = effects[["fixed_effects"]]
-    )
-    spline_params$dof[1] <- best_dof
-  }
   
   design2design_matrix_result <- design2design_matrix(
     meta = meta,
@@ -499,14 +501,18 @@ fit_global_model <- function(
 #' @param fit_obj   list returned by fit_global_model()
 #' @param condition factor column in meta that encodes the condition
 #'  (e.g. "Phase")
-#' @param spline_deg number of spline basis columns (X1 … XS). 2 by default.
+#' @param feature_names 
+#' @param dof
+#' @param effects
+#' 
 #' @return named list of topTable results, one per condition level
 #' 
 extract_within_level_time_effects <- function(
     fit_obj,
     condition,
     feature_names,
-    dof
+    dof,
+    effects
 ) {
 
   levs <- levels(factor(fit_obj$meta[[condition]]))
@@ -515,52 +521,89 @@ extract_within_level_time_effects <- function(
   main_cols <- paste0("X", seq_len(dof))
   
   ## ---------- helper : build contrast for one level ----------
+  # make_contrast <- function(lev) {
+  #   C <- matrix(
+  #     0,
+  #     nrow = dof,
+  #     ncol = length(dm_cols),
+  #     dimnames = list(NULL, dm_cols)
+  #     )
+  #   
+  #   if (lev == ref) {                       # baseline condition
+  #     for (k in seq_len(dof))
+  #       C[k, main_cols[k]] <- 1
+  #   } else {                                # other condition = main+interaction
+  #     int_cols <- paste0(condition, lev, ":", main_cols)
+  #     for (k in seq_len(dof)) {
+  #       C[k, main_cols[k]] <- 1
+  #       C[k, int_cols[k]]  <- 1
+  #     }
+  #   }
+  #   t(C)                                    # transpose → rows = coeffs
+  # }
   make_contrast <- function(lev) {
+    
+    ## give the rows names that already occur in the original design
     C <- matrix(
       0,
       nrow = dof,
       ncol = length(dm_cols),
-      dimnames = list(NULL, dm_cols)
-      )
+      dimnames = list(main_cols,   # <- row-names (will become coeff names)
+                      dm_cols)     #    column names = original DM columns
+    )
     
     if (lev == ref) {                       # baseline condition
       for (k in seq_len(dof))
         C[k, main_cols[k]] <- 1
-    } else {                                # other condition = main+interaction
+    } else {                                # other condition = main + interaction
       int_cols <- paste0(condition, lev, ":", main_cols)
       for (k in seq_len(dof)) {
         C[k, main_cols[k]] <- 1
         C[k, int_cols[k]]  <- 1
       }
     }
+    
     t(C)                                    # transpose → rows = coeffs
   }
-  
-  ## ---------- choose topTable for limma or dream --------------
-  top_fun <- if (inherits(fit_obj$fit, "MArrayLM"))
-    limma::topTable
-  else
-    variancePartition::topTable
-  
-  ## ---------- loop over levels --------------------------------
+
+  if (effects[["random_effects"]] != "") {    # variancePartition approach
+    # dream / variancePartition universe
+    eBayes_fun <- variancePartition::eBayes
+    top_fun    <- variancePartition::topTable
+  } else {
+    # classic limma universe
+    eBayes_fun <- limma::eBayes
+    top_fun    <- limma::topTable
+  }
+
+  # loop over levels
   res_list <- lapply(levs, function(lev) {
     
     Cmat  <- make_contrast(lev)
-    fit2  <- limma::contrasts.fit(fit_obj$fit, Cmat)
-    fit2  <- limma::eBayes(fit2)
+    fit2 <- limma::contrasts.fit(fit_obj$fit, Cmat)
+    if (effects[["random_effects"]] != "") {
+      # Tell dream: all these new contrast coefficients are fixed effects
+      attr(fit2, "betaType") <- rep("fixed", ncol(fit2$coefficients))
+      attr(fit2, "assign")   <- seq_len(ncol(fit2$coefficients))
+      attr(fit2, "term")     <- paste0("contrast", seq_len(ncol(fit2$coefficients)))
+      attr(fit2, "coefBaseline")  <- rep(FALSE, ncol(fit2$coefficients))
+    }
+
+    fit2  <- eBayes_fun(fit2)
+    k   <- ncol(fit2$coefficients)   # how many contrast columns survived
     
     tbl <- top_fun(
       fit2,
-      coef           = seq_len(dof),  # 1…dof contrasts
+      coef           = seq_len(k),   # test them all
       number         = Inf,
       sort.by        = "F",
       adjust.method  = fit_obj$padjust_method
     )
 
-    ## rename Coef1 → X1, Coef2 → X2, …
+    # rename Coef1 → X1, Coef2 → X2, …
     colnames(tbl) <- sub("^Coef", "X", colnames(tbl))
     
-    ## ---- feed through your existing post-processor ------------
+    # feed through your existing post-processor
 
     processed <- process_top_table(
       list(

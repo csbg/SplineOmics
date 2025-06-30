@@ -301,7 +301,7 @@ features (e.g. proteins) that have an adj. p-value below the threshold.
 Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
-```{r cluster the hits, eval = FALSE}
+```{r cluster the hits, eval = TRUE}
 adj_pthresholds <- c( # 0.05 for both levels
   0.05, # exponential
   0.05 # stationary
@@ -368,6 +368,7 @@ clustering_results <- SplineOmics::cluster_hits(
   plot_info = plot_info,
   plot_options = plot_options,
   report_dir = report_dir,
+  report = FALSE,
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05
 )

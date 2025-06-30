@@ -150,6 +150,7 @@ update_splineomics <- function(
     "meta_batch2_column",
     "feature_name_columns",
     "design",
+    "fit",
     "homosc_violation_result",
     "use_array_weights",
     "dream_params",

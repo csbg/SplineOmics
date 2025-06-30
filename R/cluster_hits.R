@@ -219,6 +219,7 @@ cluster_hits <- function(
       report_dir = report_dir,
       mode = mode,
       report_info = report_info,
+      fit = splineomics[["fit"]],
       design = design,
       meta_batch_column = meta_batch_column,
       meta_batch2_column = meta_batch2_column,
@@ -667,6 +668,7 @@ get_category_2_and_3_hits <- function(
 #' ('isolated' or 'integrated').
 #' @param report_info A named list containing report information such as analyst
 #'                    name, fixed and random effects, etc.
+#' @param fit Full fitted model returned by limma or variancePartition::dream.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
 #' @param meta_batch2_column A character string specifying the second meta
@@ -723,6 +725,7 @@ make_clustering_report <- function(
     report_dir,
     mode,
     report_info,
+    fit,
     design,
     meta_batch_column,
     meta_batch2_column,
@@ -879,6 +882,7 @@ make_clustering_report <- function(
         data = data_level,
         meta = meta_level,
         X = X,
+        fit = fit,
         time_unit_label = time_unit_label,
         plot_info = plot_info,
         adj_pthreshold = adj_pthresholds[i],
@@ -2037,6 +2041,7 @@ plot_splines <- function(
     data,
     meta,
     X,
+    fit,
     time_unit_label,
     plot_info,
     adj_pthreshold,
@@ -2073,8 +2078,12 @@ plot_splines <- function(
     heteroscedasticity <- homosc_result$violation_flag[hit_index]
     high_var_group <- homosc_result$max_var_group[hit_index]
 
-    intercept <- top_table$intercept[hit]
-    spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
+    # intercept <- top_table$intercept[hit]
+    # spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
+    
+    intercept <- fit$coefficients[hit_index, "(Intercept)"]
+    spline_cols   <- grep("^X[0-9]+$", colnames(fit$coefficients))
+    spline_coeffs <- as.numeric(fit$coefficients[hit_index, spline_cols])
 
     Time <- seq(
       meta$Time[1],
