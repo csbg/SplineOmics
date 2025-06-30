@@ -2404,21 +2404,20 @@ Level2Functions <- R6::R6Class("Level2Functions",
         spline_params,
         mode,
         meta,
-        condition) {
+        condition
+        ) {
+
       if (mode == "integrated") {
-        # Check that all parameters in spline_params have exactly
-        # one "logical" element
-        if (any(vapply(spline_params, function(x) {
-          # Atomic vectors (like numeric or character vectors)
-          # should count as 1 element
-          !is.atomic(x) && length(x) != 1
-        }, logical(1)))) {
-          stop(paste(
+        # every entry in spline_params must be a scalar (length-1)
+        if (any(vapply(spline_params,
+                       function(x) length(x) != 1,
+                       logical(1)))) {
+          stop_call_false(paste(
             "All parameters in spline_params must have exactly one element",
             "when mode is 'integrated'.",
             "Different spline parameters for the different levels is not",
             "supported for this mode."
-          ), call. = FALSE)
+          ))
         }
 
         # # Additional check for 'knots' and 'bknots' if they exist

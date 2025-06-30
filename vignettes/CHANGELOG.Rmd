@@ -55,6 +55,26 @@ Examples:
   which allows to pass a string which is the name of the corresponding
   cluster_hits() HTML report, that contains the results that are the basis for
   the respective run_ora() report.
+  
+- Separated isolated and integrated mode computations: Before, there was a part
+  in the code that generated the limma time_effect category results.
+  This was used both for the isolated and integrated mode, because they share 
+  those results. However, this meant that the analysis for the integrated mode
+  was run more often then necessary, because it was run once for each condition
+  to the the time_effect results, and then once to get the average diff 
+  condition and interaction results.
+  This was unnecessary, since all the integrated results can be derived with a
+  single global model (with the help of contrasts). Therefore, I now completely
+  separated the compuations for the isolated and integrated approach, and for
+  the integrated approach, just one global model is run and all the three limma
+  result categories extracted from there with the help of contrasts.
+  
+### Added
+- Auto-dof with loocv: Introduced new capability, that automatically finds the 
+  best spline dof based on the error on loocv. For every linear model fit, it 
+  performs the analytical loocv and then looks at the error sum of all features.
+  It does this with every dof from 2 to min(timepoints, 10). Autodof is
+  activated when the the dof = 0L is selected.
 
 --------------------------------------------------------------------------------
 

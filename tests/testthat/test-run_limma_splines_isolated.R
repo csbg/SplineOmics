@@ -56,7 +56,7 @@ test_that("run_limma_splines() works correctly", {
     mode = "isolated", 
     spline_params = list(
       spline_type = c("n", "n"), 
-      dof = c(2L, 2L) 
+      dof = c(2L, 0L) 
     )
   )
   

@@ -161,7 +161,7 @@ run_limma_splines <- function(
       fit_obj = fit_obj,
       condition = condition,
       feature_names = feature_names,
-      dof = spline_params[["dof"]][1]
+      dof = fit_obj[["spline_params"]][["dof"]]
       )
     
     # Step 3: Extract pairwise contrasts for all level combinations
@@ -249,7 +249,6 @@ fit_within_condition_isolated <- function(
   samples <- which(meta[[condition]] == level)
   data_copy <- data[, samples]
   meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
-
 
   if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
     stop_call_false(
@@ -387,6 +386,7 @@ fit_global_model <- function(
     # If there is a considerable violation, select use_array_weights strategy
     use_array_weights <- homosc_violation_result[["violation"]]
   } else{
+    use_array_weights <- FALSE
     homosc_violation_result <- NULL
   }
   
@@ -508,7 +508,7 @@ extract_within_level_time_effects <- function(
     feature_names,
     dof
 ) {
-  
+
   levs <- levels(factor(fit_obj$meta[[condition]]))
   ref  <- levs[1]                      # alphabetically first = baseline
   dm_cols   <- colnames(fit_obj$design_matrix)
@@ -516,10 +516,12 @@ extract_within_level_time_effects <- function(
   
   ## ---------- helper : build contrast for one level ----------
   make_contrast <- function(lev) {
-    C <- matrix(0,
-                nrow = dof,
-                ncol = length(dm_cols),
-                dimnames = list(NULL, dm_cols))
+    C <- matrix(
+      0,
+      nrow = dof,
+      ncol = length(dm_cols),
+      dimnames = list(NULL, dm_cols)
+      )
     
     if (lev == ref) {                       # baseline condition
       for (k in seq_len(dof))
@@ -578,7 +580,6 @@ extract_within_level_time_effects <- function(
     )
   res_list
 }
-
 
 
 #' Extract pairwise contrasts for a condition from a fitted limma model
@@ -984,8 +985,14 @@ select_spline_dof_loocv <- function(
     level_index,
     fixed_effects
 ) {
-
-  candidate_dofs <- 2:min(10, length(unique(meta$Time)))
+  
+  if (spline_params$spline_type[level_index] == "n") {
+    candidate_dofs <- 2:min(10, length(unique(meta$Time)))
+  }
+  else if (spline_params$spline_type[level_index] == "b") {
+    candidate_dofs <- 4:min(10, length(unique(meta$Time)))
+  }
+  
   avg_loocv_errors <- numeric(length(candidate_dofs))
   
   pb <- progress_bar$new(

@@ -385,7 +385,7 @@ want to limit the hits that are plotted. We have several options:
     significantly speeding up computation by omitting the creation and
     export of plots.
 
-```{r cluster the hits, eval = FALSE}
+```{r cluster the hits, eval = TRUE}
 # Note: The low adj. p-values are to have less results, so that the HTML report
 # is smaller in file size.
 adj_pthresholds <- c(   # 0.0000001 for both levels
@@ -453,6 +453,7 @@ clustering_results <- SplineOmics::cluster_hits(
   clusters = clusters,
   genes = genes,
   plot_info = plot_info,
+  report = FALSE,
   plot_options = plot_options,
   report_dir = report_dir,
   adj_pthresh_avrg_diff_conditions = 0.0000001,
