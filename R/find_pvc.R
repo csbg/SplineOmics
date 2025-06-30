@@ -328,14 +328,6 @@ pvc_test <- function(
     stop("Not enough timepoints for compound-contrast-based comparisons.")
   }
   
-  # # Create valid timepoint names for model matrix
-  # valid_timepoints <- make.names(as.character(unique_timepoints))
-  # 
-  # # Design matrix for linear modeling
-  # time_factor <- factor(meta$Time, levels = unique_timepoints)
-  # design <- stats::model.matrix(~ 0 + time_factor)
-  # colnames(design) <- valid_timepoints
-  
   batch_effects <- c("Reactor")
   valid_timepoints <- make.names(as.character(unique_timepoints))
   # batch_effects <- NULL

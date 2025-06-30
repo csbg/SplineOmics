@@ -107,39 +107,41 @@ run_limma_splines <- function(
   rownames(data) <- NULL # To just have numbers describing the rows
   
   meta[[condition]] <- factor(meta[[condition]])
-  levels <- levels(meta[[condition]])
   
-  # Get hits for level (within level analysis)
-  process_level_with_params <- purrr::partial(
-    within_level,
-    spline_params = spline_params,
-    data = data,
-    rna_seq_data = rna_seq_data,
-    meta = meta,
-    design = design,
-    dream_params = dream_params,
-    condition = condition,
-    feature_names = feature_names,
-    padjust_method = padjust_method,
-    mode = mode
-  )
-  
-  results_list <- purrr::imap(
-    levels,
-    process_level_with_params
-  )
-  
-  within_level_top_table <-
-    stats::setNames(
-      purrr::map(results_list, "top_table"),
-      purrr::map_chr(results_list, "name")
+  if (mode == "isolated") {
+    levels <- levels(meta[[condition]])
+    
+    # Get hits for level (within level analysis)
+    process_level_with_params <- purrr::partial(
+      fit_within_condition_isolated,   # the function that is called
+      spline_params = spline_params,
+      data = data,
+      rna_seq_data = rna_seq_data,
+      meta = meta,
+      design = design,
+      dream_params = dream_params,
+      condition = condition,
+      feature_names = feature_names,
+      padjust_method = padjust_method,
+      mode = mode
     )
-  
-  limma_splines_result <- list(
-    time_effect = within_level_top_table
-  )
-  
-  if (mode == "integrated") {
+
+    results_list <- purrr::imap(
+      levels,
+      process_level_with_params
+    )
+    
+    isolated_within_level_top_table <-
+      stats::setNames(
+        purrr::map(results_list, "top_table"),
+        purrr::map_chr(results_list, "name")
+      )
+    
+    limma_splines_result <- list(
+      time_effect = isolated_within_level_top_table
+    )
+
+  } else if (mode == "integrated") {
     # Step 1: Fit the global model once
     fit_obj <- fit_global_model( 
       data = data,
@@ -153,14 +155,24 @@ run_limma_splines <- function(
       feature_names = feature_names,
       use_array_weights = use_array_weights
     )
+
+    # Step 2: Extract the time_effects within each condition.
+    integrated_time_effects <- extract_within_level_time_effects(
+      fit_obj = fit_obj,
+      condition = condition,
+      feature_names = feature_names,
+      dof = spline_params[["dof"]][1]
+      )
     
-    # Step 2: Extract pairwise contrasts for all level combinations
+    # Step 3: Extract pairwise contrasts for all level combinations
     contrast_results <- extract_between_level_contrasts(
       fit_obj = fit_obj,
       condition = condition
+      )
+
+    limma_splines_result <- list(
+      time_effect = integrated_time_effects
     )
-    
-    # Add contrast-based results
     limma_splines_result[["avrg_diff_conditions"]] <- 
       contrast_results[["condition_only"]]
     limma_splines_result[["interaction_condition_time"]] <- 
@@ -168,12 +180,6 @@ run_limma_splines <- function(
     
     spline_params <- fit_obj[["spline_params"]]   # auto-dof can change dof
     
-  } else { # mode == "isolated"
-    message(paste(
-      "mode == 'integrated' necessary for between level",
-      "comparisons. Returning emtpy lists the limma result categories 2 and 3",
-      "(avrg diff conditions, and interaction condition time)."
-    ))
   }
   
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
@@ -188,11 +194,10 @@ run_limma_splines <- function(
 }
 
 
-
 # Level 1 internal functions ---------------------------------------------------
 
 
-#' Within level analysis
+#' Within level analysis for the mode: isolated.
 #' 
 #' @noRd
 #'
@@ -224,12 +229,9 @@ run_limma_splines <- function(
 #' @return A list containing the name of the results and the top table of
 #'          results.
 #'
-#' @seealso
-#' \code{\link{within_level}}, \code{\link{process_top_table}}
-#'
 #' @importFrom stats relevel
 #'
-within_level <- function(
+fit_within_condition_isolated <- function(
     level,
     level_index,
     spline_params,
@@ -244,21 +246,11 @@ within_level <- function(
     mode
 ) {
   
-  if (mode == "isolated") {
-    samples <- which(meta[[condition]] == level)
-    data_copy <- data[, samples]
-    meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
-  } else { # mode == "integrated"
-    data_copy <- data
-    meta_copy <- meta
-    meta_copy[[condition]] <- stats::relevel(
-      meta_copy[[condition]],
-      ref = level
-    )
-    # spline_params must be uniform across all levels for integrated mode.
-    level_index <- 1L
-  }
-  
+  samples <- which(meta[[condition]] == level)
+  data_copy <- data[, samples]
+  meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
+
+
   if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
     stop_call_false(
       "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
@@ -282,7 +274,7 @@ within_level <- function(
     level_index = level_index,
     padjust_method = padjust_method
   )
-  
+
   top_table <- process_top_table(
     result,
     feature_names
@@ -338,7 +330,7 @@ within_level <- function(
 #' @importFrom splines bs ns
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream eBayes
+#' @importFrom variancePartition dream
 #'
 fit_global_model <- function(
     data,
@@ -477,6 +469,118 @@ fit_global_model <- function(
 }
 
 
+#' Extract per-condition time effects from one global fit
+#' 
+#' @noRd
+#'
+#' @description
+#' Takes a **single global LIMMA / dream fit** (returned by
+#' `fit_global_model()`) whose design contains a spline expansion of *Time*
+#' and an interaction with a condition factor (e.g.  
+#' `~ Phase * ns(Time, df = dof)`).
+#' The function:
+#' 
+#' * builds the appropriate contrast matrix so that, for each level of
+#'   the condition factor, the full spline for that level is tested  
+#'   – for the reference level this is just the spline columns  
+#'   – for the other levels it is *(spline + interaction)*  
+#' * runs `limma::contrasts.fit()` + `eBayes()` (or the dream equivalent)
+#'   to obtain an F-test over all spline degrees of freedom;
+#' * renames `Coef1…CoefS` produced by `topTable()` back to `X1…XS`
+#'   so they match the column names used elsewhere;
+#' * passes the result through `process_top_table()` so the output is
+#'   uniform with the rest of the SplineOmics pipeline (adds intercepts,
+#'   feature numbers, etc.);
+#' * returns a named list whose elements are
+#'   `"Phase_Exponential"`, `"Phase_Stationary"`, … (i.e.  
+#'   `<condition>_<level>`), each containing the fully processed top-table
+#'   for that condition’s time effect.
+#'
+#' @param fit_obj   list returned by fit_global_model()
+#' @param condition factor column in meta that encodes the condition
+#'  (e.g. "Phase")
+#' @param spline_deg number of spline basis columns (X1 … XS). 2 by default.
+#' @return named list of topTable results, one per condition level
+#' 
+extract_within_level_time_effects <- function(
+    fit_obj,
+    condition,
+    feature_names,
+    dof
+) {
+  
+  levs <- levels(factor(fit_obj$meta[[condition]]))
+  ref  <- levs[1]                      # alphabetically first = baseline
+  dm_cols   <- colnames(fit_obj$design_matrix)
+  main_cols <- paste0("X", seq_len(dof))
+  
+  ## ---------- helper : build contrast for one level ----------
+  make_contrast <- function(lev) {
+    C <- matrix(0,
+                nrow = dof,
+                ncol = length(dm_cols),
+                dimnames = list(NULL, dm_cols))
+    
+    if (lev == ref) {                       # baseline condition
+      for (k in seq_len(dof))
+        C[k, main_cols[k]] <- 1
+    } else {                                # other condition = main+interaction
+      int_cols <- paste0(condition, lev, ":", main_cols)
+      for (k in seq_len(dof)) {
+        C[k, main_cols[k]] <- 1
+        C[k, int_cols[k]]  <- 1
+      }
+    }
+    t(C)                                    # transpose → rows = coeffs
+  }
+  
+  ## ---------- choose topTable for limma or dream --------------
+  top_fun <- if (inherits(fit_obj$fit, "MArrayLM"))
+    limma::topTable
+  else
+    variancePartition::topTable
+  
+  ## ---------- loop over levels --------------------------------
+  res_list <- lapply(levs, function(lev) {
+    
+    Cmat  <- make_contrast(lev)
+    fit2  <- limma::contrasts.fit(fit_obj$fit, Cmat)
+    fit2  <- limma::eBayes(fit2)
+    
+    tbl <- top_fun(
+      fit2,
+      coef           = seq_len(dof),  # 1…dof contrasts
+      number         = Inf,
+      sort.by        = "F",
+      adjust.method  = fit_obj$padjust_method
+    )
+
+    ## rename Coef1 → X1, Coef2 → X2, …
+    colnames(tbl) <- sub("^Coef", "X", colnames(tbl))
+    
+    ## ---- feed through your existing post-processor ------------
+
+    processed <- process_top_table(
+      list(
+        top_table = tbl,   # from the contrast fit
+        fit       = fit_obj$fit  # full global fit (has intercept)
+      ),
+      feature_names = feature_names
+    )
+    
+    processed
+  })
+  
+  names(res_list) <- paste(
+    condition,
+    levs,
+    sep = "_"
+    )
+  res_list
+}
+
+
+
 #' Extract pairwise contrasts for a condition from a fitted limma model
 #'
 #' @noRd
@@ -577,7 +681,9 @@ extract_between_level_contrasts <- function(
 #'
 process_top_table <- function(
     process_within_level_result,
-    feature_names) {
+    feature_names
+    ) {
+  
   top_table <- process_within_level_result$top_table
   fit <- process_within_level_result$fit
   
@@ -627,7 +733,7 @@ process_top_table <- function(
 #' @importFrom splines bs ns
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream eBayes
+#' @importFrom variancePartition dream      
 #'
 process_within_level <- function(
     data,
@@ -639,7 +745,7 @@ process_within_level <- function(
     level_index,
     padjust_method
 ) {
-  
+
   effects <- extract_effects(design)
   
   if (spline_params[["dof"]][level_index] == 0) {
@@ -659,7 +765,7 @@ process_within_level <- function(
     level_index = level_index,
     design = effects[["fixed_effects"]]
   )
-  
+
   design_matrix <- result[["design_matrix"]]
   
   if (!is.null(rna_seq_data)) {

@@ -24,7 +24,9 @@ following elements:
                                contain the following named 
      elements:
      - `dof`: An integer greater than 1, specifying the degrees of freedom 
-     for  the dream topTable.
+     for  the dream topTable. If set to 0, then the best dof is automatically
+     found with the help of leave-one-out-crossvalidation (loocv). The dof 
+     with the lowest error on the loocv is chosen.
      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
      approximation for mixed models.
      Note that random effects are now directly specified in the design 
