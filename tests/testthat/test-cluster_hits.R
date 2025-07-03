@@ -53,7 +53,7 @@ test_that("cluster_hits() returns correctly structured result", {
   
   # Inputs for clustering
   adj_pthresholds <- c(0.05, 0.05)
-  clusters <- c(6L, 2L)
+  nr_clusters <- c(6L, 2L)
   gene_column_name <- "Gene_symbol"
   genes <- annotation[[gene_column_name]]
   plot_info <- list(
@@ -71,7 +71,7 @@ test_that("cluster_hits() returns correctly structured result", {
   clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresholds = adj_pthresholds,
-    clusters = clusters,
+    nr_clusters = nr_clusters,
     genes = genes,
     plot_info = plot_info,
     plot_options = plot_options,

@@ -307,7 +307,7 @@ adj_pthresholds <- c( # 0.05 for both levels
   0.05 # stationary
 )
 
-clusters <- c(
+nr_clusters <- c(
   2L,   # clusters for the exponential level
   2L    # clusters for the stationary level
 )
@@ -363,7 +363,7 @@ plot_options <- list(
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
-  clusters = clusters,
+  nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,

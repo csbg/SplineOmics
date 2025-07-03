@@ -137,6 +137,11 @@ run_limma_splines <- function(
         purrr::map_chr(results_list, "name")
       )
     
+    isolated_fits <- stats::setNames(
+      purrr::map(results_list, "fit"),         
+      purrr::map_chr(results_list, "name")      
+    )
+    
     limma_splines_result <- list(
       time_effect = isolated_within_level_top_table
     )
@@ -201,7 +206,7 @@ run_limma_splines <- function(
     limma_splines_result = limma_splines_result,
     homosc_violation_result = 
       if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL,
-    fit = if (exists("fit_obj")) fit_obj[["fit"]] else NULL,
+    fit = if (exists("fit_obj")) fit_obj[["fit"]] else isolated_fits,
     spline_params = spline_params   # auto-dof can change dof
   )
 }
@@ -300,7 +305,8 @@ fit_within_condition_isolated <- function(
   
   list(
     name = results_name,
-    top_table = top_table
+    top_table = top_table,
+    fit = result[["fit"]]
   )
 }
 
@@ -501,9 +507,15 @@ fit_global_model <- function(
 #' @param fit_obj   list returned by fit_global_model()
 #' @param condition factor column in meta that encodes the condition
 #'  (e.g. "Phase")
-#' @param feature_names 
-#' @param dof
-#' @param effects
+#' @param feature_names Character vector of feature names (e.g. gene or protein 
+#'   IDs), used to label results in the final top tables.
+#' @param dof Integer specifying the number of spline degrees of freedom used 
+#'   in the model (i.e., how many basis functions were fitted for the time 
+#'   effect).
+#' @param effects A named list describing the model structure. Must include the 
+#'   `"random_effects"` entry, which is a string indicating whether random 
+#'   effects were used ("" = none, otherwise assumed to be 
+#'   dream/variancePartition).
 #' 
 #' @return named list of topTable results, one per condition level
 #' 
@@ -520,27 +532,6 @@ extract_within_level_time_effects <- function(
   dm_cols   <- colnames(fit_obj$design_matrix)
   main_cols <- paste0("X", seq_len(dof))
   
-  ## ---------- helper : build contrast for one level ----------
-  # make_contrast <- function(lev) {
-  #   C <- matrix(
-  #     0,
-  #     nrow = dof,
-  #     ncol = length(dm_cols),
-  #     dimnames = list(NULL, dm_cols)
-  #     )
-  #   
-  #   if (lev == ref) {                       # baseline condition
-  #     for (k in seq_len(dof))
-  #       C[k, main_cols[k]] <- 1
-  #   } else {                                # other condition = main+interaction
-  #     int_cols <- paste0(condition, lev, ":", main_cols)
-  #     for (k in seq_len(dof)) {
-  #       C[k, main_cols[k]] <- 1
-  #       C[k, int_cols[k]]  <- 1
-  #     }
-  #   }
-  #   t(C)                                    # transpose → rows = coeffs
-  # }
   make_contrast <- function(lev) {
     
     ## give the rows names that already occur in the original design

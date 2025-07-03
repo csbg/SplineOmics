@@ -6,7 +6,7 @@
 \usage{
 cluster_hits(
   splineomics,
-  clusters,
+  nr_clusters,
   adj_pthresholds = c(0.05),
   adj_pthresh_avrg_diff_conditions = 0,
   adj_pthresh_interaction_condition_time = 0,
@@ -42,7 +42,8 @@ necessary data and parameters for the analysis, including:
    'adj.P.Val' and expression data columns.
 }}
 
-\item{clusters}{Character or integer vector specifying the number of clusters}
+\item{nr_clusters}{Character or integer vector specifying the number of 
+clusters}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
 hits in each top table.}

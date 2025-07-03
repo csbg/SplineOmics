@@ -1029,12 +1029,12 @@ get_header_section <- function(
       individual spline plots is the average coefficient of variation across
       all timepoints. For example, a value of 10% means that the timepoints,
       on average, have a standard deviation of 10% of the mean.</li>',
-      '<li style="margin-bottom: 15px;">Note that the splines in the plots
-      can appear to be at the wrong intercept. This can occur when a batch  
-      effect and/or random effect is modeled with limma or the linear mixed
-      models, but the plotting data is batch corrected only with the 
-      dedicated limma batch correction function. For a reason, there is a gap.
-      The results are fine! Just the plotting is off!</li>',
+      '<li style="margin-bottom: 15px;">Note: The spline curves may not 
+      perfectly align with the raw data points. This visual mismatch is 
+      expected and arises because the plot is reconstructed from model 
+      coefficients, which may include batch or random effects that are not
+      directly removed from the plotted data. The statistical results remain
+      valid-only the visual reconstruction is approximate. </li>',
       '<li style="margin-bottom: 15px;">If a [WARNING] symbol appears at the
       beginning of a plot title, it indicates that the feature violates
       the homoscedasticity assumption of linear models. It is followed by

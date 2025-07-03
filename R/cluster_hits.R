@@ -31,7 +31,8 @@
 #'    a top table from differential expression analysis, containing at least
 #'    'adj.P.Val' and expression data columns.
 #' }
-#' @param clusters Character or integer vector specifying the number of clusters
+#' @param nr_clusters Character or integer vector specifying the number of 
+#' clusters
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
@@ -73,7 +74,7 @@
 #'
 cluster_hits <- function(
     splineomics,
-    clusters,
+    nr_clusters,
     adj_pthresholds = c(0.05),
     adj_pthresh_avrg_diff_conditions = 0,
     adj_pthresh_interaction_condition_time = 0,
@@ -148,13 +149,25 @@ cluster_hits <- function(
     huge_table_user_prompter(all_limma_result_tables)
   }
 
-  all_levels_clustering <- perform_clustering(
-    top_tables = within_level_top_tables,
-    clusters = clusters,
+  predicted_timecurves <- predict_timecurves(
+    fit = splineomics[["fit"]],
+    splineomics = splineomics,  
+    adj_pthresholds = adj_pthresholds,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction_condition_time = 
+      adj_pthresh_interaction_condition_time,
     meta = meta,
     condition = condition,
     spline_params = spline_params,
     mode = mode
+  )
+
+  all_levels_clustering <- perform_clustering(
+    top_tables = within_level_top_tables,
+    nr_clusters = nr_clusters,
+    meta = meta,
+    condition = condition,
+    predicted_timecurves = predicted_timecurves
   )
 
   # Put them in there under those names, so that the report generation fun
@@ -186,7 +199,8 @@ cluster_hits <- function(
       plot_info = plot_info,
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
-      raw_data = raw_data
+      raw_data = raw_data,
+      predicted_timecurves
     )
   } else {
     spline_comp_plots <- NULL
@@ -219,7 +233,7 @@ cluster_hits <- function(
       report_dir = report_dir,
       mode = mode,
       report_info = report_info,
-      fit = splineomics[["fit"]],
+      predicted_timecurves = predicted_timecurves,
       design = design,
       meta_batch_column = meta_batch_column,
       meta_batch2_column = meta_batch2_column,
@@ -508,7 +522,8 @@ huge_table_user_prompter <- function(tables) {
   
   # Prompt the user
   while (TRUE) {
-    message("\nThe following tables have more than 500 rows (after filtering NAs in 'adj.P.Val'):")
+    message("\nThe following tables have more than 500 rows (after filtering NAs
+            in 'adj.P.Val'):")
     message(table_info, "\n")
     message("This may result in long computations and large HTML output.\n")
     user_input <- readline(prompt = "Do you want to proceed? (y/n): ")
@@ -526,52 +541,286 @@ huge_table_user_prompter <- function(tables) {
 }
 
 
-#' Perform Clustering
-#' 
+#' Predict smooth timecourses from spline-augmented limma model
+#'
 #' @noRd
 #'
 #' @description
-#' Performs clustering on top tables using specified p-values and clusters
-#' for each level within a condition.
+#' Predicts smooth expression or abundance trajectories for all features in a
+#' spline-based limma model across all condition levels. The model must use
+#' natural cubic splines (`ns`) or B-splines (`bs`) to represent time, with or
+#' without condition-specific interaction terms.
 #'
-#' @param top_tables A list of top tables from limma analysis.
-#' @param clusters A list specifying clusters.
-#' @param meta A dataframe containing metadata.
-#' @param condition A character string specifying the condition.
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param mode A character string specifying the mode
-#' ('isolated' or 'integrated').
+#' The function builds design matrices over a smooth time grid and uses
+#' fitted model coefficients to reconstruct fitted curves for each feature,
+#' optionally handling different modeling modes ("isolated" or "integrated").
 #'
-#' @return A list of clustering results for each level within the condition.
+#' This is typically used to visualize model-implied dynamics over time for
+#' multiple biological conditions.
+#'
+#' @param fit A fitted [limma::lmFit()] model object (class `"MArrayLM"`),
+#'   containing spline-based terms (e.g., via [splines::ns()] or 
+#'   [splines::bs()]).
+#' @param splineomics A list containing top tables and model results (not used
+#'   internally, but passed for interface compatibility).
+#' @param adj_pthresholds Unused; included for interface compatibility.
+#' @param adj_pthresh_avrg_diff_conditions Unused; included for interface
+#'   compatibility.
+#' @param adj_pthresh_interaction_condition_time Unused; included for interface
+#'   compatibility.
+#' @param meta A data.frame containing metadata, including time and condition
+#'   annotations.
+#' @param condition String specifying the column in `meta` with experimental
+#'   condition levels.
+#' @param spline_params A list with spline specification:
+#'   - `spline_type`: "n" for natural spline, "b" for B-spline (per condition)
+#'   - `dof`: degrees of freedom (per condition)
+#'   - `degree`: spline degree (only used for B-spline)
+#' @param mode Either `"isolated"` or `"integrated"` depending on model setup.
+#'
+#' @return A list with:
+#'   \describe{
+#'     \item{`time_grid`}{Numeric vector of 1000 time points for prediction.}
+#'     \item{`predictions`}{Named list by condition level. Each entry is a 
+#'     matrix of predicted values (features × time points).}
+#'   }
+#'   
+predict_timecurves <- function(
+    fit,
+    splineomics,
+    adj_pthresholds,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction_condition_time,
+    meta,
+    condition,                 
+    spline_params,
+    mode
+) {
+
+  # time grid (common to all levels)
+  smooth_timepoints <- seq(
+    min(meta$Time), max(meta$Time), length.out = 1000
+  )
+  
+  pred_list <- list()                    # results
+  
+  # iterate over each condition level
+  for (level in unique(meta[[condition]])) {
+    
+    # pick the right fit object
+    if (mode == "isolated") {
+      fit_lv <- fit[[level]]                          
+      if (is.null(fit_lv))                              
+        fit_lv <- fit[[paste0(condition, "_", level)]]
+    } else {
+      fit_lv <- fit
+    }
+    if (is.null(fit_lv$coefficients))
+      stop("missing coefficients for level: ", level)
+    
+    design_n <- colnames(fit_lv$coefficients)
+    
+    # spline columns X1, X2, … 
+    spline_cols <- grep(
+      "^X[0-9]+$",
+      design_n,
+      value = TRUE
+      )
+    k <- length(spline_cols)
+    
+    # decide which row in spline_params to use
+    idx <- if (mode == "isolated")
+      match(level, unique(meta[[condition]])) %||% 1L else 1L
+    
+    # build spline basis
+    B <- if (spline_params$spline_type[idx] == "n") {
+      splines::ns(
+        smooth_timepoints,
+        df = spline_params$dof[idx] %||% k
+        )
+    } else {
+      splines::bs(
+        smooth_timepoints,
+        df     = spline_params$dof[idx] %||% k,
+        degree = spline_params$degree[idx]
+        )
+    }
+    colnames(B) <- spline_cols
+    
+    # build design row
+    if (mode == "isolated") {                   # per-level fit → no dummies
+      X_new  <- cbind(
+        "(Intercept)" = 1,
+        B
+        )
+      needed <- c(
+        "(Intercept)",
+        spline_cols
+        )
+    } else {                                    # integrated: add dummies
+      cond_prefix <- condition
+      all_levels  <- unique(as.character(meta[[condition]]))
+      dummy_suffixes <- sub(
+        paste0("^", cond_prefix),
+        "",
+        grep(
+          paste0("^", cond_prefix),
+          design_n,
+          value = TRUE
+          )
+        )
+      reference_level <- setdiff(
+        all_levels,
+        dummy_suffixes
+        )[1]
+      
+      if (identical(level, reference_level)) {
+        X_new  <- cbind(
+          "(Intercept)" = 1,
+          B
+          )
+        needed <- c(
+          "(Intercept)",
+          spline_cols
+          )
+      } else {
+        dummy_col <- paste0(
+          cond_prefix,
+          level
+          )
+        int_cols  <- paste0(
+          dummy_col,
+          ":",
+          spline_cols
+          )
+        X_new <- cbind(
+          "(Intercept)" = 1,
+          dummy_col = 1,
+          B,
+          B
+          )
+        colnames(X_new) <- c(
+          "(Intercept)",
+          dummy_col,
+          spline_cols,
+          int_cols
+          )
+        needed <- colnames(X_new)
+      }
+    }
+    
+    # coefficients matrix
+    coef_full      <- as.matrix(fit_lv$coefficients)
+    feature_indices <- seq_len(nrow(coef_full))
+    coef_mat       <- coef_full[feature_indices, needed, drop = FALSE]
+    miss <- setdiff(needed, colnames(coef_full))
+    if (length(miss)) coef_mat[, miss] <- 0
+    
+    # predictions
+    pred_mat <- coef_mat %*% t(X_new)
+    rownames(pred_mat) <- as.character(feature_indices)
+    
+    pred_list[[level]] <- pred_mat
+  }
+  
+  list(
+    time_grid   = smooth_timepoints,
+    predictions = pred_list          # named by condition level
+  )
+}
+
+
+#' Perform hierarchical clustering on predicted timecourses
+#'
+#' @noRd
+#'
+#' @description
+#' Performs hierarchical clustering for each condition level using
+#' precomputed predicted timecourses. For each level, only the features
+#' present in the corresponding top table are clustered. The function
+#' normalizes each curve to the [0, 1] range before clustering.
+#'
+#' @param top_tables A named list of data.frames, where each entry contains
+#'   significant features (`feature_nr`) for a condition level. Names must be
+#'   in the format `{condition}_{level}`.
+#' @param nr_clusters Integer vector of the same length as `top_tables`,
+#'   specifying the number of clusters per condition level.
+#' @param meta A data.frame containing the metadata, including the condition
+#'   and time columns.
+#' @param condition A string specifying the column in `meta` that encodes
+#'   condition levels (e.g., `"Phase"`).
+#' @param predicted_timecurves A list returned by [predict_timecurves()],
+#'   containing smoothed predictions for all features across all levels.
+#'
+#' @return A named list of clustering results (one per condition level). Each
+#'   entry includes:
+#'   \describe{
+#'     \item{`clustered_hits`}{Feature-to-cluster assignments}
+#'     \item{`hc`}{The full hclust object}
+#'     \item{`curve_values`}{Normalized curves with cluster labels}
+#'     \item{`top_table`}{Top table with added cluster column}
+#'     \item{`clusters`}{Number of clusters used}
+#'   }
 #'
 #' @seealso
-#' \code{\link{process_level_cluster}}
-#'
+#' \code{\link{predict_timecurves}}, \code{\link{hierarchical_clustering}},
+#' \code{\link{normalize_curves}}
+#' 
 perform_clustering <- function(
-    top_tables,
-    clusters,
+    top_tables,             
+    nr_clusters,
     meta,
-    condition,
-    spline_params,
-    mode) {
-  levels <- unique(meta[[condition]])
+    condition,              
+    predicted_timecurves   
+) {
+  
+  # common dense time grid (same for every level)
+  time_grid <- predicted_timecurves$time_grid
+  
+  # container for clustering results
+  results <- vector("list", length = length(top_tables))
+  names(results) <- names(top_tables)
+  
+  # loop over every condition level
+  for (i in seq_along(top_tables)) {
+    
+    key    <- names(top_tables)[i]                       # "Phase_Exponential"
+    level  <- sub(paste0("^", condition, "_"), "", key)  # "Exponential"
+    k      <- nr_clusters[i]                             # ← vector element
 
-  all_levels_clustering <- mapply(
-    process_level_cluster,
-    top_tables,
-    clusters,
-    levels,
-    MoreArgs = list(
-      meta = meta,
-      condition = condition,
-      spline_params = spline_params,
-      mode = mode
-    ),
-    SIMPLIFY = FALSE
-  ) # Return a list
-
-  return(all_levels_clustering)
+    tbl <- top_tables[[key]]
+    
+    # extract feature indices no matter what type tbl is
+    feat_idx <- if (is.data.frame(tbl)) {
+      tbl$feature_nr                  # normal case
+    } else if (length(tbl) == 0 || all(is.na(tbl))) {
+      integer(0)                     # no hits
+    } else {
+      as.integer(tbl)                # vector already
+    }
+    
+    if (length(feat_idx) == 0L) {
+      results[[key]] <- NA
+      next
+    }
+    
+    pred_mat <- predicted_timecurves$predictions[[level]]
+    
+    curves   <- pred_mat[ as.character(feat_idx), , drop = FALSE ]
+    norm_cur <- normalize_curves(curves)
+    
+    results[[key]] <- hierarchical_clustering(
+      curve_values      = norm_cur,
+      k                 = k,                   # use per-level k
+      smooth_timepoints = time_grid,
+      top_table         = top_tables[[key]],
+      condition         = level
+    )
+  }
+  
+  results        # named list of clustering outputs
 }
+
 
 
 #' Get Category 2 and 3 Hits
@@ -668,6 +917,15 @@ get_category_2_and_3_hits <- function(
 #' ('isolated' or 'integrated').
 #' @param report_info A named list containing report information such as analyst
 #'                    name, fixed and random effects, etc.
+#' @param predicted_timecurves A list returned by [predict_timecurves()],
+#'   containing:
+#'   \describe{
+#'     \item{`time_grid`}{A numeric vector of dense time points used for
+#'       evaluation.}
+#'     \item{`predictions`}{A named list of matrices, one per condition level.
+#'       Each matrix contains predicted values (rows = features, columns =
+#'       timepoints).}
+#'   }
 #' @param fit Full fitted model returned by limma or variancePartition::dream.
 #' @param design A string representing the limma design formula
 #' @param meta_batch_column A character string specifying the meta batch column.
@@ -725,7 +983,7 @@ make_clustering_report <- function(
     report_dir,
     mode,
     report_info,
-    fit,
+    predicted_timecurves,
     design,
     meta_batch_column,
     meta_batch2_column,
@@ -881,8 +1139,7 @@ make_clustering_report <- function(
         top_table = top_table_cluster,
         data = data_level,
         meta = meta_level,
-        X = X,
-        fit = fit,
+        predicted_timecurves = predicted_timecurves,
         time_unit_label = time_unit_label,
         plot_info = plot_info,
         adj_pthreshold = adj_pthresholds[i],
@@ -1026,6 +1283,15 @@ make_clustering_report <- function(
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
+#' @param predicted_timecurves A list returned by [predict_timecurves()],
+#'   containing:
+#'   \describe{
+#'     \item{`time_grid`}{A numeric vector of dense time points used for
+#'       evaluation.}
+#'     \item{`predictions`}{A named list of matrices, one per condition level.
+#'       Each matrix contains predicted values (rows = features, columns =
+#'       timepoints).}
+#'   }
 #'
 #' @return A list of lists containing the comparison plots and feature names
 #'         for each condition pair.
@@ -1040,7 +1306,8 @@ generate_spline_comparisons <- function(
     plot_info,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
-    raw_data
+    raw_data,
+    predicted_timecurves
     ) {
 
   # Initialize the list that will store the results
@@ -1131,10 +1398,6 @@ generate_spline_comparisons <- function(
         time_effect_1 <- time_effect[[paste0(condition, "_", condition_1)]]
         time_effect_2 <- time_effect[[paste0(condition, "_", condition_2)]]
 
-        # Get the respective X matrices from all_levels_clustering
-        X_1 <- all_levels_clustering[[paste0(condition, "_", condition_1)]]$X
-        X_2 <- all_levels_clustering[[paste0(condition, "_", condition_2)]]$X
-
         # Call the plot function for this pair and store the result
         plots_and_feature_names <- plot_spline_comparisons(
           time_effect_1 = time_effect_1,
@@ -1147,8 +1410,7 @@ generate_spline_comparisons <- function(
           meta = meta,
           condition = condition,
           replicate_column = replicate_column,
-          X_1 = X_1,
-          X_2 = X_2,
+          predicted_timecurves,
           plot_info = plot_info,
           adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
           adj_pthresh_interaction = adj_pthresh_interaction,
@@ -1350,70 +1612,6 @@ get_level_hit_indices <- function(
 }
 
 
-#' Process Level Cluster
-#' 
-#' @noRd
-#'
-#' @description
-#' Processes clustering for a specific level within a condition using the
-#' provided top table and spline parameters.
-#'
-#' @param top_table A dataframe containing the top table results from limma.
-#' @param cluster_size The size of clusters to generate.
-#' @param level The level within the condition to process.
-#' @param meta A dataframe containing metadata.
-#' @param condition A character string specifying the condition.
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param mode A character string specifying the mode
-#'            ('isolated' or 'integrated').
-#'
-#' @return A list containing the clustering results, including curve values and
-#'         the design matrix.
-#'
-#' @seealso
-#' \code{\link{get_curve_values}}, \code{\link{normalize_curves}},
-#' \code{\link{hierarchical_clustering}}
-#'
-process_level_cluster <- function(
-    top_table,
-    cluster_size,
-    level,
-    meta,
-    condition,
-    spline_params,
-    mode
-    ) {
-  
-  # means that it had < 2 hits.
-  if (is.null(top_table) || all(is.na(top_table))) {
-    return(NA)
-  }
-
-  curve_results <- get_curve_values(
-    top_table = top_table,
-    level = level,
-    meta = meta,
-    condition = condition,
-    spline_params = spline_params,
-    mode = mode
-  )
-
-  normalized_curves <- normalize_curves(curve_results$curve_values)
-
-  clustering_result <-
-    hierarchical_clustering(
-      curve_values = normalized_curves,
-      k = cluster_size,
-      smooth_timepoints = curve_results$smooth_timepoints,
-      top_table = top_table,
-      condition = condition
-    )
-
-  clustering_result$X <- curve_results$X
-  return(clustering_result)
-}
-
-
 #' Remove Batch Effect from Cluster Hits
 #' 
 #' @noRd
@@ -1523,11 +1721,6 @@ remove_batch_effect_cluster_hits <- function(
           args$batch2 <- meta_copy[[meta_batch2_column]]
         }
       }
-
-      data_copy <- do.call(
-        limma::removeBatchEffect,
-        args
-      )
 
       # For mode == "integrated", all elements are identical
       datas <- c(
@@ -2003,7 +2196,15 @@ plot_cluster_mean_splines <- function(
 #' feature.
 #' @param meta A dataframe containing metadata for the data, including time
 #' points.
-#' @param X The limma design matrix that defines the experimental conditions.
+#' @param predicted_timecurves A list returned by [predict_timecurves()],
+#'   containing:
+#'   \describe{
+#'     \item{`time_grid`}{A numeric vector of dense time points used for
+#'       evaluation.}
+#'     \item{`predictions`}{A named list of matrices, one per condition level.
+#'       Each matrix contains predicted values (rows = features, columns =
+#'       timepoints).}
+#'   }
 #' @param time_unit_label A string shown in the plots as the unit for the time,
 #' such as min or hours.
 #' @param plot_info List containing the elements y_axis_label (string),
@@ -2040,8 +2241,7 @@ plot_splines <- function(
     top_table,
     data,
     meta,
-    X,
-    fit,
+    predicted_timecurves,
     time_unit_label,
     plot_info,
     adj_pthreshold,
@@ -2053,45 +2253,34 @@ plot_splines <- function(
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
+  smooth_timepoints <- predicted_timecurves$time_grid
+  pred_mat_level    <- predicted_timecurves$predictions[[level]]
 
   DoF <- which(names(top_table) == "AveExpr") - 1
-  time_points <- meta$Time
+  time_points <- meta[["Time"]]
 
   titles <- data.frame(
     FeatureID = top_table$feature_nr,
     feature_names = top_table$feature_names
   )
   
-  # 16 = circle, 17 = triangle
-  shape_values <- c(
+  shape_values <- c(     # 16 = circle, 17 = triangle
     "Measured" = 16,
     "Imputed" = 17
     ) 
-
+  
   plot_list <- list()
 
   for (hit in seq_len(nrow(top_table))) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
+    fitted_values <- as.numeric(
+      pred_mat_level[ as.character(hit_index), ]
+    )
     y_values <- data[hit_index, ]
 
     homosc_result <- report_info[["homosc_violation_result"]][["bp_df"]]
     heteroscedasticity <- homosc_result$violation_flag[hit_index]
     high_var_group <- homosc_result$max_var_group[hit_index]
-
-    # intercept <- top_table$intercept[hit]
-    # spline_coeffs <- as.numeric(top_table[hit, seq_len(DoF)])
-    
-    intercept <- fit$coefficients[hit_index, "(Intercept)"]
-    spline_cols   <- grep("^X[0-9]+$", colnames(fit$coefficients))
-    spline_coeffs <- as.numeric(fit$coefficients[hit_index, spline_cols])
-
-    Time <- seq(
-      meta$Time[1],
-      meta$Time[length(meta$Time)],
-      length.out = 1000 # To ensure smoothness of the curve
-    )
-
-    fitted_values <- X %*% spline_coeffs + intercept
 
     plot_data <- data.frame(
       Time = time_points,
@@ -2157,7 +2346,7 @@ plot_splines <- function(
     # Use local environment to avoid unwanted updating dynamic legend label.
     p <- local({
       plot_spline <- data.frame(
-        Time = Time,
+        Time = smooth_timepoints,
         Fitted = fitted_values
       )
 
@@ -2366,8 +2555,15 @@ plot_splines <- function(
 #' replicates per timepoint. For example Reactor with the unique values: 
 #' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
 #' running this experiment and each timepoint has one sample from each reactor.
-#' @param X_1 A matrix of spline basis values for the first condition.
-#' @param X_2 A matrix of spline basis values for the second condition.
+#' @param predicted_timecurves A list returned by [predict_timecurves()],
+#'   containing:
+#'   \describe{
+#'     \item{`time_grid`}{A numeric vector of dense time points used for
+#'       evaluation.}
+#'     \item{`predictions`}{A named list of matrices, one per condition level.
+#'       Each matrix contains predicted values (rows = features, columns =
+#'       timepoints).}
+#'   }
 #' @param plot_info A list containing plotting information such as time unit
 #' and axis labels.
 #' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
@@ -2399,8 +2595,7 @@ plot_spline_comparisons <- function(
     meta,
     condition,
     replicate_column,
-    X_1,
-    X_2,
+    predicted_timecurves,
     plot_info,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
@@ -2422,6 +2617,10 @@ plot_spline_comparisons <- function(
     avrg_diff_conditions |> dplyr::arrange(.data$feature_names)
   interaction_condition_time <-
     interaction_condition_time |> dplyr::arrange(.data$feature_names)
+  
+  smooth_timepoints <- predicted_timecurves$time_grid
+  pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
+  pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
 
   # Get relevant parameters
   DoF <- which(names(time_effect_1) == "AveExpr") - 1
@@ -2533,15 +2732,12 @@ plot_spline_comparisons <- function(
       )
     }
 
-    intercept_1 <- time_effect_1$intercept[hit]
-    intercept_2 <- time_effect_2$intercept[hit]
-
-    spline_coeffs_1 <- as.numeric(time_effect_1[hit, seq_len(DoF)])
-    spline_coeffs_2 <- as.numeric(time_effect_2[hit, seq_len(DoF)])
-
-    Time <- seq(meta$Time[1], meta$Time[length(meta$Time)], length.out = 1000)
-    fitted_values_1 <- X_1 %*% spline_coeffs_1 + intercept_1
-    fitted_values_2 <- X_2 %*% spline_coeffs_2 + intercept_2
+    fitted_values_1 <- as.numeric(
+      pred_mat_1[ as.character(hit_index), ]
+    )
+    fitted_values_2 <- as.numeric(
+      pred_mat_2[ as.character(hit_index), ]
+    )
     
     # Get the adjusted p-values for the current hit
     avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
@@ -2627,7 +2823,7 @@ plot_spline_comparisons <- function(
           ) +
           ggplot2::geom_line(
             data = data.frame(
-              Time = Time,
+              Time = smooth_timepoints,
               Fitted = fitted_values_1
             ),
             ggplot2::aes(
@@ -2649,7 +2845,7 @@ plot_spline_comparisons <- function(
           ) + 
           ggplot2::geom_line(
             data = data.frame(
-              Time = Time,
+              Time = smooth_timepoints,
               Fitted = fitted_values_2
             ),
             ggplot2::aes(
@@ -3357,112 +3553,6 @@ build_cluster_hits_report <- function(
 # Level 3 internal functions ---------------------------------------------------
 
 
-#' Calculate Curve Values Based on Top Table Filter
-#' 
-#' @noRd
-#'
-#' @description This function filters entries from a given top table based on
-#' an adjusted p-value threshold,
-#' performs spline interpolation using specified degrees of freedom, and
-#' calculates curve values
-#' for the selected entries at predefined time points. The function is
-#' internal and not exported.
-#'
-#' @param top_table A data frame containing data with a column for adjusted
-#' p-values and
-#'                  expression averages which indicate the number of degrees
-#'                  of freedom.
-#' @param level The specific level of the condition to filter on in the
-#' metadata.
-#' @param meta Metadata containing time points and conditions.
-#' @param condition The name of the condition column in the metadata to filter
-#' on.
-#' @param spline_params A list of spline parameters for the analysis.
-#' @param mode A character string specifying the mode
-#' ('isolated' or 'integrated').
-#'
-#' @return A list containing two elements: `curve_values`, a data frame of
-#' curve values for each filtered entry, and `smooth_timepoints`, the time
-#' points at which curves were evaluated.
-#'
-#' @importFrom dplyr select all_of
-#' @importFrom splines ns
-#'
-get_curve_values <- function(
-    top_table,
-    level,
-    meta,
-    condition,
-    spline_params,
-    mode) {
-  subset_meta <- meta[meta[[condition]] == level, ]
-
-  if (mode == "isolated") {
-    level_index <- match(level, unique(meta[[condition]]))
-  } else if (mode == "integrated") {
-    level_index <- 1 # Different spline params not supported for this mode
-  }
-
-  smooth_timepoints <- seq(
-    subset_meta$Time[1],
-    subset_meta$Time[length(subset_meta$Time)],
-    length.out = 1000 # To ensure smoothness of the curve.
-  )
-
-  args <- list(x = smooth_timepoints, intercept = FALSE)
-
-  if (!is.null(spline_params$dof)) {
-    args$df <- spline_params$dof[level_index]
-  } else {
-    args$knots <- spline_params$knots[[level_index]]
-  }
-
-  if (!is.null(spline_params$bknots)) {
-    args$Boundary.knots <- spline_params$bknots[[level_index]]
-  }
-
-
-  if (spline_params$spline_type[level_index] == "b") {
-    args$degree <- spline_params$degree[level_index]
-    X <- do.call(splines::bs, args)
-  } else { # natural cubic splines
-    X <- do.call(splines::ns, args)
-  }
-
-  DoF <- which(names(top_table) == "AveExpr") - 1
-
-  # columns_to_select <- 1:DoF
-
-  splineCoeffs <- top_table |>
-    dplyr::select(all_of(seq_len(DoF))) |>
-    as.matrix()
-
-  curve_values <- matrix(
-    nrow = nrow(splineCoeffs),
-    ncol = length(smooth_timepoints)
-  )
-
-  for (i in seq_len(nrow(splineCoeffs))) {
-    current_coeffs <- matrix(
-      splineCoeffs[i, ],
-      ncol = ncol(splineCoeffs),
-      byrow = TRUE
-    )
-
-    curve_values[i, ] <- current_coeffs %*% t(X)
-  }
-
-  curve_values <- as.data.frame(curve_values)
-  rownames(curve_values) <- rownames(splineCoeffs)
-
-  list(
-    curve_values = curve_values,
-    smooth_timepoints = smooth_timepoints,
-    X = X
-  )
-}
-
-
 #' Normalize Curve Values
 #' 
 #' @noRd
@@ -3505,6 +3595,7 @@ normalize_curves <- function(curve_values) {
 #' @param smooth_timepoints Numeric vector of time points corresponding to
 #'                          columns in curve_values.
 #' @param top_table Data frame to be updated with cluster assignments.
+#' @param condition_level Current level within the condition.
 #' @return A list containing clustering results and the modified top_table.
 #'
 #' @importFrom stats dist hclust cutree
@@ -3514,19 +3605,17 @@ hierarchical_clustering <- function(
     k,
     smooth_timepoints,
     top_table,
-    condition
+    condition_level
     ) {
 
   if (nrow(curve_values) < k) {   # To avoid cryptic stats::hclust error.
     stop_call_false(paste(
-      "For condition '", condition, "':",
+      "For condition_level '", condition_level, "':",
       "the number of requested clusters (", k, ") is greater than",
       "the number of hits (", nrow(curve_values), ").",
       "Please choose fewer clusters."
     ))
   }
-  
-  
   
   distance_matrix <- stats::dist(
     curve_values,
@@ -3549,6 +3638,7 @@ hierarchical_clustering <- function(
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
 
   colnames(curve_values) <- smooth_timepoints
+  curve_values <- as.data.frame(curve_values)
   curve_values$cluster <- cluster_assignments
 
   top_table$cluster <- NA
@@ -4049,7 +4139,6 @@ generate_asterisks_definition <- function(adj_pvalue_threshold) {
     sep = "<br>"
   )
 }
-
 
 
 # Level 4 internal functions ---------------------------------------------------

@@ -71,7 +71,7 @@ test_that("run_limma_splines() works correctly", {
     info = "Should be S3 class 'SplineOmics'"
     )
   expect_type(splineomics, "list")
-  expect_length(splineomics, 16)
+  expect_length(splineomics, 17)
   
   # Check added element
   expect_true(

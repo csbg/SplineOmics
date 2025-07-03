@@ -717,12 +717,16 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
 ```{r prepare cluster_hits() arguments, eval = TRUE}
+# Important note: When you define parameters for the levels, always define them
+# in the order those levels appear in the meta condition column! Otherwise, 
+# there will be a mixup!
+
 adj_pthresholds <- c( # 0.05 for both levels
   0.05, # exponential
   0.05 # stationary
 )
 
-clusters <- c(
+nr_clusters <- c(
   6L, # 6 clusters for the exponential phase level
   3L # 3 clusters for the stationary phase level
 )
@@ -783,7 +787,7 @@ Run the function:
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
-  clusters = clusters,
+  nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,

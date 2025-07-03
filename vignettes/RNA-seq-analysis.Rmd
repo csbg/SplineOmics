@@ -393,7 +393,7 @@ adj_pthresholds <- c(   # 0.0000001 for both levels
   0.0000001  # temp_shift
 )
 
-clusters <- c(
+nr_clusters <- c(
   4L,  # 4 clusters for constant
   4L   # 4 clusters for temp_shift
 )
@@ -450,7 +450,7 @@ plot_options <- list(
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
-  clusters = clusters,
+  nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
   report = FALSE,
