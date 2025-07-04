@@ -48,8 +48,10 @@
 #' Must take as
 #' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 #' with the normalized counts.
-#' @return A `voom` object, which includes the log2-counts per million (logCPM)
-#'  matrix and observation-specific weights.
+#' @return The updaed `splineomics` object, now containing the `voom` object, 
+#' which includes the log2-counts per million (logCPM) matrix and 
+#' observation-specific weights. Additionally, the splineparams are updated with
+#' the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)
 #'
 #' @seealso \code{\link[edgeR]{DGEList}}, \code{\link[edgeR]{calcNormFactors}}
 #' @importFrom limma voom
@@ -88,7 +90,11 @@ preprocess_rna_seq_data <- function(
   # and I heavily oriented my code towards that. But then I realised that it is
   # nonsense to encode the time as X, and now it is explicitly "Time" (because
   # meta must contain the exact name "Time" for this respective column).
-  design <- gsub("Time", "X", design)  
+  design <- gsub(
+    "Time",
+    "X",
+    design
+    )  
   
   effects <- extract_effects(design)
 
@@ -118,6 +124,25 @@ preprocess_rna_seq_data <- function(
   } else {
     # Default: Normalize the counts using TMM normalization
     y <- edgeR::calcNormFactors(y)
+  }
+  
+  # For rna_seq data, the data can only be handled together. For mode isolated,
+  # the data has to be split and the function run twice. Thats why we can only
+  # have one parameter set for the spline_params.
+  effects <- extract_effects(design)
+  if (spline_params[["dof"]][1] == 0) {   # auto-dof.
+    best_dof <- select_spline_dof_loocv(   
+      data = raw_counts,
+      meta = meta,
+      spline_params = spline_params,
+      level_index = 1,
+      fixed_effects = effects[["fixed_effects"]]
+    )
+    spline_params$dof[1] <- best_dof
+    splineomics <- SplineOmics::update_splineomics(
+      splineomics = splineomics,
+      spline_params = spline_params
+    )
   }
 
   # Step 3: Create design matrix
@@ -187,6 +212,13 @@ preprocess_rna_seq_data <- function(
       )
     }
   }
+  
+  splineomics <- SplineOmics::update_splineomics(
+    splineomics = splineomics,
+    data = voom_obj$E,
+    rna_seq_data = voom_obj,
+    spline_params = spline_params   # was updated when auto-dof is on.
+  )
 
-  return(voom_obj)
+  return(splineomics)
 }

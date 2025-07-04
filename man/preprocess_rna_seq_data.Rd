@@ -48,8 +48,10 @@ input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 with the normalized counts.}
 }
 \value{
-A `voom` object, which includes the log2-counts per million (logCPM)
- matrix and observation-specific weights.
+The updaed `splineomics` object, now containing the `voom` object, 
+which includes the log2-counts per million (logCPM) matrix and 
+observation-specific weights. Additionally, the splineparams are updated with
+the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)
 }
 \description{
 The `preprocess_rna_seq_data()` function performs essential preprocessing

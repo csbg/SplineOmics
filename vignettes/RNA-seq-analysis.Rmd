@@ -549,6 +549,7 @@ result <- SplineOmics::run_gsea(
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
+  cluster_hits_report_name = "not meaningful here",
   report_dir = report_dir
 )
 ```
