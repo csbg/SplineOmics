@@ -16,7 +16,8 @@ cluster_hits(
   plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
   raw_data = NULL,
   report_dir = here::here(),
-  report = TRUE
+  report = TRUE,
+  max_hit_number = 100
 )
 }
 \arguments{
@@ -80,6 +81,10 @@ HTML report and any other output files should be saved.}
 
 \item{report}{Boolean TRUE or FALSE value specifing if a report should be
 generated.}
+
+\item{max_hit_number}{Maximum number of hits which are plotted within each
+cluster. This can be used to limit the computation time and size of
+the HTML report in the case of many hits. Default is 100.}
 }
 \value{
 A list where each element corresponds to a group factor and contains

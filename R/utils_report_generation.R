@@ -170,7 +170,8 @@ generate_report_html <- function(
     "project_name",
     "method_description",
     "results_summary",
-    "conclusions"
+    "conclusions",
+    "max_hit_number"
   )
 
   download_fields <- c()
@@ -1014,11 +1015,9 @@ get_header_section <- function(
       '<ul style="font-size: 2em; padding-left: 20px;">',
       '<li style="margin-bottom: 15px;">Clustering of features that show
       significant changes over time (= hits).</li>',
-      '<li style="margin-bottom: 15px;">Clustering was done based on the
-      min-max normalized shape of the spline.</li>',
-      '<li style="margin-bottom: 15px;">For this, the spline parameters in
-      the limma topTable are used to generate 1000 curve datapoints between
-      0 and 1.</li>',
+      '<li style="margin-bottom: 15px;">Clustering was done based on the min-max
+      normalized shape of the spline. They are created by predicting 1000 
+      datapoints for the time range based on the fitted linear model.</li>',
       '<li style="margin-bottom: 15px;">These datapoints are used for
       hierarchical clustering.</li>',
       '<li style="margin-bottom: 15px;">Right-click on any plot in this

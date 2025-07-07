@@ -60,6 +60,9 @@
 #' HTML report and any other output files should be saved.
 #' @param report Boolean TRUE or FALSE value specifing if a report should be
 #' generated.
+#' @param max_hit_number Maximum number of hits which are plotted within each
+#' cluster. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits. Default is 100.
 #'
 #' @return A list where each element corresponds to a group factor and contains
 #' the clustering results,
@@ -91,7 +94,8 @@ cluster_hits <- function(
     ),
     raw_data = NULL,
     report_dir = here::here(),
-    report = TRUE
+    report = TRUE,
+    max_hit_number = 100
     ) {
 
   report_dir <- normalizePath(
@@ -103,6 +107,14 @@ cluster_hits <- function(
     splineomics = splineomics,
     func_type = "cluster_hits"
   )
+  
+  if (!is.numeric(max_hit_number) ||            # must be numeric
+      length(max_hit_number) != 1L ||           # exactly one value
+      !(is.infinite(max_hit_number) ||          # allow Inf
+        (max_hit_number >= 1 &&                 # ≥ 1 …
+         max_hit_number == as.integer(max_hit_number)))) {  # … and int-valued
+    stop("`max_hit_number` must be a single positive integer (1, 2, …) or Inf.")
+  }
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
@@ -145,7 +157,9 @@ cluster_hits <- function(
     pthresh_avg_diff = adj_pthresh_avrg_diff_conditions,  
     pthresh_interact = adj_pthresh_interaction_condition_time 
   )
-  if (report) {   # only make this check if the user actually wants a report
+  
+  # only make this check if the user actually wants a report
+  if (report && max_hit_number > 500) {   
     huge_table_user_prompter(all_limma_result_tables)
   }
 
@@ -200,7 +214,8 @@ cluster_hits <- function(
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
       raw_data = raw_data,
-      predicted_timecurves
+      predicted_timecurves = predicted_timecurves,
+      max_hit_number = max_hit_number
     )
   } else {
     spline_comp_plots <- NULL
@@ -241,7 +256,8 @@ cluster_hits <- function(
       plot_options = plot_options,
       feature_name_columns = feature_name_columns,
       spline_comp_plots = spline_comp_plots,
-      raw_data = raw_data
+      raw_data = raw_data,
+      max_hit_number = max_hit_number
     )
   } else {
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
@@ -557,6 +573,11 @@ huge_table_user_prompter <- function(tables) {
 #'
 #' This is typically used to visualize model-implied dynamics over time for
 #' multiple biological conditions.
+#' 
+#' Note that this function does not use the random effects in case the linear
+#' mixed model from the variancePartition::dream() was used. This is because 
+#' they model subject-specific deviations, not the fixed-effect population trend
+#'  that defines the curve shape.
 #'
 #' @param fit A fitted [limma::lmFit()] model object (class `"MArrayLM"`),
 #'   containing spline-based terms (e.g., via [splines::ns()] or 
@@ -598,8 +619,14 @@ predict_timecurves <- function(
 ) {
 
   # time grid (common to all levels)
+  # number of unique sampling points
+  n_unique_time <- dplyr::n_distinct(meta[["Time"]])
+  
+  ## build a grid 10 × denser than the raw sampling
   smooth_timepoints <- seq(
-    min(meta$Time), max(meta$Time), length.out = 1000
+    from = min(meta[["Time"]]),
+    to   = max(meta[["Time"]]),
+    length.out = 10 * n_unique_time
   )
   
   pred_list <- list()                    # results
@@ -955,6 +982,9 @@ get_category_2_and_3_hits <- function(
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
+#' @param max_hit_number Maximum number of hits which are plotted within each
+#' cluster. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return No return value, called for side effects.
 #'
@@ -991,7 +1021,8 @@ make_clustering_report <- function(
     plot_options,
     feature_name_columns,
     spline_comp_plots,
-    raw_data
+    raw_data,
+    max_hit_number
     ) {
   
   design <- gsub("Time", "X", design)  
@@ -1029,7 +1060,8 @@ make_clustering_report <- function(
   }
 
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
-
+  
+  message("Generating heatmap...")
   heatmaps <- plot_heatmap(
     datas = datas,
     meta = meta,
@@ -1037,7 +1069,8 @@ make_clustering_report <- function(
     condition = condition,
     all_levels_clustering = all_levels_clustering,
     time_unit_label = time_unit_label,
-    cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]]
+    cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]],
+    max_hit_number = max_hit_number
   )
 
   level_headers_info <- list()
@@ -1083,11 +1116,13 @@ make_clustering_report <- function(
     }
 
     curve_values <- level_clustering$curve_values
-
+    
+    message(paste("Generating dendrogram for level: ", level))
     dendrogram <- plot_dendrogram(
       hc = level_clustering$hc,
       clusters = level_clustering[["clustered_hits"]][["cluster"]],
-      k = clusters[q]
+      k = clusters[q],
+      max_hit_number = max_hit_number
     )
 
     p_curves <- plot_all_mean_splines(
@@ -1095,11 +1130,13 @@ make_clustering_report <- function(
       plot_info = plot_info,
       level = level
     )
-
+    
+    message(paste("Generating cluster mean splines for level: ", level))
     cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
       curve_values = curve_values,
       plot_info = plot_info,
-      level = level
+      level = level,
+      max_hit_number = max_hit_number
     )
 
     top_table <- level_clustering$top_table
@@ -1116,7 +1153,8 @@ make_clustering_report <- function(
     meta_level <- meta |> dplyr::filter(.data[[condition]] == levels[i])
 
     clusters_spline_plots <- list()
-
+    
+    message("Generating spline plots...")
     for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
       nr_of_hits <- sum(
         level_clustering$clustered_hits$cluster == nr_cluster,
@@ -1146,7 +1184,8 @@ make_clustering_report <- function(
         replicate_column = plot_options[["meta_replicate_column"]],
         level = level,
         raw_data = raw_data_level,
-        report_info = report_info
+        report_info = report_info,
+        max_hit_number = max_hit_number
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -1215,6 +1254,7 @@ make_clustering_report <- function(
   )
 
   message("Generating report. This takes a few seconds.")
+  report_info[["max_hit_number"]] <- max_hit_number
 
   generate_report_html(
     plots = plots,
@@ -1292,6 +1332,9 @@ make_clustering_report <- function(
 #'       Each matrix contains predicted values (rows = features, columns =
 #'       timepoints).}
 #'   }
+#' @param max_hit_number Maximum number of hits for which the individual spline
+#' plots are shown. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return A list of lists containing the comparison plots and feature names
 #'         for each condition pair.
@@ -1307,7 +1350,8 @@ generate_spline_comparisons <- function(
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
     raw_data,
-    predicted_timecurves
+    predicted_timecurves,
+    max_hit_number
     ) {
 
   # Initialize the list that will store the results
@@ -1414,7 +1458,8 @@ generate_spline_comparisons <- function(
           plot_info = plot_info,
           adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
           adj_pthresh_interaction = adj_pthresh_interaction,
-          raw_data = raw_data
+          raw_data = raw_data,
+          max_hit_number = max_hit_number
         )
 
         # Add the plot list to the comparison_plots list,
@@ -1767,6 +1812,9 @@ remove_batch_effect_cluster_hits <- function(
 #' @param time_unit_label A character string specifying the time unit label.
 #' @param cluster_heatmap_columns Boolean specifying wether to cluster the
 #' columns of the heatmap or not.
+#' @param max_hit_number Maximum number of hits which are plotted within each
+#' cluster. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return A list of ComplexHeatmap heatmap objects for each level.
 #'
@@ -1787,7 +1835,10 @@ plot_heatmap <- function(
     condition,
     all_levels_clustering,
     time_unit_label,
-    cluster_heatmap_columns) {
+    cluster_heatmap_columns,
+    max_hit_number
+    ) {
+  
   BASE_TEXT_SIZE_PT <- 5
 
   ht_opt(
@@ -1824,6 +1875,13 @@ plot_heatmap <- function(
 
     clustered_hits <- level_clustering$clustered_hits
     clusters <- clustered_hits |> dplyr::arrange(!!rlang::sym("cluster"))
+    
+    if (!is.infinite(max_hit_number)) {
+      clusters <- clusters |>
+        dplyr::group_by(cluster) |>
+        dplyr::slice_head(n = max_hit_number) |>
+        dplyr::ungroup()
+    }
 
     level <- levels[[i]]
     level_indices <- which(meta[[condition]] == level)
@@ -1863,10 +1921,6 @@ plot_heatmap <- function(
         ),
         row_gap = unit(2, "pt"),
         column_gap = unit(2, "pt"),
-        # width = unit(2, "mm") * ncol(z_score) +
-        #   5 * unit(2, "pt"),
-        # height = unit(2, "mm") * nrow(z_score) +
-        #   5 * unit(2, "pt"),
         show_row_names = TRUE,
         row_labels = row_labels,
         show_column_names = TRUE,
@@ -1892,6 +1946,9 @@ plot_heatmap <- function(
 #' @param clusters A numeric vector, specifying the cluster in which each hit is
 #' in. Index 1 is the cluster of hit nr. 1, index 2 of hit nr. 2, etc.
 #' @param k An integer specifying the number of clusters.
+#' @param max_hit_number Maximum number of hits which are plotted within each
+#' cluster. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return A ggplot object representing the dendrogram.
 #'
@@ -1906,14 +1963,36 @@ plot_heatmap <- function(
 plot_dendrogram <- function(
     hc,
     clusters,
-    k
+    k,
+    max_hit_number
     ) {
+
+  # Get clusters based on cutree result
+  clusters <- stats::cutree(hc, k)
+  
+  if (!is.infinite(max_hit_number)) {
+    # order of leaves as they appear in the *hc* object
+    dend_order <- hc$order
+    labels_all <- hc$labels                     # no as.dendrogram yet
+    
+    keep_idx <- unlist(
+      lapply(split(seq_along(clusters), clusters), function(ix) {
+        head(ix[order(match(ix, dend_order))], n = max_hit_number)
+      }),
+      use.names = FALSE
+    )
+    drop_labels <- labels_all[-keep_idx]
+  } else {
+    drop_labels <- character(0)                 # keep everything
+  }
   
   # Convert hc to dendrogram
   dend <- stats::as.dendrogram(hc)
 
-  # Get clusters based on cutree result
-  clusters <- stats::cutree(hc, k)
+
+  # Order of leaves as they appear in the dendrogram
+  dend_order <- hc$order
+  labels_all <- labels(stats::as.dendrogram(hc))  # same length as dend_order
 
   # Get the order of clusters as they appear in the dendrogram
   cluster_order <- clusters[hc[["order"]]]
@@ -1936,7 +2015,7 @@ plot_dendrogram <- function(
     k = k,
     col = ordered_colors
   )
-  
+
   # Remove labels for the plot and adjust line thickness
   dend_colored <- dendextend::set(
     dend_colored,
@@ -2134,6 +2213,10 @@ plot_all_mean_splines <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
+#' @param level Unique value within the condition.
+#' @param max_hit_number Maximum number of hits which are plotted within each
+#' cluster. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return A list containing a plot for every cluster
 #'
@@ -2143,7 +2226,8 @@ plot_all_mean_splines <- function(
 plot_cluster_mean_splines <- function(
     curve_values,
     plot_info,
-    level
+    level,
+    max_hit_number
     ) {
 
   clusters <- sort(unique(curve_values$cluster))
@@ -2154,6 +2238,12 @@ plot_cluster_mean_splines <- function(
       curve_values,
       curve_values$cluster == current_cluster
     )
+    
+    if (!is.infinite(max_hit_number)) {
+      n_keep <- min(max_hit_number, nrow(subset_df))
+      subset_df <- subset_df[seq_len(n_keep), , drop = FALSE]
+    }
+    
     subset_df$cluster <- NULL
     nr_of_hits <- nrow(subset_df)
     current_title <- paste(
@@ -2248,7 +2338,8 @@ plot_splines <- function(
     replicate_column,
     level,
     raw_data,
-    report_info
+    report_info,
+    max_hit_number
     ) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
@@ -2270,8 +2361,12 @@ plot_splines <- function(
     ) 
   
   plot_list <- list()
-
-  for (hit in seq_len(nrow(top_table))) {
+  n_hits <- min(
+    max_hit_number,
+    nrow(top_table)
+    )
+  
+  for (hit in seq_len(n_hits)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     fitted_values <- as.numeric(
       pred_mat_level[ as.character(hit_index), ]
@@ -2575,6 +2670,9 @@ plot_splines <- function(
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
+#' @param max_hit_number Maximum number of hits for which the individual spline
+#' plots are shown. This can be used to limit the computation time and size of
+#' the HTML report in the case of many hits.
 #'
 #' @return A list containing:
 #' \describe{
@@ -2599,7 +2697,8 @@ plot_spline_comparisons <- function(
     plot_info,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
-    raw_data
+    raw_data,
+    max_hit_number
     ) {
   
   if (!is.null(replicate_column)) {
@@ -2659,10 +2758,16 @@ plot_spline_comparisons <- function(
   check_column_presence(time_effect_1, interaction_condition_time,
                         "feature_names")
   check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
-
+  
+  n_hits_time_effect <- min(
+    max_hit_number,
+    nrow(time_effect_1)
+    )
+  
   # Hit is just an index, but time_effect_1 and 2 and avrg_diff_conditions and
   # interaction_condition_time were sorted before.
-  for (hit in seq_len(nrow(time_effect_1))) {
+  for (hit in seq_len(n_hits_time_effect)) {
+  # for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     row_values <- data[hit_index, ]
     
@@ -3598,7 +3703,8 @@ normalize_curves <- function(curve_values) {
 #' @param condition_level Current level within the condition.
 #' @return A list containing clustering results and the modified top_table.
 #'
-#' @importFrom stats dist hclust cutree
+#' @importFrom stats dist cutree
+#' @importFrom fastcluster hclust
 #'
 hierarchical_clustering <- function(
     curve_values,
@@ -3622,7 +3728,7 @@ hierarchical_clustering <- function(
     method = "euclidean"
     )
   
-  hc <- stats::hclust(
+  hc <- fastcluster::hclust(
     distance_matrix,
     method = "complete"
     )
@@ -3919,7 +4025,9 @@ plot_single_and_mean_splines <- function(
     time_series_data,
     title,
     plot_info,
-    level) {
+    level
+    ) {
+  
   time_col <- rlang::sym("time")
   feature_col <- rlang::sym("feature")
 
