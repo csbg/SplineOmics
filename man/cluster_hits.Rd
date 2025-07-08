@@ -43,8 +43,9 @@ necessary data and parameters for the analysis, including:
    'adj.P.Val' and expression data columns.
 }}
 
-\item{nr_clusters}{Character or integer vector specifying the number of 
-clusters}
+\item{nr_clusters}{A list whose length matches `top_tables`; each element is
+a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
+candidate number(s) of clusters for the corresponding condition level.}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
 hits in each top table.}

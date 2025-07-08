@@ -726,9 +726,12 @@ adj_pthresholds <- c( # 0.05 for both levels
   0.05 # stationary
 )
 
-nr_clusters <- c(
-  6L, # 6 clusters for the exponential phase level
-  3L # 3 clusters for the stationary phase level
+# The amount of clusters are always specified as a range (due to technical
+# reasons) even when you want to have one definite value. Specify 1:1 if you
+# don't want to do clustering for this level.
+nr_clusters <- list(
+  6:6, # specifically 6 clusters for the exponential phase level
+  2:3  # clusters for the stationary phase level, test 2 and 3 and decide with              silhuette score (automatically)
 )
 
 report_dir <- here::here(

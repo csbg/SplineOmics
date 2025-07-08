@@ -1129,67 +1129,64 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Clusters
-    #' 
+    #'
     #' @noRd
     #'
     #' @description
-    #' This function verifies the cluster configurations within the object's
-    #' arguments.
-    #' It checks if the clusters argument is present and performs validation
-    #' on its
-    #' content. If no clusters are specified, it defaults to automatic cluster
-    #' estimation.
+    #' Verifies the `nr_clusters` argument provided to the object.
     #'
     #' @details
-    #' The function performs the following checks:
-    #' - If `clusters` is an integer or a vector of integers. Otherwise, it
-    #'   gives an error.
-    #'
+    #' * `nr_clusters` must be a single positive integer **or** a vector of
+    #'   positive integers (e.g. `1:1`, `2:2`, `2:8`).
+    #' * The **length** of `nr_clusters` must equal the number of unique values
+    #'   in the column specified by `condition` in `meta`.
+    #'   
     check_clusters = function() {
-      clusters <- self$args[["clusters"]]
-      meta <- self$args[["meta"]]
-      condition <- self$args[["condition"]]
-
-      required_args <- list(
-        clusters,
-        meta,
-        condition
-      )
-
-      if (any(vapply(required_args, is.null, logical(1)))) {
+      nr_clusters <- self$args[["nr_clusters"]]   
+      meta        <- self$args[["meta"]]
+      condition   <- self$args[["condition"]]
+      
+      # If any required field is missing, exit quietly
+      if (any(vapply(list(nr_clusters, meta, condition), is.null, logical(1))))
         return(NULL)
-      }
-
-      # Get the unique number of elements in the condition column
-      unique_conditions <- unique(meta[[condition]])
-      num_unique_conditions <- length(unique_conditions)
-
-      # Check if clusters is a single integer or a vector of integers
-      if (is.numeric(clusters) && all(clusters == as.integer(clusters))) {
-        # Ensure clusters has as many elements as unique conditions
-        if (length(clusters) != num_unique_conditions) {
-          stop_call_false(
-            "The number of elements in 'clusters' must match the number",
-            "of unique elements in the '",
-            condition, "' column of the meta dataframe ( There are",
-            num_unique_conditions, "unique elements = levels)"
-          )
-        }
-
-        # If clusters is a single integer, ensure it is positive
-        if (length(clusters) == 1 && clusters <= 0) {
-          stop_call_false("clusters must be a positive integer.")
-        }
-
-        # If clusters is a vector of integers, ensure all are positive
-        if (length(clusters) > 1 && any(clusters <= 0)) {
-          stop_call_false("All elements in clusters must be positive integers.")
-        }
-      } else {
+      
+      # 1. top-level type and length
+      if (!is.list(nr_clusters)) {
         stop_call_false(
-          "clusters must be a single integer or a vector of integers."
+          "'nr_clusters' must be a *list*, where each element is a numeric",
+          "vector of positive integers (e.g. list(1:1, 2:8))."
         )
       }
+      
+      n_levels <- length(unique(meta[[condition]]))
+      if (length(nr_clusters) != n_levels) {
+        stop_call_false(
+          "The length of 'nr_clusters' (", length(nr_clusters),
+          ") must equal the number of unique levels (", n_levels,
+          ") in the '", condition, "' column of 'meta'."
+        )
+      }
+      
+      # 2. element-wise validation
+      for (i in seq_along(nr_clusters)) {
+        vec <- nr_clusters[[i]]
+        
+        if (!is.numeric(vec) || any(vec != as.integer(vec))) {
+          stop_call_false(
+            "Element ", i,
+            " of 'nr_clusters' must be a numeric vector of integers."
+          )
+        }
+        
+        if (any(vec <= 0)) {
+          stop_call_false(
+            "All integers inside 'nr_clusters' must be positive ",
+            "(problem at element ", i, ")."
+          )
+        }
+      }
+      
+      invisible(TRUE)
     },
 
 

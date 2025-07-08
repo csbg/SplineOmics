@@ -283,7 +283,7 @@ fixed and random effects, providing robust results for differential expression
 analysis.
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
-voom_obj <- SplineOmics::preprocess_rna_seq_data(
+splineomics <- SplineOmics::preprocess_rna_seq_data(
   splineomics = splineomics
 )
 ```
@@ -294,22 +294,7 @@ Additionally, the use of `preprocess_rna_seq_data()` is optional for your RNA-se
 
 In general, as long as the `data` argument contains the actual data matrix and the `rna_seq_data` argument contains an object compatible with `limma`, your data will be correctly processed.
 
-```{r Insert preprocessed rna seq data into SplineOmics object, eval = TRUE}
-splineomics <- SplineOmics::update_splineomics(
-  splineomics = splineomics,
-  data = voom_obj$E,
-  # States explicitly that there is no problem of heteroscedasticity and 
-  # therefore, this does not need to be adressed. Setting it to TRUE would mean
-  # the opposite, and when setting it to NULL, it means it should be handled 
-  # implicitly. For details, see Reference
-  # documentation of the create_splineomics() function.
-  use_array_weights = FALSE,
-  rna_seq_data = voom_obj
-)
-```
-
-Run the `run_limma_splines()` function with the updated SplineOmics
-object:
+Run the `run_limma_splines()` function:
 
 ```{r limma spline analysis, eval = TRUE}
 splineomics <- SplineOmics::run_limma_splines(
@@ -393,9 +378,9 @@ adj_pthresholds <- c(   # 0.0000001 for both levels
   0.0000001  # temp_shift
 )
 
-nr_clusters <- c(
-  4L,  # 4 clusters for constant
-  4L   # 4 clusters for temp_shift
+nr_clusters <- list(
+  4:4,  # 4 clusters for constant
+  4:4   # 4 clusters for temp_shift
 )
 
 report_dir <- here::here(

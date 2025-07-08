@@ -1016,8 +1016,9 @@ get_header_section <- function(
       '<li style="margin-bottom: 15px;">Clustering of features that show
       significant changes over time (= hits).</li>',
       '<li style="margin-bottom: 15px;">Clustering was done based on the min-max
-      normalized shape of the spline. They are created by predicting 1000 
-      datapoints for the time range based on the fitted linear model.</li>',
+      normalized shape of the spline. They are created by predicting 10x more  
+      datapoints than timepoints for the time range based on the fitted linear
+      model.</li>',
       '<li style="margin-bottom: 15px;">These datapoints are used for
       hierarchical clustering.</li>',
       '<li style="margin-bottom: 15px;">Right-click on any plot in this

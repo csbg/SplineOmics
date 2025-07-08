@@ -31,8 +31,9 @@
 #'    a top table from differential expression analysis, containing at least
 #'    'adj.P.Val' and expression data columns.
 #' }
-#' @param nr_clusters Character or integer vector specifying the number of 
-#' clusters
+#' @param nr_clusters A list whose length matches `top_tables`; each element is
+#'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
+#'   candidate number(s) of clusters for the corresponding condition level.
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
@@ -770,8 +771,9 @@ predict_timecurves <- function(
 #' @param top_tables A named list of data.frames, where each entry contains
 #'   significant features (`feature_nr`) for a condition level. Names must be
 #'   in the format `{condition}_{level}`.
-#' @param nr_clusters Integer vector of the same length as `top_tables`,
-#'   specifying the number of clusters per condition level.
+#' @param nr_clusters A list whose length matches `top_tables`; each element is
+#'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
+#'   candidate number(s) of clusters for the corresponding condition level.
 #' @param meta A data.frame containing the metadata, including the condition
 #'   and time columns.
 #' @param condition A string specifying the column in `meta` that encodes
@@ -801,6 +803,8 @@ perform_clustering <- function(
     predicted_timecurves   
 ) {
   
+  message("\n Performing the clustering...")
+  
   # common dense time grid (same for every level)
   time_grid <- predicted_timecurves$time_grid
   
@@ -813,7 +817,8 @@ perform_clustering <- function(
     
     key    <- names(top_tables)[i]                       # "Phase_Exponential"
     level  <- sub(paste0("^", condition, "_"), "", key)  # "Exponential"
-    k      <- nr_clusters[i]                             # ← vector element
+    message(paste("For the level: ", level))
+    k_range <- nr_clusters[[i]]                  
 
     tbl <- top_tables[[key]]
     
@@ -836,9 +841,9 @@ perform_clustering <- function(
     curves   <- pred_mat[ as.character(feat_idx), , drop = FALSE ]
     norm_cur <- normalize_curves(curves)
     
-    results[[key]] <- hierarchical_clustering(
+    results[[key]] <- kmeans_clustering(
       curve_values      = norm_cur,
-      k                 = k,                   # use per-level k
+      k_range           = k_range,                   # use per-level k_range
       smooth_timepoints = time_grid,
       top_table         = top_tables[[key]],
       condition         = level
@@ -1116,14 +1121,6 @@ make_clustering_report <- function(
     }
 
     curve_values <- level_clustering$curve_values
-    
-    message(paste("Generating dendrogram for level: ", level))
-    dendrogram <- plot_dendrogram(
-      hc = level_clustering$hc,
-      clusters = level_clustering[["clustered_hits"]][["cluster"]],
-      k = clusters[q],
-      max_hit_number = max_hit_number
-    )
 
     p_curves <- plot_all_mean_splines(
       curve_values = curve_values,
@@ -1197,7 +1194,6 @@ make_clustering_report <- function(
     plots <- c(
       plots,
       new_level = "level_header", # is the signal for the plotting code
-      dendrogram = list(dendrogram),
       p_curves = list(p_curves),
       cluster_mean_splines = list(cluster_mean_splines),
       heatmap = heatmaps[[i]],
@@ -1208,7 +1204,6 @@ make_clustering_report <- function(
     plots_sizes <- c(
       plots_sizes,
       999, # dummy size for "next_level" signal
-      1.5,
       1.5,
       1,
       1.5,
@@ -1931,138 +1926,6 @@ plot_heatmap <- function(
     heatmaps[[length(heatmaps) + 1]] <- ht
   }
   heatmaps
-}
-
-
-#' Plot Dendrogram
-#' 
-#' @noRd
-#'
-#' @description
-#' Generates a dendrogram plot for hierarchical clustering results,
-#' colored by clusters.
-#'
-#' @param hc A hierarchical clustering object.
-#' @param clusters A numeric vector, specifying the cluster in which each hit is
-#' in. Index 1 is the cluster of hit nr. 1, index 2 of hit nr. 2, etc.
-#' @param k An integer specifying the number of clusters.
-#' @param max_hit_number Maximum number of hits which are plotted within each
-#' cluster. This can be used to limit the computation time and size of
-#' the HTML report in the case of many hits.
-#'
-#' @return A ggplot object representing the dendrogram.
-#'
-#' @seealso
-#' \link[dendextend]{color_branches}, \link[dendextend]{as.ggdend},
-#' \link[ggplot2]{ggplot2}
-#'
-#' @importFrom stats as.dendrogram cutree
-#' @importFrom dendextend color_branches as.ggdend
-#' @importFrom ggplot2 ggplot element_blank labs theme_minimal theme
-#'
-plot_dendrogram <- function(
-    hc,
-    clusters,
-    k,
-    max_hit_number
-    ) {
-
-  # Get clusters based on cutree result
-  clusters <- stats::cutree(hc, k)
-  
-  if (!is.infinite(max_hit_number)) {
-    # order of leaves as they appear in the *hc* object
-    dend_order <- hc$order
-    labels_all <- hc$labels                     # no as.dendrogram yet
-    
-    keep_idx <- unlist(
-      lapply(split(seq_along(clusters), clusters), function(ix) {
-        head(ix[order(match(ix, dend_order))], n = max_hit_number)
-      }),
-      use.names = FALSE
-    )
-    drop_labels <- labels_all[-keep_idx]
-  } else {
-    drop_labels <- character(0)                 # keep everything
-  }
-  
-  # Convert hc to dendrogram
-  dend <- stats::as.dendrogram(hc)
-
-
-  # Order of leaves as they appear in the dendrogram
-  dend_order <- hc$order
-  labels_all <- labels(stats::as.dendrogram(hc))  # same length as dend_order
-
-  # Get the order of clusters as they appear in the dendrogram
-  cluster_order <- clusters[hc[["order"]]]
-
-  # Find the unique clusters in the order they appear in the dendrogram
-  unique_cluster_order <- unique(cluster_order)
-
-  # Generate distinct colors for the k clusters
-  colors <- scales::hue_pal()(k)
-
-  # Reorder the colors according to the appearance of clusters in the dendrogram
-  ordered_colors <- colors[match(
-    unique_cluster_order,
-    sort(unique(clusters))
-  )]
-
-  # Apply the reordered colors to the branches of the dendrogram
-  dend_colored <- dendextend::color_branches(
-    dend,
-    k = k,
-    col = ordered_colors
-  )
-
-  # Remove labels for the plot and adjust line thickness
-  dend_colored <- dendextend::set(
-    dend_colored,
-    "branches_lwd",
-    value = 0.1  # Set line thickness here (lower values for thinner lines)
-  )
-
-  # Remove labels for the plot
-  dend_colored <- dendextend::set(
-    dend_colored,
-    "labels",
-    value = rep(
-      "",
-      length(dendextend::get_leaves_attr(dend_colored, "label"))
-    )
-  )
-
-  # Convert to ggplot-compatible dendrogram
-  ggdend <- dendextend::as.ggdend(dend_colored)
-
-  ggdend$segments$col <- factor(ggdend$segments$col, levels = ordered_colors)
-
-  # Create the plot
-  p_dend <- ggplot2::ggplot(data = ggdend$segments) +
-    ggplot2::geom_segment(
-      aes(x = x, y = y, xend = xend, yend = yend, color = col),
-      size = 0.2  # Adjust thickness directly in ggplot layer
-    ) +
-    ggplot2::labs(
-      title = paste(
-        "Hierarchical Clustering Dendrogram Features (colors = clusters",
-        "(see legend plot below!))"
-      ),
-      x = "",
-      y = ""
-    ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      axis.text.x = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(size = 9),
-      legend.position = "none"
-    )
-
-  return(p_dend)
 }
 
 
@@ -3687,57 +3550,99 @@ normalize_curves <- function(curve_values) {
 }
 
 
-#' Hierarchical Clustering of Curve Values
+#' K-means Clustering of Curve Values
 #' 
 #' @noRd
 #'
-#' @description Performs hierarchical clustering on given curve values.
+#' @description Performs k-means clustering on given curve values.
 #' The function adjusts the provided top_table with cluster
 #' assignments.
 #'
 #' @param curve_values A matrix or data frame of curve values to cluster.
-#' @param k The number of clusters to use.
+#' @param k_range The range or number of clusters to use, in the format min:max.
 #' @param smooth_timepoints Numeric vector of time points corresponding to
 #'                          columns in curve_values.
 #' @param top_table Data frame to be updated with cluster assignments.
 #' @param condition_level Current level within the condition.
 #' @return A list containing clustering results and the modified top_table.
 #'
-#' @importFrom stats dist cutree
-#' @importFrom fastcluster hclust
+#' @importFrom stats dist kmeans
 #'
-hierarchical_clustering <- function(
+kmeans_clustering <- function(
     curve_values,
-    k,
+    k_range,
     smooth_timepoints,
     top_table,
     condition_level
     ) {
 
-  if (nrow(curve_values) < k) {   # To avoid cryptic stats::hclust error.
+  if (nrow(curve_values) < max(k_range)) {   # To avoid cryptic errors.
     stop_call_false(paste(
       "For condition_level '", condition_level, "':",
-      "the number of requested clusters (", k, ") is greater than",
+      "the number of requested clusters (", max(k_range), ") is greater than",
       "the number of hits (", nrow(curve_values), ").",
       "Please choose fewer clusters."
     ))
   }
-  
-  distance_matrix <- stats::dist(
+
+  # choose k with k-means + Euclidean
+  curve_z <- scale(
     curve_values,
-    method = "euclidean"
-    )
+    center = TRUE,
+    scale = TRUE
+    )  
+  seed    <- 1L                                               
+  
+  if (length(k_range) == 1L && k_range[1L] == 1L) {
+    
+    # CASE 1 ─ all series in one cluster, skip any computation
+    k_best <- 1L
+    cl     <- NULL
+    cluster_assignments <- rep(1L, nrow(curve_z))
+    
+  } else {
+    
+    # shared preparation: one Euclidean distance matrix
+    dist_mat <- stats::dist(
+      curve_z,
+      method = "euclidean"
+      )
+    
+    set.seed(seed)
+    
+    # run k-means for every k in k_range
+    fits <- lapply(k_range, function(k) {
+      stats::kmeans(
+        curve_z,
+        centers = k,
+        nstart = 10,
+        iter.max = 100
+        )
+    })
+    
+    if (length(k_range) == 1L) {
+      # CASE 2 ─ only one k (≥ 2) → nothing to compare
+      k_best <- k_range[1L]
+      cl     <- fits[[1L]]
+      
+    } else {
+      # CASE 3 ─ multiple k → choose by mean silhouette
+      sil <- vapply(fits, function(f)
+        mean(cluster::silhouette(f$cluster, dist_mat)[, 3]),
+        numeric(1))
+      best_idx <- which.max(sil)
+      k_best   <- k_range[best_idx]
+      cl       <- fits[[best_idx]]
+    }
+    
+    cluster_assignments <- cl$cluster
+  }
 
-  hc <- fast_or_base_hclust(distance_matrix = distance_matrix)
+  clustered_hits <- data.frame(
+    feature = top_table$feature_nr,
+    cluster = cluster_assignments
+  )
 
-  cluster_assignments <- stats::cutree(
-    hc, 
-    k = k
-    )
-
-  clustered_hits <- data.frame(cluster = cluster_assignments)
-
-  clustered_hits$feature <- top_table$feature_nr
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
 
   colnames(curve_values) <- smooth_timepoints
@@ -3750,10 +3655,10 @@ hierarchical_clustering <- function(
 
   group_clustering <- list(
     clustered_hits = clustered_hits,
-    hc = hc,
+    hc = cl,
     curve_values = curve_values,
     top_table = top_table,
-    clusters = k
+    clusters = k_best
   )
 }
 
