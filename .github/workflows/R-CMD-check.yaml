@@ -50,6 +50,11 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+      
+      - name: Set Bioconductor devel repositories
+        if: matrix.config.r == 'devel'
+        run: |
+          echo 'options(repos = BiocManager::repositories(version = "devel"))' >> ~/.Rprofile
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

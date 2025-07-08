@@ -98,7 +98,7 @@ download_enrichr_databases <- function(
   )
 
   message(
-    "Download complete! The file has been saved as: ",
+    "\nDownload complete! The file has been saved as: ",
     filename_path
     )
 
@@ -127,40 +127,50 @@ download_enrichr_databases <- function(
 #'
 enrichr_get_genesets <- function(databases) {
   
-  pb <- create_progress_bar(
-    databases,
-    message = "Downloading"
-  )
-
-  setNames(lapply(databases, function(dbx) {
-    # Update the progress bar
+  pb <- create_progress_bar(databases, message = "Downloading")
+  
+  failed  <- character(0)
+  success <- character(0)                          # <-- track successes
+  results <- setNames(vector("list", length(databases)), databases)
+  
+  for (dbx in databases) {
     pb$tick()
-
-    fpath <- paste0(
-      "http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?",
-      "mode=text&libraryName=",
-      dbx
+    
+    url <- paste0(
+      "https://maayanlab.cloud/Enrichr/geneSetLibrary?",
+      "mode=text&libraryName=", dbx
     )
-
-    fhandle <- file(fpath)
+    
     dblines <- tryCatch(
-      {
-        readLines(con = fhandle)
-      },
-      error = function(e) {
-        message(e, "\nFailed reading database: ", dbx)
-        NULL
-      }
+      suppressWarnings(readLines(url, warn = FALSE)),  # silence 400/404
+      error = function(e) NULL
     )
-    close(fhandle)
-
-    if (is.null(dblines)) {
-      return(list())
-    } else {
+    
+    if (!is.null(dblines) && length(dblines) > 0) {
       res <- strsplit(dblines, "\t")
-      names(res) <- vapply(res, function(x) x[1], character(1))
-      res <- lapply(res, function(x) x[3:length(x)])
-      return(res)
+      names(res) <- vapply(res, `[`, 1, FUN.VALUE = character(1))
+      res <- lapply(res, function(x) x[-c(1, 2)])      # keep only genes
+      results[[dbx]] <- res
+      success <- c(success, dbx)                       # <-- record success
+    } else {
+      failed <- c(failed, dbx)
     }
-  }), databases)
+  }
+  
+  # Keep only successfully downloaded libraries´
+  results <- results[success]
+  
+  # User-friendly summary´
+  if (length(success) || length(failed)) {
+    msg <- c("\nEnrichr download summary:")
+    if (length(success))
+      msg <- c(msg, "  [OK] downloaded : ", paste(success, collapse = ", "))
+    if (length(failed))
+      msg <- c(msg, "  [!!] not found  : ", paste(failed, collapse = ", "),
+               "\n      (Check spelling or run enrichR::listEnrichrDbs() ",
+               "for valid names)")
+    message(paste(msg, collapse = "\n"))
+  }
+  
+  invisible(results)
 }
