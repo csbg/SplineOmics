@@ -441,6 +441,7 @@ plot_info <- list( # For the spline plots
 )
 
 genes <- rownames(data)
+genes <- sub("_\\d+$", "", genes)   # remove the _1 part from the end
 
 plot_options <- list(
   # When meta_replicate_column is not there, all datapoints are blue.

@@ -68,6 +68,13 @@ Examples:
   separated the compuations for the isolated and integrated approach, and for
   the integrated approach, just one global model is run and all the three limma
   result categories extracted from there with the help of contrasts.
+
+- Made cluster_hits() usable for many hits: Introduced a new function argument,
+  called max_hit_number. This controls the plotting logic of the report 
+  generation, so it limits the amount of plots and amount of detail shown in the
+  plots to a maximum number of hits per cluster. This allows to also generate
+  clustering reports for analyses with many hits, because nowbody anyways looks
+  at thousands of spline plots.
   
 #### Added
 - Auto-dof with loocv: Introduced new capability, that automatically finds the 
@@ -75,6 +82,15 @@ Examples:
   performs the analytical loocv and then looks at the error sum of all features.
   It does this with every dof from 2 to min(timepoints, 10). Autodof is
   activated when the the dof = 0L is selected.
+
+- Added cross-species gene mapping: Added optional support for automatic gene
+  symbol conversion between species via gprofiler2 or orthogene. Controlled
+  through the new mapping_cfg argument in run_ora(), this enables mapping from
+  from_species to to_species using either method. The conversion applies across
+  all cluster hit tables, preserves order, and retains unmapped genes. No suffix
+  stripping is done, but users are warned if trailing _digits are detected. The
+  qvalue package is now optionally required to enable stricter FDR filtering in
+  enrichment results.
 
 #### Fixed
 - Red spline curves: Before, it was just generated with the help of the spline

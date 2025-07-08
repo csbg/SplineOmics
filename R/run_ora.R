@@ -45,6 +45,24 @@
 #' not specified, it is per default NULL, in which case default parameters for
 #' those are selected, which are equivalent to the parameter values shown in the 
 #' example definition above.
+#' @param mapping_cfg A named list that controls the optional behavior of
+#'        automatically mapping gene symbols across species. This is useful
+#'        when your input gene symbols (e.g., from CHO cells) do not match
+#'        the species used by the enrichment databases (e.g., human or mouse).
+#'        By default, no mapping is performed and gene symbols are used as-is.
+#'        If mapping is desired, this list must contain the following **three**
+#'        elements:
+#'        \describe{
+#'          \item{method}{Mapping method to use. One of `"none"` (default; 
+#'          no mapping), `"gprofiler"` (online, via the g:Profiler API), or
+#'           `"orthogene"` (offline, if installed).}
+#'          \item{from_species}{Source species code 
+#'          (e.g., `"cgriseus"` for CHO). Must match the expected format for
+#'           the selected tool.}
+#'          \item{to_species"}{Target species code 
+#'          (e.g., `"hsapiens"` for human). This must be the species used in
+#'           your ORA database.}
+#'        }
 #' @param plot_titles Titles for the enrichment dotplots generated in the HTML
 #' report, default is NA.
 #' @param universe Enrichment background data, default is NULL. This is a
@@ -66,6 +84,11 @@ run_ora <- function(
     report_info,
     cluster_hits_report_name,
     clusterProfiler_params = NA,
+    mapping_cfg = list(
+      method = "none",
+      from_species = NULL,
+      to_species   = NULL
+      ),
     plot_titles = NA,
     universe = NULL,
     report_dir = here::here()
@@ -101,12 +124,18 @@ run_ora <- function(
     levels_clustered_hits = levels_clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
+    mapping_cfg = mapping_cfg,
     plot_titles = plot_titles,
     background = universe,
     cluster_hits_report_name = cluster_hits_report_name
   )
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
+
+  levels_clustered_hits <- map_gene_symbols(
+    levels_clustered_hits = levels_clustered_hits,
+    mapping_cfg = mapping_cfg
+  )
   
   all_results <- map2(
     levels_clustered_hits,
@@ -204,6 +233,24 @@ run_ora <- function(
 #' levels.
 #' @param databases A list of databases to be used in the ora analysis.
 #' @param params A list of parameters for the ora analysis.
+#' @param mapping_cfg A named list that controls the optional behavior of
+#'        automatically mapping gene symbols across species. This is useful
+#'        when your input gene symbols (e.g., from CHO cells) do not match
+#'        the species used by the enrichment databases (e.g., human or mouse).
+#'        By default, no mapping is performed and gene symbols are used as-is.
+#'        If mapping is desired, this list must contain the following **three**
+#'        elements:
+#'        \describe{
+#'          \item{method}{Mapping method to use. One of `"none"` (default; 
+#'          no mapping), `"gprofiler"` (online, via the g:Profiler API), or
+#'           `"orthogene"` (offline, if installed).}
+#'          \item{from_species}{Source species code 
+#'          (e.g., `"cgriseus"` for CHO). Must match the expected format for
+#'           the selected tool.}
+#'          \item{to_species"}{Target species code 
+#'          (e.g., `"hsapiens"` for human). This must be the species used in
+#'           your ORA database.}
+#'        }
 #' @param plot_titles A character vector of titles for the plots, with length
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
@@ -216,6 +263,7 @@ control_inputs_run_ora <- function(
     levels_clustered_hits,
     databases,
     params,
+    mapping_cfg,
     plot_titles,
     background,
     cluster_hits_report_name
@@ -227,6 +275,7 @@ control_inputs_run_ora <- function(
   
   check_params(params)
   
+  check_mapping_cfg(mapping_cfg)
   
   if (!is.na(plot_titles)) {
     if (!is.character(plot_titles) ||
@@ -268,7 +317,7 @@ control_inputs_run_ora <- function(
 #' is loaded for use.
 #'
 ensure_clusterProfiler <- function() {
-  # Check if clusterProfiler is installed; if not, inform the user
+  
   if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
     stop_call_false(
       "The 'clusterProfiler' package is not installed.\n",
@@ -518,6 +567,172 @@ build_run_ora_report <- function(
   )
 }
 
+
+#' Map gene symbols across species
+#' 
+#' @noRd
+#' 
+#' @description
+#' This function maps gene symbols from one species to another using optional 
+#' external tools. 
+#' It is primarily intended to harmonize gene symbols across species in 
+#' preparation for downstream analyses 
+#' such as overrepresentation analysis (ORA), where gene identifiers must match
+#'  those used by the reference database.
+#'
+#' The function takes a list of data frames (`levels_clustered_hits`), each of
+#'  which must contain a column named `gene`.
+#' It replaces the gene symbols in this column based on orthology mappings 
+#' between the specified source and target species.
+#' Mappings are performed via either the `gprofiler2` or `orthogene` package,
+#'  depending on user configuration. 
+#' If no mapping is requested (`method = "none"`), the gene symbols are returned
+#'  unchanged.
+#'
+#' Only 1:1 orthologs are retained during mapping; genes with no matching
+#'  orthologs or ambiguous mappings are left unchanged.
+#' The structure and order of the input list and data frames are preserved.
+#'
+#' @param levels_clustered_hits  List of data frames. Each must have a `gene`
+#'        column. Order is preserved.
+#' @param mapping_cfg A named list that controls the optional behavior of
+#'        automatically mapping gene symbols across species. This is useful
+#'        when your input gene symbols (e.g., from CHO cells) do not match
+#'        the species used by the enrichment databases (e.g., human or mouse).
+#'        By default, no mapping is performed and gene symbols are used as-is.
+#'        If mapping is desired, this list must contain the following **three**
+#'        elements:
+#'        \describe{
+#'          \item{method}{Mapping method to use. One of `"none"` (default; 
+#'          no mapping), `"gprofiler"` (online, via the g:Profiler API), or
+#'           `"orthogene"` (offline, if installed).}
+#'          \item{from_species}{Source species code 
+#'          (e.g., `"cgriseus"` for CHO). Must match the expected format for
+#'           the selected tool.}
+#'          \item{to_species"}{Target species code 
+#'          (e.g., `"hsapiens"` for human). This must be the species used in
+#'           your ORA database.}
+#'        }
+#'        
+#' @return Same `levels_clustered_hits` list, same order, `gene` column
+#'  replaced by mapped symbols.
+#' 
+map_gene_symbols <- function(
+    levels_clustered_hits,
+    mapping_cfg
+    ) {
+  
+  stopifnot(
+    is.list(levels_clustered_hits),
+    all(vapply(levels_clustered_hits,
+               \(x) "gene" %in% names(x), logical(1))),
+    is.list(mapping_cfg),
+    all(c("method","from_species","to_species") %in%
+          names(mapping_cfg))
+    )
+  
+  method <- tolower(mapping_cfg$method)
+  from   <- mapping_cfg$from_species
+  to     <- mapping_cfg$to_species
+  
+  all_genes <- unlist(lapply(levels_clustered_hits, `[[`, "gene"),
+                      use.names = FALSE)
+  
+  if (any(grepl("_[0-9]+$", all_genes))) {
+    warning(
+      "Some gene IDs end in '_<digits>'. No automatic stripping ",
+      "will be performed.  Clean them yourself if they fail to map.",
+      call. = FALSE
+      )
+  }
+  
+  unique_genes <- unique(all_genes)
+  
+  map_vec <- switch(
+    method,
+    "none" = setNames(
+      unique_genes,
+      unique_genes
+      ),
+                    
+    "gprofiler" = {
+      if (!requireNamespace("gprofiler2", quietly = TRUE))
+        stop_call_false(
+          "`gprofiler2` not installed; install it or set method = 'none'."
+          )
+
+      gp <- gprofiler2::gorth(
+        unique_genes,
+        source_organism  = from,
+        target_organism  = to,
+        mthreshold       = Inf,
+        filter_na        = TRUE
+        )
+      
+      # gorth names: 'input' = original, 'ortholog_name' = mapped
+      setNames(
+        gp$ortholog_name,
+        gp$input
+        )
+    },
+    
+    "orthogene" = {
+      if (!requireNamespace("orthogene", quietly = TRUE))
+        stop_call_false(
+          "`orthogene` not installed; install it or set method = 'none'."
+          )
+      
+      or <- orthogene::convert_orthologs(
+        gene_df        = unique_genes,
+        input_species  = from,                       # correct arg names
+        output_species = to,
+        method         = "gprofiler",
+        gene_output    = "dict")                     # returns a named list
+      
+      map_chr <- unlist(    # make it a character vec
+        or,
+        use.names = TRUE
+        )              
+      setNames(
+        map_chr,
+        names(map_chr)
+        )
+    },
+    
+    stop_call_false(
+      "Unknown mapping method: ",
+      method
+      )
+  )
+  
+  ## fallback for unmapped → keep original symbol
+  fallback_map <- setNames(   # start with identity map
+    unique_genes,
+    unique_genes
+    )  
+  fallback_map[names(map_vec)] <- map_vec       # overwrite mapped ones
+  map_vec <- fallback_map                       # use this from here on
+  
+  # Write back in the same order
+  rebuild <- \(df, idx) { df$gene <- map_vec[idx]; df }
+  row_counts <- vapply(
+    levels_clustered_hits,
+    nrow,
+    integer(1)
+    )
+  gene_split <- split(
+    all_genes,
+    rep(
+      seq_along(row_counts),
+      row_counts
+      )
+    )
+  Map(
+    rebuild,
+    levels_clustered_hits,
+    gene_split
+    )
+}
 
 
 # Level 2 internal functions ---------------------------------------------------
@@ -773,6 +988,136 @@ check_params <- function(params) {
 }
 
 
+#' Check the user-supplied mapping configuration
+#' 
+#' @noRd
+#'
+#' @description
+#' 
+#' This routine validates a `mapping_cfg` list **without altering it** and
+#' raises a clear, actionable `stop()` message on the first problem detected.
+#' If everything is acceptable it returns `invisible(TRUE)`.
+#'
+#' @param mapping_cfg list. Must contain **exactly** the elements  
+#'   `method`, `from_species`, and `to_species`.
+#'
+#' @details
+#' * **method** — character scalar, one of `"none"`, `"gprofiler"`,
+#'   or `"orthogene"` (case-insensitive).
+#' * **from_species**, **to_species** — character scalars giving the species
+#'   identifiers expected by the chosen tool.  They are only checked (not
+#'   auto-corrected).
+#'
+#' The function deliberately performs *no* coercion or guessing: any deviation
+#' from the expected input is considered an error so that the user must supply
+#' an unambiguous, reproducible configuration.
+#' 
+#' @importFrom orthogene map_species
+#' 
+check_mapping_cfg <- function(mapping_cfg) {
+  
+  # structural checks
+  if (!is.list(mapping_cfg) || inherits(mapping_cfg, "data.frame")) {
+    stop("`mapping_cfg` must be a *list*, e.g.\n",
+         "  list(method = 'gprofiler', from_species = 'cgchok1gshd', ",
+         "to_species = 'hsapiens').")
+  }
+  
+  expected <- c("method", "from_species", "to_species")
+  missing  <- setdiff(expected, names(mapping_cfg))
+  if (length(missing)) {
+    stop("`mapping_cfg` is missing field(s): ",
+         paste(missing, collapse = ", "), ".")
+  }
+  
+  extra <- setdiff(names(mapping_cfg), expected)
+  if (length(extra)) {
+    stop("`mapping_cfg` contains unknown field(s): ",
+         paste(extra, collapse = ", "), ".\n",
+         "Only the fields ", paste(expected, collapse = ", "),
+         " are allowed.")
+  }
+  
+  # method checks
+  method <- tolower(mapping_cfg$method[[1]])
+  if (!is.character(mapping_cfg$method) || length(mapping_cfg$method) != 1) {
+    stop("`method` must be a single character string.")
+  }
+  ok_methods <- c("none", "gprofiler", "orthogene")
+  if (!method %in% ok_methods) {
+    stop(
+      "`method` must be one of ",
+      paste(shQuote(ok_methods), collapse = ", "),
+      ". You supplied: ", shQuote(mapping_cfg$method), "."
+      )
+  }
+  
+  # species checks
+  need_species <- method != "none"
+  if (need_species) {
+    for (sp in c("from_species", "to_species")) {
+      val <- mapping_cfg[[sp]]
+      if (!is.character(val) || length(val) != 1 || !nzchar(val))
+        stop("`", sp, "` must be a non-empty character scalar.")
+    }
+  }
+  
+  # tool-specific checks -
+  if (method == "gprofiler") {
+    if (!requireNamespace("gprofiler2", quietly = TRUE))
+      stop_call_false(
+        "`gprofiler2` is not installed. Install with:  
+        install.packages('gprofiler2')"
+        )
+    
+    # Skip organism code checking entirely
+    message(
+      "Note: `from_species` and `to_species` are not checked for validity.\n",
+      "Make sure they match g:Profiler’s expected organism codes. See:\n",
+      "https://biit.cs.ut.ee/gprofiler/page/organism-list"
+      )
+  }
+  
+  if (method == "orthogene") {
+    if (!requireNamespace("orthogene", quietly = TRUE)) {
+      stop_call_false(
+        "`orthogene` is not installed. Install with:\n",
+        "  BiocManager::install('orthogene')"
+        )
+    }
+    # orthogene's own mapper returns NA for unknown species
+    bad_from <- is.na(orthogene::map_species(
+      mapping_cfg$from_species,
+      quiet = TRUE,
+      verbose = FALSE
+      ))
+    if (bad_from) {
+      stop_call_false(
+        "`orthogene` cannot recognise `from_species` = '",
+        mapping_cfg$from_species, "'.\n",
+        "Use a common/scientific name (e.g. 'Chinese hamster') ",
+        "or a valid NCBI tax-ID (10029)."
+        )
+    }
+    bad_to <- is.na(orthogene::map_species(
+      mapping_cfg$to_species,
+      quiet = TRUE,
+      verbose = FALSE
+      ))
+    if (bad_to) {
+      stop_call_false(
+        "`orthogene` cannot recognise `to_species` = '",
+        mapping_cfg$to_species, "'.\n",
+        "Use a common/scientific name (e.g. 'human') ",
+        "or a valid NCBI tax-ID (9606)."
+        )
+    }
+  }
+  
+  invisible(TRUE)
+}
+
+
 #' Perform Gene Set Enrichment Analysis and plot it.
 #' 
 #' @noRd
@@ -808,7 +1153,7 @@ run_ora_level <- function(
     universe = NULL
 ) {
   
-  set_default_params(params)
+  params <- set_default_params(params)
   gene_set_collections <- dbs_to_term2genes(databases)
   
   unique_clusters <- sort(unique(clustered_genes$cluster))
@@ -855,7 +1200,7 @@ run_ora_level <- function(
       if (nrow(ora_result_df) == 0) {
         ora_result_df <- NA  # Mark explicitly
       }
-      
+
       ora_results[[cluster_label]][[gene_set_name]] <- ora_result_df
     }
   }
@@ -1341,6 +1686,7 @@ flatten_ora_results <- function(ora_results) {
 #'   \code{\link{make_enrich_dotplot}}
 #' 
 prepare_plot_data <- function(ora_results) {
+  
   all_rows <- list()
   
   for (cluster in names(ora_results)) {
@@ -1361,8 +1707,8 @@ prepare_plot_data <- function(ora_results) {
   
   full_df <- do.call(rbind, all_rows)
   
-  # Filter for top plot: only significant and supported by ≥2 genes
-  top_df <- full_df[full_df$p.adjust < 0.05 & full_df$Count >= 2, ]
+  # Filter for top plot: only supported by ≥2 genes
+  top_df <- full_df[full_df$Count >= 2, ]
   top_df <- top_df[, c("cluster", "term", "p.adjust", "odds_ratio")]
   colnames(top_df) <- c("cluster", "term", "adj.p_value", "odds_ratio")
   

@@ -3727,11 +3727,8 @@ hierarchical_clustering <- function(
     curve_values,
     method = "euclidean"
     )
-  
-  hc <- fastcluster::hclust(
-    distance_matrix,
-    method = "complete"
-    )
+
+  hc <- fast_or_base_hclust(distance_matrix = distance_matrix)
 
   cluster_assignments <- stats::cutree(
     hc, 
@@ -4332,4 +4329,38 @@ add_dashed_lines <- function(
   }
 
   return(p) # Return the updated plot object
+}
+
+
+#' Fast(er) hclust with graceful fallback
+#' 
+#' @noRd
+#'
+#' @param distance_matrix  an object of class "dist" (or something you can 
+#' coerce to it)
+#' @param method           linkage method; defaults to "complete"
+#' @return                 an object of class "hclust"
+#' 
+#' @importFrom fastcluster hclust
+#' 
+fast_or_base_hclust <- function(
+    distance_matrix,
+    method = "complete"
+    ) {
+  
+  if (requireNamespace("fastcluster", quietly = TRUE)) {
+    # fastcluster is in the library – use it
+    fastcluster::hclust(
+      distance_matrix,
+      method = method
+      )
+  } else {
+    message(
+    "Package 'fastcluster' not found – falling back to stats::hclust (slower)."
+    )
+    stats::hclust(
+      distance_matrix,
+      method = method
+      )
+  }
 }

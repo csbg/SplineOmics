@@ -10,6 +10,7 @@ run_ora(
   report_info,
   cluster_hits_report_name,
   clusterProfiler_params = NA,
+  mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   plot_titles = NA,
   universe = NULL,
   report_dir = here::here()
@@ -58,6 +59,25 @@ documentation of clusterProfiler for their description. When this argument is
 not specified, it is per default NULL, in which case default parameters for
 those are selected, which are equivalent to the parameter values shown in the 
 example definition above.}
+
+\item{mapping_cfg}{A named list that controls the optional behavior of
+automatically mapping gene symbols across species. This is useful
+when your input gene symbols (e.g., from CHO cells) do not match
+the species used by the enrichment databases (e.g., human or mouse).
+By default, no mapping is performed and gene symbols are used as-is.
+If mapping is desired, this list must contain the following **three**
+elements:
+\describe{
+  \item{method}{Mapping method to use. One of `"none"` (default; 
+  no mapping), `"gprofiler"` (online, via the g:Profiler API), or
+   `"orthogene"` (offline, if installed).}
+  \item{from_species}{Source species code 
+  (e.g., `"cgriseus"` for CHO). Must match the expected format for
+   the selected tool.}
+  \item{to_species"}{Target species code 
+  (e.g., `"hsapiens"` for human). This must be the species used in
+   your ORA database.}
+}}
 
 \item{plot_titles}{Titles for the enrichment dotplots generated in the HTML
 report, default is NA.}

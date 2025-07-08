@@ -7,7 +7,7 @@ MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)
 [![R-CMD-check](https://github.com/csbg/SplineOmics/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/csbg/SplineOmics/actions/workflows/R-CMD-check.yaml)
 [![Docker](https://img.shields.io/badge/docker-pull-blue)](https://hub.docker.com/r/thomasrauter/splineomics)
-![Dependencies](https://img.shields.io/badge/dependencies-28-blue)
+![Dependencies](https://img.shields.io/badge/dependencies-21-blue)
 ![Platforms](https://img.shields.io/badge/platforms-all-brightgreen)
 
 <img src="man/figures/hex_logo.png" align="left" width="65"/>
