@@ -91,6 +91,7 @@ run_limma_splines <- function(
   mode <- splineomics[["mode"]]
   condition <- splineomics[["condition"]]
   use_array_weights <- splineomics[["use_array_weights"]]
+  bp_cfg <- splineomics[["bp_cfg"]]
   
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -123,7 +124,8 @@ run_limma_splines <- function(
       condition = condition,
       feature_names = feature_names,
       padjust_method = padjust_method,
-      mode = mode
+      mode = mode,
+      bp_cfg = bp_cfg
     )
     
     results_list <- purrr::imap(
@@ -181,7 +183,8 @@ run_limma_splines <- function(
       condition = condition,
       padjust_method = padjust_method,
       feature_names = feature_names,
-      use_array_weights = use_array_weights
+      use_array_weights = use_array_weights,
+      bp_cfg = bp_cfg
     )
 
     # Step 2: Extract the time_effects within each condition.
@@ -252,6 +255,16 @@ run_limma_splines <- function(
 #' @param padjust_method A character string specifying the p-adjustment method.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
+#' @param bp_cfg A named numeric vector specifying the parallelization
+#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#'   
+#'   This controls how many **R worker processes** (`n_cores`) and how many
+#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+#'   during parallel computation.  
+#'   
+#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
+#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+#'   disables parallelization and avoids oversubscription of CPU threads.
 #'
 #' @return A list containing the name of the results and the top table of
 #'          results.
@@ -270,7 +283,8 @@ fit_within_condition_isolated <- function(
     condition,
     feature_names,
     padjust_method,
-    mode
+    mode,
+    bp_cfg
 ) {
   
   samples <- which(meta[[condition]] == level)
@@ -298,7 +312,8 @@ fit_within_condition_isolated <- function(
     dream_params = dream_params,
     spline_params = spline_params,
     level_index = level_index,
-    padjust_method = padjust_method
+    padjust_method = padjust_method,
+    bp_cfg = bp_cfg
   )
 
   top_table <- process_top_table(
@@ -347,6 +362,18 @@ fit_within_condition_isolated <- function(
 #'                  the levels of the experimental condition.
 #' @param padjust_method A character string specifying the p-adjustment method.
 #' @param feature_names A non-empty character vector of feature names.
+#' @param bp_cfg A named numeric vector specifying the parallelization
+#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#'   
+#'   This controls how many **R worker processes** (`n_cores`) and how many
+#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+#'   during parallel computation.  
+#'   
+#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
+#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+#'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param use_array_weights Boolean value specifying whether to use array 
+#' weights for limma or variancePartition.
 #'
 #' @return A list containing top tables for the factor only and factor-time
 #' contrast.
@@ -360,6 +387,7 @@ fit_within_condition_isolated <- function(
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
 #' @importFrom variancePartition dream
+#' @importFrom BiocParallel bpstop
 #'
 fit_global_model <- function(
     data,
@@ -372,6 +400,7 @@ fit_global_model <- function(
     condition,
     padjust_method,
     feature_names,
+    bp_cfg,
     use_array_weights = NULL
 ) {
   
@@ -410,26 +439,15 @@ fit_global_model <- function(
   
   if (effects[["random_effects"]] != "") {    # variancePartition approach
     colnames(data) <- rownames(meta)  # dream requires this format
-    
+
     # Apply the Kenward-Roger method if specified
     if (isTRUE(dream_params[["KenwardRoger"]])) {
       method <- "Kenward-Roger"
     } else {
       method <- NULL
     }
-    
-    n_cores <- max(1, parallel::detectCores() - 1)
-    if (.Platform$OS.type == "windows") {
-      param <- BiocParallel::SnowParam(     # Windows-safe
-        workers = n_cores,
-        type = "SOCK"
-        )  
-    } else {
-      param <- BiocParallel::MulticoreParam(workers = n_cores)   # fork on Unix
-    }
-    register(param) 
-    if (requireNamespace("RhpcBLASctl", quietly = TRUE))
-      RhpcBLASctl::blas_set_num_threads(1)
+
+    param <- bp_setup(bp_cfg)
     set.seed(42)
     
     if (use_array_weights) {
@@ -466,7 +484,7 @@ fit_global_model <- function(
       fit <- variancePartition::eBayes(fit = fit) 
     }
     if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
-      bpstop(param)                     # cleanly shuts down workers
+      BiocParallel::bpstop(param)       # cleanly shuts down workers
     }
   } else {                         # limma approach
     if (use_array_weights) {
@@ -574,7 +592,7 @@ extract_within_level_time_effects <- function(
     if (lev == ref) {                       # baseline condition
       for (k in seq_len(dof))
         C[k, main_cols[k]] <- 1
-    } else {                                # other condition = main + interaction
+    } else {                            # other condition = main + interaction
       int_cols <- paste0(condition, lev, ":", main_cols)
       for (k in seq_len(dof)) {
         C[k, main_cols[k]] <- 1
@@ -604,7 +622,7 @@ extract_within_level_time_effects <- function(
       # Tell dream: all these new contrast coefficients are fixed effects
       attr(fit2, "betaType") <- rep("fixed", ncol(fit2$coefficients))
       attr(fit2, "assign")   <- seq_len(ncol(fit2$coefficients))
-      attr(fit2, "term")     <- paste0("contrast", seq_len(ncol(fit2$coefficients)))
+      attr(fit2, "term") <- paste0("contrast", seq_len(ncol(fit2$coefficients)))
       attr(fit2, "coefBaseline")  <- rep(FALSE, ncol(fit2$coefficients))
     }
 
@@ -785,6 +803,16 @@ process_top_table <- function(
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param level_index The index of the level within the factor.
 #' @param padjust_method A character string specifying the p-adjustment method.
+#' @param bp_cfg A named numeric vector specifying the parallelization
+#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#'   
+#'   This controls how many **R worker processes** (`n_cores`) and how many
+#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+#'   during parallel computation.  
+#'   
+#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
+#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+#'   disables parallelization and avoids oversubscription of CPU threads.
 #'
 #' @return A list containing the top table and the fit object from the limma
 #' analysis, and the potentially updated spline_params.
@@ -806,7 +834,8 @@ process_within_level <- function(
     dream_params,
     spline_params,
     level_index,
-    padjust_method
+    padjust_method,
+    bp_cfg
 ) {
 
   effects <- extract_effects(design)
@@ -844,14 +873,21 @@ process_within_level <- function(
       method <- "adaptive"  # Kenward-Roger for < 20 samples, else Satterthwaite
     }
     
+    param <- bp_setup(bp_cfg)
+    set.seed(42)
+    
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
       data = result[["meta"]],
-      ddf = method
+      ddf = method,
+      BPPARAM = param
     )
-    
     fit <- variancePartition::eBayes(fit)
+    
+    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+      BiocParallel::bpstop(param)       # cleanly shuts down workers
+    }
     
     num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
     coeffs <- paste0("X", seq_len(num_matching_columns))
@@ -1097,6 +1133,71 @@ select_spline_dof_loocv <- function(
   
   return(best_dof)
 }
+
+
+#' Set up a BiocParallel backend in a cross-platform, RAM-safe way
+#' 
+#' @noRd
+#' 
+#' @description
+#' Creates and registers a `BiocParallelParam` that is appropriate for the
+#' current platform **and** safe on memory-constrained machines:
+#'
+#' * **Linux / macOS** – uses `MulticoreParam()` (fork).  
+#' * **Windows**       – uses `SnowParam()`  (SOCK cluster).  
+#' * **n_cores <= 1**  – falls back to `SerialParam()`.
+#'
+#' Before spawning workers it throttles the number of BLAS/OpenBLAS threads
+#' **per worker** to avoid *workers × threads* oversubscription, which can slow
+#' jobs down or exhaust RAM.
+#'
+#' @param bp_cfg A named numeric vector specifying the parallelization
+#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#'   
+#'   This controls how many **R worker processes** (`n_cores`) and how many
+#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+#'   during parallel computation.  
+#'   
+#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
+#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+#'   disables parallelization and avoids oversubscription of CPU threads.
+#'
+#' @return A `BiocParallelParam` object (already registered via
+#'   `BiocParallel::register()`).  Use it directly or rely on the global
+#'   registration inside BiocParallel-aware functions.
+#'   
+#' @importFrom RhpcBLASctl blas_set_num_threads
+#' @importFrom BiocParallel SerialParam SnowParam MulticoreParam register
+#'
+bp_setup <- function(bp_cfg) {
+  
+  if (is.null(bp_cfg)) {
+    n_cores      <- 1
+    blas_threads <- 1
+  } else {
+    n_cores      <- as.integer(bp_cfg[["n_cores"]])
+    blas_threads <- as.integer(bp_cfg[["blas_threads"]])
+  }
+
+  # 1.  Throttle BLAS threads in *this* session (forks inherit) 
+  if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+    RhpcBLASctl::blas_set_num_threads(blas_threads)
+  }
+  
+  # 2.  Choose backend
+  if (n_cores <= 1) {
+    param <- BiocParallel::SerialParam()
+  } else if (.Platform$OS.type == "windows") {
+    param <- BiocParallel::SnowParam(workers = n_cores, type = "SOCK")
+  } else {
+    param <- BiocParallel::MulticoreParam(workers = n_cores)
+  }
+  
+  # 3.  Register and return
+  BiocParallel::register(param)
+  invisible(param)
+}
+
 
 
 # Level 3 internal functions ---------------------------------------------------

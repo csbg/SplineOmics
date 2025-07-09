@@ -3571,6 +3571,7 @@ normalize_curves <- function(curve_values) {
 #' }
 #'
 #' @importFrom ClusterR MiniBatchKmeans predict_KMeans
+#' @importFrom pbapply pblapply
 #' 
 kmeans_clustering <- function(
     curve_values,
@@ -3599,7 +3600,7 @@ kmeans_clustering <- function(
     n_obs <- nrow(curve_values)
     
     if (n_obs <= 1000) {    # Small dataset: use full k-means
-      fits <- lapply(k_range, function(k) {
+      fits <- pbapply::pblapply(k_range, function(k) {
         stats::kmeans(
           curve_values,
           centers  = k,
@@ -3622,7 +3623,7 @@ kmeans_clustering <- function(
         max(20L, 2L * max(k_range), floor(0.05 * n_obs))
       )
       
-      fits <- lapply(k_range, function(k) {
+      fits <- pbapply::pblapply(k_range, function(k) {
         ClusterR::MiniBatchKmeans(
           data            = curve_values,
           clusters        = k,

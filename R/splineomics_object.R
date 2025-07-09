@@ -156,7 +156,8 @@ update_splineomics <- function(
     "dream_params",
     "mode",
     "spline_params",
-    "limma_splines_result"
+    "limma_splines_result",
+    "bp_cfg"
   )
 
   args <- list(...)

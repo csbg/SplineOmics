@@ -102,6 +102,15 @@ Examples:
   qvalue package is now optionally required to enable stricter FDR filtering in
   enrichment results.
 
+- Cross-platform and memory-safe parallelization support for dream() via a new
+  helper function bp_setup(). This function sets up a BiocParallel backend using
+  either MulticoreParam (Unix) or SnowParam (Windows), based on user-supplied 
+  configuration (bp_cfg). BLAS threads per worker are throttled using 
+  RhpcBLASctl to avoid oversubscription. Cleanup with bpstop() is conditionally
+  applied for SnowParam backends. Includes validation of bp_cfg input. Enables
+  efficient multi-core execution of dream() and eBayes() while preventing system
+  resource exhaustion.
+
 #### Fixed
 - Red spline curves: Before, it was just generated with the help of the spline
   coefficients, and the intercept. But this is not the full linear model that

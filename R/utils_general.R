@@ -368,6 +368,7 @@ extract_effects <- function(formula_string) {
 #' printed to the console.
 #' 
 #' @importFrom car leveneTest
+#' @importFrom pbapply pbapply
 #' 
 check_homoscedasticity_violation <- function(
     data,

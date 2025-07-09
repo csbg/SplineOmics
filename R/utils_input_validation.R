@@ -423,7 +423,70 @@ InputControl <- R6::R6Class("InputControl",
         stop(error_message)
       }
     },
-
+    
+    
+    #' Check `bp_cfg`
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' Validates that `bp_cfg` is either **`NULL`** *or* a length-2 numeric
+    #' (integer) vector **named exactly**  
+    #' `c("n_cores", "blas_threads")`, where each value is a positive whole
+    #' number (>= 1). Any deviation triggers an informative `stop()`.
+    #'
+    #' @param bp_cfg A numeric named vector with elements
+    #'   `"n_cores"` and `"blas_threads"`, or `NULL`.
+    #'
+    #' @return No return value. Called for its side-effect of throwing an error
+    #'  on malformed input.
+    #'
+    #' @seealso
+    #'   \code{\link[base]{stop}} for error signalling.
+    #'
+    check_bp_cfg = function() {
+      
+      bp_cfg <- self$args[["bp_cfg"]]
+      
+      required_args <- list(bp_cfg)
+      
+      if (any(vapply(required_args, is.null, logical(1)))) {
+        return(NULL)
+      }
+      
+      # Allow NULL (falls back to defaults elsewhere)
+      if (is.null(bp_cfg))
+        return(invisible(NULL))
+      
+      ## Basic structure checks
+      valid_structure <-
+        is.numeric(bp_cfg) &&
+        length(bp_cfg) == 2 &&
+        setequal(names(bp_cfg), c("n_cores", "blas_threads"))
+      
+      if (!valid_structure) {
+        stop(
+          "'bp_cfg' must be NULL or a numeric vector with *exactly* two named ",
+          "elements: c(n_cores = , blas_threads = )."
+        )
+      }
+      
+      # Value checks
+      if (any(is.na(bp_cfg)) ||
+          any(bp_cfg < 1)    ||
+          any(bp_cfg != as.integer(bp_cfg))) {
+        
+        offending <- names(bp_cfg)[
+          which(bp_cfg < 1 | bp_cfg != as.integer(bp_cfg))]
+        stop(
+          "'bp_cfg' values must be positive whole numbers (>=1). ",
+          "Offending element(s): ", paste(offending, collapse = ", ")
+        )
+      }
+      
+      invisible(NULL)
+    },
+    
 
     #' Check Top Tables
     #' 
@@ -2373,7 +2436,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
         if (!all(spline_params$dof == as.integer(spline_params$dof))) {
           stop_call_false("dof must be an integer vector in spline_params.")
         }
-        # B-spline DoF must be > 2 — but only if not zero (i.e., not auto)
+        # B-spline DoF must be > 2 - but only if not zero (i.e., not auto)
         for (i in seq_along(spline_params$spline_type)) {
           if (spline_params$spline_type[i] == "b" &&
               spline_params$dof[i] != 0 &&

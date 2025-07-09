@@ -1222,7 +1222,7 @@ make_correlation_heatmaps <- function(
       data <- data_filtered
       message(
         "Filtered rows with > ", round(max_na_fraction * 100), 
-        "% missing; kept all ", nrow(data), " rows (≤ ", target_rows, ")."
+        "% missing; kept all ", nrow(data), " rows (<= ", target_rows, ")."
         )
     }
   }
