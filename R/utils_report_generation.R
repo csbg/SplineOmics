@@ -1162,7 +1162,10 @@ encode_df_to_base64 <- function(
   } else {
     stop("Input must be a dataframe or a list of dataframes.")
   }
-
+  
+  if (length(wb$worksheets) == 0L) {
+    openxlsx::addWorksheet(wb, "Sheet1")
+    }
   openxlsx::saveWorkbook(
     wb,
     temp_file,
