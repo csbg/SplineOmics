@@ -53,7 +53,7 @@ test_that("cluster_hits() returns correctly structured result", {
   
   # Inputs for clustering
   adj_pthresholds <- c(0.05, 0.05)
-  nr_clusters <- list(6:6, 2:3)
+  nr_clusters <- list(6, 2:3)
   gene_column_name <- "Gene_symbol"
   genes <- annotation[[gene_column_name]]
   plot_info <- list(

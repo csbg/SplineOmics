@@ -379,8 +379,8 @@ adj_pthresholds <- c(   # 0.0000001 for both levels
 )
 
 nr_clusters <- list(
-  4:4,  # 4 clusters for constant
-  4:4   # 4 clusters for temp_shift
+  4,  # 4 clusters for constant
+  4   # 4 clusters for temp_shift
 )
 
 report_dir <- here::here(

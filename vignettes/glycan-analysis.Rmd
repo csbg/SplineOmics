@@ -308,8 +308,8 @@ adj_pthresholds <- c( # 0.05 for both levels
 )
 
 nr_clusters <- list(
-  2:2,   # clusters for the exponential level
-  2:2    # clusters for the stationary level
+  2,   # clusters for the exponential level
+  2    # clusters for the stationary level
 )
 
 report_dir <- here::here(

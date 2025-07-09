@@ -96,7 +96,7 @@ cluster_hits <- function(
     raw_data = NULL,
     report_dir = here::here(),
     report = TRUE,
-    max_hit_number = 100
+    max_hit_number = 25
     ) {
 
   report_dir <- normalizePath(
@@ -112,9 +112,11 @@ cluster_hits <- function(
   if (!is.numeric(max_hit_number) ||            # must be numeric
       length(max_hit_number) != 1L ||           # exactly one value
       !(is.infinite(max_hit_number) ||          # allow Inf
-        (max_hit_number >= 1 &&                 # ≥ 1 …
-         max_hit_number == as.integer(max_hit_number)))) {  # … and int-valued
-    stop("`max_hit_number` must be a single positive integer (1, 2, …) or Inf.")
+        (max_hit_number >= 1 &&                 # >= 1 ...
+         max_hit_number == as.integer(max_hit_number)))) {  # ... and int-valued
+    stop_call_false(
+      "`max_hit_number` must be a single positive integer (1, 2, ...) or Inf."
+      )
   }
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -167,10 +169,6 @@ cluster_hits <- function(
   predicted_timecurves <- predict_timecurves(
     fit = splineomics[["fit"]],
     splineomics = splineomics,  
-    adj_pthresholds = adj_pthresholds,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction_condition_time = 
-      adj_pthresh_interaction_condition_time,
     meta = meta,
     condition = condition,
     spline_params = spline_params,
@@ -298,11 +296,13 @@ cluster_hits <- function(
       return(df)
     })
   }
-
-  print_info_message(
-    message_prefix = "Clustering the hits",
-    report_dir = report_dir
-  )
+  
+  if (report) {
+    print_info_message(
+      message_prefix = "Clustering the hits",
+      report_dir = report_dir
+    )
+  }
 
   list(
     all_levels_clustering = all_levels_clustering,
@@ -327,8 +327,8 @@ cluster_hits <- function(
 #' criteria and ensures that clustering can only proceed for levels with 
 #' at least two hits.
 #'
-#' @param top_tables A list of limma top tables, where each top table corresponds 
-#'   to a specific level or comparison.
+#' @param top_tables A list of limma top tables, where each top table 
+#' corresponds to a specific level or comparison.
 #' @param adj_pthresholds A numeric vector of adjusted p-value thresholds, 
 #'   one for each level in the condition.
 #' @param meta A dataframe containing metadata for the RNA-seq data, 
@@ -585,11 +585,6 @@ huge_table_user_prompter <- function(tables) {
 #'   [splines::bs()]).
 #' @param splineomics A list containing top tables and model results (not used
 #'   internally, but passed for interface compatibility).
-#' @param adj_pthresholds Unused; included for interface compatibility.
-#' @param adj_pthresh_avrg_diff_conditions Unused; included for interface
-#'   compatibility.
-#' @param adj_pthresh_interaction_condition_time Unused; included for interface
-#'   compatibility.
 #' @param meta A data.frame containing metadata, including time and condition
 #'   annotations.
 #' @param condition String specifying the column in `meta` with experimental
@@ -604,15 +599,13 @@ huge_table_user_prompter <- function(tables) {
 #'   \describe{
 #'     \item{`time_grid`}{Numeric vector of 1000 time points for prediction.}
 #'     \item{`predictions`}{Named list by condition level. Each entry is a 
-#'     matrix of predicted values (features × time points).}
+#'     matrix of predicted values (features x time points).}
 #'   }
 #'   
 predict_timecurves <- function(
     fit,
     splineomics,
     adj_pthresholds,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction_condition_time,
     meta,
     condition,                 
     spline_params,
@@ -623,7 +616,7 @@ predict_timecurves <- function(
   # number of unique sampling points
   n_unique_time <- dplyr::n_distinct(meta[["Time"]])
   
-  ## build a grid 10 × denser than the raw sampling
+  ## build a grid 10 x denser than the raw sampling
   smooth_timepoints <- seq(
     from = min(meta[["Time"]]),
     to   = max(meta[["Time"]]),
@@ -648,7 +641,7 @@ predict_timecurves <- function(
     
     design_n <- colnames(fit_lv$coefficients)
     
-    # spline columns X1, X2, … 
+    # spline columns X1, X2, ... 
     spline_cols <- grep(
       "^X[0-9]+$",
       design_n,
@@ -676,7 +669,7 @@ predict_timecurves <- function(
     colnames(B) <- spline_cols
     
     # build design row
-    if (mode == "isolated") {                   # per-level fit → no dummies
+    if (mode == "isolated") {                   # per-level fit -> no dummies
       X_new  <- cbind(
         "(Intercept)" = 1,
         B
@@ -736,7 +729,7 @@ predict_timecurves <- function(
         needed <- colnames(X_new)
       }
     }
-    
+
     # coefficients matrix
     coef_full      <- as.matrix(fit_lv$coefficients)
     feature_indices <- seq_len(nrow(coef_full))
@@ -747,7 +740,7 @@ predict_timecurves <- function(
     # predictions
     pred_mat <- coef_mat %*% t(X_new)
     rownames(pred_mat) <- as.character(feature_indices)
-    
+
     pred_list[[level]] <- pred_mat
   }
   
@@ -790,19 +783,15 @@ predict_timecurves <- function(
 #'     \item{`top_table`}{Top table with added cluster column}
 #'     \item{`clusters`}{Number of clusters used}
 #'   }
-#'
-#' @seealso
-#' \code{\link{predict_timecurves}}, \code{\link{hierarchical_clustering}},
-#' \code{\link{normalize_curves}}
 #' 
 perform_clustering <- function(
     top_tables,             
     nr_clusters,
     meta,
     condition,              
-    predicted_timecurves   
+    predicted_timecurves
 ) {
-  
+
   message("\n Performing the clustering...")
   
   # common dense time grid (same for every level)
@@ -815,20 +804,18 @@ perform_clustering <- function(
   # loop over every condition level
   for (i in seq_along(top_tables)) {
     
-    key    <- names(top_tables)[i]                       # "Phase_Exponential"
-    level  <- sub(paste0("^", condition, "_"), "", key)  # "Exponential"
+    key    <- names(top_tables)[i]                       
+    level  <- sub(paste0("^", condition, "_"), "", key)  
     message(paste("For the level: ", level))
     k_range <- nr_clusters[[i]]                  
 
     tbl <- top_tables[[key]]
-    
-    # extract feature indices no matter what type tbl is
     feat_idx <- if (is.data.frame(tbl)) {
-      tbl$feature_nr                  # normal case
-    } else if (length(tbl) == 0 || all(is.na(tbl))) {
-      integer(0)                     # no hits
+      tbl$feature_nr                      # normal case
+    } else if (length(tbl) == 0L || all(is.na(tbl))) {
+      integer(0)                          # no hits
     } else {
-      as.integer(tbl)                # vector already
+      as.integer(tbl)                     # already a vector of indices
     }
     
     if (length(feat_idx) == 0L) {
@@ -837,13 +824,12 @@ perform_clustering <- function(
     }
     
     pred_mat <- predicted_timecurves$predictions[[level]]
-    
     curves   <- pred_mat[ as.character(feat_idx), , drop = FALSE ]
     norm_cur <- normalize_curves(curves)
     
     results[[key]] <- kmeans_clustering(
       curve_values      = norm_cur,
-      k_range           = k_range,                   # use per-level k_range
+      k_range           = k_range,                   
       smooth_timepoints = time_grid,
       top_table         = top_tables[[key]],
       condition         = level
@@ -1152,7 +1138,7 @@ make_clustering_report <- function(
     clusters_spline_plots <- list()
     
     message("Generating spline plots...")
-    for (nr_cluster in unique(stats::na.omit(top_table$cluster))) {
+    for (nr_cluster in sort(unique(stats::na.omit(top_table$cluster)))) {
       nr_of_hits <- sum(
         level_clustering$clustered_hits$cluster == nr_cluster,
         na.rm = TRUE
@@ -2094,13 +2080,15 @@ plot_cluster_mean_splines <- function(
     ) {
 
   clusters <- sort(unique(curve_values$cluster))
-
   plots <- list()
+  
   for (current_cluster in clusters) {
     subset_df <- subset(
       curve_values,
       curve_values$cluster == current_cluster
     )
+    
+    nr_of_hits <- nrow(subset_df)
     
     if (!is.infinite(max_hit_number)) {
       n_keep <- min(max_hit_number, nrow(subset_df))
@@ -2108,7 +2096,6 @@ plot_cluster_mean_splines <- function(
     }
     
     subset_df$cluster <- NULL
-    nr_of_hits <- nrow(subset_df)
     current_title <- paste(
       "Cluster",
       current_cluster,
@@ -2127,7 +2114,6 @@ plot_cluster_mean_splines <- function(
         level
       )
   }
-
   return(plots)
 }
 
@@ -3550,24 +3536,40 @@ normalize_curves <- function(curve_values) {
 }
 
 
-#' K-means Clustering of Curve Values
+#' K-means Clustering of Temporal Curves using MiniBatchKmeans
 #' 
 #' @noRd
 #'
-#' @description Performs k-means clustering on given curve values.
-#' The function adjusts the provided top_table with cluster
-#' assignments.
+#' @description
+#' Performs MiniBatch K-means clustering on smoothed time-series (curve) data.
+#' Automatically selects the best number of clusters using the Bayesian 
+#' Information Criterion (BIC).
+#' Cluster assignments are added to the provided `top_table`, and the clustered
+#'  data is returned.
 #'
-#' @param curve_values A matrix or data frame of curve values to cluster.
-#' @param k_range The range or number of clusters to use, in the format min:max.
-#' @param smooth_timepoints Numeric vector of time points corresponding to
-#'                          columns in curve_values.
-#' @param top_table Data frame to be updated with cluster assignments.
-#' @param condition_level Current level within the condition.
-#' @return A list containing clustering results and the modified top_table.
+#' @param curve_values A numeric matrix of normalized time-series values 
+#' (rows = features, cols = timepoints).
+#' @param k_range Integer vector specifying the range of cluster numbers to 
+#' evaluate (e.g., `2:8`).
+#' @param smooth_timepoints Numeric vector of timepoints used as column names 
+#' in the output.
+#' @param top_table Data frame with column `feature_nr` indicating feature
+#'  indices. Will be updated with cluster assignments.
+#' @param condition_level Character string indicating the current condition 
+#' level (used for error messages).
 #'
-#' @importFrom stats dist kmeans
+#' @return A list with the following components:
+#' \describe{
+#'   \item{clustered_hits}{A data frame with `feature` and `cluster` 
+#'   assignments.}
+#'   \item{hc}{The MiniBatchKmeans object for the best `k`.}
+#'   \item{curve_values}{The input matrix with a `cluster` column added.}
+#'   \item{top_table}{The input `top_table`, updated with cluster assignments.}
+#'   \item{clusters}{The best number of clusters (`k_best`) selected via BIC.}
+#' }
 #'
+#' @importFrom ClusterR MiniBatchKmeans predict_KMeans
+#' 
 kmeans_clustering <- function(
     curve_values,
     k_range,
@@ -3585,57 +3587,74 @@ kmeans_clustering <- function(
     ))
   }
 
-  # choose k with k-means + Euclidean
-  curve_z <- scale(
-    curve_values,
-    center = TRUE,
-    scale = TRUE
-    )  
-  seed    <- 1L                                               
-  
   if (length(k_range) == 1L && k_range[1L] == 1L) {
-    
-    # CASE 1 ─ all series in one cluster, skip any computation
+    # All series in one cluster, skip any computation
     k_best <- 1L
     cl     <- NULL
-    cluster_assignments <- rep(1L, nrow(curve_z))
-    
+    cluster_assignments <- rep(1L, nrow(curve_values))
   } else {
+    set.seed(42)
+    n_obs <- nrow(curve_values)
     
-    # shared preparation: one Euclidean distance matrix
-    dist_mat <- stats::dist(
-      curve_z,
-      method = "euclidean"
-      )
-    
-    set.seed(seed)
-    
-    # run k-means for every k in k_range
-    fits <- lapply(k_range, function(k) {
-      stats::kmeans(
-        curve_z,
-        centers = k,
-        nstart = 10,
-        iter.max = 100
+    if (n_obs <= 1000) {    # Small dataset: use full k-means
+      fits <- lapply(k_range, function(k) {
+        stats::kmeans(
+          curve_values,
+          centers  = k,
+          nstart   = 10,
+          iter.max = 300
         )
-    })
-    
-    if (length(k_range) == 1L) {
-      # CASE 2 ─ only one k (≥ 2) → nothing to compare
-      k_best <- k_range[1L]
-      cl     <- fits[[1L]]
+      })
       
-    } else {
-      # CASE 3 ─ multiple k → choose by mean silhouette
-      sil <- vapply(fits, function(f)
-        mean(cluster::silhouette(f$cluster, dist_mat)[, 3]),
-        numeric(1))
-      best_idx <- which.max(sil)
-      k_best   <- k_range[best_idx]
-      cl       <- fits[[best_idx]]
+      tot_within <- vapply(
+        fits,
+        function(f)
+          f$tot.withinss,
+        numeric(1)
+        )
+      cluster_assignments_list <- lapply(fits, `[[`, "cluster")
+      
+    } else {     # Large dataset: use MiniBatchKmeans
+      batch_size <- min(                 # never larger than the data
+        n_obs,
+        max(20L, 2L * max(k_range), floor(0.05 * n_obs))
+      )
+      
+      fits <- lapply(k_range, function(k) {
+        ClusterR::MiniBatchKmeans(
+          data            = curve_values,
+          clusters        = k,
+          batch_size      = batch_size,
+          num_init        = 10,
+          max_iters       = 300,
+          init_fraction   = 1.0,
+          early_stop_iter = 10,
+          tol             = 1e-4,
+          verbose         = FALSE
+        )
+      })
+      
+      tot_within <- vapply(
+        fits,
+        function(f) sum(f$WCSS_per_cluster),
+        numeric(1)
+        )
+      cluster_assignments_list <- lapply(
+        fits,
+        function(f) 
+          ClusterR::predict_KMeans(
+            curve_values,
+            f$centroids
+            )
+        )
     }
+    p <- ncol(curve_values)
+    bic <- n_obs * log(tot_within / n_obs) + k_range * log(n_obs) * p
+    best_idx <- which.min(bic)
     
-    cluster_assignments <- cl$cluster
+    k_best <- k_range[best_idx]
+    cl <- fits[[best_idx]]
+    cluster_assignments <- cluster_assignments_list[[best_idx]]
   }
 
   clustered_hits <- data.frame(
@@ -4234,38 +4253,4 @@ add_dashed_lines <- function(
   }
 
   return(p) # Return the updated plot object
-}
-
-
-#' Fast(er) hclust with graceful fallback
-#' 
-#' @noRd
-#'
-#' @param distance_matrix  an object of class "dist" (or something you can 
-#' coerce to it)
-#' @param method           linkage method; defaults to "complete"
-#' @return                 an object of class "hclust"
-#' 
-#' @importFrom fastcluster hclust
-#' 
-fast_or_base_hclust <- function(
-    distance_matrix,
-    method = "complete"
-    ) {
-  
-  if (requireNamespace("fastcluster", quietly = TRUE)) {
-    # fastcluster is in the library – use it
-    fastcluster::hclust(
-      distance_matrix,
-      method = method
-      )
-  } else {
-    message(
-    "Package 'fastcluster' not found – falling back to stats::hclust (slower)."
-    )
-    stats::hclust(
-      distance_matrix,
-      method = method
-      )
-  }
 }

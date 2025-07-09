@@ -49,7 +49,6 @@
 #' @section Dependencies:
 #' -   **ComplexHeatmap**: For creating complex heatmaps with advanced features.
 #' -   **base64enc**: For encoding/decoding base64.
-#' -   **dendextend**: For extending `dendrogram` objects in R, allowing for easier manipulation of dendrograms.
 #' -   **dplyr**: For data manipulation.
 #' -   **ggplot2**: For creating elegant data visualizations using the grammar of graphics.
 #' -   **ggrepel**: For better label placement in ggplot2.

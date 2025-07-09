@@ -1184,6 +1184,14 @@ InputControl <- R6::R6Class("InputControl",
             "(problem at element ", i, ")."
           )
         }
+        
+        if (max(vec) > 100) {                       
+          stop_call_false(
+            "Element ", i,
+            " of 'nr_clusters' has a value (", max(vec),
+            ") greater than the allowed maximum of 100."
+          )
+        }
       }
       
       invisible(TRUE)

@@ -705,7 +705,7 @@ map_gene_symbols <- function(
       )
   )
   
-  ## fallback for unmapped → keep original symbol
+  ## fallback for unmapped -> keep original symbol
   fallback_map <- setNames(   # start with identity map
     unique_genes,
     unique_genes
@@ -1002,17 +1002,15 @@ check_params <- function(params) {
 #'   `method`, `from_species`, and `to_species`.
 #'
 #' @details
-#' * **method** — character scalar, one of `"none"`, `"gprofiler"`,
+#' * **method** - character scalar, one of `"none"`, `"gprofiler"`,
 #'   or `"orthogene"` (case-insensitive).
-#' * **from_species**, **to_species** — character scalars giving the species
+#' * **from_species**, **to_species** - character scalars giving the species
 #'   identifiers expected by the chosen tool.  They are only checked (not
 #'   auto-corrected).
 #'
 #' The function deliberately performs *no* coercion or guessing: any deviation
 #' from the expected input is considered an error so that the user must supply
 #' an unambiguous, reproducible configuration.
-#' 
-#' @importFrom orthogene map_species
 #' 
 check_mapping_cfg <- function(mapping_cfg) {
   
@@ -1073,7 +1071,7 @@ check_mapping_cfg <- function(mapping_cfg) {
     # Skip organism code checking entirely
     message(
       "Note: `from_species` and `to_species` are not checked for validity.\n",
-      "Make sure they match g:Profiler’s expected organism codes. See:\n",
+      "Make sure they match g:Profiler's expected organism codes. See:\n",
       "https://biit.cs.ut.ee/gprofiler/page/organism-list"
       )
   }
@@ -1260,7 +1258,7 @@ generate_section_content <- function(
   
   ora_results <- section_info$ora_results
   
-  # Filtered results (only Count ≥ 2 and adjusted p < 0.05)
+  # Filtered results (only Count >= 2 and adjusted p < 0.05)
   top_df <- prepare_plot_data(ora_results)
   
   if (nrow(top_df) == 0) {
@@ -1707,7 +1705,7 @@ prepare_plot_data <- function(ora_results) {
   
   full_df <- do.call(rbind, all_rows)
   
-  # Filter for top plot: only supported by ≥2 genes
+  # Filter for top plot: only supported by >= 2 genes
   top_df <- full_df[full_df$Count >= 2, ]
   top_df <- top_df[, c("cluster", "term", "p.adjust", "odds_ratio")]
   colnames(top_df) <- c("cluster", "term", "adj.p_value", "odds_ratio")

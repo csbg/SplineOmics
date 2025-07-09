@@ -17,7 +17,7 @@ cluster_hits(
   raw_data = NULL,
   report_dir = here::here(),
   report = TRUE,
-  max_hit_number = 100
+  max_hit_number = 25
 )
 }
 \arguments{

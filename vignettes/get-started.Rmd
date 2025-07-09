@@ -726,12 +726,15 @@ adj_pthresholds <- c( # 0.05 for both levels
   0.05 # stationary
 )
 
-# The amount of clusters are always specified as a range (due to technical
-# reasons) even when you want to have one definite value. Specify 1:1 if you
-# don't want to do clustering for this level.
+# The amount of clusters can be a fixed number (e.g. 6) or a range. When you
+# specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the 
+# cluster_hits() function tries all those cluster numbers and picks the one with
+# the highest silhouette score (automatic cluster number identification). When
+# you don't want to have a clustering for a level, write 1 for the cluster 
+# number for that level.
 nr_clusters <- list(
-  6:6, # specifically 6 clusters for the exponential phase level
-  2:3  # clusters for the stationary phase level, test 2 and 3 and decide with              silhuette score (automatically)
+  6,   # specifically 6 clusters for the exponential phase level
+  2:3  # range of cluster numbers for the stationary phase level
 )
 
 report_dir <- here::here(
