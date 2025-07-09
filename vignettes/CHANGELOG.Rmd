@@ -81,7 +81,10 @@ Examples:
   of clusters is always specified as a range (min:max, e.g. 2:4) and all of 
   those cluster numbers are tried out and the best one identified with the help
   of the silhuette score. Also if you want to have just one definite amount of
-  clusters, you still specify it as a range due to technical reasons.
+  clusters, you still specify it as a range due to technical reasons. 
+  Additionally, when the datasets is large, it uses the minibatch version of
+  kmeans, which is a lot faster (while sacrificing a bit of the cluster 
+  quality).
   
 #### Added
 - Auto-dof with loocv: Introduced new capability, that automatically finds the 

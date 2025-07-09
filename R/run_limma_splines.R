@@ -125,12 +125,21 @@ run_limma_splines <- function(
       padjust_method = padjust_method,
       mode = mode
     )
-
+    
     results_list <- purrr::imap(
       levels,
       process_level_with_params
     )
-    
+
+    merged_dof <- Reduce(
+      pmax.int,
+      lapply(
+        results_list,
+        \(x) x$spline_params[["dof"]]
+        )
+      )
+    spline_params[["dof"]] <- merged_dof
+
     isolated_within_level_top_table <-
       stats::setNames(
         purrr::map(results_list, "top_table"),
@@ -148,7 +157,7 @@ run_limma_splines <- function(
 
   } else if (mode == "integrated") {
     effects <- extract_effects(design)
-    
+
     if (spline_params[["dof"]][1] == 0) {   # auto-dof.
       best_dof <- select_spline_dof_loocv(   
         data = data,
@@ -306,7 +315,8 @@ fit_within_condition_isolated <- function(
   list(
     name = results_name,
     top_table = top_table,
-    fit = result[["fit"]]
+    fit = result[["fit"]],
+    spline_params = result[["spline_params"]]
   )
 }
 
@@ -759,7 +769,7 @@ process_top_table <- function(
 #' @param padjust_method A character string specifying the p-adjustment method.
 #'
 #' @return A list containing the top table and the fit object from the limma
-#' analysis.
+#' analysis, and the potentially updated spline_params.
 #'
 #' @seealso
 #' \link[splines]{bs}, \link[splines]{ns}, \link[limma]{lmFit},
@@ -782,7 +792,7 @@ process_within_level <- function(
 ) {
 
   effects <- extract_effects(design)
-  
+
   if (spline_params[["dof"]][level_index] == 0) {
     best_dof <- select_spline_dof_loocv(   
       data = data,
@@ -864,7 +874,8 @@ process_within_level <- function(
   
   list(
     top_table = top_table,
-    fit = fit
+    fit = fit,
+    spline_params = spline_params
   )
 }
 
@@ -1019,7 +1030,7 @@ select_spline_dof_loocv <- function(
     level_index,
     fixed_effects
 ) {
-  
+
   if (spline_params$spline_type[level_index] == "n") {
     candidate_dofs <- 2:min(10, length(unique(meta$Time)))
   }
