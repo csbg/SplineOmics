@@ -435,7 +435,7 @@ check_homoscedasticity_violation <- function(
   Phase <- as.factor(meta[[condition]])  # flexible group assignment
   
   # 4. Run Levene's test per feature
-  bp_results <- apply(residuals_matrix, 1, function(res) {
+  bp_results <- pbapply::pbapply(residuals_matrix, 1, function(res) {
     group_vars <- tapply(
       res,
       Phase,

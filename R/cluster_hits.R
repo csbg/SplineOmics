@@ -3110,6 +3110,7 @@ build_cluster_hits_report <- function(
     )
 
   pb <- create_progress_bar(plots)
+  # pb$tick(0)          # show a 0-% bar immediately
 
   header_index <- 0
   level_index <- 0
@@ -3293,6 +3294,7 @@ build_cluster_hits_report <- function(
 
     pb$tick()
   }
+  pb$terminate()
 
   # Add sections for limma_result_2_and_3_plots
   if (length(limma_result_2_and_3_plots) > 0) {

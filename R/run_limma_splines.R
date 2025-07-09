@@ -383,11 +383,11 @@ fit_global_model <- function(
   )
   
   design_matrix <- design2design_matrix_result[["design_matrix"]]
-  
+
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data   # Just having one variable makes the code easier
   } 
-  
+
   # For RNA-seq data, this is handled when calling limma::voom (happens before)
   # This here is the implicit fall-back logic when the user has not explicitly 
   # decided whether to use the array_weights strategy or not (is NULL)
@@ -418,6 +418,20 @@ fit_global_model <- function(
       method <- NULL
     }
     
+    n_cores <- max(1, parallel::detectCores() - 1)
+    if (.Platform$OS.type == "windows") {
+      param <- BiocParallel::SnowParam(     # Windows-safe
+        workers = n_cores,
+        type = "SOCK"
+        )  
+    } else {
+      param <- BiocParallel::MulticoreParam(workers = n_cores)   # fork on Unix
+    }
+    register(param) 
+    if (requireNamespace("RhpcBLASctl", quietly = TRUE))
+      RhpcBLASctl::blas_set_num_threads(1)
+    set.seed(42)
+    
     if (use_array_weights) {
       aw <- limma::arrayWeights(      # vector of length = # samples
         object = data,
@@ -434,7 +448,8 @@ fit_global_model <- function(
         data = design2design_matrix_result[["meta"]], # Spline transformed meta.
         ddf = method,
         useWeights = TRUE,
-        weightsMatrix = weights_matrix
+        weightsMatrix = weights_matrix,
+        BPPARAM = param                    # parallelization
       )
       fit <- variancePartition::eBayes(
         fit = fit,
@@ -445,10 +460,13 @@ fit_global_model <- function(
         exprObj = data,
         formula = stats::as.formula(design),
         data = design2design_matrix_result[["meta"]], # Spline transformed meta.
-        ddf = method
+        ddf = method,
+        BPPARAM = param             # parallelization
       )
-      
       fit <- variancePartition::eBayes(fit = fit) 
+    }
+    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+      bpstop(param)                     # cleanly shuts down workers
     }
   } else {                         # limma approach
     if (use_array_weights) {
@@ -812,7 +830,7 @@ process_within_level <- function(
   )
 
   design_matrix <- result[["design_matrix"]]
-  
+
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data
   }

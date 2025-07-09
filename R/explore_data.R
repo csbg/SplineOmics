@@ -420,7 +420,11 @@ build_explore_data_report <- function(
 make_density_plots <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making density plots...")
+  
   custom_theme <- ggplot2::theme(
     panel.background = ggplot2::element_rect(fill = "white", color = "white"),
     plot.background = ggplot2::element_rect(fill = "white", color = "white"),
@@ -518,7 +522,11 @@ make_density_plots <- function(
 make_violin_box_plots <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making violin plots...")
+  
   custom_theme <- ggplot2::theme(
     panel.background = ggplot2::element_rect(fill = "white", color = "white"),
     plot.background = ggplot2::element_rect(fill = "white", color = "white"),
@@ -605,6 +613,8 @@ plot_mean_correlation_with_time <- function(
     meta,
     condition
     ) {
+  
+  message("Making mean correlation with time plots...")
   
   plot_list <- list()
 
@@ -694,6 +704,18 @@ plot_first_lag_autocorrelation <- function(
     meta,
     condition
     ) {
+  
+  message("Making first lag auto-correlation with time plots...")
+  
+  # Filter out any features with at least one negative value
+  na_rows <- rowSums(is.na(data)) > 0       # TRUE if the row has any NA
+  if (any(na_rows)) {
+    message(
+      sum(na_rows),
+      " rows with missing values removed before first lag autocorrelation plot"
+      )
+    data <- data[!na_rows, , drop = FALSE]
+  }
   
   # Initialize a list to store the plots
   plot_list <- list()
@@ -788,7 +810,11 @@ plot_first_lag_autocorrelation <- function(
 plot_lag1_differences <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making lag1 differences plots...")
+  
   plot_list <- list()
 
   # Loop through each level of the condition
@@ -908,7 +934,11 @@ plot_lag1_differences <- function(
 plot_cv <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making cv plots...")
+  
   plot_list <- list()
 
   for (cond in unique(meta[[condition]])) {
@@ -993,9 +1023,22 @@ plot_cv <- function(
 make_pca_plot <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making PCA plots...")
+  
+  # Filter out any features with at least one negative value
+  na_rows <- rowSums(is.na(data)) > 0       # TRUE if the row has any NA
+  if (any(na_rows)) {
+    message(sum(na_rows), " rows with missing values removed before PCA.")
+    data <- data[!na_rows, , drop = FALSE]
+  }
   # Perform PCA
-  pc <- stats::prcomp(t(data))
+  pc <- stats::prcomp(
+    t(data),
+    scale. = TRUE
+    )
   pca_df <- data.frame(PC1 = pc$x[, 1], PC2 = pc$x[, 2])
 
   # Add labels and levels from the metadata
@@ -1066,7 +1109,17 @@ make_pca_plot <- function(
 make_mds_plot <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making MDS plots...")
+  
+  # Filter out any features with at least one negative value
+  na_rows <- rowSums(is.na(data)) > 0       # TRUE if the row has any NA
+  if (any(na_rows)) {
+    message(sum(na_rows), " rows with missing values removed before MDS")
+    data <- data[!na_rows, , drop = FALSE]
+  }
   # Perform MDS using limma's plotMDS function
   mds <- limma::plotMDS(
     x = data,
@@ -1144,7 +1197,36 @@ make_mds_plot <- function(
 make_correlation_heatmaps <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
+  
+  message("Making correlation heatmaps...")
+  
+  if (nrow(data) > 1000) {
+    max_na_fraction <- 0.2
+    target_rows <- 1000
+    
+    row_na_fraction <- rowMeans(is.na(data))
+    data_filtered <- data[row_na_fraction <= max_na_fraction, , drop = FALSE]
+    
+    if (nrow(data_filtered) > target_rows) {
+      row_vars <- apply(data_filtered, 1, var, na.rm = TRUE)
+      top_idx  <- order(row_vars, decreasing = TRUE)[1:target_rows]
+      data     <- data_filtered[top_idx, , drop = FALSE]
+      message(
+        "Subsampled to top ", target_rows, 
+        " most variable features (after filtering rows with > ",
+        round(max_na_fraction * 100), "% missing) for correlation heatmap."
+        )
+    } else {
+      data <- data_filtered
+      message(
+        "Filtered rows with > ", round(max_na_fraction * 100), 
+        "% missing; kept all ", nrow(data), " rows (≤ ", target_rows, ")."
+        )
+    }
+  }
+  
   heatmaps <- list()
   heatmaps_sizes <- c()
 
@@ -1154,6 +1236,7 @@ make_correlation_heatmaps <- function(
       method = "spearman",
       use = "pairwise.complete.obs"
     )
+
     # Remove perfect correlations for better visualization
     diag(corr_all) <- NA
 
