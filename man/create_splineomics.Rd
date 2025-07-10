@@ -102,6 +102,17 @@ both for natural and B-splines.}
 \item{padjust_method}{Method for p-value adjustment, one of "none", "BH",
 "BY", "holm", "bonferroni", "hochberg", or "hommel".
 Defaults to "BH" (Benjamini-Hochberg).}
+
+\item{bp_cfg}{A named numeric vector specifying the parallelization
+configuration, with expected names `"n_cores"` and `"blas_threads"`.
+
+This controls how many **R worker processes** (`n_cores`) and how many
+**BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+during parallel computation.  
+
+If `bp_cfg` is `NULL`, missing, or any of its required fields is
+`NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+disables parallelization and avoids oversubscription of CPU threads.}
 }
 \value{
 A SplineOmics object.

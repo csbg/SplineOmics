@@ -204,7 +204,6 @@ cluster_hits <- function(
     ) {
     spline_comp_plots <- generate_spline_comparisons(
       splineomics = splineomics,
-      all_levels_clustering = all_levels_clustering,
       data = data,
       meta = meta,
       condition = condition,
@@ -627,7 +626,7 @@ predict_timecurves <- function(
   
   # iterate over each condition level
   for (level in unique(meta[[condition]])) {
-    
+
     # pick the right fit object
     if (mode == "isolated") {
       fit_lv <- fit[[level]]                          
@@ -667,79 +666,64 @@ predict_timecurves <- function(
         )
     }
     colnames(B) <- spline_cols
-    
-    # build design row
-    if (mode == "isolated") {                   # per-level fit -> no dummies
-      X_new  <- cbind(
-        "(Intercept)" = 1,
-        B
-        )
-      needed <- c(
-        "(Intercept)",
-        spline_cols
-        )
-    } else {                                    # integrated: add dummies
+
+    if (mode == "isolated") {
+      # only intercept and spline terms
+      X_new <- cbind("(Intercept)" = 1, B)
+      needed <- c("(Intercept)", spline_cols)
+    } else {
+      # integrated fit: must include interaction terms for non-reference levels
       cond_prefix <- condition
-      all_levels  <- unique(as.character(meta[[condition]]))
+      all_levels <- unique(as.character(meta[[condition]]))
+      design_cols <- colnames(fit_lv$coefficients)
+      
       dummy_suffixes <- sub(
         paste0("^", cond_prefix),
         "",
-        grep(
-          paste0("^", cond_prefix),
-          design_n,
-          value = TRUE
-          )
-        )
-      reference_level <- setdiff(
-        all_levels,
-        dummy_suffixes
-        )[1]
+        grep(paste0("^", cond_prefix), design_cols, value = TRUE)
+      )
+      reference_level <- setdiff(all_levels, dummy_suffixes)[1]
       
       if (identical(level, reference_level)) {
-        X_new  <- cbind(
-          "(Intercept)" = 1,
-          B
-          )
-        needed <- c(
-          "(Intercept)",
-          spline_cols
-          )
+        X_new <- cbind("(Intercept)" = 1, B)
+        needed <- c("(Intercept)", spline_cols)
       } else {
-        dummy_col <- paste0(
-          cond_prefix,
-          level
-          )
-        int_cols  <- paste0(
-          dummy_col,
-          ":",
-          spline_cols
-          )
+        dummy_col <- paste0(cond_prefix, level)
+        int_cols <- paste0(dummy_col, ":", spline_cols)
+        
         X_new <- cbind(
           "(Intercept)" = 1,
-          dummy_col = 1,
           B,
-          B
-          )
+          B  # used again for interaction
+        )
         colnames(X_new) <- c(
           "(Intercept)",
-          dummy_col,
           spline_cols,
           int_cols
-          )
-        needed <- colnames(X_new)
+        )
+        needed <- c("(Intercept)", spline_cols, int_cols)
       }
     }
 
     # coefficients matrix
     coef_full      <- as.matrix(fit_lv$coefficients)
-    feature_indices <- seq_len(nrow(coef_full))
-    coef_mat       <- coef_full[feature_indices, needed, drop = FALSE]
-    miss <- setdiff(needed, colnames(coef_full))
-    if (length(miss)) coef_mat[, miss] <- 0
+    # ensure missing columns are handled
+    missing_cols <- setdiff(needed, colnames(coef_full))
+    if (length(missing_cols)) {
+      for (col in missing_cols) {
+        coef_full[, col] <- 0
+      }
+    }
+    
+    # subset in correct order
+    coef_mat <- coef_full[, needed, drop = FALSE]
     
     # predictions
     pred_mat <- coef_mat %*% t(X_new)
-    rownames(pred_mat) <- as.character(feature_indices)
+    
+    # propagate feature names
+    rownames(pred_mat) <- rownames(coef_mat)
+    
 
     pred_list[[level]] <- pred_mat
   }
@@ -810,23 +794,28 @@ perform_clustering <- function(
     k_range <- nr_clusters[[i]]                  
 
     tbl <- top_tables[[key]]
-    feat_idx <- if (is.data.frame(tbl)) {
-      tbl$feature_nr                      # normal case
+    if (is.data.frame(tbl)) {
+      feat_idx <- tbl$feature_nr
+      feat_names <- tbl$feature_names
     } else if (length(tbl) == 0L || all(is.na(tbl))) {
-      integer(0)                          # no hits
+      feat_idx <- integer(0)
+      feat_names <- character(0)
     } else {
-      as.integer(tbl)                     # already a vector of indices
+      feat_idx <- as.integer(tbl)
+      feat_names <- rownames(
+        predicted_timecurves$predictions[[level]]
+        )[feat_idx]
     }
     
-    if (length(feat_idx) == 0L) {
+    if (length(feat_names) == 0L) {
       results[[key]] <- NA
       next
     }
-    
+
     pred_mat <- predicted_timecurves$predictions[[level]]
-    curves   <- pred_mat[ as.character(feat_idx), , drop = FALSE ]
+    curves   <- pred_mat[ as.character(feat_names), , drop = FALSE ]
     norm_cur <- normalize_curves(curves)
-    
+
     results[[key]] <- kmeans_clustering(
       curve_values      = norm_cur,
       k_range           = k_range,                   
@@ -838,7 +827,6 @@ perform_clustering <- function(
   
   results        # named list of clustering outputs
 }
-
 
 
 #' Get Category 2 and 3 Hits
@@ -1015,7 +1003,7 @@ make_clustering_report <- function(
     raw_data,
     max_hit_number
     ) {
-  
+
   design <- gsub("Time", "X", design)  
   effects <- extract_effects(design)
   
@@ -1281,9 +1269,6 @@ make_clustering_report <- function(
 #'  time effects,
 #' average difference between conditions, and interaction between condition
 #' and time.
-#' @param all_levels_clustering A list containing the X matrices for each
-#' condition, used
-#' for spline fitting.
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements, which includes
 #'  the condition.
@@ -1322,7 +1307,6 @@ make_clustering_report <- function(
 #'
 generate_spline_comparisons <- function(
     splineomics,
-    all_levels_clustering, # This list contains the X matrices
     data,
     meta,
     condition,
@@ -2217,8 +2201,9 @@ plot_splines <- function(
   
   for (hit in seq_len(n_hits)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
+    feature_name <- top_table$feature_names[hit]
     fitted_values <- as.numeric(
-      pred_mat_level[ as.character(hit_index), ]
+      pred_mat_level[feature_name, ]
     )
     y_values <- data[hit_index, ]
 
@@ -2548,8 +2533,8 @@ plot_spline_comparisons <- function(
     adj_pthresh_interaction,
     raw_data,
     max_hit_number
-    ) {
-  
+) {
+
   if (!is.null(replicate_column)) {
     # Create a mapping of unique replicate values to numeric labels
     replicate_mapping <- setNames(
@@ -2557,7 +2542,7 @@ plot_spline_comparisons <- function(
       unique(meta[[replicate_column]])
     )
   }
-
+  
   # Sort and prepare data (sorting based on feature name for easy navigation)
   time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
   time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
@@ -2569,7 +2554,7 @@ plot_spline_comparisons <- function(
   smooth_timepoints <- predicted_timecurves$time_grid
   pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
   pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
-
+  
   # Get relevant parameters
   DoF <- which(names(time_effect_1) == "AveExpr") - 1
   time_points <- meta$Time
@@ -2587,7 +2572,7 @@ plot_spline_comparisons <- function(
     stop_call_false(
       "Error: The topTables do not have the same number of rows! Did you 
       filter just some of them?"
-      )
+    )
   }
   
   # Function to check if all elements of a column in df2 are present in df1
@@ -2608,15 +2593,11 @@ plot_spline_comparisons <- function(
                         "feature_names")
   check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
   
-  n_hits_time_effect <- min(
-    max_hit_number,
-    nrow(time_effect_1)
-    )
+  plotted_hits <- 0
   
   # Hit is just an index, but time_effect_1 and 2 and avrg_diff_conditions and
   # interaction_condition_time were sorted before.
-  for (hit in seq_len(n_hits_time_effect)) {
-  # for (hit in seq_len(nrow(time_effect_1))) {
+  for (hit in seq_len(nrow(time_effect_1))) {
     hit_index <- as.numeric(time_effect_1$feature_nr[hit])
     row_values <- data[hit_index, ]
     
@@ -2629,10 +2610,10 @@ plot_spline_comparisons <- function(
       # Now directly find NA indices within those specific columns
       na_indices_cond1 <- columns_condition_1[
         which(is.na(raw_data[hit_index, columns_condition_1]))
-        ]
+      ]
       na_indices_cond2 <- columns_condition_2[
         which(is.na(raw_data[hit_index, columns_condition_2]))
-        ]
+      ]
       
       plot_data <- data.frame(
         Time = time_points,
@@ -2649,7 +2630,7 @@ plot_spline_comparisons <- function(
           "Measured"
         )
       )
-
+      
       # Check if there are imputed values for each condition
       has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
       has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
@@ -2686,20 +2667,23 @@ plot_spline_comparisons <- function(
       )
     }
 
-    fitted_values_1 <- as.numeric(
-      pred_mat_1[ as.character(hit_index), ]
-    )
-    fitted_values_2 <- as.numeric(
-      pred_mat_2[ as.character(hit_index), ]
-    )
+    feature_name <- time_effect_1$feature_names[hit]
+    fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
+    fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
     
     # Get the adjusted p-values for the current hit
     avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
     interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
     if (is.na(avrg_diff_pval) || is.na(interaction_pval)) next
-    
+
     if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions ||
-      interaction_pval < adj_pthresh_interaction) {
+        interaction_pval < adj_pthresh_interaction) {
+      
+      plotted_hits <- plotted_hits + 1
+      if (plotted_hits > max_hit_number) {  # don't create more plots
+        break
+      }
+      
       # Define the number of stars for avrg_diff_conditions
       avrg_diff_stars <- ifelse(
         avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 500,
@@ -2743,7 +2727,7 @@ plot_spline_comparisons <- function(
         time_values = plot_data$Time,
         response_values = plot_data$Y1
       )
-
+      
       cv_2 <- calc_cv(
         time_values = plot_data$Time,
         response_values = plot_data$Y2
@@ -2839,7 +2823,7 @@ plot_spline_comparisons <- function(
             name = "Replicate"
           )
         }
-          
+        
         p <- p + ggplot2::theme_minimal() +
           ggplot2::theme(
             legend.position = "right",
@@ -2857,7 +2841,7 @@ plot_spline_comparisons <- function(
           condition_1,
           condition_2,
           sep = "_"
-          )
+        )
         
         y_combined <- c(plot_data$Y1, plot_data$Y2)  # Combine all values
         y_max <- max(y_combined, na.rm = TRUE)  # Find the maximum value
@@ -2884,7 +2868,7 @@ plot_spline_comparisons <- function(
             "purple",
             "red",
             "dodgerblue"
-            ),
+          ),
           c(
             paste("Data", condition_1),
             paste("Spline", condition_1),
@@ -2894,7 +2878,7 @@ plot_spline_comparisons <- function(
             paste("Imputed data", condition_2)
           )
         )
-
+        
         # Filter to include only legend entries that exist in the data
         filtered_labels <- c(
           paste("Data", condition_1),
@@ -2908,13 +2892,13 @@ plot_spline_comparisons <- function(
           filtered_labels <- c(
             filtered_labels,
             paste("Imputed data", condition_1)
-            )
+          )
         }
         if (has_imputed_2) {
           filtered_labels <- c(
             filtered_labels,
             paste("Imputed data", condition_2)
-            )
+          )
         }
         
         # Keep only necessary color mappings
@@ -2925,7 +2909,7 @@ plot_spline_comparisons <- function(
         
         # Apply scale_color_manual with merged color values
         p <- p + ggplot2::scale_color_manual(values = color_values)
-
+        
         p
       })
 
@@ -2934,7 +2918,7 @@ plot_spline_comparisons <- function(
         as.character(titles$feature_names[hit])
     }
   }
-
+  
   return(list(
     plots = plot_list,
     feature_names = feature_names_list
@@ -3664,13 +3648,13 @@ kmeans_clustering <- function(
     feature = top_table$feature_nr,
     cluster = cluster_assignments
   )
-
+  
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
-
+  
   colnames(curve_values) <- smooth_timepoints
   curve_values <- as.data.frame(curve_values)
   curve_values$cluster <- cluster_assignments
-
+  
   top_table$cluster <- NA
   top_table$cluster[seq_len(nrow(clustered_hits))] <-
     as.integer(clustered_hits$cluster)

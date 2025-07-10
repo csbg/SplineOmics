@@ -104,11 +104,11 @@ run_limma_splines <- function(
     )  
   
   feature_names <- rownames(data)
-  rownames(data) <- NULL # To just have numbers describing the rows
   meta[[condition]] <- factor(meta[[condition]])
   
   if (mode == "isolated") {
     levels <- levels(meta[[condition]])
+    # rownames(data) <- NULL # To just have numbers describing the rows
     
     # Get hits for level (within level analysis)
     process_level_with_params <- purrr::partial(
@@ -168,7 +168,7 @@ run_limma_splines <- function(
       )
       spline_params$dof[1] <- best_dof
     }
-    
+
     # Step 1: Fit the global model once
     fit_obj <- fit_global_model( 
       data = data,
@@ -180,7 +180,6 @@ run_limma_splines <- function(
       spline_params = spline_params,
       condition = condition,
       padjust_method = padjust_method,
-      feature_names = feature_names,
       use_array_weights = use_array_weights,
       bp_cfg = bp_cfg
     )
@@ -286,7 +285,7 @@ fit_within_condition_isolated <- function(
     mode,
     bp_cfg
 ) {
-  
+
   samples <- which(meta[[condition]] == level)
   data_copy <- data[, samples]
   meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
@@ -361,7 +360,6 @@ fit_within_condition_isolated <- function(
 #' @param condition A character string of the column name of meta that contains
 #'                  the levels of the experimental condition.
 #' @param padjust_method A character string specifying the p-adjustment method.
-#' @param feature_names A non-empty character vector of feature names.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
 #'   
@@ -438,7 +436,7 @@ fit_global_model <- function(
   }
   
   message("\nFitting global model...")
-  
+
   if (effects[["random_effects"]] != "") {    # variancePartition approach
     colnames(data) <- rownames(meta)  # dream requires this format
 
@@ -517,8 +515,8 @@ fit_global_model <- function(
     fit = fit,
     design_matrix = design_matrix,
     meta = design2design_matrix_result[["meta"]],
-    feature_names = feature_names,
     condition = condition,
+    feature_names = rownames(data),
     padjust_method = padjust_method,
     homosc_violation_result = homosc_violation_result,
     spline_params = spline_params
@@ -556,8 +554,7 @@ fit_global_model <- function(
 #' @param fit_obj   list returned by fit_global_model()
 #' @param condition factor column in meta that encodes the condition
 #'  (e.g. "Phase")
-#' @param feature_names Character vector of feature names (e.g. gene or protein 
-#'   IDs), used to label results in the final top tables.
+#' @param feature_names Char vector of names of the features
 #' @param dof Integer specifying the number of spline degrees of freedom used 
 #'   in the model (i.e., how many basis functions were fitted for the time 
 #'   effect).
@@ -626,7 +623,7 @@ extract_within_level_time_effects <- function(
     )
     
     colnames(top) <- sub("^Coef", "X", colnames(top))
-    
+
     process_top_table(
       list(
         top_table = top,
@@ -752,7 +749,7 @@ process_top_table <- function(
   
   top_table <- process_within_level_result$top_table
   fit <- process_within_level_result$fit
-  
+
   top_table <- modify_limma_top_table(
     top_table,
     feature_names
@@ -1255,8 +1252,6 @@ build_spline_contrast <- function(
 }
 
 
-
-
 # Level 3 internal functions ---------------------------------------------------
 
 
@@ -1410,14 +1405,16 @@ build_contrasts_for_pair <- function(
 #'   model the time trend or other covariates.
 #'
 #' @return A numeric scalar representing the LOOCV error.
+#' 
+#' @importFrom stats lm hatvalues residuals
 #'
 analytic_loocv <- function(
     expr_vec,
     design_matrix
     ) {
   
-  fit <- lm(expr_vec ~ design_matrix - 1)  # no intercept, already included
-  h <- hatvalues(fit)
-  r <- residuals(fit)
+  fit <- stats::lm(expr_vec ~ design_matrix - 1)  # no intercept, already in
+  h <- stats::hatvalues(fit)
+  r <- stats::residuals(fit)
   mean((r / (1 - h))^2)
 }
