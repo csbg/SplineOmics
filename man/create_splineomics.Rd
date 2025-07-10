@@ -19,7 +19,8 @@ create_splineomics(
   dream_params = NULL,
   mode = NULL,
   spline_params = NULL,
-  padjust_method = "BH"
+  padjust_method = "BH",
+  bp_cfg = NULL
 )
 }
 \arguments{

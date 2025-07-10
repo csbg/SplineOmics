@@ -185,13 +185,13 @@ run_limma_splines <- function(
       bp_cfg = bp_cfg
     )
 
-    # Step 2: Extract the time_effects within each condition.
+    # Step 2: Extract the time_effects within each condition (spline coeffs)
     integrated_time_effects <- extract_within_level_time_effects(
       fit_obj = fit_obj,
       condition = condition,
       feature_names = feature_names,
       dof = spline_params[["dof"]],
-      effects = effects
+      random_effects = (effects[["random_effects"]] != "")
       )
 
     # Step 3: Extract pairwise contrasts for all level combinations
@@ -526,7 +526,7 @@ fit_global_model <- function(
 }
 
 
-#' Extract per-condition time effects from one global fit
+#' Extract per-condition time effects (from splines) from one global fit
 #' 
 #' @noRd
 #'
@@ -561,10 +561,8 @@ fit_global_model <- function(
 #' @param dof Integer specifying the number of spline degrees of freedom used 
 #'   in the model (i.e., how many basis functions were fitted for the time 
 #'   effect).
-#' @param effects A named list describing the model structure. Must include the 
-#'   `"random_effects"` entry, which is a string indicating whether random 
-#'   effects were used ("" = none, otherwise assumed to be 
-#'   dream/variancePartition).
+#' @param random_effects Boolean value specifying whether random effects are
+#' used.
 #' 
 #' @return named list of topTable results, one per condition level
 #' 
@@ -573,95 +571,77 @@ extract_within_level_time_effects <- function(
     condition,
     feature_names,
     dof,
-    effects
+    random_effects
 ) {
 
-  levs <- levels(factor(fit_obj$meta[[condition]]))
-  ref  <- levs[1]                      # alphabetically first = baseline
-  dm_cols   <- colnames(fit_obj$design_matrix)
-  main_cols <- paste0("X", seq_len(dof))
-  
-  make_contrast <- function(lev) {
-    
-    ## give the rows names that already occur in the original design
-    C <- matrix(
-      0,
-      nrow = dof,
-      ncol = length(dm_cols),
-      dimnames = list(main_cols,   # <- row-names (will become coeff names)
-                      dm_cols)     #    column names = original DM columns
-    )
-    
-    if (lev == ref) {                       # baseline condition
-      for (k in seq_len(dof))
-        C[k, main_cols[k]] <- 1
-    } else {                            # other condition = main + interaction
-      int_cols <- paste0(condition, lev, ":", main_cols)
-      for (k in seq_len(dof)) {
-        C[k, main_cols[k]] <- 1
-        C[k, int_cols[k]]  <- 1
-      }
-    }
-    
-    t(C)                                    # transpose → rows = coeffs
-  }
+  levels_in_condition <- levels(factor(fit_obj$meta[[condition]]))
+  baseline <- levels_in_condition[1]
+  design_cols <- colnames(fit_obj$design_matrix)
+  spline_terms <- paste0("X", seq_len(dof))
 
-  if (effects[["random_effects"]] != "") {    # variancePartition approach
-    # dream / variancePartition universe
-    eBayes_fun <- variancePartition::eBayes
-    top_fun    <- variancePartition::topTable
+  eBayes_fun <- if (random_effects) {
+    variancePartition::eBayes
   } else {
-    # classic limma universe
-    eBayes_fun <- limma::eBayes
-    top_fun    <- limma::topTable
+    limma::eBayes
   }
-
-  # loop over levels
-  res_list <- lapply(levs, function(lev) {
-    
-    Cmat  <- make_contrast(lev)
-    fit2 <- limma::contrasts.fit(fit_obj$fit, Cmat)
-    if (effects[["random_effects"]] != "") {
-      # Tell dream: all these new contrast coefficients are fixed effects
-      attr(fit2, "betaType") <- rep("fixed", ncol(fit2$coefficients))
-      attr(fit2, "assign")   <- seq_len(ncol(fit2$coefficients))
-      attr(fit2, "term") <- paste0("contrast", seq_len(ncol(fit2$coefficients)))
-      attr(fit2, "coefBaseline")  <- rep(FALSE, ncol(fit2$coefficients))
-    }
-
-    fit2  <- eBayes_fun(fit2)
-    k <- ncol(fit2$coefficients)   # how many contrast columns survived
-    
-    tbl <- top_fun(
-      fit2,
-      coef           = seq_len(k),   # test them all
-      number         = Inf,
-      sort.by        = "F",
-      adjust.method  = fit_obj$padjust_method
+  
+  top_fun <- if (random_effects) {
+    variancePartition::topTable
+  } else {
+    limma::topTable
+  }
+  
+  results_by_level <- lapply(levels_in_condition, function(lev) {
+    contrast_matrix <- build_spline_contrast(
+      lev = lev,
+      baseline = baseline,
+      condition = condition,
+      spline_terms = spline_terms,
+      design_cols = design_cols,
+      dof = dof
     )
 
-    # rename Coef1 → X1, Coef2 → X2, …
-    colnames(tbl) <- sub("^Coef", "X", colnames(tbl))
+    contrast_fit <- limma::contrasts.fit(
+      fit_obj$fit,
+      contrast_matrix
+      )
     
-    # feed through your existing post-processor
+    if (random_effects) {
+      n_coef <- ncol(contrast_fit$coefficients)
+      coef_names <- colnames(contrast_fit$coefficients)
+      attr(contrast_fit, "betaType")     <- rep("fixed", n_coef)
+      attr(contrast_fit, "assign")       <- rep(1, n_coef)  
+      attr(contrast_fit, "term")         <- coef_names 
+      attr(contrast_fit, "coefBaseline") <- rep(FALSE, n_coef)
+    }
 
-    processed <- process_top_table(
+    contrast_fit <- suppressWarnings(eBayes_fun(contrast_fit))
+    
+    top <- top_fun(
+      contrast_fit,
+      coef = colnames(contrast_matrix),
+      number = Inf,
+      sort.by = "F",
+      adjust.method = fit_obj$padjust_method
+    )
+    
+    colnames(top) <- sub("^Coef", "X", colnames(top))
+    
+    process_top_table(
       list(
-        top_table = tbl,   # from the contrast fit
-        fit       = fit_obj$fit  # full global fit (has intercept)
-      ),
+        top_table = top,
+        fit = fit_obj$fit
+        ),
       feature_names = feature_names
     )
-    
-    processed
   })
   
-  names(res_list) <- paste(
+  names(results_by_level) <- paste(
     condition,
-    levs,
+    levels_in_condition, 
     sep = "_"
     )
-  res_list
+  results_by_level
 }
 
 
@@ -1009,20 +989,20 @@ extract_contrast_for_pair <- function(
   design_matrix <- fit_obj[["design_matrix"]]
   feature_names <- fit_obj[["feature_names"]]
   padjust_method <- fit_obj[["padjust_method"]]
-  
+
   # Get properly constructed contrasts
   contrasts <- build_contrasts_for_pair(
     condition = condition,
     level_pair = level_pair,
     design_matrix = design_matrix
   )
-  
+
   if (random_effects) {
     top_fun <- variancePartition::topTable
   } else {
     top_fun <- limma::topTable
   }
-  
+
   # Extract condition-only top table
   condition_only <- top_fun(
     fit,
@@ -1030,7 +1010,7 @@ extract_contrast_for_pair <- function(
     adjust.method = padjust_method,
     number = Inf
   )
-  
+
   # Extract condition-time interaction top table
   condition_time <- top_fun(
     fit,
@@ -1234,6 +1214,46 @@ bp_setup <- function(bp_cfg) {
   BiocParallel::register(param)
   invisible(param)
 }
+
+
+build_spline_contrast <- function(
+    lev,
+    baseline,
+    condition,
+    spline_terms,
+    design_cols,
+    dof
+) {
+  
+  contrast_matrix <- matrix(
+    0,
+    nrow = dof,
+    ncol = length(design_cols),
+    dimnames = list(
+      paste0("spline_c", seq_len(dof)),  # pseudo coef names
+      design_cols                        # must match colnames(fit$coefficients)
+    )
+  )
+  
+  if (lev == baseline) {
+    # Only spline coefficients are tested
+    for (k in seq_len(dof)) {
+      contrast_matrix[k, spline_terms[k]] <- 1
+    }
+  } else {
+    # For other levels: spline + interaction:spline
+    int_terms <- paste0(condition, lev, ":", spline_terms)
+    for (k in seq_len(dof)) {
+      contrast_matrix[k, spline_terms[k]]  <- 1
+      contrast_matrix[k, int_terms[k]]     <- 1
+    }
+  }
+  
+  # Transpose → rows = coefficients in the model,
+  # columns = pseudo-contrasts (one per spline term)
+  t(contrast_matrix)
+}
+
 
 
 

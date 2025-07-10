@@ -71,7 +71,7 @@ test_that("run_limma_splines() works correctly", {
     info = "Should be S3 class 'SplineOmics'"
   )
   expect_type(splineomics, "list")
-  expect_length(splineomics, 18)  
+  expect_length(splineomics, 19)  
   
   ## ---- limma_splines_result must exist and have 3 named sub-lists ----
   expect_true(

@@ -66,6 +66,6 @@ test_that("update_splineomics returns valid SplineOmics object", {
     )
   expect_length(
     updated_splineomics,
-    15
+    16
     )
 })

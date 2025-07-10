@@ -42,5 +42,5 @@ test_that("create_splineomics returns valid SplineOmics object", {
     info = "Should be S3 class 'SplineOmics'"
     )
   expect_type(splineomics, "list")
-  expect_length(splineomics, 15)
+  expect_length(splineomics, 16)
 })

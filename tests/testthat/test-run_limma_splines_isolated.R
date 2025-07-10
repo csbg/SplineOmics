@@ -62,7 +62,7 @@ test_that("run_limma_splines() works correctly", {
   
   # Run the function under test
   splineomics <- SplineOmics::run_limma_splines(splineomics)
-  
+
   ## ---------------------------
   ##  0. Structural sanity
   ## ---------------------------
@@ -71,7 +71,7 @@ test_that("run_limma_splines() works correctly", {
     info = "Should be S3 class 'SplineOmics'"
     )
   expect_type(splineomics, "list")
-  expect_length(splineomics, 17)
+  expect_length(splineomics, 18)
   
   # Check added element
   expect_true(
