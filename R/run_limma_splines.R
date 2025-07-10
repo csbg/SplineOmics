@@ -83,7 +83,7 @@ run_limma_splines <- function(
   
   data <- splineomics[["data"]]
   rna_seq_data <- splineomics[["rna_seq_data"]]
-  meta <- splineomics[["meta"]]
+  meta <- sanitize_meta(splineomics[["meta"]])
   spline_params <- splineomics[["spline_params"]]
   padjust_method <- splineomics[["padjust_method"]]
   design <- splineomics[["design"]]
@@ -104,9 +104,7 @@ run_limma_splines <- function(
     )  
   
   feature_names <- rownames(data)
-  
   rownames(data) <- NULL # To just have numbers describing the rows
-  
   meta[[condition]] <- factor(meta[[condition]])
   
   if (mode == "isolated") {
@@ -195,13 +193,14 @@ run_limma_splines <- function(
       dof = spline_params[["dof"]],
       effects = effects
       )
-    
+
     # Step 3: Extract pairwise contrasts for all level combinations
     contrast_results <- extract_between_level_contrasts(
       fit_obj = fit_obj,
-      condition = condition
+      condition = condition,
+      random_effects = (effects[["random_effects"]] != "")
       )
-
+    
     limma_splines_result <- list(
       time_effect = integrated_time_effects
     )
@@ -219,7 +218,8 @@ run_limma_splines <- function(
     homosc_violation_result = 
       if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL,
     fit = if (exists("fit_obj")) fit_obj[["fit"]] else isolated_fits,
-    spline_params = spline_params   # auto-dof can change dof
+    spline_params = spline_params,   # auto-dof can change dof
+    meta = meta    # Update with the sanitized version
   )
 }
 
@@ -437,6 +437,8 @@ fit_global_model <- function(
     homosc_violation_result <- NULL
   }
   
+  message("\nFitting global model...")
+  
   if (effects[["random_effects"]] != "") {    # variancePartition approach
     colnames(data) <- rownames(meta)  # dream requires this format
 
@@ -469,6 +471,7 @@ fit_global_model <- function(
         weightsMatrix = weights_matrix,
         BPPARAM = param                    # parallelization
       )
+
       fit <- variancePartition::eBayes(
         fit = fit,
         robust = TRUE
@@ -627,7 +630,7 @@ extract_within_level_time_effects <- function(
     }
 
     fit2  <- eBayes_fun(fit2)
-    k   <- ncol(fit2$coefficients)   # how many contrast columns survived
+    k <- ncol(fit2$coefficients)   # how many contrast columns survived
     
     tbl <- top_fun(
       fit2,
@@ -691,9 +694,10 @@ extract_within_level_time_effects <- function(
 #'
 extract_between_level_contrasts <- function(
     fit_obj,
-    condition
+    condition,
+    random_effects
 ) {
-  
+
   levels <- unique(fit_obj$meta[[condition]])
   level_combinations <- utils::combn(
     levels,
@@ -708,7 +712,8 @@ extract_between_level_contrasts <- function(
     contrast_result <- extract_contrast_for_pair(
       fit_obj = fit_obj,
       condition = condition,
-      level_pair = lev_combo
+      level_pair = lev_combo,
+      random_effects = random_effects
     )
     
     between_level_condition_only[[
@@ -864,6 +869,8 @@ process_within_level <- function(
     data <- rna_seq_data
   }
   
+  message(paste("Fitting model for level ", level_index))
+  
   if (effects[["random_effects"]] != "") {
     colnames(data) <- rownames(meta)  # dream wants it like this.
     
@@ -994,7 +1001,8 @@ remove_intercept <- function(formula) {
 extract_contrast_for_pair <- function(
     fit_obj,
     condition,
-    level_pair
+    level_pair,
+    random_effects
 ) {
   
   fit <- fit_obj[["fit"]]
@@ -1009,8 +1017,14 @@ extract_contrast_for_pair <- function(
     design_matrix = design_matrix
   )
   
+  if (random_effects) {
+    top_fun <- variancePartition::topTable
+  } else {
+    top_fun <- limma::topTable
+  }
+  
   # Extract condition-only top table
-  condition_only <- limma::topTable(
+  condition_only <- top_fun(
     fit,
     coef = contrasts$condition,
     adjust.method = padjust_method,
@@ -1018,7 +1032,7 @@ extract_contrast_for_pair <- function(
   )
   
   # Extract condition-time interaction top table
-  condition_time <- limma::topTable(
+  condition_time <- top_fun(
     fit,
     coef = contrasts$interaction,
     adjust.method = padjust_method,
@@ -1171,27 +1185,50 @@ select_spline_dof_loocv <- function(
 #'
 bp_setup <- function(bp_cfg) {
   
+  # Defaults
+  default <- list(n_cores = 1L, blas_threads = 1L)
+  
+  # NULL case — fallback
   if (is.null(bp_cfg)) {
-    n_cores      <- 1
-    blas_threads <- 1
+    n_cores      <- default$n_cores
+    blas_threads <- default$blas_threads
   } else {
-    n_cores      <- as.integer(bp_cfg[["n_cores"]])
-    blas_threads <- as.integer(bp_cfg[["blas_threads"]])
+    # One or both may be missing — check existence before extracting
+    n_cores <- if ("n_cores" %in% names(bp_cfg)) {
+      as.integer(bp_cfg[["n_cores"]])
+    } else {
+      default$n_cores
+    }
+    
+    blas_threads <- if ("blas_threads" %in% names(bp_cfg)) {
+      as.integer(bp_cfg[["blas_threads"]])
+    } else {
+      default$blas_threads
+    }
   }
 
   # 1.  Throttle BLAS threads in *this* session (forks inherit) 
   if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
     RhpcBLASctl::blas_set_num_threads(blas_threads)
   }
-  
+
   # 2.  Choose backend
   if (n_cores <= 1) {
     param <- BiocParallel::SerialParam()
   } else if (.Platform$OS.type == "windows") {
-    param <- BiocParallel::SnowParam(workers = n_cores, type = "SOCK")
+    param <- BiocParallel::SnowParam(
+      workers = n_cores,
+      type = "SOCK"
+      )
   } else {
     param <- BiocParallel::MulticoreParam(workers = n_cores)
   }
+  
+  message(paste(
+    "\nNOTE: If you manually stop run_limma_splines() in RStudio,",
+    "parallelized background processes may continue running. Use your system's",
+    "process manager to terminate them manually.\n"
+    ))
   
   # 3.  Register and return
   BiocParallel::register(param)

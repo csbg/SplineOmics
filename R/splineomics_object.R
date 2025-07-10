@@ -92,7 +92,8 @@ create_splineomics <- function(
     dream_params = NULL,
     mode = NULL,
     spline_params = NULL,
-    padjust_method = "BH"
+    padjust_method = "BH",
+    bp_cfg = NULL
     ) {
   
   splineomics <- list(
@@ -110,7 +111,8 @@ create_splineomics <- function(
     dream_params = dream_params,
     mode = mode,
     spline_params = spline_params,
-    padjust_method = padjust_method
+    padjust_method = padjust_method,
+    bp_cfg = bp_cfg
   )
 
   class(splineomics) <- "SplineOmics"

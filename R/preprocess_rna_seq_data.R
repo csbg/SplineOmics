@@ -80,7 +80,7 @@ preprocess_rna_seq_data <- function(
   input_control$auto_validate()
   
   raw_counts <- splineomics[["data"]]
-  meta <- splineomics[["meta"]]
+  meta <- sanitize_meta(splineomics[["meta"]])
   spline_params <- splineomics[["spline_params"]]
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
@@ -216,6 +216,7 @@ preprocess_rna_seq_data <- function(
   splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     data = voom_obj$E,
+    meta = meta,                  # Update with the sanitized version
     rna_seq_data = voom_obj,
     spline_params = spline_params   # was updated when auto-dof is on.
   )

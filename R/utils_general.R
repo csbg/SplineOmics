@@ -527,3 +527,35 @@ check_homoscedasticity_violation <- function(
     bp_df = bp_df    
   ))
 }
+
+
+#' Sanitize metadata columns for modeling
+#' 
+#' @noRd
+#'
+#' @description
+#' Prepares a metadata `data.frame` or `DataFrame` for use in model design by:
+#' - Applying `make.names()` to all **character and factor** columns.
+#' - Leaving numeric and integer columns untouched.
+#'
+#' @param meta A `data.frame` or `S4Vectors::DataFrame` containing metadata.
+#'
+#' @return The same object with sanitized character/factor columns.
+#'
+sanitize_meta <- function(meta) {
+  
+  stopifnot(is.data.frame(meta) || inherits(meta, "DataFrame"))
+  
+  for (col in names(meta)) {
+    col_data <- meta[[col]]
+    
+    if (is.character(col_data)) {
+      meta[[col]] <- make.names(col_data)
+    } else if (is.factor(col_data)) {
+      levels(meta[[col]]) <- make.names(levels(col_data))
+    }
+    # numeric, integer, and logical columns are left unchanged
+  }
+  
+  return(meta)
+}
