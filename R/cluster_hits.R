@@ -169,6 +169,7 @@ cluster_hits <- function(
   predicted_timecurves <- predict_timecurves(
     fit = splineomics[["fit"]],
     splineomics = splineomics,  
+    data = data,
     meta = meta,
     condition = condition,
     spline_params = spline_params,
@@ -584,6 +585,7 @@ huge_table_user_prompter <- function(tables) {
 #'   [splines::bs()]).
 #' @param splineomics A list containing top tables and model results (not used
 #'   internally, but passed for interface compatibility).
+#' @param data A dataframe containg the data used for fitting the linear models.
 #' @param meta A data.frame containing metadata, including time and condition
 #'   annotations.
 #' @param condition String specifying the column in `meta` with experimental
@@ -604,7 +606,7 @@ huge_table_user_prompter <- function(tables) {
 predict_timecurves <- function(
     fit,
     splineomics,
-    adj_pthresholds,
+    data,
     meta,
     condition,                 
     spline_params,
@@ -680,28 +682,71 @@ predict_timecurves <- function(
       dummy_suffixes <- sub(
         paste0("^", cond_prefix),
         "",
-        grep(paste0("^", cond_prefix), design_cols, value = TRUE)
+        grep(
+          paste0(
+            "^",
+            cond_prefix
+            ),
+          design_cols,
+          value = TRUE
+          )
       )
       reference_level <- setdiff(all_levels, dummy_suffixes)[1]
       
       if (identical(level, reference_level)) {
-        X_new <- cbind("(Intercept)" = 1, B)
-        needed <- c("(Intercept)", spline_cols)
-      } else {
-        dummy_col <- paste0(cond_prefix, level)
-        int_cols <- paste0(dummy_col, ":", spline_cols)
-        
         X_new <- cbind(
           "(Intercept)" = 1,
-          B,
-          B  # used again for interaction
-        )
-        colnames(X_new) <- c(
+          B
+          )
+        needed <- c(
           "(Intercept)",
-          spline_cols,
-          int_cols
-        )
-        needed <- c("(Intercept)", spline_cols, int_cols)
+          spline_cols
+          )
+      } else {
+        dummy_col <- paste0(
+          cond_prefix,
+          level
+          )
+        int_cols  <- paste0(
+          dummy_col,
+          ":", 
+          spline_cols
+          )
+        
+        # Add intercept for non-reference level if present
+        has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
+        if (has_group_intercept) {
+          X_new <- cbind(
+            "(Intercept)" = 1,
+            B,
+            group_effect = 1,
+            B  # interaction terms
+          )
+          colnames(X_new) <- c(
+            "(Intercept)",
+            spline_cols,
+            dummy_col,
+            int_cols
+          )
+          needed <- c(
+            "(Intercept)",
+            spline_cols,
+            dummy_col,
+            int_cols
+            )
+        } else {
+          X_new <- cbind(
+            "(Intercept)" = 1,
+            B,
+            B  # interaction terms only
+          )
+          colnames(X_new) <- c(
+            "(Intercept)",
+            spline_cols,
+            int_cols
+          )
+          needed <- c("(Intercept)", spline_cols, int_cols)
+        }
       }
     }
 
@@ -721,9 +766,17 @@ predict_timecurves <- function(
     # predictions
     pred_mat <- coef_mat %*% t(X_new)
     
+    pred_mat <- adjust_intercept_least_squares(
+      pred_mat = pred_mat,
+      data = data,
+      meta = meta,
+      condition = condition,
+      level = level,
+      time_grid = smooth_timepoints
+    )
+
     # propagate feature names
     rownames(pred_mat) <- rownames(coef_mat)
-    
 
     pred_list[[level]] <- pred_mat
   }
@@ -3490,6 +3543,99 @@ build_cluster_hits_report <- function(
 }
 
 
+#' Adjust predicted spline curves to match empirical data intercepts
+#'
+#' @noRd
+#'
+#' @description
+#' This function adjusts the intercept of predicted spline-based
+#' timecourses so that they visually align with the actual data. It does
+#' so by calculating the optimal constant offset (per feature) that
+#' minimizes the squared difference between the predicted and observed
+#' values, across all available samples for the specified condition level.
+#'
+#' In contrast to simple regression models, the linear models used in this
+#' context (e.g., using `limma`) include not only spline terms but also
+#' additional scientific covariates (e.g., batch effects, condition
+#' indicators). These covariates influence the fitted intercept, meaning
+#' the predicted curve does not necessarily pass through the "center of
+#' mass" of the actual data. Instead, the model’s intercept serves as an
+#' anchor for interpreting *effects*, not for minimizing residual error.
+#'
+#' Therefore, for the sake of visual clarity in plotting, this function
+#' adjusts the entire predicted timecourse vertically—without altering its
+#' shape—so that it better reflects the empirical data. This adjustment is
+#' purely cosmetic and does not affect statistical inference. Only the
+#' *shape* of the spline is tested in hypothesis testing; the intercept
+#' shift is applied post hoc for visualization.
+#'
+#' @param pred_mat A numeric matrix of predicted values from the spline
+#'   model. Rows are features, columns are timepoints (as in the prediction
+#'   grid).
+#' @param data A numeric matrix of observed data. Same feature × sample
+#'   structure as used in model fitting.
+#' @param meta A `data.frame` containing metadata for each sample (i.e.,
+#'   column of `data`), including `Time` and the condition variable used to
+#'   stratify the prediction.
+#' @param condition A string giving the name of the condition column in
+#'   `meta` (e.g., `"Phase"`).
+#' @param level The condition level for which the predictions were
+#'   generated (e.g., `"Stationary"`).
+#' @param time_grid The numeric vector of time values used for spline
+#'   prediction (i.e., the x-axis of `pred_mat`).
+#'
+#' @return A matrix of the same shape as `pred_mat`, where each row has
+#'   been shifted by a constant so that the predicted curve better matches
+#'   the empirical values under least-squares alignment.
+#'   
+adjust_intercept_least_squares <- function(
+    pred_mat,
+    data,
+    meta, 
+    condition,
+    level,
+    time_grid
+) {
+  
+  # Match samples for this group
+  sample_idx <- which(meta[[condition]] == level)
+  
+  if (length(sample_idx) == 0) {
+    warning(
+      "No samples found for level ",
+      level,
+      ". Skipping intercept adjustment."
+    )
+    return(pred_mat)
+  }
+  
+  # Actual data matrix: features × group samples
+  data_subset <- data[, sample_idx, drop = FALSE]
+  
+  # Time values of samples
+  sample_times <- meta$Time[sample_idx]
+  
+  # Match each sample time to nearest time grid index
+  matched_indices <- vapply(
+    sample_times,
+    function(t) which.min(abs(t - time_grid)),
+    integer(1)
+  )
+  
+  # For each sample, extract the corresponding prediction column
+  pred_mat_expanded <- pred_mat[, matched_indices, drop = FALSE]
+  
+  # Compute offset: empirical - predicted mean across matched samples
+  offset <- rowMeans(data_subset - pred_mat_expanded, na.rm = TRUE)
+  offset[is.na(offset)] <- 0  # fallback for all-NA rows
+  
+  # Apply offset to all predicted timepoints
+  pred_mat <- pred_mat + offset
+  
+  return(pred_mat)
+}
+
+
 # Level 3 internal functions ---------------------------------------------------
 
 
@@ -3565,12 +3711,13 @@ kmeans_clustering <- function(
     condition_level
     ) {
 
-  if (nrow(curve_values) < max(k_range)) {   # To avoid cryptic errors.
+  if (nrow(curve_values) <= max(k_range)) {  # Clustering would fail
     stop_call_false(paste(
       "For condition_level '", condition_level, "':",
-      "the number of requested clusters (", max(k_range), ") is greater than",
+      "the number of requested clusters (", max(k_range), ")",
+      "must be strictly less than",
       "the number of hits (", nrow(curve_values), ").",
-      "Please choose fewer clusters."
+      "Please choose fewer clusters to avoid failure during k-means."
     ))
   }
 

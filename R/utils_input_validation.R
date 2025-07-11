@@ -873,11 +873,13 @@ InputControl <- R6::R6Class("InputControl",
       mode <- self$args[["mode"]]
       meta <- self$args[["meta"]]
       condition <- self$args[["condition"]]
+      design <- self$args[["design"]]
 
       required_args <- list(
         mode,
         meta,
-        condition
+        condition,
+        design
         )
 
       if (any(vapply(required_args, is.null, logical(1)))) {
@@ -890,12 +892,37 @@ InputControl <- R6::R6Class("InputControl",
         )
       }
       
+      # Convert design to character, if it's a formula
+      design_str <- if (inherits(design, "formula")) {
+        deparse(design)
+      } else {
+        as.character(design)
+      }
+      design_str <- paste(design_str, collapse = " ")
+      
+      if (mode == "integrated" && !grepl("[*|:]", design_str)) {
+        warning(
+          "In 'integrated' mode, the design formula should contain an ",
+          "interaction term (e.g., '*', ':') between condition and time. ",
+          "Otherwise, model coefficients for non-reference levels may be ",
+          "missing."
+        )
+      }
+      
+      if (mode == "isolated" && grepl("[*|:]", design_str)) {
+        warning(
+          "In 'isolated' mode, the design formula should not contain ",
+          "interaction terms (e.g., '*', ':'). These are not required when ",
+          "each condition is modeled separately."
+        )
+      }
+      
       message(
-        "Make sure that the design formula contains no interaction ",
+        "\nMake sure that the design formula contains no interaction ",
         "between the condition and time for mode == isolated, and that ",
         "it contains an interaction for mode == integrated. Otherwise, ",
         "you will get an uncaught error of 'coefficients not estimable' or ",
-        "'subscript out of bounds'."
+        "'subscript out of bounds' (or any other hard to understand error)."
       )
       
     },

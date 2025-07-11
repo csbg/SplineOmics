@@ -1221,7 +1221,7 @@ build_spline_contrast <- function(
     design_cols,
     dof
 ) {
-  
+
   contrast_matrix <- matrix(
     0,
     nrow = dof,
