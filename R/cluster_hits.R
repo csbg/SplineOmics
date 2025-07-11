@@ -1059,21 +1059,13 @@ make_clustering_report <- function(
 
   design <- gsub("Time", "X", design)  
   effects <- extract_effects(design)
-  
-  # Optionally remove the batch-effect with the batch column and design matrix
-  # For mode == "integrated", the batch-effect is removed from the whole data
-  # For mode == "isolated", the batch-effect is removed for every level
-  datas <- remove_batch_effect_cluster_hits(
+
+  datas <- split_data_by_condition(
     data = data,
     meta = meta,
     condition = condition,
-    meta_batch_column = meta_batch_column,
-    meta_batch2_column = meta_batch2_column,
-    design = effects[["fixed_effects"]],
-    mode = mode,
-    spline_params = spline_params
-  )
-
+    mode = mode
+    )
 
   # To extract the stored value for the potential auto cluster decision.
   clusters <- c()
@@ -1675,137 +1667,46 @@ get_level_hit_indices <- function(
 }
 
 
-#' Remove Batch Effect from Cluster Hits
+#' Split or duplicate a data matrix by condition level
 #' 
 #' @noRd
 #'
 #' @description
-#' This function removes batch effects from the data for each level specified
-#' by the condition. It supports both isolated and integrated modes, with
-#' optional handling for a second batch column.
+#' This function returns a list of data matrices, either split by
+#' condition level (if mode is "isolated") or duplicated for each level
+#' (if mode is "integrated"). This is used to prepare per-condition data
+#' subsets for downstream processing or plotting.
 #'
-#' @param data A dataframe containing the main data.
-#' @param meta A dataframe containing meta information.
-#' @param condition A string specifying the column in `meta` that divides the
-#' experiment into levels.
-#' @param meta_batch_column A string specifying the column in `meta` that
-#' indicates batch information.
-#' @param meta_batch2_column A string specifying the second batch column in
-#' `meta`, if applicable.
-#' @param design A design matrix for the experiment.
-#' @param mode A string indicating the mode of operation: "isolated" or
-#' "integrated".
-#' @param spline_params A list of spline parameters for the design matrix.
+#' @param data A numeric matrix with features as rows and samples as
+#'   columns.
+#' @param meta A data.frame containing sample-level metadata. Each row
+#'   corresponds to a column in the data matrix.
+#' @param condition A character string specifying the column in `meta`
+#'   that defines the condition or group variable.
+#' @param mode A string, either "isolated" or "integrated", determining
+#'   whether to split the data or return full copies per level.
 #'
-#' @return A list of dataframes with batch effects removed for each level.
-#'
-#' @details
-#' The function operates in two modes:
-#' \describe{
-#'   \item{isolated}{Processes each level independently, using only data from
-#'   that level.}
-#'   \item{integrated}{Processes the entire dataset together.}
-#' }
-#' If `meta_batch_column` is specified, the function removes batch effects using
-#' `removeBatchEffect`. If a second batch column (`meta_batch2_column`) is
-#' specified, it is also included in the batch effect removal.
-#'
-#' @importFrom limma removeBatchEffect
-#'
-remove_batch_effect_cluster_hits <- function(
+#' @return A named list of data matrices, one for each condition level.
+#' 
+split_data_by_condition <- function(
     data,
     meta,
     condition,
-    meta_batch_column,
-    meta_batch2_column,
-    design,
-    mode,
-    spline_params
+    mode
     ) {
   
   datas <- list()
-  n <- length(unique(meta[[condition]]))
-  level_indices <- seq_len(n)
-  unique_levels <- unique(meta[[condition]])
-
-  if (!is.null(meta_batch_column)) {
-    for (level_index in level_indices) {
-      # Take only the data from the level for mode == "isolated"
-      if (mode == "isolated") {
-        level <- unique_levels[level_index]
-        level_columns <- which(meta[[condition]] == level)
-        data_copy <- data[, level_columns]
-        meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
-      } else {
-        data_copy <- data # Take the full data for mode == "integrated"
-        meta_copy <- meta
-        level_index <- 1L # spline_params here has only one set of params
-      }
-
-      result <- design2design_matrix(
-        meta = meta_copy,
-        spline_params = spline_params,
-        level_index = level_index,
-        design = design
-      )
-      
-      design_matrix <- result[["design_matrix"]]
-
-      # The batch columns are not allowed to be in the design_matrix for
-      # removeBatchEffect. Instead the batch column is specified with batch =
-      batch_columns <- grep(
-        paste0(
-          "^",
-          meta_batch_column
-        ),
-        colnames(design_matrix)
-      )
-
-      design_matrix <- design_matrix[, -batch_columns]
-
-      args <- list(
-        x = data_copy,
-        batch = meta_copy[[meta_batch_column]],
-        design = design_matrix
-      )
-
-      if (mode == "isolated") {
-        level <- unique_levels[level_index]
-        meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
-
-        if (!is.null(meta_batch2_column) &&
-          length(unique(meta_copy[[meta_batch2_column]])) > 1) {
-          args$batch2 <- meta_copy[[meta_batch2_column]]
-        }
-      } else { # mode == integrated
-
-        if (!is.null(meta_batch2_column) &&
-          length(unique(meta_copy[[meta_batch2_column]])) > 1) {
-          args$batch2 <- meta_copy[[meta_batch2_column]]
-        }
-      }
-
-      # For mode == "integrated", all elements are identical
-      datas <- c(
-        datas,
-        list(data_copy)
-      )
-    }
-  } else { # no meta batch column specified, just return right data
-
-    for (level_index in level_indices) {
-      # Take only the data from the level for mode == "isolated"
-      if (mode == "isolated") {
-        level <- unique_levels[level_index]
-        level_columns <- which(meta[[condition]] == level)
-        data_copy <- data[, level_columns]
-      } else {
-        data_copy <- data # Take the full data for mode == "integrated"
-      }
-
-      datas <- c(datas, list(data_copy))
+  levels <- unique(meta[[condition]])
+  
+  for (level in levels) {
+    if (mode == "isolated") {
+      cols <- which(meta[[condition]] == level)
+      datas[[level]] <- data[, cols, drop = FALSE]
+    } else {
+      datas[[level]] <- data  # same full data for all levels
     }
   }
+  
   return(datas)
 }
 
@@ -3611,6 +3512,10 @@ adjust_intercept_least_squares <- function(
   
   # Actual data matrix: features × group samples
   data_subset <- data[, sample_idx, drop = FALSE]
+  # Subset data to match the rows in pred_mat
+  common_rows <- intersect(rownames(pred_mat), rownames(data_subset))
+  data_subset <- data_subset[common_rows, , drop = FALSE]
+  pred_mat <- pred_mat[common_rows, , drop = FALSE]
   
   # Time values of samples
   sample_times <- meta$Time[sample_idx]
@@ -3621,7 +3526,7 @@ adjust_intercept_least_squares <- function(
     function(t) which.min(abs(t - time_grid)),
     integer(1)
   )
-  
+
   # For each sample, extract the corresponding prediction column
   pred_mat_expanded <- pred_mat[, matched_indices, drop = FALSE]
   

@@ -2165,9 +2165,24 @@ Level2Functions <- R6::R6Class("Level2Functions",
       # Check if row headers (rownames) are present and non-null
       row_headers <- rownames(data)
       if (is.null(row_headers)) {
-        stop(
+        stop_call_false(
           self$create_error_message(
             "The data matrix must have row headers!",
+            data_meta_index
+          )
+        )
+      }
+      
+      # Check if all row headers are unique
+      if (any(duplicated(row_headers))) {
+        dupes <- unique(row_headers[duplicated(row_headers)])
+        stop(
+          self$create_error_message(
+            paste0(
+              "The data matrix has duplicated row headers: ",
+              paste(dupes, collapse = ", "), ". ",
+              "All row names must be unique."
+            ),
             data_meta_index
           ),
           call. = FALSE

@@ -105,7 +105,7 @@ run_limma_splines <- function(
   
   feature_names <- rownames(data)
   meta[[condition]] <- factor(meta[[condition]])
-  
+
   if (mode == "isolated") {
     levels <- levels(meta[[condition]])
     # rownames(data) <- NULL # To just have numbers describing the rows
@@ -1202,9 +1202,10 @@ bp_setup <- function(bp_cfg) {
   }
   
   message(paste(
-    "\nNOTE: If you manually stop run_limma_splines() in RStudio,",
-    "parallelized background processes may continue running. Use your system's",
-    "process manager to terminate them manually.\n"
+    "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
+    "parallelization for variancePartition::dream(), then those parallelized",
+    "processes may continue running. Use your system's",
+    "process manager to terminate them manually!\n"
     ))
   
   # 3.  Register and return
