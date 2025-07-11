@@ -621,7 +621,7 @@ map_gene_symbols <- function(
     levels_clustered_hits,
     mapping_cfg
     ) {
-  browser()
+
   stopifnot(
     is.list(levels_clustered_hits),
     all(vapply(levels_clustered_hits,

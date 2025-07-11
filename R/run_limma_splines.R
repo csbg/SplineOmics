@@ -65,7 +65,7 @@
 run_limma_splines <- function(
     splineomics
 ) {
-  
+
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "run_limma_splines"
@@ -302,7 +302,7 @@ fit_within_condition_isolated <- function(
       "that is not possible with the RNA-seq data objects"
     )
   }
-  
+
   result <- process_within_level(
     data = data_copy,
     rna_seq_data = rna_seq_data,
@@ -832,7 +832,7 @@ process_within_level <- function(
     )
     spline_params$dof[level_index] <- best_dof
   }
-  
+
   result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,

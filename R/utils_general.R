@@ -92,7 +92,7 @@ design2design_matrix <- function(
   } else { # natural cubic splines
     meta$X <- do.call(splines::ns, args)
   }
-  
+
   design_matrix <- stats::model.matrix(
     stats::as.formula(design),
     data = meta

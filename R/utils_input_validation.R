@@ -2332,7 +2332,36 @@ Level2Functions <- R6::R6Class("Level2Functions",
           )
         }
       }
-
+      
+      # Check if batch column is blocked (only one level)
+      if (!is.null(meta_batch_column)) {
+        colname <- as.character(meta_batch_column)
+        n_levels <- length(unique(meta[[colname]]))
+        if (n_levels <= 1) {
+          stop(
+            paste0(
+              "meta_batch_column '", colname, "' is blocked (only ",
+              n_levels, " level). Cannot be used."
+            ),
+            call. = FALSE
+          )
+        }
+      }
+      
+      if (!is.null(meta_batch2_column)) {
+        colname <- as.character(meta_batch2_column)
+        n_levels <- length(unique(meta[[colname]]))
+        if (n_levels <= 1) {
+          stop(
+            paste0(
+              "meta_batch2_column '", colname, "' is blocked (only ",
+              n_levels, " level). Cannot be used."
+            ),
+            call. = FALSE
+          )
+        }
+      }
+      
       return(TRUE)
     },
 
