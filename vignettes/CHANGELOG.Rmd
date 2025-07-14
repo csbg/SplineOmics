@@ -118,6 +118,13 @@ Examples:
   other variables used in the linear model. The predicted splines are now 
   generated at the very beginning of the cluster_hits() function, and used for
   clustering AND plotting. 
+  
+- Wrong coefficients passes to topTable() function. 
+  For the limma result category average difference conditions, not all necessary
+  coefficients were passed. Before, it just checked if there is a difference 
+  between the conditions for the reference time point (the first timepoint). Now
+  it passes all the necessary coefficients, and then performs a joint F-test to
+  get the average difference between the conditions across the whole timecourse.
 
 
 --------------------------------------------------------------------------------

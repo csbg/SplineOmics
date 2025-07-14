@@ -987,8 +987,7 @@ extract_contrast_for_pair <- function(
   feature_names <- fit_obj[["feature_names"]]
   padjust_method <- fit_obj[["padjust_method"]]
 
-  # Get properly constructed contrasts
-  contrasts <- build_contrasts_for_pair(
+  coefs <- get_condition_contrast_coefs(
     condition = condition,
     level_pair = level_pair,
     design_matrix = design_matrix
@@ -1000,18 +999,18 @@ extract_contrast_for_pair <- function(
     top_fun <- limma::topTable
   }
 
-  # Extract condition-only top table
+  # Extract average difference condition top table
   condition_only <- top_fun(
     fit,
-    coef = contrasts$condition,
+    coef = coefs$condition_main_and_time,
     adjust.method = padjust_method,
     number = Inf
   )
 
-  # Extract condition-time interaction top table
+  # Extract condition-time interaction top table (difference in shapes)
   condition_time <- top_fun(
     fit,
-    coef = contrasts$interaction,
+    coef = coefs$condition_time_interaction_only,
     adjust.method = padjust_method,
     number = Inf,
     sort.by = "F"
@@ -1320,14 +1319,15 @@ modify_limma_top_table <- function(
 }
 
 
-#' Construct contrast names for a pair of condition levels
+#' Construct coefficient names for condition contrasts
 #'
 #' @noRd
 #'
 #' @description
-#' Builds the coefficient names used for extracting the condition-only and
-#' condition-time interaction effects between two condition levels. Assumes
-#' a design matrix where one condition level is used as the reference.
+#' Collects the coefficient names used for extracting the condition main
+#' effect (average difference across time) and the condition-time interaction
+#' effects (differences in temporal pattern) between two condition levels.
+#' Assumes a design matrix where one condition level is used as the reference.
 #'
 #' @param condition A string giving the name of the condition factor.
 #'
@@ -1338,10 +1338,12 @@ modify_limma_top_table <- function(
 #'   names determine which condition level is modeled explicitly.
 #'
 #' @return A named list with two elements:
-#'   - `condition`: name of the coefficient for the condition-only effect
-#'   - `interaction`: vector of coefficient names for the interaction terms
-#'   
-build_contrasts_for_pair <- function(
+#'   - `condition_main_and_time`: vector of coefficient names for both the
+#'     condition main effect and the condition-time interactions
+#'   - `condition_time_interaction_only`: vector of coefficient names for the
+#'     condition-time interaction terms only
+#'     
+get_condition_contrast_coefs <- function(
     condition,
     level_pair,
     design_matrix
@@ -1349,14 +1351,8 @@ build_contrasts_for_pair <- function(
   
   cols <- colnames(design_matrix)
   
-  # Try each level
-  level1 <- make.names(paste0(
-    condition,
-    level_pair[1]
-  ))
-  level2 <- make.names(paste0(
-    condition, level_pair[2]
-  ))
+  level1 <- make.names(paste0(condition, level_pair[1]))
+  level2 <- make.names(paste0(condition, level_pair[2]))
   
   if (any(grepl(level1, cols))) {
     modeled_level <- level_pair[1]
@@ -1366,29 +1362,28 @@ build_contrasts_for_pair <- function(
     stop("Neither level appears in design_matrix columns.")
   }
   
-  # Build contrasts
-  condition_contrast <- make.names(paste0(
-    condition,
-    modeled_level
-  ))
+  condition_contrast <- make.names(paste0(condition, modeled_level))
   
-  # Time interaction columns like X1, X2
   spline_cols <- grep(
     "^X\\d+$",
     cols,
     value = TRUE
-  )
+    )
   interaction_contrasts <- paste0(
     condition_contrast,
     ":",
     spline_cols
-  )
+    )
   
   list(
-    condition = condition_contrast,
-    interaction = interaction_contrasts
+    condition_main_and_time = c(
+      condition_contrast,
+      interaction_contrasts
+      ),
+    condition_time_interaction_only = interaction_contrasts
   )
 }
+
 
 
 #' Analytical Leave-One-Out Cross-Validation computation

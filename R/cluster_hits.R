@@ -2547,14 +2547,20 @@ plot_spline_comparisons <- function(
                         "feature_names")
   check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
   
-  plotted_hits <- 0
-  
-  # Hit is just an index, but time_effect_1 and 2 and avrg_diff_conditions and
-  # interaction_condition_time were sorted before.
-  for (hit in seq_len(nrow(time_effect_1))) {
-    hit_index <- as.numeric(time_effect_1$feature_nr[hit])
+  features_to_plot <- preselect_features_for_plotting(
+    avrg_diff_conditions = avrg_diff_conditions,
+    interaction_condition_time = interaction_condition_time,
+    max_hit_number = max_hit_number,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction = adj_pthresh_interaction
+  )
+
+  # Now simply loop over these
+  for (i in seq_len(nrow(features_to_plot))) {
+    hit_index <- as.numeric(features_to_plot$feature_nr[i])
+    feature_name <- features_to_plot$feature_names[i]
     row_values <- data[hit_index, ]
-    
+
     # Identify NA values from raw_data for imputation labeling
     if (!is.null(raw_data)) {
       # Identify which columns in raw_data belong to each condition
@@ -2621,256 +2627,249 @@ plot_spline_comparisons <- function(
       )
     }
 
-    feature_name <- time_effect_1$feature_names[hit]
     fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
     fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
     
-    # Get the adjusted p-values for the current hit
-    avrg_diff_pval <- as.numeric(avrg_diff_conditions[hit, "adj.P.Val"])
-    interaction_pval <- as.numeric(interaction_condition_time[hit, "adj.P.Val"])
-    if (is.na(avrg_diff_pval) || is.na(interaction_pval)) next
+    avrg_diff_pval <- avrg_diff_conditions |>
+      dplyr::filter(feature_names == feature_name) |>
+      dplyr::pull(adj.P.Val)
+    
+    interaction_pval <- interaction_condition_time |>
+      dplyr::filter(feature_names == feature_name) |>
+      dplyr::pull(adj.P.Val)
 
-    if (avrg_diff_pval < adj_pthresh_avrg_diff_conditions ||
-        interaction_pval < adj_pthresh_interaction) {
+    # Define the number of stars for avrg_diff_conditions
+    avrg_diff_stars <- ifelse(
+      avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 500,
+      "****",
+      ifelse(
+        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
+        "***",
+        ifelse(
+          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
+          "**",
+          ifelse(
+            avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
+            "*",
+            ""
+          )
+        )
+      )
+    )
+    
+    # Define the number of stars for interaction_condition_time
+    interaction_stars <- ifelse(
+      interaction_pval < adj_pthresh_interaction / 500,
+      "****",
+      ifelse(
+        interaction_pval < adj_pthresh_interaction / 50,
+        "***",
+        ifelse(
+          interaction_pval < adj_pthresh_interaction / 5,
+          "**",
+          ifelse(
+            interaction_pval < adj_pthresh_interaction,
+            "*",
+            ""
+          )
+        )
+      )
+    )
+
+    # Calculate average CV for Y1 and Y2 across all time points
+    cv_1 <- calc_cv(
+      time_values = plot_data$Time,
+      response_values = plot_data$Y1
+    )
+    
+    cv_2 <- calc_cv(
+      time_values = plot_data$Time,
+      response_values = plot_data$Y2
+    )
+    
+    plot_data$ColorLabel1 <- ifelse(
+      plot_data$IsImputed1 == "Imputed",
+      paste("Imputed data", condition_1),  # Dynamic label
+      paste("Data", condition_1)
+    )
+    
+    plot_data$ColorLabel2 <- ifelse(
+      plot_data$IsImputed2 == "Imputed",
+      paste("Imputed data", condition_2),  # Dynamic label
+      paste("Data", condition_2)
+    )
+
+    p <- local({
+      # Create the plot
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_point(
+          data = plot_data,
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Y1,
+            color = .data$ColorLabel1,
+            shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+          ),
+          na.rm = TRUE,
+          alpha = 0.5 # Make data dots transparent to see overlapping ones.
+        ) +
+        ggplot2::geom_line(
+          data = data.frame(
+            Time = smooth_timepoints,
+            Fitted = fitted_values_1
+          ),
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Fitted,
+            color = paste("Spline", condition_1),
+          )
+        ) +
+        ggplot2::geom_point(
+          data = plot_data,
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Y2,
+            color = .data$ColorLabel2,
+            shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+          ),
+          na.rm = TRUE,
+          alpha = 0.5
+        ) + 
+        ggplot2::geom_line(
+          data = data.frame(
+            Time = smooth_timepoints,
+            Fitted = fitted_values_2
+          ),
+          ggplot2::aes(
+            x = .data$Time,
+            y = .data$Fitted,
+            color = paste("Spline", condition_2)
+          )
+        ) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(title = NULL),
+          shape = ggplot2::guide_legend(title = "Replicate")  
+        ) +
+        # ggplot2::scale_shape_manual(values = shape_values) +
+        ggplot2::scale_x_continuous(
+          breaks = filter_timepoints(time_points)
+        ) +
+        ggplot2::labs(
+          title = paste(
+            feature_name,
+            "\nadj.P.Val avrg_diff_conditions: ",
+            signif(avrg_diff_pval, digits = 2),
+            avrg_diff_stars,
+            "\nadj.P.Val interaction_condition_time: ",
+            signif(interaction_pval, digits = 2),
+            interaction_stars,
+            "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
+            " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+          ),
+          x = paste0("Time [", plot_info$time_unit, "]"),
+          y = plot_info$y_axis_label
+        )
       
-      plotted_hits <- plotted_hits + 1
-      if (plotted_hits > max_hit_number) {  # don't create more plots
-        break
+      # Conditionally add shape scale only if replicates exist
+      if (!is.null(replicate_column)) {
+        p <- p + ggplot2::scale_shape_manual(
+          values = shape_mapping,
+          name = "Replicate"
+        )
       }
       
-      # Define the number of stars for avrg_diff_conditions
-      avrg_diff_stars <- ifelse(
-        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 500,
-        "****",
-        ifelse(
-          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
-          "***",
-          ifelse(
-            avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
-            "**",
-            ifelse(
-              avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
-              "*",
-              ""
-            )
-          )
+      p <- p + ggplot2::theme_minimal() +
+        ggplot2::theme(
+          legend.position = "right",
+          legend.title = element_blank(),
+          plot.title = ggplot2::element_text(size = 7),
+          legend.text = ggplot2::element_text(size = 5),
+          legend.key.height = ggplot2::unit(0.3, "cm"),  
+          legend.key.width = ggplot2::unit(0.7, "cm"),    
+          axis.title.x = ggplot2::element_text(size = 8),
+          axis.title.y = ggplot2::element_text(size = 8),
+          axis.text.x = ggplot2::element_text(size = 6)
         )
+      
+      level <- paste(
+        condition_1,
+        condition_2,
+        sep = "_"
       )
       
-      # Define the number of stars for interaction_condition_time
-      interaction_stars <- ifelse(
-        interaction_pval < adj_pthresh_interaction / 500,
-        "****",
-        ifelse(
-          interaction_pval < adj_pthresh_interaction / 50,
-          "***",
-          ifelse(
-            interaction_pval < adj_pthresh_interaction / 5,
-            "**",
-            ifelse(
-              interaction_pval < adj_pthresh_interaction,
-              "*",
-              ""
-            )
-          )
-        )
-      )
-
-      # Calculate average CV for Y1 and Y2 across all time points
-      cv_1 <- calc_cv(
-        time_values = plot_data$Time,
-        response_values = plot_data$Y1
+      y_combined <- c(plot_data$Y1, plot_data$Y2)  # Combine all values
+      y_max <- max(y_combined, na.rm = TRUE)  # Find the maximum value
+      y_min <- min(y_combined, na.rm = TRUE)  # Find the minimum value
+      y_extension <- (y_max - y_min) * 0.1  # Calculate 10% extension
+      y_pos_label <- y_max + y_extension * 0.5  # Adjust label position
+      
+      result <- maybe_add_dashed_lines(
+        p = p,
+        plot_info = plot_info,
+        level = level,
+        y_pos = y_pos_label,
+        horizontal_labels = TRUE
       )
       
-      cv_2 <- calc_cv(
-        time_values = plot_data$Time,
-        response_values = plot_data$Y2
-      )
+      p <- result$p # Updated plot with dashed lines
+      treatment_colors <- result$treatment_colors 
       
-      plot_data$ColorLabel1 <- ifelse(
-        plot_data$IsImputed1 == "Imputed",
-        paste("Imputed data", condition_1),  # Dynamic label
-        paste("Data", condition_1)
-      )
-      
-      plot_data$ColorLabel2 <- ifelse(
-        plot_data$IsImputed2 == "Imputed",
-        paste("Imputed data", condition_2),  # Dynamic label
-        paste("Data", condition_2)
-      )
-
-      p <- local({
-        # Create the plot
-        p <- ggplot2::ggplot() +
-          ggplot2::geom_point(
-            data = plot_data,
-            ggplot2::aes(
-              x = .data$Time,
-              y = .data$Y1,
-              color = .data$ColorLabel1,
-              shape = if (!is.null(replicate_column)) .data$Replicate else NULL
-            ),
-            na.rm = TRUE,
-            alpha = 0.5 # Make data dots transparent to see overlapping ones.
-          ) +
-          ggplot2::geom_line(
-            data = data.frame(
-              Time = smooth_timepoints,
-              Fitted = fitted_values_1
-            ),
-            ggplot2::aes(
-              x = .data$Time,
-              y = .data$Fitted,
-              color = paste("Spline", condition_1),
-            )
-          ) +
-          ggplot2::geom_point(
-            data = plot_data,
-            ggplot2::aes(
-              x = .data$Time,
-              y = .data$Y2,
-              color = .data$ColorLabel2,
-              shape = if (!is.null(replicate_column)) .data$Replicate else NULL
-            ),
-            na.rm = TRUE,
-            alpha = 0.5
-          ) + 
-          ggplot2::geom_line(
-            data = data.frame(
-              Time = smooth_timepoints,
-              Fitted = fitted_values_2
-            ),
-            ggplot2::aes(
-              x = .data$Time,
-              y = .data$Fitted,
-              color = paste("Spline", condition_2)
-            )
-          ) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(title = NULL),
-            shape = ggplot2::guide_legend(title = "Replicate")  
-          ) +
-          # ggplot2::scale_shape_manual(values = shape_values) +
-          ggplot2::scale_x_continuous(
-            breaks = filter_timepoints(time_points)
-          ) +
-          ggplot2::labs(
-            title = paste(
-              titles$feature_names[hit],
-              "\nadj.P.Val avrg_diff_conditions: ",
-              signif(avrg_diff_conditions[hit, "adj.P.Val"], digits = 2),
-              avrg_diff_stars,
-              "\nadj.P.Val interaction_condition_time: ",
-              signif(interaction_condition_time[hit, "adj.P.Val"], digits = 2),
-              interaction_stars,
-              "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
-              " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
-            ),
-            x = paste0("Time [", plot_info$time_unit, "]"),
-            y = plot_info$y_axis_label
-          ) 
-        
-        # Conditionally add shape scale only if replicates exist
-        if (!is.null(replicate_column)) {
-          p <- p + ggplot2::scale_shape_manual(
-            values = shape_mapping,
-            name = "Replicate"
-          )
-        }
-        
-        p <- p + ggplot2::theme_minimal() +
-          ggplot2::theme(
-            legend.position = "right",
-            legend.title = element_blank(),
-            plot.title = ggplot2::element_text(size = 7),
-            legend.text = ggplot2::element_text(size = 5),
-            legend.key.height = ggplot2::unit(0.3, "cm"),  
-            legend.key.width = ggplot2::unit(0.7, "cm"),    
-            axis.title.x = ggplot2::element_text(size = 8),
-            axis.title.y = ggplot2::element_text(size = 8),
-            axis.text.x = ggplot2::element_text(size = 6)
-          )
-        
-        level <- paste(
-          condition_1,
-          condition_2,
-          sep = "_"
-        )
-        
-        y_combined <- c(plot_data$Y1, plot_data$Y2)  # Combine all values
-        y_max <- max(y_combined, na.rm = TRUE)  # Find the maximum value
-        y_min <- min(y_combined, na.rm = TRUE)  # Find the minimum value
-        y_extension <- (y_max - y_min) * 0.1  # Calculate 10% extension
-        y_pos_label <- y_max + y_extension * 0.5  # Adjust label position
-        
-        result <- maybe_add_dashed_lines(
-          p = p,
-          plot_info = plot_info,
-          level = level,
-          y_pos = y_pos_label,
-          horizontal_labels = TRUE
-        )
-        
-        p <- result$p # Updated plot with dashed lines
-        treatment_colors <- result$treatment_colors 
-        
-        color_values <- setNames(
-          c(
-            "orange",
-            "orange",
-            "purple",
-            "purple",
-            "red",
-            "dodgerblue"
-          ),
-          c(
-            paste("Data", condition_1),
-            paste("Spline", condition_1),
-            paste("Data", condition_2),
-            paste("Spline", condition_2),
-            paste("Imputed data", condition_1),
-            paste("Imputed data", condition_2)
-          )
-        )
-        
-        # Filter to include only legend entries that exist in the data
-        filtered_labels <- c(
+      color_values <- setNames(
+        c(
+          "orange",
+          "orange",
+          "purple",
+          "purple",
+          "red",
+          "dodgerblue"
+        ),
+        c(
           paste("Data", condition_1),
           paste("Spline", condition_1),
           paste("Data", condition_2),
-          paste("Spline", condition_2)
+          paste("Spline", condition_2),
+          paste("Imputed data", condition_1),
+          paste("Imputed data", condition_2)
         )
-        
-        # Add imputed labels only if they exist
-        if (has_imputed_1) {
-          filtered_labels <- c(
-            filtered_labels,
-            paste("Imputed data", condition_1)
-          )
-        }
-        if (has_imputed_2) {
-          filtered_labels <- c(
-            filtered_labels,
-            paste("Imputed data", condition_2)
-          )
-        }
-        
-        # Keep only necessary color mappings
-        color_values <- c(
-          color_values[names(color_values) %in% filtered_labels],
-          treatment_colors
+      )
+      
+      # Filter to include only legend entries that exist in the data
+      filtered_labels <- c(
+        paste("Data", condition_1),
+        paste("Spline", condition_1),
+        paste("Data", condition_2),
+        paste("Spline", condition_2)
+      )
+      
+      # Add imputed labels only if they exist
+      if (has_imputed_1) {
+        filtered_labels <- c(
+          filtered_labels,
+          paste("Imputed data", condition_1)
         )
-        
-        # Apply scale_color_manual with merged color values
-        p <- p + ggplot2::scale_color_manual(values = color_values)
-        
-        p
-      })
+      }
+      if (has_imputed_2) {
+        filtered_labels <- c(
+          filtered_labels,
+          paste("Imputed data", condition_2)
+        )
+      }
+      
+      # Keep only necessary color mappings
+      color_values <- c(
+        color_values[names(color_values) %in% filtered_labels],
+        treatment_colors
+      )
+      
+      # Apply scale_color_manual with merged color values
+      p <- p + ggplot2::scale_color_manual(values = color_values)
+      
+      p
+    })
 
-      plot_list[[length(plot_list) + 1]] <- p
-      feature_names_list[[length(feature_names_list) + 1]] <-
-        as.character(titles$feature_names[hit])
-    }
+    plot_list[[length(plot_list) + 1]] <- p
+    feature_names_list[[length(feature_names_list) + 1]] <- feature_name
+    
   }
   
   return(list(
@@ -4207,6 +4206,73 @@ generate_asterisks_definition <- function(adj_pvalue_threshold) {
     sep = "<br>"
   )
 }
+
+
+#' Preselect features for plotting based on significance
+#' 
+#' @noRd
+#'
+#' @param avrg_diff_conditions Data frame with columns `feature_names`,
+#'   `feature_nr`, and `adj.P.Val` for the average difference condition.
+#'
+#' @param interaction_condition_time Data frame with columns `feature_names`,
+#'   `feature_nr`, and `adj.P.Val` for the interaction condition-time.
+#'
+#' @param max_hit_number Maximum number of features to select for each category.
+#'
+#' @param adj_pthresh_avrg_diff_conditions Adjusted p-value threshold for the
+#'   average difference condition.
+#'
+#' @param adj_pthresh_interaction Adjusted p-value threshold for the
+#'   interaction condition-time.
+#'
+#' @return A data frame with columns `feature_names` and `feature_nr`,
+#'   containing the union of selected features from both categories.
+#' 
+preselect_features_for_plotting <- function(
+    avrg_diff_conditions,
+    interaction_condition_time,
+    max_hit_number,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction
+) {
+  
+  # Select top features for average difference
+  sig_avg <- avrg_diff_conditions |>
+    dplyr::filter(.data$adj.P.Val < adj_pthresh_avrg_diff_conditions) |>
+    dplyr::arrange(.data$adj.P.Val) |>
+    head(max_hit_number) |>
+    dplyr::mutate(selected_avg = TRUE) |>
+    dplyr::select(feature_names, feature_nr, selected_avg)
+  
+  # Select top features for interaction
+  sig_interaction <- interaction_condition_time |>
+    dplyr::filter(.data$adj.P.Val < adj_pthresh_interaction) |>
+    dplyr::arrange(.data$adj.P.Val) |>
+    head(max_hit_number) |>
+    dplyr::mutate(selected_interaction = TRUE) |>
+    dplyr::select(feature_names, feature_nr, selected_interaction)
+  
+  # Full outer join by feature_names and feature_nr
+  features_to_plot <- dplyr::full_join(
+    sig_avg,
+    sig_interaction,
+    by = c("feature_names", "feature_nr")
+  )
+  
+  # Fix NA columns after join
+  features_to_plot <- features_to_plot |>
+    dplyr::mutate(
+      selected_avg = tidyr::replace_na(.data$selected_avg, FALSE),
+      selected_interaction = tidyr::replace_na(
+        .data$selected_interaction,
+        FALSE
+        )
+    )
+  
+  return(features_to_plot)
+}
+
 
 
 # Level 4 internal functions ---------------------------------------------------

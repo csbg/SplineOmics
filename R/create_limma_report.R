@@ -41,7 +41,7 @@ create_limma_report <- function(
     adj_pthresh = 0.05,
     report_dir = here::here()
     ) {
-  
+
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -247,7 +247,7 @@ generate_time_effect_plots <- function(
 #' @noRd
 #'
 #' @description
-#' Creates p-value histograms and volcano plots for each condition in the
+#' Creates p-value histograms for each condition in the
 #' average difference conditions. This function is used internally in the
 #' `create_limma_report` function.
 #'
@@ -261,37 +261,31 @@ generate_time_effect_plots <- function(
 #'
 generate_avrg_diff_plots <- function(
     avrg_diff_conditions,
-    adj_pthresh) {
+    adj_pthresh
+) {
   plots <- list("Average Difference Conditions")
   plots_sizes <- c(999)
-
+  
   header_info <- list(header_name = "Average Difference Conditions")
   section_headers_info <- list(header_info)
-
+  
   for (i in seq_along(avrg_diff_conditions)) {
     element_name <- names(avrg_diff_conditions)[i]
     top_table <- avrg_diff_conditions[[i]]
-
+    
     comparison <- remove_prefix(element_name, "avrg_diff_")
     title <- paste("P-Value Histogram:", comparison)
-
+    
     p_value_hist <- create_p_value_histogram(
       top_table = top_table,
       title = title
     )
-
-    compared_levels <- strsplit(comparison, "_vs_")[[1]]
-
-    volcano_plot <- create_volcano_plot(
-      top_table = top_table,
-      adj_pthresh = adj_pthresh,
-      compared_levels
-    )
-
-    plots <- c(plots, list(p_value_hist), list(volcano_plot))
-    plots_sizes <- c(plots_sizes, 1, 1.5)
+    
+    # Append only the p-value histogram now
+    plots <- c(plots, list(p_value_hist))
+    plots_sizes <- c(plots_sizes, 1)
   }
-
+  
   list(
     plots = plots,
     plots_sizes = plots_sizes,
@@ -581,171 +575,6 @@ create_p_value_histogram <- function(
     ggplot2::theme_minimal()
 
   return(p)
-}
-
-
-#' Create a Volcano Plot
-#' 
-#' @noRd
-#'
-#' @description
-#' This function creates a volcano plot from a limma top table, plotting
-#' log fold changes against the negative log10 of adjusted p-values.
-#'
-#' @param top_table A data frame from limma containing 'logFC' and 'adj.P.Val'
-#' columns.
-#' @param adj_pthresh A numeric value for the adjusted p-value threshold.
-#' @param compared_levels A character vector of length 2 specifying the
-#' compared levels.
-#'
-#' @return A ggplot object representing the volcano plot.
-#'
-#' @importFrom ggplot2 ggplot aes geom_point theme_minimal labs geom_hline
-#'                     annotate scale_color_manual
-#' @importFrom rlang .data
-#'
-create_volcano_plot <- function(
-    top_table,
-    adj_pthresh,
-    compared_levels
-    ) {
-
-  logFC <- NULL
-  adj.P.Val <- NULL
-
-  top_table <- top_table |>
-    dplyr::mutate(
-      Regulation = ifelse(
-        logFC > 0,
-        compared_levels[2],
-        compared_levels[1]
-      ),
-      Alpha = ifelse(
-        adj.P.Val < adj_pthresh,
-        1,
-        0.5
-      )
-    )
-
-  # Create a named vector for the colors
-  colors <- c("blue", "darkgrey") |>
-    setNames(c(
-      compared_levels[2],
-      compared_levels[1]
-    ))
-
-  # Calculate the number of hits
-  num_hits <- sum(top_table$adj.P.Val < adj_pthresh)
-  total_tests <- nrow(top_table)
-  percent_hits <- (num_hits / total_tests) * 100
-
-  volcano_plot <- ggplot2::ggplot(
-    data = top_table,
-    mapping = ggplot2::aes(
-      x = logFC,
-      y = -log10(adj.P.Val),
-      color = .data$Regulation,
-      alpha = .data$Alpha
-    )
-  ) +
-    # Add a shaded region below the adjusted p-value threshold
-    ggplot2::annotate(
-      "rect",
-      xmin = -Inf,
-      xmax = Inf,
-      ymin = 0,
-      ymax = -log10(adj_pthresh),
-      fill = "gray90" # Light gray color for visual distinction
-    ) +
-    ggplot2::geom_point() +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = paste(
-        "Volcano Plot:",
-        compared_levels[1],
-        "vs",
-        compared_levels[2]
-      ),
-      x = paste(
-        "Log2 Fold Change (",
-        compared_levels[2],
-        " / ",
-        compared_levels[1],
-        ")",
-        sep = ""
-      ),
-      y = "-Log10 Adjusted P-value"
-    ) +
-    # Add a dashed red line for the adjusted p-value threshold
-    ggplot2::geom_hline(
-      yintercept = -log10(adj_pthresh),
-      linetype = "dashed",
-      color = "red"
-    ) +
-    # Add a label for the adjusted p-value threshold
-    ggplot2::annotate(
-      geom = "text",
-      x = Inf,
-      y = -log10(adj_pthresh),
-      label = paste(
-        "adj.p-thresh:",
-        adj_pthresh
-      ),
-      hjust = 1.1,
-      vjust = -1.5,
-      color = "red"
-    ) +
-    ggplot2::scale_color_manual(
-      values = colors
-    ) +
-    ggplot2::scale_alpha(
-      range = c(0.5, 1)
-    ) +
-    ggplot2::annotate(
-      geom = "text",
-      x = max(top_table$logFC) * 0.8,
-      y = Inf,
-      label = paste(
-        compared_levels[2],
-        "higher"
-      ),
-      hjust = 1.1,
-      vjust = 1.1,
-      color = "blue",
-      size = 3
-    ) +
-    ggplot2::annotate(
-      geom = "text",
-      x = min(top_table$logFC) * 0.8,
-      y = Inf,
-      label = paste(
-        compared_levels[1],
-        "higher"
-      ),
-      hjust = -0.1,
-      vjust = 1.1,
-      color = "darkgrey",
-      size = 3
-    ) +
-    ggplot2::annotate(
-      geom = "text",
-      x = 0,
-      y = Inf,
-      label = paste(
-        "Hits:",
-        num_hits,
-        "(", round(percent_hits, 2), "%)"
-      ),
-      hjust = 0.5,
-      vjust = 3,
-      color = "black",
-      size = 3
-    ) +
-    ggplot2::theme(
-      legend.position = "none"
-    )
-
-  return(volcano_plot)
 }
 
 

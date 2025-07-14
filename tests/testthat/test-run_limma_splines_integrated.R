@@ -164,8 +164,8 @@ test_that("run_limma_splines() works correctly", {
   avg_tbl <- splineomics$limma_splines_result$avrg_diff_conditions[[1]]
   
   avg_expected <- c(
-    -2.3069, 0.0202, 0.1275, -6.1127, 0.0000,
-    0.0000, 0.00580, 0.7770, 0.0000, 13.3659
+    0.092, -0.152, 0.292, -0.027, 12.987,
+    131.696, 18.748, 0.864, 17.097, 1.115
   )
   avg_actual <- c(
     get_cell(avg_tbl, 2609, 3),
