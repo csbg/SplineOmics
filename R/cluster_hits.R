@@ -3503,7 +3503,7 @@ adjust_intercept_least_squares <- function(
     level,
     time_grid
 ) {
-  
+
   # Match samples for this group
   sample_idx <- which(meta[[condition]] == level)
   
@@ -3528,8 +3528,9 @@ adjust_intercept_least_squares <- function(
       level, "'): ", paste(missing_rows, collapse = ", ")
     )
   }
-  
+
   data_subset <- data_subset[common_rows, , drop = FALSE]
+  
   pred_mat <- pred_mat[common_rows, , drop = FALSE]
   
   # Time values of samples

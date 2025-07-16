@@ -2094,17 +2094,20 @@ Level2Functions <- R6::R6Class("Level2Functions",
     #'
     check_data = function(
         data,
-        data_meta_index = NULL) {
-      if (!is.matrix(data) || !is.numeric(data)) {
-        stop(
-          self$create_error_message(
-            "data must be a numeric matrix.",
-            data_meta_index
-          ),
-          call. = FALSE
-        )
-      }
+        data_meta_index = NULL
+        ) {
 
+      # Ensure data is a numeric matrix
+      if (!inherits(data, "matrix") || !is.numeric(data)) {
+        stop_call_false(paste0(
+          "Input 'data' must be a numeric matrix (class must include 'matrix'",
+          "and typeof 'double'). ",
+          "Actual class: ", paste(class(data), collapse = ", "),
+          "; typeof: ", typeof(data), ". ",
+          data_meta_index
+        ))
+      }
+      
       # Check for missing values (only warn instead of stopping execution)
       if (any(is.na(data))) {
         message(

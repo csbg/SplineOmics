@@ -199,6 +199,7 @@ clr_data_t <- compositions::clr(data_t)
 
 # Transpose back to original shape: features as rows, samples as columns
 clr_data <- t(clr_data_t)
+clr_data <- unclass(clr_data)
 ```
 
 ```{r Create the SplineOmics object, eval = TRUE}
@@ -367,8 +368,8 @@ clustering_results <- SplineOmics::cluster_hits(
   genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,
-  report_dir = report_dir,
-  report = FALSE,
+  report_dir = withr::local_tempdir(),
+  report = TRUE,
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05
 )
