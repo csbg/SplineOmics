@@ -11,6 +11,7 @@ run_ora(
   cluster_hits_report_name,
   clusterProfiler_params = NA,
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
+  enrichGO_cfg = NULL,
   plot_titles = NA,
   universe = NULL,
   report_dir = here::here()
@@ -78,6 +79,25 @@ elements:
   (e.g., `"hsapiens"` for human). This must be the species used in
    your ORA database.}
 }}
+
+\item{enrichGO_cfg}{A named list specifying the configuration for 
+running GO enrichment with Bioconductor's 
+\code{\link[clusterProfiler]{enrichGO}}.
+This is only needed when you want to perform GO Biological Process (BP), 
+Molecular Function (MF), or Cellular Component (CC) enrichment using 
+Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+
+The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+\code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+\itemize{
+  \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+  \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+  \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+}
+
+If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+enrichment is performed. All enrichment runs through 
+\code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.}
 
 \item{plot_titles}{Titles for the enrichment dotplots generated in the HTML
 report, default is NA.}

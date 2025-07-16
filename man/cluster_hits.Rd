@@ -59,7 +59,7 @@ results from the interaction of condition and time limma result. Per default
 0 (turned off).}
 
 \item{genes}{A character vector containing the gene names of the features to
-be analyzed.}
+be analyzed. The entries should be in the same order as they appear in data.}
 
 \item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),

@@ -184,8 +184,14 @@ To open an R Markdown file of the **tutorial** in `RStudio`, run:
 
 ``` r
 library(SplineOmics)
-open_tutorial()  
+SplineOmics::open_tutorial()  
 ```
+
+Note that the SplineOmics package in theory supports experimental design with
+any amount of conditions. However, so far it was only tested with datasets that
+contain two conditions. Therefore, it cannot be ruled out that bugs will occur 
+when the package is used for experiments with more conditions. If any bug occurs,
+please raise an issue here on GitHub, and it will be adressed.
 
 ### 📋 Details {#details}
 

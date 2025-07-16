@@ -1213,6 +1213,35 @@ bp_setup <- function(bp_cfg) {
 }
 
 
+#' Build Contrast Matrix for Spline-Based Time Models
+#'
+#' @noRd
+#'
+#' @description
+#' Constructs a contrast matrix for testing spline-based time effects within a 
+#' linear model, optionally including interaction terms with a condition factor.
+#' The contrast matrix is structured to test each spline basis coefficient 
+#' separately, comparing a specific condition level against the baseline.
+#'
+#' For the baseline level, only the spline terms are tested. For other levels, 
+#' both the spline terms and the corresponding interaction terms are included.
+#' Interaction terms are identified dynamically from the design matrix column 
+#' names to ensure robustness against formula term ordering.
+#'
+#' @param lev Character. The condition level for which the contrast is built.
+#' @param baseline Character. The baseline condition level.
+#' @param condition Character. The condition factor name used in the model.
+#' @param spline_terms Character vector. The names of the spline terms 
+#' (e.g., "X1", "X2").
+#' @param design_cols Character vector. Column names of the design matrix 
+#' (typically from \code{colnames(fit$coefficients)}).
+#' @param dof Integer. Degrees of freedom, i.e., the number of spline basis
+#'  terms.
+#'
+#' @return A contrast matrix with rows corresponding to model coefficients and
+#' columns corresponding to pseudo-contrasts for each spline term.
+#' This matrix can be used with \code{limma::contrasts.fit()}.
+#'
 build_spline_contrast <- function(
     lev,
     baseline,
@@ -1238,11 +1267,19 @@ build_spline_contrast <- function(
       contrast_matrix[k, spline_terms[k]] <- 1
     }
   } else {
-    # For other levels: spline + interaction:spline
-    int_terms <- paste0(condition, lev, ":", spline_terms)
     for (k in seq_len(dof)) {
-      contrast_matrix[k, spline_terms[k]]  <- 1
-      contrast_matrix[k, int_terms[k]]     <- 1
+      contrast_matrix[k, spline_terms[k]] <- 1
+      
+      # Find interaction column dynamically
+      col_idx <- which(
+        grepl(spline_terms[k], design_cols) & 
+          grepl(paste0(condition, lev), design_cols)
+      )
+      if (length(col_idx) != 1) {
+        stop_call_false("Could not uniquely identify interaction term for ",
+                        spline_terms[k], " and ", condition, lev)
+      }
+      contrast_matrix[k, col_idx] <- 1
     }
   }
   
@@ -1368,22 +1405,28 @@ get_condition_contrast_coefs <- function(
     "^X\\d+$",
     cols,
     value = TRUE
-    )
-  interaction_contrasts <- paste0(
-    condition_contrast,
-    ":",
-    spline_cols
-    )
+  )
+  
+  # Dynamically find interaction columns between spline and condition
+  interaction_contrasts <- vapply(spline_cols, function(spline_col) {
+    possible_matches <- cols[
+      grepl(condition_contrast, cols) & grepl(spline_col, cols)
+    ]
+    if (length(possible_matches) != 1) {
+      stop("Could not uniquely identify interaction column for: ",
+           condition_contrast, " and ", spline_col)
+    }
+    possible_matches
+  }, character(1))
   
   list(
     condition_main_and_time = c(
       condition_contrast,
       interaction_contrasts
-      ),
+    ),
     condition_time_interaction_only = interaction_contrasts
   )
 }
-
 
 
 #' Analytical Leave-One-Out Cross-Validation computation

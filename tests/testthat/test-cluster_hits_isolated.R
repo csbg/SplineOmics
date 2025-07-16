@@ -76,11 +76,13 @@ test_that("cluster_hits() returns correctly structured result", {
     plot_info = plot_info,
     plot_options = plot_options,
     raw_data = raw_data,
-    report = FALSE,
-    adj_pthresh_avrg_diff_conditions = 0,
+    report_dir = withr::local_tempdir(),
+    report = TRUE,
+    max_hit_number = 25,
+    adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05
   )
-  
+
   # Check top-level structure
   expect_type(clustering_results, "list")
   expect_named(clustering_results,
@@ -90,7 +92,8 @@ test_that("cluster_hits() returns correctly structured result", {
   expect_length(clustering_results, 3)
   
   # Check individual elements
-  expect_type(clustering_results$plots, "character")
+  expect_type(clustering_results$plots, "list")
+  expect_length(clustering_results$plots, 10)
   
   expect_type(clustering_results$clustered_hits_levels, "list")
   expect_length(clustering_results$clustered_hits_levels, 2)

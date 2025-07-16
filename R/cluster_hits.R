@@ -43,7 +43,7 @@
 #' results from the interaction of condition and time limma result. Per default
 #' 0 (turned off).
 #' @param genes A character vector containing the gene names of the features to
-#'  be analyzed.
+#'  be analyzed. The entries should be in the same order as they appear in data.
 #' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
 #'                  treatment_timepoints (integer vector). All can also be NA.
@@ -82,7 +82,7 @@ cluster_hits <- function(
     adj_pthresholds = c(0.05),
     adj_pthresh_avrg_diff_conditions = 0,
     adj_pthresh_interaction_condition_time = 0,
-    genes = NULL, # Underlying genes of the features
+    genes = NULL, 
     plot_info = list(
       y_axis_label = "Value",
       time_unit = "min",
@@ -707,11 +707,18 @@ predict_timecurves <- function(
           cond_prefix,
           level
           )
-        int_cols  <- paste0(
-          dummy_col,
-          ":", 
-          spline_cols
-          )
+        # Find interaction columns dynamically
+        int_cols <- vapply(spline_cols, function(spline_col) {
+          possible_matches <- colnames(fit_lv$coefficients)[
+            grepl(dummy_col, colnames(fit_lv$coefficients)) & 
+              grepl(spline_col, colnames(fit_lv$coefficients))
+          ]
+          if (length(possible_matches) != 1) {
+            stop("Could not uniquely identify interaction column for: ",
+                 dummy_col, " and ", spline_col)
+          }
+          possible_matches
+        }, character(1))
         
         # Add intercept for non-reference level if present
         has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
@@ -4347,7 +4354,7 @@ add_dashed_lines <- function(
           color = .data$Label
         ),
         linetype = "dashed",
-        size = 0.5
+        linewidth = 0.5
       ) +
       ggplot2::geom_text(
         data = treatment_df,

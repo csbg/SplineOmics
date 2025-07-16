@@ -110,6 +110,16 @@ Examples:
   applied for SnowParam backends. Includes validation of bp_cfg input. Enables
   efficient multi-core execution of dream() and eBayes() while preventing system
   resource exhaustion.
+  
+- download_bioconductor_database() function.
+  This one allows to conveniently download a database from a specific organism
+  from BioConductor (see function documentation).
+
+- Introduced clusterProfiler::enrichGO() along with clusterProfiler::simplify
+  into SplineOmics::run_ora(). This allows to run the enrichment of the 
+  BioConductor GO databases with the enrichGO function, followed by the simplify
+  function, to collapse hierarchical terms. This behavior is controlled over a
+  new argument of run_ora(), namely enrichGO_cfg (see documentation).
 
 #### Fixed
 - Red spline curves: Before, it was just generated with the help of the spline

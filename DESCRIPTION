@@ -59,6 +59,7 @@ Imports:
     utils,
     car 
 Suggests:
+    AnnotationDbi,
     BiocManager,
     edgeR (>= 4.0.16),
     clusterProfiler (>= 4.10.1),
