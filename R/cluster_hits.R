@@ -765,7 +765,7 @@ predict_timecurves <- function(
     
     # predictions
     pred_mat <- coef_mat %*% t(X_new)
-    
+
     pred_mat <- adjust_intercept_least_squares(
       pred_mat = pred_mat,
       data = data,
@@ -2504,7 +2504,7 @@ plot_spline_comparisons <- function(
     avrg_diff_conditions |> dplyr::arrange(.data$feature_names)
   interaction_condition_time <-
     interaction_condition_time |> dplyr::arrange(.data$feature_names)
-  
+
   smooth_timepoints <- predicted_timecurves$time_grid
   pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
   pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
@@ -3513,6 +3513,15 @@ adjust_intercept_least_squares <- function(
   data_subset <- data[, sample_idx, drop = FALSE]
   # Subset data to match the rows in pred_mat
   common_rows <- intersect(rownames(pred_mat), rownames(data_subset))
+  
+  if (length(common_rows) != nrow(pred_mat)) {
+    missing_rows <- setdiff(rownames(pred_mat), common_rows)
+    stop_call_false(
+      "The following features in pred_mat were not found in data_subset (condition '", 
+      level, "'): ", paste(missing_rows, collapse = ", ")
+    )
+  }
+  
   data_subset <- data_subset[common_rows, , drop = FALSE]
   pred_mat <- pred_mat[common_rows, , drop = FALSE]
   
@@ -3687,6 +3696,7 @@ kmeans_clustering <- function(
         )
     }
     p <- ncol(curve_values)
+    # Bayesian Information Criterion (BIC).
     bic <- n_obs * log(tot_within / n_obs) + k_range * log(n_obs) * p
     best_idx <- which.min(bic)
     

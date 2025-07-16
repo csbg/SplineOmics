@@ -70,6 +70,7 @@ Suggests:
     readxl,
     conflicted (>= 1.2.0),
     readr,
+    devtools,
     compositions
 Encoding: UTF-8
 LazyData: false
