@@ -160,7 +160,6 @@ generate_report_html <- function(
     "data_description",
     "data_collection_date",
     "meta_condition",
-    "plot_data_batch_correction",
     "Fixed effects",
     "Random effects",
     "mode",
@@ -1020,7 +1019,7 @@ get_header_section <- function(
       datapoints than timepoints for the time range based on the fitted linear
       model.</li>',
       '<li style="margin-bottom: 15px;">These datapoints are used for
-      hierarchical clustering.</li>',
+      k-means clustering.</li>',
       '<li style="margin-bottom: 15px;">Right-click on any plot in this
       report to save it as a .svg (vector graphic) file!</li>',
       '<li style="margin-bottom: 15px;">If one level of the experiment is
@@ -1029,17 +1028,13 @@ get_header_section <- function(
       individual spline plots is the average coefficient of variation across
       all timepoints. For example, a value of 10% means that the timepoints,
       on average, have a standard deviation of 10% of the mean.</li>',
-      '<li style="margin-bottom: 15px;">Note: The spline curves may not 
-      perfectly align with the raw data points. This visual mismatch is 
-      expected and arises because the plot is reconstructed from model 
-      coefficients, which may include batch or random effects that are not
-      directly removed from the plotted data. The statistical results remain
-      valid-only the visual reconstruction is approximate. </li>',
       '<li style="margin-bottom: 15px;">If a [WARNING] symbol appears at the
       beginning of a plot title, it indicates that the feature violates
       the homoscedasticity assumption of linear models. It is followed by
       the condition, written in brackets, which had the higher variance of the
-      residuals.</li>',
+      residuals. Those symbols can only appear if the Levenes test for
+      heteroscedasticity was run. That only happens when the use_array_weights
+      argument is set to NULL.</li>',
       "</ul>",
       "</p>",
       "</div>",

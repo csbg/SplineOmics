@@ -16,6 +16,7 @@
 #' ), cluster is an integer specifying in which cluster this feature was placed,
 #' and gene contains the gene name. It is essential that the gene name matches
 #' the gene names used in the databases that are used for this enrichment here.
+#' 
 #' @param databases A dataframe with the three columns: DB containing the 
 #' database name, Geneset containng the name of the geneset, and Gene, 
 #' containing the name of the gene. This dataframe can be obtained by specifying
@@ -24,13 +25,16 @@
 #' then loading this .tsv file as a dataframe. In essence, this dataframe then
 #' contains all the database info used for the gene set enrichment analysis with
 #' clusterProfiler in this function. 
+#' 
 #' @param report_info A list containing information for the report generation,
 #' such as omics_data_type and data_description (this is the list used for all
 #' report generating functions of this package).
+#' 
 #' @param cluster_hits_report_name Single character string specifying the name 
 #' of the cluster_hits() function report, that contains the results that were
 #' used for the overprepresentation analysis here. Must be specified, because
 #' otherwise, the connection is not documented.
+#' 
 #' @param clusterProfiler_params A list that specifies the parameters for the 
 #' clusterProfiler, such as for example: clusterProfiler_params <- list(
 #'   pvalueCutoff = 0.05,
@@ -45,6 +49,7 @@
 #' not specified, it is per default NULL, in which case default parameters for
 #' those are selected, which are equivalent to the parameter values shown in the 
 #' example definition above.
+#' 
 #' @param mapping_cfg A named list that controls the optional behavior of
 #'        automatically mapping gene symbols across species. This is useful
 #'        when your input gene symbols (e.g., from CHO cells) do not match
@@ -63,11 +68,33 @@
 #'          (e.g., `"hsapiens"` for human). This must be the species used in
 #'           your ORA database.}
 #'        }
+#'        
+#' @param enrichGO_cfg A named list specifying the configuration for 
+#' running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}.
+#' This is only needed when you want to perform GO Biological Process (BP), 
+#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
+#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+#' 
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#' 
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#' 
 #' @param plot_titles Titles for the enrichment dotplots generated in the HTML
 #' report, default is NA.
+#' 
 #' @param universe Enrichment background data, default is NULL. This is a
 #' parameter of clusterProfiler, for the documentation, please check the 
 #' documentation of the clusterProfiler R package.
+#' 
 #' @param report_dir Directory where the report will be saved, default is
 #' `here::here()`.
 #'
@@ -89,6 +116,7 @@ run_ora <- function(
       from_species = NULL,
       to_species   = NULL
       ),
+    enrichGO_cfg = NULL,
     plot_titles = NA,
     universe = NULL,
     report_dir = here::here()
@@ -107,7 +135,7 @@ run_ora <- function(
     eval,
     parent.frame()
   )
-  
+
   input_control <- InputControl$new(args)
   input_control$auto_validate()
   
@@ -125,6 +153,7 @@ run_ora <- function(
     databases = databases,
     params = clusterProfiler_params,
     mapping_cfg = mapping_cfg,
+    enrichGO_cfg = enrichGO_cfg,
     plot_titles = plot_titles,
     background = universe,
     cluster_hits_report_name = cluster_hits_report_name
@@ -136,7 +165,7 @@ run_ora <- function(
     levels_clustered_hits = levels_clustered_hits,
     mapping_cfg = mapping_cfg
   )
-  
+
   all_results <- map2(
     levels_clustered_hits,
     names(levels_clustered_hits),
@@ -145,6 +174,7 @@ run_ora <- function(
       .y,
       databases,
       clusterProfiler_params,
+      enrichGO_cfg,
       universe
     )
   )
@@ -251,6 +281,26 @@ run_ora <- function(
 #'          (e.g., `"hsapiens"` for human). This must be the species used in
 #'           your ORA database.}
 #'        }
+#'        
+#' @param enrichGO_cfg A named list specifying the configuration for 
+#' running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}.
+#' This is only needed when you want to perform GO Biological Process (BP), 
+#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
+#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+#' 
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#' 
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#' 
 #' @param plot_titles A character vector of titles for the plots, with length
 #' matching `levels_clustered_hits`.
 #' @param background A character vector of background genes or NULL.
@@ -264,11 +314,12 @@ control_inputs_run_ora <- function(
     databases,
     params,
     mapping_cfg,
+    enrichGO_cfg,
     plot_titles,
     background,
     cluster_hits_report_name
 ) {
-  
+
   check_clustered_hits(levels_clustered_hits)
   
   check_databases(databases)
@@ -276,6 +327,8 @@ control_inputs_run_ora <- function(
   check_params(params)
   
   check_mapping_cfg(mapping_cfg)
+  
+  check_enrichGO_cfg(enrichGO_cfg)
   
   if (!is.na(plot_titles)) {
     if (!is.character(plot_titles) ||
@@ -350,6 +403,25 @@ ensure_clusterProfiler <- function() {
 #'                               default is NA. Those include adj_p_value,
 #'                               pAdjustMethod, etc (see clusterProfiler
 #'                               documentation).
+#' @param enrichGO_cfg A named list specifying the configuration for 
+#' running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}.
+#' This is only needed when you want to perform GO Biological Process (BP), 
+#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
+#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+#' 
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#' 
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#' 
 #' @param universe Enrichment background data, default is NULL.
 #'
 #' @return The result of the `run_ora` function, which typically
@@ -360,6 +432,7 @@ manage_ora_level <- function(
     level_name,
     databases,
     clusterProfiler_params,
+    enrichGO_cfg,
     universe
 ) {
   
@@ -374,6 +447,7 @@ manage_ora_level <- function(
     clustered_genes = clustered_hits,
     databases = databases,
     params = clusterProfiler_params,
+    enrichGO_cfg = enrichGO_cfg,
     plot_title = level_name,
     universe = universe
   )
@@ -1116,6 +1190,128 @@ check_mapping_cfg <- function(mapping_cfg) {
 }
 
 
+#' Validate the `enrichGO_cfg` Configuration
+#'
+#' @noRd
+#'
+#' @description
+#' This function validates the user-supplied \code{enrichGO_cfg} argument to
+#' ensure it is properly specified for running GO enrichment through 
+#' \code{\link[clusterProfiler]{enrichGO}}. It checks that the input is a named 
+#' list with appropriate entries and that each entry provides the necessary 
+#' fields in the correct format.
+#'
+#' Each list element must be named according to the ontology type 
+#' (e.g., \code{"GO_BP"}, \code{"GO_MF"}, \code{"GO_CC"}) and must contain:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism annotation database, e.g.,
+#'    \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type as a string, e.g.,
+#'    \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#'
+#' If any required element is missing or improperly specified, the function
+#' raises an informative error via \code{stop_call_false()}.
+#'
+#' @param enrichGO_cfg A named list specifying the configuration for 
+#' running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}.
+#' This is only needed when you want to perform GO Biological Process (BP), 
+#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
+#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+#' 
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#' 
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#'
+#' @return Invisibly returns \code{NULL} if all checks pass; otherwise, 
+#' stops with an informative error message.
+#' 
+check_enrichGO_cfg <- function(enrichGO_cfg) {
+  
+  if (is.null(enrichGO_cfg)) return(invisible(NULL))
+  
+  if (!is.list(enrichGO_cfg)) {
+    stop_call_false("`enrichGO_cfg` must be a named list.")
+  }
+  
+  cfg_names <- names(enrichGO_cfg)
+  
+  if (is.null(cfg_names) || any(cfg_names == "")) {
+    stop_call_false("`enrichGO_cfg` must be a named list with non-empty names.")
+  }
+  
+  if (!all(startsWith(cfg_names, "GO_"))) {
+    stop_call_false(
+      "All names in `enrichGO_cfg` must start with 'GO_', e.g., 'GO_BP'."
+    )
+  }
+  
+  required_fields <- c("OrgDb", "keyType", "ontology")
+  
+  for (cfg_name in cfg_names) {
+    cfg <- enrichGO_cfg[[cfg_name]]
+    
+    if (!is.list(cfg)) {
+      stop_call_false("Each entry in `enrichGO_cfg` must be a list.")
+    }
+    
+    missing_fields <- setdiff(required_fields, names(cfg))
+    if (length(missing_fields) > 0) {
+      stop_call_false(
+        paste0(
+          "Entry '", cfg_name, "' is missing required fields: ",
+          paste(missing_fields, collapse = ", ")
+        )
+      )
+    }
+    
+    if (!inherits(cfg$OrgDb, "OrgDb")) {
+      stop_call_false(
+        paste0(
+          "In entry '",
+          cfg_name,
+          "': 'OrgDb' must be a valid Bioconductor OrgDb object",
+          "(e.g., org.Mm.eg.db)."
+        )
+      )
+    }
+    
+    if (!is.character(cfg$keyType) || length(cfg$keyType) != 1) {
+      stop_call_false(
+        paste0(
+          "In entry '",
+          cfg_name,
+          "': 'keyType' must be a single string (e.g., 'SYMBOL')."
+        )
+      )
+    }
+    
+    valid_ontologies <- c("BP", "MF", "CC")
+    if (!cfg$ontology %in% valid_ontologies) {
+      stop_call_false(
+        paste0(
+          "In entry '",
+          cfg_name,
+          "': 'ontology' must be one of 'BP', 'MF', or 'CC'."
+        )
+      )
+    }
+  }
+  
+  invisible(NULL)
+}
+
+
 #' Perform Gene Set Enrichment Analysis and plot it.
 #' 
 #' @noRd
@@ -1133,6 +1329,25 @@ check_mapping_cfg <- function(mapping_cfg) {
 #'                  databases
 #' @param params A list specifying the clusterProfiler parameters for the
 #'               enrichment analysis.
+#' @param enrichGO_cfg A named list specifying the configuration for 
+#' running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}.
+#' This is only needed when you want to perform GO Biological Process (BP), 
+#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
+#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
+#' 
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' }
+#' 
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#' 
 #' @param plot_title An optional string specifying the title of the plot. If not
 #' provided, a default title based on the analysis will be used.
 #' @param universe An optional list of standard gene symbols to be used as the
@@ -1147,6 +1362,7 @@ run_ora_level <- function(
     clustered_genes,
     databases,
     params = NA,
+    enrichGO_cfg = NULL,
     plot_title = "",
     universe = NULL
 ) {
@@ -1180,8 +1396,23 @@ run_ora_level <- function(
         gene_set_name
       ))
       
-      ora_result <-
-        clusterProfiler::enricher(
+      if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
+          cfg <- enrichGO_cfg[[gene_set_name]]
+          ora_result <- clusterProfiler::enrichGO(
+            gene = foreground_genes,
+            OrgDb = cfg$OrgDb,
+            keyType = cfg$keyType,
+            ont = cfg$ontology,
+            pvalueCutoff = params$pvalueCutoff,
+            pAdjustMethod = params$pAdjustMethod,
+            universe = universe,
+            minGSSize = params$minGSSize,
+            maxGSSize = params$maxGSSize,
+            qvalueCutoff = params$qvalueCutoff
+          )
+        ora_result <- clusterProfiler::simplify(ora_result)
+      } else {
+        ora_result <- clusterProfiler::enricher(
           gene = foreground_genes,
           pvalueCutoff = params$pvalueCutoff,
           pAdjustMethod = params$pAdjustMethod,
@@ -1193,7 +1424,8 @@ run_ora_level <- function(
           TERM2GENE = gene_set_map,
           TERM2NAME = NA
         )
-      
+      }
+
       ora_result_df <- as.data.frame(ora_result)
       if (nrow(ora_result_df) == 0) {
         ora_result_df <- NA  # Mark explicitly
@@ -1211,7 +1443,7 @@ run_ora_level <- function(
       is.data.frame(res) && nrow(res) > 0
     }))
   }))
-  
+
   if (any_result) {
     result <- make_enrich_dotplot(
       ora_results,
@@ -1398,6 +1630,7 @@ set_default_params <- function(params) {
 #'         contain gene names ('Gene') associated with each gene set.
 #'
 dbs_to_term2genes <- function(databases) {
+  
   db_split <- split(databases, databases$DB)
   
   # Transform into long format
@@ -1526,7 +1759,7 @@ make_enrich_dotplot <- function(
     ora_results,
     title = "Title"
 ) {
-  
+
   top_plot_data <- prepare_plot_data(ora_results)
   
   height_per_label <- 0.1
@@ -1589,7 +1822,7 @@ make_enrich_dotplot <- function(
       legend.box.margin = ggplot2::margin(0, 0, 0, 0)
     ) +
     ggplot2::labs(title = title) +
-    ggplot2::scale_y_discrete(expand = expansion(mult = c(0.1, 0.1))) +
+    ggplot2::scale_y_discrete(expand = ggplot2::expansion(add = c(1, 1))) +
     ggplot2::coord_cartesian(clip = "off")
   
   list(
@@ -1704,11 +1937,16 @@ prepare_plot_data <- function(ora_results) {
   }
   
   full_df <- do.call(rbind, all_rows)
-  
+
   # Filter for top plot: only supported by >= 2 genes
   top_df <- full_df[full_df$Count >= 2, ]
   top_df <- top_df[, c("cluster", "term", "p.adjust", "odds_ratio")]
-  colnames(top_df) <- c("cluster", "term", "adj.p_value", "odds_ratio")
+  colnames(top_df) <- c(
+    "cluster",
+    "term",
+    "adj.p_value",
+    "odds_ratio"
+    )
   
   top_df
 }
