@@ -251,7 +251,7 @@ excursion_plots <- SplineOmics::find_pvc(
   splineomics = splineomics,
   alphas = 0.025,
   plot_info = plot_info,
-  report_dir = here::here("results", "pvc_report")
+  report_dir = withr::local_tempdir()
 )
 ```
 

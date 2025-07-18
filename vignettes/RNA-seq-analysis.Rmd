@@ -47,7 +47,7 @@ experiment, specifically: `"72h"`, `"76h"`, `"96h"`, `"120h"`, `"124h"`,
 start. Each time point was sampled from all eight bioreactors, resulting
 in a total of **136 samples**.
 
-### Effects in the Experiment: Reactor and Plate
+### Additonal effects in the experiment: Reactor and Plate
 
 In this experiment, there are two effects to consider: **Reactor** and **Plate**.
 
@@ -61,7 +61,7 @@ In this experiment, there are two effects to consider: **Reactor** and **Plate**
    - A fully random design was employed to distribute samples across the two plates, ensuring no bias in their assignment.
    - Plate is considered a **batch effect** with respect to the condition (constant temperature vs. temperature-shifted).
 
-Since condition and reactor are confounded, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+Since reactor is a blocked effect, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
 
 In this vignette, we will demonstrate how to use linear mixed models to address these challenges and properly account for both reactor and plate effects.
 
@@ -326,15 +326,10 @@ levels (which includes both time and the average differences)
 The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
-```{r build limma report, eval = FALSE}
-report_dir <- here::here(
-  "results",
-  "limma_reports"
-)
-
+```{r build limma report, eval = TRUE}
 plots <- SplineOmics::create_limma_report(
   splineomics = splineomics,
-  report_dir = report_dir
+  report_dir = withr::local_tempdir()
 )
 ```
 
@@ -351,31 +346,10 @@ features (genes here) that have an adj. p-value below the threshold.
 Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
-Note that for this dataset, we have a vast amount of hits. Because it is
-not useful to have thousands of individual plots, and also it takes a
-long time to compute and the resulting HTML is very large in size, we
-want to limit the hits that are plotted. We have several options:
-
--   **Use a very low adjusted p-value**: This approach filters for the
-    most significant features (genes) before proceeding with analysis
-    and visualization.
-
--   **Access and customize the data**: Modify the dataframes inside the
-    `SplineOmics` object by removing all but a selected set of features
-    (genes) for plotting.
-
--   **Optimize clustering without generating a report**: Set the
-    `report` argument in the `cluster_hits()` function to `FALSE`
-    (default is `TRUE`). This skips the generation of an HTML report,
-    significantly speeding up computation by omitting the creation and
-    export of plots.
-
 ```{r cluster the hits, eval = TRUE}
-# Note: The low adj. p-values are to have less results, so that the HTML report
-# is smaller in file size.
-adj_pthresholds <- c(   # 0.0000001 for both levels
-  0.0000001, # constant (temperature)   
-  0.0000001  # temp_shift
+adj_pthresholds <- c(   
+  0.05,    # constant (temperature)   
+  0.05     # temp_shift
 )
 
 nr_clusters <- list(
@@ -439,11 +413,12 @@ clustering_results <- SplineOmics::cluster_hits(
   nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
-  report = FALSE,
+  report = TRUE,
+  max_hit_number = 20,          # maximum number of plots per result category
   plot_options = plot_options,
-  report_dir = report_dir,
-  adj_pthresh_avrg_diff_conditions = 0.0000001,
-  adj_pthresh_interaction_condition_time = 0.0000001
+  report_dir = withr::local_tempdir(),
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05
 )
 ```
 

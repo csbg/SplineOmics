@@ -8,5 +8,6 @@
 
 library(testthat)
 library(SplineOmics)
+library(withr)
 
 test_check("SplineOmics")

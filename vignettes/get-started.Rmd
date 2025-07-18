@@ -682,14 +682,9 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ```{r build limma report, eval = FALSE}
-report_dir <- here::here(
-  "results",
-  "create_limma_reports"
-)
-
 plots <- SplineOmics::create_limma_report(
   splineomics = splineomics,
-  report_dir = report_dir
+  report_dir = withr::local_tempdir()
 )
 ```
 
@@ -797,8 +792,8 @@ clustering_results <- SplineOmics::cluster_hits(
   genes = genes,
   plot_info = plot_info,
   plot_options = plot_options,
-  report = FALSE,
-  report_dir = report_dir,
+  report = TRUE,
+  report_dir = withr::local_tempdir(),
   adj_pthresh_avrg_diff_conditions = 0,
   adj_pthresh_interaction_condition_time = 0.25
 )
