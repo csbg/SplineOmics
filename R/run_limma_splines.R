@@ -92,7 +92,7 @@ run_limma_splines <- function(
   condition <- splineomics[["condition"]]
   use_array_weights <- splineomics[["use_array_weights"]]
   bp_cfg <- splineomics[["bp_cfg"]]
-  
+
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
   # nonsense to encode the time as X, and now it is explicitly "Time" (because
@@ -108,8 +108,7 @@ run_limma_splines <- function(
 
   if (mode == "isolated") {
     levels <- levels(meta[[condition]])
-    # rownames(data) <- NULL # To just have numbers describing the rows
-    
+
     # Get hits for level (within level analysis)
     process_level_with_params <- purrr::partial(
       fit_within_condition_isolated,   # the function that is called
@@ -413,6 +412,7 @@ fit_global_model <- function(
 
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data   # Just having one variable makes the code easier
+    use_array_weights <- FALSE   # was already handled by voom
   } 
 
   # For RNA-seq data, this is handled when calling limma::voom (happens before)
@@ -427,12 +427,10 @@ fit_global_model <- function(
       condition = condition,
       random_effects = effects[["random_effects"]] != ""  # Boolean flag
     )
-    
     # If there is a considerable violation, select use_array_weights strategy
     use_array_weights <- homosc_violation_result[["violation"]]
   } else{
-    use_array_weights <- FALSE
-    homosc_violation_result <- NULL
+    homosc_violation_result <- NULL     # no info of heteroscedastic features
   }
   
   message("\nFitting global model...")
@@ -449,7 +447,7 @@ fit_global_model <- function(
 
     param <- bp_setup(bp_cfg)
     set.seed(42)
-    
+
     if (use_array_weights) {
       aw <- limma::arrayWeights(      # vector of length = # samples
         object = data,

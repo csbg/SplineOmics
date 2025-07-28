@@ -160,7 +160,8 @@ preprocess_rna_seq_data <- function(
       message(
         "[WARNING] use_array_weights = TRUE is ignored for mixed model",
         "RNA-seq.\n",
-        "voomWithDreamWeights already handles heteroscedasticity internally."
+        "voomWithDreamWeights already accounts for heteroscedasticity across.",
+        "both genes and samples"
         )
     }
 
@@ -199,7 +200,7 @@ preprocess_rna_seq_data <- function(
         )
       }
     }
-      
+
     if (use_array_weights == TRUE) {
       voom_obj <- limma::voomWithQualityWeights(
         counts = y,
@@ -212,7 +213,7 @@ preprocess_rna_seq_data <- function(
       )
     }
   }
-  
+
   splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     data = voom_obj$E,

@@ -524,7 +524,8 @@ check_homoscedasticity_violation <- function(
   
   return(list(
     violation = violation,               # Single Boolean flag
-    bp_df = bp_df    
+    bp_df = bp_df,
+    percent_violated = 100 * fraction_violated
   ))
 }
 

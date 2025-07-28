@@ -71,6 +71,24 @@ create_limma_report <- function(
   report_info[["Fixed effects"]] <- effects[["fixed_effects"]]
   report_info[["Random effects"]] <- effects[["random_effects"]] 
 
+  if (!is.null(splineomics[["use_array_weights"]])) {
+    report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]
+    report_info[["heteroscedasticity"]] <- "not tested"
+  } else {
+    report_info[["use_array_weights"]] <- paste(
+      "automatic (decided by Levene's test), array_weights only used when",
+      "heteroscedasticity is detected (% violating features >= 10)"
+      )
+    report_info[["heteroscedasticity"]] <- sprintf(
+      "Heteroscedasticity detected: %s (%.1f%% of features violated the
+      assumption of homoscedasticity)",
+      ifelse(
+        splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
+        ),
+      splineomics[["homosc_violation_result"]][["percent_violated"]]
+    )
+  }
+
   # Get the top_tables of the three limma analysis categories
   time_effect <- limma_splines_result$time_effect
   avrg_diff_conditions <- limma_splines_result$avrg_diff_conditions

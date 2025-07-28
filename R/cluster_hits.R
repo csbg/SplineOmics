@@ -195,8 +195,24 @@ cluster_hits <- function(
     meta_batch2_column,
     sep = ", "
   )
-  report_info[["homosc_violation_result"]] <-
-    splineomics[["homosc_violation_result"]]
+
+  if (!is.null(splineomics[["use_array_weights"]])) {
+    report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]
+    report_info[["heteroscedasticity"]] <- "not tested"
+  } else {
+    report_info[["use_array_weights"]] <- paste(
+      "automatic (decided by Levene's test), array_weights only used when",
+      "heteroscedasticity is detected (% violating features >= 10)"
+    )
+    report_info[["heteroscedasticity"]] <- sprintf(
+      "Heteroscedasticity detected: %s (%.1f%% of features violated the
+      assumption of homoscedasticity)",
+      ifelse(
+        splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
+        ),
+      splineomics[["homosc_violation_result"]][["percent_violated"]]
+    )
+  }
 
   if (
     (mode != "isolated") &&
@@ -3524,8 +3540,11 @@ adjust_intercept_least_squares <- function(
   if (length(common_rows) != nrow(pred_mat)) {
     missing_rows <- setdiff(rownames(pred_mat), common_rows)
     stop_call_false(
-      "The following features in pred_mat were not found in data_subset (condition '", 
-      level, "'): ", paste(missing_rows, collapse = ", ")
+      "The following features in pred_mat were not found in data_subset",
+      "(condition '", 
+      level,
+      "'): ",
+      paste(missing_rows, collapse = ", ")
     )
   }
 

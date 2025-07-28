@@ -785,6 +785,9 @@ plot_options <- list(
 Run the function:
 
 ```{r cluster the hits, eval = TRUE}
+report_dir <- file.path(tempdir(), "splineomics_report")
+dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+
 clustering_results <- SplineOmics::cluster_hits(
   splineomics = splineomics,
   adj_pthresholds = adj_pthresholds,
@@ -793,7 +796,7 @@ clustering_results <- SplineOmics::cluster_hits(
   plot_info = plot_info,
   plot_options = plot_options,
   report = TRUE,
-  report_dir = withr::local_tempdir(),
+  report_dir = report_dir,
   adj_pthresh_avrg_diff_conditions = 0,
   adj_pthresh_interaction_condition_time = 0.25
 )

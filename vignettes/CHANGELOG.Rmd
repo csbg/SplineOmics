@@ -121,6 +121,9 @@ Examples:
   function, to collapse hierarchical terms. This behavior is controlled over a
   new argument of run_ora(), namely enrichGO_cfg (see documentation).
 
+- Better documentation in the limma and cluster_hits HTML reports about the 
+  heteroscedasticity arguments and the result of the Levene test.
+
 #### Fixed
 - Red spline curves: Before, it was just generated with the help of the spline
   coefficients, and the intercept. But this is not the full linear model that
@@ -135,6 +138,10 @@ Examples:
   between the conditions for the reference time point (the first timepoint). Now
   it passes all the necessary coefficients, and then performs a joint F-test to
   get the average difference between the conditions across the whole timecourse.
+  
+- The use_array_weights argument internally was always set to FALSE when it was
+  set to TRUE by the user. This is why setting it to TRUE seemingly had no 
+  effect. This was now fixed.
 
 
 --------------------------------------------------------------------------------

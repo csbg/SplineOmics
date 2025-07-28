@@ -163,6 +163,7 @@ generate_report_html <- function(
     "Fixed effects",
     "Random effects",
     "mode",
+    "use_array_weights",
     "heteroscedasticity",
     "analyst_name",
     "contact_info",
