@@ -219,7 +219,10 @@ preprocess_rna_seq_data <- function(
     data = voom_obj$E,
     meta = meta,                  # Update with the sanitized version
     rna_seq_data = voom_obj,
-    spline_params = spline_params   # was updated when auto-dof is on.
+    spline_params = spline_params,   # was updated when auto-dof is on.
+    homosc_violation_result = if (
+      exists("homosc_violation_result")
+      ) homosc_violation_result else NULL
   )
 
   return(splineomics)

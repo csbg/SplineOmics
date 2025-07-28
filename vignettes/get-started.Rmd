@@ -797,8 +797,8 @@ clustering_results <- SplineOmics::cluster_hits(
   plot_options = plot_options,
   report = TRUE,
   report_dir = report_dir,
-  adj_pthresh_avrg_diff_conditions = 0,
-  adj_pthresh_interaction_condition_time = 0.25
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05
 )
 ```
 

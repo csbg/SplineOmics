@@ -381,7 +381,7 @@ check_homoscedasticity_violation <- function(
     p_threshold = 0.05,
     fraction_threshold = 0.1  
 ) {
-  
+
   message(paste(
     "\nRunning Levene's test to check for violation of homoscedasticity",
     "of each feature..."
@@ -443,14 +443,17 @@ check_homoscedasticity_violation <- function(
       var,
       na.rm = TRUE
       )
-    
-    # Skip if any group has zero variance (not testable)
-    if (any(group_vars == 0) || length(group_vars) < 2) {
+
+    # Safe check: skip if any NA in group variances, or zero variance,
+    # or too few groups
+    if (any(is.na(group_vars)) 
+        || any(group_vars == 0) 
+        || length(group_vars) < 2) {
       return(list(
         pval = NA,
         max_var_group = NA,
         max_var = NA
-        ))
+      ))
     }
     
     pval <- car::leveneTest(res ~ Phase)$"Pr(>F)"[1]

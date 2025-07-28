@@ -195,6 +195,8 @@ cluster_hits <- function(
     meta_batch2_column,
     sep = ", "
   )
+  report_info[["homosc_violation_result"]] <-
+    splineomics[["homosc_violation_result"]]
 
   if (!is.null(splineomics[["use_array_weights"]])) {
     report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]

@@ -210,15 +210,23 @@ run_limma_splines <- function(
   
   message("\033[32mInfo\033[0m limma spline analysis completed successfully")
   
-  splineomics <- update_splineomics(
+  args <- list(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
-    homosc_violation_result = 
-      if (exists("fit_obj")) fit_obj[["homosc_violation_result"]] else NULL,
     fit = if (exists("fit_obj")) fit_obj[["fit"]] else isolated_fits,
-    spline_params = spline_params,   # auto-dof can change dof
-    meta = meta    # Update with the sanitized version
+    spline_params = spline_params,
+    meta = meta
   )
+  
+  # Conditionally add homosc_violation_result only if not already in splineomics
+  if (!"homosc_violation_result" %in% names(splineomics)) {
+    args$homosc_violation_result <- if (exists("fit_obj"))
+      fit_obj[["homosc_violation_result"]] else NULL
+  }
+  
+  # Call the function
+  splineomics <- do.call(update_splineomics, args)
+  
 }
 
 
