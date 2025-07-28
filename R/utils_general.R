@@ -477,7 +477,11 @@ check_homoscedasticity_violation <- function(
     )
   rownames(bp_df) <- rownames(residuals_matrix)  # keep feature names
   
-  bp_df$violation_flag <- !is.na(bp_df$pval) & bp_df$pval < p_threshold
+  bp_df$adj_pval <- p.adjust(
+    bp_df$pval,
+    method = "BH"
+    )
+  bp_df$violation_flag <- !is.na(bp_df$adj_pval) & bp_df$adj_pval < p_threshold
   fraction_violated <- mean(bp_df$violation_flag)
   
   message("\n------------------------------------------------------------")

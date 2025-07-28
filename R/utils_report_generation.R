@@ -1381,57 +1381,85 @@ plot2base64 <- function(
     base_height_per_row = 2.5,
     units = "in",
     html_img_width = "100%"
-    ) {
-  
+) {
   additional_height_per_row <- 2.1
   height <- base_height_per_row + (height - 1) * additional_height_per_row
-
-  # Create a temporary file for the SVG. SVG does not specify the quality
-  # already, but later, after exporting the figures from the HTML, you can
-  # specify the quality.
-  img_file <- tempfile(fileext = ".svg")
-
-  svglite::svglite(
-    file = img_file,
-    width = width,
-    height = height
+  
+  # Determine file type based on plot class
+  is_complex_heatmap <- inherits(
+    plot,
+    "Heatmap"
+    ) || inherits(
+      plot,
+      "HeatmapList"
+      )
+  
+  if (is_complex_heatmap) {
+    # Use PNG fallback for ComplexHeatmap plots
+    img_file <- tempfile(fileext = ".png")
+    
+    if (requireNamespace("ragg", quietly = TRUE)) {
+      ragg::agg_png(
+        filename = img_file,
+        width = width,         # Logical size in inches
+        height = height,       # Logical height in inches
+        units = "in",
+        res = 300             
+      )
+    } else {
+      png(
+        filename = img_file,
+        width = width,        # in inches
+        height = height,      # in inches
+        units = "in",
+        res = 300             
+      )
+    }
+    
+    print(plot)
+    dev.off()
+    
+    # Read and base64 encode PNG
+    img_data <- base64enc::dataURI(
+      file = img_file,
+      mime = "image/png"
+      )
+    unlink(img_file)
+    
+  } else {
+    # Use SVG for normal plots
+    img_file <- tempfile(fileext = ".svg")
+    
+    svglite::svglite(
+      file = img_file,
+      width = width,
+      height = height
     )
-
-  # Draw the plot
-  print(plot)
-
-  # Turn off the device
-  dev.off()
-
-  # Read the SVG file content
-  svg_content <- readLines(
-    img_file,
-    warn = FALSE
-    )
-
-  # Convert the SVG content to a single string
-  svg_string <- paste(
-    svg_content,
-    collapse = "\n"
-    )
-
-  # Encode the SVG content as base64
-  svg_base64 <- base64enc::dataURI(
-    charToRaw(svg_string),
-    mime = "image/svg+xml"
-  )
-
-  # Delete the temporary SVG file
-  unlink(img_file)
-
+    
+    print(plot)
+    dev.off()
+    
+    svg_content <- readLines(
+      img_file,
+      warn = FALSE
+      )
+    svg_string <- paste(
+      svg_content,
+      collapse = "\n"
+      )
+    img_data <- base64enc::dataURI(
+      charToRaw(svg_string),
+      mime = "image/svg+xml"
+      )
+    unlink(img_file)
+  }
+  
   # Return HTML with zoom functionality
-  return(
-    sprintf(
-      '<div class="zoom-container">
-         <img src="%s" alt="Plot" class="zoomable-image" style="width:%s;">
-       </div>',
-      svg_base64, html_img_width
-    )
+  sprintf(
+    '<div class="zoom-container">
+       <img src="%s" alt="Plot" class="zoomable-image" style="width:%s;">
+     </div>',
+    img_data, html_img_width
   )
 }
 
