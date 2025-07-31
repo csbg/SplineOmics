@@ -43,6 +43,7 @@ test_that("cluster_hits() returns correctly structured result", {
     splineomics = splineomics,
     design = "~ 1 + Time + Reactor",
     mode = "isolated",
+    use_array_weights = FALSE,
     spline_params = list(
       spline_type = c("n", "n"),
       dof = c(2L, 2L)

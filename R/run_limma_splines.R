@@ -125,7 +125,7 @@ run_limma_splines <- function(
       use_array_weights = use_array_weights,
       bp_cfg = bp_cfg
     )
-    
+
     results_nested <- purrr::imap(
       levels,
       process_level_with_params
@@ -219,8 +219,7 @@ run_limma_splines <- function(
     meta = meta
   )
   
-  
-  if (!"use_array_weights" %in% names(args)) {
+  if (!"use_array_weights" %in% names(args) && exists("results_list")) {
     args$use_array_weights <- purrr::map_lgl(
       results_list,
       "use_array_weights"
