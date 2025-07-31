@@ -1398,7 +1398,7 @@ plot2base64 <- function(
   )
   
   # Draw the plot
-  print(plot)
+  print_or_draw_plot(plot)
   
   # Turn off the device
   dev.off()
@@ -1823,10 +1823,17 @@ process_field <- function(
     )
   } else if (field == "use_array_weights") {
     weights <- report_info[[field]]
-    base64_df <- paste(
-      sprintf("%s: %s", names(weights), as.character(weights)),
-      collapse = "; "
-    )
+    
+    if (is.null(names(weights))) {
+      # Just a single TRUE/FALSE value, no names
+      base64_df <- as.character(weights)
+    } else {
+      # Named logical vector
+      base64_df <- paste(
+        sprintf("%s: %s", names(weights), as.character(weights)),
+        collapse = "; "
+      )
+    }
   } else {
     base64_df <- ifelse(
       is.null(report_info[[field]]),
@@ -1994,4 +2001,34 @@ add_plot_to_html <- function(
     '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">',
     sep = "\n"
   )
+}
+
+
+#' Print or Draw a Plot (ComplexHeatmap-Compatible)
+#'
+#' @noRd
+#'
+#' @description
+#' A utility function that prints a plot object, with special handling for
+#' `ComplexHeatmap::Heatmap` and `HeatmapList` objects which require
+#' explicit rendering via `ComplexHeatmap::draw()`.
+#'
+#' @param plot A plot object. Can be a base R plot, ggplot object, or a
+#'   `ComplexHeatmap::Heatmap` or `HeatmapList` object.
+#'
+#' @return Invisibly returns `NULL`. Used for its side effect of rendering the 
+#' plot.
+#'
+#' @details In non-interactive or headless environments (such as during
+#'   `R CMD check` or HTML report generation), `ComplexHeatmap` objects must be
+#'   rendered using `draw()` rather than `print()`. This function automatically
+#'   dispatches to the correct rendering method.
+#'
+print_or_draw_plot <- function(plot) {
+  
+  if (inherits(plot, "Heatmap") || inherits(plot, "HeatmapList")) {
+    ComplexHeatmap::draw(plot)
+  } else {
+    print(plot)
+  }
 }

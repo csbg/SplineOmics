@@ -6,12 +6,12 @@ test_that("cluster_hits() returns correctly structured result", {
   meta <- read.csv(system.file(
     "extdata", "proteomics_meta.csv", package = "SplineOmics"
   ), stringsAsFactors = FALSE)
-
+  
   first_na_col <- which(is.na(data[1, ]))[1]
   annotation <- data |>
     dplyr::select((first_na_col + 1):ncol(data)) |>
     dplyr::slice(-c(1:3))
-
+  
   extracted_data <- SplineOmics::extract_data(
     data = data,
     feature_name_columns = c("Gene_name"),
@@ -20,7 +20,7 @@ test_that("cluster_hits() returns correctly structured result", {
     right_col = 37,
     left_col = 2
   )
-
+  
   report_info <- list(
     omics_data_type = "PTX",
     data_description = "Test data",
@@ -29,7 +29,7 @@ test_that("cluster_hits() returns correctly structured result", {
     contact_info = "thomas.rauter@plus.ac.at",
     project_name = "DGTX"
   )
-
+  
   splineomics <- SplineOmics::create_splineomics(
     data = extracted_data,
     meta = meta,
@@ -38,20 +38,20 @@ test_that("cluster_hits() returns correctly structured result", {
     condition = "Phase",
     meta_batch_column = "Reactor"
   )
-
+  
   splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
-    design = "~ 1 + Time*Phase + Reactor",
-    mode = "integrated",
-    use_array_weights = FALSE,
+    design = "~ 1 + Time + Reactor",
+    mode = "isolated",
+    use_array_weights = NULL,
     spline_params = list(
-      spline_type = c("n"),
-      dof = c(2L)
+      spline_type = c("n", "n"),
+      dof = c(2L, 2L)
     )
   )
-
+  
   splineomics <- SplineOmics::run_limma_splines(splineomics)
-
+  
   # Inputs for clustering
   adj_pthresholds <- c(0.05, 0.05)
   nr_clusters <- list(6, 2:3)
@@ -68,7 +68,7 @@ test_that("cluster_hits() returns correctly structured result", {
     cluster_heatmap_columns = FALSE
   )
   raw_data <- splineomics$data
-
+  
   clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresholds = adj_pthresholds,
@@ -89,16 +89,16 @@ test_that("cluster_hits() returns correctly structured result", {
   expect_named(clustering_results,
                c("all_levels_clustering", "plots", "clustered_hits_levels"),
                ignore.order = FALSE
-  )
+               )
   expect_length(clustering_results, 3)
-
+  
   # Check individual elements
   expect_type(clustering_results$plots, "list")
   expect_length(clustering_results$plots, 16)
-
+  
   expect_type(clustering_results$clustered_hits_levels, "list")
   expect_length(clustering_results$clustered_hits_levels, 2)
-
+  
   expect_type(clustering_results$all_levels_clustering, "list")
   expect_length(clustering_results$all_levels_clustering, 2)
 })

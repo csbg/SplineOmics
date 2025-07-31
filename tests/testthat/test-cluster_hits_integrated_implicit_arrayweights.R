@@ -43,7 +43,7 @@ test_that("cluster_hits() returns correctly structured result", {
     splineomics = splineomics,
     design = "~ 1 + Time*Phase + Reactor",
     mode = "integrated",
-    use_array_weights = FALSE,
+    use_array_weights = NULL,
     spline_params = list(
       spline_type = c("n"),
       dof = c(2L)
@@ -65,7 +65,7 @@ test_that("cluster_hits() returns correctly structured result", {
   )
   plot_options <- list(
     meta_replicate_column = "Reactor",
-    cluster_heatmap_columns = FALSE
+    cluster_heatmap_columns = TRUE
   )
   raw_data <- splineomics$data
 
