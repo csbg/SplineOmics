@@ -1849,6 +1849,12 @@ process_field <- function(
      <button>Download background_genes.xlsx</button></a>',
       encode_df_to_base64(background_genes_df)
     )
+  } else if (field == "use_array_weights") {
+    weights <- report_info[[field]]
+    base64_df <- paste(
+      sprintf("%s: %s", names(weights), as.character(weights)),
+      collapse = "; "
+    )
   } else {
     base64_df <- ifelse(
       is.null(report_info[[field]]),

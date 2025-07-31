@@ -556,6 +556,16 @@ check_featurewise_heteroscedasticity_levene <- function(
     p_threshold = 0.05,
     fraction_threshold = 0.1
 ) {
+
+  if (is.null(condition)) {
+    message("No condition. Skipping feature-wise Levene's test.")
+    message("------------------------------------------------------------\n")
+    return(list(
+      bp_df = NULL,
+      fraction_violated = NA_real_,
+      feature_wise_violation = FALSE
+    ))
+  }
   
   message("Running feature wise Levene's test...")
 

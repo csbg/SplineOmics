@@ -191,7 +191,7 @@ preprocess_rna_seq_data <- function(
         data_type = "rna-seq"
       )
       use_array_weights <- homosc_violation_result[["violation"]]
-      
+
       # Step 4: If any pair was violated, rerun with robust weights
       if (use_array_weights) {
         message(
@@ -217,7 +217,7 @@ preprocess_rna_seq_data <- function(
   splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     data = voom_obj$E,
-    meta = meta,                  # Update with the sanitized version
+    meta = meta,                  # Update with the sanitized versionn
     rna_seq_data = voom_obj,
     spline_params = spline_params,   # was updated when auto-dof is on.
     homosc_violation_result = if (

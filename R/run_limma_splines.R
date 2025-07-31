@@ -126,11 +126,12 @@ run_limma_splines <- function(
       bp_cfg = bp_cfg
     )
     
-    results_list <- purrr::imap(
+    results_nested <- purrr::imap(
       levels,
       process_level_with_params
     )
-
+    results_list <- purrr::flatten(results_nested)
+    
     merged_dof <- Reduce(
       pmax.int,
       lapply(
@@ -139,20 +140,19 @@ run_limma_splines <- function(
         )
       )
     spline_params[["dof"]] <- merged_dof
-
-    isolated_within_level_top_table <-
-      stats::setNames(
-        purrr::map(results_list, "top_table"),
-        purrr::map_chr(results_list, "name")
+    
+    isolated_within_level_top_tables <- stats::setNames(
+      purrr::map(results_list, "top_table"),
+      names(results_list)
       )
     
     isolated_fits <- stats::setNames(
-      purrr::map(results_list, "fit"),         
-      purrr::map_chr(results_list, "name")      
-    )
+      purrr::map(results_list, "fit"),
+      names(results_list)
+      )
     
     limma_splines_result <- list(
-      time_effect = isolated_within_level_top_table
+      time_effect = isolated_within_level_top_tables
     )
 
   } else if (mode == "integrated") {
@@ -219,15 +219,22 @@ run_limma_splines <- function(
     meta = meta
   )
   
-  # Conditionally add homosc_violation_result only if not already in splineomics
-  if (!"homosc_violation_result" %in% names(splineomics)) {
+  
+  if (!"use_array_weights" %in% names(args)) {
+    args$use_array_weights <- purrr::map_lgl(
+      results_list,
+      "use_array_weights"
+      ) |>
+      purrr::set_names(names(results_list))
+  } else if (!"homosc_violation_result" %in% names(splineomics)) {
     args$homosc_violation_result <- if (exists("fit_obj"))
       fit_obj[["homosc_violation_result"]] else NULL
   }
-  
-  # Call the function
-  splineomics <- do.call(update_splineomics, args)
-  
+
+  splineomics <- do.call(
+    update_splineomics,
+    args
+    )
 }
 
 
@@ -337,13 +344,15 @@ fit_within_condition_isolated <- function(
     level,
     sep = "_"
   )
-  
-  list(
-    name = results_name,
+
+  out <- list(
     top_table = top_table,
     fit = result[["fit"]],
-    spline_params = result[["spline_params"]]
+    spline_params = result[["spline_params"]],
+    use_array_weights = result[["use_array_weights"]]
   )
+  
+  setNames(list(out), results_name)
 }
 
 
@@ -420,31 +429,22 @@ fit_global_model <- function(
     level_index = 1,
     design = effects[["fixed_effects"]]
   )
-  
   design_matrix <- design2design_matrix_result[["design_matrix"]]
 
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data   # Just having one variable makes the code easier
-    use_array_weights <- FALSE   # was already handled by voom
   } 
 
-  # For RNA-seq data, this is handled when calling limma::voom (happens before)
-  # This here is the implicit fall-back logic when the user has not explicitly 
-  # decided whether to use the array_weights strategy or not (is NULL)
-  if (is.null(rna_seq_data) && is.null(use_array_weights)) {
-    homosc_violation_result <- check_homoscedasticity_violation(
-      data = data,
-      meta = meta,
-      design = design,
-      design2design_matrix_result = design2design_matrix_result,
-      condition = condition,
-      random_effects = effects[["random_effects"]] != ""  # Boolean flag
-    )
-    # If there is a considerable violation, select use_array_weights strategy
-    use_array_weights <- homosc_violation_result[["violation"]]
-  } else{
-    homosc_violation_result <- NULL     # no info of heteroscedastic features
-  }
+  aw_result <- resolve_array_weights(
+    data = data,
+    rna_seq_data = rna_seq_data,
+    meta = meta,
+    design = design,
+    design2design_matrix_result = design2design_matrix_result,
+    condition = condition,
+    use_array_weights = use_array_weights,
+    random_effects = effects[["random_effects"]] != ""
+  ) 
   
   message("\nFitting global model...")
 
@@ -461,65 +461,33 @@ fit_global_model <- function(
     param <- bp_setup(bp_cfg)
     set.seed(42)
 
-    if (use_array_weights) {
-      aw <- limma::arrayWeights(      # vector of length = # samples
-        object = data,
-        design = design_matrix
-      ) 
-      weights_matrix <- matrix(
-        rep(aw, each = nrow(data)),
-        nrow = nrow(data),
-        byrow = TRUE
-      )
-      fit <- variancePartition::dream(
-        exprObj = data,
-        formula = stats::as.formula(design),
-        data = design2design_matrix_result[["meta"]], # Spline transformed meta.
-        ddf = method,
-        useWeights = TRUE,
-        weightsMatrix = weights_matrix,
-        BPPARAM = param                    # parallelization
-      )
+    fit <- variancePartition::dream(
+      exprObj = data,
+      formula = stats::as.formula(design),
+      data = design2design_matrix_result[["meta"]], # Spline transformed meta.
+      ddf = method,
+      useWeights = aw_result[["use_weights"]],
+      weightsMatrix = aw_result[["weights"]],
+      BPPARAM = param                    # parallelization
+    )
 
-      fit <- variancePartition::eBayes(
-        fit = fit,
-        robust = TRUE
-      ) 
-    } else {
-      fit <- variancePartition::dream(
-        exprObj = data,
-        formula = stats::as.formula(design),
-        data = design2design_matrix_result[["meta"]], # Spline transformed meta.
-        ddf = method,
-        BPPARAM = param             # parallelization
-      )
-      fit <- variancePartition::eBayes(fit = fit) 
-    }
+    fit <- variancePartition::eBayes(
+      fit = fit,
+      robust = aw_result[["use_weights"]]
+    ) 
     if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
       BiocParallel::bpstop(param)       # cleanly shuts down workers
     }
   } else {                         # limma approach
-    if (use_array_weights) {
-      weights <- limma::arrayWeights(
-        object = data,
-        design = design_matrix
+    fit <- limma::lmFit(
+      object = data,
+      design = design_matrix,
+      weights = aw_result[["weights"]]
+    )
+    fit <- limma::eBayes(
+      fit = fit,
+      robust = aw_result[["use_weights"]]
       )
-      fit <- limma::lmFit(
-        object = data,
-        design = design_matrix,
-        weights = weights
-      )
-      fit <- limma::eBayes(
-        fit = fit,
-        robust = TRUE
-      )
-    } else {
-      fit <- limma::lmFit(
-        object = data,
-        design = design_matrix
-      )
-      fit <- limma::eBayes(fit = fit)
-    }
   }
   
   list(
@@ -529,7 +497,7 @@ fit_global_model <- function(
     condition = condition,
     feature_names = rownames(data),
     padjust_method = padjust_method,
-    homosc_violation_result = homosc_violation_result,
+    homosc_violation_result = aw_result[["homosc_violation_result"]],
     spline_params = spline_params
   )
 }
@@ -847,21 +815,24 @@ process_within_level <- function(
     spline_params$dof[level_index] <- best_dof
   }
 
-  result <- design2design_matrix(
+  design2design_matrix_result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
     level_index = level_index,
     design = effects[["fixed_effects"]]
   )
 
-  design_matrix <- result[["design_matrix"]]
+  design_matrix <- design2design_matrix_result[["design_matrix"]]
   
-  if (use_array_weights) {
-    weights <- limma::arrayWeights(
-      object = data,
-      design = design_matrix
-    )
-  }
+  aw_result <- resolve_array_weights(
+    data = data,
+    rna_seq_data = rna_seq_data,
+    meta = meta,
+    design = design,
+    design2design_matrix_result = design2design_matrix_result,
+    use_array_weights = use_array_weights,
+    random_effects = effects[["random_effects"]] != ""
+  ) 
 
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data
@@ -884,11 +855,16 @@ process_within_level <- function(
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
-      data = result[["meta"]],
+      data = design2design_matrix_result[["meta"]],
       ddf = method,
+      useWeights = aw_result[["use_weights"]],
+      weightsMatrix = aw_result[["weights"]],
       BPPARAM = param
     )
-    fit <- variancePartition::eBayes(fit)
+    fit <- variancePartition::eBayes(
+      fit = fit,
+      robust = aw_result[["use_weights"]]
+    ) 
     
     if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
       BiocParallel::bpstop(param)       # cleanly shuts down workers
@@ -911,14 +887,15 @@ process_within_level <- function(
       sort.by = "F"
     )
   } else {
-    
-    
-    
     fit <- limma::lmFit(
-      data,
-      design_matrix
+      object = data,
+      design = design_matrix,
+      weights = aw_result[["weights"]]
     )
-    fit <- limma::eBayes(fit)
+    fit <- limma::eBayes(
+      fit = fit,
+      robust = aw_result[["use_weights"]]
+    )
     
     # Extract the top table based on coefficients
     num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
@@ -933,11 +910,12 @@ process_within_level <- function(
   }
   
   attr(top_table, "adjust.method") <- padjust_method
-  
+
   list(
     top_table = top_table,
     fit = fit,
-    spline_params = spline_params
+    spline_params = spline_params,
+    use_array_weights = aw_result[["use_weights"]]
   )
 }
 
@@ -1480,4 +1458,102 @@ analytic_loocv <- function(
   h <- stats::hatvalues(fit)
   r <- stats::residuals(fit)
   mean((r / (1 - h))^2)
+}
+
+
+#' Resolve whether array weights should be used, and return them if needed
+#'
+#' @noRd
+#' 
+#' @description
+#' This function encapsulates the logic for deciding whether to use array 
+#' weights
+#' in a linear modeling pipeline based on the presence of heteroscedasticity in 
+#' the data. It supports both automatic detection (based on Levene's test) and
+#' manual override via the `use_array_weights` argument. If `rna_seq_data` is 
+#' provided, the use of weights is suppressed since RNA-seq workflows are 
+#' expected 
+#' to have applied the voom transformation already. If heteroscedasticity is 
+#' detected or explicitly requested, the function computes array weights using 
+#' limma's `arrayWeights()` function. If random effects are present, the weights 
+#' are reshaped into a matrix suitable for use with 
+#' `variancePartition::dream()`. 
+#' The function returns a structured list containing the final weight matrix
+#'  (or NULL), 
+#' the resolved boolean flag for weight usage, and the heteroscedasticity test
+#'  result (if available) for diagnostic purposes.
+#'
+#' @param data Expression matrix (features x samples)
+#' @param rna_seq_data Optional voom-transformed data. If provided, weights are
+#'  skipped.
+#' @param meta Metadata data frame
+#' @param design Full design formula (string)
+#' @param design2design_matrix_result Result from design2design_matrix()
+#' @param condition Condition column name used for group testing
+#' @param use_array_weights User-specified flag (TRUE/FALSE/NULL)
+#' @param random_effects Boolean, whether model includes random effects
+#' @param data_type Type of omics data (used for logging only)
+#' @param p_threshold p-value threshold for Levene's test
+#' @param fraction_threshold Fraction of features needing to fail to trigger
+#'  use of weights
+#'
+#' @return A list with `weights`, `use_weights`, and `homosc_violation_result`
+#' 
+resolve_array_weights <- function(
+    data,
+    rna_seq_data,
+    meta,
+    design,
+    design2design_matrix_result,
+    condition = NULL,
+    use_array_weights = TRUE,
+    random_effects = FALSE
+) {
+  
+  # Default case: already handled for RNA-seq
+  if (!is.null(rna_seq_data)) {
+    return(list(
+      weights = NULL,
+      use_weights = FALSE,
+      homosc_violation_result = NULL
+    ))
+  }
+  
+  # Auto-detect violation if user has not explicitly set the flag
+  if (is.null(use_array_weights)) {
+    homosc_violation_result <- check_homoscedasticity_violation(
+      data = data,
+      meta = meta,
+      design = design,
+      design2design_matrix_result = design2design_matrix_result,
+      condition = condition,
+      random_effects = random_effects
+    )
+    use_array_weights <- homosc_violation_result$violation
+  } else {
+    homosc_violation_result <- NULL
+  }
+
+  if (isTRUE(use_array_weights)) {
+    message("Using arrayWeights strategy for heteroscedasticity adjustment.")
+    weights <- limma::arrayWeights(
+      object = data,
+      design = design2design_matrix_result$design_matrix
+    )
+    if (random_effects) {    # no random effects present
+      weights <- matrix(
+        rep(weights, each = nrow(data)),
+        nrow = nrow(data),
+        byrow = TRUE
+      )
+    }
+  } else {
+    weights <- NULL
+  }
+
+  list(
+    weights = weights,
+    use_weights = use_array_weights,
+    homosc_violation_result = homosc_violation_result
+  )
 }
