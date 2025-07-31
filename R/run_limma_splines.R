@@ -122,6 +122,7 @@ run_limma_splines <- function(
       feature_names = feature_names,
       padjust_method = padjust_method,
       mode = mode,
+      use_array_weights = use_array_weights,
       bp_cfg = bp_cfg
     )
     
@@ -261,6 +262,8 @@ run_limma_splines <- function(
 #' @param padjust_method A character string specifying the p-adjustment method.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
+#' @param use_array_weights Boolean value specifying whether to use array 
+#' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
 #'   
@@ -290,6 +293,7 @@ fit_within_condition_isolated <- function(
     feature_names,
     padjust_method,
     mode,
+    use_array_weights,
     bp_cfg
 ) {
 
@@ -319,6 +323,7 @@ fit_within_condition_isolated <- function(
     spline_params = spline_params,
     level_index = level_index,
     padjust_method = padjust_method,
+    use_array_weights = use_array_weights,
     bp_cfg = bp_cfg
   )
 
@@ -367,6 +372,8 @@ fit_within_condition_isolated <- function(
 #' @param condition A character string of the column name of meta that contains
 #'                  the levels of the experimental condition.
 #' @param padjust_method A character string specifying the p-adjustment method.
+#' @param use_array_weights Boolean value specifying whether to use array 
+#' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
 #'   
@@ -377,8 +384,6 @@ fit_within_condition_isolated <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
-#' @param use_array_weights Boolean value specifying whether to use array 
-#' weights for limma or variancePartition.
 #'
 #' @return A list containing top tables for the factor only and factor-time
 #' contrast.
@@ -405,8 +410,8 @@ fit_global_model <- function(
     condition,
     padjust_method,
     feature_names,
-    bp_cfg,
-    use_array_weights = NULL
+    use_array_weights,
+    bp_cfg
 ) {
   
   design2design_matrix_result <- design2design_matrix(
@@ -791,6 +796,8 @@ process_top_table <- function(
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param level_index The index of the level within the factor.
 #' @param padjust_method A character string specifying the p-adjustment method.
+#' @param use_array_weights Boolean value specifying whether to use array 
+#' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
 #'   
@@ -823,6 +830,7 @@ process_within_level <- function(
     spline_params,
     level_index,
     padjust_method,
+    use_array_weights,
     bp_cfg
 ) {
 
@@ -847,6 +855,13 @@ process_within_level <- function(
   )
 
   design_matrix <- result[["design_matrix"]]
+  
+  if (use_array_weights) {
+    weights <- limma::arrayWeights(
+      object = data,
+      design = design_matrix
+    )
+  }
 
   if (!is.null(rna_seq_data)) {
     data <- rna_seq_data
@@ -896,6 +911,9 @@ process_within_level <- function(
       sort.by = "F"
     )
   } else {
+    
+    
+    
     fit <- limma::lmFit(
       data,
       design_matrix

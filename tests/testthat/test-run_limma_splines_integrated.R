@@ -54,6 +54,7 @@ test_that("run_limma_splines() works correctly", {
     splineomics = splineomics,
     design = "~ 1 + Phase*Time + Reactor", # best design formula
     mode = "integrated", 
+    use_array_weights = FALSE,
     spline_params = list(
       spline_type = c("n"), 
       dof = c(0L) 
@@ -71,7 +72,7 @@ test_that("run_limma_splines() works correctly", {
     info = "Should be S3 class 'SplineOmics'"
   )
   expect_type(splineomics, "list")
-  expect_length(splineomics, 19)  
+  expect_length(splineomics, 18)  
   
   ## ---- limma_splines_result must exist and have 3 named sub-lists ----
   expect_true(

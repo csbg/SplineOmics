@@ -39,6 +39,7 @@ custom normalization function."></head><body>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul></li>
@@ -119,8 +120,10 @@ with the normalized counts.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A `voom` object, which includes the log2-counts per million (logCPM)
- matrix and observation-specific weights.</p>
+    <p>The updaed `splineomics` object, now containing the `voom` object,
+which includes the log2-counts per million (logCPM) matrix and
+observation-specific weights. Additionally, the splineparams are updated with
+the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

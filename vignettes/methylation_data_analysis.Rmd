@@ -1,10 +1,10 @@
 ---
-title: "Methylation data analysis"
+title: "methylation-data-analysis"
 author: "Thomas Rauter"
 date: "11 July, 2025"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RNA-seq-analysis}
+  %\VignetteIndexEntry{methylation-data-analysis}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -230,7 +230,7 @@ adj_pthresholds <- c(
 )
 
 nr_clusters <- list(
-  2:6,  
+  2:6,                    # Automatically select best cluster nr within range.
   2:6   
 )
 

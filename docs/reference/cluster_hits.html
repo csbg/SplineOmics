@@ -41,6 +41,7 @@ compiled into an HTML report."></head><body>
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul></li>
@@ -77,7 +78,7 @@ compiled into an HTML report.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_hits</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
-<span>  <span class="va">clusters</span>,</span>
+<span>  <span class="va">nr_clusters</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -87,7 +88,8 @@ compiled into an HTML report.</p>
 <span>  plot_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span>, meta_replicate_column <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  raw_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  report <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  report <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  max_hit_number <span class="op">=</span> <span class="fl">25</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -117,8 +119,10 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
 </ul></dd>
 
 
-<dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
-<dd><p>Character or integer vector specifying the number of clusters</p></dd>
+<dt id="arg-nr-clusters">nr_clusters<a class="anchor" aria-label="anchor" href="#arg-nr-clusters"></a></dt>
+<dd><p>A list whose length matches `top_tables`; each element is
+a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
+candidate number(s) of clusters for the corresponding condition level.</p></dd>
 
 
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
@@ -140,7 +144,7 @@ results from the interaction of condition and time limma result. Per default
 
 <dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
 <dd><p>A character vector containing the gene names of the features to
-be analyzed.</p></dd>
+be analyzed. The entries should be in the same order as they appear in data.</p></dd>
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>
@@ -173,6 +177,12 @@ HTML report and any other output files should be saved.</p></dd>
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
 <dd><p>Boolean TRUE or FALSE value specifing if a report should be
 generated.</p></dd>
+
+
+<dt id="arg-max-hit-number">max_hit_number<a class="anchor" aria-label="anchor" href="#arg-max-hit-number"></a></dt>
+<dd><p>Maximum number of hits which are plotted within each
+cluster. This can be used to limit the computation time and size of
+the HTML report in the case of many hits. Default is 100.</p></dd>
 
 </dl></div>
     <div class="section level2">

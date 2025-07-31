@@ -33,6 +33,7 @@ containing the enrichment results, and dotplots visualizing the enrichment."></h
     <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
   </ul></li>
@@ -67,7 +68,10 @@ containing the enrichment results, and dotplots visualizing the enrichment.</p>
 <span>  <span class="va">levels_clustered_hits</span>,</span>
 <span>  <span class="va">databases</span>,</span>
 <span>  <span class="va">report_info</span>,</span>
+<span>  <span class="va">cluster_hits_report_name</span>,</span>
 <span>  clusterProfiler_params <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  mapping_cfg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"none"</span>, from_species <span class="op">=</span> <span class="cn">NULL</span>, to_species <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>  enrichGO_cfg <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_titles <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  universe <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -107,6 +111,13 @@ such as omics_data_type and data_description (this is the list used for all
 report generating functions of this package).</p></dd>
 
 
+<dt id="arg-cluster-hits-report-name">cluster_hits_report_name<a class="anchor" aria-label="anchor" href="#arg-cluster-hits-report-name"></a></dt>
+<dd><p>Single character string specifying the name
+of the cluster_hits() function report, that contains the results that were
+used for the overprepresentation analysis here. Must be specified, because
+otherwise, the connection is not documented.</p></dd>
+
+
 <dt id="arg-clusterprofiler-params">clusterProfiler_params<a class="anchor" aria-label="anchor" href="#arg-clusterprofiler-params"></a></dt>
 <dd><p>A list that specifies the parameters for the
 clusterProfiler, such as for example: clusterProfiler_params &lt;- list(
@@ -122,6 +133,48 @@ documentation of clusterProfiler for their description. When this argument is
 not specified, it is per default NULL, in which case default parameters for
 those are selected, which are equivalent to the parameter values shown in the
 example definition above.</p></dd>
+
+
+<dt id="arg-mapping-cfg">mapping_cfg<a class="anchor" aria-label="anchor" href="#arg-mapping-cfg"></a></dt>
+<dd><p>A named list that controls the optional behavior of
+automatically mapping gene symbols across species. This is useful
+when your input gene symbols (e.g., from CHO cells) do not match
+the species used by the enrichment databases (e.g., human or mouse).
+By default, no mapping is performed and gene symbols are used as-is.
+If mapping is desired, this list must contain the following **three**
+elements:</p><dl><dt>method</dt>
+<dd><p>Mapping method to use. One of `"none"` (default;
+  no mapping), `"gprofiler"` (online, via the g:Profiler API), or
+   `"orthogene"` (offline, if installed).</p></dd>
+
+  <dt>from_species</dt>
+<dd><p>Source species code
+  (e.g., `"cgriseus"` for CHO). Must match the expected format for
+   the selected tool.</p></dd>
+
+  <dt>to_species"</dt>
+<dd><p>Target species code
+  (e.g., `"hsapiens"` for human). This must be the species used in
+   your ORA database.</p></dd>
+
+
+</dl></dd>
+
+
+<dt id="arg-enrichgo-cfg">enrichGO_cfg<a class="anchor" aria-label="anchor" href="#arg-enrichgo-cfg"></a></dt>
+<dd><p>A named list specifying the configuration for
+running GO enrichment with Bioconductor's
+<code><a href="https://rdrr.io/pkg/clusterProfiler/man/enrichGO.html" class="external-link">enrichGO</a></code>.
+This is only needed when you want to perform GO Biological Process (BP),
+Molecular Function (MF), or Cellular Component (CC) enrichment using
+Bioconductor's organism databases (e.g., <code>org.Mm.eg.db</code> for mouse).</p>
+<p>The list must be named according to the GO ontology, e.g., <code>"GO_BP"</code>,
+<code>"GO_MF"</code>, <code>"GO_CC"</code>. Each entry must provide:</p><ul><li><p><code>OrgDb</code>: The organism database, e.g., <code>org.Mm.eg.db</code>.</p></li>
+<li><p><code>keyType</code>: The gene identifier type, e.g., <code>"SYMBOL"</code>.</p></li>
+<li><p><code>ontology</code>: One of <code>"BP"</code>, <code>"MF"</code>, or <code>"CC"</code>.</p></li>
+</ul><p>If <code>enrichGO_cfg</code> is <code>NULL</code> (default), no Bioconductor-based GO
+enrichment is performed. All enrichment runs through
+<code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">enricher</a></code> with the provided TERM2GENE mappings.</p></dd>
 
 
 <dt id="arg-plot-titles">plot_titles<a class="anchor" aria-label="anchor" href="#arg-plot-titles"></a></dt>

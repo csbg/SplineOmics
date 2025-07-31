@@ -367,8 +367,8 @@ extract_effects <- function(formula_string) {
 #' A summary message about the detected violations and recommended next steps is
 #' printed to the console.
 #' 
-#' @importFrom car leveneTest
-#' @importFrom pbapply pbapply
+#' @importFrom limma lmFit eBayes
+#' @importFrom stats residuals
 #' 
 check_homoscedasticity_violation <- function(
     data,
@@ -381,11 +381,10 @@ check_homoscedasticity_violation <- function(
     p_threshold = 0.05,
     fraction_threshold = 0.1  
 ) {
-
+  
   message(paste(
-    "\nRunning Levene's test to check for violation of homoscedasticity",
-    "of each feature..."
-  ))
+    "Running Levene's test both feature wise and sample wise to implicitly",
+    "decide whether to use the limma array weights or not."))
   
   if (random_effects) {
     message(
@@ -428,93 +427,48 @@ check_homoscedasticity_violation <- function(
     fit,
     y = data
     )
-  
-  # 3. Define group/condition labels
-  if (!condition %in% colnames(meta)) {
-    stop(sprintf("Condition '%s' not found in meta columns.", condition))
-  }
-  Phase <- as.factor(meta[[condition]])  # flexible group assignment
-  
-  # 4. Run Levene's test per feature
-  bp_results <- pbapply::pbapply(residuals_matrix, 1, function(res) {
-    group_vars <- tapply(
-      res,
-      Phase,
-      var,
-      na.rm = TRUE
-      )
 
-    # Safe check: skip if any NA in group variances, or zero variance,
-    # or too few groups
-    if (any(is.na(group_vars)) 
-        || any(group_vars == 0) 
-        || length(group_vars) < 2) {
-      return(list(
-        pval = NA,
-        max_var_group = NA,
-        max_var = NA
-      ))
-    }
-    
-    pval <- car::leveneTest(res ~ Phase)$"Pr(>F)"[1]
-    max_group <- names(which.max(group_vars))
-    max_var <- max(group_vars)
-    
-    list(
-      pval = pval,
-      max_var_group = max_group,
-      max_var = max_var
-      )
-  })
+  # Run Levene’s test feature-wise
+  featurewise_levene_result <- check_featurewise_heteroscedasticity_levene(
+    residuals_matrix = residuals_matrix,
+    meta = meta,
+    condition = condition,
+    p_threshold = p_threshold,
+    fraction_threshold = fraction_threshold
+  )
   
-  # Convert list of named lists into a clean data frame
-  bp_df <- as.data.frame(
-    do.call(
-      rbind,
-      bp_results
-      ),
-    stringsAsFactors = FALSE
-    )
-  rownames(bp_df) <- rownames(residuals_matrix)  # keep feature names
+  bp_df <- featurewise_levene_result$bp_df
+  fraction_violated <- featurewise_levene_result$fraction_violated
+  feature_wise_violation <- featurewise_levene_result$feature_wise_violation
+
+  # Run sample-wise Levene's test
+  groupwise_variation_flag <- check_samplewise_heteroscedasticity_levene(
+    residuals_matrix = residuals_matrix,
+    p_threshold = p_threshold
+  )
   
-  bp_df$adj_pval <- p.adjust(
-    bp_df$pval,
-    method = "BH"
-    )
-  bp_df$violation_flag <- !is.na(bp_df$adj_pval) & bp_df$adj_pval < p_threshold
-  fraction_violated <- mean(bp_df$violation_flag)
+  # Combine decision
+  violation <- feature_wise_violation || groupwise_variation_flag
   
-  message("\n------------------------------------------------------------")
-  message(sprintf(
-    "Fraction of features violating homoscedasticity (p < %.3f): %.2f%%",
-    p_threshold,
-    100 * fraction_violated
-  ))
-  
-  # Summarize max variance group among violating features
-  group_contributions <- table(bp_df$max_var_group[bp_df$violation_flag])
-  group_fractions <- prop.table(group_contributions)
-  
-  if (length(group_contributions) > 0) {
-    message("Distribution of max variance groups among violating features:")
-    for (i in seq_along(group_contributions)) {
-      message(sprintf(
-        "- %s: %.2f%% of violating features",
-        names(group_contributions)[i],
-        100 * group_fractions[i]
-      ))
-    }
-  } else {
-    message("No violating features found.")
-  }
-  message("------------------------------------------------------------\n")
-  
-  violation <- fraction_violated >= fraction_threshold
-  
+  # Report decision with detailed reasoning
+  message("------------------------------------------------------------")
   if (violation) {
     message(
-      "\u2757 Linear model assumption of homoscedasticity is likely violated."
+      "\u2757 Heteroscedasticity detected. Proceeding with robust strategy."
+      )
+    
+    reason <- switch(
+      paste(
+        feature_wise_violation,
+        groupwise_variation_flag,
+        sep = "-"
+        ),
+      "TRUE-TRUE"  = "Both feature-wise and sample-wise tests show violation.",
+      "TRUE-FALSE" = "Feature-wise test indicated violation.",
+      "FALSE-TRUE" = "Sample-wise test indicated violation."
     )
+    message(paste("Reason:", reason))
+    
     if (data_type == "rna-seq") {
       message("\u27A1\uFE0F  Using robust RNA-seq strategy:")
       message("voomWithQualityWeights() to downweight noisy samples.")
@@ -524,13 +478,12 @@ check_homoscedasticity_violation <- function(
     }
   } else {
     message("\u2705 No strong evidence for heteroscedasticity.")
-    message("Proceeding WITHOUT using robust strategy")
+    message("Proceeding WITHOUT using robust strategy.")
   }
-  
   message("------------------------------------------------------------\n")
-  
+
   return(list(
-    violation = violation,               # Single Boolean flag
+    violation = violation,              
     bp_df = bp_df,
     percent_violated = 100 * fraction_violated
   ))
@@ -566,4 +519,212 @@ sanitize_meta <- function(meta) {
   }
   
   return(meta)
+}
+
+
+# Level 2 internal functions ---------------------------------------------------
+
+
+#' Check feature-wise heteroscedasticity using Levene's test
+#'
+#' @noRd
+#'
+#' @description
+#' This function performs Levene's test for each feature to assess whether
+#' residual variances differ between groups defined by a condition.
+#' It returns a detailed summary, a violation flag, and the annotated results.
+#'
+#' @param residuals_matrix Matrix of residuals (features x samples).
+#' @param meta Sample metadata data frame.
+#' @param condition The name of the column in `meta` defining the condition
+#'  groups.
+#' @param p_threshold Significance threshold (after adjustment).
+#' @param fraction_threshold Minimum fraction of violating features to flag a
+#'  violation.
+#' @return A list containing:
+#'   \item{bp_df}{Data frame with test results per feature}
+#'   \item{fraction_violated}{Proportion of features violating homoscedasticity}
+#'   \item{feature_wise_violation}{TRUE if the threshold is exceeded}
+#'   
+#' @importFrom car leveneTest
+#' @importFrom pbapply pbapply   
+#'   
+check_featurewise_heteroscedasticity_levene <- function(
+    residuals_matrix,
+    meta,
+    condition,
+    p_threshold = 0.05,
+    fraction_threshold = 0.1
+) {
+  
+  message("Running feature wise Levene's test...")
+
+  Phase <- as.factor(meta[[condition]])
+  
+  bp_results <- pbapply::pbapply(residuals_matrix, 1, function(res) {
+    group_vars <- tapply(
+      res,
+      Phase,
+      var,
+      na.rm = TRUE
+      )
+    
+    if (any(is.na(group_vars)) 
+        || any(group_vars == 0) 
+        || length(group_vars) < 2
+        ) {
+      return(list(
+        pval = NA,
+        max_var_group = NA,
+        max_var = NA
+        ))
+    }
+    
+    pval <- car::leveneTest(res ~ Phase)[["Pr(>F)"]][1]
+    max_group <- names(which.max(group_vars))
+    max_var <- max(group_vars)
+    
+    list(
+      pval = pval, 
+      max_var_group = max_group,
+      max_var = max_var
+      )
+  })
+  
+  # Assemble results
+  bp_df <- as.data.frame(
+    do.call(rbind, bp_results),
+    stringsAsFactors = FALSE
+    )
+  rownames(bp_df) <- rownames(residuals_matrix)
+  
+  bp_df$adj_pval <- p.adjust(bp_df$pval, method = "BH")
+  bp_df$violation_flag <- !is.na(bp_df$adj_pval) & bp_df$adj_pval < p_threshold
+  fraction_violated <- mean(bp_df$violation_flag)
+  
+  # Global summary
+  n_total <- nrow(bp_df)
+  n_violating <- sum(bp_df$violation_flag)
+  fraction_violated <- n_violating / n_total
+  
+  message("\n------------------------------------------------------------")
+  message(sprintf(
+    "Fraction of features violating homoscedasticity
+    (p < %.3f): %.2f%% (%d/%d features)",
+    p_threshold,
+    100 * fraction_violated,
+    n_violating,
+    n_total
+  ))
+  
+  # Breakdown per group
+  violating_groups <- bp_df$max_var_group[bp_df$violation_flag]
+  
+  if (length(violating_groups) > 0 && any(!is.na(violating_groups))) {
+    group_contributions <- table(violating_groups)
+    group_fractions <- prop.table(group_contributions)
+    
+    message("Distribution of max variance groups among violating features:")
+    for (i in seq_along(group_contributions)) {
+      group_name <- names(group_contributions)[i]
+      n_group <- group_contributions[i]
+      frac_group <- 100 * group_fractions[i]
+      
+      message(sprintf(
+        "- %s: %.2f%% of violating features (%d/%d)",
+        group_name,
+        frac_group,
+        n_group,
+        n_violating
+      ))
+    }
+  } else {
+    message("No violating features found.")
+  }
+  
+  message("------------------------------------------------------------\n")
+  
+  feature_wise_violation <- fraction_violated >= fraction_threshold
+  
+  return(list(
+    bp_df = bp_df,
+    fraction_violated = fraction_violated,
+    feature_wise_violation = feature_wise_violation
+  ))
+}
+
+
+#' Check for Heteroscedasticity Across Samples Using Levene's Test
+#'
+#' @noRd
+#'
+#' @description
+#' This function tests whether the residual variances differ significantly 
+#' across samples
+#' by applying Levene's test. Each sample is treated as a group in the test, 
+#' and the null hypothesis is that all samples have equal residual variance.
+#'
+#' The function is useful for detecting global heteroscedasticity that may not
+#' be group-dependent, such as technical noise affecting specific samples. It
+#' complements feature-wise group-level heteroscedasticity checks.
+#'
+#' @param residuals_matrix A numeric matrix of residuals with features in rows
+#' and samples in columns.
+#' @param p_threshold Significance threshold for rejecting the null hypothesis
+#'  of equal variances. Defaults to 0.05.
+#'
+#' @return A logical scalar. \code{TRUE} if Levene's test detects significant
+#'  inter-sample variance differences (p < \code{p_threshold}), otherwise
+#'   \code{FALSE}.
+#'
+#' @details
+#' The function reshapes the residual matrix into a long format where each 
+#' sample is treated 
+#' as a group, and applies \code{\link[car]{leveneTest}} to test for equality of
+#'  variances 
+#' across samples. A message is printed summarizing the test outcome.
+#'
+#' @importFrom car leveneTest
+#'
+check_samplewise_heteroscedasticity_levene <- function(
+    residuals_matrix,
+    p_threshold = 0.05
+    ) {
+  
+  message(paste(
+    "Running Levene's test across samples to detect inter-sample variance",
+    "differences..."
+    ))
+  
+  # Transpose: rows = samples, columns = features
+  sample_residuals <- t(residuals_matrix)
+
+  # Stack into long format
+  long_data <- data.frame(
+    residual = as.vector(sample_residuals),
+    sample = factor(
+      rep(rownames(sample_residuals),
+          ncol(sample_residuals))
+      )  
+  )
+  
+  # Run Levene’s test across samples
+  levene_res <- car::leveneTest(
+    residual ~ sample,
+    data = long_data
+    )
+  pval <- levene_res[["Pr(>F)"]][1]
+  
+  message(sprintf("Levene's test p-value (sample-level): %.4g", pval))
+  
+  if (!is.na(pval) && pval < p_threshold) {
+    message(paste(
+      "\u2757 Evidence of heteroscedasticity across samples",
+      "(violation detected).\n"
+      ))
+    return(TRUE)
+  } else {
+    message("\u2705 No strong evidence of inter-sample variance differences.\n")
+    return(FALSE)
+  }
 }

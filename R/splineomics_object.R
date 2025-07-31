@@ -37,12 +37,10 @@
 #' @param design A design matrix or similar object (optional).
 #' @param use_array_weights Boolean flag indicating if the robust fit strategy 
 #' to deal
-#' with heteroscedasticity should be used or not. If ommited (parameter value
-#' is NULL) then this is handeled implicitly based on the result of the Wilcoxon
-#' signed exact test (tests if there is a significant differene in the variance
-#' across samples between at least two levels of the experiment). If this test
-#' is significant for at least one pairwise comparison, then the robust strategy
-#' is applied. The robust strategy uses the function voomWithQualityWeights for
+#' with heteroscedasticity should be used or not. If set to NULL, then this is
+#' handeled implicitly based on the result of the Levene test. If this test is
+#' significant for at least 10% of the features, then the robust strategy is 
+#' used. The robust strategy uses the function voomWithQualityWeights for
 #' RNA-seq data instead of the normal voom function. For other, non-count-based
 #' data, the function limma::arrayWeights is used instead, combined with setting
 #' the robust argument to TRUE for the limma::eBayes function. In summary, the
@@ -98,7 +96,7 @@ create_splineomics <- function(
     meta_batch2_column = NULL,
     feature_name_columns = NULL,
     design = NULL,
-    use_array_weights = NULL,
+    use_array_weights = TRUE,
     dream_params = NULL,
     mode = NULL,
     spline_params = NULL,

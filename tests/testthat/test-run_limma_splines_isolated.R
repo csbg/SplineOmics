@@ -54,6 +54,7 @@ test_that("run_limma_splines() works correctly", {
     splineomics = splineomics,
     design = "~ 1 + Time + Reactor",
     mode = "isolated", 
+    use_array_weights = FALSE,
     spline_params = list(
       spline_type = c("n", "n"), 
       dof = c(2L, 0L) 
