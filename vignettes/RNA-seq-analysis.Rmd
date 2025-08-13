@@ -247,7 +247,7 @@ idea of what do use.
 Lets define our parameters and put them into the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
-spline_params = list(
+spline_params <- list(
   spline_type = c("n"),    # natural cubic splines
   dof = c(3L)              # Degree of freedom of 3 for the splines.
 )
@@ -261,7 +261,11 @@ splineomics <- SplineOmics::update_splineomics(
   # dream_params = dream_params,   if we would want to adjust dream()
   # means limma "borrows" statistical power from the other levels
   mode = "integrated", 
-  spline_params = spline_params
+  spline_params = spline_params,
+  bp_cfg = c(
+    n_cores = 1,
+    blas_threads = 1
+    )    
 )
 ```
 
@@ -372,7 +376,7 @@ report_dir <- here::here(
 # Here, we don't want a treatment line for the constant level, since no 
 # treatment was applied. To achieve that, we simply set it to NA or leave it
 # out. 
-treatment_labels = list(
+treatment_labels <- list(
   # constant = NA, 
   temp_shift = "temp shift",  
   constant_temp_shift = "temp shift" 
@@ -381,7 +385,7 @@ treatment_labels = list(
 # treatment_timepoints allows to specify the timepoint, at which the vertical
 # dashed treatment line is placed. Again, for the constant level, we don't
 # have a treatment, so we also do not specify a timepoint.
-treatment_timepoints = list(
+treatment_timepoints <- list(
   # constant = NA,
   temp_shift = 146,  
   constant_temp_shift = 146

@@ -50,6 +50,10 @@ Welcome to `SplineOmics`, an R package designed to streamline the analysis of -o
 
 If you have -omics data over time, the package will help you to run `limma` with splines, decide on which parameters to use, perform the clustering, run GSEA and show result plots in HTML reports. Any time-series data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, glycan fractional abundances, etc.).
 
+Note: So far, the package has only been tested with datasets with 2 conditions.
+In theory, it should also work with more conditions, but unexpected errors can
+arise.
+
 ### What do I need precisely?
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values, should have normally distributed features and no dependence between the samples.
@@ -136,7 +140,7 @@ install.packages("remotes")
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.2.0",        # Specify the tag to install
+  ref = "0.2.1",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
@@ -179,13 +183,6 @@ If you face "permission denied" issues on Linux distributions, check this [vigne
 ### 🎓 Tutorial {#tutorial}
 
 [This tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html) covers a real CHO cell time-series proteomics example from start to end.
-
-To open an R Markdown file of the **tutorial** in `RStudio`, run:
-
-``` r
-library(SplineOmics)
-SplineOmics::open_tutorial()  
-```
 
 Note that the SplineOmics package in theory supports experimental design with
 any amount of conditions. However, so far it was only tested with datasets that

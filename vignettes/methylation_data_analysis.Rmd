@@ -181,7 +181,7 @@ idea of what do use.
 Lets define our parameters and put them into the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
-spline_params = list(
+spline_params <- list(
   spline_type = c("n"),    # natural cubic splines
   dof = c(3L)              # Degree of freedom of 3 for the splines.
 )
@@ -214,7 +214,7 @@ splineomics <- SplineOmics::run_limma_splines(
 The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
-```{r build limma report, eval = FALSE}
+```{r build limma report, eval = TRUE}
 plots <- SplineOmics::create_limma_report(
   splineomics = splineomics,
   report_dir = withr::local_tempdir()
@@ -239,7 +239,7 @@ report_dir <- here::here(
   "clustering_reports"
 )
 
-treatment_labels = list(
+treatment_labels <- list(
   # constant = NA, 
   temp_shift = "temp shift",  
   constant_temp_shift = "temp shift" 
@@ -248,7 +248,7 @@ treatment_labels = list(
 # treatment_timepoints allows to specify the timepoint, at which the vertical
 # dashed treatment line is placed. Again, for the constant level, we don't
 # have a treatment, so we also do not specify a timepoint.
-treatment_timepoints = list(
+treatment_timepoints <- list(
   # constant = NA,
   temp_shift = 146,  
   constant_temp_shift = 146

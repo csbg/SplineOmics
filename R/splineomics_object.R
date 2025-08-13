@@ -21,9 +21,19 @@
 #' function.
 #' @param annotation A dataframe with the feature descriptions of data
 #' (optional).
-#' @param report_info A list containing report information such as omics data
-#' type, data description, data collection date, analyst name, contact info,
-#' and project name (optional).
+#' @param report_info A named list describing the experiment.  
+#'   Must include the following fields:  
+#'     - \code{"omics_data_type"}  
+#'     - \code{"data_description"}  
+#'     - \code{"data_collection_date"}  
+#'     - \code{"analyst_name"}  
+#'     - \code{"contact_info"}  
+#'     - \code{"project_name"}  
+#'   
+#'   May also include the following optional fields:  
+#'     - \code{"method_description"}  
+#'     - \code{"results_summary"}  
+#'     - \code{"conclusions"}  
 #' @param meta_batch_column Column for meta batch information (optional).
 #' @param meta_batch2_column Column for secondary meta batch information
 #' (optional).
@@ -58,7 +68,8 @@
 #' Note that random effects are now directly specified in the design formula 
 #' and not in `dream_params`.
 #' @param mode For the design formula, you must specify either 'isolated' or
-#' 'integrated'. Isolated means limma determines the results for each level
+#' 'integrated' for the mode. Isolated means limma determines the results for 
+#' each level
 #' using only the data from that level. Integrated means limma determines the
 #'  results for all levels using the full dataset (from all levels).
 #' @param spline_params Parameters for spline functions (optional). Must contain

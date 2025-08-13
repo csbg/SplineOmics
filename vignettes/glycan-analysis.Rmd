@@ -119,7 +119,7 @@ library(compositions)  # For clr transforming the glycan data
 
 # Load the files
 
-```{r load the files}
+```{r load the files, , eval = TRUE}
 data <- read.csv(
   system.file(
     "extdata",
@@ -277,15 +277,10 @@ using variance "outliers" for the variance shrinkage.
 The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
-```{r build limma report, eval = FALSE}
-report_dir <- here::here(
-  "results",
-  "create_limma_reports"
-)
-
+```{r build limma report, eval = TRUE}
 plots <- SplineOmics::create_limma_report(
   splineomics = splineomics,
-  report_dir = report_dir
+  report_dir = withr::local_tempdir()
 )
 ```
 
@@ -313,11 +308,6 @@ nr_clusters <- list(
   2    # clusters for the stationary level
 )
 
-report_dir <- here::here(
-  "results",
-  "clustering_reports"
-)
-
 # treatment_labels allows to place vertical dashed lines into the plots, that
 # indicate a treatment, such as "temp shift" in this experiment. For each level,
 # the treatment can be specified individually. For the "double spline plots", 
@@ -328,7 +318,7 @@ report_dir <- here::here(
 # Here, we don't want a treatment line for the constant level, since no 
 # treatment was applied. To achieve that, we simply set it to NA or leave it
 # out. 
-treatment_labels = list(
+treatment_labels <- list(
   # constant = NA, 
   tshifted = "temp shift",  
   constant_tshifted = "temp shift" 
@@ -337,7 +327,7 @@ treatment_labels = list(
 # treatment_timepoints allows to specify the timepoint, at which the vertical
 # dashed treatment line is placed. Again, for the constant level, we don't
 # have a treatment, so we also do not specify a timepoint.
-treatment_timepoints = list(
+treatment_timepoints <- list(
   # constant = NA,
   tshifted = 146,  
   constant_tshifted = 146

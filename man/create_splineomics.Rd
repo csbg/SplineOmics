@@ -42,9 +42,19 @@ function.}
 \item{annotation}{A dataframe with the feature descriptions of data
 (optional).}
 
-\item{report_info}{A list containing report information such as omics data
-type, data description, data collection date, analyst name, contact info,
-and project name (optional).}
+\item{report_info}{A named list describing the experiment.
+Must include the following fields:  
+  - \code{"omics_data_type"}  
+  - \code{"data_description"}  
+  - \code{"data_collection_date"}  
+  - \code{"analyst_name"}  
+  - \code{"contact_info"}  
+  - \code{"project_name"}  
+
+May also include the following optional fields:  
+  - \code{"method_description"}  
+  - \code{"results_summary"}  
+  - \code{"conclusions"}}
 
 \item{meta_batch_column}{Column for meta batch information (optional).}
 
@@ -86,7 +96,8 @@ Note that random effects are now directly specified in the design formula
 and not in `dream_params`.}
 
 \item{mode}{For the design formula, you must specify either 'isolated' or
-'integrated'. Isolated means limma determines the results for each level
+'integrated' for the mode. Isolated means limma determines the results for 
+each level
 using only the data from that level. Integrated means limma determines the
  results for all levels using the full dataset (from all levels).}
 

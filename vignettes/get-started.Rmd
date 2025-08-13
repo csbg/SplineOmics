@@ -365,10 +365,10 @@ print(splineomics)
 Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.
 
-```{r Run EDA function, eval = FALSE}
+```{r Run EDA function, eval = TRUE}
 plots <- SplineOmics::explore_data(
   splineomics = splineomics, # SplineOmics object
-  report_dir = report_dir
+  report_dir = withr::local_tempdir()
 )
 ```
 
@@ -390,233 +390,9 @@ out what happens when you do this, along with testing how other
 hyperparameter choices influence the results, with the package function
 screen_limma_hyperparams().
 
-## Finding the Best Hyperparameters
-
-Before running the **limma spline analysis**, it is important to find
-the best "hyperparameters". In this context, hyperparameters include:
-
--   **Degree of freedom (DoF)**
--   **Different versions of the data** (e.g., outlier removed vs. not
-    removed)
--   **Different limma design formulas**
-
-### Challenge of Hyperparameter Selection
-
-Rationally determining the best combination of hyperparameters can be
-very challenging. By rationally, I mean deciding upon the final
-hyperparameters without ever testing any, just by scientific reasoning.
-It is much easier just testing a few and seeing how they actually
-behave. However, manually selecting combinations can be tedious, and you
-have to work very systematically, which can be challenging. To solve
-this problem, the `screen_limma_hyperparams()` function was written.
-
-### Using `screen_limma_hyperparams()`
-
-The function `screen_limma_hyperparams()` automates the process of
-testing different combinations of hyperparameters. Here's how it works:
-
--   **Specify values**: For each hyperparameter, you can specify all the
-    values you want to test.
--   **Run combinations**: The function runs the **limma spline
-    analysis** with combinations formed from the hyperparameters you've
-    provided in a semi combinatorial way.
-
-### Inner vs. Outer Hyperparameters
-
-Semi combinatorial here means that not every possible combination is
-generated. Instead, there are **inner** and **outer** hyperparameters:
-
--   **Outer hyperparameters**: These include things like **different
-    versions of the dataset** (e.g., full dataset vs. dataset with
-    outliers removed).
-    -   All possible combinations of outer hyperparameters are
-        generated.
--   **Inner hyperparameters**: These include **adjusted p-value
-    thresholds** and **spline parameters** (e.g., degree of freedom).
-    -   For each version of the data (outer hyperparameter), all
-        combinations of inner hyperparameters are tested.
-
-This approach is neccessary, because otherwise the amount of combos
-would explode.
-
-### Example
-
-For example, if you have two versions of a dataset (one full dataset,
-and one with some outliers removed), these versions are considered outer
-hyperparameters. Additionaly, lets say, you want to test two different
-limma design formulas, formula 1 and 2. The function will test out all
-combinations of those outer hyperparameters and compare them with each
-other, which results in a total of 6 combinations here:
-
--   **Full Dataset Formula 1** vs **Full Dataset Formula 2**
-
--   **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 1**
-
--   **Full Dataset Formula 1** vs **Outliers Removed Dataset Formula 2**
-
--   **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 1**
-
--   **Full Dataset Formula 2** vs **Outliers Removed Dataset Formula 2**
-
--   **Outliers Removed Dataset Formula 1** vs **Outliers Removed Dataset
-    Formula 2**
-
-Let's say you specified the following inner hyperparameters:
-
--   **Spline parameters**: Natural cubic splines with a degree of
-    freedom of either 2 or 3.
--   **Adjusted p-value threshold**: 0.05 or 0.1.
-
-The function will generate and test all combinations of the spline
-parameters and p-value thresholds for all 4 combos:
-
-Combo 1:
-
--   **DoF = 2, threshold = 0.05**
-
--   **DoF = 3, threshold = 0.05**
-
--   **DoF = 2, threshold = 0.1**
-
--   **DoF = 3, threshold = 0.1**
-
-Combo 2:
-
--   **DoF = 2, threshold = 0.05**
-
--   **DoF = 3, threshold = 0.05**
-
--   **DoF = 2, threshold = 0.1**
-
--   **DoF = 3, threshold = 0.1**
-
-Combo 3: ...
-
-This allows you to systematically explore different combinations and
-select the optimal hyperparameters for your analysis.
-
-Below is an example for our proteomics data:
-
-```{r Load hyperparameter-screening args, eval = TRUE}
-data1 <- data
-meta1 <- meta
-
-# Remove the "outliers"
-data2 <- data[, !(colnames(data) %in% c(
-  "E12_TP05_Exponential",
-  "E10_TP10_Stationary"
-)
-)]
-
-# Adjust meta so that it matches data2
-meta2 <- meta[!meta$Sample.ID %in% c(
-  "E12_TP05_Exponential",
-  "E10_TP10_Stationary"
-), ]
-
-# As mentioned above, all the values of one hyperparameter are stored
-# and provided as a list.
-datas <- list(data1, data2)
-
-# This will be used to describe the versions of the data.
-datas_descr <- c(
-  "full_data",
-  "outliers_removed"
-)
-
-metas <- list(meta1, meta2)
-
-# Test two different limma designs
-designs <- c(
-  "~ 1 + Phase*Time + Reactor",
-  "~ 1 + Time + Reactor"
-)
-
-# 'Integrated means' limma will use the full dataset to generate the results for
-# each condition. 'Isolated' means limma will use only the respective part of
-# the dataset for each condition. Designs that contain the condition column
-# (here Phase) must have mode 'integrated', because the full data is needed to
-# include the different conditions into the design formula.
-modes <- c(
-  "integrated",
-  "isolated"
-)
-
-# Specify the meta "level" column
-condition <- "Phase"
-
-report_dir <- here::here(
-  "results",
-  "hyperparams_screen_reports"
-)
-
-# To remove the batch effect
-meta_batch_column <- "Reactor"
-
-# Test out two different p-value thresholds (inner hyperparameter)
-adj_pthresholds <- c(
-  0.05,
-  0.1
-)
-
-# Create a dataframe with combinations of spline parameters to test
-# (every row a combo to test)
-spline_test_configs <- data.frame(
-  # 'n' stands for natural cubic splines, b for B-splines.
-  spline_type = c("n", "n", "b", "b"),
-  # Degree is not applicable (NA) for natural splines.
-  degree = c(NA, NA, 2L, 4L),
-  # Degrees of freedom (DoF) to test.
-  # Higher dof means spline can fit more complex patterns.
-  dof = c(2L, 3L, 3L, 4L)
-)
-
-print(spline_test_configs)
-```
-
-Now that we specified all the values for each hyperparameter that we
-want to test, we can run the `screen_limma_hyperparams()` function.
-
-```{r Perform hyperparameter-screening, eval = FALSE}
-SplineOmics::screen_limma_hyperparams(
-  splineomics = splineomics,
-  datas = datas,
-  datas_descr = datas_descr,
-  metas = metas,
-  designs = designs,
-  modes = modes,
-  spline_test_configs = spline_test_configs,
-  report_dir = report_dir,
-  adj_pthresholds = adj_pthresholds,
-)
-```
-
-As mentioned, this function generates a report for each comparison of
-the outer hyperparameters, which are too many to show here. You can view
-an example report
-[here](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html)
-
-This report contains the results for the comparison of the "outer"
-hyperparameters data 1 and design (formula) 1 compared against data 1
-and design 2. For both of those, all combinations of the "inner"
-hyperparameters are generated (every possible combination of all
-specified adj. p-value thresholds and spline configs).
-
-The encoding used in the reports and the titles is
-[here](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html)
-(This is part of the output of the screen_limma_hyperparams function).
-
 # Run limma spline analysis
 
-Once we identified the hyperparameters that are likely the best ones, we
-can run the limma spline analysis with them and get the results.
-
-Lets just assume for now that the new parameters, with which the
-SplineOmics object is updated, are the best for this analysis. The
-choice depends on the analysis. For example, for this analysis, natural
-cubic splines (n) with a dof of two seemed to fit the data best (not
-overfitting, but also not underfitting), which was the reason those
-spline parameters were chosen.
+Now we decide on the parameters and run the limma spline analysis.
 
 For the design formula, you must specify either 'isolated' or
 'integrated'. Isolated means limma determines the results for each level
@@ -633,8 +409,6 @@ splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   design = "~ 1 + Phase*Time + Reactor", # best design formula
   mode = "integrated", # means limma uses the full data for each condition.
-  data = data2, # data without "outliers" was better
-  meta = meta2,
   # States explicitly that there is no problem of heteroscedasticity and 
   # therefore, this does not need to be adressed. Setting it to TRUE would mean
   # the opposite, and when setting it to NULL, it means it should be handled 
@@ -681,7 +455,7 @@ levels (which includes both time and the average differences)
 The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
-```{r build limma report, eval = FALSE}
+```{r build limma report, eval = TRUE}
 plots <- SplineOmics::create_limma_report(
   splineomics = splineomics,
   report_dir = withr::local_tempdir()
@@ -730,11 +504,6 @@ adj_pthresholds <- c( # 0.05 for both levels
 nr_clusters <- list(
   6,   # specifically 6 clusters for the exponential phase level
   2:3  # range of cluster numbers for the stationary phase level
-)
-
-report_dir <- here::here(
-  "results",
-  "clustering_reports"
 )
 
 plot_info <- list( # For the spline plots
@@ -817,7 +586,11 @@ biological insights is to perform ORA For this, the respective genes
 can be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
-```{r download Enrichr databases, eval = FALSE}
+```{r download Enrichr databases, eval = TRUE}
+# Create a temporary directory for R CMD check
+report_dir <- file.path(tempdir(), "ora_reports")
+dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+
 # Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
   "WikiPathways_2019_Human",
@@ -836,6 +609,7 @@ gene_set_lib <- c(
 
 SplineOmics::download_enrichr_databases(
   gene_set_lib = gene_set_lib,
+  output_dir = report_dir,
   filename = "databases.tsv"
 )
 ```
@@ -849,9 +623,9 @@ report dir can be specified. The function run_ora() runs ORA
 using clusterProfiler, generates an HTML report and returns the ORA
 dotplots in R.
 
-```{r prepare arguments for ORA, eval = FALSE}
+```{r prepare arguments for ORA, eval = TRUE}
 # Specify the filepath of the TSV file with the database info
-downloaded_dbs_filepath <- here::here("databases.tsv")
+downloaded_dbs_filepath <- file.path(report_dir, "databases.tsv")
 
 # Load the file
 databases <- read.delim(
@@ -868,17 +642,12 @@ clusterProfiler_params <- list(
   maxGSSize = 500,
   qvalueCutoff = 0.2
 )
-
-report_dir <- here::here(
-  "results",
-  "ora_reports"
-)
 ```
 
 The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
-```{r run ORA, eval = FALSE}
+```{r run ORA, eval = TRUE}
 result <- SplineOmics::run_ora(
   # A dataframe with three columns: feature, cluster, and gene. Feature contains
   # the integer index of the feature, cluster the integer specifying the cluster
@@ -887,8 +656,8 @@ result <- SplineOmics::run_ora(
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
-  cluster_hits_report_name = "not meaningfully filled out in this demo",
-  report_dir = report_dir
+  cluster_hits_report_name = "report name",
+  report_dir =  withr::local_tempdir()
 )
 ```
 

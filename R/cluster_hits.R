@@ -18,10 +18,37 @@
 #'   \item \code{meta}: A dataframe containing metadata corresponding to the
 #'   \code{data}, must include a 'Time' column and any columns specified by
 #'   \code{conditions}.
+#'   \item \code{annotation}: A dataframe that maps the rows of \code{data} to
+#'   annotation info, such as the gene name or database identifiers.
+#'   \item \code{report_info}: A named list describing the experiment.  
+#'   Must include the following fields:  
+#'     - \code{"omics_data_type"}  
+#'     - \code{"data_description"}  
+#'     - \code{"data_collection_date"}  
+#'     - \code{"analyst_name"}  
+#'     - \code{"contact_info"}  
+#'     - \code{"project_name"}  
+#'   
+#'   May also include the following optional fields:  
+#'     - \code{"method_description"}  
+#'     - \code{"results_summary"}  
+#'     - \code{"conclusions"}  
 #'   \item \code{design}: A character of length 1 representing the limma
 #'   design formula.
-#'   \item \code{condition}: Character of length 1 specifying the column name
-#'   in \code{meta} used to define groups for analysis.
+#'   \item \code{mode}: Specifies how the design formula is constructed: 
+#'   either `"isolated"` or `"integrated"`. 
+#'   
+#'   - `"isolated"`: Each level is analyzed independently, using only the 
+#'     subset of data corresponding to that level. The design formula does 
+#'     not include the condition variable, since only one condition is 
+#'     present in each subset.
+#'   
+#'   - `"integrated"`: All levels are analyzed together in a single model, 
+#'     using the full dataset. The design formula includes the condition 
+#'     variable (and optionally interaction terms with it) so that results 
+#'     are estimated jointly across all levels.
+#'   \item \code{condition}: Character vector of length 1 specifying the column
+#'   name in \code{meta} used to define groups for analysis.
 #'   \item \code{spline_params}: A list of spline parameters for the analysis.
 #'   \item \code{meta_batch_column}: A character string specifying the column
 #'   name in the metadata used for batch effect removal.
@@ -30,6 +57,10 @@
 #'   \item \code{limma_splines_result}: A list of data frames, each representing
 #'    a top table from differential expression analysis, containing at least
 #'    'adj.P.Val' and expression data columns.
+#'   \item \code{feature_name_columns}: Character vector of strings that each
+#'   specify a column of the original data dataframe which were used to 
+#'   automatically build the feature names with the \code{extract_data}
+#'   function.
 #' }
 #' @param nr_clusters A list whose length matches `top_tables`; each element is
 #'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
@@ -65,14 +96,8 @@
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits. Default is 100.
 #'
-#' @return A list where each element corresponds to a group factor and contains
-#' the clustering results,
-#'         including `clustered_hits` data frame, hierarchical clustering object
-#'         `hc`, `curve_values`
-#'         data frame with normalized spline curves, and `top_table` with
-#'         cluster assignments.
-#'
-#' @seealso \code{\link[limma]{topTable}}, \code{\link[stats]{hclust}}
+#' @return A list containing the clustering results, as well as the generated
+#'  plots 
 #'
 #' @export
 #'
@@ -328,7 +353,6 @@ cluster_hits <- function(
     clustered_hits_levels = clustered_hits_levels
   )
 }
-
 
 
 # Level 1 internal functions ---------------------------------------------------

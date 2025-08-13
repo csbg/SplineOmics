@@ -232,7 +232,7 @@ run_ora <- function(
     message_prefix = "ORA analysis",
     report_dir = report_dir
   )
-  
+
   generate_report_html(
     plots = plots,
     plots_sizes = plots_sizes,
@@ -1438,11 +1438,11 @@ run_ora_level <- function(
   ora_results <- add_odds_ratios_to_ora(ora_results)
   
   # Check if any enrichment results exist
-  any_result <- any(sapply(ora_results, function(cluster_entry) {
-    any(sapply(cluster_entry, function(res) {
-      is.data.frame(res) && nrow(res) > 0
-    }))
-  }))
+  any_result <- any(vapply(ora_results, function(cluster_entry) {
+    any(vapply(cluster_entry, function(res) {
+      is.data.frame(res) && nrow(res) > 0L
+    }, logical(1)))
+  }, logical(1)))
 
   if (any_result) {
     result <- make_enrich_dotplot(
@@ -1681,37 +1681,41 @@ dbs_to_term2genes <- function(databases) {
 #' 
 add_odds_ratios_to_ora <- function(ora_results) {
   
+  parse_ratio_vec <- function(x) {
+    parts <- strsplit(x, "/", fixed = TRUE)
+    numer_chr <- vapply(
+      parts,
+      function(p) if (length(p) >= 2L) p[1L] else NA_character_, character(1)
+      )
+    denom_chr <- vapply(
+      parts,
+      function(p) if (length(p) >= 2L) p[2L] else NA_character_, character(1)
+      )
+    numer <- suppressWarnings(as.numeric(numer_chr))
+    denom <- suppressWarnings(as.numeric(denom_chr))
+    numer / denom
+  }
+  
   for (cluster in names(ora_results)) {
     for (gene_set_name in names(ora_results[[cluster]])) {
       df <- ora_results[[cluster]][[gene_set_name]]
       
-      if (
-        is.data.frame(df) &&
-        "GeneRatio" %in% colnames(df) &&
-        "BgRatio" %in% colnames(df)
-      ) {
-        # Parse GeneRatio
-        gene_ratio_parts <- strsplit(df$GeneRatio, "/")
-        gene_numer <- as.numeric(sapply(gene_ratio_parts, function(x) x[1]))
-        gene_denom <- as.numeric(sapply(gene_ratio_parts, function(x) x[2]))
-        gene_ratios <- gene_numer / gene_denom
+      if (is.data.frame(df) &&
+          "GeneRatio" %in% names(df) &&
+          "BgRatio"   %in% names(df)) {
         
-        # Parse BgRatio
-        bg_ratio_parts <- strsplit(df$BgRatio, "/")
-        bg_numer <- as.numeric(sapply(bg_ratio_parts, function(x) x[1]))
-        bg_denom <- as.numeric(sapply(bg_ratio_parts, function(x) x[2]))
-        bg_ratios <- bg_numer / bg_denom
+        gene_ratios <- parse_ratio_vec(df$GeneRatio)
+        bg_ratios   <- parse_ratio_vec(df$BgRatio)
         
-        # Compute odds ratio
-        odds_ratios <- gene_ratios / bg_ratios
-        df$odds_ratio <- odds_ratios
+        # Compute odds ratio (handles NA/Inf if bg_ratios == 0)
+        df$odds_ratio <- gene_ratios / bg_ratios
         
         ora_results[[cluster]][[gene_set_name]] <- df
       }
     }
   }
   
-  return(ora_results)
+  ora_results
 }
 
 
@@ -1761,6 +1765,16 @@ make_enrich_dotplot <- function(
 ) {
 
   top_plot_data <- prepare_plot_data(ora_results)
+  
+  if (!is.data.frame(top_plot_data) || nrow(top_plot_data) == 0L) {
+    # Optional: return a placeholder plot instead of NULL
+    p_empty <- ggplot2::ggplot() +
+      ggplot2::theme_void() +
+      ggplot2::geom_text(
+        ggplot2::aes(x = 0, y = 0, label = "No enriched terms to display")
+      )
+    return(list(dotplot = p_empty, dotplot_height = 0.7))
+  }
   
   height_per_label <- 0.1
   num_labels <- length(unique(top_plot_data$term))

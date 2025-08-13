@@ -129,9 +129,12 @@ extract_data <- function(
 #'
 #' @param data A dataframe containing the input data.
 #' @param top_row Integer specifying the top-most row of the numeric block.
-#' @param bottom_row Integer specifying the bottom-most row of the numeric block.
-#' @param left_col Column identifier (letter or numeric) for the left-most column.
-#' @param right_col Column identifier (letter or numeric) for the right-most column.
+#' @param bottom_row Integer specifying the bottom-most row of the numeric
+#'  block.
+#' @param left_col Column identifier (letter or numeric) for the left-most
+#'  column.
+#' @param right_col Column identifier (letter or numeric) for the right-most
+#'  column.
 #' @param feature_name_columns A character vector specifying the feature name
 #' columns, or NA.
 #' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
@@ -310,11 +313,18 @@ control_inputs_extract_data <- function(
 excel_col_to_index <- function(col) {
   if (is.numeric(col)) return(as.integer(col))
   col <- toupper(as.character(col))
-  sapply(col, function(cname) {
-    letters <- strsplit(cname, split = "")[[1]]
-    nums <- sapply(letters, function(l) utf8ToInt(l) - 64)
-    sum(nums * 26 ^ (rev(seq_along(nums)) - 1))
-  })
+  
+  vapply(col, function(cname) {
+    if (is.na(cname) || cname == "") return(NA_integer_)
+    ch <- strsplit(cname, "", fixed = TRUE)[[1]]
+    
+    # Validate A–Z only
+    if (any(ch < "A" | ch > "Z")) stop("Invalid column label: ", cname)
+    
+    nums <- vapply(ch, function(l) utf8ToInt(l) - 64L, integer(1))
+    pows <- 26L ^ ((length(nums) - 1L):0L)
+    sum(nums * pows)
+  }, integer(1))
 }
 
 

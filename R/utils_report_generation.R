@@ -1935,35 +1935,35 @@ extract_and_combine <- function(input) {
 #' @importFrom base64enc base64encode
 #'
 create_enrichr_zip <- function(enrichr_format) {
-  temp_dir <- tempfile(pattern = "enrichr")
-  dir.create(temp_dir)
+  stopifnot(is.list(enrichr_format), !is.null(enrichr_format$gene_lists))
+  
+  temp_dir <- tempfile("enrichr")
   zip_file <- tempfile(fileext = ".zip")
-
+  dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  # Ensure cleanup even if an error occurs
+  on.exit(unlink(temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+  on.exit(unlink(zip_file, force = TRUE), add = TRUE)
+  
+  # Write level/cluster files
   for (level in names(enrichr_format$gene_lists)) {
     level_dir <- file.path(temp_dir, level)
-    dir.create(level_dir, recursive = TRUE)
-
+    dir.create(level_dir, recursive = TRUE, showWarnings = FALSE)
+    
     for (cluster in names(enrichr_format$gene_lists[[level]])) {
       cluster_file <- file.path(level_dir, paste0(cluster, ".txt"))
-      writeLines(enrichr_format$gene_lists[[level]][[cluster]], cluster_file)
+      # coerce to character; write empty file if no genes
+      vals <- as.character(enrichr_format$gene_lists[[level]][[cluster]])
+      writeLines(vals, con = cluster_file, sep = "\n", useBytes = TRUE)
     }
   }
-
-  # Create the ZIP file using relative paths
-  original_wd <- getwd()
-  setwd(temp_dir)
-  files_to_zip <- list.files(temp_dir, recursive = TRUE)
-  zip::zip(zipfile = zip_file, files = files_to_zip)
-  setwd(original_wd)
-
-  # Read the ZIP file and encode it to base64
-  zip_base64 <- base64enc::base64encode(zip_file)
-
-  # Clean up temporary directory and files
-  unlink(temp_dir, recursive = TRUE)
-  unlink(zip_file)
-
-  return(zip_base64)
+  
+  # Create the zip without changing the working directory
+  files_to_zip <- list.files(temp_dir, recursive = TRUE, all.files = FALSE)
+  zip::zipr(zipfile = zip_file, files = files_to_zip, root = temp_dir)
+  
+  # Read and encode to base64, then return
+  base64enc::base64encode(zip_file)
 }
 
 

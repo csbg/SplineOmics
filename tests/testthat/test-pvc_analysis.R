@@ -48,7 +48,7 @@ test_that("phosphoproteomics pipeline runs without errors", {
     meta_batch_column = "Reactor"
   )
   
-  plot_info = list(
+  plot_info <- list(
     y_axis_label = "log2 intensity",
     time_unit = "min",
     treatment_labels = list("feeding"),

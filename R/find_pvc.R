@@ -562,7 +562,7 @@ classify_excursions <- function(
   colnames(peak_valley_labels) <- unique_timepoints
   
   # Classification logic for each triplet
-  for (i in 1:nrow(data)) {
+  for (i in seq_len(nrow(data))) {
     for (t in 2:(num_timepoints - 1)) {
       p_val <- pvc_pvals[i, t - 1]
       

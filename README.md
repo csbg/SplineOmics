@@ -61,6 +61,10 @@ valid input to the `SplineOmics` package (such as transcriptomics,
 proteomics, phosphoproteomics, metabolomics, glycan fractional
 abundances, etc.).
 
+Note: So far, the package has only been tested with datasets with 2
+conditions. In theory, it should also work with more conditions, but
+unexpected errors can arise.
+
 ### What do I need precisely?
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein,
@@ -176,7 +180,7 @@ install.packages("remotes")
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.2.0",        # Specify the tag to install
+  ref = "0.2.1",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues

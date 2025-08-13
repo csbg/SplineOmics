@@ -30,14 +30,31 @@ following elements:
       \item \code{knots}: Positions of the internal knots (for B-splines).
       \item \code{bknots}: Boundary knots (for B-splines).
     }
-  \item \code{dream_params}: A named list or \code{NULL}. When not 
-  \code{NULL}, it can contain:
-    \itemize{
-      \item \code{dof}: An integer greater than 1, specifying the degrees 
-      of freedom for the dream topTable.
-      \item \code{KenwardRoger}: A boolean indicating whether to use the 
-      Kenward-Roger method.
-    }
+  \item \code{use_array_weights}: Boolean flag indicating if the robust fit
+   strategy to deal with heteroscedasticity should be used or not. If set to
+   NULL, then this is handeled implicitly based on the result of the Levene
+   test. If this test is significant for at least 10% of the features,
+   then the robust strategy is used. The robust strategy uses the function
+   voomWithQualityWeights for RNA-seq data instead of the normal voom
+   function. For other, non-count-based data, the function 
+   limma::arrayWeights is used instead, combined with setting the robust
+   argument to TRUE for the limma::eBayes function. In summary, the strategy
+   employed by those functions is to downweights samples with higher
+   variance. This can be neccessary, because linear models have the
+   assumption of homoscedasticity, which means that the variance is
+   (approx.) the same across all datapoints where the linear model is fitted.
+    If this is violated, then the resulting p-values cannot be trusted
+   (common statistical wisdom).
+  \item \code{bp_cfg}: A named numeric vector specifying the parallelization
+  configuration, with expected names `"n_cores"` and `"blas_threads"`.
+  
+  This controls how many **R worker processes** (`n_cores`) and how many
+  **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+  during parallel computation.  
+  
+  If `bp_cfg` is `NULL`, missing, or any of its required fields is
+  `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+  disables parallelization and avoids oversubscription of CPU threads.
 }}
 
 \item{normalize_func}{An optional normalization function. If provided, this
@@ -64,5 +81,5 @@ require a different normalization method, you can supply your own
 custom normalization function.
 }
 \seealso{
-\code{\link[edgeR]{DGEList}}, \code{\link[edgeR]{calcNormFactors}}
+edgeR::DGEList, edgeR::calcNormFactors
 }

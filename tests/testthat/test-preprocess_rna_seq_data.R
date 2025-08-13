@@ -46,7 +46,10 @@ test_that("splineomics object structure is as expected", {
       spline_type = c("n"),
       dof = c(3L)
     ),
-    bp_cfg = c(n_cores = 14, blas_threads = 1)
+    bp_cfg = c(
+      n_cores = 1,
+      blas_threads = 1
+      )
   )
   
   splineomics <- SplineOmics::preprocess_rna_seq_data(splineomics)

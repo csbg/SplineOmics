@@ -237,7 +237,7 @@ splineomics <- SplineOmics::create_splineomics(
 # Run the PVC-analysis
 
 ```{r Define plot_info, eval = TRUE}
-plot_info = list(
+plot_info <- list(
   y_axis_label = "log2 intensity",
   time_unit = "min",
   treatment_labels = list("feeding"),

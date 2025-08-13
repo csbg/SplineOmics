@@ -33,27 +33,47 @@
 #'       \item \code{knots}: Positions of the internal knots (for B-splines).
 #'       \item \code{bknots}: Boundary knots (for B-splines).
 #'     }
-#'   \item \code{dream_params}: A named list or \code{NULL}. When not 
-#'   \code{NULL}, it can contain:
-#'     \itemize{
-#'       \item \code{dof}: An integer greater than 1, specifying the degrees 
-#'       of freedom for the dream topTable.
-#'       \item \code{KenwardRoger}: A boolean indicating whether to use the 
-#'       Kenward-Roger method.
-#'     }
+#'   \item \code{use_array_weights}: Boolean flag indicating if the robust fit
+#'    strategy to deal with heteroscedasticity should be used or not. If set to
+#'    NULL, then this is handeled implicitly based on the result of the Levene
+#'    test. If this test is significant for at least 10% of the features,
+#'    then the robust strategy is used. The robust strategy uses the function
+#'    voomWithQualityWeights for RNA-seq data instead of the normal voom
+#'    function. For other, non-count-based data, the function 
+#'    limma::arrayWeights is used instead, combined with setting the robust
+#'    argument to TRUE for the limma::eBayes function. In summary, the strategy
+#'    employed by those functions is to downweights samples with higher
+#'    variance. This can be neccessary, because linear models have the
+#'    assumption of homoscedasticity, which means that the variance is
+#'    (approx.) the same across all datapoints where the linear model is fitted.
+#'     If this is violated, then the resulting p-values cannot be trusted
+#'    (common statistical wisdom).
+#'   \item \code{bp_cfg}: A named numeric vector specifying the parallelization
+#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#'   
+#'   This controls how many **R worker processes** (`n_cores`) and how many
+#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+#'   during parallel computation.  
+#'   
+#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
+#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+#'   disables parallelization and avoids oversubscription of CPU threads.
 #' }
+#' 
 #' @param normalize_func An optional normalization function. If provided, this
 #' function will be used to normalize the `DGEList` object. If not provided,
 #' TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
 #' Must take as
 #' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 #' with the normalized counts.
+#' 
 #' @return The updaed `splineomics` object, now containing the `voom` object, 
 #' which includes the log2-counts per million (logCPM) matrix and 
 #' observation-specific weights. Additionally, the splineparams are updated with
 #' the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)
 #'
-#' @seealso \code{\link[edgeR]{DGEList}}, \code{\link[edgeR]{calcNormFactors}}
+#' @seealso edgeR::DGEList, edgeR::calcNormFactors
+#' 
 #' @importFrom limma voom
 #' @importFrom variancePartition voomWithDreamWeights
 #'
@@ -85,6 +105,7 @@ preprocess_rna_seq_data <- function(
   design <- splineomics[["design"]]
   condition <- splineomics[["condition"]]
   use_array_weights <- splineomics[["use_array_weights"]]
+  bp_cfg <- splineomics[["bp_cfg"]]
 
   # Because at first I enforced that X in the design formula stands for the time
   # and I heavily oriented my code towards that. But then I realised that it is
@@ -164,12 +185,20 @@ preprocess_rna_seq_data <- function(
         "both genes and samples"
         )
     }
+    
+    param <- bp_setup(bp_cfg)
+    set.seed(42)
 
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
       formula = stats::as.formula(design),
-      data = design2design_matrix_result[["meta"]]
+      data = design2design_matrix_result[["meta"]],
+      BPPARAM = param
     )
+    
+    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+      BiocParallel::bpstop(param)       # cleanly shuts down workers
+    }
     
   }
   else {   # use the functions from limma

@@ -34,12 +34,10 @@ reference:
       - extract_data
       - find_pvc
       - make_scatter_plots_html
-      - open_tutorial
       - preprocess_rna_seq_data
       - print.SplineOmics
       - run_ora
       - run_limma_splines
-      - screen_limma_hyperparams
       - update_splineomics
 
 extra_files:
