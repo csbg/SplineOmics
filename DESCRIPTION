@@ -1,7 +1,7 @@
 Package: SplineOmics
 Type: Package
 Title: Streamlines the process of analysing omics timeseries data with splines
-Version: 0.2.1
+Version: 0.3.0
 Authors@R: person("Thomas", "Rauter", 
                   email = "thomas.rauter@plus.ac.at", 
                   role = c("aut", "cre"),

@@ -243,13 +243,6 @@ this
 tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html)
 covers a real CHO cell time-series proteomics example from start to end.
 
-To open an R Markdown file of the **tutorial** in `RStudio`, run:
-
-``` r
-library(SplineOmics)
-SplineOmics::open_tutorial()  
-```
-
 Note that the SplineOmics package in theory supports experimental design
 with any amount of conditions. However, so far it was only tested with
 datasets that contain two conditions. Therefore, it cannot be ruled out

@@ -7,15 +7,29 @@
 #' list of the plot objects it generated, and an HTML report with embedded files
 #' containing the enrichment results, and dotplots visualizing the enrichment.
 #'
-#' @param levels_clustered_hits A list of dataframes that contain the clustered
-#' hits of the different levels. When clustering_results is the variable that 
-#' collects the output of the SplineOmics::cluster_hits() function, then an 
-#' easy way to get this is clustering_results$clustered_hits_levels. Every 
-#' element of that list is a dataframe, with the three columns feature, cluster,
-#' gene. feature contains the index number of the feature (for example a protein
-#' ), cluster is an integer specifying in which cluster this feature was placed,
-#' and gene contains the gene name. It is essential that the gene name matches
-#' the gene names used in the databases that are used for this enrichment here.
+#' @param clustering_results A tibble containing one row per
+#'   \code{feature_nr} with metadata and cluster assignments across the
+#'   analysis categories. It includes:
+#'   \itemize{
+#'     \item \code{feature_nr} – Numeric feature identifier.
+#'     \item \code{feature_name} – Preferred feature name from the source
+#'       data, falling back to the numeric ID if none is available.
+#'     \item \code{gene} – Preferred gene symbol from the annotation or
+#'       cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       assignments for each time-effect condition.
+#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
+#'       category 2 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 2 hit.
+#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
+#'       category 3 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 3 hit.
+#'   }
+#'   For any category-specific cluster column, a value of \code{NA}
+#'   indicates that the feature was not significant (not a hit) in that
+#'   category.
 #' 
 #' @param databases A dataframe with the three columns: DB containing the 
 #' database name, Geneset containng the name of the geneset, and Gene, 
@@ -106,7 +120,7 @@
 #' @export
 #'
 run_ora <- function(
-    levels_clustered_hits,
+    clustering_results,
     databases,
     report_info,
     cluster_hits_report_name,
@@ -121,7 +135,7 @@ run_ora <- function(
     universe = NULL,
     report_dir = here::here()
 ) {
-  
+
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -138,18 +152,10 @@ run_ora <- function(
 
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-  
-  levels_clustered_hits <- levels_clustered_hits[
-    !vapply(
-      levels_clustered_hits,
-      is.character,
-      logical(1)
-    )
-  ]
-  
+
   # Control the test not covered by the InputControl class
   control_inputs_run_ora(
-    levels_clustered_hits = levels_clustered_hits,
+    clustering_results = clustering_results,
     databases = databases,
     params = clusterProfiler_params,
     mapping_cfg = mapping_cfg,
@@ -161,23 +167,47 @@ run_ora <- function(
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
 
-  levels_clustered_hits <- map_gene_symbols(
-    levels_clustered_hits = levels_clustered_hits,
+  clustering_results <- map_gene_symbols(
+    clustering_results = clustering_results,
     mapping_cfg = mapping_cfg
   )
 
-  all_results <- map2(
-    levels_clustered_hits,
-    names(levels_clustered_hits),
-    ~ manage_ora_level(
-      .x,
-      .y,
-      databases,
-      clusterProfiler_params,
-      enrichGO_cfg,
-      universe
+  # all_results <- map2(
+  #   levels_clustered_hits,
+  #   names(levels_clustered_hits),
+  #   ~ manage_ora_level(
+  #     .x,
+  #     .y,
+  #     databases,
+  #     clusterProfiler_params,
+  #     enrichGO_cfg,
+  #     universe
+  #   )
+  # )
+  browser()
+  level_columns <- function(clustering_results) {
+    allc <- grep("^cluster_", names(clustering_results), value = TRUE)
+    # keep stable order: 2 condition cols first, then cat2, then cat3
+    cond <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
+    c(cond,
+      intersect("cluster_cat2", allc),
+      intersect("cluster_cat3", allc))
+  }
+
+  lvl_cols <- level_columns(clustering_results)
+  
+  all_results <- lapply(lvl_cols, function(col) {
+    manage_ora_level_from_summary(
+      clustering_results = clustering_results,
+      level_col = col,
+      databases = databases,
+      clusterProfiler_params = clusterProfiler_params,
+      enrichGO_cfg = enrichGO_cfg,
+      universe = universe
     )
-  )
+  })
+  names(all_results) <- lvl_cols
+  
   
   processed_results <- map2(
     all_results,
@@ -259,8 +289,30 @@ run_ora <- function(
 #' Validates the inputs for generating a ora report, including clustered
 #' hits, genes, databases, parameters, plot titles, and background genes.
 #'
-#' @param levels_clustered_hits A list containing clustered hits at various
-#' levels.
+#' @param clustering_results A tibble produced by
+#'   \code{construct_cluster_summary()}, containing one row per
+#'   \code{feature_nr} with metadata and cluster assignments across the
+#'   analysis categories. It includes:
+#'   \itemize{
+#'     \item \code{feature_nr} – Numeric feature identifier.
+#'     \item \code{feature_name} – Preferred feature name from the source
+#'       data, falling back to the numeric ID if none is available.
+#'     \item \code{gene} – Preferred gene symbol from the annotation or
+#'       cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       assignments for each time-effect condition.
+#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
+#'       category 2 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 2 hit.
+#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
+#'       category 3 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 3 hit.
+#'   }
+#'   For any category-specific cluster column, a value of \code{NA}
+#'   indicates that the feature was not significant (not a hit) in that
+#'   category.
 #' @param databases A list of databases to be used in the ora analysis.
 #' @param params A list of parameters for the ora analysis.
 #' @param mapping_cfg A named list that controls the optional behavior of
@@ -310,7 +362,7 @@ run_ora <- function(
 #' otherwise, the connection is not documented.
 #'
 control_inputs_run_ora <- function(
-    levels_clustered_hits,
+    clustering_results,
     databases,
     params,
     mapping_cfg,
@@ -320,7 +372,7 @@ control_inputs_run_ora <- function(
     cluster_hits_report_name
 ) {
 
-  check_clustered_hits(levels_clustered_hits)
+  check_clustering_results(clustering_results)
   
   check_databases(databases)
   
@@ -329,18 +381,7 @@ control_inputs_run_ora <- function(
   check_mapping_cfg(mapping_cfg)
   
   check_enrichGO_cfg(enrichGO_cfg)
-  
-  if (!is.na(plot_titles)) {
-    if (!is.character(plot_titles) ||
-        length(plot_titles) != length(levels_clustered_hits)) {
-      stop(paste(
-        "plot_titles must be a character vector with length == length",
-        "length levels_clustered_hits"
-      ), call. = FALSE)
-    }
-  }
-  
-  
+
   if (!is.null(background)) {
     if (!is.character(background)) {
       stop_call_false("background must be a character vector or NULL.")
@@ -452,6 +493,28 @@ manage_ora_level <- function(
     universe = universe
   )
 }
+
+
+manage_ora_level_from_summary <- function(
+    clustering_results,
+    level_col,
+    databases,
+    clusterProfiler_params,
+    enrichGO_cfg,
+    universe
+) {
+  cg <- make_clustered_genes(clustering_results, level_col)
+  message(paste0("\n\n\n Running clusterProfiler for level: ", level_col))
+  run_ora_level(
+    clustered_genes = cg,
+    databases = databases,
+    params = clusterProfiler_params,
+    enrichGO_cfg = enrichGO_cfg,
+    plot_title = level_col,
+    universe = universe
+  )
+}
+
 
 
 #' Process ORA Result for a Specific Level
@@ -692,183 +755,180 @@ build_run_ora_report <- function(
 #'  replaced by mapped symbols.
 #' 
 map_gene_symbols <- function(
-    levels_clustered_hits,
+    clustering_results,
     mapping_cfg
-    ) {
-
+) {
+  
+  if (!is.data.frame(clustering_results) ||
+      !"gene" %in% names(clustering_results)) {
+    stop("clustering_results must be a data.frame with a 'gene' column.",
+         call. = FALSE)
+  }
   stopifnot(
-    is.list(levels_clustered_hits),
-    all(vapply(levels_clustered_hits,
-               \(x) "gene" %in% names(x), logical(1))),
     is.list(mapping_cfg),
-    all(c("method","from_species","to_species") %in%
-          names(mapping_cfg))
-    )
+    all(c("method","from_species","to_species") %in% names(mapping_cfg))
+  )
   
   method <- tolower(mapping_cfg$method)
   from   <- mapping_cfg$from_species
   to     <- mapping_cfg$to_species
   
-  all_genes <- unlist(lapply(levels_clustered_hits, `[[`, "gene"),
-                      use.names = FALSE)
-  
-  if (any(grepl("_[0-9]+$", all_genes))) {
+  all_genes <- as.character(clustering_results$gene)
+  has_suffix <- !is.na(all_genes) & grepl("_[0-9]+$", all_genes)
+  if (any(has_suffix)) {
     warning(
-      "Some gene IDs end in '_<digits>'. No automatic stripping ",
-      "will be performed.  Clean them yourself if they fail to map.",
+      "Some gene IDs end in '_<digits>'. No automatic stripping will be ",
+      "performed. Clean them yourself if they fail to map.",
       call. = FALSE
-      )
+    )
   }
   
-  unique_genes <- unique(all_genes)
+  unique_genes <- unique(all_genes[!is.na(all_genes)])
   
   map_vec <- switch(
     method,
-    "none" = setNames(
-      unique_genes,
-      unique_genes
-      ),
-                    
+    "none" = setNames(unique_genes, unique_genes),
+    
     "gprofiler" = {
-      if (!requireNamespace("gprofiler2", quietly = TRUE))
-        stop_call_false(
-          "`gprofiler2` not installed; install it or set method = 'none'."
-          )
-
+      if (!requireNamespace("gprofiler2", quietly = TRUE)) {
+        stop("'gprofiler2' not installed; install it or set method='none'.",
+             call. = FALSE)
+      }
       gp <- gprofiler2::gorth(
         unique_genes,
-        source_organism  = from,
-        target_organism  = to,
-        mthreshold       = Inf,
-        filter_na        = TRUE
-        )
-      
-      # gorth names: 'input' = original, 'ortholog_name' = mapped
-      setNames(
-        gp$ortholog_name,
-        gp$input
-        )
+        source_organism = from,
+        target_organism = to,
+        mthreshold = Inf,
+        filter_na = TRUE
+      )
+      setNames(gp$ortholog_name, gp$input)
     },
     
     "orthogene" = {
-      if (!requireNamespace("orthogene", quietly = TRUE))
-        stop_call_false(
-          "`orthogene` not installed; install it or set method = 'none'."
-          )
-      
+      if (!requireNamespace("orthogene", quietly = TRUE)) {
+        stop("'orthogene' not installed; install it or set method='none'.",
+             call. = FALSE)
+      }
       or <- orthogene::convert_orthologs(
         gene_df        = unique_genes,
-        input_species  = from,                       # correct arg names
+        input_species  = from,
         output_species = to,
         method         = "gprofiler",
-        gene_output    = "dict")                     # returns a named list
-      
-      map_chr <- unlist(    # make it a character vec
-        or,
-        use.names = TRUE
-        )              
-      setNames(
-        map_chr,
-        names(map_chr)
-        )
+        gene_output    = "dict"
+      )
+      map_chr <- unlist(or, use.names = TRUE)
+      setNames(map_chr, names(map_chr))
     },
     
-    stop_call_false(
-      "Unknown mapping method: ",
-      method
-      )
+    stop("Unknown mapping method: ", method, call. = FALSE)
   )
   
-  ## fallback for unmapped -> keep original symbol
-  fallback_map <- setNames(   # start with identity map
-    unique_genes,
-    unique_genes
-    )  
-  fallback_map[names(map_vec)] <- map_vec       # overwrite mapped ones
-  map_vec <- fallback_map                       # use this from here on
+  # fallback identity for unmapped symbols; preserve NAs
+  id_map <- setNames(unique_genes, unique_genes)
+  id_map[names(map_vec)] <- map_vec
+  map_vec <- id_map
   
-  # Write back in the same order
-  rebuild <- \(df, idx) { df$gene <- map_vec[idx]; df }
-  row_counts <- vapply(
-    levels_clustered_hits,
-    nrow,
-    integer(1)
-    )
-  gene_split <- split(
-    all_genes,
-    rep(
-      seq_along(row_counts),
-      row_counts
-      )
-    )
-  Map(
-    rebuild,
-    levels_clustered_hits,
-    gene_split
-    )
+  # apply mapping in place
+  idx <- match(all_genes, names(map_vec))
+  mapped <- all_genes
+  mapped[!is.na(idx)] <- unname(map_vec[idx[!is.na(idx)]])
+  
+  clustering_results$gene <- mapped
+  clustering_results
 }
 
 
 # Level 2 internal functions ---------------------------------------------------
 
 
-#' Check Clustered Genes Dataframe for Required Conditions
-#' 
+#' Validate clustering results table
+#'
 #' @noRd
 #'
 #' @description
-#' This function checks if a given dataframe `clustered_genes` contains the
-#' required columns `gene` and `cluster`. The `gene` column must contain only
-#' character strings of length 1, and the `cluster` column must contain only
-#' integers. If any condition is not met, the function stops the script and
-#' produces an informative error message.
+#' Validates a unified clustering results tibble produced by
+#' \code{construct_cluster_summary()}. Ensures required metadata columns
+#' exist (\code{feature_nr}, \code{feature_name}, \code{gene}), verifies
+#' that there are at least two time-effect cluster columns named like
+#' \code{cluster_<cond1>} and \code{cluster_<cond2>}, checks that
+#' \code{feature_nr} is integer-like and unique, and that
+#' \code{feature_name} is non-missing and non-empty. Also validates the
+#' optional category columns \code{cluster_cat2} and \code{cluster_cat3}
+#' (when present) to be atomic vectors with values either \code{NA} or
+#' strings of the form \code{"<cluster_<cond1>>_<cluster_<cond2>>"}.
 #'
-#' @param levels_clustered_hits A list of dataframes to be checked for the
-#'                              required format.
+#' @param clustering_results A tibble/data frame as returned by
+#'   \code{construct_cluster_summary()}, containing one row per
+#'   \code{feature_nr} with metadata and cluster assignments across the
+#'   analysis categories.
 #'
-#' @return This function does not return a value. It stops with an error message
-#'         if the conditions are not met.
-#'
-check_clustered_hits <- function(levels_clustered_hits) {
-  if (!is.list(levels_clustered_hits)) {
-    stop(paste("levels_clustered_hits must be a list"), call. = FALSE)
+#' @return Invisibly returns \code{TRUE} on success. The function
+#'   \emph{stops with an informative error} if any validation fails.
+#'   
+check_clustering_results <- function(clustering_results) {
+  
+  if (!is.data.frame(clustering_results)) {
+    stop("clustering_results must be a data.frame/tibble.", call. = FALSE)
   }
   
-  for (i in seq_along(levels_clustered_hits)) {
-    clustered_hits <- levels_clustered_hits[[i]]
-    
-    # Check if clustered_hits is a dataframe
-    if (!is.data.frame(clustered_hits)) {
-      stop(paste(
-        "Element", i, "of levels_clustered_hits is not a dataframe",
-        "but must be one."
-      ), call. = FALSE)
-    }
-    
-    # Check if the dataframe contains the columns 'gene' and 'cluster'
-    required_columns <- c("feature", "cluster")
-    if (!all(required_columns %in% colnames(clustered_hits))) {
-      stop(
-        paste(
-          "The dataframe must contain the columns 'feature' and",
-          "'cluster'."
-        ),
-        call. = FALSE
-      )
-    }
-    
-    # Check if the 'feature' column contains only integers
-    if (!is.integer(clustered_hits$feature) &&
-        !all(clustered_hits$feature == as.integer(clustered_hits$feature))) {
-      stop("The 'feature' column must contain only integers.", call. = FALSE)
-    }
-    
-    # Check if the 'cluster' column contains only integers
-    if (!is.integer(clustered_hits$cluster) &&
-        !all(clustered_hits$cluster == as.integer(clustered_hits$cluster))) {
-      stop("The 'cluster' column must contain only integers.", call. = FALSE)
+  req <- c("feature_nr", "feature_name", "gene")
+  missing <- setdiff(req, names(clustering_results))
+  if (length(missing) > 0) {
+    stop(paste0("Missing required columns: ",
+                paste(missing, collapse = ", ")), call. = FALSE)
+  }
+  
+  clust_cols <- grep("^cluster_", names(clustering_results), value = TRUE)
+  cond_cols <- setdiff(clust_cols, c("cluster_cat2", "cluster_cat3"))
+  if (length(cond_cols) < 2) {
+    stop("Expected at least two condition cluster columns named like ",
+         "'cluster_<cond1>' and 'cluster_<cond2>'.", call. = FALSE)
+  }
+  
+  fn <- clustering_results$feature_nr
+  int_like <- is.integer(fn) ||
+    (is.numeric(fn) && all(fn == as.integer(fn), na.rm = TRUE))
+  if (!int_like) {
+    stop("'feature_nr' must be integer-like.", call. = FALSE)
+  }
+  
+  if (any(duplicated(clustering_results$feature_nr))) {
+    dups <- unique(clustering_results$feature_nr[
+      duplicated(clustering_results$feature_nr)])
+    stop(paste0("Duplicate feature_nr values: ",
+                paste(head(dups, 10), collapse = ", "),
+                if (length(dups) > 10) " ..." else ""),
+         call. = FALSE)
+  }
+  
+  fnm <- clustering_results$feature_name
+  if (any(is.na(fnm) | fnm == "")) {
+    stop("'feature_name' must be non-missing and non-empty.", call. = FALSE)
+  }
+  
+  for (cc in cond_cols) {
+    v <- clustering_results[[cc]]
+    if (!is.atomic(v)) {
+      stop(paste0("Condition cluster column '", cc, "' must be atomic."),
+           call. = FALSE)
     }
   }
+  
+  for (cc in c("cluster_cat2", "cluster_cat3")) {
+    if (cc %in% names(clustering_results)) {
+      v <- clustering_results[[cc]]
+      if (!is.atomic(v)) {
+        stop(paste0("'", cc, "' must be atomic."), call. = FALSE)
+      }
+      bad <- !is.na(v) & !grepl("^[^_]+_[^_]+$", v)
+      if (any(bad)) {
+        stop(paste0("'", cc, "' must be of the form 'a_b' or NA."),
+             call. = FALSE)
+      }
+    }
+  }
+  
+  invisible(TRUE)
 }
 
 
@@ -1358,6 +1418,108 @@ check_enrichGO_cfg <- function(enrichGO_cfg) {
 #' @return An object containing the results of the Gene Set Enrichment Analysis,
 #' including any plots generated during the analysis.
 #'
+# run_ora_level <- function(
+#     clustered_genes,
+#     databases,
+#     params = NA,
+#     enrichGO_cfg = NULL,
+#     plot_title = "",
+#     universe = NULL
+# ) {
+#   
+#   params <- set_default_params(params)
+#   gene_set_collections <- dbs_to_term2genes(databases)
+#   
+#   unique_clusters <- sort(unique(clustered_genes$cluster))
+#   
+#   ora_results <- list()   # stores all the results from clusterProfiler
+#   
+#   for (cluster in unique_clusters) {
+#     cluster_label <- paste0("cluster_", cluster)
+#     ora_results[[cluster_label]] <- list()
+#     
+#     foreground_genes <- 
+#       as.character(clustered_genes$gene[clustered_genes$cluster == cluster])
+#     
+#     at_least_one_result <- FALSE
+#     
+#     # Run clusterProfiler and process output
+#     for (gene_set_name in names(gene_set_collections)) {
+#       gene_set_map <- gene_set_collections[[gene_set_name]]
+#       
+#       # There can be a problem with a database, and that potential message is 
+#       # not coming from the SplineOmics code. That is why here always the 
+#       # database is send as a message, so that the problems can be connected
+#       # to a specific database.
+#       message(paste(    
+#         "\nDatabase:",
+#         gene_set_name
+#       ))
+#       
+#       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
+#           cfg <- enrichGO_cfg[[gene_set_name]]
+#           ora_result <- clusterProfiler::enrichGO(
+#             gene = foreground_genes,
+#             OrgDb = cfg$OrgDb,
+#             keyType = cfg$keyType,
+#             ont = cfg$ontology,
+#             pvalueCutoff = params$pvalueCutoff,
+#             pAdjustMethod = params$pAdjustMethod,
+#             universe = universe,
+#             minGSSize = params$minGSSize,
+#             maxGSSize = params$maxGSSize,
+#             qvalueCutoff = params$qvalueCutoff
+#           )
+#         ora_result <- clusterProfiler::simplify(ora_result)
+#       } else {
+#         ora_result <- clusterProfiler::enricher(
+#           gene = foreground_genes,
+#           pvalueCutoff = params$pvalueCutoff,
+#           pAdjustMethod = params$pAdjustMethod,
+#           universe = universe,
+#           minGSSize = params$minGSSize,
+#           maxGSSize = params$maxGSSize,
+#           qvalueCutoff = params$qvalueCutoff,
+#           gson = NULL,
+#           TERM2GENE = gene_set_map,
+#           TERM2NAME = NA
+#         )
+#       }
+# 
+#       ora_result_df <- as.data.frame(ora_result)
+#       if (nrow(ora_result_df) == 0) {
+#         ora_result_df <- NA  # Mark explicitly
+#       }
+# 
+#       ora_results[[cluster_label]][[gene_set_name]] <- ora_result_df
+#     }
+#   }
+#   
+#   ora_results <- add_odds_ratios_to_ora(ora_results)
+#   
+#   # Check if any enrichment results exist
+#   any_result <- any(vapply(ora_results, function(cluster_entry) {
+#     any(vapply(cluster_entry, function(res) {
+#       is.data.frame(res) && nrow(res) > 0L
+#     }, logical(1)))
+#   }, logical(1)))
+# 
+#   if (any_result) {
+#     result <- make_enrich_dotplot(
+#       ora_results,
+#       plot_title
+#     )
+#   } else {
+#     message("No cluster led to an enrichment result!")
+#     return(NA)
+#   }
+#   
+#   list(
+#     dotplot = result[["dotplot"]],
+#     dotplot_nrows = result[["dotplot_height"]],
+#     ora_results = ora_results
+#   )
+# }
 run_ora_level <- function(
     clustered_genes,
     databases,
@@ -1366,54 +1528,44 @@ run_ora_level <- function(
     plot_title = "",
     universe = NULL
 ) {
-  
   params <- set_default_params(params)
   gene_set_collections <- dbs_to_term2genes(databases)
   
   unique_clusters <- sort(unique(clustered_genes$cluster))
-  
-  ora_results <- list()   # stores all the results from clusterProfiler
+  ora_results <- list()
   
   for (cluster in unique_clusters) {
     cluster_label <- paste0("cluster_", cluster)
     ora_results[[cluster_label]] <- list()
     
-    foreground_genes <- 
-      as.character(clustered_genes$gene[clustered_genes$cluster == cluster])
+    fg <- as.character(clustered_genes$gene[
+      clustered_genes$cluster == cluster
+    ])
+    fg <- unique(fg[!is.na(fg) & fg != ""])
+    if (length(fg) == 0L) next
     
-    at_least_one_result <- FALSE
-    
-    # Run clusterProfiler and process output
     for (gene_set_name in names(gene_set_collections)) {
+      message(paste("\nDatabase:", gene_set_name))
       gene_set_map <- gene_set_collections[[gene_set_name]]
       
-      # There can be a problem with a database, and that potential message is 
-      # not coming from the SplineOmics code. That is why here always the 
-      # database is send as a message, so that the problems can be connected
-      # to a specific database.
-      message(paste(    
-        "\nDatabase:",
-        gene_set_name
-      ))
-      
       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
-          cfg <- enrichGO_cfg[[gene_set_name]]
-          ora_result <- clusterProfiler::enrichGO(
-            gene = foreground_genes,
-            OrgDb = cfg$OrgDb,
-            keyType = cfg$keyType,
-            ont = cfg$ontology,
-            pvalueCutoff = params$pvalueCutoff,
-            pAdjustMethod = params$pAdjustMethod,
-            universe = universe,
-            minGSSize = params$minGSSize,
-            maxGSSize = params$maxGSSize,
-            qvalueCutoff = params$qvalueCutoff
-          )
+        cfg <- enrichGO_cfg[[gene_set_name]]
+        ora_result <- clusterProfiler::enrichGO(
+          gene = fg,
+          OrgDb = cfg$OrgDb,
+          keyType = cfg$keyType,
+          ont = cfg$ontology,
+          pvalueCutoff = params$pvalueCutoff,
+          pAdjustMethod = params$pAdjustMethod,
+          universe = universe,
+          minGSSize = params$minGSSize,
+          maxGSSize = params$maxGSSize,
+          qvalueCutoff = params$qvalueCutoff
+        )
         ora_result <- clusterProfiler::simplify(ora_result)
       } else {
         ora_result <- clusterProfiler::enricher(
-          gene = foreground_genes,
+          gene = fg,
           pvalueCutoff = params$pvalueCutoff,
           pAdjustMethod = params$pAdjustMethod,
           universe = universe,
@@ -1425,30 +1577,23 @@ run_ora_level <- function(
           TERM2NAME = NA
         )
       }
-
-      ora_result_df <- as.data.frame(ora_result)
-      if (nrow(ora_result_df) == 0) {
-        ora_result_df <- NA  # Mark explicitly
-      }
-
-      ora_results[[cluster_label]][[gene_set_name]] <- ora_result_df
+      
+      df <- as.data.frame(ora_result)
+      if (nrow(df) == 0) df <- NA
+      ora_results[[cluster_label]][[gene_set_name]] <- df
     }
   }
   
   ora_results <- add_odds_ratios_to_ora(ora_results)
   
-  # Check if any enrichment results exist
   any_result <- any(vapply(ora_results, function(cluster_entry) {
     any(vapply(cluster_entry, function(res) {
       is.data.frame(res) && nrow(res) > 0L
     }, logical(1)))
   }, logical(1)))
-
+  
   if (any_result) {
-    result <- make_enrich_dotplot(
-      ora_results,
-      plot_title
-    )
+    result <- make_enrich_dotplot(ora_results, plot_title)
   } else {
     message("No cluster led to an enrichment result!")
     return(NA)
@@ -1563,6 +1708,27 @@ generate_section_content <- function(
   )
   
   list(html_content = html_content)
+}
+
+
+make_clustered_genes <- function(clustering_results, level_col) {
+  stopifnot(level_col %in% names(clustering_results))
+  x <- clustering_results
+  # keep rows with a gene and a level assignment
+  if (level_col == "cluster_cat2") {
+    # pooled enrichment for cat2: ignore cluster labels
+    keep <- !is.na(x[[level_col]]) & !is.na(x$gene) & x$gene != ""
+    genes <- unique(as.character(x$gene[keep]))
+    data.frame(gene = genes, cluster = "all", stringsAsFactors = FALSE)
+  } else {
+    keep <- !is.na(x[[level_col]]) & !is.na(x$gene) & x$gene != ""
+    df <- data.frame(
+      gene    = as.character(x$gene[keep]),
+      cluster = as.character(x[[level_col]][keep]),
+      stringsAsFactors = FALSE
+    )
+    unique(df)
+  }
 }
 
 

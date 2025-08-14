@@ -56,45 +56,45 @@ test_that("splineomics object structure is as expected", {
   
   # Now test its structure:
   
-  expect_s3_class(splineomics, "SplineOmics")
-  expect_type(splineomics, "list")
-  expect_length(splineomics, 16)
+  testthat::expect_s3_class(splineomics, "SplineOmics")
+  testthat::expect_type(splineomics, "list")
+  testthat::expect_length(splineomics, 16)
   
-  expect_true(is.matrix(splineomics$data))
-  expect_equal(dim(splineomics$data)[2], 136)
+  testthat::expect_true(is.matrix(splineomics$data))
+  testthat::expect_equal(dim(splineomics$data)[2], 136)
   
-  expect_true(is.list(splineomics$rna_seq_data))
-  expect_length(splineomics$rna_seq_data, 5)
+  testthat::expect_true(is.list(splineomics$rna_seq_data))
+  testthat::expect_length(splineomics$rna_seq_data, 5)
   
-  expect_s3_class(splineomics$meta, "spec_tbl_df")
-  expect_equal(ncol(splineomics$meta), 5)
-  expect_equal(nrow(splineomics$meta), 136)
+  testthat::expect_s3_class(splineomics$meta, "spec_tbl_df")
+  testthat::expect_equal(ncol(splineomics$meta), 5)
+  testthat::expect_equal(nrow(splineomics$meta), 136)
   
-  expect_type(splineomics$condition, "character")
-  expect_equal(length(splineomics$condition), 1)
+  testthat::expect_type(splineomics$condition, "character")
+  testthat::expect_equal(length(splineomics$condition), 1)
   
-  expect_type(splineomics$report_info, "list")
-  expect_length(splineomics$report_info, 6)
+  testthat::expect_type(splineomics$report_info, "list")
+  testthat::expect_length(splineomics$report_info, 6)
   
-  expect_type(splineomics$meta_batch_column, "character")
-  expect_equal(length(splineomics$meta_batch_column), 1)
+  testthat::expect_type(splineomics$meta_batch_column, "character")
+  testthat::expect_equal(length(splineomics$meta_batch_column), 1)
   
-  expect_type(splineomics$design, "character")
+  testthat::expect_type(splineomics$design, "character")
   
-  expect_type(splineomics$use_array_weights, "logical")
-  expect_false(splineomics$use_array_weights)
+  testthat::expect_type(splineomics$use_array_weights, "logical")
+  testthat::expect_false(splineomics$use_array_weights)
   
-  expect_type(splineomics$mode, "character")
-  expect_equal(splineomics$mode, "integrated")
+  testthat::expect_type(splineomics$mode, "character")
+  testthat::expect_equal(splineomics$mode, "integrated")
   
-  expect_type(splineomics$spline_params, "list")
-  expect_length(splineomics$spline_params, 2)
+  testthat::expect_type(splineomics$spline_params, "list")
+  testthat::expect_length(splineomics$spline_params, 2)
   
-  expect_type(splineomics$padjust_method, "character")
-  expect_equal(splineomics$padjust_method, "BH")
+  testthat::expect_type(splineomics$padjust_method, "character")
+  testthat::expect_equal(splineomics$padjust_method, "BH")
   
-  expect_type(splineomics$bp_cfg, "double")
-  expect_equal(length(splineomics$bp_cfg), 2)
-  expect_named(splineomics$bp_cfg, c("n_cores", "blas_threads"))
-  expect_equal(as.numeric(splineomics$bp_cfg), c(14, 1))
+  testthat::expect_type(splineomics$bp_cfg, "double")
+  testthat::expect_equal(length(splineomics$bp_cfg), 2)
+  testthat::expect_named(splineomics$bp_cfg, c("n_cores", "blas_threads"))
+  testthat::expect_equal(as.numeric(splineomics$bp_cfg), c(1, 1))
 })

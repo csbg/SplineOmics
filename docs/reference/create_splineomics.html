@@ -11,7 +11,7 @@ argument to the other functions of this package."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,7 @@ argument to the other functions of this package.</p>
 <span>  meta_batch2_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  feature_name_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  design <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  use_array_weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  use_array_weights <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  dream_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spline_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -111,9 +111,18 @@ function.</p></dd>
 
 
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
-<dd><p>A list containing report information such as omics data
-type, data description, data collection date, analyst name, contact info,
-and project name (optional).</p></dd>
+<dd><p>A named list describing the experiment.
+Must include the following fields:
+  - <code>"omics_data_type"</code>
+  - <code>"data_description"</code>
+  - <code>"data_collection_date"</code>
+  - <code>"analyst_name"</code>
+  - <code>"contact_info"</code>
+  - <code>"project_name"</code></p>
+<p>May also include the following optional fields:
+  - <code>"method_description"</code>
+  - <code>"results_summary"</code>
+  - <code>"conclusions"</code></p></dd>
 
 
 <dt id="arg-meta-batch-column">meta_batch_column<a class="anchor" aria-label="anchor" href="#arg-meta-batch-column"></a></dt>
@@ -142,12 +151,10 @@ create the row headers for the data matrix!</p></dd>
 <dt id="arg-use-array-weights">use_array_weights<a class="anchor" aria-label="anchor" href="#arg-use-array-weights"></a></dt>
 <dd><p>Boolean flag indicating if the robust fit strategy
 to deal
-with heteroscedasticity should be used or not. If ommited (parameter value
-is NULL) then this is handeled implicitly based on the result of the Wilcoxon
-signed exact test (tests if there is a significant differene in the variance
-across samples between at least two levels of the experiment). If this test
-is significant for at least one pairwise comparison, then the robust strategy
-is applied. The robust strategy uses the function voomWithQualityWeights for
+with heteroscedasticity should be used or not. If set to NULL, then this is
+handeled implicitly based on the result of the Levene test. If this test is
+significant for at least 10<!-- % of the features, then the robust strategy is  -->
+used. The robust strategy uses the function voomWithQualityWeights for
 RNA-seq data instead of the normal voom function. For other, non-count-based
 data, the function limma::arrayWeights is used instead, combined with setting
 the robust argument to TRUE for the limma::eBayes function. In summary, the
@@ -171,7 +178,8 @@ and not in `dream_params`.</p></dd>
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
 <dd><p>For the design formula, you must specify either 'isolated' or
-'integrated'. Isolated means limma determines the results for each level
+'integrated' for the mode. Isolated means limma determines the results for
+each level
 using only the data from that level. Integrated means limma determines the
  results for all levels using the full dataset (from all levels).</p></dd>
 

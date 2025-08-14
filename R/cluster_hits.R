@@ -96,8 +96,43 @@
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits. Default is 100.
 #'
-#' @return A list containing the clustering results, as well as the generated
-#'  plots 
+#' @return
+#' A named list with two elements:
+#' \describe{
+#'   \item{\code{cluster_summary}}{
+#'     A tibble containing one row per \code{feature_nr} with metadata and
+#'     cluster assignments across the analysis categories. The structure is:
+#'     \itemize{
+#'       \item \code{feature_nr} – Numeric feature identifier.
+#'       \item \code{feature_name} – Preferred feature name, prioritizing
+#'         values from the limma tables, then from the cluster table row
+#'         names, and falling back to the numeric feature ID.
+#'       \item \code{gene} – Preferred gene symbol from the \code{annotation}
+#'         table if available, otherwise taken from the cluster tables.
+#'       \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'         assignments for each time-effect condition, named according to
+#'         the elements of \code{clustered_hits_levels}.
+#'       \item \code{cluster_cat2} – Present only if category 2 results are
+#'         available; a combined cluster label in the form
+#'         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
+#'         are significant in category 2. If this value is \code{NA}, the
+#'         feature was not a category 2 hit.
+#'       \item \code{cluster_cat3} – Present only if category 3 results are
+#'         available; a combined cluster label in the form
+#'         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
+#'         are significant in category 3. If this value is \code{NA}, the
+#'         feature was not a category 3 hit.
+#'     }
+#'     For any category-specific cluster column (\code{cluster_<cond1>},
+#'     \code{cluster_<cond2>}, \code{cluster_cat2}, \code{cluster_cat3}),
+#'     a value of \code{NA} indicates that the feature was not significant
+#'     (not a hit) in that category.
+#'   }
+#'   \item{\code{plots}}{
+#'     A list of all plots generated during the run, corresponding to the
+#'     visualizations shown in the HTML report produced by this function.
+#'   }
+#' }
 #'
 #' @export
 #'
@@ -347,10 +382,16 @@ cluster_hits <- function(
     )
   }
 
+  cluster_summary <- construct_cluster_summary(
+    limma_splines_results = splineomics[["limma_splines_result"]],
+    clustered_hits_levels = clustered_hits_levels,
+    category_2_and_3_hits = category_2_and_3_hits,
+    annotation = annotation
+  )
+
   list(
-    all_levels_clustering = all_levels_clustering,
-    plots = plots,
-    clustered_hits_levels = clustered_hits_levels
+    cluster_summary = cluster_summary,
+    plots = plots
   )
 }
 
@@ -1586,6 +1627,204 @@ clean_gene_symbols <- function(genes) {
 
   # Return cleaned genes, keeping the same index as input
   return(cleaned_genes)
+}
+
+
+#' Construct unified cluster summary table
+#'
+#' @noRd
+#'
+#' @description
+#' Constructs a unified cluster summary table for all features across
+#' time-effect (category 1) and, if present, average-difference
+#' (category 2) and interaction (category 3) results. Combines cluster
+#' assignments for two conditions, gene annotations, and feature names
+#' into a single flat tibble. For cat3 (when available), cluster labels
+#' are condition-combination strings (e.g., `"1_2"`, `"NA_2"`) shown
+#' only for features in the cat3 hit set. For cat2 (when available),
+#' the column encodes **direction** using two labels:
+#' `"<cond1>_higher"` or `"<cond2>_higher"` (condition names are taken
+#' from `clustered_hits_levels` with underscores removed). Direction is
+#' determined from the signed `PhaseStationary` statistic in
+#' `avrg_diff_conditions`, with **positive → `<cond2>_higher`** and
+#' **negative → `<cond1>_higher`**. Features not significant in a
+#' category receive `NA` in that category’s column. If
+#' `limma_splines_results` contains only time-effect results, cat2/cat3
+#' logic is skipped and those columns are omitted.
+#'
+#' @param limma_splines_results A list with required sublist
+#'   `time_effect` (two tibbles, one per condition; each contains at
+#'   least `feature_nr` and `feature_names`). It may also include:
+#'   * `avrg_diff_conditions`: tibble of category 2 results (optional),
+#'     including `feature_nr` and `PhaseStationary`.
+#'   * `interaction_condition_time`: tibble of category 3 results
+#'     (optional).
+#' @param clustered_hits_levels A named list of two data frames mapping
+#'   time-effect significant features to clusters. Each must have
+#'   columns `feature` (numeric ID), `cluster` (factor/character), and
+#'   optionally `gene`. Row names may store `feature_name`s. The list
+#'   element names are used to name the two time-effect cluster columns
+#'   in the output.
+#' @param category_2_and_3_hits A list with elements `category_2_hits`
+#'   and `category_3_hits` (each a tibble containing at least
+#'   `feature_nr`). Used only if the corresponding cat2/cat3 result is
+#'   present and non-empty; otherwise ignored.
+#' @param annotation A tibble or data frame with row names equal to
+#'   `feature_nr` and columns `Gene_symbol` and/or `Gene_name`.
+#'
+#' @return A tibble with columns:
+#'   * `feature_nr` – numeric feature identifier.
+#'   * `feature_name` – preferred feature name from any source.
+#'   * `gene` – preferred gene symbol or fallback from cluster data.
+#'   * `cluster_<cond1>` / `cluster_<cond2>` – clusters for each
+#'     time-effect condition (cat1). `NA` indicates not a cat1 hit.
+#'   * `cluster_cat2` – present only if category 2 results exist; a
+#'     **direction label** `"<cond1>_higher"` or `"<cond2>_higher"`
+#'     derived from `PhaseStationary` (positive → `<cond2>_higher`,
+#'     negative → `<cond1>_higher`). `NA` indicates not a cat2 hit (or
+#'     zero/undefined direction).
+#'   * `cluster_cat3` – present only if category 3 results exist; a
+#'     condition-combination string `"<cluster_<cond1>>_<cluster_<cond2>>"`
+#'     shown only for cat3 hits, otherwise `NA`.
+#'
+#' @importFrom dplyr mutate transmute filter select rename left_join
+#'   arrange distinct group_by ungroup slice_head bind_rows coalesce
+#' @importFrom tibble as_tibble tibble
+#' @importFrom rlang sym
+#' 
+construct_cluster_summary <- function(
+    limma_splines_results,
+    clustered_hits_levels,
+    category_2_and_3_hits,
+    annotation
+) {
+  
+  nm <- names(clustered_hits_levels)
+  if (is.null(nm) || length(nm) != 2 || any(is.na(nm) | nm == "")) {
+    nm <- c("condition1", "condition2")
+  }
+  c1 <- paste0("cluster_", nm[[1]])
+  c2 <- paste0("cluster_", nm[[2]])
+  nmc <- gsub("_", "", nm)
+  
+  has_c2 <- !is.null(limma_splines_results$avrg_diff_conditions) &&
+    nrow(stbl(limma_splines_results$avrg_diff_conditions)) > 0
+  has_c3 <- !is.null(limma_splines_results$interaction_condition_time) &&
+    nrow(stbl(limma_splines_results$interaction_condition_time)) > 0
+  use_cat23 <- has_c2 || has_c3
+  
+  anot <- annotation %>%
+    as_tibble(rownames = "feature_nr") %>%
+    mutate(feature_nr = suppressWarnings(as.numeric(.data$feature_nr))) %>%
+    transmute(feature_nr,
+              gan = dplyr::coalesce(.data$Gene_symbol, .data$Gene_name)) %>%
+    filter(!is.na(feature_nr)) %>%
+    distinct(feature_nr, .keep_all = TRUE)
+  
+  cl1 <- ncl(clustered_hits_levels[[1]], c1)
+  cl2 <- ncl(clustered_hits_levels[[2]], c2)
+  
+  te <- limma_splines_results$time_effect
+  add_parts <- list(
+    toptbl_to_fn(te[[1]]),
+    toptbl_to_fn(te[[2]])
+  )
+  if (has_c2) add_parts <- c(
+    add_parts,
+    list(toptbl_to_fn(limma_splines_results$avrg_diff_conditions))
+  )
+  if (has_c3) add_parts <- c(
+    add_parts,
+    list(toptbl_to_fn(limma_splines_results$interaction_condition_time))
+  )
+  fn_tbl <- bind_rows(add_parts) %>%
+    distinct(feature_nr, .keep_all = TRUE)
+  
+  fn_from_cl <- bind_rows(
+    cl1 %>% select(feature_nr, fnsrc) %>% rename(fname_cl = fnsrc),
+    cl2 %>% select(feature_nr, fnsrc) %>% rename(fname_cl = fnsrc)
+  ) %>%
+    filter(!is.na(feature_nr), !is.na(fname_cl), fname_cl != "") %>%
+    distinct(feature_nr, .keep_all = TRUE)
+  
+  allf_parts <- list(
+    anot %>% select(feature_nr),
+    cl1 %>% select(feature_nr),
+    cl2 %>% select(feature_nr),
+    fn_tbl %>% select(feature_nr)
+  )
+  
+  if (use_cat23) {
+    cat2h <- if (has_c2) {
+      category_2_and_3_hits$category_2_hits %>%
+        stbl() %>% transmute(feature_nr) %>% distinct()
+    } else tibble(feature_nr = numeric(0))
+    cat3h <- if (has_c3) {
+      category_2_and_3_hits$category_3_hits %>%
+        stbl() %>% transmute(feature_nr) %>% distinct()
+    } else tibble(feature_nr = numeric(0))
+    allf_parts <- c(allf_parts, list(cat2h, cat3h))
+  }
+  
+  allf <- bind_rows(allf_parts) %>%
+    distinct(feature_nr) %>%
+    filter(!is.na(feature_nr)) %>%
+    arrange(feature_nr)
+  
+  base <- allf %>%
+    left_join(anot, by = "feature_nr") %>%
+    left_join(cl1 %>% select(feature_nr, !!sym(c1), gcl, fnsrc),
+              by = "feature_nr") %>%
+    rename(gcl1 = gcl, fnsrc1 = fnsrc) %>%
+    left_join(cl2 %>% select(feature_nr, !!sym(c2), gcl, fnsrc),
+              by = "feature_nr") %>%
+    rename(gcl2 = gcl, fnsrc2 = fnsrc) %>%
+    left_join(fn_from_cl, by = "feature_nr") %>%
+    left_join(fn_tbl, by = "feature_nr") %>%
+    group_by(feature_nr) %>%
+    slice_head(n = 1) %>%
+    ungroup() %>%
+    mutate(feature_name = coalesce(fname_tbl, fname_cl, fnsrc1, fnsrc2,
+                                   as.character(feature_nr)),
+           gene = coalesce(gan, gcl1, gcl2)) %>%
+    select(feature_nr, feature_name, gene, all_of(c(c1, c2)))
+  
+  if (!use_cat23) {
+    return(base %>% distinct(feature_nr, .keep_all = TRUE) %>%
+             arrange(feature_nr))
+  }
+  
+  # cat2: direction by PhaseStationary -> "<cond>_higher"
+  out <- base
+  if (has_c2) {
+    c2_df <- limma_splines_results$avrg_diff_conditions %>%
+      stbl() %>%
+      transmute(
+        feature_nr,
+        cluster_cat2 = ifelse(
+          PhaseStationary > 0,
+          paste0(gsub("_", "", nm[2]), "_higher"),
+          ifelse(
+            PhaseStationary < 0,
+            paste0(gsub("_", "", nm[1]), "_higher"),
+            NA_character_
+          )
+        )
+      ) %>%
+      distinct(feature_nr, .keep_all = TRUE)
+    out <- out %>% left_join(c2_df, by = "feature_nr")
+  }
+  
+  # cat3: keep combo from c1/c2 (only for cat3 hits)
+  if (has_c3) {
+    cat3h <- category_2_and_3_hits$category_3_hits %>%
+      stbl() %>% transmute(feature_nr) %>% distinct()
+    cat3c <- mkc(base, cat3h, c1, c2) %>% rename(cluster_cat3 = .cmb)
+    out <- out %>% left_join(cat3c, by = "feature_nr")
+  }
+  
+  out %>% distinct(feature_nr, .keep_all = TRUE) %>%
+    arrange(feature_nr)
 }
 
 
@@ -3599,6 +3838,173 @@ adjust_intercept_least_squares <- function(
   pred_mat <- pred_mat + offset
   
   return(pred_mat)
+}
+
+
+#' Safely convert object to tibble
+#'
+#' @noRd
+#' 
+#' @description
+#' Safely convert an input object to a tibble. Handles `NULL`, data
+#' frames, and lists of data frames by coercing them to tibbles and
+#' binding them together. Any other input type returns an empty tibble.
+#'
+#' @param x An object to be converted to a tibble. Can be `NULL`,
+#'   a data frame, or a list of data frames.
+#'
+#' @return A tibble. If `x` is `NULL`, returns an empty tibble. If `x`
+#'   is a data frame, returns it as a tibble. If `x` is a list of data
+#'   frames, returns them bound into a single tibble.
+#'
+#' @importFrom tibble as_tibble tibble
+#' @importFrom dplyr bind_rows
+#' 
+stbl <- function(x) {
+  
+  if (is.null(x)) return(tibble())
+  if (inherits(x, "data.frame")) return(as_tibble(x))
+  if (is.list(x)) {
+    xs <- lapply(x, function(y)
+      if (inherits(y, "data.frame")) as_tibble(y) else tibble())
+    return(bind_rows(xs))
+  }
+  tibble()
+}
+
+
+#' Normalize cluster dataframe
+#'
+#' @noRd
+#' 
+#' @description
+#' Normalizes a cluster assignment data frame by standardizing column
+#' names, ensuring one row per `feature_nr`, and adding a specified
+#' output column for the cluster. Handles optional `gene` and feature
+#' name information from row names. Non-data-frame inputs are first
+#' converted using \code{stbl()}.
+#'
+#' @param df A data frame or object convertible by \code{stbl()}
+#'   containing at least a `cluster` column, and optionally `feature`
+#'   and `gene` columns. Row names may store feature names.
+#' @param outcol A character scalar giving the name for the cluster
+#'   column in the returned tibble.
+#'
+#' @return A tibble with columns:
+#'   * `feature_nr` – numeric feature identifier.
+#'   * `outcol` – cluster assignment as character.
+#'   * `gcl` – optional gene from the input if present.
+#'   * `fnsrc` – feature name source from row names.
+#'
+#' @importFrom tibble tibble
+#' @importFrom dplyr filter group_by slice_head ungroup
+#' 
+ncl <- function(
+    df,
+    outcol
+    ) {
+  
+  df <- stbl(df)
+  if (nrow(df) == 0) {
+    return(tibble(feature_nr = numeric(0),
+                  !!outcol := NA_character_,
+                  gcl = NA_character_,
+                  fnsrc = NA_character_))
+  }
+  hf <- "feature" %in% names(df)
+  rn <- rownames(df)
+  fnsrc <- if (!is.null(rn)) rn else rep(NA_character_, nrow(df))
+  feature_nr <- if (hf) df$feature else suppressWarnings(as.numeric(rn))
+  tibble(feature_nr = feature_nr,
+         !!outcol := as.character(df$cluster),
+         gcl = if ("gene" %in% names(df))
+           as.character(df$gene) else NA_character_,
+         fnsrc = fnsrc) %>%
+    filter(!is.na(feature_nr)) %>%
+    group_by(feature_nr) %>%
+    slice_head(n = 1) %>%
+    ungroup()
+}
+
+
+#' Extract feature names from toptable
+#'
+#' @noRd
+#' 
+#' @description
+#' Extracts `feature_nr` and corresponding feature names from a
+#' toptable-like data frame. Accepts either `feature_names`,
+#' `feature_name`, or falls back to converting `feature_nr` to a
+#' character string. Input is first normalized with \code{stbl()}.
+#'
+#' @param df A toptable data frame or object convertible by
+#'   \code{stbl()}, containing at least `feature_nr` and optionally
+#'   `feature_names` or `feature_name`.
+#'
+#' @return A tibble with columns:
+#'   * `feature_nr` – numeric feature identifier.
+#'   * `fname_tbl` – character feature name from the table.
+#'   Only non-missing, non-empty names are retained and the result
+#'   contains distinct `feature_nr` entries.
+#'
+#' @importFrom tibble tibble
+#' @importFrom dplyr filter distinct
+#' 
+toptbl_to_fn <- function(df) {
+  
+  df <- stbl(df)
+  if (nrow(df) == 0) return(tibble())
+  cols <- names(df)
+  fn <- if ("feature_names" %in% cols) df[["feature_names"]]
+  else if ("feature_name" %in% cols) df[["feature_name"]]
+  else as.character(df[["feature_nr"]])
+  tibble(feature_nr = df[["feature_nr"]],
+         fname_tbl = as.character(fn)) %>%
+    filter(!is.na(feature_nr), !is.na(fname_tbl), fname_tbl != "") %>%
+    distinct(feature_nr, .keep_all = TRUE)
+}
+
+
+#' Make combined cluster labels for category hits
+#'
+#' @noRd
+#' 
+#' @description
+#' Creates combined cluster labels by concatenating the values of two
+#' specified cluster columns for features present in a given hit set.
+#' For features not in the hit set, the combined cluster label is set
+#' to `NA`.
+#'
+#' @param df A data frame containing at least `feature_nr` and the two
+#'   cluster columns specified by \code{c1} and \code{c2}.
+#' @param hits A data frame or tibble containing a column
+#'   `feature_nr` that identifies the features to include in the
+#'   combined cluster labeling.
+#' @param c1 A character scalar giving the name of the first cluster
+#'   column.
+#' @param c2 A character scalar giving the name of the second cluster
+#'   column.
+#'
+#' @return A tibble with columns:
+#'   * `feature_nr` – numeric feature identifier.
+#'   * `.cmb` – combined cluster label in the format
+#'     `<cluster_c1>_<cluster_c2>` for hits, otherwise `NA`.
+#'
+#' @importFrom dplyr mutate select
+#' @importFrom rlang sym
+#' 
+mkc <- function(
+    df,
+    hits,
+    c1, 
+    c2
+    ) {
+  
+  df %>%
+    mutate(.cmb = paste0(!!sym(c1), "_", !!sym(c2)),
+           .cmb = ifelse(feature_nr %in% hits$feature_nr,
+                         .cmb, NA_character_)) %>%
+    select(feature_nr, .cmb)
 }
 
 

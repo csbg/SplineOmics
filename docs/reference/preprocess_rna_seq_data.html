@@ -21,7 +21,7 @@ custom normalization function."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,12 +100,29 @@ following elements:</p><ul><li><p><code>data</code>: A matrix of the omics datas
 <li><p><code>knots</code>: Positions of the internal knots (for B-splines).</p></li>
 <li><p><code>bknots</code>: Boundary knots (for B-splines).</p></li>
 </ul></li>
-<li><p><code>dream_params</code>: A named list or <code>NULL</code>. When not
-  <code>NULL</code>, it can contain:</p><ul><li><p><code>dof</code>: An integer greater than 1, specifying the degrees
-      of freedom for the dream topTable.</p></li>
-<li><p><code>KenwardRoger</code>: A boolean indicating whether to use the
-      Kenward-Roger method.</p></li>
-</ul></li>
+<li><p><code>use_array_weights</code>: Boolean flag indicating if the robust fit
+   strategy to deal with heteroscedasticity should be used or not. If set to
+   NULL, then this is handeled implicitly based on the result of the Levene
+   test. If this test is significant for at least 10<!-- % of the features, -->
+   then the robust strategy is used. The robust strategy uses the function
+   voomWithQualityWeights for RNA-seq data instead of the normal voom
+   function. For other, non-count-based data, the function
+   limma::arrayWeights is used instead, combined with setting the robust
+   argument to TRUE for the limma::eBayes function. In summary, the strategy
+   employed by those functions is to downweights samples with higher
+   variance. This can be neccessary, because linear models have the
+   assumption of homoscedasticity, which means that the variance is
+   (approx.) the same across all datapoints where the linear model is fitted.
+    If this is violated, then the resulting p-values cannot be trusted
+   (common statistical wisdom).</p></li>
+<li><p><code>bp_cfg</code>: A named numeric vector specifying the parallelization
+  configuration, with expected names `"n_cores"` and `"blas_threads"`.</p>
+<p>This controls how many **R worker processes** (`n_cores`) and how many
+  **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+  during parallel computation.</p>
+<p>If `bp_cfg` is `NULL`, missing, or any of its required fields is
+  `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+  disables parallelization and avoids oversubscription of CPU threads.</p></li>
 </ul></dd>
 
 
@@ -127,7 +144,7 @@ the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/edgeR/man/DGEList.html" class="external-link">DGEList</a></code>, <code><a href="https://rdrr.io/pkg/edgeR/man/calcNormFactors.html" class="external-link">calcNormFactors</a></code></p></div>
+    <div class="dont-index"><p>edgeR::DGEList, edgeR::calcNormFactors</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

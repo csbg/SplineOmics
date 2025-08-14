@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,6 +113,7 @@ Graphical Abstract of SplineOmics Workflow
 <h3 id="is-the-splineomics-package-of-use-for-me">Is the SplineOmics package of use for me?<a class="anchor" aria-label="anchor" href="#is-the-splineomics-package-of-use-for-me"></a>
 </h3>
 <p>If you have -omics data over time, the package will help you to run <code>limma</code> with splines, decide on which parameters to use, perform the clustering, run GSEA and show result plots in HTML reports. Any time-series data that is a valid input to the <code>limma</code> package is also a valid input to the <code>SplineOmics</code> package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, glycan fractional abundances, etc.).</p>
+<p>Note: So far, the package has only been tested with datasets with 2 conditions. In theory, it should also work with more conditions, but unexpected errors can arise.</p>
 </div>
 <div class="section level3">
 <h3 id="what-do-i-need-precisely">What do I need precisely?<a class="anchor" aria-label="anchor" href="#what-do-i-need-precisely"></a>
@@ -134,7 +135,7 @@ Graphical Abstract of SplineOmics Workflow
 </li>
 <li>
 <p><strong>Explore various limma splines hyperparameters:</strong></p>
-<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code><a href="reference/screen_limma_hyperparams.html">screen_limma_hyperparams()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html">encoding</a>)).</p>
+<p>Test combinations of hyperparameters, such as different datasets, <code>limma</code> design formulas, degrees of freedom, p-value thresholds, etc., using the <code>screen_limma_hyperparams()</code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html">example report</a> (along with the <a href="https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html">encoding</a>)).</p>
 </li>
 <li>
 <p><strong>Perform limma spline analysis:</strong></p>
@@ -207,7 +208,7 @@ Graphical Abstract of SplineOmics Workflow
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
 <span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># GitHub repository</span></span>
-<span>  ref <span class="op">=</span> <span class="st">"0.2.0"</span>,        <span class="co"># Specify the tag to install</span></span>
+<span>  ref <span class="op">=</span> <span class="st">"0.2.1"</span>,        <span class="co"># Specify the tag to install</span></span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Install all dependencies</span></span>
 <span>  upgrade <span class="op">=</span> <span class="st">"always"</span>    <span class="co"># Always upgrade dependencies</span></span>
 <span>  <span class="co"># force = TRUE        # when encountering issues</span></span>
@@ -251,10 +252,6 @@ Graphical Abstract of SplineOmics Workflow
 <h3 id="mortar_board-tutorial">🎓 Tutorial<a class="anchor" aria-label="anchor" href="#mortar_board-tutorial"></a>
 </h3>
 <p><a href="https://csbg.github.io/SplineOmics/articles/get-started.html">This tutorial</a> covers a real CHO cell time-series proteomics example from start to end.</p>
-<p>To open an R Markdown file of the <strong>tutorial</strong> in <code>RStudio</code>, run:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
-<span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="reference/open_tutorial.html">open_tutorial</a></span><span class="op">(</span><span class="op">)</span>  </span></code></pre></div>
 <p>Note that the SplineOmics package in theory supports experimental design with any amount of conditions. However, so far it was only tested with datasets that contain two conditions. Therefore, it cannot be ruled out that bugs will occur when the package is used for experiments with more conditions. If any bug occurs, please raise an issue here on GitHub, and it will be adressed.</p>
 </div>
 <div class="section level3">
@@ -281,11 +278,11 @@ Graphical Abstract of SplineOmics Workflow
 <h4 id="glycan-fractional-abundance-data">Glycan fractional abundance data<a class="anchor" aria-label="anchor" href="#glycan-fractional-abundance-data"></a>
 </h4>
 <p>The glycan fractional abundance data matrix, where each row represents a type of glycan and the columns correspond to timepoints, must be transformed before analysis. This preprocessing step is essential due to the compositional nature of the data. In compositional data, an increase in the abundance of one component (glycan) necessarily results in a decrease in others, introducing a dependency among the variables that can bias the analysis. One way to address this issue is by applying the Centered Log Ratio (CLR) transformation to the data with the clr function from the compositions package:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://www.stat.boogaart.de/compositions/" class="external-link">compositions</a></span><span class="op">)</span></span>
 <span><span class="va">clr_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/compositions/man/clr.html" class="external-link">clr</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 <p>The results from clr transformed data can be harder to understand and interpret however. If you prefer ease of interpretation and are fine that the results contain some artifacts due to the compositional nature of the data, log2 transform your data instead and use that as input for the <code>SplineOmics</code> package.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log2_transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span>  <span class="co"># use as SplineOmics input</span></span></code></pre></div>
 </div>
 </div>
@@ -344,7 +341,7 @@ Graphical Abstract of SplineOmics Workflow
 <li>
 <strong>clusterProfiler</strong> (&gt;= 4.10.1): For the <code>run_gsea()</code> function (gene set enrichment analysis).</li>
 <li>
-<strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code><a href="reference/open_tutorial.html">open_tutorial()</a></code> function.</li>
+<strong>rstudioapi</strong> (&gt;= 0.16.0): For the <code>open_tutorial()</code> function.</li>
 </ul>
 </div>
 <div class="section level3">

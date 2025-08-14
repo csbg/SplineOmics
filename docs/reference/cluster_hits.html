@@ -23,7 +23,7 @@ compiled into an HTML report."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,10 +104,34 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
 <li><p><code>meta</code>: A dataframe containing metadata corresponding to the
   <code>data</code>, must include a 'Time' column and any columns specified by
   <code>conditions</code>.</p></li>
+<li><p><code>annotation</code>: A dataframe that maps the rows of <code>data</code> to
+  annotation info, such as the gene name or database identifiers.</p></li>
+<li><p><code>report_info</code>: A named list describing the experiment.
+  Must include the following fields:
+    - <code>"omics_data_type"</code>
+    - <code>"data_description"</code>
+    - <code>"data_collection_date"</code>
+    - <code>"analyst_name"</code>
+    - <code>"contact_info"</code>
+    - <code>"project_name"</code></p>
+<p>May also include the following optional fields:
+    - <code>"method_description"</code>
+    - <code>"results_summary"</code>
+    - <code>"conclusions"</code></p></li>
 <li><p><code>design</code>: A character of length 1 representing the limma
   design formula.</p></li>
-<li><p><code>condition</code>: Character of length 1 specifying the column name
-  in <code>meta</code> used to define groups for analysis.</p></li>
+<li><p><code>mode</code>: Specifies how the design formula is constructed:
+  either `"isolated"` or `"integrated"`.</p>
+<p>- `"isolated"`: Each level is analyzed independently, using only the
+    subset of data corresponding to that level. The design formula does
+    not include the condition variable, since only one condition is
+    present in each subset.</p>
+<p>- `"integrated"`: All levels are analyzed together in a single model,
+    using the full dataset. The design formula includes the condition
+    variable (and optionally interaction terms with it) so that results
+    are estimated jointly across all levels.</p></li>
+<li><p><code>condition</code>: Character vector of length 1 specifying the column
+  name in <code>meta</code> used to define groups for analysis.</p></li>
 <li><p><code>spline_params</code>: A list of spline parameters for the analysis.</p></li>
 <li><p><code>meta_batch_column</code>: A character string specifying the column
   name in the metadata used for batch effect removal.</p></li>
@@ -116,6 +140,10 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
 <li><p><code>limma_splines_result</code>: A list of data frames, each representing
    a top table from differential expression analysis, containing at least
    'adj.P.Val' and expression data columns.</p></li>
+<li><p><code>feature_name_columns</code>: Character vector of strings that each
+  specify a column of the original data dataframe which were used to
+  automatically build the feature names with the <code>extract_data</code>
+  function.</p></li>
 </ul></dd>
 
 
@@ -187,17 +215,38 @@ the HTML report in the case of many hits. Default is 100.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list where each element corresponds to a group factor and contains
-the clustering results,
-        including `clustered_hits` data frame, hierarchical clustering object
-        `hc`, `curve_values`
-        data frame with normalized spline curves, and `top_table` with
-        cluster assignments.</p>
-    </div>
-    <div class="section level2">
-    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></code>, <code><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">hclust</a></code></p></div>
-    </div>
+    <p>A named list with two elements:</p><dl><dt><code>cluster_summary</code></dt>
+<dd><p>A tibble containing one row per <code>feature_nr</code> with metadata and
+    cluster assignments across the analysis categories. The structure is:</p><ul><li><p><code>feature_nr</code> – Numeric feature identifier.</p></li>
+<li><p><code>feature_name</code> – Preferred feature name, prioritizing
+        values from the limma tables, then from the cluster table row
+        names, and falling back to the numeric feature ID.</p></li>
+<li><p><code>gene</code> – Preferred gene symbol from the <code>annotation</code>
+        table if available, otherwise taken from the cluster tables.</p></li>
+<li><p><code>cluster_&lt;cond1&gt;</code> / <code>cluster_&lt;cond2&gt;</code> – Cluster
+        assignments for each time-effect condition, named according to
+        the elements of <code>clustered_hits_levels</code>.</p></li>
+<li><p><code>cluster_cat2</code> – Present only if category 2 results are
+        available; a combined cluster label in the form
+        <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code> for features that
+        are significant in category 2. If this value is <code>NA</code>, the
+        feature was not a category 2 hit.</p></li>
+<li><p><code>cluster_cat3</code> – Present only if category 3 results are
+        available; a combined cluster label in the form
+        <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code> for features that
+        are significant in category 3. If this value is <code>NA</code>, the
+        feature was not a category 3 hit.</p></li>
+</ul><p>For any category-specific cluster column (<code>cluster_&lt;cond1&gt;</code>,
+    <code>cluster_&lt;cond2&gt;</code>, <code>cluster_cat2</code>, <code>cluster_cat3</code>),
+    a value of <code>NA</code> indicates that the feature was not significant
+    (not a hit) in that category.</p></dd>
+
+  <dt><code>plots</code></dt>
+<dd><p>A list of all plots generated during the run, corresponding to the
+    visualizations shown in the HTML report produced by this function.</p></dd>
+
+
+</dl></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
