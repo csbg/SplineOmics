@@ -89,7 +89,8 @@ was not yet published at the time of making the SplineOmics package
 public. Instead, the dataset includes randomly generated gene symbols
 and gene names corresponding to Cricetulus griseus (Chinese Hamster) for
 each row. This is intended to demonstrate the functionality of the
-package.
+package. Further, the dataset was subsamples to 1165 proteins to limit the size
+of this package.
 
 The left part of data contains the numeric values, and the right part
 the annotation info, which can be copied in a separate dataframe, as
@@ -210,8 +211,9 @@ data <- SplineOmics::extract_data(
   data = data,
   # Use this annotation column for the feature names.
   feature_name_columns = c("Gene_name"),
+  use_row_index = TRUE,
   top_row = 4,
-  bottom_row = 4165,
+  bottom_row = 1165,
   right_col = 37,
   left_col = 2
 )
@@ -649,10 +651,7 @@ levels, and generates the HTML report:
 
 ```{r run ORA, eval = TRUE}
 result <- SplineOmics::run_ora(
-  # A dataframe with three columns: feature, cluster, and gene. Feature contains
-  # the integer index of the feature, cluster the integer specifying the cluster
-  # number, and gene the string of the gene, such as "CLSTN2".
-  levels_clustered_hits = clustering_results$clustered_hits_levels,
+  clustering_results = clustering_results[["cluster_summary"]],
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,

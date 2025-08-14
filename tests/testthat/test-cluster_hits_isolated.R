@@ -16,7 +16,7 @@ test_that("cluster_hits() returns correctly structured result", {
     data = data,
     feature_name_columns = c("Gene_name"),
     top_row = 4,
-    bottom_row = 4165,
+    bottom_row = 1165,
     right_col = 37,
     left_col = 2
   )
@@ -84,21 +84,53 @@ test_that("cluster_hits() returns correctly structured result", {
     adj_pthresh_interaction_condition_time = 0.05
   )
 
-  # Check top-level structure
+  # cluster_hits() returns a list: cluster_summary + plots
   expect_type(clustering_results, "list")
-  expect_named(clustering_results,
-               c("all_levels_clustering", "plots", "clustered_hits_levels"),
-               ignore.order = FALSE
-               )
-  expect_length(clustering_results, 3)
+  expect_named(
+    clustering_results,
+    c("cluster_summary", "plots"),
+    ignore.order = FALSE
+  )
+  expect_length(clustering_results, 2)
+  
+  # cluster_summary: structure + minimal integrity checks
+  cs <- clustering_results$cluster_summary
+  expect_s3_class(cs, c("tbl_df", "tbl", "data.frame"))
+  
+  # required metadata cols
+  req_cols <- c("feature_nr", "feature_name", "gene")
+  expect_true(all(req_cols %in% names(cs)))
+  
+  # at least two time-effect cluster columns (cat1)
+  all_cluster_cols <- grep("^cluster_", names(cs), value = TRUE)
+  cond_cols <- setdiff(all_cluster_cols, c("cluster_cat2", "cluster_cat3"))
+  expect_gte(length(cond_cols), 2)
+  
+  # feature_nr is integer-like and unique
+  expect_true(is.numeric(cs$feature_nr))
+  expect_true(all(cs$feature_nr == as.integer(cs$feature_nr), na.rm = TRUE))
+  expect_false(any(duplicated(cs$feature_nr)))
+  
+  # feature_name is present and non-empty
+  expect_true(all(!is.na(cs$feature_name) & nzchar(cs$feature_name)))
+  
+  # gene column exists but may be all NA (e.g., non-gene omics)
+  expect_true("gene" %in% names(cs))
+  expect_true(is.character(cs$gene) | all(is.na(cs$gene)))
+  
+  # Optional: if cat2/cat3 exist, they are character and atomic
+  opt_cols <- intersect(c("cluster_cat2", "cluster_cat3"), names(cs))
+  for (cc in opt_cols) {
+    expect_true(is.atomic(cs[[cc]]))
+  }
+  
+  # plots: present and list-like (count may vary)
+  expect_type(clustering_results$plots, "list")
+  expect_gte(length(clustering_results$plots), 1)
   
   # Check individual elements
   expect_type(clustering_results$plots, "list")
   expect_length(clustering_results$plots, 10)
   
-  expect_type(clustering_results$clustered_hits_levels, "list")
-  expect_length(clustering_results$clustered_hits_levels, 2)
-  
-  expect_type(clustering_results$all_levels_clustering, "list")
-  expect_length(clustering_results$all_levels_clustering, 2)
+  testthat::expect_snapshot_value(cs, style = "json2")
 })

@@ -22,7 +22,7 @@ test_that("run_limma_splines() works correctly", {
     data = data,
     feature_name_columns = c("Gene_name"),
     top_row = 4,
-    bottom_row = 4165,
+    bottom_row = 1165,
     right_col = 37,
     left_col = 2
   )
@@ -101,115 +101,15 @@ test_that("run_limma_splines() works correctly", {
   
   expect_equal(
     sum(exp_tbl$adj.P.Val  < 0.05, na.rm = TRUE),
-    61          # ← hard-coded baseline for integrated-mode
+    13          # ← hard-coded baseline for integrated-mode
   )
   expect_equal(
     sum(stat_tbl$adj.P.Val < 0.05, na.rm = TRUE),
-    5
+    4
   )
   
-  ## ---------------------------------------------------
-  ##  2. Ten invariant cells must keep their exact value
-  ## ---------------------------------------------------
-  get_cell <- function(tbl, row, col) round(tbl[[col]][row], 4)  # 4-dp rounding
-  
-  ## ---- Phase_Exponential ----
-  exp_expected <- c(
-    17.3959, 0.0198, 0.0382, 13.4048, 2.0101,
-    0.0438, 0.3638, 0.9157,  4.7002, 0.0152
+  testthat::expect_snapshot_value(
+    list(Phase_Exponential = exp_tbl, Phase_Stationary = stat_tbl),
+    style = "deparse"
   )
-  exp_actual <- c(
-    get_cell(exp_tbl, 2609, 3),
-    get_cell(exp_tbl, 4069, 1),
-    get_cell(exp_tbl, 2369, 1),
-    get_cell(exp_tbl, 1098, 3),
-    get_cell(exp_tbl, 1252, 4),
-    get_cell(exp_tbl,  634, 5),
-    get_cell(exp_tbl, 2097, 5),
-    get_cell(exp_tbl, 3911, 5),
-    get_cell(exp_tbl,  356, 4),
-    get_cell(exp_tbl, 3954, 2)
-  )
-  expect_equal(
-    exp_actual,
-    exp_expected,
-    tolerance = 1e-4
-    )
-  
-  ## ---- Phase_Stationary ----
-  stat_expected <- c(
-    0.7685, 0.0282, 0.0356, 2.6977, 0.4312,
-    3.4851, -0.0088, 0.0954, 12.7730, 0.1551
-  )
-  stat_actual <- c(
-    get_cell(stat_tbl,  860, 6),
-    get_cell(stat_tbl, 3944, 2),
-    get_cell(stat_tbl,  259, 5),
-    get_cell(stat_tbl,  481, 4),
-    get_cell(stat_tbl, 2072, 5),
-    get_cell(stat_tbl,  299, 4),
-    get_cell(stat_tbl, 3983, 2),
-    get_cell(stat_tbl, 2454, 2),
-    get_cell(stat_tbl, 3720, 3),
-    get_cell(stat_tbl,  836, 1)
-  )
-  expect_equal(
-    stat_actual,
-    stat_expected,
-    tolerance = 1e-4
-    )
-  
-  ## ---------------------------------------------------
-  ##  3. avrg_diff_conditions: 10 invariant cells
-  ## ---------------------------------------------------
-  avg_tbl <- splineomics$limma_splines_result$avrg_diff_conditions[[1]]
-  
-  avg_expected <- c(
-    0.092, -0.152, 0.292, -0.027, 12.987,
-    131.696, 18.748, 0.864, 17.097, 1.115
-  )
-  avg_actual <- c(
-    get_cell(avg_tbl, 2609, 3),
-    get_cell(avg_tbl, 4069, 1),
-    get_cell(avg_tbl, 2369, 1),
-    get_cell(avg_tbl, 1098, 3),
-    get_cell(avg_tbl, 1252, 4),
-    get_cell(avg_tbl,  634, 5),
-    get_cell(avg_tbl, 2097, 5),
-    get_cell(avg_tbl, 3911, 5),
-    get_cell(avg_tbl,  356, 4),
-    get_cell(avg_tbl, 3954, 2)
-  )
-  expect_equal(
-    avg_actual,
-    avg_expected,
-    tolerance = 1e-4
-    )
-  
-  ## ---------------------------------------------------------------
-  ##  4. interaction_condition_time: 10 invariant cells
-  ## ---------------------------------------------------------------
-  int_tbl <- splineomics$limma_splines_result$interaction_condition_time[[1]]
-  
-  int_expected <- c(
-    0.8370, 0.0302, 0.0412, 2.6055, 0.4598,
-    3.3136, -0.0087, 0.1143, 16.3951, -0.2668
-  )
-  int_actual <- c(
-    get_cell(int_tbl,  860, 6),
-    get_cell(int_tbl, 3944, 2),
-    get_cell(int_tbl,  259, 5),
-    get_cell(int_tbl,  481, 4),
-    get_cell(int_tbl, 2072, 5),
-    get_cell(int_tbl,  299, 4),
-    get_cell(int_tbl, 3983, 2),
-    get_cell(int_tbl, 2454, 2),
-    get_cell(int_tbl, 3720, 3),
-    get_cell(int_tbl,  836, 1)
-  )
-  expect_equal(
-    int_actual,
-    int_expected,
-    tolerance = 1e-4
-    )
 })

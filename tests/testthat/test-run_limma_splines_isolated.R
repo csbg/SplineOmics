@@ -22,7 +22,7 @@ test_that("run_limma_splines() works correctly", {
     data = data,
     feature_name_columns = c("Gene_name"),
     top_row = 4,
-    bottom_row = 4165,
+    bottom_row = 1165,
     right_col = 37,
     left_col = 2
   )
@@ -97,61 +97,15 @@ test_that("run_limma_splines() works correctly", {
   
   expect_equal(
     sum(exp_tbl$adj.P.Val  < 0.05, na.rm = TRUE),
-    183                                   # ← hard-coded baseline
+    32                                   # ← hard-coded baseline
   )
   expect_equal(
     sum(stat_tbl$adj.P.Val < 0.05, na.rm = TRUE),
     1
   )
   
-  ## ---------------------------------------------------
-  ##  2. Ten invariant cells must keep their exact value
-  ## ---------------------------------------------------
-  get_cell <- function(tbl, row, col) round(tbl[[col]][row], 4)   # ← 4-dp round
-  
-  ## ---- Phase_Exponential ----
-  exp_expected <- c(
-    12.4406, -0.0220, -0.0199, 13.2243, 3.1449,
-    0.0188,  0.2097,  0.8524,  7.1278, 0.0062
+  testthat::expect_snapshot_value(
+    list(Phase_Exponential = exp_tbl, Phase_Stationary = stat_tbl),
+    style = "deparse"
   )
-  exp_actual <- c(
-    get_cell(exp_tbl, 2609, 3),
-    get_cell(exp_tbl, 4069, 1),
-    get_cell(exp_tbl, 2369, 1),
-    get_cell(exp_tbl, 1098, 3),
-    get_cell(exp_tbl, 1252, 4),
-    get_cell(exp_tbl,  634, 5),
-    get_cell(exp_tbl, 2097, 5),
-    get_cell(exp_tbl, 3911, 5),
-    get_cell(exp_tbl,  356, 4),
-    get_cell(exp_tbl, 3954, 2)
-  )
-  expect_equal(
-    exp_actual,
-    exp_expected,
-    tolerance = 1e-4
-    )
-  
-  ## ---- Phase_Stationary ----
-  stat_expected <- c(
-    0.9248, -0.0245, 0.0415, 2.7826, 0.4730,
-    3.6694, -0.0196, -0.0426, 16.4171, -0.1241
-  )
-  stat_actual <- c(
-    get_cell(stat_tbl,  860, 6),
-    get_cell(stat_tbl, 3944, 2),
-    get_cell(stat_tbl,  259, 5),
-    get_cell(stat_tbl,  481, 4),
-    get_cell(stat_tbl, 2072, 5),
-    get_cell(stat_tbl,  299, 4),
-    get_cell(stat_tbl, 3983, 2),
-    get_cell(stat_tbl, 2454, 2),
-    get_cell(stat_tbl, 3720, 3),
-    get_cell(stat_tbl,  836, 1)
-  )
-  expect_equal(
-    stat_actual,
-    stat_expected,
-    tolerance = 1e-4
-    )
 })

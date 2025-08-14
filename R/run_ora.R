@@ -102,9 +102,6 @@
 #' enrichment is performed. All enrichment runs through 
 #' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
 #' 
-#' @param plot_titles Titles for the enrichment dotplots generated in the HTML
-#' report, default is NA.
-#' 
 #' @param universe Enrichment background data, default is NULL. This is a
 #' parameter of clusterProfiler, for the documentation, please check the 
 #' documentation of the clusterProfiler R package.
@@ -131,7 +128,6 @@ run_ora <- function(
       to_species   = NULL
       ),
     enrichGO_cfg = NULL,
-    plot_titles = NA,
     universe = NULL,
     report_dir = here::here()
 ) {
@@ -160,7 +156,6 @@ run_ora <- function(
     params = clusterProfiler_params,
     mapping_cfg = mapping_cfg,
     enrichGO_cfg = enrichGO_cfg,
-    plot_titles = plot_titles,
     background = universe,
     cluster_hits_report_name = cluster_hits_report_name
   )
@@ -172,108 +167,78 @@ run_ora <- function(
     mapping_cfg = mapping_cfg
   )
 
-  # all_results <- map2(
-  #   levels_clustered_hits,
-  #   names(levels_clustered_hits),
-  #   ~ manage_ora_level(
-  #     .x,
-  #     .y,
-  #     databases,
-  #     clusterProfiler_params,
-  #     enrichGO_cfg,
-  #     universe
-  #   )
-  # )
-  browser()
-  level_columns <- function(clustering_results) {
-    allc <- grep("^cluster_", names(clustering_results), value = TRUE)
-    # keep stable order: 2 condition cols first, then cat2, then cat3
-    cond <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
-    c(cond,
-      intersect("cluster_cat2", allc),
-      intersect("cluster_cat3", allc))
-  }
-
-  lvl_cols <- level_columns(clustering_results)
+  lvl_cols  <- level_columns(clustering_results)
+  lvl_names <- level_display_names(clustering_results)
   
-  all_results <- lapply(lvl_cols, function(col) {
-    manage_ora_level_from_summary(
+  all_results <- mapply(function(col, nm) {
+    manage_ora_result_cat(
       clustering_results = clustering_results,
       level_col = col,
       databases = databases,
       clusterProfiler_params = clusterProfiler_params,
       enrichGO_cfg = enrichGO_cfg,
-      universe = universe
+      universe = universe,
+      plot_title = nm      # use display name for the plot title
+    )
+  }, col = lvl_cols, nm = lvl_names, SIMPLIFY = FALSE)
+  names(all_results) <- lvl_names
+
+  processed_results <- Map(
+    function(res, nm) process_result(res, nm),
+    all_results, names(all_results)
+    )
+  
+  # Build a structured list of sections for the report
+  sections <- lapply(seq_along(processed_results), function(i) {
+    pr  <- processed_results[[i]]
+    raw <- all_results[[i]]        # <- has $ora_results from run_ora_level()
+    
+    plots <- pr$plot
+    if (inherits(plots, "ggplot") || !is.list(plots)) plots <- list(plots)
+    
+    sizes <- pr$plot_size
+    if (!is.list(sizes)) sizes <- as.list(rep_len(sizes, length(plots)))
+    
+    list(
+      level        = names(processed_results)[i],
+      header_name  = 
+        pr$header_info$header_name %||% names(processed_results)[i],
+      plots        = plots,
+      plot_sizes   = sizes,
+      ora_results  = if (is.list(raw) && !is.null(raw$ora_results))
+        raw$ora_results else NULL
     )
   })
-  names(all_results) <- lvl_cols
+  names(sections) <- names(processed_results)
   
-  
-  processed_results <- map2(
-    all_results,
-    names(all_results),
-    process_result
-  )
-  
-  # Extract the plots, plot sizes, and header info from the processed results
-  plots <- purrr::flatten(map(
-    processed_results,
-    "plot"
-  ))
-  plots_sizes <- unlist(map(
-    processed_results,
-    "plot_size"
-  ))
-  
-  insert_after_each <- function(lst, value) {
-    result <- vector("list", 2 * length(lst))
-    result[seq(1, length(result), by = 2)] <- lst
-    result[seq(2, length(result), by = 2)] <- value
-    return(result)
-  }
-  
-  plots <- insert_after_each(
-    plots,
-    "section_break"
-  )
-  plots_sizes <- insert_after_each(plots_sizes, 999)
-  
-  level_headers_info <- map(
-    processed_results,
-    "header_info"
-  )
-  
-  names(level_headers_info) <- names(all_results)
-  
-  
-  # Move them to the report by shipping them inside report_info: Convenience.
-  report_info$databases <- unique(databases[["DB"]])
-  report_info$clusterProfiler_params <- clusterProfiler_params
+  # Update report_info payload
+  report_info$databases                <- unique(databases[["DB"]])
+  report_info$clusterProfiler_params   <- clusterProfiler_params
   report_info$cluster_hits_report_name <- cluster_hits_report_name
-  report_info$levels_clustered_hits <- levels_clustered_hits
-  report_info$background_genes <- universe
+  report_info$clustering_results       <- clustering_results
+  report_info$background_genes         <- universe
   
-  if (all(vapply(plots, is.character, logical(1)))) {
+  # If *all* sections have zero plots, return NULL
+  total_plots <- sum(vapply(sections, function(s) length(s$plots), integer(1)))
+  if (total_plots == 0L) {
     message("No results --> Not generating a report and returning NULL.")
     return(NULL)
   }
+
+  generate_report_html(
+    plots       = sections,
+    report_info = report_info,
+    report_type = "run_ora",
+    filename    = "run_ora_report",
+    report_dir  = report_dir
+  )
   
   print_info_message(
     message_prefix = "ORA analysis",
     report_dir = report_dir
   )
-
-  generate_report_html(
-    plots = plots,
-    plots_sizes = plots_sizes,
-    report_info = report_info,
-    level_headers_info = level_headers_info,
-    report_type = "run_ora",
-    filename = "run_ora_report",
-    report_dir = report_dir
-  )
   
-  return(Filter(function(x) !is.character(x), plots))
+  return(all_results)
 }
 
 
@@ -367,7 +332,6 @@ control_inputs_run_ora <- function(
     params,
     mapping_cfg,
     enrichGO_cfg,
-    plot_titles,
     background,
     cluster_hits_report_name
 ) {
@@ -427,94 +391,58 @@ ensure_clusterProfiler <- function() {
 }
 
 
-#' Manage ORA Analysis for a Specific Level
-#' 
+#' Manage ORA analysis for a summary level
+#'
 #' @noRd
 #'
 #' @description
-#' This function manages the ora analysis for a specific level. It extracts
-#' genes associated with the clustered hits, removes rows with `NA` values,
-#' and runs the ora analysis using the `run_ora` function.
+#' Runs over-representation analysis (ORA) for a single level column from
+#' the unified \code{clustering_results} table. Foreground gene sets are
+#' built by grouping non-missing \code{gene} values by the labels in the
+#' chosen level column (via \code{make_clustered_genes()}). For cat2 this
+#' yields at most two clusters (\code{"<cond1>_higher"},
+#' \code{"<cond2>_higher"}); other levels use their distinct cluster labels.
+#' The resulting foregrounds are passed to \code{run_ora_level()}.
 #'
-#' @param clustered_hits A dataframe containing the clustered hits for a
-#' specific level. It must include a column named `feature` to extract genes.
-#' @param level_name A character string representing the name of the level.
-#' @param databases A list of databases for the gene set enrichment analysis.
-#' @param clusterProfiler_params Additional parameters for the ora analysis,
-#'                               default is NA. Those include adj_p_value,
-#'                               pAdjustMethod, etc (see clusterProfiler
-#'                               documentation).
-#' @param enrichGO_cfg A named list specifying the configuration for 
-#' running GO enrichment with Bioconductor's 
-#' \code{\link[clusterProfiler]{enrichGO}}.
-#' This is only needed when you want to perform GO Biological Process (BP), 
-#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
-#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
-#' 
-#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
-#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
-#' \itemize{
-#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
-#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
-#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
-#' }
-#' 
-#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
-#' enrichment is performed. All enrichment runs through 
-#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
-#' 
-#' @param universe Enrichment background data, default is NULL.
+#' @param clustering_results A tibble/data frame produced by
+#'   \code{construct_cluster_summary()} containing columns \code{gene} and
+#'   one or more level columns named \code{cluster_*}.
+#' @param level_col Character scalar naming the level column in
+#'   \code{clustering_results} to analyze (must exist).
+#' @param databases Gene set collections (data frame or list) consumed by
+#'   downstream helpers inside \code{run_ora_level()}.
+#' @param clusterProfiler_params List of clusterProfiler parameters (e.g.,
+#'   \code{pvalueCutoff}, \code{pAdjustMethod}, \code{minGSSize}).
+#' @param enrichGO_cfg Optional named list with GO settings (e.g.,
+#'   \code{OrgDb}, \code{keyType}, \code{ontology}) used when the selected
+#'   collection is GO.
+#' @param universe Optional character vector of background genes to be used
+#'   as the ORA universe.
 #'
-#' @return The result of the `run_ora` function, which typically
-#'         includes various plots and enrichment results.
-#'
-manage_ora_level <- function(
-    clustered_hits,
-    level_name,
-    databases,
-    clusterProfiler_params,
-    enrichGO_cfg,
-    universe
-) {
-  
-  clustered_hits <- na.omit(clustered_hits)
-  
-  message(paste(
-    "\n\n\n Running clusterProfiler for the level:",
-    level_name
-  ))
-  
-  result <- run_ora_level(
-    clustered_genes = clustered_hits,
-    databases = databases,
-    params = clusterProfiler_params,
-    enrichGO_cfg = enrichGO_cfg,
-    plot_title = level_name,
-    universe = universe
-  )
-}
-
-
-manage_ora_level_from_summary <- function(
+#' @return A list as returned by \code{run_ora_level()} with elements
+#'   \code{dotplot}, \code{dotplot_nrows}, and \code{ora_results}. If no
+#'   enrichment was obtained for any cluster, \code{NA} may be returned.
+#'   
+manage_ora_result_cat <- function(
     clustering_results,
     level_col,
     databases,
     clusterProfiler_params,
     enrichGO_cfg,
-    universe
+    universe,
+    plot_title
 ) {
   cg <- make_clustered_genes(clustering_results, level_col)
-  message(paste0("\n\n\n Running clusterProfiler for level: ", level_col))
+  message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
   run_ora_level(
     clustered_genes = cg,
     databases = databases,
     params = clusterProfiler_params,
     enrichGO_cfg = enrichGO_cfg,
-    plot_title = level_col,
+    plot_title = plot_title,
     universe = universe
   )
 }
-
 
 
 #' Process ORA Result for a Specific Level
@@ -565,141 +493,186 @@ process_result <- function(
 }
 
 
-#' Build ORA Report
-#' 
+#' Build ORA report
+#'
 #' @noRd
 #'
 #' @description
-#' Generates an HTML report for Gene Set Enrichment Analysis (ora) based on
-#' provided plot data, header information, and other content. The report
-#' includes sections for each level of clustered hits, along with a table of
-#' contents and various plots.
+#' Generates an HTML report for over-representation analysis (ORA) using a
+#' structured list of sections. Each section may include one or more plots,
+#' optional per-section ORA results (to render a summary table and a download
+#' link), and a human-readable header. A table of contents is created and the
+#' final HTML is written to disk.
 #'
-#' @param header_section A string containing the HTML content for the header
-#' section of the report.
-#' @param plots A list of plots to be included in the report.
-#' @param plots_sizes A list of sizes for the plots.
-#' @param level_headers_info A list containing header information for each
-#' level of clustered hits.
-#' @param report_info A named list containg the report info fields. Here used
-#'                    for the email hotkey functionality.
-#' @param output_file_path A string specifying the file path where the report
-#' will be saved.
+#' @param header_section Character scalar with HTML for the report header that
+#'   appears before the table of contents.
+#' @param sections A named list of sections. Each element is a list with fields:
+#'   \itemize{
+#'     \item \code{header_name} (character): Section title.
+#'     \item \code{plots} (list): One or more plot objects (e.g. ggplot) or
+#'       renderable items for \code{process_plots()}.
+#'     \item \code{plot_sizes} (list or scalar): Sizes matching \code{plots}.
+#'     \item \code{ora_results} (optional, list): Raw ORA output used by
+#'       \code{generate_section_content()} to append a filtered table and a
+#'       download button under the plots.
+#'   }
+#' @param level_headers_info Kept for backward compatibility; ignored when
+#'   \code{sections} is provided.
+#' @param report_info Named list with auxiliary report fields (e.g., databases,
+#'   parameters, background genes) used by downstream helpers and the header.
+#' @param output_file_path Character path where the HTML report is written.
 #'
-#' @return None. The function generates and writes an HTML report to the
-#' specified output file path.
+#' @return This function writes an HTML file to \code{output_file_path} and
+#'   returns \code{NULL} invisibly.
 #'
 #' @details
-#' The function first initializes the HTML content with the provided header
-#' section and a placeholder for the table of contents (TOC). It then iterates
-#' through the plots, generating sections for each level of clustered hits and
-#' processing individual plots. The TOC is inserted into the HTML content,
-#' which is then finalized and written to the specified output file.
+#' The function initializes the HTML with \code{header_section} and a TOC
+#' placeholder, then iterates over \code{sections}. For each section it:
+#' \enumerate{
+#'   \item Renders an \code{<h2>} header (with an \code{<hr>} after the first).
+#'   \item Filters out invalid/empty plot objects and renders remaining plots
+#'         via \code{process_plots()}.
+#'   \item If no plot is available, inserts a centered note:
+#'         "No enrichment plot available for this section."
+#'   \item If \code{ora_results} is present, calls
+#'         \code{generate_section_content()} to append a filtered ORA table and
+#'         a base64 download link for the full results. If no ORA is present
+#'         and no plots were rendered, a centered note is shown:
+#'         "No enrichment results for this section."
+#' }
+#' The TOC is updated with one entry per section. Finally,
+#' \code{generate_and_write_html()} writes the complete HTML document.
 #'
 build_run_ora_report <- function(
     header_section,
-    plots,
-    plots_sizes,
-    level_headers_info,
+    sections,
     report_info,
     output_file_path
 ) {
   
-  html_content <- paste(
-    header_section,
-    "<!--TOC-->",
-    sep = "\n"
-  )
+  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
   
   toc <- create_toc()
-  
   styles <- define_html_styles()
   section_header_style <- styles$section_header_style
   toc_style <- styles$toc_style
   
-  current_header_index <- 1
-  level_headers_info <- Filter(
-    Negate(is.null),
-    level_headers_info
-  )
+  # Helper to decide if a "plot" is really renderable
+  plot_is_valid <- function(p) {
+    if (is.null(p)) return(FALSE)
+    if (is.character(p)) return(FALSE)              # avoid old sentinels/paths
+    if (inherits(p, "ggplot")) return(TRUE)         # ggplot object OK
+    if (is.list(p) && !is.null(p$path))
+      return(is.character(p$path) && file.exists(p$path))
+    FALSE
+  }
   
-  pb <- create_progress_bar(plots)
-  # Generate the sections and plots
-  for (index in seq_along(plots)) {
-    # means jump to next level
-    if (any(is(plots[[index]], "character"))) {
-      section_info <- level_headers_info[[current_header_index]]
-      
-      section_content <- generate_section_content(
-        section_info,
-        index,
-        toc,
-        html_content,
-        section_header_style,
-        toc_style
-      )
-      
-      html_content <- section_content$html_content
-      
-      current_header_index <- current_header_index + 1
-      
-      pb$tick()
-      next
+  # Progress bar over valid plots only
+  total_plots <- sum(vapply(sections, function(s) {
+    ps <- s$plots
+    if (is.null(ps)) return(0L)
+    if (!is.list(ps) || inherits(ps, "ggplot")) ps <- list(ps)
+    sum(vapply(ps, plot_is_valid, logical(1)))
+  }, integer(1)))
+  pb <- create_progress_bar(seq_len(max(total_plots, 1)))
+  
+  for (s_idx in seq_along(sections)) {
+    sec <- sections[[s_idx]]
+    header_name <- if (!is.null(sec$header_name) && nzchar(sec$header_name)) {
+      sec$header_name
+    } else {
+      paste0("Section ", s_idx)
     }
     
-    # Add the section header and horizontal line just before the plot
-    section_info <- level_headers_info[[current_header_index]]
+    # Header + optional HR
     section_header <- sprintf(
       "<h2 style='%s' id='section%d'>%s</h2>",
-      section_header_style,
-      index,
-      section_info$header_name
+      section_header_style, s_idx, header_name
     )
-    
-    horizontal_line <- ""
-    
-    if (current_header_index > 1) {
-      horizontal_line <- "<hr>"
-    }
-    
-    # Update the HTML content with the section header and horizontal line
     html_content <- paste(
       html_content,
-      horizontal_line,
+      if (s_idx > 1) "<hr>" else "",
       section_header,
       sep = "\n"
     )
     
+    # TOC entry
     toc_entry <- sprintf(
       "<li style='%s'><a href='#section%d'>%s</a></li>",
-      toc_style,
-      index,
-      section_info$header_name
+      toc_style, s_idx, header_name
     )
+    toc <- paste(toc, toc_entry, sep = "\n")
     
-    toc <- paste(
-      toc,
-      toc_entry,
-      sep = "\n"
-    )
+    # Normalize and filter plots
+    plots <- sec$plots
+    if (!is.list(plots) || inherits(plots, "ggplot")) plots <- list(plots)
     
-    result <- process_plots(
-      plots_element = plots[[index]],
-      plots_size = plots_sizes[[index]],
-      html_content = html_content,
-      toc = toc,
-      header_index = index
-    )
-    html_content <- result$html_content
-    toc <- result$toc
+    sizes <- sec$plot_sizes
+    if (!is.list(sizes)) {
+      sizes <- as.list(rep_len(if (is.null(sizes)) 999 else sizes,
+                               length(plots)))
+    }
     
-    pb$tick()
+    valid <- vapply(plots, plot_is_valid, logical(1))
+    plots <- plots[valid]
+    sizes <- sizes[valid]
+    
+    if (length(plots) == 0L) {
+      # No valid plot -> tidy note instead of broken image
+      html_content <- paste(
+        html_content,
+        "<p style='font-size:14px;color:#666;margin:0.5em 0 1em 0;
+             text-align:center;'>",
+        "No enrichment plot available for this section.",
+        "</p>",
+        sep = "\n"
+      )
+    } else {
+      for (i in seq_along(plots)) {
+        res <- process_plots(
+          plots_element = plots[[i]],
+          plots_size    = sizes[[i]],
+          html_content  = html_content,
+          toc           = toc,
+          header_index  = s_idx
+        )
+        html_content <- res$html_content
+        toc <- res$toc
+        pb$tick()
+      }
+    }
+    
+    # Append filtered table + download (your existing function)
+    if (!is.null(sec$ora_results)) {
+      add <- generate_section_content(
+        section_info = list(
+          header_name = header_name,
+          ora_results = sec$ora_results
+        ),
+        index = s_idx,
+        toc = toc,
+        html_content = html_content,
+        section_header_style = section_header_style,
+        toc_style = toc_style
+      )
+      html_content <- add$html_content
+    } else if (length(plots) == 0L) {
+      # No ORA results AND no plots -> show a single concise note
+      html_content <- paste(
+        html_content,
+        "<p style='font-size:14px;color:#666;margin:0.25em 0 1.25em 0;
+             text-align:center;'>",
+        "No enrichment results for this section.",
+        "</p>",
+        sep = "\n"
+      )
+    }
   }
   
   generate_and_write_html(
     toc = toc,
     html_content = html_content,
-    report_info,
+    report_info  = report_info,
     output_file_path = output_file_path
   )
 }
@@ -1372,154 +1345,57 @@ check_enrichGO_cfg <- function(enrichGO_cfg) {
 }
 
 
-#' Perform Gene Set Enrichment Analysis and plot it.
-#' 
+#' Perform ORA for clustered genes and plot results
+#'
 #' @noRd
 #'
 #' @description
-#' This function conducts a Gene Set Enrichment Analysis (ora) using either the
-#' clusterProfiler package. Afterwards, it plots the results.
-#' It allows for customization of enrichment parameters, selection of databases,
-#' and optionally specifying a custom plot title and background gene list.
+#' Runs over-representation analysis (ORA) with \pkg{clusterProfiler}
+#' for each distinct value in a \code{cluster} column, using the genes
+#' in \code{gene} as foreground. Gene-set collections are taken from
+#' \code{databases} via \code{dbs_to_term2genes()}. For GO collections
+#' provided in \code{enrichGO_cfg}, \code{enrichGO()} (optionally
+#' followed by \code{simplify()}) is used; all other collections are
+#' analyzed with \code{enricher()} and their \code{TERM2GENE} maps.
+#' Invalid/empty gene IDs are removed and duplicates are deduplicated
+#' before enrichment. If any cluster yields results, a dot plot is
+#' generated; otherwise \code{NA} is returned.
 #'
-#' @param clustered_genes A list of dataframes with two columns: the first
-#' column contains the standard gene symbol, and the second column contains an
-#' integer specifying the cluster.
-#' @param databases A dataframe containing the data of the downloaded Enrichr
-#'                  databases
-#' @param params A list specifying the clusterProfiler parameters for the
-#'               enrichment analysis.
-#' @param enrichGO_cfg A named list specifying the configuration for 
-#' running GO enrichment with Bioconductor's 
-#' \code{\link[clusterProfiler]{enrichGO}}.
-#' This is only needed when you want to perform GO Biological Process (BP), 
-#' Molecular Function (MF), or Cellular Component (CC) enrichment using 
-#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
-#' 
-#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
-#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
-#' \itemize{
-#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
-#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
-#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
-#' }
-#' 
-#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
-#' enrichment is performed. All enrichment runs through 
-#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
-#' 
-#' @param plot_title An optional string specifying the title of the plot. If not
-#' provided, a default title based on the analysis will be used.
-#' @param universe An optional list of standard gene symbols to be used as the
-#' background for the enrichment analysis instead of the background chosen by
-#' the `enricher`. The default is an empty list, which implies the use of the
-#' default background set by the enrichment tool.
+#' @param clustered_genes A data.frame/tibble with two columns:
+#'   \code{gene} (character gene identifiers compatible with the chosen
+#'   collections) and \code{cluster} (scalar label; may be numeric or
+#'   character such as \code{"cond1_higher"}). One row per
+#'   feature/gene-instance; foregrounds are built by grouping on
+#'   \code{cluster}.
+#' @param databases A data.frame or list describing the gene-set
+#'   collections to analyze. It is converted to \code{TERM2GENE} maps by
+#'   \code{dbs_to_term2genes()}.
+#' @param params A list of clusterProfiler settings (e.g.,
+#'   \code{pvalueCutoff}, \code{pAdjustMethod}, \code{minGSSize},
+#'   \code{maxGSSize}, \code{qvalueCutoff}). Passed through to the
+#'   enrichment functions.
+#' @param enrichGO_cfg Optional named list configuring GO runs for those
+#'   collections that are GO. Each entry should provide:
+#'   \code{OrgDb}, \code{keyType}, and \code{ontology} (one of
+#'   \code{"BP"}, \code{"MF"}, \code{"CC"}). When present for a given
+#'   collection name, \code{enrichGO()} is used instead of
+#'   \code{enricher()}.
+#' @param plot_title Optional character string used as a title/label for
+#'   the generated dot plot(s).
+#' @param universe Optional character vector of background genes used as
+#'   the universe for ORA (passed to \code{enrichGO()}/\code{enricher()}).
 #'
-#' @return An object containing the results of the Gene Set Enrichment Analysis,
-#' including any plots generated during the analysis.
+#' @return A list with:
+#'   \itemize{
+#'     \item \code{dotplot}: ggplot object (or list of ggplots) showing
+#'       ORA results across clusters/collections.
+#'     \item \code{dotplot_nrows}: suggested plot height/rows.
+#'     \item \code{ora_results}: nested list
+#'       \code{cluster_<label> -> collection -> data.frame} with raw
+#'       enrichment tables (or \code{NA} when empty).
+#'   }
+#'   If no enrichment is found for any cluster, returns \code{NA}.
 #'
-# run_ora_level <- function(
-#     clustered_genes,
-#     databases,
-#     params = NA,
-#     enrichGO_cfg = NULL,
-#     plot_title = "",
-#     universe = NULL
-# ) {
-#   
-#   params <- set_default_params(params)
-#   gene_set_collections <- dbs_to_term2genes(databases)
-#   
-#   unique_clusters <- sort(unique(clustered_genes$cluster))
-#   
-#   ora_results <- list()   # stores all the results from clusterProfiler
-#   
-#   for (cluster in unique_clusters) {
-#     cluster_label <- paste0("cluster_", cluster)
-#     ora_results[[cluster_label]] <- list()
-#     
-#     foreground_genes <- 
-#       as.character(clustered_genes$gene[clustered_genes$cluster == cluster])
-#     
-#     at_least_one_result <- FALSE
-#     
-#     # Run clusterProfiler and process output
-#     for (gene_set_name in names(gene_set_collections)) {
-#       gene_set_map <- gene_set_collections[[gene_set_name]]
-#       
-#       # There can be a problem with a database, and that potential message is 
-#       # not coming from the SplineOmics code. That is why here always the 
-#       # database is send as a message, so that the problems can be connected
-#       # to a specific database.
-#       message(paste(    
-#         "\nDatabase:",
-#         gene_set_name
-#       ))
-#       
-#       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
-#           cfg <- enrichGO_cfg[[gene_set_name]]
-#           ora_result <- clusterProfiler::enrichGO(
-#             gene = foreground_genes,
-#             OrgDb = cfg$OrgDb,
-#             keyType = cfg$keyType,
-#             ont = cfg$ontology,
-#             pvalueCutoff = params$pvalueCutoff,
-#             pAdjustMethod = params$pAdjustMethod,
-#             universe = universe,
-#             minGSSize = params$minGSSize,
-#             maxGSSize = params$maxGSSize,
-#             qvalueCutoff = params$qvalueCutoff
-#           )
-#         ora_result <- clusterProfiler::simplify(ora_result)
-#       } else {
-#         ora_result <- clusterProfiler::enricher(
-#           gene = foreground_genes,
-#           pvalueCutoff = params$pvalueCutoff,
-#           pAdjustMethod = params$pAdjustMethod,
-#           universe = universe,
-#           minGSSize = params$minGSSize,
-#           maxGSSize = params$maxGSSize,
-#           qvalueCutoff = params$qvalueCutoff,
-#           gson = NULL,
-#           TERM2GENE = gene_set_map,
-#           TERM2NAME = NA
-#         )
-#       }
-# 
-#       ora_result_df <- as.data.frame(ora_result)
-#       if (nrow(ora_result_df) == 0) {
-#         ora_result_df <- NA  # Mark explicitly
-#       }
-# 
-#       ora_results[[cluster_label]][[gene_set_name]] <- ora_result_df
-#     }
-#   }
-#   
-#   ora_results <- add_odds_ratios_to_ora(ora_results)
-#   
-#   # Check if any enrichment results exist
-#   any_result <- any(vapply(ora_results, function(cluster_entry) {
-#     any(vapply(cluster_entry, function(res) {
-#       is.data.frame(res) && nrow(res) > 0L
-#     }, logical(1)))
-#   }, logical(1)))
-# 
-#   if (any_result) {
-#     result <- make_enrich_dotplot(
-#       ora_results,
-#       plot_title
-#     )
-#   } else {
-#     message("No cluster led to an enrichment result!")
-#     return(NA)
-#   }
-#   
-#   list(
-#     dotplot = result[["dotplot"]],
-#     dotplot_nrows = result[["dotplot_height"]],
-#     ora_results = ora_results
-#   )
-# }
 run_ora_level <- function(
     clustered_genes,
     databases,
@@ -1711,24 +1587,120 @@ generate_section_content <- function(
 }
 
 
-make_clustered_genes <- function(clustering_results, level_col) {
+#' Determine level columns in clustering summary table
+#'
+#' @noRd
+#'
+#' @description
+#' Returns the names of columns in a \code{clustering_results} data frame
+#' that represent enrichment levels. The order is:
+#' (1) time-effect condition columns (\code{cluster_*} except
+#' \code{cluster_cat2} and \code{cluster_cat3}), followed by
+#' (2) \code{cluster_cat2} if present, and
+#' (3) \code{cluster_cat3} if present.
+#'
+#' @param cr A tibble/data frame like that produced by
+#'   \code{construct_cluster_summary()}, containing \code{cluster_*}
+#'   columns.
+#'
+#' @return A character vector of level column names in the preferred
+#'   processing order.
+#'
+#' @details
+#' Columns are identified via \code{grep("^cluster_", names(cr))}. The
+#' time-effect condition columns retain their original ordering from
+#' \code{cr}; category columns are appended if present.
+#' 
+level_columns <- function(cr) {
+  allc  <- grep("^cluster_", names(cr), value = TRUE)
+  cond  <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
+  c(cond,
+    intersect("cluster_cat2", allc),
+    intersect("cluster_cat3", allc))
+}
+
+
+#' Derive display names for enrichment levels
+#'
+#' @noRd
+#'
+#' @description
+#' Generates human-readable labels for the enrichment levels present in a
+#' \code{clustering_results} table. Time-effect condition columns
+#' (\code{cluster_*} except \code{cluster_cat2}/\code{cluster_cat3}) are
+#' mapped to \code{"time_effect_condition_<cond>"}, while category columns
+#' (if present) are named \code{"avrg_diff_conditions"} (cat2) and
+#' \code{"interaction_condition_time"} (cat3).
+#'
+#' @param cr A tibble/data frame like that produced by
+#'   \code{construct_cluster_summary()} containing \code{cluster_*}
+#'   columns.
+#'
+#' @return A character vector of display names ordered to match the level
+#'   columns returned by \code{level_columns(cr)}.
+#'
+#' @details
+#' Condition names are derived by stripping the \code{"cluster_"} prefix
+#' from the corresponding column names. Category labels are included only
+#' if the respective columns exist in \code{cr}.
+#' 
+level_display_names <- function(cr) {
+  allc  <- grep("^cluster_", names(cr), value = TRUE)
+  cond  <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
+  c(
+    paste0("time_effect_condition_", sub("^cluster_", "", cond)),
+    if ("cluster_cat2" %in% allc) "avrg_diff_conditions",
+    if ("cluster_cat3" %in% allc) "interaction_condition_time"
+  )
+}
+
+
+#' Build foreground gene sets for a level
+#'
+#' @noRd
+#'
+#' @description
+#' Extracts non-missing genes and their cluster labels from a unified
+#' \code{clustering_results} table for a specific level column, producing
+#' a two-column data frame suitable for ORA (\code{gene}, \code{cluster}).
+#' Rows with missing/empty genes or missing level labels are dropped, and
+#' duplicate gene–cluster pairs are removed.
+#'
+#' @param clustering_results A tibble/data frame produced by
+#'   \code{construct_cluster_summary()} that includes a \code{gene} column
+#'   and one or more level columns named \code{cluster_*}.
+#' @param level_col Character scalar naming the level column in
+#'   \code{clustering_results} to use (must exist in \code{names()}).
+#'
+#' @return A data frame with columns:
+#'   \itemize{
+#'     \item \code{gene} (character): foreground gene identifiers.
+#'     \item \code{cluster} (character): labels from \code{level_col}.
+#'   }
+#'   May be empty (0 rows) if no valid gene–cluster pairs are found.
+#'
+#' @details
+#' Rows are kept when \code{!is.na(level_col) & !is.na(gene) & gene != ""}.
+#' Both columns are coerced to \code{character}, and duplicates are removed
+#' via \code{unique()}.
+#' 
+make_clustered_genes <- function(
+    clustering_results,
+    level_col
+    ) {
   stopifnot(level_col %in% names(clustering_results))
   x <- clustering_results
-  # keep rows with a gene and a level assignment
-  if (level_col == "cluster_cat2") {
-    # pooled enrichment for cat2: ignore cluster labels
-    keep <- !is.na(x[[level_col]]) & !is.na(x$gene) & x$gene != ""
-    genes <- unique(as.character(x$gene[keep]))
-    data.frame(gene = genes, cluster = "all", stringsAsFactors = FALSE)
-  } else {
-    keep <- !is.na(x[[level_col]]) & !is.na(x$gene) & x$gene != ""
-    df <- data.frame(
-      gene    = as.character(x$gene[keep]),
-      cluster = as.character(x[[level_col]][keep]),
-      stringsAsFactors = FALSE
-    )
-    unique(df)
+  keep <- !is.na(x[[level_col]]) & !is.na(x$gene) & x$gene != ""
+  if (!any(keep)) {
+    return(data.frame(gene = character(), cluster = character(),
+                      stringsAsFactors = FALSE))
   }
+  data.frame(
+    gene    = as.character(x$gene[keep]),
+    cluster = as.character(x[[level_col]][keep]),
+    stringsAsFactors = FALSE
+  ) |>
+    unique()
 }
 
 

@@ -5,28 +5,41 @@
 \title{run_ora()}
 \usage{
 run_ora(
-  levels_clustered_hits,
+  clustering_results,
   databases,
   report_info,
   cluster_hits_report_name,
   clusterProfiler_params = NA,
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   enrichGO_cfg = NULL,
-  plot_titles = NA,
   universe = NULL,
   report_dir = here::here()
 )
 }
 \arguments{
-\item{levels_clustered_hits}{A list of dataframes that contain the clustered
-hits of the different levels. When clustering_results is the variable that 
-collects the output of the SplineOmics::cluster_hits() function, then an 
-easy way to get this is clustering_results$clustered_hits_levels. Every 
-element of that list is a dataframe, with the three columns feature, cluster,
-gene. feature contains the index number of the feature (for example a protein
-), cluster is an integer specifying in which cluster this feature was placed,
-and gene contains the gene name. It is essential that the gene name matches
-the gene names used in the databases that are used for this enrichment here.}
+\item{clustering_results}{A tibble containing one row per
+\code{feature_nr} with metadata and cluster assignments across the
+analysis categories. It includes:
+\itemize{
+  \item \code{feature_nr} – Numeric feature identifier.
+  \item \code{feature_name} – Preferred feature name from the source
+    data, falling back to the numeric ID if none is available.
+  \item \code{gene} – Preferred gene symbol from the annotation or
+    cluster data.
+  \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+    assignments for each time-effect condition.
+  \item \code{cluster_cat2} – (Optional) Combined cluster label for
+    category 2 hits in the form
+    \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+    feature was not a category 2 hit.
+  \item \code{cluster_cat3} – (Optional) Combined cluster label for
+    category 3 hits in the form
+    \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+    feature was not a category 3 hit.
+}
+For any category-specific cluster column, a value of \code{NA}
+indicates that the feature was not significant (not a hit) in that
+category.}
 
 \item{databases}{A dataframe with the three columns: DB containing the 
 database name, Geneset containng the name of the geneset, and Gene, 
@@ -98,9 +111,6 @@ The list must be named according to the GO ontology, e.g., \code{"GO_BP"},
 If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
 enrichment is performed. All enrichment runs through 
 \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.}
-
-\item{plot_titles}{Titles for the enrichment dotplots generated in the HTML
-report, default is NA.}
 
 \item{universe}{Enrichment background data, default is NULL. This is a
 parameter of clusterProfiler, for the documentation, please check the 

@@ -10,7 +10,7 @@ test_that("create_limma_report runs without error and writes to tempdir", {
     data = data,
     feature_name_columns = c("Gene_name"),
     top_row = 4,
-    bottom_row = 4165,
+    bottom_row = 1165,
     right_col = 37,
     left_col = 2
   )

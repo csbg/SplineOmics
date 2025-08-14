@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -477,7 +477,7 @@ overwrite = TRUE)</td>
 <span><span class="co">#&gt; (`stat_boxplot()`).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpj1Ly3k/filea6fc28877a8e .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpqBVGuu/filecdf63bb1c7c .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 </div>
@@ -490,7 +490,7 @@ clear idea of what do use.</p>
 <p>Lets define our parameters and put them into the
 <code>SplineOmics</code> object:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">spline_params</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">spline_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>,    <span class="co"># natural cubic splines</span></span>
 <span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span><span class="op">)</span>              <span class="co"># Degree of freedom of 3 for the splines.</span></span>
 <span><span class="op">)</span></span>
@@ -517,11 +517,7 @@ clear idea of what do use.</p>
 <span><span class="co">#&gt; Column 'Group' of meta will be used to remove the batch effect for the plotting</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Running Levene's test to check for violation of homoscedasticity of each feature...</span></span>
-<span><span class="co">#&gt; Checking for heteroscedasticity violation with Levene's test in</span></span>
-<span><span class="co">#&gt;       the presence of random effects is currently out of order. Hopefully,</span></span>
-<span><span class="co">#&gt;       it will be available in future versions of SplineOmics</span></span>
+<span><span class="co">#&gt; Using arrayWeights strategy for heteroscedasticity adjustment.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fitting global model...</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -539,7 +535,16 @@ generate p-value histograms an volcano plots.</p>
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_limma_report.html">create_limma_report</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: The data contains missing values (NA). Ensure that imputation or handling of missing values aligns with your analysis requirements. Note that limma can  handle missing values (it just ignores them), and therefore  also SplineOmics can handle them.</span></span>
+<span><span class="co">#&gt; Column 'Group' of meta will be used to remove the batch effect for the plotting</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpqBVGuu/filecdf65f91700a .</span></span>
+<span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
+<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="cluster-the-hits-significant-features">Cluster the hits (significant features)<a class="anchor" aria-label="anchor" href="#cluster-the-hits-significant-features"></a>
@@ -560,7 +565,7 @@ generate p-value histograms an volcano plots.</p>
 <span>  <span class="st">"clustering_reports"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">treatment_labels</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span><span class="va">treatment_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="co"># constant = NA, </span></span>
 <span>  temp_shift <span class="op">=</span> <span class="st">"temp shift"</span>,  </span>
 <span>  constant_temp_shift <span class="op">=</span> <span class="st">"temp shift"</span> </span>
@@ -569,7 +574,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co"># treatment_timepoints allows to specify the timepoint, at which the vertical</span></span>
 <span><span class="co"># dashed treatment line is placed. Again, for the constant level, we don't</span></span>
 <span><span class="co"># have a treatment, so we also do not specify a timepoint.</span></span>
-<span><span class="va">treatment_timepoints</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span><span class="va">treatment_timepoints</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="co"># constant = NA,</span></span>
 <span>  temp_shift <span class="op">=</span> <span class="fl">146</span>,  </span>
 <span>  constant_temp_shift <span class="op">=</span> <span class="fl">146</span></span>
@@ -625,7 +630,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpj1Ly3k/filea6fc3e1ed7a8 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpqBVGuu/filecdf64cca445e .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 </div>
@@ -656,7 +661,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.2.0 testthat_3.2.3    devtools_2.4.5    usethis_3.1.0    </span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.3.0 testthat_3.2.3    devtools_2.4.5    usethis_3.1.0    </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_2.0.0          </span></span>
@@ -697,16 +702,16 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; [106] Biobase_2.68.0           statmod_1.5.0            brio_1.1.5              </span></span>
 <span><span class="co">#&gt; [109] matrixStats_1.5.0        pheatmap_1.0.13          stringi_1.8.7           </span></span>
 <span><span class="co">#&gt; [112] yaml_2.3.10              boot_1.3-31              evaluate_1.0.4          </span></span>
-<span><span class="co">#&gt; [115] codetools_0.2-19         tibble_3.3.0             BiocManager_1.30.26     </span></span>
-<span><span class="co">#&gt; [118] cli_3.6.5                xtable_1.8-4             systemfonts_1.2.3       </span></span>
-<span><span class="co">#&gt; [121] Rdpack_2.6.4             jquerylib_0.1.4          Rcpp_1.1.0              </span></span>
-<span><span class="co">#&gt; [124] EnvStats_3.1.0           png_0.1-8                parallel_4.5.1          </span></span>
-<span><span class="co">#&gt; [127] ellipsis_0.3.2           pkgdown_2.1.3            ggplot2_3.5.2           </span></span>
-<span><span class="co">#&gt; [130] prettyunits_1.2.0        ClusterR_1.3.3           profvis_0.4.0           </span></span>
-<span><span class="co">#&gt; [133] urlchecker_1.0.1         bitops_1.0-9             lme4_1.1-37             </span></span>
-<span><span class="co">#&gt; [136] mvtnorm_1.3-3            lmerTest_3.1-3           scales_1.4.0            </span></span>
-<span><span class="co">#&gt; [139] openxlsx_4.2.8           purrr_1.1.0              crayon_1.5.3            </span></span>
-<span><span class="co">#&gt; [142] fANCOVA_0.6-1            GetoptLong_1.0.5         rlang_1.1.6</span></span></code></pre>
+<span><span class="co">#&gt; [115] codetools_0.2-19         tibble_3.3.0             cli_3.6.5               </span></span>
+<span><span class="co">#&gt; [118] xtable_1.8-4             systemfonts_1.2.3        Rdpack_2.6.4            </span></span>
+<span><span class="co">#&gt; [121] jquerylib_0.1.4          Rcpp_1.1.0               EnvStats_3.1.0          </span></span>
+<span><span class="co">#&gt; [124] png_0.1-8                parallel_4.5.1           ellipsis_0.3.2          </span></span>
+<span><span class="co">#&gt; [127] pkgdown_2.1.3            ggplot2_3.5.2            prettyunits_1.2.0       </span></span>
+<span><span class="co">#&gt; [130] ClusterR_1.3.3           profvis_0.4.0            urlchecker_1.0.1        </span></span>
+<span><span class="co">#&gt; [133] bitops_1.0-9             lme4_1.1-37              mvtnorm_1.3-3           </span></span>
+<span><span class="co">#&gt; [136] lmerTest_3.1-3           scales_1.4.0             openxlsx_4.2.8          </span></span>
+<span><span class="co">#&gt; [139] purrr_1.1.0              crayon_1.5.3             fANCOVA_0.6-1           </span></span>
+<span><span class="co">#&gt; [142] GetoptLong_1.0.5         rlang_1.1.6</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

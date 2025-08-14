@@ -139,7 +139,7 @@ install.packages("remotes")
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.2.1",        # Specify the tag to install
+  ref = "0.3.0",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues

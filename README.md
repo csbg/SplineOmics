@@ -38,7 +38,6 @@ Workflow</figcaption>
 - [📦 Dependencies](#-dependencies)
 - [📚 Further Reading](#-further-reading)
 - [❓ Getting Help](#-getting-help)
-- [🤝 Contributing](#-contributing)
 - [💬 Feedback](#-feedback)
 - [📜 License](#-license)
 - [🎓 Citation](#-citation)
@@ -180,7 +179,7 @@ install.packages("remotes")
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "0.2.1",        # Specify the tag to install
+  ref = "0.3.0",        # Specify the tag to install
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
@@ -397,34 +396,6 @@ For more detailed questions, discussions, or contributions regarding the
 package’s use and development, please refer to the [GitHub
 Discussions](https://github.com/csbg/SplineOmics/discussions) page for
 `SplineOmics`.
-
-## 🤝 Contributing
-
-We welcome contributions to the `SplineOmics` package! Whether you’re
-interested in fixing bugs, adding new features, or improving
-documentation, your help is greatly appreciated.
-
-Here’s how you can contribute:
-
-1.  **Report a Bug or Request a Feature:** If you encounter a bug or
-    have an idea for a new feature, please [open an
-    issue](https://github.com/csbg/SplineOmics/issues) on our GitHub
-    repository. Before opening a new issue, check to see if the issue
-    has already been reported or the feature requested by another user.
-
-2.  **Submit a Pull Request:** If you’ve developed a bug fix or a new
-    feature that you’d like to share, submit a pull request.
-
-3.  **Improve Documentation:** Good documentation is crucial for any
-    project. If you notice missing or incorrect documentation, please
-    feel free to contribute.
-
-Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all your
-interactions with the project.
-
-Thank you for considering contributing to `SplineOmics`. Your efforts
-are what make the open-source community a fantastic place to learn,
-inspire, and create.
 
 ## 💬 Feedback
 

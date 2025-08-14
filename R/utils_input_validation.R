@@ -2237,42 +2237,55 @@ Level2Functions <- R6::R6Class("Level2Functions",
       if (!is.data.frame(meta) ||
         !"Time" %in% names(meta) ||
         !is.numeric(meta[["Time"]])) {
-        stop(
+        stop_call_false(
           self$create_error_message(
             paste("meta must be a dataframe with the numeric column Time"),
             data_meta_index
-          ),
-          call. = FALSE
+          )
         )
       }
 
       if (any(is.na(meta))) {
-        stop(
+        stop_call_false(
           self$create_error_message(
             "meta must not contain missing values.",
             data_meta_index
-          ),
-          call. = FALSE
+          )
         )
       }
 
       # Check if condition is a single character
       if (!is.character(condition) || length(condition) != 1) {
-        stop("'condition' must be a single character",
-          call. = FALSE
-        )
+        stop_call_false("'condition' must be a single character")
       }
 
       # Check if condition is a column in the meta dataframe
       if (!condition %in% colnames(meta)) {
-        stop(self$create_error_message(
+        stop_call_false(self$create_error_message(
           sprintf(
             "The condition '%s' is not a %s",
             condition,
             paste("column in meta")
           ),
           data_meta_index
-        ), call. = FALSE)
+        ))
+      }
+      
+      # Ensure the condition column has at most two levels
+      cond_vals <- meta[[condition]]
+      # Count distinct observed values (ignore unused factor levels)
+      n_levels <- length(unique(if (is.factor(cond_vals))
+        droplevels(cond_vals) else cond_vals))
+      if (n_levels > 2) {
+        levs <- sort(unique(as.character(cond_vals)))
+        msg <- sprintf(
+          "The condition column '%s' must have at most two levels,
+          but found %d: %s",
+          condition,
+          n_levels,
+          paste(levs, collapse = ", ")
+        )
+        stop_call_false(self$create_error_message(msg, data_meta_index))
       }
 
       # Check if the factor column is of appropriate type

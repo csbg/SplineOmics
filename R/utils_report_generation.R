@@ -401,14 +401,6 @@ generate_report_html <- function(
       report_info = report_info,
       output_file_path = output_file_path
     )
-  } else if (report_type == "screen_limma_hyperparams") {
-    build_hyperparams_screen_report(
-      header_section = header_section,
-      plots = plots,
-      plots_sizes = plots_sizes,
-      report_info = report_info,
-      output_file_path = output_file_path
-    )
   } else if (report_type == "create_limma_report") {
     build_create_limma_report(
       header_section = header_section,
@@ -429,9 +421,7 @@ generate_report_html <- function(
   } else if (report_type == "run_ora") {
     build_run_ora_report(
       header_section = header_section,
-      plots = plots,
-      plots_sizes = plots_sizes,
-      level_headers_info = level_headers_info,
+      sections = plots,
       report_info = report_info,
       output_file_path = output_file_path
     )
@@ -1795,18 +1785,38 @@ process_field <- function(
       base64_df <- "Analysis script is unavailable."
     }
   } else if (field == "foreground_genes") {
-    foreground_genes_dfs <- report_info$levels_clustered_hits
-    names(foreground_genes_dfs) <- names(foreground_genes_dfs)
+    cr <- report_info$clustering_results
+    
+    # All level columns we enrich over (present in this run)
+    level_cols <- grep("^cluster_", names(cr), value = TRUE)
+    
+    # Build a named list of data frames (one per level), with columns gene,
+    # cluster
+    foreground_genes_dfs <- setNames(
+      lapply(level_cols, function(col) {
+        cr %>%
+          dplyr::transmute(
+            gene    = as.character(.data$gene),
+            cluster = as.character(.data[[col]])
+          ) %>%
+          dplyr::filter(!is.na(gene), gene != "", !is.na(cluster)) %>%
+          dplyr::distinct()
+      }),
+      level_cols
+    )
     
     base64_df <- sprintf(
       '<a href="%s" download="foreground_genes.xlsx" class="embedded-file">
-       <button>Download foreground_genes.xlsx</button></a>',
+     <button>Download foreground_genes.xlsx</button></a>',
       encode_df_to_base64(foreground_genes_dfs)
     )
   } else if (field == "background_genes") {
     if (is.null(report_info$background_genes)) {
       background_genes_df <- data.frame(
-        note = "All genes from the respective genesets were used as background",
+        note = paste(
+          "No universe provided: All genes from the respective",
+          "genesets were used as background"
+        ),
         stringsAsFactors = FALSE
       )
     } else {

@@ -364,17 +364,6 @@ cluster_hits <- function(
     }
   }
 
-  if (!is.null(genes)) {
-    # Add gene column for the run_gsea() function.
-    clustered_hits_levels <- lapply(clustered_hits_levels, function(df) {
-      if (is.character(df)) {
-        return(df)
-      }
-      df$gene <- genes[df$feature]
-      return(df)
-    })
-  }
-  
   if (report) {
     print_info_message(
       message_prefix = "Clustering the hits",
@@ -386,7 +375,7 @@ cluster_hits <- function(
     limma_splines_results = splineomics[["limma_splines_result"]],
     clustered_hits_levels = clustered_hits_levels,
     category_2_and_3_hits = category_2_and_3_hits,
-    annotation = annotation
+    genes = genes
   )
 
   list(
@@ -1696,9 +1685,9 @@ construct_cluster_summary <- function(
     limma_splines_results,
     clustered_hits_levels,
     category_2_and_3_hits,
-    annotation
+    genes
 ) {
-  
+
   nm <- names(clustered_hits_levels)
   if (is.null(nm) || length(nm) != 2 || any(is.na(nm) | nm == "")) {
     nm <- c("condition1", "condition2")
@@ -1713,13 +1702,13 @@ construct_cluster_summary <- function(
     nrow(stbl(limma_splines_results$interaction_condition_time)) > 0
   use_cat23 <- has_c2 || has_c3
   
-  anot <- annotation %>%
-    as_tibble(rownames = "feature_nr") %>%
-    mutate(feature_nr = suppressWarnings(as.numeric(.data$feature_nr))) %>%
-    transmute(feature_nr,
-              gan = dplyr::coalesce(.data$Gene_symbol, .data$Gene_name)) %>%
-    filter(!is.na(feature_nr)) %>%
-    distinct(feature_nr, .keep_all = TRUE)
+  no_genes <- is.null(genes)
+  anot <- if (no_genes) {
+    tibble(feature_nr = numeric(0), gan = character(0))
+  } else {
+    tibble(feature_nr = seq_along(genes), gan = as.character(genes)) %>%
+      distinct(feature_nr, .keep_all = TRUE)
+  }
   
   cl1 <- ncl(clustered_hits_levels[[1]], c1)
   cl2 <- ncl(clustered_hits_levels[[2]], c2)
@@ -1784,9 +1773,12 @@ construct_cluster_summary <- function(
     group_by(feature_nr) %>%
     slice_head(n = 1) %>%
     ungroup() %>%
-    mutate(feature_name = coalesce(fname_tbl, fname_cl, fnsrc1, fnsrc2,
-                                   as.character(feature_nr)),
-           gene = coalesce(gan, gcl1, gcl2)) %>%
+    mutate(
+      feature_name = coalesce(
+        fname_tbl, fname_cl, fnsrc1, fnsrc2, as.character(feature_nr)
+      ),
+      gene = if (no_genes) NA_character_ else coalesce(gan, gcl1, gcl2)
+    ) %>%
     select(feature_nr, feature_name, gene, all_of(c(c1, c2)))
   
   if (!use_cat23) {
@@ -1794,28 +1786,41 @@ construct_cluster_summary <- function(
              arrange(feature_nr))
   }
   
-  # cat2: direction by PhaseStationary -> "<cond>_higher"
+  # cat2: direction by <cond2 score> -> "<cond>_higher"
   out <- base
   if (has_c2) {
-    c2_df <- limma_splines_results$avrg_diff_conditions %>%
-      stbl() %>%
+    c2_tbl <- stbl(limma_splines_results$avrg_diff_conditions)
+    
+    # pick cond2 score column ignoring underscores
+    score_col <- find_col_ignore_underscores_rx(c2_tbl, nm[[2]])
+    if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
+      stop_call_false(
+        "Missing logFC column in topTable for avr diff conditions."
+        )
+    }
+    
+    c2_df <- c2_tbl %>%
       transmute(
         feature_nr,
-        cluster_cat2 = ifelse(
-          PhaseStationary > 0,
-          paste0(gsub("_", "", nm[2]), "_higher"),
-          ifelse(
-            PhaseStationary < 0,
-            paste0(gsub("_", "", nm[1]), "_higher"),
-            NA_character_
-          )
+        cluster_cat2 = dplyr::case_when(
+          .data[[score_col]] > 0 ~ paste0(gsub("_","", nm[[2]]), "_higher"),
+          .data[[score_col]] < 0 ~ paste0(gsub("_","", nm[[1]]), "_higher"),
+          TRUE ~ NA_character_
         )
       ) %>%
       distinct(feature_nr, .keep_all = TRUE)
+    
+    if (!is.null(category_2_and_3_hits$category_2_hits)) {
+      cat2h <- category_2_and_3_hits$category_2_hits %>%
+        stbl() %>% transmute(feature_nr) %>% distinct()
+      c2_df <- c2_df %>%
+        mutate(cluster_cat2 = ifelse(feature_nr %in% cat2h$feature_nr,
+                                     cluster_cat2, NA_character_))
+    }
+    
     out <- out %>% left_join(c2_df, by = "feature_nr")
   }
   
-  # cat3: keep combo from c1/c2 (only for cat3 hits)
   if (has_c3) {
     cat3h <- category_2_and_3_hits$category_3_hits %>%
       stbl() %>% transmute(feature_nr) %>% distinct()
@@ -1823,8 +1828,7 @@ construct_cluster_summary <- function(
     out <- out %>% left_join(cat3c, by = "feature_nr")
   }
   
-  out %>% distinct(feature_nr, .keep_all = TRUE) %>%
-    arrange(feature_nr)
+  out %>% distinct(feature_nr, .keep_all = TRUE) %>% arrange(feature_nr)
 }
 
 
@@ -4005,6 +4009,36 @@ mkc <- function(
            .cmb = ifelse(feature_nr %in% hits$feature_nr,
                          .cmb, NA_character_)) %>%
     select(feature_nr, .cmb)
+}
+
+
+#' Find a column name ignoring underscores
+#'
+#' @noRd
+#'
+#' @description
+#' Returns the first column name in \code{df} that matches \code{target}
+#' after removing underscores from both. Matching is **case-sensitive** and
+#' only ignores underscores (no other characters are normalized).
+#'
+#' @param df A data frame (or tibble) whose column names are searched.
+#' @param target Character scalar with the desired column name. Underscores
+#'   in \code{target} are ignored for matching.
+#'
+#' @return A single character string with the matched column name from
+#'   \code{df}, or \code{NA_character_} if no match is found.
+#'
+#' @details
+#' This helper strips \code{"_"} from both the candidate column names and
+#' \code{target} and compares them for equality. If multiple columns match,
+#' the first is returned. Only underscores are ignored; other differences
+#' (e.g., case, hyphens) are not.
+
+find_col_ignore_underscores_rx <- function(df, target) {
+  nn  <- names(df)
+  key <- gsub("_", "", target)
+  hit <- which(gsub("_", "", nn) == key)
+  if (length(hit)) nn[hit[1]] else NA_character_
 }
 
 

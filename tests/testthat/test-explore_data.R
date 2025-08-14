@@ -19,7 +19,7 @@ test_that("explore_data returns correctly structured nested list", {
     data = data,
     feature_name_columns = c("Gene_name"),
     top_row = 4,
-    bottom_row = 4165,
+    bottom_row = 1165,
     right_col = 37,
     left_col = 2
   )

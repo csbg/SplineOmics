@@ -160,7 +160,7 @@ update_splineomics <- function(
     stop("The passed object must be of class 'SplineOmics'")
   }
 
-  allowed_fields <- c(
+  allowed_fields <- c( 
     "data",
     "rna_seq_data",
     "meta",
