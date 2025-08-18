@@ -8,8 +8,9 @@ cluster_hits(
   splineomics,
   nr_clusters,
   adj_pthresholds = c(0.05),
-  adj_pthresh_avrg_diff_conditions = 0,
-  adj_pthresh_interaction_condition_time = 0,
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05,
+  min_effect_size = list(time_effect = 0, avg_diff_cond = 0),
   genes = NULL,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
@@ -88,6 +89,27 @@ turned off).}
 \item{adj_pthresh_interaction_condition_time}{p-value threshold for the
 results from the interaction of condition and time limma result. Per default
 0 (turned off).}
+
+\item{min_effect_size}{A named list that specifies the minimum effect size
+  thresholds to consider a feature as biologically meaningful, in addition
+  to statistical significance. This allows users to filter out "trivial"
+  hits that pass adjusted p-value cutoffs but show negligible effect sizes.
+
+  The list must contain the following elements:
+  - `time_effect`: Minimum absolute effect size (e.g., log-fold change or
+    model coefficient) for time effects. Features with a smaller effect size
+    will be ignored even if they are statistically significant.
+  - `avg_diff_cond`: Minimum absolute effect size for average differences
+    between conditions. As above, this ensures that only condition
+    contrasts with biologically relevant magnitude are reported.
+
+  Values should be numeric (typically >0). For example,
+  `min_effect_size = list(time_effect = 1, avg_diff_cond = 1)` will only
+  keep time effects and condition differences with an absolute effect size
+  of at least 1 unit. Use smaller values (e.g., 0.1) for more permissive
+  filtering, or larger values to be more conservative.
+  
+  The default is the value 0 for both `time_effect` and `avg_diff_cond`.}
 
 \item{genes}{A character vector containing the gene names of the features to
 be analyzed. The entries should be in the same order as they appear in data.}

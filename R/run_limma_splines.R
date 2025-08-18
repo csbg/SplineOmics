@@ -689,8 +689,12 @@ extract_within_level_time_effects <- function(
 #'   the condition factor for which pairwise contrasts should be extracted.
 #'
 #' @return A named list with two elements:
-#'   - `condition_only`: average condition-level differences
-#'   - `condition_time`: condition × time interaction effects
+#' \itemize{
+#'   \item \code{condition_only}: A dataframe with the average condition-level
+#'   differences for the single contrast between the two levels.
+#'   \item \code{condition_time}: A dataframe with the condition × time
+#'   interaction effects for the same contrast.
+#' }
 #'
 #' Each is itself a list of results for all level combinations.
 #'
@@ -699,49 +703,31 @@ extract_between_level_contrasts <- function(
     condition,
     random_effects
 ) {
-
   levels <- unique(fit_obj$meta[[condition]])
-  level_combinations <- utils::combn(
-    levels,
-    2,
-    simplify = FALSE
+
+  contrast_result <- extract_contrast_for_pair(
+    fit_obj = fit_obj,
+    condition = condition,
+    level_pair = levels,
+    random_effects = random_effects
   )
   
-  between_level_condition_only <- list()
-  between_level_condition_time <- list()
+  # Name the results as before
+  cond_name  <- paste0("avrg_diff_", levels[1], "_vs_", levels[2])
+  time_name  <- paste0("time_interaction_", levels[1], "_vs_", levels[2])
   
-  for (lev_combo in level_combinations) {
-    contrast_result <- extract_contrast_for_pair(
-      fit_obj = fit_obj,
-      condition = condition,
-      level_pair = lev_combo,
-      random_effects = random_effects
-    )
-    
-    between_level_condition_only[[
-      paste0(
-        "avrg_diff_",
-        lev_combo[1],
-        "_vs_",
-        lev_combo[2]
-      )
-    ]] <- contrast_result$condition_only
-    
-    between_level_condition_time[[
-      paste0(
-        "time_interaction_",
-        lev_combo[1],
-        "_vs_",
-        lev_combo[2]
-      )
-    ]] <- contrast_result$condition_time
-  }
+  cond_df <- contrast_result$condition_only
+  if (nrow(cond_df) > 0) cond_df$contrast <- cond_name
+  
+  time_df <- contrast_result$condition_time
+  if (nrow(time_df) > 0) time_df$contrast <- time_name
   
   list(
-    condition_only = between_level_condition_only,
-    condition_time = between_level_condition_time
+    condition_only = cond_df,
+    condition_time = time_df
   )
 }
+
 
 
 # Level 2 internal functions ---------------------------------------------------

@@ -73,6 +73,26 @@
 #' @param adj_pthresh_interaction_condition_time p-value threshold for the
 #' results from the interaction of condition and time limma result. Per default
 #' 0 (turned off).
+#' @param min_effect_size A named list that specifies the minimum effect size
+#'   thresholds to consider a feature as biologically meaningful, in addition
+#'   to statistical significance. This allows users to filter out "trivial"
+#'   hits that pass adjusted p-value cutoffs but show negligible effect sizes.
+#'
+#'   The list must contain the following elements:
+#'   - `time_effect`: Minimum absolute effect size (e.g., log-fold change or
+#'     model coefficient) for time effects. Features with a smaller effect size
+#'     will be ignored even if they are statistically significant.
+#'   - `avg_diff_cond`: Minimum absolute effect size for average differences
+#'     between conditions. As above, this ensures that only condition
+#'     contrasts with biologically relevant magnitude are reported.
+#'
+#'   Values should be numeric (typically >0). For example,
+#'   `min_effect_size = list(time_effect = 1, avg_diff_cond = 1)` will only
+#'   keep time effects and condition differences with an absolute effect size
+#'   of at least 1 unit. Use smaller values (e.g., 0.1) for more permissive
+#'   filtering, or larger values to be more conservative.
+#'   
+#'   The default is the value 0 for both `time_effect` and `avg_diff_cond`.
 #' @param genes A character vector containing the gene names of the features to
 #'  be analyzed. The entries should be in the same order as they appear in data.
 #' @param plot_info List containing the elements y_axis_label (string),
@@ -140,8 +160,12 @@ cluster_hits <- function(
     splineomics,
     nr_clusters,
     adj_pthresholds = c(0.05),
-    adj_pthresh_avrg_diff_conditions = 0,
-    adj_pthresh_interaction_condition_time = 0,
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05,
+    min_effect_size = list(
+      time_effect = 0,
+      avg_diff_cond = 0
+    ),
     genes = NULL, 
     plot_info = list(
       y_axis_label = "Value",
@@ -169,15 +193,10 @@ cluster_hits <- function(
     func_type = "cluster_hits"
   )
   
-  if (!is.numeric(max_hit_number) ||            # must be numeric
-      length(max_hit_number) != 1L ||           # exactly one value
-      !(is.infinite(max_hit_number) ||          # allow Inf
-        (max_hit_number >= 1 &&                 # >= 1 ...
-         max_hit_number == as.integer(max_hit_number)))) {  # ... and int-valued
-    stop_call_false(
-      "`max_hit_number` must be a single positive integer (1, 2, ...) or Inf."
-      )
-  }
+  check_inputs_cluster_hits(
+    min_effect_size = min_effect_size,
+    max_hit_number = max_hit_number
+    )
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
   check_null_elements(args)
@@ -214,20 +233,7 @@ cluster_hits <- function(
     return(NULL)
   }
 
-  all_limma_result_tables <- filter_and_append_limma_results(
-    splineomics = splineomics,  
-    within_level_tables = within_level_top_tables,  
-    pthresh_avg_diff = adj_pthresh_avrg_diff_conditions,  
-    pthresh_interact = adj_pthresh_interaction_condition_time 
-  )
-  
-  # only make this check if the user actually wants a report
-  if (report && max_hit_number > 500) {   
-    huge_table_user_prompter(all_limma_result_tables)
-  }
-
   predicted_timecurves <- predict_timecurves(
-    fit = splineomics[["fit"]],
     splineomics = splineomics,  
     data = data,
     meta = meta,
@@ -235,6 +241,11 @@ cluster_hits <- function(
     spline_params = spline_params,
     mode = mode
   )
+  
+  predicted_timecurves <- add_curve_effectsizes(
+    predicted_timecurves,
+    threshold = min_effect_size[["time_effect"]]
+    )
 
   all_levels_clustering <- perform_clustering(
     top_tables = within_level_top_tables,
@@ -281,6 +292,14 @@ cluster_hits <- function(
     (adj_pthresh_avrg_diff_conditions > 0 ||
     adj_pthresh_interaction_condition_time > 0)
     ) {
+    category_2_and_3_hits <- get_category_2_and_3_hits(
+      splineomics = splineomics,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+      min_effect_size = min_effect_size,
+      predicted_timecurves = predicted_timecurves
+    )
+    
     spline_comp_plots <- generate_spline_comparisons(
       splineomics = splineomics,
       data = data,
@@ -288,6 +307,7 @@ cluster_hits <- function(
       condition = condition,
       replicate_column = plot_options[["meta_replicate_column"]],
       plot_info = plot_info,
+      category_2_and_3_hits = category_2_and_3_hits,
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
       raw_data = raw_data,
@@ -295,18 +315,13 @@ cluster_hits <- function(
       max_hit_number = max_hit_number
     )
   } else {
+    category_2_and_3_hits <- NULL
     spline_comp_plots <- NULL
   }
 
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
   }
-
-  category_2_and_3_hits <- get_category_2_and_3_hits(
-    splineomics = splineomics,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction = adj_pthresh_interaction_condition_time
-  )
 
   if (report) {
     plots <- make_clustering_report(
@@ -386,6 +401,89 @@ cluster_hits <- function(
 
 
 # Level 1 internal functions ---------------------------------------------------
+
+
+#' Validate input arguments for clustering of significant hits
+#'
+#' @noRd
+#'
+#' @description
+#' This helper function checks that the input control parameters for
+#' clustering are well-formed. Specifically, it validates the structure
+#' of \code{min_effect_size} and \code{max_hit_number}, and raises an
+#' error if the requirements are not met.
+#'
+#' @param min_effect_size A list with exactly two named elements:
+#'   \itemize{
+#'     \item \code{time_effect}: A single numeric value (integer or float)
+#'           specifying the minimum required time-dependent effect size.
+#'     \item \code{avg_diff_cond}: A single numeric value (integer or float)
+#'           specifying the minimum required average difference between
+#'           conditions.
+#'   }
+#'   Both elements must be length-1 numeric scalars.
+#'
+#' @param max_hit_number A single positive integer (1, 2, …) or \code{Inf},
+#'   giving the maximum number of hits to include in clustering.
+#'
+#' @return Returns \code{TRUE} invisibly if all checks pass.
+#'   Otherwise, execution is stopped with an informative error message.
+#'
+#' @details
+#' - \code{min_effect_size} must be a list of length 2, named exactly
+#'   \code{"time_effect"} and \code{"avg_diff_cond"}.
+#' - Both values must be single numeric scalars (e.g. \code{1}, \code{1.5}).
+#' - \code{max_hit_number} must be a length-1 numeric that is either
+#'   an integer ≥ 1 or \code{Inf}.
+#'
+#' This function is intended to be called at the beginning of
+#' user-facing clustering routines to ensure consistent argument structure.
+#'
+check_inputs_cluster_hits <- function(
+    min_effect_size,
+    max_hit_number
+    ) {
+
+  if (!is.list(min_effect_size)) {
+    stop_call_false("`min_effect_size` must be a list.")
+  }
+  
+  # must have exactly two named elements: time_effect and avg_diff_cond
+  required_names <- c("time_effect", "avg_diff_cond")
+  nm <- names(min_effect_size)
+  if (length(min_effect_size) != 2L || !setequal(nm, required_names)) {
+    stop_call_false(paste(
+      "`min_effect_size` must be a list with exactly two named elements:",
+      "'time_effect' and 'avg_diff_cond'."
+    ))
+  }
+  
+  # each element must be numeric (integer or float) and length 1
+  for (n in required_names) {
+    val <- min_effect_size[[n]]
+    if (!is.numeric(val) || length(val) != 1L) {
+      stop_call_false(
+        paste0(
+          "`min_effect_size$",
+          n,
+          "` must be a single numeric (integer or float)."
+          )
+      )
+    }
+  }
+  
+  if (!is.numeric(max_hit_number) ||            # must be numeric
+      length(max_hit_number) != 1L ||           # exactly one value
+      !(is.infinite(max_hit_number) ||          # allow Inf
+        (max_hit_number >= 1 &&                 # >= 1 ...
+         max_hit_number == as.integer(max_hit_number)))) {  # ... and int-valued
+    stop_call_false(
+      "`max_hit_number` must be a single positive integer (1, 2, ...) or Inf."
+    )
+  }
+  
+  invisible(TRUE)
+}
 
 
 #' Filter Top Tables by Adjusted P-Values and Levels
@@ -492,144 +590,6 @@ filter_top_tables <- function(
 }
 
 
-#' Filter and Append LIMMA Results to a List
-#'
-#' @noRd
-#'
-#' @description
-#' This function filters the `avrg_diff_condition` and 
-#' `interactin_condition_time` data frames within a 
-#' `splineomics$limma_splines_results` object based on specified 
-#' adjusted p-value thresholds. The filtered data frames are then appended to 
-#' a given list of data frames, creating a new combined list while keeping 
-#' the original list intact.
-#'
-#' @param splineomics A list containing the results of LIMMA splines analysis.
-#'   It must include the nested list `limma_splines_results` with the data 
-#'   frames `avrg_diff_condition` and `interactin_condition_time`.
-#' @param within_level_top_tables A list of data frames to which the filtered 
-#'   results will be appended.
-#' @param adj_pthresh_avrg_diff_conditions A numeric value specifying the 
-#'   adjusted p-value threshold for filtering rows in the 
-#'   `avrg_diff_condition` data frame.
-#' @param adj_pthresh_interaction_condition_time A numeric value specifying the 
-#'   adjusted p-value threshold for filtering rows in the 
-#'   `interactin_condition_time` data frame.
-#'
-#' @return A new list that combines the original `within_level_top_tables` list 
-#'   and the filtered data frames (`filtered_avrg_diff_condition` and 
-#'   `filtered_interaction_condition_time`).
-#'
-filter_and_append_limma_results <- function(
-    splineomics,
-    within_level_tables,
-    pthresh_avg_diff = 0.05,
-    pthresh_interact = 0.05
-) {
-  
-  # Initialize lists for filtered results
-  filtered_avg_diff <- list()
-  filtered_interact <- list()
-  
-  # Filter all elements in avrg_diff_condition and assign names
-  for (name in names(splineomics$limma_splines_result$avrg_diff_condition)) {
-    avg_diff_df <- splineomics$limma_splines_result$avrg_diff_condition[[name]]
-    filtered_avg_diff[[name]] <- as.data.frame(
-      avg_diff_df[avg_diff_df$adj.P.Val < pthresh_avg_diff, ]
-    )
-  }
-  
-  # Filter all elements in interaction_condition_time and assign names
-  for (
-    name in names(splineomics$limma_splines_result$interaction_condition_time)
-    ) {
-    interact_df <- 
-      splineomics$limma_splines_result$interaction_condition_time[[name]]
-    filtered_interact[[name]] <- as.data.frame(
-      interact_df[interact_df$adj.P.Val < pthresh_interact, ]
-    )
-  }
-  
-  # Combine all results into a single list
-  all_tables <- c(
-    within_level_tables,
-    filtered_avg_diff,
-    filtered_interact
-  )
-  
-  return(all_tables)
-}
-
-
-#' Prompt User if Tables in a List Have More Than 500 Rows
-#'
-#' @noRd
-#'
-#' @description
-#' This function checks all tables in a list and identifies those with more
-#' than 500 rows. If such tables are found, the user is presented with an
-#' informative message listing these tables and the number of rows they
-#' contain. The user must confirm (type 'y') to proceed; otherwise, the script
-#' stops.
-#'
-#' @param tables A named list of data frames.
-#' @return NULL. The function either proceeds with execution or stops the
-#' script based on user input.
-#' 
-huge_table_user_prompter <- function(tables) {
-  # Identify tables with more than 500 rows after filtering NAs in "adj.P.Val"
-  large_tables <- lapply(names(tables), function(name) {
-    if (!is.logical(tables[[name]])) {
-      # Remove rows where "adj.P.Val" is NA
-      filtered_table <- tables[[name]][!is.na(tables[[name]][["adj.P.Val"]]), ]
-      
-      # Check if the filtered table has more than 500 rows
-      if (nrow(filtered_table) > 500) {
-        list(name = name, rows = nrow(filtered_table))
-      } else {
-        NULL
-      }
-    } else {
-      NULL
-    }
-  })
-  
-  large_tables <- do.call(rbind, large_tables)
-  
-  # If no large tables, return immediately
-  if (is.null(large_tables)) {
-    return(NULL)
-  }
-  
-  # Create an informative message
-  table_info <- paste(
-    apply(large_tables, 1, function(row) {
-      paste(row[["name"]], "(", row[["rows"]], "rows)")
-    }),
-    collapse = "\n"
-  )
-  
-  # Prompt the user
-  while (TRUE) {
-    message("\nThe following tables have more than 500 rows (after filtering NAs
-            in 'adj.P.Val'):")
-    message(table_info, "\n")
-    message("This may result in long computations and large HTML output.\n")
-    user_input <- readline(prompt = "Do you want to proceed? (y/n): ")
-    user_input <- tolower(user_input)
-    
-    if (user_input == "y") {
-      message("User chose to proceed. Continuing execution...")
-      break
-    } else if (user_input == "n") {
-      stop("Script stopped. User chose not to proceed.", call. = FALSE)
-    } else {
-      message("Invalid input. Please type 'y' to proceed or 'n' to stop.")
-    }
-  }
-}
-
-
 #' Predict smooth timecourses from spline-augmented limma model
 #'
 #' @noRd
@@ -652,9 +612,6 @@ huge_table_user_prompter <- function(tables) {
 #' they model subject-specific deviations, not the fixed-effect population trend
 #'  that defines the curve shape.
 #'
-#' @param fit A fitted [limma::lmFit()] model object (class `"MArrayLM"`),
-#'   containing spline-based terms (e.g., via [splines::ns()] or 
-#'   [splines::bs()]).
 #' @param splineomics A list containing top tables and model results (not used
 #'   internally, but passed for interface compatibility).
 #' @param data A dataframe containg the data used for fitting the linear models.
@@ -676,7 +633,6 @@ huge_table_user_prompter <- function(tables) {
 #'   }
 #'   
 predict_timecurves <- function(
-    fit,
     splineomics,
     data,
     meta,
@@ -687,6 +643,7 @@ predict_timecurves <- function(
 
   # time grid (common to all levels)
   # number of unique sampling points
+  fit <- splineomics[["fit"]]
   n_unique_time <- dplyr::n_distinct(meta[["Time"]])
   
   ## build a grid 10 x denser than the raw sampling
@@ -867,12 +824,88 @@ predict_timecurves <- function(
 }
 
 
-#' Perform hierarchical clustering on predicted timecourses
+#' Add effect size estimates to predicted time curves
 #'
 #' @noRd
 #'
 #' @description
-#' Performs hierarchical clustering for each condition level using
+#' This function computes an absolute "cumulative travel" measure for each
+#' feature’s predicted time course, defined as the sum of absolute successive
+#' differences across timepoints. The values quantify how much a curve changes
+#' over time in total (regardless of direction). Each feature is then labeled
+#' as having passed a user-defined effect size threshold.
+#'
+#' @param predicted_timecurves A list-like object produced by
+#'   \code{predict_timecurves()}, containing at least a
+#'   \code{$predictions} element. Each element of \code{$predictions}
+#'   is a numeric matrix with features in rows and timepoints in columns.
+#' @param threshold A numeric scalar giving the minimum cumulative travel
+#'   required for a feature to be considered as having passed the effect
+#'   size cutoff.
+#'
+#' @return The input \code{predicted_timecurves} object with two additional
+#'   list elements:
+#'   \itemize{
+#'     \item \code{$effect_size}: A list of named numeric vectors (one per
+#'           condition level), giving the cumulative travel per feature.
+#'     \item \code{$passed_threshold}: A list of named logical vectors
+#'           (one per condition level), indicating whether each feature’s
+#'           effect size is greater than or equal to \code{threshold}.
+#'   }
+#'
+#' @details
+#' The cumulative travel metric is computed per feature as:
+#' \deqn{\sum_{j=1}^{T-1} |x_{j+1} - x_j|,}
+#' where \eqn{x_j} are the predicted values at ordered timepoints
+#' \eqn{j=1,\dots,T}. This is an absolute path length of the curve and
+#' increases with the amount of fluctuation over time.
+#'
+add_curve_effectsizes <- function(
+    predicted_timecurves,
+    threshold
+    ) {
+  # compute absolute cumulative travel per feature
+  cum_travel <- function(mat) {
+    if (ncol(mat) < 2) {
+      out <- rep(0, nrow(mat))
+      names(out) <- rownames(mat)
+      return(out)
+    }
+    # row-wise: sum |x_{j+1} - x_j|
+    travel <- apply(mat, 1, function(x) sum(abs(diff(x))))
+    if (!is.null(rownames(mat))) names(travel) <- rownames(mat)
+    travel
+  }
+  
+  results <- lapply(predicted_timecurves$predictions, function(mat) {
+    travel <- cum_travel(mat)
+    list(
+      effect_size = travel,
+      passed_threshold = travel >= threshold
+    )
+  })
+  
+  predicted_timecurves$effect_size <- lapply(
+    results,
+    `[[`,
+    "effect_size"
+    )
+  predicted_timecurves$passed_threshold <- lapply(
+    results,
+    `[[`,
+    "passed_threshold"
+    )
+
+  predicted_timecurves
+}
+
+
+#' Perform clustering on predicted timecourses
+#'
+#' @noRd
+#'
+#' @description
+#' Performs clustering for each condition level using
 #' precomputed predicted timecourses. For each level, only the features
 #' present in the corresponding top table are clustered. The function
 #' normalizes each curve to the [0, 1] range before clustering.
@@ -939,25 +972,29 @@ perform_clustering <- function(
         )[feat_idx]
     }
     
+    passed <- predicted_timecurves$passed_threshold[[level]]
+    feat_names <- feat_names[ feat_names %in% names(passed)[passed] ]
+ 
     if (length(feat_names) == 0L) {
       results[[key]] <- NA
       next
     }
-
+    
     pred_mat <- predicted_timecurves$predictions[[level]]
     curves   <- pred_mat[ as.character(feat_names), , drop = FALSE ]
     norm_cur <- normalize_curves(curves)
+    top_table <- tbl[tbl$feature_names %in% feat_names, , drop = FALSE]
 
     results[[key]] <- kmeans_clustering(
       curve_values      = norm_cur,
       k_range           = k_range,                   
       smooth_timepoints = time_grid,
-      top_table         = top_tables[[key]],
+      top_table         = top_table,
       condition         = level
     )
   }
-  
-  results        # named list of clustering outputs
+
+  results       
 }
 
 
@@ -966,59 +1003,97 @@ perform_clustering <- function(
 #' @noRd
 #'
 #' @description
-#' This function filters the `limma` top tables in the `splineomics` object
-#' based on adjusted p-value thresholds for the average difference between
-#' conditions (`adj_pthresh_avrg_diff_conditions`) and the interaction between
-#' condition and time (`adj_pthresh_interaction`).
-#'
-#' @param splineomics An S3 object containing the limma top tables. It must
-#' include the elements `avrg_diff_conditions` and `interaction_condition_time`,
-#' which are lists of dataframes.
-#' @param adj_pthresh_avrg_diff_conditions Numeric. Threshold for adjusted
-#' p-value for average differences between conditions.
-#' @param adj_pthresh_interaction Numeric. Threshold for adjusted p-value for
-#' the interaction between condition and time.
-#'
-#' @return A list with two elements:
+#' This function filters the `limma` top tables in the `splineomics` object to
+#' identify significant features in two categories:
 #' \itemize{
-#'   \item \code{category_2_hits}: A list of filtered dataframes from
-#'   `avrg_diff_conditions`.
-#'   \item \code{category_3_hits}: A list of filtered dataframes from
-#'   `interaction_condition_time`.
+#'   \item \strong{Category 2}: Features with a significant average difference
+#'   between conditions, based on both adjusted p-value and a minimum absolute
+#'   effect size threshold.
+#'   \item \strong{Category 3}: Features with a significant condition × time
+#'   interaction, based on adjusted p-value, and that also exceed a minimum
+#'   time-effect effect size in at least one condition (as provided in
+#'   `predicted_timecurves$effect_size`).
 #' }
 #'
-#' @examples
-#' category_2_and_3_hits <- get_category_2_and_3_hits(
-#'   splineomics = splineomics,
-#'   adj_pthresh_avrg_diff_conditions = 0.05,
-#'   adj_pthresh_interaction = 0.01
-#' )
+#' @param splineomics An S3 object containing the `limma` top tables. It must
+#' include the elements \code{avrg_diff_conditions} and
+#' \code{interaction_condition_time}, each a dataframe of results.
+#' @param adj_pthresh_avrg_diff_conditions Numeric. Threshold for adjusted
+#' p-value when testing average differences between conditions.
+#' @param adj_pthresh_interaction Numeric. Threshold for adjusted p-value when
+#' testing the interaction between condition and time.
+#' @param min_effect_size A named list specifying effect size thresholds:
+#' \itemize{
+#'   \item \code{avg_diff_cond}: Minimum absolute effect size required for
+#'   category 2 hits.
+#'   \item \code{time_effect}: Minimum time-effect effect size required in at
+#'   least one condition for category 3 hits.
+#' }
+#' @param predicted_timecurves A list of model predictions, which must contain
+#' an element \code{effect_size}. This should be a named list of numeric 
+#' vectors,
+#' with one vector per condition and feature names as names, providing the
+#' time-effect effect sizes.
+#'
+#' @return A list with two dataframes:
+#' \itemize{
+#'   \item \code{category_2_hits}: Filtered subset of
+#'   \code{avrg_diff_conditions}.
+#'   \item \code{category_3_hits}: Filtered subset of
+#'   \code{interaction_condition_time}.
+#' }
+#' 
 get_category_2_and_3_hits <- function(
     splineomics,
     adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction
+    adj_pthresh_interaction,
+    min_effect_size,
+    predicted_timecurves   
 ) {
-  # Extract the top tables from splineomics
+  # Extract top tables (already one df each)
   avrg_diff_conditions <- 
     splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
   interaction_condition_time <- 
     splineomics[["limma_splines_result"]][["interaction_condition_time"]]
+
+  # Category 2: p-value + effect size (abs(col1)) 
+  category_2_hits <- avrg_diff_conditions[
+    avrg_diff_conditions$adj.P.Val < adj_pthresh_avrg_diff_conditions &
+      abs(avrg_diff_conditions[[1]]) >= min_effect_size$avg_diff_cond,
+  ]
   
-  # Filter each dataframe in avrg_diff_conditions
-  category_2_hits <- lapply(avrg_diff_conditions, function(df) {
-    df[df$adj.P.Val < adj_pthresh_avrg_diff_conditions, ]
-  })
+  # Category 3: p-value + time-effect ES >= threshold in >=1 condition
+  # p-value filter first
+  category_3_hits <- interaction_condition_time[
+    interaction_condition_time$adj.P.Val < adj_pthresh_interaction,
+  ]
   
-  # Filter each dataframe in interaction_condition_time
-  category_3_hits <- lapply(interaction_condition_time, function(df) {
-    df[df$adj.P.Val < adj_pthresh_interaction, ]
-  })
+  # If nothing passed p-value, return early
+  if (nrow(category_3_hits) == 0L) {
+    return(list(
+      category_2_hits = category_2_hits,
+      category_3_hits = category_3_hits
+      ))
+  }
   
-  # Return the filtered dataframes as a list
-  return(list(
+  # Pull time-effect effect sizes per condition 
+  es_list <- predicted_timecurves$effect_size
+  cond_names <- names(es_list)
+
+  # For two-condition designs, this naturally checks both; for >2 it checks any
+  time_es_keep <- vapply(category_3_hits$feature_names, function(fn) {
+    any(vapply(cond_names, function(cn) {
+      es <- es_list[[cn]][fn]
+      !is.na(es) && es >= min_effect_size$time_effect
+    }, logical(1)))
+  }, logical(1))
+  
+  category_3_hits <- category_3_hits[time_es_keep, , drop = FALSE]
+  
+  list(
     category_2_hits = category_2_hits,
     category_3_hits = category_3_hits
-  ))
+  )
 }
 
 
@@ -1436,133 +1511,49 @@ generate_spline_comparisons <- function(
     condition,
     replicate_column,
     plot_info,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction,
     raw_data,
     predicted_timecurves,
-    max_hit_number
-    ) {
+    max_hit_number,
+    category_2_and_3_hits,
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction
+) {
+  # Ensure `condition` column is character
+  meta[[condition]] <- as.character(meta[[condition]])
+  levels <- unique(meta[[condition]])
 
-  # Initialize the list that will store the results
+  c1 <- levels[1]
+  c2 <- levels[2]
+  pair_name <- paste0(c1, "_vs_", c2)
+  
+  # time effects for the two levels
+  te_list <- splineomics[["limma_splines_result"]][["time_effect"]]
+  te1 <- te_list[[paste0(condition, "_", c1)]]
+  te2 <- te_list[[paste0(condition, "_", c2)]]
+  
+  # Call the plotting helper once for the single pair
+  plots_and_feature_names <- plot_spline_comparisons(
+    time_effect_1 = te1,
+    condition_1 = c1,
+    time_effect_2 = te2,
+    condition_2 = c2,
+    avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],             
+    interaction_condition_time = category_2_and_3_hits[["category_3_hits"]], 
+    data = data,
+    meta = meta,
+    condition = condition,
+    replicate_column = replicate_column,
+    predicted_timecurves = predicted_timecurves,
+    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction = adj_pthresh_interaction,
+    plot_info = plot_info,
+    raw_data = raw_data,
+    max_hit_number = max_hit_number
+  )
+  
   comparison_plots <- list()
-
-  # Check if all three elements are present
-  if (length(splineomics[["limma_splines_result"]]) == 3) {
-    # Extract the three named elements
-    time_effect <- splineomics[["limma_splines_result"]][["time_effect"]]
-    avrg_diff_conditions <-
-      splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
-    interaction_condition_time <-
-      splineomics[["limma_splines_result"]][["interaction_condition_time"]]
-
-    # Get the unique conditions from the meta data
-    # Make it to character, because it can also be for example a factor, and
-    # when it is a factor, it causes problems in the string matching below.
-    meta[[condition]] <- as.character(meta[[condition]])
-    conditions <- unique(meta[[condition]])
-
-    # Generate all pairwise combinations of conditions
-    condition_pairs <- utils::combn(
-      conditions,
-      2,
-      simplify = FALSE
-      )
-
-    # Loop over all condition pairs and generate plots
-    for (pair in condition_pairs) {
-      condition_1 <- pair[1]
-      condition_2 <- pair[2]
-
-      # Sort the current pair of conditions
-      sorted_conditions <- sort(c(condition_1, condition_2))
-
-      # Initialize matched dataframes as NULL
-      matched_avrg_diff <- NULL
-      matched_interaction_cond_time <- NULL
-
-      # Search for the correct dataframe in avrg_diff_conditions
-      for (df_name in names(avrg_diff_conditions)) {
-        # Extract the part after 'avrg_diff_' and split it by '_vs_'
-        conditions_in_df <- strsplit(
-          sub(
-            "avrg_diff_",
-            "",
-            df_name
-          ),
-          "_vs_"
-        )[[1]]
-
-        sorted_conditions_in_df <- sort(conditions_in_df)
-
-        # Check if the sorted conditions in the dataframe match the current pair
-        if (identical(sorted_conditions, sorted_conditions_in_df)) {
-          matched_avrg_diff <- avrg_diff_conditions[[df_name]]
-          break
-        }
-      }
-
-      # Search for the correct dataframe in interaction_condition_time
-      for (df_name in names(interaction_condition_time)) {
-        # Extract the part after 'time_interaction_condition_'
-        # and split it by '_vs_'
-        conditions_in_df <- strsplit(
-          sub(
-            "time_interaction_",
-            "",
-            df_name
-          ),
-          "_vs_"
-        )[[1]]
-
-        sorted_conditions_in_df <- sort(conditions_in_df)
-
-        # Check if the sorted conditions in the dataframe match the
-        # current pair
-        if (identical(sorted_conditions, sorted_conditions_in_df)) {
-          matched_interaction_cond_time <- interaction_condition_time[[df_name]]
-          break
-        }
-      }
-
-      # If both matched dataframes are found, generate plots
-      if (!is.null(matched_avrg_diff) &&
-        !is.null(matched_interaction_cond_time)) {
-        # Get the corresponding dataframes from time_effect
-        time_effect_1 <- time_effect[[paste0(condition, "_", condition_1)]]
-        time_effect_2 <- time_effect[[paste0(condition, "_", condition_2)]]
-
-        # Call the plot function for this pair and store the result
-        plots_and_feature_names <- plot_spline_comparisons(
-          time_effect_1 = time_effect_1,
-          condition_1 = condition_1,
-          time_effect_2 = time_effect_2,
-          condition_2 = condition_2,
-          avrg_diff_conditions = matched_avrg_diff,
-          interaction_condition_time = matched_interaction_cond_time,
-          data = data,
-          meta = meta,
-          condition = condition,
-          replicate_column = replicate_column,
-          predicted_timecurves,
-          plot_info = plot_info,
-          adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-          adj_pthresh_interaction = adj_pthresh_interaction,
-          raw_data = raw_data,
-          max_hit_number = max_hit_number
-        )
-
-        # Add the plot list to the comparison_plots list,
-        # naming it by the condition pair
-        plot_list_name <- paste0(condition_1, "_vs_", condition_2)
-        comparison_plots[[plot_list_name]] <- plots_and_feature_names
-      }
-    }
-  } else {
-    message("The required elements are not present in the splineomics list.")
-  }
-
-  # Return the list containing all plot lists
-  return(comparison_plots)
+  comparison_plots[[pair_name]] <- plots_and_feature_names
+  comparison_plots
 }
 
 
@@ -1810,7 +1801,8 @@ construct_cluster_summary <- function(
       ) %>%
       distinct(feature_nr, .keep_all = TRUE)
     
-    if (!is.null(category_2_and_3_hits$category_2_hits)) {
+    if (!is.null(category_2_and_3_hits$category_2_hits) &&
+        nrow(category_2_and_3_hits$category_2_hits) > 0) {
       cat2h <- category_2_and_3_hits$category_2_hits %>%
         stbl() %>% transmute(feature_nr) %>% distinct()
       c2_df <- c2_df %>%
@@ -1821,11 +1813,18 @@ construct_cluster_summary <- function(
     out <- out %>% left_join(c2_df, by = "feature_nr")
   }
   
-  if (has_c3) {
+  has_cat3_hits <- has_c3 &&
+    !is.null(category_2_and_3_hits$category_3_hits) &&
+    nrow(category_2_and_3_hits$category_3_hits) > 0
+  
+  if (has_cat3_hits) {
     cat3h <- category_2_and_3_hits$category_3_hits %>%
       stbl() %>% transmute(feature_nr) %>% distinct()
     cat3c <- mkc(base, cat3h, c1, c2) %>% rename(cluster_cat3 = .cmb)
     out <- out %>% left_join(cat3c, by = "feature_nr")
+  } else if (has_c3) {
+    # No category-3 hits, but we still want the column present (NA-filled)
+    out <- out %>% mutate(cluster_cat3 = NA_character_)
   }
   
   out %>% distinct(feature_nr, .keep_all = TRUE) %>% arrange(feature_nr)
@@ -2448,6 +2447,13 @@ plot_splines <- function(
   for (hit in seq_len(n_hits)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     feature_name <- top_table$feature_names[hit]
+    # cumulative travel (effect size) for this feature in this level
+    cum_travel_val <- NA_real_
+    es_vec <- predicted_timecurves$effect_size[[level]]
+    if (!is.null(es_vec)) {
+      tmp <- unname(es_vec[feature_name])
+      if (length(tmp)) cum_travel_val <- tmp[1]
+    }
     fitted_values <- as.numeric(
       pred_mat_level[feature_name, ]
     )
@@ -2670,9 +2676,12 @@ plot_splines <- function(
         ggplot2::labs(
           title = paste(
             "<b>", title, "</b>",
-            "<br>avg CV: ", round(avg_cv, 2), "%",
-            "  |  adj. p-val:", signif(adj_p_value, digits = 2),
-            significance_stars, ""
+            "<br>",
+            "Cumulative travel:",
+            ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
+            "  |  avg CV: ", round(avg_cv, 2), "%",
+            "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
+            " ", significance_stars
           ),
           x = paste("Time", time_unit_label),
           y = paste(plot_info$y_axis_label)
@@ -2767,106 +2776,135 @@ plot_spline_comparisons <- function(
     condition_1,
     time_effect_2,
     condition_2,
-    avrg_diff_conditions,
-    interaction_condition_time,
+    avrg_diff_conditions,        
+    interaction_condition_time,  
     data,
     meta,
     condition,
     replicate_column,
     predicted_timecurves,
     plot_info,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction,
+    adj_pthresh_avrg_diff_conditions, 
+    adj_pthresh_interaction,          
     raw_data,
     max_hit_number
 ) {
-
+  # optional replicate mapping
   if (!is.null(replicate_column)) {
-    # Create a mapping of unique replicate values to numeric labels
     replicate_mapping <- setNames(
       seq_along(unique(meta[[replicate_column]])),
       unique(meta[[replicate_column]])
     )
   }
   
-  # Sort and prepare data (sorting based on feature name for easy navigation)
-  time_effect_1 <- time_effect_1 |> dplyr::arrange(.data$feature_names)
-  time_effect_2 <- time_effect_2 |> dplyr::arrange(.data$feature_names)
-  avrg_diff_conditions <-
-    avrg_diff_conditions |> dplyr::arrange(.data$feature_names)
-  interaction_condition_time <-
-    interaction_condition_time |> dplyr::arrange(.data$feature_names)
-
+  # sort inputs for stable behavior
+  time_effect_1 <- dplyr::arrange(time_effect_1, .data$feature_names)
+  time_effect_2 <- dplyr::arrange(time_effect_2, .data$feature_names)
+  avrg_diff_conditions <- dplyr::arrange(
+    avrg_diff_conditions,
+    .data$feature_names
+    )
+  interaction_condition_time <- dplyr::arrange(
+    interaction_condition_time,
+    .data$feature_names
+    )
+  
   smooth_timepoints <- predicted_timecurves$time_grid
   pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
   pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
   
-  # Get relevant parameters
-  DoF <- which(names(time_effect_1) == "AveExpr") - 1
+  # meta/time and titles
   time_points <- meta$Time
   titles <- data.frame(
     FeatureID = time_effect_1$feature_nr,
     feature_names = time_effect_1$feature_names
   )
   
+  features_to_plot <- dplyr::bind_rows(
+    dplyr::select(avrg_diff_conditions, feature_nr, feature_names),
+    dplyr::select(interaction_condition_time, feature_nr, feature_names)
+  ) |>
+    dplyr::distinct() |>
+    dplyr::slice_head(n = max_hit_number)
+  
+  # (Optional) sanity check: ensure features exist in prediction matrices
+  if (!is.null(rownames(pred_mat_1))) {
+    features_to_plot <- features_to_plot[
+      features_to_plot$feature_names %in% rownames(pred_mat_1) &
+        features_to_plot$feature_names %in% rownames(pred_mat_2),
+      , drop = FALSE]
+  }
+  
   plot_list <- list()
   feature_names_list <- list()
   
-  # Check if all dataframes have the same number of rows
-  if (!(nrow(time_effect_1) == nrow(avrg_diff_conditions) &&
-        nrow(time_effect_1) == nrow(interaction_condition_time))) {
-    stop_call_false(
-      "Error: The topTables do not have the same number of rows! Did you 
-      filter just some of them?"
+  # helper for stars (annotation only)
+  stars_from <- function(pval, thresh) {
+    if (is.na(pval)) return("")
+    if (pval < thresh/500) "****"
+    else if (pval < thresh/50) "***"
+    else if (pval < thresh/5) "**"
+    else if (pval < thresh) "*"
+    else ""
+  }
+  
+  # precompute shape mapping if replicates used
+  if (!is.null(replicate_column)) {
+    distinct_shapes <- c(21,22,23,24,25,3,4,8)
+    fallback_shapes <- rep(1, 100)
+    uniq_rep <- unique(meta[[replicate_column]])
+    shape_mapping <- setNames(
+      c(distinct_shapes, fallback_shapes)[seq_along(uniq_rep)],
+      uniq_rep
     )
   }
   
-  # Function to check if all elements of a column in df2 are present in df1
-  check_column_presence <- function(df1, df2, column_name) {
-    missing_values <- setdiff(df2[[column_name]], df1[[column_name]])
-    if (length(missing_values) > 0) {
-      stop(paste("Error: The following values in column", column_name, 
-                 "of", deparse(substitute(df2)), 
-                 "are missing in", deparse(substitute(df1)), ":\n",
-                 paste(missing_values, collapse = ", ")))
-    }
-  }
-  
-  # Run checks for both feature_names and feature_nr columns
-  check_column_presence(time_effect_1, avrg_diff_conditions, "feature_names")
-  check_column_presence(time_effect_1, avrg_diff_conditions, "feature_nr")
-  check_column_presence(time_effect_1, interaction_condition_time,
-                        "feature_names")
-  check_column_presence(time_effect_1, interaction_condition_time, "feature_nr")
-  
-  features_to_plot <- preselect_features_for_plotting(
-    avrg_diff_conditions = avrg_diff_conditions,
-    interaction_condition_time = interaction_condition_time,
-    max_hit_number = max_hit_number,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction = adj_pthresh_interaction
-  )
-
-  # Now simply loop over these
   for (i in seq_len(nrow(features_to_plot))) {
-    hit_index <- as.numeric(features_to_plot$feature_nr[i])
+    hit_index   <- as.numeric(features_to_plot$feature_nr[i])
     feature_name <- features_to_plot$feature_names[i]
-    row_values <- data[hit_index, ]
-
-    # Identify NA values from raw_data for imputation labeling
+    # Determine membership (feature is in which category table)
+    is_cat2 <- feature_name %in% avrg_diff_conditions$feature_names
+    is_cat3 <- feature_name %in% interaction_condition_time$feature_names
+    
+    # Category 2 effect size (from FIRST column of avrg_diff_conditions)
+    cat2_eff <- NA_real_
+    cat2_colname <- colnames(avrg_diff_conditions)[1]
+    if (is_cat2) {
+      row_cat2 <- avrg_diff_conditions[
+        avrg_diff_conditions$feature_names == feature_name,
+        ,
+        drop = FALSE
+        ]
+      if (nrow(row_cat2) > 0) {
+        cat2_eff <- as.numeric(row_cat2[[1]])  # first column = effect size
+      }
+    }
+    
+    # Category 3 effect sizes per condition
+    es1 <- NA_real_
+    es2 <- NA_real_
+    if (is_cat3) {
+      es_list <- predicted_timecurves$effect_size
+      if (!is.null(es_list[[condition_1]])) {
+        es1 <- unname(es_list[[condition_1]][feature_name])
+      }
+      if (!is.null(es_list[[condition_2]])) {
+        es2 <- unname(es_list[[condition_2]][feature_name])
+      }
+    }
+    
+    row_values  <- data[hit_index, ]
+    
+    # imputation flags (by condition)
     if (!is.null(raw_data)) {
-      # Identify which columns in raw_data belong to each condition
       columns_condition_1 <- which(meta[[condition]] == condition_1)
       columns_condition_2 <- which(meta[[condition]] == condition_2)
-      
-      # Now directly find NA indices within those specific columns
       na_indices_cond1 <- columns_condition_1[
         which(is.na(raw_data[hit_index, columns_condition_1]))
       ]
       na_indices_cond2 <- columns_condition_2[
         which(is.na(raw_data[hit_index, columns_condition_2]))
       ]
-      
       plot_data <- data.frame(
         Time = time_points,
         Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
@@ -2875,15 +2913,13 @@ plot_spline_comparisons <- function(
           seq_along(row_values) %in% na_indices_cond1,
           "Imputed",
           "Measured"
-        ),
+          ),
         IsImputed2 = ifelse(
           seq_along(row_values) %in% na_indices_cond2,
           "Imputed",
           "Measured"
-        )
+          )
       )
-      
-      # Check if there are imputed values for each condition
       has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
       has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
     } else {
@@ -2894,206 +2930,178 @@ plot_spline_comparisons <- function(
         IsImputed1 = "Measured",
         IsImputed2 = "Measured"
       )
-      
       has_imputed_1 <- FALSE
       has_imputed_2 <- FALSE
     }
     
-    # If replicate_column is not NULL, add Replicate and ReplicateLabel columns
     if (!is.null(replicate_column)) {
-      plot_data$Replicate <- meta[[replicate_column]]  # Add replicates
+      plot_data$Replicate <- meta[[replicate_column]]
       plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
-      # Get unique replicate values
-      unique_replicates <- unique(plot_data$Replicate)
-      
-      # Define a set of distinct shapes
-      # Triangles, squares, diamonds, X, +
-      distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)  
-      # Default to open circles if needed (overflow)
-      fallback_shapes <- rep(1, 100) 
-      
-      # Create a shape mapping that prioritizes distinct shapes first
-      shape_mapping <- setNames(
-        c(distinct_shapes, fallback_shapes)[seq_along(unique_replicates)], 
-        unique_replicates
-      )
     }
-
+    
     fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
     fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
     
+    # pull p-values for annotation (dfs are already filtered)
     avrg_diff_pval <- avrg_diff_conditions |>
-      dplyr::filter(feature_names == feature_name) |>
-      dplyr::pull(adj.P.Val)
+      dplyr::filter(.data$feature_names == feature_name) |>
+      dplyr::pull(adj.P.Val) |>
+      (\(.) ifelse(length(.) == 0, NA_real_, .[1]))()
     
     interaction_pval <- interaction_condition_time |>
-      dplyr::filter(feature_names == feature_name) |>
-      dplyr::pull(adj.P.Val)
-
-    # Define the number of stars for avrg_diff_conditions
-    avrg_diff_stars <- ifelse(
-      avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 500,
-      "****",
-      ifelse(
-        avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 50,
-        "***",
-        ifelse(
-          avrg_diff_pval < adj_pthresh_avrg_diff_conditions / 5,
-          "**",
-          ifelse(
-            avrg_diff_pval < adj_pthresh_avrg_diff_conditions,
-            "*",
-            ""
-          )
-        )
-      )
-    )
+      dplyr::filter(.data$feature_names == feature_name) |>
+      dplyr::pull(adj.P.Val) |>
+      (\(.) ifelse(length(.) == 0, NA_real_, .[1]))()
     
-    # Define the number of stars for interaction_condition_time
-    interaction_stars <- ifelse(
-      interaction_pval < adj_pthresh_interaction / 500,
-      "****",
-      ifelse(
-        interaction_pval < adj_pthresh_interaction / 50,
-        "***",
-        ifelse(
-          interaction_pval < adj_pthresh_interaction / 5,
-          "**",
-          ifelse(
-            interaction_pval < adj_pthresh_interaction,
-            "*",
-            ""
-          )
-        )
+    avrg_diff_stars   <- stars_from(
+      avrg_diff_pval,
+      adj_pthresh_avrg_diff_conditions
       )
-    )
-
-    # Calculate average CV for Y1 and Y2 across all time points
+    interaction_stars <- stars_from(
+      interaction_pval,
+      adj_pthresh_interaction
+      )
+    
+    # average CV per condition
     cv_1 <- calc_cv(
       time_values = plot_data$Time,
       response_values = plot_data$Y1
-    )
-    
+      )
     cv_2 <- calc_cv(
       time_values = plot_data$Time,
       response_values = plot_data$Y2
-    )
+      )
     
-    plot_data$ColorLabel1 <- ifelse(
-      plot_data$IsImputed1 == "Imputed",
-      paste("Imputed data", condition_1),  # Dynamic label
-      paste("Data", condition_1)
-    )
+    plot_data$ColorLabel1 <- ifelse(plot_data$IsImputed1 == "Imputed",
+                                    paste("Imputed data", condition_1),
+                                    paste("Data", condition_1))
+    plot_data$ColorLabel2 <- ifelse(plot_data$IsImputed2 == "Imputed",
+                                    paste("Imputed data", condition_2),
+                                    paste("Data", condition_2))
     
-    plot_data$ColorLabel2 <- ifelse(
-      plot_data$IsImputed2 == "Imputed",
-      paste("Imputed data", condition_2),  # Dynamic label
-      paste("Data", condition_2)
-    )
-
     p <- local({
-      # Create the plot
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
           data = plot_data,
           ggplot2::aes(
-            x = .data$Time,
-            y = .data$Y1,
+            x = .data$Time, y = .data$Y1,
             color = .data$ColorLabel1,
             shape = if (!is.null(replicate_column)) .data$Replicate else NULL
           ),
-          na.rm = TRUE,
-          alpha = 0.5 # Make data dots transparent to see overlapping ones.
+          na.rm = TRUE, alpha = 0.5
         ) +
         ggplot2::geom_line(
           data = data.frame(
             Time = smooth_timepoints,
             Fitted = fitted_values_1
-          ),
+            ),
           ggplot2::aes(
-            x = .data$Time,
+            x = .data$Time, 
             y = .data$Fitted,
-            color = paste("Spline", condition_1),
-          )
+            color = paste("Spline", condition_1)
+            )
         ) +
         ggplot2::geom_point(
           data = plot_data,
           ggplot2::aes(
-            x = .data$Time,
-            y = .data$Y2,
+            x = .data$Time, y = .data$Y2,
             color = .data$ColorLabel2,
             shape = if (!is.null(replicate_column)) .data$Replicate else NULL
           ),
-          na.rm = TRUE,
-          alpha = 0.5
-        ) + 
+          na.rm = TRUE, alpha = 0.5
+        ) +
         ggplot2::geom_line(
           data = data.frame(
             Time = smooth_timepoints,
             Fitted = fitted_values_2
-          ),
+            ),
           ggplot2::aes(
             x = .data$Time,
             y = .data$Fitted,
             color = paste("Spline", condition_2)
-          )
+            )
         ) +
         ggplot2::guides(
           color = ggplot2::guide_legend(title = NULL),
-          shape = ggplot2::guide_legend(title = "Replicate")  
+          shape = ggplot2::guide_legend(title = "Replicate")
         ) +
-        # ggplot2::scale_shape_manual(values = shape_values) +
-        ggplot2::scale_x_continuous(
-          breaks = filter_timepoints(time_points)
-        ) +
-        ggplot2::labs(
-          title = paste(
-            feature_name,
-            "\nadj.P.Val avrg_diff_conditions: ",
-            signif(avrg_diff_pval, digits = 2),
-            avrg_diff_stars,
-            "\nadj.P.Val interaction_condition_time: ",
-            signif(interaction_pval, digits = 2),
-            interaction_stars,
-            "\navg CV ", condition_1, ": ", round(cv_1, 2), "%",
-            " | avg CV ", condition_2, ": ", round(cv_2, 2), "%"
-          ),
-          x = paste0("Time [", plot_info$time_unit, "]"),
-          y = plot_info$y_axis_label
+        ggplot2::scale_x_continuous(breaks = filter_timepoints(time_points)) 
+
+      title_lines <- c(
+        feature_name,
+        paste(
+          "adj.P.Val avrg_diff_conditions:",
+          signif(avrg_diff_pval, 2),
+          avrg_diff_stars
+        ),
+        paste(
+          "adj.P.Val interaction_condition_time:",
+          signif(interaction_pval, 2),
+          interaction_stars
         )
+      )
       
-      # Conditionally add shape scale only if replicates exist
+      # Append effect-size lines according to the category
+      if (is_cat2 && !is.na(cat2_eff)) {
+        title_lines <- c(
+          title_lines,
+          paste0("Avrg diff conditions: ", signif(cat2_eff, 3))
+        )
+      }
+      if (is_cat3 && (!is.na(es1) || !is.na(es2))) {
+        title_lines <- c(
+          title_lines,
+          paste0(
+            "Cumulative travels: ",
+            condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
+            " | ",
+            condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3))
+          )
+        )
+      }
+      
+      # CV line (kept as before)
+      title_lines <- c(
+        title_lines,
+        paste0(
+          "avg CV ", condition_1, ": ", round(cv_1, 2), "% | ",
+          "avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+        )
+      )
+      
+      p <- p + ggplot2::labs(
+        title = paste(title_lines, collapse = "\n"),
+        x = paste0("Time [", plot_info$time_unit, "]"),
+        y = plot_info$y_axis_label
+      )
+        
+      
       if (!is.null(replicate_column)) {
         p <- p + ggplot2::scale_shape_manual(
           values = shape_mapping,
           name = "Replicate"
-        )
+          )
       }
       
       p <- p + ggplot2::theme_minimal() +
         ggplot2::theme(
           legend.position = "right",
-          legend.title = element_blank(),
+          legend.title = ggplot2::element_blank(),
           plot.title = ggplot2::element_text(size = 7),
           legend.text = ggplot2::element_text(size = 5),
-          legend.key.height = ggplot2::unit(0.3, "cm"),  
-          legend.key.width = ggplot2::unit(0.7, "cm"),    
+          legend.key.height = ggplot2::unit(0.3, "cm"),
+          legend.key.width  = ggplot2::unit(0.7, "cm"),
           axis.title.x = ggplot2::element_text(size = 8),
           axis.title.y = ggplot2::element_text(size = 8),
-          axis.text.x = ggplot2::element_text(size = 6)
+          axis.text.x  = ggplot2::element_text(size = 6)
         )
       
-      level <- paste(
-        condition_1,
-        condition_2,
-        sep = "_"
-      )
-      
-      y_combined <- c(plot_data$Y1, plot_data$Y2)  # Combine all values
-      y_max <- max(y_combined, na.rm = TRUE)  # Find the maximum value
-      y_min <- min(y_combined, na.rm = TRUE)  # Find the minimum value
-      y_extension <- (y_max - y_min) * 0.1  # Calculate 10% extension
-      y_pos_label <- y_max + y_extension * 0.5  # Adjust label position
+      level <- paste(condition_1, condition_2, sep = "_")
+      y_combined <- c(plot_data$Y1, plot_data$Y2)
+      y_max <- max(y_combined, na.rm = TRUE)
+      y_min <- min(y_combined, na.rm = TRUE)
+      y_extension <- (y_max - y_min) * 0.1
+      y_pos_label <- y_max + y_extension * 0.5
       
       result <- maybe_add_dashed_lines(
         p = p,
@@ -3102,72 +3110,55 @@ plot_spline_comparisons <- function(
         y_pos = y_pos_label,
         horizontal_labels = TRUE
       )
-      
-      p <- result$p # Updated plot with dashed lines
-      treatment_colors <- result$treatment_colors 
+      p <- result$p
+      treatment_colors <- result$treatment_colors
       
       color_values <- setNames(
-        c(
-          "orange",
-          "orange",
-          "purple",
-          "purple",
-          "red",
-          "dodgerblue"
-        ),
-        c(
-          paste("Data", condition_1),
+        c("orange","orange","purple","purple","red","dodgerblue"),
+        c(paste("Data", condition_1),
           paste("Spline", condition_1),
           paste("Data", condition_2),
           paste("Spline", condition_2),
           paste("Imputed data", condition_1),
-          paste("Imputed data", condition_2)
-        )
+          paste("Imputed data", condition_2))
       )
       
-      # Filter to include only legend entries that exist in the data
       filtered_labels <- c(
         paste("Data", condition_1),
         paste("Spline", condition_1),
         paste("Data", condition_2),
         paste("Spline", condition_2)
       )
-      
-      # Add imputed labels only if they exist
-      if (has_imputed_1) {
-        filtered_labels <- c(
-          filtered_labels,
-          paste("Imputed data", condition_1)
+      if (has_imputed_1) filtered_labels <- c(
+        filtered_labels,
+        paste(
+          "Imputed data",
+          condition_1
+          )
         )
-      }
-      if (has_imputed_2) {
-        filtered_labels <- c(
-          filtered_labels,
-          paste("Imputed data", condition_2)
+      if (has_imputed_2) filtered_labels <- c(
+        filtered_labels, 
+        paste(
+          "Imputed data", 
+          condition_2
+          )
         )
-      }
       
-      # Keep only necessary color mappings
       color_values <- c(
         color_values[names(color_values) %in% filtered_labels],
         treatment_colors
-      )
-      
-      # Apply scale_color_manual with merged color values
-      p <- p + ggplot2::scale_color_manual(values = color_values)
-      
-      p
+        )
+      p + ggplot2::scale_color_manual(values = color_values)
     })
-
+    
     plot_list[[length(plot_list) + 1]] <- p
     feature_names_list[[length(feature_names_list) + 1]] <- feature_name
-    
   }
   
-  return(list(
+  list(
     plots = plot_list,
     feature_names = feature_names_list
-  ))
+  )
 }
 
 
@@ -3637,92 +3628,90 @@ build_cluster_hits_report <- function(
       sep = "\n"
     )
 
-    # Loop over each element in limma_result_2_and_3_plots
-    for (comparison_name in names(limma_result_2_and_3_plots)) {
-      # Create a subheader for each comparison
-      header_index <- header_index + 1
-      subheader <- sprintf(
-        "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
-        id='section%d'>%s</h3>",
-        header_index,
-        comparison_name
-      )
+    # We now assume limma_result_2_and_3_plots contains a single named element
+    comparison_name <- names(limma_result_2_and_3_plots)[1]
+    
+    # Create a subheader for this single comparison
+    header_index <- header_index + 1
+    subheader <- sprintf(
+      "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
+      id='section%d'>%s</h3>",
+      header_index,
+      comparison_name
+    )
 
-      # Access row counts for the current comparison_name
-      avrg_diff_hits <- 
-        category_2_and_3_hit_counts$category_2[[comparison_name]]
-      interaction_hits <- 
-        category_2_and_3_hit_counts$category_3[[comparison_name]]
-
-      # Create the HTML for hits
-      hits_info <- sprintf(
-        paste0(
-          "<p style='font-size: 2em; text-align: center;'>",
-          "Avrg diff conditions hits: %d</p>",
-          "<p style='font-size: 2em; text-align: center;'>",
-          "Interaction condition time hits: %d</p>",
-          "<hr>"
-        ),
-        avrg_diff_hits,
-        interaction_hits
+    # Access row counts directly
+    avrg_diff_hits <- category_2_and_3_hit_counts[["category_2"]]
+    interaction_hits <- category_2_and_3_hit_counts[["category_3"]]
+    
+    # Create the HTML for hits
+    hits_info <- sprintf(
+      paste0(
+        "<p style='font-size: 2em; text-align: center;'>",
+        "Avrg diff conditions hits: %d</p>",
+        "<p style='font-size: 2em; text-align: center;'>",
+        "Interaction condition time hits: %d</p>",
+        "<hr>"
+      ),
+      avrg_diff_hits,
+      interaction_hits
+    )
+    
+    html_content <- paste(
+      html_content,
+      subheader,
+      hits_info,
+      sep = "\n"
+    )
+    
+    # Add an entry in the TOC
+    toc_entry <- paste0(
+      "<li style='margin-left: 30px; font-size: 30px;'>",
+      "<a href='#section",
+      header_index,
+      "'>",
+      comparison_name,
+      "</a></li>"
+    )
+    
+    toc <- paste(
+      toc,
+      toc_entry,
+      sep = "\n"
+    )
+    
+    # Extract plots + feature names
+    comparison <- limma_result_2_and_3_plots[[comparison_name]]
+    comparison_plots <- comparison$plots
+    comparison_feature_names <- comparison$feature_names
+    
+    # Iterate through each plot and its feature name
+    for (i in seq_along(comparison_plots)) {
+      # Feature name above plot
+      feature_name_div <- sprintf(
+        '<div style="text-align: center;
+    font-size: 36px; margin-bottom: 10px;">%s</div>',
+        comparison_feature_names[[i]]
       )
       
       html_content <- paste(
         html_content,
-        subheader,
-        hits_info,
+        feature_name_div,
         sep = "\n"
       )
-
-      # Add an entry in the TOC for this subheader
-      toc_entry <- paste0(
-        "<li style='margin-left: 30px; font-size: 30px;'>",
-        "<a href='#section",
-        header_index,
-        "'>",
-        comparison_name,
-        "</a></li>"
+      
+      # Insert plot
+      result <- process_plots(
+        plots_element = comparison_plots[[i]],
+        plots_size = 1.5,
+        html_content = html_content,
+        toc = toc,
+        header_index = header_index,
+        element_name = ""
       )
-
-      toc <- paste(
-        toc,
-        toc_entry,
-        sep = "\n"
-      )
-
-      # Extract plot_list and feature_names_list for the current comparison
-      comparison <- limma_result_2_and_3_plots[[comparison_name]]
-      comparison_plots <- comparison$plots
-      comparison_feature_names <- comparison$feature_names
-
-      # Iterate through each plot and its corresponding feature name
-      for (i in seq_along(comparison_plots)) {
-        # Add the feature name as a copyable text above the plot
-        feature_name_div <- sprintf(
-          '<div style="text-align: center;
-          font-size: 36px; margin-bottom: 10px;">%s</div>',
-          comparison_feature_names[[i]]
-        )
-
-        html_content <- paste(
-          html_content,
-          feature_name_div, # Add the feature name above the plot
-          sep = "\n"
-        )
-
-        # Now add the plot itself
-        result <- process_plots(
-          plots_element = comparison_plots[[i]],
-          plots_size = 1.5,
-          html_content = html_content,
-          toc = toc,
-          header_index = header_index,
-          element_name = ""
-        )
-
-        html_content <- result$html_content
-        toc <- result$toc
-      }
+      
+      html_content <- result$html_content
+      toc <- result$toc
     }
   }
 
@@ -4775,7 +4764,6 @@ preselect_features_for_plotting <- function(
   
   return(features_to_plot)
 }
-
 
 
 # Level 4 internal functions ---------------------------------------------------

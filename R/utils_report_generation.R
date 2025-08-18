@@ -199,15 +199,17 @@ generate_report_html <- function(
       }
     )
   }
-  
-  if (!all(is.na(category_2_and_3_hits))) {
+
+  if (!is.null(category_2_and_3_hits) &&
+      length(category_2_and_3_hits) > 0 &&
+      !all(is.na(category_2_and_3_hits))) {
     download_fields <- c(
       download_fields,
       "limma_topTables_avrg_diff_conditions_hits",
       "limma_topTables_interaction_condition_time_hits"
     )
   }
-  
+
   if (report_type == "find_pvc") {
     download_fields <- c(
       download_fields,
@@ -284,16 +286,21 @@ generate_report_html <- function(
   }
 
   # Close the Report Info table
-  report_info_section <- paste(report_info_section, "</table>", sep = "\n")
+  report_info_section <- paste(
+    report_info_section,
+    "</table>",
+    sep = "\n"
+    )
 
   download_fields <- c(download_fields, "session_info")
   download_fields <- c(download_fields, "analysis_script")
   
-  category_2_and_3_hit_counts <- count_hits(category_2_and_3_hits)
-  
-  # Truncate all df names so that they are <= 30 chars (required for sheet 
-  # names of Excel files) --> every df becomes a sheet.
-  category_2_and_3_hits <- truncate_nested_list_names(category_2_and_3_hits)
+  if (all(!is.na(category_2_and_3_hits))) {
+    category_2_and_3_hit_counts <- count_hits(category_2_and_3_hits)
+    # Truncate all df names so that they are <= 30 chars (required for sheet 
+    # names of Excel files) --> every df becomes a sheet.
+    category_2_and_3_hits <- truncate_hit_labels(category_2_and_3_hits)
+  }
 
   for (field in download_fields) {
     base64_df <- process_field(
@@ -1185,153 +1192,109 @@ encode_df_to_base64 <- function(
 }
 
 
-#' Count Rows in Dataframes and Create Nested Dictionary
+#' Count Rows in Category 2 and 3 Dataframes
 #'
 #' @noRd
 #'
 #' @description
-#' This function processes the nested list of `category_2_and_3_hits` to count
-#' the rows in each dataframe. It organizes the counts into a nested list where:
-#' - The outer keys are `category_2` and `category_3`.
-#' - The inner keys are substrings of dataframe names after the second
-#'   underscore.
-#' - The values are the row counts of the corresponding dataframe.
+#' This function processes the **flat list** `category_2_and_3_hits`
+#' (with two data frames: `category_2_hits` and `category_3_hits`) 
+#' to count the number of rows in each. If an `adj.P.Val` column is 
+#' present, rows with `NA` in this column are excluded before counting.
 #'
-#' @param nested_list A nested list (e.g., category_2_and_3_hits) containing
-#'   lists of named dataframes.
+#' @param hit_list A list with two elements:
+#'   - `category_2_hits`: a data frame of condition-level differences
+#'   - `category_3_hits`: a data frame of condition × time interactions
 #'
-#' @return A nested dictionary (list) with row counts.
+#' @return A named list with two integers:
+#'   - `category_2`: number of rows in `category_2_hits`
+#'   - `category_3`: number of rows in `category_3_hits`
 #'
-#' @examples
-#' category_2_and_3_hits <- list(
-#'   category_2_hits = list(
-#'     "very_long_name_with_substring_ABC_vs_XYZ" = data.frame(A = 1:5),
-#'     "another_long_name_DEF_vs_GHI" = data.frame(B = 6:10)
-#'   ),
-#'   category_3_hits = list(
-#'     "extremely_long_name_with_substring_PQR_vs_STU" = data.frame(C = 11:15)
-#'   )
-#' )
-#' row_counts_dict <- count_hits(category_2_and_3_hits)
-count_hits <- function(nested_list) {
-  # Initialize the output dictionary
-  row_counts_dict <- list(
-    category_2 = list(),
-    category_3 = list()
+#' 
+count_hits <- function(hit_list) {
+  # Helper function to count rows safely
+  count_rows <- function(df) {
+    if (!is.data.frame(df)) return(0L)
+    if ("adj.P.Val" %in% colnames(df)) {
+      df <- df[!is.na(df$adj.P.Val), ]
+    }
+    nrow(df)
+  }
+  
+  list(
+    category_2 = count_rows(hit_list$category_2_hits),
+    category_3 = count_rows(hit_list$category_3_hits)
   )
-  
-  # Helper function to extract substring after the second underscore
-  extract_after_second_underscore <- function(name) {
-    parts <- unlist(strsplit(name, "_"))
-    if (length(parts) > 2) {
-      paste(parts[3:length(parts)], collapse = "_")
-    } else {
-      name  # Return the full name if there aren't enough parts
-    }
-  }
-  
-  # Iterate over the outer list
-  for (outer_key in names(nested_list)) {
-    # Determine if we are processing category_2 or category_3
-    category_key <- ifelse(
-      outer_key == "category_2_hits", "category_2", "category_3"
-    )
-    inner_list <- nested_list[[outer_key]]
-    
-    # Iterate over the inner list of dataframes
-    for (df_name in names(inner_list)) {
-      # Get the substring after the second underscore
-      extracted_name <- extract_after_second_underscore(df_name)
-      
-      # Get the dataframe
-      df <- inner_list[[df_name]]
-      
-      # Check if the adj.P.Val column exists
-      if ("adj.P.Val" %in% colnames(df)) {
-        # Remove rows with NA in adj.P.Val before counting
-        df <- df[!is.na(df$adj.P.Val), ]
-      }
-      
-      # Count the rows after filtering
-      row_count <- nrow(df)
-      
-      # Store the result in the dictionary
-      row_counts_dict[[category_key]][[extracted_name]] <- row_count
-    }
-  }
-  
-  return(row_counts_dict)
 }
 
 
-#' Truncate Dataframe Names in Nested Lists
+#' Truncate label values in flat hit tables
 #'
 #' @noRd
 #'
 #' @description
-#' This function processes a nested list (like category_2_and_3_hits) where each
-#' element is a list of named dataframes. It ensures all dataframe names are
-#' <= 30 characters, truncating them evenly for `_substring_vs_substring`.
+#' Given a flat list with two data frames (`category_2_hits`, `category_3_hits`),
+#' truncate long label values inside a chosen column (default: \code{"contrast"})
+#' to at most \code{max_length} characters. If a value matches the pattern
+#' \code{"*_X_vs_Y"}, the function truncates \code{X} and \code{Y} *evenly*
+#' so the full label remains within the limit.
 #'
-#' @param nested_list A list of lists containing named dataframes.
+#' @param hit_list A list with two data frames:
+#'   \itemize{
+#'     \item \code{category_2_hits}: data frame of condition-level differences.
+#'     \item \code{category_3_hits}: data frame of condition × time
+#'      interactions.
+#'   }
+#' @param col Character scalar. The column name in which to truncate labels
+#'   (default: \code{"contrast"}). If the column does not exist in a data frame,
+#'   that data frame is returned unchanged.
+#' @param max_length Integer scalar. Maximum allowed label length (default: 30).
 #'
-#' @return The same nested list, but with dataframe names adjusted to meet the
-#'         naming logic.
+#' @return The same list, with the specified column's values truncated in each
+#'   present data frame.
 #'
-#' @examples
-#' category_2_and_3_hits <- list(
-#'   category_2_hits = list(
-#'     "very_long_name_with_substring_ABC_vs_XYZ" = data.frame(A = 1:5),
-#'     "short_name" = data.frame(B = 6:10)
-#'   ),
-#'   category_3_hits = list(
-#'     "extremely_long_name_with_substring_PQR_vs_STU" = data.frame(C = 11:15)
-#'   )
-#' )
-#' result <- truncate_nested_list_names(category_2_and_3_hits)
-truncate_nested_list_names <- function(nested_list) {
-  
-  # Helper function to truncate a single dataframe name
-  truncate_name <- function(name) {
-    max_length <- 30
+truncate_hit_labels <- function(
+    hit_list,
+    col = "contrast",
+    max_length = 30
+    ) {
+  # helper to truncate a single label
+  trunc_label <- function(x) {
+    x <- as.character(x %||% "")
+    if (nchar(x) <= max_length) return(x)
     
-    # Check if the name matches the special pattern
-    if (grepl("_.*_vs_.*$", name)) {
-      # Extract the base name and substrings
-      base <- sub("(.*)_(.*)_vs_(.*)$", "\\1", name)
-      substring1 <- sub("(.*)_(.*)_vs_(.*)$", "\\2", name)
-      substring2 <- sub("(.*)_(.*)_vs_(.*)$", "\\3", name)
+    # If matches "..._X_vs_Y", balance truncation across X and Y
+    if (grepl("_.*_vs_.*$", x)) {
+      base <- sub("(.*)_(.*)_vs_(.*)$", "\\1", x)
+      s1   <- sub("(.*)_(.*)_vs_(.*)$", "\\2", x)
+      s2   <- sub("(.*)_(.*)_vs_(.*)$", "\\3", x)
       
-      # Calculate available length for substrings
-      base_length <- nchar(base)
-      remaining_length <- max_length - base_length - 5  # 5 for "_vs_"
-      
-      # Ensure there's space for both substrings
-      if (remaining_length > 0) {
-        trunc_length <- floor(remaining_length / 2)
-        substring1 <- substr(substring1, 1, trunc_length)
-        substring2 <- substr(substring2, 1, trunc_length)
-        return(paste0(base, "_", substring1, "_vs_", substring2))
-      } else {
-        # If no space for substrings, truncate the entire name
-        return(substr(name, 1, max_length))
+      base_len <- nchar(base)
+      # 5 chars for "_vs_"
+      remaining <- max_length - base_len - 5
+      if (remaining > 0) {
+        half <- floor(remaining / 2)
+        s1 <- substr(s1, 1L, half)
+        s2 <- substr(s2, 1L, remaining - half)  # handle odd char
+        return(paste0(base, "_", s1, "_vs_", s2))
       }
-    } else {
-      # For names that don't match the pattern, truncate normally
-      return(substr(name, 1, max_length))
+      # If no room for substrings, hard truncate
+      return(substr(x, 1L, max_length))
     }
+    
+    # default hard truncate
+    substr(x, 1L, max_length)
   }
   
-  # Process each inner list and truncate the names of its dataframes
-  lapply(nested_list, function(inner_list) {
-    # Update the names of the dataframes in the inner list
-    names(inner_list) <- vapply(
-      names(inner_list),
-      truncate_name,
-      FUN.VALUE = character(1)
-      )
-    inner_list
-  })
+  # apply to each df if the column exists
+  for (nm in c("category_2_hits", "category_3_hits")) {
+    df <- hit_list[[nm]]
+    if (is.data.frame(df) && col %in% names(df)) {
+      df[[col]] <- vapply(df[[col]], trunc_label, FUN.VALUE = character(1))
+      hit_list[[nm]] <- df
+    }
+  }
+  hit_list
 }
 
 
@@ -1611,7 +1574,6 @@ process_plots <- function(
     )
   )
 }
-
 
 
 #' Process and Encode Data Field for Report
