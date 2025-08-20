@@ -84,17 +84,17 @@ test_that("cluster_hits() returns correctly structured result", {
     adj_pthresh_interaction_condition_time = 0.05
   )
 
-  # cluster_hits() returns a list: cluster_summary + plots
+  # cluster_hits() returns a list: cluster_table + plots
   expect_type(clustering_results, "list")
   expect_named(
     clustering_results,
-    c("cluster_summary", "plots"),
+    c("cluster_table", "spline_results", "plots"),
     ignore.order = FALSE
   )
-  expect_length(clustering_results, 2)
+  expect_length(clustering_results, 3)
   
-  # cluster_summary: structure + minimal integrity checks
-  cs <- clustering_results$cluster_summary
+  # cluster_table: structure + minimal integrity checks
+  cs <- clustering_results$cluster_table
   expect_s3_class(cs, c("tbl_df", "tbl", "data.frame"))
 
   # required metadata cols

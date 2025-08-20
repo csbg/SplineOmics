@@ -113,7 +113,8 @@
 run_limma_splines <- function(
     splineomics
 ) {
-
+  
+  start_time <- Sys.time()
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "run_limma_splines"
@@ -257,8 +258,6 @@ run_limma_splines <- function(
       contrast_results[["condition_time"]]
   }
   
-  message("\033[32mInfo\033[0m limma spline analysis completed successfully")
-  
   args <- list(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
@@ -277,6 +276,15 @@ run_limma_splines <- function(
     args$homosc_violation_result <- if (exists("fit_obj"))
       fit_obj[["homosc_violation_result"]] else NULL
   }
+  
+  end_time <- Sys.time()
+  elapsed <- difftime(end_time, start_time, units = "min")
+  message(
+    sprintf(
+      "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
+      as.numeric(elapsed)
+    )
+  )
 
   splineomics <- do.call(
     update_splineomics,

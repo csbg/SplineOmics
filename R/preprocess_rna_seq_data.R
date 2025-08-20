@@ -84,6 +84,7 @@ preprocess_rna_seq_data <- function(
     normalize_func = NULL
     ) {
   
+  start_time <- Sys.time()
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "preprocess_rna_seq_data"
@@ -253,6 +254,15 @@ preprocess_rna_seq_data <- function(
       exists("homosc_violation_result")
       ) homosc_violation_result else NULL
   )
-
+  
+  end_time <- Sys.time()
+  elapsed <- difftime(end_time, start_time, units = "min")
+  message(
+    sprintf(
+      "\033[32mInfo\033[0m Finished preprocessing RNA-seq data in %.1f minutes",
+      as.numeric(elapsed)
+      )
+  )
+  
   return(splineomics)
 }

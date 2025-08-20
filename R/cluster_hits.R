@@ -125,9 +125,9 @@
 #' the HTML report in the case of many hits. Default is 100.
 #'
 #' @return
-#' A named list with two elements:
+#' A named list with three elements:
 #' \describe{
-#'   \item{\code{cluster_summary}}{
+#'   \item{\code{cluster_table}}{
 #'     A tibble containing one row per \code{feature_nr} with metadata and
 #'     cluster assignments across the analysis categories. The structure is:
 #'     \itemize{
@@ -155,6 +155,43 @@
 #'     \code{cluster_<cond2>}, \code{cluster_cat2}, \code{cluster_cat3}),
 #'     a value of \code{NA} indicates that the feature was not significant
 #'     (not a hit) in that category.
+#'   }
+#'   \item{\code{spline_results}}{
+#'     A named list summarizing the fitted spline trajectories, their shared
+#'     time grid, and effect-size based significance flags. Structure:
+#'     \describe{
+#'       \item{\code{time_grid}}{Numeric vector of length \eqn{T} giving the
+#'         common time points (e.g., hours since cultivation start) on which
+#'         all splines were predicted.}
+#'       \item{\code{predictions}}{Named list by condition (e.g.,
+#'         \code{constant}, \code{temp_shift}). Each entry is a numeric
+#'         matrix of size \eqn{N \times T} with rows corresponding to features
+#'         and columns to \code{time_grid}. Values are the predicted spline
+#'         trajectories on the absolute scale used in the analysis
+#'         (e.g., log2-CPM after \code{voom}). Row order matches the feature
+#'         order used throughout the analysis.}
+#'       \item{\code{time_effect_effect_size}}{Named list by condition with a
+#'         numeric vector (length \eqn{N}) per condition giving the
+#'         \emph{cumulative travel} (integrated temporal change) of each
+#'         feature’s spline across \code{time_grid}. Larger values indicate
+#'         stronger within-condition temporal modulation.}
+#'       \item{\code{time_effect_passed_threshold}}{Named list by condition
+#'         with a logical vector (length \eqn{N}) per condition indicating
+#'         whether the corresponding \code{time_effect_effect_size} exceeds
+#'         the user-defined effect-size threshold (i.e., time-effect hits).}
+#'       \item{\code{interaction_effect_size}}{Numeric vector (length \eqn{N})
+#'         giving the \emph{differential cumulative travel} between the two
+#'         condition-specific splines of each feature, computed on the same
+#'         \code{time_grid}. Larger values indicate stronger differences in
+#'         temporal behaviour between conditions (condition–time interaction).}
+#'       \item{\code{interaction_passed_threshold}}{Logical vector (length
+#'         \eqn{N}) indicating whether \code{interaction_effect_size}
+#'         exceeds the interaction effect-size threshold (i.e., features with
+#'         significantly different temporal profiles across conditions).}
+#'     }
+#'     Unless stated otherwise, vectors are aligned to the same feature order
+#'     used in the prediction matrices; condition names match
+#'     \code{levels(meta[[condition]])}.
 #'   }
 #'   \item{\code{plots}}{
 #'     A list of all plots generated during the run, corresponding to the
@@ -195,7 +232,8 @@ cluster_hits <- function(
     report = TRUE,
     max_hit_number = 25
     ) {
-
+  
+  start_time <- Sys.time()
   report_dir <- normalizePath(
     report_dir,
     mustWork = FALSE
@@ -255,7 +293,7 @@ cluster_hits <- function(
     spline_params = spline_params,
     mode = mode
   )
-  
+
   predicted_timecurves <- add_cat1_and_cat3_effectsizes(
     predicted_timecurves,
     min_effect_size = min_effect_size
@@ -379,7 +417,7 @@ cluster_hits <- function(
     plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
 
-  cluster_summary <- construct_cluster_summary(
+  cluster_table <- construct_cluster_table(
     limma_splines_results = splineomics[["limma_splines_result"]],
     all_levels_clustering = all_levels_clustering,
     category_2_and_3_hits = category_2_and_3_hits,
@@ -392,9 +430,23 @@ cluster_hits <- function(
       plot_cat3_minimal(all_levels_clustering[["paired_category_3"]])
     )
   }
+  
+  end_time <- Sys.time()
+  elapsed <- difftime(
+    end_time,
+    start_time,
+    units = "min"
+    )
+  message(
+    sprintf(
+      "Running this function took %.1f min",
+      as.numeric(elapsed)
+    )
+  )
 
   list(
-    cluster_summary = cluster_summary,
+    cluster_table = cluster_table,
+    spline_results = predicted_timecurves,
     plots = plots
   )
 }
@@ -1849,7 +1901,7 @@ clean_gene_symbols <- function(genes) {
 #' @importFrom tibble as_tibble tibble
 #' @importFrom rlang sym
 #' 
-construct_cluster_summary <- function(
+construct_cluster_table <- function(
     limma_splines_results,
     all_levels_clustering,
     category_2_and_3_hits,

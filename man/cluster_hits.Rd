@@ -80,6 +80,12 @@ necessary data and parameters for the analysis, including:
 a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
 candidate number(s) of clusters for the corresponding condition level.}
 
+\item{nr_clusters_interaction}{An integer or a numeric vector of integers
+(> 0) specifying how many clusters should be used for the clustering of 
+the interaction of condition and time hits. When a vector is provided, then
+all cluster amounts in that range are tested and the best one automatically
+taken.}
+
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
 hits in each top table.}
 
@@ -145,9 +151,9 @@ cluster. This can be used to limit the computation time and size of
 the HTML report in the case of many hits. Default is 100.}
 }
 \value{
-A named list with two elements:
+A named list with three elements:
 \describe{
-  \item{\code{cluster_summary}}{
+  \item{\code{cluster_table}}{
     A tibble containing one row per \code{feature_nr} with metadata and
     cluster assignments across the analysis categories. The structure is:
     \itemize{
@@ -175,6 +181,43 @@ A named list with two elements:
     \code{cluster_<cond2>}, \code{cluster_cat2}, \code{cluster_cat3}),
     a value of \code{NA} indicates that the feature was not significant
     (not a hit) in that category.
+  }
+  \item{\code{spline_results}}{
+    A named list summarizing the fitted spline trajectories, their shared
+    time grid, and effect-size based significance flags. Structure:
+    \describe{
+      \item{\code{time_grid}}{Numeric vector of length \eqn{T} giving the
+        common time points (e.g., hours since cultivation start) on which
+        all splines were predicted.}
+      \item{\code{predictions}}{Named list by condition (e.g.,
+        \code{constant}, \code{temp_shift}). Each entry is a numeric
+        matrix of size \eqn{N \times T} with rows corresponding to features
+        and columns to \code{time_grid}. Values are the predicted spline
+        trajectories on the absolute scale used in the analysis
+        (e.g., log2-CPM after \code{voom}). Row order matches the feature
+        order used throughout the analysis.}
+      \item{\code{time_effect_effect_size}}{Named list by condition with a
+        numeric vector (length \eqn{N}) per condition giving the
+        \emph{cumulative travel} (integrated temporal change) of each
+        feature’s spline across \code{time_grid}. Larger values indicate
+        stronger within-condition temporal modulation.}
+      \item{\code{time_effect_passed_threshold}}{Named list by condition
+        with a logical vector (length \eqn{N}) per condition indicating
+        whether the corresponding \code{time_effect_effect_size} exceeds
+        the user-defined effect-size threshold (i.e., time-effect hits).}
+      \item{\code{interaction_effect_size}}{Numeric vector (length \eqn{N})
+        giving the \emph{differential cumulative travel} between the two
+        condition-specific splines of each feature, computed on the same
+        \code{time_grid}. Larger values indicate stronger differences in
+        temporal behaviour between conditions (condition–time interaction).}
+      \item{\code{interaction_passed_threshold}}{Logical vector (length
+        \eqn{N}) indicating whether \code{interaction_effect_size}
+        exceeds the interaction effect-size threshold (i.e., features with
+        significantly different temporal profiles across conditions).}
+    }
+    Unless stated otherwise, vectors are aligned to the same feature order
+    used in the prediction matrices; condition names match
+    \code{levels(meta[[condition]])}.
   }
   \item{\code{plots}}{
     A list of all plots generated during the run, corresponding to the

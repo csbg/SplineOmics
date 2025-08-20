@@ -63,7 +63,7 @@ Suggests:
     edgeR (>= 4.0.16),
     clusterProfiler (>= 4.10.1),
     gprofiler2 (>= 0.2.3),
-    orthogene (>= 1.14.0),
+    orthogene (>= 1.12.0),
     rmarkdown (>= 2.7),
     knitr,
     testthat,

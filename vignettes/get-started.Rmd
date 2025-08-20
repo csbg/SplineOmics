@@ -651,7 +651,7 @@ levels, and generates the HTML report:
 
 ```{r run ORA, eval = TRUE}
 result <- SplineOmics::run_ora(
-  clustering_results = clustering_results[["cluster_summary"]],
+  clustering_results = clustering_results[["cluster_table"]],
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,

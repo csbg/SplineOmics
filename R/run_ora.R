@@ -432,7 +432,10 @@ manage_ora_result_cat <- function(
     universe,
     plot_title
 ) {
-  cg <- make_clustered_genes(clustering_results, level_col)
+  cg <- make_clustered_genes(
+    clustering_results,
+    level_col
+    )
   message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
   run_ora_level(
     clustered_genes = cg,
@@ -893,10 +896,21 @@ check_clustering_results <- function(clustering_results) {
       if (!is.atomic(v)) {
         stop(paste0("'", cc, "' must be atomic."), call. = FALSE)
       }
-      bad <- !is.na(v) & !grepl("^[^_]+_[^_]+$", v)
-      if (any(bad)) {
-        stop(paste0("'", cc, "' must be of the form 'a_b' or NA."),
-             call. = FALSE)
+      
+      if (cc == "cluster_cat2") {
+        bad <- !is.na(v) & !grepl("^[^_]+_[^_]+$", v)
+        if (any(bad)) {
+          stop(paste0("'", cc, "' must be of the form 'a_b' or NA."),
+               call. = FALSE)
+        }
+      }
+      
+      if (cc == "cluster_cat3") {
+        bad <- !is.na(v) & (is.na(suppressWarnings(as.integer(v))))
+        if (any(bad)) {
+          stop(paste0("'", cc, "' must be integer or NA."),
+               call. = FALSE)
+        }
       }
     }
   }
@@ -1453,7 +1467,7 @@ run_ora_level <- function(
           TERM2NAME = NA
         )
       }
-      
+
       df <- as.data.frame(ora_result)
       if (nrow(df) == 0) df <- NA
       ora_results[[cluster_label]][[gene_set_name]] <- df

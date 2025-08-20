@@ -3048,50 +3048,24 @@ Level3Functions <- R6::R6Class("Level3Functions",
     #' or printing messages.
     #'
     check_batch_column = function(
-        meta,
-        meta_batch_column,
-        data_meta_index) {
+      meta,
+      meta_batch_column,
+      data_meta_index
+    ) {
       if (!is.null(meta_batch_column) 
           && !(meta_batch_column %in% names(meta))) {
         stop(
           self$create_error_message(
             sprintf(
-              "Batch effect column '%s' %s",
-              meta_batch_column,
-              "not found in meta"
+              "Batch effect column '%s' not found in meta",
+              meta_batch_column
             ),
             data_meta_index
           ),
           call. = FALSE
         )
-      } else if (!is.null(meta_batch_column)) {
-        if (!is.null(data_meta_index)) {
-          message(sprintf(
-            "Index: %s. %s",
-            data_meta_index,
-            paste(
-              "Column", meta_batch_column,
-              "of meta will be used",
-              "to remove the batch effect for the plotting"
-            )
-          ))
-        } else {
-          message(sprintf(
-            "Column '%s' of meta will be used to %s",
-            meta_batch_column,
-            paste("remove the batch effect for the plotting")
-          ))
-        }
-      } else {
-        if (!is.null(data_meta_index)) {
-          message(sprintf(
-            "Index: %s. Batch effect will NOT be removed for plotting!",
-            data_meta_index
-          ))
-        } else {
-          message("Batch effect will NOT be removed for plotting!")
-        }
       }
+      # else: valid column or NULL → silently continue
     }
   )
 )
