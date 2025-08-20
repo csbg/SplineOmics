@@ -117,9 +117,7 @@ create_limma_report <- function(
     result$section_headers_info
   )
 
-
-  # length == 0 when there was just one level or no interaction effect
-  if (length(avrg_diff_conditions) > 0) {
+  if (!is.null(avrg_diff_conditions) && nrow(avrg_diff_conditions) > 0) {
     result <- generate_avrg_diff_plots(
       avrg_diff_conditions,
       adj_pthresh
@@ -139,8 +137,8 @@ create_limma_report <- function(
     )
   }
 
-  # length == 0 when there was just one level or no interaction effect
-  if (length(interaction_condition_time) > 0) {
+  if (!is.null(interaction_condition_time) 
+      && nrow(interaction_condition_time) > 0) {
     result <- generate_interaction_plots(
       interaction_condition_time,
       adj_pthresh
@@ -162,8 +160,8 @@ create_limma_report <- function(
 
   all_top_tables <- c(
     time_effect,
-    avrg_diff_conditions,
-    interaction_condition_time
+    list(avrg_diff_conditions = avrg_diff_conditions),
+    list(interaction_condition_time = interaction_condition_time)
   )
 
   unique_values <- unique(meta[[condition]])
@@ -205,7 +203,6 @@ create_limma_report <- function(
 }
 
 
-
 # Level 1 internal function definitions ----------------------------------------
 
 
@@ -227,7 +224,8 @@ create_limma_report <- function(
 #'
 generate_time_effect_plots <- function(
     time_effect,
-    adj_pthresh) {
+    adj_pthresh
+    ) {
   plots <- list("Time Effect")
   plots_sizes <- c(999)
 
@@ -265,18 +263,23 @@ generate_time_effect_plots <- function(
 #' @noRd
 #'
 #' @description
-#' Creates p-value histograms for each condition in the
-#' average difference conditions. This function is used internally in the
+#' Creates a p-value histogram for the average difference between conditions
+#' from a single LIMMA top table. This function is used internally in the
 #' `create_limma_report` function.
 #'
-#' @param avrg_diff_conditions A list of top tables from the LIMMA analysis
+#' @param avrg_diff_conditions A dataframe from the LIMMA analysis
 #' representing the average difference between conditions.
 #' @param adj_pthresh A numeric value specifying the adjusted p-value threshold
 #' for significance.
 #'
-#' @return A list containing the plots and their sizes, as well as the
-#' section header information.
-#'
+#' @return A list containing:
+#' \itemize{
+#'   \item \code{plots}: A list of plots, including the p-value histogram.
+#'   \item \code{plots_sizes}: A numeric vector giving relative plot sizes.
+#'   \item \code{section_headers_info}: Metadata for section headers in the
+#'    report.
+#' }
+#' 
 generate_avrg_diff_plots <- function(
     avrg_diff_conditions,
     adj_pthresh
@@ -287,22 +290,17 @@ generate_avrg_diff_plots <- function(
   header_info <- list(header_name = "Average Difference Conditions")
   section_headers_info <- list(header_info)
   
-  for (i in seq_along(avrg_diff_conditions)) {
-    element_name <- names(avrg_diff_conditions)[i]
-    top_table <- avrg_diff_conditions[[i]]
-    
-    comparison <- remove_prefix(element_name, "avrg_diff_")
-    title <- paste("P-Value Histogram:", comparison)
-    
-    p_value_hist <- create_p_value_histogram(
-      top_table = top_table,
-      title = title
-    )
-    
-    # Append only the p-value histogram now
-    plots <- c(plots, list(p_value_hist))
-    plots_sizes <- c(plots_sizes, 1)
-  }
+  # Directly use the dataframe
+  title <- "P-Value Histogram: Average Difference Conditions"
+
+  p_value_hist <- create_p_value_histogram(
+    top_table = avrg_diff_conditions,
+    title = title
+  )
+  
+  # Append only the p-value histogram now
+  plots <- c(plots, list(p_value_hist))
+  plots_sizes <- c(plots_sizes, 1)
   
   list(
     plots = plots,
@@ -317,45 +315,43 @@ generate_avrg_diff_plots <- function(
 #' @noRd
 #'
 #' @description
-#' Creates p-value histograms for each interaction condition in the
-#' interaction of condition and time. This function is used internally in the
+#' Creates a p-value histogram for the interaction of condition and time
+#' from a single LIMMA top table. This function is used internally in the
 #' `create_limma_report` function.
 #'
-#' @param interaction_condition_time A list of top tables from the LIMMA
-#' analysis
+#' @param interaction_condition_time A dataframe from the LIMMA analysis
 #' representing the interaction effects between condition and time.
 #' @param adj_pthresh A numeric value specifying the adjusted p-value threshold
 #' for significance.
 #'
-#' @return A list containing the plots and their sizes, as well as the
-#' section header information.
-#'
+#' @return A list containing:
+#' \itemize{
+#'   \item \code{plots}: A list of plots, including the p-value histogram.
+#'   \item \code{plots_sizes}: A numeric vector giving relative plot sizes.
+#'   \item \code{section_headers_info}: Metadata for section headers in the
+#'    report.
+#' }
+#' 
 generate_interaction_plots <- function(
     interaction_condition_time,
-    adj_pthresh) {
+    adj_pthresh
+    ) {
   plots <- list("Interaction of Condition and Time")
   plots_sizes <- c(999)
-
+  
   header_info <- list(header_name = "Interaction of Condition and Time")
   section_headers_info <- list(header_info)
-
-  for (i in seq_along(interaction_condition_time)) {
-    element_name <- names(interaction_condition_time)[i]
-    title <- paste(element_name, ": Adj. p-value vs. F-statistic")
-    top_table <- interaction_condition_time[[i]]
-
-    comparison <- remove_prefix(element_name, "time_interaction_")
-    title <- paste("P-Value Histogram:", comparison)
-
-    p_value_hist <- create_p_value_histogram(
-      top_table = top_table,
-      title = title
-    )
-
-    plots <- c(plots, list(p_value_hist))
-    plots_sizes <- c(plots_sizes, 1)
-  }
-
+  
+  # Single dataframe → single histogram
+  title <- "P-Value Histogram: Interaction of Condition and Time"
+  p_value_hist <- create_p_value_histogram(
+    top_table = interaction_condition_time,
+    title = title
+  )
+  
+  plots <- c(plots, list(p_value_hist))
+  plots_sizes <- c(plots_sizes, 1)
+  
   list(
     plots = plots,
     plots_sizes = plots_sizes,
@@ -381,7 +377,8 @@ generate_interaction_plots <- function(
 #'
 shorten_names <- function(
     name,
-    unique_values) {
+    unique_values
+    ) {
   for (val in unique_values) {
     short_val <- substr(val, 1, 3)
     name <- gsub(val, short_val, name, fixed = TRUE)
@@ -568,7 +565,8 @@ build_create_limma_report <- function(
 #'
 create_p_value_histogram <- function(
     top_table,
-    title = "P-Value Histogram") {
+    title = "P-Value Histogram"
+    ) {
   # Check if the top_table has a P.Value column
   if (!"P.Value" %in% colnames(top_table)) {
     stop("The top_table must contain a column named 'P.Value'.")

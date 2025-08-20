@@ -44,6 +44,23 @@ Examples:
 
 --------------------------------------------------------------------------------
 
+### [0.3.1]
+
+#### Added
+- Effect size computations and thresholding for the splines. Because with enough
+  statistical power, also tiny differences can be significant, it can make sense
+  to determine the hits by not just filtering with the adj.p-value threshold, 
+  but also with an effect size threshold. Therefore, the cluster_hits() function
+  now computes the spline effect sizes via cumulative travel and accepts a
+  threshold argument that is used for the cutoffs. For category 2 with the
+  average difference between the conditions, the effect size is already in the
+  topTable from limma.
+  
+- Double spline clustering for the hits for category 3. Those clusters are 
+  assigned to those hits and serve for the following clustered enrichment.
+  To control this, a new argument of the cluster_hits() function, 
+  nr_clusters_interaction, was defined. 
+
 
 ### [0.3.0]
 

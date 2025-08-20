@@ -7,10 +7,11 @@
 cluster_hits(
   splineomics,
   nr_clusters,
+  nr_clusters_interaction = 1,
   adj_pthresholds = c(0.05),
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05,
-  min_effect_size = list(time_effect = 0, avg_diff_cond = 0),
+  min_effect_size = list(time_effect = 0, avg_diff_cond = 0, interaction_cond_time = 0),
   genes = NULL,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
@@ -96,20 +97,23 @@ results from the interaction of condition and time limma result. Per default
   hits that pass adjusted p-value cutoffs but show negligible effect sizes.
 
   The list must contain the following elements:
-  - `time_effect`: Minimum absolute effect size (e.g., log-fold change or
-    model coefficient) for time effects. Features with a smaller effect size
-    will be ignored even if they are statistically significant.
+  - `time_effect`: Minimum cumulative travel for time effects (Category 1).
+    Features with a smaller travel will be ignored even if significant.
   - `avg_diff_cond`: Minimum absolute effect size for average differences
-    between conditions. As above, this ensures that only condition
-    contrasts with biologically relevant magnitude are reported.
+    between conditions (Category 2). Ensures that only contrasts with a
+    relevant magnitude are reported.
+  - `interaction_cond_time`: Minimum effect size for the interaction
+    between condition and time (Category 3). This controls how large the
+    differential curve travel must be across conditions to count as a hit.
 
-  Values should be numeric (typically >0). For example,
-  `min_effect_size = list(time_effect = 1, avg_diff_cond = 1)` will only
-  keep time effects and condition differences with an absolute effect size
-  of at least 1 unit. Use smaller values (e.g., 0.1) for more permissive
-  filtering, or larger values to be more conservative.
-  
-  The default is the value 0 for both `time_effect` and `avg_diff_cond`.}
+  Values should be numeric scalars (typically >0). For example:
+  `min_effect_size = list(time_effect = 1, avg_diff_cond = 1,
+  interaction_cond_time = 2)` will only keep features with cumulative
+  travels or condition-time differences above those cutoffs. Use smaller
+  values (e.g., 0.1) for permissive filtering, or larger values for more
+  conservative thresholds.
+
+  The default is 0 for all three elements.}
 
 \item{genes}{A character vector containing the gene names of the features to
 be analyzed. The entries should be in the same order as they appear in data.}
@@ -174,7 +178,10 @@ A named list with two elements:
   }
   \item{\code{plots}}{
     A list of all plots generated during the run, corresponding to the
-    visualizations shown in the HTML report produced by this function.
+    visualizations shown in the HTML report produced by this function. 
+    Additionally, this plots list also contains the plots showing the 
+    consensus clusters of the potential clustering of the interaction of 
+    condition and time (category 3) hits.
   }
 }
 }

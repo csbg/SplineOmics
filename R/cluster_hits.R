@@ -65,6 +65,11 @@
 #' @param nr_clusters A list whose length matches `top_tables`; each element is
 #'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
 #'   candidate number(s) of clusters for the corresponding condition level.
+#' @param nr_clusters_interaction An integer or a numeric vector of integers
+#' (> 0) specifying how many clusters should be used for the clustering of 
+#' the interaction of condition and time hits. When a vector is provided, then
+#' all cluster amounts in that range are tested and the best one automatically
+#' taken.
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
@@ -79,20 +84,23 @@
 #'   hits that pass adjusted p-value cutoffs but show negligible effect sizes.
 #'
 #'   The list must contain the following elements:
-#'   - `time_effect`: Minimum absolute effect size (e.g., log-fold change or
-#'     model coefficient) for time effects. Features with a smaller effect size
-#'     will be ignored even if they are statistically significant.
+#'   - `time_effect`: Minimum cumulative travel for time effects (Category 1).
+#'     Features with a smaller travel will be ignored even if significant.
 #'   - `avg_diff_cond`: Minimum absolute effect size for average differences
-#'     between conditions. As above, this ensures that only condition
-#'     contrasts with biologically relevant magnitude are reported.
+#'     between conditions (Category 2). Ensures that only contrasts with a
+#'     relevant magnitude are reported.
+#'   - `interaction_cond_time`: Minimum effect size for the interaction
+#'     between condition and time (Category 3). This controls how large the
+#'     differential curve travel must be across conditions to count as a hit.
 #'
-#'   Values should be numeric (typically >0). For example,
-#'   `min_effect_size = list(time_effect = 1, avg_diff_cond = 1)` will only
-#'   keep time effects and condition differences with an absolute effect size
-#'   of at least 1 unit. Use smaller values (e.g., 0.1) for more permissive
-#'   filtering, or larger values to be more conservative.
-#'   
-#'   The default is the value 0 for both `time_effect` and `avg_diff_cond`.
+#'   Values should be numeric scalars (typically >0). For example:
+#'   `min_effect_size = list(time_effect = 1, avg_diff_cond = 1,
+#'   interaction_cond_time = 2)` will only keep features with cumulative
+#'   travels or condition-time differences above those cutoffs. Use smaller
+#'   values (e.g., 0.1) for permissive filtering, or larger values for more
+#'   conservative thresholds.
+#'
+#'   The default is 0 for all three elements.
 #' @param genes A character vector containing the gene names of the features to
 #'  be analyzed. The entries should be in the same order as they appear in data.
 #' @param plot_info List containing the elements y_axis_label (string),
@@ -150,7 +158,10 @@
 #'   }
 #'   \item{\code{plots}}{
 #'     A list of all plots generated during the run, corresponding to the
-#'     visualizations shown in the HTML report produced by this function.
+#'     visualizations shown in the HTML report produced by this function. 
+#'     Additionally, this plots list also contains the plots showing the 
+#'     consensus clusters of the potential clustering of the interaction of 
+#'     condition and time (category 3) hits.
 #'   }
 #' }
 #'
@@ -159,12 +170,14 @@
 cluster_hits <- function(
     splineomics,
     nr_clusters,
+    nr_clusters_interaction = 1,
     adj_pthresholds = c(0.05),
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     min_effect_size = list(
       time_effect = 0,
-      avg_diff_cond = 0
+      avg_diff_cond = 0,
+      interaction_cond_time = 0
     ),
     genes = NULL, 
     plot_info = list(
@@ -191,11 +204,12 @@ cluster_hits <- function(
   check_splineomics_elements(
     splineomics = splineomics,
     func_type = "cluster_hits"
-  )
+    )
   
-  check_inputs_cluster_hits(
+  min_effect_size <- check_inputs_cluster_hits(
     min_effect_size = min_effect_size,
-    max_hit_number = max_hit_number
+    max_hit_number = max_hit_number,
+    nr_clusters_interaction
     )
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -242,14 +256,48 @@ cluster_hits <- function(
     mode = mode
   )
   
-  predicted_timecurves <- add_curve_effectsizes(
+  predicted_timecurves <- add_cat1_and_cat3_effectsizes(
     predicted_timecurves,
-    threshold = min_effect_size[["time_effect"]]
+    min_effect_size = min_effect_size
     )
 
+  if (
+    (mode != "isolated") &&
+    (adj_pthresh_avrg_diff_conditions > 0 ||
+     adj_pthresh_interaction_condition_time > 0)
+  ) {
+    category_2_and_3_hits <- get_category_2_and_3_hits(
+      splineomics = splineomics,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+      avg_diff_cond_threshold = min_effect_size[["avg_diff_cond"]],
+      predicted_timecurves = predicted_timecurves
+    )
+    
+    spline_comp_plots <- generate_spline_comparisons(
+      splineomics = splineomics,
+      data = data,
+      meta = meta,
+      condition = condition,
+      replicate_column = plot_options[["meta_replicate_column"]],
+      plot_info = plot_info,
+      category_2_and_3_hits = category_2_and_3_hits,
+      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+      raw_data = raw_data,
+      predicted_timecurves = predicted_timecurves,
+      max_hit_number = max_hit_number
+    )
+  } else {
+    category_2_and_3_hits <- NULL
+    spline_comp_plots <- NULL
+  }
+
   all_levels_clustering <- perform_clustering(
-    top_tables = within_level_top_tables,
+    time_effect_hits = within_level_top_tables,
+    category_3_hits = category_2_and_3_hits[["category_3_hits"]],
     nr_clusters = nr_clusters,
+    nr_clusters_interaction = nr_clusters_interaction,
     meta = meta,
     condition = condition,
     predicted_timecurves = predicted_timecurves
@@ -287,45 +335,16 @@ cluster_hits <- function(
     )
   }
 
-  if (
-    (mode != "isolated") &&
-    (adj_pthresh_avrg_diff_conditions > 0 ||
-    adj_pthresh_interaction_condition_time > 0)
-    ) {
-    category_2_and_3_hits <- get_category_2_and_3_hits(
-      splineomics = splineomics,
-      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
-      min_effect_size = min_effect_size,
-      predicted_timecurves = predicted_timecurves
-    )
-    
-    spline_comp_plots <- generate_spline_comparisons(
-      splineomics = splineomics,
-      data = data,
-      meta = meta,
-      condition = condition,
-      replicate_column = plot_options[["meta_replicate_column"]],
-      plot_info = plot_info,
-      category_2_and_3_hits = category_2_and_3_hits,
-      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
-      raw_data = raw_data,
-      predicted_timecurves = predicted_timecurves,
-      max_hit_number = max_hit_number
-    )
-  } else {
-    category_2_and_3_hits <- NULL
-    spline_comp_plots <- NULL
-  }
-
   if (!is.null(genes)) {
     genes <- clean_gene_symbols(genes)
   }
 
   if (report) {
+    clustering_no_cat3 <- all_levels_clustering[
+      setdiff(names(all_levels_clustering), "paired_category_3")
+    ]
     plots <- make_clustering_report(
-      all_levels_clustering = all_levels_clustering,
+      all_levels_clustering = clustering_no_cat3,
       condition = condition,
       data = data,
       meta = meta,
@@ -351,47 +370,28 @@ cluster_hits <- function(
       raw_data = raw_data,
       max_hit_number = max_hit_number
     )
-  } else {
-    plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
-  }
-
-  # Leave a message for the user instead of just NA.
-  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
-    if (is.logical(x)) {
-      return("No result for this level, because the top_table had < 2 hits")
-    } else {
-      return(x)
-    }
-  })
-
-  clustered_hits_levels <- list()
-
-  for (i in seq_along(all_levels_clustering)) {
-    clustering_level <- all_levels_clustering[[i]]
-    element_name <- names(all_levels_clustering)[i]
-
-    if (any(is.character(clustering_level))) {
-      clustered_hits_levels[[element_name]] <-
-        clustering_level
-    } else { # normal list result
-      clustered_hits_levels[[element_name]] <-
-        clustering_level$clustered_hits
-    }
-  }
-
-  if (report) {
+    
     print_info_message(
       message_prefix = "Clustering the hits",
       report_dir = report_dir
     )
+  } else {
+    plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
   }
 
   cluster_summary <- construct_cluster_summary(
     limma_splines_results = splineomics[["limma_splines_result"]],
-    clustered_hits_levels = clustered_hits_levels,
+    all_levels_clustering = all_levels_clustering,
     category_2_and_3_hits = category_2_and_3_hits,
     genes = genes
   )
+
+  if ("paired_category_3" %in% names(all_levels_clustering) &&
+      !is.character(all_levels_clustering[["paired_category_3"]])) {
+    plots[["cat3_plots"]] <- list(
+      plot_cat3_minimal(all_levels_clustering[["paired_category_3"]])
+    )
+  }
 
   list(
     cluster_summary = cluster_summary,
@@ -408,81 +408,91 @@ cluster_hits <- function(
 #' @noRd
 #'
 #' @description
-#' This helper function checks that the input control parameters for
-#' clustering are well-formed. Specifically, it validates the structure
-#' of \code{min_effect_size} and \code{max_hit_number}, and raises an
-#' error if the requirements are not met.
+#' Checks that control parameters for clustering are well formed. Validates
+#' the structure of `min_effect_size`, `max_hit_number`, and
+#' `nr_clusters_interaction`. Missing effect size entries are filled with 0.
 #'
-#' @param min_effect_size A list with exactly two named elements:
-#'   \itemize{
-#'     \item \code{time_effect}: A single numeric value (integer or float)
-#'           specifying the minimum required time-dependent effect size.
-#'     \item \code{avg_diff_cond}: A single numeric value (integer or float)
-#'           specifying the minimum required average difference between
-#'           conditions.
-#'   }
-#'   Both elements must be length-1 numeric scalars.
+#' @param min_effect_size A named list of numeric scalars used as minimum
+#'   effect size thresholds. Allowed names are:
+#'   - `time_effect` (Category 1)
+#'   - `avg_diff_cond` (Category 2)
+#'   - `interaction_cond_time` (Category 3)
+#'   The list may contain any subset of these names; missing names are set
+#'   to 0. Any other names are rejected.
 #'
-#' @param max_hit_number A single positive integer (1, 2, …) or \code{Inf},
+#' @param max_hit_number A single positive integer (1, 2, ...) or `Inf`
 #'   giving the maximum number of hits to include in clustering.
 #'
-#' @return Returns \code{TRUE} invisibly if all checks pass.
-#'   Otherwise, execution is stopped with an informative error message.
+#' @param nr_clusters_interaction A single integer > 0 giving the number
+#'   of clusters for the Category 3 paired analysis.
+#'
+#' @return The completed `min_effect_size` list with all three allowed
+#'   names present. Missing names are filled with 0. The function raises
+#'   an error if any check fails.
 #'
 #' @details
-#' - \code{min_effect_size} must be a list of length 2, named exactly
-#'   \code{"time_effect"} and \code{"avg_diff_cond"}.
-#' - Both values must be single numeric scalars (e.g. \code{1}, \code{1.5}).
-#' - \code{max_hit_number} must be a length-1 numeric that is either
-#'   an integer ≥ 1 or \code{Inf}.
-#'
-#' This function is intended to be called at the beginning of
-#' user-facing clustering routines to ensure consistent argument structure.
+#' - `min_effect_size` must be a list. All provided values must be single
+#'   numerics. Names must be a subset of the allowed set.
+#' - `max_hit_number` must be length 1 and either an integer >= 1 or `Inf`.
+#' - `nr_clusters_interaction` must be length 1, integer valued, and > 0.
 #'
 check_inputs_cluster_hits <- function(
     min_effect_size,
-    max_hit_number
-    ) {
-
+    max_hit_number,
+    nr_clusters_interaction
+) {
   if (!is.list(min_effect_size)) {
     stop_call_false("`min_effect_size` must be a list.")
   }
   
-  # must have exactly two named elements: time_effect and avg_diff_cond
-  required_names <- c("time_effect", "avg_diff_cond")
+  allowed_names <- c("time_effect", "avg_diff_cond", "interaction_cond_time")
   nm <- names(min_effect_size)
-  if (length(min_effect_size) != 2L || !setequal(nm, required_names)) {
+  
+  # names must be a subset of the allowed set (no extras)
+  if (length(nm) > 0 && !all(nm %in% allowed_names)) {
+    bad <- setdiff(nm, allowed_names)
     stop_call_false(paste(
-      "`min_effect_size` must be a list with exactly two named elements:",
-      "'time_effect' and 'avg_diff_cond'."
+      "`min_effect_size` has unknown names:",
+      paste(bad, collapse = ", ")
     ))
   }
   
-  # each element must be numeric (integer or float) and length 1
-  for (n in required_names) {
+  # start filled list with zeros
+  filled <- as.list(setNames(rep(0, length(allowed_names)), allowed_names))
+  
+  # copy provided values with validation
+  for (n in intersect(nm, allowed_names)) {
     val <- min_effect_size[[n]]
     if (!is.numeric(val) || length(val) != 1L) {
-      stop_call_false(
-        paste0(
-          "`min_effect_size$",
-          n,
-          "` must be a single numeric (integer or float)."
-          )
-      )
+      stop_call_false(paste0(
+        "`min_effect_size$", n, "` must be one numeric value."
+      ))
     }
+    filled[[n]] <- val
   }
   
-  if (!is.numeric(max_hit_number) ||            # must be numeric
-      length(max_hit_number) != 1L ||           # exactly one value
-      !(is.infinite(max_hit_number) ||          # allow Inf
-        (max_hit_number >= 1 &&                 # >= 1 ...
-         max_hit_number == as.integer(max_hit_number)))) {  # ... and int-valued
+  # validate max_hit_number
+  if (!is.numeric(max_hit_number) ||
+      length(max_hit_number) != 1L ||
+      !(is.infinite(max_hit_number) ||
+        (max_hit_number >= 1 &&
+         max_hit_number == as.integer(max_hit_number)))) {
     stop_call_false(
-      "`max_hit_number` must be a single positive integer (1, 2, ...) or Inf."
+      "`max_hit_number` must be a single positive integer or Inf."
     )
   }
   
-  invisible(TRUE)
+  # validate nr_clusters_interaction
+  if (!is.numeric(nr_clusters_interaction) ||
+      any(nr_clusters_interaction != as.integer(nr_clusters_interaction)) ||
+      any(nr_clusters_interaction <= 0)) {
+    stop_call_false(
+      "`nr_clusters_interaction` must be one or more integers > 0."
+    )
+  }
+  
+  # return the completed list (with zeros filled in)
+  filled
 }
 
 
@@ -824,78 +834,115 @@ predict_timecurves <- function(
 }
 
 
-#' Add effect size estimates to predicted time curves
+#' Add cat1 and cat3 effect sizes to predicted time curves
 #'
 #' @noRd
 #'
 #' @description
-#' This function computes an absolute "cumulative travel" measure for each
-#' feature’s predicted time course, defined as the sum of absolute successive
-#' differences across timepoints. The values quantify how much a curve changes
-#' over time in total (regardless of direction). Each feature is then labeled
-#' as having passed a user-defined effect size threshold.
+#' Computes two effect sizes for each feature from predicted time curves:
+#' (1) cat1 cumulative travel per condition (sum of absolute successive
+#' differences), and (2) cat3 differential travel across conditions
+#' (sum of absolute differences between successive changes of the two
+#' conditions). Thresholds are read from `min_effect_sizes`.
 #'
-#' @param predicted_timecurves A list-like object produced by
-#'   \code{predict_timecurves()}, containing at least a
-#'   \code{$predictions} element. Each element of \code{$predictions}
-#'   is a numeric matrix with features in rows and timepoints in columns.
-#' @param threshold A numeric scalar giving the minimum cumulative travel
-#'   required for a feature to be considered as having passed the effect
-#'   size cutoff.
+#' @param predicted_timecurves A list returned by `predict_timecurves()`
+#'   with a `$predictions` element. `$predictions` is a named list of
+#'   matrices (features x time), one per condition. Row names are feature
+#'   names; columns are ordered timepoints shared across conditions.
+#' @param min_effect_sizes A list of numeric scalars with names
+#'   `"time_effect"` and `"interaction_cond_time"`. Missing names are
+#'   treated as zero by the caller. Values give the thresholds for cat1
+#'   and cat3, respectively.
 #'
-#' @return The input \code{predicted_timecurves} object with two additional
-#'   list elements:
-#'   \itemize{
-#'     \item \code{$effect_size}: A list of named numeric vectors (one per
-#'           condition level), giving the cumulative travel per feature.
-#'     \item \code{$passed_threshold}: A list of named logical vectors
-#'           (one per condition level), indicating whether each feature’s
-#'           effect size is greater than or equal to \code{threshold}.
-#'   }
+#' @return The input `predicted_timecurves` with the following elements
+#'   added:
+#'   * `time_effect_effect_size`: list per condition of numeric vectors
+#'     (cumulative travel per feature, cat1).
+#'   * `time_effect_passed_threshold`: list per condition of logical
+#'     vectors indicating cat1 pass/fail vs `min_effect_sizes$time_effect`.
+#'   * `interaction_effect_size`: numeric vector per feature with the
+#'     cat3 differential travel (two conditions required).
+#'   * `interaction_passed_threshold`: logical vector indicating cat3
+#'     pass/fail vs `min_effect_sizes$interaction_cond_time`.
 #'
 #' @details
-#' The cumulative travel metric is computed per feature as:
-#' \deqn{\sum_{j=1}^{T-1} |x_{j+1} - x_j|,}
-#' where \eqn{x_j} are the predicted values at ordered timepoints
-#' \eqn{j=1,\dots,T}. This is an absolute path length of the curve and
-#' increases with the amount of fluctuation over time.
+#' Cat1 cumulative travel for a feature in a condition is
+#' `sum_{j=1}^{T-1} |x_{j+1} - x_j|`. It measures total movement of the
+#' curve regardless of direction.
 #'
-add_curve_effectsizes <- function(
+#' Cat3 differential travel (two conditions) is computed on successive
+#' steps `d1_j = x1_{j+1}-x1_j` and `d2_j = x2_{j+1}-x2_j` and summed as
+#' `sum_{j=1}^{T-1} |d1_j - d2_j|`. It is large when the conditions move
+#' differently over time and zero when they change in lockstep.
+#'
+#' The cat3 computation requires exactly two condition matrices with the
+#' same row names and number of timepoints.
+#' 
+add_cat1_and_cat3_effectsizes <- function(
     predicted_timecurves,
-    threshold
+    min_effect_sizes
     ) {
-  # compute absolute cumulative travel per feature
+  thr_cat1 <- min_effect_sizes[["time_effect"]]
+  thr_cat3 <- min_effect_sizes[["interaction_cond_time"]]
+  
+  # helper: cumulative travel per row
   cum_travel <- function(mat) {
+    if (!is.matrix(mat)) {
+      mat <- as.matrix(mat)
+    }
     if (ncol(mat) < 2) {
       out <- rep(0, nrow(mat))
       names(out) <- rownames(mat)
       return(out)
     }
-    # row-wise: sum |x_{j+1} - x_j|
-    travel <- apply(mat, 1, function(x) sum(abs(diff(x))))
-    if (!is.null(rownames(mat))) names(travel) <- rownames(mat)
-    travel
+    tr <- rowSums(
+      abs(mat[, -1, drop = FALSE] - mat[, -ncol(mat), drop = FALSE])
+      )
+    if (!is.null(rownames(mat))) names(tr) <- rownames(mat)
+    tr
   }
   
-  results <- lapply(predicted_timecurves$predictions, function(mat) {
-    travel <- cum_travel(mat)
-    list(
-      effect_size = travel,
-      passed_threshold = travel >= threshold
-    )
-  })
+  # cat1 per level
+  if (!is.list(predicted_timecurves$predictions) ||
+      length(predicted_timecurves$predictions) < 1L) {
+    stop_call_false("`predicted_timecurves$predictions` is missing or empty.")
+  }
+  cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
+  cat1_passed  <- lapply(cat1_effects, function(x) x >= thr_cat1)
   
-  predicted_timecurves$effect_size <- lapply(
-    results,
-    `[[`,
-    "effect_size"
-    )
-  predicted_timecurves$passed_threshold <- lapply(
-    results,
-    `[[`,
-    "passed_threshold"
-    )
-
+  predicted_timecurves$time_effect_effect_size      <- cat1_effects
+  predicted_timecurves$time_effect_passed_threshold <- cat1_passed
+  
+  # cat3: movement-difference using the two conditions
+  levs <- names(predicted_timecurves$predictions)
+  if (length(levs) == 2L) {
+    m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
+    m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
+    
+    if (!identical(rownames(m1), rownames(m2))) {
+      stop_call_false("Row names of the two condition matrices must match.")
+    }
+    if (ncol(m1) != ncol(m2)) {
+      stop_call_false("Matrices must have the same number of timepoints.")
+    }
+    if (ncol(m1) < 2L) {
+      md <- rep(0, nrow(m1))
+      names(md) <- rownames(m1)
+    } else {
+      d1 <- m1[, -1, drop = FALSE] - m1[, -ncol(m1), drop = FALSE]
+      d2 <- m2[, -1, drop = FALSE] - m2[, -ncol(m2), drop = FALSE]
+      md <- rowSums(abs(d1 - d2))
+      names(md) <- rownames(m1)
+    }
+    
+    predicted_timecurves$interaction_effect_size <- md
+    predicted_timecurves$interaction_passed_threshold <- (md >= thr_cat3)
+  } else {
+    # if not exactly two levels, define empty vectors for cat3
+    predicted_timecurves$interaction_effect_size <- numeric(0)
+    predicted_timecurves$interaction_passed_threshold <- logical(0)
+  }
+  
   predicted_timecurves
 }
 
@@ -905,37 +952,72 @@ add_curve_effectsizes <- function(
 #' @noRd
 #'
 #' @description
-#' Performs clustering for each condition level using
-#' precomputed predicted timecourses. For each level, only the features
-#' present in the corresponding top table are clustered. The function
-#' normalizes each curve to the [0, 1] range before clustering.
+#' Performs clustering of predicted timecourses for each condition
+#' level (Category 1) and, if available, jointly across two conditions
+#' for interaction features (Category 3).
 #'
-#' @param top_tables A named list of data.frames, where each entry contains
-#'   significant features (`feature_nr`) for a condition level. Names must be
-#'   in the format `{condition}_{level}`.
-#' @param nr_clusters A list whose length matches `top_tables`; each element is
-#'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
-#'   candidate number(s) of clusters for the corresponding condition level.
-#' @param meta A data.frame containing the metadata, including the condition
-#'   and time columns.
-#' @param condition A string specifying the column in `meta` that encodes
-#'   condition levels (e.g., `"Phase"`).
-#' @param predicted_timecurves A list returned by [predict_timecurves()],
-#'   containing smoothed predictions for all features across all levels.
+#' For Category 1, only features that both appear in the input
+#' `time_effect_hits` and pass the time-effect size threshold are
+#' clustered. Curves are normalized to the [0, 1] range before
+#' clustering.
 #'
-#' @return A named list of clustering results (one per condition level). Each
-#'   entry includes:
+#' For Category 3, features passing both the interaction p-value
+#' filter and the interaction effect size threshold are taken from both
+#' conditions, concatenated, and clustered jointly. A check ensures that
+#' the requested number of clusters does not exceed the number of
+#' available features.
+#'
+#' @param time_effect_hits A named list of data.frames or vectors giving
+#'   Category 1 hits per condition level. Each entry must contain
+#'   feature identifiers (`feature_nr`, `feature_names`) or numeric
+#'   indices. Names must be in the format `{condition}_{level}`.
+#' @param category_3_hits A data.frame of Category 3 hits (interaction
+#'   features). May be `NULL` or empty; in that case, paired clustering
+#'   is skipped.
+#' @param nr_clusters A list whose length matches `time_effect_hits`;
+#'   each element is a numeric vector of candidate cluster numbers
+#'   (e.g. `1:1`, `2:8`) for the corresponding condition level.
+#' @param nr_clusters_interaction A single integer giving the number of
+#'   clusters to form for the Category 3 paired analysis. Must not
+#'   exceed the number of available Category 3 features.
+#' @param meta A data.frame of metadata including the condition column.
+#' @param condition A string giving the name of the column in `meta`
+#'   that encodes condition levels (e.g., `"Phase"`).
+#' @param predicted_timecurves A list returned by
+#'   [predict_timecurves()], containing smoothed predictions,
+#'   effect-size filters, and time grid.
+#'
+#' @return A named list of clustering results (one entry per condition
+#'   level, plus an optional `paired_category_3` entry). Each entry is
+#'   either:
 #'   \describe{
-#'     \item{`clustered_hits`}{Feature-to-cluster assignments}
-#'     \item{`hc`}{The full hclust object}
-#'     \item{`curve_values`}{Normalized curves with cluster labels}
-#'     \item{`top_table`}{Top table with added cluster column}
-#'     \item{`clusters`}{Number of clusters used}
+#'     \item{A structured list}{Containing
+#'       \itemize{
+#'         \item `clustered_hits`: Feature-to-cluster assignments
+#'         \item `hc`: The `hclust` object
+#'         \item `curve_values`: Normalized curves with cluster labels
+#'         \item `top_table`: Top table with added cluster column
+#'         \item `clusters`: The number of clusters used
+#'       }}
+#'     \item{A string}{Informative message if clustering was skipped
+#'       due to insufficient hits.}
 #'   }
-#' 
+#'
+#' @details
+#' - Category 1 clustering is performed independently per condition
+#'   level.
+#' - Category 3 clustering is only performed if two condition levels
+#'   are present and at least as many hits as requested clusters are
+#'   available.
+#'
+#' @seealso [predict_timecurves()], [normalize_curves()],
+#'   [kmeans_clustering()]
+#'   
 perform_clustering <- function(
-    top_tables,             
+    time_effect_hits, 
+    category_3_hits,
     nr_clusters,
+    nr_clusters_interaction,
     meta,
     condition,              
     predicted_timecurves
@@ -947,18 +1029,18 @@ perform_clustering <- function(
   time_grid <- predicted_timecurves$time_grid
   
   # container for clustering results
-  results <- vector("list", length = length(top_tables))
-  names(results) <- names(top_tables)
+  results <- vector("list", length = length(time_effect_hits))
+  names(results) <- names(time_effect_hits)
   
   # loop over every condition level
-  for (i in seq_along(top_tables)) {
+  for (i in seq_along(time_effect_hits)) {
     
-    key    <- names(top_tables)[i]                       
+    key    <- names(time_effect_hits)[i]                       
     level  <- sub(paste0("^", condition, "_"), "", key)  
     message(paste("For the level: ", level))
     k_range <- nr_clusters[[i]]                  
 
-    tbl <- top_tables[[key]]
+    tbl <- time_effect_hits[[key]]
     if (is.data.frame(tbl)) {
       feat_idx <- tbl$feature_nr
       feat_names <- tbl$feature_names
@@ -972,7 +1054,7 @@ perform_clustering <- function(
         )[feat_idx]
     }
     
-    passed <- predicted_timecurves$passed_threshold[[level]]
+    passed <- predicted_timecurves$time_effect_passed_threshold[[level]]
     feat_names <- feat_names[ feat_names %in% names(passed)[passed] ]
  
     if (length(feat_names) == 0L) {
@@ -990,9 +1072,83 @@ perform_clustering <- function(
       k_range           = k_range,                   
       smooth_timepoints = time_grid,
       top_table         = top_table,
-      condition         = level
+      condition_level   = level
     )
   }
+
+  if (!is.null(category_3_hits) && nrow(category_3_hits) > 0) {
+    # levels are guaranteed to be exactly two
+    levels_all <- sub(
+      paste0("^", condition, "_"),
+      "",
+      names(time_effect_hits)
+      )
+    lvl1 <- levels_all[1]
+    lvl2 <- levels_all[2]
+    
+    rn1 <- rownames(predicted_timecurves$predictions[[lvl1]])
+    feat_idx <- as.integer(category_3_hits$feature_nr)
+    feat_idx <- feat_idx[feat_idx >= 1L & feat_idx <= length(rn1)]
+    feat_names <- unique(rn1[feat_idx])
+    
+    if (length(feat_names) < nr_clusters_interaction) {
+      stop(
+        "Category 3 clustering failed: requested ",
+        nr_clusters_interaction,
+        " clusters but only ",
+        length(feat_names),
+        " feature(s) passed thresholds."
+      )
+    }
+    
+    # take curves from both levels and normalize
+    pred1 <- predicted_timecurves$predictions[[lvl1]][
+      feat_names,
+      ,
+      drop = FALSE
+      ]
+    pred2 <- predicted_timecurves$predictions[[lvl2]][
+      feat_names,
+      ,
+      drop = FALSE
+      ]
+    norm1 <- normalize_curves(pred1)
+    norm2 <- normalize_curves(pred2)
+    
+    # concatenate into a single feature vector
+    concatenated <- cbind(norm1, norm2)
+    
+    # column names to keep track of which timepoints came from which condition
+    time_cols <- c(
+      paste(lvl1, time_grid, sep = "|"),
+      paste(lvl2, time_grid, sep = "|")
+    )
+    
+    top_table_paired <- data.frame(
+      feature_nr = as.integer(match(feat_names, rn1)),
+      feature_names = feat_names,
+      stringsAsFactors = FALSE
+    )
+    
+    results[["paired_category_3"]] <- kmeans_clustering(
+      curve_values      = concatenated,
+      k_range           = nr_clusters_interaction,
+      smooth_timepoints = time_cols,
+      top_table         = top_table_paired,
+      condition_level   = paste0(lvl1, "__AND__", lvl2, "__PAIRED")
+    )
+  } else {
+    results[["paired_category_3"]] <- NA
+  }
+  
+  # Leave a message for the user instead of just NA.
+  results <- lapply(results, function(x) {
+    if (is.logical(x)) {
+      return("No result for this level, because the top_table had < 2 hits")
+    } else {
+      return(x)
+    }
+  })
 
   results       
 }
@@ -1047,48 +1203,40 @@ get_category_2_and_3_hits <- function(
     splineomics,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
-    min_effect_size,
-    predicted_timecurves   
+    avg_diff_cond_threshold,
+    predicted_timecurves
 ) {
-  # Extract top tables (already one df each)
-  avrg_diff_conditions <- 
+  avrg_diff_conditions <-
     splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
-  interaction_condition_time <- 
+  interaction_condition_time <-
     splineomics[["limma_splines_result"]][["interaction_condition_time"]]
-
-  # Category 2: p-value + effect size (abs(col1)) 
+  
+  # Category 2: p-value + effect size (abs(col1))
   category_2_hits <- avrg_diff_conditions[
     avrg_diff_conditions$adj.P.Val < adj_pthresh_avrg_diff_conditions &
-      abs(avrg_diff_conditions[[1]]) >= min_effect_size$avg_diff_cond,
+      abs(avrg_diff_conditions[[1]]) >= avg_diff_cond_threshold,
+    ,
+    drop = FALSE
   ]
   
-  # Category 3: p-value + time-effect ES >= threshold in >=1 condition
-  # p-value filter first
+  # Category 3: p-value filter, then use precomputed interaction flags
   category_3_hits <- interaction_condition_time[
     interaction_condition_time$adj.P.Val < adj_pthresh_interaction,
+    ,
+    drop = FALSE
   ]
   
-  # If nothing passed p-value, return early
   if (nrow(category_3_hits) == 0L) {
     return(list(
       category_2_hits = category_2_hits,
       category_3_hits = category_3_hits
-      ))
+    ))
   }
   
-  # Pull time-effect effect sizes per condition 
-  es_list <- predicted_timecurves$effect_size
-  cond_names <- names(es_list)
-
-  # For two-condition designs, this naturally checks both; for >2 it checks any
-  time_es_keep <- vapply(category_3_hits$feature_names, function(fn) {
-    any(vapply(cond_names, function(cn) {
-      es <- es_list[[cn]][fn]
-      !is.na(es) && es >= min_effect_size$time_effect
-    }, logical(1)))
-  }, logical(1))
-  
-  category_3_hits <- category_3_hits[time_es_keep, , drop = FALSE]
+  pass_vec <- predicted_timecurves$interaction_passed_threshold
+  keep <- pass_vec[as.character(category_3_hits$feature_names)]
+  keep[is.na(keep)] <- FALSE
+  category_3_hits <- category_3_hits[keep, , drop = FALSE]
   
   list(
     category_2_hits = category_2_hits,
@@ -1222,19 +1370,35 @@ make_clustering_report <- function(
     )
 
   # To extract the stored value for the potential auto cluster decision.
-  clusters <- c()
-  for (i in seq_along(all_levels_clustering)) {
-    if (is.null(all_levels_clustering[[i]]) ||
-      all(is.na(all_levels_clustering[[i]]))) {
-      next
+  # collect k values only from valid list entries
+  clusters <- integer(0)
+  # Normalize: replace string placeholders with NULL
+  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
+    if (is.character(x)) {
+      return(NA)
     }
-
-    clusters <- c(clusters, as.integer(all_levels_clustering[[i]]$clusters))
-    all_levels_clustering[[i]]$clusters <- NULL
+    x
+  })
+  
+  for (i in seq_along(all_levels_clustering)) {
+    x <- all_levels_clustering[[i]]
+    
+    # skip non-lists (e.g., "No result ...") and NULL/NA
+    if (!is.list(x) || is.null(x) || all(is.na(x))) next
+    
+    # collect k if present and valid; then remove the field
+    if ("clusters" %in% names(x)) {
+      k <- x$clusters
+      if (is.numeric(k) && length(k) == 1L && !is.na(k)) {
+        clusters <- c(clusters, as.integer(k))
+      }
+      all_levels_clustering[[i]]$clusters <- NULL
+    }
   }
-
+  
+  # ensure the report dir exists
   if (!dir.exists(report_dir)) {
-    dir.create(report_dir)
+    dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
   }
 
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
@@ -1615,77 +1779,111 @@ clean_gene_symbols <- function(genes) {
 #' @noRd
 #'
 #' @description
-#' Constructs a unified cluster summary table for all features across
-#' time-effect (category 1) and, if present, average-difference
-#' (category 2) and interaction (category 3) results. Combines cluster
-#' assignments for two conditions, gene annotations, and feature names
-#' into a single flat tibble. For cat3 (when available), cluster labels
-#' are condition-combination strings (e.g., `"1_2"`, `"NA_2"`) shown
-#' only for features in the cat3 hit set. For cat2 (when available),
-#' the column encodes **direction** using two labels:
-#' `"<cond1>_higher"` or `"<cond2>_higher"` (condition names are taken
-#' from `clustered_hits_levels` with underscores removed). Direction is
-#' determined from the signed `PhaseStationary` statistic in
-#' `avrg_diff_conditions`, with **positive → `<cond2>_higher`** and
-#' **negative → `<cond1>_higher`**. Features not significant in a
-#' category receive `NA` in that category’s column. If
-#' `limma_splines_results` contains only time-effect results, cat2/cat3
-#' logic is skipped and those columns are omitted.
+#' Builds a unified cluster summary across category 1 (time effect),
+#' and if available category 2 (average difference between conditions)
+#' and category 3 (condition time interaction). It merges per condition
+#' cluster assignments, gene annotations, and feature names into a
+#' single flat tibble.
 #'
-#' @param limma_splines_results A list with required sublist
-#'   `time_effect` (two tibbles, one per condition; each contains at
-#'   least `feature_nr` and `feature_names`). It may also include:
-#'   * `avrg_diff_conditions`: tibble of category 2 results (optional),
-#'     including `feature_nr` and `PhaseStationary`.
-#'   * `interaction_condition_time`: tibble of category 3 results
-#'     (optional).
-#' @param clustered_hits_levels A named list of two data frames mapping
-#'   time-effect significant features to clusters. Each must have
-#'   columns `feature` (numeric ID), `cluster` (factor/character), and
-#'   optionally `gene`. Row names may store `feature_name`s. The list
-#'   element names are used to name the two time-effect cluster columns
-#'   in the output.
-#' @param category_2_and_3_hits A list with elements `category_2_hits`
-#'   and `category_3_hits` (each a tibble containing at least
-#'   `feature_nr`). Used only if the corresponding cat2/cat3 result is
-#'   present and non-empty; otherwise ignored.
-#' @param annotation A tibble or data frame with row names equal to
-#'   `feature_nr` and columns `Gene_symbol` and/or `Gene_name`.
+#' Category 3: clusters are taken directly from the paired concatenation
+#' result stored in all_levels_clustering[["paired_category_3"]]. This
+#' is obtained by concatenating the two condition curves per feature and
+#' clustering them. The resulting integer cluster index is exposed as
+#' cluster_cat3. By default cluster_cat3 is only shown for features in
+#' category_2_and_3_hits$category_3_hits; other features are set to NA.
+#'
+#' Category 2: when cat2 results exist, cluster_cat2 encodes the
+#' direction of the signed contrast between the two conditions. It uses
+#' two labels: "<cond1>_higher" or "<cond2>_higher" (condition names are
+#' taken from the per condition clustering result names, with underscores
+#' removed). The sign is read from the numeric contrast column in
+#' avrg_diff_conditions corresponding to condition2 vs condition1.
+#' Positive values give "<cond2>_higher", negative values give
+#' "<cond1>_higher". Features not in the cat2 hit set are set to NA.
+#'
+#' If only time effect results are present, cat2 and cat3 logic is
+#' skipped and those columns are omitted.
+#'
+#' @param limma_splines_results A list with:
+#'   * time_effect: length 2 list or tibbles (one per condition)
+#'     containing at least feature_nr and feature_names.
+#'   * avrg_diff_conditions (optional): tibble with at least feature_nr
+#'     and a signed numeric contrast column for condition2 vs condition1.
+#'   * interaction_condition_time (optional): tibble with at least
+#'     feature_nr; used to decide if cat3 is present and to gate which
+#'     features receive cluster_cat3.
+#'
+#' @param all_levels_clustering A named list containing the per condition
+#'   clustering outputs and a paired_category_3 entry. Each per condition
+#'   entry is either a character message or a list with element
+#'   $clustered_hits (data frame with columns feature and cluster).
+#'   The paired_category_3 entry must be a list with $clustered_hits
+#'   containing the paired concatenation clustering result (columns
+#'   feature, cluster) used to populate cluster_cat3.
+#'
+#' @param category_2_and_3_hits A list with optional elements
+#'   category_2_hits and category_3_hits (each a tibble with at least
+#'   feature_nr). When present these sets are used to mask cluster_cat2
+#'   and cluster_cat3 respectively (non hit features receive NA).
+#'
+#' @param genes A character vector of gene symbols (or names) indexed by
+#'   feature_nr (genes[i] corresponds to feature i). Use NULL to skip
+#'   gene annotations.
 #'
 #' @return A tibble with columns:
-#'   * `feature_nr` – numeric feature identifier.
-#'   * `feature_name` – preferred feature name from any source.
-#'   * `gene` – preferred gene symbol or fallback from cluster data.
-#'   * `cluster_<cond1>` / `cluster_<cond2>` – clusters for each
-#'     time-effect condition (cat1). `NA` indicates not a cat1 hit.
-#'   * `cluster_cat2` – present only if category 2 results exist; a
-#'     **direction label** `"<cond1>_higher"` or `"<cond2>_higher"`
-#'     derived from `PhaseStationary` (positive → `<cond2>_higher`,
-#'     negative → `<cond1>_higher`). `NA` indicates not a cat2 hit (or
-#'     zero/undefined direction).
-#'   * `cluster_cat3` – present only if category 3 results exist; a
-#'     condition-combination string `"<cluster_<cond1>>_<cluster_<cond2>>"`
-#'     shown only for cat3 hits, otherwise `NA`.
+#'   * feature_nr: numeric feature identifier.
+#'   * feature_name: preferred feature name from available sources.
+#'   * gene: preferred gene symbol or name (from genes or cluster data).
+#'   * cluster_<cond1>, cluster_<cond2>: category 1 cluster labels for
+#'     each condition. NA means not a cat1 hit.
+#'   * cluster_cat2: present only if cat2 exists; one of "<cond1>_higher"
+#'     or "<cond2>_higher" based on the sign of the contrast column,
+#'     masked to the cat2 hit set if provided; otherwise NA.
+#'   * cluster_cat3: present only if cat3 exists; integer cluster index
+#'     taken directly from all_levels_clustering[["paired_category_3"]],
+#'     masked to the cat3 hit set if provided; otherwise NA.
 #'
 #' @importFrom dplyr mutate transmute filter select rename left_join
 #'   arrange distinct group_by ungroup slice_head bind_rows coalesce
+#'   case_when
 #' @importFrom tibble as_tibble tibble
 #' @importFrom rlang sym
 #' 
 construct_cluster_summary <- function(
     limma_splines_results,
-    clustered_hits_levels,
+    all_levels_clustering,
     category_2_and_3_hits,
     genes
 ) {
-
-  nm <- names(clustered_hits_levels)
-  if (is.null(nm) || length(nm) != 2 || any(is.na(nm) | nm == "")) {
-    nm <- c("condition1", "condition2")
+  
+  clustered_hits_levels <- list()
+  
+  for (i in seq_along(all_levels_clustering)) {
+    clustering_level <- all_levels_clustering[[i]]
+    element_name <- names(all_levels_clustering)[i]
+    
+    if (any(is.character(clustering_level))) {
+      clustered_hits_levels[[element_name]] <-
+        clustering_level
+    } else { # normal list result
+      clustered_hits_levels[[element_name]] <-
+        clustering_level$clustered_hits
+    }
   }
-  c1 <- paste0("cluster_", nm[[1]])
-  c2 <- paste0("cluster_", nm[[2]])
-  nmc <- gsub("_", "", nm)
+
+  nm_all <- names(clustered_hits_levels)
+  # exclude the paired entry when determining the two condition levels
+  cond_names <- setdiff(nm_all, "paired_category_3")
+  
+  if (is.null(cond_names) 
+      || length(cond_names) != 2 
+      || any(is.na(cond_names) | cond_names == "")) {
+    cond_names <- c("condition1", "condition2")
+  }
+  
+  c1 <- paste0("cluster_", cond_names[[1]])
+  c2 <- paste0("cluster_", cond_names[[2]])
+  nmc <- gsub("_", "", cond_names)
   
   has_c2 <- !is.null(limma_splines_results$avrg_diff_conditions) &&
     nrow(stbl(limma_splines_results$avrg_diff_conditions)) > 0
@@ -1701,8 +1899,8 @@ construct_cluster_summary <- function(
       distinct(feature_nr, .keep_all = TRUE)
   }
   
-  cl1 <- ncl(clustered_hits_levels[[1]], c1)
-  cl2 <- ncl(clustered_hits_levels[[2]], c2)
+  cl1 <- ncl(clustered_hits_levels[[cond_names[1]]], c1)
+  cl2 <- ncl(clustered_hits_levels[[cond_names[2]]], c2)
   
   te <- limma_splines_results$time_effect
   add_parts <- list(
@@ -1783,7 +1981,7 @@ construct_cluster_summary <- function(
     c2_tbl <- stbl(limma_splines_results$avrg_diff_conditions)
     
     # pick cond2 score column ignoring underscores
-    score_col <- find_col_ignore_underscores_rx(c2_tbl, nm[[2]])
+    score_col <- find_col_ignore_underscores_rx(c2_tbl, cond_names[[2]])
     if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
       stop_call_false(
         "Missing logFC column in topTable for avr diff conditions."
@@ -1794,8 +1992,14 @@ construct_cluster_summary <- function(
       transmute(
         feature_nr,
         cluster_cat2 = dplyr::case_when(
-          .data[[score_col]] > 0 ~ paste0(gsub("_","", nm[[2]]), "_higher"),
-          .data[[score_col]] < 0 ~ paste0(gsub("_","", nm[[1]]), "_higher"),
+          .data[[score_col]] > 0 ~ paste0(
+            gsub("_","", cond_names[[2]]),
+            "_higher"
+            ),
+          .data[[score_col]] < 0 ~ paste0(
+            gsub("_","", cond_names[[1]]),
+            "_higher"
+            ),
           TRUE ~ NA_character_
         )
       ) %>%
@@ -1813,21 +2017,120 @@ construct_cluster_summary <- function(
     out <- out %>% left_join(c2_df, by = "feature_nr")
   }
   
-  has_cat3_hits <- has_c3 &&
-    !is.null(category_2_and_3_hits$category_3_hits) &&
-    nrow(category_2_and_3_hits$category_3_hits) > 0
+  # cat3: use clusters from the paired concatenation result (no construction)
+  paired_present <- "paired_category_3" %in% names(clustered_hits_levels) &&
+    !is.null(clustered_hits_levels[["paired_category_3"]]) &&
+    nrow(stbl(clustered_hits_levels[["paired_category_3"]])) > 0
   
-  if (has_cat3_hits) {
-    cat3h <- category_2_and_3_hits$category_3_hits %>%
-      stbl() %>% transmute(feature_nr) %>% distinct()
-    cat3c <- mkc(base, cat3h, c1, c2) %>% rename(cluster_cat3 = .cmb)
-    out <- out %>% left_join(cat3c, by = "feature_nr")
-  } else if (has_c3) {
-    # No category-3 hits, but we still want the column present (NA-filled)
-    out <- out %>% mutate(cluster_cat3 = NA_character_)
+  if (has_c3) {
+    if (paired_present) {
+      paired_df <- stbl(clustered_hits_levels[["paired_category_3"]]) %>%
+        # expected columns: 'feature', 'cluster'
+        transmute(
+          feature_nr = as.integer(.data$feature),
+          cluster_cat3 = as.integer(.data$cluster)
+        ) %>%
+        distinct(feature_nr, .keep_all = TRUE)
+      
+      # If you only want cat3 clusters shown for actual category_3 hits,
+      # mask others to NA
+      if (!is.null(category_2_and_3_hits$category_3_hits) &&
+          nrow(category_2_and_3_hits$category_3_hits) > 0) {
+        cat3h <- category_2_and_3_hits$category_3_hits %>%
+          stbl() %>% transmute(feature_nr) %>% distinct()
+        
+        paired_df <- paired_df %>%
+          mutate(
+            cluster_cat3 = ifelse(
+              feature_nr %in% cat3h$feature_nr,
+              cluster_cat3,
+              NA_integer_
+            )
+          )
+      }
+      
+      out <- out %>% left_join(paired_df, by = "feature_nr")
+    } else {
+      # We have an interaction result but no paired clusters to join;
+      # keep the column present
+      out <- out %>% mutate(cluster_cat3 = NA_integer_)
+    }
+  } else {
+    # No interaction result requested -> do nothing (or add NA column if
+    # you always want it present)
+    # out <- out %>% mutate(cluster_cat3 = NA_integer_)
   }
   
   out %>% distinct(feature_nr, .keep_all = TRUE) %>% arrange(feature_nr)
+}
+
+
+#' Plot minimal mean curves per cat3 cluster (one plot per cluster)
+#'
+#' @noRd
+#'
+#' @description
+#' Makes a minimal plot for each category 3 cluster using the paired
+#' concatenation result. For each cluster it draws the mean curve for
+#' both conditions on the same time axis. The y axis is fixed to [0, 1].
+#'
+#' @param paired_result The list returned by kmeans_clustering for the
+#'   paired category 3 run. Must contain a data frame in $curve_values
+#'   with time columns named like "cond|time" and a column "cluster".
+#'
+#' @return A named list of ggplot objects, one per cluster.
+#'
+#' @importFrom dplyr group_by summarise filter transmute
+#' @importFrom tidyr pivot_longer
+#' @importFrom ggplot2 ggplot aes geom_line labs theme_minimal theme
+#'                     element_blank scale_y_continuous ggtitle
+#'   
+plot_cat3_minimal <- function(paired_result) {
+  stopifnot(is.list(paired_result),
+            "curve_values" %in% names(paired_result))
+  cv <- paired_result$curve_values
+  stopifnot(is.data.frame(cv), "cluster" %in% names(cv))
+  
+  time_cols <- setdiff(names(cv), "cluster")
+  
+  long <- tidyr::pivot_longer(
+    cv,
+    cols = dplyr::all_of(time_cols),
+    names_to = "cond_time",
+    values_to = "value"
+  )
+  # split "cond|time"
+  ct <- strsplit(long$cond_time, "\\|")
+  long$cond <- vapply(ct, `[`, character(1L), 1L)
+  long$time_chr <- vapply(ct, `[`, character(1L), 2L)
+  long$time <- suppressWarnings(as.numeric(long$time_chr))
+  
+  mean_df <- long |>
+    dplyr::filter(!is.na(.data$time)) |>
+    dplyr::group_by(.data$cluster, .data$cond, .data$time) |>
+    dplyr::summarise(mean = mean(.data$value, na.rm = TRUE),
+                     .groups = "drop")
+  
+  # split into list per cluster
+  cluster_ids <- sort(unique(mean_df$cluster))
+  plots <- lapply(cluster_ids, function(clid) {
+    df <- dplyr::filter(mean_df, .data$cluster == clid)
+    ggplot2::ggplot(
+      df,
+      ggplot2::aes(x = .data$time,
+                   y = .data$mean,
+                   color = .data$cond,
+                   group = .data$cond)
+    ) +
+      ggplot2::geom_line() +
+      ggplot2::scale_y_continuous(limits = c(0, 1)) +
+      ggplot2::labs(x = "Time", y = NULL, color = NULL) +
+      ggplot2::ggtitle(paste("limma category 3 cluster:", clid)) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+  })
+  names(plots) <- paste0("cluster_", cluster_ids)
+  plots
 }
 
 
@@ -2074,9 +2377,10 @@ plot_heatmap <- function(
 
   # Generate a heatmap for every level
   for (i in seq_along(all_levels_clustering)) {
-    # When a level has < 2 hits
+    # Skip when no result: NULL, all NA, or informative string
     if (is.null(all_levels_clustering[[i]]) ||
-      all(is.na(all_levels_clustering[[i]]))) {
+        all(is.na(all_levels_clustering[[i]])) ||
+        is.character(all_levels_clustering[[i]])) {
       heatmaps[[length(heatmaps) + 1]] <- NA
       next
     }
@@ -2400,7 +2704,7 @@ plot_cluster_mean_splines <- function(
 #'
 #' @importFrom splines ns
 #' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal labs theme
-#' scale_x_continuous annotate
+#'                     scale_x_continuous annotate
 #' @importFrom patchwork wrap_plots plot_annotation
 #' @importFrom scales hue_pal
 #' @importFrom rlang .data
@@ -2449,7 +2753,7 @@ plot_splines <- function(
     feature_name <- top_table$feature_names[hit]
     # cumulative travel (effect size) for this feature in this level
     cum_travel_val <- NA_real_
-    es_vec <- predicted_timecurves$effect_size[[level]]
+    es_vec <- predicted_timecurves$time_effect_effect_size[[level]]
     if (!is.null(es_vec)) {
       tmp <- unname(es_vec[feature_name])
       if (length(tmp)) cum_travel_val <- tmp[1]
@@ -2879,12 +3183,22 @@ plot_spline_comparisons <- function(
         cat2_eff <- as.numeric(row_cat2[[1]])  # first column = effect size
       }
     }
-    
+
     # Category 3 effect sizes per condition
     es1 <- NA_real_
     es2 <- NA_real_
+    # Category 3 combined differential travel (cat3 effect size) 
+    diff_es <- NA_real_                                         
+    if (is_cat3) {                                              
+      ies <- predicted_timecurves$interaction_effect_size       
+      if (!is.null(ies)) {                                       
+        tmp <- unname(ies[feature_name])                        
+        if (length(tmp)) diff_es <- tmp[1]                       
+      }                                                         
+    }                                                          
+    
     if (is_cat3) {
-      es_list <- predicted_timecurves$effect_size
+      es_list <- predicted_timecurves$time_effect_effect_size
       if (!is.null(es_list[[condition_1]])) {
         es1 <- unname(es_list[[condition_1]][feature_name])
       }
@@ -2972,12 +3286,16 @@ plot_spline_comparisons <- function(
       response_values = plot_data$Y2
       )
     
-    plot_data$ColorLabel1 <- ifelse(plot_data$IsImputed1 == "Imputed",
-                                    paste("Imputed data", condition_1),
-                                    paste("Data", condition_1))
-    plot_data$ColorLabel2 <- ifelse(plot_data$IsImputed2 == "Imputed",
-                                    paste("Imputed data", condition_2),
-                                    paste("Data", condition_2))
+    plot_data$ColorLabel1 <- ifelse(
+      plot_data$IsImputed1 == "Imputed",
+      paste("Imputed data", condition_1),
+      paste("Data", condition_1)
+      )
+    plot_data$ColorLabel2 <- ifelse(
+      plot_data$IsImputed2 == "Imputed",
+      paste("Imputed data", condition_2),
+      paste("Data", condition_2)
+      )
     
     p <- local({
       p <- ggplot2::ggplot() +
@@ -3055,7 +3373,9 @@ plot_spline_comparisons <- function(
             "Cumulative travels: ",
             condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
             " | ",
-            condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3))
+            condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3)),
+            " | diff travel: ",
+            ifelse(is.na(diff_es), "NA", signif(diff_es, 3))
           )
         )
       }
@@ -3215,7 +3535,8 @@ merge_annotation_all_levels_clustering <- function(
 #'
 prepare_gene_lists_for_enrichr <- function(
     all_levels_clustering,
-    genes) {
+    genes
+    ) {
   formatted_gene_lists <- list()
 
   for (i in seq_along(all_levels_clustering)) {

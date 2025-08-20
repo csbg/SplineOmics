@@ -1350,11 +1350,8 @@ plot2base64 <- function(
     height = height
   )
   
-  # Draw the plot
-  print_or_draw_plot(plot)
-  
-  # Turn off the device
-  dev.off()
+  draw_plot(plot)
+  dev.off()  # Turn off the device
   
   # Read the SVG file content
   svg_content <- readLines(
@@ -1976,31 +1973,69 @@ add_plot_to_html <- function(
 }
 
 
-#' Print or Draw a Plot (ComplexHeatmap-Compatible)
+#' Draw a plot object with sensible defaults
 #'
 #' @noRd
 #'
 #' @description
-#' A utility function that prints a plot object, with special handling for
-#' `ComplexHeatmap::Heatmap` and `HeatmapList` objects which require
-#' explicit rendering via `ComplexHeatmap::draw()`.
+#' Renders a variety of plot objects using the appropriate drawing
+#' method. Supports ComplexHeatmap heatmaps, ggplot2 objects, grid grobs
+#' and gTrees, as well as callables that produce plots when invoked.
+#' Falls back to `print()` for unknown objects.
 #'
-#' @param plot A plot object. Can be a base R plot, ggplot object, or a
-#'   `ComplexHeatmap::Heatmap` or `HeatmapList` object.
+#' @param p An object to draw. Accepted types include:
+#'   * ComplexHeatmap::Heatmap or HeatmapList
+#'   * ggplot2 plot object
+#'   * grid grob or gTree
+#'   * a function that performs plotting when called
 #'
-#' @return Invisibly returns `NULL`. Used for its side effect of rendering the 
-#' plot.
+#' @details
+#' * ComplexHeatmap objects require `ComplexHeatmap::draw()`. A new page
+#'   is started via `newpage = TRUE`.
+#' * ggplot2 objects are printed, which dispatches to the correct
+#'   device method.
+#' * grid grobs and gTrees are drawn with `grid::grid.draw()` on a new
+#'   page opened by `grid::grid.newpage()`.
+#' * If `p` is a function, it is called with no arguments.
+#' * If the option `grid.draw.fallback = TRUE` is set, unknown objects
+#'   are treated like grobs and drawn with grid (after a new page).
+#' * For any other object, `print(p)` is used as a last resort.
 #'
-#' @details In non-interactive or headless environments (such as during
-#'   `R CMD check` or HTML report generation), `ComplexHeatmap` objects must be
-#'   rendered using `draw()` rather than `print()`. This function automatically
-#'   dispatches to the correct rendering method.
+#' @return Invisibly returns `NULL`. Called for its side effect of
+#'   drawing to the active graphics device.
 #'
-print_or_draw_plot <- function(plot) {
-  
-  if (inherits(plot, "Heatmap") || inherits(plot, "HeatmapList")) {
-    ComplexHeatmap::draw(plot)
-  } else {
-    print(plot)
+#' @importFrom ComplexHeatmap draw
+#' @importFrom grid grid.newpage grid.draw
+#' 
+draw_plot <- function(p) {
+  # ComplexHeatmap: must use draw()
+  if (inherits(p, c("Heatmap", "HeatmapList"))) {
+    # Device is already open; start a page and draw
+    ComplexHeatmap::draw(p, newpage = TRUE)
+    return(invisible(NULL))
   }
+  
+  # ggplot2: printing dispatches correctly
+  if (inherits(p, "ggplot")) {
+    print(p)
+    return(invisible(NULL))
+  }
+  
+  # Grid grobs / gTrees
+  if (inherits(p, c("grob", "gTree")) 
+      || isTRUE(getOption("grid.draw.fallback"))) {
+    grid::grid.newpage()
+    grid::grid.draw(p)
+    return(invisible(NULL))
+  }
+  
+  # If user passed a function that plots when called
+  if (is.function(p)) {
+    p()
+    return(invisible(NULL))
+  }
+  
+  # Last resort
+  print(p)
+  invisible(NULL)
 }
