@@ -15,8 +15,12 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  dev = "ragg_png"
 )
+
+# Ensure ComplexHeatmap’s internal png() calls don’t use Quartz on macOS
+if (capabilities("cairo")) options(bitmapType = "cairo")
 ```
 
 # About this vignette

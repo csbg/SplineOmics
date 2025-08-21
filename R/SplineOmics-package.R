@@ -56,7 +56,6 @@
 #' -   **limma**: For linear models for microarray data.
 #' -   **openxlsx**: For reading, writing, and editing xlsx files.
 #' -   **patchwork**: For combining multiple ggplot objects into a single plot.
-#' -   **pheatmap**: For creating pretty heatmaps.
 #' -   **progress**: For adding progress bars to your loops and apply functions.
 #' -   **purrr**: For functional programming tools.
 #' -   **rlang**: For tools to work with core language features of R and R’s base types.

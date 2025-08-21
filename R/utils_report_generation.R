@@ -1454,7 +1454,7 @@ process_plots <- function(
     header_index,
     element_name = NA
     ) {
-  
+
   if (
     !is.na(element_name) &&
       startsWith(
@@ -1464,7 +1464,7 @@ process_plots <- function(
   ) {
     spline_plots <- plots_element$spline_plots
     main_title <- plots_element$cluster_main_title
-
+    
     # Create a TOC entry for the main title
     toc_entry <- paste0(
       "<li style='margin-left: 50px; font-size: 25px;'>",
@@ -1546,7 +1546,8 @@ process_plots <- function(
     )
   } else if (
     !is.na(element_name) &&
-      element_name == "cluster_mean_splines"
+    (element_name == "cluster_mean_splines" ||
+    element_name == "cluster_quality_plots")
   ) {
     # One plot for each cluster
     for (i in seq_along(plots_element)) {
@@ -1555,6 +1556,7 @@ process_plots <- function(
       )
     }
   } else {
+
     # Process a single plot
     html_content <- add_plot_to_html(
       html_content,
@@ -1957,7 +1959,7 @@ add_plot_to_html <- function(
     plots_size,
     section_index
     ) {
-  
+
   img_tag <- plot2base64(
     plot_element,
     height = plots_size

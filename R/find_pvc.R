@@ -898,7 +898,7 @@ build_pvc_report <- function(
     report_info,
     output_file_path = here::here()
 ) {
-  
+
   html_content <- paste(
     header_section,
     "<!--TOC-->",

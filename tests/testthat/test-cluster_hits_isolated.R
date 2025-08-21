@@ -130,7 +130,7 @@ test_that("cluster_hits() returns correctly structured result", {
   
   # Check individual elements
   expect_type(clustering_results$plots, "list")
-  expect_length(clustering_results$plots, 10)
+  expect_length(clustering_results$plots, 11)
   
   testthat::expect_snapshot_value(cs, style = "json2")
 })

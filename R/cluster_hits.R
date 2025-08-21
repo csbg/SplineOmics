@@ -296,7 +296,7 @@ cluster_hits <- function(
 
   predicted_timecurves <- add_cat1_and_cat3_effectsizes(
     predicted_timecurves,
-    min_effect_size = min_effect_size
+    min_effect_sizes = min_effect_size
     )
 
   if (
@@ -1466,6 +1466,11 @@ make_clustering_report <- function(
     cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]],
     max_hit_number = max_hit_number
   )
+  
+  cluster_quality_plots <- lapply(
+    all_levels_clustering,
+    plot_cluster_quality
+    )
 
   level_headers_info <- list()
   plots <- list()
@@ -1571,7 +1576,9 @@ make_clustering_report <- function(
         level = level,
         raw_data = raw_data_level,
         report_info = report_info,
-        max_hit_number = max_hit_number
+        max_hit_number = max_hit_number,
+        all_levels_clustering = all_levels_clustering,
+        condition = level
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -1585,6 +1592,7 @@ make_clustering_report <- function(
       new_level = "level_header", # is the signal for the plotting code
       p_curves = list(p_curves),
       cluster_mean_splines = list(cluster_mean_splines),
+      cluster_quality_plots = list(cluster_quality_plots[[i]]),
       heatmap = heatmaps[[i]],
       individual_spline_plots = clusters_spline_plots # gets expanded like this
     )
@@ -1595,6 +1603,7 @@ make_clustering_report <- function(
       999, # dummy size for "next_level" signal
       1.5,
       1,
+      1.5,
       1.5,
       rep(1, length(clusters_spline_plots))
     )
@@ -2500,6 +2509,66 @@ plot_heatmap <- function(
 }
 
 
+#' Plot per-cluster similarity distributions (one category/result block)
+#'
+#' @noRd
+#'
+#' @description
+#' For a single result/category component of your clustering output, generate a
+#' density plot of member similarities for each cluster. Clusters without
+#' valid similarity values are skipped. The returned list is named and sorted
+#' as \code{cluster_1}, \code{cluster_2}, ... by numeric cluster id.
+#'
+#' @param category_result A list-like object representing one result/category
+#'   component of your clustering output. It must contain:
+#'   \describe{
+#'     \item{\code{cluster_quality}}{A list with \code{per_member}, a numeric
+#'       vector of similarity scores (0–1) aligned to rows in
+#'       \code{clustered_hits}.}
+#'     \item{\code{clustered_hits}}{A data.frame with a \code{cluster} column
+#'       giving the cluster id for each row/feature.}
+#'   }
+#' @return A named list of \code{ggplot} objects (one per cluster), sorted by
+#'   increasing cluster id. Returns \code{NULL} if no valid plots can be made.
+#' @details This function expects that \code{cluster_quality$per_member}
+#'   came from \code{compute_cluster_similarity()} and that its order matches
+#'   \code{clustered_hits}.
+#' @seealso \code{\link{compute_cluster_similarity}},
+#'   \code{\link{plot_cluster_similarity_distribution}}
+#'   
+plot_cluster_quality <- function(category_result) {
+  # Basic structure checks
+  if (!is.list(category_result)) return(NULL)
+  cq <- category_result$cluster_quality
+  ch <- category_result$clustered_hits
+  if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) return(NULL)
+  if (!("cluster" %in% names(ch))) return(NULL)
+  
+  # Collect cluster ids, keep numeric/finite only, sort
+  cl_ids_num <- sort(as.integer(unique(ch$cluster)))
+  cl_ids_num <- cl_ids_num[is.finite(cl_ids_num)]
+  if (length(cl_ids_num) == 0) return(NULL)
+  cl_ids_num <- sort(cl_ids_num)
+  
+  # Build plots in sorted order; drop empty/NA-only
+  plots <- lapply(cl_ids_num, function(clid) {
+    idx  <- which(as.numeric(ch$cluster) == clid)
+    sims <- cq$per_member[idx]
+    if (length(sims) == 0 || all(is.na(sims))) return(NULL)
+    plot_cluster_similarity_distribution(sims, clid)
+  })
+  
+  # Drop NULLs
+  keep <- !vapply(plots, is.null, logical(1))
+  plots <- plots[keep]
+  if (length(plots) == 0) return(NULL)
+  
+  # Name by sorted cluster id (cluster_1, cluster_2, ...)
+  names(plots) <- paste0("cluster_", cl_ids_num[keep])
+  plots
+}
+
+
 #' Plot All Mean Splines
 #' 
 #' @noRd
@@ -2593,7 +2662,7 @@ plot_all_mean_splines <- function(
     )
   ) +
     ggplot2::geom_line() +
-    ggplot2::ggtitle(sprintf("Average Splines by Cluster - %s", level)) +
+    ggplot2::ggtitle(sprintf("Cluster Centroid (average spline) - %s", level)) +
     ggplot2::xlab(paste("Time", time_unit_label)) +
     ggplot2::ylab(paste("min-max norm.", plot_info$y_axis_label)) +
     ggplot2::theme_minimal() +
@@ -2773,14 +2842,43 @@ plot_splines <- function(
     level,
     raw_data,
     report_info,
-    max_hit_number
+    max_hit_number,
+    all_levels_clustering,
+    condition
     ) {
 
   # Sort so that HTML reports are easier to read and comparisons are easier.
   top_table <- top_table |> dplyr::arrange(.data$feature_names)
   smooth_timepoints <- predicted_timecurves$time_grid
   pred_mat_level    <- predicted_timecurves$predictions[[level]]
-
+  
+  # pick the right clustering sub-result for this level
+  level_key <- if (!is.null(condition)) paste0(condition, "_", level) else level
+  level_result <- NULL
+  if (is.list(all_levels_clustering)) {
+    if (!is.null(all_levels_clustering[[level_key]])) {
+      level_result <- all_levels_clustering[[level_key]]
+    } else if (!is.null(all_levels_clustering[[level]])) {
+      # fallback if names don't carry the condition_ prefix
+      level_result <- all_levels_clustering[[level]]
+    }
+  }
+  
+  # Helper to fetch similarity + cluster id for a feature_nr
+  .get_sim_for_feature <- function(level_result, feature_nr) {
+    out <- list(sim = NA_real_, cl = NA)
+    if (!is.list(level_result)) return(out)
+    cq <- level_result$cluster_quality
+    ch <- level_result$clustered_hits
+    if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) return(out)
+    if (!("feature" %in% names(ch)) || !("cluster" %in% names(ch))) return(out)
+    idx <- which(ch$feature == as.integer(feature_nr))
+    if (length(idx) == 0) return(out)
+    out$sim <- cq$per_member[idx[1]]
+    out$cl  <- ch$cluster[idx[1]]
+    out
+  }
+  
   DoF <- which(names(top_table) == "AveExpr") - 1
   time_points <- meta[["Time"]]
 
@@ -2803,6 +2901,16 @@ plot_splines <- function(
   for (hit in seq_len(n_hits)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     feature_name <- top_table$feature_names[hit]
+    
+    # --- NEW: fetch similarity to centroid for this feature (if available)
+    sim_info <- .get_sim_for_feature(level_result, hit_index)
+    sim_str  <- if (
+      is.finite(sim_info$sim)
+      ) sprintf(
+        " | rho: %.2f (cl %s)",
+        sim_info$sim,
+        as.character(sim_info$cl)
+        ) else ""
     # cumulative travel (effect size) for this feature in this level
     cum_travel_val <- NA_real_
     es_vec <- predicted_timecurves$time_effect_effect_size[[level]]
@@ -2853,7 +2961,6 @@ plot_splines <- function(
         "Spline" = "red"
       )
     }
-
 
     # Get adjusted p-value and significance stars
     adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
@@ -3037,7 +3144,8 @@ plot_splines <- function(
             ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
             "  |  avg CV: ", round(avg_cv, 2), "%",
             "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
-            " ", significance_stars
+            " ", significance_stars,
+            sim_str
           ),
           x = paste("Time", time_unit_label),
           y = paste(plot_info$y_axis_label)
@@ -3703,11 +3811,10 @@ build_cluster_hits_report <- function(
     )
 
   pb <- create_progress_bar(plots)
-  # pb$tick(0)          # show a 0-% bar immediately
 
   header_index <- 0
   level_index <- 0
-  
+
   # Generate the sections and plots
   for (index in seq_along(plots)) {
     header_index <- header_index + 1
@@ -3802,6 +3909,7 @@ build_cluster_hits_report <- function(
     header_levels <- c(
       "dendrogram",
       "cluster_mean_splines",
+      "cluster_quality_plots",
       "heatmap",
       "individual_spline_plots"
     )
@@ -3811,7 +3919,9 @@ build_cluster_hits_report <- function(
         header_text <- "Overall Clustering"
       } else if (element_name == "cluster_mean_splines") {
         header_text <- "Min-max normalized individual and mean splines"
-      } else if (element_name == "heatmap") {
+      } else if (element_name == "cluster_quality_plots") {
+        header_text <- "Spearman corr to cluster centroid distribution plots"
+      }else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
       
         heatmap_description <- paste(
@@ -4494,6 +4604,13 @@ kmeans_clustering <- function(
     k_best <- 1L
     cl     <- NULL
     cluster_assignments <- rep(1L, nrow(curve_values))
+    
+    # Fallback defaults for similarity
+    sim <- list(
+      per_member        = rep(NA_real_, nrow(curve_values)),
+      per_cluster_mean  = NA_real_,
+      overall_mean      = NA_real_
+    )
   } else {
     set.seed(42)
     n_obs <- nrow(curve_values)
@@ -4558,19 +4675,31 @@ kmeans_clustering <- function(
     k_best <- k_range[best_idx]
     cl <- fits[[best_idx]]
     cluster_assignments <- cluster_assignments_list[[best_idx]]
+
+    curve_mat_num <- as.matrix(curve_values)
+    storage.mode(curve_mat_num) <- "double"
+    time_num <- suppressWarnings(
+      as.numeric(gsub("^.*\\|", "", smooth_timepoints))
+    )
+    if (!all(is.finite(time_num))) time_num <- NULL
+    
+    sim <- compute_cluster_similarity(
+      curves_mat = curve_mat_num,
+      clusters   = cluster_assignments,
+      time       = time_num
+    )
   }
 
   clustered_hits <- data.frame(
     feature = top_table$feature_nr,
     cluster = cluster_assignments
   )
-  
   clustered_hits <- clustered_hits[, c("feature", "cluster")]
   
   colnames(curve_values) <- smooth_timepoints
   curve_values <- as.data.frame(curve_values)
   curve_values$cluster <- cluster_assignments
-  
+
   top_table$cluster <- NA
   top_table$cluster[seq_len(nrow(clustered_hits))] <-
     as.integer(clustered_hits$cluster)
@@ -4580,7 +4709,12 @@ kmeans_clustering <- function(
     hc = cl,
     curve_values = curve_values,
     top_table = top_table,
-    clusters = k_best
+    clusters = k_best,
+    cluster_quality = list(
+      per_member        = sim$per_member,       
+      per_cluster_mean  = sim$per_cluster_mean, 
+      overall_mean      = sim$overall_mean      
+    )
   )
 }
 
@@ -5139,6 +5273,75 @@ preselect_features_for_plotting <- function(
 }
 
 
+#' Plot the similarity distribution for one cluster
+#'
+#' @noRd
+#'
+#' @description
+#' Draws a density plot of per-member similarities (0–1) to the cluster
+#' centroid. A red dashed vertical line marks the **mean similarity** of
+#' that cluster, and a legend explains this annotation.
+#'
+#' @param similarities Numeric vector of per-member similarity scores in
+#'   \[0, 1\] for a single cluster (e.g., from `compute_cluster_similarity()`).
+#' @param cluster_id Integer or character cluster identifier used in the title.
+#'
+#' @return A `ggplot` object showing the similarity density with the mean
+#'   similarity indicated.
+#'
+#' @details
+#' The red dashed line is the **mean** of `similarities`
+#' (`mean(similarities, na.rm = TRUE)`). Values near 1 indicate members that
+#' closely follow the centroid; values near 0 indicate poor alignment.
+#'
+plot_cluster_similarity_distribution <- function(
+    similarities,
+    cluster_id
+    ) {
+  stopifnot(is.numeric(similarities))
+  df <- data.frame(similarity = similarities)
+  mean_sim <- mean(df$similarity, na.rm = TRUE)
+  n_valid  <- sum(is.finite(df$similarity))
+  
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = similarity))
+  
+  # density only if we have >= 2 points (avoids warnings/errors)
+  if (n_valid >= 2) {
+    p <- p + ggplot2::geom_density(
+      fill = "steelblue",
+      alpha = 0.5,
+      na.rm = TRUE
+      )
+  }
+  
+  # mean line + legend only if the mean is finite
+  if (is.finite(mean_sim)) {
+    p <- p + ggplot2::geom_vline(
+      ggplot2::aes(xintercept = mean_sim, color = "mean"),
+      linetype = "dashed"
+    ) +
+      ggplot2::scale_color_manual(
+        values = c("mean" = "red"),
+        name = NULL
+        )
+  }
+
+  p +
+    ggplot2::xlim(0, 1) +
+    ggplot2::labs(
+      title = paste0(
+        "Cluster ", cluster_id,
+        " distribution (mean rho = ", round(mean_sim, 3), ")"
+      ),
+      x = "Spearman correlation to cluster centroid",
+      y = "Density"
+    ) +
+    ggplot2::theme_minimal(base_size = 13) +
+    ggplot2::theme(legend.position = "right")
+}
+
+
+
 # Level 4 internal functions ---------------------------------------------------
 
 
@@ -5222,4 +5425,87 @@ add_dashed_lines <- function(
   }
 
   return(p) # Return the updated plot object
+}
+
+
+#' Compute within-cluster similarity to centroids for spline curves
+#'  
+#' @noRd
+#'
+#' @description
+#' This function evaluates how well each curve fits its assigned cluster by
+#' comparing it to the cluster centroid on a weighted L2 scale, then
+#' transforming distances into an interpretable 0–1 similarity score.
+#' Values close to 1 indicate that a curve closely follows the cluster centroid,
+#' while values near 0 indicate poor alignment.
+#'
+#' If a numeric time grid is supplied, trapezoidal weights are used to account
+#' for irregular spacing of timepoints; otherwise, equal weights are assumed.
+#'
+#' @param curves_mat A numeric matrix of size \eqn{n \times T}, where rows are
+#'   features (curves) and columns are timepoints.
+#' @param clusters An integer or factor vector of length \eqn{n}, specifying
+#'   the cluster assignment of each row of \code{curves_mat}.
+#' @param time Optional numeric vector of length \eqn{T} giving the time grid.
+#'   If provided, trapezoidal weights based on the spacing of \code{time}
+#'   are applied when computing distances.
+#'
+#' @return A named list with the following elements:
+#' \describe{
+#'   \item{\code{per_cluster_mean}}{Named numeric vector, giving the average
+#'   similarity score for each cluster (names are cluster IDs).}
+#'   \item{\code{per_member}}{Numeric vector of length \eqn{n}, giving the
+#'   similarity score of each individual curve to its cluster centroid.}
+#'   \item{\code{overall_mean}}{Single numeric value: the mean similarity
+#'   across all curves, useful as a global cluster quality metric.}
+#' }
+#'
+#' @details
+#' Distances are standardized by the variance at each timepoint within the
+#' cluster, with a small epsilon added for stability. The standardized
+#' distance \eqn{d} is transformed into a similarity score by
+#' \deqn{sim = 1 / (1 + d^2),}
+#' so that higher values indicate better fit (perfect fit = 1).
+#'
+compute_cluster_similarity <- function(
+    curves_mat,
+    clusters,
+    time = NULL
+) {
+  stopifnot(is.matrix(curves_mat), length(clusters) == nrow(curves_mat))
+  n <- nrow(curves_mat); Tn <- ncol(curves_mat)
+  
+  # weights not needed anymore, but we keep the interface intact
+  if (!is.null(time)) {
+    time <- as.numeric(time)
+    stopifnot(length(time) == Tn)
+  }
+  
+  sim_member <- rep(NA_real_, n)
+  k_vals <- sort(unique(clusters))
+  sim_cluster_mean <- setNames(numeric(length(k_vals)), k_vals)
+  
+  for (k in k_vals) {
+    idx <- which(clusters == k)
+    Xk  <- curves_mat[idx, , drop = FALSE]
+    
+    mu <- colMeans(Xk, na.rm = TRUE)
+    
+    # Spearman correlation between each row and centroid
+    sim <- apply(Xk, 1, function(row) {
+      cor(row, mu, method = "spearman", use = "pairwise.complete.obs")
+    })
+    
+    # rescale to 0–1 for consistency (optional, so it behaves like before)
+    sim <- (sim + 1) / 2  
+    
+    sim_member[idx] <- sim
+    sim_cluster_mean[as.character(k)] <- mean(sim, na.rm = TRUE)
+  }
+  
+  list(
+    per_cluster_mean = sim_cluster_mean,          # named by cluster
+    per_member       = sim_member,                # length = nrow(curves_mat)
+    overall_mean     = mean(sim_member, na.rm=TRUE)
+  )
 }
