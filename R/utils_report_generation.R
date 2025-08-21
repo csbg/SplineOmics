@@ -1108,87 +1108,74 @@ encode_df_to_base64 <- function(
     df,
     report_type = NA
     ) {
-
-  temp_file <- tempfile(fileext = ".xlsx")
-  wb <- openxlsx::createWorkbook()
-
+  
+  sanitize_df <- function(x) {
+    x[] <- lapply(x, function(col) {
+      if (is.list(col)) vapply(col, toString, "", USE.NAMES = FALSE)
+      else if (inherits(col, "POSIXlt")) as.POSIXct(col)
+      else if (is.factor(col)) as.character(col)
+      else col
+    })
+    x
+  }
+  
+  sanitize_sheet <- function(s) {
+    s <- ifelse(is.na(s) | s == "", "Sheet", s)
+    s <- gsub('[\\/:*?\\[\\]]', "_", s)   # Excel‑forbidden chars
+    substr(s, 1L, 31L)                    # Excel’s 31‑char limit
+  }
+  
+  tmp <- tempfile(fileext = ".xlsx")
+  wb  <- openxlsx::createWorkbook()
+  
   if (is.data.frame(df)) {
-    # Convert single dataframe to Excel with one sheet
-    sheet_name <- "Sheet1"
-    openxlsx::addWorksheet(
-      wb,
-      sheet_name
-    )
+    sname <- "Sheet1"
+    openxlsx::addWorksheet(wb, sanitize_sheet(sname))
     openxlsx::writeData(
-      wb,
-      sheet = sheet_name,
-      df
-    )
-  } else if (is.list(df) && all(vapply(df, is.data.frame, logical(1)))) {
-    # Convert list of dataframes to Excel with multiple sheets
-
-    if (!is.na(report_type)) {
-      if (report_type == "run_ora") {
-        all_names <- names(df)
-        sheet_names <- vapply(
-          all_names,
-          extract_and_combine,
-          character(1)
-        )
-      }
-    } else {
-      sheet_names <- make.unique(names(df))
-    }
-
-
-    for (i in seq_along(sheet_names)) {
-      openxlsx::addWorksheet(
-        wb,
-        sheet_names[i]
+      wb, 
+      sheet = sanitize_sheet(sname),
+      x = sanitize_df(df),
+      keepNA = TRUE
       )
+  } else if (is.list(df) && all(vapply(df, is.data.frame, logical(1)))) {
+    nm <- names(df)
+    if (is.null(nm)) nm <- paste0("Sheet", seq_along(df))
+    if (!is.na(report_type) && identical(report_type, "run_ora")) {
+      # keep your special naming if needed, but ensure uniqueness/safety
+      nm <- make.unique(nm)
+    } else {
+      nm <- make.unique(nm)
+    }
+    nm <- sanitize_sheet(nm)
+    
+    for (i in seq_along(df)) {
+      sname <- nm[[i]]
+      openxlsx::addWorksheet(wb, sname)
       openxlsx::writeData(
         wb,
-        sheet = sheet_names[i],
-        df[[i]]
-      )
+        sheet = sname,
+        x = sanitize_df(df[[i]]),
+        keepNA = TRUE
+        )
     }
   } else {
     stop("Input must be a dataframe or a list of dataframes.")
   }
   
+  # Guard against zero worksheets (paranoid safety)
   if (length(wb$worksheets) == 0L) {
     openxlsx::addWorksheet(wb, "Sheet1")
-    }
-  openxlsx::saveWorkbook(
-    wb,
-    temp_file,
-    overwrite = TRUE
+  }
+  
+  openxlsx::saveWorkbook(wb, file = tmp, overwrite = TRUE)
+  
+  uri <- paste0(
+    "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;",
+    "base64,",
+    base64enc::base64encode(tmp)
   )
-
-  # Read the file and encode to base64
-  file_content <- readBin(
-    temp_file,
-    "raw",
-    file.info(temp_file)$size
-  )
-  base64_file <- base64enc::base64encode(file_content)
-
-  # Determine MIME type
-  mime_type <-
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-  # Create the data URI scheme
-  data_uri <- paste0(
-    "data:",
-    mime_type,
-    ";base64,",
-    base64_file
-  )
-
-  # Remove the temporary file
-  unlink(temp_file)
-
-  return(data_uri)
+  unlink(tmp)
+  uri
 }
 
 

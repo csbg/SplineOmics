@@ -1,7 +1,7 @@
 
 # SplineOmics
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue) [![License:
+[![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Maintained?
 Yes](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)

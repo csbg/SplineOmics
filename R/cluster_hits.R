@@ -2553,7 +2553,7 @@ plot_cluster_quality <- function(category_result) {
   # Build plots in sorted order; drop empty/NA-only
   plots <- lapply(cl_ids_num, function(clid) {
     idx  <- which(as.numeric(ch$cluster) == clid)
-    sims <- cq$per_member[idx]
+    sims <- cq$per_member[idx]  # here: silhouette widths per spline (-1..1)
     if (length(sims) == 0 || all(is.na(sims))) return(NULL)
     plot_cluster_similarity_distribution(sims, clid)
   })
@@ -2907,7 +2907,7 @@ plot_splines <- function(
     sim_str  <- if (
       is.finite(sim_info$sim)
       ) sprintf(
-        " | rho: %.2f (cl %s)",
+        " | silhouette: %.2f (cl %s)",
         sim_info$sim,
         as.character(sim_info$cl)
         ) else ""
@@ -3920,7 +3920,15 @@ build_cluster_hits_report <- function(
       } else if (element_name == "cluster_mean_splines") {
         header_text <- "Min-max normalized individual and mean splines"
       } else if (element_name == "cluster_quality_plots") {
-        header_text <- "Spearman corr to cluster centroid distribution plots"
+        header_text <- "Silhouette width distribution plots"
+        silhouette_description <- paste(
+          "<div style='text-align: center; font-size: 1.5em;'>",
+          "Silhouette width (higher is better):",
+          "0.71-1.00 = strong cluster fit; 0.51-0.70 = good;",
+          "0.26-0.50 = fair/weak; 0.00-0.25 = poor/borderline;",
+          "<0.00 = likely misclustered.",
+          "</div>"
+        )
       }else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
       
@@ -3945,9 +3953,12 @@ build_cluster_hits_report <- function(
         "' style='text-align: center; font-size: 3.5em;'>",
         header_text,
         "</h2>",
-        if (exists("heatmap_description")) heatmap_description else ""
+        if (exists("heatmap_description")) heatmap_description 
+        else if (exists("silhouette_description")) silhouette_description 
+        else ""
       )
-
+      
+      if (exists("silhouette_description")) rm(silhouette_description)
       if (exists("heatmap_description")) rm(heatmap_description)
 
       # Add the asterisks definition if it exists
@@ -4535,13 +4546,20 @@ find_col_ignore_underscores_rx <- function(df, target) {
 #'  each row
 #'         has been normalized.
 #'
-normalize_curves <- function(curve_values) {
+normalize_curves <- function(curve_values, epsilon = 1e-8) {
   normalized_curves <- apply(curve_values, 1, function(row) {
-    (row - min(row)) / (max(row) - min(row))
+    mu <- mean(row, na.rm = TRUE)
+    sd_row <- stats::sd(row, na.rm = TRUE)
+    if (is.na(sd_row) || sd_row < epsilon) {
+      # flat or nearly-flat row: return zeros
+      rep(0, length(row))
+    } else {
+      (row - mu) / sd_row
+    }
   })
-
+  
   normalized_curves <- t(normalized_curves)
-  curve_values[, ] <- normalized_curves
+  curve_values[,] <- normalized_curves
   curve_values
 }
 
@@ -5273,31 +5291,32 @@ preselect_features_for_plotting <- function(
 }
 
 
-#' Plot the similarity distribution for one cluster
+#' Plot the silhouette distribution for one cluster
 #'
 #' @noRd
 #'
 #' @description
-#' Draws a density plot of per-member similarities (0–1) to the cluster
-#' centroid. A red dashed vertical line marks the **mean similarity** of
-#' that cluster, and a legend explains this annotation.
+#' Draws a histogram of per-member silhouette widths (-1 to 1) for a single
+#' cluster. A red dashed vertical line marks the mean silhouette of that
+#' cluster, and a dotted vertical line at 0 highlights the boundary between
+#' negative and positive silhouettes.
 #'
-#' @param similarities Numeric vector of per-member similarity scores in
-#'   \[0, 1\] for a single cluster (e.g., from `compute_cluster_similarity()`).
-#' @param cluster_id Integer or character cluster identifier used in the title.
+#' @param similarities Numeric vector of silhouette widths for members of one
+#'   cluster. Values are typically in [-1, 1]; NAs are allowed.
+#' @param cluster_id Integer or character identifier shown in the plot title.
 #'
-#' @return A `ggplot` object showing the similarity density with the mean
-#'   similarity indicated.
+#' @return A ggplot object showing the silhouette histogram with mean and
+#'   reference lines.
 #'
 #' @details
-#' The red dashed line is the **mean** of `similarities`
-#' (`mean(similarities, na.rm = TRUE)`). Values near 1 indicate members that
-#' closely follow the centroid; values near 0 indicate poor alignment.
-#'
+#' The histogram uses fixed bin width 0.1 over [-1, 1] (20 bins) and displays
+#' counts on the y-axis. The mean line is drawn at
+#' mean(similarities, na.rm = TRUE).
+#' 
 plot_cluster_similarity_distribution <- function(
-    similarities,
+    similarities,  # silhouette widths per spline
     cluster_id
-    ) {
+) {
   stopifnot(is.numeric(similarities))
   df <- data.frame(similarity = similarities)
   mean_sim <- mean(df$similarity, na.rm = TRUE)
@@ -5305,14 +5324,25 @@ plot_cluster_similarity_distribution <- function(
   
   p <- ggplot2::ggplot(df, ggplot2::aes(x = similarity))
   
-  # density only if we have >= 2 points (avoids warnings/errors)
-  if (n_valid >= 2) {
-    p <- p + ggplot2::geom_density(
-      fill = "steelblue",
-      alpha = 0.5,
-      na.rm = TRUE
-      )
+  # histogram with fixed 0.1 bins from -1 to 1
+  if (n_valid >= 1) {
+    p <- p + ggplot2::geom_histogram(
+      ggplot2::aes(y = ggplot2::after_stat(count)),
+      binwidth = 0.1,
+      boundary = -1,       # bins: (-1,-0.9], ..., (0.9,1.0]
+      closed   = "right",
+      fill     = "steelblue",
+      color    = NA,
+      na.rm    = TRUE
+    )
   }
+  
+  # reference line at 0 (borderline silhouettes)
+  p <- p + ggplot2::geom_vline(
+    xintercept = 0,
+    linetype = "dotted",
+    color = "grey50"
+    )
   
   # mean line + legend only if the mean is finite
   if (is.finite(mean_sim)) {
@@ -5320,26 +5350,26 @@ plot_cluster_similarity_distribution <- function(
       ggplot2::aes(xintercept = mean_sim, color = "mean"),
       linetype = "dashed"
     ) +
-      ggplot2::scale_color_manual(
-        values = c("mean" = "red"),
-        name = NULL
-        )
+      ggplot2::scale_color_manual(values = c("mean" = "red"), name = NULL)
   }
-
+  
   p +
-    ggplot2::xlim(0, 1) +
     ggplot2::labs(
       title = paste0(
-        "Cluster ", cluster_id,
-        " distribution (mean rho = ", round(mean_sim, 3), ")"
-      ),
-      x = "Spearman correlation to cluster centroid",
-      y = "Density"
+        "Cluster ",
+        cluster_id,
+        " distribution (mean silhouette = ", round(mean_sim, 3), ")"
+        ),
+      x = "Silhouette width",
+      y = "Count"
     ) +
+    ggplot2::coord_cartesian(xlim = c(-1, 1)) +
     ggplot2::theme_minimal(base_size = 13) +
-    ggplot2::theme(legend.position = "right")
+    ggplot2::theme(
+      legend.position = "right",
+      aspect.ratio = 0.5
+    )
 }
-
 
 
 # Level 4 internal functions ---------------------------------------------------
@@ -5428,84 +5458,109 @@ add_dashed_lines <- function(
 }
 
 
-#' Compute within-cluster similarity to centroids for spline curves
-#'  
+#' Compute per-spline silhouette widths as a cluster quality metric
+#'
 #' @noRd
 #'
 #' @description
-#' This function evaluates how well each curve fits its assigned cluster by
-#' comparing it to the cluster centroid on a weighted L2 scale, then
-#' transforming distances into an interpretable 0–1 similarity score.
-#' Values close to 1 indicate that a curve closely follows the cluster centroid,
-#' while values near 0 indicate poor alignment.
+#' Computes silhouette width for each curve (row) given a distance over
+#' timepoints, and summarizes by cluster. Silhouette width ranges from
+#' -1 to 1: higher means better cluster fit (well inside its cluster),
+#' around 0 means on the boundary, and negative values suggest a likely
+#' misclustered curve relative to the nearest neighboring cluster.
 #'
-#' If a numeric time grid is supplied, trapezoidal weights are used to account
-#' for irregular spacing of timepoints; otherwise, equal weights are assumed.
+#' @param curves_mat Numeric matrix (n x T) with rows = curves and columns
+#'  = timepoints.
+#' @param clusters Integer or factor vector of length n with the cluster label
+#'  for each row.
+#' @param time Optional numeric vector of length T giving the time grid. Kept
+#'  for
+#'   interface compatibility; not used by the silhouette computation.
+#' @param distance Character string, one of "correlation" or "euclidean".
+#'   If "correlation", distances are 1 - Pearson correlation computed across
+#'   timepoints using pairwise.complete.obs. If "euclidean", standard Euclidean
+#'   distances are used on the rows of curves_mat.
+#' @param epsilon Small positive constant for numerical stability in potential
+#'   future extensions; currently not used.
 #'
-#' @param curves_mat A numeric matrix of size \eqn{n \times T}, where rows are
-#'   features (curves) and columns are timepoints.
-#' @param clusters An integer or factor vector of length \eqn{n}, specifying
-#'   the cluster assignment of each row of \code{curves_mat}.
-#' @param time Optional numeric vector of length \eqn{T} giving the time grid.
-#'   If provided, trapezoidal weights based on the spacing of \code{time}
-#'   are applied when computing distances.
-#'
-#' @return A named list with the following elements:
+#' @return A named list with:
 #' \describe{
-#'   \item{\code{per_cluster_mean}}{Named numeric vector, giving the average
-#'   similarity score for each cluster (names are cluster IDs).}
-#'   \item{\code{per_member}}{Numeric vector of length \eqn{n}, giving the
-#'   similarity score of each individual curve to its cluster centroid.}
-#'   \item{\code{overall_mean}}{Single numeric value: the mean similarity
-#'   across all curves, useful as a global cluster quality metric.}
+#'   \item{\code{per_cluster_mean}}{Named numeric vector: mean silhouette width
+#'     for each cluster (names are cluster IDs). Higher is better.}
+#'   \item{\code{per_member}}{Numeric vector (length n): silhouette width for
+#'    each
+#'     curve. Values in [-1, 1]; higher is better. Singleton clusters are set
+#'      to NA.}
+#'   \item{\code{overall_mean}}{Single numeric value: mean silhouette width
+#'    across all curves (excluding NAs).}
 #' }
 #'
 #' @details
-#' Distances are standardized by the variance at each timepoint within the
-#' cluster, with a small epsilon added for stability. The standardized
-#' distance \eqn{d} is transformed into a similarity score by
-#' \deqn{sim = 1 / (1 + d^2),}
-#' so that higher values indicate better fit (perfect fit = 1).
-#'
+#' Silhouette widths are computed via \code{cluster::silhouette} from the
+#' chosen distance matrix. For "correlation", missing values are handled via
+#' pairwise.complete.obs inside \code{stats::cor}. For "euclidean", consider
+#' removing or imputing missing values before calling this function.
+#' 
 compute_cluster_similarity <- function(
     curves_mat,
     clusters,
-    time = NULL
+    time = NULL,
+    distance = c("correlation", "euclidean"),
+    epsilon = 1e-8
 ) {
   stopifnot(is.matrix(curves_mat), length(clusters) == nrow(curves_mat))
+  distance <- match.arg(distance)
   n <- nrow(curves_mat); Tn <- ncol(curves_mat)
   
-  # weights not needed anymore, but we keep the interface intact
+  # keep interface
   if (!is.null(time)) {
     time <- as.numeric(time)
     stopifnot(length(time) == Tn)
   }
   
-  sim_member <- rep(NA_real_, n)
-  k_vals <- sort(unique(clusters))
-  sim_cluster_mean <- setNames(numeric(length(k_vals)), k_vals)
+  X <- curves_mat
+  # Distance matrix aligned to "shape"
+  D <- switch(
+    distance,
+    "correlation" = {
+      # 1 - Pearson correlation across timepoints; pairwise complete obs
+      as.dist(1 - stats::cor(
+        t(X),
+        use = "pairwise.complete.obs",
+        method = "pearson")
+        )
+    },
+    "euclidean" = stats::dist(X)
+  )
   
-  for (k in k_vals) {
-    idx <- which(clusters == k)
-    Xk  <- curves_mat[idx, , drop = FALSE]
-    
-    mu <- colMeans(Xk, na.rm = TRUE)
-    
-    # Spearman correlation between each row and centroid
-    sim <- apply(Xk, 1, function(row) {
-      cor(row, mu, method = "spearman", use = "pairwise.complete.obs")
-    })
-    
-    # rescale to 0–1 for consistency (optional, so it behaves like before)
-    sim <- (sim + 1) / 2  
-    
-    sim_member[idx] <- sim
-    sim_cluster_mean[as.character(k)] <- mean(sim, na.rm = TRUE)
+  # Silhouette per member
+  # (Singleton clusters have undefined silhouette; we set those to NA)
+  suppressWarnings({
+    sil <- cluster::silhouette(clusters, D)
+  })
+  per_member <- as.numeric(sil[, "sil_width"])
+  
+  # Replace widths for singleton clusters with NA explicitly
+  # (silhouette uses 0 or NA depending on version)
+  tab <- table(clusters)
+  singletons <- names(tab)[tab == 1]
+  if (length(singletons)) {
+    idx_single <- which(clusters %in% as.integer(singletons))
+    per_member[idx_single] <- NA_real_
   }
   
+  # Per-cluster & overall means
+  k_vals <- sort(unique(clusters))
+  per_cluster_mean <- setNames(numeric(length(k_vals)), k_vals)
+  for (k in k_vals) {
+    idx <- which(clusters == k)
+    per_cluster_mean[as.character(k)] <- mean(per_member[idx], na.rm = TRUE)
+  }
+  overall_mean <- mean(per_member, na.rm = TRUE)
+  
   list(
-    per_cluster_mean = sim_cluster_mean,          # named by cluster
-    per_member       = sim_member,                # length = nrow(curves_mat)
-    overall_mean     = mean(sim_member, na.rm=TRUE)
+    per_cluster_mean = per_cluster_mean,   
+    per_member       = per_member,        
+    overall_mean     = overall_mean    
   )
 }
