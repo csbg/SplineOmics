@@ -13,11 +13,14 @@
 #' @param splineomics An S3 object of class `SplineOmics` that contains all the
 #' necessary data and parameters for the analysis, including:
 #' \itemize{
-#'   \item \code{data}: The original expression dataset used for differential
-#'   expression analysis.
+#'   \item \code{data}: The data matrix with the values. The columns are the
+#'   samples (timepoint + replicate combo) and the rows are the features
+#'   (e.g. genes or proteins).
 #'   \item \code{meta}: A dataframe containing metadata corresponding to the
 #'   \code{data}, must include a 'Time' column and any columns specified by
-#'   \code{conditions}.
+#'   \code{conditions}. In general, the columns of meta correspond to the
+#'   different types of metadata, and each row corresponds to a column of data
+#'   (contains the metadata for that sample).
 #'   \item \code{annotation}: A dataframe that maps the rows of \code{data} to
 #'   annotation info, such as the gene name or database identifiers.
 #'   \item \code{report_info}: A named list describing the experiment.  
@@ -102,7 +105,7 @@
 #'
 #'   The default is 0 for all three elements.
 #' @param genes A character vector containing the gene names of the features to
-#'  be analyzed. The entries should be in the same order as they appear in data.
+#'  be analyzed. The entries must be in the same order as they appear in data.
 #' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
 #'                  treatment_timepoints (integer vector). All can also be NA.
@@ -111,18 +114,29 @@
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
-#' @param plot_options List with specific fields (cluster_heatmap_columns =
-#' Bool) that allow for customization of plotting behavior.
+#' @param plot_options A named list controlling optional plot customization.  
+#'   The list can include one or both of the following entries (any not supplied  
+#'   will fall back to their default values):  
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} (`logical`, default = \code{FALSE}):  
+#'       Whether to cluster the columns in the heatmap.  
+#'     \item \code{meta_replicate_column} (`character(1)`, 
+#'       default = \code{NULL}):  
+#'       Name of the column in \code{meta} that encodes replicate information.  
+#'       If supplied, spline plot data points are colored by replicate, allowing  
+#'       replicate-level variation to be assessed.
+#'   }
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
 #' @param report_dir Character string specifying the directory path where the
-#' HTML report and any other output files should be saved.
-#' @param report Boolean TRUE or FALSE value specifing if a report should be
+#' HTML report and any other output files should be saved. Default is the 
+#' current working dir.
+#' @param report Boolean TRUE or FALSE value specifying if a report should be
 #' generated.
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
-#' the HTML report in the case of many hits. Default is 100.
+#' the HTML report in the case of many hits. Default is 25.
 #'
 #' @return
 #' A named list with three elements:
@@ -2826,7 +2840,6 @@ plot_cluster_mean_splines <- function(
 #' @importFrom splines ns
 #' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal labs theme
 #'                     scale_x_continuous annotate
-#' @importFrom patchwork wrap_plots plot_annotation
 #' @importFrom scales hue_pal
 #' @importFrom rlang .data
 #'
@@ -5501,6 +5514,9 @@ add_dashed_lines <- function(
 #' pairwise.complete.obs inside \code{stats::cor}. For "euclidean", consider
 #' removing or imputing missing values before calling this function.
 #' 
+#' @importFrom stats cor dist as.dist setNames
+#' @importFrom cluster silhouette
+#' 
 compute_cluster_similarity <- function(
     curves_mat,
     clusters,
@@ -5535,9 +5551,7 @@ compute_cluster_similarity <- function(
   
   # Silhouette per member
   # (Singleton clusters have undefined silhouette; we set those to NA)
-  suppressWarnings({
-    sil <- cluster::silhouette(clusters, D)
-  })
+  sil <- cluster::silhouette(clusters, D)
   per_member <- as.numeric(sil[, "sil_width"])
   
   # Replace widths for singleton clusters with NA explicitly

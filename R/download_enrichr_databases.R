@@ -61,7 +61,11 @@ download_enrichr_databases <- function(
       )
     }))
   }))
-
+  
+  # When the user is offline, genesets won't be available, raising a weird error
+  if (!exists("genesets") || is.null(genesets)) {
+    stop_call_false("Object `genesets` is missing or NULL - are you online?")
+  }
   genesets <- genesets |>
     mutate(Gene = gsub(",.+$", "", .data$Gene))
 
@@ -157,10 +161,10 @@ enrichr_get_genesets <- function(databases) {
     }
   }
   
-  # Keep only successfully downloaded libraries´
+  # Keep only successfully downloaded libraries
   results <- results[success]
   
-  # User-friendly summary´
+  # User-friendly summary
   if (length(success) || length(failed)) {
     msg <- c("\nEnrichr download summary:")
     if (length(success))

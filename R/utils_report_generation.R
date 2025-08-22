@@ -1102,13 +1102,14 @@ get_header_section <- function(
 #'
 #' @return A character string containing the base64 encoded CSV data.
 #'
-#' @importFrom openxlsx createWorkbook addWorksheet writeData saveWorkbook
+#' @importFrom writexl write_xlsx
+#' @importFrom base64enc base64encode
 #'
 encode_df_to_base64 <- function(
     df,
     report_type = NA
-    ) {
-  
+) {
+
   sanitize_df <- function(x) {
     x[] <- lapply(x, function(col) {
       if (is.list(col)) vapply(col, toString, "", USE.NAMES = FALSE)
@@ -1116,59 +1117,55 @@ encode_df_to_base64 <- function(
       else if (is.factor(col)) as.character(col)
       else col
     })
+    # ensure UTF-8 to avoid odd crashes on mac during knitting
+    x[] <- lapply(
+      x, 
+      function(col) if (is.character(col)) enc2utf8(col) else col
+      )
     x
   }
   
   sanitize_sheet <- function(s) {
     s <- ifelse(is.na(s) | s == "", "Sheet", s)
-    s <- gsub('[\\/:*?\\[\\]]', "_", s)   # Excel‑forbidden chars
-    substr(s, 1L, 31L)                    # Excel’s 31‑char limit
+    s <- gsub('[\\/:*?\\[\\]]', "_", s)  # Excel-forbidden chars
+    substr(s, 1L, 31L)                   # Excel’s 31-char limit
   }
   
-  tmp <- tempfile(fileext = ".xlsx")
-  wb  <- openxlsx::createWorkbook()
-  
+  # Build a named list of data frames for writexl
+  sheets <- NULL
   if (is.data.frame(df)) {
-    sname <- "Sheet1"
-    openxlsx::addWorksheet(wb, sanitize_sheet(sname))
-    openxlsx::writeData(
-      wb, 
-      sheet = sanitize_sheet(sname),
-      x = sanitize_df(df),
-      keepNA = TRUE
-      )
+    nm <- "Sheet1"
+    sheets <- list()
+    sheets[[sanitize_sheet(nm)]] <- sanitize_df(df)
   } else if (is.list(df) && all(vapply(df, is.data.frame, logical(1)))) {
     nm <- names(df)
     if (is.null(nm)) nm <- paste0("Sheet", seq_along(df))
+    
+    # keep your special naming if needed
     if (!is.na(report_type) && identical(report_type, "run_ora")) {
-      # keep your special naming if needed, but ensure uniqueness/safety
       nm <- make.unique(nm)
     } else {
       nm <- make.unique(nm)
     }
     nm <- sanitize_sheet(nm)
     
-    for (i in seq_along(df)) {
-      sname <- nm[[i]]
-      openxlsx::addWorksheet(wb, sname)
-      openxlsx::writeData(
-        wb,
-        sheet = sname,
-        x = sanitize_df(df[[i]]),
-        keepNA = TRUE
-        )
-    }
+    # apply sanitize_df to each dataframe
+    dfs <- lapply(df, sanitize_df)
+    names(dfs) <- nm
+    sheets <- dfs
   } else {
     stop("Input must be a dataframe or a list of dataframes.")
   }
   
-  # Guard against zero worksheets (paranoid safety)
-  if (length(wb$worksheets) == 0L) {
-    openxlsx::addWorksheet(wb, "Sheet1")
+  # Guard against empty input
+  if (length(sheets) == 0L) {
+    sheets <- list("Sheet1" = data.frame())
   }
   
-  openxlsx::saveWorkbook(wb, file = tmp, overwrite = TRUE)
+  tmp <- tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(sheets, path = tmp)
   
+  # Return data: URI with base64 payload
   uri <- paste0(
     "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;",
     "base64,",

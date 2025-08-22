@@ -79,9 +79,11 @@ compiled into an HTML report.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_hits</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
 <span>  <span class="va">nr_clusters</span>,</span>
+<span>  nr_clusters_interaction <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
-<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  min_effect_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>time_effect <span class="op">=</span> <span class="fl">0</span>, avg_diff_cond <span class="op">=</span> <span class="fl">0</span>, interaction_cond_time <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  genes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y_axis_label <span class="op">=</span> <span class="st">"Value"</span>, time_unit <span class="op">=</span> <span class="st">"min"</span>, treatment_labels <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>    treatment_timepoints <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
@@ -99,11 +101,14 @@ compiled into an HTML report.</p>
 
 <dl><dt id="arg-splineomics">splineomics<a class="anchor" aria-label="anchor" href="#arg-splineomics"></a></dt>
 <dd><p>An S3 object of class `SplineOmics` that contains all the
-necessary data and parameters for the analysis, including:</p><ul><li><p><code>data</code>: The original expression dataset used for differential
-  expression analysis.</p></li>
+necessary data and parameters for the analysis, including:</p><ul><li><p><code>data</code>: The data matrix with the values. The columns are the
+  samples (timepoint + replicate combo) and the rows are the features
+  (e.g. genes or proteins).</p></li>
 <li><p><code>meta</code>: A dataframe containing metadata corresponding to the
   <code>data</code>, must include a 'Time' column and any columns specified by
-  <code>conditions</code>.</p></li>
+  <code>conditions</code>. In general, the columns of meta correspond to the
+  different types of metadata, and each row corresponds to a column of data
+  (contains the metadata for that sample).</p></li>
 <li><p><code>annotation</code>: A dataframe that maps the rows of <code>data</code> to
   annotation info, such as the gene name or database identifiers.</p></li>
 <li><p><code>report_info</code>: A named list describing the experiment.
@@ -153,6 +158,14 @@ a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
 candidate number(s) of clusters for the corresponding condition level.</p></dd>
 
 
+<dt id="arg-nr-clusters-interaction">nr_clusters_interaction<a class="anchor" aria-label="anchor" href="#arg-nr-clusters-interaction"></a></dt>
+<dd><p>An integer or a numeric vector of integers
+(&gt; 0) specifying how many clusters should be used for the clustering of
+the interaction of condition and time hits. When a vector is provided, then
+all cluster amounts in that range are tested and the best one automatically
+taken.</p></dd>
+
+
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
 <dd><p>Numeric vector of p-value thresholds for filtering
 hits in each top table.</p></dd>
@@ -170,9 +183,32 @@ results from the interaction of condition and time limma result. Per default
 0 (turned off).</p></dd>
 
 
+<dt id="arg-min-effect-size">min_effect_size<a class="anchor" aria-label="anchor" href="#arg-min-effect-size"></a></dt>
+<dd><p>A named list that specifies the minimum effect size
+  thresholds to consider a feature as biologically meaningful, in addition
+  to statistical significance. This allows users to filter out "trivial"
+  hits that pass adjusted p-value cutoffs but show negligible effect sizes.</p>
+<p>The list must contain the following elements:
+  - `time_effect`: Minimum cumulative travel for time effects (Category 1).
+    Features with a smaller travel will be ignored even if significant.
+  - `avg_diff_cond`: Minimum absolute effect size for average differences
+    between conditions (Category 2). Ensures that only contrasts with a
+    relevant magnitude are reported.
+  - `interaction_cond_time`: Minimum effect size for the interaction
+    between condition and time (Category 3). This controls how large the
+    differential curve travel must be across conditions to count as a hit.</p>
+<p>Values should be numeric scalars (typically &gt;0). For example:
+  `min_effect_size = list(time_effect = 1, avg_diff_cond = 1,
+  interaction_cond_time = 2)` will only keep features with cumulative
+  travels or condition-time differences above those cutoffs. Use smaller
+  values (e.g., 0.1) for permissive filtering, or larger values for more
+  conservative thresholds.</p>
+<p>The default is 0 for all three elements.</p></dd>
+
+
 <dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
 <dd><p>A character vector containing the gene names of the features to
-be analyzed. The entries should be in the same order as they appear in data.</p></dd>
+be analyzed. The entries must be in the same order as they appear in data.</p></dd>
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>
@@ -187,8 +223,16 @@ feeding, temperature shift, etc.).</p></dd>
 
 
 <dt id="arg-plot-options">plot_options<a class="anchor" aria-label="anchor" href="#arg-plot-options"></a></dt>
-<dd><p>List with specific fields (cluster_heatmap_columns =
-Bool) that allow for customization of plotting behavior.</p></dd>
+<dd><p>A named list controlling optional plot customization.
+The list can include one or both of the following entries (any not supplied
+will fall back to their default values):</p><ul><li><p><code>cluster_heatmap_columns</code> (`logical`, default = <code>FALSE</code>):
+    Whether to cluster the columns in the heatmap.</p></li>
+<li><p><code>meta_replicate_column</code> (`character(1)`,
+    default = <code>NULL</code>):
+    Name of the column in <code>meta</code> that encodes replicate information.
+    If supplied, spline plot data points are colored by replicate, allowing
+    replicate-level variation to be assessed.</p></li>
+</ul></dd>
 
 
 <dt id="arg-raw-data">raw_data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
@@ -199,23 +243,24 @@ spline plots that originally where NA and that were imputed.</p></dd>
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
 <dd><p>Character string specifying the directory path where the
-HTML report and any other output files should be saved.</p></dd>
+HTML report and any other output files should be saved. Default is the
+current working dir.</p></dd>
 
 
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
-<dd><p>Boolean TRUE or FALSE value specifing if a report should be
+<dd><p>Boolean TRUE or FALSE value specifying if a report should be
 generated.</p></dd>
 
 
 <dt id="arg-max-hit-number">max_hit_number<a class="anchor" aria-label="anchor" href="#arg-max-hit-number"></a></dt>
 <dd><p>Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of
-the HTML report in the case of many hits. Default is 100.</p></dd>
+the HTML report in the case of many hits. Default is 25.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with two elements:</p><dl><dt><code>cluster_summary</code></dt>
+    <p>A named list with three elements:</p><dl><dt><code>cluster_table</code></dt>
 <dd><p>A tibble containing one row per <code>feature_nr</code> with metadata and
     cluster assignments across the analysis categories. The structure is:</p><ul><li><p><code>feature_nr</code> – Numeric feature identifier.</p></li>
 <li><p><code>feature_name</code> – Preferred feature name, prioritizing
@@ -241,9 +286,59 @@ the HTML report in the case of many hits. Default is 100.</p></dd>
     a value of <code>NA</code> indicates that the feature was not significant
     (not a hit) in that category.</p></dd>
 
+  <dt><code>spline_results</code></dt>
+<dd><p>A named list summarizing the fitted spline trajectories, their shared
+    time grid, and effect-size based significance flags. Structure:</p><dl><dt><code>time_grid</code></dt>
+<dd><p>Numeric vector of length \(T\) giving the
+        common time points (e.g., hours since cultivation start) on which
+        all splines were predicted.</p></dd>
+
+      <dt><code>predictions</code></dt>
+<dd><p>Named list by condition (e.g.,
+        <code>constant</code>, <code>temp_shift</code>). Each entry is a numeric
+        matrix of size \(N \times T\) with rows corresponding to features
+        and columns to <code>time_grid</code>. Values are the predicted spline
+        trajectories on the absolute scale used in the analysis
+        (e.g., log2-CPM after <code>voom</code>). Row order matches the feature
+        order used throughout the analysis.</p></dd>
+
+      <dt><code>time_effect_effect_size</code></dt>
+<dd><p>Named list by condition with a
+        numeric vector (length \(N\)) per condition giving the
+        <em>cumulative travel</em> (integrated temporal change) of each
+        feature’s spline across <code>time_grid</code>. Larger values indicate
+        stronger within-condition temporal modulation.</p></dd>
+
+      <dt><code>time_effect_passed_threshold</code></dt>
+<dd><p>Named list by condition
+        with a logical vector (length \(N\)) per condition indicating
+        whether the corresponding <code>time_effect_effect_size</code> exceeds
+        the user-defined effect-size threshold (i.e., time-effect hits).</p></dd>
+
+      <dt><code>interaction_effect_size</code></dt>
+<dd><p>Numeric vector (length \(N\))
+        giving the <em>differential cumulative travel</em> between the two
+        condition-specific splines of each feature, computed on the same
+        <code>time_grid</code>. Larger values indicate stronger differences in
+        temporal behaviour between conditions (condition–time interaction).</p></dd>
+
+      <dt><code>interaction_passed_threshold</code></dt>
+<dd><p>Logical vector (length
+        \(N\)) indicating whether <code>interaction_effect_size</code>
+        exceeds the interaction effect-size threshold (i.e., features with
+        significantly different temporal profiles across conditions).</p></dd>
+
+
+</dl><p>Unless stated otherwise, vectors are aligned to the same feature order
+    used in the prediction matrices; condition names match
+    <code>levels(meta[[condition]])</code>.</p></dd>
+
   <dt><code>plots</code></dt>
 <dd><p>A list of all plots generated during the run, corresponding to the
-    visualizations shown in the HTML report produced by this function.</p></dd>
+    visualizations shown in the HTML report produced by this function.
+    Additionally, this plots list also contains the plots showing the
+    consensus clusters of the potential clustering of the interaction of
+    condition and time (category 3) hits.</p></dd>
 
 
 </dl></div>

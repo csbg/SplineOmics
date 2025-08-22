@@ -26,11 +26,14 @@ cluster_hits(
 \item{splineomics}{An S3 object of class `SplineOmics` that contains all the
 necessary data and parameters for the analysis, including:
 \itemize{
-  \item \code{data}: The original expression dataset used for differential
-  expression analysis.
+  \item \code{data}: The data matrix with the values. The columns are the
+  samples (timepoint + replicate combo) and the rows are the features
+  (e.g. genes or proteins).
   \item \code{meta}: A dataframe containing metadata corresponding to the
   \code{data}, must include a 'Time' column and any columns specified by
-  \code{conditions}.
+  \code{conditions}. In general, the columns of meta correspond to the
+  different types of metadata, and each row corresponds to a column of data
+  (contains the metadata for that sample).
   \item \code{annotation}: A dataframe that maps the rows of \code{data} to
   annotation info, such as the gene name or database identifiers.
   \item \code{report_info}: A named list describing the experiment.  
@@ -122,7 +125,7 @@ results from the interaction of condition and time limma result. Per default
   The default is 0 for all three elements.}
 
 \item{genes}{A character vector containing the gene names of the features to
-be analyzed. The entries should be in the same order as they appear in data.}
+be analyzed. The entries must be in the same order as they appear in data.}
 
 \item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
@@ -133,22 +136,33 @@ and -timepoints are used to create vertical dashed lines,
 indicating the positions of the treatments (such as
 feeding, temperature shift, etc.).}
 
-\item{plot_options}{List with specific fields (cluster_heatmap_columns =
-Bool) that allow for customization of plotting behavior.}
+\item{plot_options}{A named list controlling optional plot customization.
+The list can include one or both of the following entries (any not supplied  
+will fall back to their default values):  
+\itemize{
+  \item \code{cluster_heatmap_columns} (`logical`, default = \code{FALSE}):  
+    Whether to cluster the columns in the heatmap.  
+  \item \code{meta_replicate_column} (`character(1)`, 
+    default = \code{NULL}):  
+    Name of the column in \code{meta} that encodes replicate information.  
+    If supplied, spline plot data points are colored by replicate, allowing  
+    replicate-level variation to be assessed.
+}}
 
 \item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
 containing NA values. When provided, it highlights the datapoints in the 
 spline plots that originally where NA and that were imputed.}
 
 \item{report_dir}{Character string specifying the directory path where the
-HTML report and any other output files should be saved.}
+HTML report and any other output files should be saved. Default is the 
+current working dir.}
 
-\item{report}{Boolean TRUE or FALSE value specifing if a report should be
+\item{report}{Boolean TRUE or FALSE value specifying if a report should be
 generated.}
 
 \item{max_hit_number}{Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of
-the HTML report in the case of many hits. Default is 100.}
+the HTML report in the case of many hits. Default is 25.}
 }
 \value{
 A named list with three elements:
