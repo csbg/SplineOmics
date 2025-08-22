@@ -1,5 +1,4 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# .github/workflows/R-CMD-check.yaml
 on:
   push:
     branches: [main, master]
@@ -12,37 +11,38 @@ permissions: read-all
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
-
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - { os: macos-latest,   r: 'release' }
+          - { os: windows-latest, r: 'release' }
+          - { os: ubuntu-latest,  r: 'devel',   http-user-agent: 'release' }
+          - { os: ubuntu-latest,  r: 'release' }
+          - { os: ubuntu-latest,  r: 'oldrel-1' }
 
+    # Keep graphics/text consistent; helps avoid mac text/encoding quirks
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
       R_BITMAP_TYPE: cairo
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
 
     steps:
       - uses: actions/checkout@v4
 
+      # System libs for CRAN/Bioc builds (Linux only)
       - name: Install system dependencies (Ubuntu only)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libz-dev libbz2-dev liblzma-dev libcurl4-openssl-dev \
-            libssl-dev libxml2-dev libgit2-dev build-essential
-
-      - uses: r-lib/actions/setup-pandoc@v2
-
+            zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev \
+            libssl-dev libxml2-dev libgit2-dev build-essential \
+            libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -51,18 +51,27 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-      
+
+      # If you truly need Bioc devel when R='devel'
       - name: Set Bioconductor devel repositories
         if: matrix.config.r == 'devel'
         run: |
           echo 'options(repos = BiocManager::repositories(version = "devel"))' >> ~/.Rprofile
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      # Use renv everywhere to match your clean local state
+      - uses: r-lib/actions/setup-renv@v2
         with:
-          extra-packages: any::rcmdcheck
-          needs: check
+          cache-version: 1
+
+      # Debug aid: shows exactly what libs are in use on mac/Linux
+      - name: Session info
+        run: Rscript -e 'print(.libPaths()); sessioninfo::session_info()'
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          # Optional: if mac vignette segfaults until you finish refactor,
+          # uncomment the next line just for mac via a matrix flag.
+          # build_args: 'c("--no-manual","--no-build-vignettes")'
+
