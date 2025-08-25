@@ -3297,12 +3297,21 @@ plot_spline_comparisons <- function(
     feature_names = time_effect_1$feature_names
   )
   
-  features_to_plot <- dplyr::bind_rows(
-    dplyr::select(avrg_diff_conditions, feature_nr, feature_names),
-    dplyr::select(interaction_condition_time, feature_nr, feature_names)
-  ) |>
-    dplyr::distinct() |>
-    dplyr::slice_head(n = max_hit_number)
+  features_to_plot <- select_balanced_hits(
+    avrg_df  = dplyr::select(
+      avrg_diff_conditions,
+      feature_nr,
+      feature_names,
+      dplyr::any_of("adj.P.Val")
+      ),
+    inter_df = dplyr::select(
+      interaction_condition_time,
+      feature_nr,
+      feature_names,
+      dplyr::any_of("adj.P.Val")
+      ),
+    max_n    = max_hit_number
+  )
   
   # (Optional) sanity check: ensure features exist in prediction matrices
   if (!is.null(rownames(pred_mat_1))) {
@@ -5382,6 +5391,131 @@ plot_cluster_similarity_distribution <- function(
       legend.position = "right",
       aspect.ratio = 0.5
     )
+}
+
+
+#' Select balanced features across two hit tables
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper to select approximately equal numbers of hits from
+#' `avrg_diff_conditions` and `interaction_condition_time` when a
+#' global cap (`max_n`) is applied. This prevents one category from
+#' dominating the limited number of plots when its hit count is much larger.
+#'
+#' The function attempts to select hits in a ~50:50 ratio:
+#' - If both categories have sufficient hits, each supplies half.
+#' - If one category has too few hits, the other fills the remainder.
+#' - Features are ranked within each category by adjusted p-value
+#'   (`adj.P.Val`) if available, otherwise by their current order.
+#' - Duplicate features (appearing in both categories) are only counted once.
+#' - If fewer than `max_n` unique features exist overall, all available
+#'   features are returned.
+#'
+#' @param avrg_df A data frame of hits from average-difference tests,
+#'   must contain at least `feature_nr` and `feature_names`. Optionally,
+#'   it may also contain `adj.P.Val` for ranking.
+#' @param inter_df A data frame of hits from interaction tests,
+#'   must contain at least `feature_nr` and `feature_names`. Optionally,
+#'   it may also contain `adj.P.Val` for ranking.
+#' @param max_n Integer scalar. Maximum number of features to return.
+#'   If `NULL` or `Inf`, all unique features from both inputs are returned.
+#'
+#' @return A data frame with up to `max_n` rows and columns
+#'   `feature_nr` and `feature_names`, containing the selected features.
+#'
+#' @importFrom dplyr bind_rows select distinct slice_head arrange anti_join
+#'                   any_of
+#'                   
+select_balanced_hits <- function(
+    avrg_df,
+    inter_df,
+    max_n
+    ) {
+  # If no cap or Inf: just return unique union (original behavior)
+  if (is.null(max_n) || is.infinite(max_n)) {
+    return(
+      dplyr::bind_rows(
+        dplyr::select(avrg_df,  feature_nr, feature_names),
+        dplyr::select(inter_df, feature_nr, feature_names)
+      ) |>
+        dplyr::distinct()
+    )
+  }
+  
+  # Helper: rank table by adj.P.Val if present, else keep current order
+  rank_tbl <- function(tbl) {
+    has_p <- "adj.P.Val" %in% names(tbl)
+    if (has_p) {
+      tbl |>
+        dplyr::arrange(.data$adj.P.Val, .data$feature_names)
+    } else {
+      tbl # keep incoming order
+    }
+  }
+  
+  avrg_ranked <- avrg_df |> rank_tbl() |> dplyr::select(
+    feature_nr,
+    feature_names
+    )
+  inter_ranked <- inter_df |> rank_tbl() |> dplyr::select(
+    feature_nr,
+    feature_names
+    )
+  
+  half1 <- floor(max_n / 2)
+  half2 <- max_n - half1
+  
+  # pick top unique from avrg, then from inter (excluding already picked)
+  pick_unique <- function(tbl, already) {
+    dplyr::anti_join(tbl, already, by = "feature_names")
+  }
+  
+  chosen_avrg <- avrg_ranked |> dplyr::slice_head(n = half1)
+  # dedupe by name within chosen set (just in case)
+  chosen_avrg <- chosen_avrg |> dplyr::distinct(
+    feature_names,
+    .keep_all = TRUE
+    )
+  
+  inter_pool <- pick_unique(inter_ranked, chosen_avrg)
+  chosen_inter <- inter_pool |> dplyr::slice_head(n = half2)
+  
+  # If any side underfilled, let the other take over
+  need_from_inter <- half2 - nrow(chosen_inter)
+  if (need_from_inter > 0) {
+    extra <- pick_unique(inter_ranked, dplyr::bind_rows(
+      chosen_avrg,
+      chosen_inter)
+      ) |>
+      dplyr::slice_head(n = need_from_inter)
+    chosen_inter <- dplyr::bind_rows(chosen_inter, extra)
+  }
+  
+  need_from_avrg <- half1 - nrow(chosen_avrg)
+  if (need_from_avrg > 0) {
+    extra <- pick_unique(avrg_ranked, dplyr::bind_rows(
+      chosen_avrg,
+      chosen_inter)
+      ) |>
+      dplyr::slice_head(n = need_from_avrg)
+    chosen_avrg <- dplyr::bind_rows(chosen_avrg, extra)
+  }
+  
+  # Final fill if still < max_n (e.g., overall too few hits)
+  combined <- dplyr::bind_rows(chosen_avrg, chosen_inter) |>
+    dplyr::distinct(feature_names, .keep_all = TRUE)
+  if (nrow(combined) < max_n) {
+    # pull remaining from the union in ranked order (avrg first, then inter)
+    union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
+      dplyr::distinct(feature_names, .keep_all = TRUE)
+    extra <- dplyr::anti_join(union_ranked, combined, by = "feature_names") |>
+      dplyr::slice_head(n = max_n - nrow(combined))
+    combined <- dplyr::bind_rows(combined, extra)
+  }
+  
+  dplyr::slice_head(combined, n = max_n)
 }
 
 

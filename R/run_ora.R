@@ -7,7 +7,7 @@
 #' list of the plot objects it generated, and an HTML report with embedded files
 #' containing the enrichment results, and dotplots visualizing the enrichment.
 #'
-#' @param clustering_results A tibble containing one row per
+#' @param cluster_table A tibble containing one row per
 #'   \code{feature_nr} with metadata and cluster assignments across the
 #'   analysis categories. It includes:
 #'   \itemize{
@@ -117,7 +117,7 @@
 #' @export
 #'
 run_ora <- function(
-    clustering_results,
+    cluster_table,
     databases,
     report_info,
     cluster_hits_report_name,
@@ -151,7 +151,7 @@ run_ora <- function(
 
   # Control the test not covered by the InputControl class
   control_inputs_run_ora(
-    clustering_results = clustering_results,
+    cluster_table = cluster_table,
     databases = databases,
     params = clusterProfiler_params,
     mapping_cfg = mapping_cfg,
@@ -162,17 +162,17 @@ run_ora <- function(
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
 
-  clustering_results <- map_gene_symbols(
-    clustering_results = clustering_results,
+  cluster_table <- map_gene_symbols(
+    cluster_table = cluster_table,
     mapping_cfg = mapping_cfg
   )
 
-  lvl_cols  <- level_columns(clustering_results)
-  lvl_names <- level_display_names(clustering_results)
+  lvl_cols  <- level_columns(cluster_table)
+  lvl_names <- level_display_names(cluster_table)
   
   all_results <- mapply(function(col, nm) {
     manage_ora_result_cat(
-      clustering_results = clustering_results,
+      cluster_table = cluster_table,
       level_col = col,
       databases = databases,
       clusterProfiler_params = clusterProfiler_params,
@@ -215,7 +215,7 @@ run_ora <- function(
   report_info$databases                <- unique(databases[["DB"]])
   report_info$clusterProfiler_params   <- clusterProfiler_params
   report_info$cluster_hits_report_name <- cluster_hits_report_name
-  report_info$clustering_results       <- clustering_results
+  report_info$cluster_table            <- cluster_table
   report_info$background_genes         <- universe
   
   # If *all* sections have zero plots, return NULL
@@ -254,8 +254,7 @@ run_ora <- function(
 #' Validates the inputs for generating a ora report, including clustered
 #' hits, genes, databases, parameters, plot titles, and background genes.
 #'
-#' @param clustering_results A tibble produced by
-#'   \code{construct_cluster_summary()}, containing one row per
+#' @param cluster_table A tibble containing one row per
 #'   \code{feature_nr} with metadata and cluster assignments across the
 #'   analysis categories. It includes:
 #'   \itemize{
@@ -327,7 +326,7 @@ run_ora <- function(
 #' otherwise, the connection is not documented.
 #'
 control_inputs_run_ora <- function(
-    clustering_results,
+    cluster_table,
     databases,
     params,
     mapping_cfg,
@@ -336,7 +335,7 @@ control_inputs_run_ora <- function(
     cluster_hits_report_name
 ) {
 
-  check_clustering_results(clustering_results)
+  check_cluster_table(cluster_table)
   
   check_databases(databases)
   
@@ -397,18 +396,38 @@ ensure_clusterProfiler <- function() {
 #'
 #' @description
 #' Runs over-representation analysis (ORA) for a single level column from
-#' the unified \code{clustering_results} table. Foreground gene sets are
+#' the unified \code{cluster_table} table. Foreground gene sets are
 #' built by grouping non-missing \code{gene} values by the labels in the
 #' chosen level column (via \code{make_clustered_genes()}). For cat2 this
 #' yields at most two clusters (\code{"<cond1>_higher"},
 #' \code{"<cond2>_higher"}); other levels use their distinct cluster labels.
 #' The resulting foregrounds are passed to \code{run_ora_level()}.
 #'
-#' @param clustering_results A tibble/data frame produced by
-#'   \code{construct_cluster_summary()} containing columns \code{gene} and
-#'   one or more level columns named \code{cluster_*}.
+#' @param cluster_table A tibble containing one row per
+#'   \code{feature_nr} with metadata and cluster assignments across the
+#'   analysis categories. It includes:
+#'   \itemize{
+#'     \item \code{feature_nr} – Numeric feature identifier.
+#'     \item \code{feature_name} – Preferred feature name from the source
+#'       data, falling back to the numeric ID if none is available.
+#'     \item \code{gene} – Preferred gene symbol from the annotation or
+#'       cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       assignments for each time-effect condition.
+#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
+#'       category 2 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 2 hit.
+#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
+#'       category 3 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 3 hit.
+#'   }
+#'   For any category-specific cluster column, a value of \code{NA}
+#'   indicates that the feature was not significant (not a hit) in that
+#'   category.
 #' @param level_col Character scalar naming the level column in
-#'   \code{clustering_results} to analyze (must exist).
+#'   \code{cluster_table} to analyze (must exist).
 #' @param databases Gene set collections (data frame or list) consumed by
 #'   downstream helpers inside \code{run_ora_level()}.
 #' @param clusterProfiler_params List of clusterProfiler parameters (e.g.,
@@ -424,7 +443,7 @@ ensure_clusterProfiler <- function() {
 #'   enrichment was obtained for any cluster, \code{NA} may be returned.
 #'   
 manage_ora_result_cat <- function(
-    clustering_results,
+    cluster_table,
     level_col,
     databases,
     clusterProfiler_params,
@@ -433,7 +452,7 @@ manage_ora_result_cat <- function(
     plot_title
 ) {
   cg <- make_clustered_genes(
-    clustering_results,
+    cluster_table,
     level_col
     )
   message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
@@ -706,8 +725,29 @@ build_run_ora_report <- function(
 #'  orthologs or ambiguous mappings are left unchanged.
 #' The structure and order of the input list and data frames are preserved.
 #'
-#' @param levels_clustered_hits  List of data frames. Each must have a `gene`
-#'        column. Order is preserved.
+#' @param cluster_table A tibble containing one row per
+#'   \code{feature_nr} with metadata and cluster assignments across the
+#'   analysis categories. It includes:
+#'   \itemize{
+#'     \item \code{feature_nr} – Numeric feature identifier.
+#'     \item \code{feature_name} – Preferred feature name from the source
+#'       data, falling back to the numeric ID if none is available.
+#'     \item \code{gene} – Preferred gene symbol from the annotation or
+#'       cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       assignments for each time-effect condition.
+#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
+#'       category 2 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 2 hit.
+#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
+#'       category 3 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 3 hit.
+#'   }
+#'   For any category-specific cluster column, a value of \code{NA}
+#'   indicates that the feature was not significant (not a hit) in that
+#'   category.
 #' @param mapping_cfg A named list that controls the optional behavior of
 #'        automatically mapping gene symbols across species. This is useful
 #'        when your input gene symbols (e.g., from CHO cells) do not match
@@ -731,13 +771,13 @@ build_run_ora_report <- function(
 #'  replaced by mapped symbols.
 #' 
 map_gene_symbols <- function(
-    clustering_results,
+    cluster_table,
     mapping_cfg
 ) {
   
-  if (!is.data.frame(clustering_results) ||
-      !"gene" %in% names(clustering_results)) {
-    stop("clustering_results must be a data.frame with a 'gene' column.",
+  if (!is.data.frame(cluster_table) ||
+      !"gene" %in% names(cluster_table)) {
+    stop("cluster_table must be a data.frame with a 'gene' column.",
          call. = FALSE)
   }
   stopifnot(
@@ -749,7 +789,7 @@ map_gene_symbols <- function(
   from   <- mapping_cfg$from_species
   to     <- mapping_cfg$to_species
   
-  all_genes <- as.character(clustering_results$gene)
+  all_genes <- as.character(cluster_table$gene)
   has_suffix <- !is.na(all_genes) & grepl("_[0-9]+$", all_genes)
   if (any(has_suffix)) {
     warning(
@@ -809,8 +849,8 @@ map_gene_symbols <- function(
   mapped <- all_genes
   mapped[!is.na(idx)] <- unname(map_vec[idx[!is.na(idx)]])
   
-  clustering_results$gene <- mapped
-  clustering_results
+  cluster_table$gene <- mapped
+  cluster_table
 }
 
 
@@ -833,57 +873,76 @@ map_gene_symbols <- function(
 #' (when present) to be atomic vectors with values either \code{NA} or
 #' strings of the form \code{"<cluster_<cond1>>_<cluster_<cond2>>"}.
 #'
-#' @param clustering_results A tibble/data frame as returned by
-#'   \code{construct_cluster_summary()}, containing one row per
+#' @param cluster_table A tibble containing one row per
 #'   \code{feature_nr} with metadata and cluster assignments across the
-#'   analysis categories.
+#'   analysis categories. It includes:
+#'   \itemize{
+#'     \item \code{feature_nr} – Numeric feature identifier.
+#'     \item \code{feature_name} – Preferred feature name from the source
+#'       data, falling back to the numeric ID if none is available.
+#'     \item \code{gene} – Preferred gene symbol from the annotation or
+#'       cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       assignments for each time-effect condition.
+#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
+#'       category 2 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 2 hit.
+#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
+#'       category 3 hits in the form
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'       feature was not a category 3 hit.
+#'   }
+#'   For any category-specific cluster column, a value of \code{NA}
+#'   indicates that the feature was not significant (not a hit) in that
+#'   category.
 #'
 #' @return Invisibly returns \code{TRUE} on success. The function
 #'   \emph{stops with an informative error} if any validation fails.
 #'   
-check_clustering_results <- function(clustering_results) {
+check_cluster_table <- function(cluster_table) {
   
-  if (!is.data.frame(clustering_results)) {
-    stop("clustering_results must be a data.frame/tibble.", call. = FALSE)
+  if (!is.data.frame(cluster_table)) {
+    stop("cluster_table must be a data.frame/tibble.", call. = FALSE)
   }
   
   req <- c("feature_nr", "feature_name", "gene")
-  missing <- setdiff(req, names(clustering_results))
+  missing <- setdiff(req, names(cluster_table))
   if (length(missing) > 0) {
     stop(paste0("Missing required columns: ",
                 paste(missing, collapse = ", ")), call. = FALSE)
   }
   
-  clust_cols <- grep("^cluster_", names(clustering_results), value = TRUE)
+  clust_cols <- grep("^cluster_", names(cluster_table), value = TRUE)
   cond_cols <- setdiff(clust_cols, c("cluster_cat2", "cluster_cat3"))
   if (length(cond_cols) < 2) {
     stop("Expected at least two condition cluster columns named like ",
          "'cluster_<cond1>' and 'cluster_<cond2>'.", call. = FALSE)
   }
   
-  fn <- clustering_results$feature_nr
+  fn <- cluster_table$feature_nr
   int_like <- is.integer(fn) ||
     (is.numeric(fn) && all(fn == as.integer(fn), na.rm = TRUE))
   if (!int_like) {
     stop("'feature_nr' must be integer-like.", call. = FALSE)
   }
   
-  if (any(duplicated(clustering_results$feature_nr))) {
-    dups <- unique(clustering_results$feature_nr[
-      duplicated(clustering_results$feature_nr)])
+  if (any(duplicated(cluster_table$feature_nr))) {
+    dups <- unique(cluster_table$feature_nr[
+      duplicated(cluster_table$feature_nr)])
     stop(paste0("Duplicate feature_nr values: ",
                 paste(head(dups, 10), collapse = ", "),
                 if (length(dups) > 10) " ..." else ""),
          call. = FALSE)
   }
   
-  fnm <- clustering_results$feature_name
+  fnm <- cluster_table$feature_name
   if (any(is.na(fnm) | fnm == "")) {
     stop("'feature_name' must be non-missing and non-empty.", call. = FALSE)
   }
   
   for (cc in cond_cols) {
-    v <- clustering_results[[cc]]
+    v <- cluster_table[[cc]]
     if (!is.atomic(v)) {
       stop(paste0("Condition cluster column '", cc, "' must be atomic."),
            call. = FALSE)
@@ -891,8 +950,8 @@ check_clustering_results <- function(clustering_results) {
   }
   
   for (cc in c("cluster_cat2", "cluster_cat3")) {
-    if (cc %in% names(clustering_results)) {
-      v <- clustering_results[[cc]]
+    if (cc %in% names(cluster_table)) {
+      v <- cluster_table[[cc]]
       if (!is.atomic(v)) {
         stop(paste0("'", cc, "' must be atomic."), call. = FALSE)
       }

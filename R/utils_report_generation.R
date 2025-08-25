@@ -946,7 +946,6 @@ get_header_section <- function(
       "any plot in this report to save it as a .svg (vector graphic) file!</p>",
       "</div>"
     ),
-    "screen_limma_hyperparams" = '<p style="font-size: 2em;"></p>',
     "create_limma_report" = paste(
       '<div style="border: 2px solid #f00; padding: 15px; position: relative;',
       "margin-bottom: 20px; background-color: #fee; font-family: Arial,",
@@ -965,9 +964,7 @@ get_header_section <- function(
         "limma_result_categories.pdf",
         package = "SplineOmics"
       )),
-      '" download>download and review this PDF document</a><br><br>
-      The grey shaded areas of the plots in this report cover the
-      non-significant features!</p>',
+      '" download>download and review this PDF document</a><br><br></p>',
       "</div>"
     ),
     "find_pvc" = paste(
@@ -1012,8 +1009,10 @@ get_header_section <- function(
       '<ul style="font-size: 2em; padding-left: 20px;">',
       '<li style="margin-bottom: 15px;">Clustering of features that show
       significant changes over time (= hits).</li>',
-      '<li style="margin-bottom: 15px;">Clustering was done based on the min-max
-      normalized shape of the spline. They are created by predicting 10x more  
+      '<li style="margin-bottom: 15px;">Clustering was performed on splines
+      that were z-score normalized along their time axis, i.e. each spline
+      was standardized independently across its timepoints. They are created by
+      predicting 10x more  
       datapoints than timepoints for the time range based on the fitted linear
       model.</li>',
       '<li style="margin-bottom: 15px;">These datapoints are used for
@@ -1026,6 +1025,9 @@ get_header_section <- function(
       individual spline plots is the average coefficient of variation across
       all timepoints. For example, a value of 10% means that the timepoints,
       on average, have a standard deviation of 10% of the mean.</li>',
+      '<li style="margin-bottom: 15px;">For each spline, the cumulative travel
+      is reported, defined as the total absolute change of the spline
+      values along the time axis, expressed in the units of the y-axis.</li>',
       '<li style="margin-bottom: 15px;">If a [WARNING] symbol appears at the
       beginning of a plot title, it indicates that the feature violates
       the homoscedasticity assumption of linear models. It is followed by
@@ -1070,7 +1072,6 @@ get_header_section <- function(
     "</p>",
     "</div>"
   )
-
 
   header_section <- paste(
     header_section,
@@ -1730,7 +1731,7 @@ process_field <- function(
       base64_df <- "Analysis script is unavailable."
     }
   } else if (field == "foreground_genes") {
-    cr <- report_info$clustering_results
+    cr <- report_info$cluster_table
     
     # All level columns we enrich over (present in this run)
     level_cols <- grep("^cluster_", names(cr), value = TRUE)

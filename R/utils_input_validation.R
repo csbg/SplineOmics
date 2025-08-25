@@ -1125,53 +1125,80 @@ InputControl <- R6::R6Class("InputControl",
     #' error message if any check fails.
     #'
     check_adj_pthresholds = function() {
-      # Exploited argument slicing.
-      adj_pthresholds <- self$args[["adj_pthresh"]]
-
-      required_args <- list(adj_pthresholds)
-
+      thresh_timeeffect <- self$args[["adj_pthresholds"]]
+      thresh_avrdiff    <- self$args[["adj_pthresh_avrg_diff_conditions"]]
+      thresh_interact   <- self$args[["adj_pthresh_interaction_condition_time"]]
+      
+      required_args <- list(
+        adj_pthresholds                         = thresh_timeeffect,
+        adj_pthresh_avrg_diff_conditions        = thresh_avrdiff,
+        adj_pthresh_interaction_condition_time  = thresh_interact
+      )
+      
+      # If any is missing, do nothing (preserve your current behavior)
       if (any(vapply(required_args, is.null, logical(1)))) {
         return(NULL)
       }
-
-      if (!is.numeric(adj_pthresholds)) {
-        stop("'adj_pthresholds' must be a numeric vector.",
-          call. = FALSE
-        )
+      
+      validate_vec <- function(name, x) {
+        if (!is.numeric(x) || !is.atomic(x) || !is.null(dim(x))) {
+          stop(
+            paste0("'", name, "' must be a numeric vector."),
+            call. = FALSE
+          )
+        }
+        
+        if (length(x) == 0) {
+          stop(
+            paste0("'", name, "' must have length >= 1."),
+            call. = FALSE
+          )
+        }
+        
+        if (any(!is.finite(x))) {
+          idx <- which(!is.finite(x))
+          stop(
+            paste0(
+              "'", name, "' must not contain NA/NaN/Inf. ",
+              "Offending indices: ", paste(idx, collapse = ", "),
+              ". Values: ", paste(as.character(x[idx]), collapse = ", "), "."
+            ),
+            call. = FALSE
+          )
+        }
+        
+        if (any(x <= 0)) {
+          idx <- which(x <= 0)
+          stop(
+            paste0(
+              "'", name, "' must have all elements > 0. ",
+              "Offending indices: ", paste(idx, collapse = ", "),
+              ". Values: ", paste(x[idx], collapse = ", "), "."
+            ),
+            call. = FALSE
+          )
+        }
+        
+        if (any(x >= 1)) {
+          idx <- which(x >= 1)
+          stop(
+            paste0(
+              "'", name, "' must have all elements < 1. ",
+              "Offending indices: ", paste(idx, collapse = ", "),
+              ". Values: ", paste(x[idx], collapse = ", "), "."
+            ),
+            call. = FALSE
+          )
+        }
+        
+        TRUE
       }
-
-      # Check for elements <= 0
-      if (any(adj_pthresholds <= 0)) {
-        offending_elements <- which(adj_pthresholds <= 0)
-        stop(
-          paste0(
-            "'adj_pthresholds' must have all elements > 0. ",
-            "Offending elements at indices: ",
-            paste(offending_elements, collapse = ", "),
-            ". Values: ",
-            paste(adj_pthresholds[offending_elements], collapse = ", "),
-            "."
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Check for elements >= 1
-      if (any(adj_pthresholds >= 1)) {
-        offending_elements <- which(adj_pthresholds >= 1)
-        stop(
-          paste0(
-            "'adj_pthresholds' must have all elements < 1. ",
-            "Offending elements at indices: ",
-            paste(offending_elements, collapse = ", "),
-            ". Values: ",
-            paste(adj_pthresholds[offending_elements], collapse = ", "),
-            "."
-          ),
-          call. = FALSE
-        )
-      }
-
+      
+      # Validate all three
+      invisible(lapply(names(required_args), function(nm) {
+        validate_vec(nm, required_args[[nm]])
+      }))
+      
       return(TRUE)
     },
 
@@ -2085,8 +2112,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
     #'
     #' @param data A dataframe containing numeric values.
     #' @param data_meta_index An optional parameter specifying the index of the
-    #'  data
-    #' for error messages. Default is NA.
+    #'  data for error messages. Default is NA.
     #'
     #' @return Returns TRUE if all checks pass. Stops execution and returns an
     #' error
@@ -2096,6 +2122,73 @@ Level2Functions <- R6::R6Class("Level2Functions",
         data,
         data_meta_index = NULL
         ) {
+      
+      all_zero <- function(x) {
+        apply(x, 1, function(row) all(row == 0))
+      }
+      
+      # Check for all-zero rows
+      zero_rows <- which(all_zero(data))
+      if (length(zero_rows) > 0) {
+        row_names <- rownames(data)[zero_rows]
+        stop_call_false(
+          self$create_error_message(
+            paste0(
+              "Data must not contain rows where all values are zero! ",
+              "Offending rows: ",
+              paste(ifelse(
+                is.null(row_names),
+                zero_rows,
+                row_names
+                ),
+                collapse = ", ")
+            ),
+            data_meta_index
+          )
+        )
+      }
+      
+      # Check for all-NA rows
+      na_rows <- which(apply(data, 1, function(row) all(is.na(row))))
+      if (length(na_rows) > 0) {
+        row_names <- rownames(data)[na_rows]
+        stop_call_false(
+          self$create_error_message(
+            paste0(
+              "Data must not contain rows where all values are NA! ",
+              "Offending rows: ",
+              paste(ifelse(
+                is.null(row_names),
+                na_rows,
+                row_names
+                ),
+                collapse = ", ")
+            ),
+            data_meta_index
+          )
+        )
+      }
+      
+      # Check for all-NA columns
+      na_cols <- which(apply(data, 2, function(col) all(is.na(col))))
+      if (length(na_cols) > 0) {
+        col_names <- colnames(data)[na_cols]
+        stop_call_false(
+          self$create_error_message(
+            paste0(
+              "Data must not contain columns where all values are NA! ",
+              "Offending columns: ",
+              paste(ifelse(
+                is.null(col_names),
+                na_cols,
+                col_names
+                ),
+                collapse = ", ")
+            ),
+            data_meta_index
+          )
+        )
+      }
 
       # Ensure data is a numeric matrix
       if (!inherits(data, "matrix") || !is.numeric(data)) {
@@ -2136,32 +2229,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
             ),
             data_meta_index
           )
-        )
-      }
-      
-      all_zero <- function(x) {
-        apply(x, 1, function(row) all(row == 0))
-      }
-      
-      # Check for all-zero rows
-      if (any(all_zero(data))) {
-        stop(
-          self$create_error_message(
-            "Data must not contain rows where all values are zero!",
-            data_meta_index
-          ),
-          call. = FALSE
-        )
-      }
-      
-      # Check for all-zero columns
-      if (any(all_zero(t(data)))) {
-        stop(
-          self$create_error_message(
-            "Data must not contain columns where all values are zero!",
-            data_meta_index
-          ),
-          call. = FALSE
         )
       }
       

@@ -592,7 +592,7 @@ biological insights is to perform ORA For this, the respective genes
 can be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
-```{r download Enrichr databases, eval = TRUE}
+```{r download Enrichr databases, eval = FALSE}
 # Create a temporary directory for R CMD check
 report_dir <- file.path(tempdir(), "ora_reports")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
@@ -629,7 +629,7 @@ report dir can be specified. The function run_ora() runs ORA
 using clusterProfiler, generates an HTML report and returns the ORA
 dotplots in R.
 
-```{r prepare arguments for ORA, eval = TRUE}
+```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(report_dir, "databases.tsv")
 
@@ -653,9 +653,9 @@ clusterProfiler_params <- list(
 The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
-```{r run ORA, eval = TRUE}
+```{r run ORA, eval = FALSE}
 result <- SplineOmics::run_ora(
-  clustering_results = clustering_results[["cluster_table"]],
+  cluster_table = clustering_results[["cluster_table"]],
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,

@@ -32,17 +32,6 @@
   (hit) in this limma result category (irrespective of the temporal pattern of 
   this feature in any of the compared levels).
 </p>
-<div style="border: 2px solid #3498db; background-color: #eaf2f8; padding: 15px; margin-top: 20px; border-radius: 5px;">
-  <p style="font-size: 110%; font-weight: bold;">Plot Explanation:</p>
-  <p style="font-size: 100%;">
-    A volcano plot is a scatter plot used to visualize the results of multiple 
-    hypothesis tests. The x-axis represents the log fold change, showing how 
-    much something changes between two groups, while the y-axis represents 
-    -log10(adj. p-value), which shows the statistical significance. Points 
-    further from the center on the x-axis show larger effects, and points higher 
-    on the y-axis indicate more significant results.
-  </p>
-</div>
 
 <p style="font-size: 150%;">
 Features that have a significant interaction of condition and time have a different temporal pattern of their spline in both compared levels. For example, if the spline curve goes up in level 1 of the comparison, but goes down in level 2, this could be a significant feature (hit) in this limma result category.

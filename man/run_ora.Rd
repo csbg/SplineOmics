@@ -5,7 +5,7 @@
 \title{run_ora()}
 \usage{
 run_ora(
-  clustering_results,
+  cluster_table,
   databases,
   report_info,
   cluster_hits_report_name,
@@ -17,7 +17,7 @@ run_ora(
 )
 }
 \arguments{
-\item{clustering_results}{A tibble containing one row per
+\item{cluster_table}{A tibble containing one row per
 \code{feature_nr} with metadata and cluster assignments across the
 analysis categories. It includes:
 \itemize{

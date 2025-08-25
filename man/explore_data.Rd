@@ -7,9 +7,47 @@
 explore_data(splineomics, report_dir = here::here(), report = TRUE)
 }
 \arguments{
-\item{splineomics}{A SplineOmics object, containing the data, meta,
-condition, report_info, meta_batch_column, and
-meta_batch2_column.}
+\item{splineomics}{A named list containing all required inputs for the
+splineomics workflow. Must contain the following elements:
+\describe{
+  \item{data}{[numeric matrix]  
+    The data matrix with the values. The columns are the
+    samples (timepoint + replicate combo) and the rows are the features
+    (e.g. genes or proteins).}
+  \item{meta}{[dataframe]  
+     A dataframe containing metadata corresponding to the
+     \code{data}, must include a 'Time' column and any columns specified by
+     \code{conditions}. In general, the columns of meta correspond to the
+     different types of metadata, and each row corresponds to a column of
+     data (contains the metadata for that sample).}
+  \item{annotation}{[dataframe]  
+    A dataframe that maps the rows of \code{data} to
+    annotation info, such as the gene name or database identifiers.}
+  \item{report_info}{[named list]  
+    A named list describing the experiment.  
+Must include the following fields:  
+  - \code{"omics_data_type"}  
+  - \code{"data_description"}  
+  - \code{"data_collection_date"}  
+  - \code{"analyst_name"}  
+  - \code{"contact_info"}  
+  - \code{"project_name"}  
+
+May also include the following optional fields:  
+  - \code{"method_description"}  
+  - \code{"results_summary"}  
+  - \code{"conclusions"}  }
+  \item{condition}{[character]  
+    Character vector of length 1 specifying the column
+    name in \code{meta} used to define groups for analysis.}
+  \item{meta_batch_column}{[character]  
+    Character vector of length 1 specifying the column
+    name in \code{meta} that contains the info for the batch effect.}
+  \item{meta_batch2_column}{[character]  
+    Character vector of length 1 specifying the column
+    name in \code{meta} that contains the info for the second batch
+    effect.}
+}}
 
 \item{report_dir}{A non-empty string specifying the report directory. The
 output HTML reports will be placed there. Default is the
@@ -17,9 +55,7 @@ current working dir, determined with the here library:
 here::here().}
 
 \item{report}{A Boolean TRUE or FALSE value, specifying if a report should
-be generated or not. A report is generated per default, but
-when only the plots as plot objects inside R are desired, this
-argument can be set to FALSE.}
+be generated or not.}
 }
 \value{
 A list of ggplot objects representing various exploratory plots.

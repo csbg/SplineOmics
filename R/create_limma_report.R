@@ -433,7 +433,6 @@ build_create_limma_report <- function(
   # Remove empty elements created by split
   text_blocks <- Filter(function(x) length(x) > 0, text_blocks)
 
-
   html_content <- paste(
     header_section,
     "<!--TOC-->",

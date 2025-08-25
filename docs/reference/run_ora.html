@@ -15,7 +15,7 @@ containing the enrichment results, and dotplots visualizing the enrichment."></h
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@ containing the enrichment results, and dotplots visualizing the enrichment.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_ora</span><span class="op">(</span></span>
-<span>  <span class="va">clustering_results</span>,</span>
+<span>  <span class="va">cluster_table</span>,</span>
 <span>  <span class="va">databases</span>,</span>
 <span>  <span class="va">report_info</span>,</span>
 <span>  <span class="va">cluster_hits_report_name</span>,</span>
@@ -81,7 +81,7 @@ containing the enrichment results, and dotplots visualizing the enrichment.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-clustering-results">clustering_results<a class="anchor" aria-label="anchor" href="#arg-clustering-results"></a></dt>
+<dl><dt id="arg-cluster-table">cluster_table<a class="anchor" aria-label="anchor" href="#arg-cluster-table"></a></dt>
 <dd><p>A tibble containing one row per
 <code>feature_nr</code> with metadata and cluster assignments across the
 analysis categories. It includes:</p><ul><li><p><code>feature_nr</code> – Numeric feature identifier.</p></li>

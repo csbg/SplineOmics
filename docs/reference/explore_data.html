@@ -19,7 +19,7 @@ report directory."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,9 +78,59 @@ report directory.</p>
 
 
 <dl><dt id="arg-splineomics">splineomics<a class="anchor" aria-label="anchor" href="#arg-splineomics"></a></dt>
-<dd><p>A SplineOmics object, containing the data, meta,
-condition, report_info, meta_batch_column, and
-meta_batch2_column.</p></dd>
+<dd><p>A named list containing all required inputs for the
+splineomics workflow. Must contain the following elements:</p><dl><dt>data</dt>
+<dd><p>[numeric matrix]
+    The data matrix with the values. The columns are the
+    samples (timepoint + replicate combo) and the rows are the features
+    (e.g. genes or proteins).</p></dd>
+
+  <dt>meta</dt>
+<dd><p>[dataframe]
+     A dataframe containing metadata corresponding to the
+     <code>data</code>, must include a 'Time' column and any columns specified by
+     <code>conditions</code>. In general, the columns of meta correspond to the
+     different types of metadata, and each row corresponds to a column of
+     data (contains the metadata for that sample).</p></dd>
+
+  <dt>annotation</dt>
+<dd><p>[dataframe]
+    A dataframe that maps the rows of <code>data</code> to
+    annotation info, such as the gene name or database identifiers.</p></dd>
+
+  <dt>report_info</dt>
+<dd><p>[named list]
+    A named list describing the experiment.
+Must include the following fields:
+  - <code>"omics_data_type"</code>
+  - <code>"data_description"</code>
+  - <code>"data_collection_date"</code>
+  - <code>"analyst_name"</code>
+  - <code>"contact_info"</code>
+  - <code>"project_name"</code></p>
+<p>May also include the following optional fields:
+  - <code>"method_description"</code>
+  - <code>"results_summary"</code>
+  - <code>"conclusions"</code></p></dd>
+
+  <dt>condition</dt>
+<dd><p>[character]
+    Character vector of length 1 specifying the column
+    name in <code>meta</code> used to define groups for analysis.</p></dd>
+
+  <dt>meta_batch_column</dt>
+<dd><p>[character]
+    Character vector of length 1 specifying the column
+    name in <code>meta</code> that contains the info for the batch effect.</p></dd>
+
+  <dt>meta_batch2_column</dt>
+<dd><p>[character]
+    Character vector of length 1 specifying the column
+    name in <code>meta</code> that contains the info for the second batch
+    effect.</p></dd>
+
+
+</dl></dd>
 
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
@@ -92,9 +142,7 @@ here::here().</p></dd>
 
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
 <dd><p>A Boolean TRUE or FALSE value, specifying if a report should
-be generated or not. A report is generated per default, but
-when only the plots as plot objects inside R are desired, this
-argument can be set to FALSE.</p></dd>
+be generated or not.</p></dd>
 
 </dl></div>
     <div class="section level2">

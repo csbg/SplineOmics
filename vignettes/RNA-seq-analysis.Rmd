@@ -514,7 +514,7 @@ result <- SplineOmics::run_gsea(
   # A dataframe with three columns: feature, cluster, and gene. Feature contains
   # the integer index of the feature, cluster the integer specifying the cluster
   # number, and gene the string of the gene, such as "CLSTN2".
-  clustering_results = clustering_results[["cluster_table"]],
+  cluster_table = clustering_results[["cluster_table"]],
   databases = databases,
   clusterProfiler_params = clusterProfiler_params,
   report_info = report_info,
