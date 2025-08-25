@@ -153,21 +153,22 @@ automatically mapping gene symbols across species. This is useful
 when your input gene symbols (e.g., from CHO cells) do not match
 the species used by the enrichment databases (e.g., human or mouse).
 By default, no mapping is performed and gene symbols are used as-is.
-If mapping is desired, this list must contain the following **three**
+If mapping is desired, this list must contain the following three
 elements:</p><dl><dt>method</dt>
-<dd><p>Mapping method to use. One of `"none"` (default;
-  no mapping), `"gprofiler"` (online, via the g:Profiler API), or
-   `"orthogene"` (offline, if installed).</p></dd>
+<dd><p>Mapping method to use. One of <code>none</code> (default;
+  no mapping), <code>gprofiler</code> (online, via the g:Profiler API), or
+  <code>orthogene</code> (offline, if installed).</p></dd>
 
   <dt>from_species</dt>
-<dd><p>Source species code
-  (e.g., `"cgriseus"` for CHO). Must match the expected format for
-   the selected tool.</p></dd>
+<dd><p>Source species code,
+  e.g. <code>cgriseus</code> for CHO. Must match the expected format for
+  the selected tool.</p></dd>
 
-  <dt>to_species"</dt>
-<dd><p>Target species code
-  (e.g., `"hsapiens"` for human). This must be the species used in
-   your ORA database.</p></dd>
+  <dt>to_species</dt>
+<dd><p>Target species code,
+  e.g. <code>hsapiens</code> for human. This must be the species used in
+  your ORA database and must also match the expected format for the
+  selected tool.</p></dd>
 
 
 </dl></dd>
@@ -190,19 +191,74 @@ enrichment is performed. All enrichment runs through
 
 
 <dt id="arg-universe">universe<a class="anchor" aria-label="anchor" href="#arg-universe"></a></dt>
-<dd><p>Enrichment background data, default is NULL. This is a
+<dd><p>Enrichment background data. This is a
 parameter of clusterProfiler, for the documentation, please check the
 documentation of the clusterProfiler R package.</p></dd>
 
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
-<dd><p>Directory where the report will be saved, default is
-`here::here()`.</p></dd>
+<dd><p>Directory where the report will be saved.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of all plot objects, generated for the ora report.</p>
+    <p>A nested, named list whose top-level elements correspond to the
+limma result categories. The exact set of elements depends on <code>mode</code>:</p>
+<dl><dt><code>mode == "isolated"</code></dt>
+<dd><p>Two elements are returned, one per condition level:
+    <code>time_effect_condition_&lt;level1&gt;</code> and
+    <code>time_effect_condition_&lt;level2&gt;</code>.</p></dd>
+
+  <dt><code>mode == "integrated"</code></dt>
+<dd><p>The two time–effect elements above, plus (only if there are significant
+    hits at the chosen thresholds) up to two additional elements:
+    <code>avrg_diff_conditions</code> and <code>interaction_condition_time</code>.</p></dd>
+
+
+</dl><p>Each top‑level result category element is a list with the fields:</p><dl><dt><code>dotplot</code></dt>
+<dd><p>A <code>ggplot</code> object: the dot plot of
+    over-representation results (clusterProfiler) for that category.</p></dd>
+
+  <dt><code>dotplot_nrows</code></dt>
+<dd><p>Numeric scalar giving a suggested plot height
+    (in rows / relative units) that prints nicely for the number of
+    enriched terms shown.</p></dd>
+
+  <dt><code>ora_results</code></dt>
+<dd><p>A nested list of the raw enrichment results,
+    structured as:</p><dl><dt><em>cluster</em> \(\rightarrow\) <em>database</em></dt>
+<dd><p>For each cluster in the category, there is a sublist with one entry
+        per database used in the enrichment. The value of each entry is
+        either
+        <code>NA</code> (no terms enriched for that cluster–database) or a
+        <code>data.frame</code> as returned by
+        <code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">clusterProfiler::enricher()</a></code> for the enriched terms.</p></dd>
+
+
+</dl></dd>
+
+
+</dl><p>In summary, the full shape is:</p><div class="sourceCode"><pre><code>
+list(
+  time_effect_condition_&lt;level1&gt; = list(
+    dotplot        = ggplot,
+    dotplot_nrows  = numeric(1),
+    ora_results    = list(
+      &lt;cluster_1&gt; = list(&lt;database_1&gt; = NA|data.frame, ...),
+      &lt;cluster_2&gt; = list(&lt;database_1&gt; = NA|data.frame, ...),
+      ...
+    )
+  ),
+  time_effect_condition_&lt;level2&gt; = list(...),
+  avrg_diff_conditions          = list(...), # only if hits (integrated mode)
+  interaction_condition_time    = list(...)  # only if hits (integrated mode)
+)
+</code></pre></div>
+
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">clusterProfiler::enricher()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

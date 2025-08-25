@@ -78,18 +78,19 @@ automatically mapping gene symbols across species. This is useful
 when your input gene symbols (e.g., from CHO cells) do not match
 the species used by the enrichment databases (e.g., human or mouse).
 By default, no mapping is performed and gene symbols are used as-is.
-If mapping is desired, this list must contain the following **three**
+If mapping is desired, this list must contain the following three
 elements:
 \describe{
-  \item{method}{Mapping method to use. One of `"none"` (default; 
-  no mapping), `"gprofiler"` (online, via the g:Profiler API), or
-   `"orthogene"` (offline, if installed).}
-  \item{from_species}{Source species code 
-  (e.g., `"cgriseus"` for CHO). Must match the expected format for
-   the selected tool.}
-  \item{to_species"}{Target species code 
-  (e.g., `"hsapiens"` for human). This must be the species used in
-   your ORA database.}
+  \item{method}{Mapping method to use. One of \code{none} (default;
+  no mapping), \code{gprofiler} (online, via the g:Profiler API), or
+  \code{orthogene} (offline, if installed).}
+  \item{from_species}{Source species code,
+  e.g. \code{cgriseus} for CHO. Must match the expected format for
+  the selected tool.}
+  \item{to_species}{Target species code,
+  e.g. \code{hsapiens} for human. This must be the species used in
+  your ORA database and must also match the expected format for the
+  selected tool.}
 }}
 
 \item{enrichGO_cfg}{A named list specifying the configuration for 
@@ -111,15 +112,66 @@ If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO
 enrichment is performed. All enrichment runs through 
 \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.}
 
-\item{universe}{Enrichment background data, default is NULL. This is a
+\item{universe}{Enrichment background data. This is a
 parameter of clusterProfiler, for the documentation, please check the 
 documentation of the clusterProfiler R package.}
 
-\item{report_dir}{Directory where the report will be saved, default is
-`here::here()`.}
+\item{report_dir}{Directory where the report will be saved.}
 }
 \value{
-A list of all plot objects, generated for the ora report.
+A nested, named list whose top-level elements correspond to the
+limma result categories. The exact set of elements depends on \code{mode}:
+
+\describe{
+  \item{\code{mode == "isolated"}}{
+    Two elements are returned, one per condition level:
+    \code{time_effect_condition_<level1>} and
+    \code{time_effect_condition_<level2>}.
+  }
+  \item{\code{mode == "integrated"}}{
+    The two time–effect elements above, plus (only if there are significant
+    hits at the chosen thresholds) up to two additional elements:
+    \code{avrg_diff_conditions} and \code{interaction_condition_time}.
+  }
+}
+
+Each top‑level result category element is a list with the fields:
+\describe{
+  \item{\code{dotplot}}{A \code{ggplot} object: the dot plot of
+    over-representation results (clusterProfiler) for that category.}
+  \item{\code{dotplot_nrows}}{Numeric scalar giving a suggested plot height
+    (in rows / relative units) that prints nicely for the number of
+    enriched terms shown.}
+  \item{\code{ora_results}}{A nested list of the raw enrichment results,
+    structured as:
+    \describe{
+      \item{\emph{cluster} \eqn{\rightarrow} \emph{database}}{
+        For each cluster in the category, there is a sublist with one entry
+        per database used in the enrichment. The value of each entry is 
+        either
+        \code{NA} (no terms enriched for that cluster–database) or a
+        \code{data.frame} as returned by
+        \code{clusterProfiler::enricher()} for the enriched terms.}
+    }}
+}
+
+In summary, the full shape is:
+\preformatted{
+list(
+  time_effect_condition_<level1> = list(
+    dotplot        = ggplot,
+    dotplot_nrows  = numeric(1),
+    ora_results    = list(
+      <cluster_1> = list(<database_1> = NA|data.frame, ...),
+      <cluster_2> = list(<database_1> = NA|data.frame, ...),
+      ...
+    )
+  ),
+  time_effect_condition_<level2> = list(...),
+  avrg_diff_conditions          = list(...), # only if hits (integrated mode)
+  interaction_condition_time    = list(...)  # only if hits (integrated mode)
+)
+}
 }
 \description{
 This function generates a overrepresentation analysis report based
@@ -127,4 +179,7 @@ on clustered hit levels, gene data, and specified databases. It accomplishes
 this by using the R package clusterProfiler. As output, you will receive a
 list of the plot objects it generated, and an HTML report with embedded files
 containing the enrichment results, and dotplots visualizing the enrichment.
+}
+\seealso{
+\code{clusterProfiler::enricher()}
 }

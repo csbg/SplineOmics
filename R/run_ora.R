@@ -68,18 +68,19 @@
 #'        when your input gene symbols (e.g., from CHO cells) do not match
 #'        the species used by the enrichment databases (e.g., human or mouse).
 #'        By default, no mapping is performed and gene symbols are used as-is.
-#'        If mapping is desired, this list must contain the following **three**
+#'        If mapping is desired, this list must contain the following three
 #'        elements:
 #'        \describe{
-#'          \item{method}{Mapping method to use. One of `"none"` (default; 
-#'          no mapping), `"gprofiler"` (online, via the g:Profiler API), or
-#'           `"orthogene"` (offline, if installed).}
-#'          \item{from_species}{Source species code 
-#'          (e.g., `"cgriseus"` for CHO). Must match the expected format for
-#'           the selected tool.}
-#'          \item{to_species"}{Target species code 
-#'          (e.g., `"hsapiens"` for human). This must be the species used in
-#'           your ORA database.}
+#'          \item{method}{Mapping method to use. One of \code{none} (default;
+#'          no mapping), \code{gprofiler} (online, via the g:Profiler API), or
+#'          \code{orthogene} (offline, if installed).}
+#'          \item{from_species}{Source species code,
+#'          e.g. \code{cgriseus} for CHO. Must match the expected format for
+#'          the selected tool.}
+#'          \item{to_species}{Target species code,
+#'          e.g. \code{hsapiens} for human. This must be the species used in
+#'          your ORA database and must also match the expected format for the
+#'          selected tool.}
 #'        }
 #'        
 #' @param enrichGO_cfg A named list specifying the configuration for 
@@ -101,14 +102,68 @@
 #' enrichment is performed. All enrichment runs through 
 #' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
 #' 
-#' @param universe Enrichment background data, default is NULL. This is a
+#' @param universe Enrichment background data. This is a
 #' parameter of clusterProfiler, for the documentation, please check the 
 #' documentation of the clusterProfiler R package.
 #' 
-#' @param report_dir Directory where the report will be saved, default is
-#' `here::here()`.
+#' @param report_dir Directory where the report will be saved.
 #'
-#' @return A list of all plot objects, generated for the ora report.
+#' @return
+#' A nested, named list whose top-level elements correspond to the
+#' limma result categories. The exact set of elements depends on \code{mode}:
+#'
+#' \describe{
+#'   \item{\code{mode == "isolated"}}{
+#'     Two elements are returned, one per condition level:
+#'     \code{time_effect_condition_<level1>} and
+#'     \code{time_effect_condition_<level2>}.
+#'   }
+#'   \item{\code{mode == "integrated"}}{
+#'     The two time–effect elements above, plus (only if there are significant
+#'     hits at the chosen thresholds) up to two additional elements:
+#'     \code{avrg_diff_conditions} and \code{interaction_condition_time}.
+#'   }
+#' }
+#'
+#' Each top‑level result category element is a list with the fields:
+#' \describe{
+#'   \item{\code{dotplot}}{A \code{ggplot} object: the dot plot of
+#'     over-representation results (clusterProfiler) for that category.}
+#'   \item{\code{dotplot_nrows}}{Numeric scalar giving a suggested plot height
+#'     (in rows / relative units) that prints nicely for the number of
+#'     enriched terms shown.}
+#'   \item{\code{ora_results}}{A nested list of the raw enrichment results,
+#'     structured as:
+#'     \describe{
+#'       \item{\emph{cluster} \eqn{\rightarrow} \emph{database}}{
+#'         For each cluster in the category, there is a sublist with one entry
+#'         per database used in the enrichment. The value of each entry is 
+#'         either
+#'         \code{NA} (no terms enriched for that cluster–database) or a
+#'         \code{data.frame} as returned by
+#'         \code{clusterProfiler::enricher()} for the enriched terms.}
+#'     }}
+#' }
+#'
+#' In summary, the full shape is:
+#' \preformatted{
+#' list(
+#'   time_effect_condition_<level1> = list(
+#'     dotplot        = ggplot,
+#'     dotplot_nrows  = numeric(1),
+#'     ora_results    = list(
+#'       <cluster_1> = list(<database_1> = NA|data.frame, ...),
+#'       <cluster_2> = list(<database_1> = NA|data.frame, ...),
+#'       ...
+#'     )
+#'   ),
+#'   time_effect_condition_<level2> = list(...),
+#'   avrg_diff_conditions          = list(...), # only if hits (integrated mode)
+#'   interaction_condition_time    = list(...)  # only if hits (integrated mode)
+#' )
+#' }
+#'
+#' @seealso \code{clusterProfiler::enricher()}
 #'
 #' @importFrom purrr map2 flatten
 #' @importFrom here here
@@ -161,8 +216,12 @@ run_ora <- function(
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
 
-  cluster_table <- map_gene_symbols(
-    cluster_table = cluster_table,
+  cluster_table[["gene"]] <- map_gene_symbols(
+    genes = cluster_table[["gene"]],
+    mapping_cfg = mapping_cfg
+  )
+  universe <- map_gene_symbols(
+    genes = universe,
     mapping_cfg = mapping_cfg
   )
 
@@ -455,6 +514,7 @@ manage_ora_result_cat <- function(
     level_col
     )
   message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
+
   run_ora_level(
     clustered_genes = cg,
     databases = databases,
@@ -700,110 +760,61 @@ build_run_ora_report <- function(
 
 
 #' Map gene symbols across species
-#' 
-#' @noRd
-#' 
+#'
 #' @description
-#' This function maps gene symbols from one species to another using optional 
-#' external tools. 
-#' It is primarily intended to harmonize gene symbols across species in 
-#' preparation for downstream analyses 
-#' such as overrepresentation analysis (ORA), where gene identifiers must match
-#'  those used by the reference database.
+#' This function maps gene symbols from one species to another using either
+#' the g:Profiler API (`gprofiler`) or the `orthogene` package (`orthogene`).
+#' It preserves the input order and length, returning a vector of mapped gene
+#' symbols aligned to the input. If `method = "none"`, the input is returned
+#' unchanged.
 #'
-#' The function takes a list of data frames (`levels_clustered_hits`), each of
-#'  which must contain a column named `gene`.
-#' It replaces the gene symbols in this column based on orthology mappings 
-#' between the specified source and target species.
-#' Mappings are performed via either the `gprofiler2` or `orthogene` package,
-#'  depending on user configuration. 
-#' If no mapping is requested (`method = "none"`), the gene symbols are returned
-#'  unchanged.
-#'
-#' Only 1:1 orthologs are retained during mapping; genes with no matching
-#'  orthologs or ambiguous mappings are left unchanged.
-#' The structure and order of the input list and data frames are preserved.
-#'
-#' @param cluster_table A tibble containing one row per
-#'   \code{feature_nr} with metadata and cluster assignments across the
-#'   analysis categories. It includes:
-#'   \itemize{
-#'     \item \code{feature_nr} – Numeric feature identifier.
-#'     \item \code{feature_name} – Preferred feature name from the source
-#'       data, falling back to the numeric ID if none is available.
-#'     \item \code{gene} – Preferred gene symbol from the annotation or
-#'       cluster data.
-#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
-#'       assignments for each time-effect condition.
-#'     \item \code{cluster_cat2} – (Optional) Combined cluster label for
-#'       category 2 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-#'       feature was not a category 2 hit.
-#'     \item \code{cluster_cat3} – (Optional) Combined cluster label for
-#'       category 3 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-#'       feature was not a category 3 hit.
+#' @param genes Character vector of gene symbols.
+#' @param mapping_cfg Named list controlling cross-species mapping:
+#'   \describe{
+#'     \item{method}{One of `"none"` (default), `"gprofiler"`, `"orthogene"`.}
+#'     \item{from_species}{Source organism code (e.g., `"cgriseus"`,
+#'       `"mmusculus"`).}
+#'     \item{to_species}{Target organism code (e.g., `"hsapiens"`,
+#'       `"mmusculus"`).}
 #'   }
-#'   For any category-specific cluster column, a value of \code{NA}
-#'   indicates that the feature was not significant (not a hit) in that
-#'   category.
-#' @param mapping_cfg A named list that controls the optional behavior of
-#'        automatically mapping gene symbols across species. This is useful
-#'        when your input gene symbols (e.g., from CHO cells) do not match
-#'        the species used by the enrichment databases (e.g., human or mouse).
-#'        By default, no mapping is performed and gene symbols are used as-is.
-#'        If mapping is desired, this list must contain the following **three**
-#'        elements:
-#'        \describe{
-#'          \item{method}{Mapping method to use. One of `"none"` (default; 
-#'          no mapping), `"gprofiler"` (online, via the g:Profiler API), or
-#'           `"orthogene"` (offline, if installed).}
-#'          \item{from_species}{Source species code 
-#'          (e.g., `"cgriseus"` for CHO). Must match the expected format for
-#'           the selected tool.}
-#'          \item{to_species"}{Target species code 
-#'          (e.g., `"hsapiens"` for human). This must be the species used in
-#'           your ORA database.}
-#'        }
-#'        
-#' @return Same `levels_clustered_hits` list, same order, `gene` column
-#'  replaced by mapped symbols.
-#' 
+#'
+#' @return Character vector of mapped symbols, same length and order as
+#'   \code{genes}.
+#'
 map_gene_symbols <- function(
-    cluster_table,
-    mapping_cfg
-) {
+    genes,
+    mapping_cfg = list(method = "none")
+    ) {
+  stopifnot(is.character(genes))
+  if (is.null(mapping_cfg$method)) mapping_cfg$method <- "none"
+  method <- tolower(mapping_cfg$method)
   
-  if (!is.data.frame(cluster_table) ||
-      !"gene" %in% names(cluster_table)) {
-    stop("cluster_table must be a data.frame with a 'gene' column.",
+  if (identical(method, "none")) return(genes)
+  
+  from <- mapping_cfg$from_species
+  to   <- mapping_cfg$to_species
+  if (is.null(from) || is.null(to)) {
+    stop("For method='", method,
+         "', please provide from_species and to_species.",
          call. = FALSE)
   }
-  stopifnot(
-    is.list(mapping_cfg),
-    all(c("method","from_species","to_species") %in% names(mapping_cfg))
-  )
   
-  method <- tolower(mapping_cfg$method)
-  from   <- mapping_cfg$from_species
-  to     <- mapping_cfg$to_species
-  
-  all_genes <- as.character(cluster_table$gene)
-  has_suffix <- !is.na(all_genes) & grepl("_[0-9]+$", all_genes)
+  has_suffix <- !is.na(genes) & grepl("_[0-9]+$", genes)
   if (any(has_suffix)) {
-    warning(
-      "Some gene IDs end in '_<digits>'. No automatic stripping will be ",
-      "performed. Clean them yourself if they fail to map.",
-      call. = FALSE
-    )
+    warning("Some gene IDs end in '_<digits>'. No automatic stripping ",
+            "performed.", call. = FALSE)
   }
   
-  unique_genes <- unique(all_genes[!is.na(all_genes)])
+  unique_genes <- unique(genes[!is.na(genes)])
+  
+  pick_first_per_input <- function(df, in_col, out_col) {
+    df <- df[!is.na(df[[out_col]]), , drop = FALSE]
+    df <- df[!duplicated(df[[in_col]]), , drop = FALSE]
+    stats::setNames(df[[out_col]], df[[in_col]])
+  }
   
   map_vec <- switch(
     method,
-    "none" = setNames(unique_genes, unique_genes),
-    
     "gprofiler" = {
       if (!requireNamespace("gprofiler2", quietly = TRUE)) {
         stop("'gprofiler2' not installed; install it or set method='none'.",
@@ -816,9 +827,13 @@ map_gene_symbols <- function(
         mthreshold = Inf,
         filter_na = TRUE
       )
-      setNames(gp$ortholog_name, gp$input)
+      if (!all(c("input","ortholog_name") %in% names(gp))) {
+        stop("gprofiler2::gorth returned unexpected columns: ",
+             paste(names(gp), collapse = ", "))
+      }
+      pick_first_per_input(gp, in_col = "input",
+                           out_col = "ortholog_name")
     },
-    
     "orthogene" = {
       if (!requireNamespace("orthogene", quietly = TRUE)) {
         stop("'orthogene' not installed; install it or set method='none'.",
@@ -828,28 +843,30 @@ map_gene_symbols <- function(
         gene_df        = unique_genes,
         input_species  = from,
         output_species = to,
-        method         = "gprofiler",
-        gene_output    = "dict"
+        method         = "gprofiler"
       )
-      map_chr <- unlist(or, use.names = TRUE)
-      setNames(map_chr, names(map_chr))
+      in_col  <- intersect(names(or),
+                           c("input_gene","input","gene"))
+      out_col <- intersect(names(or),
+                           c("ortholog_gene","ortholog_symbol",
+                             "output_gene","ortholog_name"))
+      if (length(in_col) == 0 || length(out_col) == 0) {
+        stop("orthogene::convert_orthologs returned unexpected columns: ",
+             paste(names(or), collapse = ", "))
+      }
+      pick_first_per_input(or, in_col = in_col[1],
+                           out_col = out_col[1])
     },
-    
     stop("Unknown mapping method: ", method, call. = FALSE)
   )
   
-  # fallback identity for unmapped symbols; preserve NAs
-  id_map <- setNames(unique_genes, unique_genes)
+  id_map <- stats::setNames(unique_genes, unique_genes)
   id_map[names(map_vec)] <- map_vec
-  map_vec <- id_map
+  idx <- match(genes, names(id_map))
+  mapped <- genes
+  mapped[!is.na(idx)] <- unname(id_map[idx[!is.na(idx)]])
   
-  # apply mapping in place
-  idx <- match(all_genes, names(map_vec))
-  mapped <- all_genes
-  mapped[!is.na(idx)] <- unname(map_vec[idx[!is.na(idx)]])
-  
-  cluster_table$gene <- mapped
-  cluster_table
+  return(mapped)
 }
 
 
@@ -1478,12 +1495,12 @@ run_ora_level <- function(
 ) {
   params <- set_default_params(params)
   gene_set_collections <- dbs_to_term2genes(databases)
-  
   unique_clusters <- sort(unique(clustered_genes$cluster))
   ora_results <- list()
   
   for (cluster in unique_clusters) {
     cluster_label <- paste0("cluster_", cluster)
+    message(paste("\nCluster:", cluster_label))
     ora_results[[cluster_label]] <- list()
     
     fg <- as.character(clustered_genes$gene[
@@ -1493,9 +1510,8 @@ run_ora_level <- function(
     if (length(fg) == 0L) next
     
     for (gene_set_name in names(gene_set_collections)) {
-      message(paste("\nDatabase:", gene_set_name))
+      message(paste("Database:", gene_set_name))
       gene_set_map <- gene_set_collections[[gene_set_name]]
-      
       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
         cfg <- enrichGO_cfg[[gene_set_name]]
         ora_result <- clusterProfiler::enrichGO(
