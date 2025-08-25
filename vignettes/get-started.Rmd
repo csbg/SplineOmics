@@ -384,6 +384,9 @@ batch-corrected data, and
 [here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html)
 the report for the batch-corrected data.
 
+Note that any report linked in this vignette might have been created with an
+older version of SplineOmics, and not updated yet. 
+
 The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
 Analysis, Time Series Analysis, and Dimensionality Reduction and
@@ -594,7 +597,7 @@ proceed, the Enrichr databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
 # Create a temporary directory for R CMD check
-report_dir <- file.path(tempdir(), "ora_reports")
+results_dir <- file.path(tempdir(), "ora")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Specify which databases you want to download from Enrichr
@@ -615,7 +618,7 @@ gene_set_lib <- c(
 
 SplineOmics::download_enrichr_databases(
   gene_set_lib = gene_set_lib,
-  output_dir = report_dir,
+  output_dir = results_dir,
   filename = "databases.tsv"
 )
 ```
@@ -631,7 +634,7 @@ dotplots in R.
 
 ```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
-downloaded_dbs_filepath <- file.path(report_dir, "databases.tsv")
+downloaded_dbs_filepath <- file.path(results_dir, "databases.tsv")
 
 # Load the file
 databases <- read.delim(
@@ -685,19 +688,91 @@ term for cluster 1, so this is a way the maximum of 5 can be exceeded.
 If a phase, like stationary here, does not lead to any enrichment
 results, that is stated with a red message.
 
+# Perform ORA with the Bioconductor database
+
+The ORA can also be performed with any other database that is in the format
+DB, Geneset, Gene (see documentation of the run_ora function). The BioConductor
+databases are an example for that, and SplineOmics also contains a function
+to conveniently download these.
+
+```{r download BioConductor mouse database, eval = FALSE}
+SplineOmics::download_bioconductor_database(
+  organism_db = "org.Mm.eg.db",
+  output_dir = results_dir,
+  filename = "bioconductor_database.tsv"
+)
+```
+
+```{r prepare arguments for ORA with BioConductor databases, eval = FALSE}
+# Specify the filepath of the TSV file with the database info
+downloaded_dbs_filepath <- file.path(
+  results_dir,
+  "bioconductor_database.tsv"
+  )
+
+# Load the file
+databases <- read.delim(
+  downloaded_dbs_filepath,
+  sep = "\t",
+  stringsAsFactors = FALSE
+)
+
+# Specify the clusterProfiler parameters
+clusterProfiler_params <- list(
+  pvalueCutoff = 0.05,
+  pAdjustMethod = "BH",
+  minGSSize = 10,
+  maxGSSize = 500,
+  qvalueCutoff = 0.2
+)
+
+mapping_cfg = list(
+  method = "gprofiler",
+  from_species = "cgchok1gshd",
+  to_species   = "mmusculus"
+  )
+
+genes_clean <- genes[!grepl("-", genes)]
+
+enrichGO_cfg = list(
+  GO_BP = list(
+    OrgDb = org.Mm.eg.db,
+    keyType = "SYMBOL",
+    ontology = "BP"
+  ),
+  GO_MF = list(
+    OrgDb = org.Mm.eg.db,
+    keyType = "SYMBOL",
+    ontology = "MF"
+  ),
+  GO_CC = list(
+    OrgDb = org.Mm.eg.db,
+    keyType = "SYMBOL",
+    ontology = "CC"
+  )
+)
+```
+
+```{r run ORA with BioConductor databases, eval = FALSE}
+result <- SplineOmics::run_ora(
+  cluster_table = clustering_results[["cluster_table"]],
+  databases = databases,
+  clusterProfiler_params = clusterProfiler_params,
+  universe = genes_clean,
+  mapping_cfg = mapping_cfg,
+  enrichGO_cfg = enrichGO_cfg,
+  report_info = report_info,
+  cluster_hits_report_name = "report",
+  report_dir = results_dir
+)
+```
+
 # Conclusion
 
 This example showed most functionalities of the SplineOmics package. You
 can also run other datatypes with it, including timeseries RNA-seq and
 glycan data (for those, refer to the documentation in the README file on
 the GitHub page under Usage/RNA-seq and Glycan Data).
-
-To get an interactive version of this example, download the SplineOmics
-package and run the function `open_tutorial()` which opens an R Markdown
-file, where you can run the different code blocks and if your are
-working in R Studio (which is recommendet) you can easily check out the
-values of the individual variables and generate the output reports
-yourself.
 
 We hope that the SplineOmics package makes your scientific data analysis
 easier. If you face any problems (bugs in the code) or are not satisfied

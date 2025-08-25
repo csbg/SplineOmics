@@ -2,7 +2,7 @@
 % Please edit documentation in R/download_enrichr_databases.R
 \name{download_enrichr_databases}
 \alias{download_enrichr_databases}
-\title{download_enrichr_databases()}
+\title{Download the Enrichr databases}
 \usage{
 download_enrichr_databases(
   gene_set_lib,
@@ -15,18 +15,25 @@ download_enrichr_databases(
 Enrichr, for example: c("WikiPathways_2019_Human",
 "NCI-Nature_2016",)}
 
-\item{output_dir}{A character string specifying the output directory
-where the .tsv file will be saved. Defaults to the current
-working directory.}
+\item{output_dir}{A string specifying the output directory where the 
+`.tsv` file will be saved. Defaults to the current project directory 
+as defined by `here::here()`.}
 
 \item{filename}{Name of the output file (with file extension. Due to commas
 present in some terms, .tsv is recommended). When left out,
 the file is named all_databases_timestamp.tsv.}
 }
 \value{
-This function does not return a value but saves a .tsv file in the
-        specified directory containing the gene sets from the specified
-        Enrichr databases.
+A `data.frame` of gene set annotations with three columns:
+\describe{
+  \item{DB}{Database name (e.g. `"WikiPathways_2019_Human"`,
+  `"NCI-Nature_2016"`).}
+  \item{Geneset}{The gene set or pathway term from that database.}
+  \item{Gene}{A gene contained in the gene set.}
+}
+
+In addition to returning the `data.frame`, the function also writes the same
+table to disk as a `.tsv` file in the specified `output_dir`.
 }
 \description{
 This function downloads gene sets from specified Enrichr databases and saves

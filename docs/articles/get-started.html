@@ -959,13 +959,15 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpHHOh55/file1f192293420c .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpCgX6N2/filea6ea715098b2 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
 you can see the HTML report of the explore_data() function with the NOT
 batch-corrected data, and <a href="https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html">here</a>
 the report for the batch-corrected data.</p>
+<p>Note that any report linked in this vignette might have been created
+with an older version of SplineOmics, and not updated yet.</p>
 <p>The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
 Analysis, Time Series Analysis, and Dimensionality Reduction and
@@ -1049,7 +1051,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpHHOh55/file1f192e57a830 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpCgX6N2/filea6ea647d5a20 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1170,7 +1172,7 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpHHOh55/splineomics_report .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpCgX6N2/splineomics_report .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>
@@ -1190,7 +1192,7 @@ be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a temporary directory for R CMD check</span></span>
-<span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"ora_reports"</span><span class="op">)</span></span>
+<span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"ora"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">report_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Specify which databases you want to download from Enrichr</span></span>
@@ -1211,7 +1213,7 @@ proceed, the Enrichr databases of choice need to be downloaded:</p>
 <span></span>
 <span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_enrichr_databases.html">download_enrichr_databases</a></span><span class="op">(</span></span>
 <span>  gene_set_lib <span class="op">=</span> <span class="va">gene_set_lib</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
+<span>  output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
 <span>  filename <span class="op">=</span> <span class="st">"databases.tsv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
@@ -1223,7 +1225,7 @@ clusterProfiler, generates an HTML report and returns the ORA dotplots
 in R.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
-<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">report_dir</span>, <span class="st">"databases.tsv"</span><span class="op">)</span></span>
+<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">results_dir</span>, <span class="st">"databases.tsv"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load the file</span></span>
 <span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
@@ -1270,18 +1272,86 @@ exceeded.</p>
 results, that is stated with a red message.</p>
 </div>
 <div class="section level2">
+<h2 id="perform-ora-with-the-bioconductor-database">Perform ORA with the Bioconductor database<a class="anchor" aria-label="anchor" href="#perform-ora-with-the-bioconductor-database"></a>
+</h2>
+<p>The ORA can also be performed with any other database that is in the
+format DB, Geneset, Gene (see documentation of the run_ora function).
+The BioConductor databases are an example for that, and SplineOmics also
+contains a function to conveniently download these.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_bioconductor_database.html">download_bioconductor_database</a></span><span class="op">(</span></span>
+<span>  organism_db <span class="op">=</span> <span class="st">"org.Mm.eg.db"</span>,</span>
+<span>  output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
+<span>  filename <span class="op">=</span> <span class="st">"bioconductor_database.tsv"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
+<span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>  <span class="va">results_dir</span>,</span>
+<span>  <span class="st">"bioconductor_database.tsv"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Load the file</span></span>
+<span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
+<span>  <span class="va">downloaded_dbs_filepath</span>,</span>
+<span>  sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Specify the clusterProfiler parameters</span></span>
+<span><span class="va">clusterProfiler_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
+<span>  minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mapping_cfg</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"gprofiler"</span>,</span>
+<span>  from_species <span class="op">=</span> <span class="st">"cgchok1gshd"</span>,</span>
+<span>  to_species   <span class="op">=</span> <span class="st">"mmusculus"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="va">genes_clean</span> <span class="op">&lt;-</span> <span class="va">genes</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"-"</span>, <span class="va">genes</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">enrichGO_cfg</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  GO_BP <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>    ontology <span class="op">=</span> <span class="st">"BP"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  GO_MF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>    ontology <span class="op">=</span> <span class="st">"MF"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  GO_CC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>    ontology <span class="op">=</span> <span class="st">"CC"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
+<span>  cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  databases <span class="op">=</span> <span class="va">databases</span>,</span>
+<span>  clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
+<span>  universe <span class="op">=</span> <span class="va">genes_clean</span>,</span>
+<span>  mapping_cfg <span class="op">=</span> <span class="va">mapping_cfg</span>,</span>
+<span>  enrichGO_cfg <span class="op">=</span> <span class="va">enrichGO_cfg</span>,</span>
+<span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
+<span>  cluster_hits_report_name <span class="op">=</span> <span class="st">"report"</span>,</span>
+<span>  report_dir <span class="op">=</span> <span class="va">results_dir</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
 </h2>
 <p>This example showed most functionalities of the SplineOmics package.
 You can also run other datatypes with it, including timeseries RNA-seq
 and glycan data (for those, refer to the documentation in the README
 file on the GitHub page under Usage/RNA-seq and Glycan Data).</p>
-<p>To get an interactive version of this example, download the
-SplineOmics package and run the function <code>open_tutorial()</code>
-which opens an R Markdown file, where you can run the different code
-blocks and if your are working in R Studio (which is recommendet) you
-can easily check out the values of the individual variables and generate
-the output reports yourself.</p>
 <p>We hope that the SplineOmics package makes your scientific data
 analysis easier. If you face any problems (bugs in the code) or are not
 satisfied with the documentation, open an issue on GitHub or check out

@@ -1,4 +1,4 @@
-#' download_enrichr_databases()
+#' Download the Enrichr databases
 #'
 #' @description
 #' This function downloads gene sets from specified Enrichr databases and saves
@@ -10,19 +10,31 @@
 #' @param gene_set_lib A character vector of database names to download from
 #'                     Enrichr, for example: c("WikiPathways_2019_Human",
 #'                     "NCI-Nature_2016",)
-#' @param output_dir A character string specifying the output directory
-#'                   where the .tsv file will be saved. Defaults to the current
-#'                   working directory.
+#' @param output_dir A string specifying the output directory where the 
+#' `.tsv` file will be saved. Defaults to the current project directory 
+#' as defined by `here::here()`.
+#' 
 #' @param filename Name of the output file (with file extension. Due to commas
 #'                 present in some terms, .tsv is recommended). When left out,
 #'                 the file is named all_databases_timestamp.tsv.
 #'
-#' @return This function does not return a value but saves a .tsv file in the
-#'         specified directory containing the gene sets from the specified
-#'         Enrichr databases.
+#' @return
+#' A `data.frame` of gene set annotations with three columns:
+#' \describe{
+#'   \item{DB}{Database name (e.g. `"WikiPathways_2019_Human"`,
+#'   `"NCI-Nature_2016"`).}
+#'   \item{Geneset}{The gene set or pathway term from that database.}
+#'   \item{Gene}{A gene contained in the gene set.}
+#' }
+#' 
+#' In addition to returning the `data.frame`, the function also writes the same
+#' table to disk as a `.tsv` file in the specified `output_dir`.
 #'
 #' @importFrom here here
 #' @importFrom rlang .data
+#' @importFrom tibble tibble
+#' @importFrom dplyr mutate
+#' @importFrom utils write.table
 #'
 #' @export
 #'
@@ -67,7 +79,7 @@ download_enrichr_databases <- function(
     stop_call_false("Object `genesets` is missing or NULL - are you online?")
   }
   genesets <- genesets |>
-    mutate(Gene = gsub(",.+$", "", .data$Gene))
+    dplyr::mutate(Gene = gsub(",.+$", "", .data$Gene))
 
   dir.create(
     output_dir,
@@ -82,15 +94,15 @@ download_enrichr_databases <- function(
       "%d_%m_%Y-%H_%M_%S"
     )
     filename <- paste0(
-      "all_databases_",
+      "enrichr_databases_",
       timestamp, ".tsv"
     )
   }
 
-  filename_path <- here::here(
+  filename_path <- file.path(
     output_dir,
     filename
-  )
+  )  
 
   utils::write.table(
     x = genesets,
@@ -106,7 +118,7 @@ download_enrichr_databases <- function(
     filename_path
     )
 
-  return(invisible(filename_path))
+  genesets
 }
 
 

@@ -61,6 +61,23 @@ Examples:
   To control this, a new argument of the cluster_hits() function, 
   nr_clusters_interaction, was defined. 
 
+- Cluster quality metric (Silhouette score). Now, in the HTML reports of the
+  cluster_hits() function, for every hit, there is the Silhouette score
+  reported. Additionally, in the beginning of the time effect results sections,
+  histograms show the distribution of Silhouette scores in all clusters.
+  
+- The functions preprocess_rna_seq_data, run_limma_splines, and cluster_hits
+  now report the amount of time it took for them to run.
+
+
+#### Fixed
+
+- Some documentation was outdated or too vague. Improved that. 
+
+- Some smaller things were fixed, such as remnants of the 
+  screen_limma_hyperparams() function in the code in other places, or input
+  control functions that still expected older argument names.
+
 
 ### [0.3.0]
 

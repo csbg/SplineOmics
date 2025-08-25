@@ -163,6 +163,26 @@ topTable from limma.</p></li>
 clusters are assigned to those hits and serve for the following
 clustered enrichment. To control this, a new argument of the
 cluster_hits() function, nr_clusters_interaction, was defined.</p></li>
+<li><p>Cluster quality metric (Silhouette score). Now, in the HTML
+reports of the cluster_hits() function, for every hit, there is the
+Silhouette score reported. Additionally, in the beginning of the time
+effect results sections, histograms show the distribution of Silhouette
+scores in all clusters.</p></li>
+<li><p>The functions preprocess_rna_seq_data, run_limma_splines, and
+cluster_hits now report the amount of time it took for them to
+run.</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+</h5>
+<ul>
+<li><p>Some documentation was outdated or too vague. Improved
+that.</p></li>
+<li><p>Some smaller things were fixed, such as remnants of the
+screen_limma_hyperparams() function in the code in other places, or
+input control functions that still expected older argument
+names.</p></li>
 </ul>
 </div>
 </div>
@@ -262,7 +282,7 @@ test.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
 </h5>
 <ul>
 <li><p>Red spline curves: Before, it was just generated with the help of
@@ -289,7 +309,7 @@ seemingly had no effect. This was now fixed.</p></li>
 <h4 id="section-2">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
+<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
 </h5>
 <ul>
 <li><p>Bug that prevented the generation of the double spline plots when
@@ -416,7 +436,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
+<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
 </h5>
 <ul>
 <li>Small bug that made it impossible having no treatment label for a
@@ -489,7 +509,7 @@ in a separate field.</li>
 and 3).</li>
 </ul>
 <div class="section level5">
-<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
+<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
 </h5>
 <ul>
 <li>A few smaller visual things for the HTML reports.</li>

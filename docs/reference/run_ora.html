@@ -105,14 +105,23 @@ category.</p></dd>
 
 
 <dt id="arg-databases">databases<a class="anchor" aria-label="anchor" href="#arg-databases"></a></dt>
-<dd><p>A dataframe with the three columns: DB containing the
-database name, Geneset containng the name of the geneset, and Gene,
-containing the name of the gene. This dataframe can be obtained by specifying
-the desired Enrichr databases and downloading them to a for example .tsv file
-with the help of the SplineOmics::download_enrichr_databases function, and
-then loading this .tsv file as a dataframe. In essence, this dataframe then
-contains all the database info used for the gene set enrichment analysis with
-clusterProfiler in this function.</p></dd>
+<dd><p>A `data.frame` that defines the gene set collections to be
+  tested in the overrepresentation analysis. Must contain exactly three
+  columns:</p><dl><dt>DB</dt>
+<dd><p>Character. The database identifier (e.g., `"KEGG"`, `"GO_BP"`,
+      `"Reactome"`).</p></dd>
+
+    <dt>Geneset</dt>
+<dd><p>Character. The name of the gene set or pathway within the
+      database.</p></dd>
+
+    <dt>Gene</dt>
+<dd><p>Character. A gene identifier belonging to the gene set
+      (e.g., gene symbol, Ensembl ID).</p></dd>
+
+
+</dl><p>Each row corresponds to one `(database, geneset, gene)` association. The
+  same gene may appear in multiple gene sets.</p></dd>
 
 
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
@@ -129,20 +138,13 @@ otherwise, the connection is not documented.</p></dd>
 
 
 <dt id="arg-clusterprofiler-params">clusterProfiler_params<a class="anchor" aria-label="anchor" href="#arg-clusterprofiler-params"></a></dt>
-<dd><p>A list that specifies the parameters for the
-clusterProfiler, such as for example: clusterProfiler_params &lt;- list(
-  pvalueCutoff = 0.05,
-  pAdjustMethod = "BH",
-  minGSSize = 10,
-  maxGSSize = 500,
-  qvalueCutoff = 0.2
-)
-(Those are all the parameters that can be controlled here). The names are
-equivalent to the argument names of clusterProfiler, therefore, check out the
-documentation of clusterProfiler for their description. When this argument is
-not specified, it is per default NULL, in which case default parameters for
-those are selected, which are equivalent to the parameter values shown in the
-example definition above.</p></dd>
+<dd><p>A named list of arguments passed directly to
+the corresponding functions in the <strong>clusterProfiler</strong> package.
+Typical entries include <code>pvalueCutoff</code>, <code>pAdjustMethod</code>,
+<code>minGSSize</code>, <code>maxGSSize</code>, and <code>qvalueCutoff</code>. The names
+must match the argument names in clusterProfiler; see the clusterProfiler
+documentation for details. If <code>NULL</code> (default), the standard
+clusterProfiler defaults are used.</p></dd>
 
 
 <dt id="arg-mapping-cfg">mapping_cfg<a class="anchor" aria-label="anchor" href="#arg-mapping-cfg"></a></dt>

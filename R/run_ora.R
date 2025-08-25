@@ -31,14 +31,20 @@
 #'   indicates that the feature was not significant (not a hit) in that
 #'   category.
 #' 
-#' @param databases A dataframe with the three columns: DB containing the 
-#' database name, Geneset containng the name of the geneset, and Gene, 
-#' containing the name of the gene. This dataframe can be obtained by specifying
-#' the desired Enrichr databases and downloading them to a for example .tsv file
-#' with the help of the SplineOmics::download_enrichr_databases function, and 
-#' then loading this .tsv file as a dataframe. In essence, this dataframe then
-#' contains all the database info used for the gene set enrichment analysis with
-#' clusterProfiler in this function. 
+#' @param databases A `data.frame` that defines the gene set collections to be
+#'   tested in the overrepresentation analysis. Must contain exactly three
+#'   columns:
+#'   \describe{
+#'     \item{DB}{Character. The database identifier (e.g., `"KEGG"`, `"GO_BP"`,
+#'       `"Reactome"`).}
+#'     \item{Geneset}{Character. The name of the gene set or pathway within the
+#'       database.}
+#'     \item{Gene}{Character. A gene identifier belonging to the gene set
+#'       (e.g., gene symbol, Ensembl ID).}
+#'   }
+#'
+#'   Each row corresponds to one `(database, geneset, gene)` association. The
+#'   same gene may appear in multiple gene sets.
 #' 
 #' @param report_info A list containing information for the report generation,
 #' such as omics_data_type and data_description (this is the list used for all
@@ -49,20 +55,13 @@
 #' used for the overprepresentation analysis here. Must be specified, because
 #' otherwise, the connection is not documented.
 #' 
-#' @param clusterProfiler_params A list that specifies the parameters for the 
-#' clusterProfiler, such as for example: clusterProfiler_params <- list(
-#'   pvalueCutoff = 0.05,
-#'   pAdjustMethod = "BH",
-#'   minGSSize = 10,
-#'   maxGSSize = 500,
-#'   qvalueCutoff = 0.2
-#' )
-#' (Those are all the parameters that can be controlled here). The names are 
-#' equivalent to the argument names of clusterProfiler, therefore, check out the 
-#' documentation of clusterProfiler for their description. When this argument is
-#' not specified, it is per default NULL, in which case default parameters for
-#' those are selected, which are equivalent to the parameter values shown in the 
-#' example definition above.
+#' @param clusterProfiler_params A named list of arguments passed directly to
+#'   the corresponding functions in the \strong{clusterProfiler} package.
+#'   Typical entries include \code{pvalueCutoff}, \code{pAdjustMethod},
+#'   \code{minGSSize}, \code{maxGSSize}, and \code{qvalueCutoff}. The names
+#'   must match the argument names in clusterProfiler; see the clusterProfiler
+#'   documentation for details. If \code{NULL} (default), the standard
+#'   clusterProfiler defaults are used.
 #' 
 #' @param mapping_cfg A named list that controls the optional behavior of
 #'        automatically mapping gene symbols across species. This is useful
