@@ -959,7 +959,7 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp83OrsF/fileb7603a610e68 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpBi8LMR/file9a9e59932df0 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
@@ -1051,7 +1051,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp83OrsF/fileb76075941885 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpBi8LMR/file9a9e32010308 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1079,9 +1079,9 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co"># in the order those levels appear in the meta condition column! Otherwise, </span></span>
 <span><span class="co"># there will be a mixup!</span></span>
 <span></span>
-<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="co"># 0.05 for both levels</span></span>
-<span>  <span class="fl">0.05</span>, <span class="co"># exponential</span></span>
-<span>  <span class="fl">0.05</span> <span class="co"># stationary</span></span>
+<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> </span>
+<span>  <span class="fl">0.05</span>, </span>
+<span>  <span class="fl">0.05</span> </span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># The amount of clusters can be a fixed number (e.g. 6) or a range. When you</span></span>
@@ -1091,8 +1091,8 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co"># you don't want to have a clustering for a level, write 1 for the cluster </span></span>
 <span><span class="co"># number for that level.</span></span>
 <span><span class="va">nr_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fl">6</span>,   <span class="co"># specifically 6 clusters for the exponential phase level</span></span>
-<span>  <span class="fl">2</span><span class="op">:</span><span class="fl">3</span>  <span class="co"># range of cluster numbers for the stationary phase level</span></span>
+<span>  Exponential <span class="op">=</span> <span class="fl">6</span>,   <span class="co"># specifically 6 clusters for the exponential phase level</span></span>
+<span>  Stationary <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">3</span>   <span class="co"># range of cluster numbers for the stationary phase level</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="co"># For the spline plots</span></span>
@@ -1161,9 +1161,6 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  Exponential</span></span>
 <span><span class="co">#&gt; For the level:  Stationary</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co"><span style="color: #BBBB00;">#&gt; Gene symbols: Transforming all non-alphanumeric characters to whitespace, then extracting the substring of alphanumeric characters before the first whitespace or end of the string. The extracted substring is then converted to uppercase.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #FFAF00;">If this does not produce valid gene symbols for your geneset enrichment analysis, modify the genes argument of this function (cluster_hits) accordingly!</span></span></span>
 <span><span class="co">#&gt; Generating heatmap...</span></span>
 <span><span class="co">#&gt; Generating cluster mean splines for level:  Exponential</span></span>
 <span><span class="co">#&gt; Generating spline plots...</span></span>
@@ -1172,7 +1169,7 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp83OrsF/splineomics_report .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpBi8LMR/splineomics_report .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>

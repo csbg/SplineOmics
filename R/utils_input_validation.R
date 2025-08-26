@@ -1253,13 +1253,13 @@ InputControl <- R6::R6Class("InputControl",
     #' Verifies the `nr_clusters` argument provided to the object.
     #'
     #' @details
-    #' * `nr_clusters` must be a single positive integer **or** a vector of
-    #'   positive integers (e.g. `1:1`, `2:2`, `2:8`).
-    #' * The **length** of `nr_clusters` must equal the number of unique values
-    #'   in the column specified by `condition` in `meta`.
+    #' * `nr_clusters` must be a list with exactly two named elements whose
+    #'   names match the two unique levels in `meta[[condition]]`.
+    #' * Each element must be a positive integer (e.g. 3) or a vector of
+    #'   positive integers (e.g. 2:6).
     #'   
     check_clusters = function() {
-      nr_clusters <- self$args[["nr_clusters"]]   
+      nr_clusters <- self$args[["nr_clusters"]]
       meta        <- self$args[["meta"]]
       condition   <- self$args[["condition"]]
       
@@ -1267,46 +1267,68 @@ InputControl <- R6::R6Class("InputControl",
       if (any(vapply(list(nr_clusters, meta, condition), is.null, logical(1))))
         return(NULL)
       
-      # 1. top-level type and length
+      # --- Extract and validate condition levels (must be exactly 2) ---
+      cond_vals <- meta[[condition]]
+      if (is.null(cond_vals)) {
+        stop_call_false("Column '", condition, "' not found in 'meta'.")
+      }
+      # Coerce to character to avoid factor level surprises
+      cond_levels <- sort(unique(as.character(cond_vals)))
+      n_levels <- length(cond_levels)
+      if (n_levels != 2L) {
+        stop_call_false(
+          "Column '", condition, "' in 'meta' must have exactly 2 unique ",
+          "values, but has ", n_levels, " (",
+          paste(cond_levels, collapse = ", "), ")."
+        )
+      }
+      
+      # --- Top-level type, length, and names of nr_clusters ---
       if (!is.list(nr_clusters)) {
         stop_call_false(
-          "'nr_clusters' must be a *list*, where each element is a numeric",
-          "vector of positive integers (e.g. list(1:1, 2:8))."
+          "'nr_clusters' must be a list with exactly two named elements."
         )
       }
-      
-      n_levels <- length(unique(meta[[condition]]))
-      if (length(nr_clusters) != n_levels) {
+      if (length(nr_clusters) != 2L) {
         stop_call_false(
-          "The length of 'nr_clusters' (", length(nr_clusters),
-          ") must equal the number of unique levels (", n_levels,
-          ") in the '", condition, "' column of 'meta'."
+          "'nr_clusters' must have length 2, but has length ",
+          length(nr_clusters), "."
+        )
+      }
+      nms <- names(nr_clusters)
+      if (is.null(nms) || any(is.na(nms)) || any(nms == "")) {
+        stop_call_false(
+          "'nr_clusters' must be a named list; names must be non-empty."
+        )
+      }
+      # Names must match the two condition levels exactly (order irrelevant)
+      if (!setequal(nms, cond_levels)) {
+        stop_call_false(
+          "Names of 'nr_clusters' must match levels in '", condition, "'. ",
+          "Expected {", paste(cond_levels, collapse = ", "), "}, got {",
+          paste(nms, collapse = ", "), "}."
         )
       }
       
-      # 2. element-wise validation
+      # --- Element-wise validation ---
       for (i in seq_along(nr_clusters)) {
         vec <- nr_clusters[[i]]
-        
         if (!is.numeric(vec) || any(vec != as.integer(vec))) {
           stop_call_false(
-            "Element ", i,
-            " of 'nr_clusters' must be a numeric vector of integers."
+            "Element '", nms[i],
+            "' of 'nr_clusters' must be an integer vector (e.g. 3 or 2:6)."
           )
         }
-        
         if (any(vec <= 0)) {
           stop_call_false(
             "All integers inside 'nr_clusters' must be positive ",
-            "(problem at element ", i, ")."
+            "(problem at element '", nms[i], "')."
           )
         }
-        
-        if (max(vec) > 100) {                       
+        if (max(vec) > 100) {
           stop_call_false(
-            "Element ", i,
-            " of 'nr_clusters' has a value (", max(vec),
-            ") greater than the allowed maximum of 100."
+            "Element '", nms[i], "' of 'nr_clusters' has a value (",
+            max(vec), ") greater than the allowed maximum of 100."
           )
         }
       }

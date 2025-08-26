@@ -7,7 +7,6 @@
 cluster_hits(
   splineomics,
   nr_clusters,
-  nr_clusters_interaction = 1,
   adj_pthresholds = c(0.05),
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05,
@@ -79,15 +78,49 @@ necessary data and parameters for the analysis, including:
   function.
 }}
 
-\item{nr_clusters}{A list whose length matches `top_tables`; each element is
-a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
-candidate number(s) of clusters for the corresponding condition level.}
+\item{nr_clusters}{Named list specifying the number of clusters per
+  condition level. The list \strong{must} have one element per condition
+  level, and each element \strong{must be named exactly} with the
+  corresponding condition name (e.g., \code{"condition1"},
+  \code{"condition2"}).
 
-\item{nr_clusters_interaction}{An integer or a numeric vector of integers
-(> 0) specifying how many clusters should be used for the clustering of 
-the interaction of condition and time hits. When a vector is provided, then
-all cluster amounts in that range are tested and the best one automatically
-taken.}
+  Each element's value controls the \code{k} used by k-means for that level:
+
+  - \strong{Single integer} (\code{k > 0}, e.g. \code{3}): use exactly that
+    many clusters.
+  - \strong{Integer range} (written with \code{:}, e.g. \code{2:6}):
+    choose the \code{k} within the range that \strong{minimizes the
+    Bayesian Information Criterion (BIC)} computed from the k-means fit
+    over that range (lower is better). Ties are broken by the first
+    minimum encountered.
+
+  \strong{Notes}
+  \itemize{
+    \item All condition levels must be present exactly once as names.
+    \item Values must be positive integers; ranges must be increasing
+          (e.g. \code{2:6}).
+
+    \item BIC is computed from k-means using Euclidean distance. A common
+          form is \eqn{\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
+          k \log(n)\, p}, where \eqn{n} is the number of series, \eqn{p}
+          the number of timepoints (features), and \eqn{\mathrm{WCSS}} the
+          total within-cluster sum of squares for the fit.
+    \item Clustering will fail if the requested \code{k} is not strictly
+          less than the number of available series for that level.
+  }
+
+  \strong{Examples}
+  # Fixed k for condition1, BIC-selected k for condition2
+  nr_clusters <- list(
+    condition1 = 4,
+    condition2 = 2:6
+  )
+
+  # Fixed k for both conditions
+  nr_clusters <- list(
+    condition1 = 3,
+    condition2 = 5
+  )}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
 hits in each top table.}
@@ -124,8 +157,11 @@ results from the interaction of condition and time limma result. Per default
 
   The default is 0 for all three elements.}
 
-\item{genes}{A character vector containing the gene names of the features to
-be analyzed. The entries must be in the same order as they appear in data.}
+\item{genes}{A character vector of gene names corresponding to the features
+to be analyzed. The order of entries must match the feature order in 
+\code{data}.
+Gene names should be standardized (cleaned) to ensure compatibility with
+downstream databases used for overrepresentation analysis after clustering.}
 
 \item{plot_info}{List containing the elements y_axis_label (string),
 time_unit (string), treatment_labels (character vector),
@@ -171,21 +207,21 @@ A named list with three elements:
     A tibble containing one row per \code{feature_nr} with metadata and
     cluster assignments across the analysis categories. The structure is:
     \itemize{
-      \item \code{feature_nr} – Numeric feature identifier.
-      \item \code{feature_name} – Preferred feature name, prioritizing
+      \item \code{feature_nr} - Numeric feature identifier.
+      \item \code{feature_name} - Preferred feature name, prioritizing
         values from the limma tables, then from the cluster table row
         names, and falling back to the numeric feature ID.
-      \item \code{gene} – Preferred gene symbol from the \code{annotation}
+      \item \code{gene} - Preferred gene symbol from the \code{annotation}
         table if available, otherwise taken from the cluster tables.
-      \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+      \item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
         assignments for each time-effect condition, named according to
         the elements of \code{clustered_hits_levels}.
-      \item \code{cluster_cat2} – Present only if category 2 results are
+      \item \code{cluster_cat2} - Present only if category 2 results are
         available; a combined cluster label in the form
         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
         are significant in category 2. If this value is \code{NA}, the
         feature was not a category 2 hit.
-      \item \code{cluster_cat3} – Present only if category 3 results are
+      \item \code{cluster_cat3} - Present only if category 3 results are
         available; a combined cluster label in the form
         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
         are significant in category 3. If this value is \code{NA}, the
@@ -213,7 +249,7 @@ A named list with three elements:
       \item{\code{time_effect_effect_size}}{Named list by condition with a
         numeric vector (length \eqn{N}) per condition giving the
         \emph{cumulative travel} (integrated temporal change) of each
-        feature’s spline across \code{time_grid}. Larger values indicate
+        feature`s spline across \code{time_grid}. Larger values indicate
         stronger within-condition temporal modulation.}
       \item{\code{time_effect_passed_threshold}}{Named list by condition
         with a logical vector (length \eqn{N}) per condition indicating
@@ -223,7 +259,7 @@ A named list with three elements:
         giving the \emph{differential cumulative travel} between the two
         condition-specific splines of each feature, computed on the same
         \code{time_grid}. Larger values indicate stronger differences in
-        temporal behaviour between conditions (condition–time interaction).}
+        temporal behaviour between conditions (condition-time interaction).}
       \item{\code{interaction_passed_threshold}}{Logical vector (length
         \eqn{N}) indicating whether \code{interaction_effect_size}
         exceeds the interaction effect-size threshold (i.e., features with

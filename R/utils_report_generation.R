@@ -1586,6 +1586,7 @@ process_plots <- function(
 #'
 #' @importFrom base64enc base64encode
 #' @importFrom rstudioapi isAvailable getSourceEditorContext
+#' @importFrom utils capture.output sessionInfo
 #'
 process_field <- function(
     field,
@@ -1698,8 +1699,11 @@ process_field <- function(
     )
   } else if (field == "session_info") {
     # Capture session info and encode to base64 on-the-fly
-    session_details <- sessionInfo()
-    session_info <- paste(capture.output(session_details), collapse = "\n")
+    session_details <- utils::sessionInfo()
+    session_info <- paste(
+      utils::capture.output(session_details),
+      collapse = "\n"
+      )
     base64_session_info <- base64enc::base64encode(charToRaw(session_info))
 
     base64_df <- sprintf(

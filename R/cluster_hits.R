@@ -65,22 +65,62 @@
 #'   automatically build the feature names with the \code{extract_data}
 #'   function.
 #' }
-#' @param nr_clusters A list whose length matches `top_tables`; each element is
-#'   a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
-#'   candidate number(s) of clusters for the corresponding condition level.
-#' @param nr_clusters_interaction An integer or a numeric vector of integers
-#' (> 0) specifying how many clusters should be used for the clustering of 
-#' the interaction of condition and time hits. When a vector is provided, then
-#' all cluster amounts in that range are tested and the best one automatically
-#' taken.
+#' 
+#' @param nr_clusters Named list specifying the number of clusters per
+#'   condition level. The list \strong{must} have one element per condition
+#'   level, and each element \strong{must be named exactly} with the
+#'   corresponding condition name (e.g., \code{"condition1"},
+#'   \code{"condition2"}).
+#'
+#'   Each element's value controls the \code{k} used by k-means for that level:
+#'
+#'   - \strong{Single integer} (\code{k > 0}, e.g. \code{3}): use exactly that
+#'     many clusters.
+#'   - \strong{Integer range} (written with \code{:}, e.g. \code{2:6}):
+#'     choose the \code{k} within the range that \strong{minimizes the
+#'     Bayesian Information Criterion (BIC)} computed from the k-means fit
+#'     over that range (lower is better). Ties are broken by the first
+#'     minimum encountered.
+#'
+#'   \strong{Notes}
+#'   \itemize{
+#'     \item All condition levels must be present exactly once as names.
+#'     \item Values must be positive integers; ranges must be increasing
+#'           (e.g. \code{2:6}).
+#'
+#'     \item BIC is computed from k-means using Euclidean distance. A common
+#'           form is \eqn{\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
+#'           k \log(n)\, p}, where \eqn{n} is the number of series, \eqn{p}
+#'           the number of timepoints (features), and \eqn{\mathrm{WCSS}} the
+#'           total within-cluster sum of squares for the fit.
+#'     \item Clustering will fail if the requested \code{k} is not strictly
+#'           less than the number of available series for that level.
+#'   }
+#'
+#'   \strong{Examples}
+#'   # Fixed k for condition1, BIC-selected k for condition2
+#'   nr_clusters <- list(
+#'     condition1 = 4,
+#'     condition2 = 2:6
+#'   )
+#'
+#'   # Fixed k for both conditions
+#'   nr_clusters <- list(
+#'     condition1 = 3,
+#'     condition2 = 5
+#'   )
+#' 
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
 #' hits in each top table.
+#' 
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
 #' from the average difference of the condition limma result. Per default 0 (
 #' turned off).
+#' 
 #' @param adj_pthresh_interaction_condition_time p-value threshold for the
 #' results from the interaction of condition and time limma result. Per default
 #' 0 (turned off).
+#' 
 #' @param min_effect_size A named list that specifies the minimum effect size
 #'   thresholds to consider a feature as biologically meaningful, in addition
 #'   to statistical significance. This allows users to filter out "trivial"
@@ -104,8 +144,13 @@
 #'   conservative thresholds.
 #'
 #'   The default is 0 for all three elements.
-#' @param genes A character vector containing the gene names of the features to
-#'  be analyzed. The entries must be in the same order as they appear in data.
+#'   
+#' @param genes A character vector of gene names corresponding to the features
+#'  to be analyzed. The order of entries must match the feature order in 
+#'  \code{data}.
+#'  Gene names should be standardized (cleaned) to ensure compatibility with
+#'  downstream databases used for overrepresentation analysis after clustering.
+#'  
 #' @param plot_info List containing the elements y_axis_label (string),
 #'                  time_unit (string), treatment_labels (character vector),
 #'                  treatment_timepoints (integer vector). All can also be NA.
@@ -114,6 +159,7 @@
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
+#'                  
 #' @param plot_options A named list controlling optional plot customization.  
 #'   The list can include one or both of the following entries (any not supplied  
 #'   will fall back to their default values):  
@@ -126,14 +172,18 @@
 #'       If supplied, spline plot data points are colored by replicate, allowing  
 #'       replicate-level variation to be assessed.
 #'   }
+#'   
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
+#' 
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved. Default is the 
 #' current working dir.
+#' 
 #' @param report Boolean TRUE or FALSE value specifying if a report should be
 #' generated.
+#' 
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits. Default is 25.
@@ -145,21 +195,21 @@
 #'     A tibble containing one row per \code{feature_nr} with metadata and
 #'     cluster assignments across the analysis categories. The structure is:
 #'     \itemize{
-#'       \item \code{feature_nr} – Numeric feature identifier.
-#'       \item \code{feature_name} – Preferred feature name, prioritizing
+#'       \item \code{feature_nr} - Numeric feature identifier.
+#'       \item \code{feature_name} - Preferred feature name, prioritizing
 #'         values from the limma tables, then from the cluster table row
 #'         names, and falling back to the numeric feature ID.
-#'       \item \code{gene} – Preferred gene symbol from the \code{annotation}
+#'       \item \code{gene} - Preferred gene symbol from the \code{annotation}
 #'         table if available, otherwise taken from the cluster tables.
-#'       \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+#'       \item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
 #'         assignments for each time-effect condition, named according to
 #'         the elements of \code{clustered_hits_levels}.
-#'       \item \code{cluster_cat2} – Present only if category 2 results are
+#'       \item \code{cluster_cat2} - Present only if category 2 results are
 #'         available; a combined cluster label in the form
 #'         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
 #'         are significant in category 2. If this value is \code{NA}, the
 #'         feature was not a category 2 hit.
-#'       \item \code{cluster_cat3} – Present only if category 3 results are
+#'       \item \code{cluster_cat3} - Present only if category 3 results are
 #'         available; a combined cluster label in the form
 #'         \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
 #'         are significant in category 3. If this value is \code{NA}, the
@@ -187,7 +237,7 @@
 #'       \item{\code{time_effect_effect_size}}{Named list by condition with a
 #'         numeric vector (length \eqn{N}) per condition giving the
 #'         \emph{cumulative travel} (integrated temporal change) of each
-#'         feature’s spline across \code{time_grid}. Larger values indicate
+#'         feature`s spline across \code{time_grid}. Larger values indicate
 #'         stronger within-condition temporal modulation.}
 #'       \item{\code{time_effect_passed_threshold}}{Named list by condition
 #'         with a logical vector (length \eqn{N}) per condition indicating
@@ -197,7 +247,7 @@
 #'         giving the \emph{differential cumulative travel} between the two
 #'         condition-specific splines of each feature, computed on the same
 #'         \code{time_grid}. Larger values indicate stronger differences in
-#'         temporal behaviour between conditions (condition–time interaction).}
+#'         temporal behaviour between conditions (condition-time interaction).}
 #'       \item{\code{interaction_passed_threshold}}{Logical vector (length
 #'         \eqn{N}) indicating whether \code{interaction_effect_size}
 #'         exceeds the interaction effect-size threshold (i.e., features with
@@ -221,7 +271,6 @@
 cluster_hits <- function(
     splineomics,
     nr_clusters,
-    nr_clusters_interaction = 1,
     adj_pthresholds = c(0.05),
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
@@ -260,8 +309,7 @@ cluster_hits <- function(
   
   min_effect_size <- check_inputs_cluster_hits(
     min_effect_size = min_effect_size,
-    max_hit_number = max_hit_number,
-    nr_clusters_interaction
+    max_hit_number = max_hit_number
     )
 
   args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
@@ -347,10 +395,7 @@ cluster_hits <- function(
 
   all_levels_clustering <- perform_clustering(
     time_effect_hits = within_level_top_tables,
-    category_3_hits = category_2_and_3_hits[["category_3_hits"]],
     nr_clusters = nr_clusters,
-    nr_clusters_interaction = nr_clusters_interaction,
-    meta = meta,
     condition = condition,
     predicted_timecurves = predicted_timecurves
   )
@@ -387,16 +432,9 @@ cluster_hits <- function(
     )
   }
 
-  if (!is.null(genes)) {
-    genes <- clean_gene_symbols(genes)
-  }
-
   if (report) {
-    clustering_no_cat3 <- all_levels_clustering[
-      setdiff(names(all_levels_clustering), "paired_category_3")
-    ]
     plots <- make_clustering_report(
-      all_levels_clustering = clustering_no_cat3,
+      all_levels_clustering = all_levels_clustering,
       condition = condition,
       data = data,
       meta = meta,
@@ -438,13 +476,6 @@ cluster_hits <- function(
     genes = genes
   )
 
-  if ("paired_category_3" %in% names(all_levels_clustering) &&
-      !is.character(all_levels_clustering[["paired_category_3"]])) {
-    plots[["cat3_plots"]] <- list(
-      plot_cat3_minimal(all_levels_clustering[["paired_category_3"]])
-    )
-  }
-  
   end_time <- Sys.time()
   elapsed <- difftime(
     end_time,
@@ -489,9 +520,6 @@ cluster_hits <- function(
 #' @param max_hit_number A single positive integer (1, 2, ...) or `Inf`
 #'   giving the maximum number of hits to include in clustering.
 #'
-#' @param nr_clusters_interaction A single integer > 0 giving the number
-#'   of clusters for the Category 3 paired analysis.
-#'
 #' @return The completed `min_effect_size` list with all three allowed
 #'   names present. Missing names are filled with 0. The function raises
 #'   an error if any check fails.
@@ -500,12 +528,10 @@ cluster_hits <- function(
 #' - `min_effect_size` must be a list. All provided values must be single
 #'   numerics. Names must be a subset of the allowed set.
 #' - `max_hit_number` must be length 1 and either an integer >= 1 or `Inf`.
-#' - `nr_clusters_interaction` must be length 1, integer valued, and > 0.
 #'
 check_inputs_cluster_hits <- function(
     min_effect_size,
-    max_hit_number,
-    nr_clusters_interaction
+    max_hit_number
 ) {
   if (!is.list(min_effect_size)) {
     stop_call_false("`min_effect_size` must be a list.")
@@ -547,16 +573,7 @@ check_inputs_cluster_hits <- function(
       "`max_hit_number` must be a single positive integer or Inf."
     )
   }
-  
-  # validate nr_clusters_interaction
-  if (!is.numeric(nr_clusters_interaction) ||
-      any(nr_clusters_interaction != as.integer(nr_clusters_interaction)) ||
-      any(nr_clusters_interaction <= 0)) {
-    stop_call_false(
-      "`nr_clusters_interaction` must be one or more integers > 0."
-    )
-  }
-  
+
   # return the completed list (with zeros filled in)
   filled
 }
@@ -1019,34 +1036,20 @@ add_cat1_and_cat3_effectsizes <- function(
 #'
 #' @description
 #' Performs clustering of predicted timecourses for each condition
-#' level (Category 1) and, if available, jointly across two conditions
-#' for interaction features (Category 3).
+#' level (Category 1).
 #'
-#' For Category 1, only features that both appear in the input
+#' Only features that both appear in the input
 #' `time_effect_hits` and pass the time-effect size threshold are
 #' clustered. Curves are normalized to the [0, 1] range before
 #' clustering.
-#'
-#' For Category 3, features passing both the interaction p-value
-#' filter and the interaction effect size threshold are taken from both
-#' conditions, concatenated, and clustered jointly. A check ensures that
-#' the requested number of clusters does not exceed the number of
-#' available features.
 #'
 #' @param time_effect_hits A named list of data.frames or vectors giving
 #'   Category 1 hits per condition level. Each entry must contain
 #'   feature identifiers (`feature_nr`, `feature_names`) or numeric
 #'   indices. Names must be in the format `{condition}_{level}`.
-#' @param category_3_hits A data.frame of Category 3 hits (interaction
-#'   features). May be `NULL` or empty; in that case, paired clustering
-#'   is skipped.
 #' @param nr_clusters A list whose length matches `time_effect_hits`;
 #'   each element is a numeric vector of candidate cluster numbers
 #'   (e.g. `1:1`, `2:8`) for the corresponding condition level.
-#' @param nr_clusters_interaction A single integer giving the number of
-#'   clusters to form for the Category 3 paired analysis. Must not
-#'   exceed the number of available Category 3 features.
-#' @param meta A data.frame of metadata including the condition column.
 #' @param condition A string giving the name of the column in `meta`
 #'   that encodes condition levels (e.g., `"Phase"`).
 #' @param predicted_timecurves A list returned by
@@ -1081,10 +1084,7 @@ add_cat1_and_cat3_effectsizes <- function(
 #'   
 perform_clustering <- function(
     time_effect_hits, 
-    category_3_hits,
     nr_clusters,
-    nr_clusters_interaction,
-    meta,
     condition,              
     predicted_timecurves
 ) {
@@ -1104,7 +1104,7 @@ perform_clustering <- function(
     key    <- names(time_effect_hits)[i]                       
     level  <- sub(paste0("^", condition, "_"), "", key)  
     message(paste("For the level: ", level))
-    k_range <- nr_clusters[[i]]                  
+    k_range <- nr_clusters[[level]]                  
 
     tbl <- time_effect_hits[[key]]
     if (is.data.frame(tbl)) {
@@ -1142,71 +1142,6 @@ perform_clustering <- function(
     )
   }
 
-  if (!is.null(category_3_hits) && nrow(category_3_hits) > 0) {
-    # levels are guaranteed to be exactly two
-    levels_all <- sub(
-      paste0("^", condition, "_"),
-      "",
-      names(time_effect_hits)
-      )
-    lvl1 <- levels_all[1]
-    lvl2 <- levels_all[2]
-    
-    rn1 <- rownames(predicted_timecurves$predictions[[lvl1]])
-    feat_idx <- as.integer(category_3_hits$feature_nr)
-    feat_idx <- feat_idx[feat_idx >= 1L & feat_idx <= length(rn1)]
-    feat_names <- unique(rn1[feat_idx])
-    
-    if (length(feat_names) < nr_clusters_interaction) {
-      stop(
-        "Category 3 clustering failed: requested ",
-        nr_clusters_interaction,
-        " clusters but only ",
-        length(feat_names),
-        " feature(s) passed thresholds."
-      )
-    }
-    
-    # take curves from both levels and normalize
-    pred1 <- predicted_timecurves$predictions[[lvl1]][
-      feat_names,
-      ,
-      drop = FALSE
-      ]
-    pred2 <- predicted_timecurves$predictions[[lvl2]][
-      feat_names,
-      ,
-      drop = FALSE
-      ]
-    norm1 <- normalize_curves(pred1)
-    norm2 <- normalize_curves(pred2)
-    
-    # concatenate into a single feature vector
-    concatenated <- cbind(norm1, norm2)
-    
-    # column names to keep track of which timepoints came from which condition
-    time_cols <- c(
-      paste(lvl1, time_grid, sep = "|"),
-      paste(lvl2, time_grid, sep = "|")
-    )
-    
-    top_table_paired <- data.frame(
-      feature_nr = as.integer(match(feat_names, rn1)),
-      feature_names = feat_names,
-      stringsAsFactors = FALSE
-    )
-    
-    results[["paired_category_3"]] <- kmeans_clustering(
-      curve_values      = concatenated,
-      k_range           = nr_clusters_interaction,
-      smooth_timepoints = time_cols,
-      top_table         = top_table_paired,
-      condition_level   = paste0(lvl1, "__AND__", lvl2, "__PAIRED")
-    )
-  } else {
-    results[["paired_category_3"]] <- NA
-  }
-  
   # Leave a message for the user instead of just NA.
   results <- lapply(results, function(x) {
     if (is.logical(x)) {
@@ -1231,7 +1166,7 @@ perform_clustering <- function(
 #'   \item \strong{Category 2}: Features with a significant average difference
 #'   between conditions, based on both adjusted p-value and a minimum absolute
 #'   effect size threshold.
-#'   \item \strong{Category 3}: Features with a significant condition × time
+#'   \item \strong{Category 3}: Features with a significant condition x time
 #'   interaction, based on adjusted p-value, and that also exceed a minimum
 #'   time-effect effect size in at least one condition (as provided in
 #'   `predicted_timecurves$effect_size`).
@@ -1796,59 +1731,6 @@ generate_spline_comparisons <- function(
 }
 
 
-#' Clean the Gene Symbols
-#' 
-#' @noRd
-#'
-#' @description
-#' This function preprocesses a vector of gene names by cleaning and
-#' formatting them. It removes any non-alphanumeric characters after the
-#' first block of alphanumeric characters and converts the remaining
-#' characters to uppercase.
-#'
-#' @param genes A character vector containing gene names to be cleaned.
-#'
-#' @return A character vector of cleaned gene symbols (names) with the same
-#' length as the input. The cleaned names will be in uppercase, and any
-#' invalid or empty gene names will be replaced with NA.
-#'
-clean_gene_symbols <- function(genes) {
-  
-  message(paste0(
-    "\033[33m\nGene symbols: Transforming all non-alphanumeric characters to ",
-    "whitespace, then extracting the substring of alphanumeric characters ",
-    "before the first whitespace or end of the string. The extracted ",
-    "substring is then converted to uppercase.\033[0m"
-  ))
-
-  message(paste0(
-    "\033[38;5;214mIf this does not produce valid gene symbols for your gene",
-    "set enrichment analysis, modify ",
-    "the genes argument of this function (cluster_hits) accordingly!\033[0m"
-  ))
-
-  # Apply cleaning process to each gene
-  cleaned_genes <- vapply(genes, function(gene_name) {
-    if (!is.na(gene_name) && gene_name != "") {
-      # Replace all non-alphanumeric characters with whitespace
-      gene_name <- gsub("[^A-Za-z0-9]", " ", gene_name)
-
-      # Extract the first block of alphanumeric characters before the
-      # first whitespace
-      clean_gene_name <- sub("^([A-Za-z0-9]+).*", "\\1", gene_name)
-
-      # Convert to uppercase
-      toupper(clean_gene_name)
-    } else {
-      as.character(NA)
-    }
-  }, character(1))
-
-  # Return cleaned genes, keeping the same index as input
-  return(cleaned_genes)
-}
-
-
 #' Construct unified cluster summary table
 #'
 #' @noRd
@@ -2091,121 +1973,33 @@ construct_cluster_table <- function(
     
     out <- out %>% left_join(c2_df, by = "feature_nr")
   }
-  
-  # cat3: use clusters from the paired concatenation result (no construction)
-  paired_present <- "paired_category_3" %in% names(clustered_hits_levels) &&
-    !is.null(clustered_hits_levels[["paired_category_3"]]) &&
-    nrow(stbl(clustered_hits_levels[["paired_category_3"]])) > 0
-  
-  if (has_c3) {
-    if (paired_present) {
-      paired_df <- stbl(clustered_hits_levels[["paired_category_3"]]) %>%
-        # expected columns: 'feature', 'cluster'
-        transmute(
-          feature_nr = as.integer(.data$feature),
-          cluster_cat3 = as.integer(.data$cluster)
-        ) %>%
-        distinct(feature_nr, .keep_all = TRUE)
-      
-      # If you only want cat3 clusters shown for actual category_3 hits,
-      # mask others to NA
-      if (!is.null(category_2_and_3_hits$category_3_hits) &&
-          nrow(category_2_and_3_hits$category_3_hits) > 0) {
-        cat3h <- category_2_and_3_hits$category_3_hits %>%
-          stbl() %>% transmute(feature_nr) %>% distinct()
-        
-        paired_df <- paired_df %>%
-          mutate(
-            cluster_cat3 = ifelse(
-              feature_nr %in% cat3h$feature_nr,
-              cluster_cat3,
-              NA_integer_
-            )
-          )
-      }
-      
-      out <- out %>% left_join(paired_df, by = "feature_nr")
-    } else {
-      # We have an interaction result but no paired clusters to join;
-      # keep the column present
-      out <- out %>% mutate(cluster_cat3 = NA_integer_)
-    }
+
+  # Build vector of significant cat3 features (if available)
+  sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
+                nrow(category_2_and_3_hits$category_3_hits) > 0) {
+    category_2_and_3_hits$category_3_hits %>%
+      stbl() %>%
+      dplyr::transmute(feature_nr) %>%
+      dplyr::distinct() %>%
+      dplyr::pull(feature_nr)
   } else {
-    # No interaction result requested -> do nothing (or add NA column if
-    # you always want it present)
-    # out <- out %>% mutate(cluster_cat3 = NA_integer_)
+    integer(0)
   }
   
+  # Construct cat3 only for significant features; else NA
+  out <- out %>%
+    dplyr::mutate(
+      cluster_cat3 = dplyr::case_when(
+        !(.data$feature_nr %in% sig_c3) ~ NA_character_,
+        TRUE ~ paste0(
+          ifelse(is.na(.data[[c1]]), "ns", as.character(.data[[c1]])),
+          "_",
+          ifelse(is.na(.data[[c2]]), "ns", as.character(.data[[c2]]))
+        )
+      )
+    )
+  
   out %>% distinct(feature_nr, .keep_all = TRUE) %>% arrange(feature_nr)
-}
-
-
-#' Plot minimal mean curves per cat3 cluster (one plot per cluster)
-#'
-#' @noRd
-#'
-#' @description
-#' Makes a minimal plot for each category 3 cluster using the paired
-#' concatenation result. For each cluster it draws the mean curve for
-#' both conditions on the same time axis. The y axis is fixed to [0, 1].
-#'
-#' @param paired_result The list returned by kmeans_clustering for the
-#'   paired category 3 run. Must contain a data frame in $curve_values
-#'   with time columns named like "cond|time" and a column "cluster".
-#'
-#' @return A named list of ggplot objects, one per cluster.
-#'
-#' @importFrom dplyr group_by summarise filter transmute
-#' @importFrom tidyr pivot_longer
-#' @importFrom ggplot2 ggplot aes geom_line labs theme_minimal theme
-#'                     element_blank scale_y_continuous ggtitle
-#'   
-plot_cat3_minimal <- function(paired_result) {
-  stopifnot(is.list(paired_result),
-            "curve_values" %in% names(paired_result))
-  cv <- paired_result$curve_values
-  stopifnot(is.data.frame(cv), "cluster" %in% names(cv))
-  
-  time_cols <- setdiff(names(cv), "cluster")
-  
-  long <- tidyr::pivot_longer(
-    cv,
-    cols = dplyr::all_of(time_cols),
-    names_to = "cond_time",
-    values_to = "value"
-  )
-  # split "cond|time"
-  ct <- strsplit(long$cond_time, "\\|")
-  long$cond <- vapply(ct, `[`, character(1L), 1L)
-  long$time_chr <- vapply(ct, `[`, character(1L), 2L)
-  long$time <- suppressWarnings(as.numeric(long$time_chr))
-  
-  mean_df <- long |>
-    dplyr::filter(!is.na(.data$time)) |>
-    dplyr::group_by(.data$cluster, .data$cond, .data$time) |>
-    dplyr::summarise(mean = mean(.data$value, na.rm = TRUE),
-                     .groups = "drop")
-  
-  # split into list per cluster
-  cluster_ids <- sort(unique(mean_df$cluster))
-  plots <- lapply(cluster_ids, function(clid) {
-    df <- dplyr::filter(mean_df, .data$cluster == clid)
-    ggplot2::ggplot(
-      df,
-      ggplot2::aes(x = .data$time,
-                   y = .data$mean,
-                   color = .data$cond,
-                   group = .data$cond)
-    ) +
-      ggplot2::geom_line() +
-      ggplot2::scale_y_continuous(limits = c(0, 1)) +
-      ggplot2::labs(x = "Time", y = NULL, color = NULL) +
-      ggplot2::ggtitle(paste("limma category 3 cluster:", clid)) +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
-  })
-  names(plots) <- paste0("cluster_", cluster_ids)
-  plots
 }
 
 
@@ -2537,7 +2331,7 @@ plot_heatmap <- function(
 #'   component of your clustering output. It must contain:
 #'   \describe{
 #'     \item{\code{cluster_quality}}{A list with \code{per_member}, a numeric
-#'       vector of similarity scores (0–1) aligned to rows in
+#'       vector of similarity scores (0-1) aligned to rows in
 #'       \code{clustered_hits}.}
 #'     \item{\code{clustered_hits}}{A data.frame with a \code{cluster} column
 #'       giving the cluster id for each row/feature.}
@@ -2548,7 +2342,7 @@ plot_heatmap <- function(
 #'   came from \code{compute_cluster_similarity()} and that its order matches
 #'   \code{clustered_hits}.
 #' @seealso \code{\link{compute_cluster_similarity}},
-#'   \code{\link{plot_cluster_similarity_distribution}}
+#'   \code{\link{plot_pearson_corr_distribution}}
 #'   
 plot_cluster_quality <- function(category_result) {
   # Basic structure checks
@@ -2567,9 +2361,9 @@ plot_cluster_quality <- function(category_result) {
   # Build plots in sorted order; drop empty/NA-only
   plots <- lapply(cl_ids_num, function(clid) {
     idx  <- which(as.numeric(ch$cluster) == clid)
-    sims <- cq$per_member[idx]  # here: silhouette widths per spline (-1..1)
-    if (length(sims) == 0 || all(is.na(sims))) return(NULL)
-    plot_cluster_similarity_distribution(sims, clid)
+    r2 <- cq$per_member[idx]  # here: silhouette widths per spline (-1..1)
+    if (length(r2) == 0 || all(is.na(r2))) return(NULL)
+    plot_cluster_quality_distribution(r2, clid)
   })
   
   # Drop NULLs
@@ -2588,7 +2382,7 @@ plot_cluster_quality <- function(category_result) {
 #' @noRd
 #'
 #' @description
-#' Generates a plot of average curves for each cluster, showing min-max
+#' Generates a plot of average curves for each cluster, showing z-score
 #' normalized intensities over time.
 #'
 #' @param curve_values A dataframe containing curve values and cluster
@@ -2678,7 +2472,7 @@ plot_all_mean_splines <- function(
     ggplot2::geom_line() +
     ggplot2::ggtitle(sprintf("Cluster Centroid (average spline) - %s", level)) +
     ggplot2::xlab(paste("Time", time_unit_label)) +
-    ggplot2::ylab(paste("min-max norm.", plot_info$y_axis_label)) +
+    ggplot2::ylab(paste("z-score norm.", plot_info$y_axis_label)) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 
@@ -2915,12 +2709,11 @@ plot_splines <- function(
     hit_index <- as.numeric(top_table$feature_nr[hit])
     feature_name <- top_table$feature_names[hit]
     
-    # --- NEW: fetch similarity to centroid for this feature (if available)
     sim_info <- .get_sim_for_feature(level_result, hit_index)
     sim_str  <- if (
       is.finite(sim_info$sim)
       ) sprintf(
-        " | silhouette: %.2f (cl %s)",
+        " | sr2cc: %.2f (cl %s)",
         sim_info$sim,
         as.character(sim_info$cl)
         ) else ""
@@ -3940,15 +3733,20 @@ build_cluster_hits_report <- function(
       if (element_name == "dendrogram") {
         header_text <- "Overall Clustering"
       } else if (element_name == "cluster_mean_splines") {
-        header_text <- "Min-max normalized individual and mean splines"
+        header_text <- "Z-score normalized individual and mean splines"
       } else if (element_name == "cluster_quality_plots") {
-        header_text <- "Silhouette width distribution plots"
-        silhouette_description <- paste(
+        header_text <- 
+          "Variance-explained-by-cluster-centroid distribution plots"
+        cquality_description <- paste(
           "<div style='text-align: center; font-size: 1.5em;'>",
-          "Silhouette width (higher is better):",
-          "0.71-1.00 = strong cluster fit; 0.51-0.70 = good;",
-          "0.26-0.50 = fair/weak; 0.00-0.25 = poor/borderline;",
-          "<0.00 = likely misclustered.",
+          "Variance explained by cluster centroid:",
+          "0.90-1.00 = excellent;",
+          "0.80-0.89 = strong;",
+          "0.70-0.79 = borderline;",
+          "0.60-0.69 = marginal;",
+          "0.50-0.59 = poor;",
+          "0.00-0.49 = very poor;",
+          "<0.00 = anti-pattern.",
           "</div>"
         )
       }else if (element_name == "heatmap") {
@@ -3976,11 +3774,11 @@ build_cluster_hits_report <- function(
         header_text,
         "</h2>",
         if (exists("heatmap_description")) heatmap_description 
-        else if (exists("silhouette_description")) silhouette_description 
+        else if (exists("cquality_description")) cquality_description 
         else ""
       )
       
-      if (exists("silhouette_description")) rm(silhouette_description)
+      if (exists("cquality_description")) rm(cquality_description)
       if (exists("heatmap_description")) rm(heatmap_description)
 
       # Add the asterisks definition if it exists
@@ -4256,12 +4054,12 @@ build_cluster_hits_report <- function(
 #' additional scientific covariates (e.g., batch effects, condition
 #' indicators). These covariates influence the fitted intercept, meaning
 #' the predicted curve does not necessarily pass through the "center of
-#' mass" of the actual data. Instead, the model’s intercept serves as an
+#' mass" of the actual data. Instead, the model`s intercept serves as an
 #' anchor for interpreting *effects*, not for minimizing residual error.
 #'
 #' Therefore, for the sake of visual clarity in plotting, this function
-#' adjusts the entire predicted timecourse vertically—without altering its
-#' shape—so that it better reflects the empirical data. This adjustment is
+#' adjusts the entire predicted timecourse vertically-without altering its
+#' shape-so that it better reflects the empirical data. This adjustment is
 #' purely cosmetic and does not affect statistical inference. Only the
 #' *shape* of the spline is tested in hypothesis testing; the intercept
 #' shift is applied post hoc for visualization.
@@ -4269,7 +4067,7 @@ build_cluster_hits_report <- function(
 #' @param pred_mat A numeric matrix of predicted values from the spline
 #'   model. Rows are features, columns are timepoints (as in the prediction
 #'   grid).
-#' @param data A numeric matrix of observed data. Same feature × sample
+#' @param data A numeric matrix of observed data. Same feature x sample
 #'   structure as used in model fitting.
 #' @param meta A `data.frame` containing metadata for each sample (i.e.,
 #'   column of `data`), including `Time` and the condition variable used to
@@ -4306,7 +4104,7 @@ adjust_intercept_least_squares <- function(
     return(pred_mat)
   }
   
-  # Actual data matrix: features × group samples
+  # Actual data matrix: features x group samples
   data_subset <- data[, sample_idx, drop = FALSE]
   # Subset data to match the rows in pred_mat
   common_rows <- intersect(rownames(pred_mat), rownames(data_subset))
@@ -4400,10 +4198,10 @@ stbl <- function(x) {
 #'   column in the returned tibble.
 #'
 #' @return A tibble with columns:
-#'   * `feature_nr` – numeric feature identifier.
-#'   * `outcol` – cluster assignment as character.
-#'   * `gcl` – optional gene from the input if present.
-#'   * `fnsrc` – feature name source from row names.
+#'   * `feature_nr` - numeric feature identifier.
+#'   * `outcol` - cluster assignment as character.
+#'   * `gcl` - optional gene from the input if present.
+#'   * `fnsrc` - feature name source from row names.
 #'
 #' @importFrom tibble tibble
 #' @importFrom dplyr filter group_by slice_head ungroup
@@ -4451,8 +4249,8 @@ ncl <- function(
 #'   `feature_names` or `feature_name`.
 #'
 #' @return A tibble with columns:
-#'   * `feature_nr` – numeric feature identifier.
-#'   * `fname_tbl` – character feature name from the table.
+#'   * `feature_nr` - numeric feature identifier.
+#'   * `fname_tbl` - character feature name from the table.
 #'   Only non-missing, non-empty names are retained and the result
 #'   contains distinct `feature_nr` entries.
 #'
@@ -4495,8 +4293,8 @@ toptbl_to_fn <- function(df) {
 #'   column.
 #'
 #' @return A tibble with columns:
-#'   * `feature_nr` – numeric feature identifier.
-#'   * `.cmb` – combined cluster label in the format
+#'   * `feature_nr` - numeric feature identifier.
+#'   * `.cmb` - combined cluster label in the format
 #'     `<cluster_c1>_<cluster_c2>` for hits, otherwise `NA`.
 #'
 #' @importFrom dplyr mutate select
@@ -4718,15 +4516,12 @@ kmeans_clustering <- function(
 
     curve_mat_num <- as.matrix(curve_values)
     storage.mode(curve_mat_num) <- "double"
-    time_num <- suppressWarnings(
-      as.numeric(gsub("^.*\\|", "", smooth_timepoints))
-    )
+    time_num <- as.numeric(gsub("^.*\\|", "", smooth_timepoints))
     if (!all(is.finite(time_num))) time_num <- NULL
     
-    sim <- compute_cluster_similarity(
+    sim <- compute_cluster_fits(
       curves_mat = curve_mat_num,
-      clusters   = cluster_assignments,
-      time       = time_num
+      clusters   = cluster_assignments
     )
   }
 
@@ -5110,7 +4905,7 @@ plot_single_and_mean_splines <- function(
     ggplot2::labs(
       title = title,
       x = paste("Time", time_unit_label),
-      y = paste("min-max norm.", plot_info$y_axis_label)
+      y = paste("z-score norm.", plot_info$y_axis_label)
     ) +
     ggplot2::theme(
       plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),
@@ -5313,45 +5108,47 @@ preselect_features_for_plotting <- function(
 }
 
 
-#' Plot the silhouette distribution for one cluster
+#' Plot the signed r^2 distribution for one cluster
 #'
 #' @noRd
 #'
 #' @description
-#' Draws a histogram of per-member silhouette widths (-1 to 1) for a single
-#' cluster. A red dashed vertical line marks the mean silhouette of that
-#' cluster, and a dotted vertical line at 0 highlights the boundary between
-#' negative and positive silhouettes.
+#' Draws a histogram of per-member \emph{signed} r\eqn{^2} values
+#' (variance explained with sign of the correlation) to the cluster centroid
+#' for a single cluster. A red dashed vertical line marks the mean signed
+#' r\eqn{^2} of that cluster, and a dotted vertical line at 0 highlights the
+#' boundary between in-phase (\eqn{>0}) and inverted (\eqn{<0}) shapes.
 #'
-#' @param similarities Numeric vector of silhouette widths for members of one
-#'   cluster. Values are typically in [-1, 1]; NAs are allowed.
+#' @param r2 Numeric vector of \emph{signed} r\eqn{^2} for members
+#'   of one cluster (computed from Pearson r to that cluster's centroid as
+#'   \code{sign(r) * r^2}). Values are in \code{[-1, 1]}; \code{NA}s allowed.
 #' @param cluster_id Integer or character identifier shown in the plot title.
 #'
-#' @return A ggplot object showing the silhouette histogram with mean and
-#'   reference lines.
+#' @return A ggplot object showing the signed r\eqn{^2} histogram with mean
+#'   and reference lines.
 #'
 #' @details
-#' The histogram uses fixed bin width 0.1 over [-1, 1] (20 bins) and displays
-#' counts on the y-axis. The mean line is drawn at
-#' mean(similarities, na.rm = TRUE).
+#' The histogram uses fixed bin width \code{0.1} over \code{[-1, 1]} (20 bins)
+#' and displays counts on the y-axis. The mean line is drawn at
+#' \code{mean(r2, na.rm = TRUE)}.
 #' 
-plot_cluster_similarity_distribution <- function(
-    similarities,  # silhouette widths per spline
+plot_cluster_quality_distribution <- function(
+    r2,  
     cluster_id
 ) {
-  stopifnot(is.numeric(similarities))
-  df <- data.frame(similarity = similarities)
-  mean_sim <- mean(df$similarity, na.rm = TRUE)
-  n_valid  <- sum(is.finite(df$similarity))
+  stopifnot(is.numeric(r2))
+  df <- data.frame(sr2 = r2)
+  mean_sr2 <- mean(df$sr2, na.rm = TRUE)
+  n_valid  <- sum(is.finite(df$sr2))
   
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = similarity))
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = sr2))
   
   # histogram with fixed 0.1 bins from -1 to 1
   if (n_valid >= 1) {
     p <- p + ggplot2::geom_histogram(
       ggplot2::aes(y = ggplot2::after_stat(count)),
       binwidth = 0.1,
-      boundary = -1,       # bins: (-1,-0.9], ..., (0.9,1.0]
+      boundary = -1,
       closed   = "right",
       fill     = "steelblue",
       color    = NA,
@@ -5359,17 +5156,17 @@ plot_cluster_similarity_distribution <- function(
     )
   }
   
-  # reference line at 0 (borderline silhouettes)
+  # reference line at 0 (in-phase vs inverted boundary)
   p <- p + ggplot2::geom_vline(
     xintercept = 0,
     linetype = "dotted",
     color = "grey50"
-    )
+  )
   
   # mean line + legend only if the mean is finite
-  if (is.finite(mean_sim)) {
+  if (is.finite(mean_sr2)) {
     p <- p + ggplot2::geom_vline(
-      ggplot2::aes(xintercept = mean_sim, color = "mean"),
+      ggplot2::aes(xintercept = mean_sr2, color = "mean"),
       linetype = "dashed"
     ) +
       ggplot2::scale_color_manual(values = c("mean" = "red"), name = NULL)
@@ -5378,12 +5175,12 @@ plot_cluster_similarity_distribution <- function(
   p +
     ggplot2::labs(
       title = paste0(
-        "Cluster ",
-        cluster_id,
-        " distribution (mean silhouette = ", round(mean_sim, 3), ")"
-        ),
-      x = "Silhouette width",
-      y = "Count"
+        "Cluster ", cluster_id,
+        " variances-explained-by-centroid (mean = ",
+        round(mean_sr2, 3), ")"
+      ),
+      x = "Signed r^2 (variance explained)",
+      y = "Hit Count"
     ) +
     ggplot2::coord_cartesian(xlim = c(-1, 1)) +
     ggplot2::theme_minimal(base_size = 13) +
@@ -5605,110 +5402,91 @@ add_dashed_lines <- function(
 }
 
 
-#' Compute per-spline silhouette widths as a cluster quality metric
+#' Compute per-curve centroid shape fit (signed r^2 to cluster centroid)
 #'
 #' @noRd
 #'
 #' @description
-#' Computes silhouette width for each curve (row) given a distance over
-#' timepoints, and summarizes by cluster. Silhouette width ranges from
-#' -1 to 1: higher means better cluster fit (well inside its cluster),
-#' around 0 means on the boundary, and negative values suggest a likely
-#' misclustered curve relative to the nearest neighboring cluster.
+#' For each curve, computes the \emph{signed} coefficient of determination
+#' (\code{signed r^2 = sign(r) * r^2}) between the curve and its cluster
+#' centroid (pointwise mean profile). The magnitude reflects variance
+#' explained by the centroid's shape; the sign indicates in-phase
+#' (\code{> 0}) vs. inverted (\code{< 0}) shape. Singleton clusters yield
+#' \code{NA}.
 #'
-#' @param curves_mat Numeric matrix (n x T) with rows = curves and columns
-#'  = timepoints.
-#' @param clusters Integer or factor vector of length n with the cluster label
-#'  for each row.
-#' @param time Optional numeric vector of length T giving the time grid. Kept
-#'  for
-#'   interface compatibility; not used by the silhouette computation.
-#' @param distance Character string, one of "correlation" or "euclidean".
-#'   If "correlation", distances are 1 - Pearson correlation computed across
-#'   timepoints using pairwise.complete.obs. If "euclidean", standard Euclidean
-#'   distances are used on the rows of curves_mat.
-#' @param epsilon Small positive constant for numerical stability in potential
-#'   future extensions; currently not used.
+#' @param curves_mat Numeric matrix (\code{n x T}) with rows = curves and
+#'   columns = timepoints.
+#' @param clusters Integer or factor vector of length \code{n} giving the
+#'   cluster label for each row of \code{curves_mat}.
 #'
 #' @return A named list with:
 #' \describe{
-#'   \item{\code{per_cluster_mean}}{Named numeric vector: mean silhouette width
-#'     for each cluster (names are cluster IDs). Higher is better.}
-#'   \item{\code{per_member}}{Numeric vector (length n): silhouette width for
-#'    each
-#'     curve. Values in [-1, 1]; higher is better. Singleton clusters are set
-#'      to NA.}
-#'   \item{\code{overall_mean}}{Single numeric value: mean silhouette width
-#'    across all curves (excluding NAs).}
+#'   \item{\code{per_cluster_mean}}{Named numeric vector: mean \emph{signed}
+#'     \code{r^2} to the centroid for each cluster (names are cluster IDs).
+#'     Higher (closer to \code{1}) indicates better centroid
+#'     representativeness; negative values indicate inverted shapes.
+#'     Singleton clusters are \code{NA}.}
+#'   \item{\code{per_member}}{Numeric vector (length \code{n}): per-curve
+#'     \emph{signed} \code{r^2} to its cluster centroid. Values in
+#'     \code{[-1, 1]}; \code{NA} for singletons or undefined correlations.}
+#'   \item{\code{overall_mean}}{Single numeric value: mean of
+#'     \code{per_member} excluding \code{NA}s.}
 #' }
 #'
 #' @details
-#' Silhouette widths are computed via \code{cluster::silhouette} from the
-#' chosen distance matrix. For "correlation", missing values are handled via
-#' pairwise.complete.obs inside \code{stats::cor}. For "euclidean", consider
-#' removing or imputing missing values before calling this function.
-#' 
-#' @importFrom stats cor dist as.dist setNames
-#' @importFrom cluster silhouette
-#' 
-compute_cluster_similarity <- function(
+#' Centroids are columnwise means within each cluster (\code{na.rm = TRUE}).
+#' Correlations use \code{stats::cor(..., use = "pairwise.complete.obs",
+#' method = "pearson")}; they are converted to signed \code{r^2} via
+#' \code{sign(r) * r^2}.
+#'
+#' @importFrom stats cor setNames
+compute_cluster_fits <- function(
     curves_mat,
-    clusters,
-    time = NULL,
-    distance = c("correlation", "euclidean"),
-    epsilon = 1e-8
+    clusters
 ) {
-  stopifnot(is.matrix(curves_mat), length(clusters) == nrow(curves_mat))
-  distance <- match.arg(distance)
-  n <- nrow(curves_mat); Tn <- ncol(curves_mat)
-  
-  # keep interface
-  if (!is.null(time)) {
-    time <- as.numeric(time)
-    stopifnot(length(time) == Tn)
-  }
+  n  <- nrow(curves_mat)
+  Tn <- ncol(curves_mat)  # kept for interface symmetry
   
   X <- curves_mat
-  # Distance matrix aligned to "shape"
-  D <- switch(
-    distance,
-    "correlation" = {
-      # 1 - Pearson correlation across timepoints; pairwise complete obs
-      as.dist(1 - stats::cor(
-        t(X),
-        use = "pairwise.complete.obs",
-        method = "pearson")
-        )
-    },
-    "euclidean" = stats::dist(X)
-  )
   
-  # Silhouette per member
-  # (Singleton clusters have undefined silhouette; we set those to NA)
-  sil <- cluster::silhouette(clusters, D)
-  per_member <- as.numeric(sil[, "sil_width"])
-  
-  # Replace widths for singleton clusters with NA explicitly
-  # (silhouette uses 0 or NA depending on version)
-  tab <- table(clusters)
-  singletons <- names(tab)[tab == 1]
-  if (length(singletons)) {
-    idx_single <- which(clusters %in% as.integer(singletons))
-    per_member[idx_single] <- NA_real_
-  }
-  
-  # Per-cluster & overall means
+  # signed r^2 to the cluster centroid (shape fit with sign)
+  per_member <- rep(NA_real_, n)
   k_vals <- sort(unique(clusters))
-  per_cluster_mean <- setNames(numeric(length(k_vals)), k_vals)
+  per_cluster_mean <- stats::setNames(numeric(length(k_vals)), k_vals)
+  
   for (k in k_vals) {
     idx <- which(clusters == k)
+    
+    # singleton clusters -> undefined/uninformative
+    if (length(idx) <= 1L) {
+      per_member[idx] <- NA_real_
+      per_cluster_mean[as.character(k)] <- NA_real_
+      next
+    }
+    
+    # centroid as mean curve (pointwise)
+    cent <- colMeans(X[idx, , drop = FALSE], na.rm = TRUE)
+    
+    # correlation of each member with centroid (pairwise complete obs)
+    cors <- apply(
+      X[idx, , drop = FALSE], 1,
+      function(row) stats::cor(
+        row, cent, use = "pairwise.complete.obs", method = "pearson"
+      )
+    )
+    
+    # signed r^2
+    sr2 <- sign(cors) * (cors ^ 2)
+    
+    per_member[idx] <- as.numeric(sr2)
     per_cluster_mean[as.character(k)] <- mean(per_member[idx], na.rm = TRUE)
   }
+  
   overall_mean <- mean(per_member, na.rm = TRUE)
   
   list(
-    per_cluster_mean = per_cluster_mean,   
-    per_member       = per_member,        
-    overall_mean     = overall_mean    
+    per_cluster_mean = per_cluster_mean,
+    per_member       = per_member,
+    overall_mean     = overall_mean
   )
 }

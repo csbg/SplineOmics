@@ -79,7 +79,6 @@ compiled into an HTML report.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_hits</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
 <span>  <span class="va">nr_clusters</span>,</span>
-<span>  nr_clusters_interaction <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
@@ -153,17 +152,30 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
 
 
 <dt id="arg-nr-clusters">nr_clusters<a class="anchor" aria-label="anchor" href="#arg-nr-clusters"></a></dt>
-<dd><p>A list whose length matches `top_tables`; each element is
-a numeric vector of positive integers (e.g. `1:1`, `2:8`) giving the
-candidate number(s) of clusters for the corresponding condition level.</p></dd>
-
-
-<dt id="arg-nr-clusters-interaction">nr_clusters_interaction<a class="anchor" aria-label="anchor" href="#arg-nr-clusters-interaction"></a></dt>
-<dd><p>An integer or a numeric vector of integers
-(&gt; 0) specifying how many clusters should be used for the clustering of
-the interaction of condition and time hits. When a vector is provided, then
-all cluster amounts in that range are tested and the best one automatically
-taken.</p></dd>
+<dd><p>Named list specifying the number of clusters per
+  condition level. The list <strong>must</strong> have one element per condition
+  level, and each element <strong>must be named exactly</strong> with the
+  corresponding condition name (e.g., <code>"condition1"</code>,
+  <code>"condition2"</code>).</p>
+<p>Each element's value controls the <code>k</code> used by k-means for that level:</p>
+<p>- <strong>Single integer</strong> (<code>k &gt; 0</code>, e.g. <code>3</code>): use exactly that
+    many clusters.
+  - <strong>Integer range</strong> (written with <code>:</code>, e.g. <code>2:6</code>):
+    choose the <code>k</code> within the range that <strong>minimizes the
+    Bayesian Information Criterion (BIC)</strong> computed from the k-means fit
+    over that range (lower is better). Ties are broken by the first
+    minimum encountered.</p>
+<p><strong>Notes</strong></p><ul><li><p>All condition levels must be present exactly once as names.</p></li>
+<li><p>Values must be positive integers; ranges must be increasing
+          (e.g. <code>2:6</code>).</p></li>
+<li><p>BIC is computed from k-means using Euclidean distance. A common
+          form is \(\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
+          k \log(n)\, p\), where \(n\) is the number of series, \(p\)
+          the number of timepoints (features), and \(\mathrm{WCSS}\) the
+          total within-cluster sum of squares for the fit.</p></li>
+<li><p>Clustering will fail if the requested <code>k</code> is not strictly
+          less than the number of available series for that level.</p></li>
+</ul><p><strong>Examples</strong></p></dd>
 
 
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
@@ -207,8 +219,11 @@ results from the interaction of condition and time limma result. Per default
 
 
 <dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
-<dd><p>A character vector containing the gene names of the features to
-be analyzed. The entries must be in the same order as they appear in data.</p></dd>
+<dd><p>A character vector of gene names corresponding to the features
+to be analyzed. The order of entries must match the feature order in
+<code>data</code>.
+Gene names should be standardized (cleaned) to ensure compatibility with
+downstream databases used for overrepresentation analysis after clustering.</p></dd>
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>

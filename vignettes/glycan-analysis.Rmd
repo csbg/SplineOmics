@@ -304,8 +304,8 @@ adj_pthresholds <- c( # 0.05 for both levels
 )
 
 nr_clusters <- list(
-  2,   # clusters for the exponential level
-  2    # clusters for the stationary level
+  constant = 2, 
+  tshifted = 2   
 )
 
 # treatment_labels allows to place vertical dashed lines into the plots, that

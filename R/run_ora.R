@@ -760,6 +760,8 @@ build_run_ora_report <- function(
 
 
 #' Map gene symbols across species
+#' 
+#' @noRd
 #'
 #' @description
 #' This function maps gene symbols from one species to another using either
@@ -994,59 +996,46 @@ check_cluster_table <- function(cluster_table) {
 }
 
 
-#' Check Valid Gene IDs
-#' 
+#' Check Valid Gene IDs (permissive, no mutation)
+#'
 #' @noRd
 #'
 #' @description
-#' This function checks whether a character vector `genes`
-#' contains only valid gene IDs. Each gene ID must consist
-#' solely of alphabetic letters and numbers.
+#' Minimal validation that \code{genes} is a character vector and, if
+#' \code{max_index_overall} is provided, that \code{length(genes)} is at
+#' least that value. No content validation is performed to avoid false
+#' negatives. This function does not modify or return \code{genes}.
 #'
-#' @param genes A character vector containing gene IDs.
-#' @param max_index_overall An integer, specifying the highest index of all
-#'                          features across all levels.
+#' @param genes Character vector of gene IDs/symbols.
+#' @param max_index_overall Optional single integer: required minimum length
+#'   of \code{genes} (e.g., highest feature index expected).
 #'
-#' @return None. This function stops execution and provides
-#' an error message if the vector does not meet the criteria,
-#' including the first offending element and its index.
-#'
+#' @return Invisibly returns \code{TRUE}. Stops only on type/length errors.
+#' 
 check_genes <- function(
     genes,
-    max_index_overall = NA) {
+    max_index_overall = NA_integer_
+) {
+  if (!is.character(genes)) {
+    stop("'genes' must be a character vector.", call. = FALSE)
+  }
+  
   if (!is.na(max_index_overall)) {
-    if (length(genes) < max_index_overall) {
-      stop(
-        paste(
-          "genes must at least have over", max_index_overall,
-          "elements"
-        ),
-        call. = FALSE
-      )
+    if (!is.numeric(max_index_overall) ||
+        length(max_index_overall) != 1L ||
+        is.na(max_index_overall)) {
+      stop("'max_index_overall' must be a single numeric value.",
+           call. = FALSE)
+    }
+    if (length(genes) < as.integer(max_index_overall)) {
+      stop(sprintf(
+        "`genes` must have length >= %d (got %d).",
+        as.integer(max_index_overall), length(genes)
+      ), call. = FALSE)
     }
   }
   
-  
-  if (!is.character(genes)) {
-    stop("genes must be a character vector", call. = FALSE)
-  }
-  
-  valid <- grepl("^[a-zA-Z0-9]+$", genes) | is.na(genes)
-  if (any(!valid)) {
-    first_invalid_index <- which(!valid)[1]
-    first_invalid_value <- genes[first_invalid_index]
-    num_invalid <- sum(!valid) - 1
-    stop(
-      sprintf(
-        paste(
-          "Invalid gene found at index %d: '%s'.",
-          "There are %d more invalid elements."
-        ),
-        first_invalid_index, first_invalid_value, num_invalid
-      ),
-      call. = FALSE
-    )
-  }
+  invisible(TRUE)
 }
 
 

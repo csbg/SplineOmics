@@ -499,9 +499,9 @@ clusters as we have specified for that specific level.
 # in the order those levels appear in the meta condition column! Otherwise, 
 # there will be a mixup!
 
-adj_pthresholds <- c( # 0.05 for both levels
-  0.05, # exponential
-  0.05 # stationary
+adj_pthresholds <- c( 
+  0.05, 
+  0.05 
 )
 
 # The amount of clusters can be a fixed number (e.g. 6) or a range. When you
@@ -511,8 +511,8 @@ adj_pthresholds <- c( # 0.05 for both levels
 # you don't want to have a clustering for a level, write 1 for the cluster 
 # number for that level.
 nr_clusters <- list(
-  6,   # specifically 6 clusters for the exponential phase level
-  2:3  # range of cluster numbers for the stationary phase level
+  Exponential = 6,   # specifically 6 clusters for the exponential phase level
+  Stationary = 2:3   # range of cluster numbers for the stationary phase level
 )
 
 plot_info <- list( # For the spline plots

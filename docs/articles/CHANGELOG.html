@@ -144,7 +144,23 @@ Resolved an issue causing crashes when input data was missing values. -
 </div>
 </div>
 <div class="section level4">
-<h4 id="section">[0.3.1]<a class="anchor" aria-label="anchor" href="#section"></a>
+<h4 id="section">[0.3.2]<a class="anchor" aria-label="anchor" href="#section"></a>
+</h4>
+<div class="section level5">
+<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+</h5>
+<ul>
+<li>The cluster_hits() function now does not modify the gene symbols
+anymore. Before, it attempted to clean them by removing characters that
+are not valid and making them uppercase. This is implicit behavior (even
+though the user was informed) and was removed in the favor of the user
+now having to explicitly cleaning them himself and he is responsible for
+that.</li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="section-1">[0.3.1]<a class="anchor" aria-label="anchor" href="#section-1"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
@@ -174,7 +190,7 @@ run.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
 </h5>
 <ul>
 <li><p>Some documentation was outdated or too vague. Improved
@@ -187,7 +203,7 @@ names.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-1">[0.3.0]<a class="anchor" aria-label="anchor" href="#section-1"></a>
+<h4 id="section-2">[0.3.0]<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
 <h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
@@ -282,7 +298,7 @@ test.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
+<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
 </h5>
 <ul>
 <li><p>Red spline curves: Before, it was just generated with the help of
@@ -306,10 +322,10 @@ seemingly had no effect. This was now fixed.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-2">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-2"></a>
+<h4 id="section-3">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-3"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
+<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
 </h5>
 <ul>
 <li><p>Bug that prevented the generation of the double spline plots when
@@ -426,7 +442,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 <hr>
 </div>
 <div class="section level4">
-<h4 id="section-3">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-3"></a>
+<h4 id="section-4">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-4"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
@@ -436,7 +452,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
+<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
 </h5>
 <ul>
 <li>Small bug that made it impossible having no treatment label for a
@@ -462,7 +478,7 @@ and this, which is twice the maintainance effort.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-4">[0.1.1] - 2025-01-29<a class="anchor" aria-label="anchor" href="#section-4"></a>
+<h4 id="section-5">[0.1.1] - 2025-01-29<a class="anchor" aria-label="anchor" href="#section-5"></a>
 </h4>
 </div>
 <div class="section level4">
@@ -509,7 +525,7 @@ in a separate field.</li>
 and 3).</li>
 </ul>
 <div class="section level5">
-<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
+<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
 </h5>
 <ul>
 <li>A few smaller visual things for the HTML reports.</li>

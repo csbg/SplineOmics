@@ -947,7 +947,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpBjokzl/fileb7cceac9362 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp99o4vc/file9b0748dd67f0 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -969,8 +969,8 @@ clusters as we have specified for that specific level.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">nr_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fl">2</span>,   <span class="co"># clusters for the exponential level</span></span>
-<span>  <span class="fl">2</span>    <span class="co"># clusters for the stationary level</span></span>
+<span>  constant <span class="op">=</span> <span class="fl">2</span>, </span>
+<span>  tshifted <span class="op">=</span> <span class="fl">2</span>   </span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># treatment_labels allows to place vertical dashed lines into the plots, that</span></span>
@@ -1040,9 +1040,6 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  constant</span></span>
 <span><span class="co">#&gt; For the level:  tshifted</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co"><span style="color: #BBBB00;">#&gt; Gene symbols: Transforming all non-alphanumeric characters to whitespace, then extracting the substring of alphanumeric characters before the first whitespace or end of the string. The extracted substring is then converted to uppercase.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #FFAF00;">If this does not produce valid gene symbols for your geneset enrichment analysis, modify the genes argument of this function (cluster_hits) accordingly!</span></span></span>
 <span><span class="co">#&gt; Generating heatmap...</span></span>
 <span><span class="co">#&gt; Generating cluster mean splines for level:  constant</span></span>
 <span><span class="co">#&gt; Generating spline plots...</span></span>
@@ -1051,7 +1048,7 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpBjokzl/fileb7cc73167da4 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp99o4vc/file9b07494eeec0 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>

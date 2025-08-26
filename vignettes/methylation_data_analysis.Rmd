@@ -230,8 +230,8 @@ adj_pthresholds <- c(
 )
 
 nr_clusters <- list(
-  2:6,                    # Automatically select best cluster nr within range.
-  2:6   
+  Constant   = 2:6,                    
+  Temp..Shifted = 2:6   
 )
 
 report_dir <- here::here(

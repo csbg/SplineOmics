@@ -44,6 +44,16 @@ Examples:
 
 --------------------------------------------------------------------------------
 
+### [0.3.2]
+
+#### Fixed
+- The cluster_hits() function now does not modify the gene symbols anymore.
+  Before, it attempted to clean them by removing characters that are not valid
+  and making them uppercase. This is implicit behavior (even though the user
+  was informed) and was removed in the favor of the user now having to
+  explicitly cleaning them himself and he is responsible for that.
+
+
 ### [0.3.1]
 
 #### Added
