@@ -31,12 +31,12 @@
 #'   indicates that the feature was not significant (not a hit) in that
 #'   category.
 #' 
-#' @param databases A `data.frame` that defines the gene set collections to be
-#'   tested in the overrepresentation analysis. Must contain exactly three
-#'   columns:
+#' @param databases A \code{data.frame} that defines the gene set collections
+#'   to be tested in the overrepresentation analysis. Must contain exactly
+#'   three columns:
 #'   \describe{
-#'     \item{DB}{Character. The database identifier (e.g., `"KEGG"`, `"GO_BP"`,
-#'       `"Reactome"`).}
+#'     \item{DB}{Character. The database identifier (e.g., KEGG, GO_BP,
+#'       Reactome).}
 #'     \item{Geneset}{Character. The name of the gene set or pathway within the
 #'       database.}
 #'     \item{Gene}{Character. A gene identifier belonging to the gene set
@@ -220,10 +220,12 @@ run_ora <- function(
     genes = cluster_table[["gene"]],
     mapping_cfg = mapping_cfg
   )
-  universe <- map_gene_symbols(
-    genes = universe,
-    mapping_cfg = mapping_cfg
-  )
+  if (!is.null(universe)) {
+    universe <- map_gene_symbols(
+      genes = universe,
+      mapping_cfg = mapping_cfg
+    )
+  }
 
   lvl_cols  <- level_columns(cluster_table)
   lvl_names <- level_display_names(cluster_table)
@@ -983,9 +985,9 @@ check_cluster_table <- function(cluster_table) {
       }
       
       if (cc == "cluster_cat3") {
-        bad <- !is.na(v) & (is.na(suppressWarnings(as.integer(v))))
+        bad <- !is.na(v) & !is.character(v)
         if (any(bad)) {
-          stop(paste0("'", cc, "' must be integer or NA."),
+          stop(paste0("'", cc, "' must be character or NA."),
                call. = FALSE)
         }
       }
@@ -1497,10 +1499,9 @@ run_ora_level <- function(
     ])
     fg <- unique(fg[!is.na(fg) & fg != ""])
     if (length(fg) == 0L) next
-    
+
     for (gene_set_name in names(gene_set_collections)) {
       message(paste("Database:", gene_set_name))
-      gene_set_map <- gene_set_collections[[gene_set_name]]
       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
         cfg <- enrichGO_cfg[[gene_set_name]]
         ora_result <- clusterProfiler::enrichGO(
@@ -1515,8 +1516,16 @@ run_ora_level <- function(
           maxGSSize = params$maxGSSize,
           qvalueCutoff = params$qvalueCutoff
         )
-        ora_result <- clusterProfiler::simplify(ora_result)
+        # Only simplify if there are results
+        if (!is.null(ora_result) && nrow(as.data.frame(ora_result)) > 0) {
+          ora_result <- clusterProfiler::simplify(ora_result)
+        }
       } else {
+        gene_set_map <- gene_set_collections[[gene_set_name]]
+        check_gene_overlap(
+          fg = fg,
+          gene_set_map = gene_set_map
+          )
         ora_result <- clusterProfiler::enricher(
           gene = fg,
           pvalueCutoff = params$pvalueCutoff,
@@ -1823,27 +1832,19 @@ set_default_params <- function(params) {
 }
 
 
-#' Convert Database File to TERM2GENE List
+#' Convert DB/Geneset/Gene table to TERM2GENE list
 #' 
 #' @noRd
 #'
 #' @description
-#' Reads a specified .tsv file containing information about databases,
-#' gene sets, and genes. The file should have three columns: 'DB' for database
-#' names, Geneset' for gene set identifiers, and 'Gene' for gene names. This
-#' function organizes this information into a nested list. Each top-level
-#' element corresponds to a unique database, and within each, gene sets map to
-#' lists of associated genes.
+#' Takes a data.frame with columns DB, Geneset, Gene and returns a named list,
+#' one element per DB. Each element is a data.frame with two columns named
+#' `term` (the Geneset) and `gene` (the Gene), suitable for
+#' clusterProfiler::enricher(TERM2GENE = ...).
 #'
-#' @param databases A dataframe, containing the three columns DB, Geneset, and
-#'                  gene. This dataframe contains the databases downloaded from
-#'                  Enrichr with the SplineOmics package function:
-#'                  download_enrichr_databases.
-#' @return A nested list where the first level of names corresponds to database
-#' names ('DB'),
-#'         the second level to gene sets ('Geneset'), and the innermost lists
-#'         contain gene names ('Gene') associated with each gene set.
-#'
+#' @param databases data.frame with columns DB, Geneset, Gene
+#' @return named list of data.frames (columns: term, gene), one per DB
+#' 
 dbs_to_term2genes <- function(databases) {
   
   db_split <- split(databases, databases$DB)
@@ -2108,6 +2109,52 @@ flatten_ora_results <- function(ora_results) {
   }
   
   dplyr::bind_rows(rows)
+}
+
+
+#' Check overlap between foreground genes and a gene set map
+#' 
+#' @noRd
+#'
+#' @description
+#' This function compares a character vector of foreground genes (`fg`)
+#' against the `gene` column of a gene set map (`gene_set_map`).
+#' It reports the number and proportion of overlapping genes.
+#'
+#' @param fg Character vector of foreground genes.
+#' @param gene_set_map Data frame with a column named `gene`.
+#'
+#' @return Invisibly returns a list with counts and percentage overlap.
+#' 
+check_gene_overlap <- function(
+    fg,
+    gene_set_map
+    ) {
+  stopifnot(is.character(fg))
+  stopifnot("gene" %in% colnames(gene_set_map))
+  
+  fg <- unique(fg[!is.na(fg) & nzchar(fg)])
+  genes_avail <- unique(
+    gene_set_map$gene[!is.na(gene_set_map$gene) & nzchar(gene_set_map$gene)]
+    )
+  
+  overlap <- intersect(fg, genes_avail)
+  n_fg <- length(fg)
+  n_overlap <- length(overlap)
+  pct_overlap <- if (n_fg == 0) 0 else round(100 * n_overlap / n_fg, 1)
+  
+  message("Foreground genes:", n_fg)
+  message(
+    "Foreground genes overlapping with database: ",
+    n_overlap,
+    " (", pct_overlap, "%)\n"
+    )
+  
+  invisible(list(
+    n_fg = n_fg,
+    n_overlap = n_overlap,
+    pct_overlap = pct_overlap
+  ))
 }
 
 

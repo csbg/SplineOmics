@@ -1,7 +1,7 @@
 Package: SplineOmics
 Type: Package
 Title: Streamlines the process of analysing omics timeseries data with splines
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: person("Thomas", "Rauter", 
                   email = "thomas.rauter@plus.ac.at", 
                   role = c("aut", "cre"),
@@ -64,6 +64,7 @@ Suggests:
     orthogene (>= 1.12.0),
     rmarkdown (>= 2.7),
     knitr,
+    org.Mm.eg.db,
     testthat,
     readxl,
     conflicted (>= 1.2.0),

@@ -23,7 +23,7 @@ compiled into an HTML report."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -175,24 +175,29 @@ necessary data and parameters for the analysis, including:</p><ul><li><p><code>d
           total within-cluster sum of squares for the fit.</p></li>
 <li><p>Clustering will fail if the requested <code>k</code> is not strictly
           less than the number of available series for that level.</p></li>
-</ul><p><strong>Examples</strong></p></dd>
+</ul><p><strong>Example</strong>
+  # Fixed k for condition1, BIC-selected k for condition2
+  nr_clusters &lt;- list(
+    condition1 = 4,
+    condition2 = 2:6
+  )</p></dd>
 
 
 <dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
 <dd><p>Numeric vector of p-value thresholds for filtering
-hits in each top table.</p></dd>
+hits in each top table. The order of the elements determines which
+adj.p-value threshold is assigned to which condition (the first element
+gets assigned to the first condition, the second to the second, etc.).</p></dd>
 
 
 <dt id="arg-adj-pthresh-avrg-diff-conditions">adj_pthresh_avrg_diff_conditions<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-avrg-diff-conditions"></a></dt>
 <dd><p>p-value threshold for the results
-from the average difference of the condition limma result. Per default 0 (
-turned off).</p></dd>
+from the average difference of the condition limma result.</p></dd>
 
 
 <dt id="arg-adj-pthresh-interaction-condition-time">adj_pthresh_interaction_condition_time<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-interaction-condition-time"></a></dt>
 <dd><p>p-value threshold for the
-results from the interaction of condition and time limma result. Per default
-0 (turned off).</p></dd>
+results from the interaction of condition and time limma result.</p></dd>
 
 
 <dt id="arg-min-effect-size">min_effect_size<a class="anchor" aria-label="anchor" href="#arg-min-effect-size"></a></dt>
@@ -251,7 +256,7 @@ will fall back to their default values):</p><ul><li><p><code>cluster_heatmap_col
 
 
 <dt id="arg-raw-data">raw_data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
-<dd><p>Optional. Data matrix with the raw (unimputed) data, still
+<dd><p>Data matrix with the raw (unimputed) data, still
 containing NA values. When provided, it highlights the datapoints in the
 spline plots that originally where NA and that were imputed.</p></dd>
 
@@ -270,28 +275,28 @@ generated.</p></dd>
 <dt id="arg-max-hit-number">max_hit_number<a class="anchor" aria-label="anchor" href="#arg-max-hit-number"></a></dt>
 <dd><p>Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of
-the HTML report in the case of many hits. Default is 25.</p></dd>
+the HTML report in the case of many hits.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with three elements:</p><dl><dt><code>cluster_table</code></dt>
 <dd><p>A tibble containing one row per <code>feature_nr</code> with metadata and
-    cluster assignments across the analysis categories. The structure is:</p><ul><li><p><code>feature_nr</code> – Numeric feature identifier.</p></li>
-<li><p><code>feature_name</code> – Preferred feature name, prioritizing
+    cluster assignments across the analysis categories. The structure is:</p><ul><li><p><code>feature_nr</code> - Numeric feature identifier.</p></li>
+<li><p><code>feature_name</code> - Preferred feature name, prioritizing
         values from the limma tables, then from the cluster table row
         names, and falling back to the numeric feature ID.</p></li>
-<li><p><code>gene</code> – Preferred gene symbol from the <code>annotation</code>
+<li><p><code>gene</code> - Preferred gene symbol from the <code>annotation</code>
         table if available, otherwise taken from the cluster tables.</p></li>
-<li><p><code>cluster_&lt;cond1&gt;</code> / <code>cluster_&lt;cond2&gt;</code> – Cluster
+<li><p><code>cluster_&lt;cond1&gt;</code> / <code>cluster_&lt;cond2&gt;</code> - Cluster
         assignments for each time-effect condition, named according to
         the elements of <code>clustered_hits_levels</code>.</p></li>
-<li><p><code>cluster_cat2</code> – Present only if category 2 results are
+<li><p><code>cluster_cat2</code> - Present only if category 2 results are
         available; a combined cluster label in the form
         <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code> for features that
         are significant in category 2. If this value is <code>NA</code>, the
         feature was not a category 2 hit.</p></li>
-<li><p><code>cluster_cat3</code> – Present only if category 3 results are
+<li><p><code>cluster_cat3</code> - Present only if category 3 results are
         available; a combined cluster label in the form
         <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code> for features that
         are significant in category 3. If this value is <code>NA</code>, the
@@ -321,7 +326,7 @@ the HTML report in the case of many hits. Default is 25.</p></dd>
 <dd><p>Named list by condition with a
         numeric vector (length \(N\)) per condition giving the
         <em>cumulative travel</em> (integrated temporal change) of each
-        feature’s spline across <code>time_grid</code>. Larger values indicate
+        feature`s spline across <code>time_grid</code>. Larger values indicate
         stronger within-condition temporal modulation.</p></dd>
 
       <dt><code>time_effect_passed_threshold</code></dt>
@@ -335,7 +340,7 @@ the HTML report in the case of many hits. Default is 25.</p></dd>
         giving the <em>differential cumulative travel</em> between the two
         condition-specific splines of each feature, computed on the same
         <code>time_grid</code>. Larger values indicate stronger differences in
-        temporal behaviour between conditions (condition–time interaction).</p></dd>
+        temporal behaviour between conditions (condition-time interaction).</p></dd>
 
       <dt><code>interaction_passed_threshold</code></dt>
 <dd><p>Logical vector (length

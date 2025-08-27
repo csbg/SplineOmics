@@ -97,29 +97,23 @@
 #'           less than the number of available series for that level.
 #'   }
 #'
-#'   \strong{Examples}
+#'   \strong{Example}
 #'   # Fixed k for condition1, BIC-selected k for condition2
 #'   nr_clusters <- list(
 #'     condition1 = 4,
 #'     condition2 = 2:6
 #'   )
-#'
-#'   # Fixed k for both conditions
-#'   nr_clusters <- list(
-#'     condition1 = 3,
-#'     condition2 = 5
-#'   )
 #' 
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
-#' hits in each top table.
+#' hits in each top table. The order of the elements determines which 
+#' adj.p-value threshold is assigned to which condition (the first element
+#' gets assigned to the first condition, the second to the second, etc.).
 #' 
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
-#' from the average difference of the condition limma result. Per default 0 (
-#' turned off).
+#' from the average difference of the condition limma result. 
 #' 
 #' @param adj_pthresh_interaction_condition_time p-value threshold for the
-#' results from the interaction of condition and time limma result. Per default
-#' 0 (turned off).
+#' results from the interaction of condition and time limma result. 
 #' 
 #' @param min_effect_size A named list that specifies the minimum effect size
 #'   thresholds to consider a feature as biologically meaningful, in addition
@@ -173,7 +167,7 @@
 #'       replicate-level variation to be assessed.
 #'   }
 #'   
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
+#' @param raw_data Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
 #' 
@@ -186,7 +180,7 @@
 #' 
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
-#' the HTML report in the case of many hits. Default is 25.
+#' the HTML report in the case of many hits. 
 #'
 #' @return
 #' A named list with three elements:
@@ -2317,33 +2311,34 @@ plot_heatmap <- function(
 }
 
 
-#' Plot per-cluster similarity distributions (one category/result block)
+#' Plot per-cluster signed r^2 quality distributions (one category block)
 #'
 #' @noRd
 #'
 #' @description
-#' For a single result/category component of your clustering output, generate a
-#' density plot of member similarities for each cluster. Clusters without
-#' valid similarity values are skipped. The returned list is named and sorted
-#' as \code{cluster_1}, \code{cluster_2}, ... by numeric cluster id.
+#' For a single result/category component, generate a density-style histogram
+#' of member \emph{signed} r\eqn{^2} (variance explained with the sign of the
+#' correlation) for each cluster. Clusters without valid quality values are
+#' skipped. The returned list is named and sorted as \code{cluster_1},
+#' \code{cluster_2}, ... by numeric cluster id.
 #'
-#' @param category_result A list-like object representing one result/category
-#'   component of your clustering output. It must contain:
+#' @param category_result A list-like object for one result/category component.
+#'   Must contain:
 #'   \describe{
-#'     \item{\code{cluster_quality}}{A list with \code{per_member}, a numeric
-#'       vector of similarity scores (0-1) aligned to rows in
-#'       \code{clustered_hits}.}
+#'     \item{\code{cluster_quality}}{A list with \code{per_member}, the vector
+#'       of signed r\eqn{^2} scores aligned to rows in \code{clustered_hits}.}
 #'     \item{\code{clustered_hits}}{A data.frame with a \code{cluster} column
 #'       giving the cluster id for each row/feature.}
 #'   }
+#'
 #' @return A named list of \code{ggplot} objects (one per cluster), sorted by
 #'   increasing cluster id. Returns \code{NULL} if no valid plots can be made.
-#' @details This function expects that \code{cluster_quality$per_member}
-#'   came from \code{compute_cluster_similarity()} and that its order matches
-#'   \code{clustered_hits}.
-#' @seealso \code{\link{compute_cluster_similarity}},
-#'   \code{\link{plot_pearson_corr_distribution}}
-#'   
+#'
+#' @details
+#' This expects that \code{cluster_quality$per_member} came from
+#' \code{compute_cluster_fits()} (signed r\eqn{^2} to centroid) and that its
+#' order matches \code{clustered_hits}.
+#'
 plot_cluster_quality <- function(category_result) {
   # Basic structure checks
   if (!is.list(category_result)) return(NULL)
@@ -2356,14 +2351,13 @@ plot_cluster_quality <- function(category_result) {
   cl_ids_num <- sort(as.integer(unique(ch$cluster)))
   cl_ids_num <- cl_ids_num[is.finite(cl_ids_num)]
   if (length(cl_ids_num) == 0) return(NULL)
-  cl_ids_num <- sort(cl_ids_num)
   
   # Build plots in sorted order; drop empty/NA-only
   plots <- lapply(cl_ids_num, function(clid) {
-    idx  <- which(as.numeric(ch$cluster) == clid)
-    r2 <- cq$per_member[idx]  # here: silhouette widths per spline (-1..1)
-    if (length(r2) == 0 || all(is.na(r2))) return(NULL)
-    plot_cluster_quality_distribution(r2, clid)
+    idx <- which(as.numeric(ch$cluster) == clid)
+    sr2 <- cq$per_member[idx]  # signed r^2 per member
+    if (length(sr2) == 0 || all(is.na(sr2))) return(NULL)
+    plot_cluster_quality_distribution(sr2, clid)
   })
   
   # Drop NULLs
@@ -5132,11 +5126,13 @@ preselect_features_for_plotting <- function(
 #' and displays counts on the y-axis. The mean line is drawn at
 #' \code{mean(r2, na.rm = TRUE)}.
 #' 
+#' @importFrom ggplot2 ggplot aes geom_histogram after_stat geom_vline theme
+#'                     scale_color_manual labs coord_cartesian theme_minimal
+#' 
 plot_cluster_quality_distribution <- function(
     r2,  
     cluster_id
 ) {
-  stopifnot(is.numeric(r2))
   df <- data.frame(sr2 = r2)
   mean_sr2 <- mean(df$sr2, na.rm = TRUE)
   n_valid  <- sum(is.finite(df$sr2))
@@ -5169,14 +5165,17 @@ plot_cluster_quality_distribution <- function(
       ggplot2::aes(xintercept = mean_sr2, color = "mean"),
       linetype = "dashed"
     ) +
-      ggplot2::scale_color_manual(values = c("mean" = "red"), name = NULL)
+      ggplot2::scale_color_manual(
+        values = c("mean" = "red"),
+        name = NULL
+        )
   }
   
   p +
     ggplot2::labs(
       title = paste0(
         "Cluster ", cluster_id,
-        " variances-explained-by-centroid (mean = ",
+        " variances explained by centroid (mean = ",
         round(mean_sr2, 3), ")"
       ),
       x = "Signed r^2 (variance explained)",
@@ -5440,13 +5439,12 @@ add_dashed_lines <- function(
 #' \code{sign(r) * r^2}.
 #'
 #' @importFrom stats cor setNames
+#' 
 compute_cluster_fits <- function(
     curves_mat,
     clusters
 ) {
   n  <- nrow(curves_mat)
-  Tn <- ncol(curves_mat)  # kept for interface symmetry
-  
   X <- curves_mat
   
   # signed r^2 to the cluster centroid (shape fit with sign)

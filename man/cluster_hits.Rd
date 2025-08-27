@@ -109,29 +109,23 @@ necessary data and parameters for the analysis, including:
           less than the number of available series for that level.
   }
 
-  \strong{Examples}
+  \strong{Example}
   # Fixed k for condition1, BIC-selected k for condition2
   nr_clusters <- list(
     condition1 = 4,
     condition2 = 2:6
-  )
-
-  # Fixed k for both conditions
-  nr_clusters <- list(
-    condition1 = 3,
-    condition2 = 5
   )}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
-hits in each top table.}
+hits in each top table. The order of the elements determines which 
+adj.p-value threshold is assigned to which condition (the first element
+gets assigned to the first condition, the second to the second, etc.).}
 
 \item{adj_pthresh_avrg_diff_conditions}{p-value threshold for the results
-from the average difference of the condition limma result. Per default 0 (
-turned off).}
+from the average difference of the condition limma result.}
 
 \item{adj_pthresh_interaction_condition_time}{p-value threshold for the
-results from the interaction of condition and time limma result. Per default
-0 (turned off).}
+results from the interaction of condition and time limma result.}
 
 \item{min_effect_size}{A named list that specifies the minimum effect size
   thresholds to consider a feature as biologically meaningful, in addition
@@ -185,7 +179,7 @@ will fall back to their default values):
     replicate-level variation to be assessed.
 }}
 
-\item{raw_data}{Optional. Data matrix with the raw (unimputed) data, still 
+\item{raw_data}{Data matrix with the raw (unimputed) data, still 
 containing NA values. When provided, it highlights the datapoints in the 
 spline plots that originally where NA and that were imputed.}
 
@@ -198,7 +192,7 @@ generated.}
 
 \item{max_hit_number}{Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of
-the HTML report in the case of many hits. Default is 25.}
+the HTML report in the case of many hits.}
 }
 \value{
 A named list with three elements:

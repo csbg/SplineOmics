@@ -54,6 +54,29 @@ Examples:
   explicitly cleaning them himself and he is responsible for that.
 
 
+#### Changed 
+- Changed cluster quality metric from Silhouette score to signed r^2 
+  (variance explained). This is because Silhouette score focuses on determining
+  how well a cluster member fits in this cluster compared to other clusters,
+  but does not quantify how well the cluster centroid represents each member
+  (which is what is desired).
+  
+- Identifying the best amount of clusters in the case the user specified a range
+  of clusters is now again done with the Bayesian Information Criterion. This
+  is because in order to use the Silhouette score, a new dependency is needed,
+  and one aim is to minimize dependencies.
+
+
+#### Removed
+- Removed the double spline clustering and cat3 now forms the clusters by
+  combining the cluster assignments of the time effect clusters. This was done
+  to simplify the task, because one now needs to only focus on nicely clustering
+  the time effect hits.
+
+- Gene check inside run_ora(). Now, the user is responsible of providing 
+  appropriate symbols.
+
+
 ### [0.3.1]
 
 #### Added

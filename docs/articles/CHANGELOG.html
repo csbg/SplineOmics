@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -158,6 +158,34 @@ now having to explicitly cleaning them himself and he is responsible for
 that.</li>
 </ul>
 </div>
+<div class="section level5">
+<h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+</h5>
+<ul>
+<li><p>Changed cluster quality metric from Silhouette score to signed
+r^2 (variance explained). This is because Silhouette score focuses on
+determining how well a cluster member fits in this cluster compared to
+other clusters, but does not quantify how well the cluster centroid
+represents each member (which is what is desired).</p></li>
+<li><p>Identifying the best amount of clusters in the case the user
+specified a range of clusters is now again done with the Bayesian
+Information Criterion. This is because in order to use the Silhouette
+score, a new dependency is needed, and one aim is to minimize
+dependencies.</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="removed-1">Removed<a class="anchor" aria-label="anchor" href="#removed-1"></a>
+</h5>
+<ul>
+<li><p>Removed the double spline clustering and cat3 now forms the
+clusters by combining the cluster assignments of the time effect
+clusters. This was done to simplify the task, because one now needs to
+only focus on nicely clustering the time effect hits.</p></li>
+<li><p>Gene check inside run_ora(). Now, the user is responsible of
+providing appropriate symbols.</p></li>
+</ul>
+</div>
 </div>
 <div class="section level4">
 <h4 id="section-1">[0.3.1]<a class="anchor" aria-label="anchor" href="#section-1"></a>
@@ -206,7 +234,7 @@ names.</p></li>
 <h4 id="section-2">[0.3.0]<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
 </h5>
 <ul>
 <li><p>cluster_hits() returns. Now it returns only the plots and a large
@@ -351,7 +379,7 @@ would just confuse the user).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
+<h5 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
 </h5>
 <ul>
 <li><p>Replicates in the double spline plots (limma result category 2
@@ -466,7 +494,7 @@ data).</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="removed-1">Removed<a class="anchor" aria-label="anchor" href="#removed-1"></a>
+<h5 id="removed-2">Removed<a class="anchor" aria-label="anchor" href="#removed-2"></a>
 </h5>
 <ul>
 <li>open_template() function. This was a function that opened a template
@@ -482,7 +510,7 @@ and this, which is twice the maintainance effort.</li>
 </h4>
 </div>
 <div class="section level4">
-<h4 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
+<h4 id="changed-4">Changed<a class="anchor" aria-label="anchor" href="#changed-4"></a>
 </h4>
 <ul>
 <li>The design formula must now contain the string ‘Time’ rather than

@@ -41,12 +41,12 @@ For any category-specific cluster column, a value of \code{NA}
 indicates that the feature was not significant (not a hit) in that
 category.}
 
-\item{databases}{A `data.frame` that defines the gene set collections to be
-  tested in the overrepresentation analysis. Must contain exactly three
-  columns:
+\item{databases}{A \code{data.frame} that defines the gene set collections
+  to be tested in the overrepresentation analysis. Must contain exactly
+  three columns:
   \describe{
-    \item{DB}{Character. The database identifier (e.g., `"KEGG"`, `"GO_BP"`,
-      `"Reactome"`).}
+    \item{DB}{Character. The database identifier (e.g., KEGG, GO_BP,
+      Reactome).}
     \item{Geneset}{Character. The name of the gene set or pathway within the
       database.}
     \item{Gene}{Character. A gene identifier belonging to the gene set
