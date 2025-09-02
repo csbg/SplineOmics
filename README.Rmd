@@ -157,6 +157,18 @@ if ("SplineOmics" %in% rownames(installed.packages())) {
 }
 ```
 
+📌 **Note on documentation:**  
+The website only contains the documentation for the most recent `SplineOmics`
+version (also shown on the website in the top right corner). To get the 
+documentation of older versions, run:
+
+``` r
+help(package="SplineOmics")
+```
+
+to get the documentation of your currently installed version.
+
+
 #### Troubleshooting
 
 If you encounter errors related to dependencies or package versions during installation, try updating your R and RStudio to the latest versions and repeat the installation steps.

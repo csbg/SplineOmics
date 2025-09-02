@@ -421,7 +421,6 @@ clustering_results <- SplineOmics::cluster_hits(
   nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
-  report = TRUE,
   max_hit_number = 20,          # maximum number of plots per result category
   plot_options = plot_options,
   report_dir = withr::local_tempdir(),

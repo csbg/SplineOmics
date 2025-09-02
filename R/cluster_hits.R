@@ -172,11 +172,8 @@
 #' spline plots that originally where NA and that were imputed.
 #' 
 #' @param report_dir Character string specifying the directory path where the
-#' HTML report and any other output files should be saved. Default is the 
-#' current working dir.
-#' 
-#' @param report Boolean TRUE or FALSE value specifying if a report should be
-#' generated.
+#' HTML report and any other output files should be saved. When no path is 
+#' specified, then the function runs but no HTML report is generated.
 #' 
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
@@ -285,16 +282,11 @@ cluster_hits <- function(
       meta_replicate_column = NULL
     ),
     raw_data = NULL,
-    report_dir = here::here(),
-    report = TRUE,
+    report_dir = NULL,
     max_hit_number = 25
     ) {
   
   start_time <- Sys.time()
-  report_dir <- normalizePath(
-    report_dir,
-    mustWork = FALSE
-  )
 
   check_splineomics_elements(
     splineomics = splineomics,
@@ -426,7 +418,11 @@ cluster_hits <- function(
     )
   }
 
-  if (report) {
+  if (!is.null(report_dir)) {
+    report_dir <- normalizePath(
+      report_dir,
+      mustWork = FALSE
+    )
     plots <- make_clustering_report(
       all_levels_clustering = all_levels_clustering,
       condition = condition,
@@ -961,7 +957,7 @@ add_cat1_and_cat3_effectsizes <- function(
     ) {
   thr_cat1 <- min_effect_sizes[["time_effect"]]
   thr_cat3 <- min_effect_sizes[["interaction_cond_time"]]
-  
+
   # helper: cumulative travel per row
   cum_travel <- function(mat) {
     if (!is.matrix(mat)) {
@@ -978,7 +974,7 @@ add_cat1_and_cat3_effectsizes <- function(
     if (!is.null(rownames(mat))) names(tr) <- rownames(mat)
     tr
   }
-  
+
   # cat1 per level
   if (!is.list(predicted_timecurves$predictions) ||
       length(predicted_timecurves$predictions) < 1L) {
@@ -986,16 +982,16 @@ add_cat1_and_cat3_effectsizes <- function(
   }
   cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
   cat1_passed  <- lapply(cat1_effects, function(x) x >= thr_cat1)
-  
+
   predicted_timecurves$time_effect_effect_size      <- cat1_effects
   predicted_timecurves$time_effect_passed_threshold <- cat1_passed
-  
+
   # cat3: movement-difference using the two conditions
   levs <- names(predicted_timecurves$predictions)
   if (length(levs) == 2L) {
     m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
     m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
-    
+
     if (!identical(rownames(m1), rownames(m2))) {
       stop_call_false("Row names of the two condition matrices must match.")
     }
@@ -1011,7 +1007,7 @@ add_cat1_and_cat3_effectsizes <- function(
       md <- rowSums(abs(d1 - d2))
       names(md) <- rownames(m1)
     }
-    
+
     predicted_timecurves$interaction_effect_size <- md
     predicted_timecurves$interaction_passed_threshold <- (md >= thr_cat3)
   } else {
@@ -1019,7 +1015,7 @@ add_cat1_and_cat3_effectsizes <- function(
     predicted_timecurves$interaction_effect_size <- numeric(0)
     predicted_timecurves$interaction_passed_threshold <- logical(0)
   }
-  
+
   predicted_timecurves
 }
 
@@ -2707,7 +2703,7 @@ plot_splines <- function(
     sim_str  <- if (
       is.finite(sim_info$sim)
       ) sprintf(
-        " | sr2cc: %.2f (cl %s)",
+        " | sr^2cc: %.2f (cl %s)",
         sim_info$sim,
         as.character(sim_info$cl)
         ) else ""
@@ -2834,12 +2830,10 @@ plot_splines <- function(
         ggplot2::scale_shape_manual(values = shape_values) + 
         ggplot2::theme_minimal() +
         ggplot2::scale_x_continuous(
-          limits = c(x_min - x_extension, x_max + x_extension), 
-          breaks = filter_timepoints(time_points),
-          labels = function(x) {
-            x
-          }
+          limits = c(x_min - x_extension, x_max + x_extension),
+          labels = scales::label_number_auto()  
         ) +
+        ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE)) +
         ggplot2::coord_cartesian(ylim = c(y_min, y_max + y_extension)) +
         ggplot2::labs(
           x = paste0("Time ", time_unit_label),
@@ -3312,7 +3306,8 @@ plot_spline_comparisons <- function(
           color = ggplot2::guide_legend(title = NULL),
           shape = ggplot2::guide_legend(title = "Replicate")
         ) +
-        ggplot2::scale_x_continuous(breaks = filter_timepoints(time_points)) 
+        ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
+        ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE))
 
       title_lines <- c(
         feature_name,
@@ -3639,7 +3634,7 @@ build_cluster_hits_report <- function(
         level_index <- level_index + 1
 
         time_effect_section_header <- paste(
-          "Time Effect of Condition:",
+          "Time Effect in Condition:",
           header_info$header_name
         )
 
@@ -3741,6 +3736,10 @@ build_cluster_hits_report <- function(
           "0.50-0.59 = poor;",
           "0.00-0.49 = very poor;",
           "<0.00 = anti-pattern.",
+          "",
+          "sr<sup>2</sup><sub>cc</sub> = signed r^2 by cluster centroid,",
+          "i.e. how well a gene's spline fits the centroid of its assigned",
+          "cluster.",
           "</div>"
         )
       }else if (element_name == "heatmap") {
@@ -4667,53 +4666,6 @@ truncate_row_names <- function(
       return(x)
     }
   }, character(1))
-}
-
-
-#' Filter Time Points Based on Minimum Spacing
-#' 
-#' @noRd
-#'
-#' @description
-#' The `filter_timepoints()` function filters a sequence of time points by 
-#' ensuring that the retained points are spaced by at least a certain 
-#' percentage of the maximum time point. This is useful for simplifying 
-#' time series data or reducing labels for visualization.
-#'
-#' @param time_points A numeric vector of time points to filter.
-#' @param percentage_threshold A numeric value specifying the minimum spacing 
-#'   between consecutive time points, expressed as a percentage of the 
-#'   maximum time point. Default is `0.05` (5% of the maximum time point).
-#'
-#' @details
-#' The function calculates the minimum spacing as a percentage of the 
-#' maximum time point. It then iterates through the sorted sequence of 
-#' time points and retains only those that meet the spacing criteria. 
-#' This ensures that retained time points are sufficiently far apart 
-#' for downstream applications such as visualization or analysis.
-#'
-#' @return
-#' A numeric vector of filtered time points that satisfy the minimum 
-#' spacing requirement.
-#'
-filter_timepoints <- function(
-    time_points,
-    percentage_threshold = 0.05) {
-  x_max <- as.numeric(max(time_points))
-
-  # Calculate the minimum spacing based on the threshold
-  min_spacing <- x_max * percentage_threshold
-
-  all_time_points <- unique(c(time_points))
-
-  # Calculate the differences between consecutive time points
-  time_diffs <- diff(all_time_points)
-
-  # Keep labels that are more than the minimum spacing apart
-  keep_labels <- c(TRUE, time_diffs > min_spacing)
-  filtered_time_points <- all_time_points[keep_labels]
-
-  return(filtered_time_points)
 }
 
 

@@ -106,7 +106,9 @@
 #' parameter of clusterProfiler, for the documentation, please check the 
 #' documentation of the clusterProfiler R package.
 #' 
-#' @param report_dir Directory where the report will be saved.
+#' @param report_dir Character string specifying the directory path where the
+#' HTML report and any other output files should be saved. When no path is 
+#' specified, then the function runs but no HTML report is generated.
 #'
 #' @return
 #' A nested, named list whose top-level elements correspond to the
@@ -183,15 +185,9 @@ run_ora <- function(
       ),
     enrichGO_cfg = NULL,
     universe = NULL,
-    report_dir = here::here()
+    report_dir = NULL
 ) {
-
-  report_dir <- normalizePath(
-    report_dir,
-    mustWork = FALSE
-  )
   
-  # Check report_info and report_dir
   args <- lapply(
     as.list(
       match.call()[-1]
@@ -284,19 +280,25 @@ run_ora <- function(
     message("No results --> Not generating a report and returning NULL.")
     return(NULL)
   }
-
-  generate_report_html(
-    plots       = sections,
-    report_info = report_info,
-    report_type = "run_ora",
-    filename    = "run_ora_report",
-    report_dir  = report_dir
-  )
   
-  print_info_message(
-    message_prefix = "ORA analysis",
-    report_dir = report_dir
-  )
+  if (!is.null(report_dir)) {
+    report_dir <- normalizePath(
+      report_dir,
+      mustWork = FALSE
+    )
+    generate_report_html(
+      plots       = sections,
+      report_info = report_info,
+      report_type = "run_ora",
+      filename    = "run_ora_report",
+      report_dir  = report_dir
+    )
+    
+    print_info_message(
+      message_prefix = "ORA analysis",
+      report_dir = report_dir
+    )
+  }
   
   return(all_results)
 }

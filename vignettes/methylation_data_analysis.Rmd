@@ -274,7 +274,6 @@ clustering_results <- SplineOmics::cluster_hits(
   nr_clusters = nr_clusters,
   genes = genes,
   plot_info = plot_info,
-  report = TRUE,
   plot_options = plot_options,
   report_dir = withr::local_tempdir(),
   adj_pthresh_avrg_diff_conditions = 0.05,

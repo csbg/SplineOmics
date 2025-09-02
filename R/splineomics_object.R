@@ -107,9 +107,9 @@ create_splineomics <- function(
     meta_batch2_column = NULL,
     feature_name_columns = NULL,
     design = NULL,
-    use_array_weights = TRUE,
+    use_array_weights = FALSE,
     dream_params = NULL,
-    mode = NULL,
+    mode = "isolated",
     spline_params = NULL,
     padjust_method = "BH",
     bp_cfg = NULL

@@ -81,7 +81,6 @@ test_that("cluster_hits() returns correctly structured result", {
     plot_options = plot_options,
     raw_data = raw_data,
     report_dir = withr::local_tempdir(),
-    report = TRUE,
     max_hit_number = 25,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05

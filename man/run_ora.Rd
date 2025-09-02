@@ -13,7 +13,7 @@ run_ora(
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   enrichGO_cfg = NULL,
   universe = NULL,
-  report_dir = here::here()
+  report_dir = NULL
 )
 }
 \arguments{
@@ -116,7 +116,9 @@ enrichment is performed. All enrichment runs through
 parameter of clusterProfiler, for the documentation, please check the 
 documentation of the clusterProfiler R package.}
 
-\item{report_dir}{Directory where the report will be saved.}
+\item{report_dir}{Character string specifying the directory path where the
+HTML report and any other output files should be saved. When no path is 
+specified, then the function runs but no HTML report is generated.}
 }
 \value{
 A nested, named list whose top-level elements correspond to the

@@ -476,7 +476,6 @@ fit_global_model <- function(
     use_array_weights,
     bp_cfg
 ) {
-  
   design2design_matrix_result <- design2design_matrix(
     meta = meta,
     spline_params = spline_params,
@@ -1200,6 +1199,7 @@ select_spline_dof_loocv <- function(
 #'   
 #' @importFrom RhpcBLASctl blas_set_num_threads
 #' @importFrom BiocParallel SerialParam SnowParam MulticoreParam register
+#'                          bpstart
 #'
 bp_setup <- function(bp_cfg) {
   
@@ -1231,12 +1231,22 @@ bp_setup <- function(bp_cfg) {
   }
 
   # 2.  Choose backend
+  is_windows <- identical(.Platform$OS.type, "windows")
   if (n_cores <= 1) {
     param <- BiocParallel::SerialParam()
-  } else if (.Platform$OS.type == "windows") {
+  } else if (is_windows) {
+    # PSOCK workers inherit env vars => pin threads per worker
+    Sys.setenv(
+      OMP_NUM_THREADS       = as.character(blas_threads),
+      MKL_NUM_THREADS       = as.character(blas_threads),
+      OPENBLAS_NUM_THREADS  = as.character(blas_threads),
+      VECLIB_MAXIMUM_THREADS= as.character(blas_threads),
+      BLIS_NUM_THREADS      = as.character(blas_threads)
+    )
     param <- BiocParallel::SnowParam(
       workers = n_cores,
-      type = "SOCK"
+      type = "PSOCK",
+      exportglobals  = TRUE
       )
   } else {
     param <- BiocParallel::MulticoreParam(workers = n_cores)
@@ -1249,8 +1259,16 @@ bp_setup <- function(bp_cfg) {
     "process manager to terminate them manually!\n"
     ))
   
-  # 3.  Register and return
+  # Stop any existing cluster before switching backends
+  try(BiocParallel::bpstop(BiocParallel::bpparam()), silent = TRUE)
+  
+  # 3) Start, register, and auto-stop on exit
+  BiocParallel::bpstart(param)
+  on.exit({
+    try(BiocParallel::bpstop(param), silent = TRUE)
+  }, add = TRUE)
   BiocParallel::register(param)
+  
   invisible(param)
 }
 

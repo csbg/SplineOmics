@@ -16,8 +16,7 @@ cluster_hits(
     treatment_timepoints = NA),
   plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
   raw_data = NULL,
-  report_dir = here::here(),
-  report = TRUE,
+  report_dir = NULL,
   max_hit_number = 25
 )
 }
@@ -184,11 +183,8 @@ containing NA values. When provided, it highlights the datapoints in the
 spline plots that originally where NA and that were imputed.}
 
 \item{report_dir}{Character string specifying the directory path where the
-HTML report and any other output files should be saved. Default is the 
-current working dir.}
-
-\item{report}{Boolean TRUE or FALSE value specifying if a report should be
-generated.}
+HTML report and any other output files should be saved. When no path is 
+specified, then the function runs but no HTML report is generated.}
 
 \item{max_hit_number}{Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of

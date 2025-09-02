@@ -75,6 +75,13 @@ Examples:
 
 - Gene check inside run_ora(). Now, the user is responsible of providing 
   appropriate symbols.
+  
+- report argument of the cluster_hits() and run_ora() functions. This was a 
+  Boolean argument specifying if a report should be generated. Now, this was 
+  removed, and the functions only generate a report when a directory path to
+  write was provided. Now also the default for the directory path is NULL, 
+  instead of the project dir. This means that per default, no HMTL report is
+  generated.
 
 
 ### [0.3.1]
