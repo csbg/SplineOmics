@@ -240,8 +240,14 @@ splineomics <- SplineOmics::create_splineomics(
 plot_info <- list(
   y_axis_label = "log2 intensity",
   time_unit = "min",
-  treatment_labels = list("feeding"),
-  treatment_timepoints = list(0)
+  treatment_labels = list(
+    Exponential = "temp shift",
+    Stationary = "temp shift"
+    ),
+  treatment_timepoints = list(
+    Exponential = 146,
+    Stationary = 146
+    )
 )
 ```
 

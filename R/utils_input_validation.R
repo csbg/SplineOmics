@@ -1338,238 +1338,141 @@ InputControl <- R6::R6Class("InputControl",
 
 
     #' Check Plot Info
-    #' 
+    #'
     #' @noRd
     #'
     #' @description
-    #' This method checks the validity of the `plot_info` list. It ensures that
-    #' `y_axis_label` and `time_unit` meet the length constraints,
-    #' `treatment_labels`
-    #' is either `NA` or a character vector with elements meeting the length
-    #' constraint,
-    #' and `treatment_timepoints` is either `NA` or a numeric vector with the
-    #' same length
-    #' as `treatment_labels`.
+    #' Validate `plot_info` for treatment overlays. Require that
+    #' `treatment_labels` and `treatment_timepoints` are both absent or both
+    #' present. When present, each must be a named list. The names must be a
+    #' subset of the values in `meta[[condition]]`. Each `treatment_labels`
+    #' value must be a single character string. Each `treatment_timepoints`
+    #' value must be a single numeric (integer or double).
     #'
     #' @details
     #' The method performs the following checks:
     #'
-    #' * Ensures that `plot_info` is provided and not NULL.
-    #' * Confirms that `y_axis_label` is a character vector with maximally 30
-    #'  characters.
-    #' * Confirms that `time_unit` is a character vector with maximally 15
-    #' characters.
-    #' * Validates that `treatment_labels` is either `NA` or a character vector
-    #'  with each
-    #'   element being maximally 15 characters long.
-    #' * Validates that `treatment_timepoints` is either `NA` or a numeric
-    #' vector with the
-    #'   same length as `treatment_labels` if `treatment_labels` is not `NA`.
+    #' * Ensure `plot_info`, `meta`, and `condition` exist; otherwise return
+    #'   `NULL`.
+    #' * If both treatment lists are absent, validation passes.
+    #' * If exactly one of `treatment_labels` or `treatment_timepoints` is
+    #'   provided, raise an error.
+    #' * Both treatment objects must be lists with non-empty, unique names.
+    #' * The two lists must have identical name sets and equal length.
+    #' * All names must exist among values of `meta[[condition]]`.
+    #' * Each element of `treatment_labels` must be length-1, non-NA char.
+    #' * Each element of `treatment_timepoints` must be length-1, non-NA
+    #'   numeric.
     #'
-    #' If any of these checks fail, an informative error message is returned.
+    #' If any of these checks fail, raise an informative error.
     #'
-    #' @return NULL if `plot_info` is not provided or invalid. Otherwise,
-    #' performs checks
-    #' and potentially raises errors if checks fail.
-    #'
+    #' @return
+    #' `NULL` if `plot_info` is not provided. Otherwise, return
+    #' `invisible(TRUE)` on success; errors are thrown on validation failures.
+    #' 
     check_plot_info = function() {
       plot_info <- self$args$plot_info
       meta <- self$args$meta
       condition_column <- self$args[["condition"]]
       
-      required_args <- list(
-        plot_info,
-        meta,
-        condition_column
-      )
-      
-      if (any(vapply(required_args, is.null, logical(1)))) {
+      required <- list(plot_info, meta, condition_column)
+      if (any(vapply(required, is.null, logical(1)))) {
         return(NULL)
       }
-
-      # Ensure that plot_info is not empty and contains at least one element
-      if (is.null(plot_info) || length(plot_info) == 0) {
-        stop("plot_info cannot be empty and must contain at least one element",
-             call. = FALSE)
+      
+      tl <- plot_info$treatment_labels
+      tt <- plot_info$treatment_timepoints
+      
+      if (is.null(tl) && is.null(tt)) {
+        return(invisible(TRUE))
       }
       
-      # Check that each element of plot_info can be NULL (so absent)
-      if (all(vapply(plot_info, is.null, logical(1)))) {
-        stop("At least one element of plot_info must be non-NULL",
-             call. = FALSE)
-      }
-
-      # Check y_axis_label (if present and non-NULL)
-      if (!is.null(plot_info$y_axis_label)) {
-        if (!is.character(plot_info$y_axis_label) ||
-            nchar(plot_info$y_axis_label) > 40) {
-          stop(
-            "y_axis_label must be a string with maximally 40 characters",
-            call. = FALSE
-          )
-        }
-      }
-      
-      # Check time_unit (if present and non-NULL)
-      if (!is.null(plot_info$time_unit)) {
-        if (!is.character(plot_info$time_unit) ||
-            nchar(plot_info$time_unit) > 15) {
-          stop(
-            "time_unit must be a string with maximally 15 characters",
-            call. = FALSE
-          )
-        }
-      }
-      
-      # Ensure treatment_labels and treatment_timepoints are lists (if present)
-      if (!is.null(plot_info$treatment_labels) &&
-          !is.null(plot_info$treatment_timepoints)) {
-        if (!is.list(plot_info$treatment_labels) ||
-            !is.list(plot_info$treatment_timepoints)) {
-          stop(
-            "treatment_labels and treatment_timepoints must be lists",
-            call. = FALSE
-          )
-        }
-        
-        # Check if the lists are named or not
-        label_names <- names(plot_info$treatment_labels)
-        timepoint_names <- names(plot_info$treatment_timepoints)
-        
-        if (!is.null(label_names) || !is.null(timepoint_names)) {
-          # If one has names, both must have names
-          if (is.null(label_names) || is.null(timepoint_names)) {
-            stop(
-              "Both treatment_labels and treatment_timepoints must
-              be either fully named or not named",
-              call. = FALSE
-            )
-          }
-          
-          # Check if the names are present in the condition column of meta
-          missing_labels <- setdiff(label_names, meta[[condition_column]])
-          missing_timepoints <- setdiff(
-            timepoint_names,
-            meta[[condition_column]]
-            )
-          
-          if (length(missing_labels) > 0 || length(missing_timepoints) > 0) {
-            warning_message <- paste0(
-              "\n\033[33mWarning:\033[39m ", 
-              "Not all names in treatment_labels and treatment_timepoints are ",
-              "present in the condition column of the meta data.\n"
-            )
-            
-            if (length(missing_labels) > 0) {
-              warning_message <- paste0(
-                warning_message,
-                " - Offending treatment_labels: ", 
-                paste(missing_labels, collapse = ", "), "\n"
-              )
-            }
-            
-            if (length(missing_timepoints) > 0) {
-              warning_message <- paste0(
-                warning_message,
-                " - Offending treatment_timepoints: ",
-                paste(missing_timepoints, collapse = ", "), "\n"
-              )
-            }
-            
-            warning_message <- paste0(
-              warning_message,
-              "Note: If these elements belong to the double spline plots, this", 
-              " is acceptable and this warning can be ignored!\n"
-            )
-            
-            message(warning_message)
-          }
-          
-          # Ensure that both lists have the same names
-          if (!identical(label_names, timepoint_names)) {
-            stop(
-              "treatment_labels and treatment_timepoints must have
-              identical names",
-              call. = FALSE
-            )
-          }
-        } else {
-          # If unnamed, ensure there's only one element
-          if (length(plot_info$treatment_labels) != 1 ||
-              length(plot_info$treatment_timepoints) != 1) {
-            stop(
-              "If treatment_labels and treatment_timepoints are unnamed,
-              they must contain only a single element",
-              call. = FALSE
-            )
-          }
-        }
-        
-        # Check elements of treatment_labels
-        for (label in plot_info$treatment_labels) {
-          if (!any(is.na(label))) {
-            if (!is.character(label)) {
-              stop(
-                "All elements of treatment_labels must be NA or character
-                strings",
-                call. = FALSE
-              )
-            }
-          }
-        }
-
-        # Extract treatment_timepoints
-        treatment_timepoints <- plot_info$treatment_timepoints
-        
-        # Check if each element is either numeric or NA
-        is_valid <- vapply(
-          treatment_timepoints,
-          function(x) is.numeric(x) || is.na(x),
-          FUN.VALUE = logical(1)  # Ensure output is always a logical value
+      if (xor(is.null(tl), is.null(tt))) {
+        stop(
+          "Provide both treatment_labels and treatment_timepoints, or neither.",
+          call. = FALSE
         )
-        
-        # Ensure all elements pass the check
-        if (!all(is_valid)) {
-          stop(
-            "All elements of treatment_timepoints must be NA or numeric",
-            call. = FALSE
-          )
-        }
-        
-        # Ensure that the lengths match if both are non-NA
-        if (!any(is.na(plot_info$treatment_labels)) &&
-            !any(is.na(plot_info$treatment_timepoints))) {
-          if (length(plot_info$treatment_labels) !=
-              length(plot_info$treatment_timepoints)) {
-            stop(
-              "treatment_labels and treatment_timepoints must have the
-              same number of elements",
-              call. = FALSE
-            )
-          }
-        }
-        
-        # Ensure treatment_timepoints are within valid range
-        max_time <- max(meta$Time, na.rm = TRUE)
-        
-        # Exclude NA values from the check
-        valid_timepoints <- 
-          plot_info$treatment_timepoints[!is.na(plot_info$treatment_timepoints)]
-
-        # Check if any valid timepoints exceed max_time
-        if (any(unlist(valid_timepoints) > max_time)) {
-          stop(
-            paste(
-              "All treatment_timepoints must be before the last timepoint:",
-              max_time
-            ),
-            call. = FALSE
-          )
-        }
-        
       }
+      
+      if (!is.list(tl) || !is.list(tt)) {
+        stop(
+          "treatment_labels and treatment_timepoints must both be lists.",
+          call. = FALSE
+        )
+      }
+      
+      nms_l <- names(tl)
+      nms_t <- names(tt)
+      
+      if (is.null(nms_l) || is.null(nms_t) ||
+          any(is.na(nms_l)) || any(is.na(nms_t)) ||
+          any(nchar(nms_l) == 0) || any(nchar(nms_t) == 0)) {
+        stop(
+          paste(
+            "Both treatment_labels and treatment_timepoints must have",
+            "named elements with non-empty names."
+          ),
+          call. = FALSE
+        )
+      }
+      
+      if (any(duplicated(nms_l)) || any(duplicated(nms_t))) {
+        stop(
+          "Names in treatment lists must be unique.",
+          call. = FALSE
+        )
+      }
+      
+      allowed <- unique(as.character(meta[[condition_column]]))
+      allowed <- c(allowed, "double_spline_plots")
+      
+      invalid_l <- setdiff(nms_l, allowed)
+      invalid_t <- setdiff(nms_t, allowed)
+      
+      if (length(invalid_l) > 0L || length(invalid_t) > 0L) {
+        stop(
+          paste0(
+            "Invalid names in treatment lists. Allowed names are values of `",
+            condition_column, "` and 'double_spline_plots'."
+          ),
+          call. = FALSE
+        )
+      }
+      
+      if (!setequal(nms_l, nms_t) || length(tl) != length(tt)) {
+        stop(
+          "Both lists must have identical name sets and the same length.",
+          call. = FALSE
+        )
+      }
+      
+      ok_labels <- vapply(
+        tl,
+        function(x) is.character(x) && length(x) == 1L && !is.na(x),
+        logical(1)
+      )
+      if (!all(ok_labels)) {
+        stop(
+          "Each treatment_labels element must be a single string.",
+          call. = FALSE
+        )
+      }
+      
+      ok_tps <- vapply(
+        tt,
+        function(x) is.numeric(x) && length(x) == 1L && !is.na(x),
+        logical(1)
+      )
+      if (!all(ok_tps)) {
+        stop(
+          "Each treatment_timepoints element must be a single numeric value.",
+          call. = FALSE
+        )
+      }
+      
+      invisible(TRUE)
     },
-
+  
 
     #' Check plot options
     #'

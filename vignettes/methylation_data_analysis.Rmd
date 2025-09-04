@@ -239,26 +239,17 @@ report_dir <- here::here(
   "clustering_reports"
 )
 
-treatment_labels <- list(
-  # constant = NA, 
-  temp_shift = "temp shift",  
-  constant_temp_shift = "temp shift" 
-  )
-
-# treatment_timepoints allows to specify the timepoint, at which the vertical
-# dashed treatment line is placed. Again, for the constant level, we don't
-# have a treatment, so we also do not specify a timepoint.
-treatment_timepoints <- list(
-  # constant = NA,
-  temp_shift = 146,  
-  constant_temp_shift = 146
-  )
-
 plot_info <- list( # For the spline plots
   y_axis_label = "beta value",
   time_unit = "hours", 
-  treatment_labels = treatment_labels,
-  treatment_timepoints = treatment_timepoints
+  treatment_labels = list(
+    temp_shift = "temp shift",
+    double_spline_plots = "temp shift"
+    ),
+  treatment_timepoints = list(
+    temp_shift = 146,
+    double_spline_plots = 146
+    )
 )
 
 genes <- rownames(data)

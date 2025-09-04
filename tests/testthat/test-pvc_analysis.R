@@ -51,8 +51,14 @@ test_that("phosphoproteomics pipeline runs without errors", {
   plot_info <- list(
     y_axis_label = "log2 intensity",
     time_unit = "min",
-    treatment_labels = list("feeding"),
-    treatment_timepoints = list(0)
+    treatment_labels = list(
+      Exponential = "feeding",
+      Stationary = "feeding"
+    ),
+    treatment_timepoints = list(
+      Exponential = 0,
+      Stationary = 0
+    )
   )
   
   warning_message <- capture_warnings({

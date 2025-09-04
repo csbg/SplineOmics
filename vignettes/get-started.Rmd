@@ -519,32 +519,17 @@ nr_clusters <- list(
 plot_info <- list( # For the spline plots
   y_axis_label = "log2 intensity",
   time_unit = "min", # our measurements were in minutes
-  treatment_labels = list("feeding"), # add this for all conditions
-  treatment_timepoints = list(0) # Feeding was at 0 minutes.
+  treatment_labels = list(
+    Exponential = "feeding",
+    Stationary = "feeding",
+    double_spline_plots = "feeding"
+    ),
+  treatment_timepoints = list(
+    Exponential = 0,
+    Stationary = 0,
+    double_spline_plots = 0
+    )
 )
-
-# Like this you can add individual treatment labels to your plots:
-# treatment_labels = list(
-#   exponential = "treatment 1", # One treatment in exp
-#   stationary = c("treatment 2", "treatment 3"),  # Two treatments in stat
-#   additional_condition = NA  # No treatment in the hypothetical third condition
-#   )
-#
-# treatment_timepoints = list(
-#   exponential = 0,
-#   stationary = c(100, 140),  # Two treatments also need two timepoints
-#   additional_condition = NA
-#   )
-#
-# or set a treatment for ALL conditions (still always make a list):
-#
-# treatment_labels = list("treatment")
-# treatment_timepoints = list(120)
-#
-# or set multiple treatments for ALL conditions:
-#
-# treatment_labels = list(c("treatment1", "treatment2"))
-# treatment_timepoints = list(c(120, 90))
 
 
 # Get all the gene names. They are used for generating files

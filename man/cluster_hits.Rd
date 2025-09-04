@@ -156,14 +156,19 @@ to be analyzed. The order of entries must match the feature order in
 Gene names should be standardized (cleaned) to ensure compatibility with
 downstream databases used for overrepresentation analysis after clustering.}
 
-\item{plot_info}{List containing the elements y_axis_label (string),
-time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA.
-This list is used to add this info to the spline plots.
-time_unit is used to label the x-axis, and treatment_labels
-and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as
-feeding, temperature shift, etc.).}
+\item{plot_info}{List with optional elements used to annotate spline plots:
+  - y_axis_label: single string for the y-axis label.
+  - time_unit: single string used in the x-axis label.
+  - treatment_labels: named list of single strings.
+  - treatment_timepoints: named list of single numeric values.
+
+  If any treatment list is present, both must be present. The two lists
+  must have identical name sets. Allowed names are the values of
+  `meta[[condition]]` and the special name "double_spline_plots".
+
+  Vertical dashed lines are drawn at the given timepoints for facets whose
+  level name matches a list name, and labeled with the corresponding string
+  (e.g., feeding, temperature shift).}
 
 \item{plot_options}{A named list controlling optional plot customization.
 The list can include one or both of the following entries (any not supplied  

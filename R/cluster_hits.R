@@ -145,14 +145,19 @@
 #'  Gene names should be standardized (cleaned) to ensure compatibility with
 #'  downstream databases used for overrepresentation analysis after clustering.
 #'  
-#' @param plot_info List containing the elements y_axis_label (string),
-#'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA.
-#'                  This list is used to add this info to the spline plots.
-#'                  time_unit is used to label the x-axis, and treatment_labels
-#'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as
-#'                  feeding, temperature shift, etc.).
+#' @param plot_info List with optional elements used to annotate spline plots:
+#'   - y_axis_label: single string for the y-axis label.
+#'   - time_unit: single string used in the x-axis label.
+#'   - treatment_labels: named list of single strings.
+#'   - treatment_timepoints: named list of single numeric values.
+#'
+#'   If any treatment list is present, both must be present. The two lists
+#'   must have identical name sets. Allowed names are the values of
+#'   `meta[[condition]]` and the special name "double_spline_plots".
+#'
+#'   Vertical dashed lines are drawn at the given timepoints for facets whose
+#'   level name matches a list name, and labeled with the corresponding string
+#'   (e.g., feeding, temperature shift).
 #'                  
 #' @param plot_options A named list controlling optional plot customization.  
 #'   The list can include one or both of the following entries (any not supplied  
@@ -1438,7 +1443,7 @@ make_clustering_report <- function(
     levels <- unique(meta[[condition]])
 
     if (length(levels) >= i) {
-      level <- levels[i]
+      level <- as.character(levels[i])
       
       # Get indices of columns in meta that match the given level (condition)
       condition_indices <- which(meta[["condition"]] == level)
@@ -1467,7 +1472,7 @@ make_clustering_report <- function(
       plot_info = plot_info,
       level = level
     )
-    
+
     message(paste("Generating cluster mean splines for level: ", level))
     cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
       curve_values = curve_values,
@@ -2051,31 +2056,33 @@ add_effect_size_columns <- function(
     out
   }
   
-  cat3 <- category_2_and_3_hits[["category_3_hits"]]
-  
-  if (length(time_effect_effect_size) == 1L) {
-    vec <- time_effect_effect_size[[1L]]
-    cat3[["cT"]] <- get_by_index(
-      vec,
-      cat3[["feature_nr"]]
-    )
-  } else {
-    for (nm in names(time_effect_effect_size)) {
-      vec <- time_effect_effect_size[[nm]]
-      col_nm <- paste0("cT_", nm)
-      cat3[[col_nm]] <- get_by_index(
+  if (!is.null(category_2_and_3_hits)) {
+    cat3 <- category_2_and_3_hits[["category_3_hits"]]
+    
+    if (length(time_effect_effect_size) == 1L) {
+      vec <- time_effect_effect_size[[1L]]
+      cat3[["cT"]] <- get_by_index(
         vec,
         cat3[["feature_nr"]]
       )
+    } else {
+      for (nm in names(time_effect_effect_size)) {
+        vec <- time_effect_effect_size[[nm]]
+        col_nm <- paste0("cT_", nm)
+        cat3[[col_nm]] <- get_by_index(
+          vec,
+          cat3[["feature_nr"]]
+        )
+      }
     }
+    
+    cat3[["cDT"]] <- get_by_index(
+      interaction_effect_size,
+      cat3[["feature_nr"]]
+    )
+    
+    category_2_and_3_hits[["category_3_hits"]] <- cat3
   }
-  
-  cat3[["cDT"]] <- get_by_index(
-    interaction_effect_size,
-    cat3[["feature_nr"]]
-  )
-  
-  category_2_and_3_hits[["category_3_hits"]] <- cat3
   
   for (nm in names(time_effect_effect_size)) {
     tt_name <- paste0("Condition_", nm)
@@ -3458,8 +3465,8 @@ plot_spline_comparisons <- function(
       
       p <- p + ggplot2::labs(
         title = paste(title_lines, collapse = "\n"),
-        x = paste0("Time [", plot_info$time_unit, "]"),
-        y = plot_info$y_axis_label
+        x = paste0("Time [", plot_info[["time_unit"]], "]"),
+        y = plot_info[["y_axis_label"]]
       )
         
       
@@ -3483,7 +3490,6 @@ plot_spline_comparisons <- function(
           axis.text.x  = ggplot2::element_text(size = 6)
         )
       
-      level <- paste(condition_1, condition_2, sep = "_")
       y_combined <- c(plot_data$Y1, plot_data$Y2)
       y_max <- max(y_combined, na.rm = TRUE)
       y_min <- min(y_combined, na.rm = TRUE)
@@ -3493,7 +3499,7 @@ plot_spline_comparisons <- function(
       result <- maybe_add_dashed_lines(
         p = p,
         plot_info = plot_info,
-        level = level,
+        level = "double_spline_plots",
         y_pos = y_pos_label,
         horizontal_labels = TRUE
       )
@@ -4849,6 +4855,8 @@ calc_cv <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
+#' @param level Level of the condition, which is a factor (categorical 
+#'              predictor of the linear model)
 #'
 #' @return A ggplot object representing the single and consensus shapes.
 #'
@@ -4980,8 +4988,6 @@ plot_single_and_mean_splines <- function(
 #' This internal function checks whether there are valid treatment
 #' timepoints and labels in the `plot_info` list. If found, it adds
 #' dashed vertical lines and their corresponding x-axis values to the plot.
-#' The treatment timepoints and labels can either be named lists (for
-#' multiple levels) or unnamed single elements.
 #'
 #' @param p A ggplot object. The plot to which dashed lines and labels
 #' will be added.
@@ -5008,59 +5014,52 @@ maybe_add_dashed_lines <- function(
     level,
     y_pos = 1,
     horizontal_labels = FALSE
-    ) {
-
-  # Initialize an empty vector to store treatment colors
+) {
   treatment_colors <- c()
-
-  # Check if there are treatment labels
-  if (!all(is.na(plot_info$treatment_labels))) {
-    # Initialize variables to store treatment_timepoints and treatment_labels
-    treatment_timepoints <- NULL
-    treatment_labels <- NULL
-
-    # Case when there is a single unnamed element in the lists
-    if (is.null(names(plot_info$treatment_labels))) {
-      # Take the single unnamed element
-      treatment_timepoints <- plot_info$treatment_timepoints[[1]]
-      treatment_labels <- plot_info$treatment_labels[[1]]
-    } else {
-      # Check if the key (level) is in the named lists
-      if (level %in% names(plot_info$treatment_labels) &&
-        level %in% names(plot_info$treatment_timepoints)) {
-        # Extract the corresponding named elements
-        treatment_timepoints <- plot_info$treatment_timepoints[[level]]
-        treatment_labels <- plot_info$treatment_labels[[level]]
-      }
-    }
-
-    # If we have valid treatment_timepoints and treatment_labels, 
-    # add the dashed lines
-    if (!is.null(treatment_timepoints) &&
-      !is.null(treatment_labels) &&
-      all(!is.na(treatment_timepoints)) &&
-      all(!is.na(treatment_labels))) {
-      # Generate colors for the treatment labels
-      treatment_colors <- scales::hue_pal()(length(treatment_labels))
-      names(treatment_colors) <- treatment_labels
-
-      # Call the function to add dashed lines
-      p <- add_dashed_lines(
-        p = p,
-        treatment_timepoints = treatment_timepoints,
-        treatment_labels = treatment_labels,
-        y_pos = y_pos,
-        horizontal_labels = horizontal_labels
-      )
-    }
+  
+  labs <- plot_info$treatment_labels
+  tps  <- plot_info$treatment_timepoints
+  
+  # Require explicit naming and presence of `level` in both lists
+  if (is.null(labs) ||
+      is.null(tps) ||
+      is.null(names(labs)) ||
+      is.null(names(tps)) ||
+      !(level %in% names(labs)) ||
+      !(level %in% names(tps))) {
+    return(list(p = p, treatment_colors = treatment_colors))
   }
-
-  # Return both the updated plot and the treatment colors
-  return(list(
+  
+  # Extract values for this level
+  chosen_labels <- as.character(labs[[level]])
+  chosen_tps <- as.numeric(tps[[level]])
+  
+  # Skip if empty or NA
+  if (length(chosen_labels) == 0 ||
+      length(chosen_tps) == 0 ||
+      anyNA(chosen_labels) ||
+      anyNA(chosen_tps)) {
+    return(list(p = p, treatment_colors = treatment_colors))
+  }
+  
+  treatment_colors <- scales::hue_pal()(length(chosen_labels))
+  names(treatment_colors) <- chosen_labels
+  
+  p <- add_dashed_lines(
+    p = p,
+    treatment_timepoints = chosen_tps,
+    treatment_labels = chosen_labels,
+    y_pos = y_pos,
+    horizontal_labels = horizontal_labels
+  )
+  
+  list(
     p = p,
     treatment_colors = treatment_colors
-  ))
+  )
 }
+
+
 
 
 #' Generate Asterisks Definition HTML
