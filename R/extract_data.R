@@ -381,9 +381,7 @@ add_feature_names <- function(
         )
     )
 
-    # Check for NA values in combined feature names
     feature_names <- as.character(feature_names)
-    feature_names <- feature_names[!is.na(feature_names)]
     
     # Optionally prepend row index
     if (use_row_index) {

@@ -1035,6 +1035,8 @@ get_header_section <- function(
       residuals. Those symbols can only appear if the Levenes test for
       heteroscedasticity was run. That only happens when the use_array_weights
       argument is set to NULL.</li>',
+      '<li style="margin-bottom: 15px;">cT = cumulative travel,
+      cDT = cumulative differential travel</li>',
       "</ul>",
       "</p>",
       "</div>",

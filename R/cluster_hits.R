@@ -379,8 +379,15 @@ cluster_hits <- function(
     spline_comp_plots <- NULL
   }
 
+  all_top_tables <- add_effect_size_columns(
+    time_effect_effect_size = predicted_timecurves[["time_effect_effect_size"]],
+    interaction_effect_size = predicted_timecurves[["interaction_effect_size"]],
+    category_2_and_3_hits = category_2_and_3_hits,
+    within_level_top_tables = within_level_top_tables
+  )
+
   all_levels_clustering <- perform_clustering(
-    time_effect_hits = within_level_top_tables,
+    time_effect_hits = all_top_tables[["within_level_top_tables"]],
     nr_clusters = nr_clusters,
     condition = condition,
     predicted_timecurves = predicted_timecurves
@@ -435,7 +442,7 @@ cluster_hits <- function(
       adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
       adj_pthresh_interaction_condition_time =
         adj_pthresh_interaction_condition_time,
-      category_2_and_3_hits = category_2_and_3_hits,
+      category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
       report_dir = report_dir,
       mode = mode,
       report_info = report_info,
@@ -462,7 +469,7 @@ cluster_hits <- function(
   cluster_table <- construct_cluster_table(
     limma_splines_results = splineomics[["limma_splines_result"]],
     all_levels_clustering = all_levels_clustering,
-    category_2_and_3_hits = category_2_and_3_hits,
+    category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
     genes = genes
   )
 
@@ -1993,6 +2000,102 @@ construct_cluster_table <- function(
 }
 
 
+#' Add cT and cDT columns to hit and top tables
+#'
+#' @noRd
+#' 
+#' @description
+#' For `category_2_and_3_hits$category_3_hits`, add per-condition columns
+#' `cT` (single effect) or `cT_<name>` (multiple effects), mapped by
+#' `feature_nr` into the corresponding effect-size vectors in
+#' `time_effect_effect_size`. Also add a single combined column `cDT`
+#' taken from `interaction_effect_size`, again by `feature_nr`.
+#'
+#' For `within_level_top_tables`, add a `cT` column to each tibble named
+#' `Condition_<name>`, where `<name>` matches the names in
+#' `time_effect_effect_size`.
+#'
+#' @param time_effect_effect_size
+#'   A named list of numeric vectors. Each vector holds per-feature
+#'   effect sizes. Names are used to match `Condition_<name>` tibbles
+#'   in `top_tables`.
+#' @param interaction_effect_size
+#'   A numeric vector for interaction effect sizes. Included for
+#'   completeness; not used to create columns here.
+#' @param category_2_and_3_hits
+#'   A list that contains a tibble named `category_3_hits` with a
+#'   numeric `feature_nr` column.
+#' @param top_tables
+#'   A list of tibbles named `Condition_<name>` with a numeric
+#'   `feature_nr` column.
+#'
+#' @return
+#'   A list with elements:
+#'   - `top_tables`: updated list of tibbles
+#'   - `category_2_and_3_hits`: updated list with `category_3_hits`
+#'
+add_effect_size_columns <- function(
+    time_effect_effect_size,
+    interaction_effect_size,
+    category_2_and_3_hits,
+    within_level_top_tables
+) {
+  get_by_index <- function(
+    vec,
+    idx
+  ) {
+    idx <- as.integer(idx)
+    bad <- is.na(idx) | idx < 1L | idx > length(vec)
+    out <- vec[idx]
+    out[bad] <- NA_real_
+    out
+  }
+  
+  cat3 <- category_2_and_3_hits[["category_3_hits"]]
+  
+  if (length(time_effect_effect_size) == 1L) {
+    vec <- time_effect_effect_size[[1L]]
+    cat3[["cT"]] <- get_by_index(
+      vec,
+      cat3[["feature_nr"]]
+    )
+  } else {
+    for (nm in names(time_effect_effect_size)) {
+      vec <- time_effect_effect_size[[nm]]
+      col_nm <- paste0("cT_", nm)
+      cat3[[col_nm]] <- get_by_index(
+        vec,
+        cat3[["feature_nr"]]
+      )
+    }
+  }
+  
+  cat3[["cDT"]] <- get_by_index(
+    interaction_effect_size,
+    cat3[["feature_nr"]]
+  )
+  
+  category_2_and_3_hits[["category_3_hits"]] <- cat3
+  
+  for (nm in names(time_effect_effect_size)) {
+    tt_name <- paste0("Condition_", nm)
+    if (!(tt_name %in% names(within_level_top_tables))) {
+      next
+    }
+    vec <- time_effect_effect_size[[nm]]
+    within_level_top_tables[[tt_name]][["cT"]] <- get_by_index(
+      vec,
+      within_level_top_tables[[tt_name]][["feature_nr"]]
+    )
+  }
+  
+  list(
+    within_level_top_tables = within_level_top_tables,
+    category_2_and_3_hits = category_2_and_3_hits
+  )
+}
+
+
 # Level 2 internal functions ---------------------------------------------------
 
 
@@ -2934,7 +3037,7 @@ plot_splines <- function(
           title = paste(
             "<b>", title, "</b>",
             "<br>",
-            "Cumulative travel:",
+            "cT:",
             ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
             "  |  avg CV: ", round(avg_cv, 2), "%",
             "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
@@ -3334,11 +3437,11 @@ plot_spline_comparisons <- function(
         title_lines <- c(
           title_lines,
           paste0(
-            "Cumulative travels: ",
+            "cT: ",
             condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
             " | ",
             condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3)),
-            " | diff travel: ",
+            " | cDT: ",
             ifelse(is.na(diff_es), "NA", signif(diff_es, 3))
           )
         )

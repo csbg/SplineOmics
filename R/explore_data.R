@@ -663,17 +663,16 @@ plot_mean_correlation_with_time <- function(
 
     # Compute correlation of each feature with time
     correlations <- apply(data_subset, 1, function(feature) {
-      # Check if either feature or time_subset has zero variance
-      if (sd(feature, na.rm = TRUE) == 0 
-          || sd(time_subset, na.rm = TRUE) == 0) {
-        return(NA) # Assign NA if variance is zero
-      } else {
-        return(cor(
-          feature,
-          time_subset,
-          use = "complete.obs"
-          ))
+      sdx <- sd(feature, na.rm = TRUE)
+      sdt <- sd(time_subset, na.rm = TRUE)
+      
+      # guard against NA or zero variance
+      if (is.na(sdx) || is.na(sdt) || sdx == 0 || sdt == 0) {
+        return(NA_real_)
       }
+      
+      out <- cor(feature, time_subset, use = "complete.obs")
+      if (is.finite(out)) out else NA_real_
     })
 
     # Create a data frame for plotting, ensuring row names are set
