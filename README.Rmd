@@ -47,11 +47,7 @@ Welcome to `SplineOmics`, an R package designed to streamline the analysis of -o
 
 ### Is the SplineOmics package of use for me?
 
-If you have -omics data over time, the package will help you to run `limma` with splines, decide on which parameters to use, perform the clustering, run GSEA and show result plots in HTML reports. Any time-series data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, glycan fractional abundances, etc.).
-
-Note: So far, the package has only been tested with datasets with 2 conditions.
-In theory, it should also work with more conditions, but unexpected errors can
-arise.
+If you have -omics data over time, the package will help you to run `limma` with splines, perform the clustering, run ORA and show result plots in HTML reports. Any time-series data that is a valid input to the `limma` package is also a valid input to the `SplineOmics` package (such as transcriptomics, proteomics, phosphoproteomics, metabolomics, glycan fractional abundances, etc.).
 
 ### What do I need precisely?
 
@@ -69,21 +65,21 @@ With `SplineOmics`, you can:
 
     The `explore_data()` function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots ([example report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
 
--   **Explore various limma splines hyperparameters:**
-
-    Test combinations of hyperparameters, such as different datasets, `limma` design formulas, degrees of freedom, p-value thresholds, etc., using the `screen_limma_hyperparams()` function ([example report](https://csbg.github.io/SplineOmics_html_reports/Data_1_Design_1_vs_Data_1_Design_2_PTX.html) (along with the [encoding](https://csbg.github.io/SplineOmics_html_reports/hyperparams_screen_meta_table.html))).
-
 -   **Perform limma spline analysis:**
 
     Use the `run_limma_splines()` function to perform the `limma` analysis with splines once the optimal hyperparameters are identified ([example report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
+
+-   **Find jumps and drops in the timecourse:**
+
+    Use the `find_pvc()` function for that ([example report](https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html)).
 
 -   **Cluster significant features:**
 
     Cluster the significant features (hits) identified in the spline analysis with the `cluster_hits()` function ([example report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
 
--   **Run GSEA with clustered hits:**
+-   **Run ORA with clustered hits:**
 
-    Perform gene set enrichment analysis (GSEA) using the clustered hits with the `create_gsea_report()` function ([example report](https://csbg.github.io/SplineOmics_html_reports/create_gsea_report_PTX.html)).
+    Perform over-representation analysis (ORA) using the clustered hits with the `run_ora()` function ([example report](https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html)).
 
 ## 🔧 Installation
 
@@ -195,12 +191,6 @@ If you face "permission denied" issues on Linux distributions, check this [vigne
 
 [This tutorial](https://csbg.github.io/SplineOmics/articles/get-started.html) covers a real CHO cell time-series proteomics example from start to end.
 
-Note that the SplineOmics package in theory supports experimental design with
-any amount of conditions. However, so far it was only tested with datasets that
-contain two conditions. Therefore, it cannot be ruled out that bugs will occur 
-when the package is used for experiments with more conditions. If any bug occurs,
-please raise an issue here on GitHub, and it will be adressed.
-
 ### 📋 Details {#details}
 
 A detailed description of all arguments and outputs of all the functions in the package (exported and internal functions) can be found [here](https://csbg.github.io/SplineOmics/reference/).
@@ -234,53 +224,10 @@ The results from clr transformed data can be harder to understand and interpret 
 log2_transformed_data <- log2(data_matrix)  # use as SplineOmics input
 ```
 
-## 📦 Dependencies
-
-The `SplineOmics` package relies on several other R packages for its functionality. Below is a list of dependencies that will automatically be installed along with `SplineOmics`. If you already have these packages installed, ensure they are up to date to avoid any compatibility issues.
-
--   **ComplexHeatmap** (\>= 2.18.0): For creating complex heatmaps with advanced features.
--   **base64enc** (\>= 0.1-3): For encoding/decoding base64.
--   **dendextend** (\>= 1.17.1): For extending `dendrogram` objects, allowing for easier manipulation of dendrograms.
--   **dplyr** (\>= 1.1.4): For data manipulation.
--   **ggplot2** (\>= 3.5.1): For creating elegant data visualizations using the grammar of graphics.
--   **ggrepel** (\>= 0.9.5): For better label placement in `ggplot2`.
--   **here** (\>= 1.0.1): For constructing paths to your project’s files.
--   **limma** (\>= 3.58.1): For linear models in microarray and RNA-seq analysis.
--   **openxlsx** (\>= 4.2.6.1): For reading, writing, and editing `.xlsx` files.
--   **patchwork** (\>= 1.2.0): For combining multiple `ggplot` objects into a single plot.
--   **pheatmap** (\>= 1.0.12): For creating aesthetically pleasing heatmaps.
--   **progress** (\>= 1.2.3): For adding progress bars to loops and apply functions.
--   **purrr** (\>= 1.0.2): For functional programming tools.
--   **rlang** (\>= 1.1.4): For working with core language features of R.
--   **scales** (\>= 1.3.0): For scale functions in visualizations.
--   **svglite** (\>= 2.1.3): For creating high-quality vector graphics (SVG).
--   **tibble** (\>= 3.2.1): For creating tidy data frames.
--   **tidyr** (\>= 1.3.1): For tidying data.
--   **zip** (\>= 2.3.1): For compressing and combining files into zip archives.
-
-### Optional Dependencies
-
-These packages are optional and are only needed for specific functionality:
-
--   **edgeR** (\>= 4.0.16): For preprocessing RNA-seq data in the `preprocess_rna_seq_data()` function.
--   **clusterProfiler** (\>= 4.10.1): For the `run_gsea()` function (gene set enrichment analysis).
--   **rstudioapi** (\>= 0.16.0): For the `open_tutorial()` function.
-
 ### R Version
 
 -   Recommended: R 4.3.3 or higher
 
-## 📚 Further Reading
-
-For those interested in gaining a deeper understanding of the methodologies used in the `SplineOmics` package, here are some recommended publications:
-
--   **Splines**: To learn more about splines, you can refer to this [review](https://doi.org/10.1186/s12874-019-0666-3).
-
--   **limma**: To read about the `limma` R package, you can refer to this [publication](https://doi.org/10.1093/nar/gkv007).
-
--   **PCA**: To learn more about PCA, download and read this [document](https://github.com/csbg/SplineOmics/raw/main/docs/Points_of_Significance_PCA.pdf).
-
--   **Hierarchical clustering**: To get information about hierarchical clustering, you can refer to this [web article](https://towardsdatascience.com/understanding-the-concept-of-hierarchical-clustering-technique-c6e8243758ec).
 
 ## ❓ Getting Help
 

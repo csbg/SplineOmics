@@ -36,15 +36,28 @@ Each release section should follow the structure below:
 #### Security
 - Any security-related updates or patches.
 
-Examples:
-- **Added**: Introduced a new plotting function `plotTimeSeries()`.
-- **Fixed**: Resolved an issue causing crashes when input data was missing values.
-- **Changed**: Modified the default parameters for `normalizeData()`.
 
 
 --------------------------------------------------------------------------------
 
-### [0.3.2]
+### [v0.3.3]
+
+#### Fixed
+- Bugs occuring in the functions extract_data(), explore_data(), 
+  and cluster_hits()
+  
+#### Removed
+- Removed the report argument of the cluster_hits() and run_ora() function. 
+  Instead, now, the report_dir argument is per default NULL, which means that
+  no HTML report is generated. Only when a directory path is provided with the
+  report_dir argument, a HTML report is generated.
+
+#### Added
+- The signed r² as the quality score for the cluster members is now also 
+  written in the downloadable topTables inside the cluster_hits() HTML report.
+
+
+### [v0.3.2]
 
 #### Fixed
 - The cluster_hits() function now does not modify the gene symbols anymore.
@@ -84,7 +97,7 @@ Examples:
   generated.
 
 
-### [0.3.1]
+### [v0.3.1]
 
 #### Added
 - Effect size computations and thresholding for the splines. Because with enough

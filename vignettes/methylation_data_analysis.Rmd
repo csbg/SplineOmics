@@ -76,9 +76,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 # Load the packages
 
 ```{r setup, eval = TRUE}
-# library(SplineOmics)
-library(devtools)
-devtools::load_all()
+library(SplineOmics)
 library(readr) # For reading the meta CSV file
 library(here)  # For managing filepaths
 library(dplyr) # For data manipulation
@@ -102,6 +100,7 @@ meta <- readr::read_csv(
   ),
   show_col_types = FALSE
 )
+meta$Condition[meta$Condition == "Temp. Shifted"] <- "Temp_shift"
 ```
 
 ## Show top rows of data
@@ -231,7 +230,7 @@ adj_pthresholds <- c(
 
 nr_clusters <- list(
   Constant   = 2:6,                    
-  Temp..Shifted = 2:6   
+  Temp_shift = 2:6   
 )
 
 report_dir <- here::here(
@@ -243,11 +242,11 @@ plot_info <- list( # For the spline plots
   y_axis_label = "beta value",
   time_unit = "hours", 
   treatment_labels = list(
-    temp_shift = "temp shift",
+    Temp_shift = "temp shift",
     double_spline_plots = "temp shift"
     ),
   treatment_timepoints = list(
-    temp_shift = 146,
+    Temp_shift = 146,
     double_spline_plots = 146
     )
 )

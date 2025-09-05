@@ -105,6 +105,8 @@ extract_data <- function(
     data = data,
     data_matrix = numeric_data,
     feature_name_columns = feature_name_columns,
+    top_row = top_row,
+    bottom_row = bottom_row,
     use_row_index = use_row_index
   )
   
@@ -342,6 +344,10 @@ excel_col_to_index <- function(col) {
 #' @param feature_name_columns A string specifying the name of the feature
 #'                             columns in `data`. If `NA`, sequential numbers
 #'                             will be used as feature names.
+#' @param top_row Integer. Specifies the first (top) row of the numeric data
+#' block. Row indexing is 1-based.
+#' @param bottom_row Integer. Specifies the last (bottom) row of the numeric
+#' data block. Must be >= `top_row`.
 #' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
 #'  combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
 #'
@@ -362,45 +368,38 @@ add_feature_names <- function(
     data,
     data_matrix,
     feature_name_columns,
+    top_row,
+    bottom_row,
     use_row_index = FALSE
-    ) {
-
+) {
   if (!any(is.na(feature_name_columns))) {
-    non_na_index <- which(apply(
-      data[feature_name_columns], 1,
-      function(row) all(!is.na(row))
-    ))[1]
-    data_filtered <- data[non_na_index:nrow(data), , drop = FALSE]
-
-    # Extract and combine the feature names from specified columns
+    rows <- seq.int(top_row, bottom_row)
+    
+    data_filtered <- data[rows, , drop = FALSE]
+    
     feature_names <- apply(
-      data_filtered[feature_name_columns], 1,
-      function(row) paste(
-        row,
-        collapse = "_"
-        )
+      data_filtered[feature_name_columns],
+      1,
+      function(row) paste(row, collapse = "_")
     )
-
+    
     feature_names <- as.character(feature_names)
     
-    # Optionally prepend row index
     if (use_row_index) {
       row_indices <- seq_len(length(feature_names))
       feature_names <- paste(
         row_indices,
         feature_names,
         sep = "_"
-        )
+      )
     }
-
-    # Ensure unique feature names
+    
     if (length(feature_names) != length(unique(feature_names))) {
       stop_call_false(
         "Combined feature names must be unique, ignoring NA values."
       )
     }
-
-    # Ensure the length matches the number of rows in data_matrix
+    
     if (length(feature_names) != nrow(data_matrix)) {
       stop_call_false(
         paste(
@@ -409,8 +408,7 @@ add_feature_names <- function(
         )
       )
     }
-
-    # Assign combined feature names as row names
+    
     rownames(data_matrix) <- feature_names
   } else {
     rownames(data_matrix) <- as.character(seq_len(nrow(data_matrix)))

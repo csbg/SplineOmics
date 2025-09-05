@@ -308,36 +308,17 @@ nr_clusters <- list(
   tshifted = 2   
 )
 
-# treatment_labels allows to place vertical dashed lines into the plots, that
-# indicate a treatment, such as "temp shift" in this experiment. For each level,
-# the treatment can be specified individually. For the "double spline plots", 
-# where two levels are combined into one plot, treatment lines can also be 
-# defined. The correct fieldname for those is {first_level}_{second_level}, 
-# with first_level being the level of the two occuring first in the respective
-# meta column, and second_level the one that occurs after. 
-# Here, we don't want a treatment line for the constant level, since no 
-# treatment was applied. To achieve that, we simply set it to NA or leave it
-# out. 
-treatment_labels <- list(
-  # constant = NA, 
-  tshifted = "temp shift",  
-  constant_tshifted = "temp shift" 
-  )
-
-# treatment_timepoints allows to specify the timepoint, at which the vertical
-# dashed treatment line is placed. Again, for the constant level, we don't
-# have a treatment, so we also do not specify a timepoint.
-treatment_timepoints <- list(
-  # constant = NA,
-  tshifted = 146,  
-  constant_tshifted = 146
-  )
-
-plot_info <- list( # For the spline plots
+plot_info <- list(
   y_axis_label = "Glycan fractional abundance",
-  time_unit = "hours", # our measurements were in minutes
-  treatment_labels = treatment_labels,
-  treatment_timepoints = treatment_timepoints
+  time_unit = "hours",
+  treatment_labels = list(
+    tshifted = "temp shift",  
+    double_spline_plots = "temp shift" 
+    ),
+  treatment_timepoints = list(
+    tshifted = 146,  
+    double_spline_plots = 146
+    )
 )
 
 # Those are not genes for this glycan analysis here, but this argument expects
@@ -348,7 +329,7 @@ genes <- rownames(data)
 plot_options <- list(
   # When meta_replicate_column is not there, all datapoints are blue.
   meta_replicate_column = "Reactor", # Colors the data points based on Reactor
-  cluster_heatmap_columns = FALSE # Per default FALSE, just for demonstration
+  cluster_heatmap_columns = FALSE 
 )
 
 clustering_results <- SplineOmics::cluster_hits(

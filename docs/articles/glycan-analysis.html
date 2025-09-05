@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -947,7 +947,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPhtABm/file22272a4ddc5e .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp2XMq4P/file977c62803f7d .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -973,36 +973,17 @@ clusters as we have specified for that specific level.</p>
 <span>  tshifted <span class="op">=</span> <span class="fl">2</span>   </span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># treatment_labels allows to place vertical dashed lines into the plots, that</span></span>
-<span><span class="co"># indicate a treatment, such as "temp shift" in this experiment. For each level,</span></span>
-<span><span class="co"># the treatment can be specified individually. For the "double spline plots", </span></span>
-<span><span class="co"># where two levels are combined into one plot, treatment lines can also be </span></span>
-<span><span class="co"># defined. The correct fieldname for those is {first_level}_{second_level}, </span></span>
-<span><span class="co"># with first_level being the level of the two occuring first in the respective</span></span>
-<span><span class="co"># meta column, and second_level the one that occurs after. </span></span>
-<span><span class="co"># Here, we don't want a treatment line for the constant level, since no </span></span>
-<span><span class="co"># treatment was applied. To achieve that, we simply set it to NA or leave it</span></span>
-<span><span class="co"># out. </span></span>
-<span><span class="va">treatment_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># constant = NA, </span></span>
-<span>  tshifted <span class="op">=</span> <span class="st">"temp shift"</span>,  </span>
-<span>  constant_tshifted <span class="op">=</span> <span class="st">"temp shift"</span> </span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># treatment_timepoints allows to specify the timepoint, at which the vertical</span></span>
-<span><span class="co"># dashed treatment line is placed. Again, for the constant level, we don't</span></span>
-<span><span class="co"># have a treatment, so we also do not specify a timepoint.</span></span>
-<span><span class="va">treatment_timepoints</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># constant = NA,</span></span>
-<span>  tshifted <span class="op">=</span> <span class="fl">146</span>,  </span>
-<span>  constant_tshifted <span class="op">=</span> <span class="fl">146</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="co"># For the spline plots</span></span>
+<span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  y_axis_label <span class="op">=</span> <span class="st">"Glycan fractional abundance"</span>,</span>
-<span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>, <span class="co"># our measurements were in minutes</span></span>
-<span>  treatment_labels <span class="op">=</span> <span class="va">treatment_labels</span>,</span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="va">treatment_timepoints</span></span>
+<span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>,</span>
+<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    tshifted <span class="op">=</span> <span class="st">"temp shift"</span>,  </span>
+<span>    double_spline_plots <span class="op">=</span> <span class="st">"temp shift"</span> </span>
+<span>    <span class="op">)</span>,</span>
+<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    tshifted <span class="op">=</span> <span class="fl">146</span>,  </span>
+<span>    double_spline_plots <span class="op">=</span> <span class="fl">146</span></span>
+<span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Those are not genes for this glycan analysis here, but this argument expects</span></span>
@@ -1013,7 +994,7 @@ clusters as we have specified for that specific level.</p>
 <span><span class="va">plot_options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
 <span>  meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># Colors the data points based on Reactor</span></span>
-<span>  cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Per default FALSE, just for demonstration</span></span>
+<span>  cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span> </span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
@@ -1024,18 +1005,12 @@ clusters as we have specified for that specific level.</p>
 <span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
 <span>  plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  report <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Hint: The data contains negative values. This may occur if the data has been transformed (e.g., log-transformed or normalized) and is valid in such cases. Ensure that the data preprocessing aligns with your analysis requirements.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">Warning:</span> Not all names in treatment_labels and treatment_timepoints are present in the condition column of the meta data.</span></span>
-<span><span class="co">#&gt;  - Offending treatment_labels: constant_tshifted</span></span>
-<span><span class="co">#&gt;  - Offending treatment_timepoints: constant_tshifted</span></span>
-<span><span class="co">#&gt; Note: If these elements belong to the double spline plots, this is acceptable and this warning can be ignored!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  constant</span></span>
@@ -1048,7 +1023,7 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPhtABm/file222742e8484c .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp2XMq4P/file977c292842ca .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>
@@ -1086,7 +1061,7 @@ contains an interaction effect).</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] compositions_2.0-8 knitr_1.50         dplyr_1.1.4        here_1.0.1        </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.3.2 </span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.3.3 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       tensorA_0.36.2.1         rstudioapi_0.17.1       </span></span>

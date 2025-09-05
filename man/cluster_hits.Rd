@@ -164,7 +164,10 @@ downstream databases used for overrepresentation analysis after clustering.}
 
   If any treatment list is present, both must be present. The two lists
   must have identical name sets. Allowed names are the values of
-  `meta[[condition]]` and the special name "double_spline_plots".
+  `meta[[condition]]` and the special name "double_spline_plots", which
+  generates a treatment line for the plots of limma category 2 and 3, so 
+  for the average difference between the conditions and the interaction 
+  between condition and time. 
 
   Vertical dashed lines are drawn at the given timepoints for facets whose
   level name matches a list name, and labeled with the corresponding string

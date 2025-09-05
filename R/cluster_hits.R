@@ -153,7 +153,10 @@
 #'
 #'   If any treatment list is present, both must be present. The two lists
 #'   must have identical name sets. Allowed names are the values of
-#'   `meta[[condition]]` and the special name "double_spline_plots".
+#'   `meta[[condition]]` and the special name "double_spline_plots", which
+#'   generates a treatment line for the plots of limma category 2 and 3, so 
+#'   for the average difference between the conditions and the interaction 
+#'   between condition and time. 
 #'
 #'   Vertical dashed lines are drawn at the given timepoints for facets whose
 #'   level name matches a list name, and labeled with the corresponding string
@@ -627,7 +630,6 @@ filter_top_tables <- function(
     meta,
     condition
     ) {
-  
   result <- check_between_level_pattern(top_tables)
 
   if (result$between_levels) { # between_level analysis
@@ -647,7 +649,7 @@ filter_top_tables <- function(
 
   for (i in seq_along(within_level_top_tables)) {
     within_level_top_table <- within_level_top_tables[[i]]
-    level <- unique(meta[[condition]])[i]
+    level <- unique(as.character(meta[[condition]]))[i]
 
     if (result$between_levels) {
       hit_indices <- get_level_hit_indices(
@@ -2089,11 +2091,27 @@ add_effect_size_columns <- function(
     if (!(tt_name %in% names(within_level_top_tables))) {
       next
     }
+    
+    tt <- within_level_top_tables[[tt_name]]
+    
+    # skip if element is NA or not a data.frame
+    if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) {
+      next
+    }
+    if (!is.data.frame(tt)) {
+      next
+    }
+    if (!("feature_nr" %in% names(tt))) {
+      next
+    }
+    
     vec <- time_effect_effect_size[[nm]]
-    within_level_top_tables[[tt_name]][["cT"]] <- get_by_index(
+    cT_vals <- get_by_index(
       vec,
-      within_level_top_tables[[tt_name]][["feature_nr"]]
+      tt[["feature_nr"]]
     )
+    tt[["cT"]] <- cT_vals
+    within_level_top_tables[[tt_name]] <- tt
   }
   
   list(

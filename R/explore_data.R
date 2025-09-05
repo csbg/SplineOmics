@@ -648,50 +648,55 @@ plot_mean_correlation_with_time <- function(
     data,
     meta,
     condition
-    ) {
-  
+) {
   message("Making mean correlation with time plots...")
   
+  # make sure Time is numeric
+  if (!is.numeric(meta$Time)) {
+    meta$Time <- as.numeric(meta$Time)
+  }
+  
   plot_list <- list()
-
-  # Loop through each level of the condition
-  for (cond in unique(meta[[condition]])) {
-    # Subset the data and meta for the current condition
-    condition_indices <- which(meta[[condition]] == cond)
-    data_subset <- data[, condition_indices]
-    time_subset <- meta$Time[condition_indices]
-
-    # Compute correlation of each feature with time
-    correlations <- apply(data_subset, 1, function(feature) {
-      sdx <- sd(feature, na.rm = TRUE)
-      sdt <- sd(time_subset, na.rm = TRUE)
-      
-      # guard against NA or zero variance
-      if (is.na(sdx) || is.na(sdt) || sdx == 0 || sdt == 0) {
-        return(NA_real_)
+  
+  for (cond in unique(as.character(meta[[condition]]))) {
+    idx <- which(meta[[condition]] == cond)
+    data_subset <- data[, idx, drop = FALSE]
+    time_subset <- meta$Time[idx]
+    
+    correlations <- apply(
+      data_subset,
+      1,
+      function(feature) {
+        ok <- is.finite(feature) & is.finite(time_subset)
+        if (sum(ok) < 2) {
+          return(NA_real_)
+        }
+        f <- feature[ok]
+        t <- time_subset[ok]
+        if (sd(f) == 0 || sd(t) == 0) {
+          return(NA_real_)
+        }
+        out <- cor(f, t)
+        if (is.finite(out)) out else NA_real_
       }
-      
-      out <- cor(feature, time_subset, use = "complete.obs")
-      if (is.finite(out)) out else NA_real_
-    })
-
-    # Create a data frame for plotting, ensuring row names are set
+    )
+    
     if (is.null(rownames(data))) {
       rownames(data) <- paste0("Feature", seq_len(nrow(data)))
     }
-
+    
     cor_data <- data.frame(
       Feature = rownames(data),
-      Correlation = correlations
+      Correlation = correlations,
+      stringsAsFactors = FALSE
     )
     
-    # Remove non-finite values from the correlation data
-    cor_data <- cor_data[is.finite(cor_data$Correlation), ]
-
-    # Generate the plot
-    p <- ggplot2::ggplot(cor_data, aes(x = .data$Correlation)) +
+    cor_data <- cor_data[is.finite(cor_data$Correlation), , drop = FALSE]
+    
+    p <- ggplot2::ggplot(cor_data, ggplot2::aes(x = .data$Correlation)) +
       ggplot2::geom_histogram(
-        binwidth = 0.05, fill = "#bcbd22",
+        binwidth = 0.05,
+        fill = "#bcbd22",
         color = "black"
       ) +
       ggplot2::theme_minimal() +
@@ -700,12 +705,11 @@ plot_mean_correlation_with_time <- function(
         x = "Correlation with Time",
         y = "Count of Features"
       )
-
-    # Add the plot to the list
+    
     plot_list[[cond]] <- p
   }
-
-  return(plot_list)
+  
+  plot_list
 }
 
 

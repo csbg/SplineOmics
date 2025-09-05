@@ -1247,6 +1247,11 @@ check_mapping_cfg <- function(mapping_cfg) {
       if (!is.character(val) || length(val) != 1 || !nzchar(val))
         stop("`", sp, "` must be a non-empty character scalar.")
     }
+    
+    if (identical(mapping_cfg$from_species, mapping_cfg$to_species)) {
+      stop("`from_species` and `to_species` must not be the same: ",
+           shQuote(mapping_cfg$from_species), ".")
+    }
   }
   
   # tool-specific checks -

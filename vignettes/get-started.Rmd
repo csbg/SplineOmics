@@ -580,7 +580,7 @@ biological insights is to perform ORA For this, the respective genes
 can be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
-```{r download Enrichr databases, eval = TRUE}
+```{r download Enrichr databases, eval = FALSE}
 # Create a temporary directory for R CMD check
 results_dir <- file.path(tempdir(), "ora")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
@@ -617,7 +617,7 @@ report dir can be specified. The function run_ora() runs ORA
 using clusterProfiler, generates an HTML report and returns the ORA
 dotplots in R.
 
-```{r prepare arguments for ORA, eval = TRUE}
+```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(results_dir, "databases.tsv")
 
@@ -641,7 +641,7 @@ clusterProfiler_params <- list(
 The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
-```{r run ORA, eval = TRUE}
+```{r run ORA, eval = FALSE}
 result <- SplineOmics::run_ora(
   cluster_table = clustering_results[["cluster_table"]],
   databases = databases,
@@ -680,7 +680,7 @@ DB, Geneset, Gene (see documentation of the run_ora function). The BioConductor
 databases are an example for that, and SplineOmics also contains a function
 to conveniently download these.
 
-```{r download BioConductor mouse database, eval = TRUE}
+```{r download BioConductor mouse database, eval = FALSE}
 SplineOmics::download_bioconductor_database(
   organism_db = "org.Mm.eg.db",
   output_dir = results_dir,
@@ -688,7 +688,7 @@ SplineOmics::download_bioconductor_database(
 )
 ```
 
-```{r prepare arguments for ORA with BioConductor databases, eval = TRUE}
+```{r prepare arguments for ORA with BioConductor databases, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(
   results_dir,
@@ -738,7 +738,7 @@ enrichGO_cfg = list(
 )
 ```
 
-```{r run ORA with BioConductor databases, eval = TRUE}
+```{r run ORA with BioConductor databases, eval = FALSE}
 result <- SplineOmics::run_ora(
   cluster_table = clustering_results[["cluster_table"]],
   databases = databases,

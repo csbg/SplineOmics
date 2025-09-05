@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,19 +135,46 @@ future.</li>
 <ul>
 <li>Any security-related updates or patches.</li>
 </ul>
-<p>Examples: - <strong>Added</strong>: Introduced a new plotting
-function <code>plotTimeSeries()</code>. - <strong>Fixed</strong>:
-Resolved an issue causing crashes when input data was missing values. -
-<strong>Changed</strong>: Modified the default parameters for
-<code>normalizeData()</code>.</p>
 <hr>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section">[0.3.2]<a class="anchor" aria-label="anchor" href="#section"></a>
+<h4 id="v0-3-3">[v0.3.3]<a class="anchor" aria-label="anchor" href="#v0-3-3"></a>
 </h4>
 <div class="section level5">
 <h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+</h5>
+<ul>
+<li>Bugs occuring in the functions extract_data(), explore_data(), and
+cluster_hits()</li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="removed-1">Removed<a class="anchor" aria-label="anchor" href="#removed-1"></a>
+</h5>
+<ul>
+<li>Removed the report argument of the cluster_hits() and run_ora()
+function. Instead, now, the report_dir argument is per default NULL,
+which means that no HTML report is generated. Only when a directory path
+is provided with the report_dir argument, a HTML report is
+generated.</li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+</h5>
+<ul>
+<li>The signed r² as the quality score for the cluster members is now
+also written in the downloadable topTables inside the cluster_hits()
+HTML report.</li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="v0-3-2">[v0.3.2]<a class="anchor" aria-label="anchor" href="#v0-3-2"></a>
+</h4>
+<div class="section level5">
+<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
 </h5>
 <ul>
 <li>The cluster_hits() function now does not modify the gene symbols
@@ -175,7 +202,7 @@ dependencies.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="removed-1">Removed<a class="anchor" aria-label="anchor" href="#removed-1"></a>
+<h5 id="removed-2">Removed<a class="anchor" aria-label="anchor" href="#removed-2"></a>
 </h5>
 <ul>
 <li><p>Removed the double spline clustering and cat3 now forms the
@@ -184,14 +211,20 @@ clusters. This was done to simplify the task, because one now needs to
 only focus on nicely clustering the time effect hits.</p></li>
 <li><p>Gene check inside run_ora(). Now, the user is responsible of
 providing appropriate symbols.</p></li>
+<li><p>report argument of the cluster_hits() and run_ora() functions.
+This was a Boolean argument specifying if a report should be generated.
+Now, this was removed, and the functions only generate a report when a
+directory path to write was provided. Now also the default for the
+directory path is NULL, instead of the project dir. This means that per
+default, no HMTL report is generated.</p></li>
 </ul>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-1">[0.3.1]<a class="anchor" aria-label="anchor" href="#section-1"></a>
+<h4 id="v0-3-1">[v0.3.1]<a class="anchor" aria-label="anchor" href="#v0-3-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
 </h5>
 <ul>
 <li><p>Effect size computations and thresholding for the splines.
@@ -218,7 +251,7 @@ run.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
+<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
 </h5>
 <ul>
 <li><p>Some documentation was outdated or too vague. Improved
@@ -231,7 +264,7 @@ names.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-2">[0.3.0]<a class="anchor" aria-label="anchor" href="#section-2"></a>
+<h4 id="section">[0.3.0]<a class="anchor" aria-label="anchor" href="#section"></a>
 </h4>
 <div class="section level5">
 <h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
@@ -284,7 +317,7 @@ is large, it uses the minibatch version of kmeans, which is a lot faster
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
+<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
 </h5>
 <ul>
 <li><p>Auto-dof with loocv: Introduced new capability, that
@@ -326,7 +359,7 @@ test.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
+<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
 </h5>
 <ul>
 <li><p>Red spline curves: Before, it was just generated with the help of
@@ -350,10 +383,10 @@ seemingly had no effect. This was now fixed.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-3">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-3"></a>
+<h4 id="section-1">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
+<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
 </h5>
 <ul>
 <li><p>Bug that prevented the generation of the double spline plots when
@@ -428,7 +461,7 @@ not gsea (gene set enrichment analysis) in the stricter sense.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
+<h4 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
 </h4>
 <ul>
 <li><p>find_pvc() function. This function performs a compount contrast
@@ -470,17 +503,17 @@ example intergrated vs. isolated approach with the same data).</p></li>
 <hr>
 </div>
 <div class="section level4">
-<h4 id="section-4">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-4"></a>
+<h4 id="section-2">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
+<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
 </h5>
 <ul>
 <li>Level name in title of overall spline plots.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
+<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
 </h5>
 <ul>
 <li>Small bug that made it impossible having no treatment label for a
@@ -494,7 +527,7 @@ data).</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="removed-2">Removed<a class="anchor" aria-label="anchor" href="#removed-2"></a>
+<h5 id="removed-3">Removed<a class="anchor" aria-label="anchor" href="#removed-3"></a>
 </h5>
 <ul>
 <li>open_template() function. This was a function that opened a template
@@ -506,7 +539,7 @@ and this, which is twice the maintainance effort.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="section-5">[0.1.1] - 2025-01-29<a class="anchor" aria-label="anchor" href="#section-5"></a>
+<h4 id="section-3">[0.1.1] - 2025-01-29<a class="anchor" aria-label="anchor" href="#section-3"></a>
 </h4>
 </div>
 <div class="section level4">
@@ -522,7 +555,7 @@ formula, rather than being passed as part of the dream_params.</li>
 </ul>
 </div>
 <div class="section level4">
-<h4 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
+<h4 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
 </h4>
 <ul>
 <li>Added linear mixed models for modeling random effects. The
@@ -553,7 +586,7 @@ in a separate field.</li>
 and 3).</li>
 </ul>
 <div class="section level5">
-<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
+<h5 id="fixed-7">Fixed<a class="anchor" aria-label="anchor" href="#fixed-7"></a>
 </h5>
 <ul>
 <li>A few smaller visual things for the HTML reports.</li>

@@ -23,7 +23,7 @@ compiled into an HTML report."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,8 +88,7 @@ compiled into an HTML report.</p>
 <span>    treatment_timepoints <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  plot_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span>, meta_replicate_column <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  raw_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  report <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  report_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_hit_number <span class="op">=</span> <span class="fl">25</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -232,14 +231,20 @@ downstream databases used for overrepresentation analysis after clustering.</p><
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>
-<dd><p>List containing the elements y_axis_label (string),
-time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA.
-This list is used to add this info to the spline plots.
-time_unit is used to label the x-axis, and treatment_labels
-and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as
-feeding, temperature shift, etc.).</p></dd>
+<dd><p>List with optional elements used to annotate spline plots:
+  - y_axis_label: single string for the y-axis label.
+  - time_unit: single string used in the x-axis label.
+  - treatment_labels: named list of single strings.
+  - treatment_timepoints: named list of single numeric values.</p>
+<p>If any treatment list is present, both must be present. The two lists
+  must have identical name sets. Allowed names are the values of
+  `meta[[condition]]` and the special name "double_spline_plots", which
+  generates a treatment line for the plots of limma category 2 and 3, so
+  for the average difference between the conditions and the interaction
+  between condition and time.</p>
+<p>Vertical dashed lines are drawn at the given timepoints for facets whose
+  level name matches a list name, and labeled with the corresponding string
+  (e.g., feeding, temperature shift).</p></dd>
 
 
 <dt id="arg-plot-options">plot_options<a class="anchor" aria-label="anchor" href="#arg-plot-options"></a></dt>
@@ -263,13 +268,8 @@ spline plots that originally where NA and that were imputed.</p></dd>
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
 <dd><p>Character string specifying the directory path where the
-HTML report and any other output files should be saved. Default is the
-current working dir.</p></dd>
-
-
-<dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
-<dd><p>Boolean TRUE or FALSE value specifying if a report should be
-generated.</p></dd>
+HTML report and any other output files should be saved. When no path is
+specified, then the function runs but no HTML report is generated.</p></dd>
 
 
 <dt id="arg-max-hit-number">max_hit_number<a class="anchor" aria-label="anchor" href="#arg-max-hit-number"></a></dt>
