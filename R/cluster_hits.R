@@ -161,6 +161,21 @@
 #'   Vertical dashed lines are drawn at the given timepoints for facets whose
 #'   level name matches a list name, and labeled with the corresponding string
 #'   (e.g., feeding, temperature shift).
+#'   Example: annotate spline plots with feeding and temperature shift events:
+#'      plot_info <- list(
+#'          y_axis_label = "log2 expression",
+#'          time_unit = "hours",
+#'          treatment_labels = list(
+#'             WT = "Feeding",
+#'             KO = "Temperature shift",
+#'             double_spline_plots = "Treatment line"
+#'          ),
+#'          treatment_timepoints = list(
+#'            WT = 12,
+#'            KO = 24,
+#'            double_spline_plots = 18
+#'          )
+#'        )
 #'                  
 #' @param plot_options A named list controlling optional plot customization.  
 #'   The list can include one or both of the following entries (any not supplied  
@@ -2564,7 +2579,7 @@ plot_all_mean_splines <- function(
 
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
-  cluster_colors <- scales::hue_pal()(length(unique(average_curves$cluster)))
+  cluster_colors <- get_cluster_colors(curve_values)
 
   if (length(cluster_colors) > length(unique(average_curves$cluster))) {
     cluster_colors <- 
@@ -2615,10 +2630,16 @@ plot_all_mean_splines <- function(
       name = NULL # No legend title
     ) +
     ggplot2::theme(
-      legend.key.size = grid::unit(0.6, "cm"),
-      legend.key.height = grid::unit(0.3, "cm"),
-      legend.title = ggplot2::element_text(size = 8)
+      axis.text.x  = ggplot2::element_text(size = 12),
+      axis.text.y  = ggplot2::element_text(size = 12),
+      axis.title.x = ggplot2::element_text(size = 14),
+      axis.title.y = ggplot2::element_text(size = 14),
+      legend.text  = ggplot2::element_text(size = 12),
+      legend.key.size   = grid::unit(0.9, "cm"),
+      legend.key.height = grid::unit(0.6, "cm"),
+      plot.title    = ggplot2::element_text(size = 16)
     )
+  
 
   return(p_curves)
 }
@@ -2661,6 +2682,7 @@ plot_cluster_mean_splines <- function(
 
   clusters <- sort(unique(curve_values$cluster))
   plots <- list()
+  cluster_colors <- get_cluster_colors(curve_values)
   
   for (current_cluster in clusters) {
     subset_df <- subset(
@@ -2691,7 +2713,8 @@ plot_cluster_mean_splines <- function(
         subset_df,
         current_title,
         plot_info = plot_info,
-        level
+        level,
+        cluster_color = cluster_colors[[paste("Cluster", current_cluster)]]
       )
   }
   return(plots)
@@ -2974,30 +2997,7 @@ plot_splines <- function(
           } else {
             "none" # Completely remove shape legend when no "Imputed" points
           }
-        ) +
-        ggplot2::theme(
-          legend.position = "right",
-          legend.justification = "center",
-          legend.box = "vertical",
-          legend.background = ggplot2::element_blank(),
-          legend.title = ggplot2::element_blank(),
-          legend.text = ggplot2::element_text(
-            size = 6,
-            margin = ggplot2::margin(t = 4, b = 4)
-          ),
-          axis.text.x = ggplot2::element_text(
-            size = 8,
-            angle = 45, # Tilt labels by 45 degrees
-            hjust = 1 # Adjust horizontal justification
-          ),
-          axis.title.y = ggplot2::element_text(
-            size = 8,
-            margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)
-          ),
-          axis.text.y = ggplot2::element_text(
-            margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)
-          )
-        )
+        ) 
       
       y_pos_label <- y_max + y_extension * 0.5
       
@@ -3009,7 +3009,7 @@ plot_splines <- function(
         horizontal_labels = TRUE
       )
 
-      p <- result$p # Updated plot with dashed lines
+      p <- result$p   # Updated plot with dashed lines
       treatment_colors <- result$treatment_colors # Colors used for treatments
 
       color_values <- c(
@@ -3057,7 +3057,6 @@ plot_splines <- function(
         ggplot2::scale_colour_manual(
           values = color_values,
         ) +
-        ggplot2::theme_minimal() +
         ggplot2::labs(
           title = paste(
             "<b>", title, "</b>",
@@ -3074,13 +3073,14 @@ plot_splines <- function(
         ) +
         ggplot2::theme(
           plot.title = ggplot2::element_text(size = 6),
-          axis.title.x = ggplot2::element_text(size = 8),
-          axis.title.y = ggplot2::element_text(size = 8),
-          legend.key.size = grid::unit(0.6, "cm"),
-          legend.key.height = grid::unit(0.3, "cm"),
+          axis.title.x = ggplot2::element_text(size = 14),
+          axis.title.y = ggplot2::element_text(size = 14),
+          legend.key.size = grid::unit(0.8, "cm"),
+          legend.key.height = grid::unit(0.5, "cm"),
           legend.title = ggplot2::element_text(size = 8),
-          legend.text = ggplot2::element_text(size = 6),
-          axis.text.x = ggplot2::element_text(size = 6)
+          legend.text = ggplot2::element_text(size = 12),
+          axis.text.x = ggplot2::element_text(size = 12),
+          axis.text.y = ggplot2::element_text(size = 12)
         )
 
       p
@@ -3500,12 +3500,13 @@ plot_spline_comparisons <- function(
           legend.position = "right",
           legend.title = ggplot2::element_blank(),
           plot.title = ggplot2::element_text(size = 7),
-          legend.text = ggplot2::element_text(size = 5),
-          legend.key.height = ggplot2::unit(0.3, "cm"),
-          legend.key.width  = ggplot2::unit(0.7, "cm"),
-          axis.title.x = ggplot2::element_text(size = 8),
-          axis.title.y = ggplot2::element_text(size = 8),
-          axis.text.x  = ggplot2::element_text(size = 6)
+          legend.text = ggplot2::element_text(size = 8),
+          legend.key.height = ggplot2::unit(0.4, "cm"),
+          legend.key.width  = ggplot2::unit(0.8, "cm"),
+          axis.title.x = ggplot2::element_text(size = 14),
+          axis.title.y = ggplot2::element_text(size = 14),
+          axis.text.x  = ggplot2::element_text(size = 12),
+          axis.text.y  = ggplot2::element_text(size = 12)
         )
       
       y_combined <- c(plot_data$Y1, plot_data$Y2)
@@ -3856,19 +3857,26 @@ build_cluster_hits_report <- function(
         cquality_description <- paste(
           "<div style='text-align: center; font-size: 1.5em;'>",
           "Variance explained by cluster centroid:",
-          "0.90-1.00 = excellent;",
-          "0.80-0.89 = strong;",
-          "0.70-0.79 = borderline;",
-          "0.60-0.69 = marginal;",
-          "0.50-0.59 = poor;",
-          "0.00-0.49 = very poor;",
-          "<0.00 = anti-pattern.",
-          "",
-          "sr<sup>2</sup><sub>cc</sub> = signed r^2 by cluster centroid,",
+          "<br>",
+          "<ul style='list-style-position: inside; text-align: left;",
+          "display: inline-block;'>",
+          "<li>0.90–1.00 = excellent</li>",
+          "<li>0.80–0.89 = strong</li>",
+          "<li>0.70–0.79 = borderline</li>",
+          "<li>0.60–0.69 = marginal</li>",
+          "<li>0.50–0.59 = poor</li>",
+          "<li>0.00–0.49 = very poor</li>",
+          "<li>&lt;0.00 = anti-pattern</li>",
+          "</ul>",
+          "<br>",
+          "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup><sub>cc</sub>",
+          "by cluster centroid,",
           "i.e. how well a gene's spline fits the centroid of its assigned",
           "cluster.",
+          "<br><hr>",
           "</div>"
         )
+        
       }else if (element_name == "heatmap") {
         header_text <- "Z-Score of log2 Value Heatmap"
       
@@ -4875,6 +4883,7 @@ calc_cv <- function(
 #'                  feeding, temperature shift, etc.).
 #' @param level Level of the condition, which is a factor (categorical 
 #'              predictor of the linear model)
+#' @param cluster_color Color to be used for the splines of this cluster.
 #'
 #' @return A ggplot object representing the single and consensus shapes.
 #'
@@ -4893,7 +4902,8 @@ plot_single_and_mean_splines <- function(
     time_series_data,
     title,
     plot_info,
-    level
+    level,
+    cluster_color
     ) {
   
   time_col <- rlang::sym("time")
@@ -4921,8 +4931,8 @@ plot_single_and_mean_splines <- function(
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
   color_values <- c(
-    "Mean" = "darkblue",
-    "Spline" = "#6495ED"
+    "Mean"   = cluster_color,
+    "Spline" = cluster_color
   )
 
   p <- ggplot2::ggplot() +
@@ -4934,7 +4944,7 @@ plot_single_and_mean_splines <- function(
         group = !!rlang::sym("feature"),
         colour = "Spline"
       ),
-      alpha = 0.3, linewidth = 0.5
+      alpha = 0.4, linewidth = 0.5
     ) +
     ggplot2::geom_line(
       data = consensus_df,
@@ -4986,12 +4996,15 @@ plot_single_and_mean_splines <- function(
       plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),
       legend.position = "right",
       legend.box = "vertical",
-      legend.title = ggplot2::element_text(size = 8),
       legend.background = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_text(size = 6),
       plot.title = ggplot2::element_text(hjust = 0.5),
-      legend.key.size = grid::unit(0.6, "cm"),
-      legend.key.height = grid::unit(0.3, "cm")
+      legend.key.size = grid::unit(0.9, "cm"),
+      legend.key.height = grid::unit(0.6, "cm"),
+      axis.title.x  = ggplot2::element_text(size = 14),
+      axis.title.y  = ggplot2::element_text(size = 8),
+      axis.text.x   = ggplot2::element_text(size = 12),
+      axis.text.y   = ggplot2::element_text(size = 12),
+      legend.text   = ggplot2::element_text(size = 12)
     )
 
   return(p)
@@ -5250,14 +5263,21 @@ plot_cluster_quality_distribution <- function(
         " variances explained by centroid (mean = ",
         round(mean_sr2, 3), ")"
       ),
-      x = "Signed r^2 (variance explained)",
+      x = bquote("Signed " ~ r^2 ~ "(variance explained)"),
       y = "Hit Count"
     ) +
     ggplot2::coord_cartesian(xlim = c(-1, 1)) +
     ggplot2::theme_minimal(base_size = 13) +
     ggplot2::theme(
       legend.position = "right",
-      aspect.ratio = 0.5
+      legend.key.size = grid::unit(0.9, "cm"),
+      legend.key.height = grid::unit(0.6, "cm"),
+      aspect.ratio = 0.5,
+      axis.title.x  = ggplot2::element_text(size = 14),
+      axis.title.y  = ggplot2::element_text(size = 14),
+      axis.text.x   = ggplot2::element_text(size = 12),
+      axis.text.y   = ggplot2::element_text(size = 12),
+      legend.text   = ggplot2::element_text(size = 12)
     )
 }
 
@@ -5384,6 +5404,38 @@ select_balanced_hits <- function(
   }
   
   dplyr::slice_head(combined, n = max_n)
+}
+
+
+#' Generate consistent colors for clusters
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function assigns a distinct color to each
+#' cluster in a dataset, ensuring that plots use a reproducible and
+#' consistent color mapping across different functions.
+#'
+#' @param curve_values A data frame containing a column named
+#'   `cluster` with cluster assignments (numeric or coercible to numeric).
+#'
+#' @return
+#' A named character vector of hex color codes. Names are of the
+#' form `"Cluster 1"`, `"Cluster 2"`, etc., corresponding to the
+#' sorted cluster IDs.
+#'
+#' @details
+#' Colors are generated with [scales::hue_pal()], which cycles
+#' through distinct hues on the color wheel. The number of colors
+#' is determined by the number of unique clusters present.
+#'
+#' @importFrom scales hue_pal
+#' 
+get_cluster_colors <- function(curve_values) {
+  lvls <- sort(unique(as.numeric(curve_values$cluster)))
+  base <- scales::hue_pal()(length(lvls))
+  names(base) <- paste("Cluster", lvls)
+  base
 }
 
 

@@ -171,7 +171,22 @@ downstream databases used for overrepresentation analysis after clustering.}
 
   Vertical dashed lines are drawn at the given timepoints for facets whose
   level name matches a list name, and labeled with the corresponding string
-  (e.g., feeding, temperature shift).}
+  (e.g., feeding, temperature shift).
+  Example: annotate spline plots with feeding and temperature shift events:
+     plot_info <- list(
+         y_axis_label = "log2 expression",
+         time_unit = "hours",
+         treatment_labels = list(
+            WT = "Feeding",
+            KO = "Temperature shift",
+            double_spline_plots = "Treatment line"
+         ),
+         treatment_timepoints = list(
+           WT = 12,
+           KO = 24,
+           double_spline_plots = 18
+         )
+       )}
 
 \item{plot_options}{A named list controlling optional plot customization.
 The list can include one or both of the following entries (any not supplied  
