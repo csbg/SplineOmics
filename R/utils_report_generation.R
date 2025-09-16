@@ -1220,25 +1220,30 @@ count_hits <- function(hit_list) {
 #' @noRd
 #'
 #' @description
-#' Given a flat list with two data frames (`category_2_hits`, `category_3_hits`),
-#' truncate long label values inside a chosen column (default: \code{"contrast"})
-#' to at most \code{max_length} characters. If a value matches the pattern
-#' \code{"*_X_vs_Y"}, the function truncates \code{X} and \code{Y} *evenly*
-#' so the full label remains within the limit.
+#' Given a flat list with two data frames (`category_2_hits`,
+#' `category_3_hits`), truncate long label values inside a chosen
+#' column (default: \code{"contrast"}) to at most \code{max_length}
+#' characters. If a value matches the pattern \code{"*_X_vs_Y"}, the
+#' function truncates \code{X} and \code{Y} *evenly* so the full
+#' label remains within the limit.
 #'
 #' @param hit_list A list with two data frames:
 #'   \itemize{
-#'     \item \code{category_2_hits}: data frame of condition-level differences.
+#'     \item \code{category_2_hits}: data frame of condition-level
+#'       differences.
 #'     \item \code{category_3_hits}: data frame of condition × time
-#'      interactions.
+#'       interactions.
 #'   }
-#' @param col Character scalar. The column name in which to truncate labels
-#'   (default: \code{"contrast"}). If the column does not exist in a data frame,
-#'   that data frame is returned unchanged.
-#' @param max_length Integer scalar. Maximum allowed label length (default: 30).
 #'
-#' @return The same list, with the specified column's values truncated in each
-#'   present data frame.
+#' @param col Character scalar. The column name in which to truncate
+#'   labels (default: \code{"contrast"}). If the column does not exist
+#'   in a data frame, that data frame is returned unchanged.
+#'
+#' @param max_length Integer scalar. Maximum allowed label length
+#'   (default: 30).
+#'
+#' @return The same list, with the specified column's values truncated
+#'   in each present data frame.
 #'
 truncate_hit_labels <- function(
     hit_list,
@@ -1746,12 +1751,12 @@ process_field <- function(
     # cluster
     foreground_genes_dfs <- setNames(
       lapply(level_cols, function(col) {
-        cr %>%
+        cr |>
           dplyr::transmute(
             gene    = as.character(.data$gene),
             cluster = as.character(.data[[col]])
-          ) %>%
-          dplyr::filter(!is.na(gene), gene != "", !is.na(cluster)) %>%
+          ) |>
+          dplyr::filter(!is.na(gene), gene != "", !is.na(cluster)) |>
           dplyr::distinct()
       }),
       level_cols
@@ -2030,5 +2035,5 @@ draw_plot <- function(p) {
   
   # Last resort
   print(p)
-  invisible(NULL)
+  p
 }

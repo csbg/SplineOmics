@@ -681,7 +681,7 @@ databases are an example for that, and SplineOmics also contains a function
 to conveniently download these.
 
 ```{r download BioConductor mouse database, eval = FALSE}
-SplineOmics::download_bioconductor_database(
+SplineOmics::extract_gene_sets(
   organism_db = "org.Mm.eg.db",
   output_dir = results_dir,
   filename = "bioconductor_database.tsv"

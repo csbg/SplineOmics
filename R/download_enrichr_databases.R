@@ -158,7 +158,7 @@ enrichr_get_genesets <- function(databases) {
     )
     
     dblines <- tryCatch(
-      suppressWarnings(readLines(url, warn = FALSE)),  # silence 400/404
+      readLines(url, warn = FALSE), 
       error = function(e) NULL
     )
     

@@ -40,6 +40,14 @@ Each release section should follow the structure below:
 
 --------------------------------------------------------------------------------
 
+### [v0.3.4]
+
+#### Changed
+- Renamed the function download_bioconductor_database() to extract_gene_sets().
+
+- Stylistic changes to cluster_hits HTML report, such as font sizes for plots.
+
+
 ### [v0.3.3]
 
 #### Fixed

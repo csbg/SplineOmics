@@ -1,4 +1,4 @@
-#' make_scatter_plot_html()
+#' make_scatter_plots_html()
 #' 
 #' @description
 #' This function is used to make scatter plots for the raw data of all the 
@@ -18,6 +18,46 @@
 #'
 #' @import ggplot2
 #' @importFrom progress progress_bar
+#' 
+#' @return
+#' Invisibly returns `NULL`. This function is called for its side effects:
+#' it renders one or more HTML reports to the **current working directory**,
+#' named `paste0(output_file, "_chunk_", i, ".html")` for chunk index `i`,
+#' and prints progress messages during generation.
+#' 
+#' @examples
+#' # Create toy data: 3 features × 6 samples
+#' set.seed(123)
+#' toy_data <- matrix(
+#'   rnorm(18, mean = 5, sd = 2),
+#'   nrow = 3,
+#'   ncol = 6,
+#'   dimnames = list(
+#'     c("geneA", "geneB", "geneC"),
+#'     paste0("sample", 1:6)
+#'   )
+#' )
+#'
+#' # Meta data: must include a numeric Time column
+#' toy_meta <- data.frame(
+#'   Time = rep(c(0, 1, 2), each = 2),
+#'   Replicate = rep(c("R1", "R2"), times = 3),
+#'   row.names = colnames(toy_data)
+#' )
+#'
+#' # Write HTML reports into a temporary directory
+#' old_wd <- setwd(tempdir())
+#' make_scatter_plots_html(
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   output_file = "scatter_demo",
+#'   meta_replicate_column = "Replicate",
+#'   features_per_file = 2
+#' )
+#' setwd(old_wd)
+#'
+#' # Inspect generated HTML files in tempdir():
+#' list.files(tempdir(), pattern = "scatter_demo_chunk_.*html$")
 #' 
 #' @export
 #'

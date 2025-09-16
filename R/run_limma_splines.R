@@ -107,6 +107,81 @@
 #' @importFrom purrr partial map map_chr map2
 #' @importFrom stats setNames
 #' @importFrom utils combn
+#' 
+#' @examples
+#' # Toy data: 4 features x 6 samples (two conditions, three time points)
+#' toy_data <- matrix(
+#'   c(
+#'     3,  5,  8, 12, 17, 23,   # f1
+#'     23, 17, 13,  9,  6,  4,  # f2
+#'     5,  3,  2,  2,  3,  5,   # f3
+#'     1,  4,  9,  8,  4,  1,   # f4
+#'     10, 10, 10, 10, 10, 10,  # f5
+#'     2,   2,  2,  9, 12, 15,  # f6
+#'     4,   5,  7, 10, 14, 19,  # f7
+#'     12, 11,  9,  8,  9, 12   # f8
+#'   ),
+#'   nrow = 8, ncol = 6, byrow = TRUE,
+#'   dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#' )
+#'
+#' toy_meta <- data.frame(
+#'   Time      = c(0, 1, 2, 0, 1, 2),
+#'   condition = rep(c("WT", "KO"), each = 3),
+#'   Replicate = rep(c("R1", "R2"), each = 3),
+#'   row.names = colnames(toy_data),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' toy_annot <- data.frame(
+#'   feature_nr = 1:8,
+#'   gene       = c("G1", "G2", "G3", "G4"),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Stub limma "top tables" with minimal required fields 
+#' # (feature_nr + adj.P.Val)
+#' tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
+#' tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
+#' tt_c2 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.04, 0.70, 0.80, 0.90))
+#' tt_c3 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.20, 0.90, 0.03, 0.80))
+#'
+#' design_str <- "~ 1 + Time*condition"
+#'
+#' # Minimal spline parameters required by spline machinery
+#' spline_params <- list(
+#'   spline_type = "n",  # natural cubic splines
+#'   dof = 1L            # degrees of freedom for the spline basis
+#' )
+#'
+#' toy_splineomics <- list(
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   annotation = toy_annot,
+#'   report_info = list(
+#'     omics_data_type      = "RNA-seq",
+#'     data_description      = "toy example",
+#'     data_collection_date  = "2025-01-01",
+#'     analyst_name          = "Example",
+#'     contact_info          = "example@example.org",
+#'     project_name          = "ToyProject"
+#'   ),
+#'   design                 = design_str,
+#'   mode                   = "integrated",        
+#'   condition              = "condition",        
+#'   spline_params          = spline_params,
+#'   meta_batch_column      = NULL,
+#'   meta_batch2_column     = NULL,
+#'   limma_splines_result = list(
+#'     time_effect                  = list(WT = tt_wt, KO = tt_ko),
+#'     avrg_diff_conditions         = tt_c2,
+#'     interaction_condition_time   = tt_c3
+#'   ),
+#'   feature_name_columns   = "gene"
+#' )
+#' class(toy_splineomics) <- "SplineOmics"
+#'
+#' toy_splineomics <- run_limma_splines(toy_splineomics)
 #'
 #' @export
 #'
@@ -257,7 +332,7 @@ run_limma_splines <- function(
     limma_splines_result[["interaction_condition_time"]] <- 
       contrast_results[["condition_time"]]
   }
-  
+
   args <- list(
     splineomics = splineomics,
     limma_splines_result = limma_splines_result,
@@ -512,8 +587,7 @@ fit_global_model <- function(
     }
 
     param <- bp_setup(bp_cfg)
-    set.seed(42)
-
+    
     fit <- variancePartition::dream(
       exprObj = data,
       formula = stats::as.formula(design),
@@ -607,6 +681,7 @@ extract_within_level_time_effects <- function(
   baseline <- levels_in_condition[1]
   design_cols <- colnames(fit_obj$design_matrix)
   spline_terms <- paste0("X", seq_len(dof))
+  if ("X" %in% design_cols) spline_terms[1L] <- "X"   # In case of dof = 1
 
   eBayes_fun <- if (random_effects) {
     variancePartition::eBayes
@@ -644,13 +719,13 @@ extract_within_level_time_effects <- function(
       attr(contrast_fit, "coefBaseline") <- rep(FALSE, n_coef)
     }
 
-    contrast_fit <- suppressWarnings(eBayes_fun(contrast_fit))
-    
+    contrast_fit <- eBayes_fun(contrast_fit)
+    coef <- colnames(contrast_matrix)
     top <- top_fun(
       contrast_fit,
-      coef = colnames(contrast_matrix),
+      coef = coef,
       number = Inf,
-      sort.by = "F",
+      sort.by = if (length(coef) > 1) "F" else "t",
       adjust.method = fit_obj$padjust_method
     )
     
@@ -664,7 +739,7 @@ extract_within_level_time_effects <- function(
       feature_names = feature_names
     )
   })
-  
+
   names(results_by_level) <- paste(
     condition,
     levels_in_condition, 
@@ -889,7 +964,6 @@ process_within_level <- function(
     }
     
     param <- bp_setup(bp_cfg)
-    set.seed(42)
     
     fit <- variancePartition::dream(
       exprObj = data,
@@ -923,7 +997,7 @@ process_within_level <- function(
       adjust.method = padjust_method,
       number = dof,
       coef = coeffs,
-      sort.by = "F"
+      sort.by = if (length(coeffs) > 1) "F" else "t"
     )
   } else {
     fit <- limma::lmFit(
@@ -1049,12 +1123,13 @@ extract_contrast_for_pair <- function(
   )
 
   # Extract condition-time interaction top table (difference in shapes)
+  coef <- coefs$condition_time_interaction_only
   condition_time <- top_fun(
     fit,
-    coef = coefs$condition_time_interaction_only,
+    coef = coef,
     adjust.method = padjust_method,
     number = Inf,
-    sort.by = "F"
+    sort.by = if (length(coef) > 1) "F" else "t"
   )
   
   # Wrap results in lists to pass through process_top_table
@@ -1235,14 +1310,6 @@ bp_setup <- function(bp_cfg) {
   if (n_cores <= 1) {
     param <- BiocParallel::SerialParam()
   } else if (is_windows) {
-    # PSOCK workers inherit env vars => pin threads per worker
-    Sys.setenv(
-      OMP_NUM_THREADS       = as.character(blas_threads),
-      MKL_NUM_THREADS       = as.character(blas_threads),
-      OPENBLAS_NUM_THREADS  = as.character(blas_threads),
-      VECLIB_MAXIMUM_THREADS= as.character(blas_threads),
-      BLIS_NUM_THREADS      = as.character(blas_threads)
-    )
     param <- BiocParallel::SnowParam(
       workers = n_cores,
       type = "PSOCK",
@@ -1310,14 +1377,13 @@ build_spline_contrast <- function(
     design_cols,
     dof
 ) {
-
   contrast_matrix <- matrix(
     0,
     nrow = dof,
     ncol = length(design_cols),
     dimnames = list(
       paste0("spline_c", seq_len(dof)),  # pseudo coef names
-      design_cols                        # must match colnames(fit$coefficients)
+      design_cols                     # must match colnames(fit$coefficients)
     )
   )
   
@@ -1462,7 +1528,7 @@ get_condition_contrast_coefs <- function(
   condition_contrast <- make.names(paste0(condition, modeled_level))
   
   spline_cols <- grep(
-    "^X\\d+$",
+    "^X\\d*$",
     cols,
     value = TRUE
   )
@@ -1533,8 +1599,8 @@ analytic_loocv <- function(
 #' expected 
 #' to have applied the voom transformation already. If heteroscedasticity is 
 #' detected or explicitly requested, the function computes array weights using 
-#' limma's `arrayWeights()` function. If random effects are present, the weights 
-#' are reshaped into a matrix suitable for use with 
+#' limma's `arrayWeights()` function. If random effects are present, the
+#' weights are reshaped into a matrix suitable for use with 
 #' `variancePartition::dream()`. 
 #' The function returns a structured list containing the final weight matrix
 #'  (or NULL), 

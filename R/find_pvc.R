@@ -1,65 +1,71 @@
 #' Find Peaks and Valleys in Time-Series Omics Data
 #'
 #' @description
-#' Identifies significant local peaks or valleys (excursions) in time-series 
-#' omics data using a Union-Intersection Test (UIT)-based approach. This 
-#' function wraps the detection and plotting steps, returning visualizations of 
-#' all features with at least one excursion.
+#' Identifies significant local peaks or valleys (excursions) in
+#' time-series omics data using a Union-Intersection Test (UIT)-based
+#' approach. This function wraps the detection and plotting steps,
+#' returning visualizations of all features with at least one excursion.
 #'
-#' @param splineomics A list containing the preprocessed time-series input data. 
-#' Must include named elements `"data"` (a numeric matrix), `"meta"` (a metadata 
-#' data frame with a `"Time"` column), `"meta_batch_column"` (name of the column 
-#' in `meta` identifying replicates or batches), and `"padjust_method"` (a 
-#' string specifying the method for p-value adjustment).
-#' @param alphas A single numeric value or a named list of numeric thresholds 
-#' used to identify significant excursion points. If a single value is provided
-#' (either as a numeric scalar or a list of length 1), the same threshold is 
-#' applied to all condition levels. If a named list is provided, it must contain
-#' one numeric 
-#' value per condition level, with names matching the condition levels exactly. 
-#' This input is normalized internally to ensure consistent per-level access.
-#' @param padjust_method A character string specifying the method for multiple 
-#' testing correction. Defaults to `"BH"` (Benjamini-Hochberg).
-#' @param support Minimum amount of non-NA values in each timepoint that 
-#' influenced a PVC-test result. For example, when the timepoints are 10, 15,
-#' 20, etc. and support = 1, then for timepoint 15 for a given feature, the 
-#' timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
-#' more of those timepoints for that feature don't meet this criterium, then the
-#' p-value for that timepoint 15 and feature is set to NA.
-#' @param plot_info List containing the elements y_axis_label (string),
-#'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA.
-#'                  This list is used to add this info to the spline plots.
-#'                  time_unit is used to label the x-axis, and treatment_labels
-#'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as
-#'                  feeding, temperature shift, etc.).
-#' @param report_dir Character string specifying the directory path where the
-#' HTML report and any other output files should be saved.
+#' @param splineomics A list containing the preprocessed time-series
+#' input data. Must include named elements `"data"` (a numeric matrix),
+#' `"meta"` (a metadata data frame with a `"Time"` column),
+#' `"meta_batch_column"` (name of the column in `meta` identifying
+#' replicates or batches), and `"padjust_method"` (a string specifying
+#' the method for p-value adjustment).
 #'
-#' @return A named list of ggplot objects, where each element corresponds to a 
-#' feature with at least one detected peak or valley. Each plot shows expression 
-#' profiles across timepoints, highlights excursion points in red, and annotates 
-#' statistically significant excursions with significance stars.
+#' @param alphas A single numeric value or a named list of numeric
+#' thresholds used to identify significant excursion points. If a single
+#' value is provided (numeric scalar or list of length 1), the same
+#' threshold is applied to all condition levels. If a named list is
+#' provided, it must contain one numeric value per condition level, with
+#' names matching the condition levels exactly. This input is normalized
+#' internally to ensure consistent per-level access.
+#'
+#' @param padjust_method A character string specifying the method for
+#' multiple testing correction. Defaults to `"BH"`
+#' (Benjamini-Hochberg).
+#'
+#' @param support Minimum amount of non-NA values in each timepoint that
+#' influence a PVC-test result. For example, with timepoints 10, 15, 20
+#' and support = 1, then for timepoint 15 for a given feature, the
+#' timepoints 10, 15, and 20 each must have at least 1 non-NA value. If
+#' one or more of those timepoints for that feature don't meet this
+#' criterium, then the p-value for that feature at timepoint 15 is set
+#' to NA.
+#'
+#' @param plot_info List with elements y_axis_label (string), time_unit
+#' (string), treatment_labels (character vector), and
+#' treatment_timepoints (integer vector). All can also be NA. This list
+#' is used to add this info to the spline plots. time_unit labels the
+#' x-axis; treatment_labels and -timepoints add vertical dashed lines,
+#' showing treatment positions (e.g. feeding, temperature shift).
+#'
+#' @param report_dir Character string specifying the directory path
+#' where the HTML report and any other output files should be saved.
+#'
+#' @return A named list of ggplot objects, where each element corresponds
+#' to a feature with at least one detected peak or valley. Each plot
+#' shows expression profiles across timepoints, highlights excursions in
+#' red, and annotates significant excursions with significance stars.
 #'
 #' @details
-#' A peak or valley is defined as a timepoint whose expression value is 
-#' significantly different from both its immediate neighbors and deviates in 
-#' the same direction - i.e., it is either significantly higher than both 
-#' (a peak) or significantly lower than both (a valley).  
-#' 
-#' Statistically, this is tested using a compound contrast in limma:  
-#' (T - T_prev) + (T - T_next) = 2T - T_prev - T_next
-#' This compound contrast has power only when the timepoint `T` is an outlier 
-#' compared to both neighbors in the same direction. The resulting p-value is 
-#' FDR-adjusted and compared to the `alpha` threshold.
-#' 
-#' - Performs internal input validation via `check_splineomics_elements()` and 
+#' A peak or valley is a timepoint whose expression value is
+#' significantly different from both its neighbors and deviates in the
+#' same direction: either significantly higher than both (a peak) or
+#' significantly lower than both (a valley).
+#'
+#' Statistically, this is tested with a compound contrast in limma:
+#' (T - T_prev) + (T - T_next) = 2T - T_prev - T_next. The contrast has
+#' power only when `T` is an outlier vs. both neighbors in the same
+#' direction. The resulting p-value is FDR-adjusted and compared to
+#' `alpha`.
+#'
+#' - Validates inputs via `check_splineomics_elements()` and
 #'   `InputControl`.
-#' - Detects local excursions using the `pvc_test()` function.
+#' - Detects local excursions using `pvc_test()`.
 #' - Displays the number of total excursion hits found.
-#' - Generates plots using `plot_pvc()`, with each excursion point 
-#'   evaluated for significance based on the provided `alpha`.
+#' - Generates plots with `plot_pvc()`, marking excursion significance
+#'   by the chosen `alpha`.
 #'
 #' @export
 #' 
@@ -244,12 +250,13 @@ find_pvc <- function(
 #' @description
 #' This helper function standardizes the `alphas` input to ensure it can be 
 #' consistently used across multiple condition levels. The input can either be 
-#' a single numeric value, which will be replicated and named for each condition 
+#' a single numeric value, which will be replicated and named for each
+#'  condition 
 #' level, or a named list containing a numeric threshold for each condition 
 #' level.
 #'
-#' @param alphas Either a single numeric value (e.g., `0.05`) or a named list of 
-#' numeric values. If a single value is provided, it is applied to all 
+#' @param alphas Either a single numeric value (e.g., `0.05`) or a named list
+#' of numeric values. If a single value is provided, it is applied to all 
 #' `condition_levels`. If a list is provided, it must be named, with each name 
 #' corresponding to a value in `condition_levels`.
 #' 
@@ -292,7 +299,8 @@ normalize_alphas <- function(
 #' neighbors in the same direction (higher or lower). The significance is 
 #' determined using limma's moderated t-test with FDR correction.
 #'
-#' @param data A numeric matrix, where rows correspond to features (e.g., genes, 
+#' @param data A numeric matrix, where rows correspond to features
+#'  (e.g., genes, 
 #' proteins, metabolites) and columns correspond to samples.
 #' @param meta A data frame containing metadata for the samples. Must include 
 #' a column named `"Time"` that specifies the timepoint for each sample.
@@ -353,7 +361,7 @@ pvc_test <- function(
 
     # Create design matrix
     design <- model.matrix(design_formula, data = meta)
-    colnames(design)[1:num_timepoints] <- valid_timepoints
+    colnames(design)[seq_len(num_timepoints)] <- valid_timepoints
   }
   
   # Fit base limma model
@@ -634,14 +642,15 @@ classify_excursions <- function(
 #' This function generates scatter plots for features that exhibit significant 
 #' local peaks or valleys (excursions) in time-series omics data. Excursion 
 #' points are highlighted in red, while normal points remain grey. If the 
-#' excursion is statistically significant (based on the compound contrast test), 
+#' excursion is statistically significant 
+#' (based on the compound contrast test), 
 #' a significance star is shown directly above the excursion point.
 #'
 #' @param results A list returned from `detect_excursions()`, containing 
-#' `results_df` (excursion matrix) and `pairwise_pvals` (one-tailed p-values for 
-#' the excursion contrast).
-#' @param data A numeric matrix, where rows correspond to features (e.g., genes, 
-#' proteins, metabolites) and columns correspond to samples.
+#' `results_df` (excursion matrix) and `pairwise_pvals` 
+#' (one-tailed p-values for the excursion contrast).
+#' @param data A numeric matrix, where rows correspond to features
+#' (e.g., genes, proteins, metabolites) and columns correspond to samples.
 #' @param meta A data frame containing metadata for the samples. Must include
 #' a column named `"Time"` that specifies the timepoint for each sample.
 #' @param meta_replicates_column A character string specifying the column name 
@@ -687,7 +696,7 @@ plot_pvc <- function(
   num_replicates <- length(unique_replicates)
   
   symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)  
-  symbols <- symbols_available[1:num_replicates]  
+  symbols <- symbols_available[seq_len(num_replicates)] 
   
   plots <- list()
   
@@ -873,17 +882,17 @@ plot_pvc <- function(
 #'
 #' @description
 #' This function assembles the complete HTML report for PVC analysis, including 
-#' section headers, significance metadata, subplot titles, plots, and a table of 
-#' contents. It processes a nested list of plots and writes the final report to 
-#' the specified output file path.
+#' section headers, significance metadata, subplot titles, plots, and a table
+#'  of contents. It processes a nested list of plots and writes the final
+#' report to the specified output file path.
 #'
 #' @param header_section A character string of HTML content that represents the 
 #'   top-level header section of the report (e.g., title, description, metadata)
 #' @param plots A named list of plot objects, each containing a `plots` field 
 #'   (itself a named list of ggplot2 objects). The names define report sections.
 #' @param level_headers_info A list of metadata associated with each report 
-#'   section, including p-value thresholds and padjust methods, structured under 
-#'   the `pvc_settings` key.
+#'   section, including p-value thresholds and padjust methods, structured
+#'   under the `pvc_settings` key.
 #' @param report_info A list containing metadata about the entire report (e.g., 
 #'   parameters used, timestamps, version info) used in the report footer.
 #' @param output_file_path File path (character) where the final HTML report 

@@ -46,8 +46,8 @@ create_progress_bar <- function(
 #'
 #' @description
 #' This function generates a design matrix using spline parameters and metadata.
-#' It accommodates both B-splines and natural cubic splines based on the provided
-#' spline type and parameters.
+#' It accommodates both B-splines and natural cubic splines based on the
+#' provided spline type and parameters.
 #'
 #' @param meta A dataframe containing the metadata, including the time column.
 #' @param spline_params A list containing the spline parameters. This list can
@@ -113,10 +113,12 @@ design2design_matrix <- function(
 #' This function merges annotation information into a single `top_table`
 #' dataframe based on the `feature_nr` column.
 #'
-#' @param top_table A dataframe containing the `top_table` with a `feature_nr` column.
+#' @param top_table A dataframe containing the `top_table` with a `feature_nr`
+#'                  column.
 #' @param annotation A dataframe containing the annotation information.
 #'
-#' @return A dataframe with updated `top_table` containing merged annotation information.
+#' @return A dataframe with updated `top_table` containing merged annotation
+#'         information.
 #'
 merge_top_table_with_annotation <- function(
     top_table,

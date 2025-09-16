@@ -1250,7 +1250,7 @@ make_correlation_heatmaps <- function(
     
     if (nrow(data_filtered) > target_rows) {
       row_vars <- apply(data_filtered, 1, var, na.rm = TRUE)
-      top_idx  <- order(row_vars, decreasing = TRUE)[1:target_rows]
+      top_idx <- order(row_vars, decreasing = TRUE)[seq_len(target_rows)]
       data     <- data_filtered[top_idx, , drop = FALSE]
       message(
         "Subsampled to top ", target_rows, 

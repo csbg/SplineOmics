@@ -1,4 +1,4 @@
-# InputControl class -----------------------------------------------------------
+# InputControl class ----------------------------------------------------------
 
 
 #' InputControl: A class for controlling and validating inputs
@@ -34,8 +34,8 @@ InputControl <- R6::R6Class("InputControl",
     #' calling
     #' various validation methods defined within the class. Each validation
     #' method
-    #' checks specific aspects of the input arguments and raises an error if the
-    #' validation fails.
+    #' checks specific aspects of the input arguments and raises an error if
+    #' the validation fails.
     #'
     #' The following validation methods are called in sequence:
     #' - \code{self$check_data_and_meta()}
@@ -113,8 +113,8 @@ InputControl <- R6::R6Class("InputControl",
     #' and the specified condition column.
     #' @param condition A single character string specifying the column name in
     #' the meta dataframe to be checked.
-    #' @param meta_batch_column An optional parameter specifying the column name
-    #' in the meta dataframe used to remove the batch effect. Default is NA.
+    #' @param meta_batch_column An optional parameter specifying the column
+    #'  name in the meta dataframe used to remove the batch effect. 
     #' @param data_meta_index An optional parameter specifying the index of the
     #' data/meta pair for error messages. Default is NA.
     #'
@@ -221,8 +221,8 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @description
     #' This method validates the `alphas` argument, ensuring it is either a 
-    #' single numeric threshold or a named list of numeric thresholds to be used
-    #' for determining significance levels.
+    #' single numeric threshold or a named list of numeric thresholds to be
+    #' used for determining significance levels.
     #'
     #' @details
     #' The method performs the following checks:
@@ -336,8 +336,8 @@ InputControl <- R6::R6Class("InputControl",
     #' @param metas A list of data frames containing metadata.
     #' @param condition A character string specifying the column name in the
     #' meta dataframe to be checked.
-    #' @param meta_batch_column An optional parameter specifying the column name
-    #' in the meta dataframe used to remove the batch effect. Default is NA.
+    #' @param meta_batch_column An optional parameter specifying the column
+    #' name in the meta dataframe used to remove the batch effect. 
     #' @param meta_batch2_column An optional parameter specifying the column
     #'  name
     #' in the meta dataframe used to remove the second batch effect. Default
@@ -466,7 +466,8 @@ InputControl <- R6::R6Class("InputControl",
       
       if (!valid_structure) {
         stop(
-          "'bp_cfg' must be NULL or a numeric vector with *exactly* two named ",
+          "'bp_cfg' must be NULL or a numeric vector with *exactly*
+          two named ",
           "elements: c(n_cores = , blas_threads = )."
         )
       }
@@ -651,19 +652,6 @@ InputControl <- R6::R6Class("InputControl",
         )
       }
 
-      # # Ensure that the formula begins with an intercept (~ 1)
-      # # Ignore whitespace, check the start of the string
-      # if (!grepl("^\\s*~\\s*1", formula)) {
-      #   stop(
-      #     paste(
-      #       "The design formula must start with an intercept term '~ 1'.",
-      #       "This is because spline curves are plotted onto the data",
-      #       "which is not possible without an intercept"
-      #     ),
-      #     call. = FALSE
-      #   )
-      # }
-
       # Ensure the formula contains the intercept term 'X'
       if (!grepl("\\bTime\\b", formula)) {
         stop_call_false(
@@ -679,9 +667,7 @@ InputControl <- R6::R6Class("InputControl",
         formatted_formula
         ), " "))
       formula_terms <- formula_terms[formula_terms != ""]
-
-      # Remove '1' and 'X' from terms since they are not columns
-      formula_terms <- setdiff(formula_terms, c("1"))
+      formula_terms <- setdiff(formula_terms, c("0", "1"))
 
       # Check if the terms are present in the dataframe
       missing_columns <- setdiff(formula_terms, names(meta))
@@ -704,7 +690,8 @@ InputControl <- R6::R6Class("InputControl",
       # Convert formula to string for regex checking
       formula_str <- as.character(formula)
 
-      # Check if batch column is provided and validate its presence in the formula
+      # Check if batch column is provided and validate its presence in the
+      # formula
       if (!is.null(meta_batch_column)) {
         if (!grepl(meta_batch_column, formula_str)) {
           stop_call_false(
@@ -740,19 +727,21 @@ InputControl <- R6::R6Class("InputControl",
     
     
     #' Check validity of the `robust_fit` argument
-    #' 
+    #'
     #' @noRd
     #'
     #' @description
-    #' This internal method validates the `robust_fit` argument provided to the
-    #' function. It ensures that the value is either `TRUE`, `FALSE`, or `NULL`,
-    #' which control whether robust modeling should be applied in downstream 
-    #' analysis.
+    #' This internal method validates the `robust_fit` argument provided
+    #' to the function. It ensures that the value is either `TRUE`,
+    #' `FALSE`, or `NULL`, which control whether robust modeling should
+    #' be applied in downstream analysis.
     #'
-    #' If the value is not one of these types, the function halts execution 
-    #' using `stop_call_false()` with an informative error message.
+    #' If the value is not one of these types, the function halts
+    #' execution using `stop_call_false()` with an informative error
+    #' message.
     #'
-    #' @return No return value. Called for its side effect of input validation.
+    #' @return No return value. Called for its side effect of input
+    #' validation.
     #'
     check_robust_fit = function() {
       robust_fit <- self$args[["robust_fit"]]
@@ -766,18 +755,20 @@ InputControl <- R6::R6Class("InputControl",
     
       
     #' Validate the `dream_params` argument
-    #' 
+    #'
     #' @noRd
     #'
     #' @description
-    #' This function checks the validity of the `dream_params` argument provided 
-    #' in the class. If `dream_params` is present, it ensures that it contains  
-    #' only the allowed optional elements `dof` and `KenwardRoger` in the correct 
-    #' format. Unnamed elements or elements other than these two are not allowed.
+    #' This function checks the validity of the `dream_params` argument
+    #' provided in the class. If `dream_params` is present, it ensures
+    #' that it contains only the allowed optional elements `dof` and
+    #' `KenwardRoger` in the correct format. Unnamed elements or other
+    #' elements are not allowed.
     #'
     #' @return
-    #' Returns `TRUE` if `dream_params` passes all checks. Otherwise, stops the 
-    #' function and returns an error message using `stop_call_false`.
+    #' Returns `TRUE` if `dream_params` passes all checks. Otherwise,
+    #' stops the function and returns an error message using
+    #' `stop_call_false`.
     #'
     check_dream_params = function() {
       dream_params <- self$args[["dream_params"]]
@@ -797,8 +788,8 @@ InputControl <- R6::R6Class("InputControl",
       allowed_elements <- c("dof", "KenwardRoger")
       if (!all(names(dream_params) %in% allowed_elements)) {
         stop_call_false(
-          "dream_params contains invalid elements. Only 'dof' and 'KenwardRoger'
-      are allowed."
+          "dream_params contains invalid elements.
+          Only 'dof' and 'KenwardRoger' are allowed."
         )
       }
       
@@ -888,7 +879,9 @@ InputControl <- R6::R6Class("InputControl",
 
       if (mode != "isolated" && mode != "integrated") {
         stop_call_false(
-          "mode must be either 'isolated' or 'integrated' and not '", mode, "'!"
+          "mode must be either 'isolated' or 'integrated' and not '",
+          mode,
+          "'!"
         )
       }
       
@@ -939,7 +932,8 @@ InputControl <- R6::R6Class("InputControl",
     #' @param designs A vector of character strings representing design
     #' formulas.
     #' @param metas A list of data frames containing metadata.
-    #' @param meta_indices A vector of optional indices for the data/meta pairs.
+    #' @param meta_indices A vector of optional indices for the
+    #'                     data/meta pairs.
     #'
     #' @return NULL if any check fails, otherwise returns TRUE.
     #'
@@ -1127,7 +1121,7 @@ InputControl <- R6::R6Class("InputControl",
     check_adj_pthresholds = function() {
       thresh_timeeffect <- self$args[["adj_pthresholds"]]
       thresh_avrdiff    <- self$args[["adj_pthresh_avrg_diff_conditions"]]
-      thresh_interact   <- self$args[["adj_pthresh_interaction_condition_time"]]
+      thresh_interact <- self$args[["adj_pthresh_interaction_condition_time"]]
       
       required_args <- list(
         adj_pthresholds                         = thresh_timeeffect,
@@ -1389,7 +1383,7 @@ InputControl <- R6::R6Class("InputControl",
       
       if (xor(is.null(tl), is.null(tt))) {
         stop(
-          "Provide both treatment_labels and treatment_timepoints, or neither.",
+          "Provide both treatment_labels & treatment_timepoints, or neither.",
           call. = FALSE
         )
       }
@@ -1542,11 +1536,14 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @description
     #' This function verifies the `raw_data` argument to ensure that it is a 
-    #' numeric matrix with the same dimensions as `data`. NA values are permitted 
-    #' within `raw_data`. If `raw_data` is not a numeric matrix or does not match 
+    #' numeric matrix with the same dimensions as `data`. NA values are
+    #'  permitted 
+    #' within `raw_data`. If `raw_data` is not a numeric matrix or does not
+    #'  match 
     #' the dimensions of `data`, the function stops execution with an error.
     #'
-    #' @return Returns NULL if either `data` or `raw_data` is not provided or if 
+    #' @return Returns NULL if either `data` or `raw_data` is not provided or
+    #'  if 
     #' all checks pass. Stops execution and raises an error if `raw_data` does 
     #' not meet the criteria.
     #'
@@ -1595,8 +1592,8 @@ InputControl <- R6::R6Class("InputControl",
     #'
     #' @return Returns TRUE if the directory exists or is successfully created.
     #' Stops execution
-    #' and returns an error message if the directory cannot be created or is not
-    #' valid.
+    #' and returns an error message if the directory cannot be created or is
+    #' not valid.
     #'
     check_report_dir = function() {
       report_dir <- self$args[["report_dir"]]
@@ -1659,12 +1656,12 @@ InputControl <- R6::R6Class("InputControl",
     #' This function checks the validity of the `data` and `genes` arguments
     #' within the `self$args` list. It ensures that `genes` is a character
     #' vector,
-    #' that neither `data` nor `genes` is `NULL`, and that the length of `genes`
-    #' matches the number of rows in `data`.
+    #' that neither `data` nor `genes` is `NULL`, and that the length of
+    #'  `genes` matches the number of rows in `data`.
     #'
-    #' @return Returns `TRUE` if all checks pass. Returns `NULL` if any required
-    #' arguments are `NULL`. Throws an error if `genes` is not a character
-    #' vector
+    #' @return Returns `TRUE` if all checks pass. Returns `NULL` if any
+    #' required arguments are `NULL`. Throws an error if `genes` is not a
+    #' character vector
     #' or if the length of `genes` does not match the number of rows in `data`.
     #'
     check_genes = function() {
@@ -1682,7 +1679,7 @@ InputControl <- R6::R6Class("InputControl",
       }
 
       if (length(genes) != nrow(data)) {
-        stop(paste0("length(genes) must be equal to nrow(data)"), call. = FALSE)
+        stop_call_false(paste0("length(genes) must be equal to nrow(data)"))
       }
     },
 
@@ -1707,9 +1704,8 @@ InputControl <- R6::R6Class("InputControl",
     #' are "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", and
     #' "none".
     #'
-    #' @return Returns TRUE if the p-adjustment method is valid. Stops execution
-    #'  and
-    #' returns an error message if the method is invalid.
+    #' @return Returns TRUE if the p-adjustment method is valid. Stops
+    #'         execution and returns an error message if the method is invalid.
     #'
     check_padjust_method = function() {
       padjust_method <- self[["args"]][["padjust_method"]]
@@ -1811,14 +1807,8 @@ InputControl <- R6::R6Class("InputControl",
           paste(extra_fields, collapse = ", ")
         ))
       }
-
-      # Check omics_data_type format
-      if (!grepl("^[a-zA-Z_]+$", report_info[["omics_data_type"]])) {
-        stop_call_false(paste(
-          "The 'omics_data_type' field must contain only alphabetic",
-          "letters and underscores."
-        ))
-      }
+      
+      self$validate_omics_data_type(report_info[["omics_data_type"]])
 
       excluded_fields <- c(
         "data_description",
@@ -1850,10 +1840,11 @@ InputControl <- R6::R6Class("InputControl",
 
       if (any(long_fields)) {
         too_long_fields <- names(report_info)[long_fields]
-        stop(paste("The following fields have strings exceeding 70 characters:",
+        stop_call_false(paste(
+          "The following fields have strings exceeding 70 characters:",
           paste(too_long_fields, collapse = ", "),
           sep = "\n"
-        ), call. = FALSE)
+        ))
       }
 
       return(TRUE)
@@ -2008,7 +1999,7 @@ InputControl <- R6::R6Class("InputControl",
 )
 
 
-# Level2Functions class --------------------------------------------------------
+# Level2Functions class -------------------------------------------------------
 
 
 #' Level2Functions: A class providing level 2 functionalities
@@ -2031,9 +2022,8 @@ Level2Functions <- R6::R6Class("Level2Functions",
     #' This function checks the validity of the data matrix, ensuring that it
     #' is a
     #' matrix, contains only numeric values,
-    #' has no missing values, and all elements are non-negative. Additionally, it
-    #' verifies that no rows or columns are
-    #' entirely zeros.
+    #' has no missing values, and all elements are non-negative. Additionally,
+    #' it verifies that no rows or columns are entirely zeros.
     #'
     #' @param data A dataframe containing numeric values.
     #' @param data_meta_index An optional parameter specifying the index of the
@@ -2128,17 +2118,19 @@ Level2Functions <- R6::R6Class("Level2Functions",
       
       # Check for missing values (only warn instead of stopping execution)
       if (any(is.na(data))) {
-        message(
+        warning(
           self$create_error_message(
-            paste(
-              "Warning: The data contains missing values (NA).",
-              "Ensure that imputation or handling of missing values",
-              "aligns with your analysis requirements. Note that limma can",
-              " handle missing values (it just ignores them), and therefore",
-              " also SplineOmics can handle them."
+            paste0(
+              "The data contains missing values (NA). ",
+              "Ensure that imputation or handling of missing values ",
+              "aligns with your analysis requirements. Note that limma can ",
+              "handle missing values (it just ignores them), and therefore ",
+              "also SplineOmics can handle them."
             ),
             data_meta_index
-          )
+          ),
+          call. = FALSE,
+          immediate. = TRUE
         )
       }
       
@@ -2148,7 +2140,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
           self$create_error_message(
             paste(
               "Hint: The data contains negative values. This may occur if the",
-              "data has been transformed (e.g., log-transformed or normalized)",
+              "data has been transformed (e.g. log-transformed or normalized)",
               "and is valid in such cases. Ensure that the data preprocessing",
               "aligns with your analysis requirements."
             ),
@@ -2306,9 +2298,12 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
       if (!is.null(meta_batch_column)) {
         if (is.character(meta_batch_column)) {
-          if (meta_batch_column == "Time" || meta_batch_column == condition) {
-            stop(paste("meta_batch_column must not be == 'Time' or", condition),
-              call. = FALSE
+          if (meta_batch_column == "Time" ||
+              meta_batch_column == condition) {
+            stop_call_false(paste(
+              "meta_batch_column must not be == 'Time' or",
+              condition
+              )
             )
           }
 
@@ -2327,9 +2322,12 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
       if (!is.null(meta_batch2_column)) {
         if (is.character(meta_batch2_column)) {
-          if (meta_batch2_column == "Time" || meta_batch2_column == condition) {
-            stop(paste("meta_batch2_column must not be == 'Time' or", condition),
-              call. = FALSE
+          if (meta_batch2_column == "Time" ||
+              meta_batch2_column == condition) {
+            stop_call_false(paste(
+              "meta_batch2_column must not be == 'Time' or",
+              condition
+              )
             )
           }
 
@@ -2497,12 +2495,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
           }
           if (spline_params$spline_type[i] == "n" &&
             !is.na(spline_params$degree[i])) {
-            stop(
-              paste(
-                "Degree must be NA for natural cubic",
-                "splines in spline_params."
-              ),
-              call. = FALSE
+            stop_call_false(
+              "Degree must be NA for natural cubic ",
+              "splines in spline_params."
             )
           }
         }
@@ -2566,38 +2561,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
             "supported for this mode."
           ))
         }
-
-        # # Additional check for 'knots' and 'bknots' if they exist
-        # if ("knots" %in% names(spline_params)) {
-        #   # Check if 'knots' is atomic (i.e., treat vectors as a single unit) or NA
-        #   if (!(is.atomic(spline_params$knots) || all(is.na(spline_params$knots)))) {
-        #     stop(
-        #       paste(
-        #         "All elements in 'knots' in spline_params must be atomic",
-        #         "or NA when mode is 'integrated'.",
-        #         "Different spline parameters for different levels are not",
-        #         "supported for this mode."
-        #       ),
-        #       call. = FALSE
-        #     )
-        #   }
-        # }
-        #
-        # if ("bknots" %in% names(spline_params)) {
-        #   # Check if 'bknots' is atomic (i.e., treat vectors as a single unit) or NA
-        #   if (!(is.atomic(spline_params$bknots) ||
-        #         all(is.na(spline_params$bknots)))) {
-        #     stop(
-        #       paste(
-        #         "All elements in 'bknots' in spline_params must be atomic or",
-        #         "NA when mode is 'integrated'.",
-        #         "Different spline parameters for different levels are not",
-        #         "supported for this mode."
-        #       ),
-        #       call. = FALSE
-        #     )
-        #   }
-        # }
       } else if (mode == "isolated") {
         num_levels <- length(unique(meta[[condition]]))
         if (any(vapply(spline_params, length, integer(1)) != num_levels)) {
@@ -2608,24 +2571,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
             "column of meta when mode is 'isolated'."
           ))
         }
-        # if ("knots" %in% names(spline_params)) {
-        #   if (length(spline_params$knots) != num_levels) {
-        #     stop(
-        #       paste("'knots' in spline_params must have the same number of",
-        #             "elements as there are unique elements in the ", condition,
-        #             "column of meta when mode is 'isolated'."),
-        #          call. = FALSE)
-        #   }
-        # }
-        # if ("bknots" %in% names(spline_params)) {
-        #   if (length(spline_params$bknots) != num_levels) {
-        #     stop(
-        #       paste("'bknots' in spline_params must have the same number of",
-        #             "elements as there are unique elements in the ", condition,
-        #             "column of meta when mode is 'isolated'."),
-        #          call. = FALSE)
-        #   }
-        # }
       }
     },
 
@@ -2741,26 +2686,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
               stop("degree must be NA for spline_type n")
             }
 
-            # if (!((is.na(row$dof) && !is.na(row$knots)) ||
-            #       (!is.na(row$dof) && is.na(row$knots)))) {
-            #   stop("Either dof or knots must be NA, but not both, for
-            #     spline_type n")
-            # }
-
             if (!is.integer(row$dof)) {
               stop("dof must be an integer when it is not NA for
                     spline_type n")
             }
-
-            # if (!is.na(row$knots) && !is.numeric(row$knots)) {
-            #   stop("knots must be a numeric vector when it is not NA for
-            #     spline_type n")
-            # }
-            # if (!is.na(row$bknots) && (!is.numeric(row$bknots) ||
-            #                            length(row$bknots) != 2)) {
-            #   stop("bknots must be a numeric vector of exactly two elements
-            #     or NA for spline_type n")
-            # }
           },
           "b" = {
             if (!is.integer(row$degree)) stop("degree must be an integer for
@@ -2770,16 +2699,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
               stop("dof must be an integer at least as big as degree for
                     spline_type b")
             }
-
-            # if (!is.na(row$knots) && !is.numeric(row$knots)) {
-            #   stop("knots must be a numeric vector when it is not NA for
-            #     spline_type b")
-            # }
-            # if (!is.na(row$bknots) && (!is.numeric(row$bknots) ||
-            #                            length(row$bknots) != 2)) {
-            #   stop("bknots must be a numeric vector of exactly two elements
-            #     or NA for spline_type b")
-            # }
           },
           stop("spline_type must be either 'n' or 'b'")
         )
@@ -2883,10 +2802,45 @@ Level2Functions <- R6::R6Class("Level2Functions",
           "Dataframe column classes do not match expected classes"
           )
       }
+    },
+    
+    
+    #' Validate omics_data_type label
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' Validates a human-readable omics_data_type label. Allowed are letters,
+    #' digits, spaces, and the symbols: _ - / + ( ) . , . Leading/trailing
+    #' spaces are trimmed and internal whitespace is collapsed to single
+    #' spaces. The check uses Unicode classes \p{L} and \p{N} with
+    #' perl-compatible regex.
+    #'
+    #' @param x A character scalar with the omics_data_type label to validate.
+    #'
+    #' @return The normalized label (character scalar). The function stops
+    #' with an error if the value is empty after trimming or contains
+    #' disallowed characters.
+    #' 
+    validate_omics_data_type = function(x) {
+      x <- trimws(x)
+      x <- gsub("\\s+", " ", x)                 # normalize spaces
+      if (!nzchar(x)) {
+        stop_call_false("'omics_data_type' cannot be empty after trimming.")
+      }
+      ok <- grepl("^[\\p{L}\\p{N}][\\p{L}\\p{N} _/\\-+().,]*$",
+                  x, perl = TRUE)
+      if (!ok) {
+        stop_call_false(paste0(
+          "The 'omics_data_type' may contain letters, digits, spaces, ",
+          "and the symbols _ - / + ( ) . , (no control characters). ",
+          "Got: ", sQuote(x)
+        ))
+      }
+      x
     }
   )
 )
-
 
 
 # Level3Functions class --------------------------------------------------------
@@ -3144,11 +3098,6 @@ check_splineomics_elements <- function(
       "condition",
       "report_info"
     ),
-    "screen_limma_hyperparams" = c(
-      "condition",
-      "report_info",
-      "padjust_method"
-    ),
     "preprocess_rna_seq_data" = c(
       "data",
       "meta",
@@ -3162,8 +3111,7 @@ check_splineomics_elements <- function(
       "design",
       "mode",
       "condition",
-      "spline_params",
-      "padjust_method"
+      "spline_params"
     ),
     "find_peaks_valleys" = c(
       "data",

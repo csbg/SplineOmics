@@ -27,6 +27,55 @@
 #' 
 #' @importFrom stats cor
 #' 
+#' @examples
+#' # Minimal runnable example (offline)
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   # Two tiny topTables per category with matching feature_names
+#'   feats <- paste0("g", 1:6)
+#'   ttA_te <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.01, .2, .03, .8, .5, .04))
+#'   ttB_te <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.02, .25, .01, .7, .4, .06))
+#'   ttA_c2 <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.2, .8, .04, .3, .9, .7))
+#'   ttB_c2 <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.3, .7, .03, .4, .95, .6))
+#'   ttA_c3 <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.5, .6, .7, .04, .9, .8))
+#'   ttB_c3 <- data.frame(feature_names = feats,
+#'                        adj.P.Val = c(.6, .55, .65, .03, .85, .75))
+#'
+#'   # Assemble limma_splines_result lists (one subcategory per cat)
+#'   lsr1 <- list(
+#'     time_effect = list(WT = ttA_te),
+#'     avrg_diff_conditions = list(comp = ttA_c2),
+#'     interaction_condition_time = list(comp = ttA_c3)
+#'   )
+#'   lsr2 <- list(
+#'     time_effect = list(WT = ttB_te),
+#'     avrg_diff_conditions = list(comp = ttB_c2),
+#'     interaction_condition_time = list(comp = ttB_c3)
+#'   )
+#'
+#'   # Minimal SplineOmics shells holding the results
+#'   so1 <- list(limma_splines_result = lsr1); class(so1) <- "SplineOmics"
+#'   so2 <- list(limma_splines_result = lsr2); class(so2) <- "SplineOmics"
+#'
+#'   cmp <- compare_results(
+#'     splineomics1 = so1,
+#'     splineomics2 = so2,
+#'     splineomics1_description = "Analysis A",
+#'     splineomics2_description = "Analysis B",
+#'     adj_p_tresh1 = 0.05,
+#'     adj_p_tresh2 = 0.05
+#'   )
+#'
+#'   # Inspect outputs
+#'   head(cmp$correlation_summary)
+#'   names(cmp$plots)
+#'   head(cmp$hits_summary)
+#' }
+#' 
 #' @export
 #' 
 compare_results <- function(
@@ -73,12 +122,12 @@ compare_results <- function(
   log10_thresh1 <- -log10(adj_p_tresh1 + 1e-16)
   log10_thresh2 <- -log10(adj_p_tresh2 + 1e-16)
   
-  for (cat in categories) {    # loop over the limma result categories
-    list1 <- splineomics1[["limma_splines_result"]][[cat]]
-    list2 <- splineomics2[["limma_splines_result"]][[cat]]
+  for (category in categories) {    # loop over the limma result categories
+    list1 <- splineomics1[["limma_splines_result"]][[category]]
+    list2 <- splineomics2[["limma_splines_result"]][[category]]
     
     if (!is.list(list1) || !is.list(list2)) {  # Can be NA when result not there
-      message(sprintf("Category '%s' missing or not a list", cat))
+      message(sprintf("Category '%s' missing or not a list", category))
       next
     }
     
@@ -87,7 +136,7 @@ compare_results <- function(
       names(list2)
       )
     if (length(shared_names) == 0) {
-      message(sprintf("No matching subcategories in '%s'", cat))
+      message(sprintf("No matching subcategories in '%s'", category))
       next
     }
     
@@ -97,7 +146,11 @@ compare_results <- function(
         list2[[subcat]]
         )
       if (is.null(merged)) {
-        message(sprintf("Invalid or no overlap in '%s' > '%s'", cat, subcat))
+        message(sprintf(
+          "Invalid or no overlap in '%s' > '%s'",
+          category,
+          subcat
+          ))
         next
       }
       
@@ -111,7 +164,7 @@ compare_results <- function(
       
       # Main correlation summary entry
       correlation_summary <- rbind(correlation_summary, data.frame(
-        category = cat, subcategory = subcat,
+        category = category, subcategory = subcat,
         n_common = nrow(merged),
         correlation = round(corr, 3),
         correlation_hits_only = NA,
@@ -119,9 +172,9 @@ compare_results <- function(
       ))
       
       # Main plot
-      plot_list[[paste0(cat, "_", subcat)]] <- plot_pval_correlation(
+      plot_list[[paste0(category, "_", subcat)]] <- plot_pval_correlation(
         df = merged,
-        title = paste0(cat, " > ", subcat),
+        title = paste0(category, " > ", subcat),
         subtitle = paste(
           "Spearman rho:",
           round(corr, 3),
@@ -147,7 +200,7 @@ compare_results <- function(
         adj_p_tresh2
       )
       hits_summary <- rbind(hits_summary, data.frame(
-        category = cat, subcategory = subcat,
+        category = category, subcategory = subcat,
         hits_1 = length(hit_info$sig1),
         hits_2 = length(hit_info$sig2),
         n_overlap = length(hit_info$overlap),
@@ -166,11 +219,11 @@ compare_results <- function(
         correlation_summary$n_hits_common[nrow(correlation_summary)] <-
           nrow(hits)
         
-        plot_list[[paste0(cat, "_", subcat, "_hits_only")]] <- 
+        plot_list[[paste0(category, "_", subcat, "_hits_only")]] <- 
           plot_pval_correlation(
             df = hits,
             title = paste0(
-              cat,
+              category,
               " > ",
               subcat
               ),

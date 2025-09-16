@@ -76,6 +76,52 @@
 #' 
 #' @importFrom limma voom
 #' @importFrom variancePartition voomWithDreamWeights
+#' 
+#' @examples
+#' if (requireNamespace("edgeR", quietly = TRUE) &&
+#'     requireNamespace("limma", quietly = TRUE)) {
+#'
+#'   # Toy raw counts: 4 genes x 6 samples (2 conditions x 3 timepoints)
+#'   set.seed(1)
+#'   counts <- matrix(
+#'     rpois(24, lambda = 20),
+#'     nrow = 4, ncol = 6,
+#'     dimnames = list(paste0("g", 1:4), paste0("s", 1:6))
+#'   )
+#'
+#'   meta <- data.frame(
+#'     Time = c(0, 1, 2, 0, 1, 2),
+#'     condition = rep(c("WT", "KO"), each = 3),
+#'     row.names = colnames(counts)
+#'   )
+#'
+#'   # Simple fixed-effects design (no random effects → uses limma::voom)
+#'   design_str <- "~ 0 + Time + condition"
+#'
+#'   # Spline params: natural cubic with fixed dof (avoid auto-dof path)
+#'   sp <- list(spline_type = "n", dof = 3L, degree = NA_integer_,
+#'              knots = NULL, bknots = NULL)
+#'
+#'   # Build minimal SplineOmics object
+#'   so <- list(
+#'     data = counts,
+#'     meta = meta,
+#'     design = design_str,
+#'     condition = "condition",
+#'     spline_params = sp,
+#'     use_array_weights = FALSE,   # skip homoscedasticity auto-check
+#'     bp_cfg = list(n_cores = 1L, blas_threads = 1L)
+#'   )
+#'   class(so) <- "SplineOmics"
+#'
+#'   # Run preprocessing (TMM + voom)
+#'   so2 <- preprocess_rna_seq_data(so)
+#'
+#'   # Inspect the voom results (logCPM matrix dimensions)
+#'   if (!is.null(so2$rna_seq_data)) {
+#'     dim(so2$rna_seq_data$E)
+#'   }
+#' }
 #'
 #' @export
 #'
@@ -179,17 +225,18 @@ preprocess_rna_seq_data <- function(
   if (effects[["random_effects"]] != "") {  # use the variancePartition fun()
     
     if (!is.null(use_array_weights) && use_array_weights == TRUE) {
-      message(
-        "[WARNING] use_array_weights = TRUE is ignored for mixed model",
-        "RNA-seq.\n",
-        "voomWithDreamWeights already accounts for heteroscedasticity across.",
-        "both genes and samples"
-        )
+      warning(
+        "Argument `use_array_weights = TRUE` is ignored",
+        "for mixed-model RNA-seq; ",
+        "voomWithDreamWeights already models heteroscedasticity across genes ",
+        "and samples.",
+        call. = FALSE,
+        immediate. = TRUE
+      )
     }
     
     param <- bp_setup(bp_cfg)
-    set.seed(42)
-
+    
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
       formula = stats::as.formula(design),

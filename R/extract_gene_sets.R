@@ -47,9 +47,37 @@
 #' 
 #' @importFrom here here
 #' 
+#' @examples
+#' # Minimal real example (runs only if org package is installed)
+#' tmp <- tempdir()
+#' if (requireNamespace("org.Mm.eg.db", quietly = TRUE) &&
+#'     requireNamespace("AnnotationDbi", quietly = TRUE)) {
+#'   gs <- extract_gene_sets(
+#'     organism_db = "org.Mm.eg.db",
+#'     output_dir  = tmp,
+#'     filename    = "mm_genesets.tsv"
+#'   )
+#'   head(gs)
+#'   # The file path:
+#'   file.path(tmp, "mm_genesets.tsv")
+#' }
+#'
+#' # If the organism package is not installed, you can still see the TSV format:
+#' tiny <- data.frame(
+#'   DB = c("GO_BP", "GO_MF"),
+#'   Geneset = c("GO:0008150", "GO:0003674"),
+#'   Gene = c("Trp53", "Egfr"),
+#'   stringsAsFactors = FALSE
+#' )
+#' utils::write.table(
+#'   tiny,
+#'   file = file.path(tmp, "example_genesets.tsv"),
+#'   sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE
+#' )
+#' 
 #' @export
 #'
-download_bioconductor_database <- function(
+extract_gene_sets <- function(
     organism_db = "org.Hs.eg.db",
     output_dir  = here::here(),
     filename    = NULL

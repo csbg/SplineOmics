@@ -189,16 +189,17 @@ downstream databases used for overrepresentation analysis after clustering.}
        )}
 
 \item{plot_options}{A named list controlling optional plot customization.
-The list can include one or both of the following entries (any not supplied  
-will fall back to their default values):  
+The list can include one or both of the following entries 
+(any not supplied will fall back to their default values):  
 \itemize{
-  \item \code{cluster_heatmap_columns} (`logical`, default = \code{FALSE}):  
+  \item \code{cluster_heatmap_columns} 
+  (`logical`, default = \code{FALSE}):  
     Whether to cluster the columns in the heatmap.  
   \item \code{meta_replicate_column} (`character(1)`, 
     default = \code{NULL}):  
     Name of the column in \code{meta} that encodes replicate information.  
-    If supplied, spline plot data points are colored by replicate, allowing  
-    replicate-level variation to be assessed.
+    If supplied, spline plot data points are colored by replicate,
+    allowing replicate-level variation to be assessed.
 }}
 
 \item{raw_data}{Data matrix with the raw (unimputed) data, still 
@@ -301,4 +302,106 @@ clustering. The results,
 including clustering assignments and normalized spline curves, are saved in a
 specified directory and
 compiled into an HTML report.
+}
+\examples{
+# Toy data: 4 features x 6 samples (two conditions, three time points)
+toy_data <- matrix(
+  c(
+    3,  5,  8, 12, 17, 23,   # f1
+    23, 17, 13,  9,  6,  4,  # f2
+    5,  3,  2,  2,  3,  5,   # f3
+    1,  4,  9,  8,  4,  1,   # f4
+    10, 10, 10, 10, 10, 10,  # f5
+    2,   2,  2,  9, 12, 15,  # f6
+    4,   5,  7, 10, 14, 19,  # f7
+    12, 11,  9,  8,  9, 12   # f8
+  ),
+  nrow = 8, ncol = 6, byrow = TRUE,
+  dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+)
+
+toy_meta <- data.frame(
+  Time      = c(0, 1, 2, 0, 1, 2),
+  condition = rep(c("WT", "KO"), each = 3),
+  Replicate = rep(c("R1", "R2"), each = 3),
+  row.names = colnames(toy_data),
+  stringsAsFactors = FALSE
+)
+
+toy_annot <- data.frame(
+  feature_nr = 1:8,
+  gene       = c("G1", "G2", "G3", "G4"),
+  stringsAsFactors = FALSE
+)
+
+# Stub limma "top tables" with minimal required fields 
+# (feature_nr + adj.P.Val)
+tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
+tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
+tt_c2 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.04, 0.70, 0.80, 0.90))
+tt_c3 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.20, 0.90, 0.03, 0.80))
+
+design_str <- "~ 1 + Time*condition"
+
+# Minimal spline parameters required by spline machinery
+spline_params <- list(
+  spline_type = "n",  # natural cubic splines
+  dof = 1L            # degrees of freedom for the spline basis
+)
+
+toy_splineomics <- list(
+  data = toy_data,
+  meta = toy_meta,
+  annotation = toy_annot,
+  report_info = list(
+    omics_data_type      = "RNA-seq",
+    data_description      = "toy example",
+    data_collection_date  = "2025-01-01",
+    analyst_name          = "Example",
+    contact_info          = "example@example.org",
+    project_name          = "ToyProject"
+  ),
+  design                 = design_str,
+  mode                   = "integrated",        
+  condition              = "condition",        
+  spline_params          = spline_params,
+  meta_batch_column      = NULL,
+  meta_batch2_column     = NULL,
+  limma_splines_result = list(
+    time_effect                  = list(WT = tt_wt, KO = tt_ko),
+    avrg_diff_conditions         = tt_c2,
+    interaction_condition_time   = tt_c3
+  ),
+  feature_name_columns   = "gene"
+)
+class(toy_splineomics) <- "SplineOmics"
+
+toy_splineomics <- run_limma_splines(toy_splineomics)
+
+# Clustering configuration: fixed k per condition
+nr_k <- list(WT = 2L, KO = 2L)
+
+# Keep outputs light and write into a temporary directory
+out <- cluster_hits(
+  splineomics = toy_splineomics,
+  nr_clusters = nr_k,
+  adj_pthresholds = c(0.05, 0.05),
+  adj_pthresh_avrg_diff_conditions = 0.05,
+  adj_pthresh_interaction_condition_time = 0.05,
+  min_effect_size = list(
+    time_effect = 0,
+    avg_diff_cond = 0,
+    interaction_cond_time = 0
+  ),
+  genes = toy_annot$gene,
+  plot_info = list(y_axis_label = "log2 expression", time_unit = "h"),
+  plot_options = list(
+    cluster_heatmap_columns = FALSE,
+    meta_replicate_column = "Replicate"
+  ),
+  raw_data   = toy_data,
+  report_dir = tempdir(),
+  max_hit_number = 2
+)
+
 }

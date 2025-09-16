@@ -36,6 +36,44 @@
 #'
 #' @return A numeric matrix with cleaned values and appropriate column names.
 #' 
+#' @examples
+#' # Tiny demo table with two header rows, feature columns, and numeric block
+#' df <- data.frame(
+#'   feat_id = c(NA, NA, "g1", "g2", "g3"),
+#'   feat_sym = c(NA, NA, "TP53", "EGFR", "BAX"),
+#'   A = c("cond", "t0", 1, 2, 3),
+#'   B = c("cond", "t1", 4, 5, 6),
+#'   C = c("ctrl", "t0", 7, 8, 9),
+#'   D = c("ctrl", "t1", 10, 11, 12),
+#'   check.names = FALSE
+#' )
+#'
+#' # Example 1: extract numeric block using Excel letters, build headers from
+#' # the two rows above (they get collapsed like "cond_t0", "ctrl_t1", ...)
+#' m1 <- extract_data(
+#'   data = df,
+#'   top_row = 3,
+#'   bottom_row = 5,
+#'   left_col = "A",
+#'   right_col = "D",
+#'   feature_name_columns = c("feat_id", "feat_sym"),
+#'   use_row_index = FALSE
+#' )
+#' m1
+#'
+#' # Example 2: same extraction but with numeric column indices and row index
+#' # prepended to ensure uniqueness of feature names
+#' m2 <- extract_data(
+#'   data = df,
+#'   top_row = 3,
+#'   bottom_row = 5,
+#'   left_col = 3,
+#'   right_col = 6,
+#'   feature_name_columns = c("feat_id", "feat_sym"),
+#'   use_row_index = TRUE
+#' )
+#' m2
+#' 
 #' @export
 #' 
 extract_data <- function(
@@ -57,7 +95,7 @@ extract_data <- function(
     feature_name_columns = feature_name_columns,
     use_row_index = use_row_index
   )
-  
+
   # Convert Excel-style letters to column indices if needed
   left_col_idx <- excel_col_to_index(left_col)
   right_col_idx <- excel_col_to_index(right_col)
@@ -68,7 +106,7 @@ extract_data <- function(
   
   # Coerce to numeric
   numeric_data[] <- lapply(numeric_data, function(col) {
-    suppressWarnings(as.numeric(as.character(col)))
+    as.numeric(as.character(col))
   })
   
   # Check that all values are numeric or NA
@@ -205,10 +243,10 @@ control_inputs_extract_data <- function(
       ")."
       ))
   }
-  
+
   left_col_idx <- excel_col_to_index(left_col)
   right_col_idx <- excel_col_to_index(right_col)
-  
+
   if (any(is.na(c(left_col_idx, right_col_idx)))) {
     stop_call_false(paste0(
       "Invalid column reference(s). Got: left_col = '",
@@ -325,7 +363,7 @@ excel_col_to_index <- function(col) {
     
     nums <- vapply(ch, function(l) utf8ToInt(l) - 64L, integer(1))
     pows <- 26L ^ ((length(nums) - 1L):0L)
-    sum(nums * pows)
+    as.integer(sum(nums * pows))
   }, integer(1))
 }
 

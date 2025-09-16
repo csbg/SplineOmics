@@ -15,70 +15,71 @@ find_pvc(
 )
 }
 \arguments{
-\item{splineomics}{A list containing the preprocessed time-series input data. 
-Must include named elements `"data"` (a numeric matrix), `"meta"` (a metadata 
-data frame with a `"Time"` column), `"meta_batch_column"` (name of the column 
-in `meta` identifying replicates or batches), and `"padjust_method"` (a 
-string specifying the method for p-value adjustment).}
+\item{splineomics}{A list containing the preprocessed time-series
+input data. Must include named elements `"data"` (a numeric matrix),
+`"meta"` (a metadata data frame with a `"Time"` column),
+`"meta_batch_column"` (name of the column in `meta` identifying
+replicates or batches), and `"padjust_method"` (a string specifying
+the method for p-value adjustment).}
 
-\item{alphas}{A single numeric value or a named list of numeric thresholds 
-used to identify significant excursion points. If a single value is provided
-(either as a numeric scalar or a list of length 1), the same threshold is 
-applied to all condition levels. If a named list is provided, it must contain
-one numeric 
-value per condition level, with names matching the condition levels exactly. 
-This input is normalized internally to ensure consistent per-level access.}
+\item{alphas}{A single numeric value or a named list of numeric
+thresholds used to identify significant excursion points. If a single
+value is provided (numeric scalar or list of length 1), the same
+threshold is applied to all condition levels. If a named list is
+provided, it must contain one numeric value per condition level, with
+names matching the condition levels exactly. This input is normalized
+internally to ensure consistent per-level access.}
 
-\item{padjust_method}{A character string specifying the method for multiple 
-testing correction. Defaults to `"BH"` (Benjamini-Hochberg).}
+\item{padjust_method}{A character string specifying the method for
+multiple testing correction. Defaults to `"BH"`
+(Benjamini-Hochberg).}
 
-\item{support}{Minimum amount of non-NA values in each timepoint that 
-influenced a PVC-test result. For example, when the timepoints are 10, 15,
-20, etc. and support = 1, then for timepoint 15 for a given feature, the 
-timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
-more of those timepoints for that feature don't meet this criterium, then the
-p-value for that timepoint 15 and feature is set to NA.}
+\item{support}{Minimum amount of non-NA values in each timepoint that
+influence a PVC-test result. For example, with timepoints 10, 15, 20
+and support = 1, then for timepoint 15 for a given feature, the
+timepoints 10, 15, and 20 each must have at least 1 non-NA value. If
+one or more of those timepoints for that feature don't meet this
+criterium, then the p-value for that feature at timepoint 15 is set
+to NA.}
 
-\item{plot_info}{List containing the elements y_axis_label (string),
-time_unit (string), treatment_labels (character vector),
-treatment_timepoints (integer vector). All can also be NA.
-This list is used to add this info to the spline plots.
-time_unit is used to label the x-axis, and treatment_labels
-and -timepoints are used to create vertical dashed lines,
-indicating the positions of the treatments (such as
-feeding, temperature shift, etc.).}
+\item{plot_info}{List with elements y_axis_label (string), time_unit
+(string), treatment_labels (character vector), and
+treatment_timepoints (integer vector). All can also be NA. This list
+is used to add this info to the spline plots. time_unit labels the
+x-axis; treatment_labels and -timepoints add vertical dashed lines,
+showing treatment positions (e.g. feeding, temperature shift).}
 
-\item{report_dir}{Character string specifying the directory path where the
-HTML report and any other output files should be saved.}
+\item{report_dir}{Character string specifying the directory path
+where the HTML report and any other output files should be saved.}
 }
 \value{
-A named list of ggplot objects, where each element corresponds to a 
-feature with at least one detected peak or valley. Each plot shows expression 
-profiles across timepoints, highlights excursion points in red, and annotates 
-statistically significant excursions with significance stars.
+A named list of ggplot objects, where each element corresponds
+to a feature with at least one detected peak or valley. Each plot
+shows expression profiles across timepoints, highlights excursions in
+red, and annotates significant excursions with significance stars.
 }
 \description{
-Identifies significant local peaks or valleys (excursions) in time-series 
-omics data using a Union-Intersection Test (UIT)-based approach. This 
-function wraps the detection and plotting steps, returning visualizations of 
-all features with at least one excursion.
+Identifies significant local peaks or valleys (excursions) in
+time-series omics data using a Union-Intersection Test (UIT)-based
+approach. This function wraps the detection and plotting steps,
+returning visualizations of all features with at least one excursion.
 }
 \details{
-A peak or valley is defined as a timepoint whose expression value is 
-significantly different from both its immediate neighbors and deviates in 
-the same direction - i.e., it is either significantly higher than both 
-(a peak) or significantly lower than both (a valley).  
+A peak or valley is a timepoint whose expression value is
+significantly different from both its neighbors and deviates in the
+same direction: either significantly higher than both (a peak) or
+significantly lower than both (a valley).
 
-Statistically, this is tested using a compound contrast in limma:  
-(T - T_prev) + (T - T_next) = 2T - T_prev - T_next
-This compound contrast has power only when the timepoint `T` is an outlier 
-compared to both neighbors in the same direction. The resulting p-value is 
-FDR-adjusted and compared to the `alpha` threshold.
+Statistically, this is tested with a compound contrast in limma:
+(T - T_prev) + (T - T_next) = 2T - T_prev - T_next. The contrast has
+power only when `T` is an outlier vs. both neighbors in the same
+direction. The resulting p-value is FDR-adjusted and compared to
+`alpha`.
 
-- Performs internal input validation via `check_splineomics_elements()` and 
+- Validates inputs via `check_splineomics_elements()` and
   `InputControl`.
-- Detects local excursions using the `pvc_test()` function.
+- Detects local excursions using `pvc_test()`.
 - Displays the number of total excursion hits found.
-- Generates plots using `plot_pvc()`, with each excursion point 
-  evaluated for significance based on the provided `alpha`.
+- Generates plots with `plot_pvc()`, marking excursion significance
+  by the chosen `alpha`.
 }

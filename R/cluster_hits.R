@@ -178,16 +178,17 @@
 #'        )
 #'                  
 #' @param plot_options A named list controlling optional plot customization.  
-#'   The list can include one or both of the following entries (any not supplied  
-#'   will fall back to their default values):  
+#'   The list can include one or both of the following entries 
+#'   (any not supplied will fall back to their default values):  
 #'   \itemize{
-#'     \item \code{cluster_heatmap_columns} (`logical`, default = \code{FALSE}):  
+#'     \item \code{cluster_heatmap_columns} 
+#'     (`logical`, default = \code{FALSE}):  
 #'       Whether to cluster the columns in the heatmap.  
 #'     \item \code{meta_replicate_column} (`character(1)`, 
 #'       default = \code{NULL}):  
 #'       Name of the column in \code{meta} that encodes replicate information.  
-#'       If supplied, spline plot data points are colored by replicate, allowing  
-#'       replicate-level variation to be assessed.
+#'       If supplied, spline plot data points are colored by replicate,
+#'       allowing replicate-level variation to be assessed.
 #'   }
 #'   
 #' @param raw_data Data matrix with the raw (unimputed) data, still 
@@ -279,6 +280,107 @@
 #'     condition and time (category 3) hits.
 #'   }
 #' }
+#' 
+#' @examples
+#' # Toy data: 4 features x 6 samples (two conditions, three time points)
+#' toy_data <- matrix(
+#'   c(
+#'     3,  5,  8, 12, 17, 23,   # f1
+#'     23, 17, 13,  9,  6,  4,  # f2
+#'     5,  3,  2,  2,  3,  5,   # f3
+#'     1,  4,  9,  8,  4,  1,   # f4
+#'     10, 10, 10, 10, 10, 10,  # f5
+#'     2,   2,  2,  9, 12, 15,  # f6
+#'     4,   5,  7, 10, 14, 19,  # f7
+#'     12, 11,  9,  8,  9, 12   # f8
+#'   ),
+#'   nrow = 8, ncol = 6, byrow = TRUE,
+#'   dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#' )
+#'
+#' toy_meta <- data.frame(
+#'   Time      = c(0, 1, 2, 0, 1, 2),
+#'   condition = rep(c("WT", "KO"), each = 3),
+#'   Replicate = rep(c("R1", "R2"), each = 3),
+#'   row.names = colnames(toy_data),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' toy_annot <- data.frame(
+#'   feature_nr = 1:8,
+#'   gene       = c("G1", "G2", "G3", "G4"),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Stub limma "top tables" with minimal required fields 
+#' # (feature_nr + adj.P.Val)
+#' tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
+#' tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
+#' tt_c2 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.04, 0.70, 0.80, 0.90))
+#' tt_c3 <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.20, 0.90, 0.03, 0.80))
+#'
+#' design_str <- "~ 1 + Time*condition"
+#'
+#' # Minimal spline parameters required by spline machinery
+#' spline_params <- list(
+#'   spline_type = "n",  # natural cubic splines
+#'   dof = 1L            # degrees of freedom for the spline basis
+#' )
+#'
+#' toy_splineomics <- list(
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   annotation = toy_annot,
+#'   report_info = list(
+#'     omics_data_type      = "RNA-seq",
+#'     data_description      = "toy example",
+#'     data_collection_date  = "2025-01-01",
+#'     analyst_name          = "Example",
+#'     contact_info          = "example@example.org",
+#'     project_name          = "ToyProject"
+#'   ),
+#'   design                 = design_str,
+#'   mode                   = "integrated",        
+#'   condition              = "condition",        
+#'   spline_params          = spline_params,
+#'   meta_batch_column      = NULL,
+#'   meta_batch2_column     = NULL,
+#'   limma_splines_result = list(
+#'     time_effect                  = list(WT = tt_wt, KO = tt_ko),
+#'     avrg_diff_conditions         = tt_c2,
+#'     interaction_condition_time   = tt_c3
+#'   ),
+#'   feature_name_columns   = "gene"
+#' )
+#' class(toy_splineomics) <- "SplineOmics"
+#'
+#' toy_splineomics <- run_limma_splines(toy_splineomics)
+#'
+#' # Clustering configuration: fixed k per condition
+#' nr_k <- list(WT = 2L, KO = 2L)
+#'
+#' # Keep outputs light and write into a temporary directory
+#' out <- cluster_hits(
+#'   splineomics = toy_splineomics,
+#'   nr_clusters = nr_k,
+#'   adj_pthresholds = c(0.05, 0.05),
+#'   adj_pthresh_avrg_diff_conditions = 0.05,
+#'   adj_pthresh_interaction_condition_time = 0.05,
+#'   min_effect_size = list(
+#'     time_effect = 0,
+#'     avg_diff_cond = 0,
+#'     interaction_cond_time = 0
+#'   ),
+#'   genes = toy_annot$gene,
+#'   plot_info = list(y_axis_label = "log2 expression", time_unit = "h"),
+#'   plot_options = list(
+#'     cluster_heatmap_columns = FALSE,
+#'     meta_replicate_column = "Replicate"
+#'   ),
+#'   raw_data   = toy_data,
+#'   report_dir = tempdir(),
+#'   max_hit_number = 2
+#' )
 #'
 #' @export
 #'
@@ -308,7 +410,7 @@ cluster_hits <- function(
     report_dir = NULL,
     max_hit_number = 25
     ) {
-  
+
   start_time <- Sys.time()
 
   check_splineomics_elements(
@@ -382,7 +484,7 @@ cluster_hits <- function(
       avg_diff_cond_threshold = min_effect_size[["avg_diff_cond"]],
       predicted_timecurves = predicted_timecurves
     )
-    
+
     spline_comp_plots <- generate_spline_comparisons(
       splineomics = splineomics,
       data = data,
@@ -785,7 +887,7 @@ predict_timecurves <- function(
     
     # spline columns X1, X2, ... 
     spline_cols <- grep(
-      "^X[0-9]+$",
+      "^X\\d*$",
       design_n,
       value = TRUE
       )
@@ -860,7 +962,7 @@ predict_timecurves <- function(
           }
           possible_matches
         }, character(1))
-        
+
         # Add intercept for non-reference level if present
         has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
         if (has_group_intercept) {
@@ -1730,7 +1832,7 @@ generate_spline_comparisons <- function(
     condition_1 = c1,
     time_effect_2 = te2,
     condition_2 = c2,
-    avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],             
+    avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],   
     interaction_condition_time = category_2_and_3_hits[["category_3_hits"]], 
     data = data,
     meta = meta,
@@ -1871,7 +1973,7 @@ construct_cluster_table <- function(
   anot <- if (no_genes) {
     tibble(feature_nr = numeric(0), gan = character(0))
   } else {
-    tibble(feature_nr = seq_along(genes), gan = as.character(genes)) %>%
+    tibble(feature_nr = seq_along(genes), gan = as.character(genes)) |>
       distinct(feature_nr, .keep_all = TRUE)
   }
   
@@ -1891,63 +1993,63 @@ construct_cluster_table <- function(
     add_parts,
     list(toptbl_to_fn(limma_splines_results$interaction_condition_time))
   )
-  fn_tbl <- bind_rows(add_parts) %>%
+  fn_tbl <- bind_rows(add_parts) |>
     distinct(feature_nr, .keep_all = TRUE)
   
   fn_from_cl <- bind_rows(
-    cl1 %>% select(feature_nr, fnsrc) %>% rename(fname_cl = fnsrc),
-    cl2 %>% select(feature_nr, fnsrc) %>% rename(fname_cl = fnsrc)
-  ) %>%
-    filter(!is.na(feature_nr), !is.na(fname_cl), fname_cl != "") %>%
+    cl1 |> select(feature_nr, fnsrc) |> rename(fname_cl = fnsrc),
+    cl2 |> select(feature_nr, fnsrc) |> rename(fname_cl = fnsrc)
+  ) |>
+    filter(!is.na(feature_nr), !is.na(fname_cl), fname_cl != "") |>
     distinct(feature_nr, .keep_all = TRUE)
   
   allf_parts <- list(
-    anot %>% select(feature_nr),
-    cl1 %>% select(feature_nr),
-    cl2 %>% select(feature_nr),
-    fn_tbl %>% select(feature_nr)
+    anot |> select(feature_nr),
+    cl1 |> select(feature_nr),
+    cl2 |> select(feature_nr),
+    fn_tbl |> select(feature_nr)
   )
   
   if (use_cat23) {
     cat2h <- if (has_c2) {
-      category_2_and_3_hits$category_2_hits %>%
-        stbl() %>% transmute(feature_nr) %>% distinct()
+      category_2_and_3_hits$category_2_hits |>
+        stbl() |> transmute(feature_nr) |> distinct()
     } else tibble(feature_nr = numeric(0))
     cat3h <- if (has_c3) {
-      category_2_and_3_hits$category_3_hits %>%
-        stbl() %>% transmute(feature_nr) %>% distinct()
+      category_2_and_3_hits$category_3_hits |>
+        stbl() |> transmute(feature_nr) |> distinct()
     } else tibble(feature_nr = numeric(0))
     allf_parts <- c(allf_parts, list(cat2h, cat3h))
   }
   
-  allf <- bind_rows(allf_parts) %>%
-    distinct(feature_nr) %>%
-    filter(!is.na(feature_nr)) %>%
+  allf <- bind_rows(allf_parts) |>
+    distinct(feature_nr) |>
+    filter(!is.na(feature_nr)) |>
     arrange(feature_nr)
   
-  base <- allf %>%
-    left_join(anot, by = "feature_nr") %>%
-    left_join(cl1 %>% select(feature_nr, !!sym(c1), gcl, fnsrc),
-              by = "feature_nr") %>%
-    rename(gcl1 = gcl, fnsrc1 = fnsrc) %>%
-    left_join(cl2 %>% select(feature_nr, !!sym(c2), gcl, fnsrc),
-              by = "feature_nr") %>%
-    rename(gcl2 = gcl, fnsrc2 = fnsrc) %>%
-    left_join(fn_from_cl, by = "feature_nr") %>%
-    left_join(fn_tbl, by = "feature_nr") %>%
-    group_by(feature_nr) %>%
-    slice_head(n = 1) %>%
-    ungroup() %>%
+  base <- allf |>
+    left_join(anot, by = "feature_nr") |>
+    left_join(cl1 |> select(feature_nr, !!sym(c1), gcl, fnsrc),
+              by = "feature_nr") |>
+    rename(gcl1 = gcl, fnsrc1 = fnsrc) |>
+    left_join(cl2 |> select(feature_nr, !!sym(c2), gcl, fnsrc),
+              by = "feature_nr") |>
+    rename(gcl2 = gcl, fnsrc2 = fnsrc) |>
+    left_join(fn_from_cl, by = "feature_nr") |>
+    left_join(fn_tbl, by = "feature_nr") |>
+    group_by(feature_nr) |>
+    slice_head(n = 1) |>
+    ungroup() |>
     mutate(
       feature_name = coalesce(
         fname_tbl, fname_cl, fnsrc1, fnsrc2, as.character(feature_nr)
       ),
       gene = if (no_genes) NA_character_ else coalesce(gan, gcl1, gcl2)
-    ) %>%
+    ) |>
     select(feature_nr, feature_name, gene, all_of(c(c1, c2)))
   
   if (!use_cat23) {
-    return(base %>% distinct(feature_nr, .keep_all = TRUE) %>%
+    return(base |> distinct(feature_nr, .keep_all = TRUE) |>
              arrange(feature_nr))
   }
   
@@ -1964,7 +2066,7 @@ construct_cluster_table <- function(
         )
     }
     
-    c2_df <- c2_tbl %>%
+    c2_df <- c2_tbl |>
       transmute(
         feature_nr,
         cluster_cat2 = dplyr::case_when(
@@ -1978,35 +2080,35 @@ construct_cluster_table <- function(
             ),
           TRUE ~ NA_character_
         )
-      ) %>%
+      ) |>
       distinct(feature_nr, .keep_all = TRUE)
     
     if (!is.null(category_2_and_3_hits$category_2_hits) &&
         nrow(category_2_and_3_hits$category_2_hits) > 0) {
-      cat2h <- category_2_and_3_hits$category_2_hits %>%
-        stbl() %>% transmute(feature_nr) %>% distinct()
-      c2_df <- c2_df %>%
+      cat2h <- category_2_and_3_hits$category_2_hits |>
+        stbl() |> transmute(feature_nr) |> distinct()
+      c2_df <- c2_df |>
         mutate(cluster_cat2 = ifelse(feature_nr %in% cat2h$feature_nr,
                                      cluster_cat2, NA_character_))
     }
     
-    out <- out %>% left_join(c2_df, by = "feature_nr")
+    out <- out |> left_join(c2_df, by = "feature_nr")
   }
 
   # Build vector of significant cat3 features (if available)
   sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
                 nrow(category_2_and_3_hits$category_3_hits) > 0) {
-    category_2_and_3_hits$category_3_hits %>%
-      stbl() %>%
-      dplyr::transmute(feature_nr) %>%
-      dplyr::distinct() %>%
+    category_2_and_3_hits$category_3_hits |>
+      stbl() |>
+      dplyr::transmute(feature_nr) |>
+      dplyr::distinct() |>
       dplyr::pull(feature_nr)
   } else {
     integer(0)
   }
   
   # Construct cat3 only for significant features; else NA
-  out <- out %>%
+  out <- out |>
     dplyr::mutate(
       cluster_cat3 = dplyr::case_when(
         !(.data$feature_nr %in% sig_c3) ~ NA_character_,
@@ -2017,8 +2119,17 @@ construct_cluster_table <- function(
         )
       )
     )
-  
-  out %>% distinct(feature_nr, .keep_all = TRUE) %>% arrange(feature_nr)
+  n_cat3 <- out |> dplyr::filter(!is.na(cluster_cat3)) |>
+    dplyr::distinct(cluster_cat3) |> nrow()
+  message(sprintf(
+    paste(
+      "%d clusters for the condition effect (interaction between condition",
+      "and time)"
+    ),
+    n_cat3
+  ))
+
+  out |> distinct(feature_nr, .keep_all = TRUE) |> arrange(feature_nr)
 }
 
 
@@ -3352,7 +3463,7 @@ plot_spline_comparisons <- function(
       dplyr::filter(.data$feature_names == feature_name) |>
       dplyr::pull(adj.P.Val) |>
       (\(.) ifelse(length(.) == 0, NA_real_, .[1]))()
-    
+
     interaction_pval <- interaction_condition_time |>
       dplyr::filter(.data$feature_names == feature_name) |>
       dplyr::pull(adj.P.Val) |>
@@ -3860,12 +3971,12 @@ build_cluster_hits_report <- function(
           "<br>",
           "<ul style='list-style-position: inside; text-align: left;",
           "display: inline-block;'>",
-          "<li>0.90–1.00 = excellent</li>",
-          "<li>0.80–0.89 = strong</li>",
-          "<li>0.70–0.79 = borderline</li>",
-          "<li>0.60–0.69 = marginal</li>",
-          "<li>0.50–0.59 = poor</li>",
-          "<li>0.00–0.49 = very poor</li>",
+          "<li>0.90-1.00 = excellent</li>",
+          "<li>0.80-0.89 = strong</li>",
+          "<li>0.70-0.79 = borderline</li>",
+          "<li>0.60-0.69 = marginal</li>",
+          "<li>0.50-0.59 = poor</li>",
+          "<li>0.00-0.49 = very poor</li>",
           "<li>&lt;0.00 = anti-pattern</li>",
           "</ul>",
           "<br>",
@@ -4349,15 +4460,15 @@ ncl <- function(
   hf <- "feature" %in% names(df)
   rn <- rownames(df)
   fnsrc <- if (!is.null(rn)) rn else rep(NA_character_, nrow(df))
-  feature_nr <- if (hf) df$feature else suppressWarnings(as.numeric(rn))
+  feature_nr <- if (hf) df$feature else as.numeric(rn)
   tibble(feature_nr = feature_nr,
          !!outcol := as.character(df$cluster),
          gcl = if ("gene" %in% names(df))
            as.character(df$gene) else NA_character_,
-         fnsrc = fnsrc) %>%
-    filter(!is.na(feature_nr)) %>%
-    group_by(feature_nr) %>%
-    slice_head(n = 1) %>%
+         fnsrc = fnsrc) |>
+    filter(!is.na(feature_nr)) |>
+    group_by(feature_nr) |>
+    slice_head(n = 1) |>
     ungroup()
 }
 
@@ -4394,8 +4505,8 @@ toptbl_to_fn <- function(df) {
   else if ("feature_name" %in% cols) df[["feature_name"]]
   else as.character(df[["feature_nr"]])
   tibble(feature_nr = df[["feature_nr"]],
-         fname_tbl = as.character(fn)) %>%
-    filter(!is.na(feature_nr), !is.na(fname_tbl), fname_tbl != "") %>%
+         fname_tbl = as.character(fn)) |>
+    filter(!is.na(feature_nr), !is.na(fname_tbl), fname_tbl != "") |>
     distinct(feature_nr, .keep_all = TRUE)
 }
 
@@ -4435,10 +4546,10 @@ mkc <- function(
     c2
     ) {
   
-  df %>%
+  df |>
     mutate(.cmb = paste0(!!sym(c1), "_", !!sym(c2)),
            .cmb = ifelse(feature_nr %in% hits$feature_nr,
-                         .cmb, NA_character_)) %>%
+                         .cmb, NA_character_)) |>
     select(feature_nr, .cmb)
 }
 
@@ -4578,7 +4689,6 @@ kmeans_clustering <- function(
       overall_mean      = NA_real_
     )
   } else {
-    set.seed(42)
     n_obs <- nrow(curve_values)
     
     if (n_obs <= 1000) {    # Small dataset: use full k-means
@@ -4615,7 +4725,8 @@ kmeans_clustering <- function(
           init_fraction   = 1.0,
           early_stop_iter = 10,
           tol             = 1e-4,
-          verbose         = FALSE
+          verbose         = FALSE,
+          seed            = 42
         )
       })
       

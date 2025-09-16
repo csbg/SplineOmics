@@ -1,5 +1,6 @@
 test_that("cluster_hits() returns correctly structured result", {
   # Setup
+  set.seed(42)
   data <- readRDS(xzfile(system.file(
     "extdata", "proteomics_data.rds.xz", package = "SplineOmics"
   )))

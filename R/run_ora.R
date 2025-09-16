@@ -1914,8 +1914,8 @@ add_odds_ratios_to_ora <- function(ora_results) {
       parts,
       function(p) if (length(p) >= 2L) p[2L] else NA_character_, character(1)
       )
-    numer <- suppressWarnings(as.numeric(numer_chr))
-    denom <- suppressWarnings(as.numeric(denom_chr))
+    numer <- as.numeric(numer_chr)
+    denom <- as.numeric(denom_chr)
     numer / denom
   }
   
