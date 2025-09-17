@@ -13,7 +13,8 @@ run_ora(
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   enrichGO_cfg = NULL,
   universe = NULL,
-  report_dir = NULL
+  report_dir = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -119,6 +120,8 @@ documentation of the clusterProfiler R package.}
 \item{report_dir}{Character string specifying the directory path where the
 HTML report and any other output files should be saved. When no path is 
 specified, then the function runs but no HTML report is generated.}
+
+\item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 A nested, named list whose top-level elements correspond to the

@@ -92,6 +92,8 @@
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
 #' }
+#' 
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return The SplineOmics object, updated with a list with three elements:
 #'         - `time_effect`: A list of top tables for each level with the time
@@ -186,7 +188,8 @@
 #' @export
 #'
 run_limma_splines <- function(
-    splineomics
+    splineomics,
+    verbose = TRUE
 ) {
   
   start_time <- Sys.time()
@@ -200,7 +203,7 @@ run_limma_splines <- function(
     eval,
     parent.frame()
   )
-  
+  args[["verbose"]] <- verbose
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -305,7 +308,8 @@ run_limma_splines <- function(
       condition = condition,
       padjust_method = padjust_method,
       use_array_weights = use_array_weights,
-      bp_cfg = bp_cfg
+      bp_cfg = bp_cfg,
+      verbose = verbose
     )
 
     # Step 2: Extract the time_effects within each condition (spline coeffs)
@@ -352,14 +356,16 @@ run_limma_splines <- function(
       fit_obj[["homosc_violation_result"]] else NULL
   }
   
-  end_time <- Sys.time()
-  elapsed <- difftime(end_time, start_time, units = "min")
-  message(
-    sprintf(
-      "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
-      as.numeric(elapsed)
+  if (verbose) {
+    end_time <- Sys.time()
+    elapsed <- difftime(end_time, start_time, units = "min")
+    message(
+      sprintf(
+        "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
+        as.numeric(elapsed)
+      )
     )
-  )
+  }
 
   splineomics <- do.call(
     update_splineomics,
@@ -411,6 +417,7 @@ run_limma_splines <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list containing the name of the results and the top table of
 #'          results.
@@ -431,7 +438,8 @@ fit_within_condition_isolated <- function(
     padjust_method,
     mode,
     use_array_weights,
-    bp_cfg
+    bp_cfg,
+    verbose
 ) {
 
   samples <- which(meta[[condition]] == level)
@@ -461,7 +469,8 @@ fit_within_condition_isolated <- function(
     level_index = level_index,
     padjust_method = padjust_method,
     use_array_weights = use_array_weights,
-    bp_cfg = bp_cfg
+    bp_cfg = bp_cfg,
+    verbose = verbose
   )
 
   top_table <- process_top_table(
@@ -523,6 +532,7 @@ fit_within_condition_isolated <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list containing top tables for the factor only and factor-time
 #' contrast.
@@ -549,7 +559,8 @@ fit_global_model <- function(
     condition,
     padjust_method,
     use_array_weights,
-    bp_cfg
+    bp_cfg,
+    verbose
 ) {
   design2design_matrix_result <- design2design_matrix(
     meta = meta,
@@ -574,7 +585,9 @@ fit_global_model <- function(
     random_effects = effects[["random_effects"]] != ""
   ) 
   
-  message("\nFitting global model...")
+  if (verbose) {
+    message("\nFitting global model...")
+  }
 
   if (effects[["random_effects"]] != "") {    # variancePartition approach
     colnames(data) <- rownames(meta)  # dream requires this format
@@ -586,7 +599,10 @@ fit_global_model <- function(
       method <- NULL
     }
 
-    param <- bp_setup(bp_cfg)
+    param <- bp_setup(
+      bp_cfg = bp_cfg,
+      verbose = verbose
+      )
     
     fit <- variancePartition::dream(
       exprObj = data,
@@ -704,28 +720,20 @@ extract_within_level_time_effects <- function(
       design_cols = design_cols,
       dof = dof
     )
-
+    
     contrast_fit <- limma::contrasts.fit(
       fit_obj$fit,
       contrast_matrix
-      )
-    
-    if (random_effects) {
-      n_coef <- ncol(contrast_fit$coefficients)
-      coef_names <- colnames(contrast_fit$coefficients)
-      attr(contrast_fit, "betaType")     <- rep("fixed", n_coef)
-      attr(contrast_fit, "assign")       <- rep(1, n_coef)  
-      attr(contrast_fit, "term")         <- coef_names 
-      attr(contrast_fit, "coefBaseline") <- rep(FALSE, n_coef)
-    }
+    )
 
-    contrast_fit <- eBayes_fun(contrast_fit)
-    coef <- colnames(contrast_matrix)
+    contrast_fit <- suppressWarnings(eBayes_fun(contrast_fit))
+    coef_names <- colnames(contrast_matrix)
+
     top <- top_fun(
       contrast_fit,
-      coef = coef,
+      coef = if (length(coef_names) == 1L) 1L else coef_names,
       number = Inf,
-      sort.by = if (length(coef) > 1) "F" else "t",
+      sort.by = if (length(coef_names) > 1) "F" else "t",
       adjust.method = fit_obj$padjust_method
     )
     
@@ -890,6 +898,7 @@ process_top_table <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list containing the top table and the fit object from the limma
 #' analysis, and the potentially updated spline_params.
@@ -913,7 +922,8 @@ process_within_level <- function(
     level_index,
     padjust_method,
     use_array_weights,
-    bp_cfg
+    bp_cfg,
+    verbose
 ) {
 
   effects <- extract_effects(design)
@@ -963,7 +973,10 @@ process_within_level <- function(
       method <- "adaptive"  # Kenward-Roger for < 20 samples, else Satterthwaite
     }
     
-    param <- bp_setup(bp_cfg)
+    param <- bp_setup(
+      bp_cfg = bp_cfg,
+      verbose = verbose
+      )
     
     fit <- variancePartition::dream(
       exprObj = data,
@@ -1267,6 +1280,7 @@ select_spline_dof_loocv <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A `BiocParallelParam` object (already registered via
 #'   `BiocParallel::register()`).  Use it directly or rely on the global
@@ -1276,7 +1290,10 @@ select_spline_dof_loocv <- function(
 #' @importFrom BiocParallel SerialParam SnowParam MulticoreParam register
 #'                          bpstart
 #'
-bp_setup <- function(bp_cfg) {
+bp_setup <- function(
+    bp_cfg,
+    verbose
+    ) {
   
   # Defaults
   default <- list(n_cores = 1L, blas_threads = 1L)
@@ -1319,12 +1336,15 @@ bp_setup <- function(bp_cfg) {
     param <- BiocParallel::MulticoreParam(workers = n_cores)
   }
   
-  message(paste(
-    "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
-    "parallelization for variancePartition::dream(), then those parallelized",
-    "processes may continue running. Use your system's",
-    "process manager to terminate them manually!\n"
+  if (verbose) {
+    message(paste(
+      "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
+      "parallelization for variancePartition::dream(), then those",
+      "parallelized",
+      "processes may continue running. Use your system's",
+      "process manager to terminate them manually!\n"
     ))
+  }
   
   # Stop any existing cluster before switching backends
   try(BiocParallel::bpstop(BiocParallel::bpparam()), silent = TRUE)

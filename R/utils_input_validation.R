@@ -90,6 +90,7 @@ InputControl <- R6::R6Class("InputControl",
       self$check_report()
       self$check_support()
       self$check_feature_name_columns()
+      self$check_verbose()
     },
 
 
@@ -128,6 +129,7 @@ InputControl <- R6::R6Class("InputControl",
       meta_batch_column <- self$args[["meta_batch_column"]]
       meta_batch2_column <- self$args[["meta_batch2_column"]]
       data_meta_index <- self$args[["data_meta_index"]]
+      verbose <- self$args[["verbose"]]
 
       required_args <- list(data, meta, condition)
 
@@ -137,6 +139,7 @@ InputControl <- R6::R6Class("InputControl",
 
       self$check_data(
         data,
+        verbose,
         data_meta_index
       )
 
@@ -865,12 +868,14 @@ InputControl <- R6::R6Class("InputControl",
       meta <- self$args[["meta"]]
       condition <- self$args[["condition"]]
       design <- self$args[["design"]]
+      verbose <- self$args[["verbose"]]
 
       required_args <- list(
         mode,
         meta,
         condition,
-        design
+        design,
+        verbose
         )
 
       if (any(vapply(required_args, is.null, logical(1)))) {
@@ -910,14 +915,15 @@ InputControl <- R6::R6Class("InputControl",
         )
       }
       
-      message(
-        "\nMake sure that the design formula contains no interaction ",
-        "between the condition and time for mode == isolated, and that ",
-        "it contains an interaction for mode == integrated. Otherwise, ",
-        "you will get an uncaught error of 'coefficients not estimable' or ",
-        "'subscript out of bounds' (or any other hard to understand error)."
-      )
-      
+      if (verbose) {
+        message(
+          "\nMake sure that the design formula contains no interaction ",
+          "between the condition and time for mode == isolated, and that ",
+          "it contains an interaction for mode == integrated. Otherwise, ",
+          "you will get an uncaught error of 'coefficients not estimable' or ",
+          "'subscript out of bounds' (or any other hard to understand error)."
+        )
+      }
     },
 
 
@@ -1994,6 +2000,42 @@ InputControl <- R6::R6Class("InputControl",
           call. = FALSE
         )
       }
+    },
+    
+    
+    #' Check Verbose Argument
+    #'
+    #' @noRd
+    #'
+    #' @description
+    #' Validates the `verbose` argument to ensure it is a strict boolean
+    #' flag. The value must be either `TRUE` or `FALSE` (a length-1
+    #' logical); no other values are allowed.
+    #'
+    #' @details
+    #' Examines `self$args[["verbose"]]` and applies these checks:
+    #'
+    #' * If `verbose` is `NULL`, return `NULL` without error.
+    #' * Ensure `verbose` is a logical vector.
+    #' * Confirm `verbose` has length 1.
+    #' * Verify `verbose` is not `NA`.
+    #'
+    #' If any check fails, an error is raised indicating that `verbose`
+    #' must be `TRUE` or `FALSE` (length-1 logical).
+    #'
+    #' @return
+    #' `NULL` if `verbose` is not provided; otherwise, performs validation
+    #' and throws an error on failure.
+    #' 
+    check_verbose = function() {
+      verbose <- self$args[["verbose"]]
+      
+      if (is.null(verbose)) {
+        return(NULL)
+      }
+      
+      if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose))
+        stop_call_false("`verbose` must be TRUE or FALSE (length-1 logical).")
     }
   )
 )
@@ -2035,9 +2077,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
     #'
     check_data = function(
         data,
+        verbose,
         data_meta_index = NULL
         ) {
-      
+
       all_zero <- function(x) {
         apply(x, 1, function(row) all(row == 0))
       }
@@ -2133,9 +2176,9 @@ Level2Functions <- R6::R6Class("Level2Functions",
           immediate. = TRUE
         )
       }
-      
+
       # Check for non-negative values, allowing NAs
-      if (any(data < 0, na.rm = TRUE)) {  # Ignore NA values in the check
+      if (isTRUE(verbose) && any(data < 0, na.rm = TRUE)) {
         message(
           self$create_error_message(
             paste(

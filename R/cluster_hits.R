@@ -202,6 +202,8 @@
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits. 
+#' 
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return
 #' A named list with three elements:
@@ -408,7 +410,8 @@ cluster_hits <- function(
     ),
     raw_data = NULL,
     report_dir = NULL,
-    max_hit_number = 25
+    max_hit_number = 25,
+    verbose = TRUE
     ) {
 
   start_time <- Sys.time()
@@ -423,7 +426,12 @@ cluster_hits <- function(
     max_hit_number = max_hit_number
     )
 
-  args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
+  args <- lapply(
+    as.list(match.call()[-1]),
+    eval,
+    parent.frame()
+    )
+  args[["verbose"]] <- verbose
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -515,7 +523,8 @@ cluster_hits <- function(
     time_effect_hits = all_top_tables[["within_level_top_tables"]],
     nr_clusters = nr_clusters,
     condition = condition,
-    predicted_timecurves = predicted_timecurves
+    predicted_timecurves = predicted_timecurves,
+    verbose = verbose
   )
 
   # Put them in there under those names, so that the report generation fun
@@ -580,7 +589,8 @@ cluster_hits <- function(
       feature_name_columns = feature_name_columns,
       spline_comp_plots = spline_comp_plots,
       raw_data = raw_data,
-      max_hit_number = max_hit_number
+      max_hit_number = max_hit_number,
+      verbose = verbose
     )
     
     print_info_message(
@@ -597,19 +607,21 @@ cluster_hits <- function(
     category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
     genes = genes
   )
-
-  end_time <- Sys.time()
-  elapsed <- difftime(
-    end_time,
-    start_time,
-    units = "min"
+  
+  if (verbose) {
+    end_time <- Sys.time()
+    elapsed <- difftime(
+      end_time,
+      start_time,
+      units = "min"
     )
-  message(
-    sprintf(
-      "Running this function took %.1f min",
-      as.numeric(elapsed)
+    message(
+      sprintf(
+        "Running this function took %.1f min",
+        as.numeric(elapsed)
+      )
     )
-  )
+  }
 
   list(
     cluster_table = cluster_table,
@@ -1176,6 +1188,7 @@ add_cat1_and_cat3_effectsizes <- function(
 #' @param predicted_timecurves A list returned by
 #'   [predict_timecurves()], containing smoothed predictions,
 #'   effect-size filters, and time grid.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A named list of clustering results (one entry per condition
 #'   level, plus an optional `paired_category_3` entry). Each entry is
@@ -1207,10 +1220,13 @@ perform_clustering <- function(
     time_effect_hits, 
     nr_clusters,
     condition,              
-    predicted_timecurves
+    predicted_timecurves,
+    verbose
 ) {
-
-  message("\n Performing the clustering...")
+  
+  if (verbose) {
+    message("\n Performing the clustering...")
+  }
   
   # common dense time grid (same for every level)
   time_grid <- predicted_timecurves$time_grid
@@ -1224,7 +1240,9 @@ perform_clustering <- function(
     
     key    <- names(time_effect_hits)[i]                       
     level  <- sub(paste0("^", condition, "_"), "", key)  
-    message(paste("For the level: ", level))
+    if (verbose) {
+      message(paste("For the level: ", level))
+    }
     k_range <- nr_clusters[[level]]                  
 
     tbl <- time_effect_hits[[key]]
@@ -1259,7 +1277,8 @@ perform_clustering <- function(
       k_range           = k_range,                   
       smooth_timepoints = time_grid,
       top_table         = top_table,
-      condition_level   = level
+      condition_level   = level,
+      verbose           = verbose
     )
   }
 
@@ -1441,6 +1460,7 @@ get_category_2_and_3_hits <- function(
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return No return value, called for side effects.
 #'
@@ -1478,7 +1498,8 @@ make_clustering_report <- function(
     feature_name_columns,
     spline_comp_plots,
     raw_data,
-    max_hit_number
+    max_hit_number,
+    verbose
     ) {
 
   design <- gsub("Time", "X", design)  
@@ -1525,7 +1546,7 @@ make_clustering_report <- function(
 
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
   
-  message("Generating heatmap...")
+  if (isTRUE(verbose)) message("Generating heatmap...")
   heatmaps <- plot_heatmap(
     datas = datas,
     meta = meta,
@@ -1591,8 +1612,10 @@ make_clustering_report <- function(
       plot_info = plot_info,
       level = level
     )
-
-    message(paste("Generating cluster mean splines for level: ", level))
+    
+    if (verbose) {
+      message(paste("Generating cluster mean splines for level: ", level))
+    }
     cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
       curve_values = curve_values,
       plot_info = plot_info,
@@ -1615,7 +1638,7 @@ make_clustering_report <- function(
 
     clusters_spline_plots <- list()
     
-    message("Generating spline plots...")
+    if (isTRUE(verbose)) message("Generating spline plots...")
     for (nr_cluster in sort(unique(stats::na.omit(top_table$cluster)))) {
       nr_of_hits <- sum(
         level_clustering$clustered_hits$cluster == nr_cluster,
@@ -1648,7 +1671,7 @@ make_clustering_report <- function(
         report_info = report_info,
         max_hit_number = max_hit_number,
         all_levels_clustering = all_levels_clustering,
-        condition = level
+        condition = condition
       )
 
       clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
@@ -1716,7 +1739,7 @@ make_clustering_report <- function(
     annotation = annotation
   )
 
-  message("Generating report. This takes a few seconds.")
+  if (isTRUE(verbose)) message("Generating report. This takes a few seconds.")
   report_info[["max_hit_number"]] <- max_hit_number
 
   generate_report_html(
@@ -2912,7 +2935,8 @@ plot_splines <- function(
   pred_mat_level    <- predicted_timecurves$predictions[[level]]
   
   # pick the right clustering sub-result for this level
-  level_key <- if (!is.null(condition)) paste0(condition, "_", level) else level
+  level_key <- if (!is.null(condition)) 
+    paste0(condition, "_", level) else level
   level_result <- NULL
   if (is.list(all_levels_clustering)) {
     if (!is.null(all_levels_clustering[[level_key]])) {
@@ -2960,7 +2984,6 @@ plot_splines <- function(
   for (hit in seq_len(n_hits)) {
     hit_index <- as.numeric(top_table$feature_nr[hit])
     feature_name <- top_table$feature_names[hit]
-    
     sim_info <- .get_sim_for_feature(level_result, hit_index)
     sim_str  <- if (
       is.finite(sim_info$sim)
@@ -4644,6 +4667,7 @@ normalize_curves <- function(curve_values, epsilon = 1e-8) {
 #'  indices. Will be updated with cluster assignments.
 #' @param condition_level Character string indicating the current condition 
 #' level (used for error messages).
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list with the following components:
 #' \describe{
@@ -4663,7 +4687,8 @@ kmeans_clustering <- function(
     k_range,
     smooth_timepoints,
     top_table,
-    condition_level
+    condition_level,
+    verbose
     ) {
 
   if (nrow(curve_values) <= max(k_range)) {  # Clustering would fail
@@ -4690,9 +4715,10 @@ kmeans_clustering <- function(
     )
   } else {
     n_obs <- nrow(curve_values)
+    apply_fun <- if (isTRUE(verbose)) pbapply::pblapply else lapply
     
     if (n_obs <= 1000) {    # Small dataset: use full k-means
-      fits <- pbapply::pblapply(k_range, function(k) {
+      fits <- apply_fun(k_range, function(k) {
         stats::kmeans(
           curve_values,
           centers  = k,
@@ -4715,7 +4741,7 @@ kmeans_clustering <- function(
         max(20L, 2L * max(k_range), floor(0.05 * n_obs))
       )
       
-      fits <- pbapply::pblapply(k_range, function(k) {
+      fits <- apply_fun(k_range, function(k) {
         ClusterR::MiniBatchKmeans(
           data            = curve_values,
           clusters        = k,
@@ -5704,7 +5730,10 @@ compute_cluster_fits <- function(
     cors <- apply(
       X[idx, , drop = FALSE], 1,
       function(row) stats::cor(
-        row, cent, use = "pairwise.complete.obs", method = "pearson"
+        row,
+        cent,
+        use = "pairwise.complete.obs",
+        method = "pearson"
       )
     )
     

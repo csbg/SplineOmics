@@ -29,6 +29,7 @@
 #' for significance. Default is 0.05. Must be > 0 and < 1.
 #' @param report_dir A string specifying the directory where the report should
 #' be saved. Default is the current working directory.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list of plots included in the generated HTML report.
 #'
@@ -39,7 +40,8 @@
 create_limma_report <- function(
     splineomics,
     adj_pthresh = 0.05,
-    report_dir = here::here()
+    report_dir = here::here(),
+    verbose = TRUE
     ) {
 
   report_dir <- normalizePath(
@@ -57,7 +59,7 @@ create_limma_report <- function(
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
-
+  args[["verbose"]] <- verbose
   limma_splines_result <- splineomics[["limma_splines_result"]]
   meta <- splineomics[["meta"]]
   condition <- splineomics[["condition"]]
@@ -193,11 +195,13 @@ create_limma_report <- function(
     filename = "limma_report",
     report_dir = report_dir
   )
-
-  print_info_message(
-    message_prefix = "Limma report generation",
-    report_dir = report_dir
-  )
+  
+  if (verbose) {
+    print_info_message(
+      message_prefix = "Limma report generation",
+      report_dir = report_dir
+    )
+  }
 
   return(plots)
 }

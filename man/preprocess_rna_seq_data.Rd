@@ -4,7 +4,7 @@
 \alias{preprocess_rna_seq_data}
 \title{preprocess_rna_seq_data()}
 \usage{
-preprocess_rna_seq_data(splineomics, normalize_func = NULL)
+preprocess_rna_seq_data(splineomics, normalize_func = NULL, verbose = TRUE)
 }
 \arguments{
 \item{splineomics}{An S3 object of class `SplineOmics` that must contain the 
@@ -63,6 +63,8 @@ TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
 Must take as
 input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 with the normalized counts.}
+
+\item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 The updaed `splineomics` object, now containing the `voom` object, 

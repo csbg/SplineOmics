@@ -4,7 +4,12 @@
 \alias{create_limma_report}
 \title{create_limma_report()}
 \usage{
-create_limma_report(splineomics, adj_pthresh = 0.05, report_dir = here::here())
+create_limma_report(
+  splineomics,
+  adj_pthresh = 0.05,
+  report_dir = here::here(),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{splineomics}{An S3 object of class `SplineOmics` that contains all the
@@ -31,6 +36,8 @@ for significance. Default is 0.05. Must be > 0 and < 1.}
 
 \item{report_dir}{A string specifying the directory where the report should
 be saved. Default is the current working directory.}
+
+\item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 A list of plots included in the generated HTML report.

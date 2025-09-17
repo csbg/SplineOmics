@@ -17,7 +17,8 @@ cluster_hits(
   plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
   raw_data = NULL,
   report_dir = NULL,
-  max_hit_number = 25
+  max_hit_number = 25,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -213,6 +214,8 @@ specified, then the function runs but no HTML report is generated.}
 \item{max_hit_number}{Maximum number of hits which are plotted within each
 cluster. This can be used to limit the computation time and size of
 the HTML report in the case of many hits.}
+
+\item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 A named list with three elements:

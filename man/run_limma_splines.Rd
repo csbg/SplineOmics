@@ -4,7 +4,7 @@
 \alias{run_limma_splines}
 \title{run_limma_splines()}
 \usage{
-run_limma_splines(splineomics)
+run_limma_splines(splineomics, verbose = TRUE)
 }
 \arguments{
 \item{splineomics}{An S3 object of class `SplineOmics` that contains the
@@ -92,6 +92,8 @@ following elements:
   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
   disables parallelization and avoids oversubscription of CPU threads.
 }}
+
+\item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 The SplineOmics object, updated with a list with three elements:

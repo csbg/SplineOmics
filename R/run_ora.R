@@ -109,6 +109,8 @@
 #' @param report_dir Character string specifying the directory path where the
 #' HTML report and any other output files should be saved. When no path is 
 #' specified, then the function runs but no HTML report is generated.
+#' 
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return
 #' A nested, named list whose top-level elements correspond to the
@@ -185,7 +187,8 @@ run_ora <- function(
       ),
     enrichGO_cfg = NULL,
     universe = NULL,
-    report_dir = NULL
+    report_dir = NULL,
+    verbose = TRUE
 ) {
   
   args <- lapply(
@@ -195,7 +198,7 @@ run_ora <- function(
     eval,
     parent.frame()
   )
-
+  args[["verbose"]] <- verbose
   input_control <- InputControl$new(args)
   input_control$auto_validate()
 
@@ -207,7 +210,8 @@ run_ora <- function(
     mapping_cfg = mapping_cfg,
     enrichGO_cfg = enrichGO_cfg,
     background = universe,
-    cluster_hits_report_name = cluster_hits_report_name
+    cluster_hits_report_name = cluster_hits_report_name,
+    verbose = verbose
   )
   
   ensure_clusterProfiler() # Deals with clusterProfiler installation.
@@ -234,7 +238,8 @@ run_ora <- function(
       clusterProfiler_params = clusterProfiler_params,
       enrichGO_cfg = enrichGO_cfg,
       universe = universe,
-      plot_title = nm      # use display name for the plot title
+      plot_title = nm,      # use display name for the plot title
+      verbose = verbose
     )
   }, col = lvl_cols, nm = lvl_names, SIMPLIFY = FALSE)
   names(all_results) <- lvl_names
@@ -276,7 +281,7 @@ run_ora <- function(
   
   # If *all* sections have zero plots, return NULL
   total_plots <- sum(vapply(sections, function(s) length(s$plots), integer(1)))
-  if (total_plots == 0L) {
+  if (total_plots == 0L && verbose) {
     message("No results --> Not generating a report and returning NULL.")
     return(NULL)
   }
@@ -294,10 +299,12 @@ run_ora <- function(
       report_dir  = report_dir
     )
     
-    print_info_message(
-      message_prefix = "ORA analysis",
-      report_dir = report_dir
-    )
+    if (verbose) {
+      print_info_message(
+        message_prefix = "ORA analysis",
+        report_dir = report_dir
+      )
+    }
   }
   
   return(all_results)
@@ -386,6 +393,7 @@ run_ora <- function(
 #' of the cluster_hits() function report, that contains the results that were
 #' used for the overprepresentation analysis here. Must be specified, because
 #' otherwise, the connection is not documented.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 control_inputs_run_ora <- function(
     cluster_table,
@@ -394,7 +402,8 @@ control_inputs_run_ora <- function(
     mapping_cfg,
     enrichGO_cfg,
     background,
-    cluster_hits_report_name
+    cluster_hits_report_name,
+    verbose
 ) {
 
   check_cluster_table(cluster_table)
@@ -403,7 +412,10 @@ control_inputs_run_ora <- function(
   
   check_params(params)
   
-  check_mapping_cfg(mapping_cfg)
+  check_mapping_cfg(
+    mapping_cfg = mapping_cfg,
+    verbose = verbose
+    )
   
   check_enrichGO_cfg(enrichGO_cfg)
 
@@ -421,7 +433,6 @@ control_inputs_run_ora <- function(
       "`cluster_hits_report_name` must be a single character string."
     )
   }
-  
 }
 
 
@@ -499,6 +510,8 @@ ensure_clusterProfiler <- function() {
 #'   collection is GO.
 #' @param universe Optional character vector of background genes to be used
 #'   as the ORA universe.
+#' @param plot_title String specifying the title of the plot.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list as returned by \code{run_ora_level()} with elements
 #'   \code{dotplot}, \code{dotplot_nrows}, and \code{ora_results}. If no
@@ -511,13 +524,16 @@ manage_ora_result_cat <- function(
     clusterProfiler_params,
     enrichGO_cfg,
     universe,
-    plot_title
+    plot_title,
+    verbose
 ) {
   cg <- make_clustered_genes(
     cluster_table,
     level_col
     )
-  message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
+  if (verbose) {
+    message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
+  }
 
   run_ora_level(
     clustered_genes = cg,
@@ -525,7 +541,8 @@ manage_ora_result_cat <- function(
     params = clusterProfiler_params,
     enrichGO_cfg = enrichGO_cfg,
     plot_title = plot_title,
-    universe = universe
+    universe = universe,
+    verbose = verbose
   )
 }
 
@@ -1189,6 +1206,7 @@ check_params <- function(params) {
 #'
 #' @param mapping_cfg list. Must contain **exactly** the elements  
 #'   `method`, `from_species`, and `to_species`.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @details
 #' * **method** - character scalar, one of `"none"`, `"gprofiler"`,
@@ -1201,7 +1219,10 @@ check_params <- function(params) {
 #' from the expected input is considered an error so that the user must supply
 #' an unambiguous, reproducible configuration.
 #' 
-check_mapping_cfg <- function(mapping_cfg) {
+check_mapping_cfg <- function(
+    mapping_cfg,
+    verbose
+    ) {
   
   # structural checks
   if (!is.list(mapping_cfg) || inherits(mapping_cfg, "data.frame")) {
@@ -1263,7 +1284,7 @@ check_mapping_cfg <- function(mapping_cfg) {
         )
     
     # Skip organism code checking entirely
-    message(
+    if (isTRUE(verbose)) message(
       "Note: `from_species` and `to_species` are not checked for validity.\n",
       "Make sure they match g:Profiler's expected organism codes. See:\n",
       "https://biit.cs.ut.ee/gprofiler/page/organism-list"
@@ -1471,6 +1492,7 @@ check_enrichGO_cfg <- function(enrichGO_cfg) {
 #'   the generated dot plot(s).
 #' @param universe Optional character vector of background genes used as
 #'   the universe for ORA (passed to \code{enrichGO()}/\code{enricher()}).
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list with:
 #'   \itemize{
@@ -1489,7 +1511,8 @@ run_ora_level <- function(
     params = NA,
     enrichGO_cfg = NULL,
     plot_title = "",
-    universe = NULL
+    universe = NULL,
+    verbose = TRUE
 ) {
   params <- set_default_params(params)
   gene_set_collections <- dbs_to_term2genes(databases)
@@ -1498,7 +1521,7 @@ run_ora_level <- function(
   
   for (cluster in unique_clusters) {
     cluster_label <- paste0("cluster_", cluster)
-    message(paste("\nCluster:", cluster_label))
+    if (isTRUE(verbose)) message(paste("\nCluster:", cluster_label))
     ora_results[[cluster_label]] <- list()
     
     fg <- as.character(clustered_genes$gene[
@@ -1508,7 +1531,7 @@ run_ora_level <- function(
     if (length(fg) == 0L) next
 
     for (gene_set_name in names(gene_set_collections)) {
-      message(paste("Database:", gene_set_name))
+      if (isTRUE(verbose)) message(paste("Database:", gene_set_name))
       if (!is.null(enrichGO_cfg) && gene_set_name %in% names(enrichGO_cfg)) {
         cfg <- enrichGO_cfg[[gene_set_name]]
         ora_result <- clusterProfiler::enrichGO(
@@ -1531,7 +1554,8 @@ run_ora_level <- function(
         gene_set_map <- gene_set_collections[[gene_set_name]]
         check_gene_overlap(
           fg = fg,
-          gene_set_map = gene_set_map
+          gene_set_map = gene_set_map,
+          verbose = verbose
           )
         ora_result <- clusterProfiler::enricher(
           gene = fg,
@@ -1564,7 +1588,7 @@ run_ora_level <- function(
   if (any_result) {
     result <- make_enrich_dotplot(ora_results, plot_title)
   } else {
-    message("No cluster led to an enrichment result!")
+    if (isTRUE(verbose)) message("No cluster led to an enrichment result!")
     return(NA)
   }
   
@@ -2130,12 +2154,14 @@ flatten_ora_results <- function(ora_results) {
 #'
 #' @param fg Character vector of foreground genes.
 #' @param gene_set_map Data frame with a column named `gene`.
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return Invisibly returns a list with counts and percentage overlap.
 #' 
 check_gene_overlap <- function(
     fg,
-    gene_set_map
+    gene_set_map,
+    verbose
     ) {
   stopifnot(is.character(fg))
   stopifnot("gene" %in% colnames(gene_set_map))
@@ -2150,8 +2176,8 @@ check_gene_overlap <- function(
   n_overlap <- length(overlap)
   pct_overlap <- if (n_fg == 0) 0 else round(100 * n_overlap / n_fg, 1)
   
-  message("Foreground genes:", n_fg)
-  message(
+  if (isTRUE(verbose)) message("Foreground genes:", n_fg)
+  if (isTRUE(verbose)) message(
     "Foreground genes overlapping with database: ",
     n_overlap,
     " (", pct_overlap, "%)\n"

@@ -66,6 +66,7 @@
 #' Must take as
 #' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 #' with the normalized counts.
+#' @param verbose Boolean flag controlling the display of messages.
 #' 
 #' @return The updaed `splineomics` object, now containing the `voom` object, 
 #' which includes the log2-counts per million (logCPM) matrix and 
@@ -127,7 +128,8 @@
 #'
 preprocess_rna_seq_data <- function(
     splineomics,
-    normalize_func = NULL
+    normalize_func = NULL,
+    verbose = TRUE
     ) {
   
   start_time <- Sys.time()
@@ -141,7 +143,7 @@ preprocess_rna_seq_data <- function(
     eval,
     parent.frame()
   )
-  
+  args[["verbose"]] <- verbose
   check_null_elements(args)
   input_control <- InputControl$new(args)
   input_control$auto_validate()
@@ -165,8 +167,10 @@ preprocess_rna_seq_data <- function(
     )  
   
   effects <- extract_effects(design)
-
-  message("Preprocessing RNA-seq data (normalization + voom)...")
+  
+  if (verbose) {
+    message("Preprocessing RNA-seq data (normalization + voom)...")
+  }
 
   # Check if edgeR is installed; if not, inform the user
   if (!requireNamespace("edgeR", quietly = TRUE)) {
@@ -235,7 +239,10 @@ preprocess_rna_seq_data <- function(
       )
     }
     
-    param <- bp_setup(bp_cfg)
+    param <- bp_setup(
+      bp_cfg = bp_cfg,
+      verbose = verbose
+      )
     
     voom_obj <- variancePartition::voomWithDreamWeights(
       counts = y,
@@ -270,7 +277,7 @@ preprocess_rna_seq_data <- function(
       use_array_weights <- homosc_violation_result[["violation"]]
 
       # Step 4: If any pair was violated, rerun with robust weights
-      if (use_array_weights) {
+      if (use_array_weights && verbose) {
         message(
         "Using voomWithQualityWeights() due to detected violation of the 
         assumption of homoscedasticity."
@@ -302,14 +309,17 @@ preprocess_rna_seq_data <- function(
       ) homosc_violation_result else NULL
   )
   
-  end_time <- Sys.time()
-  elapsed <- difftime(end_time, start_time, units = "min")
-  message(
-    sprintf(
-      "\033[32mInfo\033[0m Finished preprocessing RNA-seq data in %.1f minutes",
-      as.numeric(elapsed)
+  if (verbose) {
+    end_time <- Sys.time()
+    elapsed <- difftime(end_time, start_time, units = "min")
+    message(
+      sprintf(
+        "\033[32mInfo\033[0m Finished preprocessing RNA-seq
+        data in %.1f minutes",
+        as.numeric(elapsed)
       )
-  )
+    )
+  }
   
   return(splineomics)
 }
