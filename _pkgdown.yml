@@ -29,7 +29,7 @@ reference:
       - cluster_hits
       - create_limma_report
       - create_splineomics
-      - download_bioconductor_database
+      - extract_gene_sets
       - download_enrichr_databases
       - explore_data
       - extract_data

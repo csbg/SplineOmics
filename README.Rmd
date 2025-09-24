@@ -263,10 +263,13 @@ Also, if you like the package, consider giving the GitHub repository a star. You
 
 ## 🌟 Contributors
 
--   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with VSchaepertoens under guidance from nfortelny and skafdasschaf.
--   [nfortelny](https://github.com/nfortelny) - 🧠 Principal Investigator, provided guidance and support for the overall approach.
--   [skafdasschaf](https://github.com/skafdasschaf) - 🔧 Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.
--   [VSchaepertoens](https://github.com/VSchaepertoens) - ✨ Developed one internal plotting function, as well as some code for the exploratory data analysis plots, and the overall approach together with Thomas-Rauter.
+-   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the package, developed the approach together with Veronika Schäpertöns under guidance from Nikolaus Fortelny and Wolfgang Esser-Skala.
+-   [Nikolaus Fortelny](https://github.com/nfortelny) - 🧠 Principal Investigator, provided guidance and support for the overall approach.
+-   [Wolfgang Esser-Skala](https://github.com/skafdasschaf) - Helped reviewing code, delivered improvement suggestions and scientific guidance to develop the approach.
+-   [Veronika Schäpertöns](https://github.com/VSchaepertoens) - Developed one internal plotting function, as well as some code for the exploratory data analysis plots, and the overall approach together with Thomas Rauter.
+dh2305
+-  [Dominik Hofreither](https://github.com/dh2305) - was (i) actively involved as a tester, (ii) provided datasets that helped define the problem addressed by the package, (iii) contributed numerous ideas that shaped its development, and (iv) as an end-user, provided feedback that improved its functionality.
+-  [Larissa Hofer](https://github.com/larissahofer) - contributed through feedback and beta-testing, and by providing the epigenetics and RNA datasets used as examples in the package documentation. These datasets were also used to define the problem addressed by the package.
 
 ## 🙏 Acknowledgements
 

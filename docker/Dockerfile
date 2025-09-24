@@ -54,5 +54,5 @@ CMD ["/init"]
 
 # To build the image, run the following command in the Bash shell in the dir 
 # where this Dockerfile is located (./docker):
-# docker build --no-cache -t thomasrauter/splineomics:0.2.0 .
+# docker build --no-cache -t thomasrauter/splineomics:v0.3.4 .
 

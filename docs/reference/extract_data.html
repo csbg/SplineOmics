@@ -127,6 +127,57 @@ combined feature name to ensure uniqueness. Defaults to <code>FALSE</code>.</p><
     <p>A numeric matrix with cleaned values and appropriate column names.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Tiny demo table with two header rows, feature columns, and numeric block</span></span></span>
+<span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  feat_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"g1"</span>, <span class="st">"g2"</span>, <span class="st">"g3"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  feat_sym <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"TP53"</span>, <span class="st">"EGFR"</span>, <span class="st">"BAX"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cond"</span>, <span class="st">"t0"</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  B <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cond"</span>, <span class="st">"t1"</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  C <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ctrl"</span>, <span class="st">"t0"</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">9</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ctrl"</span>, <span class="st">"t1"</span>, <span class="fl">10</span>, <span class="fl">11</span>, <span class="fl">12</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 1: extract numeric block using Excel letters, build headers from</span></span></span>
+<span class="r-in"><span><span class="co"># the two rows above (they get collapsed like "cond_t0", "ctrl_t1", ...)</span></span></span>
+<span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu">extract_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">df</span>,</span></span>
+<span class="r-in"><span>  top_row <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  bottom_row <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  left_col <span class="op">=</span> <span class="st">"A"</span>,</span></span>
+<span class="r-in"><span>  right_col <span class="op">=</span> <span class="st">"D"</span>,</span></span>
+<span class="r-in"><span>  feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"feat_id"</span>, <span class="st">"feat_sym"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  use_row_index <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
+<span class="r-in"><span><span class="va">m1</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         X1 X2 cond_t0 cond_t1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g1_TP53 NA NA       1       4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g2_EGFR NA NA       2       5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g3_BAX  NA NA       3       6</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 2: same extraction but with numeric column indices and row index</span></span></span>
+<span class="r-in"><span><span class="co"># prepended to ensure uniqueness of feature names</span></span></span>
+<span class="r-in"><span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu">extract_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">df</span>,</span></span>
+<span class="r-in"><span>  top_row <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  bottom_row <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  left_col <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  right_col <span class="op">=</span> <span class="fl">6</span>,</span></span>
+<span class="r-in"><span>  feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"feat_id"</span>, <span class="st">"feat_sym"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  use_row_index <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">m2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           cond_t0 cond_t1 ctrl_t0 ctrl_t1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_g1_TP53       1       4       7      10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2_g2_EGFR       2       5       8      11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3_g3_BAX        3       6       9      12</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

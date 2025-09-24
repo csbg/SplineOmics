@@ -2987,11 +2987,9 @@ plot_splines <- function(
     sim_info <- .get_sim_for_feature(level_result, hit_index)
     sim_str  <- if (
       is.finite(sim_info$sim)
-      ) sprintf(
-        " | sr^2cc: %.2f (cl %s)",
-        sim_info$sim,
-        as.character(sim_info$cl)
-        ) else ""
+      ) sprintf(" | sr<sup>2</sup><sub>cc</sub>: %.2f (cl %s)", 
+                sim_info$sim, as.character(sim_info$cl))
+    else ""
     # cumulative travel (effect size) for this feature in this level
     cum_travel_val <- NA_real_
     es_vec <- predicted_timecurves$time_effect_effect_size[[level]]
@@ -3485,12 +3483,12 @@ plot_spline_comparisons <- function(
     avrg_diff_pval <- avrg_diff_conditions |>
       dplyr::filter(.data$feature_names == feature_name) |>
       dplyr::pull(adj.P.Val) |>
-      (\(.) ifelse(length(.) == 0, NA_real_, .[1]))()
-
+      (\(.) ifelse(length(.) == 0 || is.na(.[1]), "ns", signif(.[1], 2)))()
+    
     interaction_pval <- interaction_condition_time |>
       dplyr::filter(.data$feature_names == feature_name) |>
       dplyr::pull(adj.P.Val) |>
-      (\(.) ifelse(length(.) == 0, NA_real_, .[1]))()
+      (\(.) ifelse(length(.) == 0 || is.na(.[1]), "ns", signif(.[1], 2)))()
     
     avrg_diff_stars   <- stars_from(
       avrg_diff_pval,
@@ -4003,7 +4001,7 @@ build_cluster_hits_report <- function(
           "<li>&lt;0.00 = anti-pattern</li>",
           "</ul>",
           "<br>",
-          "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup><sub>cc</sub>",
+          "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup>",
           "by cluster centroid,",
           "i.e. how well a gene's spline fits the centroid of its assigned",
           "cluster.",

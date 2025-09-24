@@ -1,4 +1,4 @@
-pandoc: '3.4'
+pandoc: 3.6.3
 pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
@@ -12,7 +12,7 @@ articles:
   methylation_data_analysis: methylation_data_analysis.html
   PVC_analysis: PVC_analysis.html
   RNA-seq-analysis: RNA-seq-analysis.html
-last_built: 2025-09-05T08:36Z
+last_built: 2025-09-24T12:45Z
 urls:
   reference: https://csbg.github.io/SplineOmics/reference
   article: https://csbg.github.io/SplineOmics/articles
