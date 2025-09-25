@@ -2159,21 +2159,19 @@ Level2Functions <- R6::R6Class("Level2Functions",
         ))
       }
       
-      # Check for missing values (only warn instead of stopping execution)
-      if (any(is.na(data))) {
-        warning(
+      # Check for missing values (only hint instead of stopping execution)
+      if (isTRUE(verbose) && any(is.na(data))) {
+        message(
           self$create_error_message(
             paste0(
-              "The data contains missing values (NA). ",
+              "Hint: The data contains missing values (NA). ",
               "Ensure that imputation or handling of missing values ",
               "aligns with your analysis requirements. Note that limma can ",
               "handle missing values (it just ignores them), and therefore ",
               "also SplineOmics can handle them."
             ),
             data_meta_index
-          ),
-          call. = FALSE,
-          immediate. = TRUE
+          )
         )
       }
 

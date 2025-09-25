@@ -175,16 +175,24 @@ create_limma_report <- function(
   )
   names(all_top_tables) <- new_names
 
-  if (!is.null(annotation)) {
-    # Add annotation info into the top_tables
-    for (index in seq_along(all_top_tables)) {
-      all_top_tables[[index]] <- merge_top_table_with_annotation(
-        top_table = all_top_tables[[index]],
-        annotation = annotation
-      )
+  # replace NA / NULL list elements with empty data.frames (necessary for 
+  # downstream code. Yes, this is a quickfix..)
+  all_top_tables <- lapply(all_top_tables, function(tbl) {
+    if (is.null(tbl) || (is.atomic(tbl) && length(tbl) == 1 && is.na(tbl))) {
+      data.frame()
+    } else {
+      tbl
     }
-  }
+  })
 
+  if (!is.null(annotation)) {
+    all_top_tables <- lapply(
+      all_top_tables,
+      merge_top_table_with_annotation,
+      annotation = annotation
+      )
+  }
+  
   generate_report_html(
     plots,
     plots_sizes,
