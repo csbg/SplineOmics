@@ -23,12 +23,12 @@ jobs:
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
       R_BITMAP_TYPE: cairo
-      RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"   # <- prevent renv auto-activation
 
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +48,11 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+      
+      - name: Set Bioconductor devel repositories
+        if: matrix.config.r == 'devel'
+        run: |
+          echo 'options(repos = BiocManager::repositories(version = "devel"))' >> ~/.Rprofile
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -57,5 +62,4 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          build_args: ${{ runner.os == 'Linux' &&  'c("--no-manual","--compact-vignettes=gs+qpdf")' || 'c("--no-manual","--no-build-vignettes")' }}
-          args:        ${{ runner.os == 'Linux' &&  'c("--no-multiarch")' || 'c("--no-multiarch","--no-vignettes")' }}
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'

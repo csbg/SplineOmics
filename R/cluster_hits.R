@@ -3480,15 +3480,16 @@ plot_spline_comparisons <- function(
     fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
     
     # pull p-values for annotation (dfs are already filtered)
-    avrg_diff_pval <- avrg_diff_conditions |>
-      dplyr::filter(.data$feature_names == feature_name) |>
-      dplyr::pull(adj.P.Val) |>
-      (\(.) ifelse(length(.) == 0 || is.na(.[1]), "ns", signif(.[1], 2)))()
-    
-    interaction_pval <- interaction_condition_time |>
-      dplyr::filter(.data$feature_names == feature_name) |>
-      dplyr::pull(adj.P.Val) |>
-      (\(.) ifelse(length(.) == 0 || is.na(.[1]), "ns", signif(.[1], 2)))()
+    avrg_diff_pval  <- safe_pull_pval(
+      avrg_diff_conditions,
+      feature_name,
+      "adj.P.Val"
+      )
+    interaction_pval <- safe_pull_pval(
+      interaction_condition_time,
+      feature_name,
+      "adj.P.Val"
+      )
     
     avrg_diff_stars   <- stars_from(
       avrg_diff_pval,
@@ -3519,6 +3520,9 @@ plot_spline_comparisons <- function(
       paste("Imputed data", condition_2),
       paste("Data", condition_2)
       )
+    
+    fmt_p_for_title <- function(p) 
+      if (is.na(p)) "ns" else as.character(signif(p, 2))
     
     p <- local({
       p <- ggplot2::ggplot() +
@@ -3573,12 +3577,12 @@ plot_spline_comparisons <- function(
         feature_name,
         paste(
           "adj.P.Val avrg_diff_conditions:",
-          signif(avrg_diff_pval, 2),
+          fmt_p_for_title(avrg_diff_pval),
           avrg_diff_stars
         ),
         paste(
           "adj.P.Val interaction_condition_time:",
-          signif(interaction_pval, 2),
+          fmt_p_for_title(interaction_pval),
           interaction_stars
         )
       )
@@ -5571,6 +5575,52 @@ get_cluster_colors <- function(curve_values) {
   base <- scales::hue_pal()(length(lvls))
   names(base) <- paste("Cluster", lvls)
   base
+}
+
+
+#' Safely extract a numeric p-value for a feature
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function retrieves the adjusted p-value for a given
+#' feature from a results table. It ensures that the returned value is always
+#' numeric (`NA_real_` if unavailable), preventing downstream errors when
+#' formatting or comparing p-values.
+#'
+#' @param tbl A data frame containing a column `feature_names` and a column
+#'   specified by `col` (default `"adj.P.Val"`).
+#' @param feature_name A character scalar giving the feature identifier
+#'   to match against the `feature_names` column.
+#' @param col A character scalar specifying the name of the column to pull
+#'   (defaults to `"adj.P.Val"`).
+#'
+#' @return
+#' A single numeric value: the p-value corresponding to the feature, or
+#' `NA_real_` if the feature is not present or the value is missing.
+#'
+#' @details
+#' The function performs a filtered lookup on `tbl` and extracts the first
+#' matching value from column `col`. It explicitly converts the result to
+#' numeric and returns `NA_real_` if the feature is absent or the value
+#' is `NA`. This ensures safe use of p-values in subsequent numerical
+#' operations such as significance testing, thresholding, or annotation.
+#'
+#' @importFrom dplyr filter pull
+#' 
+safe_pull_pval <- function(
+    tbl,
+    feature_name,
+    col = "adj.P.Val"
+    ) {
+  if (is.null(tbl) 
+      || !is.data.frame(tbl) 
+      || !(col %in% names(tbl)))
+    return(NA_real_)
+  v <- tbl |>
+    dplyr::filter(.data$feature_names == feature_name) |>
+    dplyr::pull({{ col }})
+  if (length(v) == 0 || is.na(v[1])) NA_real_ else as.numeric(v[1])
 }
 
 

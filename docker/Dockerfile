@@ -38,7 +38,7 @@ RUN R -e "install.packages('BiocManager'); install.packages('remotes')" 2>&1 | t
 RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'variancePartition'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
 
 # Install the SplineOmics package from GitHub in the custom library
-RUN R -e "remotes::install_github('csbg/SplineOmics', ref = '0.2.0', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
+RUN R -e "remotes::install_github('csbg/SplineOmics', ref = 'v0.3.4', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
 
 # Install R packages often used in bioinformatics analysises.
 RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))" 2>&1 | tee /log/required_packages_install_log.txt
