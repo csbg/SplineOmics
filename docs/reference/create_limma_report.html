@@ -77,21 +77,21 @@ and interaction effects between condition and time.</p>
 
 
 <dl><dt id="arg-splineomics">splineomics<a class="anchor" aria-label="anchor" href="#arg-splineomics"></a></dt>
-<dd><p>An S3 object of class `SplineOmics` that contains all the
+<dd><p>An S3 object of class <code>SplineOmics</code> that contains all the
 necessary data and parameters for the analysis, including:</p><ul><li><p><code>limma_splines_result</code>: A list containing top tables from
-   differential expression analysis for the three different limma results.</p></li>
+differential expression analysis for the three different limma results.</p></li>
 <li><p><code>meta</code>: A data frame with sample metadata. Must contain a column
-                     "Time".</p></li>
+"Time".</p></li>
 <li><p><code>condition</code>: A character string specifying the column name in
-                         the metadata (<code>meta</code>) that defines groups
-                         for analysis. This column contains levels such as
-                          "exponential" and "stationary" for phases, or
-                          "drug" and "no_drug" for treatments.</p></li>
+the metadata (<code>meta</code>) that defines groups
+for analysis. This column contains levels such as
+"exponential" and "stationary" for phases, or
+"drug" and "no_drug" for treatments.</p></li>
 <li><p><code>annotation</code>: A data frame containing feature information,
-                           such as gene and protein names, associated with
-                           the expression data.</p></li>
+such as gene and protein names, associated with
+the expression data.</p></li>
 <li><p><code>report_info</code>: A list containing metadata about the analysis
-                            for reporting purposes.</p></li>
+for reporting purposes.</p></li>
 </ul></dd>
 
 

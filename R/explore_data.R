@@ -12,20 +12,20 @@
 #' @param splineomics A named list containing all required inputs for the
 #'   splineomics workflow. Must contain the following elements:
 #'   \describe{
-#'     \item{data}{[numeric matrix]  
+#'     \item{data}{
 #'       The data matrix with the values. The columns are the
 #'       samples (timepoint + replicate combo) and the rows are the features
 #'       (e.g. genes or proteins).}
-#'     \item{meta}{[dataframe]  
+#'     \item{meta}{
 #'        A dataframe containing metadata corresponding to the
 #'        \code{data}, must include a 'Time' column and any columns specified by
 #'        \code{conditions}. In general, the columns of meta correspond to the
 #'        different types of metadata, and each row corresponds to a column of
 #'        data (contains the metadata for that sample).}
-#'     \item{annotation}{[dataframe]  
+#'     \item{annotation}{
 #'       A dataframe that maps the rows of \code{data} to
 #'       annotation info, such as the gene name or database identifiers.}
-#'     \item{report_info}{[named list]  
+#'     \item{report_info}{
 #'       A named list describing the experiment.  
 #'   Must include the following fields:  
 #'     - \code{"omics_data_type"}  
@@ -1229,7 +1229,7 @@ make_mds_plot <- function(
 #' correlation
 #' heatmaps.
 #'
-#' @importFrom stats cor
+#' @importFrom stats cor var
 #' @importFrom ComplexHeatmap Heatmap
 #' @importFrom grDevices colorRampPalette
 #'
@@ -1249,7 +1249,7 @@ make_correlation_heatmaps <- function(
     data_filtered <- data[row_na_fraction <= max_na_fraction, , drop = FALSE]
     
     if (nrow(data_filtered) > target_rows) {
-      row_vars <- apply(data_filtered, 1, var, na.rm = TRUE)
+      row_vars <- apply(data_filtered, 1, stats::var, na.rm = TRUE)
       top_idx <- order(row_vars, decreasing = TRUE)[seq_len(target_rows)]
       data     <- data_filtered[top_idx, , drop = FALSE]
       message(

@@ -2067,8 +2067,14 @@ make_enrich_dotplot <- function(
     ggplot2::theme(
       panel.grid.major.x = ggplot2::element_blank(),
       panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.y = ggplot2::element_line(size = 0.2, color = "gray80"),
-      panel.grid.minor.y = ggplot2::element_line(size = 0.1, color = "gray90"),
+      panel.grid.major.y = ggplot2::element_line(
+        linewidth = 0.2,
+        color = "gray80"
+        ),
+      panel.grid.minor.y = ggplot2::element_line(
+        linewidth = 0.1, 
+        color = "gray90"
+        ),
       plot.title = ggplot2::element_text(size = 12, hjust = 0.5),
       axis.text.y = ggplot2::element_text(size = 5),
       axis.text.x = ggplot2::element_text(size = 5),

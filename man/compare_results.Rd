@@ -14,10 +14,10 @@ compare_results(
 )
 }
 \arguments{
-\item{splineomics1}{A list containing `limma_splines_result` with topTables
+\item{splineomics1}{A list containing \code{limma_splines_result} with topTables
 organized by category and subcategory.}
 
-\item{splineomics2}{Same structure as `splineomics1`; the object to compare.}
+\item{splineomics2}{Same structure as \code{splineomics1}; the object to compare.}
 
 \item{splineomics1_description}{Character label used for x-axis annotation.}
 
@@ -30,9 +30,9 @@ organized by category and subcategory.}
 \value{
 A list with components:
 \describe{
-  \item{correlation_summary}{Data frame of global and hit-level correlations}
-  \item{plots}{Named list of ggplot objects for all and hit-only subsets.}
-  \item{hits_summary}{Data frame with hit counts, overlap, and Jaccard index}
+\item{correlation_summary}{Data frame of global and hit-level correlations}
+\item{plots}{Named list of ggplot objects for all and hit-only subsets.}
+\item{hits_summary}{Data frame with hit counts, overlap, and Jaccard index}
 }
 }
 \description{
@@ -41,8 +41,8 @@ standard categories. Calculates Spearman correlation globally and for
 significant hits only, generates diagnostic plots, and summarizes
 overlap statistics including Jaccard index and hit counts.
 
-Note: The feature_names columns in the topTables of splineomics1 and 
-splineomics2 must have the same names, otherwise, no comparisons are 
+Note: The feature_names columns in the topTables of splineomics1 and
+splineomics2 must have the same names, otherwise, no comparisons are
 possible.
 }
 \examples{

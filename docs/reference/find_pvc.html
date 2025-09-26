@@ -78,11 +78,18 @@ returning visualizations of all features with at least one excursion.</p>
 
 <dl><dt id="arg-splineomics">splineomics<a class="anchor" aria-label="anchor" href="#arg-splineomics"></a></dt>
 <dd><p>A list containing the preprocessed time-series
-input data. Must include named elements `"data"` (a numeric matrix),
-`"meta"` (a metadata data frame with a `"Time"` column),
-`"meta_batch_column"` (name of the column in `meta` identifying
-replicates or batches), and `"padjust_method"` (a string specifying
-the method for p-value adjustment).</p></dd>
+input data. Must include the following named elements:</p>
+<ul><li><p><code>data</code>: Numeric matrix of feature values. Rows are features
+(e.g., genes or proteins), columns are samples (timepoint–replicate
+combinations).</p></li>
+<li><p><code>meta</code>: Data frame of sample metadata corresponding to the
+columns of <code>data</code>. Must include a <code>"Time"</code> column, and
+typically other columns describing conditions or experimental factors.</p></li>
+<li><p><code>meta_batch_column</code>: Character string giving the column name
+in <code>meta</code> that identifies replicates or batches.</p></li>
+<li><p><code>padjust_method</code>: Character string specifying the method for
+p-value adjustment (e.g., <code>"BH"</code>, <code>"bonferroni"</code>).</p></li>
+</ul></dd>
 
 
 <dt id="arg-alphas">alphas<a class="anchor" aria-label="anchor" href="#arg-alphas"></a></dt>
@@ -97,7 +104,7 @@ internally to ensure consistent per-level access.</p></dd>
 
 <dt id="arg-padjust-method">padjust_method<a class="anchor" aria-label="anchor" href="#arg-padjust-method"></a></dt>
 <dd><p>A character string specifying the method for
-multiple testing correction. Defaults to `"BH"`
+multiple testing correction. Defaults to <code>"BH"</code>
 (Benjamini-Hochberg).</p></dd>
 
 
@@ -112,12 +119,33 @@ to NA.</p></dd>
 
 
 <dt id="arg-plot-info">plot_info<a class="anchor" aria-label="anchor" href="#arg-plot-info"></a></dt>
-<dd><p>List with elements y_axis_label (string), time_unit
-(string), treatment_labels (character vector), and
-treatment_timepoints (integer vector). All can also be NA. This list
-is used to add this info to the spline plots. time_unit labels the
-x-axis; treatment_labels and -timepoints add vertical dashed lines,
-showing treatment positions (e.g. feeding, temperature shift).</p></dd>
+<dd><p>List with optional elements used to annotate spline plots:</p><ul><li><p><code>y_axis_label</code>: single string for the y-axis label.</p></li>
+<li><p><code>time_unit</code>: single string used in the x-axis label.</p></li>
+<li><p><code>treatment_labels</code>: named list of single strings.</p></li>
+<li><p><code>treatment_timepoints</code>: named list of single numeric values.</p></li>
+</ul><p>If any treatment list is present, both must be present. The two lists must
+have identical name sets. Allowed names are the values of <code>meta[[condition]]</code>
+and the special name <code>"double_spline_plots"</code>, which generates a treatment line
+for the plots of limma category 2 and 3 (average difference between conditions
+and the interaction between condition and time).</p>
+<p>Vertical dashed lines are drawn at the given timepoints for facets whose
+level name matches a list name, and labeled with the corresponding string
+(e.g., feeding, temperature shift).</p>
+<p>Example:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  y_axis_label <span class="op">=</span> <span class="st">"log2 expression"</span>,</span>
+<span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>,</span>
+<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    WT <span class="op">=</span> <span class="st">"Feeding"</span>,</span>
+<span>    KO <span class="op">=</span> <span class="st">"Temperature shift"</span>,</span>
+<span>    double_spline_plots <span class="op">=</span> <span class="st">"Treatment line"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    WT <span class="op">=</span> <span class="fl">12</span>,</span>
+<span>    KO <span class="op">=</span> <span class="fl">24</span>,</span>
+<span>    double_spline_plots <span class="op">=</span> <span class="fl">18</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre><p></p></div></dd>
 
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
@@ -140,17 +168,154 @@ same direction: either significantly higher than both (a peak) or
 significantly lower than both (a valley).</p>
 <p>Statistically, this is tested with a compound contrast in limma:
 (T - T_prev) + (T - T_next) = 2T - T_prev - T_next. The contrast has
-power only when `T` is an outlier vs. both neighbors in the same
+power only when <code>T</code> is an outlier vs. both neighbors in the same
 direction. The resulting p-value is FDR-adjusted and compared to
-`alpha`.</p>
-<p>- Validates inputs via `check_splineomics_elements()` and
-  `InputControl`.
-- Detects local excursions using `pvc_test()`.
-- Displays the number of total excursion hits found.
-- Generates plots with `plot_pvc()`, marking excursion significance
-  by the chosen `alpha`.</p>
-    </div>
+<code>alpha</code>.</p><ul><li><p>Validates inputs via <code>check_splineomics_elements()</code> and
+<code>InputControl</code>.</p></li>
+<li><p>Detects local excursions using <code>pvc_test()</code>.</p></li>
+<li><p>Displays the number of total excursion hits found.</p></li>
+<li><p>Generates plots with <code>plot_pvc()</code>, marking excursion significance
+by the chosen <code>alpha</code>.</p></li>
+</ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Minimal toy with 4 timepoints, flat with a single mid spike (t=2).</span></span></span>
+<span class="r-in"><span><span class="co">## 2 conditions (WT/KO), 3 replicates each → 24 samples total.</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Your original 8x6 toy matrix</span></span></span>
+<span class="r-in"><span><span class="va">toy6</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">8</span>, <span class="fl">12</span>, <span class="fl">17</span>, <span class="fl">23</span>, <span class="co"># f1</span></span></span>
+<span class="r-in"><span><span class="fl">23</span>, <span class="fl">17</span>, <span class="fl">13</span>, <span class="fl">9</span>, <span class="fl">6</span>, <span class="fl">4</span>, <span class="co"># f2</span></span></span>
+<span class="r-in"><span><span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">5</span>, <span class="co"># f3</span></span></span>
+<span class="r-in"><span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">9</span>, <span class="fl">8</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="co"># f4</span></span></span>
+<span class="r-in"><span><span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="co"># f5</span></span></span>
+<span class="r-in"><span><span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">9</span>, <span class="fl">12</span>, <span class="fl">15</span>, <span class="co"># f6</span></span></span>
+<span class="r-in"><span><span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">7</span>, <span class="fl">10</span>, <span class="fl">14</span>, <span class="fl">19</span>, <span class="co"># f7</span></span></span>
+<span class="r-in"><span><span class="fl">12</span>, <span class="fl">11</span>, <span class="fl">9</span>, <span class="fl">8</span>, <span class="fl">9</span>, <span class="fl">12</span> <span class="co"># f8</span></span></span>
+<span class="r-in"><span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>nrow <span class="op">=</span> <span class="fl">8</span>, ncol <span class="op">=</span> <span class="fl">6</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"f"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Baselines per condition from toy6 (WT = cols 1:3, KO = cols 4:6)</span></span></span>
+<span class="r-in"><span><span class="va">wt0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">toy6</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ko0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">toy6</span><span class="op">[</span>, <span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Make 4 flat timepoints; spike at one middle timepoint (default t=2)</span></span></span>
+<span class="r-in"><span><span class="va">spike_tp</span> <span class="op">&lt;-</span> <span class="fl">3</span> <span class="co"># 1=t0, 2=t1, 3=t2, 4=t3</span></span></span>
+<span class="r-in"><span><span class="va">spike_amp</span> <span class="op">&lt;-</span> <span class="fl">3</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">flat4</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">base</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">base</span>, <span class="va">base</span>, <span class="va">base</span>, <span class="va">base</span><span class="op">)</span> <span class="co"># 8 x 4</span></span></span>
+<span class="r-in"><span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fu">flat4</span><span class="op">(</span><span class="va">wt0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">wt</span><span class="op">[</span>, <span class="va">spike_tp</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">wt</span><span class="op">[</span>, <span class="va">spike_tp</span><span class="op">]</span> <span class="op">+</span> <span class="va">spike_amp</span></span></span>
+<span class="r-in"><span><span class="va">ko</span> <span class="op">&lt;-</span> <span class="fu">flat4</span><span class="op">(</span><span class="va">ko0</span><span class="op">)</span> <span class="co"># keep KO flat; spike KO too by adding the same line</span></span></span>
+<span class="r-in"><span><span class="co"># ko[, spike_tp] &lt;- ko[, spike_tp] + spike_amp</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Create 3 replicates by adding tiny noise and bind WT then KO</span></span></span>
+<span class="r-in"><span><span class="va">rep3</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">M</span>, <span class="va">sd</span> <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">cbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">M</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">M</span><span class="op">)</span>, sd <span class="op">=</span> <span class="va">sd</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">M</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">M</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">toy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu">rep3</span><span class="op">(</span><span class="va">wt</span><span class="op">)</span>, <span class="fu">rep3</span><span class="op">(</span><span class="va">ko</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">toy6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="co"># s1..s24</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Matching meta: 2 conditions × 3 reps × 4 timepoints = 24 rows</span></span></span>
+<span class="r-in"><span><span class="va">time</span> <span class="op">&lt;-</span> <span class="fl">0</span><span class="op">:</span><span class="fl">3</span></span></span>
+<span class="r-in"><span><span class="va">toy_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>Time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">time</span>, times <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"WT"</span>, <span class="st">"KO"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>Replicate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"R"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Minimal annotation &amp; report info</span></span></span>
+<span class="r-in"><span><span class="va">annotation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">toy_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">report_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  omics_data_type      <span class="op">=</span> <span class="st">"Transcriptomics"</span>,</span></span>
+<span class="r-in"><span>  data_description     <span class="op">=</span> <span class="st">"Toy time-series (WT vs KO, t=0/1/2)"</span>,</span></span>
+<span class="r-in"><span>  data_collection_date <span class="op">=</span> <span class="st">"2025-01-01"</span>,</span></span>
+<span class="r-in"><span>  analyst_name         <span class="op">=</span> <span class="st">"Example"</span>,</span></span>
+<span class="r-in"><span>  contact_info         <span class="op">=</span> <span class="st">"example@example.org"</span>,</span></span>
+<span class="r-in"><span>  project_name         <span class="op">=</span> <span class="st">"find_pvc_toy"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">toy_data</span>,</span></span>
+<span class="r-in"><span>  meta <span class="op">=</span> <span class="va">toy_meta</span>,</span></span>
+<span class="r-in"><span>  annotation <span class="op">=</span> <span class="va">annotation</span>,</span></span>
+<span class="r-in"><span>  condition <span class="op">=</span> <span class="st">"condition"</span>,</span></span>
+<span class="r-in"><span>  meta_batch_column <span class="op">=</span> <span class="st">"Replicate"</span>,</span></span>
+<span class="r-in"><span>  padjust_method <span class="op">=</span> <span class="st">"BH"</span>,</span></span>
+<span class="r-in"><span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span></span>
+<span class="r-in"><span>  feature_name_columns <span class="op">=</span> <span class="st">"id"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  y_axis_label <span class="op">=</span> <span class="st">"log2 value"</span>,</span></span>
+<span class="r-in"><span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>,</span></span>
+<span class="r-in"><span>  treatment_labels <span class="op">=</span> <span class="cn">NA</span>,</span></span>
+<span class="r-in"><span>  treatment_timepoints <span class="op">=</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Run with a lenient alpha to ensure toy detections;</span></span></span>
+<span class="r-in"><span><span class="co"># write report to a temp dir to avoid clutter.</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">find_pvc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span></span>
+<span class="r-in"><span>  alphas <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
+<span class="r-in"><span>  padjust_method <span class="op">=</span> <span class="st">"BH"</span>,</span></span>
+<span class="r-in"><span>  support <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span></span>
+<span class="r-in"><span>  report_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Detected 16 total pattern hits for condition level: WT</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Summary by pattern type:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> p: 8, v: 0, b: 0, t: 8</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Breakdown by timepoint:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 0: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 1: p=0; v=0; b=0; t=8</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2: p=8; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Detected 0 total pattern hits for condition level: KO</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Summary by pattern type:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> p: 0, v: 0, b: 0, t: 0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Breakdown by timepoint:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 0: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 1: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3: p=0; v=0; b=0; t=0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> PVC report generation completed successfully.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/Rtmp3gyzmz .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Peek at one plot if available (WT first plot)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">res</span><span class="op">[[</span><span class="st">"WT"</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="st">"plots"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">res</span><span class="op">[[</span><span class="st">"WT"</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="st">"plots"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">[[</span><span class="st">"WT"</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="st">"plots"</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-plt img"><img src="find_pvc-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

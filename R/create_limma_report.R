@@ -193,6 +193,8 @@ create_limma_report <- function(
       )
   }
   
+  report_info[["meta_condition"]] <- c(condition) # To show in HTML report.
+  
   generate_report_html(
     plots,
     plots_sizes,

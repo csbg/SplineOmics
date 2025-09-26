@@ -22,46 +22,46 @@ run_ora(
 \code{feature_nr} with metadata and cluster assignments across the
 analysis categories. It includes:
 \itemize{
-  \item \code{feature_nr} – Numeric feature identifier.
-  \item \code{feature_name} – Preferred feature name from the source
-    data, falling back to the numeric ID if none is available.
-  \item \code{gene} – Preferred gene symbol from the annotation or
-    cluster data.
-  \item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
-    assignments for each time-effect condition.
-  \item \code{cluster_cat2} – (Optional) Combined cluster label for
-    category 2 hits in the form
-    \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-    feature was not a category 2 hit.
-  \item \code{cluster_cat3} – (Optional) Combined cluster label for
-    category 3 hits in the form
-    \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-    feature was not a category 3 hit.
+\item \code{feature_nr} – Numeric feature identifier.
+\item \code{feature_name} – Preferred feature name from the source
+data, falling back to the numeric ID if none is available.
+\item \code{gene} – Preferred gene symbol from the annotation or
+cluster data.
+\item \code{cluster_<cond1>} / \code{cluster_<cond2>} – Cluster
+assignments for each time-effect condition.
+\item \code{cluster_cat2} – (Optional) Combined cluster label for
+category 2 hits in the form
+\code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+feature was not a category 2 hit.
+\item \code{cluster_cat3} – (Optional) Combined cluster label for
+category 3 hits in the form
+\code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+feature was not a category 3 hit.
 }
 For any category-specific cluster column, a value of \code{NA}
 indicates that the feature was not significant (not a hit) in that
 category.}
 
 \item{databases}{A \code{data.frame} that defines the gene set collections
-  to be tested in the overrepresentation analysis. Must contain exactly
-  three columns:
-  \describe{
-    \item{DB}{Character. The database identifier (e.g., KEGG, GO_BP,
-      Reactome).}
-    \item{Geneset}{Character. The name of the gene set or pathway within the
-      database.}
-    \item{Gene}{Character. A gene identifier belonging to the gene set
-      (e.g., gene symbol, Ensembl ID).}
-  }
+to be tested in the overrepresentation analysis. Must contain exactly
+three columns:
+\describe{
+\item{DB}{Character. The database identifier (e.g., KEGG, GO_BP,
+Reactome).}
+\item{Geneset}{Character. The name of the gene set or pathway within the
+database.}
+\item{Gene}{Character. A gene identifier belonging to the gene set
+(e.g., gene symbol, Ensembl ID).}
+}
 
-  Each row corresponds to one `(database, geneset, gene)` association. The
-  same gene may appear in multiple gene sets.}
+Each row corresponds to one \verb{(database, geneset, gene)} association. The
+same gene may appear in multiple gene sets.}
 
 \item{report_info}{A list containing information for the report generation,
 such as omics_data_type and data_description (this is the list used for all
 report generating functions of this package).}
 
-\item{cluster_hits_report_name}{Single character string specifying the name 
+\item{cluster_hits_report_name}{Single character string specifying the name
 of the cluster_hits() function report, that contains the results that were
 used for the overprepresentation analysis here. Must be specified, because
 otherwise, the connection is not documented.}
@@ -82,43 +82,43 @@ By default, no mapping is performed and gene symbols are used as-is.
 If mapping is desired, this list must contain the following three
 elements:
 \describe{
-  \item{method}{Mapping method to use. One of \code{none} (default;
-  no mapping), \code{gprofiler} (online, via the g:Profiler API), or
-  \code{orthogene} (offline, if installed).}
-  \item{from_species}{Source species code,
-  e.g. \code{cgriseus} for CHO. Must match the expected format for
-  the selected tool.}
-  \item{to_species}{Target species code,
-  e.g. \code{hsapiens} for human. This must be the species used in
-  your ORA database and must also match the expected format for the
-  selected tool.}
+\item{method}{Mapping method to use. One of \code{none} (default;
+no mapping), \code{gprofiler} (online, via the g:Profiler API), or
+\code{orthogene} (offline, if installed).}
+\item{from_species}{Source species code,
+e.g. \code{cgriseus} for CHO. Must match the expected format for
+the selected tool.}
+\item{to_species}{Target species code,
+e.g. \code{hsapiens} for human. This must be the species used in
+your ORA database and must also match the expected format for the
+selected tool.}
 }}
 
-\item{enrichGO_cfg}{A named list specifying the configuration for 
-running GO enrichment with Bioconductor's 
+\item{enrichGO_cfg}{A named list specifying the configuration for
+running GO enrichment with Bioconductor's
 \code{\link[clusterProfiler]{enrichGO}}.
-This is only needed when you want to perform GO Biological Process (BP), 
-Molecular Function (MF), or Cellular Component (CC) enrichment using 
+This is only needed when you want to perform GO Biological Process (BP),
+Molecular Function (MF), or Cellular Component (CC) enrichment using
 Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
 
-The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+The list must be named according to the GO ontology, e.g., \code{"GO_BP"},
 \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
 \itemize{
-  \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
-  \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
-  \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+\item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
+\item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
+\item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
 }
 
-If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
-enrichment is performed. All enrichment runs through 
+If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO
+enrichment is performed. All enrichment runs through
 \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.}
 
 \item{universe}{Enrichment background data. This is a
-parameter of clusterProfiler, for the documentation, please check the 
+parameter of clusterProfiler, for the documentation, please check the
 documentation of the clusterProfiler R package.}
 
 \item{report_dir}{Character string specifying the directory path where the
-HTML report and any other output files should be saved. When no path is 
+HTML report and any other output files should be saved. When no path is
 specified, then the function runs but no HTML report is generated.}
 
 \item{verbose}{Boolean flag controlling the display of messages.}
@@ -128,36 +128,36 @@ A nested, named list whose top-level elements correspond to the
 limma result categories. The exact set of elements depends on \code{mode}:
 
 \describe{
-  \item{\code{mode == "isolated"}}{
-    Two elements are returned, one per condition level:
-    \code{time_effect_condition_<level1>} and
-    \code{time_effect_condition_<level2>}.
-  }
-  \item{\code{mode == "integrated"}}{
-    The two time–effect elements above, plus (only if there are significant
-    hits at the chosen thresholds) up to two additional elements:
-    \code{avrg_diff_conditions} and \code{interaction_condition_time}.
-  }
+\item{\code{mode == "isolated"}}{
+Two elements are returned, one per condition level:
+\code{time_effect_condition_<level1>} and
+\code{time_effect_condition_<level2>}.
+}
+\item{\code{mode == "integrated"}}{
+The two time–effect elements above, plus (only if there are significant
+hits at the chosen thresholds) up to two additional elements:
+\code{avrg_diff_conditions} and \code{interaction_condition_time}.
+}
 }
 
 Each top‑level result category element is a list with the fields:
 \describe{
-  \item{\code{dotplot}}{A \code{ggplot} object: the dot plot of
-    over-representation results (clusterProfiler) for that category.}
-  \item{\code{dotplot_nrows}}{Numeric scalar giving a suggested plot height
-    (in rows / relative units) that prints nicely for the number of
-    enriched terms shown.}
-  \item{\code{ora_results}}{A nested list of the raw enrichment results,
-    structured as:
-    \describe{
-      \item{\emph{cluster} \eqn{\rightarrow} \emph{database}}{
-        For each cluster in the category, there is a sublist with one entry
-        per database used in the enrichment. The value of each entry is 
-        either
-        \code{NA} (no terms enriched for that cluster–database) or a
-        \code{data.frame} as returned by
-        \code{clusterProfiler::enricher()} for the enriched terms.}
-    }}
+\item{\code{dotplot}}{A \code{ggplot} object: the dot plot of
+over-representation results (clusterProfiler) for that category.}
+\item{\code{dotplot_nrows}}{Numeric scalar giving a suggested plot height
+(in rows / relative units) that prints nicely for the number of
+enriched terms shown.}
+\item{\code{ora_results}}{A nested list of the raw enrichment results,
+structured as:
+\describe{
+\item{\emph{cluster} \eqn{\rightarrow} \emph{database}}{
+For each cluster in the category, there is a sublist with one entry
+per database used in the enrichment. The value of each entry is
+either
+\code{NA} (no terms enriched for that cluster–database) or a
+\code{data.frame} as returned by
+\code{clusterProfiler::enricher()} for the enriched terms.}
+}}
 }
 
 In summary, the full shape is:
@@ -180,7 +180,7 @@ list(
 }
 \description{
 This function generates a overrepresentation analysis report based
-on clustered hit levels, gene data, and specified databases. It accomplishes 
+on clustered hit levels, gene data, and specified databases. It accomplishes
 this by using the R package clusterProfiler. As output, you will receive a
 list of the plot objects it generated, and an HTML report with embedded files
 containing the enrichment results, and dotplots visualizing the enrichment.

@@ -89,12 +89,12 @@ columns and the numeric block to extract.</p></dd>
 
 <dt id="arg-bottom-row">bottom_row<a class="anchor" aria-label="anchor" href="#arg-bottom-row"></a></dt>
 <dd><p>Integer. Specifies the last (bottom) row of the numeric
-data block. Must be &gt;= `top_row`.</p></dd>
+data block. Must be &gt;= <code>top_row</code>.</p></dd>
 
 
 <dt id="arg-right-col">right_col<a class="anchor" aria-label="anchor" href="#arg-right-col"></a></dt>
-<dd><p>Same format as `left_col`. Specifies the right-most column
-of the numeric block. Must be &gt;= `left_col` after conversion.</p></dd>
+<dd><p>Same format as <code>left_col</code>. Specifies the right-most column
+of the numeric block. Must be &gt;= <code>left_col</code> after conversion.</p></dd>
 
 
 <dt id="arg-top-row">top_row<a class="anchor" aria-label="anchor" href="#arg-top-row"></a></dt>
@@ -104,16 +104,15 @@ block. Row indexing is 1-based.</p></dd>
 
 <dt id="arg-left-col">left_col<a class="anchor" aria-label="anchor" href="#arg-left-col"></a></dt>
 <dd><p>Column specifier for the left-most column of the data block.
-Can be either:
-  - An integer index (e.g., 2 for the second column), or
-  - A character string using Excel-style letters (e.g., "A", "AB").</p>
-<p>Column names (e.g., "age") are **not** allowed here. Only letters or numeric
+Can be either:</p><ul><li><p>An integer index (e.g., 2 for the second column), or</p></li>
+<li><p>A character string using Excel-style letters (e.g., "A", "AB").</p></li>
+</ul><p>Column names (e.g., "age") are <strong>not</strong> allowed here. Only letters or numeric
 indices are accepted.</p></dd>
 
 
 <dt id="arg-feature-name-columns">feature_name_columns<a class="anchor" aria-label="anchor" href="#arg-feature-name-columns"></a></dt>
 <dd><p>Optional character vector specifying columns in
-`data` to be used as row (feature) names in the output. If `NA`, generic
+<code>data</code> to be used as row (feature) names in the output. If <code>NA</code>, generic
 feature names are used.</p></dd>
 
 

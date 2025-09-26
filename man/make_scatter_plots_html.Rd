@@ -13,7 +13,7 @@ make_scatter_plots_html(
 )
 }
 \arguments{
-\item{data}{A matrix with features as rows and samples as columns. 
+\item{data}{A matrix with features as rows and samples as columns.
 Row names should be feature names.}
 
 \item{meta}{A data frame with the meta information. Must contain a numeric
@@ -29,13 +29,13 @@ proteins) should be plotted per file. Per default
 500.}
 }
 \value{
-Invisibly returns `NULL`. This function is called for its side effects:
-it renders one or more HTML reports to the **current working directory**,
-named `paste0(output_file, "_chunk_", i, ".html")` for chunk index `i`,
+Invisibly returns \code{NULL}. This function is called for its side effects:
+it renders one or more HTML reports to the \strong{current working directory},
+named \code{paste0(output_file, "_chunk_", i, ".html")} for chunk index \code{i},
 and prints progress messages during generation.
 }
 \description{
-This function is used to make scatter plots for the raw data of all the 
+This function is used to make scatter plots for the raw data of all the
 features. It generates an HTML report in the fashion of the other functions
 of the SplineOmics package which contains all the scatter plots.
 }

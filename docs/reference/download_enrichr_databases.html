@@ -83,8 +83,8 @@ Enrichr, for example: c("WikiPathways_2019_Human",
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
 <dd><p>A string specifying the output directory where the
-`.tsv` file will be saved. Defaults to the current project directory
-as defined by `here::here()`.</p></dd>
+<code>.tsv</code> file will be saved. Defaults to the current project directory
+as defined by <code><a href="https://here.r-lib.org/reference/here.html" class="external-link">here::here()</a></code>.</p></dd>
 
 
 <dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
@@ -95,19 +95,19 @@ the file is named all_databases_timestamp.tsv.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A `data.frame` of gene set annotations with three columns:</p><dl><dt>DB</dt>
-<dd><p>Database name (e.g. `"WikiPathways_2019_Human"`,
-  `"NCI-Nature_2016"`).</p></dd>
+    <p>A <code>data.frame</code> of gene set annotations with three columns:</p><dl><dt>DB</dt>
+<dd><p>Database name (e.g. <code>"WikiPathways_2019_Human"</code>,
+<code>"NCI-Nature_2016"</code>).</p></dd>
 
-  <dt>Geneset</dt>
+<dt>Geneset</dt>
 <dd><p>The gene set or pathway term from that database.</p></dd>
 
-  <dt>Gene</dt>
+<dt>Gene</dt>
 <dd><p>A gene contained in the gene set.</p></dd>
 
 
-</dl><p>In addition to returning the `data.frame`, the function also writes the same
-table to disk as a `.tsv` file in the specified `output_dir`.</p>
+</dl><p>In addition to returning the <code>data.frame</code>, the function also writes the same
+table to disk as a <code>.tsv</code> file in the specified <code>output_dir</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -87,19 +87,19 @@ containing the enrichment results, and dotplots visualizing the enrichment.</p>
 <code>feature_nr</code> with metadata and cluster assignments across the
 analysis categories. It includes:</p><ul><li><p><code>feature_nr</code> – Numeric feature identifier.</p></li>
 <li><p><code>feature_name</code> – Preferred feature name from the source
-    data, falling back to the numeric ID if none is available.</p></li>
+data, falling back to the numeric ID if none is available.</p></li>
 <li><p><code>gene</code> – Preferred gene symbol from the annotation or
-    cluster data.</p></li>
+cluster data.</p></li>
 <li><p><code>cluster_&lt;cond1&gt;</code> / <code>cluster_&lt;cond2&gt;</code> – Cluster
-    assignments for each time-effect condition.</p></li>
+assignments for each time-effect condition.</p></li>
 <li><p><code>cluster_cat2</code> – (Optional) Combined cluster label for
-    category 2 hits in the form
-    <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code>; <code>NA</code> if the
-    feature was not a category 2 hit.</p></li>
+category 2 hits in the form
+<code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code>; <code>NA</code> if the
+feature was not a category 2 hit.</p></li>
 <li><p><code>cluster_cat3</code> – (Optional) Combined cluster label for
-    category 3 hits in the form
-    <code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code>; <code>NA</code> if the
-    feature was not a category 3 hit.</p></li>
+category 3 hits in the form
+<code>"&lt;cluster_&lt;cond1&gt;&gt;_&lt;cluster_&lt;cond2&gt;&gt;"</code>; <code>NA</code> if the
+feature was not a category 3 hit.</p></li>
 </ul><p>For any category-specific cluster column, a value of <code>NA</code>
 indicates that the feature was not significant (not a hit) in that
 category.</p></dd>
@@ -107,22 +107,22 @@ category.</p></dd>
 
 <dt id="arg-databases">databases<a class="anchor" aria-label="anchor" href="#arg-databases"></a></dt>
 <dd><p>A <code>data.frame</code> that defines the gene set collections
-  to be tested in the overrepresentation analysis. Must contain exactly
-  three columns:</p><dl><dt>DB</dt>
+to be tested in the overrepresentation analysis. Must contain exactly
+three columns:</p><dl><dt>DB</dt>
 <dd><p>Character. The database identifier (e.g., KEGG, GO_BP,
-      Reactome).</p></dd>
+Reactome).</p></dd>
 
-    <dt>Geneset</dt>
+<dt>Geneset</dt>
 <dd><p>Character. The name of the gene set or pathway within the
-      database.</p></dd>
+database.</p></dd>
 
-    <dt>Gene</dt>
+<dt>Gene</dt>
 <dd><p>Character. A gene identifier belonging to the gene set
-      (e.g., gene symbol, Ensembl ID).</p></dd>
+(e.g., gene symbol, Ensembl ID).</p></dd>
 
 
-</dl><p>Each row corresponds to one `(database, geneset, gene)` association. The
-  same gene may appear in multiple gene sets.</p></dd>
+</dl><p>Each row corresponds to one <code>(database, geneset, gene)</code> association. The
+same gene may appear in multiple gene sets.</p></dd>
 
 
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
@@ -157,19 +157,19 @@ By default, no mapping is performed and gene symbols are used as-is.
 If mapping is desired, this list must contain the following three
 elements:</p><dl><dt>method</dt>
 <dd><p>Mapping method to use. One of <code>none</code> (default;
-  no mapping), <code>gprofiler</code> (online, via the g:Profiler API), or
-  <code>orthogene</code> (offline, if installed).</p></dd>
+no mapping), <code>gprofiler</code> (online, via the g:Profiler API), or
+<code>orthogene</code> (offline, if installed).</p></dd>
 
-  <dt>from_species</dt>
+<dt>from_species</dt>
 <dd><p>Source species code,
-  e.g. <code>cgriseus</code> for CHO. Must match the expected format for
-  the selected tool.</p></dd>
+e.g. <code>cgriseus</code> for CHO. Must match the expected format for
+the selected tool.</p></dd>
 
-  <dt>to_species</dt>
+<dt>to_species</dt>
 <dd><p>Target species code,
-  e.g. <code>hsapiens</code> for human. This must be the species used in
-  your ORA database and must also match the expected format for the
-  selected tool.</p></dd>
+e.g. <code>hsapiens</code> for human. This must be the species used in
+your ORA database and must also match the expected format for the
+selected tool.</p></dd>
 
 
 </dl></dd>
@@ -213,33 +213,33 @@ specified, then the function runs but no HTML report is generated.</p></dd>
 limma result categories. The exact set of elements depends on <code>mode</code>:</p>
 <dl><dt><code>mode == "isolated"</code></dt>
 <dd><p>Two elements are returned, one per condition level:
-    <code>time_effect_condition_&lt;level1&gt;</code> and
-    <code>time_effect_condition_&lt;level2&gt;</code>.</p></dd>
+<code>time_effect_condition_&lt;level1&gt;</code> and
+<code>time_effect_condition_&lt;level2&gt;</code>.</p></dd>
 
-  <dt><code>mode == "integrated"</code></dt>
+<dt><code>mode == "integrated"</code></dt>
 <dd><p>The two time–effect elements above, plus (only if there are significant
-    hits at the chosen thresholds) up to two additional elements:
-    <code>avrg_diff_conditions</code> and <code>interaction_condition_time</code>.</p></dd>
+hits at the chosen thresholds) up to two additional elements:
+<code>avrg_diff_conditions</code> and <code>interaction_condition_time</code>.</p></dd>
 
 
 </dl><p>Each top‑level result category element is a list with the fields:</p><dl><dt><code>dotplot</code></dt>
 <dd><p>A <code>ggplot</code> object: the dot plot of
-    over-representation results (clusterProfiler) for that category.</p></dd>
+over-representation results (clusterProfiler) for that category.</p></dd>
 
-  <dt><code>dotplot_nrows</code></dt>
+<dt><code>dotplot_nrows</code></dt>
 <dd><p>Numeric scalar giving a suggested plot height
-    (in rows / relative units) that prints nicely for the number of
-    enriched terms shown.</p></dd>
+(in rows / relative units) that prints nicely for the number of
+enriched terms shown.</p></dd>
 
-  <dt><code>ora_results</code></dt>
+<dt><code>ora_results</code></dt>
 <dd><p>A nested list of the raw enrichment results,
-    structured as:</p><dl><dt><em>cluster</em> \(\rightarrow\) <em>database</em></dt>
+structured as:</p><dl><dt><em>cluster</em> \(\rightarrow\) <em>database</em></dt>
 <dd><p>For each cluster in the category, there is a sublist with one entry
-        per database used in the enrichment. The value of each entry is
-        either
-        <code>NA</code> (no terms enriched for that cluster–database) or a
-        <code>data.frame</code> as returned by
-        <code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">clusterProfiler::enricher()</a></code> for the enriched terms.</p></dd>
+per database used in the enrichment. The value of each entry is
+either
+<code>NA</code> (no terms enriched for that cluster–database) or a
+<code>data.frame</code> as returned by
+<code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">clusterProfiler::enricher()</a></code> for the enriched terms.</p></dd>
 
 
 </dl></dd>

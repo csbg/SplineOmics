@@ -1167,8 +1167,8 @@ InputControl <- R6::R6Class("InputControl",
           )
         }
         
-        if (any(x <= 0)) {
-          idx <- which(x <= 0)
+        if (any(x < 0)) {
+          idx <- which(x < 0)
           stop(
             paste0(
               "'", name, "' must have all elements > 0. ",
@@ -1179,8 +1179,8 @@ InputControl <- R6::R6Class("InputControl",
           )
         }
         
-        if (any(x >= 1)) {
-          idx <- which(x >= 1)
+        if (any(x > 1)) {
+          idx <- which(x > 1)
           stop(
             paste0(
               "'", name, "' must have all elements < 1. ",
@@ -1210,7 +1210,7 @@ InputControl <- R6::R6Class("InputControl",
     #' @description
     #' This function checks that both adjusted p-value thresholds for
     #' average difference conditions and interaction condition time are
-    #' non-null, floats, and in the range [0, 1].
+    #' non-null, floats, and in the range 0 to 1.
     #'
     #' @return
     #' `NULL` if either argument is `NULL` or invalid.

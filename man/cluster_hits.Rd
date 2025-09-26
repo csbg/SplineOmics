@@ -22,102 +22,102 @@ cluster_hits(
 )
 }
 \arguments{
-\item{splineomics}{An S3 object of class `SplineOmics` that contains all the
+\item{splineomics}{An S3 object of class \code{SplineOmics} that contains all the
 necessary data and parameters for the analysis, including:
 \itemize{
-  \item \code{data}: The data matrix with the values. The columns are the
-  samples (timepoint + replicate combo) and the rows are the features
-  (e.g. genes or proteins).
-  \item \code{meta}: A dataframe containing metadata corresponding to the
-  \code{data}, must include a 'Time' column and any columns specified by
-  \code{conditions}. In general, the columns of meta correspond to the
-  different types of metadata, and each row corresponds to a column of data
-  (contains the metadata for that sample).
-  \item \code{annotation}: A dataframe that maps the rows of \code{data} to
-  annotation info, such as the gene name or database identifiers.
-  \item \code{report_info}: A named list describing the experiment.  
-  Must include the following fields:  
-    - \code{"omics_data_type"}  
-    - \code{"data_description"}  
-    - \code{"data_collection_date"}  
-    - \code{"analyst_name"}  
-    - \code{"contact_info"}  
-    - \code{"project_name"}  
-  
-  May also include the following optional fields:  
-    - \code{"method_description"}  
-    - \code{"results_summary"}  
-    - \code{"conclusions"}  
-  \item \code{design}: A character of length 1 representing the limma
-  design formula.
-  \item \code{mode}: Specifies how the design formula is constructed: 
-  either `"isolated"` or `"integrated"`. 
-  
-  - `"isolated"`: Each level is analyzed independently, using only the 
-    subset of data corresponding to that level. The design formula does 
-    not include the condition variable, since only one condition is 
-    present in each subset.
-  
-  - `"integrated"`: All levels are analyzed together in a single model, 
-    using the full dataset. The design formula includes the condition 
-    variable (and optionally interaction terms with it) so that results 
-    are estimated jointly across all levels.
-  \item \code{condition}: Character vector of length 1 specifying the column
-  name in \code{meta} used to define groups for analysis.
-  \item \code{spline_params}: A list of spline parameters for the analysis.
-  \item \code{meta_batch_column}: A character string specifying the column
-  name in the metadata used for batch effect removal.
-  \item \code{meta_batch2_column}: A character string specifying the second
-  column name in the metadata used for batch effect removal.
-  \item \code{limma_splines_result}: A list of data frames, each representing
-   a top table from differential expression analysis, containing at least
-   'adj.P.Val' and expression data columns.
-  \item \code{feature_name_columns}: Character vector of strings that each
-  specify a column of the original data dataframe which were used to 
-  automatically build the feature names with the \code{extract_data}
-  function.
+\item \code{data}: The data matrix with the values. The columns are the
+samples (timepoint + replicate combo) and the rows are the features
+(e.g. genes or proteins).
+\item \code{meta}: A dataframe containing metadata corresponding to the
+\code{data}, must include a 'Time' column and any columns specified by
+\code{conditions}. In general, the columns of meta correspond to the
+different types of metadata, and each row corresponds to a column of data
+(contains the metadata for that sample).
+\item \code{annotation}: A dataframe that maps the rows of \code{data} to
+annotation info, such as the gene name or database identifiers.
+\item \code{report_info}: A named list describing the experiment.
+Must include the following fields:
+- \code{"omics_data_type"}
+- \code{"data_description"}
+- \code{"data_collection_date"}
+- \code{"analyst_name"}
+- \code{"contact_info"}
+- \code{"project_name"}
+
+May also include the following optional fields:
+- \code{"method_description"}
+- \code{"results_summary"}
+- \code{"conclusions"}
+\item \code{design}: A character of length 1 representing the limma
+design formula.
+\item \code{mode}: Specifies how the design formula is constructed:
+either \code{"isolated"} or \code{"integrated"}.
+\itemize{
+\item \code{"isolated"}: Each level is analyzed independently, using only the
+subset of data corresponding to that level. The design formula does
+not include the condition variable, since only one condition is
+present in each subset.
+\item \code{"integrated"}: All levels are analyzed together in a single model,
+using the full dataset. The design formula includes the condition
+variable (and optionally interaction terms with it) so that results
+are estimated jointly across all levels.
+\item \code{condition}: Character vector of length 1 specifying the column
+name in \code{meta} used to define groups for analysis.
+\item \code{spline_params}: A list of spline parameters for the analysis.
+\item \code{meta_batch_column}: A character string specifying the column
+name in the metadata used for batch effect removal.
+\item \code{meta_batch2_column}: A character string specifying the second
+column name in the metadata used for batch effect removal.
+\item \code{limma_splines_result}: A list of data frames, each representing
+a top table from differential expression analysis, containing at least
+'adj.P.Val' and expression data columns.
+\item \code{feature_name_columns}: Character vector of strings that each
+specify a column of the original data dataframe which were used to
+automatically build the feature names with the \code{extract_data}
+function.
+}
 }}
 
 \item{nr_clusters}{Named list specifying the number of clusters per
-  condition level. The list \strong{must} have one element per condition
-  level, and each element \strong{must be named exactly} with the
-  corresponding condition name (e.g., \code{"condition1"},
-  \code{"condition2"}).
+condition level. The list must have one element per condition
+level, and each element must be named exactly with the
+corresponding condition name (e.g., \code{"condition1"},
+\code{"condition2"}).
 
-  Each element's value controls the \code{k} used by k-means for that level:
+Each element's value controls the \code{k} used by k-means for that level:
+\itemize{
+\item \strong{Single integer} (\code{k > 0}, e.g. \code{3}): use exactly that
+many clusters.
+\item \strong{Integer range} (written with \code{:}, e.g. \code{2:6}):
+choose the \code{k} within the range that \strong{minimizes the
+Bayesian Information Criterion (BIC)} computed from the k-means fit
+over that range (lower is better). Ties are broken by the first
+minimum encountered.
+}
 
-  - \strong{Single integer} (\code{k > 0}, e.g. \code{3}): use exactly that
-    many clusters.
-  - \strong{Integer range} (written with \code{:}, e.g. \code{2:6}):
-    choose the \code{k} within the range that \strong{minimizes the
-    Bayesian Information Criterion (BIC)} computed from the k-means fit
-    over that range (lower is better). Ties are broken by the first
-    minimum encountered.
-
-  \strong{Notes}
-  \itemize{
-    \item All condition levels must be present exactly once as names.
-    \item Values must be positive integers; ranges must be increasing
-          (e.g. \code{2:6}).
-
-    \item BIC is computed from k-means using Euclidean distance. A common
-          form is \eqn{\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
+\strong{Notes}
+\itemize{
+\item All condition levels must be present exactly once as names.
+\item Values must be positive integers; ranges must be increasing
+(e.g. \code{2:6}).
+\item BIC is computed from k-means using Euclidean distance. A common
+form is \eqn{\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
           k \log(n)\, p}, where \eqn{n} is the number of series, \eqn{p}
-          the number of timepoints (features), and \eqn{\mathrm{WCSS}} the
-          total within-cluster sum of squares for the fit.
-    \item Clustering will fail if the requested \code{k} is not strictly
-          less than the number of available series for that level.
-  }
+the number of timepoints (features), and \eqn{\mathrm{WCSS}} the
+total within-cluster sum of squares for the fit.
+\item Clustering will fail if the requested \code{k} is not strictly
+less than the number of available series for that level.
+}
 
-  \strong{Example}
-  # Fixed k for condition1, BIC-selected k for condition2
-  nr_clusters <- list(
-    condition1 = 4,
-    condition2 = 2:6
-  )}
+\strong{Example}
+Fixed k for condition1, BIC-selected k for condition2
+nr_clusters <- list(
+condition1 = 4,
+condition2 = 2:6
+)}
 
 \item{adj_pthresholds}{Numeric vector of p-value thresholds for filtering
-hits in each top table. The order of the elements determines which 
+hits in each top table. The order of the elements determines which
 adj.p-value threshold is assigned to which condition (the first element
 gets assigned to the first condition, the second to the second, etc.).}
 
@@ -128,87 +128,93 @@ from the average difference of the condition limma result.}
 results from the interaction of condition and time limma result.}
 
 \item{min_effect_size}{A named list that specifies the minimum effect size
-  thresholds to consider a feature as biologically meaningful, in addition
-  to statistical significance. This allows users to filter out "trivial"
-  hits that pass adjusted p-value cutoffs but show negligible effect sizes.
+thresholds to consider a feature as biologically meaningful, in addition
+to statistical significance. This allows users to filter out "trivial"
+hits that pass adjusted p-value cutoffs but show negligible effect sizes.
 
-  The list must contain the following elements:
-  - `time_effect`: Minimum cumulative travel for time effects (Category 1).
-    Features with a smaller travel will be ignored even if significant.
-  - `avg_diff_cond`: Minimum absolute effect size for average differences
-    between conditions (Category 2). Ensures that only contrasts with a
-    relevant magnitude are reported.
-  - `interaction_cond_time`: Minimum effect size for the interaction
-    between condition and time (Category 3). This controls how large the
-    differential curve travel must be across conditions to count as a hit.
+The list must contain the following elements:
+\itemize{
+\item \code{time_effect}: Minimum cumulative travel for time effects (Category 1).
+Features with a smaller travel will be ignored even if significant.
+\item \code{avg_diff_cond}: Minimum absolute effect size for average differences
+between conditions (Category 2). Ensures that only contrasts with a
+relevant magnitude are reported.
+\item \code{interaction_cond_time}: Minimum effect size for the interaction
+between condition and time (Category 3). This controls how large the
+differential curve travel must be across conditions to count as a hit.
+}
 
-  Values should be numeric scalars (typically >0). For example:
-  `min_effect_size = list(time_effect = 1, avg_diff_cond = 1,
-  interaction_cond_time = 2)` will only keep features with cumulative
-  travels or condition-time differences above those cutoffs. Use smaller
-  values (e.g., 0.1) for permissive filtering, or larger values for more
-  conservative thresholds.
+Values should be numeric scalars (typically >0). For example:
+\code{min_effect_size = list(time_effect = 1, avg_diff_cond = 1, interaction_cond_time = 2)} will only keep features with cumulative
+travels or condition-time differences above those cutoffs. Use smaller
+values (e.g., 0.1) for permissive filtering, or larger values for more
+conservative thresholds.
 
-  The default is 0 for all three elements.}
+The default is 0 for all three elements.}
 
 \item{genes}{A character vector of gene names corresponding to the features
-to be analyzed. The order of entries must match the feature order in 
+to be analyzed. The order of entries must match the feature order in
 \code{data}.
 Gene names should be standardized (cleaned) to ensure compatibility with
 downstream databases used for overrepresentation analysis after clustering.}
 
 \item{plot_info}{List with optional elements used to annotate spline plots:
-  - y_axis_label: single string for the y-axis label.
-  - time_unit: single string used in the x-axis label.
-  - treatment_labels: named list of single strings.
-  - treatment_timepoints: named list of single numeric values.
-
-  If any treatment list is present, both must be present. The two lists
-  must have identical name sets. Allowed names are the values of
-  `meta[[condition]]` and the special name "double_spline_plots", which
-  generates a treatment line for the plots of limma category 2 and 3, so 
-  for the average difference between the conditions and the interaction 
-  between condition and time. 
-
-  Vertical dashed lines are drawn at the given timepoints for facets whose
-  level name matches a list name, and labeled with the corresponding string
-  (e.g., feeding, temperature shift).
-  Example: annotate spline plots with feeding and temperature shift events:
-     plot_info <- list(
-         y_axis_label = "log2 expression",
-         time_unit = "hours",
-         treatment_labels = list(
-            WT = "Feeding",
-            KO = "Temperature shift",
-            double_spline_plots = "Treatment line"
-         ),
-         treatment_timepoints = list(
-           WT = 12,
-           KO = 24,
-           double_spline_plots = 18
-         )
-       )}
-
-\item{plot_options}{A named list controlling optional plot customization.
-The list can include one or both of the following entries 
-(any not supplied will fall back to their default values):  
 \itemize{
-  \item \code{cluster_heatmap_columns} 
-  (`logical`, default = \code{FALSE}):  
-    Whether to cluster the columns in the heatmap.  
-  \item \code{meta_replicate_column} (`character(1)`, 
-    default = \code{NULL}):  
-    Name of the column in \code{meta} that encodes replicate information.  
-    If supplied, spline plot data points are colored by replicate,
-    allowing replicate-level variation to be assessed.
+\item \code{y_axis_label}: single string for the y-axis label.
+\item \code{time_unit}: single string used in the x-axis label.
+\item \code{treatment_labels}: named list of single strings.
+\item \code{treatment_timepoints}: named list of single numeric values.
+}
+
+If any treatment list is present, both must be present. The two lists must
+have identical name sets. Allowed names are the values of \code{meta[[condition]]}
+and the special name \code{"double_spline_plots"}, which generates a treatment line
+for the plots of limma category 2 and 3 (average difference between conditions
+and the interaction between condition and time).
+
+Vertical dashed lines are drawn at the given timepoints for facets whose
+level name matches a list name, and labeled with the corresponding string
+(e.g., feeding, temperature shift).
+
+Example:
+
+\preformatted{
+plot_info <- list(
+  y_axis_label = "log2 expression",
+  time_unit = "hours",
+  treatment_labels = list(
+    WT = "Feeding",
+    KO = "Temperature shift",
+    double_spline_plots = "Treatment line"
+  ),
+  treatment_timepoints = list(
+    WT = 12,
+    KO = 24,
+    double_spline_plots = 18
+  )
+)
 }}
 
-\item{raw_data}{Data matrix with the raw (unimputed) data, still 
-containing NA values. When provided, it highlights the datapoints in the 
+\item{plot_options}{A named list controlling optional plot customization.
+The list can include one or both of the following entries
+(any not supplied will fall back to their default values):
+\itemize{
+\item \code{cluster_heatmap_columns}
+(\code{logical}, default = \code{FALSE}):
+Whether to cluster the columns in the heatmap.
+\item \code{meta_replicate_column} (\code{character(1)},
+default = \code{NULL}):
+Name of the column in \code{meta} that encodes replicate information.
+If supplied, spline plot data points are colored by replicate,
+allowing replicate-level variation to be assessed.
+}}
+
+\item{raw_data}{Data matrix with the raw (unimputed) data, still
+containing NA values. When provided, it highlights the datapoints in the
 spline plots that originally where NA and that were imputed.}
 
 \item{report_dir}{Character string specifying the directory path where the
-HTML report and any other output files should be saved. When no path is 
+HTML report and any other output files should be saved. When no path is
 specified, then the function runs but no HTML report is generated.}
 
 \item{max_hit_number}{Maximum number of hits which are plotted within each
@@ -220,79 +226,79 @@ the HTML report in the case of many hits.}
 \value{
 A named list with three elements:
 \describe{
-  \item{\code{cluster_table}}{
-    A tibble containing one row per \code{feature_nr} with metadata and
-    cluster assignments across the analysis categories. The structure is:
-    \itemize{
-      \item \code{feature_nr} - Numeric feature identifier.
-      \item \code{feature_name} - Preferred feature name, prioritizing
-        values from the limma tables, then from the cluster table row
-        names, and falling back to the numeric feature ID.
-      \item \code{gene} - Preferred gene symbol from the \code{annotation}
-        table if available, otherwise taken from the cluster tables.
-      \item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
-        assignments for each time-effect condition, named according to
-        the elements of \code{clustered_hits_levels}.
-      \item \code{cluster_cat2} - Present only if category 2 results are
-        available; a combined cluster label in the form
-        \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
-        are significant in category 2. If this value is \code{NA}, the
-        feature was not a category 2 hit.
-      \item \code{cluster_cat3} - Present only if category 3 results are
-        available; a combined cluster label in the form
-        \code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
-        are significant in category 3. If this value is \code{NA}, the
-        feature was not a category 3 hit.
-    }
-    For any category-specific cluster column (\code{cluster_<cond1>},
-    \code{cluster_<cond2>}, \code{cluster_cat2}, \code{cluster_cat3}),
-    a value of \code{NA} indicates that the feature was not significant
-    (not a hit) in that category.
-  }
-  \item{\code{spline_results}}{
-    A named list summarizing the fitted spline trajectories, their shared
-    time grid, and effect-size based significance flags. Structure:
-    \describe{
-      \item{\code{time_grid}}{Numeric vector of length \eqn{T} giving the
-        common time points (e.g., hours since cultivation start) on which
-        all splines were predicted.}
-      \item{\code{predictions}}{Named list by condition (e.g.,
-        \code{constant}, \code{temp_shift}). Each entry is a numeric
-        matrix of size \eqn{N \times T} with rows corresponding to features
-        and columns to \code{time_grid}. Values are the predicted spline
-        trajectories on the absolute scale used in the analysis
-        (e.g., log2-CPM after \code{voom}). Row order matches the feature
-        order used throughout the analysis.}
-      \item{\code{time_effect_effect_size}}{Named list by condition with a
-        numeric vector (length \eqn{N}) per condition giving the
-        \emph{cumulative travel} (integrated temporal change) of each
-        feature`s spline across \code{time_grid}. Larger values indicate
-        stronger within-condition temporal modulation.}
-      \item{\code{time_effect_passed_threshold}}{Named list by condition
-        with a logical vector (length \eqn{N}) per condition indicating
-        whether the corresponding \code{time_effect_effect_size} exceeds
-        the user-defined effect-size threshold (i.e., time-effect hits).}
-      \item{\code{interaction_effect_size}}{Numeric vector (length \eqn{N})
-        giving the \emph{differential cumulative travel} between the two
-        condition-specific splines of each feature, computed on the same
-        \code{time_grid}. Larger values indicate stronger differences in
-        temporal behaviour between conditions (condition-time interaction).}
-      \item{\code{interaction_passed_threshold}}{Logical vector (length
-        \eqn{N}) indicating whether \code{interaction_effect_size}
-        exceeds the interaction effect-size threshold (i.e., features with
-        significantly different temporal profiles across conditions).}
-    }
-    Unless stated otherwise, vectors are aligned to the same feature order
-    used in the prediction matrices; condition names match
-    \code{levels(meta[[condition]])}.
-  }
-  \item{\code{plots}}{
-    A list of all plots generated during the run, corresponding to the
-    visualizations shown in the HTML report produced by this function. 
-    Additionally, this plots list also contains the plots showing the 
-    consensus clusters of the potential clustering of the interaction of 
-    condition and time (category 3) hits.
-  }
+\item{\code{cluster_table}}{
+A tibble containing one row per \code{feature_nr} with metadata and
+cluster assignments across the analysis categories. The structure is:
+\itemize{
+\item \code{feature_nr} - Numeric feature identifier.
+\item \code{feature_name} - Preferred feature name, prioritizing
+values from the limma tables, then from the cluster table row
+names, and falling back to the numeric feature ID.
+\item \code{gene} - Preferred gene symbol from the \code{annotation}
+table if available, otherwise taken from the cluster tables.
+\item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
+assignments for each time-effect condition, named according to
+the elements of \code{clustered_hits_levels}.
+\item \code{cluster_cat2} - Present only if category 2 results are
+available; a combined cluster label in the form
+\code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
+are significant in category 2. If this value is \code{NA}, the
+feature was not a category 2 hit.
+\item \code{cluster_cat3} - Present only if category 3 results are
+available; a combined cluster label in the form
+\code{"<cluster_<cond1>>_<cluster_<cond2>>"} for features that
+are significant in category 3. If this value is \code{NA}, the
+feature was not a category 3 hit.
+}
+For any category-specific cluster column (\code{cluster_<cond1>},
+\code{cluster_<cond2>}, \code{cluster_cat2}, \code{cluster_cat3}),
+a value of \code{NA} indicates that the feature was not significant
+(not a hit) in that category.
+}
+\item{\code{spline_results}}{
+A named list summarizing the fitted spline trajectories, their shared
+time grid, and effect-size based significance flags. Structure:
+\describe{
+\item{\code{time_grid}}{Numeric vector of length \eqn{T} giving the
+common time points (e.g., hours since cultivation start) on which
+all splines were predicted.}
+\item{\code{predictions}}{Named list by condition (e.g.,
+\code{constant}, \code{temp_shift}). Each entry is a numeric
+matrix of size \eqn{N \times T} with rows corresponding to features
+and columns to \code{time_grid}. Values are the predicted spline
+trajectories on the absolute scale used in the analysis
+(e.g., log2-CPM after \code{voom}). Row order matches the feature
+order used throughout the analysis.}
+\item{\code{time_effect_effect_size}}{Named list by condition with a
+numeric vector (length \eqn{N}) per condition giving the
+\emph{cumulative travel} (integrated temporal change) of each
+feature`s spline across \code{time_grid}. Larger values indicate
+stronger within-condition temporal modulation.}
+\item{\code{time_effect_passed_threshold}}{Named list by condition
+with a logical vector (length \eqn{N}) per condition indicating
+whether the corresponding \code{time_effect_effect_size} exceeds
+the user-defined effect-size threshold (i.e., time-effect hits).}
+\item{\code{interaction_effect_size}}{Numeric vector (length \eqn{N})
+giving the \emph{differential cumulative travel} between the two
+condition-specific splines of each feature, computed on the same
+\code{time_grid}. Larger values indicate stronger differences in
+temporal behaviour between conditions (condition-time interaction).}
+\item{\code{interaction_passed_threshold}}{Logical vector (length
+\eqn{N}) indicating whether \code{interaction_effect_size}
+exceeds the interaction effect-size threshold (i.e., features with
+significantly different temporal profiles across conditions).}
+}
+Unless stated otherwise, vectors are aligned to the same feature order
+used in the prediction matrices; condition names match
+\code{levels(meta[[condition]])}.
+}
+\item{\code{plots}}{
+A list of all plots generated during the run, corresponding to the
+visualizations shown in the HTML report produced by this function.
+Additionally, this plots list also contains the plots showing the
+consensus clusters of the potential clustering of the interaction of
+condition and time (category 3) hits.
+}
 }
 }
 \description{

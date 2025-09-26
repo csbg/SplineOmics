@@ -12,23 +12,23 @@ create_limma_report(
 )
 }
 \arguments{
-\item{splineomics}{An S3 object of class `SplineOmics` that contains all the
+\item{splineomics}{An S3 object of class \code{SplineOmics} that contains all the
 necessary data and parameters for the analysis, including:
 \itemize{
-  \item \code{limma_splines_result}: A list containing top tables from
-   differential expression analysis for the three different limma results.
-  \item \code{meta}: A data frame with sample metadata. Must contain a column
-                     "Time".
-  \item \code{condition}: A character string specifying the column name in
-                         the metadata (\code{meta}) that defines groups
-                         for analysis. This column contains levels such as
-                          "exponential" and "stationary" for phases, or
-                          "drug" and "no_drug" for treatments.
-  \item \code{annotation}: A data frame containing feature information,
-                           such as gene and protein names, associated with
-                           the expression data.
-  \item \code{report_info}: A list containing metadata about the analysis
-                            for reporting purposes.
+\item \code{limma_splines_result}: A list containing top tables from
+differential expression analysis for the three different limma results.
+\item \code{meta}: A data frame with sample metadata. Must contain a column
+"Time".
+\item \code{condition}: A character string specifying the column name in
+the metadata (\code{meta}) that defines groups
+for analysis. This column contains levels such as
+"exponential" and "stationary" for phases, or
+"drug" and "no_drug" for treatments.
+\item \code{annotation}: A data frame containing feature information,
+such as gene and protein names, associated with
+the expression data.
+\item \code{report_info}: A list containing metadata about the analysis
+for reporting purposes.
 }}
 
 \item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold

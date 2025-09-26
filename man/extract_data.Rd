@@ -19,24 +19,26 @@ extract_data(
 columns and the numeric block to extract.}
 
 \item{bottom_row}{Integer. Specifies the last (bottom) row of the numeric
-data block. Must be >= `top_row`.}
+data block. Must be >= \code{top_row}.}
 
-\item{right_col}{Same format as `left_col`. Specifies the right-most column
-of the numeric block. Must be >= `left_col` after conversion.}
+\item{right_col}{Same format as \code{left_col}. Specifies the right-most column
+of the numeric block. Must be >= \code{left_col} after conversion.}
 
 \item{top_row}{Integer. Specifies the first (top) row of the numeric data
 block. Row indexing is 1-based.}
 
 \item{left_col}{Column specifier for the left-most column of the data block.
 Can be either:
-  - An integer index (e.g., 2 for the second column), or
-  - A character string using Excel-style letters (e.g., "A", "AB").
+\itemize{
+\item An integer index (e.g., 2 for the second column), or
+\item A character string using Excel-style letters (e.g., "A", "AB").
+}
 
-Column names (e.g., "age") are **not** allowed here. Only letters or numeric
+Column names (e.g., "age") are \strong{not} allowed here. Only letters or numeric
 indices are accepted.}
 
 \item{feature_name_columns}{Optional character vector specifying columns in
-`data` to be used as row (feature) names in the output. If `NA`, generic
+\code{data} to be used as row (feature) names in the output. If \code{NA}, generic
 feature names are used.}
 
 \item{use_row_index}{Logical. If \code{TRUE}, prepend the row index to each
@@ -46,11 +48,11 @@ combined feature name to ensure uniqueness. Defaults to \code{FALSE}.}
 A numeric matrix with cleaned values and appropriate column names.
 }
 \description{
-This function extracts a rectangular block from a dataframe using 
+This function extracts a rectangular block from a dataframe using
 user-specified
-top/bottom row indices and left/right column identifiers (numeric or 
+top/bottom row indices and left/right column identifiers (numeric or
 Excel-style letters).
-It ensures the block contains only numeric values or NAs, and returns a 
+It ensures the block contains only numeric values or NAs, and returns a
 cleaned matrix.
 }
 \examples{

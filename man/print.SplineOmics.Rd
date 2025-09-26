@@ -7,7 +7,7 @@
 \method{print}{SplineOmics}(x, ...)
 }
 \arguments{
-\item{x}{A SplineOmics object created by the `create_splineomics` function.}
+\item{x}{A SplineOmics object created by the \code{create_splineomics} function.}
 
 \item{...}{Additional arguments passed to or from other methods.}
 }

@@ -547,7 +547,8 @@ sanitize_meta <- function(meta) {
 #'   \item{bp_df}{Data frame with test results per feature}
 #'   \item{fraction_violated}{Proportion of features violating homoscedasticity}
 #'   \item{feature_wise_violation}{TRUE if the threshold is exceeded}
-#'   
+#'
+#' @importFrom stats var   
 #' @importFrom car leveneTest
 #' @importFrom pbapply pbapply   
 #'   
@@ -577,7 +578,7 @@ check_featurewise_heteroscedasticity_levene <- function(
     group_vars <- tapply(
       res,
       Phase,
-      var,
+      stats::var,
       na.rm = TRUE
       )
     

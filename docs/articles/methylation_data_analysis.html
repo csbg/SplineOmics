@@ -410,10 +410,6 @@ overwrite = TRUE)</td>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>, </span>
 <span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: The data contains missing values (NA). Ensure that imputation or</span></span>
-<span><span class="co">#&gt; handling of missing values aligns with your analysis requirements. Note that</span></span>
-<span><span class="co">#&gt; limma can handle missing values (it just ignores them), and therefore also</span></span>
-<span><span class="co">#&gt; SplineOmics can handle them.</span></span>
 <span><span class="co">#&gt; Making density plots...</span></span>
 <span><span class="co">#&gt; Making violin plots...</span></span>
 <span><span class="co">#&gt; Making PCA plots...</span></span>
@@ -468,7 +464,7 @@ overwrite = TRUE)</td>
 <span><span class="co">#&gt; (`stat_boxplot()`).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpB87vSd/file371c15576f26 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpC3kc23/file5c0c73fea83a .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 </div>
@@ -504,10 +500,7 @@ clear idea of what do use.</p>
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: The data contains missing values (NA). Ensure that imputation or</span></span>
-<span><span class="co">#&gt; handling of missing values aligns with your analysis requirements. Note that</span></span>
-<span><span class="co">#&gt; limma can handle missing values (it just ignores them), and therefore also</span></span>
-<span><span class="co">#&gt; SplineOmics can handle them.</span></span>
+<span><span class="co">#&gt; Hint: The data contains missing values (NA). Ensure that imputation or handling of missing values aligns with your analysis requirements. Note that limma can handle missing values (it just ignores them), and therefore also SplineOmics can handle them.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -528,13 +521,9 @@ generate p-value histograms an volcano plots.</p>
 <span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: The data contains missing values (NA). Ensure that imputation or</span></span>
-<span><span class="co">#&gt; handling of missing values aligns with your analysis requirements. Note that</span></span>
-<span><span class="co">#&gt; limma can handle missing values (it just ignores them), and therefore also</span></span>
-<span><span class="co">#&gt; SplineOmics can handle them.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpB87vSd/file371ca06a990 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpC3kc23/file5c0c933fc78 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 </div>
@@ -588,10 +577,7 @@ generate p-value histograms an volcano plots.</p>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: The data contains missing values (NA). Ensure that imputation or</span></span>
-<span><span class="co">#&gt; handling of missing values aligns with your analysis requirements. Note that</span></span>
-<span><span class="co">#&gt; limma can handle missing values (it just ignores them), and therefore also</span></span>
-<span><span class="co">#&gt; SplineOmics can handle them.</span></span>
+<span><span class="co">#&gt; Hint: The data contains missing values (NA). Ensure that imputation or handling of missing values aligns with your analysis requirements. Note that limma can handle missing values (it just ignores them), and therefore also SplineOmics can handle them.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -606,7 +592,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpB87vSd/file371c535f695f .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpC3kc23/file5c0c7e612f5e .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; 5 clusters for the condition effect (interaction between condition and time)</span></span>

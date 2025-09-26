@@ -34,27 +34,27 @@ as row headers (otherwise, just numbers will be your feature names).}
 \item{condition}{A condition variable.}
 
 \item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
-such as the output from `limma::voom` or a similar preprocessing pipeline.
+such as the output from \code{limma::voom} or a similar preprocessing pipeline.
 This argument is not subjected to input control.
-Rather, in that regard it relies on the input control from the `limma::lmfit`
+Rather, in that regard it relies on the input control from the \code{limma::lmfit}
 function.}
 
 \item{annotation}{A dataframe with the feature descriptions of data
 (optional).}
 
 \item{report_info}{A named list describing the experiment.
-Must include the following fields:  
-  - \code{"omics_data_type"}  
-  - \code{"data_description"}  
-  - \code{"data_collection_date"}  
-  - \code{"analyst_name"}  
-  - \code{"contact_info"}  
-  - \code{"project_name"}  
+Must include the following fields:
+- \code{"omics_data_type"}
+- \code{"data_description"}
+- \code{"data_collection_date"}
+- \code{"analyst_name"}
+- \code{"contact_info"}
+- \code{"project_name"}
 
-May also include the following optional fields:  
-  - \code{"method_description"}  
-  - \code{"results_summary"}  
-  - \code{"conclusions"}}
+May also include the following optional fields:
+- \code{"method_description"}
+- \code{"results_summary"}
+- \code{"conclusions"}}
 
 \item{meta_batch_column}{Column for meta batch information (optional).}
 
@@ -71,35 +71,37 @@ create the row headers for the data matrix!}
 
 \item{design}{A design matrix or similar object (optional).}
 
-\item{use_array_weights}{Boolean flag indicating if the robust fit strategy 
+\item{use_array_weights}{Boolean flag indicating if the robust fit strategy
 to deal
 with heteroscedasticity should be used or not. If set to NULL, then this is
 handeled implicitly based on the result of the Levene test. If this test is
-significant for at least 10% of the features, then the robust strategy is 
+significant for at least 10\% of the features, then the robust strategy is
 used. The robust strategy uses the function voomWithQualityWeights for
 RNA-seq data instead of the normal voom function. For other, non-count-based
 data, the function limma::arrayWeights is used instead, combined with setting
 the robust argument to TRUE for the limma::eBayes function. In summary, the
 strategy employed by those functions is to downweights samples with higher
 variance. This can be neccessary, because linear models have the assumption
-of homoscedasticity, which means that the variance is (approx.) the same 
+of homoscedasticity, which means that the variance is (approx.) the same
 across all datapoints where the linear model is fitted. If this is violated,
 then the resulting p-values cannot be trusted (common statistical wisdom).}
 
 \item{dream_params}{#' A named list or NULL. When not NULL, it can contain
- the following named elements:
-- `dof`: An integer greater than 1, specifying the degrees of freedom for 
-  the dream topTable.
-- `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
-  approximation for mixed models.
-Note that random effects are now directly specified in the design formula 
-and not in `dream_params`.}
+the following named elements:
+\itemize{
+\item \code{dof}: An integer greater than 1, specifying the degrees of freedom for
+the dream topTable.
+\item \code{KenwardRoger}: A boolean indicating whether to use the Kenward-Roger
+approximation for mixed models.
+Note that random effects are now directly specified in the design formula
+and not in \code{dream_params}.
+}}
 
 \item{mode}{For the design formula, you must specify either 'isolated' or
-'integrated' for the mode. Isolated means limma determines the results for 
+'integrated' for the mode. Isolated means limma determines the results for
 each level
 using only the data from that level. Integrated means limma determines the
- results for all levels using the full dataset (from all levels).}
+results for all levels using the full dataset (from all levels).}
 
 \item{spline_params}{Parameters for spline functions (optional). Must contain
 the named elements spline_type, which must contain either the string "n" for
@@ -113,14 +115,14 @@ both for natural and B-splines.}
 Defaults to "BH" (Benjamini-Hochberg).}
 
 \item{bp_cfg}{A named numeric vector specifying the parallelization
-configuration, with expected names `"n_cores"` and `"blas_threads"`.
+configuration, with expected names \code{"n_cores"} and \code{"blas_threads"}.
 
-This controls how many **R worker processes** (`n_cores`) and how many
-**BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-during parallel computation.  
+This controls how many \strong{R worker processes} (\code{n_cores}) and how many
+\strong{BLAS/OpenBLAS threads per process} (\code{blas_threads}) should be used
+during parallel computation.
 
-If `bp_cfg` is `NULL`, missing, or any of its required fields is
-`NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+If \code{bp_cfg} is \code{NULL}, missing, or any of its required fields is
+\code{NA}, both \code{n_cores} and \code{blas_threads} default to \code{1}. This effectively
 disables parallelization and avoids oversubscription of CPU threads.}
 }
 \value{

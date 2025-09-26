@@ -7,109 +7,109 @@
 run_limma_splines(splineomics, verbose = TRUE)
 }
 \arguments{
-\item{splineomics}{An S3 object of class `SplineOmics` that contains the
+\item{splineomics}{An S3 object of class \code{SplineOmics} that contains the
 following elements:
 \itemize{
-  \item \code{data}: The matrix of the omics dataset, with the feature
-  names optionally as row headers.
-  \item \code{rna_seq_data}: An optional object containing the preprocessed
-  RNA-seq data, such as the output from `limma::voom` or a similar
-   preprocessing pipeline. This must only be provided when the input is 
-   RNA-seq data.
-  \item \code{meta}: A dataframe containing metadata corresponding to the
-  \code{data}, must include a 'Time' column and the column specified by
-  \code{condition}. The columns of meta describe the meta info, such as 
-  the time and condition, and each row corresponds to a column in data, and
-  therefore, contains the meta info for that data column. It is important 
-  that meta and data are matched in this way.
-  \item \code{padjust_method}: Statistical method that is used for multiple
-  hypothesis correction. Supported methods include all that are included in
-  the p.adjust() function in R: "holm", "hochberg", "hommel", "bonferroni",
-  "BH" or "fdr", "BY", or "none" for no correction. Default of this package
-  is "BH".
-  \item \code{design}: A character string representing the limma design
-  formula, such as "~ 1 + Phase*Time + Reactor" for an integrated design, or
-  "~ 1 + Time + Reactor" for an isolated design.
-  \item\code{dream_params}: A named list or NULL. When not NULL, it can 
-                               contain the following named 
-     elements:
-     - `dof`: An integer greater than 1, specifying the degrees of freedom 
-     for  the dream topTable. If set to 0, then the best dof is automatically
-     found with the help of leave-one-out-crossvalidation (loocv). The dof 
-     with the lowest error on the loocv is chosen.
-     - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
-     approximation for mixed models.
-     Note that random effects are now directly specified in the design 
-     formula and not in `dream_params`.
-  \item \code{mode}: Specifies how the design formula is constructed: 
-  either `"isolated"` or `"integrated"`. 
-  
-  - `"isolated"`: Each level is analyzed independently, using only the 
-    subset of data corresponding to that level. The design formula does 
-    not include the condition variable, since only one condition is 
-    present in each subset.
-  
-  - `"integrated"`: All levels are analyzed together in a single model, 
-    using the full dataset. The design formula includes the condition 
-    variable (and optionally interaction terms with it) so that results 
-    are estimated jointly across all levels.
-  \item \code{condition}: A character string specifying the column name
-  in \code{meta} used to define groups for analysis. The condition column
-  contains the levels of the experiment (such as control and treatment).
-  \item \code{spline_params}: A list of spline parameters used in the
-  analysis, including:
-    \itemize{
-      \item \code{spline_type}: The type of spline (e.g., "n" for natural
-      splines or "b" for B-splines).
-      \item \code{dof}: Degrees of freedom for the spline.
-      \item \code{knots}: Positions of the internal knots (for B-splines).
-      \item \code{bknots}: Boundary knots (for B-splines).
-      \item \code{degree}: Degree of the spline (for B-splines only).
-    }
-  \item \code{use_array_weights}: Boolean flag indicating if the robust fit
-   strategy to deal with heteroscedasticity should be used or not. If set to
-   NULL, then this is handeled implicitly based on the result of the Levene
-   test. If this test is significant for at least 10% of the features,
-   then the robust strategy is used. The robust strategy uses the function
-   voomWithQualityWeights for RNA-seq data instead of the normal voom
-   function. For other, non-count-based data, the function 
-   limma::arrayWeights is used instead, combined with setting the robust
-   argument to TRUE for the limma::eBayes function. In summary, the strategy
-   employed by those functions is to downweights samples with higher
-   variance. This can be neccessary, because linear models have the
-   assumption of homoscedasticity, which means that the variance is
-   (approx.) the same across all datapoints where the linear model is fitted.
-    If this is violated, then the resulting p-values cannot be trusted
-   (common statistical wisdom).
-  \item \code{bp_cfg}: A named numeric vector specifying the parallelization
-  configuration, with expected names `"n_cores"` and `"blas_threads"`.
-  
-  This controls how many **R worker processes** (`n_cores`) and how many
-  **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-  during parallel computation.  
-  
-  If `bp_cfg` is `NULL`, missing, or any of its required fields is
-  `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
-  disables parallelization and avoids oversubscription of CPU threads.
+\item \code{data}: The matrix of the omics dataset, with the feature
+names optionally as row headers.
+\item \code{rna_seq_data}: An optional object containing the preprocessed
+RNA-seq data, such as the output from \code{limma::voom} or a similar
+preprocessing pipeline. This must only be provided when the input is
+RNA-seq data.
+\item \code{meta}: A dataframe containing metadata corresponding to the
+\code{data}, must include a 'Time' column and the column specified by
+\code{condition}. The columns of meta describe the meta info, such as
+the time and condition, and each row corresponds to a column in data, and
+therefore, contains the meta info for that data column. It is important
+that meta and data are matched in this way.
+\item \code{padjust_method}: Statistical method that is used for multiple
+hypothesis correction. Supported methods include all that are included in
+the p.adjust() function in R: "holm", "hochberg", "hommel", "bonferroni",
+"BH" or "fdr", "BY", or "none" for no correction. Default of this package
+is "BH".
+\item \code{design}: A character string representing the limma design
+formula, such as "~ 1 + Phase*Time + Reactor" for an integrated design, or
+"~ 1 + Time + Reactor" for an isolated design.
+\item\code{dream_params}: A named list or NULL. When not NULL, it can
+contain the following named
+elements:
+- \code{dof}: An integer greater than 1, specifying the degrees of freedom
+for  the dream topTable. If set to 0, then the best dof is automatically
+found with the help of leave-one-out-crossvalidation (loocv). The dof
+with the lowest error on the loocv is chosen.
+- \code{KenwardRoger}: A boolean indicating whether to use the Kenward-Roger
+approximation for mixed models.
+Note that random effects are now directly specified in the design
+formula and not in \code{dream_params}.
+\item \code{mode}: Specifies how the design formula is constructed:
+either \code{"isolated"} or \code{"integrated"}.
+\itemize{
+\item \code{"isolated"}: Each level is analyzed independently, using only the
+subset of data corresponding to that level. The design formula does
+not include the condition variable, since only one condition is
+present in each subset.
+\item \code{"integrated"}: All levels are analyzed together in a single model,
+using the full dataset. The design formula includes the condition
+variable (and optionally interaction terms with it) so that results
+are estimated jointly across all levels.
+\item \code{condition}: A character string specifying the column name
+in \code{meta} used to define groups for analysis. The condition column
+contains the levels of the experiment (such as control and treatment).
+\item \code{spline_params}: A list of spline parameters used in the
+analysis, including:
+\itemize{
+\item \code{spline_type}: The type of spline (e.g., "n" for natural
+splines or "b" for B-splines).
+\item \code{dof}: Degrees of freedom for the spline.
+\item \code{knots}: Positions of the internal knots (for B-splines).
+\item \code{bknots}: Boundary knots (for B-splines).
+\item \code{degree}: Degree of the spline (for B-splines only).
+}
+\item \code{use_array_weights}: Boolean flag indicating if the robust fit
+strategy to deal with heteroscedasticity should be used or not. If set to
+NULL, then this is handeled implicitly based on the result of the Levene
+test. If this test is significant for at least 10\% of the features,
+then the robust strategy is used. The robust strategy uses the function
+voomWithQualityWeights for RNA-seq data instead of the normal voom
+function. For other, non-count-based data, the function
+limma::arrayWeights is used instead, combined with setting the robust
+argument to TRUE for the limma::eBayes function. In summary, the strategy
+employed by those functions is to downweights samples with higher
+variance. This can be neccessary, because linear models have the
+assumption of homoscedasticity, which means that the variance is
+(approx.) the same across all datapoints where the linear model is fitted.
+If this is violated, then the resulting p-values cannot be trusted
+(common statistical wisdom).
+\item \code{bp_cfg}: A named numeric vector specifying the parallelization
+configuration, with expected names \code{"n_cores"} and \code{"blas_threads"}.
+}
+
+This controls how many \strong{R worker processes} (\code{n_cores}) and how many
+\strong{BLAS/OpenBLAS threads per process} (\code{blas_threads}) should be used
+during parallel computation.
+
+If \code{bp_cfg} is \code{NULL}, missing, or any of its required fields is
+\code{NA}, both \code{n_cores} and \code{blas_threads} default to \code{1}. This effectively
+disables parallelization and avoids oversubscription of CPU threads.
 }}
 
 \item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
 The SplineOmics object, updated with a list with three elements:
-        - `time_effect`: A list of top tables for each level with the time
-                         effect.
-        - `avrg_diff_conditions`: A list of top tables for each comparison
-                                 between the levels. The comparison is the
-                                 average difference of the values.
-        - `interaction_condition_time`: A list of top tables for each
-                                        comparison between levels. The
-                                        comparison is the interaction between
-                                        the condition and the time.
+- \code{time_effect}: A list of top tables for each level with the time
+effect.
+- \code{avrg_diff_conditions}: A list of top tables for each comparison
+between the levels. The comparison is the
+average difference of the values.
+- \code{interaction_condition_time}: A list of top tables for each
+comparison between levels. The
+comparison is the interaction between
+the condition and the time.
 }
 \description{
 This is the core function, which performs a limma spline analysis to identify
- significant time-dependent changes in features (e.g., proteins) within an 
+significant time-dependent changes in features (e.g., proteins) within an
 omics time-series dataset. It evaluates features within each condition level
 and between levels by comparing average differences and interactions
 between time and condition.

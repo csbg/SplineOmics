@@ -99,9 +99,9 @@ as row headers (otherwise, just numbers will be your feature names).</p></dd>
 
 <dt id="arg-rna-seq-data">rna_seq_data<a class="anchor" aria-label="anchor" href="#arg-rna-seq-data"></a></dt>
 <dd><p>An object containing the preprocessed RNA-seq data,
-such as the output from `limma::voom` or a similar preprocessing pipeline.
+such as the output from <code><a href="https://rdrr.io/pkg/limma/man/voom.html" class="external-link">limma::voom</a></code> or a similar preprocessing pipeline.
 This argument is not subjected to input control.
-Rather, in that regard it relies on the input control from the `limma::lmfit`
+Rather, in that regard it relies on the input control from the <code>limma::lmfit</code>
 function.</p></dd>
 
 
@@ -113,16 +113,16 @@ function.</p></dd>
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
 <dd><p>A named list describing the experiment.
 Must include the following fields:
-  - <code>"omics_data_type"</code>
-  - <code>"data_description"</code>
-  - <code>"data_collection_date"</code>
-  - <code>"analyst_name"</code>
-  - <code>"contact_info"</code>
-  - <code>"project_name"</code></p>
+- <code>"omics_data_type"</code>
+- <code>"data_description"</code>
+- <code>"data_collection_date"</code>
+- <code>"analyst_name"</code>
+- <code>"contact_info"</code>
+- <code>"project_name"</code></p>
 <p>May also include the following optional fields:
-  - <code>"method_description"</code>
-  - <code>"results_summary"</code>
-  - <code>"conclusions"</code></p></dd>
+- <code>"method_description"</code>
+- <code>"results_summary"</code>
+- <code>"conclusions"</code></p></dd>
 
 
 <dt id="arg-meta-batch-column">meta_batch_column<a class="anchor" aria-label="anchor" href="#arg-meta-batch-column"></a></dt>
@@ -153,7 +153,7 @@ create the row headers for the data matrix!</p></dd>
 to deal
 with heteroscedasticity should be used or not. If set to NULL, then this is
 handeled implicitly based on the result of the Levene test. If this test is
-significant for at least 10<!-- % of the features, then the robust strategy is  -->
+significant for at least 10% of the features, then the robust strategy is
 used. The robust strategy uses the function voomWithQualityWeights for
 RNA-seq data instead of the normal voom function. For other, non-count-based
 data, the function limma::arrayWeights is used instead, combined with setting
@@ -167,13 +167,13 @@ then the resulting p-values cannot be trusted (common statistical wisdom).</p></
 
 <dt id="arg-dream-params">dream_params<a class="anchor" aria-label="anchor" href="#arg-dream-params"></a></dt>
 <dd><p>#' A named list or NULL. When not NULL, it can contain
- the following named elements:
-- `dof`: An integer greater than 1, specifying the degrees of freedom for
-  the dream topTable.
-- `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
-  approximation for mixed models.
+the following named elements:</p><ul><li><p><code>dof</code>: An integer greater than 1, specifying the degrees of freedom for
+the dream topTable.</p></li>
+<li><p><code>KenwardRoger</code>: A boolean indicating whether to use the Kenward-Roger
+approximation for mixed models.
 Note that random effects are now directly specified in the design formula
-and not in `dream_params`.</p></dd>
+and not in <code>dream_params</code>.</p></li>
+</ul></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
@@ -181,7 +181,7 @@ and not in `dream_params`.</p></dd>
 'integrated' for the mode. Isolated means limma determines the results for
 each level
 using only the data from that level. Integrated means limma determines the
- results for all levels using the full dataset (from all levels).</p></dd>
+results for all levels using the full dataset (from all levels).</p></dd>
 
 
 <dt id="arg-spline-params">spline_params<a class="anchor" aria-label="anchor" href="#arg-spline-params"></a></dt>
@@ -201,12 +201,12 @@ Defaults to "BH" (Benjamini-Hochberg).</p></dd>
 
 <dt id="arg-bp-cfg">bp_cfg<a class="anchor" aria-label="anchor" href="#arg-bp-cfg"></a></dt>
 <dd><p>A named numeric vector specifying the parallelization
-configuration, with expected names `"n_cores"` and `"blas_threads"`.</p>
-<p>This controls how many **R worker processes** (`n_cores`) and how many
-**BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
+configuration, with expected names <code>"n_cores"</code> and <code>"blas_threads"</code>.</p>
+<p>This controls how many <strong>R worker processes</strong> (<code>n_cores</code>) and how many
+<strong>BLAS/OpenBLAS threads per process</strong> (<code>blas_threads</code>) should be used
 during parallel computation.</p>
-<p>If `bp_cfg` is `NULL`, missing, or any of its required fields is
-`NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
+<p>If <code>bp_cfg</code> is <code>NULL</code>, missing, or any of its required fields is
+<code>NA</code>, both <code>n_cores</code> and <code>blas_threads</code> default to <code>1</code>. This effectively
 disables parallelization and avoids oversubscription of CPU threads.</p></dd>
 
 </dl></div>

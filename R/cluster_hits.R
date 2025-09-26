@@ -67,8 +67,8 @@
 #' }
 #' 
 #' @param nr_clusters Named list specifying the number of clusters per
-#'   condition level. The list \strong{must} have one element per condition
-#'   level, and each element \strong{must be named exactly} with the
+#'   condition level. The list must have one element per condition
+#'   level, and each element must be named exactly with the
 #'   corresponding condition name (e.g., \code{"condition1"},
 #'   \code{"condition2"}).
 #'
@@ -87,7 +87,6 @@
 #'     \item All condition levels must be present exactly once as names.
 #'     \item Values must be positive integers; ranges must be increasing
 #'           (e.g. \code{2:6}).
-#'
 #'     \item BIC is computed from k-means using Euclidean distance. A common
 #'           form is \eqn{\mathrm{BIC} = n \log(\mathrm{WCSS}/n) +
 #'           k \log(n)\, p}, where \eqn{n} is the number of series, \eqn{p}
@@ -98,7 +97,7 @@
 #'   }
 #'
 #'   \strong{Example}
-#'   # Fixed k for condition1, BIC-selected k for condition2
+#'   Fixed k for condition1, BIC-selected k for condition2
 #'   nr_clusters <- list(
 #'     condition1 = 4,
 #'     condition2 = 2:6
@@ -146,36 +145,40 @@
 #'  downstream databases used for overrepresentation analysis after clustering.
 #'  
 #' @param plot_info List with optional elements used to annotate spline plots:
-#'   - y_axis_label: single string for the y-axis label.
-#'   - time_unit: single string used in the x-axis label.
-#'   - treatment_labels: named list of single strings.
-#'   - treatment_timepoints: named list of single numeric values.
 #'
-#'   If any treatment list is present, both must be present. The two lists
-#'   must have identical name sets. Allowed names are the values of
-#'   `meta[[condition]]` and the special name "double_spline_plots", which
-#'   generates a treatment line for the plots of limma category 2 and 3, so 
-#'   for the average difference between the conditions and the interaction 
-#'   between condition and time. 
+#' - `y_axis_label`: single string for the y-axis label.  
+#' - `time_unit`: single string used in the x-axis label.  
+#' - `treatment_labels`: named list of single strings.  
+#' - `treatment_timepoints`: named list of single numeric values.
 #'
-#'   Vertical dashed lines are drawn at the given timepoints for facets whose
-#'   level name matches a list name, and labeled with the corresponding string
-#'   (e.g., feeding, temperature shift).
-#'   Example: annotate spline plots with feeding and temperature shift events:
-#'      plot_info <- list(
-#'          y_axis_label = "log2 expression",
-#'          time_unit = "hours",
-#'          treatment_labels = list(
-#'             WT = "Feeding",
-#'             KO = "Temperature shift",
-#'             double_spline_plots = "Treatment line"
-#'          ),
-#'          treatment_timepoints = list(
-#'            WT = 12,
-#'            KO = 24,
-#'            double_spline_plots = 18
-#'          )
-#'        )
+#' If any treatment list is present, both must be present. The two lists must
+#' have identical name sets. Allowed names are the values of `meta[[condition]]`
+#' and the special name `"double_spline_plots"`, which generates a treatment line
+#' for the plots of limma category 2 and 3 (average difference between conditions
+#' and the interaction between condition and time).
+#'
+#' Vertical dashed lines are drawn at the given timepoints for facets whose
+#' level name matches a list name, and labeled with the corresponding string
+#' (e.g., feeding, temperature shift).
+#' 
+#' Example:
+#'
+#' \preformatted{
+#' plot_info <- list(
+#'   y_axis_label = "log2 expression",
+#'   time_unit = "hours",
+#'   treatment_labels = list(
+#'     WT = "Feeding",
+#'     KO = "Temperature shift",
+#'     double_spline_plots = "Treatment line"
+#'   ),
+#'   treatment_timepoints = list(
+#'     WT = 12,
+#'     KO = 24,
+#'     double_spline_plots = 18
+#'   )
+#' )
+#' }
 #'                  
 #' @param plot_options A named list controlling optional plot customization.  
 #'   The list can include one or both of the following entries 
@@ -1173,8 +1176,7 @@ add_cat1_and_cat3_effectsizes <- function(
 #'
 #' Only features that both appear in the input
 #' `time_effect_hits` and pass the time-effect size threshold are
-#' clustered. Curves are normalized to the [0, 1] range before
-#' clustering.
+#' clustered. Curves are z-score normalised before clustering.
 #'
 #' @param time_effect_hits A named list of data.frames or vectors giving
 #'   Category 1 hits per condition level. Each entry must contain
@@ -1185,8 +1187,7 @@ add_cat1_and_cat3_effectsizes <- function(
 #'   (e.g. `1:1`, `2:8`) for the corresponding condition level.
 #' @param condition A string giving the name of the column in `meta`
 #'   that encodes condition levels (e.g., `"Phase"`).
-#' @param predicted_timecurves A list returned by
-#'   [predict_timecurves()], containing smoothed predictions,
+#' @param predicted_timecurves A list containing smoothed predictions,
 #'   effect-size filters, and time grid.
 #' @param verbose Boolean flag controlling the display of messages.
 #'
@@ -1212,9 +1213,6 @@ add_cat1_and_cat3_effectsizes <- function(
 #' - Category 3 clustering is only performed if two condition levels
 #'   are present and at least as many hits as requested clusters are
 #'   available.
-#'
-#' @seealso [predict_timecurves()], [normalize_curves()],
-#'   [kmeans_clustering()]
 #'   
 perform_clustering <- function(
     time_effect_hits, 
@@ -1419,8 +1417,7 @@ get_category_2_and_3_hits <- function(
 #' ('isolated' or 'integrated').
 #' @param report_info A named list containing report information such as analyst
 #'                    name, fixed and random effects, etc.
-#' @param predicted_timecurves A list returned by [predict_timecurves()],
-#'   containing:
+#' @param predicted_timecurves A list containing:
 #'   \describe{
 #'     \item{`time_grid`}{A numeric vector of dense time points used for
 #'       evaluation.}
@@ -1616,11 +1613,10 @@ make_clustering_report <- function(
     if (verbose) {
       message(paste("Generating cluster mean splines for level: ", level))
     }
-    cluster_mean_splines <- plot_cluster_mean_splines( # Plot for each cluster
+    cluster_mean_splines <- plot_cluster_mean_splines( 
       curve_values = curve_values,
       plot_info = plot_info,
-      level = level,
-      max_hit_number = max_hit_number
+      level = level
     )
 
     top_table <- level_clustering$top_table
@@ -1725,6 +1721,11 @@ make_clustering_report <- function(
     topTables[[element_name]] <- top_table_element
   }
 
+  topTables <- transfer_sr2cc(
+    topTables = topTables,
+    all_levels_clustering = all_levels_clustering
+  )
+
   if (!is.null(genes)) {
     enrichr_format <- prepare_gene_lists_for_enrichr(
       all_levels_clustering,
@@ -1806,8 +1807,7 @@ make_clustering_report <- function(
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
 #' containing NA values. When provided, it highlights the datapoints in the 
 #' spline plots that originally where NA and that were imputed.
-#' @param predicted_timecurves A list returned by [predict_timecurves()],
-#'   containing:
+#' @param predicted_timecurves A list containing:
 #'   \describe{
 #'     \item{`time_grid`}{A numeric vector of dense time points used for
 #'       evaluation.}
@@ -1887,7 +1887,7 @@ generate_spline_comparisons <- function(
 #' single flat tibble.
 #'
 #' Category 3: clusters are taken directly from the paired concatenation
-#' result stored in all_levels_clustering[["paired_category_3"]]. This
+#' result stored in all_levels_clustering$paired_category_3. This
 #' is obtained by concatenating the two condition curves per feature and
 #' clustering them. The resulting integer cluster index is exposed as
 #' cluster_cat3. By default cluster_cat3 is only shown for features in
@@ -1928,7 +1928,7 @@ generate_spline_comparisons <- function(
 #'   and cluster_cat3 respectively (non hit features receive NA).
 #'
 #' @param genes A character vector of gene symbols (or names) indexed by
-#'   feature_nr (genes[i] corresponds to feature i). Use NULL to skip
+#'   feature_nr (genes i corresponds to feature i). Use NULL to skip
 #'   gene annotations.
 #'
 #' @return A tibble with columns:
@@ -1941,7 +1941,7 @@ generate_spline_comparisons <- function(
 #'     or "<cond2>_higher" based on the sign of the contrast column,
 #'     masked to the cat2 hit set if provided; otherwise NA.
 #'   * cluster_cat3: present only if cat3 exists; integer cluster index
-#'     taken directly from all_levels_clustering[["paired_category_3"]],
+#'     taken directly from all_levels_clustering$paired_category_3,
 #'     masked to the cat3 hit set if provided; otherwise NA.
 #'
 #' @importFrom dplyr mutate transmute filter select rename left_join
@@ -1986,12 +1986,13 @@ construct_cluster_table <- function(
   c2 <- paste0("cluster_", cond_names[[2]])
   nmc <- gsub("_", "", cond_names)
   
-  has_c2 <- !is.null(limma_splines_results$avrg_diff_conditions) &&
-    nrow(stbl(limma_splines_results$avrg_diff_conditions)) > 0
-  has_c3 <- !is.null(limma_splines_results$interaction_condition_time) &&
-    nrow(stbl(limma_splines_results$interaction_condition_time)) > 0
-  use_cat23 <- has_c2 || has_c3
+  has_c2 <- is.list(category_2_and_3_hits) &&
+    "category_2_hits" %in% names(category_2_and_3_hits)
   
+  has_c3 <- is.list(category_2_and_3_hits) &&
+    "category_3_hits" %in% names(category_2_and_3_hits)
+  use_cat23 <- has_c2 || has_c3
+
   no_genes <- is.null(genes)
   anot <- if (no_genes) {
     tibble(feature_nr = numeric(0), gan = character(0))
@@ -2032,7 +2033,7 @@ construct_cluster_table <- function(
     cl2 |> select(feature_nr),
     fn_tbl |> select(feature_nr)
   )
-  
+
   if (use_cat23) {
     cat2h <- if (has_c2) {
       category_2_and_3_hits$category_2_hits |>
@@ -2810,8 +2811,7 @@ plot_all_mean_splines <- function(
 plot_cluster_mean_splines <- function(
     curve_values,
     plot_info,
-    level,
-    max_hit_number
+    level
     ) {
 
   clusters <- sort(unique(curve_values$cluster))
@@ -2825,11 +2825,6 @@ plot_cluster_mean_splines <- function(
     )
     
     nr_of_hits <- nrow(subset_df)
-    
-    if (!is.infinite(max_hit_number)) {
-      n_keep <- min(max_hit_number, nrow(subset_df))
-      subset_df <- subset_df[seq_len(n_keep), , drop = FALSE]
-    }
     
     subset_df$cluster <- NULL
     current_title <- paste(
@@ -2872,8 +2867,7 @@ plot_cluster_mean_splines <- function(
 #' feature.
 #' @param meta A dataframe containing metadata for the data, including time
 #' points.
-#' @param predicted_timecurves A list returned by [predict_timecurves()],
-#'   containing:
+#' @param predicted_timecurves A list containing:
 #'   \describe{
 #'     \item{`time_grid`}{A numeric vector of dense time points used for
 #'       evaluation.}
@@ -3257,8 +3251,7 @@ plot_splines <- function(
 #' replicates per timepoint. For example Reactor with the unique values: 
 #' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
 #' running this experiment and each timepoint has one sample from each reactor.
-#' @param predicted_timecurves A list returned by [predict_timecurves()],
-#'   containing:
+#' @param predicted_timecurves A list containing:
 #'   \describe{
 #'     \item{`time_grid`}{A numeric vector of dense time points used for
 #'       evaluation.}
@@ -3997,9 +3990,9 @@ build_cluster_hits_report <- function(
           "<ul style='list-style-position: inside; text-align: left;",
           "display: inline-block;'>",
           "<li>0.90-1.00 = excellent</li>",
-          "<li>0.80-0.89 = strong</li>",
-          "<li>0.70-0.79 = borderline</li>",
-          "<li>0.60-0.69 = marginal</li>",
+          "<li>0.80-0.89 = very good</li>",
+          "<li>0.70-0.79 = good</li>",
+          "<li>0.60-0.69 = borderline</li>",
           "<li>0.50-0.59 = poor</li>",
           "<li>0.00-0.49 = very poor</li>",
           "<li>&lt;0.00 = anti-pattern</li>",
@@ -4609,6 +4602,87 @@ find_col_ignore_underscores_rx <- function(df, target) {
 }
 
 
+#' Transfer per-member cluster quality scores into top tables
+#'
+#' @noRd
+#'
+#' @description
+#' For each condition level present in both `topTables` and
+#' `all_levels_clustering`, transfer the per-feature values from
+#' `cluster_quality$per_member` (in `all_levels_clustering`) into the
+#' corresponding tibble in `topTables`.  
+#'
+#' The mapping is done by matching feature identifiers:
+#' - `feature` in `clustered_hits` is aligned positionally with entries
+#'   in `per_member` (row i of `clustered_hits` corresponds to element i
+#'   of `per_member`).
+#' - `feature_nr` in each tibble of `topTables` is then matched against
+#'   `feature` in `clustered_hits` to retrieve the correct per-member
+#'   score.
+#'
+#' A new column `sr2cc` is added to each tibble in `topTables`:
+#' - Values are numeric, taken from the corresponding `per_member`
+#'   element after ID-based matching.
+#' - Unmatched rows are assigned `NA`.
+#' - Any existing `sr2cc` column is removed and replaced.
+#'
+#' @param topTables
+#'   A named list of tibbles. Each tibble must contain a column
+#'   `feature_nr` with numeric feature IDs used for matching.
+#' @param all_levels_clustering
+#'   A named list of condition-level results. Each element must contain:
+#'   - `cluster_quality$per_member`: numeric vector of per-feature
+#'     scores (aligned to rows of `clustered_hits`).
+#'   - `clustered_hits`: data frame with a numeric `feature` column.
+#'
+#' @return
+#'   A list of tibbles (same structure as `topTables`), each with a new
+#'   column `sr2cc` holding per-member cluster quality scores or `NA`
+#'   if no match was found.
+#'   
+transfer_sr2cc <- function(
+    topTables,
+    all_levels_clustering
+    ) {
+  out <- topTables
+  lvl_names <- intersect(names(all_levels_clustering), names(out))
+  if (length(lvl_names) == 0L) return(out)
+  
+  for (lvl in lvl_names) {
+    alc <- all_levels_clustering[[lvl]]
+    tt  <- out[[lvl]]
+    
+    if (is.null(alc$cluster_quality$per_member) ||
+        is.null(alc$clustered_hits) ||
+        !is.data.frame(alc$clustered_hits) ||
+        is.null(tt) || !is.data.frame(tt) ||
+        !("feature_nr" %in% names(tt))) {
+      next
+    }
+    
+    per_member <- alc$cluster_quality$per_member
+    hits_df    <- alc$clustered_hits
+    
+    # Coerce IDs to numeric for robust matching
+    f_ids <- suppressWarnings(as.numeric(hits_df$feature))
+    t_ids <- suppressWarnings(as.numeric(tt$feature_nr))
+    
+    # Match feature_nr (tt) to feature (hits_df)
+    idx <- match(t_ids, f_ids)
+    
+    # Pull per_member by the matched row position in hits_df
+    sr2cc <- rep(NA_real_, nrow(tt))
+    ok <- !is.na(idx) & idx >= 1 & idx <= length(per_member)
+    sr2cc[ok] <- as.numeric(per_member[idx[ok]])
+    
+    tt$sr2cc <- sr2cc
+    out[[lvl]] <- tt
+  }
+  
+  out
+}
+
+
 # Level 3 internal functions ---------------------------------------------------
 
 
@@ -5070,10 +5144,11 @@ plot_single_and_mean_splines <- function(
   time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
   color_values <- c(
-    "Mean"   = cluster_color,
+    "Mean"   = "black",
     "Spline" = cluster_color
   )
 
+  # Draw only the individual splines here
   p <- ggplot2::ggplot() +
     ggplot2::geom_line(
       data = df_long,
@@ -5084,15 +5159,6 @@ plot_single_and_mean_splines <- function(
         colour = "Spline"
       ),
       alpha = 0.4, linewidth = 0.5
-    ) +
-    ggplot2::geom_line(
-      data = consensus_df,
-      ggplot2::aes(
-        x = !!rlang::sym("time"),
-        y = consensus,
-        colour = "Mean"
-      ),
-      linewidth = 1.5
     )
 
   treatment_labels <- NA
@@ -5110,19 +5176,15 @@ plot_single_and_mean_splines <- function(
   color_values <- c(color_values, treatment_colors)
 
   # Add the final scale for colors and adjust legend
+  p <- result$p
+  treatment_colors <- result$treatment_colors
+  
+  color_values <- c(color_values, treatment_colors)
+  
   p <- p +
     ggplot2::scale_colour_manual(
       name = "",
-      values = color_values,
-      guide = ggplot2::guide_legend(
-        override.aes = list(
-          size = c(
-            1.5, # First line's size
-            0.5, # Second line's size
-            rep(0.5, length(na.omit(treatment_colors))) # Treatment line sizes
-          )
-        )
-      )
+      values = color_values
     ) +
     ggplot2::coord_cartesian(clip = "off") +
     ggplot2::theme_minimal() +
@@ -5144,6 +5206,14 @@ plot_single_and_mean_splines <- function(
       axis.text.x   = ggplot2::element_text(size = 12),
       axis.text.y   = ggplot2::element_text(size = 12),
       legend.text   = ggplot2::element_text(size = 12)
+    )
+  
+  # Add mean line last so that it is always on top.
+  p <- p +
+    ggplot2::geom_line(
+      data = consensus_df,
+      ggplot2::aes(x = !!rlang::sym("time"), y = consensus, colour = "Mean"),
+      linewidth = 1.5
     )
 
   return(p)

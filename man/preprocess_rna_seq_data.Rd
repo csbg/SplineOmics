@@ -7,59 +7,59 @@
 preprocess_rna_seq_data(splineomics, normalize_func = NULL, verbose = TRUE)
 }
 \arguments{
-\item{splineomics}{An S3 object of class `SplineOmics` that must contain the 
+\item{splineomics}{An S3 object of class \code{SplineOmics} that must contain the
 following elements:
 \itemize{
-  \item \code{data}: A matrix of the omics dataset, with feature names 
-  optionally as row headers (genes as rows, samples as columns).
-  \item \code{meta}: A dataframe containing metadata corresponding to the 
-  \code{data}. The dataframe must include a 'Time' column and a column 
-  specified by the \code{condition}.
-  \item \code{design}: A character string representing the design formula 
-  for the limma analysis (e.g., \code{'~ 1 + Phase*X + Reactor'}).
-  \item \code{spline_params}: A list of spline parameters used in the 
-  analysis. This can include:
-    \itemize{
-      \item \code{spline_type}: A character string specifying the type of 
-      spline. Must be either \code{'n'} for natural cubic splines or 
-      \code{'b'} for B-splines.
-      \item \code{dof}: An integer specifying the degrees of freedom. 
-      Required for both natural cubic splines and B-splines.
-      \item \code{degree}: An integer specifying the degree of the spline 
-      (for B-splines only).
-      \item \code{knots}: Positions of the internal knots (for B-splines).
-      \item \code{bknots}: Boundary knots (for B-splines).
-    }
-  \item \code{use_array_weights}: Boolean flag indicating if the robust fit
-   strategy to deal with heteroscedasticity should be used or not. If set to
-   NULL, then this is handeled implicitly based on the result of the Levene
-   test. If this test is significant for at least 10% of the features,
-   then the robust strategy is used. The robust strategy uses the function
-   voomWithQualityWeights for RNA-seq data instead of the normal voom
-   function. For other, non-count-based data, the function 
-   limma::arrayWeights is used instead, combined with setting the robust
-   argument to TRUE for the limma::eBayes function. In summary, the strategy
-   employed by those functions is to downweights samples with higher
-   variance. This can be neccessary, because linear models have the
-   assumption of homoscedasticity, which means that the variance is
-   (approx.) the same across all datapoints where the linear model is fitted.
-    If this is violated, then the resulting p-values cannot be trusted
-   (common statistical wisdom).
-  \item \code{bp_cfg}: A named numeric vector specifying the parallelization
-  configuration, with expected names `"n_cores"` and `"blas_threads"`.
-  
-  This controls how many **R worker processes** (`n_cores`) and how many
-  **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-  during parallel computation.  
-  
-  If `bp_cfg` is `NULL`, missing, or any of its required fields is
-  `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
-  disables parallelization and avoids oversubscription of CPU threads.
+\item \code{data}: A matrix of the omics dataset, with feature names
+optionally as row headers (genes as rows, samples as columns).
+\item \code{meta}: A dataframe containing metadata corresponding to the
+\code{data}. The dataframe must include a 'Time' column and a column
+specified by the \code{condition}.
+\item \code{design}: A character string representing the design formula
+for the limma analysis (e.g., \code{'~ 1 + Phase*X + Reactor'}).
+\item \code{spline_params}: A list of spline parameters used in the
+analysis. This can include:
+\itemize{
+\item \code{spline_type}: A character string specifying the type of
+spline. Must be either \code{'n'} for natural cubic splines or
+\code{'b'} for B-splines.
+\item \code{dof}: An integer specifying the degrees of freedom.
+Required for both natural cubic splines and B-splines.
+\item \code{degree}: An integer specifying the degree of the spline
+(for B-splines only).
+\item \code{knots}: Positions of the internal knots (for B-splines).
+\item \code{bknots}: Boundary knots (for B-splines).
+}
+\item \code{use_array_weights}: Boolean flag indicating if the robust fit
+strategy to deal with heteroscedasticity should be used or not. If set to
+NULL, then this is handeled implicitly based on the result of the Levene
+test. If this test is significant for at least 10\% of the features,
+then the robust strategy is used. The robust strategy uses the function
+voomWithQualityWeights for RNA-seq data instead of the normal voom
+function. For other, non-count-based data, the function
+limma::arrayWeights is used instead, combined with setting the robust
+argument to TRUE for the limma::eBayes function. In summary, the strategy
+employed by those functions is to downweights samples with higher
+variance. This can be neccessary, because linear models have the
+assumption of homoscedasticity, which means that the variance is
+(approx.) the same across all datapoints where the linear model is fitted.
+If this is violated, then the resulting p-values cannot be trusted
+(common statistical wisdom).
+\item \code{bp_cfg}: A named numeric vector specifying the parallelization
+configuration, with expected names \code{"n_cores"} and \code{"blas_threads"}.
+
+This controls how many \strong{R worker processes} (\code{n_cores}) and how many
+\strong{BLAS/OpenBLAS threads per process} (\code{blas_threads}) should be used
+during parallel computation.
+
+If \code{bp_cfg} is \code{NULL}, missing, or any of its required fields is
+\code{NA}, both \code{n_cores} and \code{blas_threads} default to \code{1}. This effectively
+disables parallelization and avoids oversubscription of CPU threads.
 }}
 
 \item{normalize_func}{An optional normalization function. If provided, this
-function will be used to normalize the `DGEList` object. If not provided,
-TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
+function will be used to normalize the \code{DGEList} object. If not provided,
+TMM normalization (via \code{edgeR::calcNormFactors}) will be used by default.
 Must take as
 input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 with the normalized counts.}
@@ -67,17 +67,17 @@ with the normalized counts.}
 \item{verbose}{Boolean flag controlling the display of messages.}
 }
 \value{
-The updaed `splineomics` object, now containing the `voom` object, 
-which includes the log2-counts per million (logCPM) matrix and 
+The updaed \code{splineomics} object, now containing the \code{voom} object,
+which includes the log2-counts per million (logCPM) matrix and
 observation-specific weights. Additionally, the splineparams are updated with
 the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)
 }
 \description{
-The `preprocess_rna_seq_data()` function performs essential preprocessing
-steps for raw RNA-seq counts. This includes creating a `DGEList` object,
+The \code{preprocess_rna_seq_data()} function performs essential preprocessing
+steps for raw RNA-seq counts. This includes creating a \code{DGEList} object,
 normalizing the counts using the default TMM (Trimmed Mean of M-values)
-normalization via the `edgeR::calcNormFactors` function, and applying the
-`voom` transformation from the `limma` package to obtain log-transformed
+normalization via the \code{edgeR::calcNormFactors} function, and applying the
+\code{voom} transformation from the \code{limma} package to obtain log-transformed
 counts per million (logCPM) with associated precision weights. If you
 require a different normalization method, you can supply your own
 custom normalization function.

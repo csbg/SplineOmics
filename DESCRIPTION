@@ -55,6 +55,7 @@ Imports:
     stats,
     tools,
     utils,
+    methods,
     car 
 Suggests:
     AnnotationDbi,
@@ -78,5 +79,6 @@ Suggests:
 Encoding: UTF-8
 LazyData: false
 RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

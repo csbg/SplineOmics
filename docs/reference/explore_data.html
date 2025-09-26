@@ -80,54 +80,50 @@ report directory.</p>
 <dl><dt id="arg-splineomics">splineomics<a class="anchor" aria-label="anchor" href="#arg-splineomics"></a></dt>
 <dd><p>A named list containing all required inputs for the
 splineomics workflow. Must contain the following elements:</p><dl><dt>data</dt>
-<dd><p>[numeric matrix]
-    The data matrix with the values. The columns are the
-    samples (timepoint + replicate combo) and the rows are the features
-    (e.g. genes or proteins).</p></dd>
+<dd><p>The data matrix with the values. The columns are the
+samples (timepoint + replicate combo) and the rows are the features
+(e.g. genes or proteins).</p></dd>
 
-  <dt>meta</dt>
-<dd><p>[dataframe]
-     A dataframe containing metadata corresponding to the
-     <code>data</code>, must include a 'Time' column and any columns specified by
-     <code>conditions</code>. In general, the columns of meta correspond to the
-     different types of metadata, and each row corresponds to a column of
-     data (contains the metadata for that sample).</p></dd>
+<dt>meta</dt>
+<dd><p>A dataframe containing metadata corresponding to the
+<code>data</code>, must include a 'Time' column and any columns specified by
+<code>conditions</code>. In general, the columns of meta correspond to the
+different types of metadata, and each row corresponds to a column of
+data (contains the metadata for that sample).</p></dd>
 
-  <dt>annotation</dt>
-<dd><p>[dataframe]
-    A dataframe that maps the rows of <code>data</code> to
-    annotation info, such as the gene name or database identifiers.</p></dd>
+<dt>annotation</dt>
+<dd><p>A dataframe that maps the rows of <code>data</code> to
+annotation info, such as the gene name or database identifiers.</p></dd>
 
-  <dt>report_info</dt>
-<dd><p>[named list]
-    A named list describing the experiment.
+<dt>report_info</dt>
+<dd><p>A named list describing the experiment.
 Must include the following fields:
-  - <code>"omics_data_type"</code>
-  - <code>"data_description"</code>
-  - <code>"data_collection_date"</code>
-  - <code>"analyst_name"</code>
-  - <code>"contact_info"</code>
-  - <code>"project_name"</code></p>
+- <code>"omics_data_type"</code>
+- <code>"data_description"</code>
+- <code>"data_collection_date"</code>
+- <code>"analyst_name"</code>
+- <code>"contact_info"</code>
+- <code>"project_name"</code></p>
 <p>May also include the following optional fields:
-  - <code>"method_description"</code>
-  - <code>"results_summary"</code>
-  - <code>"conclusions"</code></p></dd>
+- <code>"method_description"</code>
+- <code>"results_summary"</code>
+- <code>"conclusions"</code></p></dd>
 
-  <dt>condition</dt>
-<dd><p>[character]
-    Character vector of length 1 specifying the column
-    name in <code>meta</code> used to define groups for analysis.</p></dd>
+<dt>condition</dt>
+<dd><p><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a>
+Character vector of length 1 specifying the column
+name in <code>meta</code> used to define groups for analysis.</p></dd>
 
-  <dt>meta_batch_column</dt>
-<dd><p>[character]
-    Character vector of length 1 specifying the column
-    name in <code>meta</code> that contains the info for the batch effect.</p></dd>
+<dt>meta_batch_column</dt>
+<dd><p><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a>
+Character vector of length 1 specifying the column
+name in <code>meta</code> that contains the info for the batch effect.</p></dd>
 
-  <dt>meta_batch2_column</dt>
-<dd><p>[character]
-    Character vector of length 1 specifying the column
-    name in <code>meta</code> that contains the info for the second batch
-    effect.</p></dd>
+<dt>meta_batch2_column</dt>
+<dd><p><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a>
+Character vector of length 1 specifying the column
+name in <code>meta</code> that contains the info for the second batch
+effect.</p></dd>
 
 
 </dl></dd>
