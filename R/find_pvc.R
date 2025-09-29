@@ -366,7 +366,7 @@ find_pvc <- function(
       support = support
     )
   )
-  
+
   generate_report_html(
     plots = results,
     # required, but statically handled downstream for the pvc HTML report.
@@ -508,12 +508,21 @@ pvc_test <- function(
     }
 
     # Build formula string: e.g. "~ 0 + Time + Reactor + HPLC_column"
-    batch_formula_part <- paste(batch_effects, collapse = " + ")
-    design_formula_str <- paste("~ 0 + Time +", batch_formula_part)
+    batch_formula_part <- paste(
+      batch_effects,
+      collapse = " + "
+      )
+    design_formula_str <- paste(
+      "~ 0 + Time +",
+      batch_formula_part
+      )
     design_formula <- as.formula(design_formula_str)
 
     # Create design matrix
-    design <- model.matrix(design_formula, data = meta)
+    design <- model.matrix(
+      design_formula,
+      data = meta
+      )
     colnames(design)[seq_len(num_timepoints)] <- valid_timepoints
   }
 
@@ -1100,12 +1109,13 @@ build_pvc_report <- function(
   
   # Create progress bar
   pb <- create_progress_bar(flattened_plots)
-  nr_of_hits <- length(flattened_plots)
-  
+
   for (index in seq_along(flattened_plots)) {
     if (plots_processed_in_section == 0) {
       # Insert section header
       level <- levels[[current_header_index]]
+      
+      nr_of_hits <- n_plots_per_header[[current_header_index]]
       
       html_content <- paste(
         html_content,
