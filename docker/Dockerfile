@@ -38,7 +38,7 @@ RUN R -e "install.packages('BiocManager'); install.packages('remotes')" 2>&1 | t
 RUN R -e "BiocManager::install(c('ComplexHeatmap', 'limma', 'variancePartition'), force = TRUE)" 2>&1 | tee /log/bioconductor_install_log.txt
 
 # Install the SplineOmics package from GitHub in the custom library
-RUN R -e "remotes::install_github('csbg/SplineOmics', ref = 'v0.3.5', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
+RUN R -e "remotes::install_github('csbg/SplineOmics', ref = 'v0.3.6', dependencies = TRUE, force = TRUE)" 2>&1 | tee /log/splineomics_install_log.txt
 
 # Install R packages often used in bioinformatics analysises.
 RUN R -e "install.packages(c('conflicted', 'here', 'readxl', 'readr'))" 2>&1 | tee /log/required_packages_install_log.txt
@@ -54,5 +54,5 @@ CMD ["/init"]
 
 # To build the image, run the following command in the Bash shell in the dir 
 # where this Dockerfile is located (./docker):
-# docker build --no-cache -t thomasrauter/splineomics:v0.3.5 .
+# docker build --no-cache -t thomasrauter/splineomics:v0.3.6 .
 

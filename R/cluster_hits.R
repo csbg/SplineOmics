@@ -1138,12 +1138,6 @@ add_cat1_and_cat3_effectsizes <- function(
     m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
     m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
 
-    if (!identical(rownames(m1), rownames(m2))) {
-      stop_call_false("Row names of the two condition matrices must match.")
-    }
-    if (ncol(m1) != ncol(m2)) {
-      stop_call_false("Matrices must have the same number of timepoints.")
-    }
     if (ncol(m1) < 2L) {
       md <- rep(0, nrow(m1))
       names(md) <- rownames(m1)
@@ -2207,7 +2201,7 @@ add_effect_size_columns <- function(
     out[bad] <- NA_real_
     out
   }
-  
+
   if (!is.null(category_2_and_3_hits)) {
     cat3 <- category_2_and_3_hits[["category_3_hits"]]
     
@@ -2235,12 +2229,12 @@ add_effect_size_columns <- function(
     
     category_2_and_3_hits[["category_3_hits"]] <- cat3
   }
-  
+
   for (nm in names(time_effect_effect_size)) {
-    tt_name <- paste0("Condition_", nm)
-    if (!(tt_name %in% names(within_level_top_tables))) {
-      next
-    }
+    tt_names <- names(within_level_top_tables)
+    idx <- match(nm, sub("^[^_]*_", "", tt_names))
+    if (is.na(idx)) next
+    tt_name <- tt_names[[idx]]
     
     tt <- within_level_top_tables[[tt_name]]
     

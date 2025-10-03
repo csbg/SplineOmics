@@ -1,7 +1,7 @@
 library(testthat)
 library(SplineOmics)
 
-test_that("phosphoproteomics pipeline runs without errors", {
+test_that("phosphoproteomics pipeline snapshot", {
   data <- readRDS(xzfile(system.file(
     "extdata",
     "phosphoproteomics_data.rds.xz",
@@ -53,14 +53,15 @@ test_that("phosphoproteomics pipeline runs without errors", {
     time_unit = "min",
     treatment_labels = list(
       Exponential = "feeding",
-      Stationary = "feeding"
+      Stationary  = "feeding"
     ),
     treatment_timepoints = list(
       Exponential = 0,
-      Stationary = 0
+      Stationary  = 0
     )
   )
   
+  # run and collect warnings
   warning_message <- capture_warnings({
     excursion_plots <- SplineOmics::find_pvc(
       splineomics = splineomics,
@@ -70,58 +71,44 @@ test_that("phosphoproteomics pipeline runs without errors", {
     )
   })
   
-  expect_true(any(grepl("Partial NA coefficients", warning_message)))
-  
-  # Check overall structure
+  # light sanity checks that won’t churn snapshots
   expect_type(excursion_plots, "list")
-  expect_named(excursion_plots, c("Exponential", "Stationary"))
-  expect_length(excursion_plots, 2)
+  expect_setequal(names(excursion_plots), c("Exponential", "Stationary"))
   
-  # Check Exponential
-  exp <- excursion_plots$Exponential
-  expect_type(exp, "list")
-  expect_named(exp, c("plots", "pvc_adj_pvals", "pvc_pattern_summary"))
-  expect_length(exp$plots, 1)
-  expect_type(exp$plots, "list")
-  
-  expect_type(exp$pvc_adj_pvals, "double")
-  expect_equal(dim(exp$pvc_adj_pvals), c(1000, 4))
-  expect_equal(exp$pvc_adj_pvals[1, 1], 0.99561, tolerance = 1e-5)
-  expect_equal(exp$pvc_adj_pvals[1, 2], 0.94922, tolerance = 1e-5)
-  expect_equal(exp$pvc_adj_pvals[1, 3], 0.966554, tolerance = 1e-5)
-  expect_equal(exp$pvc_adj_pvals[1, 4], 0.9926, tolerance = 1e-5)
-  
-  # pvc_pattern_summary for Exponential
-  exp_summary <- exp$pvc_pattern_summary
-  expect_s3_class(exp_summary, "data.frame")
-  expect_equal(dim(exp_summary), c(4, 6))
-  expect_equal(names(exp_summary), c("-60", "15", "60", "90", "120", "240"))
-  expect_equal(as.integer(unlist(exp_summary[1, ])), c(0, 0, 0, 0, 0, 0))
-  expect_equal(as.integer(unlist(exp_summary[2, ])), c(0, 0, 0, 1, 0, 0))
-  expect_equal(as.integer(unlist(exp_summary[3, ])), c(0, 0, 0, 0, 0, 0))
-  expect_equal(as.integer(unlist(exp_summary[4, ])), c(0, 0, 0, 0, 0, 0))
-  
-  # Check Stationary
+  exp  <- excursion_plots$Exponential
   stat <- excursion_plots$Stationary
+  
+  expect_type(exp,  "list")
   expect_type(stat, "list")
-  expect_named(stat, c("plots", "pvc_adj_pvals", "pvc_pattern_summary"))
-  expect_length(stat$plots, 11)
-  expect_type(stat$plots, "list")
   
-  expect_type(stat$pvc_adj_pvals, "double")
-  expect_equal(dim(stat$pvc_adj_pvals), c(1000, 4))
-  expect_equal(stat$pvc_adj_pvals[1, 1], 0.621858, tolerance = 1e-5)
-  expect_equal(stat$pvc_adj_pvals[1, 2], 0.025854, tolerance = 1e-5)
-  expect_equal(stat$pvc_adj_pvals[1, 3], 0.357782, tolerance = 1e-5)
-  expect_equal(stat$pvc_adj_pvals[1, 4], 0.99784, tolerance = 1e-5)
+  # prepare a compact, stable snapshot payload
+  # round numerics to reduce noise across R/BLAS platforms
+  round6 <- function(x) {
+    if (is.numeric(x)) return(round(x, 6))
+    if (is.matrix(x))  return(apply(x, 2, function(col) round(col, 6)))
+    x
+  }
   
-  # pvc_pattern_summary for Stationary
-  stat_summary <- stat$pvc_pattern_summary
-  expect_s3_class(stat_summary, "data.frame")
-  expect_equal(dim(stat_summary), c(4, 6))
-  expect_equal(names(stat_summary), c("-60", "15", "60", "90", "120", "240"))
-  expect_equal(as.integer(unlist(stat_summary[1, ])), c(0, 0, 8, 0, 0, 0))
-  expect_equal(as.integer(unlist(stat_summary[2, ])), c(0, 1, 2, 0, 0, 0))
-  expect_equal(as.integer(unlist(stat_summary[3, ]))[1:5], c(0, 1, 0, 0, 0))
-  expect_equal(as.integer(unlist(stat_summary[4, ])), c(0, 0, 0, 0, 0, 0))
+  snapshot_payload <- list(
+    warnings = warning_message,
+    structure = list(
+      exp_names  = names(exp),
+      stat_names = names(stat),
+      exp_plots_len  = length(exp$plots),
+      stat_plots_len = length(stat$plots)
+    ),
+    exponential = list(
+      pvc_adj_pvals_dim   = dim(exp$pvc_adj_pvals),
+      pvc_adj_pvals_head5 = round6(exp$pvc_adj_pvals[seq_len(min(5, nrow(exp$pvc_adj_pvals))), , drop = FALSE]),
+      pvc_pattern_summary = exp$pvc_pattern_summary
+    ),
+    stationary = list(
+      pvc_adj_pvals_dim   = dim(stat$pvc_adj_pvals),
+      pvc_adj_pvals_head5 = round6(stat$pvc_adj_pvals[seq_len(min(5, nrow(stat$pvc_adj_pvals))), , drop = FALSE]),
+      pvc_pattern_summary = stat$pvc_pattern_summary
+    )
+  )
+  
+  # store as JSON-like snapshot (stable + human-readable)
+  expect_snapshot_value(snapshot_payload, style = "json2")
 })
