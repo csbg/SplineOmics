@@ -122,8 +122,13 @@ design2design_matrix <- function(
 #'
 merge_top_table_with_annotation <- function(
     top_table,
-    annotation) {
-  top_table$feature_nr <- as.numeric(as.character(top_table$feature_nr))
+    annotation
+    ) {
+  if (!"feature_nr" %in% names(top_table)) {
+    top_table$feature_nr <- seq_len(nrow(top_table))
+  } else {
+    top_table$feature_nr <- as.integer(as.character(top_table$feature_nr))
+  }
   annotation_rows <- annotation[top_table$feature_nr, ]
   top_table <- cbind(top_table, annotation_rows)
 }

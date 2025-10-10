@@ -46,6 +46,7 @@
 #' table to disk as a `.tsv` file in the specified `output_dir`.
 #' 
 #' @importFrom here here
+#' @importFrom rlang .data
 #' 
 #' @examples
 #' # Minimal real example (runs only if org package is installed)
@@ -82,13 +83,14 @@ extract_gene_sets <- function(
     output_dir  = here::here(),
     filename    = NULL
 ) {
-  # Dependencies (Not core of SplineOmics, must be downloaded for this function)
+  # Dependencies (Not core of SplineOmics, must be downloaded for this
+  # function)
   if (!requireNamespace(organism_db, quietly = TRUE)) {
     stop_call_false(
       "Organism database ",
       organism_db,
       " is not installed."
-      )
+    )
   }
   if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
     stop_call_false("Package 'AnnotationDbi' is required but not installed.")
@@ -98,12 +100,12 @@ extract_gene_sets <- function(
   orgdb <- get(
     organism_db,
     envir = asNamespace(organism_db)
-    )
+  )
   
   entrez_keys <- AnnotationDbi::keys(
     orgdb,
     keytype = "ENTREZID"
-    )
+  )
   
   # GO (BP/MF/CC)
   go_df <- AnnotationDbi::select(
@@ -113,26 +115,26 @@ extract_gene_sets <- function(
       "SYMBOL",
       "GO",
       "ONTOLOGY"
-      ),
+    ),
     keytype = "ENTREZID"
   )
   
   go_df <- go_df[!is.na(go_df$GO), , drop = FALSE]
-  go_df <- go_df |>
-    dplyr::mutate(
-      DB = dplyr::case_when(
-        ONTOLOGY == "BP" ~ "GO_BP",
-        ONTOLOGY == "MF" ~ "GO_MF",
-        ONTOLOGY == "CC" ~ "GO_CC",
-        TRUE ~ NA_character_
-      ),
-      Geneset = GO,
-      Gene    = SYMBOL
-    ) |>
-    dplyr::select(DB, Geneset, Gene) |>
-    dplyr::filter(!is.na(DB), !is.na(Gene))
+  go_df <- dplyr::mutate(
+    go_df,
+    DB = dplyr::case_when(
+      .data$ONTOLOGY == "BP" ~ "GO_BP",
+      .data$ONTOLOGY == "MF" ~ "GO_MF",
+      .data$ONTOLOGY == "CC" ~ "GO_CC",
+      TRUE ~ NA_character_
+    ),
+    Geneset = .data$GO,
+    Gene    = .data$SYMBOL
+  )
+  keep <- intersect(c("DB", "Geneset", "Gene"), names(go_df))
+  go_df <- dplyr::select(go_df, keep)
+  go_df <- dplyr::filter(go_df, !is.na(.data$DB), !is.na(.data$Gene))
   
-  # KEGG (guard for missing PATH)
   kegg_df <- NULL
   if ("PATH" %in% AnnotationDbi::columns(orgdb)) {
     kegg_raw <- AnnotationDbi::select(
@@ -145,9 +147,16 @@ extract_gene_sets <- function(
       kegg_raw <- kegg_raw[!is.na(kegg_raw$PATH), , drop = FALSE]
       if (nrow(kegg_raw)) {
         kegg_df <- kegg_raw |>
-          dplyr::mutate(DB = "KEGG", Geneset = PATH, Gene = SYMBOL) |>
-          dplyr::select(DB, Geneset, Gene) |>
-          dplyr::filter(!is.na(Gene))
+          dplyr::mutate(
+            DB      = "KEGG",
+            Geneset = .data$PATH,
+            Gene    = .data$SYMBOL
+          ) |>
+          (\(d) {
+            keep <- intersect(c("DB", "Geneset", "Gene"), names(d))
+            dplyr::select(d, keep)   # no tidyselect dependency, ignores missing
+          })() |>
+          dplyr::filter(!is.na(.data$Gene))
       }
     }
   }
@@ -159,41 +168,41 @@ extract_gene_sets <- function(
     go_df
   } |>
     dplyr::distinct(
-      DB,
-      Geneset,
-      Gene
-      )
+      .data$DB,
+      .data$Geneset,
+      .data$Gene
+    )
   
   # Output path
   dir.create(
     output_dir,
     recursive = TRUE,
     showWarnings = FALSE
-    )
+  )
   
   if (is.null(filename)) {
     timestamp <- format(
       Sys.time(),
       "%Y_%m_%d-%H_%M_%S"
-      )
+    )
     safe_org  <- gsub(
       "[^A-Za-z0-9]+",
       "_",
       organism_db
-      )
+    )
     filename  <- paste0(
       "bioconductor_",
       safe_org,
       "_",
       timestamp,
       ".tsv"
-      )
+    )
   }
   
   filename_path <- file.path(
     output_dir,
     filename
-    )  
+  )  
   
   # Write TSV
   utils::write.table(
@@ -208,6 +217,6 @@ extract_gene_sets <- function(
   message(
     "\nDownload complete! The file has been saved as: ",
     filename_path
-    )
+  )
   genesets
 }

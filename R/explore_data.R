@@ -58,6 +58,71 @@
 #'               be generated or not. 
 #'
 #' @return A list of ggplot objects representing various exploratory plots.
+#' 
+#' @examples
+#' # Temporary output dir for the HTML report
+#' report_dir <- file.path(tempdir(), "explore_data_demo")
+#' if (!dir.exists(report_dir)) dir.create(report_dir, recursive = TRUE)
+#'
+#' ## --- Load example inputs from inst/extdata ---
+#' data <- readRDS(xzfile(system.file(
+#'   "extdata", "proteomics_data.rds.xz", package = "SplineOmics"
+#' )))
+#'
+#' meta <- read.csv(
+#'   system.file("extdata", "proteomics_meta.csv", package = "SplineOmics"),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Derive the annotation table from the data frame (as in the vignette)
+#' first_na_col <- which(is.na(data[1, ]))[1]
+#' annotation <- data |>
+#'   dplyr::select((first_na_col + 1):ncol(data)) |>
+#'   dplyr::slice(-c(1:3))
+#'   
+#' data <- SplineOmics::extract_data(
+#'  # The dataframe with the numbers on the left and info on the right.
+#'  data = data,
+#'  # Use this annotation column for the feature names.
+#'  feature_name_columns = c("Gene_name"),
+#'  top_row = 4,
+#'  bottom_row = 1165,
+#'  right_col = 37,
+#'  left_col = 2
+#')
+#'
+#' # Minimal report metadata
+#' report_info <- list(
+#'   omics_data_type    = "PTX",
+#'   data_description   = "Demo proteomics dataset from extdata",
+#'   data_collection_date = "2024",
+#'   analyst_name       = "Example Analyst",
+#'   contact_info       = "analyst@example.org",
+#'   project_name       = "DemoProject"
+#' )
+#'
+#' # Build the SplineOmics input object
+#' splineomics <- SplineOmics::create_splineomics(
+#'   data               = data,
+#'   meta               = meta,
+#'   annotation         = annotation,
+#'   report_info        = report_info,
+#'   condition          = "Phase",     # column in `meta` defining groups
+#'   meta_batch_column  = "Reactor"    # optional: for batch-effect removal
+#' )
+#'
+#' # Run EDA and write the HTML report to the temp dir
+#' plots <- SplineOmics::explore_data(
+#'   splineomics = splineomics,
+#'   report_dir  = report_dir,
+#'   report      = TRUE
+#' )
+#'
+#' # Inspect what was written
+#' list.files(report_dir, recursive = TRUE)
+#'
+#' # `plots` is a named list of ggplot objects (e.g., plots$raw_data$pca, etc.)
+#' # print(plots$raw_data$pca)
 #'
 #' @export
 #'

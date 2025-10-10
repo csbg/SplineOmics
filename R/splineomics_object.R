@@ -93,6 +93,86 @@
 #'   disables parallelization and avoids oversubscription of CPU threads.
 #'
 #' @return A SplineOmics object.
+#' 
+#' @examples
+#' set.seed(1)
+#'
+#' # 6 samples, 4 features
+#' toy_data <- matrix(
+#'   rnorm(4 * 6, mean = 0, sd = 1),
+#'   nrow = 4, ncol = 6,
+#'   dimnames = list(
+#'     paste0("gene", 1:4),
+#'     paste0("S", 1:6)
+#'   )
+#' )
+#'
+#' # Sample metadata
+#' toy_meta <- data.frame(
+#'   SampleID  = colnames(toy_data),
+#'   Time      = c(0, 0, 1, 1, 2, 2),
+#'   Condition = factor(c("Ctrl", "Ctrl", "Ctrl", "Trt", "Trt", "Trt"),
+#'                      levels = c("Ctrl", "Trt")),
+#'   Batch     = factor(c("B1","B1","B1","B2","B2","B2")),
+#'   stringsAsFactors = FALSE,
+#'   row.names = colnames(toy_data)
+#' )
+#'
+#' # Condition vector (must align with samples)
+#' cond <- toy_meta$Condition
+#'
+#' # Minimal annotation (feature-level info)
+#' toy_anno <- data.frame(
+#'   feature_id = rownames(toy_data),
+#'   symbol     = c("G1","G2","G3","G4"),
+#'   stringsAsFactors = FALSE,
+#'   row.names = rownames(toy_data)
+#' )
+#'
+#' # Spline parameters (natural splines with df = 3)
+#' toy_spline <- list(spline_type = "n", dof = 3)
+#'
+#' # Parallel config (single-threaded for examples)
+#' toy_bp <- c(n_cores = 1, blas_threads = 1)
+#'
+#' # Dream params example (optional)
+#' toy_dream <- list(dof = 3L, KenwardRoger = FALSE)
+#'
+#' # Simple design matrix (intercept + condition + time)
+#' toy_design <- stats::model.matrix(~ Condition + Time, data = toy_meta)
+#'
+#' # Required report fields
+#' toy_report <- list(
+#'   omics_data_type    = "RNA-seq (toy)",
+#'   data_description   = "Simulated expression matrix (4x6)",
+#'   data_collection_date = "2025-10-07",
+#'   analyst_name       = "Analyst A",
+#'   contact_info       = "analyst@example.org",
+#'   project_name       = "SplineOmics Demo",
+#'   method_description = "Toy example to construct a SplineOmics object"
+#' )
+#'
+#' so <- create_splineomics(
+#'   data                 = toy_data,
+#'   meta                 = toy_meta,
+#'   condition            = cond,
+#'   rna_seq_data         = NULL,            # not used in this toy
+#'   annotation           = toy_anno,
+#'   report_info          = toy_report,
+#'   meta_batch_column    = "Batch",
+#'   meta_batch2_column   = NULL,
+#'   feature_name_columns = c("feature_id","symbol"),
+#'   design               = toy_design,
+#'   use_array_weights    = FALSE,
+#'   dream_params         = toy_dream,
+#'   mode                 = "isolated",
+#'   spline_params        = toy_spline,
+#'   padjust_method       = "BH",
+#'   bp_cfg               = toy_bp
+#' )
+#'
+#' class(so)
+#' str(so, max.level = 1)
 #'
 #' @export
 #'
@@ -148,6 +228,32 @@ create_splineomics <- function(
 #' @param ... Named arguments with new values for fields to be updated or added.
 #'
 #' @return The updated SplineOmics object.
+#' 
+#' @examples
+#' set.seed(1)
+#' toy_data <- matrix(rnorm(12), nrow = 3,
+#'                    dimnames = list(paste0("gene", 1:3), paste0("S", 1:4)))
+#' toy_meta <- data.frame(
+#'   SampleID = colnames(toy_data),
+#'   Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
+#'   stringsAsFactors = FALSE,
+#'   row.names = colnames(toy_data)
+#' )
+#'
+#' so <- create_splineomics(
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   condition = toy_meta$Condition
+#' )
+#'
+#' # Update the mode and add a new design matrix
+#' new_design <- model.matrix(~ Condition, data = toy_meta)
+#' so_updated <- update_splineomics(so,
+#'   mode = "integrated",
+#'   design = new_design
+#' )
+#'
+#' str(so_updated, max.level = 1)
 #'
 #' @export
 #'
@@ -215,6 +321,32 @@ update_splineomics <- function(
 #' the SplineOmics object.
 #'
 #' @importFrom utils head
+#' 
+#' @examples
+#' # Example: create and print a SplineOmics object
+#' set.seed(1)
+#' toy_data <- matrix(rnorm(12), nrow = 3,
+#'                    dimnames = list(paste0("gene", 1:3), paste0("S", 1:4)))
+#' toy_meta <- data.frame(
+#'   SampleID = colnames(toy_data),
+#'   Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
+#'   stringsAsFactors = FALSE,
+#'   row.names = colnames(toy_data)
+#' )
+#'
+#' so <- create_splineomics(
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   condition = toy_meta$Condition,
+#'   spline_params = list(spline_type = "n", dof = 3),
+#'   padjust_method = "BH"
+#' )
+#'
+#' # The print method is automatically called:
+#' so
+#'
+#' # Or explicitly:
+#' print(so)
 #'
 #' @export
 #'

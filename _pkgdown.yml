@@ -25,7 +25,6 @@ reference:
     desc: This section contains the documentation for all functions available 
           to the user in the SplineOmics package.
     contents:
-      - compare_results
       - cluster_hits
       - create_limma_report
       - create_splineomics
@@ -34,7 +33,6 @@ reference:
       - explore_data
       - extract_data
       - find_pvc
-      - make_scatter_plots_html
       - preprocess_rna_seq_data
       - print.SplineOmics
       - run_ora

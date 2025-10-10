@@ -55,7 +55,8 @@ Imports:
     stats,
     tools,
     utils,
-    car 
+    car,
+    methods 
 Suggests:
     AnnotationDbi,
     BiocManager,

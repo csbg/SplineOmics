@@ -800,10 +800,9 @@ filter_top_tables <- function(
       %in% hit_indices, ]
 
     if (nrow(top_table_filtered) < 2) {
-      message(paste(
-        "Level", level, "has < 2 hits. Skipping clustering for",
-        "this level"
-      ))
+      message(
+        "Level", level, "has < 2 hits. Skipping clustering for this level"
+      )
       within_level_top_tables[[i]] <- NA
     } else {
       within_level_top_tables[[i]] <- top_table_filtered
@@ -1942,7 +1941,7 @@ generate_spline_comparisons <- function(
 #'   arrange distinct group_by ungroup slice_head bind_rows coalesce
 #'   case_when
 #' @importFrom tibble as_tibble tibble
-#' @importFrom rlang sym
+#' @importFrom rlang sym .data
 #' 
 construct_cluster_table <- function(
     limma_splines_results,
@@ -1965,7 +1964,7 @@ construct_cluster_table <- function(
         clustering_level$clustered_hits
     }
   }
-
+  
   nm_all <- names(clustered_hits_levels)
   # exclude the paired entry when determining the two condition levels
   cond_names <- setdiff(nm_all, "paired_category_3")
@@ -1986,13 +1985,16 @@ construct_cluster_table <- function(
   has_c3 <- is.list(category_2_and_3_hits) &&
     "category_3_hits" %in% names(category_2_and_3_hits)
   use_cat23 <- has_c2 || has_c3
-
+  
   no_genes <- is.null(genes)
   anot <- if (no_genes) {
     tibble(feature_nr = numeric(0), gan = character(0))
   } else {
-    tibble(feature_nr = seq_along(genes), gan = as.character(genes)) |>
-      distinct(feature_nr, .keep_all = TRUE)
+    tibble(
+      feature_nr = seq_along(genes),
+      gan = as.character(genes)
+    ) |>
+      dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
   }
   
   cl1 <- ncl(clustered_hits_levels[[cond_names[1]]], c1)
@@ -2009,66 +2011,109 @@ construct_cluster_table <- function(
   )
   if (has_c3) add_parts <- c(
     add_parts,
-    list(toptbl_to_fn(limma_splines_results$interaction_condition_time))
+    list(
+      toptbl_to_fn(limma_splines_results$interaction_condition_time)
+    )
   )
-  fn_tbl <- bind_rows(add_parts) |>
-    distinct(feature_nr, .keep_all = TRUE)
+  fn_tbl <- dplyr::bind_rows(add_parts) |>
+    dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
   
-  fn_from_cl <- bind_rows(
-    cl1 |> select(feature_nr, fnsrc) |> rename(fname_cl = fnsrc),
-    cl2 |> select(feature_nr, fnsrc) |> rename(fname_cl = fnsrc)
+  fn_from_cl <- dplyr::bind_rows(
+    cl1 |>
+      dplyr::select(.data$feature_nr, .data$fnsrc) |>
+      dplyr::rename(fname_cl = .data$fnsrc),
+    cl2 |>
+      dplyr::select(.data$feature_nr, .data$fnsrc) |>
+      dplyr::rename(fname_cl = .data$fnsrc)
   ) |>
-    filter(!is.na(feature_nr), !is.na(fname_cl), fname_cl != "") |>
-    distinct(feature_nr, .keep_all = TRUE)
+    dplyr::filter(
+      !is.na(.data$feature_nr),
+      !is.na(.data$fname_cl),
+      .data$fname_cl != ""
+    ) |>
+    dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
   
   allf_parts <- list(
-    anot |> select(feature_nr),
-    cl1 |> select(feature_nr),
-    cl2 |> select(feature_nr),
-    fn_tbl |> select(feature_nr)
+    anot |> dplyr::select(.data$feature_nr),
+    cl1  |> dplyr::select(.data$feature_nr),
+    cl2  |> dplyr::select(.data$feature_nr),
+    fn_tbl |> dplyr::select(.data$feature_nr)
   )
-
+  
   if (use_cat23) {
     cat2h <- if (has_c2) {
       category_2_and_3_hits$category_2_hits |>
-        stbl() |> transmute(feature_nr) |> distinct()
+        stbl() |>
+        dplyr::transmute(feature_nr = .data$feature_nr) |>
+        dplyr::distinct()
     } else tibble(feature_nr = numeric(0))
     cat3h <- if (has_c3) {
       category_2_and_3_hits$category_3_hits |>
-        stbl() |> transmute(feature_nr) |> distinct()
+        stbl() |>
+        dplyr::transmute(feature_nr = .data$feature_nr) |>
+        dplyr::distinct()
     } else tibble(feature_nr = numeric(0))
     allf_parts <- c(allf_parts, list(cat2h, cat3h))
   }
   
-  allf <- bind_rows(allf_parts) |>
-    distinct(feature_nr) |>
-    filter(!is.na(feature_nr)) |>
-    arrange(feature_nr)
+  allf <- dplyr::bind_rows(allf_parts) |>
+    dplyr::distinct(.data$feature_nr) |>
+    dplyr::filter(!is.na(.data$feature_nr)) |>
+    dplyr::arrange(.data$feature_nr)
   
   base <- allf |>
-    left_join(anot, by = "feature_nr") |>
-    left_join(cl1 |> select(feature_nr, !!sym(c1), gcl, fnsrc),
-              by = "feature_nr") |>
-    rename(gcl1 = gcl, fnsrc1 = fnsrc) |>
-    left_join(cl2 |> select(feature_nr, !!sym(c2), gcl, fnsrc),
-              by = "feature_nr") |>
-    rename(gcl2 = gcl, fnsrc2 = fnsrc) |>
-    left_join(fn_from_cl, by = "feature_nr") |>
-    left_join(fn_tbl, by = "feature_nr") |>
-    group_by(feature_nr) |>
-    slice_head(n = 1) |>
-    ungroup() |>
-    mutate(
-      feature_name = coalesce(
-        fname_tbl, fname_cl, fnsrc1, fnsrc2, as.character(feature_nr)
-      ),
-      gene = if (no_genes) NA_character_ else coalesce(gan, gcl1, gcl2)
+    dplyr::left_join(anot, by = "feature_nr") |>
+    dplyr::left_join(
+      cl1 |>
+        dplyr::select(
+          .data$feature_nr,
+          !!rlang::sym(c1),
+          .data$gcl,
+          .data$fnsrc
+        ),
+      by = "feature_nr"
     ) |>
-    select(feature_nr, feature_name, gene, all_of(c(c1, c2)))
+    dplyr::rename(gcl1 = .data$gcl, fnsrc1 = .data$fnsrc) |>
+    dplyr::left_join(
+      cl2 |>
+        dplyr::select(
+          .data$feature_nr,
+          !!rlang::sym(c2),
+          .data$gcl,
+          .data$fnsrc
+        ),
+      by = "feature_nr"
+    ) |>
+    dplyr::rename(gcl2 = .data$gcl, fnsrc2 = .data$fnsrc) |>
+    dplyr::left_join(fn_from_cl, by = "feature_nr") |>
+    dplyr::left_join(fn_tbl, by = "feature_nr") |>
+    dplyr::group_by(.data$feature_nr) |>
+    dplyr::slice_head(n = 1) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(
+      feature_name = dplyr::coalesce(
+        .data$fname_tbl,
+        .data$fname_cl,
+        .data$fnsrc1,
+        .data$fnsrc2,
+        as.character(.data$feature_nr)
+      ),
+      gene = if (no_genes) {
+        NA_character_
+      } else {
+        dplyr::coalesce(.data$gan, .data$gcl1, .data$gcl2)
+      }
+    )
+  
+  keep <- intersect(unique(c(c1, c2)), names(base))
+  base <- dplyr::select(base, c("feature_nr", "feature_name", "gene", keep))
   
   if (!use_cat23) {
-    return(base |> distinct(feature_nr, .keep_all = TRUE) |>
-             arrange(feature_nr))
+    return(
+      base |>
+        dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
+        dplyr::arrange(.data$feature_nr)
+    )
   }
   
   # cat2: direction by <cond2 score> -> "<cond>_higher"
@@ -2081,46 +2126,53 @@ construct_cluster_table <- function(
     if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
       stop_call_false(
         "Missing logFC column in topTable for avr diff conditions."
-        )
+      )
     }
     
     c2_df <- c2_tbl |>
-      transmute(
-        feature_nr,
+      dplyr::transmute(
+        feature_nr = .data$feature_nr,
         cluster_cat2 = dplyr::case_when(
           .data[[score_col]] > 0 ~ paste0(
-            gsub("_","", cond_names[[2]]),
+            gsub("_", "", cond_names[[2]]),
             "_higher"
-            ),
+          ),
           .data[[score_col]] < 0 ~ paste0(
-            gsub("_","", cond_names[[1]]),
+            gsub("_", "", cond_names[[1]]),
             "_higher"
-            ),
+          ),
           TRUE ~ NA_character_
         )
       ) |>
-      distinct(feature_nr, .keep_all = TRUE)
+      dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
     
     if (!is.null(category_2_and_3_hits$category_2_hits) &&
         nrow(category_2_and_3_hits$category_2_hits) > 0) {
       cat2h <- category_2_and_3_hits$category_2_hits |>
-        stbl() |> transmute(feature_nr) |> distinct()
+        stbl() |>
+        dplyr::transmute(feature_nr = .data$feature_nr) |>
+        dplyr::distinct()
       c2_df <- c2_df |>
-        mutate(cluster_cat2 = ifelse(feature_nr %in% cat2h$feature_nr,
-                                     cluster_cat2, NA_character_))
+        dplyr::mutate(
+          cluster_cat2 = ifelse(
+            .data$feature_nr %in% cat2h$feature_nr,
+            .data$cluster_cat2,
+            NA_character_
+          )
+        )
     }
     
-    out <- out |> left_join(c2_df, by = "feature_nr")
+    out <- out |> dplyr::left_join(c2_df, by = "feature_nr")
   }
-
+  
   # Build vector of significant cat3 features (if available)
   sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
                 nrow(category_2_and_3_hits$category_3_hits) > 0) {
     category_2_and_3_hits$category_3_hits |>
       stbl() |>
-      dplyr::transmute(feature_nr) |>
+      dplyr::transmute(feature_nr = .data$feature_nr) |>
       dplyr::distinct() |>
-      dplyr::pull(feature_nr)
+      dplyr::pull(.data$feature_nr)
   } else {
     integer(0)
   }
@@ -2131,14 +2183,20 @@ construct_cluster_table <- function(
       cluster_cat3 = dplyr::case_when(
         !(.data$feature_nr %in% sig_c3) ~ NA_character_,
         TRUE ~ paste0(
-          ifelse(is.na(.data[[c1]]), "ns", as.character(.data[[c1]])),
+          ifelse(
+            is.na(.data[[c1]]), "ns", as.character(.data[[c1]])
+          ),
           "_",
-          ifelse(is.na(.data[[c2]]), "ns", as.character(.data[[c2]]))
+          ifelse(
+            is.na(.data[[c2]]), "ns", as.character(.data[[c2]])
+          )
         )
       )
     )
-  n_cat3 <- out |> dplyr::filter(!is.na(cluster_cat3)) |>
-    dplyr::distinct(cluster_cat3) |> nrow()
+  n_cat3 <- out |>
+    dplyr::filter(!is.na(.data$cluster_cat3)) |>
+    dplyr::distinct(.data$cluster_cat3) |>
+    nrow()
   message(sprintf(
     paste(
       "%d clusters for the condition effect (interaction between condition",
@@ -2146,8 +2204,10 @@ construct_cluster_table <- function(
     ),
     n_cat3
   ))
-
-  out |> distinct(feature_nr, .keep_all = TRUE) |> arrange(feature_nr)
+  
+  out |>
+    dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
+    dplyr::arrange(.data$feature_nr)
 }
 
 
@@ -2471,6 +2531,7 @@ split_data_by_condition <- function(
 #' @importFrom ggplot2 ggplot geom_line facet_wrap geom_vline ylab theme unit
 #' @importFrom ggplot2 theme_bw scale_x_continuous
 #' @importFrom grid gpar
+#' @importFrom rlang .data
 #'
 plot_heatmap <- function(
     datas,
@@ -2523,7 +2584,7 @@ plot_heatmap <- function(
     
     if (!is.infinite(max_hit_number)) {
       clusters <- clusters |>
-        dplyr::group_by(cluster) |>
+        dplyr::group_by(!!rlang::sym("cluster")) |>
         dplyr::slice_head(n = max_hit_number) |>
         dplyr::ungroup()
     }
@@ -3081,12 +3142,12 @@ plot_splines <- function(
 
       p <- ggplot2::ggplot() +
         ggplot2::geom_point(
-          data = dplyr::filter(plot_data, !is.na(Y)),
+          data = dplyr::filter(plot_data, !is.na(.data$Y)),
           ggplot2::aes(
-            x = Time,
-            y = Y,
-            color = color_column,
-            shape = factor(IsNA)  # Map shape to "Data" or "Imputed"
+            x = .data$Time,
+            y = .data$Y,
+            color = .data$color_column,
+            shape = factor(.data$IsNA)  # Map shape to "Data" or "Imputed"
           ),
           alpha = 0.5 # 50% transparent data dots
         ) +
@@ -3328,16 +3389,16 @@ plot_spline_comparisons <- function(
   features_to_plot <- select_balanced_hits(
     avrg_df  = dplyr::select(
       avrg_diff_conditions,
-      feature_nr,
-      feature_names,
+      .data$feature_nr,
+      .data$feature_names,
       dplyr::any_of("adj.P.Val")
-      ),
+    ),
     inter_df = dplyr::select(
       interaction_condition_time,
-      feature_nr,
-      feature_names,
+      .data$feature_nr,
+      .data$feature_names,
       dplyr::any_of("adj.P.Val")
-      ),
+    ),
     max_n    = max_hit_number
   )
   
@@ -4456,6 +4517,7 @@ stbl <- function(x) {
 #'
 #' @importFrom tibble tibble
 #' @importFrom dplyr filter group_by slice_head ungroup
+#' @importFrom rlang sym :=
 #' 
 ncl <- function(
     df,
@@ -4465,7 +4527,7 @@ ncl <- function(
   df <- stbl(df)
   if (nrow(df) == 0) {
     return(tibble(feature_nr = numeric(0),
-                  !!outcol := NA_character_,
+                  !!rlang::sym(outcol) := NA_character_,
                   gcl = NA_character_,
                   fnsrc = NA_character_))
   }
@@ -4518,8 +4580,11 @@ toptbl_to_fn <- function(df) {
   else as.character(df[["feature_nr"]])
   tibble(feature_nr = df[["feature_nr"]],
          fname_tbl = as.character(fn)) |>
-    filter(!is.na(feature_nr), !is.na(fname_tbl), fname_tbl != "") |>
-    distinct(feature_nr, .keep_all = TRUE)
+    filter(
+      !is.na(.data$feature_nr),
+      !is.na(.data$fname_tbl), .data$fname_tbl != ""
+      ) |>
+    distinct(.data$feature_nr, .keep_all = TRUE)
 }
 
 
@@ -4549,20 +4614,25 @@ toptbl_to_fn <- function(df) {
 #'     `<cluster_c1>_<cluster_c2>` for hits, otherwise `NA`.
 #'
 #' @importFrom dplyr mutate select
-#' @importFrom rlang sym
+#' @importFrom rlang sym .data
 #' 
 mkc <- function(
     df,
     hits,
     c1, 
     c2
-    ) {
+) {
   
   df |>
-    mutate(.cmb = paste0(!!sym(c1), "_", !!sym(c2)),
-           .cmb = ifelse(feature_nr %in% hits$feature_nr,
-                         .cmb, NA_character_)) |>
-    select(feature_nr, .cmb)
+    dplyr::mutate(
+      .cmb = paste0(!!rlang::sym(c1), "_", !!rlang::sym(c2)),
+      .cmb = ifelse(
+        .data$feature_nr %in% hits$feature_nr,
+        .data$.cmb,
+        NA_character_
+      )
+    ) |>
+    dplyr::select(.data$feature_nr, .data$.cmb)
 }
 
 
@@ -4658,8 +4728,8 @@ transfer_sr2cc <- function(
     hits_df    <- alc$clustered_hits
     
     # Coerce IDs to numeric for robust matching
-    f_ids <- suppressWarnings(as.numeric(hits_df$feature))
-    t_ids <- suppressWarnings(as.numeric(tt$feature_nr))
+    f_ids <- as.numeric(hits_df$feature)
+    t_ids <- as.numeric(tt$feature_nr)
     
     # Match feature_nr (tt) to feature (hits_df)
     idx <- match(t_ids, f_ids)
@@ -5344,6 +5414,8 @@ generate_asterisks_definition <- function(adj_pvalue_threshold) {
 #'
 #' @return A data frame with columns `feature_names` and `feature_nr`,
 #'   containing the union of selected features from both categories.
+#'
+#' @importFrom rlang .data
 #' 
 preselect_features_for_plotting <- function(
     avrg_diff_conditions,
@@ -5352,14 +5424,17 @@ preselect_features_for_plotting <- function(
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction
 ) {
-  
   # Select top features for average difference
   sig_avg <- avrg_diff_conditions |>
     dplyr::filter(.data$adj.P.Val < adj_pthresh_avrg_diff_conditions) |>
     dplyr::arrange(.data$adj.P.Val) |>
     head(max_hit_number) |>
     dplyr::mutate(selected_avg = TRUE) |>
-    dplyr::select(feature_names, feature_nr, selected_avg)
+    dplyr::select(
+      .data$feature_names,
+      .data$feature_nr,
+      .data$selected_avg
+      )
   
   # Select top features for interaction
   sig_interaction <- interaction_condition_time |>
@@ -5367,7 +5442,11 @@ preselect_features_for_plotting <- function(
     dplyr::arrange(.data$adj.P.Val) |>
     head(max_hit_number) |>
     dplyr::mutate(selected_interaction = TRUE) |>
-    dplyr::select(feature_names, feature_nr, selected_interaction)
+    dplyr::select(
+      .data$feature_names,
+      .data$feature_nr,
+      .data$selected_interaction
+      )
   
   # Full outer join by feature_names and feature_nr
   features_to_plot <- dplyr::full_join(
@@ -5376,17 +5455,18 @@ preselect_features_for_plotting <- function(
     by = c("feature_names", "feature_nr")
   )
   
-  # Fix NA columns after join
-  features_to_plot <- features_to_plot |>
+  # Fill NAs introduced by the join
+  features_to_plot |>
     dplyr::mutate(
-      selected_avg = tidyr::replace_na(.data$selected_avg, FALSE),
+      selected_avg = tidyr::replace_na(
+        .data$selected_avg,
+        FALSE
+        ),
       selected_interaction = tidyr::replace_na(
         .data$selected_interaction,
         FALSE
         )
     )
-  
-  return(features_to_plot)
 }
 
 
@@ -5416,6 +5496,7 @@ preselect_features_for_plotting <- function(
 #' 
 #' @importFrom ggplot2 ggplot aes geom_histogram after_stat geom_vline theme
 #'                     scale_color_manual labs coord_cartesian theme_minimal
+#' @importFrom rlang .data
 #' 
 plot_cluster_quality_distribution <- function(
     r2,  
@@ -5425,12 +5506,11 @@ plot_cluster_quality_distribution <- function(
   mean_sr2 <- mean(df$sr2, na.rm = TRUE)
   n_valid  <- sum(is.finite(df$sr2))
   
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = sr2))
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = !!rlang::sym("sr2")))
   
   # histogram with fixed 0.1 bins from -1 to 1
   if (n_valid >= 1) {
     p <- p + ggplot2::geom_histogram(
-      ggplot2::aes(y = ggplot2::after_stat(count)),
       binwidth = 0.1,
       boundary = -1,
       closed   = "right",
@@ -5456,7 +5536,7 @@ plot_cluster_quality_distribution <- function(
       ggplot2::scale_color_manual(
         values = c("mean" = "red"),
         name = NULL
-        )
+      )
   }
   
   p +
@@ -5528,8 +5608,16 @@ select_balanced_hits <- function(
   if (is.null(max_n) || is.infinite(max_n)) {
     return(
       dplyr::bind_rows(
-        dplyr::select(avrg_df,  feature_nr, feature_names),
-        dplyr::select(inter_df, feature_nr, feature_names)
+        dplyr::select(
+          avrg_df,
+          .data$feature_nr,
+          .data$feature_names
+          ),
+        dplyr::select(
+          inter_df,
+          .data$feature_nr,
+          .data$feature_names
+          )
       ) |>
         dplyr::distinct()
     )
@@ -5547,12 +5635,12 @@ select_balanced_hits <- function(
   }
   
   avrg_ranked <- avrg_df |> rank_tbl() |> dplyr::select(
-    feature_nr,
-    feature_names
+    .data$feature_nr,
+    .data$feature_names
     )
   inter_ranked <- inter_df |> rank_tbl() |> dplyr::select(
-    feature_nr,
-    feature_names
+    .data$feature_nr,
+    .data$feature_names
     )
   
   half1 <- floor(max_n / 2)
@@ -5566,7 +5654,7 @@ select_balanced_hits <- function(
   chosen_avrg <- avrg_ranked |> dplyr::slice_head(n = half1)
   # dedupe by name within chosen set (just in case)
   chosen_avrg <- chosen_avrg |> dplyr::distinct(
-    feature_names,
+    .data$feature_names,
     .keep_all = TRUE
     )
   
@@ -5596,11 +5684,11 @@ select_balanced_hits <- function(
   
   # Final fill if still < max_n (e.g., overall too few hits)
   combined <- dplyr::bind_rows(chosen_avrg, chosen_inter) |>
-    dplyr::distinct(feature_names, .keep_all = TRUE)
+    dplyr::distinct(.data$feature_names, .keep_all = TRUE)
   if (nrow(combined) < max_n) {
     # pull remaining from the union in ranked order (avrg first, then inter)
     union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
-      dplyr::distinct(feature_names, .keep_all = TRUE)
+      dplyr::distinct(.data$feature_names, .keep_all = TRUE)
     extra <- dplyr::anti_join(union_ranked, combined, by = "feature_names") |>
       dplyr::slice_head(n = max_n - nrow(combined))
     combined <- dplyr::bind_rows(combined, extra)
@@ -5716,6 +5804,7 @@ safe_pull_pval <- function(
 #'
 #' @importFrom ggplot2 geom_vline geom_text aes
 #' @importFrom scales hue_pal
+#' @importFrom rlang .data
 #'
 add_dashed_lines <- function(
     p,
@@ -5755,18 +5844,20 @@ add_dashed_lines <- function(
       ggplot2::geom_text(
         data = treatment_df,
         ggplot2::aes(
-          x = 
-            if (horizontal_labels) Time + max(treatment_timepoints) * 0.04 
-            else Time - max(treatment_timepoints) * 0.005, 
+          x = ifelse(
+            horizontal_labels,
+            .data$Time + max(treatment_timepoints) * 0.04,
+            .data$Time - max(treatment_timepoints) * 0.005
+          ),
           y = .data$y_pos,
-          label = round(Time, 2),
-          color = Label
+          label = round(.data$Time, 2),
+          color = .data$Label
         ),
-        angle = if (horizontal_labels) 0 else 90,  
-        vjust = if (horizontal_labels) -0.2 else 0,  
-        hjust = if (horizontal_labels) 0.5 else 1,  
-        size = 3, # Text size
-        show.legend = FALSE # Prevent text labels from appearing in the legend
+        angle = if (horizontal_labels) 0 else 90,
+        vjust = if (horizontal_labels) -0.2 else 0,
+        hjust = if (horizontal_labels) 0.5 else 1,
+        size = 3,
+        show.legend = FALSE
       )
   }
 

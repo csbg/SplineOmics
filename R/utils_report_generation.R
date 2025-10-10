@@ -1756,7 +1756,10 @@ process_field <- function(
             gene    = as.character(.data$gene),
             cluster = as.character(.data[[col]])
           ) |>
-          dplyr::filter(!is.na(gene), gene != "", !is.na(cluster)) |>
+          dplyr::filter(
+            !is.na(.data$gene),
+            .data$gene != "",
+            !is.na(.data$cluster)) |>
           dplyr::distinct()
       }),
       level_cols

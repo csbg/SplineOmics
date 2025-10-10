@@ -917,11 +917,9 @@ InputControl <- R6::R6Class("InputControl",
       
       if (verbose) {
         message(
-          "\nMake sure that the design formula contains no interaction ",
-          "between the condition and time for mode == isolated, and that ",
-          "it contains an interaction for mode == integrated. Otherwise, ",
-          "you will get an uncaught error of 'coefficients not estimable' or ",
-          "'subscript out of bounds' (or any other hard to understand error)."
+          "\nEnsure the design has no Condition*Time interaction for mode",
+          "== 'isolated', ",
+          "and includes it for mode == 'integrated'."
         )
       }
     },
@@ -3052,7 +3050,7 @@ Level3Functions <- R6::R6Class("Level3Functions",
           call. = FALSE
         )
       }
-      # else: valid column or NULL → silently continue
+      # else: valid column or NULL -> silently continue
     }
   )
 )

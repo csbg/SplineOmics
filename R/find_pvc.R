@@ -823,6 +823,7 @@ classify_excursions <- function(
 #'
 #' @importFrom ggplot2 ggplot aes geom_point scale_shape_manual
 #'             scale_color_manual geom_text labs theme_minimal
+#' @importFrom rlang .data
 #'
 plot_pvc <- function(
     pvc_pvals,
@@ -833,67 +834,63 @@ plot_pvc <- function(
     plot_info,
     level
 ) {
-
+  
   peak_valley_flags <- ifelse(
     is.na(pvc_pvals),
     0,
     ifelse(pvc_pvals < alpha, 1, 0)
   )
-
+  
   unique_timepoints <- sort(unique(meta$Time))
   num_timepoints <- length(unique_timepoints)
-
+  
   unique_replicates <- unique(meta[[meta_batch_column]])
   num_replicates <- length(unique_replicates)
-
+  
   symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)
   symbols <- symbols_available[seq_len(num_replicates)]
-
+  
   plots <- list()
-
+  
   for (protein_index in which(rowSums(peak_valley_flags) > 0)) {
     feature_name <- rownames(peak_valley_flags)[protein_index]
     protein_data <- data[feature_name, ]
-
+    
     plot_data <- data.frame(
       Time = meta$Time,
       Feature_value = as.numeric(protein_data),
       Replicate = as.factor(meta[[meta_batch_column]])
     )
-
+    
     excursion_flags <- as.numeric(peak_valley_flags[protein_index, ])
-
+    
     # Step 1: define internal timepoints
     internal_timepoints <- unique_timepoints[2:(num_timepoints - 1)]
-
+    
     # Step 2: map excursion flags to only internal timepoints
     named_flags <- excursion_flags
     names(named_flags) <- as.character(internal_timepoints)
-
+    
     # Step 3: assign only to matching timepoints
     plot_data$Excursion <- named_flags[as.character(plot_data$Time)]
     plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
-
-
+    
     plot_data$Point_Type <- factor(
       ifelse(
         plot_data$Excursion == 1,
         "Excursion",
         "Normal"
       ),
-      levels = c(
-        "Normal",
-        "Excursion"
-      )
+      levels = c("Normal", "Excursion")
     )
-
+    
     # For plotting significance stars directly above excursion points
     sig_df <- data.frame(
       Time = numeric(0),
       Label = character(0),
       y_pos = numeric(0)
     )
-
+    
     get_stars <- function(p, alpha) {
       if (p < alpha / 500) return("****")
       else if (p < alpha / 50) return("***")
@@ -901,26 +898,23 @@ plot_pvc <- function(
       else if (p < alpha) return("*")
       else return("")
     }
-
+    
     # Loop over internal timepoints
     for (t in 2:(num_timepoints - 1)) {
       timepoint <- unique_timepoints[t]
-
-      # excursion_flags is aligned to internal timepoints:
-      # T2 -> [1], T3 -> [2], ...
       flag_index <- t - 1
-
+      
       if (excursion_flags[flag_index] == 1) {
         p_val <- pvc_pvals[protein_index, flag_index]
-
+        
         if (p_val < alpha) {
           stars <- get_stars(p_val, alpha)
-
+          
           max_value <- max(
             plot_data$Feature_value[plot_data$Time == timepoint],
             na.rm = TRUE
           )
-
+          
           sig_df <- rbind(
             sig_df,
             data.frame(
@@ -933,7 +927,7 @@ plot_pvc <- function(
         }
       }
     }
-
+    
     # Build the p-value string if any are significant
     if (nrow(sig_df) > 0) {
       pval_str <- paste0(
@@ -948,18 +942,18 @@ plot_pvc <- function(
     } else {
       plot_title <- feature_name
     }
-
+    
     p <- ggplot2::ggplot(
       plot_data,
       ggplot2::aes(
-        x = Time,
-        y = Feature_value
+        x = !!rlang::sym("Time"),
+        y = !!rlang::sym("Feature_value")
       )
     ) +
       ggplot2::geom_point(
         ggplot2::aes(
-          shape = Replicate,
-          color = Point_Type
+          shape = !!rlang::sym("Replicate"),
+          color = !!rlang::sym("Point_Type")
         ),
         size = 3,
         stroke = 1.2,
@@ -970,13 +964,13 @@ plot_pvc <- function(
       ggplot2::geom_text(
         data = sig_df,
         ggplot2::aes(
-          x = Time,
-          y = max_value,
-          label = Label
+          x = !!rlang::sym("Time"),
+          y = !!rlang::sym("max_value"),
+          label = !!rlang::sym("Label")
         ),
         size = 5,
         hjust = 0.5,
-        vjust = -0.5   # Positions the significance stars a bit above datapoint
+        vjust = -0.5
       ) +
       ggplot2::labs(
         title = plot_title,
@@ -986,43 +980,43 @@ plot_pvc <- function(
         shape = "Replicates"
       ) +
       ggplot2::theme_minimal()
-
+    
     y_min <- min(plot_data$Feature_value, na.rm = TRUE)
     y_max <- max(plot_data$Feature_value, na.rm = TRUE)
     y_extension <- (y_max - y_min) * 0.1
     y_pos <- y_max + y_extension
-
+    
     result <- maybe_add_dashed_lines(
       p = p,
       plot_info = plot_info,
       level = level,
       y_pos = y_pos
     )
-
+    
     p <- result$p
     treatment_colors <- result$treatment_colors
-
+    
     color_values <- c(
       "Normal" = "grey40",
       "Excursion" = "red",
       treatment_colors
     )
-
+    
     p <- p + ggplot2::scale_color_manual(
       values = color_values,
       guide = ggplot2::guide_legend(
         override.aes = list(
           size = c(
-            rep(1.5, 2),  # Point sizes for Normal and Excursion
-            rep(0.5, length(treatment_colors))  # Line size for treatments
+            rep(1.5, 2),
+            rep(0.5, length(treatment_colors))
           )
         )
       )
     )
-
+    
     plots[[feature_name]] <- p
   }
-
+  
   return(plots)
 }
 
