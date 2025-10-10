@@ -29,21 +29,23 @@ information such as annotations and spline parameters.
 \examples{
 # Example: create and print a SplineOmics object
 set.seed(1)
-toy_data <- matrix(rnorm(12), nrow = 3,
-                   dimnames = list(paste0("gene", 1:3), paste0("S", 1:4)))
+toy_data <- matrix(rnorm(12),
+    nrow = 3,
+    dimnames = list(paste0("gene", 1:3), paste0("S", 1:4))
+)
 toy_meta <- data.frame(
-  SampleID = colnames(toy_data),
-  Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
-  stringsAsFactors = FALSE,
-  row.names = colnames(toy_data)
+    SampleID = colnames(toy_data),
+    Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
+    stringsAsFactors = FALSE,
+    row.names = colnames(toy_data)
 )
 
 so <- create_splineomics(
-  data = toy_data,
-  meta = toy_meta,
-  condition = toy_meta$Condition,
-  spline_params = list(spline_type = "n", dof = 3),
-  padjust_method = "BH"
+    data = toy_data,
+    meta = toy_meta,
+    condition = toy_meta$Condition,
+    spline_params = list(spline_type = "n", dof = 3),
+    padjust_method = "BH"
 )
 
 # The print method is automatically called:

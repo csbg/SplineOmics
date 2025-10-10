@@ -133,18 +133,18 @@ set.seed(1)
 
 ## Your original 8x6 toy matrix
 toy6 <- matrix(
-c(
-3, 5, 8, 12, 17, 23, # f1
-23, 17, 13, 9, 6, 4, # f2
-5, 3, 2, 2, 3, 5, # f3
-1, 4, 9, 8, 4, 1, # f4
-10, 10, 10, 10, 10, 10, # f5
-2, 2, 2, 9, 12, 15, # f6
-4, 5, 7, 10, 14, 19, # f7
-12, 11, 9, 8, 9, 12 # f8
-),
-nrow = 8, ncol = 6, byrow = TRUE,
-dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+    c(
+        3, 5, 8, 12, 17, 23, # f1
+        23, 17, 13, 9, 6, 4, # f2
+        5, 3, 2, 2, 3, 5, # f3
+        1, 4, 9, 8, 4, 1, # f4
+        10, 10, 10, 10, 10, 10, # f5
+        2, 2, 2, 9, 12, 15, # f6
+        4, 5, 7, 10, 14, 19, # f7
+        12, 11, 9, 8, 9, 12 # f8
+    ),
+    nrow = 8, ncol = 6, byrow = TRUE,
+    dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 )
 
 ## Baselines per condition from toy6 (WT = cols 1:3, KO = cols 4:6)
@@ -163,9 +163,9 @@ ko <- flat4(ko0) # keep KO flat; spike KO too by adding the same line
 
 ## Create 3 replicates by adding tiny noise and bind WT then KO
 rep3 <- function(M, sd = 0.2) {
-do.call(cbind, lapply(1:3, function(i) {
-M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
-}))
+    do.call(cbind, lapply(1:3, function(i) {
+        M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
+    }))
 }
 
 toy_data <- cbind(rep3(wt), rep3(ko))
@@ -175,61 +175,61 @@ colnames(toy_data) <- paste0("s", seq_len(ncol(toy_data))) # s1..s24
 ## Matching meta: 2 conditions × 3 reps × 4 timepoints = 24 rows
 time <- 0:3
 toy_meta <- data.frame(
-Time = rep(time, times = 2 * 3),
-condition = rep(c("WT", "KO"), each = 3 * length(time)),
-Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
-row.names = colnames(toy_data),
-stringsAsFactors = FALSE
+    Time = rep(time, times = 2 * 3),
+    condition = rep(c("WT", "KO"), each = 3 * length(time)),
+    Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
+    row.names = colnames(toy_data),
+    stringsAsFactors = FALSE
 )
 
 # Minimal annotation & report info
 annotation <- data.frame(
-  id = rownames(toy_data),
-  row.names = rownames(toy_data)
+    id = rownames(toy_data),
+    row.names = rownames(toy_data)
 )
 
 report_info <- list(
-  omics_data_type      = "Transcriptomics",
-  data_description     = "Toy time-series (WT vs KO, t=0/1/2)",
-  data_collection_date = "2025-01-01",
-  analyst_name         = "Example",
-  contact_info         = "example@example.org",
-  project_name         = "find_pvc_toy"
+    omics_data_type      = "Transcriptomics",
+    data_description     = "Toy time-series (WT vs KO, t=0/1/2)",
+    data_collection_date = "2025-01-01",
+    analyst_name         = "Example",
+    contact_info         = "example@example.org",
+    project_name         = "find_pvc_toy"
 )
 
 splineomics <- list(
-  data = toy_data,
-  meta = toy_meta,
-  annotation = annotation,
-  condition = "condition",
-  meta_batch_column = "Replicate",
-  padjust_method = "BH",
-  report_info = report_info,
-  feature_name_columns = "id"
+    data = toy_data,
+    meta = toy_meta,
+    annotation = annotation,
+    condition = "condition",
+    meta_batch_column = "Replicate",
+    padjust_method = "BH",
+    report_info = report_info,
+    feature_name_columns = "id"
 )
 
 plot_info <- list(
-  y_axis_label = "log2 value",
-  time_unit = "hours",
-  treatment_labels = NA,
-  treatment_timepoints = NA
+    y_axis_label = "log2 value",
+    time_unit = "hours",
+    treatment_labels = NA,
+    treatment_timepoints = NA
 )
 
 # Run with a lenient alpha to ensure toy detections;
 # write report to a temp dir to avoid clutter.
 res <- find_pvc(
-  splineomics = splineomics,
-  alphas = 0.05,
-  padjust_method = "BH",
-  support = 1,
-  plot_info = plot_info,
-  report_dir = tempdir()
+    splineomics = splineomics,
+    alphas = 0.05,
+    padjust_method = "BH",
+    support = 1,
+    plot_info = plot_info,
+    report_dir = tempdir()
 )
 
 # Peek at one plot if available (WT first plot)
 if (!is.null(res[["WT"]][["plots"]]) &&
     length(res[["WT"]][["plots"]]) > 0) {
-  print(res[["WT"]][["plots"]][[1]])
+    print(res[["WT"]][["plots"]][[1]])
 }
 
 }

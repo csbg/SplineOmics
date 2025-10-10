@@ -14,9 +14,9 @@ editor_options:
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  dev = "ragg_png"
+    collapse = TRUE,
+    comment = "#>",
+    dev = "ragg_png"
 )
 
 # Ensure ComplexHeatmap’s internal png() calls don’t use Quartz on macOS
@@ -120,7 +120,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ```{r setup, eval = TRUE}
 library(SplineOmics)
 library(readr) # For reading the meta CSV file
-library(here)  # For managing filepaths
+library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
 ```
@@ -129,18 +129,18 @@ library(knitr) # For Showing the head of the data and the meta tables.
 
 ```{r load the files, eval = TRUE}
 data <- readRDS(xzfile(system.file(
-  "extdata",
-  "rna_seq_data.rds.xz",
-  package = "SplineOmics"
+    "extdata",
+    "rna_seq_data.rds.xz",
+    package = "SplineOmics"
 )))
 
 meta <- readr::read_csv(
-  system.file(
-    "extdata",
-    "rna_seq_meta.csv",
-    package = "SplineOmics"
-  ),
-  show_col_types = FALSE
+    system.file(
+        "extdata",
+        "rna_seq_meta.csv",
+        package = "SplineOmics"
+    ),
+    show_col_types = FALSE
 )
 ```
 
@@ -148,9 +148,9 @@ meta <- readr::read_csv(
 
 ```{r Show data head, eval = TRUE}
 kable(
-  head(data),
-  format = "markdown"
-  )
+    head(data),
+    format = "markdown"
+)
 ```
 
 **data**: A numeric matrix where each row represents a gene (features)
@@ -168,9 +168,9 @@ For the data analysis involving splines over time, it is essential to sort the s
 
 ```{r Show meta head, eval = TRUE}
 kable(
-  head(meta),
-  format = "markdown"
-  )
+    head(meta),
+    format = "markdown"
+)
 ```
 
 **meta**: A data frame containing metadata information about the samples
@@ -194,45 +194,45 @@ rows_after <- nrow(data)
 rows_removed <- rows_before - rows_after
 
 cat(sprintf(
-  "Rows before filtering: %d\nRows after filtering: %d\nRows removed: %d\n", 
-  rows_before,
-  rows_after,
-  rows_removed
-  ))
+    "Rows before filtering: %d\nRows after filtering: %d\nRows removed: %d\n",
+    rows_before,
+    rows_after,
+    rows_removed
+))
 ```
 
 # Perform EDA (exploratory data analysis)
 
 ```{r Define EDA arguments, eval = TRUE}
 report_info <- list(
-  omics_data_type = "RNA",
-  data_description = "RNA-seq data of CHO cells",
-  data_collection_date = "December 2024",
-  analyst_name = "Thomas Rauter",
-  contact_info = "thomas.rauter@plus.ac.at",
-  project_name = "DGTX"
+    omics_data_type = "RNA",
+    data_description = "RNA-seq data of CHO cells",
+    data_collection_date = "December 2024",
+    analyst_name = "Thomas Rauter",
+    contact_info = "thomas.rauter@plus.ac.at",
+    project_name = "DGTX"
 )
 
 report_dir <- here::here(
-  "results",
-  "explore_data"
+    "results",
+    "explore_data"
 )
 ```
 
 ```{r Create the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::create_splineomics(
-  data = data,
-  meta = meta,
-  report_info = report_info,
-  condition = "Condition",    # Column of meta that contains the levels.
-  meta_batch_column = "Plate" # Remove batch effect for plotting.
+    data = data,
+    meta = meta,
+    report_info = report_info,
+    condition = "Condition", # Column of meta that contains the levels.
+    meta_batch_column = "Plate" # Remove batch effect for plotting.
 )
 ```
 
 ```{r Run EDA function, eval = FALSE}
 plots <- SplineOmics::explore_data(
-  splineomics = splineomics, 
-  report_dir = report_dir
+    splineomics = splineomics,
+    report_dir = report_dir
 )
 ```
 
@@ -252,24 +252,24 @@ Lets define our parameters and put them into the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
 spline_params <- list(
-  spline_type = c("n"),    # natural cubic splines
-  dof = c(3L)              # Degree of freedom of 3 for the splines.
+    spline_type = c("n"), # natural cubic splines
+    dof = c(3L) # Degree of freedom of 3 for the splines.
 )
 
 design <- "~ 1 + Condition*Time + Plate + (1|Reactor)"
 
 splineomics <- SplineOmics::update_splineomics(
-  splineomics = splineomics,
-  data = data,
-  design = design, 
-  # dream_params = dream_params,   if we would want to adjust dream()
-  # means limma "borrows" statistical power from the other levels
-  mode = "integrated", 
-  spline_params = spline_params,
-  bp_cfg = c(
-    n_cores = 1,
-    blas_threads = 1
-    )    
+    splineomics = splineomics,
+    data = data,
+    design = design,
+    # dream_params = dream_params,   if we would want to adjust dream()
+    # means limma "borrows" statistical power from the other levels
+    mode = "integrated",
+    spline_params = spline_params,
+    bp_cfg = c(
+        n_cores = 1,
+        blas_threads = 1
+    )
 )
 ```
 
@@ -292,7 +292,7 @@ analysis.
 
 ```{r Preprocess RNA-seq data with voom, eval = TRUE}
 splineomics <- SplineOmics::preprocess_rna_seq_data(
-  splineomics = splineomics
+    splineomics = splineomics
 )
 ```
 
@@ -306,7 +306,7 @@ Run the `run_limma_splines()` function:
 
 ```{r limma spline analysis, eval = TRUE}
 splineomics <- SplineOmics::run_limma_splines(
-  splineomics = splineomics
+    splineomics = splineomics
 )
 ```
 
@@ -336,8 +336,8 @@ generate p-value histograms an volcano plots.
 
 ```{r build limma report, eval = TRUE}
 plots <- SplineOmics::create_limma_report(
-  splineomics = splineomics,
-  report_dir = withr::local_tempdir()
+    splineomics = splineomics,
+    report_dir = withr::local_tempdir()
 )
 ```
 
@@ -355,53 +355,53 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
 ```{r cluster the hits, eval = TRUE}
-adj_pthresholds <- c(   
-  0.05,    
-  0.05     
+adj_pthresholds <- c(
+    0.05,
+    0.05
 )
 
 nr_clusters <- list(
-  constant = 4, 
-  temp_shift = 4   
+    constant = 4,
+    temp_shift = 4
 )
 
 report_dir <- here::here(
-  "results",
-  "clustering_reports"
+    "results",
+    "clustering_reports"
 )
 
 plot_info <- list( # For the spline plots
-  y_axis_label = "log2 counts",
-  time_unit = "hours", 
-  treatment_labels = list(
-    temp_shift = "temp shift",
-    double_spline_plots = "temp shift"
+    y_axis_label = "log2 counts",
+    time_unit = "hours",
+    treatment_labels = list(
+        temp_shift = "temp shift",
+        double_spline_plots = "temp shift"
     ),
-  treatment_timepoints = list(
-    temp_shift = 146,
-    double_spline_plots = 146
+    treatment_timepoints = list(
+        temp_shift = 146,
+        double_spline_plots = 146
     )
 )
 
 genes <- rownames(data)
-genes <- sub("_\\d+$", "", genes)   # remove the _1 part from the end
+genes <- sub("_\\d+$", "", genes) # remove the _1 part from the end
 
 plot_options <- list(
-  # When meta_replicate_column is not there, all datapoints are blue.
-  meta_replicate_column = "Reactor" # Colors the data points based on Reactor
+    # When meta_replicate_column is not there, all datapoints are blue.
+    meta_replicate_column = "Reactor" # Colors the data points based on Reactor
 )
 
 clustering_results <- SplineOmics::cluster_hits(
-  splineomics = splineomics,
-  adj_pthresholds = adj_pthresholds,
-  nr_clusters = nr_clusters,
-  genes = genes,
-  plot_info = plot_info,
-  max_hit_number = 20,          # maximum number of plots per result category
-  plot_options = plot_options,
-  report_dir = withr::local_tempdir(),
-  adj_pthresh_avrg_diff_conditions = 0.05,
-  adj_pthresh_interaction_condition_time = 0.05
+    splineomics = splineomics,
+    adj_pthresholds = adj_pthresholds,
+    nr_clusters = nr_clusters,
+    genes = genes,
+    plot_info = plot_info,
+    max_hit_number = 20, # maximum number of plots per result category
+    plot_options = plot_options,
+    report_dir = withr::local_tempdir(),
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05
 )
 ```
 
@@ -423,24 +423,24 @@ databases of choice need to be downloaded:
 ```{r download Enrichr databases, eval = FALSE}
 # Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
-  "WikiPathways_2019_Human",
-  "NCI-Nature_2016",
-  "TRRUST_Transcription_Factors_2019",
-  "MSigDB_Hallmark_2020",
-  "GO_Cellular_Component_2018",
-  "CORUM",
-  "KEGG_2019_Human",
-  "TRANSFAC_and_JASPAR_PWMs",
-  "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
-  "GO_Biological_Process_2018",
-  "GO_Molecular_Function_2018",
-  "Human_Gene_Atlas"
+    "WikiPathways_2019_Human",
+    "NCI-Nature_2016",
+    "TRRUST_Transcription_Factors_2019",
+    "MSigDB_Hallmark_2020",
+    "GO_Cellular_Component_2018",
+    "CORUM",
+    "KEGG_2019_Human",
+    "TRANSFAC_and_JASPAR_PWMs",
+    "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X",
+    "GO_Biological_Process_2018",
+    "GO_Molecular_Function_2018",
+    "Human_Gene_Atlas"
 )
 
 SplineOmics::download_enrichr_databases(
-  gene_set_lib = gene_set_lib,
-  output_dir = here::here(),   # output into the current working dir (default)
-  filename = "databases.tsv"   # just the name of the file, not the full path
+    gene_set_lib = gene_set_lib,
+    output_dir = here::here(), # output into the current working dir (default)
+    filename = "databases.tsv" # just the name of the file, not the full path
 )
 ```
 
@@ -456,28 +456,28 @@ dotplots in R.
 ```{r prepare arguments for GSEA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- here::here(
-  "databases.tsv"
-  )
+    "databases.tsv"
+)
 
 # Load the file
 databases <- read.delim(
-  downloaded_dbs_filepath,
-  sep = "\t",
-  stringsAsFactors = FALSE
+    downloaded_dbs_filepath,
+    sep = "\t",
+    stringsAsFactors = FALSE
 )
 
 # Specify the clusterProfiler parameters
 clusterProfiler_params <- list(
-  pvalueCutoff = 0.05,
-  pAdjustMethod = "BH",
-  minGSSize = 10,
-  maxGSSize = 500,
-  qvalueCutoff = 0.2
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "BH",
+    minGSSize = 10,
+    maxGSSize = 500,
+    qvalueCutoff = 0.2
 )
 
 report_dir <- here::here(
-  "results",
-  "gsea_reports"
+    "results",
+    "gsea_reports"
 )
 ```
 
@@ -486,15 +486,15 @@ levels, and generates the HTML report:
 
 ```{r run GSEA, eval = FALSE}
 result <- SplineOmics::run_gsea(
-  # A dataframe with three columns: feature, cluster, and gene. Feature contains
-  # the integer index of the feature, cluster the integer specifying the cluster
-  # number, and gene the string of the gene, such as "CLSTN2".
-  cluster_table = clustering_results[["cluster_table"]],
-  databases = databases,
-  clusterProfiler_params = clusterProfiler_params,
-  report_info = report_info,
-  cluster_hits_report_name = "not meaningful here",
-  report_dir = report_dir
+    # A dataframe with three columns: feature, cluster, and gene. Feature contains
+    # the integer index of the feature, cluster the integer specifying the cluster
+    # number, and gene the string of the gene, such as "CLSTN2".
+    cluster_table = clustering_results[["cluster_table"]],
+    databases = databases,
+    clusterProfiler_params = clusterProfiler_params,
+    report_info = report_info,
+    cluster_hits_report_name = "not meaningful here",
+    report_dir = report_dir
 )
 ```
 

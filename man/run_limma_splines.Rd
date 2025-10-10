@@ -117,35 +117,35 @@ between time and condition.
 \examples{
 # Toy data: 4 features x 6 samples (two conditions, three time points)
 toy_data <- matrix(
-  c(
-    3,  5,  8, 12, 17, 23,   # f1
-    23, 17, 13,  9,  6,  4,  # f2
-    5,  3,  2,  2,  3,  5,   # f3
-    1,  4,  9,  8,  4,  1,   # f4
-    10, 10, 10, 10, 10, 10,  # f5
-    2,   2,  2,  9, 12, 15,  # f6
-    4,   5,  7, 10, 14, 19,  # f7
-    12, 11,  9,  8,  9, 12   # f8
-  ),
-  nrow = 8, ncol = 6, byrow = TRUE,
-  dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+    c(
+        3, 5, 8, 12, 17, 23, # f1
+        23, 17, 13, 9, 6, 4, # f2
+        5, 3, 2, 2, 3, 5, # f3
+        1, 4, 9, 8, 4, 1, # f4
+        10, 10, 10, 10, 10, 10, # f5
+        2, 2, 2, 9, 12, 15, # f6
+        4, 5, 7, 10, 14, 19, # f7
+        12, 11, 9, 8, 9, 12 # f8
+    ),
+    nrow = 8, ncol = 6, byrow = TRUE,
+    dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 )
 
 toy_meta <- data.frame(
-  Time      = c(0, 1, 2, 0, 1, 2),
-  condition = rep(c("WT", "KO"), each = 3),
-  Replicate = rep(c("R1", "R2"), each = 3),
-  row.names = colnames(toy_data),
-  stringsAsFactors = FALSE
+    Time = c(0, 1, 2, 0, 1, 2),
+    condition = rep(c("WT", "KO"), each = 3),
+    Replicate = rep(c("R1", "R2"), each = 3),
+    row.names = colnames(toy_data),
+    stringsAsFactors = FALSE
 )
 
 toy_annot <- data.frame(
-  feature_nr = 1:8,
-  gene       = c("G1", "G2", "G3", "G4"),
-  stringsAsFactors = FALSE
+    feature_nr = 1:8,
+    gene = c("G1", "G2", "G3", "G4"),
+    stringsAsFactors = FALSE
 )
 
-# Stub limma "top tables" with minimal required fields 
+# Stub limma "top tables" with minimal required fields
 # (feature_nr + adj.P.Val)
 tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
 tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
@@ -156,34 +156,34 @@ design_str <- "~ 1 + Time*condition"
 
 # Minimal spline parameters required by spline machinery
 spline_params <- list(
-  spline_type = "n",  # natural cubic splines
-  dof = 1L            # degrees of freedom for the spline basis
+    spline_type = "n", # natural cubic splines
+    dof = 1L # degrees of freedom for the spline basis
 )
 
 toy_splineomics <- list(
-  data = toy_data,
-  meta = toy_meta,
-  annotation = toy_annot,
-  report_info = list(
-    omics_data_type      = "RNA-seq",
-    data_description      = "toy example",
-    data_collection_date  = "2025-01-01",
-    analyst_name          = "Example",
-    contact_info          = "example@example.org",
-    project_name          = "ToyProject"
-  ),
-  design                 = design_str,
-  mode                   = "integrated",        
-  condition              = "condition",        
-  spline_params          = spline_params,
-  meta_batch_column      = NULL,
-  meta_batch2_column     = NULL,
-  limma_splines_result = list(
-    time_effect                  = list(WT = tt_wt, KO = tt_ko),
-    avrg_diff_conditions         = tt_c2,
-    interaction_condition_time   = tt_c3
-  ),
-  feature_name_columns   = "gene"
+    data = toy_data,
+    meta = toy_meta,
+    annotation = toy_annot,
+    report_info = list(
+        omics_data_type = "RNA-seq",
+        data_description = "toy example",
+        data_collection_date = "2025-01-01",
+        analyst_name = "Example",
+        contact_info = "example@example.org",
+        project_name = "ToyProject"
+    ),
+    design = design_str,
+    mode = "integrated",
+    condition = "condition",
+    spline_params = spline_params,
+    meta_batch_column = NULL,
+    meta_batch2_column = NULL,
+    limma_splines_result = list(
+        time_effect                  = list(WT = tt_wt, KO = tt_ko),
+        avrg_diff_conditions         = tt_c2,
+        interaction_condition_time   = tt_c3
+    ),
+    feature_name_columns = "gene"
 )
 class(toy_splineomics) <- "SplineOmics"
 

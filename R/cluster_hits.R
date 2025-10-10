@@ -23,32 +23,32 @@
 #'   (contains the metadata for that sample).
 #'   \item \code{annotation}: A dataframe that maps the rows of \code{data} to
 #'   annotation info, such as the gene name or database identifiers.
-#'   \item \code{report_info}: A named list describing the experiment.  
-#'   Must include the following fields:  
-#'     - \code{"omics_data_type"}  
-#'     - \code{"data_description"}  
-#'     - \code{"data_collection_date"}  
-#'     - \code{"analyst_name"}  
-#'     - \code{"contact_info"}  
-#'     - \code{"project_name"}  
-#'   
-#'   May also include the following optional fields:  
-#'     - \code{"method_description"}  
-#'     - \code{"results_summary"}  
-#'     - \code{"conclusions"}  
+#'   \item \code{report_info}: A named list describing the experiment.
+#'   Must include the following fields:
+#'     - \code{"omics_data_type"}
+#'     - \code{"data_description"}
+#'     - \code{"data_collection_date"}
+#'     - \code{"analyst_name"}
+#'     - \code{"contact_info"}
+#'     - \code{"project_name"}
+#'
+#'   May also include the following optional fields:
+#'     - \code{"method_description"}
+#'     - \code{"results_summary"}
+#'     - \code{"conclusions"}
 #'   \item \code{design}: A character of length 1 representing the limma
 #'   design formula.
-#'   \item \code{mode}: Specifies how the design formula is constructed: 
-#'   either `"isolated"` or `"integrated"`. 
-#'   
-#'   - `"isolated"`: Each level is analyzed independently, using only the 
-#'     subset of data corresponding to that level. The design formula does 
-#'     not include the condition variable, since only one condition is 
+#'   \item \code{mode}: Specifies how the design formula is constructed:
+#'   either `"isolated"` or `"integrated"`.
+#'
+#'   - `"isolated"`: Each level is analyzed independently, using only the
+#'     subset of data corresponding to that level. The design formula does
+#'     not include the condition variable, since only one condition is
 #'     present in each subset.
-#'   
-#'   - `"integrated"`: All levels are analyzed together in a single model, 
-#'     using the full dataset. The design formula includes the condition 
-#'     variable (and optionally interaction terms with it) so that results 
+#'
+#'   - `"integrated"`: All levels are analyzed together in a single model,
+#'     using the full dataset. The design formula includes the condition
+#'     variable (and optionally interaction terms with it) so that results
 #'     are estimated jointly across all levels.
 #'   \item \code{condition}: Character vector of length 1 specifying the column
 #'   name in \code{meta} used to define groups for analysis.
@@ -61,11 +61,11 @@
 #'    a top table from differential expression analysis, containing at least
 #'    'adj.P.Val' and expression data columns.
 #'   \item \code{feature_name_columns}: Character vector of strings that each
-#'   specify a column of the original data dataframe which were used to 
+#'   specify a column of the original data dataframe which were used to
 #'   automatically build the feature names with the \code{extract_data}
 #'   function.
 #' }
-#' 
+#'
 #' @param nr_clusters Named list specifying the number of clusters per
 #'   condition level. The list must have one element per condition
 #'   level, and each element must be named exactly with the
@@ -102,18 +102,18 @@
 #'     condition1 = 4,
 #'     condition2 = 2:6
 #'   )
-#' 
+#'
 #' @param adj_pthresholds Numeric vector of p-value thresholds for filtering
-#' hits in each top table. The order of the elements determines which 
+#' hits in each top table. The order of the elements determines which
 #' adj.p-value threshold is assigned to which condition (the first element
 #' gets assigned to the first condition, the second to the second, etc.).
-#' 
+#'
 #' @param adj_pthresh_avrg_diff_conditions p-value threshold for the results
-#' from the average difference of the condition limma result. 
-#' 
+#' from the average difference of the condition limma result.
+#'
 #' @param adj_pthresh_interaction_condition_time p-value threshold for the
-#' results from the interaction of condition and time limma result. 
-#' 
+#' results from the interaction of condition and time limma result.
+#'
 #' @param min_effect_size A named list that specifies the minimum effect size
 #'   thresholds to consider a feature as biologically meaningful, in addition
 #'   to statistical significance. This allows users to filter out "trivial"
@@ -137,18 +137,18 @@
 #'   conservative thresholds.
 #'
 #'   The default is 0 for all three elements.
-#'   
+#'
 #' @param genes A character vector of gene names corresponding to the features
-#'  to be analyzed. The order of entries must match the feature order in 
+#'  to be analyzed. The order of entries must match the feature order in
 #'  \code{data}.
 #'  Gene names should be standardized (cleaned) to ensure compatibility with
 #'  downstream databases used for overrepresentation analysis after clustering.
-#'  
+#'
 #' @param plot_info List with optional elements used to annotate spline plots:
 #'
-#' - `y_axis_label`: single string for the y-axis label.  
-#' - `time_unit`: single string used in the x-axis label.  
-#' - `treatment_labels`: named list of single strings.  
+#' - `y_axis_label`: single string for the y-axis label.
+#' - `time_unit`: single string used in the x-axis label.
+#' - `treatment_labels`: named list of single strings.
 #' - `treatment_timepoints`: named list of single numeric values.
 #'
 #' If any treatment list is present, both must be present. The two lists must
@@ -160,7 +160,7 @@
 #' Vertical dashed lines are drawn at the given timepoints for facets whose
 #' level name matches a list name, and labeled with the corresponding string
 #' (e.g., feeding, temperature shift).
-#' 
+#'
 #' Example:
 #'
 #' \preformatted{
@@ -179,33 +179,33 @@
 #'   )
 #' )
 #' }
-#'                  
-#' @param plot_options A named list controlling optional plot customization.  
-#'   The list can include one or both of the following entries 
-#'   (any not supplied will fall back to their default values):  
+#'
+#' @param plot_options A named list controlling optional plot customization.
+#'   The list can include one or both of the following entries
+#'   (any not supplied will fall back to their default values):
 #'   \itemize{
-#'     \item \code{cluster_heatmap_columns} 
-#'     (`logical`, default = \code{FALSE}):  
-#'       Whether to cluster the columns in the heatmap.  
-#'     \item \code{meta_replicate_column} (`character(1)`, 
-#'       default = \code{NULL}):  
-#'       Name of the column in \code{meta} that encodes replicate information.  
+#'     \item \code{cluster_heatmap_columns}
+#'     (`logical`, default = \code{FALSE}):
+#'       Whether to cluster the columns in the heatmap.
+#'     \item \code{meta_replicate_column} (`character(1)`,
+#'       default = \code{NULL}):
+#'       Name of the column in \code{meta} that encodes replicate information.
 #'       If supplied, spline plot data points are colored by replicate,
 #'       allowing replicate-level variation to be assessed.
 #'   }
-#'   
-#' @param raw_data Data matrix with the raw (unimputed) data, still 
-#' containing NA values. When provided, it highlights the datapoints in the 
+#'
+#' @param raw_data Data matrix with the raw (unimputed) data, still
+#' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
-#' 
+#'
 #' @param report_dir Character string specifying the directory path where the
-#' HTML report and any other output files should be saved. When no path is 
+#' HTML report and any other output files should be saved. When no path is
 #' specified, then the function runs but no HTML report is generated.
-#' 
+#'
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
-#' the HTML report in the case of many hits. 
-#' 
+#' the HTML report in the case of many hits.
+#'
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return
@@ -279,45 +279,45 @@
 #'   }
 #'   \item{\code{plots}}{
 #'     A list of all plots generated during the run, corresponding to the
-#'     visualizations shown in the HTML report produced by this function. 
-#'     Additionally, this plots list also contains the plots showing the 
-#'     consensus clusters of the potential clustering of the interaction of 
+#'     visualizations shown in the HTML report produced by this function.
+#'     Additionally, this plots list also contains the plots showing the
+#'     consensus clusters of the potential clustering of the interaction of
 #'     condition and time (category 3) hits.
 #'   }
 #' }
-#' 
+#'
 #' @examples
 #' # Toy data: 4 features x 6 samples (two conditions, three time points)
 #' toy_data <- matrix(
-#'   c(
-#'     3,  5,  8, 12, 17, 23,   # f1
-#'     23, 17, 13,  9,  6,  4,  # f2
-#'     5,  3,  2,  2,  3,  5,   # f3
-#'     1,  4,  9,  8,  4,  1,   # f4
-#'     10, 10, 10, 10, 10, 10,  # f5
-#'     2,   2,  2,  9, 12, 15,  # f6
-#'     4,   5,  7, 10, 14, 19,  # f7
-#'     12, 11,  9,  8,  9, 12   # f8
-#'   ),
-#'   nrow = 8, ncol = 6, byrow = TRUE,
-#'   dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#'     c(
+#'         3, 5, 8, 12, 17, 23, # f1
+#'         23, 17, 13, 9, 6, 4, # f2
+#'         5, 3, 2, 2, 3, 5, # f3
+#'         1, 4, 9, 8, 4, 1, # f4
+#'         10, 10, 10, 10, 10, 10, # f5
+#'         2, 2, 2, 9, 12, 15, # f6
+#'         4, 5, 7, 10, 14, 19, # f7
+#'         12, 11, 9, 8, 9, 12 # f8
+#'     ),
+#'     nrow = 8, ncol = 6, byrow = TRUE,
+#'     dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 #' )
 #'
 #' toy_meta <- data.frame(
-#'   Time      = c(0, 1, 2, 0, 1, 2),
-#'   condition = rep(c("WT", "KO"), each = 3),
-#'   Replicate = rep(c("R1", "R2"), each = 3),
-#'   row.names = colnames(toy_data),
-#'   stringsAsFactors = FALSE
+#'     Time = c(0, 1, 2, 0, 1, 2),
+#'     condition = rep(c("WT", "KO"), each = 3),
+#'     Replicate = rep(c("R1", "R2"), each = 3),
+#'     row.names = colnames(toy_data),
+#'     stringsAsFactors = FALSE
 #' )
 #'
 #' toy_annot <- data.frame(
-#'   feature_nr = 1:8,
-#'   gene       = c("G1", "G2", "G3", "G4"),
-#'   stringsAsFactors = FALSE
+#'     feature_nr = 1:8,
+#'     gene = c("G1", "G2", "G3", "G4"),
+#'     stringsAsFactors = FALSE
 #' )
 #'
-#' # Stub limma "top tables" with minimal required fields 
+#' # Stub limma "top tables" with minimal required fields
 #' # (feature_nr + adj.P.Val)
 #' tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
 #' tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
@@ -328,34 +328,34 @@
 #'
 #' # Minimal spline parameters required by spline machinery
 #' spline_params <- list(
-#'   spline_type = "n",  # natural cubic splines
-#'   dof = 1L            # degrees of freedom for the spline basis
+#'     spline_type = "n", # natural cubic splines
+#'     dof = 1L # degrees of freedom for the spline basis
 #' )
 #'
 #' toy_splineomics <- list(
-#'   data = toy_data,
-#'   meta = toy_meta,
-#'   annotation = toy_annot,
-#'   report_info = list(
-#'     omics_data_type      = "RNA-seq",
-#'     data_description      = "toy example",
-#'     data_collection_date  = "2025-01-01",
-#'     analyst_name          = "Example",
-#'     contact_info          = "example@example.org",
-#'     project_name          = "ToyProject"
-#'   ),
-#'   design                 = design_str,
-#'   mode                   = "integrated",        
-#'   condition              = "condition",        
-#'   spline_params          = spline_params,
-#'   meta_batch_column      = NULL,
-#'   meta_batch2_column     = NULL,
-#'   limma_splines_result = list(
-#'     time_effect                  = list(WT = tt_wt, KO = tt_ko),
-#'     avrg_diff_conditions         = tt_c2,
-#'     interaction_condition_time   = tt_c3
-#'   ),
-#'   feature_name_columns   = "gene"
+#'     data = toy_data,
+#'     meta = toy_meta,
+#'     annotation = toy_annot,
+#'     report_info = list(
+#'         omics_data_type = "RNA-seq",
+#'         data_description = "toy example",
+#'         data_collection_date = "2025-01-01",
+#'         analyst_name = "Example",
+#'         contact_info = "example@example.org",
+#'         project_name = "ToyProject"
+#'     ),
+#'     design = design_str,
+#'     mode = "integrated",
+#'     condition = "condition",
+#'     spline_params = spline_params,
+#'     meta_batch_column = NULL,
+#'     meta_batch2_column = NULL,
+#'     limma_splines_result = list(
+#'         time_effect                  = list(WT = tt_wt, KO = tt_ko),
+#'         avrg_diff_conditions         = tt_c2,
+#'         interaction_condition_time   = tt_c3
+#'     ),
+#'     feature_name_columns = "gene"
 #' )
 #' class(toy_splineomics) <- "SplineOmics"
 #'
@@ -366,25 +366,25 @@
 #'
 #' # Keep outputs light and write into a temporary directory
 #' out <- cluster_hits(
-#'   splineomics = toy_splineomics,
-#'   nr_clusters = nr_k,
-#'   adj_pthresholds = c(0.05, 0.05),
-#'   adj_pthresh_avrg_diff_conditions = 0.05,
-#'   adj_pthresh_interaction_condition_time = 0.05,
-#'   min_effect_size = list(
-#'     time_effect = 0,
-#'     avg_diff_cond = 0,
-#'     interaction_cond_time = 0
-#'   ),
-#'   genes = toy_annot$gene,
-#'   plot_info = list(y_axis_label = "log2 expression", time_unit = "h"),
-#'   plot_options = list(
-#'     cluster_heatmap_columns = FALSE,
-#'     meta_replicate_column = "Replicate"
-#'   ),
-#'   raw_data   = toy_data,
-#'   report_dir = tempdir(),
-#'   max_hit_number = 2
+#'     splineomics = toy_splineomics,
+#'     nr_clusters = nr_k,
+#'     adj_pthresholds = c(0.05, 0.05),
+#'     adj_pthresh_avrg_diff_conditions = 0.05,
+#'     adj_pthresh_interaction_condition_time = 0.05,
+#'     min_effect_size = list(
+#'         time_effect = 0,
+#'         avg_diff_cond = 0,
+#'         interaction_cond_time = 0
+#'     ),
+#'     genes = toy_annot$gene,
+#'     plot_info = list(y_axis_label = "log2 expression", time_unit = "h"),
+#'     plot_options = list(
+#'         cluster_heatmap_columns = FALSE,
+#'         meta_replicate_column = "Replicate"
+#'     ),
+#'     raw_data = toy_data,
+#'     report_dir = tempdir(),
+#'     max_hit_number = 2
 #' )
 #'
 #' @export
@@ -396,241 +396,239 @@ cluster_hits <- function(
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     min_effect_size = list(
-      time_effect = 0,
-      avg_diff_cond = 0,
-      interaction_cond_time = 0
+        time_effect = 0,
+        avg_diff_cond = 0,
+        interaction_cond_time = 0
     ),
-    genes = NULL, 
+    genes = NULL,
     plot_info = list(
-      y_axis_label = "Value",
-      time_unit = "min",
-      treatment_labels = NA,
-      treatment_timepoints = NA
+        y_axis_label = "Value",
+        time_unit = "min",
+        treatment_labels = NA,
+        treatment_timepoints = NA
     ),
     plot_options = list(
-      cluster_heatmap_columns = FALSE,
-      meta_replicate_column = NULL
+        cluster_heatmap_columns = FALSE,
+        meta_replicate_column = NULL
     ),
     raw_data = NULL,
     report_dir = NULL,
     max_hit_number = 25,
-    verbose = TRUE
+    verbose = TRUE) {
+    start_time <- Sys.time()
+
+    check_splineomics_elements(
+        splineomics = splineomics,
+        func_type = "cluster_hits"
+    )
+
+    min_effect_size <- check_inputs_cluster_hits(
+        min_effect_size = min_effect_size,
+        max_hit_number = max_hit_number
+    )
+
+    args <- lapply(
+        as.list(match.call()[-1]),
+        eval,
+        parent.frame()
+    )
+    args[["verbose"]] <- verbose
+    check_null_elements(args)
+    input_control <- InputControl$new(args)
+    input_control$auto_validate()
+
+    top_tables <- splineomics[["limma_splines_result"]][["time_effect"]]
+    data <- splineomics[["data"]]
+    meta <- splineomics[["meta"]]
+    annotation <- splineomics[["annotation"]]
+    report_info <- splineomics[["report_info"]]
+    design <- splineomics[["design"]]
+    mode <- splineomics[["mode"]]
+    condition <- splineomics[["condition"]]
+    spline_params <- splineomics[["spline_params"]]
+    meta_batch_column <- splineomics[["meta_batch_column"]]
+    meta_batch2_column <- splineomics[["meta_batch2_column"]]
+    feature_name_columns <- splineomics[["feature_name_columns"]]
+
+    # To set the default p-value threshold for ALL levels.
+    if (is.numeric(adj_pthresholds) &&
+        length(adj_pthresholds) == 1 && adj_pthresholds[1] == 0.05) {
+        levels <- unique(meta[[condition]])
+        adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
+    }
+
+    within_level_top_tables <- filter_top_tables(
+        top_tables = top_tables,
+        adj_pthresholds = adj_pthresholds,
+        meta = meta,
+        condition = condition
+    )
+    if (is.null(within_level_top_tables)) { # when <2 hits for all levels
+        return(NULL)
+    }
+
+    predicted_timecurves <- predict_timecurves(
+        splineomics = splineomics,
+        data = data,
+        meta = meta,
+        condition = condition,
+        spline_params = spline_params,
+        mode = mode
+    )
+
+    predicted_timecurves <- add_cat1_and_cat3_effectsizes(
+        predicted_timecurves,
+        min_effect_sizes = min_effect_size
+    )
+
+    if (
+        (mode != "isolated") &&
+            (adj_pthresh_avrg_diff_conditions > 0 ||
+                adj_pthresh_interaction_condition_time > 0)
     ) {
+        category_2_and_3_hits <- get_category_2_and_3_hits(
+            splineomics = splineomics,
+            adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+            adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+            avg_diff_cond_threshold = min_effect_size[["avg_diff_cond"]],
+            predicted_timecurves = predicted_timecurves
+        )
 
-  start_time <- Sys.time()
+        spline_comp_plots <- generate_spline_comparisons(
+            splineomics = splineomics,
+            data = data,
+            meta = meta,
+            condition = condition,
+            replicate_column = plot_options[["meta_replicate_column"]],
+            plot_info = plot_info,
+            category_2_and_3_hits = category_2_and_3_hits,
+            adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+            adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+            raw_data = raw_data,
+            predicted_timecurves = predicted_timecurves,
+            max_hit_number = max_hit_number
+        )
+    } else {
+        category_2_and_3_hits <- NULL
+        spline_comp_plots <- NULL
+    }
 
-  check_splineomics_elements(
-    splineomics = splineomics,
-    func_type = "cluster_hits"
-    )
-  
-  min_effect_size <- check_inputs_cluster_hits(
-    min_effect_size = min_effect_size,
-    max_hit_number = max_hit_number
-    )
-
-  args <- lapply(
-    as.list(match.call()[-1]),
-    eval,
-    parent.frame()
-    )
-  args[["verbose"]] <- verbose
-  check_null_elements(args)
-  input_control <- InputControl$new(args)
-  input_control$auto_validate()
-
-  top_tables <- splineomics[["limma_splines_result"]][["time_effect"]]
-  data <- splineomics[["data"]]
-  meta <- splineomics[["meta"]]
-  annotation <- splineomics[["annotation"]]
-  report_info <- splineomics[["report_info"]]
-  design <- splineomics[["design"]]
-  mode <- splineomics[["mode"]]
-  condition <- splineomics[["condition"]]
-  spline_params <- splineomics[["spline_params"]]
-  meta_batch_column <- splineomics[["meta_batch_column"]]
-  meta_batch2_column <- splineomics[["meta_batch2_column"]]
-  feature_name_columns <- splineomics[["feature_name_columns"]]
-
-  # To set the default p-value threshold for ALL levels.
-  if (is.numeric(adj_pthresholds) &&
-    length(adj_pthresholds) == 1 && adj_pthresholds[1] == 0.05) {
-    levels <- unique(meta[[condition]])
-    adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
-  }
-
-  within_level_top_tables <- filter_top_tables(
-    top_tables = top_tables,
-    adj_pthresholds = adj_pthresholds,
-    meta = meta,
-    condition = condition
-  )
-  if (is.null(within_level_top_tables)) {   # when <2 hits for all levels
-    return(NULL)
-  }
-
-  predicted_timecurves <- predict_timecurves(
-    splineomics = splineomics,  
-    data = data,
-    meta = meta,
-    condition = condition,
-    spline_params = spline_params,
-    mode = mode
-  )
-
-  predicted_timecurves <- add_cat1_and_cat3_effectsizes(
-    predicted_timecurves,
-    min_effect_sizes = min_effect_size
+    all_top_tables <- add_effect_size_columns(
+        time_effect_effect_size = predicted_timecurves[["time_effect_effect_size"]],
+        interaction_effect_size = predicted_timecurves[["interaction_effect_size"]],
+        category_2_and_3_hits = category_2_and_3_hits,
+        within_level_top_tables = within_level_top_tables
     )
 
-  if (
-    (mode != "isolated") &&
-    (adj_pthresh_avrg_diff_conditions > 0 ||
-     adj_pthresh_interaction_condition_time > 0)
-  ) {
-    category_2_and_3_hits <- get_category_2_and_3_hits(
-      splineomics = splineomics,
-      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
-      avg_diff_cond_threshold = min_effect_size[["avg_diff_cond"]],
-      predicted_timecurves = predicted_timecurves
+    all_levels_clustering <- perform_clustering(
+        time_effect_hits = all_top_tables[["within_level_top_tables"]],
+        nr_clusters = nr_clusters,
+        condition = condition,
+        predicted_timecurves = predicted_timecurves,
+        verbose = verbose
     )
 
-    spline_comp_plots <- generate_spline_comparisons(
-      splineomics = splineomics,
-      data = data,
-      meta = meta,
-      condition = condition,
-      replicate_column = plot_options[["meta_replicate_column"]],
-      plot_info = plot_info,
-      category_2_and_3_hits = category_2_and_3_hits,
-      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
-      raw_data = raw_data,
-      predicted_timecurves = predicted_timecurves,
-      max_hit_number = max_hit_number
+    # Put them in there under those names, so that the report generation fun
+    # can access them directly like this.
+    effects <- extract_effects(design)
+    report_info[["Fixed effects"]] <- effects[["fixed_effects"]]
+    report_info[["Random effects"]] <- effects[["random_effects"]]
+    report_info[["meta_condition"]] <- c(condition)
+    report_info[["plot_data_batch_correction"]] <- paste(
+        meta_batch_column,
+        meta_batch2_column,
+        sep = ", "
     )
-  } else {
-    category_2_and_3_hits <- NULL
-    spline_comp_plots <- NULL
-  }
+    report_info[["homosc_violation_result"]] <-
+        splineomics[["homosc_violation_result"]]
 
-  all_top_tables <- add_effect_size_columns(
-    time_effect_effect_size = predicted_timecurves[["time_effect_effect_size"]],
-    interaction_effect_size = predicted_timecurves[["interaction_effect_size"]],
-    category_2_and_3_hits = category_2_and_3_hits,
-    within_level_top_tables = within_level_top_tables
-  )
-
-  all_levels_clustering <- perform_clustering(
-    time_effect_hits = all_top_tables[["within_level_top_tables"]],
-    nr_clusters = nr_clusters,
-    condition = condition,
-    predicted_timecurves = predicted_timecurves,
-    verbose = verbose
-  )
-
-  # Put them in there under those names, so that the report generation fun
-  # can access them directly like this.
-  effects <- extract_effects(design)
-  report_info[["Fixed effects"]] <- effects[["fixed_effects"]] 
-  report_info[["Random effects"]] <- effects[["random_effects"]] 
-  report_info[["meta_condition"]] <- c(condition)
-  report_info[["plot_data_batch_correction"]] <- paste(
-    meta_batch_column,
-    meta_batch2_column,
-    sep = ", "
-  )
-  report_info[["homosc_violation_result"]] <-
-    splineomics[["homosc_violation_result"]]
-
-  if (!is.null(splineomics[["use_array_weights"]])) {
-    report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]
-    report_info[["heteroscedasticity"]] <- "not tested"
-  } else {
-    report_info[["use_array_weights"]] <- paste(
-      "automatic (decided by Levene's test), array_weights only used when",
-      "heteroscedasticity is detected (% violating features >= 10)"
-    )
-    report_info[["heteroscedasticity"]] <- sprintf(
-      "Heteroscedasticity detected: %s (%.1f%% of features violated the
+    if (!is.null(splineomics[["use_array_weights"]])) {
+        report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]
+        report_info[["heteroscedasticity"]] <- "not tested"
+    } else {
+        report_info[["use_array_weights"]] <- paste(
+            "automatic (decided by Levene's test), array_weights only used when",
+            "heteroscedasticity is detected (% violating features >= 10)"
+        )
+        report_info[["heteroscedasticity"]] <- sprintf(
+            "Heteroscedasticity detected: %s (%.1f%% of features violated the
       assumption of homoscedasticity)",
-      ifelse(
-        splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
-        ),
-      splineomics[["homosc_violation_result"]][["percent_violated"]]
-    )
-  }
+            ifelse(
+                splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
+            ),
+            splineomics[["homosc_violation_result"]][["percent_violated"]]
+        )
+    }
 
-  if (!is.null(report_dir)) {
-    report_dir <- normalizePath(
-      report_dir,
-      mustWork = FALSE
-    )
-    plots <- make_clustering_report(
-      all_levels_clustering = all_levels_clustering,
-      condition = condition,
-      data = data,
-      meta = meta,
-      annotation = annotation,
-      genes = genes,
-      spline_params = spline_params,
-      adj_pthresholds = adj_pthresholds,
-      adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-      adj_pthresh_interaction_condition_time =
-        adj_pthresh_interaction_condition_time,
-      category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
-      report_dir = report_dir,
-      mode = mode,
-      report_info = report_info,
-      predicted_timecurves = predicted_timecurves,
-      design = design,
-      meta_batch_column = meta_batch_column,
-      meta_batch2_column = meta_batch2_column,
-      plot_info = plot_info,
-      plot_options = plot_options,
-      feature_name_columns = feature_name_columns,
-      spline_comp_plots = spline_comp_plots,
-      raw_data = raw_data,
-      max_hit_number = max_hit_number,
-      verbose = verbose
-    )
-    
-    print_info_message(
-      message_prefix = "Clustering the hits",
-      report_dir = report_dir
-    )
-  } else {
-    plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
-  }
+    if (!is.null(report_dir)) {
+        report_dir <- normalizePath(
+            report_dir,
+            mustWork = FALSE
+        )
+        plots <- make_clustering_report(
+            all_levels_clustering = all_levels_clustering,
+            condition = condition,
+            data = data,
+            meta = meta,
+            annotation = annotation,
+            genes = genes,
+            spline_params = spline_params,
+            adj_pthresholds = adj_pthresholds,
+            adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+            adj_pthresh_interaction_condition_time =
+                adj_pthresh_interaction_condition_time,
+            category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
+            report_dir = report_dir,
+            mode = mode,
+            report_info = report_info,
+            predicted_timecurves = predicted_timecurves,
+            design = design,
+            meta_batch_column = meta_batch_column,
+            meta_batch2_column = meta_batch2_column,
+            plot_info = plot_info,
+            plot_options = plot_options,
+            feature_name_columns = feature_name_columns,
+            spline_comp_plots = spline_comp_plots,
+            raw_data = raw_data,
+            max_hit_number = max_hit_number,
+            verbose = verbose
+        )
 
-  cluster_table <- construct_cluster_table(
-    limma_splines_results = splineomics[["limma_splines_result"]],
-    all_levels_clustering = all_levels_clustering,
-    category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
-    genes = genes
-  )
-  
-  if (verbose) {
-    end_time <- Sys.time()
-    elapsed <- difftime(
-      end_time,
-      start_time,
-      units = "min"
-    )
-    message(
-      sprintf(
-        "Running this function took %.1f min",
-        as.numeric(elapsed)
-      )
-    )
-  }
+        print_info_message(
+            message_prefix = "Clustering the hits",
+            report_dir = report_dir
+        )
+    } else {
+        plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
+    }
 
-  list(
-    cluster_table = cluster_table,
-    spline_results = predicted_timecurves,
-    plots = plots
-  )
+    cluster_table <- construct_cluster_table(
+        limma_splines_results = splineomics[["limma_splines_result"]],
+        all_levels_clustering = all_levels_clustering,
+        category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
+        genes = genes
+    )
+
+    if (verbose) {
+        end_time <- Sys.time()
+        elapsed <- difftime(
+            end_time,
+            start_time,
+            units = "min"
+        )
+        message(
+            sprintf(
+                "Running this function took %.1f min",
+                as.numeric(elapsed)
+            )
+        )
+    }
+
+    list(
+        cluster_table = cluster_table,
+        spline_results = predicted_timecurves,
+        plots = plots
+    )
 }
 
 
@@ -668,153 +666,151 @@ cluster_hits <- function(
 #'
 check_inputs_cluster_hits <- function(
     min_effect_size,
-    max_hit_number
-) {
-  if (!is.list(min_effect_size)) {
-    stop_call_false("`min_effect_size` must be a list.")
-  }
-  
-  allowed_names <- c("time_effect", "avg_diff_cond", "interaction_cond_time")
-  nm <- names(min_effect_size)
-  
-  # names must be a subset of the allowed set (no extras)
-  if (length(nm) > 0 && !all(nm %in% allowed_names)) {
-    bad <- setdiff(nm, allowed_names)
-    stop_call_false(paste(
-      "`min_effect_size` has unknown names:",
-      paste(bad, collapse = ", ")
-    ))
-  }
-  
-  # start filled list with zeros
-  filled <- as.list(setNames(rep(0, length(allowed_names)), allowed_names))
-  
-  # copy provided values with validation
-  for (n in intersect(nm, allowed_names)) {
-    val <- min_effect_size[[n]]
-    if (!is.numeric(val) || length(val) != 1L) {
-      stop_call_false(paste0(
-        "`min_effect_size$", n, "` must be one numeric value."
-      ))
+    max_hit_number) {
+    if (!is.list(min_effect_size)) {
+        stop_call_false("`min_effect_size` must be a list.")
     }
-    filled[[n]] <- val
-  }
-  
-  # validate max_hit_number
-  if (!is.numeric(max_hit_number) ||
-      length(max_hit_number) != 1L ||
-      !(is.infinite(max_hit_number) ||
-        (max_hit_number >= 1 &&
-         max_hit_number == as.integer(max_hit_number)))) {
-    stop_call_false(
-      "`max_hit_number` must be a single positive integer or Inf."
-    )
-  }
 
-  # return the completed list (with zeros filled in)
-  filled
+    allowed_names <- c("time_effect", "avg_diff_cond", "interaction_cond_time")
+    nm <- names(min_effect_size)
+
+    # names must be a subset of the allowed set (no extras)
+    if (length(nm) > 0 && !all(nm %in% allowed_names)) {
+        bad <- setdiff(nm, allowed_names)
+        stop_call_false(paste(
+            "`min_effect_size` has unknown names:",
+            paste(bad, collapse = ", ")
+        ))
+    }
+
+    # start filled list with zeros
+    filled <- as.list(setNames(rep(0, length(allowed_names)), allowed_names))
+
+    # copy provided values with validation
+    for (n in intersect(nm, allowed_names)) {
+        val <- min_effect_size[[n]]
+        if (!is.numeric(val) || length(val) != 1L) {
+            stop_call_false(paste0(
+                "`min_effect_size$", n, "` must be one numeric value."
+            ))
+        }
+        filled[[n]] <- val
+    }
+
+    # validate max_hit_number
+    if (!is.numeric(max_hit_number) ||
+        length(max_hit_number) != 1L ||
+        !(is.infinite(max_hit_number) ||
+            (max_hit_number >= 1 &&
+                max_hit_number == as.integer(max_hit_number)))) {
+        stop_call_false(
+            "`max_hit_number` must be a single positive integer or Inf."
+        )
+    }
+
+    # return the completed list (with zeros filled in)
+    filled
 }
 
 
 #' Filter Top Tables by Adjusted P-Values and Levels
-#' 
+#'
 #' @noRd
 #'
 #' @description
-#' Filters a set of limma top tables based on adjusted p-value thresholds 
-#' and metadata levels. This function supports both within-level and 
-#' between-level analyses. It removes hits that do not meet the specified 
-#' criteria and ensures that clustering can only proceed for levels with 
+#' Filters a set of limma top tables based on adjusted p-value thresholds
+#' and metadata levels. This function supports both within-level and
+#' between-level analyses. It removes hits that do not meet the specified
+#' criteria and ensures that clustering can only proceed for levels with
 #' at least two hits.
 #'
-#' @param top_tables A list of limma top tables, where each top table 
+#' @param top_tables A list of limma top tables, where each top table
 #' corresponds to a specific level or comparison.
-#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds, 
+#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds,
 #'   one for each level in the condition.
-#' @param meta A dataframe containing metadata for the RNA-seq data, 
+#' @param meta A dataframe containing metadata for the RNA-seq data,
 #'   including the condition column used to identify levels.
-#' @param condition A character string specifying the name of the condition 
-#'   column in the `meta` dataframe. Each level of this column corresponds 
+#' @param condition A character string specifying the name of the condition
+#'   column in the `meta` dataframe. Each level of this column corresponds
 #'   to a separate analysis.
 #'
 #' @details
-#' If a between-level analysis is detected, the function identifies the 
-#' appropriate indices for within-level and between-level top tables. 
-#' It filters within-level top tables based on feature indices from the 
+#' If a between-level analysis is detected, the function identifies the
+#' appropriate indices for within-level and between-level top tables.
+#' It filters within-level top tables based on feature indices from the
 #' between-level results or adjusted p-value thresholds.
 #'
-#' For within-level analysis, only features with an adjusted p-value less 
-#' than the specified thresholds are retained. If fewer than two hits are 
-#' found for a level, clustering is skipped for that level, and an NA is 
+#' For within-level analysis, only features with an adjusted p-value less
+#' than the specified thresholds are retained. If fewer than two hits are
+#' found for a level, clustering is skipped for that level, and an NA is
 #' returned for that level in the filtered top tables.
 #'
-#' If all levels have fewer than two hits, the function stops execution 
+#' If all levels have fewer than two hits, the function stops execution
 #' with an error message, as clustering cannot proceed.
 #'
 #' @return
-#' A list of filtered top tables, where each entry corresponds to a level 
-#' in the condition. Levels with fewer than two hits are assigned NA. 
+#' A list of filtered top tables, where each entry corresponds to a level
+#' in the condition. Levels with fewer than two hits are assigned NA.
 #' If all levels are skipped, an error is thrown.
 #'
 filter_top_tables <- function(
     top_tables,
     adj_pthresholds,
     meta,
-    condition
-    ) {
-  result <- check_between_level_pattern(top_tables)
+    condition) {
+    result <- check_between_level_pattern(top_tables)
 
-  if (result$between_levels) { # between_level analysis
-    if (result$index_with_pattern == 1) {
-      within_level_top_tables_index <- 2
-      between_level_top_tables_index <- 1
-    } else { # between level top_tables are at index 2
-      within_level_top_tables_index <- 1
-      between_level_top_tables_index <- 2
+    if (result$between_levels) { # between_level analysis
+        if (result$index_with_pattern == 1) {
+            within_level_top_tables_index <- 2
+            between_level_top_tables_index <- 1
+        } else { # between level top_tables are at index 2
+            within_level_top_tables_index <- 1
+            between_level_top_tables_index <- 2
+        }
+
+        within_level_top_tables <- top_tables[[within_level_top_tables_index]]
+        between_level_top_tables <- top_tables[[between_level_top_tables_index]]
+    } else { # no between level analysis
+        within_level_top_tables <- top_tables
     }
 
-    within_level_top_tables <- top_tables[[within_level_top_tables_index]]
-    between_level_top_tables <- top_tables[[between_level_top_tables_index]]
-  } else { # no between level analysis
-    within_level_top_tables <- top_tables
-  }
+    for (i in seq_along(within_level_top_tables)) {
+        within_level_top_table <- within_level_top_tables[[i]]
+        level <- unique(as.character(meta[[condition]]))[i]
 
-  for (i in seq_along(within_level_top_tables)) {
-    within_level_top_table <- within_level_top_tables[[i]]
-    level <- unique(as.character(meta[[condition]]))[i]
+        if (result$between_levels) {
+            hit_indices <- get_level_hit_indices(
+                between_level_top_tables,
+                level,
+                adj_pthresholds
+            )
+        } else { # within level
+            hit_indices <- within_level_top_table[["feature_nr"]][
+                within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
+            ]
+        }
 
-    if (result$between_levels) {
-      hit_indices <- get_level_hit_indices(
-        between_level_top_tables,
-        level,
-        adj_pthresholds
-      )
-    } else { # within level
-      hit_indices <- within_level_top_table[["feature_nr"]][
-        within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
-      ]
+        top_table_filtered <-
+            within_level_top_table[within_level_top_table[["feature_nr"]]
+            %in% hit_indices, ]
+
+        if (nrow(top_table_filtered) < 2) {
+            message(
+                "Level", level, "has < 2 hits. Skipping clustering for this level"
+            )
+            within_level_top_tables[[i]] <- NA
+        } else {
+            within_level_top_tables[[i]] <- top_table_filtered
+        }
     }
 
-    top_table_filtered <-
-      within_level_top_table[within_level_top_table[["feature_nr"]]
-      %in% hit_indices, ]
-
-    if (nrow(top_table_filtered) < 2) {
-      message(
-        "Level", level, "has < 2 hits. Skipping clustering for this level"
-      )
-      within_level_top_tables[[i]] <- NA
-    } else {
-      within_level_top_tables[[i]] <- top_table_filtered
+    if (all(is.na(within_level_top_tables))) {
+        message("All levels have < 2 hits. Cannot run clustering. Stopping.")
+        return(NULL)
     }
-  }
 
-  if (all(is.na(within_level_top_tables))) {
-    message("All levels have < 2 hits. Cannot run clustering. Stopping.")
-    return(NULL)
-  }
-
-  within_level_top_tables
+    within_level_top_tables
 }
 
 
@@ -834,9 +830,9 @@ filter_top_tables <- function(
 #'
 #' This is typically used to visualize model-implied dynamics over time for
 #' multiple biological conditions.
-#' 
+#'
 #' Note that this function does not use the random effects in case the linear
-#' mixed model from the variancePartition::dream() was used. This is because 
+#' mixed model from the variancePartition::dream() was used. This is because
 #' they model subject-specific deviations, not the fixed-effect population trend
 #'  that defines the curve shape.
 #'
@@ -856,199 +852,203 @@ filter_top_tables <- function(
 #' @return A list with:
 #'   \describe{
 #'     \item{`time_grid`}{Numeric vector of 1000 time points for prediction.}
-#'     \item{`predictions`}{Named list by condition level. Each entry is a 
+#'     \item{`predictions`}{Named list by condition level. Each entry is a
 #'     matrix of predicted values (features x time points).}
 #'   }
-#'   
+#'
 predict_timecurves <- function(
     splineomics,
     data,
     meta,
-    condition,                 
+    condition,
     spline_params,
-    mode
-) {
+    mode) {
+    # time grid (common to all levels)
+    # number of unique sampling points
+    fit <- splineomics[["fit"]]
+    n_unique_time <- dplyr::n_distinct(meta[["Time"]])
 
-  # time grid (common to all levels)
-  # number of unique sampling points
-  fit <- splineomics[["fit"]]
-  n_unique_time <- dplyr::n_distinct(meta[["Time"]])
-  
-  ## build a grid 10 x denser than the raw sampling
-  smooth_timepoints <- seq(
-    from = min(meta[["Time"]]),
-    to   = max(meta[["Time"]]),
-    length.out = 10 * n_unique_time
-  )
-  
-  pred_list <- list()                    # results
-  
-  # iterate over each condition level
-  for (level in unique(meta[[condition]])) {
-
-    # pick the right fit object
-    if (mode == "isolated") {
-      fit_lv <- fit[[level]]                          
-      if (is.null(fit_lv))                              
-        fit_lv <- fit[[paste0(condition, "_", level)]]
-    } else {
-      fit_lv <- fit
-    }
-    if (is.null(fit_lv$coefficients))
-      stop("missing coefficients for level: ", level)
-    
-    design_n <- colnames(fit_lv$coefficients)
-    
-    # spline columns X1, X2, ... 
-    spline_cols <- grep(
-      "^X\\d*$",
-      design_n,
-      value = TRUE
-      )
-    k <- length(spline_cols)
-    
-    # decide which row in spline_params to use
-    idx <- if (mode == "isolated")
-      match(level, unique(meta[[condition]])) %||% 1L else 1L
-    
-    # build spline basis
-    B <- if (spline_params$spline_type[idx] == "n") {
-      splines::ns(
-        smooth_timepoints,
-        df = spline_params$dof[idx] %||% k
-        )
-    } else {
-      splines::bs(
-        smooth_timepoints,
-        df     = spline_params$dof[idx] %||% k,
-        degree = spline_params$degree[idx]
-        )
-    }
-    colnames(B) <- spline_cols
-
-    if (mode == "isolated") {
-      # only intercept and spline terms
-      X_new <- cbind("(Intercept)" = 1, B)
-      needed <- c("(Intercept)", spline_cols)
-    } else {
-      # integrated fit: must include interaction terms for non-reference levels
-      cond_prefix <- condition
-      all_levels <- unique(as.character(meta[[condition]]))
-      design_cols <- colnames(fit_lv$coefficients)
-      
-      dummy_suffixes <- sub(
-        paste0("^", cond_prefix),
-        "",
-        grep(
-          paste0(
-            "^",
-            cond_prefix
-            ),
-          design_cols,
-          value = TRUE
-          )
-      )
-      reference_level <- setdiff(all_levels, dummy_suffixes)[1]
-      
-      if (identical(level, reference_level)) {
-        X_new <- cbind(
-          "(Intercept)" = 1,
-          B
-          )
-        needed <- c(
-          "(Intercept)",
-          spline_cols
-          )
-      } else {
-        dummy_col <- paste0(
-          cond_prefix,
-          level
-          )
-        # Find interaction columns dynamically
-        int_cols <- vapply(spline_cols, function(spline_col) {
-          possible_matches <- colnames(fit_lv$coefficients)[
-            grepl(dummy_col, colnames(fit_lv$coefficients)) & 
-              grepl(spline_col, colnames(fit_lv$coefficients))
-          ]
-          if (length(possible_matches) != 1) {
-            stop("Could not uniquely identify interaction column for: ",
-                 dummy_col, " and ", spline_col)
-          }
-          possible_matches
-        }, character(1))
-
-        # Add intercept for non-reference level if present
-        has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
-        if (has_group_intercept) {
-          X_new <- cbind(
-            "(Intercept)" = 1,
-            B,
-            group_effect = 1,
-            B  # interaction terms
-          )
-          colnames(X_new) <- c(
-            "(Intercept)",
-            spline_cols,
-            dummy_col,
-            int_cols
-          )
-          needed <- c(
-            "(Intercept)",
-            spline_cols,
-            dummy_col,
-            int_cols
-            )
-        } else {
-          X_new <- cbind(
-            "(Intercept)" = 1,
-            B,
-            B  # interaction terms only
-          )
-          colnames(X_new) <- c(
-            "(Intercept)",
-            spline_cols,
-            int_cols
-          )
-          needed <- c("(Intercept)", spline_cols, int_cols)
-        }
-      }
-    }
-
-    # coefficients matrix
-    coef_full      <- as.matrix(fit_lv$coefficients)
-    # ensure missing columns are handled
-    missing_cols <- setdiff(needed, colnames(coef_full))
-    if (length(missing_cols)) {
-      for (col in missing_cols) {
-        coef_full[, col] <- 0
-      }
-    }
-    
-    # subset in correct order
-    coef_mat <- coef_full[, needed, drop = FALSE]
-    
-    # predictions
-    pred_mat <- coef_mat %*% t(X_new)
-
-    pred_mat <- adjust_intercept_least_squares(
-      pred_mat = pred_mat,
-      data = data,
-      meta = meta,
-      condition = condition,
-      level = level,
-      time_grid = smooth_timepoints
+    ## build a grid 10 x denser than the raw sampling
+    smooth_timepoints <- seq(
+        from = min(meta[["Time"]]),
+        to = max(meta[["Time"]]),
+        length.out = 10 * n_unique_time
     )
 
-    # propagate feature names
-    rownames(pred_mat) <- rownames(coef_mat)
+    pred_list <- list() # results
 
-    pred_list[[level]] <- pred_mat
-  }
-  
-  list(
-    time_grid   = smooth_timepoints,
-    predictions = pred_list          # named by condition level
-  )
+    # iterate over each condition level
+    for (level in unique(meta[[condition]])) {
+        # pick the right fit object
+        if (mode == "isolated") {
+            fit_lv <- fit[[level]]
+            if (is.null(fit_lv)) {
+                fit_lv <- fit[[paste0(condition, "_", level)]]
+            }
+        } else {
+            fit_lv <- fit
+        }
+        if (is.null(fit_lv$coefficients)) {
+            stop("missing coefficients for level: ", level)
+        }
+
+        design_n <- colnames(fit_lv$coefficients)
+
+        # spline columns X1, X2, ...
+        spline_cols <- grep(
+            "^X\\d*$",
+            design_n,
+            value = TRUE
+        )
+        k <- length(spline_cols)
+
+        # decide which row in spline_params to use
+        idx <- if (mode == "isolated") {
+            match(level, unique(meta[[condition]])) %||% 1L
+        } else {
+            1L
+        }
+
+        # build spline basis
+        B <- if (spline_params$spline_type[idx] == "n") {
+            splines::ns(
+                smooth_timepoints,
+                df = spline_params$dof[idx] %||% k
+            )
+        } else {
+            splines::bs(
+                smooth_timepoints,
+                df     = spline_params$dof[idx] %||% k,
+                degree = spline_params$degree[idx]
+            )
+        }
+        colnames(B) <- spline_cols
+
+        if (mode == "isolated") {
+            # only intercept and spline terms
+            X_new <- cbind("(Intercept)" = 1, B)
+            needed <- c("(Intercept)", spline_cols)
+        } else {
+            # integrated fit: must include interaction terms for non-reference levels
+            cond_prefix <- condition
+            all_levels <- unique(as.character(meta[[condition]]))
+            design_cols <- colnames(fit_lv$coefficients)
+
+            dummy_suffixes <- sub(
+                paste0("^", cond_prefix),
+                "",
+                grep(
+                    paste0(
+                        "^",
+                        cond_prefix
+                    ),
+                    design_cols,
+                    value = TRUE
+                )
+            )
+            reference_level <- setdiff(all_levels, dummy_suffixes)[1]
+
+            if (identical(level, reference_level)) {
+                X_new <- cbind(
+                    "(Intercept)" = 1,
+                    B
+                )
+                needed <- c(
+                    "(Intercept)",
+                    spline_cols
+                )
+            } else {
+                dummy_col <- paste0(
+                    cond_prefix,
+                    level
+                )
+                # Find interaction columns dynamically
+                int_cols <- vapply(spline_cols, function(spline_col) {
+                    possible_matches <- colnames(fit_lv$coefficients)[
+                        grepl(dummy_col, colnames(fit_lv$coefficients)) &
+                            grepl(spline_col, colnames(fit_lv$coefficients))
+                    ]
+                    if (length(possible_matches) != 1) {
+                        stop(
+                            "Could not uniquely identify interaction column for: ",
+                            dummy_col, " and ", spline_col
+                        )
+                    }
+                    possible_matches
+                }, character(1))
+
+                # Add intercept for non-reference level if present
+                has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
+                if (has_group_intercept) {
+                    X_new <- cbind(
+                        "(Intercept)" = 1,
+                        B,
+                        group_effect = 1,
+                        B # interaction terms
+                    )
+                    colnames(X_new) <- c(
+                        "(Intercept)",
+                        spline_cols,
+                        dummy_col,
+                        int_cols
+                    )
+                    needed <- c(
+                        "(Intercept)",
+                        spline_cols,
+                        dummy_col,
+                        int_cols
+                    )
+                } else {
+                    X_new <- cbind(
+                        "(Intercept)" = 1,
+                        B,
+                        B # interaction terms only
+                    )
+                    colnames(X_new) <- c(
+                        "(Intercept)",
+                        spline_cols,
+                        int_cols
+                    )
+                    needed <- c("(Intercept)", spline_cols, int_cols)
+                }
+            }
+        }
+
+        # coefficients matrix
+        coef_full <- as.matrix(fit_lv$coefficients)
+        # ensure missing columns are handled
+        missing_cols <- setdiff(needed, colnames(coef_full))
+        if (length(missing_cols)) {
+            for (col in missing_cols) {
+                coef_full[, col] <- 0
+            }
+        }
+
+        # subset in correct order
+        coef_mat <- coef_full[, needed, drop = FALSE]
+
+        # predictions
+        pred_mat <- coef_mat %*% t(X_new)
+
+        pred_mat <- adjust_intercept_least_squares(
+            pred_mat = pred_mat,
+            data = data,
+            meta = meta,
+            condition = condition,
+            level = level,
+            time_grid = smooth_timepoints
+        )
+
+        # propagate feature names
+        rownames(pred_mat) <- rownames(coef_mat)
+
+        pred_list[[level]] <- pred_mat
+    }
+
+    list(
+        time_grid   = smooth_timepoints,
+        predictions = pred_list # named by condition level
+    )
 }
 
 
@@ -1095,67 +1095,66 @@ predict_timecurves <- function(
 #'
 #' The cat3 computation requires exactly two condition matrices with the
 #' same row names and number of timepoints.
-#' 
+#'
 add_cat1_and_cat3_effectsizes <- function(
     predicted_timecurves,
-    min_effect_sizes
-    ) {
-  thr_cat1 <- min_effect_sizes[["time_effect"]]
-  thr_cat3 <- min_effect_sizes[["interaction_cond_time"]]
+    min_effect_sizes) {
+    thr_cat1 <- min_effect_sizes[["time_effect"]]
+    thr_cat3 <- min_effect_sizes[["interaction_cond_time"]]
 
-  # helper: cumulative travel per row
-  cum_travel <- function(mat) {
-    if (!is.matrix(mat)) {
-      mat <- as.matrix(mat)
+    # helper: cumulative travel per row
+    cum_travel <- function(mat) {
+        if (!is.matrix(mat)) {
+            mat <- as.matrix(mat)
+        }
+        if (ncol(mat) < 2) {
+            out <- rep(0, nrow(mat))
+            names(out) <- rownames(mat)
+            return(out)
+        }
+        tr <- rowSums(
+            abs(mat[, -1, drop = FALSE] - mat[, -ncol(mat), drop = FALSE])
+        )
+        if (!is.null(rownames(mat))) names(tr) <- rownames(mat)
+        tr
     }
-    if (ncol(mat) < 2) {
-      out <- rep(0, nrow(mat))
-      names(out) <- rownames(mat)
-      return(out)
+
+    # cat1 per level
+    if (!is.list(predicted_timecurves$predictions) ||
+        length(predicted_timecurves$predictions) < 1L) {
+        stop_call_false("`predicted_timecurves$predictions` is missing or empty.")
     }
-    tr <- rowSums(
-      abs(mat[, -1, drop = FALSE] - mat[, -ncol(mat), drop = FALSE])
-      )
-    if (!is.null(rownames(mat))) names(tr) <- rownames(mat)
-    tr
-  }
+    cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
+    cat1_passed <- lapply(cat1_effects, function(x) x >= thr_cat1)
 
-  # cat1 per level
-  if (!is.list(predicted_timecurves$predictions) ||
-      length(predicted_timecurves$predictions) < 1L) {
-    stop_call_false("`predicted_timecurves$predictions` is missing or empty.")
-  }
-  cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
-  cat1_passed  <- lapply(cat1_effects, function(x) x >= thr_cat1)
+    predicted_timecurves$time_effect_effect_size <- cat1_effects
+    predicted_timecurves$time_effect_passed_threshold <- cat1_passed
 
-  predicted_timecurves$time_effect_effect_size      <- cat1_effects
-  predicted_timecurves$time_effect_passed_threshold <- cat1_passed
+    # cat3: movement-difference using the two conditions
+    levs <- names(predicted_timecurves$predictions)
+    if (length(levs) == 2L) {
+        m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
+        m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
 
-  # cat3: movement-difference using the two conditions
-  levs <- names(predicted_timecurves$predictions)
-  if (length(levs) == 2L) {
-    m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
-    m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
+        if (ncol(m1) < 2L) {
+            md <- rep(0, nrow(m1))
+            names(md) <- rownames(m1)
+        } else {
+            d1 <- m1[, -1, drop = FALSE] - m1[, -ncol(m1), drop = FALSE]
+            d2 <- m2[, -1, drop = FALSE] - m2[, -ncol(m2), drop = FALSE]
+            md <- rowSums(abs(d1 - d2))
+            names(md) <- rownames(m1)
+        }
 
-    if (ncol(m1) < 2L) {
-      md <- rep(0, nrow(m1))
-      names(md) <- rownames(m1)
+        predicted_timecurves$interaction_effect_size <- md
+        predicted_timecurves$interaction_passed_threshold <- (md >= thr_cat3)
     } else {
-      d1 <- m1[, -1, drop = FALSE] - m1[, -ncol(m1), drop = FALSE]
-      d2 <- m2[, -1, drop = FALSE] - m2[, -ncol(m2), drop = FALSE]
-      md <- rowSums(abs(d1 - d2))
-      names(md) <- rownames(m1)
+        # if not exactly two levels, define empty vectors for cat3
+        predicted_timecurves$interaction_effect_size <- numeric(0)
+        predicted_timecurves$interaction_passed_threshold <- logical(0)
     }
 
-    predicted_timecurves$interaction_effect_size <- md
-    predicted_timecurves$interaction_passed_threshold <- (md >= thr_cat3)
-  } else {
-    # if not exactly two levels, define empty vectors for cat3
-    predicted_timecurves$interaction_effect_size <- numeric(0)
-    predicted_timecurves$interaction_passed_threshold <- logical(0)
-  }
-
-  predicted_timecurves
+    predicted_timecurves
 }
 
 
@@ -1206,83 +1205,80 @@ add_cat1_and_cat3_effectsizes <- function(
 #' - Category 3 clustering is only performed if two condition levels
 #'   are present and at least as many hits as requested clusters are
 #'   available.
-#'   
+#'
 perform_clustering <- function(
-    time_effect_hits, 
+    time_effect_hits,
     nr_clusters,
-    condition,              
+    condition,
     predicted_timecurves,
-    verbose
-) {
-  
-  if (verbose) {
-    message("\n Performing the clustering...")
-  }
-  
-  # common dense time grid (same for every level)
-  time_grid <- predicted_timecurves$time_grid
-  
-  # container for clustering results
-  results <- vector("list", length = length(time_effect_hits))
-  names(results) <- names(time_effect_hits)
-  
-  # loop over every condition level
-  for (i in seq_along(time_effect_hits)) {
-    
-    key    <- names(time_effect_hits)[i]                       
-    level  <- sub(paste0("^", condition, "_"), "", key)  
+    verbose) {
     if (verbose) {
-      message(paste("For the level: ", level))
+        message("\n Performing the clustering...")
     }
-    k_range <- nr_clusters[[level]]                  
 
-    tbl <- time_effect_hits[[key]]
-    if (is.data.frame(tbl)) {
-      feat_idx <- tbl$feature_nr
-      feat_names <- tbl$feature_names
-    } else if (length(tbl) == 0L || all(is.na(tbl))) {
-      feat_idx <- integer(0)
-      feat_names <- character(0)
-    } else {
-      feat_idx <- as.integer(tbl)
-      feat_names <- rownames(
-        predicted_timecurves$predictions[[level]]
-        )[feat_idx]
+    # common dense time grid (same for every level)
+    time_grid <- predicted_timecurves$time_grid
+
+    # container for clustering results
+    results <- vector("list", length = length(time_effect_hits))
+    names(results) <- names(time_effect_hits)
+
+    # loop over every condition level
+    for (i in seq_along(time_effect_hits)) {
+        key <- names(time_effect_hits)[i]
+        level <- sub(paste0("^", condition, "_"), "", key)
+        if (verbose) {
+            message(paste("For the level: ", level))
+        }
+        k_range <- nr_clusters[[level]]
+
+        tbl <- time_effect_hits[[key]]
+        if (is.data.frame(tbl)) {
+            feat_idx <- tbl$feature_nr
+            feat_names <- tbl$feature_names
+        } else if (length(tbl) == 0L || all(is.na(tbl))) {
+            feat_idx <- integer(0)
+            feat_names <- character(0)
+        } else {
+            feat_idx <- as.integer(tbl)
+            feat_names <- rownames(
+                predicted_timecurves$predictions[[level]]
+            )[feat_idx]
+        }
+
+        passed <- predicted_timecurves$time_effect_passed_threshold[[level]]
+        feat_names <- feat_names[feat_names %in% names(passed)[passed]]
+
+        if (length(feat_names) == 0L) {
+            results[[key]] <- NA
+            next
+        }
+
+        pred_mat <- predicted_timecurves$predictions[[level]]
+        curves <- pred_mat[as.character(feat_names), , drop = FALSE]
+        norm_cur <- normalize_curves(curves)
+        top_table <- tbl[tbl$feature_names %in% feat_names, , drop = FALSE]
+
+        results[[key]] <- kmeans_clustering(
+            curve_values      = norm_cur,
+            k_range           = k_range,
+            smooth_timepoints = time_grid,
+            top_table         = top_table,
+            condition_level   = level,
+            verbose           = verbose
+        )
     }
-    
-    passed <- predicted_timecurves$time_effect_passed_threshold[[level]]
-    feat_names <- feat_names[ feat_names %in% names(passed)[passed] ]
- 
-    if (length(feat_names) == 0L) {
-      results[[key]] <- NA
-      next
-    }
-    
-    pred_mat <- predicted_timecurves$predictions[[level]]
-    curves   <- pred_mat[ as.character(feat_names), , drop = FALSE ]
-    norm_cur <- normalize_curves(curves)
-    top_table <- tbl[tbl$feature_names %in% feat_names, , drop = FALSE]
 
-    results[[key]] <- kmeans_clustering(
-      curve_values      = norm_cur,
-      k_range           = k_range,                   
-      smooth_timepoints = time_grid,
-      top_table         = top_table,
-      condition_level   = level,
-      verbose           = verbose
-    )
-  }
+    # Leave a message for the user instead of just NA.
+    results <- lapply(results, function(x) {
+        if (is.logical(x)) {
+            return("No result for this level, because the top_table had < 2 hits")
+        } else {
+            return(x)
+        }
+    })
 
-  # Leave a message for the user instead of just NA.
-  results <- lapply(results, function(x) {
-    if (is.logical(x)) {
-      return("No result for this level, because the top_table had < 2 hits")
-    } else {
-      return(x)
-    }
-  })
-
-  results       
+    results
 }
 
 
@@ -1318,7 +1314,7 @@ perform_clustering <- function(
 #'   least one condition for category 3 hits.
 #' }
 #' @param predicted_timecurves A list of model predictions, which must contain
-#' an element \code{effect_size}. This should be a named list of numeric 
+#' an element \code{effect_size}. This should be a named list of numeric
 #' vectors,
 #' with one vector per condition and feature names as names, providing the
 #' time-effect effect sizes.
@@ -1330,55 +1326,52 @@ perform_clustering <- function(
 #'   \item \code{category_3_hits}: Filtered subset of
 #'   \code{interaction_condition_time}.
 #' }
-#' 
+#'
 get_category_2_and_3_hits <- function(
     splineomics,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction,
     avg_diff_cond_threshold,
-    predicted_timecurves
-) {
-  avrg_diff_conditions <-
-    splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
-  interaction_condition_time <-
-    splineomics[["limma_splines_result"]][["interaction_condition_time"]]
-  
-  # Category 2: p-value + effect size (abs(col1))
-  category_2_hits <- avrg_diff_conditions[
-    avrg_diff_conditions$adj.P.Val < adj_pthresh_avrg_diff_conditions &
-      abs(avrg_diff_conditions[[1]]) >= avg_diff_cond_threshold,
-    ,
-    drop = FALSE
-  ]
-  
-  # Category 3: p-value filter, then use precomputed interaction flags
-  category_3_hits <- interaction_condition_time[
-    interaction_condition_time$adj.P.Val < adj_pthresh_interaction,
-    ,
-    drop = FALSE
-  ]
-  
-  if (nrow(category_3_hits) == 0L) {
-    return(list(
-      category_2_hits = category_2_hits,
-      category_3_hits = category_3_hits
-    ))
-  }
-  
-  pass_vec <- predicted_timecurves$interaction_passed_threshold
-  keep <- pass_vec[as.character(category_3_hits$feature_names)]
-  keep[is.na(keep)] <- FALSE
-  category_3_hits <- category_3_hits[keep, , drop = FALSE]
-  
-  list(
-    category_2_hits = category_2_hits,
-    category_3_hits = category_3_hits
-  )
+    predicted_timecurves) {
+    avrg_diff_conditions <-
+        splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
+    interaction_condition_time <-
+        splineomics[["limma_splines_result"]][["interaction_condition_time"]]
+
+    # Category 2: p-value + effect size (abs(col1))
+    category_2_hits <- avrg_diff_conditions[
+        avrg_diff_conditions$adj.P.Val < adj_pthresh_avrg_diff_conditions &
+            abs(avrg_diff_conditions[[1]]) >= avg_diff_cond_threshold, ,
+        drop = FALSE
+    ]
+
+    # Category 3: p-value filter, then use precomputed interaction flags
+    category_3_hits <- interaction_condition_time[
+        interaction_condition_time$adj.P.Val < adj_pthresh_interaction, ,
+        drop = FALSE
+    ]
+
+    if (nrow(category_3_hits) == 0L) {
+        return(list(
+            category_2_hits = category_2_hits,
+            category_3_hits = category_3_hits
+        ))
+    }
+
+    pass_vec <- predicted_timecurves$interaction_passed_threshold
+    keep <- pass_vec[as.character(category_3_hits$feature_names)]
+    keep[is.na(keep)] <- FALSE
+    category_3_hits <- category_3_hits[keep, , drop = FALSE]
+
+    list(
+        category_2_hits = category_2_hits,
+        category_3_hits = category_3_hits
+    )
 }
 
 
 #' Make Clustering Report
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -1403,7 +1396,7 @@ get_category_2_and_3_hits <- function(
 #' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
 #' @param category_2_and_3_hits List of dataframes, where each df is the part
-#' of the toptable that contains the significant features of the respective 
+#' of the toptable that contains the significant features of the respective
 #' limma result category (2 or 3).
 #' @param report_dir A character string specifying the report directory.
 #' @param mode A character string specifying the mode
@@ -1444,8 +1437,8 @@ get_category_2_and_3_hits <- function(
 #' the plots for all the pairwise comparisons of the condition in terms of
 #' average spline diff and interaction condition time, and another list of lists
 #' where the respective names of each plot are stored.
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
-#' containing NA values. When provided, it highlights the datapoints in the 
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
+#' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
 #' @param max_hit_number Maximum number of hits which are plotted within each
 #' cluster. This can be used to limit the computation time and size of
@@ -1489,282 +1482,280 @@ make_clustering_report <- function(
     spline_comp_plots,
     raw_data,
     max_hit_number,
-    verbose
-    ) {
+    verbose) {
+    design <- gsub("Time", "X", design)
+    effects <- extract_effects(design)
 
-  design <- gsub("Time", "X", design)  
-  effects <- extract_effects(design)
-
-  datas <- split_data_by_condition(
-    data = data,
-    meta = meta,
-    condition = condition,
-    mode = mode
+    datas <- split_data_by_condition(
+        data = data,
+        meta = meta,
+        condition = condition,
+        mode = mode
     )
 
-  # To extract the stored value for the potential auto cluster decision.
-  # collect k values only from valid list entries
-  clusters <- integer(0)
-  # Normalize: replace string placeholders with NULL
-  all_levels_clustering <- lapply(all_levels_clustering, function(x) {
-    if (is.character(x)) {
-      return(NA)
-    }
-    x
-  })
-  
-  for (i in seq_along(all_levels_clustering)) {
-    x <- all_levels_clustering[[i]]
-    
-    # skip non-lists (e.g., "No result ...") and NULL/NA
-    if (!is.list(x) || is.null(x) || all(is.na(x))) next
-    
-    # collect k if present and valid; then remove the field
-    if ("clusters" %in% names(x)) {
-      k <- x$clusters
-      if (is.numeric(k) && length(k) == 1L && !is.na(k)) {
-        clusters <- c(clusters, as.integer(k))
-      }
-      all_levels_clustering[[i]]$clusters <- NULL
-    }
-  }
-  
-  # ensure the report dir exists
-  if (!dir.exists(report_dir)) {
-    dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
-  }
+    # To extract the stored value for the potential auto cluster decision.
+    # collect k values only from valid list entries
+    clusters <- integer(0)
+    # Normalize: replace string placeholders with NULL
+    all_levels_clustering <- lapply(all_levels_clustering, function(x) {
+        if (is.character(x)) {
+            return(NA)
+        }
+        x
+    })
 
-  time_unit_label <- paste0("[", plot_info$time_unit, "]")
-  
-  if (isTRUE(verbose)) message("Generating heatmap...")
-  heatmaps <- plot_heatmap(
-    datas = datas,
-    meta = meta,
-    mode = mode,
-    condition = condition,
-    all_levels_clustering = all_levels_clustering,
-    time_unit_label = time_unit_label,
-    cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]],
-    max_hit_number = max_hit_number
-  )
-  
-  cluster_quality_plots <- lapply(
-    all_levels_clustering,
-    plot_cluster_quality
-    )
+    for (i in seq_along(all_levels_clustering)) {
+        x <- all_levels_clustering[[i]]
 
-  level_headers_info <- list()
-  plots <- list()
-  plots_sizes <- list()
-  q <- 0
-  
-  
-  for (i in seq_along(all_levels_clustering)) {
-    # When a level has < 2 hits
-    if (is.null(all_levels_clustering[[i]]) ||
-      all(is.na(all_levels_clustering[[i]]))) {
-      next
-    } else {
-      q <- q + 1
+        # skip non-lists (e.g., "No result ...") and NULL/NA
+        if (!is.list(x) || is.null(x) || all(is.na(x))) next
+
+        # collect k if present and valid; then remove the field
+        if ("clusters" %in% names(x)) {
+            k <- x$clusters
+            if (is.numeric(k) && length(k) == 1L && !is.na(k)) {
+                clusters <- c(clusters, as.integer(k))
+            }
+            all_levels_clustering[[i]]$clusters <- NULL
+        }
     }
 
-    level_clustering <- all_levels_clustering[[i]]
-
-    levels <- unique(meta[[condition]])
-
-    if (length(levels) >= i) {
-      level <- as.character(levels[i])
-      
-      # Get indices of columns in meta that match the given level (condition)
-      condition_indices <- which(meta[["condition"]] == level)
-      
-      # Subset raw_data to only include these columns (keeping all rows)
-      raw_data_level <- raw_data[, condition_indices, drop = FALSE]
-
-      # Construct header name
-      header_name <- level
-
-      nr_hits <- nrow(level_clustering$clustered_hits)
-
-      header_info <- list(
-        header_name = header_name,
-        nr_hits = nr_hits,
-        adj_pvalue_threshold = adj_pthresholds[i]
-      )
-
-      level_headers_info[[i]] <- header_info
+    # ensure the report dir exists
+    if (!dir.exists(report_dir)) {
+        dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
     }
 
-    curve_values <- level_clustering$curve_values
+    time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
-    p_curves <- plot_all_mean_splines(
-      curve_values = curve_values,
-      plot_info = plot_info,
-      level = level
-    )
-    
-    if (verbose) {
-      message(paste("Generating cluster mean splines for level: ", level))
-    }
-    cluster_mean_splines <- plot_cluster_mean_splines( 
-      curve_values = curve_values,
-      plot_info = plot_info,
-      level = level
-    )
-
-    top_table <- level_clustering$top_table
-    levels <- as.character(unique(meta[[condition]]))
-
-    col_indices <- which(meta[[condition]] == levels[i])
-
-    if (mode == "integrated") {
-      data_level <- datas[[i]][, col_indices]
-    } else { # mode == "isolated"
-      data_level <- datas[[i]]
-    }
-
-    meta_level <- meta |> dplyr::filter(.data[[condition]] == levels[i])
-
-    clusters_spline_plots <- list()
-    
-    if (isTRUE(verbose)) message("Generating spline plots...")
-    for (nr_cluster in sort(unique(stats::na.omit(top_table$cluster)))) {
-      nr_of_hits <- sum(
-        level_clustering$clustered_hits$cluster == nr_cluster,
-        na.rm = TRUE
-      )
-      main_title <- paste(
-        "Cluster",
-        nr_cluster,
-        " | Hits:",
-        nr_of_hits,
-        sep = " "
-      )
-
-      top_table_cluster <- top_table |>
-        dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
-
-      X <- level_clustering$X
-
-      spline_plots <- plot_splines(
-        top_table = top_table_cluster,
-        data = data_level,
-        meta = meta_level,
-        predicted_timecurves = predicted_timecurves,
-        time_unit_label = time_unit_label,
-        plot_info = plot_info,
-        adj_pthreshold = adj_pthresholds[i],
-        replicate_column = plot_options[["meta_replicate_column"]],
-        level = level,
-        raw_data = raw_data_level,
-        report_info = report_info,
-        max_hit_number = max_hit_number,
+    if (isTRUE(verbose)) message("Generating heatmap...")
+    heatmaps <- plot_heatmap(
+        datas = datas,
+        meta = meta,
+        mode = mode,
+        condition = condition,
         all_levels_clustering = all_levels_clustering,
-        condition = condition
-      )
+        time_unit_label = time_unit_label,
+        cluster_heatmap_columns = plot_options[["cluster_heatmap_columns"]],
+        max_hit_number = max_hit_number
+    )
 
-      clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
-        spline_plots = spline_plots,
-        cluster_main_title = main_title
-      )
+    cluster_quality_plots <- lapply(
+        all_levels_clustering,
+        plot_cluster_quality
+    )
+
+    level_headers_info <- list()
+    plots <- list()
+    plots_sizes <- list()
+    q <- 0
+
+
+    for (i in seq_along(all_levels_clustering)) {
+        # When a level has < 2 hits
+        if (is.null(all_levels_clustering[[i]]) ||
+            all(is.na(all_levels_clustering[[i]]))) {
+            next
+        } else {
+            q <- q + 1
+        }
+
+        level_clustering <- all_levels_clustering[[i]]
+
+        levels <- unique(meta[[condition]])
+
+        if (length(levels) >= i) {
+            level <- as.character(levels[i])
+
+            # Get indices of columns in meta that match the given level (condition)
+            condition_indices <- which(meta[["condition"]] == level)
+
+            # Subset raw_data to only include these columns (keeping all rows)
+            raw_data_level <- raw_data[, condition_indices, drop = FALSE]
+
+            # Construct header name
+            header_name <- level
+
+            nr_hits <- nrow(level_clustering$clustered_hits)
+
+            header_info <- list(
+                header_name = header_name,
+                nr_hits = nr_hits,
+                adj_pvalue_threshold = adj_pthresholds[i]
+            )
+
+            level_headers_info[[i]] <- header_info
+        }
+
+        curve_values <- level_clustering$curve_values
+
+        p_curves <- plot_all_mean_splines(
+            curve_values = curve_values,
+            plot_info = plot_info,
+            level = level
+        )
+
+        if (verbose) {
+            message(paste("Generating cluster mean splines for level: ", level))
+        }
+        cluster_mean_splines <- plot_cluster_mean_splines(
+            curve_values = curve_values,
+            plot_info = plot_info,
+            level = level
+        )
+
+        top_table <- level_clustering$top_table
+        levels <- as.character(unique(meta[[condition]]))
+
+        col_indices <- which(meta[[condition]] == levels[i])
+
+        if (mode == "integrated") {
+            data_level <- datas[[i]][, col_indices]
+        } else { # mode == "isolated"
+            data_level <- datas[[i]]
+        }
+
+        meta_level <- meta |> dplyr::filter(.data[[condition]] == levels[i])
+
+        clusters_spline_plots <- list()
+
+        if (isTRUE(verbose)) message("Generating spline plots...")
+        for (nr_cluster in sort(unique(stats::na.omit(top_table$cluster)))) {
+            nr_of_hits <- sum(
+                level_clustering$clustered_hits$cluster == nr_cluster,
+                na.rm = TRUE
+            )
+            main_title <- paste(
+                "Cluster",
+                nr_cluster,
+                " | Hits:",
+                nr_of_hits,
+                sep = " "
+            )
+
+            top_table_cluster <- top_table |>
+                dplyr::filter(!!rlang::sym("cluster") == nr_cluster)
+
+            X <- level_clustering$X
+
+            spline_plots <- plot_splines(
+                top_table = top_table_cluster,
+                data = data_level,
+                meta = meta_level,
+                predicted_timecurves = predicted_timecurves,
+                time_unit_label = time_unit_label,
+                plot_info = plot_info,
+                adj_pthreshold = adj_pthresholds[i],
+                replicate_column = plot_options[["meta_replicate_column"]],
+                level = level,
+                raw_data = raw_data_level,
+                report_info = report_info,
+                max_hit_number = max_hit_number,
+                all_levels_clustering = all_levels_clustering,
+                condition = condition
+            )
+
+            clusters_spline_plots[[length(clusters_spline_plots) + 1]] <- list(
+                spline_plots = spline_plots,
+                cluster_main_title = main_title
+            )
+        }
+
+        plots <- c(
+            plots,
+            new_level = "level_header", # is the signal for the plotting code
+            p_curves = list(p_curves),
+            cluster_mean_splines = list(cluster_mean_splines),
+            cluster_quality_plots = list(cluster_quality_plots[[i]]),
+            heatmap = heatmaps[[i]],
+            individual_spline_plots = clusters_spline_plots # gets expanded like this
+        )
+
+        # For every plot in plots, this determines the size in the HTML
+        plots_sizes <- c(
+            plots_sizes,
+            999, # dummy size for "next_level" signal
+            1.5,
+            1,
+            1.5,
+            1.5,
+            rep(1, length(clusters_spline_plots))
+        )
     }
 
-    plots <- c(
-      plots,
-      new_level = "level_header", # is the signal for the plotting code
-      p_curves = list(p_curves),
-      cluster_mean_splines = list(cluster_mean_splines),
-      cluster_quality_plots = list(cluster_quality_plots[[i]]),
-      heatmap = heatmaps[[i]],
-      individual_spline_plots = clusters_spline_plots # gets expanded like this
-    )
+    topTables <- list()
 
-    # For every plot in plots, this determines the size in the HTML
-    plots_sizes <- c(
-      plots_sizes,
-      999, # dummy size for "next_level" signal
-      1.5,
-      1,
-      1.5,
-      1.5,
-      rep(1, length(clusters_spline_plots))
-    )
-  }
+    # Loop over each element in all_levels_clustering
+    for (i in seq_along(all_levels_clustering)) {
+        if (is.logical(all_levels_clustering[[i]])) next
 
-  topTables <- list()
+        # Get the current element, which is a list
+        current_element <- all_levels_clustering[[i]]
 
-  # Loop over each element in all_levels_clustering
-  for (i in seq_along(all_levels_clustering)) {
-    if (is.logical(all_levels_clustering[[i]])) next
+        # Extract the top_table element
+        top_table_element <- current_element$top_table
 
-    # Get the current element, which is a list
-    current_element <- all_levels_clustering[[i]]
+        # Get the name of the outer list element
+        element_name <- names(all_levels_clustering)[i]
 
-    # Extract the top_table element
-    top_table_element <- current_element$top_table
+        # Trim the name to 30 characters if necessary
+        if (nchar(element_name) > 30) {
+            element_name <- substr(element_name, 1, 30)
+        }
 
-    # Get the name of the outer list element
-    element_name <- names(all_levels_clustering)[i]
-
-    # Trim the name to 30 characters if necessary
-    if (nchar(element_name) > 30) {
-      element_name <- substr(element_name, 1, 30)
+        topTables[[element_name]] <- top_table_element
     }
 
-    topTables[[element_name]] <- top_table_element
-  }
-
-  topTables <- transfer_sr2cc(
-    topTables = topTables,
-    all_levels_clustering = all_levels_clustering
-  )
-
-  if (!is.null(genes)) {
-    enrichr_format <- prepare_gene_lists_for_enrichr(
-      all_levels_clustering,
-      genes
+    topTables <- transfer_sr2cc(
+        topTables = topTables,
+        all_levels_clustering = all_levels_clustering
     )
-  } else {
-    enrichr_format <- NA
-  }
 
-  all_levels_clustering <- merge_annotation_all_levels_clustering(
-    all_levels_clustering = all_levels_clustering,
-    annotation = annotation
-  )
+    if (!is.null(genes)) {
+        enrichr_format <- prepare_gene_lists_for_enrichr(
+            all_levels_clustering,
+            genes
+        )
+    } else {
+        enrichr_format <- NA
+    }
 
-  if (isTRUE(verbose)) message("Generating report. This takes a few seconds.")
-  report_info[["max_hit_number"]] <- max_hit_number
+    all_levels_clustering <- merge_annotation_all_levels_clustering(
+        all_levels_clustering = all_levels_clustering,
+        annotation = annotation
+    )
 
-  generate_report_html(
-    plots = plots,
-    limma_result_2_and_3_plots = spline_comp_plots,
-    plots_sizes = plots_sizes,
-    level_headers_info = level_headers_info,
-    spline_params = spline_params,
-    report_info = report_info,
-    data = bind_data_with_annotation(data, annotation),
-    meta = meta,
-    topTables = topTables,
-    category_2_and_3_hits = category_2_and_3_hits,
-    enrichr_format = enrichr_format,
-    adj_pthresholds = adj_pthresholds,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction_condition_time =
-      adj_pthresh_interaction_condition_time,
-    report_type = "cluster_hits",
-    feature_name_columns = feature_name_columns,
-    mode = mode,
-    filename = "report_clustered_hits",
-    report_dir = report_dir
-  )
+    if (isTRUE(verbose)) message("Generating report. This takes a few seconds.")
+    report_info[["max_hit_number"]] <- max_hit_number
 
-  return(plots)
+    generate_report_html(
+        plots = plots,
+        limma_result_2_and_3_plots = spline_comp_plots,
+        plots_sizes = plots_sizes,
+        level_headers_info = level_headers_info,
+        spline_params = spline_params,
+        report_info = report_info,
+        data = bind_data_with_annotation(data, annotation),
+        meta = meta,
+        topTables = topTables,
+        category_2_and_3_hits = category_2_and_3_hits,
+        enrichr_format = enrichr_format,
+        adj_pthresholds = adj_pthresholds,
+        adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction_condition_time =
+            adj_pthresh_interaction_condition_time,
+        report_type = "cluster_hits",
+        feature_name_columns = feature_name_columns,
+        mode = mode,
+        filename = "report_clustered_hits",
+        report_dir = report_dir
+    )
+
+    return(plots)
 }
 
 
 #' Generate spline comparison plots for all condition pairs
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -1786,7 +1777,7 @@ make_clustering_report <- function(
 #' @param condition Column name of meta that contains the levels of the
 #' experiment.
 #' @param replicate_column Column name of the meta column that specifies the
-#' replicates per timepoint. For example Reactor with the unique values: 
+#' replicates per timepoint. For example Reactor with the unique values:
 #' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
 #' running this experiment and each timepoint has one sample from each reactor.
 #' @param plot_info A list containing plotting information such as time unit
@@ -1797,8 +1788,8 @@ make_clustering_report <- function(
 #' @param adj_pthresh_interaction The adjusted p-value threshold for the
 #' interaction
 #' between condition and time.
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
-#' containing NA values. When provided, it highlights the datapoints in the 
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
+#' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
 #' @param predicted_timecurves A list containing:
 #'   \describe{
@@ -1827,44 +1818,43 @@ generate_spline_comparisons <- function(
     max_hit_number,
     category_2_and_3_hits,
     adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction
-) {
-  # Ensure `condition` column is character
-  meta[[condition]] <- as.character(meta[[condition]])
-  levels <- unique(meta[[condition]])
+    adj_pthresh_interaction) {
+    # Ensure `condition` column is character
+    meta[[condition]] <- as.character(meta[[condition]])
+    levels <- unique(meta[[condition]])
 
-  c1 <- levels[1]
-  c2 <- levels[2]
-  pair_name <- paste0(c1, "_vs_", c2)
-  
-  # time effects for the two levels
-  te_list <- splineomics[["limma_splines_result"]][["time_effect"]]
-  te1 <- te_list[[paste0(condition, "_", c1)]]
-  te2 <- te_list[[paste0(condition, "_", c2)]]
-  
-  # Call the plotting helper once for the single pair
-  plots_and_feature_names <- plot_spline_comparisons(
-    time_effect_1 = te1,
-    condition_1 = c1,
-    time_effect_2 = te2,
-    condition_2 = c2,
-    avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],   
-    interaction_condition_time = category_2_and_3_hits[["category_3_hits"]], 
-    data = data,
-    meta = meta,
-    condition = condition,
-    replicate_column = replicate_column,
-    predicted_timecurves = predicted_timecurves,
-    adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction = adj_pthresh_interaction,
-    plot_info = plot_info,
-    raw_data = raw_data,
-    max_hit_number = max_hit_number
-  )
-  
-  comparison_plots <- list()
-  comparison_plots[[pair_name]] <- plots_and_feature_names
-  comparison_plots
+    c1 <- levels[1]
+    c2 <- levels[2]
+    pair_name <- paste0(c1, "_vs_", c2)
+
+    # time effects for the two levels
+    te_list <- splineomics[["limma_splines_result"]][["time_effect"]]
+    te1 <- te_list[[paste0(condition, "_", c1)]]
+    te2 <- te_list[[paste0(condition, "_", c2)]]
+
+    # Call the plotting helper once for the single pair
+    plots_and_feature_names <- plot_spline_comparisons(
+        time_effect_1 = te1,
+        condition_1 = c1,
+        time_effect_2 = te2,
+        condition_2 = c2,
+        avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],
+        interaction_condition_time = category_2_and_3_hits[["category_3_hits"]],
+        data = data,
+        meta = meta,
+        condition = condition,
+        replicate_column = replicate_column,
+        predicted_timecurves = predicted_timecurves,
+        adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction = adj_pthresh_interaction,
+        plot_info = plot_info,
+        raw_data = raw_data,
+        max_hit_number = max_hit_number
+    )
+
+    comparison_plots <- list()
+    comparison_plots[[pair_name]] <- plots_and_feature_names
+    comparison_plots
 }
 
 
@@ -1942,279 +1932,285 @@ generate_spline_comparisons <- function(
 #'   case_when
 #' @importFrom tibble as_tibble tibble
 #' @importFrom rlang sym .data
-#' 
+#'
 construct_cluster_table <- function(
     limma_splines_results,
     all_levels_clustering,
     category_2_and_3_hits,
-    genes
-) {
-  
-  clustered_hits_levels <- list()
-  
-  for (i in seq_along(all_levels_clustering)) {
-    clustering_level <- all_levels_clustering[[i]]
-    element_name <- names(all_levels_clustering)[i]
-    
-    if (any(is.character(clustering_level))) {
-      clustered_hits_levels[[element_name]] <-
-        clustering_level
-    } else { # normal list result
-      clustered_hits_levels[[element_name]] <-
-        clustering_level$clustered_hits
+    genes) {
+    clustered_hits_levels <- list()
+
+    for (i in seq_along(all_levels_clustering)) {
+        clustering_level <- all_levels_clustering[[i]]
+        element_name <- names(all_levels_clustering)[i]
+
+        if (any(is.character(clustering_level))) {
+            clustered_hits_levels[[element_name]] <-
+                clustering_level
+        } else { # normal list result
+            clustered_hits_levels[[element_name]] <-
+                clustering_level$clustered_hits
+        }
     }
-  }
-  
-  nm_all <- names(clustered_hits_levels)
-  # exclude the paired entry when determining the two condition levels
-  cond_names <- setdiff(nm_all, "paired_category_3")
-  
-  if (is.null(cond_names) 
-      || length(cond_names) != 2 
-      || any(is.na(cond_names) | cond_names == "")) {
-    cond_names <- c("condition1", "condition2")
-  }
-  
-  c1 <- paste0("cluster_", cond_names[[1]])
-  c2 <- paste0("cluster_", cond_names[[2]])
-  nmc <- gsub("_", "", cond_names)
-  
-  has_c2 <- is.list(category_2_and_3_hits) &&
-    "category_2_hits" %in% names(category_2_and_3_hits)
-  
-  has_c3 <- is.list(category_2_and_3_hits) &&
-    "category_3_hits" %in% names(category_2_and_3_hits)
-  use_cat23 <- has_c2 || has_c3
-  
-  no_genes <- is.null(genes)
-  anot <- if (no_genes) {
-    tibble(feature_nr = numeric(0), gan = character(0))
-  } else {
-    tibble(
-      feature_nr = seq_along(genes),
-      gan = as.character(genes)
-    ) |>
-      dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-  }
-  
-  cl1 <- ncl(clustered_hits_levels[[cond_names[1]]], c1)
-  cl2 <- ncl(clustered_hits_levels[[cond_names[2]]], c2)
-  
-  te <- limma_splines_results$time_effect
-  add_parts <- list(
-    toptbl_to_fn(te[[1]]),
-    toptbl_to_fn(te[[2]])
-  )
-  if (has_c2) add_parts <- c(
-    add_parts,
-    list(toptbl_to_fn(limma_splines_results$avrg_diff_conditions))
-  )
-  if (has_c3) add_parts <- c(
-    add_parts,
-    list(
-      toptbl_to_fn(limma_splines_results$interaction_condition_time)
+
+    nm_all <- names(clustered_hits_levels)
+    # exclude the paired entry when determining the two condition levels
+    cond_names <- setdiff(nm_all, "paired_category_3")
+
+    if (is.null(cond_names) ||
+        length(cond_names) != 2 ||
+        any(is.na(cond_names) | cond_names == "")) {
+        cond_names <- c("condition1", "condition2")
+    }
+
+    c1 <- paste0("cluster_", cond_names[[1]])
+    c2 <- paste0("cluster_", cond_names[[2]])
+    nmc <- gsub("_", "", cond_names)
+
+    has_c2 <- is.list(category_2_and_3_hits) &&
+        "category_2_hits" %in% names(category_2_and_3_hits)
+
+    has_c3 <- is.list(category_2_and_3_hits) &&
+        "category_3_hits" %in% names(category_2_and_3_hits)
+    use_cat23 <- has_c2 || has_c3
+
+    no_genes <- is.null(genes)
+    anot <- if (no_genes) {
+        tibble(feature_nr = numeric(0), gan = character(0))
+    } else {
+        tibble(
+            feature_nr = seq_along(genes),
+            gan = as.character(genes)
+        ) |>
+            dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
+    }
+
+    cl1 <- ncl(clustered_hits_levels[[cond_names[1]]], c1)
+    cl2 <- ncl(clustered_hits_levels[[cond_names[2]]], c2)
+
+    te <- limma_splines_results$time_effect
+    add_parts <- list(
+        toptbl_to_fn(te[[1]]),
+        toptbl_to_fn(te[[2]])
     )
-  )
-  fn_tbl <- dplyr::bind_rows(add_parts) |>
-    dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-  
-  fn_from_cl <- dplyr::bind_rows(
-    cl1 |>
-      dplyr::select(.data$feature_nr, .data$fnsrc) |>
-      dplyr::rename(fname_cl = .data$fnsrc),
-    cl2 |>
-      dplyr::select(.data$feature_nr, .data$fnsrc) |>
-      dplyr::rename(fname_cl = .data$fnsrc)
-  ) |>
-    dplyr::filter(
-      !is.na(.data$feature_nr),
-      !is.na(.data$fname_cl),
-      .data$fname_cl != ""
+    if (has_c2) {
+        add_parts <- c(
+            add_parts,
+            list(toptbl_to_fn(limma_splines_results$avrg_diff_conditions))
+        )
+    }
+    if (has_c3) {
+        add_parts <- c(
+            add_parts,
+            list(
+                toptbl_to_fn(limma_splines_results$interaction_condition_time)
+            )
+        )
+    }
+    fn_tbl <- dplyr::bind_rows(add_parts) |>
+        dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
+
+    fn_from_cl <- dplyr::bind_rows(
+        cl1 |>
+            dplyr::select(.data$feature_nr, .data$fnsrc) |>
+            dplyr::rename(fname_cl = .data$fnsrc),
+        cl2 |>
+            dplyr::select(.data$feature_nr, .data$fnsrc) |>
+            dplyr::rename(fname_cl = .data$fnsrc)
     ) |>
-    dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-  
-  allf_parts <- list(
-    anot |> dplyr::select(.data$feature_nr),
-    cl1  |> dplyr::select(.data$feature_nr),
-    cl2  |> dplyr::select(.data$feature_nr),
-    fn_tbl |> dplyr::select(.data$feature_nr)
-  )
-  
-  if (use_cat23) {
-    cat2h <- if (has_c2) {
-      category_2_and_3_hits$category_2_hits |>
-        stbl() |>
-        dplyr::transmute(feature_nr = .data$feature_nr) |>
-        dplyr::distinct()
-    } else tibble(feature_nr = numeric(0))
-    cat3h <- if (has_c3) {
-      category_2_and_3_hits$category_3_hits |>
-        stbl() |>
-        dplyr::transmute(feature_nr = .data$feature_nr) |>
-        dplyr::distinct()
-    } else tibble(feature_nr = numeric(0))
-    allf_parts <- c(allf_parts, list(cat2h, cat3h))
-  }
-  
-  allf <- dplyr::bind_rows(allf_parts) |>
-    dplyr::distinct(.data$feature_nr) |>
-    dplyr::filter(!is.na(.data$feature_nr)) |>
-    dplyr::arrange(.data$feature_nr)
-  
-  base <- allf |>
-    dplyr::left_join(anot, by = "feature_nr") |>
-    dplyr::left_join(
-      cl1 |>
-        dplyr::select(
-          .data$feature_nr,
-          !!rlang::sym(c1),
-          .data$gcl,
-          .data$fnsrc
-        ),
-      by = "feature_nr"
-    ) |>
-    dplyr::rename(gcl1 = .data$gcl, fnsrc1 = .data$fnsrc) |>
-    dplyr::left_join(
-      cl2 |>
-        dplyr::select(
-          .data$feature_nr,
-          !!rlang::sym(c2),
-          .data$gcl,
-          .data$fnsrc
-        ),
-      by = "feature_nr"
-    ) |>
-    dplyr::rename(gcl2 = .data$gcl, fnsrc2 = .data$fnsrc) |>
-    dplyr::left_join(fn_from_cl, by = "feature_nr") |>
-    dplyr::left_join(fn_tbl, by = "feature_nr") |>
-    dplyr::group_by(.data$feature_nr) |>
-    dplyr::slice_head(n = 1) |>
-    dplyr::ungroup() |>
-    dplyr::mutate(
-      feature_name = dplyr::coalesce(
-        .data$fname_tbl,
-        .data$fname_cl,
-        .data$fnsrc1,
-        .data$fnsrc2,
-        as.character(.data$feature_nr)
-      ),
-      gene = if (no_genes) {
-        NA_character_
-      } else {
-        dplyr::coalesce(.data$gan, .data$gcl1, .data$gcl2)
-      }
+        dplyr::filter(
+            !is.na(.data$feature_nr),
+            !is.na(.data$fname_cl),
+            .data$fname_cl != ""
+        ) |>
+        dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
+
+    allf_parts <- list(
+        anot |> dplyr::select(.data$feature_nr),
+        cl1 |> dplyr::select(.data$feature_nr),
+        cl2 |> dplyr::select(.data$feature_nr),
+        fn_tbl |> dplyr::select(.data$feature_nr)
     )
-  
-  keep <- intersect(unique(c(c1, c2)), names(base))
-  base <- dplyr::select(base, c("feature_nr", "feature_name", "gene", keep))
-  
-  if (!use_cat23) {
-    return(
-      base |>
+
+    if (use_cat23) {
+        cat2h <- if (has_c2) {
+            category_2_and_3_hits$category_2_hits |>
+                stbl() |>
+                dplyr::transmute(feature_nr = .data$feature_nr) |>
+                dplyr::distinct()
+        } else {
+            tibble(feature_nr = numeric(0))
+        }
+        cat3h <- if (has_c3) {
+            category_2_and_3_hits$category_3_hits |>
+                stbl() |>
+                dplyr::transmute(feature_nr = .data$feature_nr) |>
+                dplyr::distinct()
+        } else {
+            tibble(feature_nr = numeric(0))
+        }
+        allf_parts <- c(allf_parts, list(cat2h, cat3h))
+    }
+
+    allf <- dplyr::bind_rows(allf_parts) |>
+        dplyr::distinct(.data$feature_nr) |>
+        dplyr::filter(!is.na(.data$feature_nr)) |>
+        dplyr::arrange(.data$feature_nr)
+
+    base <- allf |>
+        dplyr::left_join(anot, by = "feature_nr") |>
+        dplyr::left_join(
+            cl1 |>
+                dplyr::select(
+                    .data$feature_nr,
+                    !!rlang::sym(c1),
+                    .data$gcl,
+                    .data$fnsrc
+                ),
+            by = "feature_nr"
+        ) |>
+        dplyr::rename(gcl1 = .data$gcl, fnsrc1 = .data$fnsrc) |>
+        dplyr::left_join(
+            cl2 |>
+                dplyr::select(
+                    .data$feature_nr,
+                    !!rlang::sym(c2),
+                    .data$gcl,
+                    .data$fnsrc
+                ),
+            by = "feature_nr"
+        ) |>
+        dplyr::rename(gcl2 = .data$gcl, fnsrc2 = .data$fnsrc) |>
+        dplyr::left_join(fn_from_cl, by = "feature_nr") |>
+        dplyr::left_join(fn_tbl, by = "feature_nr") |>
+        dplyr::group_by(.data$feature_nr) |>
+        dplyr::slice_head(n = 1) |>
+        dplyr::ungroup() |>
+        dplyr::mutate(
+            feature_name = dplyr::coalesce(
+                .data$fname_tbl,
+                .data$fname_cl,
+                .data$fnsrc1,
+                .data$fnsrc2,
+                as.character(.data$feature_nr)
+            ),
+            gene = if (no_genes) {
+                NA_character_
+            } else {
+                dplyr::coalesce(.data$gan, .data$gcl1, .data$gcl2)
+            }
+        )
+
+    keep <- intersect(unique(c(c1, c2)), names(base))
+    base <- dplyr::select(base, c("feature_nr", "feature_name", "gene", keep))
+
+    if (!use_cat23) {
+        return(
+            base |>
+                dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
+                dplyr::arrange(.data$feature_nr)
+        )
+    }
+
+    # cat2: direction by <cond2 score> -> "<cond>_higher"
+    out <- base
+    if (has_c2) {
+        c2_tbl <- stbl(limma_splines_results$avrg_diff_conditions)
+
+        # pick cond2 score column ignoring underscores
+        score_col <- find_col_ignore_underscores_rx(c2_tbl, cond_names[[2]])
+        if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
+            stop_call_false(
+                "Missing logFC column in topTable for avr diff conditions."
+            )
+        }
+
+        c2_df <- c2_tbl |>
+            dplyr::transmute(
+                feature_nr = .data$feature_nr,
+                cluster_cat2 = dplyr::case_when(
+                    .data[[score_col]] > 0 ~ paste0(
+                        gsub("_", "", cond_names[[2]]),
+                        "_higher"
+                    ),
+                    .data[[score_col]] < 0 ~ paste0(
+                        gsub("_", "", cond_names[[1]]),
+                        "_higher"
+                    ),
+                    TRUE ~ NA_character_
+                )
+            ) |>
+            dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
+
+        if (!is.null(category_2_and_3_hits$category_2_hits) &&
+            nrow(category_2_and_3_hits$category_2_hits) > 0) {
+            cat2h <- category_2_and_3_hits$category_2_hits |>
+                stbl() |>
+                dplyr::transmute(feature_nr = .data$feature_nr) |>
+                dplyr::distinct()
+            c2_df <- c2_df |>
+                dplyr::mutate(
+                    cluster_cat2 = ifelse(
+                        .data$feature_nr %in% cat2h$feature_nr,
+                        .data$cluster_cat2,
+                        NA_character_
+                    )
+                )
+        }
+
+        out <- out |> dplyr::left_join(c2_df, by = "feature_nr")
+    }
+
+    # Build vector of significant cat3 features (if available)
+    sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
+        nrow(category_2_and_3_hits$category_3_hits) > 0) {
+        category_2_and_3_hits$category_3_hits |>
+            stbl() |>
+            dplyr::transmute(feature_nr = .data$feature_nr) |>
+            dplyr::distinct() |>
+            dplyr::pull(.data$feature_nr)
+    } else {
+        integer(0)
+    }
+
+    # Construct cat3 only for significant features; else NA
+    out <- out |>
+        dplyr::mutate(
+            cluster_cat3 = dplyr::case_when(
+                !(.data$feature_nr %in% sig_c3) ~ NA_character_,
+                TRUE ~ paste0(
+                    ifelse(
+                        is.na(.data[[c1]]), "ns", as.character(.data[[c1]])
+                    ),
+                    "_",
+                    ifelse(
+                        is.na(.data[[c2]]), "ns", as.character(.data[[c2]])
+                    )
+                )
+            )
+        )
+    n_cat3 <- out |>
+        dplyr::filter(!is.na(.data$cluster_cat3)) |>
+        dplyr::distinct(.data$cluster_cat3) |>
+        nrow()
+    message(sprintf(
+        paste(
+            "%d clusters for the condition effect (interaction between condition",
+            "and time)"
+        ),
+        n_cat3
+    ))
+
+    out |>
         dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
         dplyr::arrange(.data$feature_nr)
-    )
-  }
-  
-  # cat2: direction by <cond2 score> -> "<cond>_higher"
-  out <- base
-  if (has_c2) {
-    c2_tbl <- stbl(limma_splines_results$avrg_diff_conditions)
-    
-    # pick cond2 score column ignoring underscores
-    score_col <- find_col_ignore_underscores_rx(c2_tbl, cond_names[[2]])
-    if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
-      stop_call_false(
-        "Missing logFC column in topTable for avr diff conditions."
-      )
-    }
-    
-    c2_df <- c2_tbl |>
-      dplyr::transmute(
-        feature_nr = .data$feature_nr,
-        cluster_cat2 = dplyr::case_when(
-          .data[[score_col]] > 0 ~ paste0(
-            gsub("_", "", cond_names[[2]]),
-            "_higher"
-          ),
-          .data[[score_col]] < 0 ~ paste0(
-            gsub("_", "", cond_names[[1]]),
-            "_higher"
-          ),
-          TRUE ~ NA_character_
-        )
-      ) |>
-      dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-    
-    if (!is.null(category_2_and_3_hits$category_2_hits) &&
-        nrow(category_2_and_3_hits$category_2_hits) > 0) {
-      cat2h <- category_2_and_3_hits$category_2_hits |>
-        stbl() |>
-        dplyr::transmute(feature_nr = .data$feature_nr) |>
-        dplyr::distinct()
-      c2_df <- c2_df |>
-        dplyr::mutate(
-          cluster_cat2 = ifelse(
-            .data$feature_nr %in% cat2h$feature_nr,
-            .data$cluster_cat2,
-            NA_character_
-          )
-        )
-    }
-    
-    out <- out |> dplyr::left_join(c2_df, by = "feature_nr")
-  }
-  
-  # Build vector of significant cat3 features (if available)
-  sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
-                nrow(category_2_and_3_hits$category_3_hits) > 0) {
-    category_2_and_3_hits$category_3_hits |>
-      stbl() |>
-      dplyr::transmute(feature_nr = .data$feature_nr) |>
-      dplyr::distinct() |>
-      dplyr::pull(.data$feature_nr)
-  } else {
-    integer(0)
-  }
-  
-  # Construct cat3 only for significant features; else NA
-  out <- out |>
-    dplyr::mutate(
-      cluster_cat3 = dplyr::case_when(
-        !(.data$feature_nr %in% sig_c3) ~ NA_character_,
-        TRUE ~ paste0(
-          ifelse(
-            is.na(.data[[c1]]), "ns", as.character(.data[[c1]])
-          ),
-          "_",
-          ifelse(
-            is.na(.data[[c2]]), "ns", as.character(.data[[c2]])
-          )
-        )
-      )
-    )
-  n_cat3 <- out |>
-    dplyr::filter(!is.na(.data$cluster_cat3)) |>
-    dplyr::distinct(.data$cluster_cat3) |>
-    nrow()
-  message(sprintf(
-    paste(
-      "%d clusters for the condition effect (interaction between condition",
-      "and time)"
-    ),
-    n_cat3
-  ))
-  
-  out |>
-    dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
-    dplyr::arrange(.data$feature_nr)
 }
 
 
 #' Add cT and cDT columns to hit and top tables
 #'
 #' @noRd
-#' 
+#'
 #' @description
 #' For `category_2_and_3_hits$category_3_hits`, add per-condition columns
 #' `cT` (single effect) or `cT_<name>` (multiple effects), mapped by
@@ -2249,79 +2245,77 @@ add_effect_size_columns <- function(
     time_effect_effect_size,
     interaction_effect_size,
     category_2_and_3_hits,
-    within_level_top_tables
-) {
-  get_by_index <- function(
-    vec,
-    idx
-  ) {
-    idx <- as.integer(idx)
-    bad <- is.na(idx) | idx < 1L | idx > length(vec)
-    out <- vec[idx]
-    out[bad] <- NA_real_
-    out
-  }
-
-  if (!is.null(category_2_and_3_hits)) {
-    cat3 <- category_2_and_3_hits[["category_3_hits"]]
-    
-    if (length(time_effect_effect_size) == 1L) {
-      vec <- time_effect_effect_size[[1L]]
-      cat3[["cT"]] <- get_by_index(
+    within_level_top_tables) {
+    get_by_index <- function(
         vec,
-        cat3[["feature_nr"]]
-      )
-    } else {
-      for (nm in names(time_effect_effect_size)) {
-        vec <- time_effect_effect_size[[nm]]
-        col_nm <- paste0("cT_", nm)
-        cat3[[col_nm]] <- get_by_index(
-          vec,
-          cat3[["feature_nr"]]
-        )
-      }
+        idx) {
+        idx <- as.integer(idx)
+        bad <- is.na(idx) | idx < 1L | idx > length(vec)
+        out <- vec[idx]
+        out[bad] <- NA_real_
+        out
     }
-    
-    cat3[["cDT"]] <- get_by_index(
-      interaction_effect_size,
-      cat3[["feature_nr"]]
-    )
-    
-    category_2_and_3_hits[["category_3_hits"]] <- cat3
-  }
 
-  for (nm in names(time_effect_effect_size)) {
-    tt_names <- names(within_level_top_tables)
-    idx <- match(nm, sub("^[^_]*_", "", tt_names))
-    if (is.na(idx)) next
-    tt_name <- tt_names[[idx]]
-    
-    tt <- within_level_top_tables[[tt_name]]
-    
-    # skip if element is NA or not a data.frame
-    if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) {
-      next
+    if (!is.null(category_2_and_3_hits)) {
+        cat3 <- category_2_and_3_hits[["category_3_hits"]]
+
+        if (length(time_effect_effect_size) == 1L) {
+            vec <- time_effect_effect_size[[1L]]
+            cat3[["cT"]] <- get_by_index(
+                vec,
+                cat3[["feature_nr"]]
+            )
+        } else {
+            for (nm in names(time_effect_effect_size)) {
+                vec <- time_effect_effect_size[[nm]]
+                col_nm <- paste0("cT_", nm)
+                cat3[[col_nm]] <- get_by_index(
+                    vec,
+                    cat3[["feature_nr"]]
+                )
+            }
+        }
+
+        cat3[["cDT"]] <- get_by_index(
+            interaction_effect_size,
+            cat3[["feature_nr"]]
+        )
+
+        category_2_and_3_hits[["category_3_hits"]] <- cat3
     }
-    if (!is.data.frame(tt)) {
-      next
+
+    for (nm in names(time_effect_effect_size)) {
+        tt_names <- names(within_level_top_tables)
+        idx <- match(nm, sub("^[^_]*_", "", tt_names))
+        if (is.na(idx)) next
+        tt_name <- tt_names[[idx]]
+
+        tt <- within_level_top_tables[[tt_name]]
+
+        # skip if element is NA or not a data.frame
+        if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) {
+            next
+        }
+        if (!is.data.frame(tt)) {
+            next
+        }
+        if (!("feature_nr" %in% names(tt))) {
+            next
+        }
+
+        vec <- time_effect_effect_size[[nm]]
+        cT_vals <- get_by_index(
+            vec,
+            tt[["feature_nr"]]
+        )
+        tt[["cT"]] <- cT_vals
+        within_level_top_tables[[tt_name]] <- tt
     }
-    if (!("feature_nr" %in% names(tt))) {
-      next
-    }
-    
-    vec <- time_effect_effect_size[[nm]]
-    cT_vals <- get_by_index(
-      vec,
-      tt[["feature_nr"]]
+
+    list(
+        within_level_top_tables = within_level_top_tables,
+        category_2_and_3_hits = category_2_and_3_hits
     )
-    tt[["cT"]] <- cT_vals
-    within_level_top_tables[[tt_name]] <- tt
-  }
-  
-  list(
-    within_level_top_tables = within_level_top_tables,
-    category_2_and_3_hits = category_2_and_3_hits
-  )
 }
 
 
@@ -2329,7 +2323,7 @@ add_effect_size_columns <- function(
 
 
 #' Check for Between-Level Patterns in Top Tables
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2357,40 +2351,40 @@ add_effect_size_columns <- function(
 #' match.
 #'
 check_between_level_pattern <- function(top_tables) {
-  # Initialize variables
-  between_levels <- FALSE
-  index_with_pattern <- NA
+    # Initialize variables
+    between_levels <- FALSE
+    index_with_pattern <- NA
 
-  # Define the regular expression pattern
-  pattern <- ".+_vs_.+"
+    # Define the regular expression pattern
+    pattern <- ".+_vs_.+"
 
-  # Check if top_tables is a list
-  if (is.list(top_tables)) {
-    # Iterate over each element in top_tables
-    for (i in seq_along(top_tables)) {
-      # Check if the element is a list
-      if (is.list(top_tables[[i]])) {
-        # Get the names of the elements in the inner list
-        element_names <- names(top_tables[[i]])
-        # Check if all names in the inner list match the pattern
-        if (all(grepl(pattern, element_names))) {
-          between_levels <- TRUE
-          index_with_pattern <- i
-          break
+    # Check if top_tables is a list
+    if (is.list(top_tables)) {
+        # Iterate over each element in top_tables
+        for (i in seq_along(top_tables)) {
+            # Check if the element is a list
+            if (is.list(top_tables[[i]])) {
+                # Get the names of the elements in the inner list
+                element_names <- names(top_tables[[i]])
+                # Check if all names in the inner list match the pattern
+                if (all(grepl(pattern, element_names))) {
+                    between_levels <- TRUE
+                    index_with_pattern <- i
+                    break
+                }
+            }
         }
-      }
     }
-  }
 
-  return(list(
-    between_levels = between_levels,
-    index_with_pattern = index_with_pattern
-  ))
+    return(list(
+        between_levels = between_levels,
+        index_with_pattern = index_with_pattern
+    ))
 }
 
 
 #' Get Hit Indices for a Specific Level
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2418,42 +2412,42 @@ get_level_hit_indices <- function(
     between_level_top_tables,
     level,
     adj_pthresholds) {
-  unique_hit_indices <- c()
+    unique_hit_indices <- c()
 
-  # Loop through the elements of the list
-  for (i in seq_along(between_level_top_tables)) {
-    # Get the name of the current data frame
-    df_name <- names(between_level_top_tables)[i]
+    # Loop through the elements of the list
+    for (i in seq_along(between_level_top_tables)) {
+        # Get the name of the current data frame
+        df_name <- names(between_level_top_tables)[i]
 
-    # Check if the name contains the level string case insensitively
-    if (grepl(level, df_name, ignore.case = TRUE)) {
-      # Get the current data frame
-      within_level_top_table <- between_level_top_tables[[i]]
+        # Check if the name contains the level string case insensitively
+        if (grepl(level, df_name, ignore.case = TRUE)) {
+            # Get the current data frame
+            within_level_top_table <- between_level_top_tables[[i]]
 
-      # Find the row indices that meet the condition
-      hit_indices <-
-        which(within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i])
+            # Find the row indices that meet the condition
+            hit_indices <-
+                which(within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i])
 
-      # Extract the feature indices from the identified rows
-      feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
-      feature_indices <- within_level_top_table[hit_indices,
-        "feature_nr",
-        drop = TRUE
-      ]
-      unique_hit_indices <- c(
-        unique_hit_indices,
-        feature_indices
-      )
+            # Extract the feature indices from the identified rows
+            feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
+            feature_indices <- within_level_top_table[hit_indices,
+                "feature_nr",
+                drop = TRUE
+            ]
+            unique_hit_indices <- c(
+                unique_hit_indices,
+                feature_indices
+            )
+        }
     }
-  }
 
-  # Get unique feature indices
-  unique_hit_indices <- unique(unique_hit_indices)
+    # Get unique feature indices
+    unique_hit_indices <- unique(unique_hit_indices)
 }
 
 
 #' Split or duplicate a data matrix by condition level
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2472,32 +2466,30 @@ get_level_hit_indices <- function(
 #'   whether to split the data or return full copies per level.
 #'
 #' @return A named list of data matrices, one for each condition level.
-#' 
+#'
 split_data_by_condition <- function(
     data,
     meta,
     condition,
-    mode
-    ) {
-  
-  datas <- list()
-  levels <- unique(meta[[condition]])
-  
-  for (level in levels) {
-    if (mode == "isolated") {
-      cols <- which(meta[[condition]] == level)
-      datas[[level]] <- data[, cols, drop = FALSE]
-    } else {
-      datas[[level]] <- data  # same full data for all levels
+    mode) {
+    datas <- list()
+    levels <- unique(meta[[condition]])
+
+    for (level in levels) {
+        if (mode == "isolated") {
+            cols <- which(meta[[condition]] == level)
+            datas[[level]] <- data[, cols, drop = FALSE]
+        } else {
+            datas[[level]] <- data # same full data for all levels
+        }
     }
-  }
-  
-  return(datas)
+
+    return(datas)
 }
 
 
 #' Plot Heatmap
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2541,102 +2533,100 @@ plot_heatmap <- function(
     all_levels_clustering,
     time_unit_label,
     cluster_heatmap_columns,
-    max_hit_number
-    ) {
-  
-  BASE_TEXT_SIZE_PT <- 5
+    max_hit_number) {
+    BASE_TEXT_SIZE_PT <- 5
 
-  ht_opt(
-    simple_anno_size = unit(1.5, "mm"),
-    COLUMN_ANNO_PADDING = unit(1, "pt"),
-    DENDROGRAM_PADDING = unit(1, "pt"),
-    HEATMAP_LEGEND_PADDING = unit(1, "mm"),
-    ROW_ANNO_PADDING = unit(1, "pt"),
-    TITLE_PADDING = unit(2, "mm"),
-    heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
-    legend_border = FALSE
-  )
+    ht_opt(
+        simple_anno_size = unit(1.5, "mm"),
+        COLUMN_ANNO_PADDING = unit(1, "pt"),
+        DENDROGRAM_PADDING = unit(1, "pt"),
+        HEATMAP_LEGEND_PADDING = unit(1, "mm"),
+        ROW_ANNO_PADDING = unit(1, "pt"),
+        TITLE_PADDING = unit(2, "mm"),
+        heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+        legend_border = FALSE
+    )
 
-  ht_opt$message <- FALSE
+    ht_opt$message <- FALSE
 
-  levels <- unique(meta[[condition]])
-  heatmaps <- list()
+    levels <- unique(meta[[condition]])
+    heatmaps <- list()
 
-  # Generate a heatmap for every level
-  for (i in seq_along(all_levels_clustering)) {
-    # Skip when no result: NULL, all NA, or informative string
-    if (is.null(all_levels_clustering[[i]]) ||
-        all(is.na(all_levels_clustering[[i]])) ||
-        is.character(all_levels_clustering[[i]])) {
-      heatmaps[[length(heatmaps) + 1]] <- NA
-      next
+    # Generate a heatmap for every level
+    for (i in seq_along(all_levels_clustering)) {
+        # Skip when no result: NULL, all NA, or informative string
+        if (is.null(all_levels_clustering[[i]]) ||
+            all(is.na(all_levels_clustering[[i]])) ||
+            is.character(all_levels_clustering[[i]])) {
+            heatmaps[[length(heatmaps) + 1]] <- NA
+            next
+        }
+
+        level_clustering <- all_levels_clustering[[i]]
+
+        clustered_hits <- level_clustering$clustered_hits
+        clusters <- clustered_hits |> dplyr::arrange(!!rlang::sym("cluster"))
+
+        if (!is.infinite(max_hit_number)) {
+            clusters <- clusters |>
+                dplyr::group_by(!!rlang::sym("cluster")) |>
+                dplyr::slice_head(n = max_hit_number) |>
+                dplyr::ungroup()
+        }
+
+        level <- levels[[i]]
+        level_indices <- which(meta[[condition]] == level)
+
+        if (mode == "integrated") {
+            data_level <- datas[[i]][, level_indices]
+        } else { # mode == "isolated"
+            data_level <- datas[[i]]
+        }
+
+        data_level <- data_level[as.numeric(clusters$feature), ]
+        z_score <- t(scale(t(data_level)))
+
+        meta_level <- meta[level_indices, ]
+
+        row_labels <- truncate_row_names(rownames(data_level))
+
+        if (is.null(cluster_heatmap_columns)) { # set default value
+            cluster_heatmap_columns <- FALSE
+        }
+
+        ht <-
+            ComplexHeatmap::Heatmap(
+                z_score,
+                name = paste0(
+                    "left-labels = cluster,",
+                    "top-labels = time"
+                ),
+                use_raster = TRUE,
+                column_split = meta_level$Time,
+                cluster_columns = cluster_heatmap_columns,
+                row_split = clusters$cluster,
+                cluster_rows = FALSE,
+                heatmap_legend_param = list(
+                    title = "z-score of log2 values",
+                    title_position = "lefttop-rot"
+                ),
+                row_gap = unit(2, "pt"),
+                column_gap = unit(2, "pt"),
+                show_row_names = TRUE,
+                row_labels = row_labels,
+                show_column_names = TRUE,
+                column_names_rot = 70,
+                column_names_gp = gpar(fontsize = 5)
+            )
+
+        heatmaps[[length(heatmaps) + 1]] <- ht
     }
-
-    level_clustering <- all_levels_clustering[[i]]
-
-    clustered_hits <- level_clustering$clustered_hits
-    clusters <- clustered_hits |> dplyr::arrange(!!rlang::sym("cluster"))
-    
-    if (!is.infinite(max_hit_number)) {
-      clusters <- clusters |>
-        dplyr::group_by(!!rlang::sym("cluster")) |>
-        dplyr::slice_head(n = max_hit_number) |>
-        dplyr::ungroup()
-    }
-
-    level <- levels[[i]]
-    level_indices <- which(meta[[condition]] == level)
-
-    if (mode == "integrated") {
-      data_level <- datas[[i]][, level_indices]
-    } else { # mode == "isolated"
-      data_level <- datas[[i]]
-    }
-
-    data_level <- data_level[as.numeric(clusters$feature), ]
-    z_score <- t(scale(t(data_level)))
-
-    meta_level <- meta[level_indices, ]
-
-    row_labels <- truncate_row_names(rownames(data_level))
-
-    if (is.null(cluster_heatmap_columns)) { # set default value
-      cluster_heatmap_columns <- FALSE
-    }
-
-    ht <-
-      ComplexHeatmap::Heatmap(
-        z_score,
-        name = paste0(
-          "left-labels = cluster,",
-          "top-labels = time"
-        ),
-        use_raster = TRUE,
-        column_split = meta_level$Time,
-        cluster_columns = cluster_heatmap_columns,
-        row_split = clusters$cluster,
-        cluster_rows = FALSE,
-        heatmap_legend_param = list(
-          title = "z-score of log2 values",
-          title_position = "lefttop-rot"
-        ),
-        row_gap = unit(2, "pt"),
-        column_gap = unit(2, "pt"),
-        show_row_names = TRUE,
-        row_labels = row_labels,
-        show_column_names = TRUE,
-        column_names_rot = 70,
-        column_names_gp = gpar(fontsize = 5)
-      )
-
-    heatmaps[[length(heatmaps) + 1]] <- ht
-  }
-  heatmaps
+    heatmaps
 }
 
 
@@ -2669,39 +2659,51 @@ plot_heatmap <- function(
 #' order matches \code{clustered_hits}.
 #'
 plot_cluster_quality <- function(category_result) {
-  # Basic structure checks
-  if (!is.list(category_result)) return(NULL)
-  cq <- category_result$cluster_quality
-  ch <- category_result$clustered_hits
-  if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) return(NULL)
-  if (!("cluster" %in% names(ch))) return(NULL)
-  
-  # Collect cluster ids, keep numeric/finite only, sort
-  cl_ids_num <- sort(as.integer(unique(ch$cluster)))
-  cl_ids_num <- cl_ids_num[is.finite(cl_ids_num)]
-  if (length(cl_ids_num) == 0) return(NULL)
-  
-  # Build plots in sorted order; drop empty/NA-only
-  plots <- lapply(cl_ids_num, function(clid) {
-    idx <- which(as.numeric(ch$cluster) == clid)
-    sr2 <- cq$per_member[idx]  # signed r^2 per member
-    if (length(sr2) == 0 || all(is.na(sr2))) return(NULL)
-    plot_cluster_quality_distribution(sr2, clid)
-  })
-  
-  # Drop NULLs
-  keep <- !vapply(plots, is.null, logical(1))
-  plots <- plots[keep]
-  if (length(plots) == 0) return(NULL)
-  
-  # Name by sorted cluster id (cluster_1, cluster_2, ...)
-  names(plots) <- paste0("cluster_", cl_ids_num[keep])
-  plots
+    # Basic structure checks
+    if (!is.list(category_result)) {
+        return(NULL)
+    }
+    cq <- category_result$cluster_quality
+    ch <- category_result$clustered_hits
+    if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) {
+        return(NULL)
+    }
+    if (!("cluster" %in% names(ch))) {
+        return(NULL)
+    }
+
+    # Collect cluster ids, keep numeric/finite only, sort
+    cl_ids_num <- sort(as.integer(unique(ch$cluster)))
+    cl_ids_num <- cl_ids_num[is.finite(cl_ids_num)]
+    if (length(cl_ids_num) == 0) {
+        return(NULL)
+    }
+
+    # Build plots in sorted order; drop empty/NA-only
+    plots <- lapply(cl_ids_num, function(clid) {
+        idx <- which(as.numeric(ch$cluster) == clid)
+        sr2 <- cq$per_member[idx] # signed r^2 per member
+        if (length(sr2) == 0 || all(is.na(sr2))) {
+            return(NULL)
+        }
+        plot_cluster_quality_distribution(sr2, clid)
+    })
+
+    # Drop NULLs
+    keep <- !vapply(plots, is.null, logical(1))
+    plots <- plots[keep]
+    if (length(plots) == 0) {
+        return(NULL)
+    }
+
+    # Name by sorted cluster id (cluster_1, cluster_2, ...)
+    names(plots) <- paste0("cluster_", cl_ids_num[keep])
+    plots
 }
 
 
 #' Plot All Mean Splines
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2731,112 +2733,110 @@ plot_cluster_quality <- function(category_result) {
 plot_all_mean_splines <- function(
     curve_values,
     plot_info,
-    level
-    ) {
-  
-  time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
+    level) {
+    time <- as.numeric(colnames(curve_values)[-length(colnames(curve_values))])
 
-  clusters <- unique(curve_values$cluster)
-  average_curves <- data.frame()
+    clusters <- unique(curve_values$cluster)
+    average_curves <- data.frame()
 
-  # Loop through each unique cluster value to calculate the average curve
-  for (current_cluster in clusters) {
-    # Filter rows for the current cluster
-    subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
-    last_timepoint <- (which(names(curve_values) == "cluster")) - 1
-    average_curve <- colMeans(subset_hits[, seq_len(last_timepoint)])
+    # Loop through each unique cluster value to calculate the average curve
+    for (current_cluster in clusters) {
+        # Filter rows for the current cluster
+        subset_hits <- curve_values[curve_values$cluster == current_cluster, ]
+        last_timepoint <- (which(names(curve_values) == "cluster")) - 1
+        average_curve <- colMeans(subset_hits[, seq_len(last_timepoint)])
 
-    # Create a data frame for the average curve with an additional 'Cluster'
-    # column
-    curve_df <- data.frame(
-      Time = time, Value = average_curve,
-      cluster = as.factor(current_cluster)
+        # Create a data frame for the average curve with an additional 'Cluster'
+        # column
+        curve_df <- data.frame(
+            Time = time, Value = average_curve,
+            cluster = as.factor(current_cluster)
+        )
+
+        # Bind the curve data frame to the cumulative data frame
+        average_curves <- rbind(
+            average_curves,
+            curve_df
+        )
+    }
+
+    average_curves$cluster <- factor(
+        average_curves$cluster,
+        levels = sort(
+            unique(as.numeric(average_curves$cluster))
+        )
     )
 
-    # Bind the curve data frame to the cumulative data frame
-    average_curves <- rbind(
-      average_curves,
-      curve_df
+    time_unit_label <- paste0("[", plot_info$time_unit, "]")
+
+    cluster_colors <- get_cluster_colors(curve_values)
+
+    if (length(cluster_colors) > length(unique(average_curves$cluster))) {
+        cluster_colors <-
+            cluster_colors[seq_len(length(unique(average_curves$cluster)))]
+    }
+    names(cluster_colors) <- paste(
+        "Cluster",
+        levels(average_curves$cluster)
     )
-  }
 
-  average_curves$cluster <- factor(
-    average_curves$cluster,
-    levels = sort(
-      unique(as.numeric(average_curves$cluster))
-    )
-  )
+    color_values <- c(cluster_colors)
+    distinct_colors <- c()
 
-  time_unit_label <- paste0("[", plot_info$time_unit, "]")
-
-  cluster_colors <- get_cluster_colors(curve_values)
-
-  if (length(cluster_colors) > length(unique(average_curves$cluster))) {
-    cluster_colors <- 
-      cluster_colors[seq_len(length(unique(average_curves$cluster)))]
-  }
-  names(cluster_colors) <- paste(
-    "Cluster",
-    levels(average_curves$cluster)
-  )
-
-  color_values <- c(cluster_colors)
-  distinct_colors <- c()
-
-  # Create the base plot
-  p_curves <- ggplot2::ggplot(
-    average_curves,
-    ggplot2::aes(
-      x = !!rlang::sym("Time"),
-      y = !!rlang::sym("Value"),
-      color = paste("Cluster", factor(!!rlang::sym("cluster")))
-    )
-  ) +
-    ggplot2::geom_line() +
-    ggplot2::ggtitle(sprintf("Cluster Centroid (average spline) - %s", level)) +
-    ggplot2::xlab(paste("Time", time_unit_label)) +
-    ggplot2::ylab(paste("z-score norm.", plot_info$y_axis_label)) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
-
-  # Call the wrapper function to conditionally add dashed lines and get
-  # treatment colors
-  result <- maybe_add_dashed_lines(
-    p = p_curves,
-    plot_info = plot_info,
-    level = level
-  )
-
-  p_curves <- result$p
-  treatment_colors <- result$treatment_colors
-
-  # Combine cluster colors and treatment colors for a single color scale
-  all_colors <- c(cluster_colors, treatment_colors)
-
-  # Finalize color scale and theme adjustments
-  p_curves <- p_curves +
-    ggplot2::scale_color_manual(
-      values = all_colors, # Combine both cluster and treatment colors
-      name = NULL # No legend title
+    # Create the base plot
+    p_curves <- ggplot2::ggplot(
+        average_curves,
+        ggplot2::aes(
+            x = !!rlang::sym("Time"),
+            y = !!rlang::sym("Value"),
+            color = paste("Cluster", factor(!!rlang::sym("cluster")))
+        )
     ) +
-    ggplot2::theme(
-      axis.text.x  = ggplot2::element_text(size = 12),
-      axis.text.y  = ggplot2::element_text(size = 12),
-      axis.title.x = ggplot2::element_text(size = 14),
-      axis.title.y = ggplot2::element_text(size = 14),
-      legend.text  = ggplot2::element_text(size = 12),
-      legend.key.size   = grid::unit(0.9, "cm"),
-      legend.key.height = grid::unit(0.6, "cm"),
-      plot.title    = ggplot2::element_text(size = 16)
-    )
-  
+        ggplot2::geom_line() +
+        ggplot2::ggtitle(sprintf("Cluster Centroid (average spline) - %s", level)) +
+        ggplot2::xlab(paste("Time", time_unit_label)) +
+        ggplot2::ylab(paste("z-score norm.", plot_info$y_axis_label)) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 
-  return(p_curves)
+    # Call the wrapper function to conditionally add dashed lines and get
+    # treatment colors
+    result <- maybe_add_dashed_lines(
+        p = p_curves,
+        plot_info = plot_info,
+        level = level
+    )
+
+    p_curves <- result$p
+    treatment_colors <- result$treatment_colors
+
+    # Combine cluster colors and treatment colors for a single color scale
+    all_colors <- c(cluster_colors, treatment_colors)
+
+    # Finalize color scale and theme adjustments
+    p_curves <- p_curves +
+        ggplot2::scale_color_manual(
+            values = all_colors, # Combine both cluster and treatment colors
+            name = NULL # No legend title
+        ) +
+        ggplot2::theme(
+            axis.text.x = ggplot2::element_text(size = 12),
+            axis.text.y = ggplot2::element_text(size = 12),
+            axis.title.x = ggplot2::element_text(size = 14),
+            axis.title.y = ggplot2::element_text(size = 14),
+            legend.text = ggplot2::element_text(size = 12),
+            legend.key.size = grid::unit(0.9, "cm"),
+            legend.key.height = grid::unit(0.6, "cm"),
+            plot.title = ggplot2::element_text(size = 16)
+        )
+
+
+    return(p_curves)
 }
 
 
 #' Plot Consensus Shapes
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -2866,47 +2866,45 @@ plot_all_mean_splines <- function(
 plot_cluster_mean_splines <- function(
     curve_values,
     plot_info,
-    level
-    ) {
+    level) {
+    clusters <- sort(unique(curve_values$cluster))
+    plots <- list()
+    cluster_colors <- get_cluster_colors(curve_values)
 
-  clusters <- sort(unique(curve_values$cluster))
-  plots <- list()
-  cluster_colors <- get_cluster_colors(curve_values)
-  
-  for (current_cluster in clusters) {
-    subset_df <- subset(
-      curve_values,
-      curve_values$cluster == current_cluster
-    )
-    
-    nr_of_hits <- nrow(subset_df)
-    
-    subset_df$cluster <- NULL
-    current_title <- paste(
-      "Cluster",
-      current_cluster,
-      "| Hits:",
-      nr_of_hits,
-      "|",
-      level,
-      sep = " "
-    )
+    for (current_cluster in clusters) {
+        subset_df <- subset(
+            curve_values,
+            curve_values$cluster == current_cluster
+        )
 
-    plots[[length(plots) + 1]] <-
-      plot_single_and_mean_splines(
-        subset_df,
-        current_title,
-        plot_info = plot_info,
-        level,
-        cluster_color = cluster_colors[[paste("Cluster", current_cluster)]]
-      )
-  }
-  return(plots)
+        nr_of_hits <- nrow(subset_df)
+
+        subset_df$cluster <- NULL
+        current_title <- paste(
+            "Cluster",
+            current_cluster,
+            "| Hits:",
+            nr_of_hits,
+            "|",
+            level,
+            sep = " "
+        )
+
+        plots[[length(plots) + 1]] <-
+            plot_single_and_mean_splines(
+                subset_df,
+                current_title,
+                plot_info = plot_info,
+                level,
+                cluster_color = cluster_colors[[paste("Cluster", current_cluster)]]
+            )
+    }
+    return(plots)
 }
 
 
 #' Plot Splines for Features Based on Top Table Information
-#' 
+#'
 #' @noRd
 #'
 #' @description This function generates plots for each feature listed in the
@@ -2944,10 +2942,10 @@ plot_cluster_mean_splines <- function(
 #' @param replicate_column String specifying the column of the meta dataframe
 #' that contains the labels of the replicate measurents. When that is not
 #' given, this argument is NULL.
-#' @param level Unique value of the meta condition column, such as 'treatment' 
+#' @param level Unique value of the meta condition column, such as 'treatment'
 #' or 'control'.
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
-#' containing NA values. When provided, it highlights the datapoints in the 
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
+#' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
 #' @param report_info A named list containing report information such as analyst
 #'                    name, fixed and random effects, etc.
@@ -2975,307 +2973,321 @@ plot_splines <- function(
     report_info,
     max_hit_number,
     all_levels_clustering,
-    condition
-    ) {
+    condition) {
+    # Sort so that HTML reports are easier to read and comparisons are easier.
+    top_table <- top_table |> dplyr::arrange(.data$feature_names)
+    smooth_timepoints <- predicted_timecurves$time_grid
+    pred_mat_level <- predicted_timecurves$predictions[[level]]
 
-  # Sort so that HTML reports are easier to read and comparisons are easier.
-  top_table <- top_table |> dplyr::arrange(.data$feature_names)
-  smooth_timepoints <- predicted_timecurves$time_grid
-  pred_mat_level    <- predicted_timecurves$predictions[[level]]
-  
-  # pick the right clustering sub-result for this level
-  level_key <- if (!is.null(condition)) 
-    paste0(condition, "_", level) else level
-  level_result <- NULL
-  if (is.list(all_levels_clustering)) {
-    if (!is.null(all_levels_clustering[[level_key]])) {
-      level_result <- all_levels_clustering[[level_key]]
-    } else if (!is.null(all_levels_clustering[[level]])) {
-      # fallback if names don't carry the condition_ prefix
-      level_result <- all_levels_clustering[[level]]
-    }
-  }
-  
-  # Helper to fetch similarity + cluster id for a feature_nr
-  .get_sim_for_feature <- function(level_result, feature_nr) {
-    out <- list(sim = NA_real_, cl = NA)
-    if (!is.list(level_result)) return(out)
-    cq <- level_result$cluster_quality
-    ch <- level_result$clustered_hits
-    if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) return(out)
-    if (!("feature" %in% names(ch)) || !("cluster" %in% names(ch))) return(out)
-    idx <- which(ch$feature == as.integer(feature_nr))
-    if (length(idx) == 0) return(out)
-    out$sim <- cq$per_member[idx[1]]
-    out$cl  <- ch$cluster[idx[1]]
-    out
-  }
-  
-  DoF <- which(names(top_table) == "AveExpr") - 1
-  time_points <- meta[["Time"]]
-
-  titles <- data.frame(
-    FeatureID = top_table$feature_nr,
-    feature_names = top_table$feature_names
-  )
-  
-  shape_values <- c(     # 16 = circle, 17 = triangle
-    "Measured" = 16,
-    "Imputed" = 17
-    ) 
-  
-  plot_list <- list()
-  n_hits <- min(
-    max_hit_number,
-    nrow(top_table)
-    )
-  
-  for (hit in seq_len(n_hits)) {
-    hit_index <- as.numeric(top_table$feature_nr[hit])
-    feature_name <- top_table$feature_names[hit]
-    sim_info <- .get_sim_for_feature(level_result, hit_index)
-    sim_str  <- if (
-      is.finite(sim_info$sim)
-      ) sprintf(" | sr<sup>2</sup><sub>cc</sub>: %.2f (cl %s)", 
-                sim_info$sim, as.character(sim_info$cl))
-    else ""
-    # cumulative travel (effect size) for this feature in this level
-    cum_travel_val <- NA_real_
-    es_vec <- predicted_timecurves$time_effect_effect_size[[level]]
-    if (!is.null(es_vec)) {
-      tmp <- unname(es_vec[feature_name])
-      if (length(tmp)) cum_travel_val <- tmp[1]
-    }
-    fitted_values <- as.numeric(
-      pred_mat_level[feature_name, ]
-    )
-    y_values <- data[hit_index, ]
-
-    homosc_result <- report_info[["homosc_violation_result"]][["bp_df"]]
-    heteroscedasticity <- homosc_result$violation_flag[hit_index]
-    high_var_group <- homosc_result$max_var_group[hit_index]
-
-    plot_data <- data.frame(
-      Time = time_points,
-      Y = y_values
-    )
-
-    # Mark original NA values from raw_data if available
-    if (!is.null(raw_data)) {
-      # Identify NA positions and mark them as "Imputed" in `plot_data`
-      na_indices <- which(is.na(raw_data[hit_index, ]))
-      plot_data$IsNA <- "Measured"
-      plot_data$IsNA[na_indices] <- "Imputed"
+    # pick the right clustering sub-result for this level
+    level_key <- if (!is.null(condition)) {
+        paste0(condition, "_", level)
     } else {
-      plot_data$IsNA <- "Measured"
+        level
     }
-
-    # If replicate_column is specified (i.e., a string), use replicate info
-    if (!is.null(replicate_column) && is.character(replicate_column)) {
-      replicates <- meta[[replicate_column]] # Get the replicate information
-      plot_data$Replicate <- replicates # Add replicate info to plot data
-
-      # Create color palette for replicates
-      replicate_colors <- scales::hue_pal()(length(unique(replicates)))
-      names(replicate_colors) <- unique(replicates)
-
-      color_values <- c(
-        "Spline" = "red",
-        replicate_colors
-      )
-    } else {
-      color_values <- c(
-        "Data" = "blue",
-        "Spline" = "red"
-      )
-    }
-
-    # Get adjusted p-value and significance stars
-    adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
-    significance_stars <- ifelse(
-      adj_p_value < adj_pthreshold / 500,
-      "****",
-      ifelse(
-        adj_p_value < adj_pthreshold / 50,
-        "***",
-        ifelse(
-          adj_p_value < adj_pthreshold / 5,
-          "**",
-          ifelse(
-            adj_p_value < adj_pthreshold,
-            "*",
-            ""
-          )
-        )
-      )
-    )
-
-    avg_cv <- calc_cv(
-      time_values = time_points,
-      response_values = y_values
-    )
-
-    # Use local environment to avoid unwanted updating dynamic legend label.
-    p <- local({
-      plot_spline <- data.frame(
-        Time = smooth_timepoints,
-        Fitted = fitted_values
-      )
-
-      x_min <- min(time_points)
-      x_max <- max(time_points)
-      x_extension <- (x_max - x_min) * 0.001  # Etxtension on each side
-
-      # Define color column outside aes()
-      color_column_values <- if (!is.null(replicate_column) &&
-        is.character(replicate_column)) {
-        plot_data$Replicate # Use replicate column if it exists
-      } else {
-        rep("Data", nrow(plot_data))
-      }
-
-      plot_data$color_column <- factor(color_column_values)
-      
-      y_max <- max(c(y_values, fitted_values), na.rm = TRUE)
-      y_min <- min(c(y_values, fitted_values), na.rm = TRUE)
-      y_extension <- (y_max - y_min) * 0.1
-
-      p <- ggplot2::ggplot() +
-        ggplot2::geom_point(
-          data = dplyr::filter(plot_data, !is.na(.data$Y)),
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Y,
-            color = .data$color_column,
-            shape = factor(.data$IsNA)  # Map shape to "Data" or "Imputed"
-          ),
-          alpha = 0.5 # 50% transparent data dots
-        ) +
-        ggplot2::geom_line(
-          data = plot_spline,
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Fitted,
-            color = "Spline"
-          )
-        ) +
-        ggplot2::scale_shape_manual(values = shape_values) + 
-        ggplot2::theme_minimal() +
-        ggplot2::scale_x_continuous(
-          limits = c(x_min - x_extension, x_max + x_extension),
-          labels = scales::label_number_auto()  
-        ) +
-        ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE)) +
-        ggplot2::coord_cartesian(ylim = c(y_min, y_max + y_extension)) +
-        ggplot2::labs(
-          x = paste0("Time ", time_unit_label),
-          y = plot_info$y_axis_label
-        ) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(title = NULL),
-          shape = if (any(plot_data$IsNA == "Imputed")) {
-            ggplot2::guide_legend(title = NULL)
-          } else {
-            "none" # Completely remove shape legend when no "Imputed" points
-          }
-        ) 
-      
-      y_pos_label <- y_max + y_extension * 0.5
-      
-      result <- maybe_add_dashed_lines(
-        p = p,
-        plot_info = plot_info,
-        level = level,
-        y_pos = y_pos_label,
-        horizontal_labels = TRUE
-      )
-
-      p <- result$p   # Updated plot with dashed lines
-      treatment_colors <- result$treatment_colors # Colors used for treatments
-
-      color_values <- c(
-        color_values,
-        treatment_colors
-        )
-
-      # Add title and annotations
-      matched_row <- dplyr::filter(
-        titles,
-        !!rlang::sym("FeatureID") == hit_index
-      )
-
-      title <- as.character(matched_row$feature_name)
-
-      if (isTRUE(heteroscedasticity)) {
-        if (!is.na(high_var_group)) {
-          title_prefix <- paste0("\u26A0 (", high_var_group, " \u2191) | ")
-        } else {
-          title_prefix <- "\u26A0\uFE0F "
+    level_result <- NULL
+    if (is.list(all_levels_clustering)) {
+        if (!is.null(all_levels_clustering[[level_key]])) {
+            level_result <- all_levels_clustering[[level_key]]
+        } else if (!is.null(all_levels_clustering[[level]])) {
+            # fallback if names don't carry the condition_ prefix
+            level_result <- all_levels_clustering[[level]]
         }
-      } else {
-        title_prefix <- ""
-      }
-      
-      title <- paste0(
-        title_prefix,
-        title
-      )
+    }
 
-      if (nchar(title) > 100) {
-        title_before <- title
-        title <- paste0(substr(title, 1, 100), " ...")
-        message(paste(
-          "The feature ID", title_before, "is > 100 characters.",
-          "Truncating it to 100 chars:", title
-        ))
-      }
+    # Helper to fetch similarity + cluster id for a feature_nr
+    .get_sim_for_feature <- function(level_result, feature_nr) {
+        out <- list(sim = NA_real_, cl = NA)
+        if (!is.list(level_result)) {
+            return(out)
+        }
+        cq <- level_result$cluster_quality
+        ch <- level_result$clustered_hits
+        if (is.null(cq) || is.null(cq$per_member) || is.null(ch)) {
+            return(out)
+        }
+        if (!("feature" %in% names(ch)) || !("cluster" %in% names(ch))) {
+            return(out)
+        }
+        idx <- which(ch$feature == as.integer(feature_nr))
+        if (length(idx) == 0) {
+            return(out)
+        }
+        out$sim <- cq$per_member[idx[1]]
+        out$cl <- ch$cluster[idx[1]]
+        out
+    }
 
-      if (is.na(title)) {
-        title <- paste("feature:", hit_index)
-      }
+    DoF <- which(names(top_table) == "AveExpr") - 1
+    time_points <- meta[["Time"]]
 
-      p <- p +
-        ggplot2::scale_colour_manual(
-          values = color_values,
-        ) +
-        ggplot2::labs(
-          title = paste(
-            "<b>", title, "</b>",
-            "<br>",
-            "cT:",
-            ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
-            "  |  avg CV: ", round(avg_cv, 2), "%",
-            "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
-            " ", significance_stars,
-            sim_str
-          ),
-          x = paste("Time", time_unit_label),
-          y = paste(plot_info$y_axis_label)
-        ) +
-        ggplot2::theme(
-          plot.title = ggplot2::element_text(size = 6),
-          axis.title.x = ggplot2::element_text(size = 14),
-          axis.title.y = ggplot2::element_text(size = 14),
-          legend.key.size = grid::unit(0.8, "cm"),
-          legend.key.height = grid::unit(0.5, "cm"),
-          legend.title = ggplot2::element_text(size = 8),
-          legend.text = ggplot2::element_text(size = 12),
-          axis.text.x = ggplot2::element_text(size = 12),
-          axis.text.y = ggplot2::element_text(size = 12)
+    titles <- data.frame(
+        FeatureID = top_table$feature_nr,
+        feature_names = top_table$feature_names
+    )
+
+    shape_values <- c( # 16 = circle, 17 = triangle
+        "Measured" = 16,
+        "Imputed" = 17
+    )
+
+    plot_list <- list()
+    n_hits <- min(
+        max_hit_number,
+        nrow(top_table)
+    )
+
+    for (hit in seq_len(n_hits)) {
+        hit_index <- as.numeric(top_table$feature_nr[hit])
+        feature_name <- top_table$feature_names[hit]
+        sim_info <- .get_sim_for_feature(level_result, hit_index)
+        sim_str <- if (
+            is.finite(sim_info$sim)
+        ) {
+            sprintf(
+                " | sr<sup>2</sup><sub>cc</sub>: %.2f (cl %s)",
+                sim_info$sim, as.character(sim_info$cl)
+            )
+        } else {
+            ""
+        }
+        # cumulative travel (effect size) for this feature in this level
+        cum_travel_val <- NA_real_
+        es_vec <- predicted_timecurves$time_effect_effect_size[[level]]
+        if (!is.null(es_vec)) {
+            tmp <- unname(es_vec[feature_name])
+            if (length(tmp)) cum_travel_val <- tmp[1]
+        }
+        fitted_values <- as.numeric(
+            pred_mat_level[feature_name, ]
+        )
+        y_values <- data[hit_index, ]
+
+        homosc_result <- report_info[["homosc_violation_result"]][["bp_df"]]
+        heteroscedasticity <- homosc_result$violation_flag[hit_index]
+        high_var_group <- homosc_result$max_var_group[hit_index]
+
+        plot_data <- data.frame(
+            Time = time_points,
+            Y = y_values
         )
 
-      p
-    })
+        # Mark original NA values from raw_data if available
+        if (!is.null(raw_data)) {
+            # Identify NA positions and mark them as "Imputed" in `plot_data`
+            na_indices <- which(is.na(raw_data[hit_index, ]))
+            plot_data$IsNA <- "Measured"
+            plot_data$IsNA[na_indices] <- "Imputed"
+        } else {
+            plot_data$IsNA <- "Measured"
+        }
 
-    plot_list[[hit]] <- p
-  }
+        # If replicate_column is specified (i.e., a string), use replicate info
+        if (!is.null(replicate_column) && is.character(replicate_column)) {
+            replicates <- meta[[replicate_column]] # Get the replicate information
+            plot_data$Replicate <- replicates # Add replicate info to plot data
 
-  return(plot_list)
+            # Create color palette for replicates
+            replicate_colors <- scales::hue_pal()(length(unique(replicates)))
+            names(replicate_colors) <- unique(replicates)
+
+            color_values <- c(
+                "Spline" = "red",
+                replicate_colors
+            )
+        } else {
+            color_values <- c(
+                "Data" = "blue",
+                "Spline" = "red"
+            )
+        }
+
+        # Get adjusted p-value and significance stars
+        adj_p_value <- as.numeric(top_table[hit, "adj.P.Val"])
+        significance_stars <- ifelse(
+            adj_p_value < adj_pthreshold / 500,
+            "****",
+            ifelse(
+                adj_p_value < adj_pthreshold / 50,
+                "***",
+                ifelse(
+                    adj_p_value < adj_pthreshold / 5,
+                    "**",
+                    ifelse(
+                        adj_p_value < adj_pthreshold,
+                        "*",
+                        ""
+                    )
+                )
+            )
+        )
+
+        avg_cv <- calc_cv(
+            time_values = time_points,
+            response_values = y_values
+        )
+
+        # Use local environment to avoid unwanted updating dynamic legend label.
+        p <- local({
+            plot_spline <- data.frame(
+                Time = smooth_timepoints,
+                Fitted = fitted_values
+            )
+
+            x_min <- min(time_points)
+            x_max <- max(time_points)
+            x_extension <- (x_max - x_min) * 0.001 # Etxtension on each side
+
+            # Define color column outside aes()
+            color_column_values <- if (!is.null(replicate_column) &&
+                is.character(replicate_column)) {
+                plot_data$Replicate # Use replicate column if it exists
+            } else {
+                rep("Data", nrow(plot_data))
+            }
+
+            plot_data$color_column <- factor(color_column_values)
+
+            y_max <- max(c(y_values, fitted_values), na.rm = TRUE)
+            y_min <- min(c(y_values, fitted_values), na.rm = TRUE)
+            y_extension <- (y_max - y_min) * 0.1
+
+            p <- ggplot2::ggplot() +
+                ggplot2::geom_point(
+                    data = dplyr::filter(plot_data, !is.na(.data$Y)),
+                    ggplot2::aes(
+                        x = .data$Time,
+                        y = .data$Y,
+                        color = .data$color_column,
+                        shape = factor(.data$IsNA) # Map shape to "Data" or "Imputed"
+                    ),
+                    alpha = 0.5 # 50% transparent data dots
+                ) +
+                ggplot2::geom_line(
+                    data = plot_spline,
+                    ggplot2::aes(
+                        x = .data$Time,
+                        y = .data$Fitted,
+                        color = "Spline"
+                    )
+                ) +
+                ggplot2::scale_shape_manual(values = shape_values) +
+                ggplot2::theme_minimal() +
+                ggplot2::scale_x_continuous(
+                    limits = c(x_min - x_extension, x_max + x_extension),
+                    labels = scales::label_number_auto()
+                ) +
+                ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE)) +
+                ggplot2::coord_cartesian(ylim = c(y_min, y_max + y_extension)) +
+                ggplot2::labs(
+                    x = paste0("Time ", time_unit_label),
+                    y = plot_info$y_axis_label
+                ) +
+                ggplot2::guides(
+                    color = ggplot2::guide_legend(title = NULL),
+                    shape = if (any(plot_data$IsNA == "Imputed")) {
+                        ggplot2::guide_legend(title = NULL)
+                    } else {
+                        "none" # Completely remove shape legend when no "Imputed" points
+                    }
+                )
+
+            y_pos_label <- y_max + y_extension * 0.5
+
+            result <- maybe_add_dashed_lines(
+                p = p,
+                plot_info = plot_info,
+                level = level,
+                y_pos = y_pos_label,
+                horizontal_labels = TRUE
+            )
+
+            p <- result$p # Updated plot with dashed lines
+            treatment_colors <- result$treatment_colors # Colors used for treatments
+
+            color_values <- c(
+                color_values,
+                treatment_colors
+            )
+
+            # Add title and annotations
+            matched_row <- dplyr::filter(
+                titles,
+                !!rlang::sym("FeatureID") == hit_index
+            )
+
+            title <- as.character(matched_row$feature_name)
+
+            if (isTRUE(heteroscedasticity)) {
+                if (!is.na(high_var_group)) {
+                    title_prefix <- paste0("\u26A0 (", high_var_group, " \u2191) | ")
+                } else {
+                    title_prefix <- "\u26A0\uFE0F "
+                }
+            } else {
+                title_prefix <- ""
+            }
+
+            title <- paste0(
+                title_prefix,
+                title
+            )
+
+            if (nchar(title) > 100) {
+                title_before <- title
+                title <- paste0(substr(title, 1, 100), " ...")
+                message(paste(
+                    "The feature ID", title_before, "is > 100 characters.",
+                    "Truncating it to 100 chars:", title
+                ))
+            }
+
+            if (is.na(title)) {
+                title <- paste("feature:", hit_index)
+            }
+
+            p <- p +
+                ggplot2::scale_colour_manual(
+                    values = color_values,
+                ) +
+                ggplot2::labs(
+                    title = paste(
+                        "<b>", title, "</b>",
+                        "<br>",
+                        "cT:",
+                        ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
+                        "  |  avg CV: ", round(avg_cv, 2), "%",
+                        "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
+                        " ", significance_stars,
+                        sim_str
+                    ),
+                    x = paste("Time", time_unit_label),
+                    y = paste(plot_info$y_axis_label)
+                ) +
+                ggplot2::theme(
+                    plot.title = ggplot2::element_text(size = 6),
+                    axis.title.x = ggplot2::element_text(size = 14),
+                    axis.title.y = ggplot2::element_text(size = 14),
+                    legend.key.size = grid::unit(0.8, "cm"),
+                    legend.key.height = grid::unit(0.5, "cm"),
+                    legend.title = ggplot2::element_text(size = 8),
+                    legend.text = ggplot2::element_text(size = 12),
+                    axis.text.x = ggplot2::element_text(size = 12),
+                    axis.text.y = ggplot2::element_text(size = 12)
+                )
+
+            p
+        })
+
+        plot_list[[hit]] <- p
+    }
+
+    return(plot_list)
 }
 
 
 #' Create spline comparison plots for two conditions
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -3303,7 +3315,7 @@ plot_splines <- function(
 #' @param condition Column name of meta that contains the levels of the
 #' experiment.
 #' @param replicate_column Column name of the meta column that specifies the
-#' replicates per timepoint. For example Reactor with the unique values: 
+#' replicates per timepoint. For example Reactor with the unique values:
 #' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
 #' running this experiment and each timepoint has one sample from each reactor.
 #' @param predicted_timecurves A list containing:
@@ -3322,8 +3334,8 @@ plot_splines <- function(
 #' @param adj_pthresh_interaction The adjusted p-value threshold for the
 #' interaction between
 #' condition and time.
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still 
-#' containing NA values. When provided, it highlights the datapoints in the 
+#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
+#' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
 #' @param max_hit_number Maximum number of hits for which the individual spline
 #' plots are shown. This can be used to limit the computation time and size of
@@ -3342,424 +3354,438 @@ plot_spline_comparisons <- function(
     condition_1,
     time_effect_2,
     condition_2,
-    avrg_diff_conditions,        
-    interaction_condition_time,  
+    avrg_diff_conditions,
+    interaction_condition_time,
     data,
     meta,
     condition,
     replicate_column,
     predicted_timecurves,
     plot_info,
-    adj_pthresh_avrg_diff_conditions, 
-    adj_pthresh_interaction,          
+    adj_pthresh_avrg_diff_conditions,
+    adj_pthresh_interaction,
     raw_data,
-    max_hit_number
-) {
-  # optional replicate mapping
-  if (!is.null(replicate_column)) {
-    replicate_mapping <- setNames(
-      seq_along(unique(meta[[replicate_column]])),
-      unique(meta[[replicate_column]])
-    )
-  }
-  
-  # sort inputs for stable behavior
-  time_effect_1 <- dplyr::arrange(time_effect_1, .data$feature_names)
-  time_effect_2 <- dplyr::arrange(time_effect_2, .data$feature_names)
-  avrg_diff_conditions <- dplyr::arrange(
-    avrg_diff_conditions,
-    .data$feature_names
-    )
-  interaction_condition_time <- dplyr::arrange(
-    interaction_condition_time,
-    .data$feature_names
-    )
-  
-  smooth_timepoints <- predicted_timecurves$time_grid
-  pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
-  pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
-  
-  # meta/time and titles
-  time_points <- meta$Time
-  titles <- data.frame(
-    FeatureID = time_effect_1$feature_nr,
-    feature_names = time_effect_1$feature_names
-  )
-  
-  features_to_plot <- select_balanced_hits(
-    avrg_df  = dplyr::select(
-      avrg_diff_conditions,
-      .data$feature_nr,
-      .data$feature_names,
-      dplyr::any_of("adj.P.Val")
-    ),
-    inter_df = dplyr::select(
-      interaction_condition_time,
-      .data$feature_nr,
-      .data$feature_names,
-      dplyr::any_of("adj.P.Val")
-    ),
-    max_n    = max_hit_number
-  )
-  
-  # (Optional) sanity check: ensure features exist in prediction matrices
-  if (!is.null(rownames(pred_mat_1))) {
-    features_to_plot <- features_to_plot[
-      features_to_plot$feature_names %in% rownames(pred_mat_1) &
-        features_to_plot$feature_names %in% rownames(pred_mat_2),
-      , drop = FALSE]
-  }
-  
-  plot_list <- list()
-  feature_names_list <- list()
-  
-  # helper for stars (annotation only)
-  stars_from <- function(pval, thresh) {
-    if (is.na(pval)) return("")
-    if (pval < thresh/500) "****"
-    else if (pval < thresh/50) "***"
-    else if (pval < thresh/5) "**"
-    else if (pval < thresh) "*"
-    else ""
-  }
-  
-  # precompute shape mapping if replicates used
-  if (!is.null(replicate_column)) {
-    distinct_shapes <- c(21,22,23,24,25,3,4,8)
-    fallback_shapes <- rep(1, 100)
-    uniq_rep <- unique(meta[[replicate_column]])
-    shape_mapping <- setNames(
-      c(distinct_shapes, fallback_shapes)[seq_along(uniq_rep)],
-      uniq_rep
-    )
-  }
-  
-  for (i in seq_len(nrow(features_to_plot))) {
-    hit_index   <- as.numeric(features_to_plot$feature_nr[i])
-    feature_name <- features_to_plot$feature_names[i]
-    # Determine membership (feature is in which category table)
-    is_cat2 <- feature_name %in% avrg_diff_conditions$feature_names
-    is_cat3 <- feature_name %in% interaction_condition_time$feature_names
-    
-    # Category 2 effect size (from FIRST column of avrg_diff_conditions)
-    cat2_eff <- NA_real_
-    cat2_colname <- colnames(avrg_diff_conditions)[1]
-    if (is_cat2) {
-      row_cat2 <- avrg_diff_conditions[
-        avrg_diff_conditions$feature_names == feature_name,
-        ,
-        drop = FALSE
-        ]
-      if (nrow(row_cat2) > 0) {
-        cat2_eff <- as.numeric(row_cat2[[1]])  # first column = effect size
-      }
-    }
-
-    # Category 3 effect sizes per condition
-    es1 <- NA_real_
-    es2 <- NA_real_
-    # Category 3 combined differential travel (cat3 effect size) 
-    diff_es <- NA_real_                                         
-    if (is_cat3) {                                              
-      ies <- predicted_timecurves$interaction_effect_size       
-      if (!is.null(ies)) {                                       
-        tmp <- unname(ies[feature_name])                        
-        if (length(tmp)) diff_es <- tmp[1]                       
-      }                                                         
-    }                                                          
-    
-    if (is_cat3) {
-      es_list <- predicted_timecurves$time_effect_effect_size
-      if (!is.null(es_list[[condition_1]])) {
-        es1 <- unname(es_list[[condition_1]][feature_name])
-      }
-      if (!is.null(es_list[[condition_2]])) {
-        es2 <- unname(es_list[[condition_2]][feature_name])
-      }
-    }
-    
-    row_values  <- data[hit_index, ]
-    
-    # imputation flags (by condition)
-    if (!is.null(raw_data)) {
-      columns_condition_1 <- which(meta[[condition]] == condition_1)
-      columns_condition_2 <- which(meta[[condition]] == condition_2)
-      na_indices_cond1 <- columns_condition_1[
-        which(is.na(raw_data[hit_index, columns_condition_1]))
-      ]
-      na_indices_cond2 <- columns_condition_2[
-        which(is.na(raw_data[hit_index, columns_condition_2]))
-      ]
-      plot_data <- data.frame(
-        Time = time_points,
-        Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
-        Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
-        IsImputed1 = ifelse(
-          seq_along(row_values) %in% na_indices_cond1,
-          "Imputed",
-          "Measured"
-          ),
-        IsImputed2 = ifelse(
-          seq_along(row_values) %in% na_indices_cond2,
-          "Imputed",
-          "Measured"
-          )
-      )
-      has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
-      has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
-    } else {
-      plot_data <- data.frame(
-        Time = time_points,
-        Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
-        Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
-        IsImputed1 = "Measured",
-        IsImputed2 = "Measured"
-      )
-      has_imputed_1 <- FALSE
-      has_imputed_2 <- FALSE
-    }
-    
+    max_hit_number) {
+    # optional replicate mapping
     if (!is.null(replicate_column)) {
-      plot_data$Replicate <- meta[[replicate_column]]
-      plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
+        replicate_mapping <- setNames(
+            seq_along(unique(meta[[replicate_column]])),
+            unique(meta[[replicate_column]])
+        )
     }
-    
-    fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
-    fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
-    
-    # pull p-values for annotation (dfs are already filtered)
-    avrg_diff_pval  <- safe_pull_pval(
-      avrg_diff_conditions,
-      feature_name,
-      "adj.P.Val"
-      )
-    interaction_pval <- safe_pull_pval(
-      interaction_condition_time,
-      feature_name,
-      "adj.P.Val"
-      )
-    
-    avrg_diff_stars   <- stars_from(
-      avrg_diff_pval,
-      adj_pthresh_avrg_diff_conditions
-      )
-    interaction_stars <- stars_from(
-      interaction_pval,
-      adj_pthresh_interaction
-      )
-    
-    # average CV per condition
-    cv_1 <- calc_cv(
-      time_values = plot_data$Time,
-      response_values = plot_data$Y1
-      )
-    cv_2 <- calc_cv(
-      time_values = plot_data$Time,
-      response_values = plot_data$Y2
-      )
-    
-    plot_data$ColorLabel1 <- ifelse(
-      plot_data$IsImputed1 == "Imputed",
-      paste("Imputed data", condition_1),
-      paste("Data", condition_1)
-      )
-    plot_data$ColorLabel2 <- ifelse(
-      plot_data$IsImputed2 == "Imputed",
-      paste("Imputed data", condition_2),
-      paste("Data", condition_2)
-      )
-    
-    fmt_p_for_title <- function(p) 
-      if (is.na(p)) "ns" else as.character(signif(p, 2))
-    
-    p <- local({
-      p <- ggplot2::ggplot() +
-        ggplot2::geom_point(
-          data = plot_data,
-          ggplot2::aes(
-            x = .data$Time, y = .data$Y1,
-            color = .data$ColorLabel1,
-            shape = if (!is.null(replicate_column)) .data$Replicate else NULL
-          ),
-          na.rm = TRUE, alpha = 0.5
-        ) +
-        ggplot2::geom_line(
-          data = data.frame(
-            Time = smooth_timepoints,
-            Fitted = fitted_values_1
-            ),
-          ggplot2::aes(
-            x = .data$Time, 
-            y = .data$Fitted,
-            color = paste("Spline", condition_1)
-            )
-        ) +
-        ggplot2::geom_point(
-          data = plot_data,
-          ggplot2::aes(
-            x = .data$Time, y = .data$Y2,
-            color = .data$ColorLabel2,
-            shape = if (!is.null(replicate_column)) .data$Replicate else NULL
-          ),
-          na.rm = TRUE, alpha = 0.5
-        ) +
-        ggplot2::geom_line(
-          data = data.frame(
-            Time = smooth_timepoints,
-            Fitted = fitted_values_2
-            ),
-          ggplot2::aes(
-            x = .data$Time,
-            y = .data$Fitted,
-            color = paste("Spline", condition_2)
-            )
-        ) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(title = NULL),
-          shape = ggplot2::guide_legend(title = "Replicate")
-        ) +
-        ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
-        ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE))
 
-      title_lines <- c(
-        feature_name,
-        paste(
-          "adj.P.Val avrg_diff_conditions:",
-          fmt_p_for_title(avrg_diff_pval),
-          avrg_diff_stars
+    # sort inputs for stable behavior
+    time_effect_1 <- dplyr::arrange(time_effect_1, .data$feature_names)
+    time_effect_2 <- dplyr::arrange(time_effect_2, .data$feature_names)
+    avrg_diff_conditions <- dplyr::arrange(
+        avrg_diff_conditions,
+        .data$feature_names
+    )
+    interaction_condition_time <- dplyr::arrange(
+        interaction_condition_time,
+        .data$feature_names
+    )
+
+    smooth_timepoints <- predicted_timecurves$time_grid
+    pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
+    pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
+
+    # meta/time and titles
+    time_points <- meta$Time
+    titles <- data.frame(
+        FeatureID = time_effect_1$feature_nr,
+        feature_names = time_effect_1$feature_names
+    )
+
+    features_to_plot <- select_balanced_hits(
+        avrg_df = dplyr::select(
+            avrg_diff_conditions,
+            .data$feature_nr,
+            .data$feature_names,
+            dplyr::any_of("adj.P.Val")
         ),
-        paste(
-          "adj.P.Val interaction_condition_time:",
-          fmt_p_for_title(interaction_pval),
-          interaction_stars
+        inter_df = dplyr::select(
+            interaction_condition_time,
+            .data$feature_nr,
+            .data$feature_names,
+            dplyr::any_of("adj.P.Val")
+        ),
+        max_n = max_hit_number
+    )
+
+    # (Optional) sanity check: ensure features exist in prediction matrices
+    if (!is.null(rownames(pred_mat_1))) {
+        features_to_plot <- features_to_plot[
+            features_to_plot$feature_names %in% rownames(pred_mat_1) &
+                features_to_plot$feature_names %in% rownames(pred_mat_2), ,
+            drop = FALSE
+        ]
+    }
+
+    plot_list <- list()
+    feature_names_list <- list()
+
+    # helper for stars (annotation only)
+    stars_from <- function(pval, thresh) {
+        if (is.na(pval)) {
+            return("")
+        }
+        if (pval < thresh / 500) {
+            "****"
+        } else if (pval < thresh / 50) {
+            "***"
+        } else if (pval < thresh / 5) {
+            "**"
+        } else if (pval < thresh) {
+            "*"
+        } else {
+            ""
+        }
+    }
+
+    # precompute shape mapping if replicates used
+    if (!is.null(replicate_column)) {
+        distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)
+        fallback_shapes <- rep(1, 100)
+        uniq_rep <- unique(meta[[replicate_column]])
+        shape_mapping <- setNames(
+            c(distinct_shapes, fallback_shapes)[seq_along(uniq_rep)],
+            uniq_rep
         )
-      )
-      
-      # Append effect-size lines according to the category
-      if (is_cat2 && !is.na(cat2_eff)) {
-        title_lines <- c(
-          title_lines,
-          paste0("Avrg diff conditions: ", signif(cat2_eff, 3))
+    }
+
+    for (i in seq_len(nrow(features_to_plot))) {
+        hit_index <- as.numeric(features_to_plot$feature_nr[i])
+        feature_name <- features_to_plot$feature_names[i]
+        # Determine membership (feature is in which category table)
+        is_cat2 <- feature_name %in% avrg_diff_conditions$feature_names
+        is_cat3 <- feature_name %in% interaction_condition_time$feature_names
+
+        # Category 2 effect size (from FIRST column of avrg_diff_conditions)
+        cat2_eff <- NA_real_
+        cat2_colname <- colnames(avrg_diff_conditions)[1]
+        if (is_cat2) {
+            row_cat2 <- avrg_diff_conditions[
+                avrg_diff_conditions$feature_names == feature_name, ,
+                drop = FALSE
+            ]
+            if (nrow(row_cat2) > 0) {
+                cat2_eff <- as.numeric(row_cat2[[1]]) # first column = effect size
+            }
+        }
+
+        # Category 3 effect sizes per condition
+        es1 <- NA_real_
+        es2 <- NA_real_
+        # Category 3 combined differential travel (cat3 effect size)
+        diff_es <- NA_real_
+        if (is_cat3) {
+            ies <- predicted_timecurves$interaction_effect_size
+            if (!is.null(ies)) {
+                tmp <- unname(ies[feature_name])
+                if (length(tmp)) diff_es <- tmp[1]
+            }
+        }
+
+        if (is_cat3) {
+            es_list <- predicted_timecurves$time_effect_effect_size
+            if (!is.null(es_list[[condition_1]])) {
+                es1 <- unname(es_list[[condition_1]][feature_name])
+            }
+            if (!is.null(es_list[[condition_2]])) {
+                es2 <- unname(es_list[[condition_2]][feature_name])
+            }
+        }
+
+        row_values <- data[hit_index, ]
+
+        # imputation flags (by condition)
+        if (!is.null(raw_data)) {
+            columns_condition_1 <- which(meta[[condition]] == condition_1)
+            columns_condition_2 <- which(meta[[condition]] == condition_2)
+            na_indices_cond1 <- columns_condition_1[
+                which(is.na(raw_data[hit_index, columns_condition_1]))
+            ]
+            na_indices_cond2 <- columns_condition_2[
+                which(is.na(raw_data[hit_index, columns_condition_2]))
+            ]
+            plot_data <- data.frame(
+                Time = time_points,
+                Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
+                Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
+                IsImputed1 = ifelse(
+                    seq_along(row_values) %in% na_indices_cond1,
+                    "Imputed",
+                    "Measured"
+                ),
+                IsImputed2 = ifelse(
+                    seq_along(row_values) %in% na_indices_cond2,
+                    "Imputed",
+                    "Measured"
+                )
+            )
+            has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
+            has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
+        } else {
+            plot_data <- data.frame(
+                Time = time_points,
+                Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
+                Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
+                IsImputed1 = "Measured",
+                IsImputed2 = "Measured"
+            )
+            has_imputed_1 <- FALSE
+            has_imputed_2 <- FALSE
+        }
+
+        if (!is.null(replicate_column)) {
+            plot_data$Replicate <- meta[[replicate_column]]
+            plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
+        }
+
+        fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
+        fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
+
+        # pull p-values for annotation (dfs are already filtered)
+        avrg_diff_pval <- safe_pull_pval(
+            avrg_diff_conditions,
+            feature_name,
+            "adj.P.Val"
         )
-      }
-      if (is_cat3 && (!is.na(es1) || !is.na(es2))) {
-        title_lines <- c(
-          title_lines,
-          paste0(
-            "cT: ",
-            condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
-            " | ",
-            condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3)),
-            " | cDT: ",
-            ifelse(is.na(diff_es), "NA", signif(diff_es, 3))
-          )
+        interaction_pval <- safe_pull_pval(
+            interaction_condition_time,
+            feature_name,
+            "adj.P.Val"
         )
-      }
-      
-      # CV line (kept as before)
-      title_lines <- c(
-        title_lines,
-        paste0(
-          "avg CV ", condition_1, ": ", round(cv_1, 2), "% | ",
-          "avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+
+        avrg_diff_stars <- stars_from(
+            avrg_diff_pval,
+            adj_pthresh_avrg_diff_conditions
         )
-      )
-      
-      p <- p + ggplot2::labs(
-        title = paste(title_lines, collapse = "\n"),
-        x = paste0("Time [", plot_info[["time_unit"]], "]"),
-        y = plot_info[["y_axis_label"]]
-      )
-        
-      
-      if (!is.null(replicate_column)) {
-        p <- p + ggplot2::scale_shape_manual(
-          values = shape_mapping,
-          name = "Replicate"
-          )
-      }
-      
-      p <- p + ggplot2::theme_minimal() +
-        ggplot2::theme(
-          legend.position = "right",
-          legend.title = ggplot2::element_blank(),
-          plot.title = ggplot2::element_text(size = 7),
-          legend.text = ggplot2::element_text(size = 8),
-          legend.key.height = ggplot2::unit(0.4, "cm"),
-          legend.key.width  = ggplot2::unit(0.8, "cm"),
-          axis.title.x = ggplot2::element_text(size = 14),
-          axis.title.y = ggplot2::element_text(size = 14),
-          axis.text.x  = ggplot2::element_text(size = 12),
-          axis.text.y  = ggplot2::element_text(size = 12)
+        interaction_stars <- stars_from(
+            interaction_pval,
+            adj_pthresh_interaction
         )
-      
-      y_combined <- c(plot_data$Y1, plot_data$Y2)
-      y_max <- max(y_combined, na.rm = TRUE)
-      y_min <- min(y_combined, na.rm = TRUE)
-      y_extension <- (y_max - y_min) * 0.1
-      y_pos_label <- y_max + y_extension * 0.5
-      
-      result <- maybe_add_dashed_lines(
-        p = p,
-        plot_info = plot_info,
-        level = "double_spline_plots",
-        y_pos = y_pos_label,
-        horizontal_labels = TRUE
-      )
-      p <- result$p
-      treatment_colors <- result$treatment_colors
-      
-      color_values <- setNames(
-        c("orange","orange","purple","purple","red","dodgerblue"),
-        c(paste("Data", condition_1),
-          paste("Spline", condition_1),
-          paste("Data", condition_2),
-          paste("Spline", condition_2),
-          paste("Imputed data", condition_1),
-          paste("Imputed data", condition_2))
-      )
-      
-      filtered_labels <- c(
-        paste("Data", condition_1),
-        paste("Spline", condition_1),
-        paste("Data", condition_2),
-        paste("Spline", condition_2)
-      )
-      if (has_imputed_1) filtered_labels <- c(
-        filtered_labels,
-        paste(
-          "Imputed data",
-          condition_1
-          )
+
+        # average CV per condition
+        cv_1 <- calc_cv(
+            time_values = plot_data$Time,
+            response_values = plot_data$Y1
         )
-      if (has_imputed_2) filtered_labels <- c(
-        filtered_labels, 
-        paste(
-          "Imputed data", 
-          condition_2
-          )
+        cv_2 <- calc_cv(
+            time_values = plot_data$Time,
+            response_values = plot_data$Y2
         )
-      
-      color_values <- c(
-        color_values[names(color_values) %in% filtered_labels],
-        treatment_colors
+
+        plot_data$ColorLabel1 <- ifelse(
+            plot_data$IsImputed1 == "Imputed",
+            paste("Imputed data", condition_1),
+            paste("Data", condition_1)
         )
-      p + ggplot2::scale_color_manual(values = color_values)
-    })
-    
-    plot_list[[length(plot_list) + 1]] <- p
-    feature_names_list[[length(feature_names_list) + 1]] <- feature_name
-  }
-  
-  list(
-    plots = plot_list,
-    feature_names = feature_names_list
-  )
+        plot_data$ColorLabel2 <- ifelse(
+            plot_data$IsImputed2 == "Imputed",
+            paste("Imputed data", condition_2),
+            paste("Data", condition_2)
+        )
+
+        fmt_p_for_title <- function(p) {
+            if (is.na(p)) "ns" else as.character(signif(p, 2))
+        }
+
+        p <- local({
+            p <- ggplot2::ggplot() +
+                ggplot2::geom_point(
+                    data = plot_data,
+                    ggplot2::aes(
+                        x = .data$Time, y = .data$Y1,
+                        color = .data$ColorLabel1,
+                        shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+                    ),
+                    na.rm = TRUE, alpha = 0.5
+                ) +
+                ggplot2::geom_line(
+                    data = data.frame(
+                        Time = smooth_timepoints,
+                        Fitted = fitted_values_1
+                    ),
+                    ggplot2::aes(
+                        x = .data$Time,
+                        y = .data$Fitted,
+                        color = paste("Spline", condition_1)
+                    )
+                ) +
+                ggplot2::geom_point(
+                    data = plot_data,
+                    ggplot2::aes(
+                        x = .data$Time, y = .data$Y2,
+                        color = .data$ColorLabel2,
+                        shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+                    ),
+                    na.rm = TRUE, alpha = 0.5
+                ) +
+                ggplot2::geom_line(
+                    data = data.frame(
+                        Time = smooth_timepoints,
+                        Fitted = fitted_values_2
+                    ),
+                    ggplot2::aes(
+                        x = .data$Time,
+                        y = .data$Fitted,
+                        color = paste("Spline", condition_2)
+                    )
+                ) +
+                ggplot2::guides(
+                    color = ggplot2::guide_legend(title = NULL),
+                    shape = ggplot2::guide_legend(title = "Replicate")
+                ) +
+                ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
+                ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE))
+
+            title_lines <- c(
+                feature_name,
+                paste(
+                    "adj.P.Val avrg_diff_conditions:",
+                    fmt_p_for_title(avrg_diff_pval),
+                    avrg_diff_stars
+                ),
+                paste(
+                    "adj.P.Val interaction_condition_time:",
+                    fmt_p_for_title(interaction_pval),
+                    interaction_stars
+                )
+            )
+
+            # Append effect-size lines according to the category
+            if (is_cat2 && !is.na(cat2_eff)) {
+                title_lines <- c(
+                    title_lines,
+                    paste0("Avrg diff conditions: ", signif(cat2_eff, 3))
+                )
+            }
+            if (is_cat3 && (!is.na(es1) || !is.na(es2))) {
+                title_lines <- c(
+                    title_lines,
+                    paste0(
+                        "cT: ",
+                        condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
+                        " | ",
+                        condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3)),
+                        " | cDT: ",
+                        ifelse(is.na(diff_es), "NA", signif(diff_es, 3))
+                    )
+                )
+            }
+
+            # CV line (kept as before)
+            title_lines <- c(
+                title_lines,
+                paste0(
+                    "avg CV ", condition_1, ": ", round(cv_1, 2), "% | ",
+                    "avg CV ", condition_2, ": ", round(cv_2, 2), "%"
+                )
+            )
+
+            p <- p + ggplot2::labs(
+                title = paste(title_lines, collapse = "\n"),
+                x = paste0("Time [", plot_info[["time_unit"]], "]"),
+                y = plot_info[["y_axis_label"]]
+            )
+
+
+            if (!is.null(replicate_column)) {
+                p <- p + ggplot2::scale_shape_manual(
+                    values = shape_mapping,
+                    name = "Replicate"
+                )
+            }
+
+            p <- p + ggplot2::theme_minimal() +
+                ggplot2::theme(
+                    legend.position = "right",
+                    legend.title = ggplot2::element_blank(),
+                    plot.title = ggplot2::element_text(size = 7),
+                    legend.text = ggplot2::element_text(size = 8),
+                    legend.key.height = ggplot2::unit(0.4, "cm"),
+                    legend.key.width = ggplot2::unit(0.8, "cm"),
+                    axis.title.x = ggplot2::element_text(size = 14),
+                    axis.title.y = ggplot2::element_text(size = 14),
+                    axis.text.x = ggplot2::element_text(size = 12),
+                    axis.text.y = ggplot2::element_text(size = 12)
+                )
+
+            y_combined <- c(plot_data$Y1, plot_data$Y2)
+            y_max <- max(y_combined, na.rm = TRUE)
+            y_min <- min(y_combined, na.rm = TRUE)
+            y_extension <- (y_max - y_min) * 0.1
+            y_pos_label <- y_max + y_extension * 0.5
+
+            result <- maybe_add_dashed_lines(
+                p = p,
+                plot_info = plot_info,
+                level = "double_spline_plots",
+                y_pos = y_pos_label,
+                horizontal_labels = TRUE
+            )
+            p <- result$p
+            treatment_colors <- result$treatment_colors
+
+            color_values <- setNames(
+                c("orange", "orange", "purple", "purple", "red", "dodgerblue"),
+                c(
+                    paste("Data", condition_1),
+                    paste("Spline", condition_1),
+                    paste("Data", condition_2),
+                    paste("Spline", condition_2),
+                    paste("Imputed data", condition_1),
+                    paste("Imputed data", condition_2)
+                )
+            )
+
+            filtered_labels <- c(
+                paste("Data", condition_1),
+                paste("Spline", condition_1),
+                paste("Data", condition_2),
+                paste("Spline", condition_2)
+            )
+            if (has_imputed_1) {
+                filtered_labels <- c(
+                    filtered_labels,
+                    paste(
+                        "Imputed data",
+                        condition_1
+                    )
+                )
+            }
+            if (has_imputed_2) {
+                filtered_labels <- c(
+                    filtered_labels,
+                    paste(
+                        "Imputed data",
+                        condition_2
+                    )
+                )
+            }
+
+            color_values <- c(
+                color_values[names(color_values) %in% filtered_labels],
+                treatment_colors
+            )
+            p + ggplot2::scale_color_manual(values = color_values)
+        })
+
+        plot_list[[length(plot_list) + 1]] <- p
+        feature_names_list[[length(feature_names_list) + 1]] <- feature_name
+    }
+
+    list(
+        plots = plot_list,
+        feature_names = feature_names_list
+    )
 }
 
 
 #' Merge Annotation with All Top Tables
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -3776,26 +3802,26 @@ plot_spline_comparisons <- function(
 merge_annotation_all_levels_clustering <- function(
     all_levels_clustering,
     annotation = NULL) {
-  all_levels_clustering <- lapply(
-    all_levels_clustering,
-    function(x) {
-      # Check if x is not logical and annotation is not NULL
-      if (!is.logical(x) && !is.null(annotation)) {
-        x$top_table <- merge_top_table_with_annotation(
-          x$top_table,
-          annotation
-        )
-      }
-      return(x)
-    }
-  )
+    all_levels_clustering <- lapply(
+        all_levels_clustering,
+        function(x) {
+            # Check if x is not logical and annotation is not NULL
+            if (!is.logical(x) && !is.null(annotation)) {
+                x$top_table <- merge_top_table_with_annotation(
+                    x$top_table,
+                    annotation
+                )
+            }
+            return(x)
+        }
+    )
 
-  return(all_levels_clustering)
+    return(all_levels_clustering)
 }
 
 
 #' Prepare Gene Lists for Enrichr and Return as String
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -3811,54 +3837,53 @@ merge_annotation_all_levels_clustering <- function(
 #'
 prepare_gene_lists_for_enrichr <- function(
     all_levels_clustering,
-    genes
-    ) {
-  formatted_gene_lists <- list()
+    genes) {
+    formatted_gene_lists <- list()
 
-  for (i in seq_along(all_levels_clustering)) {
-    if (is.logical(all_levels_clustering[[i]])) next
+    for (i in seq_along(all_levels_clustering)) {
+        if (is.logical(all_levels_clustering[[i]])) next
 
-    level_name <- names(all_levels_clustering)[i]
-    clustered_hits <- all_levels_clustering[[i]]$clustered_hits
+        level_name <- names(all_levels_clustering)[i]
+        clustered_hits <- all_levels_clustering[[i]]$clustered_hits
 
-    # Process each cluster
-    clusters <- split(
-      clustered_hits$feature,
-      clustered_hits$cluster
-    )
+        # Process each cluster
+        clusters <- split(
+            clustered_hits$feature,
+            clustered_hits$cluster
+        )
 
-    level_gene_lists <- list()
+        level_gene_lists <- list()
 
-    for (cluster_id in names(clusters)) {
-      cluster_genes <- clusters[[cluster_id]]
+        for (cluster_id in names(clusters)) {
+            cluster_genes <- clusters[[cluster_id]]
 
-      gene_list <- genes[cluster_genes]
-      gene_list <- na.omit(gene_list) # Remove NAs if any
+            gene_list <- genes[cluster_genes]
+            gene_list <- na.omit(gene_list) # Remove NAs if any
 
-      if (length(gene_list) > 0) {
-        level_gene_lists[[paste0("Cluster ", cluster_id)]] <-
-          paste(gene_list, collapse = "\n")
-      }
+            if (length(gene_list) > 0) {
+                level_gene_lists[[paste0("Cluster ", cluster_id)]] <-
+                    paste(gene_list, collapse = "\n")
+            }
+        }
+
+        formatted_gene_lists[[level_name]] <- level_gene_lists
     }
 
-    formatted_gene_lists[[level_name]] <- level_gene_lists
-  }
+    # Prepare the background genes list using preprocessed genes
+    background_gene_list <- paste(
+        na.omit(genes),
+        collapse = "\n"
+    )
 
-  # Prepare the background genes list using preprocessed genes
-  background_gene_list <- paste(
-    na.omit(genes),
-    collapse = "\n"
-  )
-
-  return(list(
-    gene_lists = formatted_gene_lists,
-    background = background_gene_list
-  ))
+    return(list(
+        gene_lists = formatted_gene_lists,
+        background = background_gene_list
+    ))
 }
 
 
 #' Build Cluster Hits Report
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -3877,11 +3902,11 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
 #' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
-#' @param row_counts_dict A nested list containing row counts for dataframes 
-#'   from `category_2_and_3_hits`. The outer keys are `"category_2"` and 
-#'   `"category_3"`, representing the two sublists. The inner keys are derived 
-#'   from the portion of each dataframe name after the second underscore (`_`), 
-#'   or the full name if fewer than two underscores exist. The values are 
+#' @param row_counts_dict A nested list containing row counts for dataframes
+#'   from `category_2_and_3_hits`. The outer keys are `"category_2"` and
+#'   `"category_3"`, representing the two sublists. The inner keys are derived
+#'   from the portion of each dataframe name after the second underscore (`_`),
+#'   or the full name if fewer than two underscores exist. The values are
 #'   integers representing the number of rows in each dataframe.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
@@ -3908,445 +3933,446 @@ build_cluster_hits_report <- function(
     category_2_and_3_hit_counts,
     mode,
     report_info,
-    output_file_path
-    ) {
-  
-  html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
+    output_file_path) {
+    html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
 
-  toc <- create_toc()
+    toc <- create_toc()
 
-  styles <- define_html_styles()
-  section_header_style <- styles$section_header_style
-  toc_style <- styles$toc_style
+    styles <- define_html_styles()
+    section_header_style <- styles$section_header_style
+    toc_style <- styles$toc_style
 
-  current_header_index <- 1
-  j <- 0
-  level_headers_info <- Filter(
-    Negate(is.null),
-    level_headers_info
+    current_header_index <- 1
+    j <- 0
+    level_headers_info <- Filter(
+        Negate(is.null),
+        level_headers_info
     )
 
-  pb <- create_progress_bar(plots)
+    pb <- create_progress_bar(plots)
 
-  header_index <- 0
-  level_index <- 0
+    header_index <- 0
+    level_index <- 0
 
-  # Generate the sections and plots
-  for (index in seq_along(plots)) {
-    header_index <- header_index + 1
+    # Generate the sections and plots
+    for (index in seq_along(plots)) {
+        header_index <- header_index + 1
 
-    if (current_header_index <= length(level_headers_info)) {
-      header_info <- level_headers_info[[current_header_index]]
-      nr_hits <- header_info$nr_hits
-      adj_pvalue_threshold <- header_info$adj_pvalue_threshold
+        if (current_header_index <= length(level_headers_info)) {
+            header_info <- level_headers_info[[current_header_index]]
+            nr_hits <- header_info$nr_hits
+            adj_pvalue_threshold <- header_info$adj_pvalue_threshold
 
-      # means this is the section of a new level
-      # The very first level is also a new level
-      if (names(plots)[index] == "new_level") {
-        level_index <- level_index + 1
+            # means this is the section of a new level
+            # The very first level is also a new level
+            if (names(plots)[index] == "new_level") {
+                level_index <- level_index + 1
 
-        time_effect_section_header <- paste(
-          "Time Effect in Condition:",
-          header_info$header_name
-        )
+                time_effect_section_header <- paste(
+                    "Time Effect in Condition:",
+                    header_info$header_name
+                )
 
-        section_header <- sprintf(
-          "<h2 style='%s' id='section%d'>%s</h2>",
-          section_header_style,
-          header_index,
-          time_effect_section_header
-        )
+                section_header <- sprintf(
+                    "<h2 style='%s' id='section%d'>%s</h2>",
+                    section_header_style,
+                    header_index,
+                    time_effect_section_header
+                )
 
-        html_content <- paste(
-          html_content,
-          section_header,
-          sep = "\n"
-        )
+                html_content <- paste(
+                    html_content,
+                    section_header,
+                    sep = "\n"
+                )
 
-        if (mode == "integrated") {
-          j <- 1
-        } else { # mode == "isolated" or mode == NA
-          j <- j + 1
+                if (mode == "integrated") {
+                    j <- 1
+                } else { # mode == "isolated" or mode == NA
+                    j <- j + 1
+                }
+
+                spline_params_info <-
+                    get_spline_params_info(
+                        spline_params = spline_params,
+                        j = j
+                    )
+
+                html_content <- paste(
+                    html_content,
+                    spline_params_info,
+                    sep = "\n"
+                )
+
+                hits_info <- sprintf(
+                    paste0(
+                        "<p style='text-align: center; font-size: 30px;'>",
+                        "adj.p-value threshold: %.4g</p>",
+                        "<p style='text-align: center; font-size: 30px;'>",
+                        "Number of hits: %d</p>",
+                        "<div style='text-align: center; font-size: 30px;'>%s</div>",
+                        "<hr>"
+                    ),
+                    adj_pvalue_threshold,
+                    nr_hits,
+                    generate_asterisks_definition(adj_pvalue_threshold)
+                )
+
+                html_content <- paste(
+                    html_content,
+                    hits_info,
+                    sep = "\n"
+                )
+
+                toc_entry <- sprintf(
+                    "<li style='%s'><a href='#section%d'>%s</a></li>",
+                    toc_style,
+                    header_index,
+                    time_effect_section_header
+                )
+                toc <- paste(
+                    toc,
+                    toc_entry,
+                    sep = "\n"
+                )
+
+                current_header_index <- current_header_index + 1
+
+                pb$tick()
+                next
+            }
         }
 
-        spline_params_info <-
-          get_spline_params_info(
-            spline_params = spline_params,
-            j = j
-          )
+        element_name <- names(plots)[index]
 
-        html_content <- paste(
-          html_content,
-          spline_params_info,
-          sep = "\n"
+        header_levels <- c(
+            "dendrogram",
+            "cluster_mean_splines",
+            "cluster_quality_plots",
+            "heatmap",
+            "individual_spline_plots"
         )
 
-        hits_info <- sprintf(
-          paste0(
-            "<p style='text-align: center; font-size: 30px;'>",
-            "adj.p-value threshold: %.4g</p>",
-            "<p style='text-align: center; font-size: 30px;'>",
-            "Number of hits: %d</p>",
-            "<div style='text-align: center; font-size: 30px;'>%s</div>",
-            "<hr>"
-          ),
-          adj_pvalue_threshold,
-          nr_hits,
-          generate_asterisks_definition(adj_pvalue_threshold)
+        if (element_name %in% header_levels) {
+            if (element_name == "dendrogram") {
+                header_text <- "Overall Clustering"
+            } else if (element_name == "cluster_mean_splines") {
+                header_text <- "Z-score normalized individual and mean splines"
+            } else if (element_name == "cluster_quality_plots") {
+                header_text <-
+                    "Variance-explained-by-cluster-centroid distribution plots"
+                cquality_description <- paste(
+                    "<div style='text-align: center; font-size: 1.5em;'>",
+                    "Variance explained by cluster centroid:",
+                    "<br>",
+                    "<ul style='list-style-position: inside; text-align: left;",
+                    "display: inline-block;'>",
+                    "<li>0.90-1.00 = excellent</li>",
+                    "<li>0.80-0.89 = very good</li>",
+                    "<li>0.70-0.79 = good</li>",
+                    "<li>0.60-0.69 = borderline</li>",
+                    "<li>0.50-0.59 = poor</li>",
+                    "<li>0.00-0.49 = very poor</li>",
+                    "<li>&lt;0.00 = anti-pattern</li>",
+                    "</ul>",
+                    "<br>",
+                    "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup>",
+                    "by cluster centroid,",
+                    "i.e. how well a gene's spline fits the centroid of its assigned",
+                    "cluster.",
+                    "<br><hr>",
+                    "</div>"
+                )
+            } else if (element_name == "heatmap") {
+                header_text <- "Z-Score of log2 Value Heatmap"
+
+                heatmap_description <- paste(
+                    "<div style='text-align: center; font-size: 1.5em;'>",
+                    "Rows = features (labels on the right, cluster labels on the left),",
+                    "columns = timepoints; Blue = down, red = up, --> compared to the rest
+          of the row;",
+                    "</div>"
+                )
+            } else { # element_name == "individual_spline_plots"
+                adjusted_p_val <- adj_pthresholds[level_index]
+                header_text <- "Individual Significant Features (Hits) Splines"
+                asterisks_definition <- generate_asterisks_definition(adjusted_p_val)
+            }
+
+            # Add the main title as a section title with an anchor
+            # before the first plot
+            header <- paste0(
+                "<h2 id='section",
+                header_index,
+                "' style='text-align: center; font-size: 3.5em;'>",
+                header_text,
+                "</h2>",
+                if (exists("heatmap_description")) {
+                    heatmap_description
+                } else if (exists("cquality_description")) {
+                    cquality_description
+                } else {
+                    ""
+                }
+            )
+
+            if (exists("cquality_description")) rm(cquality_description)
+            if (exists("heatmap_description")) rm(heatmap_description)
+
+            # Add the asterisks definition if it exists
+            if (exists("asterisks_definition")) {
+                header <- paste0(
+                    header,
+                    "<div style='text-align: center;",
+                    "font-size: 1.5em;'>",
+                    asterisks_definition,
+                    "</div>"
+                )
+
+                rm(asterisks_definition) # Otherwise, the next level has it everywhere
+            }
+
+            html_content <- paste(
+                html_content,
+                header,
+                sep = "\n"
+            )
+
+            toc_entry <- paste0(
+                "<li style='margin-left: 30px; font-size: 30px;'>",
+                "<a href='#section",
+                header_index,
+                "'>",
+                header_text,
+                "</a></li>"
+            )
+
+            toc <- paste(toc, toc_entry, sep = "\n")
+        }
+
+        header_index <- header_index + 1
+
+        result <- process_plots(
+            plots_element = plots[[index]],
+            element_name = names(plots)[index],
+            plots_size = plots_sizes[[index]],
+            html_content = html_content,
+            toc = toc,
+            header_index = header_index
         )
 
-        html_content <- paste(
-          html_content,
-          hits_info,
-          sep = "\n"
-        )
-        
-        toc_entry <- sprintf(
-          "<li style='%s'><a href='#section%d'>%s</a></li>",
-          toc_style,
-          header_index,
-          time_effect_section_header
-        )
-        toc <- paste(
-          toc,
-          toc_entry,
-          sep = "\n"
-        )
-
-        current_header_index <- current_header_index + 1
+        html_content <- result$html_content
+        toc <- result$toc
 
         pb$tick()
-        next
-      }
     }
+    pb$terminate()
 
-    element_name <- names(plots)[index]
+    # Add sections for limma_result_2_and_3_plots
+    if (length(limma_result_2_and_3_plots) > 0) {
+        # Create a new main header for the limma result plots
+        header_index <- header_index + 1
 
-    header_levels <- c(
-      "dendrogram",
-      "cluster_mean_splines",
-      "cluster_quality_plots",
-      "heatmap",
-      "individual_spline_plots"
-    )
-
-    if (element_name %in% header_levels) {
-      if (element_name == "dendrogram") {
-        header_text <- "Overall Clustering"
-      } else if (element_name == "cluster_mean_splines") {
-        header_text <- "Z-score normalized individual and mean splines"
-      } else if (element_name == "cluster_quality_plots") {
-        header_text <- 
-          "Variance-explained-by-cluster-centroid distribution plots"
-        cquality_description <- paste(
-          "<div style='text-align: center; font-size: 1.5em;'>",
-          "Variance explained by cluster centroid:",
-          "<br>",
-          "<ul style='list-style-position: inside; text-align: left;",
-          "display: inline-block;'>",
-          "<li>0.90-1.00 = excellent</li>",
-          "<li>0.80-0.89 = very good</li>",
-          "<li>0.70-0.79 = good</li>",
-          "<li>0.60-0.69 = borderline</li>",
-          "<li>0.50-0.59 = poor</li>",
-          "<li>0.00-0.49 = very poor</li>",
-          "<li>&lt;0.00 = anti-pattern</li>",
-          "</ul>",
-          "<br>",
-          "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup>",
-          "by cluster centroid,",
-          "i.e. how well a gene's spline fits the centroid of its assigned",
-          "cluster.",
-          "<br><hr>",
-          "</div>"
-        )
-        
-      }else if (element_name == "heatmap") {
-        header_text <- "Z-Score of log2 Value Heatmap"
-      
-        heatmap_description <- paste(
-          "<div style='text-align: center; font-size: 1.5em;'>",
-          "Rows = features (labels on the right, cluster labels on the left),",
-          "columns = timepoints; Blue = down, red = up, --> compared to the rest
-          of the row;",
-          "</div>"
-        )
-      } else { # element_name == "individual_spline_plots"
-        adjusted_p_val <- adj_pthresholds[level_index]
-        header_text <- "Individual Significant Features (Hits) Splines"
-        asterisks_definition <- generate_asterisks_definition(adjusted_p_val)
-      }
-
-      # Add the main title as a section title with an anchor
-      # before the first plot
-      header <- paste0(
-        "<h2 id='section",
-        header_index,
-        "' style='text-align: center; font-size: 3.5em;'>",
-        header_text,
-        "</h2>",
-        if (exists("heatmap_description")) heatmap_description 
-        else if (exists("cquality_description")) cquality_description 
-        else ""
-      )
-      
-      if (exists("cquality_description")) rm(cquality_description)
-      if (exists("heatmap_description")) rm(heatmap_description)
-
-      # Add the asterisks definition if it exists
-      if (exists("asterisks_definition")) {
-        header <- paste0(
-          header,
-          "<div style='text-align: center;",
-          "font-size: 1.5em;'>",
-          asterisks_definition,
-          "</div>"
+        # Add the main header and anchor it
+        limma_main_header <- sprintf(
+            "<h2 style='%s' id='section%d'>%s</h2>",
+            section_header_style,
+            header_index,
+            "Avrg diff conditions & interaction condition time"
         )
 
-        rm(asterisks_definition) # Otherwise, the next level has it everywhere
-      }
+        html_content <- paste(
+            html_content,
+            limma_main_header,
+            sep = "\n"
+        )
 
-      html_content <- paste(
-        html_content,
-        header,
-        sep = "\n"
-      )
-
-      toc_entry <- paste0(
-        "<li style='margin-left: 30px; font-size: 30px;'>",
-        "<a href='#section",
-        header_index,
-        "'>",
-        header_text,
-        "</a></li>"
-      )
-
-      toc <- paste(toc, toc_entry, sep = "\n")
-    }
-
-    header_index <- header_index + 1
-
-    result <- process_plots(
-      plots_element = plots[[index]],
-      element_name = names(plots)[index],
-      plots_size = plots_sizes[[index]],
-      html_content = html_content,
-      toc = toc,
-      header_index = header_index
-    )
-
-    html_content <- result$html_content
-    toc <- result$toc
-
-    pb$tick()
-  }
-  pb$terminate()
-
-  # Add sections for limma_result_2_and_3_plots
-  if (length(limma_result_2_and_3_plots) > 0) {
-    # Create a new main header for the limma result plots
-    header_index <- header_index + 1
-
-    # Add the main header and anchor it
-    limma_main_header <- sprintf(
-      "<h2 style='%s' id='section%d'>%s</h2>",
-      section_header_style,
-      header_index,
-      "Avrg diff conditions & interaction condition time"
-    )
-
-    html_content <- paste(
-      html_content,
-      limma_main_header,
-      sep = "\n"
-    )
-
-    # Define the asterisks definition for both adjusted p-values,
-    # centered, with larger p-value text
-    asterisks_definition_avrg_diff <- paste(
-      "<div style='text-align:center; margin-bottom: 20px;'>",
-      "<b><span style='font-size:24pt;
+        # Define the asterisks definition for both adjusted p-values,
+        # centered, with larger p-value text
+        asterisks_definition_avrg_diff <- paste(
+            "<div style='text-align:center; margin-bottom: 20px;'>",
+            "<b><span style='font-size:24pt;
       '>Asterisks definition (Average Diff Conditions):</span></b><br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_avrg_diff_conditions,
-        "--> *</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_avrg_diff_conditions / 5,
-        "--> **</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_avrg_diff_conditions / 50,
-        "--> ***</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_avrg_diff_conditions / 500,
-        "--> ****</span>",
-        sep = " "
-      ),
-      "</div>",
-      sep = "\n"
-    )
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_avrg_diff_conditions,
+                "--> *</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_avrg_diff_conditions / 5,
+                "--> **</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_avrg_diff_conditions / 50,
+                "--> ***</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_avrg_diff_conditions / 500,
+                "--> ****</span>",
+                sep = " "
+            ),
+            "</div>",
+            sep = "\n"
+        )
 
-    asterisks_definition_interaction <- paste(
-      "<div style='text-align:center; margin-bottom: 40px;'>",
-      "<b><span style='font-size:24pt;
+        asterisks_definition_interaction <- paste(
+            "<div style='text-align:center; margin-bottom: 40px;'>",
+            "<b><span style='font-size:24pt;
       '>Asterisks definition (Interaction):</span></b><br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_interaction_condition_time,
-        "--> *</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_interaction_condition_time / 5,
-        "--> **</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_interaction_condition_time / 50,
-        "--> ***</span>",
-        sep = " "
-      ),
-      "<br>",
-      paste(
-        "<span style='font-size:18pt;'>Adj. p-value <",
-        adj_pthresh_interaction_condition_time / 500,
-        "--> ****</span>",
-        sep = " "
-      ),
-      "</div>",
-      sep = "\n"
-    )
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_interaction_condition_time,
+                "--> *</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_interaction_condition_time / 5,
+                "--> **</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_interaction_condition_time / 50,
+                "--> ***</span>",
+                sep = " "
+            ),
+            "<br>",
+            paste(
+                "<span style='font-size:18pt;'>Adj. p-value <",
+                adj_pthresh_interaction_condition_time / 500,
+                "--> ****</span>",
+                sep = " "
+            ),
+            "</div>",
+            sep = "\n"
+        )
 
-    # Add the asterisks definitions to the HTML content
-    html_content <- paste(
-      html_content,
-      asterisks_definition_avrg_diff,
-      asterisks_definition_interaction,
-      sep = "\n"
-    )
+        # Add the asterisks definitions to the HTML content
+        html_content <- paste(
+            html_content,
+            asterisks_definition_avrg_diff,
+            asterisks_definition_interaction,
+            sep = "\n"
+        )
 
-    # Add an entry in the table of contents for this new section
-    toc_entry <- sprintf(
-      "<li style='%s'><a href='#section%d'>%s</a></li>",
-      toc_style,
-      header_index,
-      "Avrg diff conditions & interaction condition time"
-    )
-    toc <- paste(
-      toc,
-      toc_entry,
-      sep = "\n"
-    )
+        # Add an entry in the table of contents for this new section
+        toc_entry <- sprintf(
+            "<li style='%s'><a href='#section%d'>%s</a></li>",
+            toc_style,
+            header_index,
+            "Avrg diff conditions & interaction condition time"
+        )
+        toc <- paste(
+            toc,
+            toc_entry,
+            sep = "\n"
+        )
 
-    # We now assume limma_result_2_and_3_plots contains a single named element
-    comparison_name <- names(limma_result_2_and_3_plots)[1]
-    
-    # Create a subheader for this single comparison
-    header_index <- header_index + 1
-    subheader <- sprintf(
-      "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
+        # We now assume limma_result_2_and_3_plots contains a single named element
+        comparison_name <- names(limma_result_2_and_3_plots)[1]
+
+        # Create a subheader for this single comparison
+        header_index <- header_index + 1
+        subheader <- sprintf(
+            "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
       id='section%d'>%s</h3>",
-      header_index,
-      comparison_name
-    )
+            header_index,
+            comparison_name
+        )
 
-    # Access row counts directly
-    avrg_diff_hits <- category_2_and_3_hit_counts[["category_2"]]
-    interaction_hits <- category_2_and_3_hit_counts[["category_3"]]
-    
-    # Create the HTML for hits
-    hits_info <- sprintf(
-      paste0(
-        "<p style='font-size: 2em; text-align: center;'>",
-        "Avrg diff conditions hits: %d</p>",
-        "<p style='font-size: 2em; text-align: center;'>",
-        "Interaction condition time hits: %d</p>",
-        "<hr>"
-      ),
-      avrg_diff_hits,
-      interaction_hits
-    )
-    
-    html_content <- paste(
-      html_content,
-      subheader,
-      hits_info,
-      sep = "\n"
-    )
-    
-    # Add an entry in the TOC
-    toc_entry <- paste0(
-      "<li style='margin-left: 30px; font-size: 30px;'>",
-      "<a href='#section",
-      header_index,
-      "'>",
-      comparison_name,
-      "</a></li>"
-    )
-    
-    toc <- paste(
-      toc,
-      toc_entry,
-      sep = "\n"
-    )
-    
-    # Extract plots + feature names
-    comparison <- limma_result_2_and_3_plots[[comparison_name]]
-    comparison_plots <- comparison$plots
-    comparison_feature_names <- comparison$feature_names
-    
-    # Iterate through each plot and its feature name
-    for (i in seq_along(comparison_plots)) {
-      # Feature name above plot
-      feature_name_div <- sprintf(
-        '<div style="text-align: center;
+        # Access row counts directly
+        avrg_diff_hits <- category_2_and_3_hit_counts[["category_2"]]
+        interaction_hits <- category_2_and_3_hit_counts[["category_3"]]
+
+        # Create the HTML for hits
+        hits_info <- sprintf(
+            paste0(
+                "<p style='font-size: 2em; text-align: center;'>",
+                "Avrg diff conditions hits: %d</p>",
+                "<p style='font-size: 2em; text-align: center;'>",
+                "Interaction condition time hits: %d</p>",
+                "<hr>"
+            ),
+            avrg_diff_hits,
+            interaction_hits
+        )
+
+        html_content <- paste(
+            html_content,
+            subheader,
+            hits_info,
+            sep = "\n"
+        )
+
+        # Add an entry in the TOC
+        toc_entry <- paste0(
+            "<li style='margin-left: 30px; font-size: 30px;'>",
+            "<a href='#section",
+            header_index,
+            "'>",
+            comparison_name,
+            "</a></li>"
+        )
+
+        toc <- paste(
+            toc,
+            toc_entry,
+            sep = "\n"
+        )
+
+        # Extract plots + feature names
+        comparison <- limma_result_2_and_3_plots[[comparison_name]]
+        comparison_plots <- comparison$plots
+        comparison_feature_names <- comparison$feature_names
+
+        # Iterate through each plot and its feature name
+        for (i in seq_along(comparison_plots)) {
+            # Feature name above plot
+            feature_name_div <- sprintf(
+                '<div style="text-align: center;
     font-size: 36px; margin-bottom: 10px;">%s</div>',
-        comparison_feature_names[[i]]
-      )
-      
-      html_content <- paste(
-        html_content,
-        feature_name_div,
-        sep = "\n"
-      )
-      
-      # Insert plot
-      result <- process_plots(
-        plots_element = comparison_plots[[i]],
-        plots_size = 1.5,
-        html_content = html_content,
-        toc = toc,
-        header_index = header_index,
-        element_name = ""
-      )
-      
-      html_content <- result$html_content
-      toc <- result$toc
-    }
-  }
+                comparison_feature_names[[i]]
+            )
 
-  generate_and_write_html(
-    toc = toc,
-    html_content = html_content,
-    report_info = report_info,
-    output_file_path = output_file_path
-  )
+            html_content <- paste(
+                html_content,
+                feature_name_div,
+                sep = "\n"
+            )
+
+            # Insert plot
+            result <- process_plots(
+                plots_element = comparison_plots[[i]],
+                plots_size = 1.5,
+                html_content = html_content,
+                toc = toc,
+                header_index = header_index,
+                element_name = ""
+            )
+
+            html_content <- result$html_content
+            toc <- result$toc
+        }
+    }
+
+    generate_and_write_html(
+        toc = toc,
+        html_content = html_content,
+        report_info = report_info,
+        output_file_path = output_file_path
+    )
 }
 
 
@@ -4394,76 +4420,74 @@ build_cluster_hits_report <- function(
 #' @return A matrix of the same shape as `pred_mat`, where each row has
 #'   been shifted by a constant so that the predicted curve better matches
 #'   the empirical values under least-squares alignment.
-#'   
+#'
 adjust_intercept_least_squares <- function(
     pred_mat,
     data,
-    meta, 
+    meta,
     condition,
     level,
-    time_grid
-) {
+    time_grid) {
+    # Match samples for this group
+    sample_idx <- which(meta[[condition]] == level)
 
-  # Match samples for this group
-  sample_idx <- which(meta[[condition]] == level)
-  
-  if (length(sample_idx) == 0) {
-    warning(
-      "No samples found for level ",
-      level,
-      ". Skipping intercept adjustment."
+    if (length(sample_idx) == 0) {
+        warning(
+            "No samples found for level ",
+            level,
+            ". Skipping intercept adjustment."
+        )
+        return(pred_mat)
+    }
+
+    # Actual data matrix: features x group samples
+    data_subset <- data[, sample_idx, drop = FALSE]
+    # Subset data to match the rows in pred_mat
+    common_rows <- intersect(rownames(pred_mat), rownames(data_subset))
+
+    if (length(common_rows) != nrow(pred_mat)) {
+        missing_rows <- setdiff(rownames(pred_mat), common_rows)
+        stop_call_false(
+            "The following features in pred_mat were not found in data_subset",
+            "(condition '",
+            level,
+            "'): ",
+            paste(missing_rows, collapse = ", ")
+        )
+    }
+
+    data_subset <- data_subset[common_rows, , drop = FALSE]
+
+    pred_mat <- pred_mat[common_rows, , drop = FALSE]
+
+    # Time values of samples
+    sample_times <- meta$Time[sample_idx]
+
+    # Match each sample time to nearest time grid index
+    matched_indices <- vapply(
+        sample_times,
+        function(t) which.min(abs(t - time_grid)),
+        integer(1)
     )
+
+    # For each sample, extract the corresponding prediction column
+    pred_mat_expanded <- pred_mat[, matched_indices, drop = FALSE]
+
+    # Compute offset: empirical - predicted mean across matched samples
+    offset <- rowMeans(data_subset - pred_mat_expanded, na.rm = TRUE)
+    offset[is.na(offset)] <- 0 # fallback for all-NA rows
+
+    # Apply offset to all predicted timepoints
+    pred_mat <- pred_mat + offset
+
     return(pred_mat)
-  }
-  
-  # Actual data matrix: features x group samples
-  data_subset <- data[, sample_idx, drop = FALSE]
-  # Subset data to match the rows in pred_mat
-  common_rows <- intersect(rownames(pred_mat), rownames(data_subset))
-  
-  if (length(common_rows) != nrow(pred_mat)) {
-    missing_rows <- setdiff(rownames(pred_mat), common_rows)
-    stop_call_false(
-      "The following features in pred_mat were not found in data_subset",
-      "(condition '", 
-      level,
-      "'): ",
-      paste(missing_rows, collapse = ", ")
-    )
-  }
-
-  data_subset <- data_subset[common_rows, , drop = FALSE]
-  
-  pred_mat <- pred_mat[common_rows, , drop = FALSE]
-  
-  # Time values of samples
-  sample_times <- meta$Time[sample_idx]
-  
-  # Match each sample time to nearest time grid index
-  matched_indices <- vapply(
-    sample_times,
-    function(t) which.min(abs(t - time_grid)),
-    integer(1)
-  )
-
-  # For each sample, extract the corresponding prediction column
-  pred_mat_expanded <- pred_mat[, matched_indices, drop = FALSE]
-  
-  # Compute offset: empirical - predicted mean across matched samples
-  offset <- rowMeans(data_subset - pred_mat_expanded, na.rm = TRUE)
-  offset[is.na(offset)] <- 0  # fallback for all-NA rows
-  
-  # Apply offset to all predicted timepoints
-  pred_mat <- pred_mat + offset
-  
-  return(pred_mat)
 }
 
 
 #' Safely convert object to tibble
 #'
 #' @noRd
-#' 
+#'
 #' @description
 #' Safely convert an input object to a tibble. Handles `NULL`, data
 #' frames, and lists of data frames by coercing them to tibbles and
@@ -4478,24 +4502,28 @@ adjust_intercept_least_squares <- function(
 #'
 #' @importFrom tibble as_tibble tibble
 #' @importFrom dplyr bind_rows
-#' 
+#'
 stbl <- function(x) {
-  
-  if (is.null(x)) return(tibble())
-  if (inherits(x, "data.frame")) return(as_tibble(x))
-  if (is.list(x)) {
-    xs <- lapply(x, function(y)
-      if (inherits(y, "data.frame")) as_tibble(y) else tibble())
-    return(bind_rows(xs))
-  }
-  tibble()
+    if (is.null(x)) {
+        return(tibble())
+    }
+    if (inherits(x, "data.frame")) {
+        return(as_tibble(x))
+    }
+    if (is.list(x)) {
+        xs <- lapply(x, function(y) {
+            if (inherits(y, "data.frame")) as_tibble(y) else tibble()
+        })
+        return(bind_rows(xs))
+    }
+    tibble()
 }
 
 
 #' Normalize cluster dataframe
 #'
 #' @noRd
-#' 
+#'
 #' @description
 #' Normalizes a cluster assignment data frame by standardizing column
 #' names, ensuring one row per `feature_nr`, and adding a specified
@@ -4518,39 +4546,44 @@ stbl <- function(x) {
 #' @importFrom tibble tibble
 #' @importFrom dplyr filter group_by slice_head ungroup
 #' @importFrom rlang sym :=
-#' 
+#'
 ncl <- function(
     df,
-    outcol
-    ) {
-  
-  df <- stbl(df)
-  if (nrow(df) == 0) {
-    return(tibble(feature_nr = numeric(0),
-                  !!rlang::sym(outcol) := NA_character_,
-                  gcl = NA_character_,
-                  fnsrc = NA_character_))
-  }
-  hf <- "feature" %in% names(df)
-  rn <- rownames(df)
-  fnsrc <- if (!is.null(rn)) rn else rep(NA_character_, nrow(df))
-  feature_nr <- if (hf) df$feature else as.numeric(rn)
-  tibble(feature_nr = feature_nr,
-         !!outcol := as.character(df$cluster),
-         gcl = if ("gene" %in% names(df))
-           as.character(df$gene) else NA_character_,
-         fnsrc = fnsrc) |>
-    filter(!is.na(feature_nr)) |>
-    group_by(feature_nr) |>
-    slice_head(n = 1) |>
-    ungroup()
+    outcol) {
+    df <- stbl(df)
+    if (nrow(df) == 0) {
+        return(tibble(
+            feature_nr = numeric(0),
+            !!rlang::sym(outcol) := NA_character_,
+            gcl = NA_character_,
+            fnsrc = NA_character_
+        ))
+    }
+    hf <- "feature" %in% names(df)
+    rn <- rownames(df)
+    fnsrc <- if (!is.null(rn)) rn else rep(NA_character_, nrow(df))
+    feature_nr <- if (hf) df$feature else as.numeric(rn)
+    tibble(
+        feature_nr = feature_nr,
+        !!outcol := as.character(df$cluster),
+        gcl = if ("gene" %in% names(df)) {
+            as.character(df$gene)
+        } else {
+            NA_character_
+        },
+        fnsrc = fnsrc
+    ) |>
+        filter(!is.na(feature_nr)) |>
+        group_by(feature_nr) |>
+        slice_head(n = 1) |>
+        ungroup()
 }
 
 
 #' Extract feature names from toptable
 #'
 #' @noRd
-#' 
+#'
 #' @description
 #' Extracts `feature_nr` and corresponding feature names from a
 #' toptable-like data frame. Accepts either `feature_names`,
@@ -4569,29 +4602,36 @@ ncl <- function(
 #'
 #' @importFrom tibble tibble
 #' @importFrom dplyr filter distinct
-#' 
+#'
 toptbl_to_fn <- function(df) {
-  
-  df <- stbl(df)
-  if (nrow(df) == 0) return(tibble())
-  cols <- names(df)
-  fn <- if ("feature_names" %in% cols) df[["feature_names"]]
-  else if ("feature_name" %in% cols) df[["feature_name"]]
-  else as.character(df[["feature_nr"]])
-  tibble(feature_nr = df[["feature_nr"]],
-         fname_tbl = as.character(fn)) |>
-    filter(
-      !is.na(.data$feature_nr),
-      !is.na(.data$fname_tbl), .data$fname_tbl != ""
-      ) |>
-    distinct(.data$feature_nr, .keep_all = TRUE)
+    df <- stbl(df)
+    if (nrow(df) == 0) {
+        return(tibble())
+    }
+    cols <- names(df)
+    fn <- if ("feature_names" %in% cols) {
+        df[["feature_names"]]
+    } else if ("feature_name" %in% cols) {
+        df[["feature_name"]]
+    } else {
+        as.character(df[["feature_nr"]])
+    }
+    tibble(
+        feature_nr = df[["feature_nr"]],
+        fname_tbl = as.character(fn)
+    ) |>
+        filter(
+            !is.na(.data$feature_nr),
+            !is.na(.data$fname_tbl), .data$fname_tbl != ""
+        ) |>
+        distinct(.data$feature_nr, .keep_all = TRUE)
 }
 
 
 #' Make combined cluster labels for category hits
 #'
 #' @noRd
-#' 
+#'
 #' @description
 #' Creates combined cluster labels by concatenating the values of two
 #' specified cluster columns for features present in a given hit set.
@@ -4615,24 +4655,22 @@ toptbl_to_fn <- function(df) {
 #'
 #' @importFrom dplyr mutate select
 #' @importFrom rlang sym .data
-#' 
+#'
 mkc <- function(
     df,
     hits,
-    c1, 
-    c2
-) {
-  
-  df |>
-    dplyr::mutate(
-      .cmb = paste0(!!rlang::sym(c1), "_", !!rlang::sym(c2)),
-      .cmb = ifelse(
-        .data$feature_nr %in% hits$feature_nr,
-        .data$.cmb,
-        NA_character_
-      )
-    ) |>
-    dplyr::select(.data$feature_nr, .data$.cmb)
+    c1,
+    c2) {
+    df |>
+        dplyr::mutate(
+            .cmb = paste0(!!rlang::sym(c1), "_", !!rlang::sym(c2)),
+            .cmb = ifelse(
+                .data$feature_nr %in% hits$feature_nr,
+                .data$.cmb,
+                NA_character_
+            )
+        ) |>
+        dplyr::select(.data$feature_nr, .data$.cmb)
 }
 
 
@@ -4659,10 +4697,10 @@ mkc <- function(
 #' (e.g., case, hyphens) are not.
 
 find_col_ignore_underscores_rx <- function(df, target) {
-  nn  <- names(df)
-  key <- gsub("_", "", target)
-  hit <- which(gsub("_", "", nn) == key)
-  if (length(hit)) nn[hit[1]] else NA_character_
+    nn <- names(df)
+    key <- gsub("_", "", target)
+    hit <- which(gsub("_", "", nn) == key)
+    if (length(hit)) nn[hit[1]] else NA_character_
 }
 
 
@@ -4674,7 +4712,7 @@ find_col_ignore_underscores_rx <- function(df, target) {
 #' For each condition level present in both `topTables` and
 #' `all_levels_clustering`, transfer the per-feature values from
 #' `cluster_quality$per_member` (in `all_levels_clustering`) into the
-#' corresponding tibble in `topTables`.  
+#' corresponding tibble in `topTables`.
 #'
 #' The mapping is done by matching feature identifiers:
 #' - `feature` in `clustered_hits` is aligned positionally with entries
@@ -4703,47 +4741,48 @@ find_col_ignore_underscores_rx <- function(df, target) {
 #'   A list of tibbles (same structure as `topTables`), each with a new
 #'   column `sr2cc` holding per-member cluster quality scores or `NA`
 #'   if no match was found.
-#'   
+#'
 transfer_sr2cc <- function(
     topTables,
-    all_levels_clustering
-    ) {
-  out <- topTables
-  lvl_names <- intersect(names(all_levels_clustering), names(out))
-  if (length(lvl_names) == 0L) return(out)
-  
-  for (lvl in lvl_names) {
-    alc <- all_levels_clustering[[lvl]]
-    tt  <- out[[lvl]]
-    
-    if (is.null(alc$cluster_quality$per_member) ||
-        is.null(alc$clustered_hits) ||
-        !is.data.frame(alc$clustered_hits) ||
-        is.null(tt) || !is.data.frame(tt) ||
-        !("feature_nr" %in% names(tt))) {
-      next
+    all_levels_clustering) {
+    out <- topTables
+    lvl_names <- intersect(names(all_levels_clustering), names(out))
+    if (length(lvl_names) == 0L) {
+        return(out)
     }
-    
-    per_member <- alc$cluster_quality$per_member
-    hits_df    <- alc$clustered_hits
-    
-    # Coerce IDs to numeric for robust matching
-    f_ids <- as.numeric(hits_df$feature)
-    t_ids <- as.numeric(tt$feature_nr)
-    
-    # Match feature_nr (tt) to feature (hits_df)
-    idx <- match(t_ids, f_ids)
-    
-    # Pull per_member by the matched row position in hits_df
-    sr2cc <- rep(NA_real_, nrow(tt))
-    ok <- !is.na(idx) & idx >= 1 & idx <= length(per_member)
-    sr2cc[ok] <- as.numeric(per_member[idx[ok]])
-    
-    tt$sr2cc <- sr2cc
-    out[[lvl]] <- tt
-  }
-  
-  out
+
+    for (lvl in lvl_names) {
+        alc <- all_levels_clustering[[lvl]]
+        tt <- out[[lvl]]
+
+        if (is.null(alc$cluster_quality$per_member) ||
+            is.null(alc$clustered_hits) ||
+            !is.data.frame(alc$clustered_hits) ||
+            is.null(tt) || !is.data.frame(tt) ||
+            !("feature_nr" %in% names(tt))) {
+            next
+        }
+
+        per_member <- alc$cluster_quality$per_member
+        hits_df <- alc$clustered_hits
+
+        # Coerce IDs to numeric for robust matching
+        f_ids <- as.numeric(hits_df$feature)
+        t_ids <- as.numeric(tt$feature_nr)
+
+        # Match feature_nr (tt) to feature (hits_df)
+        idx <- match(t_ids, f_ids)
+
+        # Pull per_member by the matched row position in hits_df
+        sr2cc <- rep(NA_real_, nrow(tt))
+        ok <- !is.na(idx) & idx >= 1 & idx <= length(per_member)
+        sr2cc[ok] <- as.numeric(per_member[idx[ok]])
+
+        tt$sr2cc <- sr2cc
+        out[[lvl]] <- tt
+    }
+
+    out
 }
 
 
@@ -4751,7 +4790,7 @@ transfer_sr2cc <- function(
 
 
 #' Normalize Curve Values
-#' 
+#'
 #' @noRd
 #'
 #' @description This function normalizes each row in a data frame or matrix
@@ -4769,49 +4808,49 @@ transfer_sr2cc <- function(
 #'         has been normalized.
 #'
 normalize_curves <- function(curve_values, epsilon = 1e-8) {
-  normalized_curves <- apply(curve_values, 1, function(row) {
-    mu <- mean(row, na.rm = TRUE)
-    sd_row <- stats::sd(row, na.rm = TRUE)
-    if (is.na(sd_row) || sd_row < epsilon) {
-      # flat or nearly-flat row: return zeros
-      rep(0, length(row))
-    } else {
-      (row - mu) / sd_row
-    }
-  })
-  
-  normalized_curves <- t(normalized_curves)
-  curve_values[,] <- normalized_curves
-  curve_values
+    normalized_curves <- apply(curve_values, 1, function(row) {
+        mu <- mean(row, na.rm = TRUE)
+        sd_row <- stats::sd(row, na.rm = TRUE)
+        if (is.na(sd_row) || sd_row < epsilon) {
+            # flat or nearly-flat row: return zeros
+            rep(0, length(row))
+        } else {
+            (row - mu) / sd_row
+        }
+    })
+
+    normalized_curves <- t(normalized_curves)
+    curve_values[, ] <- normalized_curves
+    curve_values
 }
 
 
 #' K-means Clustering of Temporal Curves using MiniBatchKmeans
-#' 
+#'
 #' @noRd
 #'
 #' @description
 #' Performs MiniBatch K-means clustering on smoothed time-series (curve) data.
-#' Automatically selects the best number of clusters using the Bayesian 
+#' Automatically selects the best number of clusters using the Bayesian
 #' Information Criterion (BIC).
 #' Cluster assignments are added to the provided `top_table`, and the clustered
 #'  data is returned.
 #'
-#' @param curve_values A numeric matrix of normalized time-series values 
+#' @param curve_values A numeric matrix of normalized time-series values
 #' (rows = features, cols = timepoints).
-#' @param k_range Integer vector specifying the range of cluster numbers to 
+#' @param k_range Integer vector specifying the range of cluster numbers to
 #' evaluate (e.g., `2:8`).
-#' @param smooth_timepoints Numeric vector of timepoints used as column names 
+#' @param smooth_timepoints Numeric vector of timepoints used as column names
 #' in the output.
 #' @param top_table Data frame with column `feature_nr` indicating feature
 #'  indices. Will be updated with cluster assignments.
-#' @param condition_level Character string indicating the current condition 
+#' @param condition_level Character string indicating the current condition
 #' level (used for error messages).
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list with the following components:
 #' \describe{
-#'   \item{clustered_hits}{A data frame with `feature` and `cluster` 
+#'   \item{clustered_hits}{A data frame with `feature` and `cluster`
 #'   assignments.}
 #'   \item{hc}{The MiniBatchKmeans object for the best `k`.}
 #'   \item{curve_values}{The input matrix with a `cluster` column added.}
@@ -4821,146 +4860,145 @@ normalize_curves <- function(curve_values, epsilon = 1e-8) {
 #'
 #' @importFrom ClusterR MiniBatchKmeans predict_KMeans
 #' @importFrom pbapply pblapply
-#' 
+#'
 kmeans_clustering <- function(
     curve_values,
     k_range,
     smooth_timepoints,
     top_table,
     condition_level,
-    verbose
-    ) {
+    verbose) {
+    if (nrow(curve_values) <= max(k_range)) { # Clustering would fail
+        stop_call_false(paste(
+            "For condition_level '", condition_level, "':",
+            "the number of requested clusters (", max(k_range), ")",
+            "must be strictly less than",
+            "the number of hits (", nrow(curve_values), ").",
+            "Please choose fewer clusters to avoid failure during k-means."
+        ))
+    }
 
-  if (nrow(curve_values) <= max(k_range)) {  # Clustering would fail
-    stop_call_false(paste(
-      "For condition_level '", condition_level, "':",
-      "the number of requested clusters (", max(k_range), ")",
-      "must be strictly less than",
-      "the number of hits (", nrow(curve_values), ").",
-      "Please choose fewer clusters to avoid failure during k-means."
-    ))
-  }
+    if (length(k_range) == 1L && k_range[1L] == 1L) {
+        # All series in one cluster, skip any computation
+        k_best <- 1L
+        cl <- NULL
+        cluster_assignments <- rep(1L, nrow(curve_values))
 
-  if (length(k_range) == 1L && k_range[1L] == 1L) {
-    # All series in one cluster, skip any computation
-    k_best <- 1L
-    cl     <- NULL
-    cluster_assignments <- rep(1L, nrow(curve_values))
-    
-    # Fallback defaults for similarity
-    sim <- list(
-      per_member        = rep(NA_real_, nrow(curve_values)),
-      per_cluster_mean  = NA_real_,
-      overall_mean      = NA_real_
-    )
-  } else {
-    n_obs <- nrow(curve_values)
-    apply_fun <- if (isTRUE(verbose)) pbapply::pblapply else lapply
-    
-    if (n_obs <= 1000) {    # Small dataset: use full k-means
-      fits <- apply_fun(k_range, function(k) {
-        stats::kmeans(
-          curve_values,
-          centers  = k,
-          nstart   = 10,
-          iter.max = 300
+        # Fallback defaults for similarity
+        sim <- list(
+            per_member        = rep(NA_real_, nrow(curve_values)),
+            per_cluster_mean  = NA_real_,
+            overall_mean      = NA_real_
         )
-      })
-      
-      tot_within <- vapply(
-        fits,
-        function(f)
-          f$tot.withinss,
-        numeric(1)
-        )
-      cluster_assignments_list <- lapply(fits, `[[`, "cluster")
-      
-    } else {     # Large dataset: use MiniBatchKmeans
-      batch_size <- min(                 # never larger than the data
-        n_obs,
-        max(20L, 2L * max(k_range), floor(0.05 * n_obs))
-      )
-      
-      fits <- apply_fun(k_range, function(k) {
-        ClusterR::MiniBatchKmeans(
-          data            = curve_values,
-          clusters        = k,
-          batch_size      = batch_size,
-          num_init        = 10,
-          max_iters       = 300,
-          init_fraction   = 1.0,
-          early_stop_iter = 10,
-          tol             = 1e-4,
-          verbose         = FALSE,
-          seed            = 42
-        )
-      })
-      
-      tot_within <- vapply(
-        fits,
-        function(f) sum(f$WCSS_per_cluster),
-        numeric(1)
-        )
-      cluster_assignments_list <- lapply(
-        fits,
-        function(f) 
-          ClusterR::predict_KMeans(
-            curve_values,
-            f$centroids
+    } else {
+        n_obs <- nrow(curve_values)
+        apply_fun <- if (isTRUE(verbose)) pbapply::pblapply else lapply
+
+        if (n_obs <= 1000) { # Small dataset: use full k-means
+            fits <- apply_fun(k_range, function(k) {
+                stats::kmeans(
+                    curve_values,
+                    centers  = k,
+                    nstart   = 10,
+                    iter.max = 300
+                )
+            })
+
+            tot_within <- vapply(
+                fits,
+                function(f) {
+                    f$tot.withinss
+                },
+                numeric(1)
             )
+            cluster_assignments_list <- lapply(fits, `[[`, "cluster")
+        } else { # Large dataset: use MiniBatchKmeans
+            batch_size <- min( # never larger than the data
+                n_obs,
+                max(20L, 2L * max(k_range), floor(0.05 * n_obs))
+            )
+
+            fits <- apply_fun(k_range, function(k) {
+                ClusterR::MiniBatchKmeans(
+                    data            = curve_values,
+                    clusters        = k,
+                    batch_size      = batch_size,
+                    num_init        = 10,
+                    max_iters       = 300,
+                    init_fraction   = 1.0,
+                    early_stop_iter = 10,
+                    tol             = 1e-4,
+                    verbose         = FALSE,
+                    seed            = 42
+                )
+            })
+
+            tot_within <- vapply(
+                fits,
+                function(f) sum(f$WCSS_per_cluster),
+                numeric(1)
+            )
+            cluster_assignments_list <- lapply(
+                fits,
+                function(f) {
+                    ClusterR::predict_KMeans(
+                        curve_values,
+                        f$centroids
+                    )
+                }
+            )
+        }
+        p <- ncol(curve_values)
+        # Bayesian Information Criterion (BIC).
+        bic <- n_obs * log(tot_within / n_obs) + k_range * log(n_obs) * p
+        best_idx <- which.min(bic)
+
+        k_best <- k_range[best_idx]
+        cl <- fits[[best_idx]]
+        cluster_assignments <- cluster_assignments_list[[best_idx]]
+
+        curve_mat_num <- as.matrix(curve_values)
+        storage.mode(curve_mat_num) <- "double"
+        time_num <- as.numeric(gsub("^.*\\|", "", smooth_timepoints))
+        if (!all(is.finite(time_num))) time_num <- NULL
+
+        sim <- compute_cluster_fits(
+            curves_mat = curve_mat_num,
+            clusters   = cluster_assignments
         )
     }
-    p <- ncol(curve_values)
-    # Bayesian Information Criterion (BIC).
-    bic <- n_obs * log(tot_within / n_obs) + k_range * log(n_obs) * p
-    best_idx <- which.min(bic)
-    
-    k_best <- k_range[best_idx]
-    cl <- fits[[best_idx]]
-    cluster_assignments <- cluster_assignments_list[[best_idx]]
 
-    curve_mat_num <- as.matrix(curve_values)
-    storage.mode(curve_mat_num) <- "double"
-    time_num <- as.numeric(gsub("^.*\\|", "", smooth_timepoints))
-    if (!all(is.finite(time_num))) time_num <- NULL
-    
-    sim <- compute_cluster_fits(
-      curves_mat = curve_mat_num,
-      clusters   = cluster_assignments
+    clustered_hits <- data.frame(
+        feature = top_table$feature_nr,
+        cluster = cluster_assignments
     )
-  }
+    clustered_hits <- clustered_hits[, c("feature", "cluster")]
 
-  clustered_hits <- data.frame(
-    feature = top_table$feature_nr,
-    cluster = cluster_assignments
-  )
-  clustered_hits <- clustered_hits[, c("feature", "cluster")]
-  
-  colnames(curve_values) <- smooth_timepoints
-  curve_values <- as.data.frame(curve_values)
-  curve_values$cluster <- cluster_assignments
+    colnames(curve_values) <- smooth_timepoints
+    curve_values <- as.data.frame(curve_values)
+    curve_values$cluster <- cluster_assignments
 
-  top_table$cluster <- NA
-  top_table$cluster[seq_len(nrow(clustered_hits))] <-
-    as.integer(clustered_hits$cluster)
+    top_table$cluster <- NA
+    top_table$cluster[seq_len(nrow(clustered_hits))] <-
+        as.integer(clustered_hits$cluster)
 
-  group_clustering <- list(
-    clustered_hits = clustered_hits,
-    hc = cl,
-    curve_values = curve_values,
-    top_table = top_table,
-    clusters = k_best,
-    cluster_quality = list(
-      per_member        = sim$per_member,       
-      per_cluster_mean  = sim$per_cluster_mean, 
-      overall_mean      = sim$overall_mean      
+    group_clustering <- list(
+        clustered_hits = clustered_hits,
+        hc = cl,
+        curve_values = curve_values,
+        top_table = top_table,
+        clusters = k_best,
+        cluster_quality = list(
+            per_member        = sim$per_member,
+            per_cluster_mean  = sim$per_cluster_mean,
+            overall_mean      = sim$overall_mean
+        )
     )
-  )
 }
 
 
 #' Get Spline Parameters Info
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -4988,44 +5026,44 @@ kmeans_clustering <- function(
 get_spline_params_info <- function(
     spline_params,
     j) {
-  if (!is.null(spline_params$spline_type) &&
-    length(spline_params$spline_type) >= j) {
-    spline_params$spline_type[j] <- spline_params$spline_type[j]
-  } else {
-    spline_params$spline_type[j] <- NA
-  }
+    if (!is.null(spline_params$spline_type) &&
+        length(spline_params$spline_type) >= j) {
+        spline_params$spline_type[j] <- spline_params$spline_type[j]
+    } else {
+        spline_params$spline_type[j] <- NA
+    }
 
-  if (!is.null(spline_params$degree) &&
-    length(spline_params$degree) >= j) {
-    spline_params$degree[j] <- spline_params$degree[j]
-  } else {
-    spline_params$degree[j] <- NA
-  }
+    if (!is.null(spline_params$degree) &&
+        length(spline_params$degree) >= j) {
+        spline_params$degree[j] <- spline_params$degree[j]
+    } else {
+        spline_params$degree[j] <- NA
+    }
 
-  if (!is.null(spline_params$dof) &&
-    length(spline_params$dof) >= j) {
-    spline_params$dof[j] <- spline_params$dof[j]
-  } else {
-    spline_params$dof[j] <- NA
-  }
+    if (!is.null(spline_params$dof) &&
+        length(spline_params$dof) >= j) {
+        spline_params$dof[j] <- spline_params$dof[j]
+    } else {
+        spline_params$dof[j] <- NA
+    }
 
-  if (!is.null(spline_params$knots) &&
-    length(spline_params$knots) >= j) {
-    spline_params$knots[j] <- spline_params$knots[j]
-  } else {
-    spline_params$knots[j] <- NA
-  }
+    if (!is.null(spline_params$knots) &&
+        length(spline_params$knots) >= j) {
+        spline_params$knots[j] <- spline_params$knots[j]
+    } else {
+        spline_params$knots[j] <- NA
+    }
 
-  if (!is.null(spline_params$bknots) &&
-    length(spline_params$bknots) >= j) {
-    spline_params$bknots[j] <- spline_params$bknots[j]
-  } else {
-    spline_params$bknots[j] <- NA
-  }
+    if (!is.null(spline_params$bknots) &&
+        length(spline_params$bknots) >= j) {
+        spline_params$bknots[j] <- spline_params$bknots[j]
+    } else {
+        spline_params$bknots[j] <- NA
+    }
 
-  if (spline_params$spline_type[j] == "b") {
-    spline_params_info <- sprintf(
-      "
+    if (spline_params$spline_type[j] == "b") {
+        spline_params_info <- sprintf(
+            "
     <p style='text-align: center; font-size: 30px;'>
         <span style='color: blue;'>Spline-type:</span> B-spline<br>
         <span style='color: blue;'>Degree:</span> %s<br>
@@ -5033,28 +5071,28 @@ get_spline_params_info <- function(
         <span style='color: blue;'>Knots:</span> %s<br>
         <span style='color: blue;'>Boundary-knots:</span> %s
     </p>",
-      spline_params$degree[j], spline_params$dof[j],
-      spline_params$knots[j], spline_params$bknots[j]
-    )
-  } else { # spline_type == "n"
-    spline_params_info <- sprintf(
-      "
+            spline_params$degree[j], spline_params$dof[j],
+            spline_params$knots[j], spline_params$bknots[j]
+        )
+    } else { # spline_type == "n"
+        spline_params_info <- sprintf(
+            "
     <p style='text-align: center; font-size: 30px;'>
         <span style='color: blue;'>Spline-type:</span> Natural cubic spline<br>
         <span style='color: blue;'>DoF:</span> %s<br>
         <span style='color: blue;'>Knots:</span> %s<br>
         <span style='color: blue;'>Boundary-knots:</span> %s
     </p>",
-      spline_params$dof[j], spline_params$knots[j],
-      spline_params$bknots[j]
-    )
-  }
-  return(spline_params_info)
+            spline_params$dof[j], spline_params$knots[j],
+            spline_params$bknots[j]
+        )
+    }
+    return(spline_params_info)
 }
 
 
 #' Truncate Row Names
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -5071,18 +5109,18 @@ get_spline_params_info <- function(
 truncate_row_names <- function(
     names,
     max_length = 40) {
-  vapply(names, function(x) {
-    if (nchar(x) > max_length) {
-      return(paste0(substr(x, 1, max_length - 3), " ..."))
-    } else {
-      return(x)
-    }
-  }, character(1))
+    vapply(names, function(x) {
+        if (nchar(x) > max_length) {
+            return(paste0(substr(x, 1, max_length - 3), " ..."))
+        } else {
+            return(x)
+        }
+    }, character(1))
 }
 
 
 #' Calculate average CV across unique time points
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -5103,45 +5141,45 @@ truncate_row_names <- function(
 calc_cv <- function(
     time_values,
     response_values) {
-  time_data <- data.frame(
-    Time = time_values,
-    Response = response_values
-  )
+    time_data <- data.frame(
+        Time = time_values,
+        Response = response_values
+    )
 
-  unique_times <- unique(time_data$Time)
+    unique_times <- unique(time_data$Time)
 
-  cvs <- vapply(
-    unique_times,
-    function(t) {
-      # Subset for the specific time point
-      values_at_time <- time_data$Response[time_data$Time == t]
-      # Calculate CV if the mean is not zero and there are enough data points
-      if (mean(values_at_time, na.rm = TRUE) != 0 &&
-        sum(!is.na(values_at_time)) > 1) {
-        (sd(
-          values_at_time,
-          na.rm = TRUE
-        ) /
-          mean(
-            values_at_time,
-            na.rm = TRUE
-          )) * 100
-      } else {
-        NA # Return NA for CV when mean is 0 or insufficient data points
-      }
-    },
-    numeric(1)
-  )
-  # Return the average CV across time points
-  return(mean(
-    cvs,
-    na.rm = TRUE
-  ))
+    cvs <- vapply(
+        unique_times,
+        function(t) {
+            # Subset for the specific time point
+            values_at_time <- time_data$Response[time_data$Time == t]
+            # Calculate CV if the mean is not zero and there are enough data points
+            if (mean(values_at_time, na.rm = TRUE) != 0 &&
+                sum(!is.na(values_at_time)) > 1) {
+                (sd(
+                    values_at_time,
+                    na.rm = TRUE
+                ) /
+                    mean(
+                        values_at_time,
+                        na.rm = TRUE
+                    )) * 100
+            } else {
+                NA # Return NA for CV when mean is 0 or insufficient data points
+            }
+        },
+        numeric(1)
+    )
+    # Return the average CV across time points
+    return(mean(
+        cvs,
+        na.rm = TRUE
+    ))
 }
 
 
 #' Plot Single and Mean Splines
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -5158,7 +5196,7 @@ calc_cv <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
-#' @param level Level of the condition, which is a factor (categorical 
+#' @param level Level of the condition, which is a factor (categorical
 #'              predictor of the linear model)
 #' @param cluster_color Color to be used for the splines of this cluster.
 #'
@@ -5180,112 +5218,110 @@ plot_single_and_mean_splines <- function(
     title,
     plot_info,
     level,
-    cluster_color
-    ) {
-  
-  time_col <- rlang::sym("time")
-  feature_col <- rlang::sym("feature")
+    cluster_color) {
+    time_col <- rlang::sym("time")
+    feature_col <- rlang::sym("feature")
 
-  # Convert data to long format
-  df_long <- as.data.frame(t(time_series_data)) |>
-    tibble::rownames_to_column(var = "time") |>
-    tidyr::pivot_longer(
-      cols = -!!time_col,
-      names_to = "feature",
-      values_to = "intensity"
-    ) |>
-    dplyr::arrange(!!feature_col) |>
-    dplyr::mutate(time = as.numeric(.data$time))
+    # Convert data to long format
+    df_long <- as.data.frame(t(time_series_data)) |>
+        tibble::rownames_to_column(var = "time") |>
+        tidyr::pivot_longer(
+            cols = -!!time_col,
+            names_to = "feature",
+            values_to = "intensity"
+        ) |>
+        dplyr::arrange(!!feature_col) |>
+        dplyr::mutate(time = as.numeric(.data$time))
 
-  # Compute consensus (mean of each column)
-  consensus <- colMeans(time_series_data, na.rm = TRUE)
+    # Compute consensus (mean of each column)
+    consensus <- colMeans(time_series_data, na.rm = TRUE)
 
-  consensus_df <- data.frame(
-    time = as.numeric(colnames(time_series_data)),
-    consensus = consensus
-  )
-
-  time_unit_label <- paste0("[", plot_info$time_unit, "]")
-
-  color_values <- c(
-    "Mean"   = "black",
-    "Spline" = cluster_color
-  )
-
-  # Draw only the individual splines here
-  p <- ggplot2::ggplot() +
-    ggplot2::geom_line(
-      data = df_long,
-      ggplot2::aes(
-        x = !!rlang::sym("time"),
-        y = !!rlang::sym("intensity"),
-        group = !!rlang::sym("feature"),
-        colour = "Spline"
-      ),
-      alpha = 0.4, linewidth = 0.5
+    consensus_df <- data.frame(
+        time = as.numeric(colnames(time_series_data)),
+        consensus = consensus
     )
 
-  treatment_labels <- NA
+    time_unit_label <- paste0("[", plot_info$time_unit, "]")
 
-  result <- maybe_add_dashed_lines(
-    p = p,
-    plot_info = plot_info,
-    level = level
-  )
-
-  p <- result$p
-  treatment_colors <- result$treatment_colors
-
-  # Combine the original colors with the treatment colors
-  color_values <- c(color_values, treatment_colors)
-
-  # Add the final scale for colors and adjust legend
-  p <- result$p
-  treatment_colors <- result$treatment_colors
-  
-  color_values <- c(color_values, treatment_colors)
-  
-  p <- p +
-    ggplot2::scale_colour_manual(
-      name = "",
-      values = color_values
-    ) +
-    ggplot2::coord_cartesian(clip = "off") +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = title,
-      x = paste("Time", time_unit_label),
-      y = paste("z-score norm.", plot_info$y_axis_label)
-    ) +
-    ggplot2::theme(
-      plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),
-      legend.position = "right",
-      legend.box = "vertical",
-      legend.background = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(hjust = 0.5),
-      legend.key.size = grid::unit(0.9, "cm"),
-      legend.key.height = grid::unit(0.6, "cm"),
-      axis.title.x  = ggplot2::element_text(size = 14),
-      axis.title.y  = ggplot2::element_text(size = 8),
-      axis.text.x   = ggplot2::element_text(size = 12),
-      axis.text.y   = ggplot2::element_text(size = 12),
-      legend.text   = ggplot2::element_text(size = 12)
-    )
-  
-  # Add mean line last so that it is always on top.
-  p <- p +
-    ggplot2::geom_line(
-      data = consensus_df,
-      ggplot2::aes(x = !!rlang::sym("time"), y = consensus, colour = "Mean"),
-      linewidth = 1.5
+    color_values <- c(
+        "Mean"   = "black",
+        "Spline" = cluster_color
     )
 
-  return(p)
+    # Draw only the individual splines here
+    p <- ggplot2::ggplot() +
+        ggplot2::geom_line(
+            data = df_long,
+            ggplot2::aes(
+                x = !!rlang::sym("time"),
+                y = !!rlang::sym("intensity"),
+                group = !!rlang::sym("feature"),
+                colour = "Spline"
+            ),
+            alpha = 0.4, linewidth = 0.5
+        )
+
+    treatment_labels <- NA
+
+    result <- maybe_add_dashed_lines(
+        p = p,
+        plot_info = plot_info,
+        level = level
+    )
+
+    p <- result$p
+    treatment_colors <- result$treatment_colors
+
+    # Combine the original colors with the treatment colors
+    color_values <- c(color_values, treatment_colors)
+
+    # Add the final scale for colors and adjust legend
+    p <- result$p
+    treatment_colors <- result$treatment_colors
+
+    color_values <- c(color_values, treatment_colors)
+
+    p <- p +
+        ggplot2::scale_colour_manual(
+            name = "",
+            values = color_values
+        ) +
+        ggplot2::coord_cartesian(clip = "off") +
+        ggplot2::theme_minimal() +
+        ggplot2::labs(
+            title = title,
+            x = paste("Time", time_unit_label),
+            y = paste("z-score norm.", plot_info$y_axis_label)
+        ) +
+        ggplot2::theme(
+            plot.margin = grid::unit(c(1, 1, 1.5, 1), "lines"),
+            legend.position = "right",
+            legend.box = "vertical",
+            legend.background = ggplot2::element_blank(),
+            plot.title = ggplot2::element_text(hjust = 0.5),
+            legend.key.size = grid::unit(0.9, "cm"),
+            legend.key.height = grid::unit(0.6, "cm"),
+            axis.title.x = ggplot2::element_text(size = 14),
+            axis.title.y = ggplot2::element_text(size = 8),
+            axis.text.x = ggplot2::element_text(size = 12),
+            axis.text.y = ggplot2::element_text(size = 12),
+            legend.text = ggplot2::element_text(size = 12)
+        )
+
+    # Add mean line last so that it is always on top.
+    p <- p +
+        ggplot2::geom_line(
+            data = consensus_df,
+            ggplot2::aes(x = !!rlang::sym("time"), y = consensus, colour = "Mean"),
+            linewidth = 1.5
+        )
+
+    return(p)
 }
 
 
 #' Conditionally add dashed lines for treatment timepoints
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -5317,50 +5353,49 @@ maybe_add_dashed_lines <- function(
     plot_info,
     level,
     y_pos = 1,
-    horizontal_labels = FALSE
-) {
-  treatment_colors <- c()
-  
-  labs <- plot_info$treatment_labels
-  tps  <- plot_info$treatment_timepoints
-  
-  # Require explicit naming and presence of `level` in both lists
-  if (is.null(labs) ||
-      is.null(tps) ||
-      is.null(names(labs)) ||
-      is.null(names(tps)) ||
-      !(level %in% names(labs)) ||
-      !(level %in% names(tps))) {
-    return(list(p = p, treatment_colors = treatment_colors))
-  }
-  
-  # Extract values for this level
-  chosen_labels <- as.character(labs[[level]])
-  chosen_tps <- as.numeric(tps[[level]])
-  
-  # Skip if empty or NA
-  if (length(chosen_labels) == 0 ||
-      length(chosen_tps) == 0 ||
-      anyNA(chosen_labels) ||
-      anyNA(chosen_tps)) {
-    return(list(p = p, treatment_colors = treatment_colors))
-  }
-  
-  treatment_colors <- scales::hue_pal()(length(chosen_labels))
-  names(treatment_colors) <- chosen_labels
-  
-  p <- add_dashed_lines(
-    p = p,
-    treatment_timepoints = chosen_tps,
-    treatment_labels = chosen_labels,
-    y_pos = y_pos,
-    horizontal_labels = horizontal_labels
-  )
-  
-  list(
-    p = p,
-    treatment_colors = treatment_colors
-  )
+    horizontal_labels = FALSE) {
+    treatment_colors <- c()
+
+    labs <- plot_info$treatment_labels
+    tps <- plot_info$treatment_timepoints
+
+    # Require explicit naming and presence of `level` in both lists
+    if (is.null(labs) ||
+        is.null(tps) ||
+        is.null(names(labs)) ||
+        is.null(names(tps)) ||
+        !(level %in% names(labs)) ||
+        !(level %in% names(tps))) {
+        return(list(p = p, treatment_colors = treatment_colors))
+    }
+
+    # Extract values for this level
+    chosen_labels <- as.character(labs[[level]])
+    chosen_tps <- as.numeric(tps[[level]])
+
+    # Skip if empty or NA
+    if (length(chosen_labels) == 0 ||
+        length(chosen_tps) == 0 ||
+        anyNA(chosen_labels) ||
+        anyNA(chosen_tps)) {
+        return(list(p = p, treatment_colors = treatment_colors))
+    }
+
+    treatment_colors <- scales::hue_pal()(length(chosen_labels))
+    names(treatment_colors) <- chosen_labels
+
+    p <- add_dashed_lines(
+        p = p,
+        treatment_timepoints = chosen_tps,
+        treatment_labels = chosen_labels,
+        y_pos = y_pos,
+        horizontal_labels = horizontal_labels
+    )
+
+    list(
+        p = p,
+        treatment_colors = treatment_colors
+    )
 }
 
 
@@ -5382,20 +5417,20 @@ maybe_add_dashed_lines <- function(
 #' generate_asterisks_definition(0.05)
 #' # Returns an HTML string for the asterisk definitions.
 generate_asterisks_definition <- function(adj_pvalue_threshold) {
-  paste(
-    "<b><span style='font-size:20pt; margin-bottom: 0;'>",
-    "Asterisks definition:</span></b>",
-    paste("Adj. p-value <", adj_pvalue_threshold, "--> *", sep = " "),
-    paste("Adj. p-value <", adj_pvalue_threshold / 5, "--> **", sep = " "),
-    paste("Adj. p-value <", adj_pvalue_threshold / 50, "--> ***", sep = " "),
-    paste("Adj. p-value <", adj_pvalue_threshold / 500, "--> ****", sep = " "),
-    sep = "<br>"
-  )
+    paste(
+        "<b><span style='font-size:20pt; margin-bottom: 0;'>",
+        "Asterisks definition:</span></b>",
+        paste("Adj. p-value <", adj_pvalue_threshold, "--> *", sep = " "),
+        paste("Adj. p-value <", adj_pvalue_threshold / 5, "--> **", sep = " "),
+        paste("Adj. p-value <", adj_pvalue_threshold / 50, "--> ***", sep = " "),
+        paste("Adj. p-value <", adj_pvalue_threshold / 500, "--> ****", sep = " "),
+        sep = "<br>"
+    )
 }
 
 
 #' Preselect features for plotting based on significance
-#' 
+#'
 #' @noRd
 #'
 #' @param avrg_diff_conditions Data frame with columns `feature_names`,
@@ -5416,57 +5451,56 @@ generate_asterisks_definition <- function(adj_pvalue_threshold) {
 #'   containing the union of selected features from both categories.
 #'
 #' @importFrom rlang .data
-#' 
+#'
 preselect_features_for_plotting <- function(
     avrg_diff_conditions,
     interaction_condition_time,
     max_hit_number,
     adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction
-) {
-  # Select top features for average difference
-  sig_avg <- avrg_diff_conditions |>
-    dplyr::filter(.data$adj.P.Val < adj_pthresh_avrg_diff_conditions) |>
-    dplyr::arrange(.data$adj.P.Val) |>
-    head(max_hit_number) |>
-    dplyr::mutate(selected_avg = TRUE) |>
-    dplyr::select(
-      .data$feature_names,
-      .data$feature_nr,
-      .data$selected_avg
-      )
-  
-  # Select top features for interaction
-  sig_interaction <- interaction_condition_time |>
-    dplyr::filter(.data$adj.P.Val < adj_pthresh_interaction) |>
-    dplyr::arrange(.data$adj.P.Val) |>
-    head(max_hit_number) |>
-    dplyr::mutate(selected_interaction = TRUE) |>
-    dplyr::select(
-      .data$feature_names,
-      .data$feature_nr,
-      .data$selected_interaction
-      )
-  
-  # Full outer join by feature_names and feature_nr
-  features_to_plot <- dplyr::full_join(
-    sig_avg,
-    sig_interaction,
-    by = c("feature_names", "feature_nr")
-  )
-  
-  # Fill NAs introduced by the join
-  features_to_plot |>
-    dplyr::mutate(
-      selected_avg = tidyr::replace_na(
-        .data$selected_avg,
-        FALSE
-        ),
-      selected_interaction = tidyr::replace_na(
-        .data$selected_interaction,
-        FALSE
+    adj_pthresh_interaction) {
+    # Select top features for average difference
+    sig_avg <- avrg_diff_conditions |>
+        dplyr::filter(.data$adj.P.Val < adj_pthresh_avrg_diff_conditions) |>
+        dplyr::arrange(.data$adj.P.Val) |>
+        head(max_hit_number) |>
+        dplyr::mutate(selected_avg = TRUE) |>
+        dplyr::select(
+            .data$feature_names,
+            .data$feature_nr,
+            .data$selected_avg
         )
+
+    # Select top features for interaction
+    sig_interaction <- interaction_condition_time |>
+        dplyr::filter(.data$adj.P.Val < adj_pthresh_interaction) |>
+        dplyr::arrange(.data$adj.P.Val) |>
+        head(max_hit_number) |>
+        dplyr::mutate(selected_interaction = TRUE) |>
+        dplyr::select(
+            .data$feature_names,
+            .data$feature_nr,
+            .data$selected_interaction
+        )
+
+    # Full outer join by feature_names and feature_nr
+    features_to_plot <- dplyr::full_join(
+        sig_avg,
+        sig_interaction,
+        by = c("feature_names", "feature_nr")
     )
+
+    # Fill NAs introduced by the join
+    features_to_plot |>
+        dplyr::mutate(
+            selected_avg = tidyr::replace_na(
+                .data$selected_avg,
+                FALSE
+            ),
+            selected_interaction = tidyr::replace_na(
+                .data$selected_interaction,
+                FALSE
+            )
+        )
 }
 
 
@@ -5493,75 +5527,74 @@ preselect_features_for_plotting <- function(
 #' The histogram uses fixed bin width \code{0.1} over \code{[-1, 1]} (20 bins)
 #' and displays counts on the y-axis. The mean line is drawn at
 #' \code{mean(r2, na.rm = TRUE)}.
-#' 
+#'
 #' @importFrom ggplot2 ggplot aes geom_histogram after_stat geom_vline theme
 #'                     scale_color_manual labs coord_cartesian theme_minimal
 #' @importFrom rlang .data
-#' 
+#'
 plot_cluster_quality_distribution <- function(
-    r2,  
-    cluster_id
-) {
-  df <- data.frame(sr2 = r2)
-  mean_sr2 <- mean(df$sr2, na.rm = TRUE)
-  n_valid  <- sum(is.finite(df$sr2))
-  
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = !!rlang::sym("sr2")))
-  
-  # histogram with fixed 0.1 bins from -1 to 1
-  if (n_valid >= 1) {
-    p <- p + ggplot2::geom_histogram(
-      binwidth = 0.1,
-      boundary = -1,
-      closed   = "right",
-      fill     = "steelblue",
-      color    = NA,
-      na.rm    = TRUE
-    )
-  }
-  
-  # reference line at 0 (in-phase vs inverted boundary)
-  p <- p + ggplot2::geom_vline(
-    xintercept = 0,
-    linetype = "dotted",
-    color = "grey50"
-  )
-  
-  # mean line + legend only if the mean is finite
-  if (is.finite(mean_sr2)) {
+    r2,
+    cluster_id) {
+    df <- data.frame(sr2 = r2)
+    mean_sr2 <- mean(df$sr2, na.rm = TRUE)
+    n_valid <- sum(is.finite(df$sr2))
+
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = !!rlang::sym("sr2")))
+
+    # histogram with fixed 0.1 bins from -1 to 1
+    if (n_valid >= 1) {
+        p <- p + ggplot2::geom_histogram(
+            binwidth = 0.1,
+            boundary = -1,
+            closed   = "right",
+            fill     = "steelblue",
+            color    = NA,
+            na.rm    = TRUE
+        )
+    }
+
+    # reference line at 0 (in-phase vs inverted boundary)
     p <- p + ggplot2::geom_vline(
-      ggplot2::aes(xintercept = mean_sr2, color = "mean"),
-      linetype = "dashed"
-    ) +
-      ggplot2::scale_color_manual(
-        values = c("mean" = "red"),
-        name = NULL
-      )
-  }
-  
-  p +
-    ggplot2::labs(
-      title = paste0(
-        "Cluster ", cluster_id,
-        " variances explained by centroid (mean = ",
-        round(mean_sr2, 3), ")"
-      ),
-      x = bquote("Signed " ~ r^2 ~ "(variance explained)"),
-      y = "Hit Count"
-    ) +
-    ggplot2::coord_cartesian(xlim = c(-1, 1)) +
-    ggplot2::theme_minimal(base_size = 13) +
-    ggplot2::theme(
-      legend.position = "right",
-      legend.key.size = grid::unit(0.9, "cm"),
-      legend.key.height = grid::unit(0.6, "cm"),
-      aspect.ratio = 0.5,
-      axis.title.x  = ggplot2::element_text(size = 14),
-      axis.title.y  = ggplot2::element_text(size = 14),
-      axis.text.x   = ggplot2::element_text(size = 12),
-      axis.text.y   = ggplot2::element_text(size = 12),
-      legend.text   = ggplot2::element_text(size = 12)
+        xintercept = 0,
+        linetype = "dotted",
+        color = "grey50"
     )
+
+    # mean line + legend only if the mean is finite
+    if (is.finite(mean_sr2)) {
+        p <- p + ggplot2::geom_vline(
+            ggplot2::aes(xintercept = mean_sr2, color = "mean"),
+            linetype = "dashed"
+        ) +
+            ggplot2::scale_color_manual(
+                values = c("mean" = "red"),
+                name = NULL
+            )
+    }
+
+    p +
+        ggplot2::labs(
+            title = paste0(
+                "Cluster ", cluster_id,
+                " variances explained by centroid (mean = ",
+                round(mean_sr2, 3), ")"
+            ),
+            x = bquote("Signed " ~ r^2 ~ "(variance explained)"),
+            y = "Hit Count"
+        ) +
+        ggplot2::coord_cartesian(xlim = c(-1, 1)) +
+        ggplot2::theme_minimal(base_size = 13) +
+        ggplot2::theme(
+            legend.position = "right",
+            legend.key.size = grid::unit(0.9, "cm"),
+            legend.key.height = grid::unit(0.6, "cm"),
+            aspect.ratio = 0.5,
+            axis.title.x = ggplot2::element_text(size = 14),
+            axis.title.y = ggplot2::element_text(size = 14),
+            axis.text.x = ggplot2::element_text(size = 12),
+            axis.text.y = ggplot2::element_text(size = 12),
+            legend.text = ggplot2::element_text(size = 12)
+        )
 }
 
 
@@ -5598,103 +5631,106 @@ plot_cluster_quality_distribution <- function(
 #'
 #' @importFrom dplyr bind_rows select distinct slice_head arrange anti_join
 #'                   any_of
-#'                   
+#'
 select_balanced_hits <- function(
     avrg_df,
     inter_df,
-    max_n
-    ) {
-  # If no cap or Inf: just return unique union (original behavior)
-  if (is.null(max_n) || is.infinite(max_n)) {
-    return(
-      dplyr::bind_rows(
-        dplyr::select(
-          avrg_df,
-          .data$feature_nr,
-          .data$feature_names
-          ),
-        dplyr::select(
-          inter_df,
-          .data$feature_nr,
-          .data$feature_names
-          )
-      ) |>
-        dplyr::distinct()
-    )
-  }
-  
-  # Helper: rank table by adj.P.Val if present, else keep current order
-  rank_tbl <- function(tbl) {
-    has_p <- "adj.P.Val" %in% names(tbl)
-    if (has_p) {
-      tbl |>
-        dplyr::arrange(.data$adj.P.Val, .data$feature_names)
-    } else {
-      tbl # keep incoming order
+    max_n) {
+    # If no cap or Inf: just return unique union (original behavior)
+    if (is.null(max_n) || is.infinite(max_n)) {
+        return(
+            dplyr::bind_rows(
+                dplyr::select(
+                    avrg_df,
+                    .data$feature_nr,
+                    .data$feature_names
+                ),
+                dplyr::select(
+                    inter_df,
+                    .data$feature_nr,
+                    .data$feature_names
+                )
+            ) |>
+                dplyr::distinct()
+        )
     }
-  }
-  
-  avrg_ranked <- avrg_df |> rank_tbl() |> dplyr::select(
-    .data$feature_nr,
-    .data$feature_names
+
+    # Helper: rank table by adj.P.Val if present, else keep current order
+    rank_tbl <- function(tbl) {
+        has_p <- "adj.P.Val" %in% names(tbl)
+        if (has_p) {
+            tbl |>
+                dplyr::arrange(.data$adj.P.Val, .data$feature_names)
+        } else {
+            tbl # keep incoming order
+        }
+    }
+
+    avrg_ranked <- avrg_df |>
+        rank_tbl() |>
+        dplyr::select(
+            .data$feature_nr,
+            .data$feature_names
+        )
+    inter_ranked <- inter_df |>
+        rank_tbl() |>
+        dplyr::select(
+            .data$feature_nr,
+            .data$feature_names
+        )
+
+    half1 <- floor(max_n / 2)
+    half2 <- max_n - half1
+
+    # pick top unique from avrg, then from inter (excluding already picked)
+    pick_unique <- function(tbl, already) {
+        dplyr::anti_join(tbl, already, by = "feature_names")
+    }
+
+    chosen_avrg <- avrg_ranked |> dplyr::slice_head(n = half1)
+    # dedupe by name within chosen set (just in case)
+    chosen_avrg <- chosen_avrg |> dplyr::distinct(
+        .data$feature_names,
+        .keep_all = TRUE
     )
-  inter_ranked <- inter_df |> rank_tbl() |> dplyr::select(
-    .data$feature_nr,
-    .data$feature_names
-    )
-  
-  half1 <- floor(max_n / 2)
-  half2 <- max_n - half1
-  
-  # pick top unique from avrg, then from inter (excluding already picked)
-  pick_unique <- function(tbl, already) {
-    dplyr::anti_join(tbl, already, by = "feature_names")
-  }
-  
-  chosen_avrg <- avrg_ranked |> dplyr::slice_head(n = half1)
-  # dedupe by name within chosen set (just in case)
-  chosen_avrg <- chosen_avrg |> dplyr::distinct(
-    .data$feature_names,
-    .keep_all = TRUE
-    )
-  
-  inter_pool <- pick_unique(inter_ranked, chosen_avrg)
-  chosen_inter <- inter_pool |> dplyr::slice_head(n = half2)
-  
-  # If any side underfilled, let the other take over
-  need_from_inter <- half2 - nrow(chosen_inter)
-  if (need_from_inter > 0) {
-    extra <- pick_unique(inter_ranked, dplyr::bind_rows(
-      chosen_avrg,
-      chosen_inter)
-      ) |>
-      dplyr::slice_head(n = need_from_inter)
-    chosen_inter <- dplyr::bind_rows(chosen_inter, extra)
-  }
-  
-  need_from_avrg <- half1 - nrow(chosen_avrg)
-  if (need_from_avrg > 0) {
-    extra <- pick_unique(avrg_ranked, dplyr::bind_rows(
-      chosen_avrg,
-      chosen_inter)
-      ) |>
-      dplyr::slice_head(n = need_from_avrg)
-    chosen_avrg <- dplyr::bind_rows(chosen_avrg, extra)
-  }
-  
-  # Final fill if still < max_n (e.g., overall too few hits)
-  combined <- dplyr::bind_rows(chosen_avrg, chosen_inter) |>
-    dplyr::distinct(.data$feature_names, .keep_all = TRUE)
-  if (nrow(combined) < max_n) {
-    # pull remaining from the union in ranked order (avrg first, then inter)
-    union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
-      dplyr::distinct(.data$feature_names, .keep_all = TRUE)
-    extra <- dplyr::anti_join(union_ranked, combined, by = "feature_names") |>
-      dplyr::slice_head(n = max_n - nrow(combined))
-    combined <- dplyr::bind_rows(combined, extra)
-  }
-  
-  dplyr::slice_head(combined, n = max_n)
+
+    inter_pool <- pick_unique(inter_ranked, chosen_avrg)
+    chosen_inter <- inter_pool |> dplyr::slice_head(n = half2)
+
+    # If any side underfilled, let the other take over
+    need_from_inter <- half2 - nrow(chosen_inter)
+    if (need_from_inter > 0) {
+        extra <- pick_unique(inter_ranked, dplyr::bind_rows(
+            chosen_avrg,
+            chosen_inter
+        )) |>
+            dplyr::slice_head(n = need_from_inter)
+        chosen_inter <- dplyr::bind_rows(chosen_inter, extra)
+    }
+
+    need_from_avrg <- half1 - nrow(chosen_avrg)
+    if (need_from_avrg > 0) {
+        extra <- pick_unique(avrg_ranked, dplyr::bind_rows(
+            chosen_avrg,
+            chosen_inter
+        )) |>
+            dplyr::slice_head(n = need_from_avrg)
+        chosen_avrg <- dplyr::bind_rows(chosen_avrg, extra)
+    }
+
+    # Final fill if still < max_n (e.g., overall too few hits)
+    combined <- dplyr::bind_rows(chosen_avrg, chosen_inter) |>
+        dplyr::distinct(.data$feature_names, .keep_all = TRUE)
+    if (nrow(combined) < max_n) {
+        # pull remaining from the union in ranked order (avrg first, then inter)
+        union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
+            dplyr::distinct(.data$feature_names, .keep_all = TRUE)
+        extra <- dplyr::anti_join(union_ranked, combined, by = "feature_names") |>
+            dplyr::slice_head(n = max_n - nrow(combined))
+        combined <- dplyr::bind_rows(combined, extra)
+    }
+
+    dplyr::slice_head(combined, n = max_n)
 }
 
 
@@ -5721,12 +5757,12 @@ select_balanced_hits <- function(
 #' is determined by the number of unique clusters present.
 #'
 #' @importFrom scales hue_pal
-#' 
+#'
 get_cluster_colors <- function(curve_values) {
-  lvls <- sort(unique(as.numeric(curve_values$cluster)))
-  base <- scales::hue_pal()(length(lvls))
-  names(base) <- paste("Cluster", lvls)
-  base
+    lvls <- sort(unique(as.numeric(curve_values$cluster)))
+    base <- scales::hue_pal()(length(lvls))
+    names(base) <- paste("Cluster", lvls)
+    base
 }
 
 
@@ -5759,20 +5795,20 @@ get_cluster_colors <- function(curve_values) {
 #' operations such as significance testing, thresholding, or annotation.
 #'
 #' @importFrom dplyr filter pull
-#' 
+#'
 safe_pull_pval <- function(
     tbl,
     feature_name,
-    col = "adj.P.Val"
-    ) {
-  if (is.null(tbl) 
-      || !is.data.frame(tbl) 
-      || !(col %in% names(tbl)))
-    return(NA_real_)
-  v <- tbl |>
-    dplyr::filter(.data$feature_names == feature_name) |>
-    dplyr::pull({{ col }})
-  if (length(v) == 0 || is.na(v[1])) NA_real_ else as.numeric(v[1])
+    col = "adj.P.Val") {
+    if (is.null(tbl) ||
+        !is.data.frame(tbl) ||
+        !(col %in% names(tbl))) {
+        return(NA_real_)
+    }
+    v <- tbl |>
+        dplyr::filter(.data$feature_names == feature_name) |>
+        dplyr::pull({{ col }})
+    if (length(v) == 0 || is.na(v[1])) NA_real_ else as.numeric(v[1])
 }
 
 
@@ -5780,7 +5816,7 @@ safe_pull_pval <- function(
 
 
 #' Add dashed lines for treatment timepoints to a plot
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -5811,57 +5847,55 @@ add_dashed_lines <- function(
     treatment_timepoints,
     treatment_labels,
     y_pos = 1,
-    horizontal_labels = FALSE
-    ) {
-  
-  # Check if treatment labels and timepoints are valid
-  if (!is.null(treatment_timepoints) &&
-    !is.null(treatment_labels) &&
-    all(!is.na(treatment_timepoints)) &&
-    all(!is.na(treatment_labels))) {
-    # Create a data frame for the treatment lines
-    treatment_df <- data.frame(
-      Time = treatment_timepoints,
-      Label = treatment_labels,
-      y_pos = y_pos
-    )
+    horizontal_labels = FALSE) {
+    # Check if treatment labels and timepoints are valid
+    if (!is.null(treatment_timepoints) &&
+        !is.null(treatment_labels) &&
+        all(!is.na(treatment_timepoints)) &&
+        all(!is.na(treatment_labels))) {
+        # Create a data frame for the treatment lines
+        treatment_df <- data.frame(
+            Time = treatment_timepoints,
+            Label = treatment_labels,
+            y_pos = y_pos
+        )
 
-    # Generate distinct colors for the treatment labels
-    treatment_colors <- scales::hue_pal()(length(treatment_labels))
-    names(treatment_colors) <- treatment_labels
+        # Generate distinct colors for the treatment labels
+        treatment_colors <- scales::hue_pal()(length(treatment_labels))
+        names(treatment_colors) <- treatment_labels
 
-    # Add dashed vertical lines and text labels to the plot
-    p <- p +
-      ggplot2::geom_vline(
-        data = treatment_df,
-        ggplot2::aes(
-          xintercept = .data$Time,
-          color = .data$Label
-        ),
-        linetype = "dashed",
-        linewidth = 0.5
-      ) +
-      ggplot2::geom_text(
-        data = treatment_df,
-        ggplot2::aes(
-          x = ifelse(
-            horizontal_labels,
-            .data$Time + max(treatment_timepoints) * 0.04,
-            .data$Time - max(treatment_timepoints) * 0.005
-          ),
-          y = .data$y_pos,
-          label = round(.data$Time, 2),
-          color = .data$Label
-        ),
-        angle = if (horizontal_labels) 0 else 90,
-        vjust = if (horizontal_labels) -0.2 else 0,
-        hjust = if (horizontal_labels) 0.5 else 1,
-        size = 3,
-        show.legend = FALSE
-      )
-  }
+        # Add dashed vertical lines and text labels to the plot
+        p <- p +
+            ggplot2::geom_vline(
+                data = treatment_df,
+                ggplot2::aes(
+                    xintercept = .data$Time,
+                    color = .data$Label
+                ),
+                linetype = "dashed",
+                linewidth = 0.5
+            ) +
+            ggplot2::geom_text(
+                data = treatment_df,
+                ggplot2::aes(
+                    x = ifelse(
+                        horizontal_labels,
+                        .data$Time + max(treatment_timepoints) * 0.04,
+                        .data$Time - max(treatment_timepoints) * 0.005
+                    ),
+                    y = .data$y_pos,
+                    label = round(.data$Time, 2),
+                    color = .data$Label
+                ),
+                angle = if (horizontal_labels) 0 else 90,
+                vjust = if (horizontal_labels) -0.2 else 0,
+                hjust = if (horizontal_labels) 0.5 else 1,
+                size = 3,
+                show.legend = FALSE
+            )
+    }
 
-  return(p) # Return the updated plot object
+    return(p) # Return the updated plot object
 }
 
 
@@ -5903,55 +5937,56 @@ add_dashed_lines <- function(
 #' \code{sign(r) * r^2}.
 #'
 #' @importFrom stats cor setNames
-#' 
+#'
 compute_cluster_fits <- function(
     curves_mat,
-    clusters
-) {
-  n  <- nrow(curves_mat)
-  X <- curves_mat
-  
-  # signed r^2 to the cluster centroid (shape fit with sign)
-  per_member <- rep(NA_real_, n)
-  k_vals <- sort(unique(clusters))
-  per_cluster_mean <- stats::setNames(numeric(length(k_vals)), k_vals)
-  
-  for (k in k_vals) {
-    idx <- which(clusters == k)
-    
-    # singleton clusters -> undefined/uninformative
-    if (length(idx) <= 1L) {
-      per_member[idx] <- NA_real_
-      per_cluster_mean[as.character(k)] <- NA_real_
-      next
+    clusters) {
+    n <- nrow(curves_mat)
+    X <- curves_mat
+
+    # signed r^2 to the cluster centroid (shape fit with sign)
+    per_member <- rep(NA_real_, n)
+    k_vals <- sort(unique(clusters))
+    per_cluster_mean <- stats::setNames(numeric(length(k_vals)), k_vals)
+
+    for (k in k_vals) {
+        idx <- which(clusters == k)
+
+        # singleton clusters -> undefined/uninformative
+        if (length(idx) <= 1L) {
+            per_member[idx] <- NA_real_
+            per_cluster_mean[as.character(k)] <- NA_real_
+            next
+        }
+
+        # centroid as mean curve (pointwise)
+        cent <- colMeans(X[idx, , drop = FALSE], na.rm = TRUE)
+
+        # correlation of each member with centroid (pairwise complete obs)
+        cors <- apply(
+            X[idx, , drop = FALSE], 1,
+            function(row) {
+                stats::cor(
+                    row,
+                    cent,
+                    use = "pairwise.complete.obs",
+                    method = "pearson"
+                )
+            }
+        )
+
+        # signed r^2
+        sr2 <- sign(cors) * (cors^2)
+
+        per_member[idx] <- as.numeric(sr2)
+        per_cluster_mean[as.character(k)] <- mean(per_member[idx], na.rm = TRUE)
     }
-    
-    # centroid as mean curve (pointwise)
-    cent <- colMeans(X[idx, , drop = FALSE], na.rm = TRUE)
-    
-    # correlation of each member with centroid (pairwise complete obs)
-    cors <- apply(
-      X[idx, , drop = FALSE], 1,
-      function(row) stats::cor(
-        row,
-        cent,
-        use = "pairwise.complete.obs",
-        method = "pearson"
-      )
+
+    overall_mean <- mean(per_member, na.rm = TRUE)
+
+    list(
+        per_cluster_mean = per_cluster_mean,
+        per_member       = per_member,
+        overall_mean     = overall_mean
     )
-    
-    # signed r^2
-    sr2 <- sign(cors) * (cors ^ 2)
-    
-    per_member[idx] <- as.numeric(sr2)
-    per_cluster_mean[as.character(k)] <- mean(per_member[idx], na.rm = TRUE)
-  }
-  
-  overall_mean <- mean(per_member, na.rm = TRUE)
-  
-  list(
-    per_cluster_mean = per_cluster_mean,
-    per_member       = per_member,
-    overall_mean     = overall_mean
-  )
 }

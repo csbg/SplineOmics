@@ -173,8 +173,8 @@ list(
     )
   ),
   time_effect_condition_<level2> = list(...),
-  avrg_diff_conditions          = list(...), # only if hits (integrated mode)
-  interaction_condition_time    = list(...)  # only if hits (integrated mode)
+  avrg_diff_conditions          = list(...),
+  interaction_condition_time    = list(...)
 )
 }
 }
@@ -182,68 +182,69 @@ list(
 This function generates a overrepresentation analysis report based
 on clustered hit levels, gene data, and specified databases. It accomplishes
 this by using the R package clusterProfiler. As output, you will receive a
-list of the plot objects it generated, and an HTML report with embedded files
-containing the enrichment results, and dotplots visualizing the enrichment.
+list of the plot objects it generated, and an HTML report with embedded
+files containing the enrichment results, and dotplots visualizing the
+enrichment.
 }
 \examples{
 \dontshow{if (requireNamespace("clusterProfiler", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 {
-set.seed(1)
+    set.seed(1)
 
-# --- toy cluster table (two “conditions”) ------------------------------
-toy_genes <- paste0("G", 1:8)
-cluster_table <- tibble::tibble(
-  feature_nr    = 1:8,
-  feature_name  = paste0("feat_", 1:8),
-  gene          = toy_genes,
-  cluster_condA = c(1, 1, 2, 2, NA, NA, 1, 2),
-  cluster_condB = c(NA, 1, NA, 2, 1, 2, 1, NA)
-)
+    # --- toy cluster table (two “conditions”) ------------------------------
+    toy_genes <- paste0("G", 1:8)
+    cluster_table <- tibble::tibble(
+        feature_nr    = 1:8,
+        feature_name  = paste0("feat_", 1:8),
+        gene          = toy_genes,
+        cluster_condA = c(1, 1, 2, 2, NA, NA, 1, 2),
+        cluster_condB = c(NA, 1, NA, 2, 1, 2, 1, NA)
+    )
 
-# --- toy TERM2GENE database -------------------------------------------
-databases <- data.frame(
-  DB      = rep("ToyDB", 6),
-  Geneset = c(rep("SetA", 3), rep("SetB", 3)),
-  Gene    = c("G1", "G2", "G7", "G3", "G4", "G6"),
-  stringsAsFactors = FALSE
-)
+    # --- toy TERM2GENE database -------------------------------------------
+    databases <- data.frame(
+        DB = rep("ToyDB", 6),
+        Geneset = c(rep("SetA", 3), rep("SetB", 3)),
+        Gene = c("G1", "G2", "G7", "G3", "G4", "G6"),
+        stringsAsFactors = FALSE
+    )
 
-# --- minimal report info ----------------------------------------------
-report_info <- list(
-  omics_data_type     = "TOY",
-  data_description    = "Toy dataset for run_ora() example",
-  data_collection_date= "2025",
-  analyst_name        = "Example Analyst",
-  contact_info        = "analyst@example.org",
-  project_name        = "ToyProject"
-)
+    # --- minimal report info ----------------------------------------------
+    report_info <- list(
+        omics_data_type = "TOY",
+        data_description = "Toy dataset for run_ora() example",
+        data_collection_date = "2025",
+        analyst_name = "Example Analyst",
+        contact_info = "analyst@example.org",
+        project_name = "ToyProject"
+    )
 
-# --- output directory (temp) -------------------------------------------
-report_dir <- file.path(tempdir(), "run_ora_demo")
-dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+    # --- output directory (temp) -------------------------------------------
+    report_dir <- file.path(tempdir(), "run_ora_demo")
+    dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
-# --- permissive params for tiny example --------------------------------
-clusterProfiler_params <- list(
-  pvalueCutoff = 1,
-  qvalueCutoff = 1,
-  minGSSize    = 1,
-  maxGSSize    = 500
-)
+    # --- permissive params for tiny example --------------------------------
+    clusterProfiler_params <- list(
+        pvalueCutoff = 1,
+        qvalueCutoff = 1,
+        minGSSize    = 1,
+        maxGSSize    = 500
+    )
 
-# --- run ORA -----------------------------------------------------------
-res <- run_ora(
-  cluster_table            = cluster_table,
-  databases                = databases,
-  report_info              = report_info,
-  cluster_hits_report_name = "cluster_hits_demo",
-  clusterProfiler_params   = clusterProfiler_params,
-  report_dir               = report_dir,
-  verbose                  = TRUE
-)
+    # --- run ORA -----------------------------------------------------------
+    res <- run_ora(
+        cluster_table            = cluster_table,
+        databases                = databases,
+        report_info              = report_info,
+        cluster_hits_report_name = "cluster_hits_demo",
+        clusterProfiler_params   = clusterProfiler_params,
+        report_dir               = report_dir,
+        verbose                  = TRUE
+    )
 
-# see sections and files written
-names(res)
-list.files(report_dir, recursive = TRUE)
+    # see sections and files written
+    names(res)
+    list.files(report_dir, recursive = TRUE)
 }
 \dontshow{\}) # examplesIf}
 }

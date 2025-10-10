@@ -54,70 +54,71 @@ set.seed(1)
 
 # --- Toy data: 4 features x 6 samples ---
 toy_data <- matrix(
-  rnorm(4 * 6),
-  nrow = 4, ncol = 6,
-  dimnames = list(paste0("feat", 1:4), paste0("S", 1:6))
+    rnorm(4 * 6),
+    nrow = 4, ncol = 6,
+    dimnames = list(paste0("feat", 1:4), paste0("S", 1:6))
 )
 
 # --- Metadata with required columns (Time, Condition) ---
 toy_meta <- data.frame(
-  SampleID  = colnames(toy_data),
-  Time      = c(0, 0, 1, 1, 2, 2),
-  Condition = factor(c("Ctrl","Ctrl","Ctrl","Trt","Trt","Trt"),
-                     levels = c("Ctrl","Trt")),
-  row.names = colnames(toy_data),
-  check.names = FALSE
+    SampleID = colnames(toy_data),
+    Time = c(0, 0, 1, 1, 2, 2),
+    Condition = factor(c("Ctrl", "Ctrl", "Ctrl", "Trt", "Trt", "Trt"),
+        levels = c("Ctrl", "Trt")
+    ),
+    row.names = colnames(toy_data),
+    check.names = FALSE
 )
 
 # --- Minimal annotation (feature-level) ---
 toy_anno <- data.frame(
-  feature_id = rownames(toy_data),
-  gene       = paste0("G", 1:4),
-  row.names  = rownames(toy_data),
-  check.names = FALSE
+    feature_id = rownames(toy_data),
+    gene = paste0("G", 1:4),
+    row.names = rownames(toy_data),
+    check.names = FALSE
 )
 
 # --- Helper to fabricate limma-like topTables ---
 make_tt <- function(n = 4) {
-  p  <- runif(n)
-  ap <- p.adjust(p, method = "BH")
-  data.frame(
-    logFC     = rnorm(n),
-    AveExpr   = rnorm(n, 5),
-    t         = rnorm(n),
-    P.Value   = p,
-    adj.P.Val = ap,
-    B         = rnorm(n),
-    row.names = paste0("feat", 1:n),
-    check.names = FALSE
-  )
+    p <- runif(n)
+    ap <- p.adjust(p, method = "BH")
+    data.frame(
+        logFC = rnorm(n),
+        AveExpr = rnorm(n, 5),
+        t = rnorm(n),
+        P.Value = p,
+        adj.P.Val = ap,
+        B = rnorm(n),
+        row.names = paste0("feat", 1:n),
+        check.names = FALSE
+    )
 }
 
 # Structure expected by create_limma_report():
 toy_limma_res <- list(
-  time_effect = list(
-    "Time" = make_tt()
-  ),
-  avrg_diff_conditions       = make_tt(),
-  interaction_condition_time = make_tt()
+    time_effect = list(
+        "Time" = make_tt()
+    ),
+    avrg_diff_conditions = make_tt(),
+    interaction_condition_time = make_tt()
 )
 
 # --- Build SplineOmics object (note: condition is the COLUMN NAME) ---
 so <- create_splineomics(
-  data                 = toy_data,
-  meta                 = toy_meta,
-  condition            = "Condition",
-  annotation           = toy_anno,
-  design               = "1 ~ Condition + Time",
-  spline_params        = list(spline_type = c("n", "n"), dof = c(2L, 2L)),
-  report_info          = list(
-    omics_data_type       = "RNA-seq (toy)",
-    data_description      = "Simulated expression matrix (4x6)",
-    data_collection_date  = "2025-10-07",
-    analyst_name          = "Analyst A",
-    contact_info          = "analyst@example.org",
-    project_name          = "SplineOmics Demo"
-  )
+    data = toy_data,
+    meta = toy_meta,
+    condition = "Condition",
+    annotation = toy_anno,
+    design = "1 ~ Condition + Time",
+    spline_params = list(spline_type = c("n", "n"), dof = c(2L, 2L)),
+    report_info = list(
+        omics_data_type       = "RNA-seq (toy)",
+        data_description      = "Simulated expression matrix (4x6)",
+        data_collection_date  = "2025-10-07",
+        analyst_name          = "Analyst A",
+        contact_info          = "analyst@example.org",
+        project_name          = "SplineOmics Demo"
+    )
 )
 
 # Attach limma results to the object
@@ -125,10 +126,10 @@ so <- update_splineomics(so, limma_splines_result = toy_limma_res)
 
 # --- Generate the HTML report into a temporary directory ---
 out_plots <- create_limma_report(
-  splineomics = so,
-  adj_pthresh = 0.05,
-  report_dir  = tempdir(),
-  verbose     = FALSE
+    splineomics = so,
+    adj_pthresh = 0.05,
+    report_dir  = tempdir(),
+    verbose     = FALSE
 )
 
 }

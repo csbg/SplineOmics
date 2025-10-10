@@ -19,26 +19,28 @@ Updates a SplineOmics object by modifying existing fields or adding new ones.
 }
 \examples{
 set.seed(1)
-toy_data <- matrix(rnorm(12), nrow = 3,
-                   dimnames = list(paste0("gene", 1:3), paste0("S", 1:4)))
+toy_data <- matrix(rnorm(12),
+    nrow = 3,
+    dimnames = list(paste0("gene", 1:3), paste0("S", 1:4))
+)
 toy_meta <- data.frame(
-  SampleID = colnames(toy_data),
-  Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
-  stringsAsFactors = FALSE,
-  row.names = colnames(toy_data)
+    SampleID = colnames(toy_data),
+    Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
+    stringsAsFactors = FALSE,
+    row.names = colnames(toy_data)
 )
 
 so <- create_splineomics(
-  data = toy_data,
-  meta = toy_meta,
-  condition = toy_meta$Condition
+    data = toy_data,
+    meta = toy_meta,
+    condition = toy_meta$Condition
 )
 
 # Update the mode and add a new design matrix
-new_design <- model.matrix(~ Condition, data = toy_meta)
+new_design <- model.matrix(~Condition, data = toy_meta)
 so_updated <- update_splineomics(so,
-  mode = "integrated",
-  design = new_design
+    mode = "integrated",
+    design = new_design
 )
 
 str(so_updated, max.level = 1)

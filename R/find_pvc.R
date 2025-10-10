@@ -116,18 +116,18 @@
 #'
 #' ## Your original 8x6 toy matrix
 #' toy6 <- matrix(
-#' c(
-#' 3, 5, 8, 12, 17, 23, # f1
-#' 23, 17, 13, 9, 6, 4, # f2
-#' 5, 3, 2, 2, 3, 5, # f3
-#' 1, 4, 9, 8, 4, 1, # f4
-#' 10, 10, 10, 10, 10, 10, # f5
-#' 2, 2, 2, 9, 12, 15, # f6
-#' 4, 5, 7, 10, 14, 19, # f7
-#' 12, 11, 9, 8, 9, 12 # f8
-#' ),
-#' nrow = 8, ncol = 6, byrow = TRUE,
-#' dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#'     c(
+#'         3, 5, 8, 12, 17, 23, # f1
+#'         23, 17, 13, 9, 6, 4, # f2
+#'         5, 3, 2, 2, 3, 5, # f3
+#'         1, 4, 9, 8, 4, 1, # f4
+#'         10, 10, 10, 10, 10, 10, # f5
+#'         2, 2, 2, 9, 12, 15, # f6
+#'         4, 5, 7, 10, 14, 19, # f7
+#'         12, 11, 9, 8, 9, 12 # f8
+#'     ),
+#'     nrow = 8, ncol = 6, byrow = TRUE,
+#'     dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 #' )
 #'
 #' ## Baselines per condition from toy6 (WT = cols 1:3, KO = cols 4:6)
@@ -146,9 +146,9 @@
 #'
 #' ## Create 3 replicates by adding tiny noise and bind WT then KO
 #' rep3 <- function(M, sd = 0.2) {
-#' do.call(cbind, lapply(1:3, function(i) {
-#' M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
-#' }))
+#'     do.call(cbind, lapply(1:3, function(i) {
+#'         M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
+#'     }))
 #' }
 #'
 #' toy_data <- cbind(rep3(wt), rep3(ko))
@@ -158,61 +158,61 @@
 #' ## Matching meta: 2 conditions × 3 reps × 4 timepoints = 24 rows
 #' time <- 0:3
 #' toy_meta <- data.frame(
-#' Time = rep(time, times = 2 * 3),
-#' condition = rep(c("WT", "KO"), each = 3 * length(time)),
-#' Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
-#' row.names = colnames(toy_data),
-#' stringsAsFactors = FALSE
+#'     Time = rep(time, times = 2 * 3),
+#'     condition = rep(c("WT", "KO"), each = 3 * length(time)),
+#'     Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
+#'     row.names = colnames(toy_data),
+#'     stringsAsFactors = FALSE
 #' )
 #'
 #' # Minimal annotation & report info
 #' annotation <- data.frame(
-#'   id = rownames(toy_data),
-#'   row.names = rownames(toy_data)
+#'     id = rownames(toy_data),
+#'     row.names = rownames(toy_data)
 #' )
 #'
 #' report_info <- list(
-#'   omics_data_type      = "Transcriptomics",
-#'   data_description     = "Toy time-series (WT vs KO, t=0/1/2)",
-#'   data_collection_date = "2025-01-01",
-#'   analyst_name         = "Example",
-#'   contact_info         = "example@example.org",
-#'   project_name         = "find_pvc_toy"
+#'     omics_data_type      = "Transcriptomics",
+#'     data_description     = "Toy time-series (WT vs KO, t=0/1/2)",
+#'     data_collection_date = "2025-01-01",
+#'     analyst_name         = "Example",
+#'     contact_info         = "example@example.org",
+#'     project_name         = "find_pvc_toy"
 #' )
 #'
 #' splineomics <- list(
-#'   data = toy_data,
-#'   meta = toy_meta,
-#'   annotation = annotation,
-#'   condition = "condition",
-#'   meta_batch_column = "Replicate",
-#'   padjust_method = "BH",
-#'   report_info = report_info,
-#'   feature_name_columns = "id"
+#'     data = toy_data,
+#'     meta = toy_meta,
+#'     annotation = annotation,
+#'     condition = "condition",
+#'     meta_batch_column = "Replicate",
+#'     padjust_method = "BH",
+#'     report_info = report_info,
+#'     feature_name_columns = "id"
 #' )
 #'
 #' plot_info <- list(
-#'   y_axis_label = "log2 value",
-#'   time_unit = "hours",
-#'   treatment_labels = NA,
-#'   treatment_timepoints = NA
+#'     y_axis_label = "log2 value",
+#'     time_unit = "hours",
+#'     treatment_labels = NA,
+#'     treatment_timepoints = NA
 #' )
 #'
 #' # Run with a lenient alpha to ensure toy detections;
 #' # write report to a temp dir to avoid clutter.
 #' res <- find_pvc(
-#'   splineomics = splineomics,
-#'   alphas = 0.05,
-#'   padjust_method = "BH",
-#'   support = 1,
-#'   plot_info = plot_info,
-#'   report_dir = tempdir()
+#'     splineomics = splineomics,
+#'     alphas = 0.05,
+#'     padjust_method = "BH",
+#'     support = 1,
+#'     plot_info = plot_info,
+#'     report_dir = tempdir()
 #' )
 #'
 #' # Peek at one plot if available (WT first plot)
 #' if (!is.null(res[["WT"]][["plots"]]) &&
 #'     length(res[["WT"]][["plots"]]) > 0) {
-#'   print(res[["WT"]][["plots"]][[1]])
+#'     print(res[["WT"]][["plots"]][[1]])
 #' }
 #'
 #' @export
@@ -223,173 +223,174 @@ find_pvc <- function(
     padjust_method = "BH",
     support = 1,
     plot_info = list(
-      y_axis_label = "Value",
-      time_unit = "min",
-      treatment_labels = NA,
-      treatment_timepoints = NA
+        y_axis_label = "Value",
+        time_unit = "min",
+        treatment_labels = NA,
+        treatment_timepoints = NA
     ),
-    report_dir = here::here()
-) {
-
-  check_splineomics_elements(
-    splineomics = splineomics,
-    func_type = "find_peaks_valleys"
-  )
-
-  args <- lapply(
-    as.list(match.call()[-1]),
-    eval,
-    parent.frame()
-  )
-
-  check_null_elements(args)
-  input_control <- InputControl$new(args)
-  input_control$auto_validate()
-
-  data <- splineomics[["data"]]
-  annotation <- splineomics[["annotation"]]
-  meta <- splineomics[["meta"]]
-  condition <- splineomics[["condition"]]
-  meta_batch_column <- splineomics[["meta_batch_column"]]
-  meta_batch2_column <- splineomics[["meta_batch2_column"]]
-  report_info <- splineomics[["report_info"]]
-  feature_name_columns <- splineomics[["feature_name_columns"]]
-
-  batch_effects <- c(meta_batch_column, meta_batch2_column)
-
-  # Get all unique condition levels
-  condition_levels <- unique(meta[[condition]])
-  alphas <- normalize_alphas(
-    alphas = alphas,
-    condition_levels = condition_levels
-  )
-
-  # Initialize output list
-  results <- list()
-
-  for (level_index in seq_along(condition_levels)) {
-    level <- condition_levels[[level_index]]
-
-    # Select samples for this condition level
-    selected_samples <- meta[[condition]] == level
-    sub_data <- data[, selected_samples, drop = FALSE]
-    sub_meta <- meta[selected_samples, , drop = FALSE]
-
-    alpha <- alphas[[level]]
-
-    # Run peak/valley detection on the subset
-    pvc_pvals <- pvc_test(
-      data = sub_data,
-      meta = sub_meta,
-      batch_effects = batch_effects,
-      padjust_method = padjust_method
+    report_dir = here::here()) {
+    check_splineomics_elements(
+        splineomics = splineomics,
+        func_type = "find_peaks_valleys"
     )
 
-    pvc_pvals <- filter_pvals_by_support(
-      pvc_pvals,
-      sub_data,
-      sub_meta,
-      support
+    args <- lapply(
+        as.list(match.call()[-1]),
+        eval,
+        parent.frame()
     )
 
-    labels <- classify_excursions(
-      data = sub_data,
-      meta = sub_meta,
-      pvc_pvals = pvc_pvals,
-      alpha = alpha
+    check_null_elements(args)
+    input_control <- InputControl$new(args)
+    input_control$auto_validate()
+
+    data <- splineomics[["data"]]
+    annotation <- splineomics[["annotation"]]
+    meta <- splineomics[["meta"]]
+    condition <- splineomics[["condition"]]
+    meta_batch_column <- splineomics[["meta_batch_column"]]
+    meta_batch2_column <- splineomics[["meta_batch2_column"]]
+    report_info <- splineomics[["report_info"]]
+    feature_name_columns <- splineomics[["feature_name_columns"]]
+
+    batch_effects <- c(meta_batch_column, meta_batch2_column)
+
+    # Get all unique condition levels
+    condition_levels <- unique(meta[[condition]])
+    alphas <- normalize_alphas(
+        alphas = alphas,
+        condition_levels = condition_levels
     )
 
-    # Count each label type per column (i.e., per timepoint)
-    pattern_counts <- apply(
-      labels,
-      2,
-      function(col) table(factor(col, levels = c("p", "v", "b", "t")))
+    # Initialize output list
+    results <- list()
+
+    for (level_index in seq_along(condition_levels)) {
+        level <- condition_levels[[level_index]]
+
+        # Select samples for this condition level
+        selected_samples <- meta[[condition]] == level
+        sub_data <- data[, selected_samples, drop = FALSE]
+        sub_meta <- meta[selected_samples, , drop = FALSE]
+
+        alpha <- alphas[[level]]
+
+        # Run peak/valley detection on the subset
+        pvc_pvals <- pvc_test(
+            data = sub_data,
+            meta = sub_meta,
+            batch_effects = batch_effects,
+            padjust_method = padjust_method
+        )
+
+        pvc_pvals <- filter_pvals_by_support(
+            pvc_pvals,
+            sub_data,
+            sub_meta,
+            support
+        )
+
+        labels <- classify_excursions(
+            data = sub_data,
+            meta = sub_meta,
+            pvc_pvals = pvc_pvals,
+            alpha = alpha
+        )
+
+        # Count each label type per column (i.e., per timepoint)
+        pattern_counts <- apply(
+            labels,
+            2,
+            function(col) table(factor(col, levels = c("p", "v", "b", "t")))
+        )
+
+        # Convert to data frame for easier aggregation
+        pattern_df <- as.data.frame(pattern_counts)
+        pattern_summary <- rowSums(pattern_df)
+        total_hits <- sum(pattern_summary)
+
+        # Compose message
+        message(
+            "\nDetected ",
+            total_hits,
+            " total pattern hits for condition level: ",
+            level,
+            "\n\n",
+            "Summary by pattern type:\n",
+            paste(
+                names(pattern_summary),
+                pattern_summary,
+                sep = ": ",
+                collapse = ", "
+            ),
+            "\n\n",
+            "Breakdown by timepoint:\n",
+            paste(
+                colnames(pattern_df),
+                apply(
+                    pattern_df,
+                    2,
+                    function(x) {
+                        paste(
+                            names(x),
+                            x,
+                            sep = "=",
+                            collapse = "; "
+                        )
+                    }
+                ),
+                sep = ": ",
+                collapse = "\n"
+            ),
+            "\n"
+        )
+
+        # Plot results
+        plots <- plot_pvc(
+            pvc_pvals = pvc_pvals,
+            data = sub_data,
+            meta = sub_meta,
+            meta_batch_column = meta_batch_column,
+            alpha = alpha,
+            plot_info = plot_info,
+            level = level
+        )
+
+        results[[as.character(level)]][["plots"]] <- plots
+        results[[as.character(level)]][["pvc_adj_pvals"]] <- pvc_pvals
+        results[[as.character(level)]][["pvc_pattern_summary"]] <- pattern_df
+    }
+
+    # This info is passed like this so that it can be written in the HTML report
+    level_headers_info <- list(
+        pvc_settings = list(
+            adj_value_thresh = alphas,
+            padjust_method = padjust_method,
+            support = support,
+            batch_effects = batch_effects
+        )
     )
 
-    # Convert to data frame for easier aggregation
-    pattern_df <- as.data.frame(pattern_counts)
-    pattern_summary <- rowSums(pattern_df)
-    total_hits <- sum(pattern_summary)
-
-    # Compose message
-    message(
-      "\nDetected ",
-      total_hits,
-      " total pattern hits for condition level: ",
-      level,
-      "\n\n",
-      "Summary by pattern type:\n",
-      paste(
-        names(pattern_summary),
-        pattern_summary,
-        sep = ": ",
-        collapse = ", "
-      ),
-      "\n\n",
-      "Breakdown by timepoint:\n",
-      paste(
-        colnames(pattern_df),
-        apply(
-          pattern_df,
-          2,
-          function(x) paste(
-            names(x),
-            x,
-            sep = "=",
-            collapse = "; "
-          )),
-        sep = ": ",
-        collapse = "\n"
-      ),
-      "\n"
+    generate_report_html(
+        plots = results,
+        # required, but statically handled downstream for the pvc HTML report.
+        plots_sizes = NULL,
+        report_info = report_info,
+        data = bind_data_with_annotation(data, annotation),
+        meta = meta,
+        level_headers_info = level_headers_info,
+        report_type = "find_pvc",
+        feature_name_columns = feature_name_columns,
+        filename = "pvc_report",
+        report_dir = report_dir
     )
 
-    # Plot results
-    plots <- plot_pvc(
-      pvc_pvals = pvc_pvals,
-      data = sub_data,
-      meta = sub_meta,
-      meta_batch_column = meta_batch_column,
-      alpha = alpha,
-      plot_info = plot_info,
-      level = level
+    print_info_message(
+        message_prefix = "PVC report generation",
+        report_dir = report_dir
     )
 
-    results[[as.character(level)]][["plots"]] <- plots
-    results[[as.character(level)]][["pvc_adj_pvals"]] <- pvc_pvals
-    results[[as.character(level)]][["pvc_pattern_summary"]] <- pattern_df
-  }
-
-  # This info is passed like this so that it can be written in the HTML report
-  level_headers_info <- list(
-    pvc_settings = list(
-      adj_value_thresh = alphas,
-      padjust_method = padjust_method,
-      support = support,
-      batch_effects = batch_effects
-    )
-  )
-
-  generate_report_html(
-    plots = results,
-    # required, but statically handled downstream for the pvc HTML report.
-    plots_sizes = NULL,
-    report_info = report_info,
-    data = bind_data_with_annotation(data, annotation),
-    meta = meta,
-    level_headers_info = level_headers_info,
-    report_type = "find_pvc",
-    feature_name_columns = feature_name_columns,
-    filename = "pvc_report",
-    report_dir = report_dir
-  )
-
-  print_info_message(
-    message_prefix = "PVC report generation",
-    report_dir = report_dir
-  )
-
-  return(results)
+    return(results)
 }
 
 
@@ -421,23 +422,23 @@ find_pvc <- function(
 #'
 normalize_alphas <- function(
     alphas,
-    condition_levels
-) {
-
-  if (is.numeric(alphas) && length(alphas) == 1) {
-    alphas <- setNames(as.list(rep(
-      alphas,
-      length(condition_levels))),
-      condition_levels
-    )
-  } else if (is.list(alphas)) {
-    if (!all(condition_levels %in% names(alphas))) {
-      stop_call_false("Alpha list must be named for all condition levels.")
+    condition_levels) {
+    if (is.numeric(alphas) && length(alphas) == 1) {
+        alphas <- setNames(
+            as.list(rep(
+                alphas,
+                length(condition_levels)
+            )),
+            condition_levels
+        )
+    } else if (is.list(alphas)) {
+        if (!all(condition_levels %in% names(alphas))) {
+            stop_call_false("Alpha list must be named for all condition levels.")
+        }
+    } else {
+        stop_call_false("Invalid alphas: must be a single numeric or a named list.")
     }
-  } else {
-    stop_call_false("Invalid alphas: must be a single numeric or a named list.")
-  }
-  return(alphas)
+    return(alphas)
 }
 
 
@@ -480,81 +481,80 @@ pvc_test <- function(
     data,
     meta,
     batch_effects,
-    padjust_method = "BH"
-) {
-  # Extract unique timepoints in sorted order
-  unique_timepoints <- sort(unique(meta$Time))
-  num_timepoints <- length(unique_timepoints)
+    padjust_method = "BH") {
+    # Extract unique timepoints in sorted order
+    unique_timepoints <- sort(unique(meta$Time))
+    num_timepoints <- length(unique_timepoints)
 
-  # Ensure there are at least 3 timepoints for meaningful comparisons
-  if (num_timepoints < 3) {
-    stop("Not enough timepoints for compound-contrast-based comparisons.")
-  }
-
-  # Remove the batch effect(s)
-  if (!identical(batch_effects, FALSE)) {
-    if (length(batch_effects) == 1) {
-      data <- limma::removeBatchEffect(
-        data,
-        batch = meta[[batch_effects[1]]]
-      )
-    } else if (length(batch_effects) == 2) {
-      data <- limma::removeBatchEffect(
-        data,
-        batch = meta[[batch_effects[1]]],
-        batch2 = meta[[batch_effects[2]]]
-      )
+    # Ensure there are at least 3 timepoints for meaningful comparisons
+    if (num_timepoints < 3) {
+        stop("Not enough timepoints for compound-contrast-based comparisons.")
     }
-  }
 
-  valid_timepoints <- make.names(as.character(unique_timepoints))
+    # Remove the batch effect(s)
+    if (!identical(batch_effects, FALSE)) {
+        if (length(batch_effects) == 1) {
+            data <- limma::removeBatchEffect(
+                data,
+                batch = meta[[batch_effects[1]]]
+            )
+        } else if (length(batch_effects) == 2) {
+            data <- limma::removeBatchEffect(
+                data,
+                batch = meta[[batch_effects[1]]],
+                batch2 = meta[[batch_effects[2]]]
+            )
+        }
+    }
 
-  time <- factor(meta$Time, levels = unique_timepoints)
-  design <- stats::model.matrix(~ 0 + time)
-  colnames(design) <- valid_timepoints
+    valid_timepoints <- make.names(as.character(unique_timepoints))
 
-  fit <- limma::lmFit(    # Fit base limma model
-    data,
-    design
-  )
+    time <- factor(meta$Time, levels = unique_timepoints)
+    design <- stats::model.matrix(~ 0 + time)
+    colnames(design) <- valid_timepoints
 
-  # Initialize matrix to store compound contrast p-values
-  peak_valley_pvals <- matrix(
-    NA,
-    nrow = nrow(data),
-    ncol = num_timepoints - 2
-  )
-  rownames(peak_valley_pvals) <- rownames(data)
-  colnames(peak_valley_pvals) <- paste0(
-    unique_timepoints[-c(1, num_timepoints)],
-    "_vs_neighbors"
-  )
-
-  # Loop over internal timepoints to compute compound contrast p-values
-  for (t in 2:(num_timepoints - 1)) {
-    compound_contrast <- paste0(
-      "(", valid_timepoints[t], "-", valid_timepoints[t - 1], ") + ",
-      "(", valid_timepoints[t], "-", valid_timepoints[t + 1], ")"
+    fit <- limma::lmFit( # Fit base limma model
+        data,
+        design
     )
 
-    contrast_matrix <- limma::makeContrasts(
-      contrasts = compound_contrast,
-      levels = design
+    # Initialize matrix to store compound contrast p-values
+    peak_valley_pvals <- matrix(
+        NA,
+        nrow = nrow(data),
+        ncol = num_timepoints - 2
+    )
+    rownames(peak_valley_pvals) <- rownames(data)
+    colnames(peak_valley_pvals) <- paste0(
+        unique_timepoints[-c(1, num_timepoints)],
+        "_vs_neighbors"
     )
 
-    fit2 <- limma::contrasts.fit(fit, contrast_matrix)
-    fit2 <- limma::eBayes(fit2)
+    # Loop over internal timepoints to compute compound contrast p-values
+    for (t in 2:(num_timepoints - 1)) {
+        compound_contrast <- paste0(
+            "(", valid_timepoints[t], "-", valid_timepoints[t - 1], ") + ",
+            "(", valid_timepoints[t], "-", valid_timepoints[t + 1], ")"
+        )
 
-    peak_valley_pvals[, t - 1] <- limma::topTable(
-      fit2,
-      coef = 1,
-      number = Inf,
-      adjust.method = padjust_method,
-      sort.by = "none"
-    )[,"adj.P.Val"]
-  }
+        contrast_matrix <- limma::makeContrasts(
+            contrasts = compound_contrast,
+            levels = design
+        )
 
-  return(peak_valley_pvals)
+        fit2 <- limma::contrasts.fit(fit, contrast_matrix)
+        fit2 <- limma::eBayes(fit2)
+
+        peak_valley_pvals[, t - 1] <- limma::topTable(
+            fit2,
+            coef = 1,
+            number = Inf,
+            adjust.method = padjust_method,
+            sort.by = "none"
+        )[, "adj.P.Val"]
+    }
+
+    return(peak_valley_pvals)
 }
 
 
@@ -601,69 +601,67 @@ filter_pvals_by_support <- function(
     pvc_pvals,
     sub_data,
     sub_meta,
-    support
-) {
-
-  # Ensure Time is numeric and sorted
-  time_values <- sub_meta$Time
-  if (!is.numeric(time_values)) {
-    stop("sub_meta$Time must be numeric for sorting and comparison.")
-  }
-
-  # Get unique sorted timepoints
-  unique_times <- sort(unique(time_values))
-
-  # Create a lookup for each timepoint -> column indices in sub_data
-  time_to_indices <- lapply(unique_times, function(t) which(time_values == t))
-  names(time_to_indices) <- as.character(unique_times)
-
-  # Initialize result
-  filtered_pvals <- pvc_pvals
-
-  # Loop over each column in pvc_pvals (each timepoint)
-  for (col_idx in seq_len(ncol(pvc_pvals))) {
-    # Extract timepoint t from column name (before first underscore)
-    col_name <- colnames(pvc_pvals)[col_idx]
-    t <- as.numeric(sub("_.*", "", col_name))
-    if (is.na(t)) next  # skip if invalid timepoint
-
-    # Identify previous and next timepoints
-    t_pos <- which(unique_times == t)
-    if (length(t_pos) == 0) next  # timepoint not found
-
-    # Skip if t is the first or last (no prev/next)
-    if (t_pos == 1 || t_pos == length(unique_times)) {
-      filtered_pvals[, col_idx] <- 1
-      next
+    support) {
+    # Ensure Time is numeric and sorted
+    time_values <- sub_meta$Time
+    if (!is.numeric(time_values)) {
+        stop("sub_meta$Time must be numeric for sorting and comparison.")
     }
 
-    t_prev <- unique_times[t_pos - 1]
-    t_next <- unique_times[t_pos + 1]
+    # Get unique sorted timepoints
+    unique_times <- sort(unique(time_values))
 
-    # Get column indices in sub_data for each group
-    idx_prev <- time_to_indices[[as.character(t_prev)]]
-    idx_curr <- time_to_indices[[as.character(t)]]
-    idx_next <- time_to_indices[[as.character(t_next)]]
+    # Create a lookup for each timepoint -> column indices in sub_data
+    time_to_indices <- lapply(unique_times, function(t) which(time_values == t))
+    names(time_to_indices) <- as.character(unique_times)
 
-    # Combine data per feature (i.e., per row)
-    for (row_idx in seq_len(nrow(pvc_pvals))) {
-      vals_prev <- sub_data[row_idx, idx_prev]
-      vals_curr <- sub_data[row_idx, idx_curr]
-      vals_next <- sub_data[row_idx, idx_next]
+    # Initialize result
+    filtered_pvals <- pvc_pvals
 
-      non_na_prev <- sum(!is.na(vals_prev))
-      non_na_curr <- sum(!is.na(vals_curr))
-      non_na_next <- sum(!is.na(vals_next))
+    # Loop over each column in pvc_pvals (each timepoint)
+    for (col_idx in seq_len(ncol(pvc_pvals))) {
+        # Extract timepoint t from column name (before first underscore)
+        col_name <- colnames(pvc_pvals)[col_idx]
+        t <- as.numeric(sub("_.*", "", col_name))
+        if (is.na(t)) next # skip if invalid timepoint
 
-      if (non_na_prev < support
-          || non_na_curr < support
-          || non_na_next < support) {
-        filtered_pvals[row_idx, col_idx] <- 1
-      }
+        # Identify previous and next timepoints
+        t_pos <- which(unique_times == t)
+        if (length(t_pos) == 0) next # timepoint not found
+
+        # Skip if t is the first or last (no prev/next)
+        if (t_pos == 1 || t_pos == length(unique_times)) {
+            filtered_pvals[, col_idx] <- 1
+            next
+        }
+
+        t_prev <- unique_times[t_pos - 1]
+        t_next <- unique_times[t_pos + 1]
+
+        # Get column indices in sub_data for each group
+        idx_prev <- time_to_indices[[as.character(t_prev)]]
+        idx_curr <- time_to_indices[[as.character(t)]]
+        idx_next <- time_to_indices[[as.character(t_next)]]
+
+        # Combine data per feature (i.e., per row)
+        for (row_idx in seq_len(nrow(pvc_pvals))) {
+            vals_prev <- sub_data[row_idx, idx_prev]
+            vals_curr <- sub_data[row_idx, idx_curr]
+            vals_next <- sub_data[row_idx, idx_next]
+
+            non_na_prev <- sum(!is.na(vals_prev))
+            non_na_curr <- sum(!is.na(vals_curr))
+            non_na_next <- sum(!is.na(vals_next))
+
+            if (non_na_prev < support ||
+                non_na_curr < support ||
+                non_na_next < support) {
+                filtered_pvals[row_idx, col_idx] <- 1
+            }
+        }
     }
-  }
 
-  return(filtered_pvals)
+    return(filtered_pvals)
 }
 
 
@@ -704,84 +702,82 @@ classify_excursions <- function(
     meta,
     pvc_pvals,
     alpha = 0.05,
-    symmetry_ratio = 0.3
-) {
+    symmetry_ratio = 0.3) {
+    # Extract sorted timepoints
+    unique_timepoints <- sort(unique(meta$Time))
+    num_timepoints <- length(unique_timepoints)
 
-  # Extract sorted timepoints
-  unique_timepoints <- sort(unique(meta$Time))
-  num_timepoints <- length(unique_timepoints)
+    # Initialize label matrix with "."
+    peak_valley_labels <- matrix(
+        ".",
+        nrow = nrow(data),
+        ncol = num_timepoints
+    )
+    rownames(peak_valley_labels) <- rownames(data)
+    colnames(peak_valley_labels) <- unique_timepoints
 
-  # Initialize label matrix with "."
-  peak_valley_labels <- matrix(
-    ".",
-    nrow = nrow(data),
-    ncol = num_timepoints
-  )
-  rownames(peak_valley_labels) <- rownames(data)
-  colnames(peak_valley_labels) <- unique_timepoints
+    # Classification logic for each triplet
+    for (i in seq_len(nrow(data))) {
+        for (t in 2:(num_timepoints - 1)) {
+            p_val <- pvc_pvals[i, t - 1]
 
-  # Classification logic for each triplet
-  for (i in seq_len(nrow(data))) {
-    for (t in 2:(num_timepoints - 1)) {
-      p_val <- pvc_pvals[i, t - 1]
+            # Skip if NA or not significant
+            if (is.na(p_val) || p_val >= alpha) next
 
-      # Skip if NA or not significant
-      if (is.na(p_val) || p_val >= alpha) next
-
-      # Extract timepoint means
-      prev_mean <- mean(
-        data[i, which(meta$Time == unique_timepoints[t - 1])],
-        na.rm = TRUE
-      )
-      curr_mean <- mean(
-        data[i, which(meta$Time == unique_timepoints[t])],
-        na.rm = TRUE
-      )
-      next_mean <- mean(
-        data[i, which(meta$Time == unique_timepoints[t + 1])],
-        na.rm = TRUE
-      )
-
-      prev_change <- curr_mean - prev_mean
-      next_change <- curr_mean - next_mean
-
-      if (!is.na(prev_change) && !is.na(next_change)) {
-        same_direction <- sign(prev_change) == sign(next_change)
-        if (same_direction) {
-          abs_prev <- abs(prev_change)
-          abs_next <- abs(next_change)
-          smaller <- min(abs_prev, abs_next)
-          larger  <- max(abs_prev, abs_next)
-
-          if (smaller / larger >= symmetry_ratio) {
-            if (prev_change > 0) {
-              peak_valley_labels[i, t] <- "p"
-            } else {
-              peak_valley_labels[i, t] <- "v"
-            }
-          } else {
-            peak_valley_labels[i, t] <- classify_cliff(
-              prev_change,
-              next_change
+            # Extract timepoint means
+            prev_mean <- mean(
+                data[i, which(meta$Time == unique_timepoints[t - 1])],
+                na.rm = TRUE
             )
-          }
-        } else {
-          peak_valley_labels[i, t] <- classify_cliff(
-            prev_change,
-            next_change
-          )
+            curr_mean <- mean(
+                data[i, which(meta$Time == unique_timepoints[t])],
+                na.rm = TRUE
+            )
+            next_mean <- mean(
+                data[i, which(meta$Time == unique_timepoints[t + 1])],
+                na.rm = TRUE
+            )
+
+            prev_change <- curr_mean - prev_mean
+            next_change <- curr_mean - next_mean
+
+            if (!is.na(prev_change) && !is.na(next_change)) {
+                same_direction <- sign(prev_change) == sign(next_change)
+                if (same_direction) {
+                    abs_prev <- abs(prev_change)
+                    abs_next <- abs(next_change)
+                    smaller <- min(abs_prev, abs_next)
+                    larger <- max(abs_prev, abs_next)
+
+                    if (smaller / larger >= symmetry_ratio) {
+                        if (prev_change > 0) {
+                            peak_valley_labels[i, t] <- "p"
+                        } else {
+                            peak_valley_labels[i, t] <- "v"
+                        }
+                    } else {
+                        peak_valley_labels[i, t] <- classify_cliff(
+                            prev_change,
+                            next_change
+                        )
+                    }
+                } else {
+                    peak_valley_labels[i, t] <- classify_cliff(
+                        prev_change,
+                        next_change
+                    )
+                }
+            }
         }
-      }
     }
-  }
 
-  # Return as data.frame for compatibility
-  results_df <- data.frame(
-    peak_valley_labels,
-    check.names = FALSE
-  )
+    # Return as data.frame for compatibility
+    results_df <- data.frame(
+        peak_valley_labels,
+        check.names = FALSE
+    )
 
-  return(results_df)
+    return(results_df)
 }
 
 
@@ -832,192 +828,196 @@ plot_pvc <- function(
     meta_batch_column,
     alpha = 0.05,
     plot_info,
-    level
-) {
-  
-  peak_valley_flags <- ifelse(
-    is.na(pvc_pvals),
-    0,
-    ifelse(pvc_pvals < alpha, 1, 0)
-  )
-  
-  unique_timepoints <- sort(unique(meta$Time))
-  num_timepoints <- length(unique_timepoints)
-  
-  unique_replicates <- unique(meta[[meta_batch_column]])
-  num_replicates <- length(unique_replicates)
-  
-  symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)
-  symbols <- symbols_available[seq_len(num_replicates)]
-  
-  plots <- list()
-  
-  for (protein_index in which(rowSums(peak_valley_flags) > 0)) {
-    feature_name <- rownames(peak_valley_flags)[protein_index]
-    protein_data <- data[feature_name, ]
-    
-    plot_data <- data.frame(
-      Time = meta$Time,
-      Feature_value = as.numeric(protein_data),
-      Replicate = as.factor(meta[[meta_batch_column]])
+    level) {
+    peak_valley_flags <- ifelse(
+        is.na(pvc_pvals),
+        0,
+        ifelse(pvc_pvals < alpha, 1, 0)
     )
-    
-    excursion_flags <- as.numeric(peak_valley_flags[protein_index, ])
-    
-    # Step 1: define internal timepoints
-    internal_timepoints <- unique_timepoints[2:(num_timepoints - 1)]
-    
-    # Step 2: map excursion flags to only internal timepoints
-    named_flags <- excursion_flags
-    names(named_flags) <- as.character(internal_timepoints)
-    
-    # Step 3: assign only to matching timepoints
-    plot_data$Excursion <- named_flags[as.character(plot_data$Time)]
-    plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
-    
-    plot_data$Point_Type <- factor(
-      ifelse(
-        plot_data$Excursion == 1,
-        "Excursion",
-        "Normal"
-      ),
-      levels = c("Normal", "Excursion")
-    )
-    
-    # For plotting significance stars directly above excursion points
-    sig_df <- data.frame(
-      Time = numeric(0),
-      Label = character(0),
-      y_pos = numeric(0)
-    )
-    
-    get_stars <- function(p, alpha) {
-      if (p < alpha / 500) return("****")
-      else if (p < alpha / 50) return("***")
-      else if (p < alpha / 5) return("**")
-      else if (p < alpha) return("*")
-      else return("")
-    }
-    
-    # Loop over internal timepoints
-    for (t in 2:(num_timepoints - 1)) {
-      timepoint <- unique_timepoints[t]
-      flag_index <- t - 1
-      
-      if (excursion_flags[flag_index] == 1) {
-        p_val <- pvc_pvals[protein_index, flag_index]
-        
-        if (p_val < alpha) {
-          stars <- get_stars(p_val, alpha)
-          
-          max_value <- max(
-            plot_data$Feature_value[plot_data$Time == timepoint],
-            na.rm = TRUE
-          )
-          
-          sig_df <- rbind(
-            sig_df,
-            data.frame(
-              Time = timepoint,
-              Label = stars,
-              max_value = max_value,
-              PValue = p_val
-            )
-          )
+
+    unique_timepoints <- sort(unique(meta$Time))
+    num_timepoints <- length(unique_timepoints)
+
+    unique_replicates <- unique(meta[[meta_batch_column]])
+    num_replicates <- length(unique_replicates)
+
+    symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)
+    symbols <- symbols_available[seq_len(num_replicates)]
+
+    plots <- list()
+
+    for (protein_index in which(rowSums(peak_valley_flags) > 0)) {
+        feature_name <- rownames(peak_valley_flags)[protein_index]
+        protein_data <- data[feature_name, ]
+
+        plot_data <- data.frame(
+            Time = meta$Time,
+            Feature_value = as.numeric(protein_data),
+            Replicate = as.factor(meta[[meta_batch_column]])
+        )
+
+        excursion_flags <- as.numeric(peak_valley_flags[protein_index, ])
+
+        # Step 1: define internal timepoints
+        internal_timepoints <- unique_timepoints[2:(num_timepoints - 1)]
+
+        # Step 2: map excursion flags to only internal timepoints
+        named_flags <- excursion_flags
+        names(named_flags) <- as.character(internal_timepoints)
+
+        # Step 3: assign only to matching timepoints
+        plot_data$Excursion <- named_flags[as.character(plot_data$Time)]
+        plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
+
+        plot_data$Point_Type <- factor(
+            ifelse(
+                plot_data$Excursion == 1,
+                "Excursion",
+                "Normal"
+            ),
+            levels = c("Normal", "Excursion")
+        )
+
+        # For plotting significance stars directly above excursion points
+        sig_df <- data.frame(
+            Time = numeric(0),
+            Label = character(0),
+            y_pos = numeric(0)
+        )
+
+        get_stars <- function(p, alpha) {
+            if (p < alpha / 500) {
+                return("****")
+            } else if (p < alpha / 50) {
+                return("***")
+            } else if (p < alpha / 5) {
+                return("**")
+            } else if (p < alpha) {
+                return("*")
+            } else {
+                return("")
+            }
         }
-      }
-    }
-    
-    # Build the p-value string if any are significant
-    if (nrow(sig_df) > 0) {
-      pval_str <- paste0(
-        "adj.p-val: ",
-        paste0(
-          "T=", sig_df$Time, " -> ",
-          formatC(sig_df$PValue, format = "fg", digits = 4),
-          collapse = "; "
+
+        # Loop over internal timepoints
+        for (t in 2:(num_timepoints - 1)) {
+            timepoint <- unique_timepoints[t]
+            flag_index <- t - 1
+
+            if (excursion_flags[flag_index] == 1) {
+                p_val <- pvc_pvals[protein_index, flag_index]
+
+                if (p_val < alpha) {
+                    stars <- get_stars(p_val, alpha)
+
+                    max_value <- max(
+                        plot_data$Feature_value[plot_data$Time == timepoint],
+                        na.rm = TRUE
+                    )
+
+                    sig_df <- rbind(
+                        sig_df,
+                        data.frame(
+                            Time = timepoint,
+                            Label = stars,
+                            max_value = max_value,
+                            PValue = p_val
+                        )
+                    )
+                }
+            }
+        }
+
+        # Build the p-value string if any are significant
+        if (nrow(sig_df) > 0) {
+            pval_str <- paste0(
+                "adj.p-val: ",
+                paste0(
+                    "T=", sig_df$Time, " -> ",
+                    formatC(sig_df$PValue, format = "fg", digits = 4),
+                    collapse = "; "
+                )
+            )
+            plot_title <- paste(feature_name, "\n", pval_str)
+        } else {
+            plot_title <- feature_name
+        }
+
+        p <- ggplot2::ggplot(
+            plot_data,
+            ggplot2::aes(
+                x = !!rlang::sym("Time"),
+                y = !!rlang::sym("Feature_value")
+            )
+        ) +
+            ggplot2::geom_point(
+                ggplot2::aes(
+                    shape = !!rlang::sym("Replicate"),
+                    color = !!rlang::sym("Point_Type")
+                ),
+                size = 3,
+                stroke = 1.2,
+                fill = "white",
+                na.rm = TRUE
+            ) +
+            ggplot2::scale_shape_manual(values = symbols) +
+            ggplot2::geom_text(
+                data = sig_df,
+                ggplot2::aes(
+                    x = !!rlang::sym("Time"),
+                    y = !!rlang::sym("max_value"),
+                    label = !!rlang::sym("Label")
+                ),
+                size = 5,
+                hjust = 0.5,
+                vjust = -0.5
+            ) +
+            ggplot2::labs(
+                title = plot_title,
+                x = paste0("Time [", plot_info[["time_unit"]], "]"),
+                y = plot_info[["y_axis_label"]],
+                color = "Timepoints",
+                shape = "Replicates"
+            ) +
+            ggplot2::theme_minimal()
+
+        y_min <- min(plot_data$Feature_value, na.rm = TRUE)
+        y_max <- max(plot_data$Feature_value, na.rm = TRUE)
+        y_extension <- (y_max - y_min) * 0.1
+        y_pos <- y_max + y_extension
+
+        result <- maybe_add_dashed_lines(
+            p = p,
+            plot_info = plot_info,
+            level = level,
+            y_pos = y_pos
         )
-      )
-      plot_title <- paste(feature_name, "\n", pval_str)
-    } else {
-      plot_title <- feature_name
-    }
-    
-    p <- ggplot2::ggplot(
-      plot_data,
-      ggplot2::aes(
-        x = !!rlang::sym("Time"),
-        y = !!rlang::sym("Feature_value")
-      )
-    ) +
-      ggplot2::geom_point(
-        ggplot2::aes(
-          shape = !!rlang::sym("Replicate"),
-          color = !!rlang::sym("Point_Type")
-        ),
-        size = 3,
-        stroke = 1.2,
-        fill = "white",
-        na.rm = TRUE
-      ) +
-      ggplot2::scale_shape_manual(values = symbols) +
-      ggplot2::geom_text(
-        data = sig_df,
-        ggplot2::aes(
-          x = !!rlang::sym("Time"),
-          y = !!rlang::sym("max_value"),
-          label = !!rlang::sym("Label")
-        ),
-        size = 5,
-        hjust = 0.5,
-        vjust = -0.5
-      ) +
-      ggplot2::labs(
-        title = plot_title,
-        x = paste0("Time [", plot_info[["time_unit"]], "]"),
-        y = plot_info[["y_axis_label"]],
-        color = "Timepoints",
-        shape = "Replicates"
-      ) +
-      ggplot2::theme_minimal()
-    
-    y_min <- min(plot_data$Feature_value, na.rm = TRUE)
-    y_max <- max(plot_data$Feature_value, na.rm = TRUE)
-    y_extension <- (y_max - y_min) * 0.1
-    y_pos <- y_max + y_extension
-    
-    result <- maybe_add_dashed_lines(
-      p = p,
-      plot_info = plot_info,
-      level = level,
-      y_pos = y_pos
-    )
-    
-    p <- result$p
-    treatment_colors <- result$treatment_colors
-    
-    color_values <- c(
-      "Normal" = "grey40",
-      "Excursion" = "red",
-      treatment_colors
-    )
-    
-    p <- p + ggplot2::scale_color_manual(
-      values = color_values,
-      guide = ggplot2::guide_legend(
-        override.aes = list(
-          size = c(
-            rep(1.5, 2),
-            rep(0.5, length(treatment_colors))
-          )
+
+        p <- result$p
+        treatment_colors <- result$treatment_colors
+
+        color_values <- c(
+            "Normal" = "grey40",
+            "Excursion" = "red",
+            treatment_colors
         )
-      )
-    )
-    
-    plots[[feature_name]] <- p
-  }
-  
-  return(plots)
+
+        p <- p + ggplot2::scale_color_manual(
+            values = color_values,
+            guide = ggplot2::guide_legend(
+                override.aes = list(
+                    size = c(
+                        rep(1.5, 2),
+                        rep(0.5, length(treatment_colors))
+                    )
+                )
+            )
+        )
+
+        plots[[feature_name]] <- p
+    }
+
+    return(plots)
 }
 
 
@@ -1050,132 +1050,130 @@ build_pvc_report <- function(
     plots,
     level_headers_info,
     report_info,
-    output_file_path = here::here()
-) {
-
-  html_content <- paste(
-    header_section,
-    "<!--TOC-->",
-    sep = "\n"
-  )
-
-  toc <- create_toc()
-
-  styles <- define_html_styles()
-  section_header_style <- styles$section_header_style
-  toc_style <- styles$toc_style
-
-  current_header_index <- 1
-
-  # Flatten the nested structure into a list of (header_name, plot) pairs
-  flattened_plots <- list()
-  for (header_name in names(plots)) {
-    subplots <- plots[[header_name]]$plots
-    subplot_names <- names(subplots)
-
-    for (i in seq_along(subplots)) {
-      flattened_plots[[length(flattened_plots) + 1]] <- list(
-        header_name = header_name,
-        subplot_name = subplot_names[i],
-        plot = subplots[[i]]
-      )
-    }
-  }
-
-  # Clean up header info
-  levels <- names(plots)
-  n_plots_per_header <- vapply(plots, function(x) length(x$plots), integer(1))
-
-  # Track current section and plot offset
-  current_header_index <- 1
-  plots_processed_in_section <- 0
-
-  # Create progress bar
-  pb <- create_progress_bar(flattened_plots)
-
-  for (index in seq_along(flattened_plots)) {
-    if (plots_processed_in_section == 0) {
-      # Insert section header
-      level <- levels[[current_header_index]]
-
-      nr_of_hits <- n_plots_per_header[[current_header_index]]
-
-      html_content <- paste(
-        html_content,
-        generate_section_header_block(
-          level = levels[[current_header_index]],
-          index = index,
-          section_header_style = section_header_style,
-          level_headers_info = level_headers_info,
-          nr_of_hits = nr_of_hits
-        ),
-        sep = "\n"
-      )
-
-      hits_info <- "<p style='text-align: center; font-size: 30px;'>"
-      html_content <- paste(
-        html_content,
-        hits_info,
-        sep = "\n"
-      )
-
-      toc_entry <- sprintf(
-        "<li style='%s'><a href='#section%d'>%s</a></li>",
-        toc_style,
-        index,
-        level
-      )
-      toc <- paste(
-        toc,
-        toc_entry,
-        sep = "\n"
-      )
-    }
-
-    # Add subplot name as an HTML sub-header
-    subplot_name <- flattened_plots[[index]]$subplot_name
-    subplot_header <- sprintf(
-      paste0(
-        '<h4 style="text-align: center; font-size: 20px; ',
-        'margin-top: 30px;">\n%s\n</h4>'
-      ),
-      subplot_name
-    )
-
-    # Inject it into the HTML content before the plot
+    output_file_path = here::here()) {
     html_content <- paste(
-      html_content,
-      subplot_header,
-      sep = "\n"
+        header_section,
+        "<!--TOC-->",
+        sep = "\n"
     )
 
-    result <- process_plots(
-      plots_element = flattened_plots[[index]]$plot,
-      plots_size = 2,
-      html_content = html_content,
-      toc = toc,
-      header_index = current_header_index
-    )
-    html_content <- result$html_content
-    toc <- result$toc
+    toc <- create_toc()
 
-    # Update section counters
-    plots_processed_in_section <- plots_processed_in_section + 1
-    if (plots_processed_in_section >=
-        n_plots_per_header[[current_header_index]]) {
-      current_header_index <- current_header_index + 1
-      plots_processed_in_section <- 0
+    styles <- define_html_styles()
+    section_header_style <- styles$section_header_style
+    toc_style <- styles$toc_style
+
+    current_header_index <- 1
+
+    # Flatten the nested structure into a list of (header_name, plot) pairs
+    flattened_plots <- list()
+    for (header_name in names(plots)) {
+        subplots <- plots[[header_name]]$plots
+        subplot_names <- names(subplots)
+
+        for (i in seq_along(subplots)) {
+            flattened_plots[[length(flattened_plots) + 1]] <- list(
+                header_name = header_name,
+                subplot_name = subplot_names[i],
+                plot = subplots[[i]]
+            )
+        }
     }
 
-    pb$tick()
-  }
+    # Clean up header info
+    levels <- names(plots)
+    n_plots_per_header <- vapply(plots, function(x) length(x$plots), integer(1))
 
-  generate_and_write_html(
-    toc = toc,
-    html_content = html_content,
-    report_info = report_info,
-    output_file_path = output_file_path
-  )
+    # Track current section and plot offset
+    current_header_index <- 1
+    plots_processed_in_section <- 0
+
+    # Create progress bar
+    pb <- create_progress_bar(flattened_plots)
+
+    for (index in seq_along(flattened_plots)) {
+        if (plots_processed_in_section == 0) {
+            # Insert section header
+            level <- levels[[current_header_index]]
+
+            nr_of_hits <- n_plots_per_header[[current_header_index]]
+
+            html_content <- paste(
+                html_content,
+                generate_section_header_block(
+                    level = levels[[current_header_index]],
+                    index = index,
+                    section_header_style = section_header_style,
+                    level_headers_info = level_headers_info,
+                    nr_of_hits = nr_of_hits
+                ),
+                sep = "\n"
+            )
+
+            hits_info <- "<p style='text-align: center; font-size: 30px;'>"
+            html_content <- paste(
+                html_content,
+                hits_info,
+                sep = "\n"
+            )
+
+            toc_entry <- sprintf(
+                "<li style='%s'><a href='#section%d'>%s</a></li>",
+                toc_style,
+                index,
+                level
+            )
+            toc <- paste(
+                toc,
+                toc_entry,
+                sep = "\n"
+            )
+        }
+
+        # Add subplot name as an HTML sub-header
+        subplot_name <- flattened_plots[[index]]$subplot_name
+        subplot_header <- sprintf(
+            paste0(
+                '<h4 style="text-align: center; font-size: 20px; ',
+                'margin-top: 30px;">\n%s\n</h4>'
+            ),
+            subplot_name
+        )
+
+        # Inject it into the HTML content before the plot
+        html_content <- paste(
+            html_content,
+            subplot_header,
+            sep = "\n"
+        )
+
+        result <- process_plots(
+            plots_element = flattened_plots[[index]]$plot,
+            plots_size = 2,
+            html_content = html_content,
+            toc = toc,
+            header_index = current_header_index
+        )
+        html_content <- result$html_content
+        toc <- result$toc
+
+        # Update section counters
+        plots_processed_in_section <- plots_processed_in_section + 1
+        if (plots_processed_in_section >=
+            n_plots_per_header[[current_header_index]]) {
+            current_header_index <- current_header_index + 1
+            plots_processed_in_section <- 0
+        }
+
+        pb$tick()
+    }
+
+    generate_and_write_html(
+        toc = toc,
+        html_content = html_content,
+        report_info = report_info,
+        output_file_path = output_file_path
+    )
 }
 
 
@@ -1202,22 +1200,20 @@ build_pvc_report <- function(
 #' timepoint).
 #'
 #' @examples
-#' classify_cliff(-2, 0.5)  # returns "b" (bottom of a cliff)
-#' classify_cliff(1.5, -3)  # returns "t" (top of a cliff)
+#' classify_cliff(-2, 0.5) # returns "b" (bottom of a cliff)
+#' classify_cliff(1.5, -3) # returns "t" (top of a cliff)
 #'
 classify_cliff <- function(
     prev_change,
-    next_change
-) {
+    next_change) {
+    abs_prev <- abs(prev_change)
+    abs_next <- abs(next_change)
 
-  abs_prev <- abs(prev_change)
-  abs_next <- abs(next_change)
-
-  if (abs_prev > abs_next) {
-    return(ifelse(prev_change < 0, "b", "t"))  # drop into point -> bottom
-  } else {
-    return(ifelse(next_change < 0, "t", "b"))  # drop after point -> top
-  }
+    if (abs_prev > abs_next) {
+        return(ifelse(prev_change < 0, "b", "t")) # drop into point -> bottom
+    } else {
+        return(ifelse(next_change < 0, "t", "b")) # drop after point -> top
+    }
 }
 
 
@@ -1249,64 +1245,62 @@ generate_section_header_block <- function(
     index,
     section_header_style,
     level_headers_info,
-    nr_of_hits
-) {
+    nr_of_hits) {
+    # Access per-level alpha threshold
+    alpha_thresh <-
+        level_headers_info[["pvc_settings"]][["adj_value_thresh"]][[level]]
 
-  # Access per-level alpha threshold
-  alpha_thresh <-
-    level_headers_info[["pvc_settings"]][["adj_value_thresh"]][[level]]
+    # Access global padjust_method
+    padjust_method <- level_headers_info[["pvc_settings"]][["padjust_method"]]
+    support <- level_headers_info[["pvc_settings"]][["support"]]
+    batch_effects <- level_headers_info[["pvc_settings"]][["batch_effects"]]
 
-  # Access global padjust_method
-  padjust_method <- level_headers_info[["pvc_settings"]][["padjust_method"]]
-  support <- level_headers_info[["pvc_settings"]][["support"]]
-  batch_effects <- level_headers_info[["pvc_settings"]][["batch_effects"]]
-
-  # Format alpha threshold smartly
-  format_alpha <- function(x) {
-    if (x >= 0.0001) {
-      # remove trailing zeros
-      sub("\\.?0+$", "", format(round(x, 4), nsmall = 0))
-    } else {
-      format(
-        x,
-        scientific = TRUE,
-        digits = 3
-      )
+    # Format alpha threshold smartly
+    format_alpha <- function(x) {
+        if (x >= 0.0001) {
+            # remove trailing zeros
+            sub("\\.?0+$", "", format(round(x, 4), nsmall = 0))
+        } else {
+            format(
+                x,
+                scientific = TRUE,
+                digits = 3
+            )
+        }
     }
-  }
 
-  # Compute significance thresholds
-  thresholds <- c(
-    "*"    = alpha_thresh,
-    "**"   = alpha_thresh / 5,
-    "***"  = alpha_thresh / 50,
-    "****" = alpha_thresh / 500
-  )
+    # Compute significance thresholds
+    thresholds <- c(
+        "*"    = alpha_thresh,
+        "**"   = alpha_thresh / 5,
+        "***"  = alpha_thresh / 50,
+        "****" = alpha_thresh / 500
+    )
 
-  thresholds_formatted <- vapply(
-    thresholds,
-    format_alpha,
-    character(1)
-  )
-  alpha_thresh_formatted <- format_alpha(alpha_thresh)
+    thresholds_formatted <- vapply(
+        thresholds,
+        format_alpha,
+        character(1)
+    )
+    alpha_thresh_formatted <- format_alpha(alpha_thresh)
 
-  # Generate section header
-  section_header <- sprintf(
-    "<h2 style='%s' id='section%d'>%s</h2>",
-    section_header_style,
-    index,
-    level
-  )
+    # Generate section header
+    section_header <- sprintf(
+        "<h2 style='%s' id='section%d'>%s</h2>",
+        section_header_style,
+        index,
+        level
+    )
 
-  batch_effects_formatted <- if (isFALSE(batch_effects)) {
-    "None"
-  } else {
-    paste(batch_effects, collapse = ", ")
-  }
+    batch_effects_formatted <- if (isFALSE(batch_effects)) {
+        "None"
+    } else {
+        paste(batch_effects, collapse = ", ")
+    }
 
-  # Generate info block
-  info_block <- sprintf(
-    "<div style='text-align: center; font-size: 24px; margin-bottom: 20px;'>
+    # Generate info block
+    info_block <- sprintf(
+        "<div style='text-align: center; font-size: 24px; margin-bottom: 20px;'>
        <p><strong>Adjusted p-value threshold:</strong> %s<br>
        <strong>p-adjustment method:</strong> %s<br>
        <strong>Support (min nr non-NA in all timepoints of hit):</strong> %s</p>
@@ -1321,21 +1315,21 @@ generate_section_header_block <- function(
        </p>
        <hr style='border-top: 1px dashed #999; width: 100%%; margin-top: 15px;'>
      </div>",
-    alpha_thresh_formatted,
-    padjust_method,
-    support,
-    batch_effects_formatted,
-    nr_of_hits,
-    thresholds_formatted["*"],
-    thresholds_formatted["**"],
-    thresholds_formatted["***"],
-    thresholds_formatted["****"]
-  )
+        alpha_thresh_formatted,
+        padjust_method,
+        support,
+        batch_effects_formatted,
+        nr_of_hits,
+        thresholds_formatted["*"],
+        thresholds_formatted["**"],
+        thresholds_formatted["***"],
+        thresholds_formatted["****"]
+    )
 
-  # Combine and return the full HTML block
-  return(paste(
-    section_header,
-    info_block,
-    sep = "\n"
-  ))
+    # Combine and return the full HTML block
+    return(paste(
+        section_header,
+        info_block,
+        sep = "\n"
+    ))
 }

@@ -58,38 +58,38 @@ cleaned matrix.
 \examples{
 # Tiny demo table with two header rows, feature columns, and numeric block
 df <- data.frame(
-  feat_id = c(NA, NA, "g1", "g2", "g3"),
-  feat_sym = c(NA, NA, "TP53", "EGFR", "BAX"),
-  A = c("cond", "t0", 1, 2, 3),
-  B = c("cond", "t1", 4, 5, 6),
-  C = c("ctrl", "t0", 7, 8, 9),
-  D = c("ctrl", "t1", 10, 11, 12),
-  check.names = FALSE
+    feat_id = c(NA, NA, "g1", "g2", "g3"),
+    feat_sym = c(NA, NA, "TP53", "EGFR", "BAX"),
+    A = c("cond", "t0", 1, 2, 3),
+    B = c("cond", "t1", 4, 5, 6),
+    C = c("ctrl", "t0", 7, 8, 9),
+    D = c("ctrl", "t1", 10, 11, 12),
+    check.names = FALSE
 )
 
 # Example 1: extract numeric block using Excel letters, build headers from
 # the two rows above (they get collapsed like "cond_t0", "ctrl_t1", ...)
 m1 <- extract_data(
-  data = df,
-  top_row = 3,
-  bottom_row = 5,
-  left_col = "A",
-  right_col = "D",
-  feature_name_columns = c("feat_id", "feat_sym"),
-  use_row_index = FALSE
+    data = df,
+    top_row = 3,
+    bottom_row = 5,
+    left_col = "A",
+    right_col = "D",
+    feature_name_columns = c("feat_id", "feat_sym"),
+    use_row_index = FALSE
 )
 m1
 
 # Example 2: same extraction but with numeric column indices and row index
 # prepended to ensure uniqueness of feature names
 m2 <- extract_data(
-  data = df,
-  top_row = 3,
-  bottom_row = 5,
-  left_col = 3,
-  right_col = 6,
-  feature_name_columns = c("feat_id", "feat_sym"),
-  use_row_index = TRUE
+    data = df,
+    top_row = 3,
+    bottom_row = 5,
+    left_col = 3,
+    right_col = 6,
+    feature_name_columns = c("feat_id", "feat_sym"),
+    use_row_index = TRUE
 )
 m2
 

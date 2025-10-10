@@ -2,7 +2,7 @@
 #'
 #' @description
 #' This is the core function, which performs a limma spline analysis to identify
-#'  significant time-dependent changes in features (e.g., proteins) within an 
+#'  significant time-dependent changes in features (e.g., proteins) within an
 #' omics time-series dataset. It evaluates features within each condition level
 #' and between levels by comparing average differences and interactions
 #' between time and condition.
@@ -14,13 +14,13 @@
 #'   names optionally as row headers.
 #'   \item \code{rna_seq_data}: An optional object containing the preprocessed
 #'   RNA-seq data, such as the output from `limma::voom` or a similar
-#'    preprocessing pipeline. This must only be provided when the input is 
+#'    preprocessing pipeline. This must only be provided when the input is
 #'    RNA-seq data.
 #'   \item \code{meta}: A dataframe containing metadata corresponding to the
 #'   \code{data}, must include a 'Time' column and the column specified by
-#'   \code{condition}. The columns of meta describe the meta info, such as 
+#'   \code{condition}. The columns of meta describe the meta info, such as
 #'   the time and condition, and each row corresponds to a column in data, and
-#'   therefore, contains the meta info for that data column. It is important 
+#'   therefore, contains the meta info for that data column. It is important
 #'   that meta and data are matched in this way.
 #'   \item \code{padjust_method}: Statistical method that is used for multiple
 #'   hypothesis correction. Supported methods include all that are included in
@@ -30,28 +30,28 @@
 #'   \item \code{design}: A character string representing the limma design
 #'   formula, such as "~ 1 + Phase*Time + Reactor" for an integrated design, or
 #'   "~ 1 + Time + Reactor" for an isolated design.
-#'   \item\code{dream_params}: A named list or NULL. When not NULL, it can 
-#'                                contain the following named 
+#'   \item\code{dream_params}: A named list or NULL. When not NULL, it can
+#'                                contain the following named
 #'      elements:
-#'      - `dof`: An integer greater than 1, specifying the degrees of freedom 
+#'      - `dof`: An integer greater than 1, specifying the degrees of freedom
 #'      for  the dream topTable. If set to 0, then the best dof is automatically
-#'      found with the help of leave-one-out-crossvalidation (loocv). The dof 
+#'      found with the help of leave-one-out-crossvalidation (loocv). The dof
 #'      with the lowest error on the loocv is chosen.
-#'      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger 
+#'      - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
 #'      approximation for mixed models.
-#'      Note that random effects are now directly specified in the design 
+#'      Note that random effects are now directly specified in the design
 #'      formula and not in `dream_params`.
-#'   \item \code{mode}: Specifies how the design formula is constructed: 
-#'   either `"isolated"` or `"integrated"`. 
-#'   
-#'   - `"isolated"`: Each level is analyzed independently, using only the 
-#'     subset of data corresponding to that level. The design formula does 
-#'     not include the condition variable, since only one condition is 
+#'   \item \code{mode}: Specifies how the design formula is constructed:
+#'   either `"isolated"` or `"integrated"`.
+#'
+#'   - `"isolated"`: Each level is analyzed independently, using only the
+#'     subset of data corresponding to that level. The design formula does
+#'     not include the condition variable, since only one condition is
 #'     present in each subset.
-#'   
-#'   - `"integrated"`: All levels are analyzed together in a single model, 
-#'     using the full dataset. The design formula includes the condition 
-#'     variable (and optionally interaction terms with it) so that results 
+#'
+#'   - `"integrated"`: All levels are analyzed together in a single model,
+#'     using the full dataset. The design formula includes the condition
+#'     variable (and optionally interaction terms with it) so that results
 #'     are estimated jointly across all levels.
 #'   \item \code{condition}: A character string specifying the column name
 #'   in \code{meta} used to define groups for analysis. The condition column
@@ -72,7 +72,7 @@
 #'    test. If this test is significant for at least 10% of the features,
 #'    then the robust strategy is used. The robust strategy uses the function
 #'    voomWithQualityWeights for RNA-seq data instead of the normal voom
-#'    function. For other, non-count-based data, the function 
+#'    function. For other, non-count-based data, the function
 #'    limma::arrayWeights is used instead, combined with setting the robust
 #'    argument to TRUE for the limma::eBayes function. In summary, the strategy
 #'    employed by those functions is to downweights samples with higher
@@ -83,16 +83,16 @@
 #'    (common statistical wisdom).
 #'   \item \code{bp_cfg}: A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
 #' }
-#' 
+#'
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return The SplineOmics object, updated with a list with three elements:
@@ -109,39 +109,39 @@
 #' @importFrom purrr partial map map_chr map2
 #' @importFrom stats setNames
 #' @importFrom utils combn
-#' 
+#'
 #' @examples
 #' # Toy data: 4 features x 6 samples (two conditions, three time points)
 #' toy_data <- matrix(
-#'   c(
-#'     3,  5,  8, 12, 17, 23,   # f1
-#'     23, 17, 13,  9,  6,  4,  # f2
-#'     5,  3,  2,  2,  3,  5,   # f3
-#'     1,  4,  9,  8,  4,  1,   # f4
-#'     10, 10, 10, 10, 10, 10,  # f5
-#'     2,   2,  2,  9, 12, 15,  # f6
-#'     4,   5,  7, 10, 14, 19,  # f7
-#'     12, 11,  9,  8,  9, 12   # f8
-#'   ),
-#'   nrow = 8, ncol = 6, byrow = TRUE,
-#'   dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#'     c(
+#'         3, 5, 8, 12, 17, 23, # f1
+#'         23, 17, 13, 9, 6, 4, # f2
+#'         5, 3, 2, 2, 3, 5, # f3
+#'         1, 4, 9, 8, 4, 1, # f4
+#'         10, 10, 10, 10, 10, 10, # f5
+#'         2, 2, 2, 9, 12, 15, # f6
+#'         4, 5, 7, 10, 14, 19, # f7
+#'         12, 11, 9, 8, 9, 12 # f8
+#'     ),
+#'     nrow = 8, ncol = 6, byrow = TRUE,
+#'     dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 #' )
 #'
 #' toy_meta <- data.frame(
-#'   Time      = c(0, 1, 2, 0, 1, 2),
-#'   condition = rep(c("WT", "KO"), each = 3),
-#'   Replicate = rep(c("R1", "R2"), each = 3),
-#'   row.names = colnames(toy_data),
-#'   stringsAsFactors = FALSE
+#'     Time = c(0, 1, 2, 0, 1, 2),
+#'     condition = rep(c("WT", "KO"), each = 3),
+#'     Replicate = rep(c("R1", "R2"), each = 3),
+#'     row.names = colnames(toy_data),
+#'     stringsAsFactors = FALSE
 #' )
 #'
 #' toy_annot <- data.frame(
-#'   feature_nr = 1:8,
-#'   gene       = c("G1", "G2", "G3", "G4"),
-#'   stringsAsFactors = FALSE
+#'     feature_nr = 1:8,
+#'     gene = c("G1", "G2", "G3", "G4"),
+#'     stringsAsFactors = FALSE
 #' )
 #'
-#' # Stub limma "top tables" with minimal required fields 
+#' # Stub limma "top tables" with minimal required fields
 #' # (feature_nr + adj.P.Val)
 #' tt_wt <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.01, 0.20, 0.04, 0.60))
 #' tt_ko <- data.frame(feature_nr = 1:4, adj.P.Val = c(0.50, 0.03, 0.70, 0.02))
@@ -152,34 +152,34 @@
 #'
 #' # Minimal spline parameters required by spline machinery
 #' spline_params <- list(
-#'   spline_type = "n",  # natural cubic splines
-#'   dof = 1L            # degrees of freedom for the spline basis
+#'     spline_type = "n", # natural cubic splines
+#'     dof = 1L # degrees of freedom for the spline basis
 #' )
 #'
 #' toy_splineomics <- list(
-#'   data = toy_data,
-#'   meta = toy_meta,
-#'   annotation = toy_annot,
-#'   report_info = list(
-#'     omics_data_type      = "RNA-seq",
-#'     data_description      = "toy example",
-#'     data_collection_date  = "2025-01-01",
-#'     analyst_name          = "Example",
-#'     contact_info          = "example@example.org",
-#'     project_name          = "ToyProject"
-#'   ),
-#'   design                 = design_str,
-#'   mode                   = "integrated",        
-#'   condition              = "condition",        
-#'   spline_params          = spline_params,
-#'   meta_batch_column      = NULL,
-#'   meta_batch2_column     = NULL,
-#'   limma_splines_result = list(
-#'     time_effect                  = list(WT = tt_wt, KO = tt_ko),
-#'     avrg_diff_conditions         = tt_c2,
-#'     interaction_condition_time   = tt_c3
-#'   ),
-#'   feature_name_columns   = "gene"
+#'     data = toy_data,
+#'     meta = toy_meta,
+#'     annotation = toy_annot,
+#'     report_info = list(
+#'         omics_data_type = "RNA-seq",
+#'         data_description = "toy example",
+#'         data_collection_date = "2025-01-01",
+#'         analyst_name = "Example",
+#'         contact_info = "example@example.org",
+#'         project_name = "ToyProject"
+#'     ),
+#'     design = design_str,
+#'     mode = "integrated",
+#'     condition = "condition",
+#'     spline_params = spline_params,
+#'     meta_batch_column = NULL,
+#'     meta_batch2_column = NULL,
+#'     limma_splines_result = list(
+#'         time_effect                  = list(WT = tt_wt, KO = tt_ko),
+#'         avrg_diff_conditions         = tt_c2,
+#'         interaction_condition_time   = tt_c3
+#'     ),
+#'     feature_name_columns = "gene"
 #' )
 #' class(toy_splineomics) <- "SplineOmics"
 #'
@@ -189,187 +189,187 @@
 #'
 run_limma_splines <- function(
     splineomics,
-    verbose = TRUE
-) {
-  
-  start_time <- Sys.time()
-  check_splineomics_elements(
-    splineomics = splineomics,
-    func_type = "run_limma_splines"
-  )
-  
-  args <- lapply(
-    as.list(match.call()[-1]),
-    eval,
-    parent.frame()
-  )
-  args[["verbose"]] <- verbose
-  check_null_elements(args)
-  input_control <- InputControl$new(args)
-  input_control$auto_validate()
-  
-  data <- splineomics[["data"]]
-  rna_seq_data <- splineomics[["rna_seq_data"]]
-  meta <- sanitize_meta(splineomics[["meta"]])
-  spline_params <- splineomics[["spline_params"]]
-  padjust_method <- splineomics[["padjust_method"]]
-  design <- splineomics[["design"]]
-  dream_params <- splineomics[["dream_params"]]
-  mode <- splineomics[["mode"]]
-  condition <- splineomics[["condition"]]
-  use_array_weights <- splineomics[["use_array_weights"]]
-  bp_cfg <- splineomics[["bp_cfg"]]
-
-  # Because at first I enforced that X in the design formula stands for the time
-  # and I heavily oriented my code towards that. But then I realised that it is
-  # nonsense to encode the time as X, and now it is explicitly "Time" (because
-  # meta must contain the exact name "Time" for this respective column).
-  design <- gsub(
-    "Time",
-    "X",
-    design
-    )  
-  
-  feature_names <- rownames(data)
-  meta[[condition]] <- factor(meta[[condition]])
-
-  if (mode == "isolated") {
-    levels <- levels(meta[[condition]])
-
-    # Get hits for level (within level analysis)
-    process_level_with_params <- purrr::partial(
-      fit_within_condition_isolated,   # the function that is called
-      spline_params = spline_params,
-      data = data,
-      rna_seq_data = rna_seq_data,
-      meta = meta,
-      design = design,
-      dream_params = dream_params,
-      condition = condition,
-      feature_names = feature_names,
-      padjust_method = padjust_method,
-      mode = mode,
-      use_array_weights = use_array_weights,
-      bp_cfg = bp_cfg
+    verbose = TRUE) {
+    start_time <- Sys.time()
+    check_splineomics_elements(
+        splineomics = splineomics,
+        func_type = "run_limma_splines"
     )
 
-    results_nested <- purrr::imap(
-      levels,
-      process_level_with_params
+    args <- lapply(
+        as.list(match.call()[-1]),
+        eval,
+        parent.frame()
     )
-    results_list <- purrr::flatten(results_nested)
-    
-    merged_dof <- Reduce(
-      pmax.int,
-      lapply(
-        results_list,
-        \(x) x$spline_params[["dof"]]
+    args[["verbose"]] <- verbose
+    check_null_elements(args)
+    input_control <- InputControl$new(args)
+    input_control$auto_validate()
+
+    data <- splineomics[["data"]]
+    rna_seq_data <- splineomics[["rna_seq_data"]]
+    meta <- sanitize_meta(splineomics[["meta"]])
+    spline_params <- splineomics[["spline_params"]]
+    padjust_method <- splineomics[["padjust_method"]]
+    design <- splineomics[["design"]]
+    dream_params <- splineomics[["dream_params"]]
+    mode <- splineomics[["mode"]]
+    condition <- splineomics[["condition"]]
+    use_array_weights <- splineomics[["use_array_weights"]]
+    bp_cfg <- splineomics[["bp_cfg"]]
+
+    # Because at first I enforced that X in the design formula stands for the time
+    # and I heavily oriented my code towards that. But then I realised that it is
+    # nonsense to encode the time as X, and now it is explicitly "Time" (because
+    # meta must contain the exact name "Time" for this respective column).
+    design <- gsub(
+        "Time",
+        "X",
+        design
+    )
+
+    feature_names <- rownames(data)
+    meta[[condition]] <- factor(meta[[condition]])
+
+    if (mode == "isolated") {
+        levels <- levels(meta[[condition]])
+
+        # Get hits for level (within level analysis)
+        process_level_with_params <- purrr::partial(
+            fit_within_condition_isolated, # the function that is called
+            spline_params = spline_params,
+            data = data,
+            rna_seq_data = rna_seq_data,
+            meta = meta,
+            design = design,
+            dream_params = dream_params,
+            condition = condition,
+            feature_names = feature_names,
+            padjust_method = padjust_method,
+            mode = mode,
+            use_array_weights = use_array_weights,
+            bp_cfg = bp_cfg
         )
-      )
-    spline_params[["dof"]] <- merged_dof
-    
-    isolated_within_level_top_tables <- stats::setNames(
-      purrr::map(results_list, "top_table"),
-      names(results_list)
-      )
-    
-    isolated_fits <- stats::setNames(
-      purrr::map(results_list, "fit"),
-      names(results_list)
-      )
-    
-    limma_splines_result <- list(
-      time_effect = isolated_within_level_top_tables
-    )
 
-  } else if (mode == "integrated") {
-    effects <- extract_effects(design)
+        results_nested <- purrr::imap(
+            levels,
+            process_level_with_params
+        )
+        results_list <- purrr::flatten(results_nested)
 
-    if (spline_params[["dof"]][1] == 0) {   # auto-dof.
-      best_dof <- select_spline_dof_loocv(   
-        data = data,
-        meta = meta,
-        spline_params = spline_params,
-        level_index = 1,
-        fixed_effects = effects[["fixed_effects"]]
-      )
-      spline_params$dof[1] <- best_dof
+        merged_dof <- Reduce(
+            pmax.int,
+            lapply(
+                results_list,
+                \(x) x$spline_params[["dof"]]
+            )
+        )
+        spline_params[["dof"]] <- merged_dof
+
+        isolated_within_level_top_tables <- stats::setNames(
+            purrr::map(results_list, "top_table"),
+            names(results_list)
+        )
+
+        isolated_fits <- stats::setNames(
+            purrr::map(results_list, "fit"),
+            names(results_list)
+        )
+
+        limma_splines_result <- list(
+            time_effect = isolated_within_level_top_tables
+        )
+    } else if (mode == "integrated") {
+        effects <- extract_effects(design)
+
+        if (spline_params[["dof"]][1] == 0) { # auto-dof.
+            best_dof <- select_spline_dof_loocv(
+                data = data,
+                meta = meta,
+                spline_params = spline_params,
+                level_index = 1,
+                fixed_effects = effects[["fixed_effects"]]
+            )
+            spline_params$dof[1] <- best_dof
+        }
+
+        # Step 1: Fit the global model once
+        fit_obj <- fit_global_model(
+            data = data,
+            rna_seq_data = rna_seq_data,
+            meta = meta,
+            design = design,
+            effects = effects,
+            dream_params = dream_params,
+            spline_params = spline_params,
+            condition = condition,
+            padjust_method = padjust_method,
+            use_array_weights = use_array_weights,
+            bp_cfg = bp_cfg,
+            verbose = verbose
+        )
+
+        # Step 2: Extract the time_effects within each condition (spline coeffs)
+        integrated_time_effects <- extract_within_level_time_effects(
+            fit_obj = fit_obj,
+            condition = condition,
+            feature_names = feature_names,
+            dof = spline_params[["dof"]],
+            random_effects = (effects[["random_effects"]] != "")
+        )
+
+        # Step 3: Extract pairwise contrasts for all level combinations
+        contrast_results <- extract_between_level_contrasts(
+            fit_obj = fit_obj,
+            condition = condition,
+            random_effects = (effects[["random_effects"]] != "")
+        )
+
+        limma_splines_result <- list(
+            time_effect = integrated_time_effects
+        )
+        limma_splines_result[["avrg_diff_conditions"]] <-
+            contrast_results[["condition_only"]]
+        limma_splines_result[["interaction_condition_time"]] <-
+            contrast_results[["condition_time"]]
     }
 
-    # Step 1: Fit the global model once
-    fit_obj <- fit_global_model( 
-      data = data,
-      rna_seq_data = rna_seq_data,
-      meta = meta,
-      design = design,
-      effects = effects,
-      dream_params = dream_params,
-      spline_params = spline_params,
-      condition = condition,
-      padjust_method = padjust_method,
-      use_array_weights = use_array_weights,
-      bp_cfg = bp_cfg,
-      verbose = verbose
+    args <- list(
+        splineomics = splineomics,
+        limma_splines_result = limma_splines_result,
+        fit = if (exists("fit_obj")) fit_obj[["fit"]] else isolated_fits,
+        spline_params = spline_params,
+        meta = meta
     )
 
-    # Step 2: Extract the time_effects within each condition (spline coeffs)
-    integrated_time_effects <- extract_within_level_time_effects(
-      fit_obj = fit_obj,
-      condition = condition,
-      feature_names = feature_names,
-      dof = spline_params[["dof"]],
-      random_effects = (effects[["random_effects"]] != "")
-      )
+    if (!"use_array_weights" %in% names(args) && exists("results_list")) {
+        args$use_array_weights <- purrr::map_lgl(
+            results_list,
+            "use_array_weights"
+        ) |>
+            purrr::set_names(names(results_list))
+    } else if (!"homosc_violation_result" %in% names(splineomics)) {
+        args$homosc_violation_result <- if (exists("fit_obj")) {
+            fit_obj[["homosc_violation_result"]]
+        } else {
+            NULL
+        }
+    }
 
-    # Step 3: Extract pairwise contrasts for all level combinations
-    contrast_results <- extract_between_level_contrasts(
-      fit_obj = fit_obj,
-      condition = condition,
-      random_effects = (effects[["random_effects"]] != "")
-      )
-    
-    limma_splines_result <- list(
-      time_effect = integrated_time_effects
-    )
-    limma_splines_result[["avrg_diff_conditions"]] <- 
-      contrast_results[["condition_only"]]
-    limma_splines_result[["interaction_condition_time"]] <- 
-      contrast_results[["condition_time"]]
-  }
+    if (verbose) {
+        end_time <- Sys.time()
+        elapsed <- difftime(end_time, start_time, units = "min")
+        message(
+            sprintf(
+                "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
+                as.numeric(elapsed)
+            )
+        )
+    }
 
-  args <- list(
-    splineomics = splineomics,
-    limma_splines_result = limma_splines_result,
-    fit = if (exists("fit_obj")) fit_obj[["fit"]] else isolated_fits,
-    spline_params = spline_params,
-    meta = meta
-  )
-  
-  if (!"use_array_weights" %in% names(args) && exists("results_list")) {
-    args$use_array_weights <- purrr::map_lgl(
-      results_list,
-      "use_array_weights"
-      ) |>
-      purrr::set_names(names(results_list))
-  } else if (!"homosc_violation_result" %in% names(splineomics)) {
-    args$homosc_violation_result <- if (exists("fit_obj"))
-      fit_obj[["homosc_violation_result"]] else NULL
-  }
-  
-  if (verbose) {
-    end_time <- Sys.time()
-    elapsed <- difftime(end_time, start_time, units = "min")
-    message(
-      sprintf(
-        "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
-        as.numeric(elapsed)
-      )
-    )
-  }
-
-  splineomics <- do.call(
-    update_splineomics,
-    args
+    splineomics <- do.call(
+        update_splineomics,
+        args
     )
 }
 
@@ -378,7 +378,7 @@ run_limma_splines <- function(
 
 
 #' Within level analysis for the mode: isolated.
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -393,9 +393,9 @@ run_limma_splines <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing the metadata for data.
 #' @param design A design formula or matrix for the limma analysis.
-#' @param dream_params A named list or NULL. When not NULL, it must at least 
+#' @param dream_params A named list or NULL. When not NULL, it must at least
 #' contain the named element 'random_effects', which must contain a string that
-#' is a formula for the random effects of the mixed models by dream. 
+#' is a formula for the random effects of the mixed models by dream.
 #' Additionally, it can contain the named elements dof, which must be a int
 #' bigger than 1, which is the degree of freedom for the dream topTable, and
 #' the named element KenwardRoger, which must be a bool, specifying whether
@@ -405,15 +405,15 @@ run_limma_splines <- function(
 #' @param padjust_method A character string specifying the p-adjustment method.
 #' @param mode A character string specifying the mode
 #'            ('isolated' or 'integrated').
-#' @param use_array_weights Boolean value specifying whether to use array 
+#' @param use_array_weights Boolean value specifying whether to use array
 #' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
@@ -439,64 +439,62 @@ fit_within_condition_isolated <- function(
     mode,
     use_array_weights,
     bp_cfg,
-    verbose
-) {
+    verbose) {
+    samples <- which(meta[[condition]] == level)
+    data_copy <- data[, samples]
+    meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
 
-  samples <- which(meta[[condition]] == level)
-  data_copy <- data[, samples]
-  meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
+    if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
+        stop_call_false(
+            "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
+            " columns, but meta_copy has ", nrow(meta_copy), " rows. The most likely",
+            "cause for this is that you selected mode == isolated, but passed the ",
+            "full data in rna_seq_data. For RNA-seq data, you must pass the ",
+            "respective datasets of the different conditions individually (for all ",
+            "other omics datasets, this is handleded implicitly by SplineOmics: it ",
+            "splits up the data and meta into the different conditions. However, ",
+            "that is not possible with the RNA-seq data objects"
+        )
+    }
 
-  if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
-    stop_call_false(
-      "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
-      " columns, but meta_copy has ", nrow(meta_copy), " rows. The most likely",
-      "cause for this is that you selected mode == isolated, but passed the ",
-      "full data in rna_seq_data. For RNA-seq data, you must pass the ",
-      "respective datasets of the different conditions individually (for all ",
-      "other omics datasets, this is handleded implicitly by SplineOmics: it ",
-      "splits up the data and meta into the different conditions. However, ",
-      "that is not possible with the RNA-seq data objects"
+    result <- process_within_level(
+        data = data_copy,
+        rna_seq_data = rna_seq_data,
+        meta = meta_copy,
+        design = design,
+        dream_params = dream_params,
+        spline_params = spline_params,
+        level_index = level_index,
+        padjust_method = padjust_method,
+        use_array_weights = use_array_weights,
+        bp_cfg = bp_cfg,
+        verbose = verbose
     )
-  }
 
-  result <- process_within_level(
-    data = data_copy,
-    rna_seq_data = rna_seq_data,
-    meta = meta_copy,
-    design = design,
-    dream_params = dream_params,
-    spline_params = spline_params,
-    level_index = level_index,
-    padjust_method = padjust_method,
-    use_array_weights = use_array_weights,
-    bp_cfg = bp_cfg,
-    verbose = verbose
-  )
+    top_table <- process_top_table(
+        result,
+        feature_names
+    )
 
-  top_table <- process_top_table(
-    result,
-    feature_names
-  )
-  
-  results_name <- paste(
-    condition,
-    level,
-    sep = "_"
-  )
+    results_name <- paste(
+        condition,
+        level,
+        sep = "_"
+    )
 
-  out <- list(
-    top_table = top_table,
-    fit = result[["fit"]],
-    spline_params = result[["spline_params"]],
-    use_array_weights = result[["use_array_weights"]]
-  )
-  
-  setNames(list(out), results_name)
+    out <- list(
+        top_table = top_table,
+        fit = result[["fit"]],
+        spline_params = result[["spline_params"]],
+        use_array_weights = result[["use_array_weights"]]
+    )
+
+    setNames(list(out), results_name)
 }
 
 
 #' Between Level Analysis
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -508,10 +506,11 @@ fit_within_condition_isolated <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
-#' @param effects 
-#' @param dream_params A named list or NULL. When not NULL, it must at least 
+#' @param effects Strings of the fixed and potentially random effects of the 
+#' design.
+#' @param dream_params A named list or NULL. When not NULL, it must at least
 #' contain the named element 'random_effects', which must contain a string that
-#' is a formula for the random effects of the mixed models by dream. 
+#' is a formula for the random effects of the mixed models by dream.
 #' Additionally, it can contain the named elements dof, which must be a int
 #' bigger than 1, which is the degree of freedom for the dream topTable, and
 #' the named element KenwardRoger, which must be a bool, specifying whether
@@ -520,15 +519,15 @@ fit_within_condition_isolated <- function(
 #' @param condition A character string of the column name of meta that contains
 #'                  the levels of the experimental condition.
 #' @param padjust_method A character string specifying the p-adjustment method.
-#' @param use_array_weights Boolean value specifying whether to use array 
+#' @param use_array_weights Boolean value specifying whether to use array
 #' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
@@ -560,107 +559,106 @@ fit_global_model <- function(
     padjust_method,
     use_array_weights,
     bp_cfg,
-    verbose
-) {
-  design2design_matrix_result <- design2design_matrix(
-    meta = meta,
-    spline_params = spline_params,
-    level_index = 1,
-    design = effects[["fixed_effects"]]
-  )
-  design_matrix <- design2design_matrix_result[["design_matrix"]]
+    verbose) {
+    design2design_matrix_result <- design2design_matrix(
+        meta = meta,
+        spline_params = spline_params,
+        level_index = 1,
+        design = effects[["fixed_effects"]]
+    )
+    design_matrix <- design2design_matrix_result[["design_matrix"]]
 
-  if (!is.null(rna_seq_data)) {
-    data <- rna_seq_data   # Just having one variable makes the code easier
-  } 
-
-  aw_result <- resolve_array_weights(
-    data = data,
-    rna_seq_data = rna_seq_data,
-    meta = meta,
-    design = design,
-    design2design_matrix_result = design2design_matrix_result,
-    condition = condition,
-    use_array_weights = use_array_weights,
-    random_effects = effects[["random_effects"]] != ""
-  ) 
-  
-  if (verbose) {
-    message("\nFitting global model...")
-  }
-
-  if (effects[["random_effects"]] != "") {    # variancePartition approach
-    colnames(data) <- rownames(meta)  # dream requires this format
-
-    # Apply the Kenward-Roger method if specified
-    if (isTRUE(dream_params[["KenwardRoger"]])) {
-      method <- "Kenward-Roger"
-    } else {
-      method <- NULL
+    if (!is.null(rna_seq_data)) {
+        data <- rna_seq_data # Just having one variable makes the code easier
     }
 
-    param <- bp_setup(
-      bp_cfg = bp_cfg,
-      verbose = verbose
-      )
-    
-    fit <- variancePartition::dream(
-      exprObj = data,
-      formula = stats::as.formula(design),
-      data = design2design_matrix_result[["meta"]], # Spline transformed meta.
-      ddf = method,
-      useWeights = aw_result[["use_weights"]],
-      weightsMatrix = aw_result[["weights"]],
-      BPPARAM = param                    # parallelization
+    aw_result <- resolve_array_weights(
+        data = data,
+        rna_seq_data = rna_seq_data,
+        meta = meta,
+        design = design,
+        design2design_matrix_result = design2design_matrix_result,
+        condition = condition,
+        use_array_weights = use_array_weights,
+        random_effects = effects[["random_effects"]] != ""
     )
 
-    fit <- variancePartition::eBayes(
-      fit = fit,
-      robust = aw_result[["use_weights"]]
-    ) 
-    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
-      BiocParallel::bpstop(param)       # cleanly shuts down workers
+    if (verbose) {
+        message("\nFitting global model...")
     }
-  } else {                         # limma approach
-    fit <- limma::lmFit(
-      object = data,
-      design = design_matrix,
-      weights = aw_result[["weights"]]
+
+    if (effects[["random_effects"]] != "") { # variancePartition approach
+        colnames(data) <- rownames(meta) # dream requires this format
+
+        # Apply the Kenward-Roger method if specified
+        if (isTRUE(dream_params[["KenwardRoger"]])) {
+            method <- "Kenward-Roger"
+        } else {
+            method <- NULL
+        }
+
+        param <- bp_setup(
+            bp_cfg = bp_cfg,
+            verbose = verbose
+        )
+
+        fit <- variancePartition::dream(
+            exprObj = data,
+            formula = stats::as.formula(design),
+            data = design2design_matrix_result[["meta"]], # Spline transformed meta.
+            ddf = method,
+            useWeights = aw_result[["use_weights"]],
+            weightsMatrix = aw_result[["weights"]],
+            BPPARAM = param # parallelization
+        )
+
+        fit <- variancePartition::eBayes(
+            fit = fit,
+            robust = aw_result[["use_weights"]]
+        )
+        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+            BiocParallel::bpstop(param) # cleanly shuts down workers
+        }
+    } else { # limma approach
+        fit <- limma::lmFit(
+            object = data,
+            design = design_matrix,
+            weights = aw_result[["weights"]]
+        )
+        fit <- limma::eBayes(
+            fit = fit,
+            robust = aw_result[["use_weights"]]
+        )
+    }
+
+    list(
+        fit = fit,
+        design_matrix = design_matrix,
+        meta = design2design_matrix_result[["meta"]],
+        condition = condition,
+        feature_names = rownames(data),
+        padjust_method = padjust_method,
+        homosc_violation_result = aw_result[["homosc_violation_result"]],
+        spline_params = spline_params
     )
-    fit <- limma::eBayes(
-      fit = fit,
-      robust = aw_result[["use_weights"]]
-      )
-  }
-  
-  list(
-    fit = fit,
-    design_matrix = design_matrix,
-    meta = design2design_matrix_result[["meta"]],
-    condition = condition,
-    feature_names = rownames(data),
-    padjust_method = padjust_method,
-    homosc_violation_result = aw_result[["homosc_violation_result"]],
-    spline_params = spline_params
-  )
 }
 
 
 #' Extract per-condition time effects (from splines) from one global fit
-#' 
+#'
 #' @noRd
 #'
 #' @description
 #' Takes a **single global LIMMA / dream fit** (returned by
 #' `fit_global_model()`) whose design contains a spline expansion of *Time*
-#' and an interaction with a condition factor (e.g.  
+#' and an interaction with a condition factor (e.g.
 #' `~ Phase * ns(Time, df = dof)`).
 #' The function:
-#' 
+#'
 #' * builds the appropriate contrast matrix so that, for each level of
-#'   the condition factor, the full spline for that level is tested  
-#'   – for the reference level this is just the spline columns  
-#'   – for the other levels it is *(spline + interaction)*  
+#'   the condition factor, the full spline for that level is tested
+#'   – for the reference level this is just the spline columns
+#'   – for the other levels it is *(spline + interaction)*
 #' * runs `limma::contrasts.fit()` + `eBayes()` (or the dream equivalent)
 #'   to obtain an F-test over all spline degrees of freedom;
 #' * renames `Coef1…CoefS` produced by `topTable()` back to `X1…XS`
@@ -669,7 +667,7 @@ fit_global_model <- function(
 #'   uniform with the rest of the SplineOmics pipeline (adds intercepts,
 #'   feature numbers, etc.);
 #' * returns a named list whose elements are
-#'   `"Phase_Exponential"`, `"Phase_Stationary"`, … (i.e.  
+#'   `"Phase_Exponential"`, `"Phase_Stationary"`, … (i.e.
 #'   `<condition>_<level>`), each containing the fully processed top-table
 #'   for that condition’s time effect.
 #'
@@ -677,83 +675,81 @@ fit_global_model <- function(
 #' @param condition factor column in meta that encodes the condition
 #'  (e.g. "Phase")
 #' @param feature_names Char vector of names of the features
-#' @param dof Integer specifying the number of spline degrees of freedom used 
-#'   in the model (i.e., how many basis functions were fitted for the time 
+#' @param dof Integer specifying the number of spline degrees of freedom used
+#'   in the model (i.e., how many basis functions were fitted for the time
 #'   effect).
 #' @param random_effects Boolean value specifying whether random effects are
 #' used.
-#' 
+#'
 #' @return named list of topTable results, one per condition level
-#' 
+#'
 extract_within_level_time_effects <- function(
     fit_obj,
     condition,
     feature_names,
     dof,
-    random_effects
-) {
+    random_effects) {
+    levels_in_condition <- levels(factor(fit_obj$meta[[condition]]))
+    baseline <- levels_in_condition[1]
+    design_cols <- colnames(fit_obj$design_matrix)
+    spline_terms <- paste0("X", seq_len(dof))
+    if ("X" %in% design_cols) spline_terms[1L] <- "X" # In case of dof = 1
 
-  levels_in_condition <- levels(factor(fit_obj$meta[[condition]]))
-  baseline <- levels_in_condition[1]
-  design_cols <- colnames(fit_obj$design_matrix)
-  spline_terms <- paste0("X", seq_len(dof))
-  if ("X" %in% design_cols) spline_terms[1L] <- "X"   # In case of dof = 1
+    eBayes_fun <- if (random_effects) {
+        variancePartition::eBayes
+    } else {
+        limma::eBayes
+    }
 
-  eBayes_fun <- if (random_effects) {
-    variancePartition::eBayes
-  } else {
-    limma::eBayes
-  }
-  
-  top_fun <- if (random_effects) {
-    variancePartition::topTable
-  } else {
-    limma::topTable
-  }
-  
-  results_by_level <- lapply(levels_in_condition, function(lev) {
-    contrast_matrix <- build_spline_contrast(
-      lev = lev,
-      baseline = baseline,
-      condition = condition,
-      spline_terms = spline_terms,
-      design_cols = design_cols,
-      dof = dof
+    top_fun <- if (random_effects) {
+        variancePartition::topTable
+    } else {
+        limma::topTable
+    }
+
+    results_by_level <- lapply(levels_in_condition, function(lev) {
+        contrast_matrix <- build_spline_contrast(
+            lev = lev,
+            baseline = baseline,
+            condition = condition,
+            spline_terms = spline_terms,
+            design_cols = design_cols,
+            dof = dof
+        )
+
+        contrast_fit <- limma::contrasts.fit(
+            fit_obj$fit,
+            contrast_matrix
+        )
+
+        contrast_fit <- eBayes_fun(contrast_fit)
+        coef_names <- colnames(contrast_matrix)
+
+        top <- top_fun(
+            contrast_fit,
+            coef = if (length(coef_names) == 1L) 1L else coef_names,
+            number = Inf,
+            sort.by = if (length(coef_names) > 1) "F" else "t",
+            adjust.method = fit_obj$padjust_method
+        )
+
+        colnames(top) <- sub("^Coef", "X", colnames(top))
+
+        process_top_table(
+            list(
+                top_table = top,
+                fit = fit_obj$fit
+            ),
+            feature_names = feature_names
+        )
+    })
+
+    names(results_by_level) <- paste(
+        condition,
+        levels_in_condition,
+        sep = "_"
     )
-    
-    contrast_fit <- limma::contrasts.fit(
-      fit_obj$fit,
-      contrast_matrix
-    )
-
-    contrast_fit <- eBayes_fun(contrast_fit)
-    coef_names <- colnames(contrast_matrix)
-
-    top <- top_fun(
-      contrast_fit,
-      coef = if (length(coef_names) == 1L) 1L else coef_names,
-      number = Inf,
-      sort.by = if (length(coef_names) > 1) "F" else "t",
-      adjust.method = fit_obj$padjust_method
-    )
-    
-    colnames(top) <- sub("^Coef", "X", colnames(top))
-
-    process_top_table(
-      list(
-        top_table = top,
-        fit = fit_obj$fit
-        ),
-      feature_names = feature_names
-    )
-  })
-
-  names(results_by_level) <- paste(
-    condition,
-    levels_in_condition, 
-    sep = "_"
-    )
-  results_by_level
+    results_by_level
 }
 
 
@@ -791,31 +787,30 @@ extract_within_level_time_effects <- function(
 extract_between_level_contrasts <- function(
     fit_obj,
     condition,
-    random_effects
-) {
-  levels <- unique(fit_obj$meta[[condition]])
+    random_effects) {
+    levels <- unique(fit_obj$meta[[condition]])
 
-  contrast_result <- extract_contrast_for_pair(
-    fit_obj = fit_obj,
-    condition = condition,
-    level_pair = levels,
-    random_effects = random_effects
-  )
-  
-  # Name the results as before
-  cond_name  <- paste0("avrg_diff_", levels[1], "_vs_", levels[2])
-  time_name  <- paste0("time_interaction_", levels[1], "_vs_", levels[2])
-  
-  cond_df <- contrast_result$condition_only
-  if (nrow(cond_df) > 0) cond_df$contrast <- cond_name
-  
-  time_df <- contrast_result$condition_time
-  if (nrow(time_df) > 0) time_df$contrast <- time_name
-  
-  list(
-    condition_only = cond_df,
-    condition_time = time_df
-  )
+    contrast_result <- extract_contrast_for_pair(
+        fit_obj = fit_obj,
+        condition = condition,
+        level_pair = levels,
+        random_effects = random_effects
+    )
+
+    # Name the results as before
+    cond_name <- paste0("avrg_diff_", levels[1], "_vs_", levels[2])
+    time_name <- paste0("time_interaction_", levels[1], "_vs_", levels[2])
+
+    cond_df <- contrast_result$condition_only
+    if (nrow(cond_df) > 0) cond_df$contrast <- cond_name
+
+    time_df <- contrast_result$condition_time
+    if (nrow(time_df) > 0) time_df$contrast <- time_name
+
+    list(
+        condition_only = cond_df,
+        condition_time = time_df
+    )
 }
 
 
@@ -824,7 +819,7 @@ extract_between_level_contrasts <- function(
 
 
 #' Process Top Table
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -845,27 +840,25 @@ extract_between_level_contrasts <- function(
 #'
 process_top_table <- function(
     process_within_level_result,
-    feature_names
-    ) {
-  
-  top_table <- process_within_level_result$top_table
-  fit <- process_within_level_result$fit
+    feature_names) {
+    top_table <- process_within_level_result$top_table
+    fit <- process_within_level_result$fit
 
-  top_table <- modify_limma_top_table(
-    top_table,
-    feature_names
-  )
-  
-  intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
-  intercepts_ordered <- intercepts[top_table$feature_nr, , drop = FALSE]
-  top_table$intercept <- intercepts_ordered[, 1]
-  
-  top_table
+    top_table <- modify_limma_top_table(
+        top_table,
+        feature_names
+    )
+
+    intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
+    intercepts_ordered <- intercepts[top_table$feature_nr, , drop = FALSE]
+    top_table$intercept <- intercepts_ordered[, 1]
+
+    top_table
 }
 
 
 #' Process Within Level
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -878,7 +871,7 @@ process_top_table <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
-#' @param dream_params A named list or NULL. When not NULL, it it can contain 
+#' @param dream_params A named list or NULL. When not NULL, it it can contain
 #' the named elements dof, which must be a int
 #' bigger than 1, which is the degree of freedom for the dream topTable, and
 #' the named element KenwardRoger, which must be a bool, specifying whether
@@ -886,15 +879,15 @@ process_top_table <- function(
 #' @param spline_params A list of spline parameters for the analysis.
 #' @param level_index The index of the level within the factor.
 #' @param padjust_method A character string specifying the p-adjustment method.
-#' @param use_array_weights Boolean value specifying whether to use array 
+#' @param use_array_weights Boolean value specifying whether to use array
 #' weights for limma or variancePartition.
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
@@ -910,7 +903,7 @@ process_top_table <- function(
 #' @importFrom splines bs ns
 #' @importFrom stats as.formula model.matrix
 #' @importFrom limma lmFit eBayes topTable
-#' @importFrom variancePartition dream      
+#' @importFrom variancePartition dream
 #'
 process_within_level <- function(
     data,
@@ -923,131 +916,129 @@ process_within_level <- function(
     padjust_method,
     use_array_weights,
     bp_cfg,
-    verbose
-) {
+    verbose) {
+    effects <- extract_effects(design)
 
-  effects <- extract_effects(design)
+    if (spline_params[["dof"]][level_index] == 0) {
+        best_dof <- select_spline_dof_loocv(
+            data = data,
+            meta = meta,
+            spline_params = spline_params,
+            level_index = level_index,
+            fixed_effects = effects[["fixed_effects"]]
+        )
+        spline_params$dof[level_index] <- best_dof
+    }
 
-  if (spline_params[["dof"]][level_index] == 0) {
-    best_dof <- select_spline_dof_loocv(   
-      data = data,
-      meta = meta,
-      spline_params = spline_params,
-      level_index = level_index,
-      fixed_effects = effects[["fixed_effects"]]
+    design2design_matrix_result <- design2design_matrix(
+        meta = meta,
+        spline_params = spline_params,
+        level_index = level_index,
+        design = effects[["fixed_effects"]]
     )
-    spline_params$dof[level_index] <- best_dof
-  }
 
-  design2design_matrix_result <- design2design_matrix(
-    meta = meta,
-    spline_params = spline_params,
-    level_index = level_index,
-    design = effects[["fixed_effects"]]
-  )
+    design_matrix <- design2design_matrix_result[["design_matrix"]]
 
-  design_matrix <- design2design_matrix_result[["design_matrix"]]
-  
-  aw_result <- resolve_array_weights(
-    data = data,
-    rna_seq_data = rna_seq_data,
-    meta = meta,
-    design = design,
-    design2design_matrix_result = design2design_matrix_result,
-    use_array_weights = use_array_weights,
-    random_effects = effects[["random_effects"]] != ""
-  ) 
+    aw_result <- resolve_array_weights(
+        data = data,
+        rna_seq_data = rna_seq_data,
+        meta = meta,
+        design = design,
+        design2design_matrix_result = design2design_matrix_result,
+        use_array_weights = use_array_weights,
+        random_effects = effects[["random_effects"]] != ""
+    )
 
-  if (!is.null(rna_seq_data)) {
-    data <- rna_seq_data
-  }
-  
-  message(paste("Fitting model for level ", level_index))
-  
-  if (effects[["random_effects"]] != "") {
-    colnames(data) <- rownames(meta)  # dream wants it like this.
-    
-    if (isTRUE(dream_params[["KenwardRoger"]])) {
-      method <- "Kenward-Roger"
+    if (!is.null(rna_seq_data)) {
+        data <- rna_seq_data
+    }
+
+    message(paste("Fitting model for level ", level_index))
+
+    if (effects[["random_effects"]] != "") {
+        colnames(data) <- rownames(meta) # dream wants it like this.
+
+        if (isTRUE(dream_params[["KenwardRoger"]])) {
+            method <- "Kenward-Roger"
+        } else {
+            method <- "adaptive" # Kenward-Roger for < 20 samples, else Satterthwaite
+        }
+
+        param <- bp_setup(
+            bp_cfg = bp_cfg,
+            verbose = verbose
+        )
+
+        fit <- variancePartition::dream(
+            exprObj = data,
+            formula = stats::as.formula(design),
+            data = design2design_matrix_result[["meta"]],
+            ddf = method,
+            useWeights = aw_result[["use_weights"]],
+            weightsMatrix = aw_result[["weights"]],
+            BPPARAM = param
+        )
+        fit <- variancePartition::eBayes(
+            fit = fit,
+            robust = aw_result[["use_weights"]]
+        )
+
+        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+            BiocParallel::bpstop(param) # cleanly shuts down workers
+        }
+
+        num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
+        coeffs <- paste0("X", seq_len(num_matching_columns))
+
+        if (!is.null(dream_params[["dof"]])) {
+            dof <- dream_params[["dof"]]
+        } else {
+            dof <- Inf
+        }
+
+        top_table <- variancePartition::topTable(
+            fit,
+            adjust.method = padjust_method,
+            number = dof,
+            coef = coeffs,
+            sort.by = if (length(coeffs) > 1) "F" else "t"
+        )
     } else {
-      method <- "adaptive"  # Kenward-Roger for < 20 samples, else Satterthwaite
-    }
-    
-    param <- bp_setup(
-      bp_cfg = bp_cfg,
-      verbose = verbose
-      )
-    
-    fit <- variancePartition::dream(
-      exprObj = data,
-      formula = stats::as.formula(design),
-      data = design2design_matrix_result[["meta"]],
-      ddf = method,
-      useWeights = aw_result[["use_weights"]],
-      weightsMatrix = aw_result[["weights"]],
-      BPPARAM = param
-    )
-    fit <- variancePartition::eBayes(
-      fit = fit,
-      robust = aw_result[["use_weights"]]
-    ) 
-    
-    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
-      BiocParallel::bpstop(param)       # cleanly shuts down workers
-    }
-    
-    num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
-    coeffs <- paste0("X", seq_len(num_matching_columns))
-    
-    if (!is.null(dream_params[["dof"]])) {
-      dof <- dream_params[["dof"]]
-    } else {
-      dof <- Inf
-    }
-    
-    top_table <- variancePartition::topTable(
-      fit,
-      adjust.method = padjust_method,
-      number = dof,
-      coef = coeffs,
-      sort.by = if (length(coeffs) > 1) "F" else "t"
-    )
-  } else {
-    fit <- limma::lmFit(
-      object = data,
-      design = design_matrix,
-      weights = aw_result[["weights"]]
-    )
-    fit <- limma::eBayes(
-      fit = fit,
-      robust = aw_result[["use_weights"]]
-    )
-    
-    # Extract the top table based on coefficients
-    num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
-    coeffs <- paste0("X", seq_len(num_matching_columns))
-    
-    top_table <- limma::topTable(
-      fit,
-      adjust.method = padjust_method,
-      number = Inf,
-      coef = coeffs
-    )
-  }
-  
-  attr(top_table, "adjust.method") <- padjust_method
+        fit <- limma::lmFit(
+            object = data,
+            design = design_matrix,
+            weights = aw_result[["weights"]]
+        )
+        fit <- limma::eBayes(
+            fit = fit,
+            robust = aw_result[["use_weights"]]
+        )
 
-  list(
-    top_table = top_table,
-    fit = fit,
-    spline_params = spline_params,
-    use_array_weights = aw_result[["use_weights"]]
-  )
+        # Extract the top table based on coefficients
+        num_matching_columns <- sum(grepl("^X\\d+$", colnames(design_matrix)))
+        coeffs <- paste0("X", seq_len(num_matching_columns))
+
+        top_table <- limma::topTable(
+            fit,
+            adjust.method = padjust_method,
+            number = Inf,
+            coef = coeffs
+        )
+    }
+
+    attr(top_table, "adjust.method") <- padjust_method
+
+    list(
+        top_table = top_table,
+        fit = fit,
+        spline_params = spline_params,
+        use_array_weights = aw_result[["use_weights"]]
+    )
 }
 
 
 #' Remove intercept from a formula
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -1063,17 +1054,17 @@ process_within_level <- function(
 #'   occurrence of `1` will be replaced by `0`.
 #'
 remove_intercept <- function(formula) {
-  # Deparse the formula into a single string
-  formula_str <- paste(deparse(formula), collapse = " ")
-  
-  # Regular expression to match the first standalone 1
-  # (with optional spaces around it)
-  pattern <- "(~\\s*|\\s+)(1)(\\s|$)"
-  
-  # Replace the first occurrence of "1" with "0"
-  formula_str <- sub(pattern, "\\10\\3", formula_str)
-  
-  new_formula <- as.formula(formula_str)
+    # Deparse the formula into a single string
+    formula_str <- paste(deparse(formula), collapse = " ")
+
+    # Regular expression to match the first standalone 1
+    # (with optional spaces around it)
+    pattern <- "(~\\s*|\\s+)(1)(\\s|$)"
+
+    # Replace the first occurrence of "1" with "0"
+    formula_str <- sub(pattern, "\\10\\3", formula_str)
+
+    new_formula <- as.formula(formula_str)
 }
 
 
@@ -1102,69 +1093,67 @@ remove_intercept <- function(formula) {
 #' @return A named list with two elements:
 #'   - `condition_only`: the top table for the condition effect
 #'   - `condition_time`: the top table for the interaction effect
-#'   
+#'
 extract_contrast_for_pair <- function(
     fit_obj,
     condition,
     level_pair,
-    random_effects
-) {
-  
-  fit <- fit_obj[["fit"]]
-  design_matrix <- fit_obj[["design_matrix"]]
-  feature_names <- fit_obj[["feature_names"]]
-  padjust_method <- fit_obj[["padjust_method"]]
+    random_effects) {
+    fit <- fit_obj[["fit"]]
+    design_matrix <- fit_obj[["design_matrix"]]
+    feature_names <- fit_obj[["feature_names"]]
+    padjust_method <- fit_obj[["padjust_method"]]
 
-  coefs <- get_condition_contrast_coefs(
-    condition = condition,
-    level_pair = level_pair,
-    design_matrix = design_matrix
-  )
-
-  if (random_effects) {
-    top_fun <- variancePartition::topTable
-  } else {
-    top_fun <- limma::topTable
-  }
-
-  # Extract average difference condition top table
-  condition_only <- top_fun(
-    fit,
-    coef = coefs$condition_main_and_time,
-    adjust.method = padjust_method,
-    number = Inf
-  )
-
-  # Extract condition-time interaction top table (difference in shapes)
-  coef <- coefs$condition_time_interaction_only
-  condition_time <- top_fun(
-    fit,
-    coef = coef,
-    adjust.method = padjust_method,
-    number = Inf,
-    sort.by = if (length(coef) > 1) "F" else "t"
-  )
-  
-  # Wrap results in lists to pass through process_top_table
-  condition_only_result <- list(
-    top_table = condition_only,
-    fit = fit
-  )
-  condition_time_result <- list(
-    top_table = condition_time,
-    fit = fit
-  )
-  
-  list(
-    condition_only = process_top_table(
-      condition_only_result,
-      feature_names
-    ),
-    condition_time = process_top_table(
-      condition_time_result,
-      feature_names
+    coefs <- get_condition_contrast_coefs(
+        condition = condition,
+        level_pair = level_pair,
+        design_matrix = design_matrix
     )
-  )
+
+    if (random_effects) {
+        top_fun <- variancePartition::topTable
+    } else {
+        top_fun <- limma::topTable
+    }
+
+    # Extract average difference condition top table
+    condition_only <- top_fun(
+        fit,
+        coef = coefs$condition_main_and_time,
+        adjust.method = padjust_method,
+        number = Inf
+    )
+
+    # Extract condition-time interaction top table (difference in shapes)
+    coef <- coefs$condition_time_interaction_only
+    condition_time <- top_fun(
+        fit,
+        coef = coef,
+        adjust.method = padjust_method,
+        number = Inf,
+        sort.by = if (length(coef) > 1) "F" else "t"
+    )
+
+    # Wrap results in lists to pass through process_top_table
+    condition_only_result <- list(
+        top_table = condition_only,
+        fit = fit
+    )
+    condition_time_result <- list(
+        top_table = condition_time,
+        fit = fit
+    )
+
+    list(
+        condition_only = process_top_table(
+            condition_only_result,
+            feature_names
+        ),
+        condition_time = process_top_table(
+            condition_time_result,
+            feature_names
+        )
+    )
 }
 
 
@@ -1173,8 +1162,8 @@ extract_contrast_for_pair <- function(
 #' @noRd
 #'
 #' @description
-#' This internal helper function selects the optimal number of degrees of 
-#' freedom (DoF) for a spline-based time model by minimizing the average 
+#' This internal helper function selects the optimal number of degrees of
+#' freedom (DoF) for a spline-based time model by minimizing the average
 #' analytical leave-one-out cross-validation (LOOCV) error across all features
 #' (e.g., genes).
 #'
@@ -1195,75 +1184,72 @@ extract_contrast_for_pair <- function(
 #'   effects for model construction.
 #'
 #' @return An integer giving the optimal degrees of freedom selected via LOOCV.
-#' 
+#'
 select_spline_dof_loocv <- function(
     data,
     meta,
     spline_params,
     level_index,
-    fixed_effects
-) {
+    fixed_effects) {
+    if (spline_params$spline_type[level_index] == "n") {
+        candidate_dofs <- 2:min(10, length(unique(meta$Time)))
+    } else if (spline_params$spline_type[level_index] == "b") {
+        candidate_dofs <- 4:min(10, length(unique(meta$Time)))
+    }
 
-  if (spline_params$spline_type[level_index] == "n") {
-    candidate_dofs <- 2:min(10, length(unique(meta$Time)))
-  }
-  else if (spline_params$spline_type[level_index] == "b") {
-    candidate_dofs <- 4:min(10, length(unique(meta$Time)))
-  }
-  
-  avg_loocv_errors <- numeric(length(candidate_dofs))
-  
-  pb <- progress_bar$new(
-    format = "  Optimizing DoF [:bar] :current/:total (:percent) ETA: :eta",
-    total = length(candidate_dofs),
-    clear = FALSE,
-    width = 60
-  )
-  
-  for (i in seq_along(candidate_dofs)) {
-    dof_i <- candidate_dofs[i]
-    spline_params_i <- spline_params
-    spline_params_i$dof <- numeric(length(spline_params$dof))
-    spline_params_i$dof[level_index] <- as.numeric(dof_i)
-    
-    design_result <- design2design_matrix(
-      meta = meta,
-      spline_params = spline_params_i,
-      level_index = level_index,
-      design = fixed_effects
+    avg_loocv_errors <- numeric(length(candidate_dofs))
+
+    pb <- progress_bar$new(
+        format = "  Optimizing DoF [:bar] :current/:total (:percent) ETA: :eta",
+        total = length(candidate_dofs),
+        clear = FALSE,
+        width = 60
     )
-    design_matrix_i <- design_result$design_matrix
-    
-    loocv_errors <- apply(
-      data,
-      1,
-      analytic_loocv,
-      design_matrix = design_matrix_i
-      )
-    avg_loocv_errors[i] <- mean(
-      loocv_errors,
-      na.rm = TRUE
-      )
-    pb$tick()
-  }
-  
-  best_dof <- candidate_dofs[which.min(avg_loocv_errors)]
-  message(sprintf("Selected optimal spline DoF = %d", best_dof))
-  
-  return(best_dof)
+
+    for (i in seq_along(candidate_dofs)) {
+        dof_i <- candidate_dofs[i]
+        spline_params_i <- spline_params
+        spline_params_i$dof <- numeric(length(spline_params$dof))
+        spline_params_i$dof[level_index] <- as.numeric(dof_i)
+
+        design_result <- design2design_matrix(
+            meta = meta,
+            spline_params = spline_params_i,
+            level_index = level_index,
+            design = fixed_effects
+        )
+        design_matrix_i <- design_result$design_matrix
+
+        loocv_errors <- apply(
+            data,
+            1,
+            analytic_loocv,
+            design_matrix = design_matrix_i
+        )
+        avg_loocv_errors[i] <- mean(
+            loocv_errors,
+            na.rm = TRUE
+        )
+        pb$tick()
+    }
+
+    best_dof <- candidate_dofs[which.min(avg_loocv_errors)]
+    message(sprintf("Selected optimal spline DoF = %d", best_dof))
+
+    return(best_dof)
 }
 
 
 #' Set up a BiocParallel backend in a cross-platform, RAM-safe way
-#' 
+#'
 #' @noRd
-#' 
+#'
 #' @description
 #' Creates and registers a `BiocParallelParam` that is appropriate for the
 #' current platform **and** safe on memory-constrained machines:
 #'
-#' * **Linux / macOS** – uses `MulticoreParam()` (fork).  
-#' * **Windows**       – uses `SnowParam()`  (SOCK cluster).  
+#' * **Linux / macOS** – uses `MulticoreParam()` (fork).
+#' * **Windows**       – uses `SnowParam()`  (SOCK cluster).
 #' * **n_cores <= 1**  – falls back to `SerialParam()`.
 #'
 #' Before spawning workers it throttles the number of BLAS/OpenBLAS threads
@@ -1272,11 +1258,11 @@ select_spline_dof_loocv <- function(
 #'
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
@@ -1285,78 +1271,79 @@ select_spline_dof_loocv <- function(
 #' @return A `BiocParallelParam` object (already registered via
 #'   `BiocParallel::register()`).  Use it directly or rely on the global
 #'   registration inside BiocParallel-aware functions.
-#'   
+#'
 #' @importFrom RhpcBLASctl blas_set_num_threads
 #' @importFrom BiocParallel SerialParam SnowParam MulticoreParam register
 #'                          bpstart
 #'
 bp_setup <- function(
     bp_cfg,
-    verbose
-    ) {
-  
-  # Defaults
-  default <- list(n_cores = 1L, blas_threads = 1L)
-  
-  # NULL case — fallback
-  if (is.null(bp_cfg)) {
-    n_cores      <- default$n_cores
-    blas_threads <- default$blas_threads
-  } else {
-    # One or both may be missing — check existence before extracting
-    n_cores <- if ("n_cores" %in% names(bp_cfg)) {
-      as.integer(bp_cfg[["n_cores"]])
-    } else {
-      default$n_cores
-    }
-    
-    blas_threads <- if ("blas_threads" %in% names(bp_cfg)) {
-      as.integer(bp_cfg[["blas_threads"]])
-    } else {
-      default$blas_threads
-    }
-  }
+    verbose) {
+    # Defaults
+    default <- list(n_cores = 1L, blas_threads = 1L)
 
-  # 1.  Throttle BLAS threads in *this* session (forks inherit) 
-  if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
-    RhpcBLASctl::blas_set_num_threads(blas_threads)
-  }
+    # NULL case — fallback
+    if (is.null(bp_cfg)) {
+        n_cores <- default$n_cores
+        blas_threads <- default$blas_threads
+    } else {
+        # One or both may be missing — check existence before extracting
+        n_cores <- if ("n_cores" %in% names(bp_cfg)) {
+            as.integer(bp_cfg[["n_cores"]])
+        } else {
+            default$n_cores
+        }
 
-  # 2.  Choose backend
-  is_windows <- identical(.Platform$OS.type, "windows")
-  if (n_cores <= 1) {
-    param <- BiocParallel::SerialParam()
-  } else if (is_windows) {
-    param <- BiocParallel::SnowParam(
-      workers = n_cores,
-      type = "PSOCK",
-      exportglobals  = TRUE
-      )
-  } else {
-    param <- BiocParallel::MulticoreParam(workers = n_cores)
-  }
-  
-  if (verbose) {
-    message(paste(
-      "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
-      "parallelization for variancePartition::dream(), then those",
-      "parallelized",
-      "processes may continue running. Use your system's",
-      "process manager to terminate them manually!\n"
-    ))
-  }
-  
-  # Stop any existing cluster before switching backends
-  try(BiocParallel::bpstop(BiocParallel::bpparam()), silent = TRUE)
-  
-  # 3) Start, register, and auto-stop on exit
-  BiocParallel::bpstart(param)
-  on.exit({
-    try(BiocParallel::bpstop(param), silent = TRUE)
-  }, add = TRUE)
-  BiocParallel::register(param)
-  
-  invisible(param)
+        blas_threads <- if ("blas_threads" %in% names(bp_cfg)) {
+            as.integer(bp_cfg[["blas_threads"]])
+        } else {
+            default$blas_threads
+        }
+    }
+
+    # 1.  Throttle BLAS threads in *this* session (forks inherit)
+    if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+        RhpcBLASctl::blas_set_num_threads(blas_threads)
+    }
+
+    # 2.  Choose backend
+    is_windows <- identical(.Platform$OS.type, "windows")
+    if (n_cores <= 1) {
+        param <- BiocParallel::SerialParam()
+    } else if (is_windows) {
+        param <- BiocParallel::SnowParam(
+            workers = n_cores,
+            type = "PSOCK",
+            exportglobals = TRUE
+        )
+    } else {
+        param <- BiocParallel::MulticoreParam(workers = n_cores)
+    }
+
+    if (verbose) {
+        message(paste(
+            "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
+            "parallelization for variancePartition::dream(), then those",
+            "parallelized",
+            "processes may continue running. Use your system's",
+            "process manager to terminate them manually!\n"
+        ))
+    }
+
+    # Stop any existing cluster before switching backends
+    try(BiocParallel::bpstop(BiocParallel::bpparam()), silent = TRUE)
+
+    # 3) Start, register, and auto-stop on exit
+    BiocParallel::bpstart(param)
+    on.exit(
+        {
+            try(BiocParallel::bpstop(param), silent = TRUE)
+        },
+        add = TRUE
+    )
+    BiocParallel::register(param)
+
+    invisible(param)
 }
 
 
@@ -1365,22 +1352,22 @@ bp_setup <- function(
 #' @noRd
 #'
 #' @description
-#' Constructs a contrast matrix for testing spline-based time effects within a 
+#' Constructs a contrast matrix for testing spline-based time effects within a
 #' linear model, optionally including interaction terms with a condition factor.
-#' The contrast matrix is structured to test each spline basis coefficient 
+#' The contrast matrix is structured to test each spline basis coefficient
 #' separately, comparing a specific condition level against the baseline.
 #'
-#' For the baseline level, only the spline terms are tested. For other levels, 
+#' For the baseline level, only the spline terms are tested. For other levels,
 #' both the spline terms and the corresponding interaction terms are included.
-#' Interaction terms are identified dynamically from the design matrix column 
+#' Interaction terms are identified dynamically from the design matrix column
 #' names to ensure robustness against formula term ordering.
 #'
 #' @param lev Character. The condition level for which the contrast is built.
 #' @param baseline Character. The baseline condition level.
 #' @param condition Character. The condition factor name used in the model.
-#' @param spline_terms Character vector. The names of the spline terms 
+#' @param spline_terms Character vector. The names of the spline terms
 #' (e.g., "X1", "X2").
-#' @param design_cols Character vector. Column names of the design matrix 
+#' @param design_cols Character vector. Column names of the design matrix
 #' (typically from \code{colnames(fit$coefficients)}).
 #' @param dof Integer. Degrees of freedom, i.e., the number of spline basis
 #'  terms.
@@ -1395,43 +1382,44 @@ build_spline_contrast <- function(
     condition,
     spline_terms,
     design_cols,
-    dof
-) {
-  contrast_matrix <- matrix(
-    0,
-    nrow = dof,
-    ncol = length(design_cols),
-    dimnames = list(
-      paste0("spline_c", seq_len(dof)),  # pseudo coef names
-      design_cols                     # must match colnames(fit$coefficients)
+    dof) {
+    contrast_matrix <- matrix(
+        0,
+        nrow = dof,
+        ncol = length(design_cols),
+        dimnames = list(
+            paste0("spline_c", seq_len(dof)), # pseudo coef names
+            design_cols # must match colnames(fit$coefficients)
+        )
     )
-  )
-  
-  if (lev == baseline) {
-    # Only spline coefficients are tested
-    for (k in seq_len(dof)) {
-      contrast_matrix[k, spline_terms[k]] <- 1
+
+    if (lev == baseline) {
+        # Only spline coefficients are tested
+        for (k in seq_len(dof)) {
+            contrast_matrix[k, spline_terms[k]] <- 1
+        }
+    } else {
+        for (k in seq_len(dof)) {
+            contrast_matrix[k, spline_terms[k]] <- 1
+
+            # Find interaction column dynamically
+            col_idx <- which(
+                grepl(spline_terms[k], design_cols) &
+                    grepl(paste0(condition, lev), design_cols)
+            )
+            if (length(col_idx) != 1) {
+                stop_call_false(
+                    "Could not uniquely identify interaction term for ",
+                    spline_terms[k], " and ", condition, lev
+                )
+            }
+            contrast_matrix[k, col_idx] <- 1
+        }
     }
-  } else {
-    for (k in seq_len(dof)) {
-      contrast_matrix[k, spline_terms[k]] <- 1
-      
-      # Find interaction column dynamically
-      col_idx <- which(
-        grepl(spline_terms[k], design_cols) & 
-          grepl(paste0(condition, lev), design_cols)
-      )
-      if (length(col_idx) != 1) {
-        stop_call_false("Could not uniquely identify interaction term for ",
-                        spline_terms[k], " and ", condition, lev)
-      }
-      contrast_matrix[k, col_idx] <- 1
-    }
-  }
-  
-  # Transpose → rows = coefficients in the model,
-  # columns = pseudo-contrasts (one per spline term)
-  t(contrast_matrix)
+
+    # Transpose → rows = coefficients in the model,
+    # columns = pseudo-contrasts (one per spline term)
+    t(contrast_matrix)
 }
 
 
@@ -1439,7 +1427,7 @@ build_spline_contrast <- function(
 
 
 #' Modify limma Top Table
-#' 
+#'
 #' @noRd
 #'
 #' @description
@@ -1456,49 +1444,47 @@ build_spline_contrast <- function(
 #'
 modify_limma_top_table <- function(
     top_table,
-    feature_names
-    ) {
-  
-  is_integer_string <- function(x) {
-    return(grepl("^[0-9]+$", x))
-  }
-  
-  # Because the row headers of a potential rna_seq_data object were not
-  # converted to ints (written as strings) beforehand. This is run only when
-  # the row headers are still "real" strings.
-  if (!all(vapply(
-    rownames(top_table),
-    is_integer_string,
-    logical(1)
-  ))
-  ) {
-    rownames(top_table) <- vapply(
-      rownames(top_table),
-      function(id) {
-        # Find the index of the current row name in feature_names
-        index <- which(feature_names == id)
-        # Return the index as a string
-        return(as.character(index))
-      },
-      character(1)
-    )
-  }
-  
-  top_table <- tibble::as_tibble(
-    top_table,
-    rownames = "feature_nr"
-  )
+    feature_names) {
+    is_integer_string <- function(x) {
+        return(grepl("^[0-9]+$", x))
+    }
 
-  # Convert feature_nr to integer
-  top_table <- top_table |>
-    dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
-    dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
-  
-  # Sort and add feature names based on the feature_nr
-  sorted_feature_names <- feature_names[top_table$feature_nr]
-  top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
-  
-  return(top_table)
+    # Because the row headers of a potential rna_seq_data object were not
+    # converted to ints (written as strings) beforehand. This is run only when
+    # the row headers are still "real" strings.
+    if (!all(vapply(
+        rownames(top_table),
+        is_integer_string,
+        logical(1)
+    ))
+    ) {
+        rownames(top_table) <- vapply(
+            rownames(top_table),
+            function(id) {
+                # Find the index of the current row name in feature_names
+                index <- which(feature_names == id)
+                # Return the index as a string
+                return(as.character(index))
+            },
+            character(1)
+        )
+    }
+
+    top_table <- tibble::as_tibble(
+        top_table,
+        rownames = "feature_nr"
+    )
+
+    # Convert feature_nr to integer
+    top_table <- top_table |>
+        dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
+        dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
+
+    # Sort and add feature names based on the feature_nr
+    sorted_feature_names <- feature_names[top_table$feature_nr]
+    top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
+
+    return(top_table)
 }
 
 
@@ -1525,53 +1511,53 @@ modify_limma_top_table <- function(
 #'     condition main effect and the condition-time interactions
 #'   - `condition_time_interaction_only`: vector of coefficient names for the
 #'     condition-time interaction terms only
-#'     
+#'
 get_condition_contrast_coefs <- function(
     condition,
     level_pair,
-    design_matrix
-) {
-  
-  cols <- colnames(design_matrix)
-  
-  level1 <- make.names(paste0(condition, level_pair[1]))
-  level2 <- make.names(paste0(condition, level_pair[2]))
-  
-  if (any(grepl(level1, cols))) {
-    modeled_level <- level_pair[1]
-  } else if (any(grepl(level2, cols))) {
-    modeled_level <- level_pair[2]
-  } else {
-    stop("Neither level appears in design_matrix columns.")
-  }
-  
-  condition_contrast <- make.names(paste0(condition, modeled_level))
-  
-  spline_cols <- grep(
-    "^X\\d*$",
-    cols,
-    value = TRUE
-  )
-  
-  # Dynamically find interaction columns between spline and condition
-  interaction_contrasts <- vapply(spline_cols, function(spline_col) {
-    possible_matches <- cols[
-      grepl(condition_contrast, cols) & grepl(spline_col, cols)
-    ]
-    if (length(possible_matches) != 1) {
-      stop("Could not uniquely identify interaction column for: ",
-           condition_contrast, " and ", spline_col)
+    design_matrix) {
+    cols <- colnames(design_matrix)
+
+    level1 <- make.names(paste0(condition, level_pair[1]))
+    level2 <- make.names(paste0(condition, level_pair[2]))
+
+    if (any(grepl(level1, cols))) {
+        modeled_level <- level_pair[1]
+    } else if (any(grepl(level2, cols))) {
+        modeled_level <- level_pair[2]
+    } else {
+        stop("Neither level appears in design_matrix columns.")
     }
-    possible_matches
-  }, character(1))
-  
-  list(
-    condition_main_and_time = c(
-      condition_contrast,
-      interaction_contrasts
-    ),
-    condition_time_interaction_only = interaction_contrasts
-  )
+
+    condition_contrast <- make.names(paste0(condition, modeled_level))
+
+    spline_cols <- grep(
+        "^X\\d*$",
+        cols,
+        value = TRUE
+    )
+
+    # Dynamically find interaction columns between spline and condition
+    interaction_contrasts <- vapply(spline_cols, function(spline_col) {
+        possible_matches <- cols[
+            grepl(condition_contrast, cols) & grepl(spline_col, cols)
+        ]
+        if (length(possible_matches) != 1) {
+            stop(
+                "Could not uniquely identify interaction column for: ",
+                condition_contrast, " and ", spline_col
+            )
+        }
+        possible_matches
+    }, character(1))
+
+    list(
+        condition_main_and_time = c(
+            condition_contrast,
+            interaction_contrasts
+        ),
+        condition_time_interaction_only = interaction_contrasts
+    )
 }
 
 
@@ -1590,40 +1576,38 @@ get_condition_contrast_coefs <- function(
 #'   model the time trend or other covariates.
 #'
 #' @return A numeric scalar representing the LOOCV error.
-#' 
+#'
 #' @importFrom stats lm hatvalues residuals
 #'
 analytic_loocv <- function(
     expr_vec,
-    design_matrix
-    ) {
-  
-  fit <- stats::lm(expr_vec ~ design_matrix - 1)  # no intercept, already in
-  h <- stats::hatvalues(fit)
-  r <- stats::residuals(fit)
-  mean((r / (1 - h))^2)
+    design_matrix) {
+    fit <- stats::lm(expr_vec ~ design_matrix - 1) # no intercept, already in
+    h <- stats::hatvalues(fit)
+    r <- stats::residuals(fit)
+    mean((r / (1 - h))^2)
 }
 
 
 #' Resolve whether array weights should be used, and return them if needed
 #'
 #' @noRd
-#' 
+#'
 #' @description
-#' This function encapsulates the logic for deciding whether to use array 
+#' This function encapsulates the logic for deciding whether to use array
 #' weights
-#' in a linear modeling pipeline based on the presence of heteroscedasticity in 
+#' in a linear modeling pipeline based on the presence of heteroscedasticity in
 #' the data. It supports both automatic detection (based on Levene's test) and
-#' manual override via the `use_array_weights` argument. If `rna_seq_data` is 
-#' provided, the use of weights is suppressed since RNA-seq workflows are 
-#' expected 
-#' to have applied the voom transformation already. If heteroscedasticity is 
-#' detected or explicitly requested, the function computes array weights using 
+#' manual override via the `use_array_weights` argument. If `rna_seq_data` is
+#' provided, the use of weights is suppressed since RNA-seq workflows are
+#' expected
+#' to have applied the voom transformation already. If heteroscedasticity is
+#' detected or explicitly requested, the function computes array weights using
 #' limma's `arrayWeights()` function. If random effects are present, the
-#' weights are reshaped into a matrix suitable for use with 
-#' `variancePartition::dream()`. 
+#' weights are reshaped into a matrix suitable for use with
+#' `variancePartition::dream()`.
 #' The function returns a structured list containing the final weight matrix
-#'  (or NULL), 
+#'  (or NULL),
 #' the resolved boolean flag for weight usage, and the heteroscedasticity test
 #'  result (if available) for diagnostic purposes.
 #'
@@ -1642,7 +1626,7 @@ analytic_loocv <- function(
 #'  use of weights
 #'
 #' @return A list with `weights`, `use_weights`, and `homosc_violation_result`
-#' 
+#'
 resolve_array_weights <- function(
     data,
     rna_seq_data,
@@ -1651,53 +1635,51 @@ resolve_array_weights <- function(
     design2design_matrix_result,
     condition = NULL,
     use_array_weights = TRUE,
-    random_effects = FALSE
-) {
-  
-  # Default case: already handled for RNA-seq
-  if (!is.null(rna_seq_data)) {
-    return(list(
-      weights = NULL,
-      use_weights = FALSE,
-      homosc_violation_result = NULL
-    ))
-  }
-  
-  # Auto-detect violation if user has not explicitly set the flag
-  if (is.null(use_array_weights)) {
-    homosc_violation_result <- check_homoscedasticity_violation(
-      data = data,
-      meta = meta,
-      design = design,
-      design2design_matrix_result = design2design_matrix_result,
-      condition = condition,
-      random_effects = random_effects
-    )
-    use_array_weights <- homosc_violation_result$violation
-  } else {
-    homosc_violation_result <- NULL
-  }
-
-  if (isTRUE(use_array_weights)) {
-    message("Using arrayWeights strategy for heteroscedasticity adjustment.")
-    weights <- limma::arrayWeights(
-      object = data,
-      design = design2design_matrix_result$design_matrix
-    )
-    if (random_effects) {    # no random effects present
-      weights <- matrix(
-        rep(weights, each = nrow(data)),
-        nrow = nrow(data),
-        byrow = TRUE
-      )
+    random_effects = FALSE) {
+    # Default case: already handled for RNA-seq
+    if (!is.null(rna_seq_data)) {
+        return(list(
+            weights = NULL,
+            use_weights = FALSE,
+            homosc_violation_result = NULL
+        ))
     }
-  } else {
-    weights <- NULL
-  }
 
-  list(
-    weights = weights,
-    use_weights = use_array_weights,
-    homosc_violation_result = homosc_violation_result
-  )
+    # Auto-detect violation if user has not explicitly set the flag
+    if (is.null(use_array_weights)) {
+        homosc_violation_result <- check_homoscedasticity_violation(
+            data = data,
+            meta = meta,
+            design = design,
+            design2design_matrix_result = design2design_matrix_result,
+            condition = condition,
+            random_effects = random_effects
+        )
+        use_array_weights <- homosc_violation_result$violation
+    } else {
+        homosc_violation_result <- NULL
+    }
+
+    if (isTRUE(use_array_weights)) {
+        message("Using arrayWeights strategy for heteroscedasticity adjustment.")
+        weights <- limma::arrayWeights(
+            object = data,
+            design = design2design_matrix_result$design_matrix
+        )
+        if (random_effects) { # no random effects present
+            weights <- matrix(
+                rep(weights, each = nrow(data)),
+                nrow = nrow(data),
+                byrow = TRUE
+            )
+        }
+    } else {
+        weights <- NULL
+    }
+
+    list(
+        weights = weights,
+        use_weights = use_array_weights,
+        homosc_violation_result = homosc_violation_result
+    )
 }

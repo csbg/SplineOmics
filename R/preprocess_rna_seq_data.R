@@ -10,25 +10,25 @@
 #' require a different normalization method, you can supply your own
 #' custom normalization function.
 #'
-#' @param splineomics An S3 object of class `SplineOmics` that must contain the 
+#' @param splineomics An S3 object of class `SplineOmics` that must contain the
 #' following elements:
 #' \itemize{
-#'   \item \code{data}: A matrix of the omics dataset, with feature names 
+#'   \item \code{data}: A matrix of the omics dataset, with feature names
 #'   optionally as row headers (genes as rows, samples as columns).
-#'   \item \code{meta}: A dataframe containing metadata corresponding to the 
-#'   \code{data}. The dataframe must include a 'Time' column and a column 
+#'   \item \code{meta}: A dataframe containing metadata corresponding to the
+#'   \code{data}. The dataframe must include a 'Time' column and a column
 #'   specified by the \code{condition}.
-#'   \item \code{design}: A character string representing the design formula 
+#'   \item \code{design}: A character string representing the design formula
 #'   for the limma analysis (e.g., \code{'~ 1 + Phase*X + Reactor'}).
-#'   \item \code{spline_params}: A list of spline parameters used in the 
+#'   \item \code{spline_params}: A list of spline parameters used in the
 #'   analysis. This can include:
 #'     \itemize{
-#'       \item \code{spline_type}: A character string specifying the type of 
-#'       spline. Must be either \code{'n'} for natural cubic splines or 
+#'       \item \code{spline_type}: A character string specifying the type of
+#'       spline. Must be either \code{'n'} for natural cubic splines or
 #'       \code{'b'} for B-splines.
-#'       \item \code{dof}: An integer specifying the degrees of freedom. 
+#'       \item \code{dof}: An integer specifying the degrees of freedom.
 #'       Required for both natural cubic splines and B-splines.
-#'       \item \code{degree}: An integer specifying the degree of the spline 
+#'       \item \code{degree}: An integer specifying the degree of the spline
 #'       (for B-splines only).
 #'       \item \code{knots}: Positions of the internal knots (for B-splines).
 #'       \item \code{bknots}: Boundary knots (for B-splines).
@@ -39,7 +39,7 @@
 #'    test. If this test is significant for at least 10% of the features,
 #'    then the robust strategy is used. The robust strategy uses the function
 #'    voomWithQualityWeights for RNA-seq data instead of the normal voom
-#'    function. For other, non-count-based data, the function 
+#'    function. For other, non-count-based data, the function
 #'    limma::arrayWeights is used instead, combined with setting the robust
 #'    argument to TRUE for the limma::eBayes function. In summary, the strategy
 #'    employed by those functions is to downweights samples with higher
@@ -50,16 +50,16 @@
 #'    (common statistical wisdom).
 #'   \item \code{bp_cfg}: A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
-#'   
+#'
 #'   This controls how many **R worker processes** (`n_cores`) and how many
 #'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.  
-#'   
+#'   during parallel computation.
+#'
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
 #' }
-#' 
+#'
 #' @param normalize_func An optional normalization function. If provided, this
 #' function will be used to normalize the `DGEList` object. If not provided,
 #' TMM normalization (via `edgeR::calcNormFactors`) will be used by default.
@@ -67,61 +67,62 @@
 #' input the y of: y <- edgeR::DGEList(counts = raw_counts) and output the y
 #' with the normalized counts.
 #' @param verbose Boolean flag controlling the display of messages.
-#' 
-#' @return The updaed `splineomics` object, now containing the `voom` object, 
-#' which includes the log2-counts per million (logCPM) matrix and 
+#'
+#' @return The updaed `splineomics` object, now containing the `voom` object,
+#' which includes the log2-counts per million (logCPM) matrix and
 #' observation-specific weights. Additionally, the splineparams are updated with
 #' the identified optimal dof based on LOOCV, when dof = 0L (for auto-dof)
 #'
 #' @seealso edgeR::DGEList, edgeR::calcNormFactors
-#' 
+#'
 #' @importFrom limma voom
 #' @importFrom variancePartition voomWithDreamWeights
-#' 
+#'
 #' @examples
 #' if (requireNamespace("edgeR", quietly = TRUE) &&
 #'     requireNamespace("limma", quietly = TRUE)) {
+#'     # Toy raw counts: 4 genes x 6 samples (2 conditions x 3 timepoints)
+#'     set.seed(1)
+#'     counts <- matrix(
+#'         rpois(24, lambda = 20),
+#'         nrow = 4, ncol = 6,
+#'         dimnames = list(paste0("g", 1:4), paste0("s", 1:6))
+#'     )
 #'
-#'   # Toy raw counts: 4 genes x 6 samples (2 conditions x 3 timepoints)
-#'   set.seed(1)
-#'   counts <- matrix(
-#'     rpois(24, lambda = 20),
-#'     nrow = 4, ncol = 6,
-#'     dimnames = list(paste0("g", 1:4), paste0("s", 1:6))
-#'   )
+#'     meta <- data.frame(
+#'         Time = c(0, 1, 2, 0, 1, 2),
+#'         condition = rep(c("WT", "KO"), each = 3),
+#'         row.names = colnames(counts)
+#'     )
 #'
-#'   meta <- data.frame(
-#'     Time = c(0, 1, 2, 0, 1, 2),
-#'     condition = rep(c("WT", "KO"), each = 3),
-#'     row.names = colnames(counts)
-#'   )
+#'     # Simple fixed-effects design (no random effects → uses limma::voom)
+#'     design_str <- "~ 0 + Time + condition"
 #'
-#'   # Simple fixed-effects design (no random effects → uses limma::voom)
-#'   design_str <- "~ 0 + Time + condition"
+#'     # Spline params: natural cubic with fixed dof (avoid auto-dof path)
+#'     sp <- list(
+#'         spline_type = "n", dof = 3L, degree = NA_integer_,
+#'         knots = NULL, bknots = NULL
+#'     )
 #'
-#'   # Spline params: natural cubic with fixed dof (avoid auto-dof path)
-#'   sp <- list(spline_type = "n", dof = 3L, degree = NA_integer_,
-#'              knots = NULL, bknots = NULL)
+#'     # Build minimal SplineOmics object
+#'     so <- list(
+#'         data = counts,
+#'         meta = meta,
+#'         design = design_str,
+#'         condition = "condition",
+#'         spline_params = sp,
+#'         use_array_weights = FALSE, # skip homoscedasticity auto-check
+#'         bp_cfg = list(n_cores = 1L, blas_threads = 1L)
+#'     )
+#'     class(so) <- "SplineOmics"
 #'
-#'   # Build minimal SplineOmics object
-#'   so <- list(
-#'     data = counts,
-#'     meta = meta,
-#'     design = design_str,
-#'     condition = "condition",
-#'     spline_params = sp,
-#'     use_array_weights = FALSE,   # skip homoscedasticity auto-check
-#'     bp_cfg = list(n_cores = 1L, blas_threads = 1L)
-#'   )
-#'   class(so) <- "SplineOmics"
+#'     # Run preprocessing (TMM + voom)
+#'     so2 <- preprocess_rna_seq_data(so)
 #'
-#'   # Run preprocessing (TMM + voom)
-#'   so2 <- preprocess_rna_seq_data(so)
-#'
-#'   # Inspect the voom results (logCPM matrix dimensions)
-#'   if (!is.null(so2$rna_seq_data)) {
-#'     dim(so2$rna_seq_data$E)
-#'   }
+#'     # Inspect the voom results (logCPM matrix dimensions)
+#'     if (!is.null(so2$rna_seq_data)) {
+#'         dim(so2$rna_seq_data$E)
+#'     }
 #' }
 #'
 #' @export
@@ -129,197 +130,197 @@
 preprocess_rna_seq_data <- function(
     splineomics,
     normalize_func = NULL,
-    verbose = TRUE
-    ) {
-  
-  start_time <- Sys.time()
-  check_splineomics_elements(
-    splineomics = splineomics,
-    func_type = "preprocess_rna_seq_data"
-  )
-  
-  args <- lapply(
-    as.list(match.call()[-1]),
-    eval,
-    parent.frame()
-  )
-  args[["verbose"]] <- verbose
-  check_null_elements(args)
-  input_control <- InputControl$new(args)
-  input_control$auto_validate()
-  
-  raw_counts <- splineomics[["data"]]
-  meta <- sanitize_meta(splineomics[["meta"]])
-  spline_params <- splineomics[["spline_params"]]
-  design <- splineomics[["design"]]
-  condition <- splineomics[["condition"]]
-  use_array_weights <- splineomics[["use_array_weights"]]
-  bp_cfg <- splineomics[["bp_cfg"]]
-
-  # Because at first I enforced that X in the design formula stands for the time
-  # and I heavily oriented my code towards that. But then I realised that it is
-  # nonsense to encode the time as X, and now it is explicitly "Time" (because
-  # meta must contain the exact name "Time" for this respective column).
-  design <- gsub(
-    "Time",
-    "X",
-    design
-    )  
-  
-  effects <- extract_effects(design)
-  
-  if (verbose) {
-    message("Preprocessing RNA-seq data (normalization + voom)...")
-  }
-
-  # Check if edgeR is installed; if not, inform the user
-  if (!requireNamespace("edgeR", quietly = TRUE)) {
-    stop_call_false(
-      "The 'edgeR' package is not installed.\n",
-      "Please install it manually using the command \n", 
-      " below and re-run the function:\n\n",
-      "  BiocManager::install('edgeR')\n\n",
-      "This is an optional dependency of the SplineOmics package, \n",
-      "only needed when working with RNA-seq data."
+    verbose = TRUE) {
+    start_time <- Sys.time()
+    check_splineomics_elements(
+        splineomics = splineomics,
+        func_type = "preprocess_rna_seq_data"
     )
-  }
-  
-  # voomWithDreamWeights wants it like this
-  colnames(raw_counts) <- rownames(meta)  
-  
-  # Step 1: Create DGEList object from raw counts
-  y <- edgeR::DGEList(counts = raw_counts)
 
-  # Step 2: Apply the normalization function (either user-provided or default)
-  if (!is.null(normalize_func) && is.function(normalize_func)) {
-    y <- normalize_func(y) # user provided normalisation function
-  } else {
-    # Default: Normalize the counts using TMM normalization
-    y <- edgeR::calcNormFactors(y)
-  }
-  
-  # For rna_seq data, the data can only be handled together. For mode isolated,
-  # the data has to be split and the function run twice. Thats why we can only
-  # have one parameter set for the spline_params.
-  effects <- extract_effects(design)
-  if (spline_params[["dof"]][1] == 0) {   # auto-dof.
-    best_dof <- select_spline_dof_loocv(   
-      data = raw_counts,
-      meta = meta,
-      spline_params = spline_params,
-      level_index = 1,
-      fixed_effects = effects[["fixed_effects"]]
+    args <- lapply(
+        as.list(match.call()[-1]),
+        eval,
+        parent.frame()
     )
-    spline_params$dof[1] <- best_dof
-    splineomics <- SplineOmics::update_splineomics(
-      splineomics = splineomics,
-      spline_params = spline_params
+    args[["verbose"]] <- verbose
+    check_null_elements(args)
+    input_control <- InputControl$new(args)
+    input_control$auto_validate()
+
+    raw_counts <- splineomics[["data"]]
+    meta <- sanitize_meta(splineomics[["meta"]])
+    spline_params <- splineomics[["spline_params"]]
+    design <- splineomics[["design"]]
+    condition <- splineomics[["condition"]]
+    use_array_weights <- splineomics[["use_array_weights"]]
+    bp_cfg <- splineomics[["bp_cfg"]]
+
+    # Because at first I enforced that X in the design formula stands for the time
+    # and I heavily oriented my code towards that. But then I realised that it is
+    # nonsense to encode the time as X, and now it is explicitly "Time" (because
+    # meta must contain the exact name "Time" for this respective column).
+    design <- gsub(
+        "Time",
+        "X",
+        design
     )
-  }
 
-  # Step 3: Create design matrix
-  design2design_matrix_result <- design2design_matrix(
-    meta = meta,
-    spline_params = spline_params,
-    level_index = 1,
-    design = effects[["fixed_effects"]]
-  )
+    effects <- extract_effects(design)
 
-  # Step 4: Apply voom transformation to get logCPM values and weights
-  if (effects[["random_effects"]] != "") {  # use the variancePartition fun()
-    
-    if (!is.null(use_array_weights) && use_array_weights == TRUE) {
-      warning(
-        "Argument `use_array_weights = TRUE` is ignored",
-        "for mixed-model RNA-seq; ",
-        "voomWithDreamWeights already models heteroscedasticity across genes ",
-        "and samples.",
-        call. = FALSE,
-        immediate. = TRUE
-      )
+    if (verbose) {
+        message("Preprocessing RNA-seq data (normalization + voom)...")
     }
-    
-    param <- bp_setup(
-      bp_cfg = bp_cfg,
-      verbose = verbose
-      )
-    
-    voom_obj <- variancePartition::voomWithDreamWeights(
-      counts = y,
-      formula = stats::as.formula(design),
-      data = design2design_matrix_result[["meta"]],
-      BPPARAM = param
-    )
-    
-    if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
-      BiocParallel::bpstop(param)       # cleanly shuts down workers
-    }
-    
-  }
-  else {   # use the functions from limma
-    design_matrix <- design2design_matrix_result[["design_matrix"]]
-    
-    if (is.null(use_array_weights)) {     # means fallback to implicit handling
-      # Run voom normally first
-      voom_obj <- limma::voom(
-        counts = y,
-        design = design_matrix
-      )
 
-      homosc_violation_result <- check_homoscedasticity_violation(
-        data = voom_obj$E,
-        meta = meta,
-        design = design,
-        design2design_matrix_result = design2design_matrix_result,
-        condition = condition,
-        data_type = "rna-seq"
-      )
-      use_array_weights <- homosc_violation_result[["violation"]]
-
-      # Step 4: If any pair was violated, rerun with robust weights
-      if (use_array_weights && verbose) {
-        message(
-        "Using voomWithQualityWeights() due to detected violation of the 
-        assumption of homoscedasticity."
+    # Check if edgeR is installed; if not, inform the user
+    if (!requireNamespace("edgeR", quietly = TRUE)) {
+        stop_call_false(
+            "The 'edgeR' package is not installed.\n",
+            "Please install it manually using the command \n",
+            " below and re-run the function:\n\n",
+            "  BiocManager::install('edgeR')\n\n",
+            "This is an optional dependency of the SplineOmics package, \n",
+            "only needed when working with RNA-seq data."
         )
-      }
     }
 
-    if (use_array_weights == TRUE) {
-      voom_obj <- limma::voomWithQualityWeights(
-        counts = y,
-        design = design_matrix
-      )
-    } else {   # use_array_weights == FALSE
-      voom_obj <- limma::voom(
-        counts = y,
-        design = design_matrix
-      )
-    }
-  }
+    # voomWithDreamWeights wants it like this
+    colnames(raw_counts) <- rownames(meta)
 
-  splineomics <- SplineOmics::update_splineomics(
-    splineomics = splineomics,
-    data = voom_obj$E,
-    meta = meta,                  # Update with the sanitized versionn
-    rna_seq_data = voom_obj,
-    spline_params = spline_params,   # was updated when auto-dof is on.
-    homosc_violation_result = if (
-      exists("homosc_violation_result")
-      ) homosc_violation_result else NULL
-  )
-  
-  if (verbose) {
-    end_time <- Sys.time()
-    elapsed <- difftime(end_time, start_time, units = "min")
-    message(
-      sprintf(
-        "\033[32mInfo\033[0m Finished preprocessing RNA-seq
-        data in %.1f minutes",
-        as.numeric(elapsed)
-      )
+    # Step 1: Create DGEList object from raw counts
+    y <- edgeR::DGEList(counts = raw_counts)
+
+    # Step 2: Apply the normalization function (either user-provided or default)
+    if (!is.null(normalize_func) && is.function(normalize_func)) {
+        y <- normalize_func(y) # user provided normalisation function
+    } else {
+        # Default: Normalize the counts using TMM normalization
+        y <- edgeR::calcNormFactors(y)
+    }
+
+    # For rna_seq data, the data can only be handled together. For mode isolated,
+    # the data has to be split and the function run twice. Thats why we can only
+    # have one parameter set for the spline_params.
+    effects <- extract_effects(design)
+    if (spline_params[["dof"]][1] == 0) { # auto-dof.
+        best_dof <- select_spline_dof_loocv(
+            data = raw_counts,
+            meta = meta,
+            spline_params = spline_params,
+            level_index = 1,
+            fixed_effects = effects[["fixed_effects"]]
+        )
+        spline_params$dof[1] <- best_dof
+        splineomics <- SplineOmics::update_splineomics(
+            splineomics = splineomics,
+            spline_params = spline_params
+        )
+    }
+
+    # Step 3: Create design matrix
+    design2design_matrix_result <- design2design_matrix(
+        meta = meta,
+        spline_params = spline_params,
+        level_index = 1,
+        design = effects[["fixed_effects"]]
     )
-  }
-  
-  return(splineomics)
+
+    # Step 4: Apply voom transformation to get logCPM values and weights
+    if (effects[["random_effects"]] != "") { # use the variancePartition fun()
+
+        if (!is.null(use_array_weights) && use_array_weights == TRUE) {
+            warning(
+                "Argument `use_array_weights = TRUE` is ignored",
+                "for mixed-model RNA-seq; ",
+                "voomWithDreamWeights already models heteroscedasticity across genes ",
+                "and samples.",
+                call. = FALSE,
+                immediate. = TRUE
+            )
+        }
+
+        param <- bp_setup(
+            bp_cfg = bp_cfg,
+            verbose = verbose
+        )
+
+        voom_obj <- variancePartition::voomWithDreamWeights(
+            counts = y,
+            formula = stats::as.formula(design),
+            data = design2design_matrix_result[["meta"]],
+            BPPARAM = param
+        )
+
+        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+            BiocParallel::bpstop(param) # cleanly shuts down workers
+        }
+    } else { # use the functions from limma
+        design_matrix <- design2design_matrix_result[["design_matrix"]]
+
+        if (is.null(use_array_weights)) { # means fallback to implicit handling
+            # Run voom normally first
+            voom_obj <- limma::voom(
+                counts = y,
+                design = design_matrix
+            )
+
+            homosc_violation_result <- check_homoscedasticity_violation(
+                data = voom_obj$E,
+                meta = meta,
+                design = design,
+                design2design_matrix_result = design2design_matrix_result,
+                condition = condition,
+                data_type = "rna-seq"
+            )
+            use_array_weights <- homosc_violation_result[["violation"]]
+
+            # Step 4: If any pair was violated, rerun with robust weights
+            if (use_array_weights && verbose) {
+                message(
+                    "Using voomWithQualityWeights() due to detected violation of the
+        assumption of homoscedasticity."
+                )
+            }
+        }
+
+        if (use_array_weights == TRUE) {
+            voom_obj <- limma::voomWithQualityWeights(
+                counts = y,
+                design = design_matrix
+            )
+        } else { # use_array_weights == FALSE
+            voom_obj <- limma::voom(
+                counts = y,
+                design = design_matrix
+            )
+        }
+    }
+
+    splineomics <- SplineOmics::update_splineomics(
+        splineomics = splineomics,
+        data = voom_obj$E,
+        meta = meta, # Update with the sanitized versionn
+        rna_seq_data = voom_obj,
+        spline_params = spline_params, # was updated when auto-dof is on.
+        homosc_violation_result = if (
+            exists("homosc_violation_result")
+        ) {
+            homosc_violation_result
+        } else {
+            NULL
+        }
+    )
+
+    if (verbose) {
+        end_time <- Sys.time()
+        elapsed <- difftime(end_time, start_time, units = "min")
+        message(
+            sprintf(
+                "\033[32mInfo\033[0m Finished preprocessing RNA-seq
+        data in %.1f minutes",
+                as.numeric(elapsed)
+            )
+        )
+    }
+
+    return(splineomics)
 }

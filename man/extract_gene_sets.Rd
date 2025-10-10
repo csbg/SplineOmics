@@ -61,27 +61,27 @@ table to disk as a \code{.tsv} file in the specified \code{output_dir}.
 tmp <- tempdir()
 if (requireNamespace("org.Mm.eg.db", quietly = TRUE) &&
     requireNamespace("AnnotationDbi", quietly = TRUE)) {
-  gs <- extract_gene_sets(
-    organism_db = "org.Mm.eg.db",
-    output_dir  = tmp,
-    filename    = "mm_genesets.tsv"
-  )
-  head(gs)
-  # The file path:
-  file.path(tmp, "mm_genesets.tsv")
+    gs <- extract_gene_sets(
+        organism_db = "org.Mm.eg.db",
+        output_dir  = tmp,
+        filename    = "mm_genesets.tsv"
+    )
+    head(gs)
+    # The file path:
+    file.path(tmp, "mm_genesets.tsv")
 }
 
 # If the organism package is not installed, you can still see the TSV format:
 tiny <- data.frame(
-  DB = c("GO_BP", "GO_MF"),
-  Geneset = c("GO:0008150", "GO:0003674"),
-  Gene = c("Trp53", "Egfr"),
-  stringsAsFactors = FALSE
+    DB = c("GO_BP", "GO_MF"),
+    Geneset = c("GO:0008150", "GO:0003674"),
+    Gene = c("Trp53", "Egfr"),
+    stringsAsFactors = FALSE
 )
 utils::write.table(
-  tiny,
-  file = file.path(tmp, "example_genesets.tsv"),
-  sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE
+    tiny,
+    file = file.path(tmp, "example_genesets.tsv"),
+    sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE
 )
 
 }
