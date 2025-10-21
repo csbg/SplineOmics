@@ -92,7 +92,9 @@ extract_gene_sets <- function(
         )
     }
     if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
-        stop_call_false("Package 'AnnotationDbi' is required but not installed.")
+        stop_call_false(
+            "Package 'AnnotationDbi' is required but not installed."
+            )
     }
 
     # Load the org.* namespace and get the OrgDb object
@@ -153,7 +155,7 @@ extract_gene_sets <- function(
                     ) |>
                     (\(d) {
                         keep <- intersect(c("DB", "Geneset", "Gene"), names(d))
-                        dplyr::select(d, keep) # no tidyselect dependency, ignores missing
+                        dplyr::select(d, keep) 
                     })() |>
                     dplyr::filter(!is.na(.data$Gene))
             }

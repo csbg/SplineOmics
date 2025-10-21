@@ -312,7 +312,11 @@ generate_report_html <- function(
             enrichr_format = enrichr_format
         )
 
-        field_display <- sprintf("%-*s", max_field_length, gsub("_", " ", field))
+        field_display <- sprintf(
+            "%-*s",
+            max_field_length,
+            gsub("_", " ", field)
+            )
         downloads_section <- paste(
             downloads_section,
             sprintf(
@@ -368,7 +372,8 @@ generate_report_html <- function(
                 "</p>"
             ),
             paste0(
-                "<p style='font-size: 20px;'><strong>clusterProfiler params:</strong> ",
+                "<p style='font-size: 20px;'><strong>",
+                "clusterProfiler params:</strong> ",
                 params_text,
                 "</p>"
             ),
@@ -870,29 +875,34 @@ get_header_section <- function(
         "      imgOffsetX = (0.5 - mouseX) * 100 * (scale - 1);",
         "      imgOffsetY = (0.5 - mouseY) * 100 * (scale - 1);",
         "",
-        "      img.style.transform = `scale(${scale}) translate(${imgOffsetX}px,",
-        "        ${imgOffsetY}px)`;",
+        "      img.style.transform = `scale(${scale}) ",
+        "translate(${imgOffsetX}px, ${imgOffsetY}px)`;",
         "      img.style.transformOrigin = 'center center';",
-        "      console.log('Zooming:', scale, 'Offset:', imgOffsetX, imgOffsetY);",
+        "      console.log('Zooming:', scale, 'Offset:', ",
+        "imgOffsetX, imgOffsetY);",
         "    });",
         "",
         "    img.addEventListener('mousedown', function(event) {",
         "      if (!zoomActive || scale === 1) return;",
         "      isDragging = true;",
-        "      startX = event.clientX; startY = event.clientY;",
+        "      startX = event.clientX; ",
+        "startY = event.clientY;",
         "      img.style.cursor = 'grabbing';",
         "    });",
         "",
-        "    document.addEventListener('mousemove', function(event) {",
+        "    document.addEventListener('mousemove', ",
+        "function(event) {",
         "      if (!isDragging) return;",
         "      event.preventDefault();",
         "      let dx = (event.clientX - startX) / scale;",
         "      let dy = (event.clientY - startY) / scale;",
-        "      imgOffsetX += dx; imgOffsetY += dy;",
+        "      imgOffsetX += dx; ",
+        "imgOffsetY += dy;",
         "",
-        "      img.style.transform = `scale(${scale}) translate(${imgOffsetX}px,",
-        "        ${imgOffsetY}px)`;",
-        "      startX = event.clientX; startY = event.clientY;",
+        "      img.style.transform = `scale(${scale}) ",
+        "translate(${imgOffsetX}px, ${imgOffsetY}px)`;",
+        "      startX = event.clientX; ",
+        "startY = event.clientY;",
         "    });",
         "",
         "    document.addEventListener('mouseup', function() {",
@@ -931,112 +941,163 @@ get_header_section <- function(
             '<p style="font-size: 2em;">',
             "This HTML report contains the exploratory",
             "data analysis plots, (e.g. density plots) <br> Right-click on",
-            "any plot in this report to save it as a .svg (vector graphic) file!</p>",
+            "any plot in this report to save it as a .svg (vector graphic)",
+            "file!</p>",
             "</div>"
         ),
         "create_limma_report" = paste(
-            '<div style="border: 2px solid #f00; padding: 15px; position: relative;',
-            "margin-bottom: 20px; background-color: #fee; font-family: Arial,",
+            '<div style="border: 2px solid #f00; padding: 15px;',
+            'position: relative; margin-bottom: 20px;',
+            'background-color: #fee; font-family: Arial, ',
             'sans-serif; width: 65%;">',
-            '<div style="position: absolute; top: -25px; right: -25px; transform:',
-            "rotate(45deg); background-color: #f00; color: #fff; padding: 10px 15px;",
-            'font-size: 2em; font-weight: bold; z-index: 1;">Note!</div>',
+            
+            '<div style="position: absolute; top: -25px;',
+            'right: -25px; transform: rotate(45deg);',
+            'background-color: #f00; color: #fff;',
+            'padding: 10px 15px; font-size: 2em;',
+            'font-weight: bold; z-index: 1;">Note!</div>',
+            
             '<p style="font-size: 2em;">',
-            "This HTML report contains plots visualizing the results from",
-            "the limma topTables. <br> Right-click on",
-            "any plot in this report to save it as a .svg (vector graphic) file!",
-            "<br><br>To understand the three limma result categories shown in this ",
-            'report, please <a href="',
-            file.path(system.file(
-                "descriptions",
-                "limma_result_categories.pdf",
-                package = "SplineOmics"
-            )),
-            '" download>download and review this PDF document</a><br><br></p>',
-            "</div>"
+            'This HTML report contains plots visualizing ',
+            'the results from the limma topTables.<br>',
+            'Right-click on any plot in this report to save ',
+            'it as a .svg (vector graphic) file!',
+            
+            '<br><br>To understand the three limma result ',
+            'categories shown in this report, please ',
+            '<a href="',
+            file.path(
+                system.file(
+                    "descriptions",
+                    "limma_result_categories.pdf",
+                    package = "SplineOmics"
+                )
+            ),
+            '" download>download and review this PDF ',
+            'document</a><br><br></p>',
+            
+            '</div>'
         ),
         "find_pvc" = paste(
-            '<div style="border: 2px solid #f00; padding: 15px; position: relative;',
-            "margin-bottom: 20px; background-color: #fee; font-family: Arial,",
+            '<div style="border: 2px solid #f00; padding: 15px;',
+            'position: relative; margin-bottom: 20px;',
+            'background-color: #fee; font-family: Arial, ',
             'sans-serif; width: 65%;">',
-            '<div style="position: absolute; top: -25px; right: -25px; transform:',
-            "rotate(45deg); background-color: #f00; color: #fff; padding: 10px 15px;",
-            'font-size: 2em; font-weight: bold; z-index: 1;">Note!</div>',
+            
+            '<div style="position: absolute; top: -25px;',
+            'right: -25px; transform: rotate(45deg);',
+            'background-color: #f00; color: #fff;',
+            'padding: 10px 15px; font-size: 2em;',
+            'font-weight: bold; z-index: 1;">Note!</div>',
+            
             '<p style="font-size: 2em;">',
-            "This HTML report contains plots visualizing the results from",
-            "the PVC test. <br> Right-click on",
-            "any plot in this report to save it as a .svg (vector graphic) file!",
-            "<br><br>The PVC test is a compound contrast test carried out with limma",
-            ".<br> It tests if a given timepoint T is significantly higher or lower",
-            "than both neighbor timepoints (that is why it is NOT carried out for",
-            "the first and last timepoint). Tests whether 2 * Tn - Tn-1",
-            "- Tn+1 != 0 (significantly).",
-            "</ul>",
-            "</p>",
-            "</div>",
+            'This HTML report contains plots visualizing ',
+            'the results from the PVC test. <br>',
+            'Right-click on any plot in this report to ',
+            'save it as a .svg (vector graphic) file!',
+            
+            '<br><br>The PVC test is a compound contrast ',
+            'test carried out with limma.<br>',
+            'It tests if a given timepoint T is ',
+            'significantly higher or lower than both ',
+            'neighbor timepoints (this is why it is not ',
+            'performed for the first or last timepoint).',
+            
+            'Specifically, it tests whether ',
+            '2 * Tn - Tn-1 - Tn+1 != 0 (significantly).',
+            
+            '</ul>',
+            '</p>',
+            '</div>',
+            
             paste(
                 '<span style="font-size:1.3em;">',
                 'feature_name "formula": ',
-                "{annotation-column-x}_{annotation-column-y}_ ... :",
-                "<br><b>",
+                '{annotation-column-x}_{annotation-column-y}_ ... :',
+                '<br><b>',
                 feature_names_formula,
-                "</b></span>"
+                '</b></span>'
             ),
-            "</div>"
+            
+            '</div>'
         ),
         "cluster_hits" = paste(
             '<div style="border: 2px solid #f00; padding: 15px;',
-            "position: relative; margin-bottom: 20px;",
-            'background-color: #fee; font-family: Arial, sans-serif; width: 65%;">',
+            'position: relative; margin-bottom: 20px;',
+            'background-color: #fee; font-family: Arial, ',
+            'sans-serif; width: 65%;">',
+            
             '<div style="position: absolute; top: -20px;',
-            "right: -27px; transform: rotate(45deg);",
-            "background-color: #f00; color: #fff; padding:",
-            "10px 15px; font-size: 2em; font-weight: bold;",
-            'z-index: 1;">Note!</div>',
+            'right: -27px; transform: rotate(45deg);',
+            'background-color: #f00; color: #fff;',
+            'padding: 10px 15px; font-size: 2em;',
+            'font-weight: bold; z-index: 1;">Note!</div>',
+            
             '<p style="font-size: 1em;">',
             '<ul style="font-size: 2em; padding-left: 20px;">',
-            '<li style="margin-bottom: 15px;">Clustering of features that show
-      significant changes over time (= hits).</li>',
-            '<li style="margin-bottom: 15px;">Clustering was performed on splines
-      that were z-score normalized along their time axis, i.e. each spline
-      was standardized independently across its timepoints. They are created by
-      predicting 10x more
-      datapoints than timepoints for the time range based on the fitted linear
-      model.</li>',
-            '<li style="margin-bottom: 15px;">These datapoints are used for
-      k-means clustering.</li>',
-            '<li style="margin-bottom: 15px;">Right-click on any plot in this
-      report to save it as a .svg (vector graphic) file!</li>',
-            '<li style="margin-bottom: 15px;">If one level of the experiment is
-      not shown, it means it has < 2 hits!</li>',
-            '<li style="margin-bottom: 15px;">The "avg CV" value on top of all
-      individual spline plots is the average coefficient of variation across
-      all timepoints. For example, a value of 10% means that the timepoints,
-      on average, have a standard deviation of 10% of the mean.</li>',
-            '<li style="margin-bottom: 15px;">For each spline, the cumulative travel
-      is reported, defined as the total absolute change of the spline
-      values along the time axis, expressed in the units of the y-axis.</li>',
-            '<li style="margin-bottom: 15px;">If a [WARNING] symbol appears at the
-      beginning of a plot title, it indicates that the feature violates
-      the homoscedasticity assumption of linear models. It is followed by
-      the condition, written in brackets, which had the higher variance of the
-      residuals. Those symbols can only appear if the Levenes test for
-      heteroscedasticity was run. That only happens when the use_array_weights
-      argument is set to NULL.</li>',
-            '<li style="margin-bottom: 15px;">cT = cumulative travel,
-      cDT = cumulative differential travel</li>',
-            "</ul>",
-            "</p>",
-            "</div>",
+            
+            '<li style="margin-bottom: 15px;">Clustering of ',
+            'features that show significant changes over time ',
+            '(= hits).</li>',
+            
+            '<li style="margin-bottom: 15px;">Clustering was ',
+            'performed on splines that were z-score normalized ',
+            'along their time axis, i.e. each spline was ',
+            'standardized independently across its timepoints. ',
+            'They are created by predicting 10x more datapoints ',
+            'than timepoints for the time range based on the ',
+            'fitted linear model.</li>',
+            
+            '<li style="margin-bottom: 15px;">These datapoints ',
+            'are used for k-means clustering.</li>',
+            
+            '<li style="margin-bottom: 15px;">Right-click on any ',
+            'plot in this report to save it as a .svg (vector ',
+            'graphic) file!</li>',
+            
+            '<li style="margin-bottom: 15px;">If one level of ',
+            'the experiment is not shown, it means it has < 2 ',
+            'hits!</li>',
+            
+            '<li style="margin-bottom: 15px;">The "avg CV" value ',
+            'on top of all individual spline plots is the ',
+            'average coefficient of variation across all ',
+            'timepoints. For example, a value of 10% means that ',
+            'timepoints have, on average, a standard deviation ',
+            'of 10% of the mean.</li>',
+            
+            '<li style="margin-bottom: 15px;">For each spline, ',
+            'the cumulative travel is reported, defined as the ',
+            'total absolute change of spline values along the ',
+            'time axis, expressed in the units of the y-axis.',
+            '</li>',
+            
+            '<li style="margin-bottom: 15px;">If a [WARNING] ',
+            'symbol appears at the beginning of a plot title, ',
+            'it indicates that the feature violates the ',
+            'homoscedasticity assumption of linear models. It is ',
+            'followed by the condition (in brackets) that had ',
+            'the higher variance of residuals. Those symbols ',
+            'appear only if the Levene`s test for ',
+            'heteroscedasticity was run (i.e. when ',
+            'use_array_weights = NULL).</li>',
+            
+            '<li style="margin-bottom: 15px;">cT = cumulative ',
+            'travel, cDT = cumulative differential travel</li>',
+            
+            '</ul>',
+            '</p>',
+            
+            '</div>',
+            
             paste(
                 '<span style="font-size:1.3em;">',
                 'feature_name "formula": ',
-                "{annotation-column-x}_{annotation-column-y}_ ... :",
-                "<br><b>",
-                feature_names_formula,
-                "</b></span>"
+                '{annotation-column-x}_{annotation-column-y}_ ... :',
+                '<br><b>', feature_names_formula, '</b></span>'
             ),
-            "</div>"
+            
+            '</div>'
         ),
         "run_ora_report" = '<p style="font-size: 2em;"></p>'
     )
@@ -1053,7 +1114,7 @@ get_header_section <- function(
         'font-weight: bold; z-index: 1;">Hotkeys</div>',
         '<p style="font-size: 2em;">',
         "Press:<br>",
-        "<b>t</b>  --> Jump to <b>Table of Contents</b> and save current scroll",
+        "<b>t</b> --> Jump to <b>Table of Contents</b> and save current scroll",
         "position \U0001F4D1<br>",
         "<b>s</b> --> <b>Save</b> current scroll position \U0001F4CC<br>",
         "<b>b</b> --> Jump <b>back</b> to saved position \U0001F519<br>",
@@ -1122,7 +1183,7 @@ encode_df_to_base64 <- function(
     sanitize_sheet <- function(s) {
         s <- ifelse(is.na(s) | s == "", "Sheet", s)
         s <- gsub("[\\/:*?\\[\\]]", "_", s) # Excel-forbidden chars
-        substr(s, 1L, 31L) # Excel’s 31-char limit
+        substr(s, 1L, 31L) # Excel's 31-char limit
     }
 
     # Build a named list of data frames for writexl
@@ -1161,7 +1222,7 @@ encode_df_to_base64 <- function(
 
     # Return data: URI with base64 payload
     uri <- paste0(
-        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;",
+      "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;",
         "base64,",
         base64enc::base64encode(tmp)
     )
@@ -1182,7 +1243,7 @@ encode_df_to_base64 <- function(
 #'
 #' @param hit_list A list with two elements:
 #'   - `category_2_hits`: a data frame of condition-level differences
-#'   - `category_3_hits`: a data frame of condition × time interactions
+#'   - `category_3_hits`: a data frame of condition x time interactions
 #'
 #' @return A named list with two integers:
 #'   - `category_2`: number of rows in `category_2_hits`
@@ -1224,7 +1285,7 @@ count_hits <- function(hit_list) {
 #'   \itemize{
 #'     \item \code{category_2_hits}: data frame of condition-level
 #'       differences.
-#'     \item \code{category_3_hits}: data frame of condition × time
+#'     \item \code{category_3_hits}: data frame of condition x time
 #'       interactions.
 #'   }
 #'
@@ -1276,7 +1337,11 @@ truncate_hit_labels <- function(
     for (nm in c("category_2_hits", "category_3_hits")) {
         df <- hit_list[[nm]]
         if (is.data.frame(df) && col %in% names(df)) {
-            df[[col]] <- vapply(df[[col]], trunc_label, FUN.VALUE = character(1))
+            df[[col]] <- vapply(
+                df[[col]],
+                trunc_label,
+                FUN.VALUE = character(1)
+                )
             hit_list[[nm]] <- df
         }
     }
@@ -1403,7 +1468,8 @@ create_toc <- function() {
 #' @return A list containing the styles for section headers and TOC entries.
 #'
 define_html_styles <- function() {
-    section_header_style <- "font-size: 70px; color: #001F3F; text-align: center;"
+    section_header_style <- 
+        "font-size: 70px; color: #001F3F; text-align: center;"
     toc_style <- "font-size: 40px;"
 
     styles <- list(
@@ -1460,11 +1526,13 @@ process_plots <- function(
             sep = "\n"
         )
 
-        # Add the main title as a section title with an anchor before the first plot
+        # Add the main title as a section title with an anchor before the
+        # first plot
         grid_content <- paste0(
             '<h2 id="section',
             header_index,
-            '" style="text-align: center; margin-bottom: 20px; font-size: 50px;">',
+            '" style="text-align: center;
+            margin-bottom: 20px; font-size: 50px;">',
             main_title, "</h2>"
         )
 
@@ -1498,7 +1566,8 @@ process_plots <- function(
             # Add the title as HTML text
             grid_content <- paste0(
                 grid_content,
-                '<div style="padding: 5px; text-align: center; font-size: 32px;">',
+                '<div style="padding: 5px;
+                text-align: center; font-size: 32px;">',
                 base64_list[[i]]$title, "</div>"
             )
             # Start a new row for each plot
@@ -1508,7 +1577,8 @@ process_plots <- function(
             )
             grid_content <- paste0(
                 grid_content,
-                '<div style="flex: 1; padding: 5px;">', base64_list[[i]]$plot, "</div>"
+                '<div style="flex: 1; padding: 5px;">',
+                base64_list[[i]]$plot, "</div>"
             )
 
             grid_content <- paste0(grid_content, "</div>")
@@ -1516,7 +1586,8 @@ process_plots <- function(
             # Add a horizontal line after each plot
             grid_content <- paste0(
                 grid_content,
-                '<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">'
+                '<hr style="border: 0; border-top:
+                1px solid #ccc; margin: 20px 0;">'
             )
         }
 
@@ -1534,7 +1605,8 @@ process_plots <- function(
         # One plot for each cluster
         for (i in seq_along(plots_element)) {
             html_content <- add_plot_to_html(
-                html_content, plots_element[[i]], plots_size, header_index + i - 1
+                html_content, plots_element[[i]],
+                plots_size, header_index + i - 1
             )
         }
     } else {
@@ -1611,10 +1683,12 @@ process_field <- function(
     } else if (field == "limma_topTables_clustered_time_effect_hits" &&
         !any(is.na(topTables))) {
         base64_df <- sprintf(
-            '<a href="%s" download="limma_topTables_clustered_time_effect_hits.xlsx"
-      class="embedded-file">
-       <button>Download limma_topTables_clustered_time_effect_hits.xlsx</button>
-      </a>',
+            '<a href="%s"
+            download="limma_topTables_clustered_time_effect_hits.xlsx"
+            class="embedded-file">
+            <button>Download limma_topTables_clustered_time_effect_hits.xlsx
+            </button>
+            </a>',
             encode_df_to_base64(topTables)
         )
     } else if (field == "limma_topTables" && !any(is.na(topTables))) {
@@ -1625,10 +1699,11 @@ process_field <- function(
         )
     } else if (field == "limma_topTables_avrg_diff_conditions_hits") {
         base64_df <- sprintf(
-            '<a href="%s" download="limma_topTables_avrg_diff_conditions_hits.xlsx"
-      class="embedded-file">
-       <button>Download limma_topTables_avrg_diff_conditions_hits.xlsx
-      </button></a>',
+            '<a href="%s"
+            download="limma_topTables_avrg_diff_conditions_hits.xlsx"
+            class="embedded-file">
+            <button>Download limma_topTables_avrg_diff_conditions_hits.xlsx
+            </button></a>',
             encode_df_to_base64(category_2_and_3_hits[[1]]) # category 2
         )
     } else if (field == "limma_topTables_interaction_condition_time_hits") {
@@ -1684,9 +1759,10 @@ process_field <- function(
         !any(is.na(enrichr_format)) &&
         !is.null(enrichr_format$background)) {
         base64_df <- sprintf(
-            '<a href="data:text/plain;base64,%s" download="Enrichr_background.txt"
-      class="embedded-file">
-       <button>Download Enrichr_background.txt</button></a>',
+            '<a href="data:text/plain;base64,%s"
+            download="Enrichr_background.txt"
+            class="embedded-file">
+            <button>Download Enrichr_background.txt</button></a>',
             base64enc::base64encode(charToRaw(enrichr_format$background))
         )
     } else if (field == "session_info") {
@@ -1718,9 +1794,10 @@ process_field <- function(
             )
 
             base64_df <- sprintf(
-                '<a href="data:text/plain;base64,%s" download="analysis_script.txt"
-        class="embedded-file">
-         <button>Download Analysis Script</button></a>',
+                '<a href="data:text/plain;base64,%s"
+                download="analysis_script.txt"
+                class="embedded-file">
+                <button>Download Analysis Script</button></a>',
                 base64_script
             )
         } else {
@@ -1752,8 +1829,9 @@ process_field <- function(
         )
 
         base64_df <- sprintf(
-            '<a href="%s" download="foreground_genes.xlsx" class="embedded-file">
-     <button>Download foreground_genes.xlsx</button></a>',
+            '<a href="%s" download="foreground_genes.xlsx"
+            class="embedded-file">
+            <button>Download foreground_genes.xlsx</button></a>',
             encode_df_to_base64(foreground_genes_dfs)
         )
     } else if (field == "background_genes") {
@@ -1773,8 +1851,9 @@ process_field <- function(
         }
 
         base64_df <- sprintf(
-            '<a href="%s" download="background_genes.xlsx" class="embedded-file">
-     <button>Download background_genes.xlsx</button></a>',
+            '<a href="%s" download="background_genes.xlsx"
+            class="embedded-file">
+            <button>Download background_genes.xlsx</button></a>',
             encode_df_to_base64(background_genes_df)
         )
     } else if (field == "use_array_weights") {

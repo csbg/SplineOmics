@@ -524,8 +524,14 @@ make_density_plots <- function(
     message("Making density plots...")
 
     custom_theme <- ggplot2::theme(
-        panel.background = ggplot2::element_rect(fill = "white", color = "white"),
-        plot.background = ggplot2::element_rect(fill = "white", color = "white"),
+        panel.background = ggplot2::element_rect(
+            fill = "white",
+            color = "white"
+            ),
+        plot.background = ggplot2::element_rect(
+            fill = "white",
+            color = "white"
+            ),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.major.y = ggplot2::element_line(color = "grey"),
         panel.grid.minor = ggplot2::element_blank()
@@ -624,8 +630,14 @@ make_violin_box_plots <- function(
     message("Making violin plots...")
 
     custom_theme <- ggplot2::theme(
-        panel.background = ggplot2::element_rect(fill = "white", color = "white"),
-        plot.background = ggplot2::element_rect(fill = "white", color = "white"),
+        panel.background = ggplot2::element_rect(
+            fill = "white",
+            color = "white"
+            ),
+        plot.background = ggplot2::element_rect(
+            fill = "white",
+            color = "white"
+            ),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.major.y = ggplot2::element_line(color = "grey"),
         panel.grid.minor = ggplot2::element_blank()
@@ -657,7 +669,11 @@ make_violin_box_plots <- function(
                 y = !!rlang::sym("value")
             )
         ) +
-            ggplot2::geom_violin(trim = FALSE, fill = "#77DD77", color = "black") +
+            ggplot2::geom_violin(
+                trim = FALSE, 
+                fill = "#77DD77",
+                color = "black"
+                ) +
             ggplot2::geom_boxplot(
                 width = 0.1, fill = "white",
                 color = "black", outlier.shape = NA
@@ -808,7 +824,8 @@ plot_first_lag_autocorrelation <- function(
     if (any(na_rows)) {
         message(
             sum(na_rows),
-            " rows with missing values removed before first lag autocorrelation plot"
+            " rows with missing values removed before first",
+            "lag autocorrelation plot"
         )
         data <- data[!na_rows, , drop = FALSE]
     }
@@ -935,7 +952,8 @@ plot_lag1_differences <- function(
 
         normalized_lag1_differences <- lag1_differences / feature_means
 
-        # Calculate mean and stdev of normalized lag-1 differences for each feature
+        # Calculate mean and stdev of normalized lag-1 differences for each
+        # feature
         mean_lag1_diff <- apply(
             normalized_lag1_differences,
             1,
@@ -1164,8 +1182,16 @@ make_pca_plot <- function(
             size = 2
         ) +
         ggplot2::xlim(x_range[1], extended_x_max) +
-        ggplot2::xlab(paste("PC1 -", percent_variance_explained[1], "% variance")) +
-        ggplot2::ylab(paste("PC2 -", percent_variance_explained[2], "% variance")) +
+        ggplot2::xlab(paste(
+            "PC1 -",
+            percent_variance_explained[1],
+            "% variance")
+            ) +
+        ggplot2::ylab(paste(
+            "PC2 -",
+            percent_variance_explained[2],
+            "% variance")
+            ) +
         ggplot2::labs(color = condition) +
         ggplot2::scale_alpha(range = c(0.3, 1), guide = "none") + # Hide alpha
         ggplot2::theme_minimal() +
@@ -1293,7 +1319,11 @@ make_correlation_heatmaps <- function(
         target_rows <- 1000
 
         row_na_fraction <- rowMeans(is.na(data))
-        data_filtered <- data[row_na_fraction <= max_na_fraction, , drop = FALSE]
+        data_filtered <- data[
+            row_na_fraction <= max_na_fraction,
+            ,
+            drop = FALSE
+            ]
 
         if (nrow(data_filtered) > target_rows) {
             row_vars <- apply(data_filtered, 1, stats::var, na.rm = TRUE)
@@ -1302,13 +1332,17 @@ make_correlation_heatmaps <- function(
             message(
                 "Subsampled to top ", target_rows,
                 " most variable features (after filtering rows with > ",
-                round(max_na_fraction * 100), "% missing) for correlation heatmap."
+                round(max_na_fraction * 100), 
+                "% missing) for correlation heatmap."
             )
         } else {
             data <- data_filtered
             message(
-                "Filtered rows with > ", round(max_na_fraction * 100),
-                "% missing; kept all ", nrow(data), " rows (<= ", target_rows, ")."
+                "Filtered rows with > ",
+                round(max_na_fraction * 100),
+                "% missing; kept all ",
+                nrow(data), 
+                " rows (<= ", target_rows, ")."
             )
         }
     }
@@ -1326,7 +1360,8 @@ make_correlation_heatmaps <- function(
         # Remove perfect correlations for better visualization
         diag(corr_all) <- NA
 
-        # Define the color function for the heatmap based on the range of corr_all
+        # Define the color function for the heatmap based on the range of
+        # corr_all
         breaks <- seq(min(corr_all, na.rm = TRUE),
             max(corr_all, na.rm = TRUE),
             length.out = 100
@@ -1375,7 +1410,8 @@ make_correlation_heatmaps <- function(
         # Remove perfect correlations for better visualization
         diag(corr_level) <- NA
 
-        # Define the color function for the heatmap based on the range of corr_level
+        # Define the color function for the heatmap based on the range of
+        # corr_level
         breaks_level <- seq(min(corr_level, na.rm = TRUE),
             max(corr_level, na.rm = TRUE),
             length.out = 100

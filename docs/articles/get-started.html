@@ -6,11 +6,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>get-started • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
-<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="icon" sizes="any" href="../favicon.ico">
-<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -25,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,12 +134,19 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <h2 id="load-the-packages">Load the packages<a class="anchor" aria-label="anchor" href="#load-the-packages"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># library(SplineOmics)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: usethis</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">SplineOmics</span></span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span> <span class="co"># For managing filepaths</span></span>
 <span><span class="co">#&gt; here() starts at /home/thomas/Documents/PhD/projects/DGTX/SplineOmics_hub/SplineOmics</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># For data manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:testthat':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     matches</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     filter, lag</span></span>
@@ -152,7 +154,7 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span> <span class="co"># For Showing the head of the data and the meta tables.</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">org.Mm.eg.db</span><span class="op">)</span>    <span class="co"># BioConductor database</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">org.Mm.eg.db</span><span class="op">)</span> <span class="co"># BioConductor database</span></span>
 <span><span class="co">#&gt; Loading required package: AnnotationDbi</span></span>
 <span><span class="co">#&gt; Loading required package: stats4</span></span>
 <span><span class="co">#&gt; Loading required package: BiocGenerics</span></span>
@@ -171,6 +173,9 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span><span class="co">#&gt; The following object is masked from 'package:dplyr':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     combine</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:SplineOmics':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     sd, var</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     IQR, mad, sd, var, xtabs</span></span>
@@ -195,6 +200,9 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span><span class="co">#&gt; The following objects are masked from 'package:dplyr':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     first, rename</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:SplineOmics':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     rename</span></span>
 <span><span class="co">#&gt; The following object is masked from 'package:utils':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     findMatches</span></span>
@@ -209,6 +217,9 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'AnnotationDbi'</span></span>
 <span><span class="co">#&gt; The following object is masked from 'package:dplyr':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     select</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:SplineOmics':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     select</span></span>
 <span><span class="co">#&gt; </span></span></code></pre></div>
@@ -239,33 +250,33 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">xzfile</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"extdata"</span>,</span>
-<span>  <span class="st">"proteomics_data.rds.xz"</span>,</span>
-<span>  package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
+<span>    <span class="st">"extdata"</span>,</span>
+<span>    <span class="st">"proteomics_data.rds.xz"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
 <span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>    <span class="st">"extdata"</span>,</span>
-<span>    <span class="st">"proteomics_meta.csv"</span>,</span>
-<span>    package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>        <span class="st">"extdata"</span>,</span>
+<span>        <span class="st">"proteomics_meta.csv"</span>,</span>
+<span>        package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract the annotation part from the dataframe.</span></span>
 <span><span class="va">first_na_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">data</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">annotation</span> <span class="op">&lt;-</span> <span class="va">data</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">(</span><span class="va">first_na_col</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">(</span><span class="va">first_na_col</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="show-top-rows-of-data">Show top rows of data<a class="anchor" aria-label="anchor" href="#show-top-rows-of-data"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="3%">
@@ -612,9 +623,9 @@ shown below.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Sample.ID</th>
@@ -674,9 +685,9 @@ shown below.</p>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotation</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotation</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Gene_symbol</th>
@@ -782,15 +793,15 @@ feature.</li>
 </ul>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/extract_data.html">extract_data</a></span><span class="op">(</span></span>
-<span>  <span class="co"># The dataframe with the numbers on the left and info on the right.</span></span>
-<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  <span class="co"># Use this annotation column for the feature names.</span></span>
-<span>  feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene_name"</span><span class="op">)</span>,</span>
-<span>  use_row_index <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  top_row <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  bottom_row <span class="op">=</span> <span class="fl">1165</span>,</span>
-<span>  right_col <span class="op">=</span> <span class="fl">37</span>,</span>
-<span>  left_col <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="co"># The dataframe with the numbers on the left and info on the right.</span></span>
+<span>    data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>    <span class="co"># Use this annotation column for the feature names.</span></span>
+<span>    feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene_name"</span><span class="op">)</span>,</span>
+<span>    use_row_index <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    top_row <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>    bottom_row <span class="op">=</span> <span class="fl">1165</span>,</span>
+<span>    right_col <span class="op">=</span> <span class="fl">37</span>,</span>
+<span>    left_col <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -879,17 +890,17 @@ just want the figures in the R environment)</li>
 <code class="sourceCode R"><span><span class="co"># Those fields are mandatory, because we believe that when such a report is</span></span>
 <span><span class="co"># opened after half a year, those infos can be very helpful.</span></span>
 <span><span class="va">report_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  omics_data_type <span class="op">=</span> <span class="st">"PTX"</span>,</span>
-<span>  data_description <span class="op">=</span> <span class="st">"Proteomics data of CHO cells"</span>,</span>
-<span>  data_collection_date <span class="op">=</span> <span class="st">"February 2024"</span>,</span>
-<span>  analyst_name <span class="op">=</span> <span class="st">"Thomas Rauter"</span>,</span>
-<span>  contact_info <span class="op">=</span> <span class="st">"thomas.rauter@plus.ac.at"</span>,</span>
-<span>  project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
+<span>    omics_data_type <span class="op">=</span> <span class="st">"PTX"</span>,</span>
+<span>    data_description <span class="op">=</span> <span class="st">"Proteomics data of CHO cells"</span>,</span>
+<span>    data_collection_date <span class="op">=</span> <span class="st">"February 2024"</span>,</span>
+<span>    analyst_name <span class="op">=</span> <span class="st">"Thomas Rauter"</span>,</span>
+<span>    contact_info <span class="op">=</span> <span class="st">"thomas.rauter@plus.ac.at"</span>,</span>
+<span>    project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span></span>
-<span>  <span class="st">"results"</span>,</span>
-<span>  <span class="st">"explore_data"</span></span>
+<span>    <span class="st">"results"</span>,</span>
+<span>    <span class="st">"explore_data"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -965,12 +976,12 @@ functions.</li>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># splineomics now contains the SplineOmics object.</span></span>
 <span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_splineomics.html">create_splineomics</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  meta <span class="op">=</span> <span class="va">meta</span>,</span>
-<span>  annotation <span class="op">=</span> <span class="va">annotation</span>,</span>
-<span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>  condition <span class="op">=</span> <span class="st">"Phase"</span>, <span class="co"># Column of meta that contains the levels.</span></span>
-<span>  meta_batch_column <span class="op">=</span> <span class="st">"Reactor"</span> <span class="co"># For batch effect removal</span></span>
+<span>    data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>    meta <span class="op">=</span> <span class="va">meta</span>,</span>
+<span>    annotation <span class="op">=</span> <span class="va">annotation</span>,</span>
+<span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
+<span>    condition <span class="op">=</span> <span class="st">"Phase"</span>, <span class="co"># Column of meta that contains the levels.</span></span>
+<span>    meta_batch_column <span class="op">=</span> <span class="st">"Reactor"</span> <span class="co"># For batch effect removal</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Special print.SplineOmics function leads to selective printing</span></span>
@@ -994,8 +1005,8 @@ functions.</li>
 exploratory data analysis.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/explore_data.html">explore_data</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>, <span class="co"># SplineOmics object</span></span>
-<span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>, <span class="co"># SplineOmics object</span></span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Making density plots...</span></span>
 <span><span class="co">#&gt; Making violin plots...</span></span>
@@ -1019,7 +1030,7 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPRP7bn/file26a23a8a593f .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpks2516/file6bd674bb4de9 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
@@ -1034,10 +1045,7 @@ Analysis, Time Series Analysis, and Dimensionality Reduction and
 Clustering.</p>
 <p>If you look at the correlation heatmaps in the HTML report, you can
 see that the samples E12_TP05_Exponential and E10_TP10_Stationary stick
-out. Seeing this, you might want to remove them from the data. You can
-test out what happens when you do this, along with testing how other
-hyperparameter choices influence the results, with the package function
-screen_limma_hyperparams().</p>
+out. Seeing this, you might want to remove them from the data.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1056,28 +1064,28 @@ level.</p>
 <p>To generate the limma result categories 2 and 3 ()</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  design <span class="op">=</span> <span class="st">"~ 1 + Phase*Time + Reactor"</span>, <span class="co"># best design formula</span></span>
-<span>  mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
-<span>  <span class="co"># States explicitly that there is no problem of heteroscedasticity and </span></span>
-<span>  <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would mean</span></span>
-<span>  <span class="co"># the opposite, and when setting it to NULL, it means it should be handled </span></span>
-<span>  <span class="co"># implicitly. For details, see Reference</span></span>
-<span>  <span class="co"># documentation of the create_splineomics() function.</span></span>
-<span>  use_array_weights <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>, <span class="co"># natural cubic splines (take these if unsure)</span></span>
-<span>    dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span> <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
-<span>  <span class="op">)</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>    design <span class="op">=</span> <span class="st">"~ 1 + Phase*Time + Reactor"</span>, <span class="co"># best design formula</span></span>
+<span>    mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
+<span>    <span class="co"># States explicitly that there is no problem of heteroscedasticity and</span></span>
+<span>    <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would mean</span></span>
+<span>    <span class="co"># the opposite, and when setting it to NULL, it means it should be handled</span></span>
+<span>    <span class="co"># implicitly. For details, see Reference</span></span>
+<span>    <span class="co"># documentation of the create_splineomics() function.</span></span>
+<span>    use_array_weights <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>, <span class="co"># natural cubic splines (take these if unsure)</span></span>
+<span>        dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span> <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
+<span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> function with the updated
 SplineOmics object:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
+<span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fitting global model...</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 0.0 min</span></span></code></pre></div>
@@ -1104,12 +1112,12 @@ levels (which includes both time and the average differences)</p>
 generate p-value histograms an volcano plots.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_limma_report.html">create_limma_report</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPRP7bn/file26a2300baabe .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpks2516/file6bd66ffa7dce .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1134,37 +1142,37 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Important note: When you define parameters for the levels, always define them</span></span>
-<span><span class="co"># in the order those levels appear in the meta condition column! Otherwise, </span></span>
+<span><span class="co"># in the order those levels appear in the meta condition column! Otherwise,</span></span>
 <span><span class="co"># there will be a mixup!</span></span>
 <span></span>
-<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> </span>
-<span>  <span class="fl">0.05</span>, </span>
-<span>  <span class="fl">0.05</span> </span>
+<span><span class="va">adj_pthresholds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="fl">0.05</span>,</span>
+<span>    <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># The amount of clusters can be a fixed number (e.g. 6) or a range. When you</span></span>
-<span><span class="co"># specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the </span></span>
+<span><span class="co"># specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the</span></span>
 <span><span class="co"># cluster_hits() function tries all those cluster numbers and picks the one with</span></span>
 <span><span class="co"># the highest silhouette score (automatic cluster number identification). When</span></span>
-<span><span class="co"># you don't want to have a clustering for a level, write 1 for the cluster </span></span>
+<span><span class="co"># you don't want to have a clustering for a level, write 1 for the cluster</span></span>
 <span><span class="co"># number for that level.</span></span>
 <span><span class="va">nr_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  Exponential <span class="op">=</span> <span class="fl">6</span>,   <span class="co"># specifically 6 clusters for the exponential phase level</span></span>
-<span>  Stationary <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">3</span>   <span class="co"># range of cluster numbers for the stationary phase level</span></span>
+<span>    Exponential <span class="op">=</span> <span class="fl">6</span>, <span class="co"># specifically 6 clusters for the exponential phase level</span></span>
+<span>    Stationary <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">3</span> <span class="co"># range of cluster numbers for the stationary phase level</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="co"># For the spline plots</span></span>
-<span>  y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
-<span>  time_unit <span class="op">=</span> <span class="st">"min"</span>, <span class="co"># our measurements were in minutes</span></span>
-<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Exponential <span class="op">=</span> <span class="st">"feeding"</span>,</span>
-<span>    Stationary <span class="op">=</span> <span class="st">"feeding"</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="st">"feeding"</span></span>
+<span>    y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
+<span>    time_unit <span class="op">=</span> <span class="st">"min"</span>, <span class="co"># our measurements were in minutes</span></span>
+<span>    treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        Exponential <span class="op">=</span> <span class="st">"feeding"</span>,</span>
+<span>        Stationary <span class="op">=</span> <span class="st">"feeding"</span>,</span>
+<span>        double_spline_plots <span class="op">=</span> <span class="st">"feeding"</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Exponential <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>    Stationary <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="fl">0</span></span>
+<span>    treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        Exponential <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>        Stationary <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>        double_spline_plots <span class="op">=</span> <span class="fl">0</span></span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -1177,9 +1185,9 @@ clusters as we have specified for that specific level.</p>
 <span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="va">annotation</span><span class="op">[[</span><span class="va">gene_column_name</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">plot_options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
-<span>  meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># Colors the data points based on Reactor</span></span>
-<span>  cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Per default FALSE, just for demonstration</span></span>
+<span>    <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
+<span>    meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># Colors the data points based on Reactor</span></span>
+<span>    cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Per default FALSE, just for demonstration</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the function:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -1187,18 +1195,18 @@ clusters as we have specified for that specific level.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">report_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
-<span>  nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
-<span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
-<span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
-<span>  plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
-<span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>    adj_pthresholds <span class="op">=</span> <span class="va">adj_pthresholds</span>,</span>
+<span>    nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
+<span>    genes <span class="op">=</span> <span class="va">genes</span>,</span>
+<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>    plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="va">report_dir</span>,</span>
+<span>    adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Make sure that the design formula contains no interaction between the condition and time for mode == isolated, and that it contains an interaction for mode == integrated. Otherwise, you will get an uncaught error of 'coefficients not estimable' or 'subscript out of bounds' (or any other hard to understand error).</span></span>
+<span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  Exponential</span></span>
@@ -1211,11 +1219,12 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPRP7bn/splineomics_report .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpks2516/splineomics_report .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
-<span><span class="co">#&gt; 0 clusters for the condition effect (interaction between condition and time)</span></span>
-<span><span class="co">#&gt; Running this function took 0.2 min</span></span></code></pre></div>
+<span><span class="co">#&gt; 0 clusters for the condition effect</span></span>
+<span><span class="co">#&gt;             (interaction between condition and time)</span></span>
+<span><span class="co">#&gt; Running this function took 0.3 min</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
@@ -1237,24 +1246,24 @@ proceed, the Enrichr databases of choice need to be downloaded:</p>
 <span></span>
 <span><span class="co"># Specify which databases you want to download from Enrichr</span></span>
 <span><span class="va">gene_set_lib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"WikiPathways_2019_Human"</span>,</span>
-<span>  <span class="st">"NCI-Nature_2016"</span>,</span>
-<span>  <span class="st">"TRRUST_Transcription_Factors_2019"</span>,</span>
-<span>  <span class="st">"MSigDB_Hallmark_2020"</span>,</span>
-<span>  <span class="st">"GO_Cellular_Component_2018"</span>,</span>
-<span>  <span class="st">"CORUM"</span>,</span>
-<span>  <span class="st">"KEGG_2019_Human"</span>,</span>
-<span>  <span class="st">"TRANSFAC_and_JASPAR_PWMs"</span>,</span>
-<span>  <span class="st">"ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X"</span>,</span>
-<span>  <span class="st">"GO_Biological_Process_2018"</span>,</span>
-<span>  <span class="st">"GO_Molecular_Function_2018"</span>,</span>
-<span>  <span class="st">"Human_Gene_Atlas"</span></span>
+<span>    <span class="st">"WikiPathways_2019_Human"</span>,</span>
+<span>    <span class="st">"NCI-Nature_2016"</span>,</span>
+<span>    <span class="st">"TRRUST_Transcription_Factors_2019"</span>,</span>
+<span>    <span class="st">"MSigDB_Hallmark_2020"</span>,</span>
+<span>    <span class="st">"GO_Cellular_Component_2018"</span>,</span>
+<span>    <span class="st">"CORUM"</span>,</span>
+<span>    <span class="st">"KEGG_2019_Human"</span>,</span>
+<span>    <span class="st">"TRANSFAC_and_JASPAR_PWMs"</span>,</span>
+<span>    <span class="st">"ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X"</span>,</span>
+<span>    <span class="st">"GO_Biological_Process_2018"</span>,</span>
+<span>    <span class="st">"GO_Molecular_Function_2018"</span>,</span>
+<span>    <span class="st">"Human_Gene_Atlas"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/download_enrichr_databases.html">download_enrichr_databases</a></span><span class="op">(</span></span>
-<span>  gene_set_lib <span class="op">=</span> <span class="va">gene_set_lib</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
-<span>  filename <span class="op">=</span> <span class="st">"databases.tsv"</span></span>
+<span>    gene_set_lib <span class="op">=</span> <span class="va">gene_set_lib</span>,</span>
+<span>    output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
+<span>    filename <span class="op">=</span> <span class="st">"databases.tsv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Per default the file is placed in the current working directory,
 which is the root dir of the R project.</p>
@@ -1269,29 +1278,29 @@ in R.</p>
 <span></span>
 <span><span class="co"># Load the file</span></span>
 <span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
-<span>  <span class="va">downloaded_dbs_filepath</span>,</span>
-<span>  sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="va">downloaded_dbs_filepath</span>,</span>
+<span>    sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Specify the clusterProfiler parameters</span></span>
 <span><span class="va">clusterProfiler_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
-<span>  minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
+<span>    pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
+<span>    minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>    maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
-<span>  cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>  databases <span class="op">=</span> <span class="va">databases</span>,</span>
-<span>  clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
-<span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>  cluster_hits_report_name <span class="op">=</span> <span class="st">"report name"</span>,</span>
-<span>  report_dir <span class="op">=</span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    databases <span class="op">=</span> <span class="va">databases</span>,</span>
+<span>    clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
+<span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
+<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"report name"</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the run_ora function <a href="https://csbg.github.io/SplineOmics_html_reports/run_ora_report_PTX.html">here</a>.</p>
 <p>This report first shows all enrichment results, where more than 2
@@ -1320,69 +1329,69 @@ The BioConductor databases are an example for that, and SplineOmics also
 contains a function to conveniently download these.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/extract_gene_sets.html">extract_gene_sets</a></span><span class="op">(</span></span>
-<span>  organism_db <span class="op">=</span> <span class="st">"org.Mm.eg.db"</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
-<span>  filename <span class="op">=</span> <span class="st">"bioconductor_database.tsv"</span></span>
+<span>    organism_db <span class="op">=</span> <span class="st">"org.Mm.eg.db"</span>,</span>
+<span>    output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
+<span>    filename <span class="op">=</span> <span class="st">"bioconductor_database.tsv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
 <span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>  <span class="va">results_dir</span>,</span>
-<span>  <span class="st">"bioconductor_database.tsv"</span></span>
-<span>  <span class="op">)</span></span>
+<span>    <span class="va">results_dir</span>,</span>
+<span>    <span class="st">"bioconductor_database.tsv"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load the file</span></span>
 <span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
-<span>  <span class="va">downloaded_dbs_filepath</span>,</span>
-<span>  sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="va">downloaded_dbs_filepath</span>,</span>
+<span>    sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Specify the clusterProfiler parameters</span></span>
 <span><span class="va">clusterProfiler_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
-<span>  minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
+<span>    pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>,</span>
+<span>    minGSSize <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>    maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mapping_cfg</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"gprofiler"</span>,</span>
-<span>  from_species <span class="op">=</span> <span class="st">"cgchok1gshd"</span>,</span>
-<span>  to_species   <span class="op">=</span> <span class="st">"mmusculus"</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="va">mapping_cfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    method <span class="op">=</span> <span class="st">"gprofiler"</span>,</span>
+<span>    from_species <span class="op">=</span> <span class="st">"cgchok1gshd"</span>,</span>
+<span>    to_species <span class="op">=</span> <span class="st">"mmusculus"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">genes_clean</span> <span class="op">&lt;-</span> <span class="va">genes</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"-"</span>, <span class="va">genes</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">enrichGO_cfg</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  GO_BP <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
-<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
-<span>    ontology <span class="op">=</span> <span class="st">"BP"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  GO_MF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
-<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
-<span>    ontology <span class="op">=</span> <span class="st">"MF"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  GO_CC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
-<span>    keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
-<span>    ontology <span class="op">=</span> <span class="st">"CC"</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="va">enrichGO_cfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    GO_BP <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>        keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>        ontology <span class="op">=</span> <span class="st">"BP"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    GO_MF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>        keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>        ontology <span class="op">=</span> <span class="st">"MF"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    GO_CC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        OrgDb <span class="op">=</span> <span class="va">org.Mm.eg.db</span>,</span>
+<span>        keyType <span class="op">=</span> <span class="st">"SYMBOL"</span>,</span>
+<span>        ontology <span class="op">=</span> <span class="st">"CC"</span></span>
+<span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
-<span>  cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>  databases <span class="op">=</span> <span class="va">databases</span>,</span>
-<span>  clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
-<span>  universe <span class="op">=</span> <span class="va">genes_clean</span>,</span>
-<span>  mapping_cfg <span class="op">=</span> <span class="va">mapping_cfg</span>,</span>
-<span>  enrichGO_cfg <span class="op">=</span> <span class="va">enrichGO_cfg</span>,</span>
-<span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>  cluster_hits_report_name <span class="op">=</span> <span class="st">"report"</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="va">results_dir</span></span>
+<span>    cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    databases <span class="op">=</span> <span class="va">databases</span>,</span>
+<span>    clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
+<span>    universe <span class="op">=</span> <span class="va">genes_clean</span>,</span>
+<span>    mapping_cfg <span class="op">=</span> <span class="va">mapping_cfg</span>,</span>
+<span>    enrichGO_cfg <span class="op">=</span> <span class="va">enrichGO_cfg</span>,</span>
+<span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
+<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"report"</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="va">results_dir</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -1428,53 +1437,58 @@ Thank you!</p>
 <span><span class="co">#&gt;  [1] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      </span></span>
 <span><span class="co">#&gt;  [4] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.0 </span></span>
 <span><span class="co">#&gt;  [7] generics_0.1.4       knitr_1.50           dplyr_1.1.4         </span></span>
-<span><span class="co">#&gt; [10] here_1.0.2           SplineOmics_0.3.6   </span></span>
+<span><span class="co">#&gt; [10] here_1.0.1           SplineOmics_0.3.7    testthat_3.2.3      </span></span>
+<span><span class="co">#&gt; [13] devtools_2.4.5       usethis_3.2.1       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_2.0.0          </span></span>
-<span><span class="co">#&gt;   [4] shape_1.4.6.1            magrittr_2.0.4           farver_2.1.2            </span></span>
-<span><span class="co">#&gt;   [7] nloptr_2.2.1             rmarkdown_2.30           GlobalOptions_0.1.2     </span></span>
-<span><span class="co">#&gt;  [10] fs_1.6.6                 ragg_1.4.0               vctrs_0.6.5             </span></span>
-<span><span class="co">#&gt;  [13] memoise_2.0.1            minqa_1.2.8              base64enc_0.1-3         </span></span>
-<span><span class="co">#&gt;  [16] htmltools_0.5.8.1        progress_1.2.3           broom_1.0.10            </span></span>
-<span><span class="co">#&gt;  [19] Formula_1.2-5            variancePartition_1.38.1 sass_0.4.10             </span></span>
-<span><span class="co">#&gt;  [22] KernSmooth_2.23-26       bslib_0.9.0              htmlwidgets_1.6.4       </span></span>
-<span><span class="co">#&gt;  [25] desc_1.4.3               pbkrtest_0.5.5           plyr_1.8.9              </span></span>
-<span><span class="co">#&gt;  [28] cachem_1.1.0             lifecycle_1.0.4          iterators_1.0.14        </span></span>
-<span><span class="co">#&gt;  [31] pkgconfig_2.0.3          Matrix_1.7-4             R6_2.6.1                </span></span>
-<span><span class="co">#&gt;  [34] fastmap_1.2.0            GenomeInfoDbData_1.2.14  rbibutils_2.3           </span></span>
-<span><span class="co">#&gt;  [37] clue_0.3-66              digest_0.6.37            numDeriv_2016.8-1.1     </span></span>
-<span><span class="co">#&gt;  [40] colorspace_2.1-2         rprojroot_2.1.1          textshaping_1.0.3       </span></span>
-<span><span class="co">#&gt;  [43] RSQLite_2.4.3            labeling_0.4.3           httr_1.4.7              </span></span>
-<span><span class="co">#&gt;  [46] abind_1.4-8              compiler_4.5.1           withr_3.0.2             </span></span>
-<span><span class="co">#&gt;  [49] bit64_4.6.0-1            aod_1.3.3                doParallel_1.0.17       </span></span>
-<span><span class="co">#&gt;  [52] S7_0.2.0                 backports_1.5.0          BiocParallel_1.42.2     </span></span>
-<span><span class="co">#&gt;  [55] carData_3.0-5            DBI_1.2.3                gplots_3.2.0            </span></span>
-<span><span class="co">#&gt;  [58] MASS_7.3-65              rjson_0.2.23             corpcor_1.6.10          </span></span>
-<span><span class="co">#&gt;  [61] gtools_3.9.5             caTools_1.18.3           tools_4.5.1             </span></span>
-<span><span class="co">#&gt;  [64] zip_2.3.3                remaCor_0.0.20           glue_1.8.0              </span></span>
-<span><span class="co">#&gt;  [67] nlme_3.1-168             grid_4.5.1               cluster_2.1.8.1         </span></span>
-<span><span class="co">#&gt;  [70] reshape2_1.4.4           gtable_0.3.6             tidyr_1.3.1             </span></span>
-<span><span class="co">#&gt;  [73] hms_1.1.3                XVector_0.48.0           car_3.1-3               </span></span>
-<span><span class="co">#&gt;  [76] ggrepel_0.9.6            foreach_1.5.2            pillar_1.11.1           </span></span>
-<span><span class="co">#&gt;  [79] stringr_1.5.2            limma_3.64.3             circlize_0.4.16         </span></span>
-<span><span class="co">#&gt;  [82] splines_4.5.1            lattice_0.22-5           renv_1.1.5              </span></span>
-<span><span class="co">#&gt;  [85] gmp_0.7-5                bit_4.6.0                tidyselect_1.2.1        </span></span>
-<span><span class="co">#&gt;  [88] ComplexHeatmap_2.24.1    Biostrings_2.76.0        pbapply_1.7-4           </span></span>
-<span><span class="co">#&gt;  [91] reformulas_0.4.1         svglite_2.2.1            RhpcBLASctl_0.23-42     </span></span>
-<span><span class="co">#&gt;  [94] xfun_0.53                statmod_1.5.0            matrixStats_1.5.0       </span></span>
-<span><span class="co">#&gt;  [97] UCSC.utils_1.4.0         stringi_1.8.7            yaml_2.3.10             </span></span>
-<span><span class="co">#&gt; [100] boot_1.3-32              evaluate_1.0.5           codetools_0.2-19        </span></span>
-<span><span class="co">#&gt; [103] tibble_3.3.0             BiocManager_1.30.26      cli_3.6.5               </span></span>
-<span><span class="co">#&gt; [106] systemfonts_1.3.1        Rdpack_2.6.4             jquerylib_0.1.4         </span></span>
-<span><span class="co">#&gt; [109] GenomeInfoDb_1.44.3      Rcpp_1.1.0               EnvStats_3.1.0          </span></span>
-<span><span class="co">#&gt; [112] png_0.1-8                parallel_4.5.1           pkgdown_2.1.3           </span></span>
-<span><span class="co">#&gt; [115] ggplot2_4.0.0            blob_1.2.4               prettyunits_1.2.0       </span></span>
-<span><span class="co">#&gt; [118] ClusterR_1.3.4           bitops_1.0-9             lme4_1.1-37             </span></span>
-<span><span class="co">#&gt; [121] mvtnorm_1.3-3            lmerTest_3.1-3           scales_1.4.0            </span></span>
-<span><span class="co">#&gt; [124] purrr_1.1.0              crayon_1.5.3             writexl_1.5.4           </span></span>
-<span><span class="co">#&gt; [127] fANCOVA_0.6-1            GetoptLong_1.0.5         rlang_1.1.6             </span></span>
-<span><span class="co">#&gt; [130] KEGGREST_1.48.1</span></span></code></pre>
+<span><span class="co">#&gt;   [1] splines_4.5.1            later_1.4.2              bitops_1.0-9            </span></span>
+<span><span class="co">#&gt;   [4] tibble_3.3.0             lifecycle_1.0.4          Rdpack_2.6.4            </span></span>
+<span><span class="co">#&gt;   [7] doParallel_1.0.17        rprojroot_2.1.0          lattice_0.22-5          </span></span>
+<span><span class="co">#&gt;  [10] MASS_7.3-65              backports_1.5.0          magrittr_2.0.3          </span></span>
+<span><span class="co">#&gt;  [13] limma_3.64.1             sass_0.4.10              rmarkdown_2.29          </span></span>
+<span><span class="co">#&gt;  [16] jquerylib_0.1.4          yaml_2.3.10              remotes_2.5.0           </span></span>
+<span><span class="co">#&gt;  [19] httpuv_1.6.16            zip_2.3.3                sessioninfo_1.2.3       </span></span>
+<span><span class="co">#&gt;  [22] pkgbuild_1.4.8           pbapply_1.7-2            DBI_1.2.3               </span></span>
+<span><span class="co">#&gt;  [25] minqa_1.2.8              RColorBrewer_1.1-3       abind_1.4-8             </span></span>
+<span><span class="co">#&gt;  [28] pkgload_1.4.0            EnvStats_3.1.0           purrr_1.1.0             </span></span>
+<span><span class="co">#&gt;  [31] GenomeInfoDbData_1.2.14  circlize_0.4.16          ggrepel_0.9.6           </span></span>
+<span><span class="co">#&gt;  [34] pbkrtest_0.5.4           pkgdown_2.1.3            svglite_2.2.1           </span></span>
+<span><span class="co">#&gt;  [37] codetools_0.2-19         tidyselect_1.2.1         shape_1.4.6.1           </span></span>
+<span><span class="co">#&gt;  [40] UCSC.utils_1.4.0         farver_2.1.2             lme4_1.1-37             </span></span>
+<span><span class="co">#&gt;  [43] gmp_0.7-5                matrixStats_1.5.0        base64enc_0.1-3         </span></span>
+<span><span class="co">#&gt;  [46] jsonlite_2.0.0           GetoptLong_1.0.5         ellipsis_0.3.2          </span></span>
+<span><span class="co">#&gt;  [49] Formula_1.2-5            iterators_1.0.14         systemfonts_1.2.3       </span></span>
+<span><span class="co">#&gt;  [52] foreach_1.5.2            tools_4.5.1              progress_1.2.3          </span></span>
+<span><span class="co">#&gt;  [55] ragg_1.4.0               Rcpp_1.1.0               glue_1.8.0              </span></span>
+<span><span class="co">#&gt;  [58] xfun_0.52                GenomeInfoDb_1.44.0      withr_3.0.2             </span></span>
+<span><span class="co">#&gt;  [61] numDeriv_2016.8-1.1      BiocManager_1.30.26      fastmap_1.2.0           </span></span>
+<span><span class="co">#&gt;  [64] boot_1.3-31              caTools_1.18.3           digest_0.6.37           </span></span>
+<span><span class="co">#&gt;  [67] R6_2.6.1                 mime_0.13                textshaping_1.0.1       </span></span>
+<span><span class="co">#&gt;  [70] colorspace_2.1-1         gtools_3.9.5             RSQLite_2.4.1           </span></span>
+<span><span class="co">#&gt;  [73] RhpcBLASctl_0.23-42      tidyr_1.3.1              variancePartition_1.38.0</span></span>
+<span><span class="co">#&gt;  [76] renv_1.1.5               corpcor_1.6.10           prettyunits_1.2.0       </span></span>
+<span><span class="co">#&gt;  [79] httr_1.4.7               htmlwidgets_1.6.4        pkgconfig_2.0.3         </span></span>
+<span><span class="co">#&gt;  [82] gtable_0.3.6             blob_1.2.4               ComplexHeatmap_2.24.1   </span></span>
+<span><span class="co">#&gt;  [85] XVector_0.48.0           remaCor_0.0.18           brio_1.1.5              </span></span>
+<span><span class="co">#&gt;  [88] htmltools_0.5.8.1        carData_3.0-5            profvis_0.4.0           </span></span>
+<span><span class="co">#&gt;  [91] clue_0.3-66              scales_1.4.0             ClusterR_1.3.3          </span></span>
+<span><span class="co">#&gt;  [94] png_0.1-8                fANCOVA_0.6-1            reformulas_0.4.1        </span></span>
+<span><span class="co">#&gt;  [97] rstudioapi_0.17.1        reshape2_1.4.4           rjson_0.2.23            </span></span>
+<span><span class="co">#&gt; [100] nlme_3.1-168             nloptr_2.2.1             cachem_1.1.0            </span></span>
+<span><span class="co">#&gt; [103] GlobalOptions_0.1.2      stringr_1.5.1            KernSmooth_2.23-26      </span></span>
+<span><span class="co">#&gt; [106] parallel_4.5.1           miniUI_0.1.2             desc_1.4.3              </span></span>
+<span><span class="co">#&gt; [109] pillar_1.11.0            grid_4.5.1               vctrs_0.6.5             </span></span>
+<span><span class="co">#&gt; [112] gplots_3.2.0             urlchecker_1.0.1         promises_1.3.3          </span></span>
+<span><span class="co">#&gt; [115] car_3.1-3                xtable_1.8-4             cluster_2.1.8.1         </span></span>
+<span><span class="co">#&gt; [118] evaluate_1.0.4           mvtnorm_1.3-3            cli_3.6.5               </span></span>
+<span><span class="co">#&gt; [121] compiler_4.5.1           rlang_1.1.6              crayon_1.5.3            </span></span>
+<span><span class="co">#&gt; [124] labeling_0.4.3           plyr_1.8.9               fs_1.6.6                </span></span>
+<span><span class="co">#&gt; [127] writexl_1.5.4            stringi_1.8.7            BiocParallel_1.42.1     </span></span>
+<span><span class="co">#&gt; [130] lmerTest_3.1-3           Biostrings_2.76.0        aod_1.3.3               </span></span>
+<span><span class="co">#&gt; [133] Matrix_1.7-3             hms_1.1.3                bit64_4.6.0-1           </span></span>
+<span><span class="co">#&gt; [136] ggplot2_3.5.2            KEGGREST_1.48.1          statmod_1.5.0           </span></span>
+<span><span class="co">#&gt; [139] shiny_1.11.1             rbibutils_2.3            broom_1.0.8             </span></span>
+<span><span class="co">#&gt; [142] memoise_2.0.1            bslib_0.9.0              bit_4.6.0</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

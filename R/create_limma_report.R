@@ -159,14 +159,17 @@ create_limma_report <- function(
         report_info[["heteroscedasticity"]] <- "not tested"
     } else {
         report_info[["use_array_weights"]] <- paste(
-            "automatic (decided by Levene's test), array_weights only used when",
+            "automatic (decided by Levene's test), array_weights only used",
+            "when",
             "heteroscedasticity is detected (% violating features >= 10)"
         )
         report_info[["heteroscedasticity"]] <- sprintf(
             "Heteroscedasticity detected: %s (%.1f%% of features violated the
       assumption of homoscedasticity)",
             ifelse(
-                splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
+                splineomics[["homosc_violation_result"]][["violation"]],
+                "Yes",
+                "No"
             ),
             splineomics[["homosc_violation_result"]][["percent_violated"]]
         )
@@ -175,7 +178,8 @@ create_limma_report <- function(
     # Get the top_tables of the three limma analysis categories
     time_effect <- limma_splines_result$time_effect
     avrg_diff_conditions <- limma_splines_result$avrg_diff_conditions
-    interaction_condition_time <- limma_splines_result$interaction_condition_time
+    interaction_condition_time <- 
+        limma_splines_result$interaction_condition_time
 
     plots <- list()
     plots_sizes <- list()
@@ -259,7 +263,8 @@ create_limma_report <- function(
     # replace NA / NULL list elements with empty data.frames (necessary for
     # downstream code. Yes, this is a quickfix..)
     all_top_tables <- lapply(all_top_tables, function(tbl) {
-        if (is.null(tbl) || (is.atomic(tbl) && length(tbl) == 1 && is.na(tbl))) {
+        if (is.null(tbl) ||
+            (is.atomic(tbl) && length(tbl) == 1 && is.na(tbl))) {
             data.frame()
         } else {
             tbl
@@ -562,7 +567,8 @@ build_create_limma_report <- function(
 
                 # Add text block after the main headers.
                 if (current_header_index <= length(text_blocks)) {
-                    # Convert text block to a single string with HTML paragraph format
+                    # Convert text block to a single string with HTML
+                    # paragraph format
                     text_block_html <- paste(
                         "<p style='font-size: 200%;'>",
                         paste(

@@ -397,10 +397,7 @@ Clustering.
 
 If you look at the correlation heatmaps in the HTML report, you can see
 that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
-Seeing this, you might want to remove them from the data. You can test
-out what happens when you do this, along with testing how other
-hyperparameter choices influence the results, with the package function
-screen_limma_hyperparams().
+Seeing this, you might want to remove them from the data. 
 
 # Run limma spline analysis
 

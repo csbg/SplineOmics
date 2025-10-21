@@ -6,11 +6,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>PVC_analysis • SplineOmics</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
-<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="icon" sizes="any" href="../favicon.ico">
-<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -25,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -252,31 +247,31 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">xzfile</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"extdata"</span>,</span>
-<span>  <span class="st">"phosphoproteomics_data.rds.xz"</span>,</span>
-<span>  package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
+<span>    <span class="st">"extdata"</span>,</span>
+<span>    <span class="st">"phosphoproteomics_data.rds.xz"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
 <span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>    <span class="st">"extdata"</span>,</span>
-<span>    <span class="st">"phosphoproteomics_meta.csv"</span>,</span>
-<span>    package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>        <span class="st">"extdata"</span>,</span>
+<span>        <span class="st">"phosphoproteomics_meta.csv"</span>,</span>
+<span>        package <span class="op">=</span> <span class="st">"SplineOmics"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract the annotation part from the dataframe.</span></span>
 <span><span class="va">first_na_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">data</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
-<span><span class="va">annotation</span> <span class="op">&lt;-</span> <span class="va">data</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">(</span><span class="va">first_na_col</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
+<span><span class="va">annotation</span> <span class="op">&lt;-</span> <span class="va">data</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">(</span><span class="va">first_na_col</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="show-top-rows-of-data">Show top rows of data<a class="anchor" aria-label="anchor" href="#show-top-rows-of-data"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="2%">
@@ -647,9 +642,9 @@ shown below.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="30%">
@@ -724,9 +719,9 @@ shown below.</p>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotation</span><span class="op">)</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"markdown"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotation</span><span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"markdown"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="12%">
@@ -801,15 +796,15 @@ shown below.</p>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/extract_data.html">extract_data</a></span><span class="op">(</span></span>
-<span>  <span class="co"># The dataframe with the numbers on the left and info on the right.</span></span>
-<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  <span class="co"># Use this annotation column for the feature names.</span></span>
-<span>  feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T..Gene"</span><span class="op">)</span>,</span>
-<span>  use_row_index <span class="op">=</span> <span class="cn">TRUE</span>,   <span class="co"># makes the feature names unique with row index</span></span>
-<span>  top_row <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  bottom_row <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  right_col <span class="op">=</span> <span class="fl">36</span>,</span>
-<span>  left_col <span class="op">=</span> <span class="fl">1</span></span>
+<span>    <span class="co"># The dataframe with the numbers on the left and info on the right.</span></span>
+<span>    data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>    <span class="co"># Use this annotation column for the feature names.</span></span>
+<span>    feature_name_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T..Gene"</span><span class="op">)</span>,</span>
+<span>    use_row_index <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># makes the feature names unique with row index</span></span>
+<span>    top_row <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    bottom_row <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    right_col <span class="op">=</span> <span class="fl">36</span>,</span>
+<span>    left_col <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -819,22 +814,22 @@ shown below.</p>
 <code class="sourceCode R"><span><span class="co"># Those fields are mandatory, because we believe that when such a report is</span></span>
 <span><span class="co"># opened after half a year, those infos can be very helpful.</span></span>
 <span><span class="va">report_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  omics_data_type <span class="op">=</span> <span class="st">"PPTX"</span>,</span>
-<span>  data_description <span class="op">=</span> <span class="st">"Phosphoproteomics data of CHO cells"</span>,</span>
-<span>  data_collection_date <span class="op">=</span> <span class="st">"February 2024"</span>,</span>
-<span>  analyst_name <span class="op">=</span> <span class="st">"Thomas Rauter"</span>,</span>
-<span>  contact_info <span class="op">=</span> <span class="st">"thomas.rauter@plus.ac.at"</span>,</span>
-<span>  project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
+<span>    omics_data_type <span class="op">=</span> <span class="st">"PPTX"</span>,</span>
+<span>    data_description <span class="op">=</span> <span class="st">"Phosphoproteomics data of CHO cells"</span>,</span>
+<span>    data_collection_date <span class="op">=</span> <span class="st">"February 2024"</span>,</span>
+<span>    analyst_name <span class="op">=</span> <span class="st">"Thomas Rauter"</span>,</span>
+<span>    contact_info <span class="op">=</span> <span class="st">"thomas.rauter@plus.ac.at"</span>,</span>
+<span>    project_name <span class="op">=</span> <span class="st">"DGTX"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># splineomics now contains the SplineOmics object.</span></span>
 <span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_splineomics.html">create_splineomics</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
-<span>  meta <span class="op">=</span> <span class="va">meta</span>,</span>
-<span>  annotation <span class="op">=</span> <span class="va">annotation</span>,</span>
-<span>  report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>  condition <span class="op">=</span> <span class="st">"Phase"</span>, <span class="co"># Column of meta that contains the levels.</span></span>
-<span>  meta_batch_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># For batch effect removal</span></span>
+<span>    data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>    meta <span class="op">=</span> <span class="va">meta</span>,</span>
+<span>    annotation <span class="op">=</span> <span class="va">annotation</span>,</span>
+<span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
+<span>    condition <span class="op">=</span> <span class="st">"Phase"</span>, <span class="co"># Column of meta that contains the levels.</span></span>
+<span>    meta_batch_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># For batch effect removal</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -843,24 +838,24 @@ shown below.</p>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
-<span>  time_unit <span class="op">=</span> <span class="st">"min"</span>,</span>
-<span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Exponential <span class="op">=</span> <span class="st">"temp shift"</span>,</span>
-<span>    Stationary <span class="op">=</span> <span class="st">"temp shift"</span></span>
+<span>    y_axis_label <span class="op">=</span> <span class="st">"log2 intensity"</span>,</span>
+<span>    time_unit <span class="op">=</span> <span class="st">"min"</span>,</span>
+<span>    treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        Exponential <span class="op">=</span> <span class="st">"temp shift"</span>,</span>
+<span>        Stationary <span class="op">=</span> <span class="st">"temp shift"</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Exponential <span class="op">=</span> <span class="fl">146</span>,</span>
-<span>    Stationary <span class="op">=</span> <span class="fl">146</span></span>
+<span>    treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        Exponential <span class="op">=</span> <span class="fl">146</span>,</span>
+<span>        Stationary <span class="op">=</span> <span class="fl">146</span></span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check out the documentation of the function under the Reference tab.</span></span>
 <span><span class="va">excursion_plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/find_pvc.html">find_pvc</a></span><span class="op">(</span></span>
-<span>  splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
-<span>  alphas <span class="op">=</span> <span class="fl">0.025</span>,</span>
-<span>  plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
+<span>    alphas <span class="op">=</span> <span class="fl">0.025</span>,</span>
+<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; design matrix of interest not specified. Assuming a one-group experiment.</span></span>
 <span><span class="co">#&gt; Warning: Partial NA coefficients for 33 probe(s)</span></span>
@@ -897,7 +892,7 @@ shown below.</p>
 <span><span class="co">#&gt; 240: p=0; v=0; b=0; t=0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> PVC report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmpdxm1Rt/file293b19d36708 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpIsFBGA/file6e347a85cb3c .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>The terminal output of the function gives information about the total
@@ -933,50 +928,50 @@ you can see the resulting HTML report.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       here_1.0.2        SplineOmics_0.3.6</span></span>
+<span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       here_1.0.1        SplineOmics_0.3.7</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] Rdpack_2.6.4             bitops_1.0-9             pbapply_1.7-4           </span></span>
-<span><span class="co">#&gt;   [4] writexl_1.5.4            rlang_1.1.6              magrittr_2.0.4          </span></span>
+<span><span class="co">#&gt;   [1] Rdpack_2.6.4             bitops_1.0-9             pbapply_1.7-2           </span></span>
+<span><span class="co">#&gt;   [4] writexl_1.5.4            rlang_1.1.6              magrittr_2.0.3          </span></span>
 <span><span class="co">#&gt;   [7] clue_0.3-66              GetoptLong_1.0.5         matrixStats_1.5.0       </span></span>
 <span><span class="co">#&gt;  [10] compiler_4.5.1           reshape2_1.4.4           png_0.1-8               </span></span>
-<span><span class="co">#&gt;  [13] systemfonts_1.3.1        vctrs_0.6.5              stringr_1.5.2           </span></span>
+<span><span class="co">#&gt;  [13] systemfonts_1.2.3        vctrs_0.6.5              stringr_1.5.1           </span></span>
 <span><span class="co">#&gt;  [16] pkgconfig_2.0.3          shape_1.4.6.1            crayon_1.5.3            </span></span>
 <span><span class="co">#&gt;  [19] fastmap_1.2.0            backports_1.5.0          labeling_0.4.3          </span></span>
-<span><span class="co">#&gt;  [22] caTools_1.18.3           rmarkdown_2.30           nloptr_2.2.1            </span></span>
-<span><span class="co">#&gt;  [25] ragg_1.4.0               purrr_1.1.0              xfun_0.53               </span></span>
+<span><span class="co">#&gt;  [22] caTools_1.18.3           rmarkdown_2.29           nloptr_2.2.1            </span></span>
+<span><span class="co">#&gt;  [25] ragg_1.4.0               purrr_1.1.0              xfun_0.52               </span></span>
 <span><span class="co">#&gt;  [28] cachem_1.1.0             jsonlite_2.0.0           progress_1.2.3          </span></span>
-<span><span class="co">#&gt;  [31] EnvStats_3.1.0           remaCor_0.0.20           gmp_0.7-5               </span></span>
-<span><span class="co">#&gt;  [34] BiocParallel_1.42.2      broom_1.0.10             parallel_4.5.1          </span></span>
+<span><span class="co">#&gt;  [31] EnvStats_3.1.0           remaCor_0.0.18           gmp_0.7-5               </span></span>
+<span><span class="co">#&gt;  [34] BiocParallel_1.42.1      broom_1.0.8              parallel_4.5.1          </span></span>
 <span><span class="co">#&gt;  [37] prettyunits_1.2.0        cluster_2.1.8.1          R6_2.6.1                </span></span>
 <span><span class="co">#&gt;  [40] stringi_1.8.7            bslib_0.9.0              RColorBrewer_1.1-3      </span></span>
-<span><span class="co">#&gt;  [43] limma_3.64.3             car_3.1-3                boot_1.3-32             </span></span>
-<span><span class="co">#&gt;  [46] ClusterR_1.3.4           numDeriv_2016.8-1.1      jquerylib_0.1.4         </span></span>
+<span><span class="co">#&gt;  [43] limma_3.64.1             car_3.1-3                boot_1.3-31             </span></span>
+<span><span class="co">#&gt;  [46] ClusterR_1.3.3           numDeriv_2016.8-1.1      jquerylib_0.1.4         </span></span>
 <span><span class="co">#&gt;  [49] Rcpp_1.1.0               iterators_1.0.14         base64enc_0.1-3         </span></span>
-<span><span class="co">#&gt;  [52] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.1           </span></span>
+<span><span class="co">#&gt;  [52] IRanges_2.42.0           Matrix_1.7-3             splines_4.5.1           </span></span>
 <span><span class="co">#&gt;  [55] tidyselect_1.2.1         rstudioapi_0.17.1        abind_1.4-8             </span></span>
 <span><span class="co">#&gt;  [58] yaml_2.3.10              doParallel_1.0.17        gplots_3.2.0            </span></span>
 <span><span class="co">#&gt;  [61] codetools_0.2-19         plyr_1.8.9               lmerTest_3.1-3          </span></span>
 <span><span class="co">#&gt;  [64] lattice_0.22-5           tibble_3.3.0             withr_3.0.2             </span></span>
-<span><span class="co">#&gt;  [67] Biobase_2.68.0           S7_0.2.0                 evaluate_1.0.5          </span></span>
-<span><span class="co">#&gt;  [70] desc_1.4.3               zip_2.3.3                circlize_0.4.16         </span></span>
-<span><span class="co">#&gt;  [73] pillar_1.11.1            BiocManager_1.30.26      carData_3.0-5           </span></span>
-<span><span class="co">#&gt;  [76] KernSmooth_2.23-26       renv_1.1.5               foreach_1.5.2           </span></span>
-<span><span class="co">#&gt;  [79] stats4_4.5.1             reformulas_0.4.1         generics_0.1.4          </span></span>
-<span><span class="co">#&gt;  [82] rprojroot_2.1.1          S4Vectors_0.46.0         hms_1.1.3               </span></span>
-<span><span class="co">#&gt;  [85] ggplot2_4.0.0            scales_1.4.0             aod_1.3.3               </span></span>
-<span><span class="co">#&gt;  [88] minqa_1.2.8              gtools_3.9.5             RhpcBLASctl_0.23-42     </span></span>
-<span><span class="co">#&gt;  [91] glue_1.8.0               tools_4.5.1              fANCOVA_0.6-1           </span></span>
-<span><span class="co">#&gt;  [94] variancePartition_1.38.1 lme4_1.1-37              mvtnorm_1.3-3           </span></span>
-<span><span class="co">#&gt;  [97] fs_1.6.6                 grid_4.5.1               tidyr_1.3.1             </span></span>
-<span><span class="co">#&gt; [100] rbibutils_2.3            colorspace_2.1-2         nlme_3.1-168            </span></span>
-<span><span class="co">#&gt; [103] Formula_1.2-5            cli_3.6.5                textshaping_1.0.3       </span></span>
-<span><span class="co">#&gt; [106] svglite_2.2.1            ComplexHeatmap_2.24.1    corpcor_1.6.10          </span></span>
-<span><span class="co">#&gt; [109] gtable_0.3.6             sass_0.4.10              digest_0.6.37           </span></span>
-<span><span class="co">#&gt; [112] BiocGenerics_0.54.0      pbkrtest_0.5.5           ggrepel_0.9.6           </span></span>
-<span><span class="co">#&gt; [115] rjson_0.2.23             htmlwidgets_1.6.4        farver_2.1.2            </span></span>
-<span><span class="co">#&gt; [118] htmltools_0.5.8.1        pkgdown_2.1.3            lifecycle_1.0.4         </span></span>
-<span><span class="co">#&gt; [121] GlobalOptions_0.1.2      statmod_1.5.0            MASS_7.3-65</span></span></code></pre>
+<span><span class="co">#&gt;  [67] Biobase_2.68.0           evaluate_1.0.4           desc_1.4.3              </span></span>
+<span><span class="co">#&gt;  [70] zip_2.3.3                circlize_0.4.16          pillar_1.11.0           </span></span>
+<span><span class="co">#&gt;  [73] BiocManager_1.30.26      carData_3.0-5            KernSmooth_2.23-26      </span></span>
+<span><span class="co">#&gt;  [76] renv_1.1.5               foreach_1.5.2            stats4_4.5.1            </span></span>
+<span><span class="co">#&gt;  [79] reformulas_0.4.1         generics_0.1.4           rprojroot_2.1.0         </span></span>
+<span><span class="co">#&gt;  [82] S4Vectors_0.46.0         hms_1.1.3                ggplot2_3.5.2           </span></span>
+<span><span class="co">#&gt;  [85] scales_1.4.0             aod_1.3.3                minqa_1.2.8             </span></span>
+<span><span class="co">#&gt;  [88] gtools_3.9.5             RhpcBLASctl_0.23-42      glue_1.8.0              </span></span>
+<span><span class="co">#&gt;  [91] tools_4.5.1              fANCOVA_0.6-1            variancePartition_1.38.0</span></span>
+<span><span class="co">#&gt;  [94] lme4_1.1-37              mvtnorm_1.3-3            fs_1.6.6                </span></span>
+<span><span class="co">#&gt;  [97] grid_4.5.1               tidyr_1.3.1              rbibutils_2.3           </span></span>
+<span><span class="co">#&gt; [100] colorspace_2.1-1         nlme_3.1-168             Formula_1.2-5           </span></span>
+<span><span class="co">#&gt; [103] cli_3.6.5                textshaping_1.0.1        svglite_2.2.1           </span></span>
+<span><span class="co">#&gt; [106] ComplexHeatmap_2.24.1    corpcor_1.6.10           gtable_0.3.6            </span></span>
+<span><span class="co">#&gt; [109] sass_0.4.10              digest_0.6.37            BiocGenerics_0.54.0     </span></span>
+<span><span class="co">#&gt; [112] pbkrtest_0.5.4           ggrepel_0.9.6            rjson_0.2.23            </span></span>
+<span><span class="co">#&gt; [115] htmlwidgets_1.6.4        farver_2.1.2             htmltools_0.5.8.1       </span></span>
+<span><span class="co">#&gt; [118] pkgdown_2.1.3            lifecycle_1.0.4          GlobalOptions_0.1.2     </span></span>
+<span><span class="co">#&gt; [121] statmod_1.5.0            MASS_7.3-65</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

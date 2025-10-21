@@ -218,10 +218,11 @@ run_limma_splines <- function(
     use_array_weights <- splineomics[["use_array_weights"]]
     bp_cfg <- splineomics[["bp_cfg"]]
 
-    # Because at first I enforced that X in the design formula stands for the time
-    # and I heavily oriented my code towards that. But then I realised that it is
-    # nonsense to encode the time as X, and now it is explicitly "Time" (because
-    # meta must contain the exact name "Time" for this respective column).
+    # Because at first I enforced that X in the design formula stands for the
+    # time and I heavily oriented my code towards that. But then I realised that
+    # it is nonsense to encode the time as X, and now it is explicitly "Time"
+    # (because meta must contain the exact name "Time" for this respective
+    # column).
     design <- gsub(
         "Time",
         "X",
@@ -361,9 +362,10 @@ run_limma_splines <- function(
         elapsed <- difftime(end_time, start_time, units = "min")
         message(
             sprintf(
-                "\033[32mInfo\033[0m Finished limma spline analysis in %.1f min",
+                "\033[32mInfo\033[0m Finished limma spline analysis in %.1f ",
                 as.numeric(elapsed)
-            )
+            ),
+            "min"
         )
     }
 
@@ -446,14 +448,17 @@ fit_within_condition_isolated <- function(
 
     if (!is.null(rna_seq_data) && ncol(rna_seq_data$E) != nrow(meta_copy)) {
         stop_call_false(
-            "Mismatch detected: rna_seq_data$E has ", ncol(rna_seq_data$E),
-            " columns, but meta_copy has ", nrow(meta_copy), " rows. The most likely",
-            "cause for this is that you selected mode == isolated, but passed the ",
-            "full data in rna_seq_data. For RNA-seq data, you must pass the ",
-            "respective datasets of the different conditions individually (for all ",
-            "other omics datasets, this is handleded implicitly by SplineOmics: it ",
-            "splits up the data and meta into the different conditions. However, ",
-            "that is not possible with the RNA-seq data objects"
+            "Mismatch detected: rna_seq_data$E has ",
+            ncol(rna_seq_data$E),
+            " columns, but meta_copy has ",
+            nrow(meta_copy),
+            " rows. The most likely cause for this is that you selected ",
+            "mode == 'isolated', but passed the full data in rna_seq_data. ",
+            "For RNA-seq data, you must pass the respective datasets of the ",
+            "different conditions individually (for all other omics datasets, ",
+            "this is handled implicitly by SplineOmics: it splits up the data ",
+            "and meta into the different conditions. However, that is not ",
+            "possible with the RNA-seq data objects)."
         )
     }
 
@@ -605,7 +610,8 @@ fit_global_model <- function(
         fit <- variancePartition::dream(
             exprObj = data,
             formula = stats::as.formula(design),
-            data = design2design_matrix_result[["meta"]], # Spline transformed meta.
+            # Spline transformed meta.
+            data = design2design_matrix_result[["meta"]], 
             ddf = method,
             useWeights = aw_result[["use_weights"]],
             weightsMatrix = aw_result[["weights"]],
@@ -616,7 +622,8 @@ fit_global_model <- function(
             fit = fit,
             robust = aw_result[["use_weights"]]
         )
-        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+        # includes SOCK/FORK clusters on Windows
+        if (inherits(param, "SnowParam")) { 
             BiocParallel::bpstop(param) # cleanly shuts down workers
         }
     } else { # limma approach
@@ -961,7 +968,8 @@ process_within_level <- function(
         if (isTRUE(dream_params[["KenwardRoger"]])) {
             method <- "Kenward-Roger"
         } else {
-            method <- "adaptive" # Kenward-Roger for < 20 samples, else Satterthwaite
+            # Kenward-Roger for < 20 samples, else Satterthwaite
+            method <- "adaptive" 
         }
 
         param <- bp_setup(
@@ -982,8 +990,8 @@ process_within_level <- function(
             fit = fit,
             robust = aw_result[["use_weights"]]
         )
-
-        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+        # includes SOCK/FORK clusters on Windows
+        if (inherits(param, "SnowParam")) { 
             BiocParallel::bpstop(param) # cleanly shuts down workers
         }
 
@@ -1322,8 +1330,8 @@ bp_setup <- function(
 
     if (verbose) {
         message(paste(
-            "\nNOTE: If you manually stop run_limma_splines() in RStudio and used,",
-            "parallelization for variancePartition::dream(), then those",
+            "\nNOTE: If you manually stop run_limma_splines() in RStudio and ",
+            "used parallelization for variancePartition::dream(), then those",
             "parallelized",
             "processes may continue running. Use your system's",
             "process manager to terminate them manually!\n"
@@ -1482,7 +1490,9 @@ modify_limma_top_table <- function(
 
     # Sort and add feature names based on the feature_nr
     sorted_feature_names <- feature_names[top_table$feature_nr]
-    top_table <- top_table |> dplyr::mutate(feature_names = sorted_feature_names)
+    top_table <- top_table |> dplyr::mutate(
+        feature_names = sorted_feature_names
+        )
 
     return(top_table)
 }
@@ -1661,7 +1671,9 @@ resolve_array_weights <- function(
     }
 
     if (isTRUE(use_array_weights)) {
-        message("Using arrayWeights strategy for heteroscedasticity adjustment.")
+        message(
+            "Using arrayWeights strategy for heteroscedasticity adjustment."
+            )
         weights <- limma::arrayWeights(
             object = data,
             design = design2design_matrix_result$design_matrix

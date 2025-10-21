@@ -155,10 +155,11 @@ preprocess_rna_seq_data <- function(
     use_array_weights <- splineomics[["use_array_weights"]]
     bp_cfg <- splineomics[["bp_cfg"]]
 
-    # Because at first I enforced that X in the design formula stands for the time
-    # and I heavily oriented my code towards that. But then I realised that it is
-    # nonsense to encode the time as X, and now it is explicitly "Time" (because
-    # meta must contain the exact name "Time" for this respective column).
+    # Because at first I enforced that X in the design formula stands for the
+    # time and I heavily oriented my code towards that. But then I realised that
+    # it is nonsense to encode the time as X, and now it is explicitly "Time"
+    # (because meta must contain the exact name "Time" for this respective
+    # column).
     design <- gsub(
         "Time",
         "X",
@@ -197,7 +198,8 @@ preprocess_rna_seq_data <- function(
         y <- edgeR::calcNormFactors(y)
     }
 
-    # For rna_seq data, the data can only be handled together. For mode isolated,
+    # For rna_seq data, the data can only be handled together. 
+    # For mode isolated,
     # the data has to be split and the function run twice. Thats why we can only
     # have one parameter set for the spline_params.
     effects <- extract_effects(design)
@@ -231,8 +233,8 @@ preprocess_rna_seq_data <- function(
             warning(
                 "Argument `use_array_weights = TRUE` is ignored",
                 "for mixed-model RNA-seq; ",
-                "voomWithDreamWeights already models heteroscedasticity across genes ",
-                "and samples.",
+                "voomWithDreamWeights already models heteroscedasticity",
+                "across genes and samples.",
                 call. = FALSE,
                 immediate. = TRUE
             )
@@ -249,8 +251,8 @@ preprocess_rna_seq_data <- function(
             data = design2design_matrix_result[["meta"]],
             BPPARAM = param
         )
-
-        if (inherits(param, "SnowParam")) { # includes SOCK/FORK clusters on Windows
+        # includes SOCK/FORK clusters on Windows
+        if (inherits(param, "SnowParam")) { 
             BiocParallel::bpstop(param) # cleanly shuts down workers
         }
     } else { # use the functions from limma
@@ -276,8 +278,8 @@ preprocess_rna_seq_data <- function(
             # Step 4: If any pair was violated, rerun with robust weights
             if (use_array_weights && verbose) {
                 message(
-                    "Using voomWithQualityWeights() due to detected violation of the
-        assumption of homoscedasticity."
+                    "Using voomWithQualityWeights() due to detected violation",
+                    "of the assumption of homoscedasticity."
                 )
             }
         }

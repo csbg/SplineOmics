@@ -54,8 +54,10 @@
 #'
 #' If any treatment list is present, both must be present. The two lists must
 #' have identical name sets. Allowed names are the values of `meta[[condition]]`
-#' and the special name `"double_spline_plots"`, which generates a treatment line
-#' for the plots of limma category 2 and 3 (average difference between conditions
+#' and the special name `"double_spline_plots"`, which generates a 
+#' treatment line
+#' for the plots of limma category 2 and 3 (average difference between 
+#' conditions
 #' and the interaction between condition and time).
 #'
 #' Vertical dashed lines are drawn at the given timepoints for facets whose
@@ -433,10 +435,14 @@ normalize_alphas <- function(
         )
     } else if (is.list(alphas)) {
         if (!all(condition_levels %in% names(alphas))) {
-            stop_call_false("Alpha list must be named for all condition levels.")
+            stop_call_false(
+                "Alpha list must be named for all condition levels."
+                )
         }
     } else {
-        stop_call_false("Invalid alphas: must be a single numeric or a named list.")
+        stop_call_false(
+            "Invalid alphas: must be a single numeric or a named list."
+            )
     }
     return(alphas)
 }

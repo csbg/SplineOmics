@@ -307,7 +307,8 @@ log2_transformed_data <- log2(data_matrix)  # use as SplineOmics input
 
 ### R Version
 
-- Recommended: R 4.3.3 or higher
+Depending on the version of `SplineOmics`, for the most recent, 4.5.0 or
+higher.
 
 ## ❓ Getting Help
 
@@ -395,4 +396,3 @@ the Computational Systems Biology working group at the Paris Lodron
 University of Salzburg, Austria. You can find more information about
 Prof. Fortelny’s research group
 [here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).
-

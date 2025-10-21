@@ -198,7 +198,8 @@ print_info_message <- function(
         message_prefix,
         "completed successfully.\n",
         "Your HTML reports are located in the directory: ", report_dir, ".\n",
-        "Please note that due to embedded files, the reports might be flagged as\n",
+        "Please note that due to embedded files, the reports might be",
+        "flagged as\n",
         "harmful by other software. Rest assured that they provide no harm.\n"
     )
 
@@ -452,7 +453,8 @@ check_homoscedasticity_violation <- function(
     message("------------------------------------------------------------")
     if (violation) {
         message(
-            "\u2757 Heteroscedasticity detected. Proceeding with robust strategy."
+            "\u2757 Heteroscedasticity detected. Proceeding with",
+            "robust strategy."
         )
 
         reason <- switch(paste(
@@ -460,7 +462,7 @@ check_homoscedasticity_violation <- function(
             groupwise_variation_flag,
             sep = "-"
         ),
-        "TRUE-TRUE"  = "Both feature-wise and sample-wise tests show violation.",
+        "TRUE-TRUE"  = "Both feature-wise & sample-wise tests show violation.",
         "TRUE-FALSE" = "Feature-wise test indicated violation.",
         "FALSE-TRUE" = "Sample-wise test indicated violation."
         )
@@ -471,7 +473,10 @@ check_homoscedasticity_violation <- function(
             message("voomWithQualityWeights() to downweight noisy samples.")
         } else {
             message("\u27A1\uFE0F  Using robust modeling strategy:")
-            message("arrayWeights() and eBayes(robust = TRUE) to stabilize variance.")
+            message(
+                "arrayWeights() and eBayes(robust = TRUE) to stabilize",
+                "variance."
+                )
         }
     } else {
         message("\u2705 No strong evidence for heteroscedasticity.")
@@ -554,7 +559,7 @@ check_featurewise_heteroscedasticity_levene <- function(
     fraction_threshold = 0.1) {
     if (is.null(condition)) {
         message("No condition. Skipping feature-wise Levene's test.")
-        message("------------------------------------------------------------\n")
+        message("-----------------------------------------------------------\n")
         return(list(
             bp_df = NULL,
             fraction_violated = NA_real_,
@@ -604,7 +609,9 @@ check_featurewise_heteroscedasticity_levene <- function(
     rownames(bp_df) <- rownames(residuals_matrix)
 
     bp_df$adj_pval <- p.adjust(bp_df$pval, method = "BH")
-    bp_df$violation_flag <- !is.na(bp_df$adj_pval) & bp_df$adj_pval < p_threshold
+    bp_df$violation_flag <- !is.na(
+        bp_df$adj_pval
+        ) & bp_df$adj_pval < p_threshold
     fraction_violated <- mean(bp_df$violation_flag)
 
     # Global summary
@@ -729,7 +736,9 @@ check_samplewise_heteroscedasticity_levene <- function(
         ))
         return(TRUE)
     } else {
-        message("\u2705 No strong evidence of inter-sample variance differences.\n")
+        message(
+            "\u2705 No strong evidence of inter-sample variance differences.\n"
+            )
         return(FALSE)
     }
 }

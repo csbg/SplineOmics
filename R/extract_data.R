@@ -216,9 +216,10 @@ control_inputs_extract_data <- function(
         top_row != floor(top_row) ||
         bottom_row != floor(bottom_row)) {
         stop_call_false(paste0(
-            "'top_row' and 'bottom_row' must be positive integers. Got: top_row = ",
-            top_row, ",
-      bottom_row = ",
+            "'top_row' and 'bottom_row' must be positive integers.",
+            "Got: top_row = ",
+            top_row,
+            ", bottom_row = ",
             bottom_row
         ))
     }
@@ -294,7 +295,8 @@ control_inputs_extract_data <- function(
         missing_columns <- setdiff(feature_name_columns, colnames(data))
         if (length(missing_columns) > 0) {
             stop_call_false(paste0(
-                "The following 'feature_name_columns' are not present in the data: ",
+                "The following 'feature_name_columns' are not present",
+                "in the data: ",
                 paste(missing_columns, collapse = ", ")
             ))
         }
@@ -440,7 +442,8 @@ add_feature_names <- function(
         if (length(feature_names) != nrow(data_matrix)) {
             stop_call_false(
                 paste(
-                    "Length of combined feature names does not match the number of",
+                    "Length of combined feature names does not match",
+                    "the number of",
                     "rows in data_matrix"
                 )
             )

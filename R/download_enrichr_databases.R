@@ -44,7 +44,9 @@ download_enrichr_databases <- function(
     filename = NULL) {
     # Control the user inputs
     if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
-        stop_call_false("gene_set_lib must be a character vector with length > 0")
+        stop_call_false(
+            "gene_set_lib must be a character vector with length > 0"
+            )
     }
 
     # Control the filename input (must be NULL or a valid string)
@@ -72,9 +74,12 @@ download_enrichr_databases <- function(
         }))
     }))
 
-    # When the user is offline, genesets won't be available, raising a weird error
+    # When the user is offline, genesets won't be available, raising a weird
+    # error
     if (!exists("genesets") || is.null(genesets)) {
-        stop_call_false("Object `genesets` is missing or NULL - are you online?")
+        stop_call_false(
+            "Object `genesets` is missing or NULL - are you online?"
+            )
     }
     genesets <- genesets |>
         dplyr::mutate(Gene = gsub(",.+$", "", .data$Gene))
@@ -177,7 +182,11 @@ enrichr_get_genesets <- function(databases) {
     if (length(success) || length(failed)) {
         msg <- c("\nEnrichr download summary:")
         if (length(success)) {
-            msg <- c(msg, "  [OK] downloaded : ", paste(success, collapse = ", "))
+            msg <- c(
+                msg,
+                "  [OK] downloaded : ",
+                paste(success, collapse = ", ")
+                )
         }
         if (length(failed)) {
             msg <- c(

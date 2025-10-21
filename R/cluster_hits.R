@@ -153,8 +153,9 @@
 #'
 #' If any treatment list is present, both must be present. The two lists must
 #' have identical name sets. Allowed names are the values of `meta[[condition]]`
-#' and the special name `"double_spline_plots"`, which generates a treatment line
-#' for the plots of limma category 2 and 3 (average difference between conditions
+#' and the special name `"double_spline_plots"`, which generates a treatment 
+#' line for the plots of limma category 2 and 3 (average difference between
+#' conditions
 #' and the interaction between condition and time).
 #'
 #' Vertical dashed lines are drawn at the given timepoints for facets whose
@@ -514,8 +515,10 @@ cluster_hits <- function(
     }
 
     all_top_tables <- add_effect_size_columns(
-        time_effect_effect_size = predicted_timecurves[["time_effect_effect_size"]],
-        interaction_effect_size = predicted_timecurves[["interaction_effect_size"]],
+        time_effect_effect_size = 
+          predicted_timecurves[["time_effect_effect_size"]],
+        interaction_effect_size = 
+          predicted_timecurves[["interaction_effect_size"]],
         category_2_and_3_hits = category_2_and_3_hits,
         within_level_top_tables = within_level_top_tables
     )
@@ -547,14 +550,16 @@ cluster_hits <- function(
         report_info[["heteroscedasticity"]] <- "not tested"
     } else {
         report_info[["use_array_weights"]] <- paste(
-            "automatic (decided by Levene's test), array_weights only used when",
-            "heteroscedasticity is detected (% violating features >= 10)"
+            "automatic (decided by Levene's test), array_weights only used ",
+            "when heteroscedasticity is detected (% violating features >= 10)"
         )
         report_info[["heteroscedasticity"]] <- sprintf(
             "Heteroscedasticity detected: %s (%.1f%% of features violated the
       assumption of homoscedasticity)",
             ifelse(
-                splineomics[["homosc_violation_result"]][["violation"]], "Yes", "No"
+                splineomics[["homosc_violation_result"]][["violation"]],
+                "Yes",
+                "No"
             ),
             splineomics[["homosc_violation_result"]][["percent_violated"]]
         )
@@ -599,7 +604,8 @@ cluster_hits <- function(
             report_dir = report_dir
         )
     } else {
-        plots <- "no plots, because report arg of cluster_hits() was set to FALSE"
+        plots <- 
+            "no plots, because report arg of cluster_hits() was set to FALSE"
     }
 
     cluster_table <- construct_cluster_table(
@@ -797,7 +803,9 @@ filter_top_tables <- function(
 
         if (nrow(top_table_filtered) < 2) {
             message(
-                "Level", level, "has < 2 hits. Skipping clustering for this level"
+                "Level",
+                level,
+                "has < 2 hits. Skipping clustering for this level"
             )
             within_level_top_tables[[i]] <- NA
         } else {
@@ -970,15 +978,18 @@ predict_timecurves <- function(
                     ]
                     if (length(possible_matches) != 1) {
                         stop(
-                            "Could not uniquely identify interaction column for: ",
-                            dummy_col, " and ", spline_col
+                            "Could not uniquely identify interaction col for: ",
+                            dummy_col,
+                            " and ", 
+                            spline_col
                         )
                     }
                     possible_matches
                 }, character(1))
 
                 # Add intercept for non-reference level if present
-                has_group_intercept <- dummy_col %in% colnames(fit_lv$coefficients)
+                has_group_intercept <- 
+                    dummy_col %in% colnames(fit_lv$coefficients)
                 if (has_group_intercept) {
                     X_new <- cbind(
                         "(Intercept)" = 1,
@@ -1122,7 +1133,9 @@ add_cat1_and_cat3_effectsizes <- function(
     # cat1 per level
     if (!is.list(predicted_timecurves$predictions) ||
         length(predicted_timecurves$predictions) < 1L) {
-        stop_call_false("`predicted_timecurves$predictions` is missing or empty.")
+        stop_call_false(
+            "`predicted_timecurves$predictions` is missing or empty."
+            )
     }
     cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
     cat1_passed <- lapply(cat1_effects, function(x) x >= thr_cat1)
@@ -1272,7 +1285,9 @@ perform_clustering <- function(
     # Leave a message for the user instead of just NA.
     results <- lapply(results, function(x) {
         if (is.logical(x)) {
-            return("No result for this level, because the top_table had < 2 hits")
+            return(
+                "No result for this level, because the top_table had < 2 hits"
+                )
         } else {
             return(x)
         }
@@ -1566,7 +1581,8 @@ make_clustering_report <- function(
         if (length(levels) >= i) {
             level <- as.character(levels[i])
 
-            # Get indices of columns in meta that match the given level (condition)
+            # Get indices of columns in meta that match the given level
+            # (condition)
             condition_indices <- which(meta[["condition"]] == level)
 
             # Subset raw_data to only include these columns (keeping all rows)
@@ -1667,7 +1683,7 @@ make_clustering_report <- function(
             cluster_mean_splines = list(cluster_mean_splines),
             cluster_quality_plots = list(cluster_quality_plots[[i]]),
             heatmap = heatmaps[[i]],
-            individual_spline_plots = clusters_spline_plots # gets expanded like this
+            individual_spline_plots = clusters_spline_plots 
         )
 
         # For every plot in plots, this determines the size in the HTML
@@ -2195,7 +2211,8 @@ construct_cluster_table <- function(
         nrow()
     message(sprintf(
         paste(
-            "%d clusters for the condition effect (interaction between condition",
+            "%d clusters for the condition effect
+            (interaction between condition",
             "and time)"
         ),
         n_cat3
@@ -2425,8 +2442,9 @@ get_level_hit_indices <- function(
             within_level_top_table <- between_level_top_tables[[i]]
 
             # Find the row indices that meet the condition
-            hit_indices <-
-                which(within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i])
+            hit_indices <-which(
+                within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
+                )
 
             # Extract the feature indices from the identified rows
             feature_indices <- within_level_top_table[hit_indices, "feature_nr"]
@@ -2793,7 +2811,9 @@ plot_all_mean_splines <- function(
         )
     ) +
         ggplot2::geom_line() +
-        ggplot2::ggtitle(sprintf("Cluster Centroid (average spline) - %s", level)) +
+        ggplot2::ggtitle(
+            sprintf("Cluster Centroid (average spline) - %s", level)
+            ) +
         ggplot2::xlab(paste("Time", time_unit_label)) +
         ggplot2::ylab(paste("z-score norm.", plot_info$y_axis_label)) +
         ggplot2::theme_minimal() +
@@ -2896,7 +2916,8 @@ plot_cluster_mean_splines <- function(
                 current_title,
                 plot_info = plot_info,
                 level,
-                cluster_color = cluster_colors[[paste("Cluster", current_cluster)]]
+                cluster_color = 
+                    cluster_colors[[paste("Cluster", current_cluster)]]
             )
     }
     return(plots)
@@ -3084,7 +3105,7 @@ plot_splines <- function(
 
         # If replicate_column is specified (i.e., a string), use replicate info
         if (!is.null(replicate_column) && is.character(replicate_column)) {
-            replicates <- meta[[replicate_column]] # Get the replicate information
+            replicates <- meta[[replicate_column]] # Get the replicate info
             plot_data$Replicate <- replicates # Add replicate info to plot data
 
             # Create color palette for replicates
@@ -3159,7 +3180,7 @@ plot_splines <- function(
                         x = .data$Time,
                         y = .data$Y,
                         color = .data$color_column,
-                        shape = factor(.data$IsNA) # Map shape to "Data" or "Imputed"
+                        shape = factor(.data$IsNA) 
                     ),
                     alpha = 0.5 # 50% transparent data dots
                 ) +
@@ -3188,7 +3209,7 @@ plot_splines <- function(
                     shape = if (any(plot_data$IsNA == "Imputed")) {
                         ggplot2::guide_legend(title = NULL)
                     } else {
-                        "none" # Completely remove shape legend when no "Imputed" points
+                        "none" 
                     }
                 )
 
@@ -3203,7 +3224,7 @@ plot_splines <- function(
             )
 
             p <- result$p # Updated plot with dashed lines
-            treatment_colors <- result$treatment_colors # Colors used for treatments
+            treatment_colors <- result$treatment_colors 
 
             color_values <- c(
                 color_values,
@@ -3220,7 +3241,11 @@ plot_splines <- function(
 
             if (isTRUE(heteroscedasticity)) {
                 if (!is.na(high_var_group)) {
-                    title_prefix <- paste0("\u26A0 (", high_var_group, " \u2191) | ")
+                    title_prefix <- paste0(
+                        "\u26A0 (",
+                        high_var_group,
+                        " \u2191) | "
+                        )
                 } else {
                     title_prefix <- "\u26A0\uFE0F "
                 }
@@ -3255,7 +3280,10 @@ plot_splines <- function(
                         "<b>", title, "</b>",
                         "<br>",
                         "cT:",
-                        ifelse(is.na(cum_travel_val), "NA", signif(cum_travel_val, 3)),
+                        ifelse(
+                            is.na(cum_travel_val),
+                            "NA", signif(cum_travel_val, 3)
+                            ),
                         "  |  avg CV: ", round(avg_cv, 2), "%",
                         "  |  adj. p-val: ", signif(adj_p_value, digits = 2),
                         " ", significance_stars,
@@ -3470,7 +3498,7 @@ plot_spline_comparisons <- function(
                 drop = FALSE
             ]
             if (nrow(row_cat2) > 0) {
-                cat2_eff <- as.numeric(row_cat2[[1]]) # first column = effect size
+                cat2_eff <- as.numeric(row_cat2[[1]]) 
             }
         }
 
@@ -3540,7 +3568,8 @@ plot_spline_comparisons <- function(
 
         if (!is.null(replicate_column)) {
             plot_data$Replicate <- meta[[replicate_column]]
-            plot_data$ReplicateLabel <- replicate_mapping[meta[[replicate_column]]]
+            plot_data$ReplicateLabel <- 
+                replicate_mapping[meta[[replicate_column]]]
         }
 
         fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
@@ -3599,7 +3628,9 @@ plot_spline_comparisons <- function(
                     ggplot2::aes(
                         x = .data$Time, y = .data$Y1,
                         color = .data$ColorLabel1,
-                        shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+                        shape = if (
+                            !is.null(replicate_column)
+                            ) .data$Replicate else NULL
                     ),
                     na.rm = TRUE, alpha = 0.5
                 ) +
@@ -3619,7 +3650,9 @@ plot_spline_comparisons <- function(
                     ggplot2::aes(
                         x = .data$Time, y = .data$Y2,
                         color = .data$ColorLabel2,
-                        shape = if (!is.null(replicate_column)) .data$Replicate else NULL
+                        shape = if (
+                            !is.null(replicate_column)
+                            ) .data$Replicate else NULL
                     ),
                     na.rm = TRUE, alpha = 0.5
                 ) +
@@ -3638,7 +3671,9 @@ plot_spline_comparisons <- function(
                     color = ggplot2::guide_legend(title = NULL),
                     shape = ggplot2::guide_legend(title = "Replicate")
                 ) +
-                ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
+                ggplot2::scale_x_continuous(
+                    labels = scales::label_number_auto()
+                    ) +
                 ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE))
 
             title_lines <- c(
@@ -3667,11 +3702,20 @@ plot_spline_comparisons <- function(
                     title_lines,
                     paste0(
                         "cT: ",
-                        condition_1, "=", ifelse(is.na(es1), "NA", signif(es1, 3)),
+                        condition_1,
+                        "=", ifelse(
+                            is.na(es1), "NA", signif(es1, 3)
+                            ),
                         " | ",
-                        condition_2, "=", ifelse(is.na(es2), "NA", signif(es2, 3)),
+                        condition_2,
+                        "=",
+                        ifelse(
+                            is.na(es2), "NA", signif(es2, 3)
+                            ),
                         " | cDT: ",
-                        ifelse(is.na(diff_es), "NA", signif(diff_es, 3))
+                        ifelse(
+                            is.na(diff_es), "NA", signif(diff_es, 3)
+                            )
                     )
                 )
             }
@@ -4010,7 +4054,8 @@ build_cluster_hits_report <- function(
                         "adj.p-value threshold: %.4g</p>",
                         "<p style='text-align: center; font-size: 30px;'>",
                         "Number of hits: %d</p>",
-                        "<div style='text-align: center; font-size: 30px;'>%s</div>",
+                        "<div style='text-align: center; font-size:",
+                        "30px;'>%s</div>",
                         "<hr>"
                     ),
                     adj_pvalue_threshold,
@@ -4078,8 +4123,8 @@ build_cluster_hits_report <- function(
                     "<br>",
                     "sr<sup>2</sup><sub>cc</sub> = signed r<sup>2</sup>",
                     "by cluster centroid,",
-                    "i.e. how well a gene's spline fits the centroid of its assigned",
-                    "cluster.",
+                    "i.e. how well a gene's spline fits the centroid of",
+                    "its assigned cluster.",
                     "<br><hr>",
                     "</div>"
                 )
@@ -4088,15 +4133,17 @@ build_cluster_hits_report <- function(
 
                 heatmap_description <- paste(
                     "<div style='text-align: center; font-size: 1.5em;'>",
-                    "Rows = features (labels on the right, cluster labels on the left),",
-                    "columns = timepoints; Blue = down, red = up, --> compared to the rest
-          of the row;",
+                    "Rows = features (labels on the right, cluster labels",
+                    "on the left),",
+                    "columns = timepoints; Blue = down, red = up, --> compared",
+                    "to the rest of the row;",
                     "</div>"
                 )
             } else { # element_name == "individual_spline_plots"
                 adjusted_p_val <- adj_pthresholds[level_index]
                 header_text <- "Individual Significant Features (Hits) Splines"
-                asterisks_definition <- generate_asterisks_definition(adjusted_p_val)
+                asterisks_definition <- 
+                    generate_asterisks_definition(adjusted_p_val)
             }
 
             # Add the main title as a section title with an anchor
@@ -4128,8 +4175,8 @@ build_cluster_hits_report <- function(
                     asterisks_definition,
                     "</div>"
                 )
-
-                rm(asterisks_definition) # Otherwise, the next level has it everywhere
+                # Otherwise, the next level has it everywhere
+                rm(asterisks_definition) 
             }
 
             html_content <- paste(
@@ -4280,7 +4327,6 @@ build_cluster_hits_report <- function(
             sep = "\n"
         )
 
-        # We now assume limma_result_2_and_3_plots contains a single named element
         comparison_name <- names(limma_result_2_and_3_plots)[1]
 
         # Create a subheader for this single comparison
@@ -5153,7 +5199,6 @@ calc_cv <- function(
         function(t) {
             # Subset for the specific time point
             values_at_time <- time_data$Response[time_data$Time == t]
-            # Calculate CV if the mean is not zero and there are enough data points
             if (mean(values_at_time, na.rm = TRUE) != 0 &&
                 sum(!is.na(values_at_time)) > 1) {
                 (sd(
@@ -5312,7 +5357,11 @@ plot_single_and_mean_splines <- function(
     p <- p +
         ggplot2::geom_line(
             data = consensus_df,
-            ggplot2::aes(x = !!rlang::sym("time"), y = consensus, colour = "Mean"),
+            ggplot2::aes(
+                x = !!rlang::sym("time"),
+                y = consensus,
+                colour = "Mean"
+                ),
             linewidth = 1.5
         )
 
@@ -5420,10 +5469,30 @@ generate_asterisks_definition <- function(adj_pvalue_threshold) {
     paste(
         "<b><span style='font-size:20pt; margin-bottom: 0;'>",
         "Asterisks definition:</span></b>",
-        paste("Adj. p-value <", adj_pvalue_threshold, "--> *", sep = " "),
-        paste("Adj. p-value <", adj_pvalue_threshold / 5, "--> **", sep = " "),
-        paste("Adj. p-value <", adj_pvalue_threshold / 50, "--> ***", sep = " "),
-        paste("Adj. p-value <", adj_pvalue_threshold / 500, "--> ****", sep = " "),
+        paste(
+            "Adj. p-value <",
+            adj_pvalue_threshold,
+            "--> *",
+            sep = " "
+            ),
+        paste(
+            "Adj. p-value <",
+            adj_pvalue_threshold / 5,
+            "--> **",
+            sep = " "
+            ),
+        paste(
+            "Adj. p-value <",
+            adj_pvalue_threshold / 50,
+            "--> ***",
+            sep = " "
+            ),
+        paste(
+            "Adj. p-value <",
+            adj_pvalue_threshold / 500,
+            "--> ****",
+            sep = " "
+            ),
         sep = "<br>"
     )
 }
@@ -5725,7 +5794,11 @@ select_balanced_hits <- function(
         # pull remaining from the union in ranked order (avrg first, then inter)
         union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
             dplyr::distinct(.data$feature_names, .keep_all = TRUE)
-        extra <- dplyr::anti_join(union_ranked, combined, by = "feature_names") |>
+        extra <- dplyr::anti_join(
+            union_ranked, 
+            combined,
+            by = "feature_names"
+            ) |>
             dplyr::slice_head(n = max_n - nrow(combined))
         combined <- dplyr::bind_rows(combined, extra)
     }
