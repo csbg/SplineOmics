@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>get-started • SplineOmics</title>
+<title>proteomics_analysis • SplineOmics</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="get-started">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="proteomics_analysis">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -31,20 +31,25 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/CHANGELOG.html">Changelog</a></li>
-    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a Limma Design Formula</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-use-cases" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Use cases</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-use-cases">
+<li><a class="dropdown-item" href="../articles/get-started.html">Proteomics analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/proteomics_analysis.html">RNA-seq analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
   </ul>
 </li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-guides" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Guides</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-guides">
+<li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
+    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a limma design formula</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker container instructions</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker permission denied</a></li>
+  </ul>
+</li>
+<li class="nav-item"><a class="nav-link" href="../articles/faq.html">FAQ</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -65,14 +70,14 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>get-started</h1>
+      <h1>proteomics_analysis</h1>
                         <h4 data-toc-skip class="author">Thomas
 Rauter</h4>
             
             <h4 data-toc-skip class="date">20 September, 2024</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/get-started.Rmd" class="external-link"><code>vignettes/get-started.Rmd</code></a></small>
-      <div class="d-none name"><code>get-started.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/csbg/SplineOmics/blob/HEAD/vignettes/proteomics_analysis.Rmd" class="external-link"><code>vignettes/proteomics_analysis.Rmd</code></a></small>
+      <div class="d-none name"><code>proteomics_analysis.Rmd</code></div>
     </div>
 
     
@@ -1030,7 +1035,7 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpSM7ukX/file91d43df6fe27 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp9JzcdA/file14cc67937913c .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
@@ -1068,14 +1073,16 @@ level.</p>
 <span>    design <span class="op">=</span> <span class="st">"~ 1 + Phase*Time + Reactor"</span>, <span class="co"># best design formula</span></span>
 <span>    mode <span class="op">=</span> <span class="st">"integrated"</span>, <span class="co"># means limma uses the full data for each condition.</span></span>
 <span>    <span class="co"># States explicitly that there is no problem of heteroscedasticity and</span></span>
-<span>    <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would mean</span></span>
+<span>    <span class="co"># therefore, this does not need to be adressed. Setting it to TRUE would</span></span>
+<span>    <span class="co"># mean</span></span>
 <span>    <span class="co"># the opposite, and when setting it to NULL, it means it should be handled</span></span>
 <span>    <span class="co"># implicitly. For details, see Reference</span></span>
 <span>    <span class="co"># documentation of the create_splineomics() function.</span></span>
 <span>    use_array_weights <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>    spline_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>        spline_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span><span class="op">)</span>, <span class="co"># natural cubic splines (take these if unsure)</span></span>
-<span>        dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span> <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
+<span>        <span class="co"># If you are unsure about which dof, start with 2 and increase</span></span>
+<span>        dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span> </span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Run the <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> function with the updated
@@ -1117,7 +1124,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpSM7ukX/file91d4616f2981 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp9JzcdA/file14cc61d7e0814 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1219,12 +1226,12 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpSM7ukX/splineomics_report .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp9JzcdA/splineomics_report .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; 0 clusters for the condition effect</span></span>
 <span><span class="co">#&gt;             (interaction between condition and time)</span></span>
-<span><span class="co">#&gt; Running this function took 0.3 min</span></span></code></pre></div>
+<span><span class="co">#&gt; Running this function took 0.2 min</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The

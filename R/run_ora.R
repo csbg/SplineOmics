@@ -1,4 +1,4 @@
-#' run_ora()
+#' Perform over-representation analysis with the results from cluster_hits()
 #'
 #' @description
 #' This function generates a overrepresentation analysis report based
@@ -8,110 +8,115 @@
 #' files containing the enrichment results, and dotplots visualizing the
 #' enrichment.
 #'
-#' @param cluster_table A tibble containing one row per
-#'   \code{feature_nr} with metadata and cluster assignments across the
+#' @param cluster_table `tibble`: A tibble containing one row per 
+#'   \code{feature_nr} with metadata and cluster assignments across the 
 #'   analysis categories. It includes:
 #'   \itemize{
-#'     \item \code{feature_nr} - Numeric feature identifier.
-#'     \item \code{feature_name} - Preferred feature name from the source
-#'       data, falling back to the numeric ID if none is available.
-#'     \item \code{gene} - Preferred gene symbol from the annotation or
-#'       cluster data.
-#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
-#'       assignments for each time-effect condition.
-#'     \item \code{cluster_cat2} - (Optional) Combined cluster label for
-#'       category 2 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'     \item \code{feature_nr}: `numeric(1)` Numeric feature identifier.
+#'     \item \code{feature_name}: `character(1)` Preferred feature name from 
+#'       the source data, falling back to the numeric ID if none is available.
+#'     \item \code{gene}: `character(1)` Preferred gene symbol from the 
+#'       annotation or cluster data.
+#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>}: `integer(1)` 
+#'       Cluster assignments for each time-effect condition.
+#'     \item \code{cluster_cat2}: `character(1)` (Optional) Combined cluster 
+#'       label for category 2 hits in the form 
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the 
 #'       feature was not a category 2 hit.
-#'     \item \code{cluster_cat3} - (Optional) Combined cluster label for
-#'       category 3 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
+#'     \item \code{cluster_cat3}: `character(1)` (Optional) Combined cluster 
+#'       label for category 3 hits in the form 
+#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the 
 #'       feature was not a category 3 hit.
 #'   }
-#'   For any category-specific cluster column, a value of \code{NA}
-#'   indicates that the feature was not significant (not a hit) in that
-#'   category.
+#'   For any category-specific cluster column, a value of \code{NA} indicates 
+#'   that the feature was not significant (not a hit) in that category.
 #'
-#' @param databases A \code{data.frame} that defines the gene set collections
-#'   to be tested in the overrepresentation analysis. Must contain exactly
-#'   three columns:
+#' @param databases `data.frame`: A \code{data.frame} that defines the gene set 
+#'   collections to be tested in the overrepresentation analysis. Must contain 
+#'   exactly three columns:
 #'   \describe{
-#'     \item{DB}{Character. The database identifier (e.g., KEGG, GO_BP,
+#'     \item{DB `character(1)`}{The database identifier (e.g., KEGG, GO_BP, 
 #'       Reactome).}
-#'     \item{Geneset}{Character. The name of the gene set or pathway within the
-#'       database.}
-#'     \item{Gene}{Character. A gene identifier belonging to the gene set
+#'     \item{Geneset `character(1)`}{The name of the gene set or pathway 
+#'       within the database.}
+#'     \item{Gene `character(1)`}{A gene identifier belonging to the gene set 
 #'       (e.g., gene symbol, Ensembl ID).}
 #'   }
 #'
-#'   Each row corresponds to one `(database, geneset, gene)` association. The
+#'   Each row corresponds to one `(database, geneset, gene)` association. The 
 #'   same gene may appear in multiple gene sets.
 #'
-#' @param report_info A list containing information for the report generation,
-#' such as omics_data_type and data_description (this is the list used for all
-#' report generating functions of this package).
+#' @param report_info `list`: A list containing information for the report 
+#' generation, such as omics_data_type and data_description (this is the list 
+#' used for all report generating functions of this package).
 #'
-#' @param cluster_hits_report_name Single character string specifying the name
-#' of the cluster_hits() function report, that contains the results that were
-#' used for the overprepresentation analysis here. Must be specified, because
-#' otherwise, the connection is not documented.
+#' @param cluster_hits_report_name `character(1)`: Single character string 
+#' specifying the name of the cluster_hits() function report, that contains 
+#' the results that were used for the overprepresentation analysis here. Must 
+#' be specified, because otherwise, the connection is not documented.
 #'
-#' @param clusterProfiler_params A named list of arguments passed directly to
-#'   the corresponding functions in the \strong{clusterProfiler} package.
-#'   Typical entries include \code{pvalueCutoff}, \code{pAdjustMethod},
-#'   \code{minGSSize}, \code{maxGSSize}, and \code{qvalueCutoff}. The names
-#'   must match the argument names in clusterProfiler; see the clusterProfiler
-#'   documentation for details. If \code{NULL} (default), the standard
-#'   clusterProfiler defaults are used.
+#' @param clusterProfiler_params `list` | `NULL`: A named list of arguments 
+#' passed directly to the corresponding functions in the 
+#' \strong{clusterProfiler} package. Typical entries include 
+#' \code{pvalueCutoff}, \code{pAdjustMethod}, \code{minGSSize}, 
+#' \code{maxGSSize}, and \code{qvalueCutoff}. The names must match the 
+#' argument names in clusterProfiler; see the clusterProfiler documentation 
+#' for details. If \code{NULL} (default), the standard clusterProfiler defaults 
+#' are used.
 #'
-#' @param mapping_cfg A named list that controls the optional behavior of
-#'        automatically mapping gene symbols across species. This is useful
-#'        when your input gene symbols (e.g., from CHO cells) do not match
-#'        the species used by the enrichment databases (e.g., human or mouse).
-#'        By default, no mapping is performed and gene symbols are used as-is.
-#'        If mapping is desired, this list must contain the following three
-#'        elements:
-#'        \describe{
-#'          \item{method}{Mapping method to use. One of \code{none} (default;
-#'          no mapping), \code{gprofiler} (online, via the g:Profiler API), or
-#'          \code{orthogene} (offline, if installed).}
-#'          \item{from_species}{Source species code,
-#'          e.g. \code{cgriseus} for CHO. Must match the expected format for
-#'          the selected tool.}
-#'          \item{to_species}{Target species code,
-#'          e.g. \code{hsapiens} for human. This must be the species used in
-#'          your ORA database and must also match the expected format for the
-#'          selected tool.}
-#'        }
-#'
-#' @param enrichGO_cfg A named list specifying the configuration for
-#' running GO enrichment with Bioconductor's
-#' \code{\link[clusterProfiler]{enrichGO}}.
-#' This is only needed when you want to perform GO Biological Process (BP),
-#' Molecular Function (MF), or Cellular Component (CC) enrichment using
-#' Bioconductor's organism databases (e.g., \code{org.Mm.eg.db} for mouse).
-#'
-#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"},
-#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
-#' \itemize{
-#'   \item \code{OrgDb}: The organism database, e.g., \code{org.Mm.eg.db}.
-#'   \item \code{keyType}: The gene identifier type, e.g., \code{"SYMBOL"}.
-#'   \item \code{ontology}: One of \code{"BP"}, \code{"MF"}, or \code{"CC"}.
+#' @param mapping_cfg `list` | `NULL`: A named list that controls the optional 
+#' behavior of automatically mapping gene symbols across species. This is 
+#' useful when your input gene symbols (e.g., from CHO cells) do not match the 
+#' species used by the enrichment databases (e.g., human or mouse). By 
+#' default, no mapping is performed and gene symbols are used as-is. If 
+#' mapping is desired, this list must contain the following three elements:
+#' \describe{
+#'   \item{method}{`character(1)`: Mapping method to use. One of \code{none} 
+#'   (default; no mapping), \code{gprofiler} (online, via the g:Profiler API), 
+#'   or \code{orthogene} (offline, if installed).}
+#'   \item{from_species}{`character(1)`: Source species code, 
+#'   e.g. \code{cgriseus} for CHO. Must match the expected format for the 
+#'   selected tool.}
+#'   \item{to_species}{`character(1)`: Target species code, e.g.
+#'    \code{hsapiens} 
+#'   for human. This must be the species used in your ORA database and must 
+#'   also match the expected format for the selected tool.}
 #' }
 #'
-#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO
-#' enrichment is performed. All enrichment runs through
-#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE mappings.
+#' @param enrichGO_cfg `list` | `NULL`: A named list specifying the 
+#' configuration for running GO enrichment with Bioconductor's 
+#' \code{\link[clusterProfiler]{enrichGO}}. This is only needed when you want 
+#' to perform GO Biological Process (BP), Molecular Function (MF), or Cellular 
+#' Component (CC) enrichment using Bioconductor's organism databases (e.g., 
+#' \code{org.Mm.eg.db} for mouse).
 #'
-#' @param universe Enrichment background data. This is a
-#' parameter of clusterProfiler, for the documentation, please check the
-#' documentation of the clusterProfiler R package.
+#' The list must be named according to the GO ontology, e.g., \code{"GO_BP"}, 
+#' \code{"GO_MF"}, \code{"GO_CC"}. Each entry must provide:
+#' \itemize{
+#'   \item \code{OrgDb}: `character(1)` The organism database, e.g., 
+#'   \code{org.Mm.eg.db}.
+#'   \item \code{keyType}: `character(1)` The gene identifier type, e.g., 
+#'   \code{"SYMBOL"}.
+#'   \item \code{ontology}: `character(1)` One of \code{"BP"}, \code{"MF"}, or 
+#'   \code{"CC"}.
+#' }
 #'
-#' @param report_dir Character string specifying the directory path where the
-#' HTML report and any other output files should be saved. When no path is
-#' specified, then the function runs but no HTML report is generated.
+#' If \code{enrichGO_cfg} is \code{NULL} (default), no Bioconductor-based GO 
+#' enrichment is performed. All enrichment runs through 
+#' \code{\link[clusterProfiler]{enricher}} with the provided TERM2GENE 
+#' mappings.
 #'
-#' @param verbose Boolean flag controlling the display of messages.
+#' @param universe `character()` | `NULL`: Enrichment background data. This is 
+#' a parameter of clusterProfiler; for details, please check the documentation 
+#' of the clusterProfiler R package.
+#'
+#' @param report_dir `character(1)`: Character string specifying the directory 
+#' path where the HTML report and any other output files should be saved. When 
+#' no path is specified, then the function runs but no HTML report is 
+#' generated.
+#'
+#' @param verbose `logical(1)`: Boolean flag controlling the display of 
+#' messages.
 #'
 #' @return
 #' A nested, named list whose top-level elements correspond to the

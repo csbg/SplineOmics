@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract_gene_sets.R
 \name{extract_gene_sets}
 \alias{extract_gene_sets}
-\title{Download Gene Set Annotations from Bioconductor Organism Databases}
+\title{Download gene set annotations from Bioconductor organism databases}
 \usage{
 extract_gene_sets(
   organism_db = "org.Hs.eg.db",
@@ -11,17 +11,17 @@ extract_gene_sets(
 )
 }
 \arguments{
-\item{organism_db}{A string specifying the Bioconductor organism
-annotation database to use (e.g., \code{"org.Hs.eg.db"} for human or
+\item{organism_db}{\code{character(1)}: A string specifying the Bioconductor
+organism annotation database to use (e.g., \code{"org.Hs.eg.db"} for human or
 \code{"org.Mm.eg.db"} for mouse).}
 
-\item{output_dir}{A string specifying the output directory where the
-\code{.tsv} file will be saved. Defaults to the current project directory
-as defined by \code{here::here()}.}
+\item{output_dir}{\code{character(1)}: A string specifying the output directory
+where the \code{.tsv} file will be saved. Defaults to the current project
+directory as defined by \code{here::here()}.}
 
-\item{filename}{An optional string specifying the filename for the
-output file. If \code{NULL} (default), a filename is generated automatically
-with a timestamp.}
+\item{filename}{\code{character(1)} | \code{NULL}: An optional string specifying the
+filename for the output file. If \code{NULL} (default), a filename is generated
+automatically with a timestamp.}
 }
 \value{
 A \code{data.frame} of gene set annotations with three columns:

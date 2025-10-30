@@ -1,4 +1,4 @@
-#' Download Gene Set Annotations from Bioconductor Organism Databases
+#' Download gene set annotations from Bioconductor organism databases
 #'
 #' @description
 #' This function extracts gene-to-ontology mappings from a specified
@@ -10,17 +10,17 @@
 #' directly with enrichment functions such as `clusterProfiler::enricher()`
 #' with `TERM2GENE`.
 #'
-#' @param organism_db A string specifying the Bioconductor organism
-#' annotation database to use (e.g., `"org.Hs.eg.db"` for human or
+#' @param organism_db `character(1)`: A string specifying the Bioconductor 
+#' organism annotation database to use (e.g., `"org.Hs.eg.db"` for human or 
 #' `"org.Mm.eg.db"` for mouse).
 #'
-#' @param output_dir A string specifying the output directory where the
-#' `.tsv` file will be saved. Defaults to the current project directory
-#' as defined by `here::here()`.
+#' @param output_dir `character(1)`: A string specifying the output directory 
+#' where the `.tsv` file will be saved. Defaults to the current project 
+#' directory as defined by `here::here()`.
 #'
-#' @param filename An optional string specifying the filename for the
-#' output file. If `NULL` (default), a filename is generated automatically
-#' with a timestamp.
+#' @param filename `character(1)` | `NULL`: An optional string specifying the 
+#' filename for the output file. If `NULL` (default), a filename is generated 
+#' automatically with a timestamp.
 #'
 #' @return
 #' A `data.frame` of gene set annotations with three columns:

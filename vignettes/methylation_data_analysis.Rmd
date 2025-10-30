@@ -51,12 +51,17 @@ in a total of **130 samples**.
 
 ### Additonal effects in the experiment: Reactor and Group
 
-In this experiment, there are two effects to consider: **Reactor** and **Group**.
+In this experiment, there are two effects to consider: **Reactor** and 
+**Group**.
 
 1. **Reactor**:
-   - This refers to the different bioreactors used for cell cultivation, which can exhibit substantial variability.
-   - Each reactor was assigned a single condition: either constant temperature or temperature-shifted. As a result, reactor is a blocked effect.
-   - Reactor should not be treated as a fixed effect to simply remove its influence. Instead, it is treated as a **random effect**, which allows us to model its variability appropriately.
+   - This refers to the different bioreactors used for cell cultivation, which
+   can exhibit substantial variability.
+   - Each reactor was assigned a single condition: either constant temperature
+   or temperature-shifted. As a result, reactor is a blocked effect.
+   - Reactor should not be treated as a fixed effect to simply remove its
+   influence. Instead, it is treated as a **random effect**, which allows us
+   to model its variability appropriately.
 
 2. **Group**:
    - This refers to the two separate groups in which the bioreactors where run.
@@ -65,7 +70,12 @@ In this experiment, there are two effects to consider: **Reactor** and **Group**
    - Group is considered a **batch effect** with respect to the condition
    (constant temperature vs. temperature-shifted).
 
-Since reactor is a blocked effect, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+Since reactor is a blocked effect, the variability due to the reactors cannot
+be directly separated from the condition. Instead,
+**linear mixed models (LMMs)** are used to attribute the reactor as a random
+effect, allowing us to account for its variability while isolating the effects
+of the condition. This approach ensures that the analysis appropriately
+handles the hierarchical structure of the data and avoids incorrect conclusions.
 
 
 ### Note

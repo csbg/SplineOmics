@@ -56,18 +56,31 @@ in a total of **136 samples**.
 In this experiment, there are two effects to consider: **Reactor** and **Plate**.
 
 1. **Reactor**:
-   - This refers to the different bioreactors used for cell cultivation, which can exhibit substantial variability.
-   - Each reactor was assigned a single condition: either constant temperature or temperature-shifted. As a result, **condition and reactor are confounded**.
-   - Reactor should not be treated as a fixed effect to simply remove its influence. Instead, it is treated as a **random effect**, which allows us to model its variability appropriately.
+   - This refers to the different bioreactors used for cell cultivation, which
+   can exhibit substantial variability.
+   - Each reactor was assigned a single condition: either constant temperature
+   or temperature-shifted. As a result, **condition and reactor are confounded**.
+   - Reactor should not be treated as a fixed effect to simply remove its 
+   influence. Instead, it is treated as a **random effect**, which allows us
+   to model its variability appropriately.
 
 2. **Plate**:
-   - This refers to the two separate plates used during the RNA-seq analysis of the samples.
-   - A fully random design was employed to distribute samples across the two plates, ensuring no bias in their assignment.
-   - Plate is considered a **batch effect** with respect to the condition (constant temperature vs. temperature-shifted).
+   - This refers to the two separate plates used during the RNA-seq analysis
+   of the samples.
+   - A fully random design was employed to distribute samples across the two
+   plates, ensuring no bias in their assignment.
+   - Plate is considered a **batch effect** with respect to the condition
+   (constant temperature vs. temperature-shifted).
 
-Since reactor is a blocked effect, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+Since reactor is a blocked effect, the variability due to the reactors cannot
+be directly separated from the condition. Instead,
+**linear mixed models (LMMs)** are used to attribute the reactor as a random 
+effect, allowing us to account for its variability while isolating the effects
+of the condition. This approach ensures that the analysis appropriately handles
+the hierarchical structure of the data and avoids incorrect conclusions.
 
-In this vignette, we will demonstrate how to use linear mixed models to address these challenges and properly account for both reactor and plate effects.
+In this vignette, we will demonstrate how to use linear mixed models to address
+these challenges and properly account for both reactor and plate effects.
 
 ### Further info
 
@@ -159,9 +172,17 @@ contain the gene identifiers, while the columns are aligned with the
 sample metadata in meta. The matrix contains expression values for 136
 samples. 
 
-Note that the study was conducted in a blinded manner, with samples randomly distributed across two plates for RNA-seq analysis. As a result, the sample numbers (e.g., 1, 2, 3, etc.) are not in sequential order with respect to time, condition, or plate.
+Note that the study was conducted in a blinded manner, with samples randomly
+distributed across two plates for RNA-seq analysis. As a result, the sample
+numbers (e.g., 1, 2, 3, etc.) are not in sequential order with respect to time,
+condition, or plate.
 
-For the data analysis involving splines over time, it is essential to sort the samples based on time to establish a valid temporal sequence. Additionally, organizing the data in this way improves clarity and ensures consistency. Within each time point, samples were further sorted by condition (e.g., constant before `temp_shift`) and, subsequently, by plate (e.g., `plate_1` before `plate_2`).
+For the data analysis involving splines over time, it is essential to sort the
+samples based on time to establish a valid temporal sequence. Additionally,
+organizing the data in this way improves clarity and ensures consistency.
+Within each time point, samples were further sorted by condition (e.g.,
+constant before `temp_shift`) and, subsequently, by plate (e.g., `plate_1` 
+before `plate_2`).
 
 
 ## Show top rows of meta
@@ -181,7 +202,8 @@ SampleNr, Reactor, Time, Condition, and Plate.
 
 # Preprocess the data
 
-Filter out data rows (genes) with zero counts across all samples. This step is a standard preprocessing procedure in RNA-seq data analysis, as genes with zero 
+Filter out data rows (genes) with zero counts across all samples. This step is
+a standard preprocessing procedure in RNA-seq data analysis, as genes with zero 
 counts in all samples provide no information for downstream analyses.
 
 ```{r Filter data rows, eval = TRUE}
@@ -273,7 +295,8 @@ splineomics <- SplineOmics::update_splineomics(
 )
 ```
 
-Preprocess the RNA-seq data with `limma::voom`. This method transforms raw RNA-seq 
+Preprocess the RNA-seq data with `limma::voom`. This method transforms raw
+RNA-seq 
 counts into log-counts per million (logCPM) while modeling the mean-variance 
 relationship. It assigns precision weights to each observation, ensuring 
 accurate linear modeling of RNA-seq data, which often exhibits 
@@ -296,11 +319,21 @@ splineomics <- SplineOmics::preprocess_rna_seq_data(
 )
 ```
 
-You can customize the normalization method by providing a specific normalization function through the `normalize_func` argument in the `preprocess_rna_seq_data()` function. For details on how to use this feature, please refer to the function documentation available under 'References' on the website.
+You can customize the normalization method by providing a specific
+normalization function through the `normalize_func` argument in the
+`preprocess_rna_seq_data()` function. For details on how to use this feature,
+please refer to the function documentation available under 'References' on
+the website.
 
-Additionally, the use of `preprocess_rna_seq_data()` is optional for your RNA-seq data. Alternatively, you can use the `limma::voom` function directly and pass the resulting `voom` object to the `rna_seq_data` argument of `create_splineomics()` or `update_splineomics()`. Alongside this, you must pass the `$E` data matrix as the `data` argument.
+Additionally, the use of `preprocess_rna_seq_data()` is optional for your
+RNA-seq data. Alternatively, you can use the `limma::voom` function directly 
+and pass the resulting `voom` object to the `rna_seq_data` argument of 
+`create_splineomics()` or `update_splineomics()`. Alongside this, you must
+pass the `$E` data matrix as the `data` argument.
 
-In general, as long as the `data` argument contains the actual data matrix and the `rna_seq_data` argument contains an object compatible with `limma`, your data will be correctly processed.
+In general, as long as the `data` argument contains the actual data matrix 
+and the `rna_seq_data` argument contains an object compatible with `limma`, 
+your data will be correctly processed.
 
 Run the `run_limma_splines()` function:
 
@@ -486,8 +519,10 @@ levels, and generates the HTML report:
 
 ```{r run GSEA, eval = FALSE}
 result <- SplineOmics::run_gsea(
-    # A dataframe with three columns: feature, cluster, and gene. Feature contains
-    # the integer index of the feature, cluster the integer specifying the cluster
+    # A dataframe with three columns: feature, cluster, and gene. Feature
+    # contains
+    # the integer index of the feature, cluster the integer specifying the
+    # cluster
     # number, and gene the string of the gene, such as "CLSTN2".
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,

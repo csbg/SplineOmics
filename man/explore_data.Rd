@@ -2,30 +2,30 @@
 % Please edit documentation in R/explore_data.R
 \name{explore_data}
 \alias{explore_data}
-\title{explore_data()}
+\title{Automatically perform exploratory data analysis (EDA)}
 \usage{
 explore_data(splineomics, report_dir = here::here(), report = TRUE)
 }
 \arguments{
-\item{splineomics}{A named list containing all required inputs for the
-splineomics workflow. Must contain the following elements:
-\describe{
-\item{data}{
-The data matrix with the values. The columns are the
-samples (timepoint + replicate combo) and the rows are the features
-(e.g. genes or proteins).}
-\item{meta}{
-A dataframe containing metadata corresponding to the
-\code{data}, must include a 'Time' column and any columns specified by
-\code{conditions}. In general, the columns of meta correspond to the
-different types of metadata, and each row corresponds to a column of
-data (contains the metadata for that sample).}
-\item{annotation}{
-A dataframe that maps the rows of \code{data} to
-annotation info, such as the gene name or database identifiers.}
-\item{report_info}{
-A named list describing the experiment.
-Must include the following fields:
+\item{splineomics}{\code{SplineOmics}: A named list containing all required
+inputs for the splineomics workflow. Must contain the following elements:
+\itemize{
+\item \code{data}: \code{matrix} The data matrix with the values. The columns
+are the samples (timepoint + replicate combo) and the rows are the
+features (e.g. genes or proteins).
+
+\item \code{meta}: \code{data.frame} A dataframe containing metadata
+corresponding to the \code{data}. Must include a 'Time' column and any
+columns specified by \code{conditions}. In general, the columns of meta
+correspond to different metadata types, and each row corresponds to a
+column of data (metadata for that sample).
+
+\item \code{annotation}: \code{data.frame} A dataframe that maps the rows of
+\code{data} to annotation info, such as gene names or database
+identifiers.
+
+\item \code{report_info}: \code{list} A named list describing the experiment.
+Must include the following fields (\code{character(1)}):
 - \code{"omics_data_type"}
 - \code{"data_description"}
 - \code{"data_collection_date"}
@@ -33,29 +33,31 @@ Must include the following fields:
 - \code{"contact_info"}
 - \code{"project_name"}
 
-May also include the following optional fields:
+May also include the following optional fields (\code{character(1)}):
 - \code{"method_description"}
 - \code{"results_summary"}
-- \code{"conclusions"}  }
-\item{condition}{\link{character}
-Character vector of length 1 specifying the column
-name in \code{meta} used to define groups for analysis.}
-\item{meta_batch_column}{\link{character}
-Character vector of length 1 specifying the column
-name in \code{meta} that contains the info for the batch effect.}
-\item{meta_batch2_column}{\link{character}
-Character vector of length 1 specifying the column
-name in \code{meta} that contains the info for the second batch
-effect.}
+- \code{"conclusions"}
+
+\item \code{condition}: \code{character(1)} Character vector of length 1
+specifying the column name in \code{meta} used to define groups for
+analysis.
+
+\item \code{meta_batch_column}: \code{character(1)} Character vector of length
+1 specifying the column name in \code{meta} that contains the info for the
+batch effect.
+
+\item \code{meta_batch2_column}: \code{character(1)} Character vector of length
+1 specifying the column name in \code{meta} that contains the info for the
+second batch effect.
 }}
 
-\item{report_dir}{A non-empty string specifying the report directory. The
-output HTML reports will be placed there. Default is the
-current working dir, determined with the here library:
-here::here().}
+\item{report_dir}{\code{character(1)}: A non-empty string specifying the report
+directory. The output HTML reports will be placed there. Default is the
+current working directory, determined with the here library:
+\code{here::here()}.}
 
-\item{report}{A Boolean TRUE or FALSE value, specifying if a report should
-be generated or not.}
+\item{report}{\code{logical(1)}: A Boolean TRUE or FALSE value, specifying if a
+report should be generated or not.}
 }
 \value{
 A list of ggplot objects representing various exploratory plots.

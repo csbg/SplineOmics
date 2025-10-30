@@ -2,7 +2,7 @@
 % Please edit documentation in R/splineomics_object.R
 \name{create_splineomics}
 \alias{create_splineomics}
-\title{create_splineomics()}
+\title{Create an object containing variables often used by SplineOmics functions}
 \usage{
 create_splineomics(
   data,
@@ -24,106 +24,98 @@ create_splineomics(
 )
 }
 \arguments{
-\item{data}{The actual omics data. In the case the rna_seq_data argument is
-used, still provide this argument. In that case, input the data matrix in
-here (for example the $E part of the voom object). Assign your feature names
-as row headers (otherwise, just numbers will be your feature names).}
+\item{data}{\code{matrix}: The actual omics data. If the \code{rna_seq_data} argument
+is
+used, still provide this argument. In that case, input the data matrix here
+(for example, the \verb{$E} part of a \code{voom} object). Assign your feature names as
+row headers; otherwise, numeric indices will be used.}
 
-\item{meta}{Metadata associated with the omics data.}
+\item{meta}{\code{data.frame}: Metadata associated with the omics data.}
 
-\item{condition}{A condition variable.}
+\item{condition}{\code{character(1)}: Condition variable describing the
+experimental groups.}
 
-\item{rna_seq_data}{An object containing the preprocessed RNA-seq data,
-such as the output from \code{limma::voom} or a similar preprocessing pipeline.
-This argument is not subjected to input control.
-Rather, in that regard it relies on the input control from the \code{limma::lmfit}
-function.}
+\item{rna_seq_data}{\code{list} | \code{NULL}: An object containing the preprocessed
+RNA-seq data, such as the output from \code{limma::voom} or a similar pipeline.
+This argument is not validated directly; input checks rely on
+\code{limma::lmFit()}.}
 
-\item{annotation}{A dataframe with the feature descriptions of data
-(optional).}
+\item{annotation}{\code{data.frame} | \code{NULL}: Feature annotations (optional)
+providing descriptive information about each feature in \code{data}.}
 
-\item{report_info}{A named list describing the experiment.
-Must include the following fields:
-- \code{"omics_data_type"}
-- \code{"data_description"}
-- \code{"data_collection_date"}
-- \code{"analyst_name"}
-- \code{"contact_info"}
-- \code{"project_name"}
-
-May also include the following optional fields:
-- \code{"method_description"}
-- \code{"results_summary"}
-- \code{"conclusions"}}
-
-\item{meta_batch_column}{Column for meta batch information (optional).}
-
-\item{meta_batch2_column}{Column for secondary meta batch information
-(optional).}
-
-\item{feature_name_columns}{Character vector containing the column names of
-the annotation info that describe the features.
-This argument is used to specify in the HTML
-report how exactly the feature names displayed
-above each individual spline plot have been
-created. Use the same vector that was used to
-create the row headers for the data matrix!}
-
-\item{design}{A design matrix or similar object (optional).}
-
-\item{use_array_weights}{Boolean flag indicating if the robust fit strategy
-to deal
-with heteroscedasticity should be used or not. If set to NULL, then this is
-handeled implicitly based on the result of the Levene test. If this test is
-significant for at least 10\% of the features, then the robust strategy is
-used. The robust strategy uses the function voomWithQualityWeights for
-RNA-seq data instead of the normal voom function. For other, non-count-based
-data, the function limma::arrayWeights is used instead, combined with setting
-the robust argument to TRUE for the limma::eBayes function. In summary, the
-strategy employed by those functions is to downweights samples with higher
-variance. This can be neccessary, because linear models have the assumption
-of homoscedasticity, which means that the variance is (approx.) the same
-across all datapoints where the linear model is fitted. If this is violated,
-then the resulting p-values cannot be trusted (common statistical wisdom).}
-
-\item{dream_params}{#' A named list or NULL. When not NULL, it can contain
-the following named elements:
+\item{report_info}{\code{list}: Named list describing the experiment. Must include
+the following fields (all \code{character(1)}):
 \itemize{
-\item \code{dof}: An integer greater than 1, specifying the degrees of freedom for
-the dream topTable.
-\item \code{KenwardRoger}: A boolean indicating whether to use the Kenward-Roger
-approximation for mixed models.
-Note that random effects are now directly specified in the design formula
-and not in \code{dream_params}.
+\item \code{"omics_data_type"}
+\item \code{"data_description"}
+\item \code{"data_collection_date"}
+\item \code{"analyst_name"}
+\item \code{"contact_info"}
+\item \code{"project_name"}
+}
+
+Optional fields (all \code{character(1)}):
+\itemize{
+\item \code{"method_description"}
+\item \code{"results_summary"}
+\item \code{"conclusions"}
 }}
 
-\item{mode}{For the design formula, you must specify either 'isolated' or
-'integrated' for the mode. Isolated means limma determines the results for
-each level
-using only the data from that level. Integrated means limma determines the
-results for all levels using the full dataset (from all levels).}
+\item{meta_batch_column}{\code{character(1)} | \code{NULL}: Column name in \code{meta}
+specifying batch information (optional).}
 
-\item{spline_params}{Parameters for spline functions (optional). Must contain
-the named elements spline_type, which must contain either the string "n" for
-natural cubic splines, or "b", for B-splines, the named element degree in the
-case of B-splines, that must contain only an integer, and the named element
-dof, specifying the degree of freedom, containing an integer and required
-both for natural and B-splines.}
+\item{meta_batch2_column}{\code{character(1)} | \code{NULL}: Column name in \code{meta}
+specifying secondary batch information (optional).}
 
-\item{padjust_method}{Method for p-value adjustment, one of "none", "BH",
-"BY", "holm", "bonferroni", "hochberg", or "hommel".
-Defaults to "BH" (Benjamini-Hochberg).}
+\item{feature_name_columns}{\code{character()}: Vector of column names from
+\code{annotation} that describe the features. Used in the HTML report to define
+how feature names displayed above each spline plot were created. Use the same
+vector that was used to create the row headers for the data matrix.}
 
-\item{bp_cfg}{A named numeric vector specifying the parallelization
-configuration, with expected names \code{"n_cores"} and \code{"blas_threads"}.
+\item{design}{\code{matrix} | \code{NULL}: Design matrix or similar object (optional).}
 
-This controls how many \strong{R worker processes} (\code{n_cores}) and how many
-\strong{BLAS/OpenBLAS threads per process} (\code{blas_threads}) should be used
-during parallel computation.
+\item{use_array_weights}{\code{logical(1)}: Boolean flag indicating whether to use
+the robust fitting strategy to handle heteroskedasticity. If \code{NULL}, this is
+determined automatically via the Levene test: if at least 10\% of features are
+significant, the robust strategy is enabled. For RNA-seq data, this uses
+\code{limma::voomWithQualityWeights()}, otherwise \code{limma::arrayWeights()} with
+\code{robust = TRUE} in \code{limma::eBayes()}. These approaches down-weight samples
+with higher variance, improving validity of statistical inference.}
 
-If \code{bp_cfg} is \code{NULL}, missing, or any of its required fields is
-\code{NA}, both \code{n_cores} and \code{blas_threads} default to \code{1}. This effectively
-disables parallelization and avoids oversubscription of CPU threads.}
+\item{dream_params}{\code{list} | \code{NULL}: Optional named list controlling
+mixed-model fitting. When not \code{NULL}, may include:
+\itemize{
+\item \code{dof} \code{integer(1)} Degrees of freedom for the DREAM \code{topTable}.
+\item \code{KenwardRoger} \code{logical(1)} Whether to use the Kenward-Roger correction.
+}
+
+Random effects are specified directly in the design formula, not here.}
+
+\item{mode}{\code{character(1)}: Either \code{"isolated"} or \code{"integrated"}. Determines
+whether conditions are analysed independently (\code{"isolated"}) or jointly
+(\code{"integrated"}). The integrated mode fits a single model across all levels.}
+
+\item{spline_params}{\code{list} | \code{NULL}: Parameters for spline functions.
+Must contain:
+\itemize{
+\item \code{spline_type}: \code{character(1)} \code{"n"} for natural cubic or \code{"b"} for
+B-splines.
+\item \code{dof}: \code{integer(1)} Degrees of freedom. If set to \code{0},
+\code{SplineOmics} automatically determines the best value using
+leave-one-out cross-validation.
+\item \code{degree}: \code{integer(1)} Degree of the spline (B-splines only).
+}}
+
+\item{padjust_method}{\code{character(1)}: Method for p-value adjustment. One of
+\code{"none"}, \code{"BH"}, \code{"BY"}, \code{"holm"}, \code{"bonferroni"}, \code{"hochberg"}, or
+\code{"hommel"}. Defaults to \code{"BH"} (Benjamini–Hochberg).}
+
+\item{bp_cfg}{\code{numeric()} | \code{NULL}: Named numeric vector specifying
+parallelization settings, with expected names \code{"n_cores"} and
+\code{"blas_threads"}. Controls the number of R worker processes (\code{n_cores}) and
+BLAS/OpenBLAS threads per process (\code{blas_threads}). If \code{bp_cfg} is \code{NULL} or
+missing, both default to \code{1}, disabling parallelization and avoiding thread
+oversubscription.}
 }
 \value{
 A SplineOmics object.

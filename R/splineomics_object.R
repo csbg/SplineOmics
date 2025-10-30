@@ -1,96 +1,94 @@
-# Exported functions -----------------------------------------------------------
-
-
-#' create_splineomics()
+#' Create an object containing variables often used by SplineOmics functions
 #'
 #' @description
 #' Creates a SplineOmics object containing variables that are commonly used
 #' across multiple functions in the package. This object is then passed as an
 #' argument to the other functions of this package.
 #'
-#' @param data The actual omics data. In the case the rna_seq_data argument is
-#' used, still provide this argument. In that case, input the data matrix in
-#' here (for example the $E part of the voom object). Assign your feature names
-#' as row headers (otherwise, just numbers will be your feature names).
-#' @param meta Metadata associated with the omics data.
-#' @param condition A condition variable.
-#' @param rna_seq_data An object containing the preprocessed RNA-seq data,
-#' such as the output from `limma::voom` or a similar preprocessing pipeline.
-#' This argument is not subjected to input control.
-#' Rather, in that regard it relies on the input control from the `limma::lmfit`
-#' function.
-#' @param annotation A dataframe with the feature descriptions of data
-#' (optional).
-#' @param report_info A named list describing the experiment.
-#'   Must include the following fields:
-#'     - \code{"omics_data_type"}
-#'     - \code{"data_description"}
-#'     - \code{"data_collection_date"}
-#'     - \code{"analyst_name"}
-#'     - \code{"contact_info"}
-#'     - \code{"project_name"}
+#' @param data `matrix`: The actual omics data. If the `rna_seq_data` argument
+#'  is
+#' used, still provide this argument. In that case, input the data matrix here
+#' (for example, the `$E` part of a `voom` object). Assign your feature names as
+#' row headers; otherwise, numeric indices will be used.
 #'
-#'   May also include the following optional fields:
-#'     - \code{"method_description"}
-#'     - \code{"results_summary"}
-#'     - \code{"conclusions"}
-#' @param meta_batch_column Column for meta batch information (optional).
-#' @param meta_batch2_column Column for secondary meta batch information
-#' (optional).
-#' @param feature_name_columns Character vector containing the column names of
-#'                             the annotation info that describe the features.
-#'                             This argument is used to specify in the HTML
-#'                             report how exactly the feature names displayed
-#'                             above each individual spline plot have been
-#'                             created. Use the same vector that was used to
-#'                             create the row headers for the data matrix!
-#' @param design A design matrix or similar object (optional).
-#' @param use_array_weights Boolean flag indicating if the robust fit strategy
-#' to deal
-#' with heteroscedasticity should be used or not. If set to NULL, then this is
-#' handeled implicitly based on the result of the Levene test. If this test is
-#' significant for at least 10% of the features, then the robust strategy is
-#' used. The robust strategy uses the function voomWithQualityWeights for
-#' RNA-seq data instead of the normal voom function. For other, non-count-based
-#' data, the function limma::arrayWeights is used instead, combined with setting
-#' the robust argument to TRUE for the limma::eBayes function. In summary, the
-#' strategy employed by those functions is to downweights samples with higher
-#' variance. This can be neccessary, because linear models have the assumption
-#' of homoscedasticity, which means that the variance is (approx.) the same
-#' across all datapoints where the linear model is fitted. If this is violated,
-#' then the resulting p-values cannot be trusted (common statistical wisdom).
-#' @param dream_params #' A named list or NULL. When not NULL, it can contain
-#'  the following named elements:
-#' - `dof`: An integer greater than 1, specifying the degrees of freedom for
-#'   the dream topTable.
-#' - `KenwardRoger`: A boolean indicating whether to use the Kenward-Roger
-#'   approximation for mixed models.
-#' Note that random effects are now directly specified in the design formula
-#' and not in `dream_params`.
-#' @param mode For the design formula, you must specify either 'isolated' or
-#' 'integrated' for the mode. Isolated means limma determines the results for
-#' each level
-#' using only the data from that level. Integrated means limma determines the
-#'  results for all levels using the full dataset (from all levels).
-#' @param spline_params Parameters for spline functions (optional). Must contain
-#' the named elements spline_type, which must contain either the string "n" for
-#' natural cubic splines, or "b", for B-splines, the named element degree in the
-#' case of B-splines, that must contain only an integer, and the named element
-#' dof, specifying the degree of freedom, containing an integer and required
-#' both for natural and B-splines.
-#' @param padjust_method Method for p-value adjustment, one of "none", "BH",
-#' "BY", "holm", "bonferroni", "hochberg", or "hommel".
-#' Defaults to "BH" (Benjamini-Hochberg).
-#' @param bp_cfg A named numeric vector specifying the parallelization
-#'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
+#' @param meta `data.frame`: Metadata associated with the omics data.
 #'
-#'   This controls how many **R worker processes** (`n_cores`) and how many
-#'   **BLAS/OpenBLAS threads per process** (`blas_threads`) should be used
-#'   during parallel computation.
+#' @param condition `character(1)`: Condition variable describing the
+#' experimental groups.
 #'
-#'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
-#'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
-#'   disables parallelization and avoids oversubscription of CPU threads.
+#' @param rna_seq_data `list` | `NULL`: An object containing the preprocessed
+#' RNA-seq data, such as the output from `limma::voom` or a similar pipeline.
+#' This argument is not validated directly; input checks rely on
+#' `limma::lmFit()`.
+#'
+#' @param annotation `data.frame` | `NULL`: Feature annotations (optional)
+#' providing descriptive information about each feature in `data`.
+#'
+#' @param report_info `list`: Named list describing the experiment. Must include
+#' the following fields (all `character(1)`):
+#'   - `"omics_data_type"`
+#'   - `"data_description"`
+#'   - `"data_collection_date"`
+#'   - `"analyst_name"`
+#'   - `"contact_info"`
+#'   - `"project_name"`
+#'
+#'   Optional fields (all `character(1)`):
+#'   - `"method_description"`
+#'   - `"results_summary"`
+#'   - `"conclusions"`
+#'
+#' @param meta_batch_column `character(1)` | `NULL`: Column name in `meta`
+#' specifying batch information (optional).
+#'
+#' @param meta_batch2_column `character(1)` | `NULL`: Column name in `meta`
+#' specifying secondary batch information (optional).
+#'
+#' @param feature_name_columns `character()`: Vector of column names from
+#' `annotation` that describe the features. Used in the HTML report to define
+#' how feature names displayed above each spline plot were created. Use the same
+#' vector that was used to create the row headers for the data matrix.
+#'
+#' @param design `matrix` | `NULL`: Design matrix or similar object (optional).
+#'
+#' @param use_array_weights `logical(1)`: Boolean flag indicating whether to use
+#' the robust fitting strategy to handle heteroskedasticity. If `NULL`, this is
+#' determined automatically via the Levene test: if at least 10% of features are
+#' significant, the robust strategy is enabled. For RNA-seq data, this uses
+#' `limma::voomWithQualityWeights()`, otherwise `limma::arrayWeights()` with
+#' `robust = TRUE` in `limma::eBayes()`. These approaches down-weight samples
+#' with higher variance, improving validity of statistical inference.
+#'
+#' @param dream_params `list` | `NULL`: Optional named list controlling
+#' mixed-model fitting. When not `NULL`, may include:
+#'   - `dof` `integer(1)` Degrees of freedom for the DREAM `topTable`.
+#'   - `KenwardRoger` `logical(1)` Whether to use the Kenward-Roger correction.
+#'
+#'   Random effects are specified directly in the design formula, not here.
+#'
+#' @param mode `character(1)`: Either `"isolated"` or `"integrated"`. Determines
+#' whether conditions are analysed independently (`"isolated"`) or jointly
+#' (`"integrated"`). The integrated mode fits a single model across all levels.
+#'
+#' @param spline_params `list` | `NULL`: Parameters for spline functions.
+#' Must contain:
+#'   - `spline_type`: `character(1)` `"n"` for natural cubic or `"b"` for
+#'     B-splines.
+#'   - `dof`: `integer(1)` Degrees of freedom. If set to `0`,
+#'     `SplineOmics` automatically determines the best value using
+#'     leave-one-out cross-validation.
+#'   - `degree`: `integer(1)` Degree of the spline (B-splines only).
+#'
+#' @param padjust_method `character(1)`: Method for p-value adjustment. One of
+#' `"none"`, `"BH"`, `"BY"`, `"holm"`, `"bonferroni"`, `"hochberg"`, or
+#' `"hommel"`. Defaults to `"BH"` (Benjamini–Hochberg).
+#'
+#' @param bp_cfg `numeric()` | `NULL`: Named numeric vector specifying
+#' parallelization settings, with expected names `"n_cores"` and
+#' `"blas_threads"`. Controls the number of R worker processes (`n_cores`) and
+#' BLAS/OpenBLAS threads per process (`blas_threads`). If `bp_cfg` is `NULL` or
+#' missing, both default to `1`, disabling parallelization and avoiding thread
+#' oversubscription.
 #'
 #' @return A SplineOmics object.
 #'
@@ -218,12 +216,12 @@ create_splineomics <- function(
 }
 
 
-#' update_splineomics()
+#' Update the variables in a SplineOmics object
 #'
 #' @description
 #' Updates a SplineOmics object by modifying existing fields or adding new ones.
 #'
-#' @param splineomics A SplineOmics object to be updated.
+#' @param splineomics `SplineOmics`: A SplineOmics object to be updated.
 #' @param ... Named arguments with new values for fields to be updated or added.
 #'
 #' @return The updated SplineOmics object.
@@ -306,7 +304,8 @@ update_splineomics <- function(
 #' relevant information such as the number of features, samples, metadata,
 #' RNA-seq data, annotation, and spline parameters.
 #'
-#' @param x A SplineOmics object created by the `create_splineomics` function.
+#' @param x `SplineOmics`: A SplineOmics object created by the
+#'  `create_splineomics` function.
 #' @param ... Additional arguments passed to or from other methods.
 #'
 #' @details
@@ -373,7 +372,11 @@ print.SplineOmics <- function(x, ...) {
     }
 
     if (!is.null(x$annotation)) {
-        cat("Annotation provided with", nrow(x$annotation), "entries.\n")
+        cat(
+            "Annotation provided with",
+            nrow(x$annotation),
+            "entries.\n"
+            )
     } else {
         cat("No annotation provided.\n")
     }

@@ -49,8 +49,7 @@ create_progress_bar <- function(
 #'
 #' @param meta A dataframe containing the metadata, including the time column.
 #' @param spline_params A list containing the spline parameters. This list can
-#' include `dof` (degrees of freedom), `knots`, `bknots` (boundary knots),
-#' `spline_type`, and `degree`.
+#' include `dof` (degrees of freedom), `spline_type`, and `degree`.
 #' @param level_index An integer representing the current level index for which
 #' the design matrix is being generated.
 #' @param design A character string representing the design formula to be used
@@ -74,13 +73,7 @@ design2design_matrix <- function(
 
     if (!is.null(spline_params$dof)) {
         args$df <- spline_params$dof[level_index]
-    } else {
-        args$knots <- spline_params$knots[[level_index]]
-    }
-
-    if (!is.null(spline_params$bknots)) {
-        args$Boundary.knots <- spline_params$bknots[[level_index]]
-    }
+    } 
 
     if (spline_params$spline_type[level_index] == "b") {
         args$degree <- spline_params$degree[level_index]

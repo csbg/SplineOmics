@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_limma_report.R
 \name{create_limma_report}
 \alias{create_limma_report}
-\title{create_limma_report()}
+\title{Generate HTML report with p-value histograms of all the features}
 \usage{
 create_limma_report(
   splineomics,
@@ -12,32 +12,37 @@ create_limma_report(
 )
 }
 \arguments{
-\item{splineomics}{An S3 object of class \code{SplineOmics} that contains all the
-necessary data and parameters for the analysis, including:
+\item{splineomics}{\code{SplineOmics}: An S3 object of class \code{SplineOmics} that
+contains all the necessary data and parameters for the analysis, including:
 \itemize{
-\item \code{limma_splines_result}: A list containing top tables from
-differential expression analysis for the three different limma results.
-\item \code{meta}: A data frame with sample metadata. Must contain a
-column "Time".
-\item \code{condition}: A character string specifying the column name in
-the metadata (\code{meta}) that defines groups
-for analysis. This column contains levels such as
-"exponential" and "stationary" for phases, or
-"drug" and "no_drug" for treatments.
-\item \code{annotation}: A data frame containing feature information,
-such as gene and protein names, associated with
-the expression data.
-\item \code{report_info}: A list containing metadata about the analysis
-for reporting purposes.
+\item \code{limma_splines_result}: \code{list} A list containing top tables
+from differential expression analysis for the three different limma
+results.
+
+\item \code{meta}: \code{data.frame} A data frame with sample metadata. Must
+contain a column \code{"Time"}.
+
+\item \code{condition}: \code{character(1)} A character string specifying the
+column name in the metadata (\code{meta}) that defines groups for
+analysis. This column contains levels such as \code{"exponential"} and
+\code{"stationary"} for phases, or \code{"drug"} and \code{"no_drug"} for treatments.
+
+\item \code{annotation}: \code{data.frame} A data frame containing feature
+information, such as gene and protein names, associated with the
+expression data.
+
+\item \code{report_info}: \code{list} A list containing metadata about the
+analysis for reporting purposes.
 }}
 
-\item{adj_pthresh}{A numeric value specifying the adjusted p-value threshold
-for significance. Default is 0.05. Must be > 0 and < 1.}
+\item{adj_pthresh}{\code{numeric(1)}: A numeric value specifying the adjusted
+p-value threshold for significance. Default is 0.05. Must be > 0 and < 1.}
 
-\item{report_dir}{A string specifying the directory where the report should
-be saved. Default is the current working directory.}
+\item{report_dir}{\code{character(1)}: A string specifying the directory where
+the report should be saved. Default is the current working directory.}
 
-\item{verbose}{Boolean flag controlling the display of messages.}
+\item{verbose}{\code{logical(1)}: Boolean flag controlling the display of
+messages.}
 }
 \value{
 A list of plots included in the generated HTML report.

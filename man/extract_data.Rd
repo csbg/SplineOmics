@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract_data.R
 \name{extract_data}
 \alias{extract_data}
-\title{extract_data()}
+\title{Extract a rectangular block from a dataframe and make it to a matrix}
 \usage{
 extract_data(
   data,
@@ -15,20 +15,21 @@ extract_data(
 )
 }
 \arguments{
-\item{data}{A dataframe containing the full input, including annotation
-columns and the numeric block to extract.}
+\item{data}{\code{data.frame}: A dataframe containing the full input, including
+annotation columns and the numeric block to extract.}
 
-\item{bottom_row}{Integer. Specifies the last (bottom) row of the numeric
-data block. Must be >= \code{top_row}.}
+\item{bottom_row}{\code{integer(1)}: Specifies the last (bottom) row of the
+numeric data block. Must be >= \code{top_row}.}
 
-\item{right_col}{Same format as \code{left_col}. Specifies the right-most column
-of the numeric block. Must be >= \code{left_col} after conversion.}
+\item{right_col}{\code{integer(1)} | \code{character(1)}: Same format as \code{left_col}.
+Specifies the right-most column of the numeric block. Must be >= \code{left_col}
+after conversion.}
 
-\item{top_row}{Integer. Specifies the first (top) row of the numeric data
-block. Row indexing is 1-based.}
+\item{top_row}{\code{integer(1)}: Specifies the first (top) row of the numeric
+data block. Row indexing is 1-based.}
 
-\item{left_col}{Column specifier for the left-most column of the data block.
-Can be either:
+\item{left_col}{\code{integer(1)} | \code{character(1)}: Column specifier for the
+left-most column of the data block. Can be either:
 \itemize{
 \item An integer index (e.g., 2 for the second column), or
 \item A character string using Excel-style letters (e.g., "A", "AB").
@@ -37,12 +38,14 @@ Can be either:
 Column names (e.g., "age") are \strong{not} allowed here. Only letters or numeric
 indices are accepted.}
 
-\item{feature_name_columns}{Optional character vector specifying columns in
-\code{data} to be used as row (feature) names in the output. If \code{NA}, generic
-feature names are used.}
+\item{feature_name_columns}{\code{character()} | \code{NULL}: Optional character
+vector specifying columns in \code{data} to be used as row (feature) names in
+the output. If \code{NA}, generic feature names are used. These row names are
+used everywhere to label the features, such as to label the plots in the
+\code{cluster_hits()} function report.}
 
-\item{use_row_index}{Logical. If \code{TRUE}, prepend the row index to each
-combined feature name to ensure uniqueness. Defaults to \code{FALSE}.}
+\item{use_row_index}{\code{logical(1)}: If \code{TRUE}, prepend the row index to
+each combined feature name to ensure uniqueness. Defaults to \code{FALSE}.}
 }
 \value{
 A numeric matrix with cleaned values and appropriate column names.

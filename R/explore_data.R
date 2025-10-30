@@ -1,4 +1,4 @@
-#' explore_data()
+#' Automatically perform exploratory data analysis (EDA)
 #'
 #' @description
 #' This function automatically generates exploratory data analysis (EDA) plots
@@ -9,25 +9,25 @@
 #' creates an HTML report containing the plots, saving it to the specified
 #' report directory.
 #'
-#' @param splineomics A named list containing all required inputs for the
-#'   splineomics workflow. Must contain the following elements:
-#'   \describe{
-#'     \item{data}{
-#'       The data matrix with the values. The columns are the
-#'       samples (timepoint + replicate combo) and the rows are the features
-#'       (e.g. genes or proteins).}
-#'     \item{meta}{
-#'        A dataframe containing metadata corresponding to the
-#'        \code{data}, must include a 'Time' column and any columns specified by
-#'        \code{conditions}. In general, the columns of meta correspond to the
-#'        different types of metadata, and each row corresponds to a column of
-#'        data (contains the metadata for that sample).}
-#'     \item{annotation}{
-#'       A dataframe that maps the rows of \code{data} to
-#'       annotation info, such as the gene name or database identifiers.}
-#'     \item{report_info}{
-#'       A named list describing the experiment.
-#'   Must include the following fields:
+#' @param splineomics `SplineOmics`: A named list containing all required
+#' inputs for the splineomics workflow. Must contain the following elements:
+#' \itemize{
+#'   \item \code{data}: `matrix` The data matrix with the values. The columns
+#'   are the samples (timepoint + replicate combo) and the rows are the
+#'   features (e.g. genes or proteins).
+#'
+#'   \item \code{meta}: `data.frame` A dataframe containing metadata
+#'   corresponding to the \code{data}. Must include a 'Time' column and any
+#'   columns specified by \code{conditions}. In general, the columns of meta
+#'   correspond to different metadata types, and each row corresponds to a
+#'   column of data (metadata for that sample).
+#'
+#'   \item \code{annotation}: `data.frame` A dataframe that maps the rows of
+#'   \code{data} to annotation info, such as gene names or database
+#'   identifiers.
+#'
+#'   \item \code{report_info}: `list` A named list describing the experiment.
+#'   Must include the following fields (`character(1)`):
 #'     - \code{"omics_data_type"}
 #'     - \code{"data_description"}
 #'     - \code{"data_collection_date"}
@@ -35,27 +35,31 @@
 #'     - \code{"contact_info"}
 #'     - \code{"project_name"}
 #'
-#'   May also include the following optional fields:
+#'   May also include the following optional fields (`character(1)`):
 #'     - \code{"method_description"}
 #'     - \code{"results_summary"}
-#'     - \code{"conclusions"}  }
-#'     \item{condition}{[character]
-#'       Character vector of length 1 specifying the column
-#'       name in \code{meta} used to define groups for analysis.}
-#'     \item{meta_batch_column}{[character]
-#'       Character vector of length 1 specifying the column
-#'       name in \code{meta} that contains the info for the batch effect.}
-#'     \item{meta_batch2_column}{[character]
-#'       Character vector of length 1 specifying the column
-#'       name in \code{meta} that contains the info for the second batch
-#'       effect.}
-#'   }
-#' @param report_dir A non-empty string specifying the report directory. The
-#'                   output HTML reports will be placed there. Default is the
-#'                   current working dir, determined with the here library:
-#'                   here::here().
-#' @param report A Boolean TRUE or FALSE value, specifying if a report should
-#'               be generated or not.
+#'     - \code{"conclusions"}
+#'
+#'   \item \code{condition}: `character(1)` Character vector of length 1
+#'   specifying the column name in \code{meta} used to define groups for
+#'   analysis.
+#'
+#'   \item \code{meta_batch_column}: `character(1)` Character vector of length
+#'   1 specifying the column name in \code{meta} that contains the info for the
+#'   batch effect.
+#'
+#'   \item \code{meta_batch2_column}: `character(1)` Character vector of length
+#'   1 specifying the column name in \code{meta} that contains the info for the
+#'   second batch effect.
+#' }
+#'
+#' @param report_dir `character(1)`: A non-empty string specifying the report
+#' directory. The output HTML reports will be placed there. Default is the
+#' current working directory, determined with the here library:
+#'  \code{here::here()}.
+#'
+#' @param report `logical(1)`: A Boolean TRUE or FALSE value, specifying if a
+#' report should be generated or not.
 #'
 #' @return A list of ggplot objects representing various exploratory plots.
 #'

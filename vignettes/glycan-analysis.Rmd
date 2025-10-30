@@ -32,7 +32,11 @@ provided here.
 ## Data Overview
 
 This dataset originates from a **time-series glycan experiment**
-designed to study Chinese Hamster Ovary (CHO) cells. The data is compositional, meaning that the observed glycoform abundances represent parts of a whole and are constrained by a constant-sum constraint, making standard statistical analyses inappropriate without appropriate log-ratio transformations. The experiment
+designed to study Chinese Hamster Ovary (CHO) cells. The data is compositional,
+meaning that the observed glycoform abundances represent parts of a whole and 
+are constrained by a constant-sum constraint, making standard statistical
+analyses inappropriate without appropriate log-ratio transformations. The
+experiment
 involved cultivating cells in **eight bioreactors**, with **four
 bioreactors** subjected to a temperature shift after 146 hours
 (experimental condition) and the remaining **four bioreactors**
@@ -52,24 +56,39 @@ In this experiment, there are two effects to consider: **Reactor** and
 **Batch**.
 
 1. **Reactor**:
-   - This refers to the different bioreactors used for cell cultivation, which can exhibit substantial variability.
-   - Each reactor was assigned a single condition: either constant temperature or temperature-shifted. As a result, **condition and reactor are confounded**.
-   - Reactor should not be treated as a fixed effect to simply remove its influence. Instead, it is treated as a **random effect**, which allows us to model its variability appropriately.
+   - This refers to the different bioreactors used for cell cultivation, which
+   can exhibit substantial variability.
+   - Each reactor was assigned a single condition: either constant temperature
+   or temperature-shifted. As a result,
+   **condition and reactor are confounded**.
+   - Reactor should not be treated as a fixed effect to simply remove its
+   influence. Instead, it is treated as a **random effect**, which allows
+   us to model its variability appropriately.
 
 2. **Batch**:
    - This refers to the two separate glycan analysis batches.
    - Batch is considered a **batch effect** with respect to the condition 
    (constant temperature vs. temperature-shifted).
 
-Since Condition and Reactor are confounded, the variability due to the reactors cannot be directly separated from the condition. Instead, **linear mixed models (LMMs)** are used to attribute the reactor as a random effect, allowing us to account for its variability while isolating the effects of the condition. This approach ensures that the analysis appropriately handles the hierarchical structure of the data and avoids incorrect conclusions.
+Since Condition and Reactor are confounded, the variability due to the reactors
+cannot be directly separated from the condition. Instead,
+**linear mixed models (LMMs)** are used to attribute the reactor as a random
+effect, allowing us to account for its variability while isolating the effects
+of the condition. This approach ensures that the analysis appropriately handles
+the hierarchical structure of the data and avoids incorrect conclusions.
 
-In this vignette, we will demonstrate how to use linear mixed models to address these challenges and properly account for both reactor and plate effects.
+In this vignette, we will demonstrate how to use linear mixed models to
+address these challenges and properly account for both reactor and plate
+effects.
 
 ### Further info
 
-The data matrix comprises **glycoforms as rows** (such as G0/G0 and none/G0F) and
-**samples as columns**, providing glycoform measurements for all time points. Each
-glycoform as a row stands for a combination of sugars (glycans) that can be attached to the 
+The data matrix comprises **glycoforms as rows** (such as G0/G0 and none/G0F)
+and
+**samples as columns**, providing glycoform measurements for all time points.
+Each
+glycoform as a row stands for a combination of sugars (glycans) that can be
+attached to the 
 left and right side of the product antibody, that we produced in our CHO cell 
 cultivation. For example G0/G0 means that the glycan G0 was attached to both 
 sides, and none/G0F means at the left side, there was no glycan, and on the 
@@ -172,7 +191,8 @@ knitr::kable(
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
     omics_data_type = "Glycan",
-    data_description = "clr transformed timeseries fractional abundance glycoform data of CHO cells, batch corrected",
+    data_description = "clr transformed timeseries fractional abundance
+    glycoform data of CHO cells, batch corrected",
     data_collection_date = "September 2024",
     analyst_name = "Thomas Rauter",
     contact_info = "thomas.rauter@plus.ac.at",
@@ -185,7 +205,16 @@ report_dir <- here::here(
 )
 ```
 
-Compositional data, such as glycan profiles expressed as relative abundances, are inherently constrained by a constant sum and therefore reside in a simplex rather than Euclidean space. This violates the assumptions of standard statistical methods. To address this, we applied a centered log-ratio (CLR) transformation, which appropriately maps the data into real space by accounting for the compositional structure. While some studies apply a simple log-transformation to stabilize variance, this approach ignores the relative nature of the data and may lead to biased or misleading results. CLR transformation is thus the more appropriate and statistically sound choice for downstream modeling.
+Compositional data, such as glycan profiles expressed as relative abundances,
+are inherently constrained by a constant sum and therefore reside in a simplex
+rather than Euclidean space. This violates the assumptions of standard
+statistical methods. To address this, we applied a centered log-ratio (CLR)
+transformation, which appropriately maps the data into real space by accounting
+for the compositional structure. While some studies apply a simple
+log-transformation to stabilize variance, this approach ignores the relative
+nature of the data and may lead to biased or misleading results. CLR
+transformation is thus the more appropriate and statistically sound choice
+for downstream modeling.
 
 ```{r clr transform the data, eval = TRUE}
 # TRANSPOSE: make samples rows, features columns
@@ -245,8 +274,8 @@ splineomics <- SplineOmics::update_splineomics(
     design = "~ 1 + Condition*Time + Batch + (1|Reactor)",
     mode = "integrated", # means limma uses the full data for each condition.
     spline_params = list(
-        spline_type = c("n"), # natural cubic splines (take these if unsure)
-        dof = c(2L) # If you are unsure about which dof, start with 2 and increase
+        spline_type = c("n"), 
+        dof = c(2L) 
     )
 )
 ```
@@ -266,7 +295,8 @@ splineomics <- SplineOmics::run_limma_splines(
 Note that for our dataset, the Wilcoxon signed rank exact test revealed that we
 have a problem of heteroscedasticity for our data. This means that the variance
 between the samples is significantly higher in the stationary phase compared to
-the exponential phase. This is a violation for the assumption of homoscedasticity of linear models, which means that the derived p-values are not
+the exponential phase. This is a violation for the assumption of
+homoscedasticity of linear models, which means that the derived p-values are not
 trustworthy. To adress this issue, limma has a function (arrayWeights) which 
 downweights samples with higher variance, which we then use here automatically.
 Further, the eBayes function of limma with the robust = TRUE argument avoids

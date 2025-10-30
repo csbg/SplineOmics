@@ -11,17 +11,17 @@ download_enrichr_databases(
 )
 }
 \arguments{
-\item{gene_set_lib}{A character vector of database names to download from
-Enrichr, for example: c("WikiPathways_2019_Human",
-"NCI-Nature_2016",)}
+\item{gene_set_lib}{\code{character()}: A character vector of database names to
+download from Enrichr, for example:
+\code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.}
 
-\item{output_dir}{A string specifying the output directory where the
-\code{.tsv} file will be saved. Defaults to the current project directory
-as defined by \code{here::here()}.}
+\item{output_dir}{\code{character(1)}: A string specifying the output directory
+where the \code{.tsv} file will be saved. Defaults to the current project
+directory as defined by \code{here::here()}.}
 
-\item{filename}{Name of the output file (with file extension. Due to commas
-present in some terms, .tsv is recommended). When left out,
-the file is named all_databases_timestamp.tsv.}
+\item{filename}{\code{character(1)}: Name of the output file (with file
+extension). Due to commas present in some terms, \code{.tsv} is recommended.
+When left out, the file is named \code{all_databases_timestamp.tsv}.}
 }
 \value{
 A \code{data.frame} of gene set annotations with three columns:
@@ -41,4 +41,16 @@ them to a specified output directory as a .tsv file per default. The file is
 named with a timestamp per default to ensure uniqueness (all databases are
 stored in a single file). This file has 3 columns: DB containing the database
 name, Geneset, with the genesets, and Gene, with the gene names.
+}
+\examples{
+if (interactive()) {
+  libs <- c("WikiPathways_2019_Human")
+  out <- download_enrichr_databases(
+    gene_set_lib = libs,
+    output_dir = tempdir(),
+    filename = "enrichr_demo.tsv"
+  )
+  head(out)
+}
+
 }

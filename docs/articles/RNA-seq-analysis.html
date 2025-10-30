@@ -29,22 +29,25 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../articles/get_started.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/CHANGELOG.html">Changelog</a></li>
-    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a Limma Design Formula</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
+    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a limma design formula</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker container instructions</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker permission denied</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../articles/faq.html">FAQ</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -1566,7 +1569,7 @@ differential expression analysis.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; NOTE: If you manually stop run_limma_splines() in RStudio and  used parallelization for variancePartition::dream(), then those parallelized processes may continue running. Use your system's process manager to terminate them manually!</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished preprocessing RNA-seq</span></span>
-<span><span class="co">#&gt;         data in 0.4 minutes</span></span></code></pre></div>
+<span><span class="co">#&gt;         data in 0.2 minutes</span></span></code></pre></div>
 <p>You can customize the normalization method by providing a specific
 normalization function through the <code>normalize_func</code> argument
 in the <code><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function. For details on
@@ -1599,7 +1602,7 @@ correctly processed.</p>
 <span><span class="co">#&gt;   Running topTable() will fail.</span></span>
 <span><span class="co">#&gt; Warning in .standard_transform(fit_eb, sigma = sqrt(fit_eb$s2.post)): No testable fixed effects were included in the model.</span></span>
 <span><span class="co">#&gt;   Running topTable() will fail.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 1.1 min</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 0.5 min</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
 document</a> for an explanation of the different result categories. Each
@@ -1628,7 +1631,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpDBFwvC/file6e9d7e573d30 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp0hAvtb/file9aca26446848 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1707,12 +1710,12 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpDBFwvC/file6e9d3420ae64 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp0hAvtb/file9aca73f45133 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
 <span><span class="co">#&gt; 25 clusters for the condition effect</span></span>
 <span><span class="co">#&gt;             (interaction between condition and time)</span></span>
-<span><span class="co">#&gt; Running this function took 1.0 min</span></span></code></pre></div>
+<span><span class="co">#&gt; Running this function took 0.5 min</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?export=view&amp;id=1EvPiEwHyGnBQFxRets00s87tochgyGK4" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
@@ -1786,8 +1789,10 @@ dotplots in R.</p>
 levels, and generates the HTML report:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu">run_gsea</span><span class="op">(</span></span>
-<span>    <span class="co"># A dataframe with three columns: feature, cluster, and gene. Feature contains</span></span>
-<span>    <span class="co"># the integer index of the feature, cluster the integer specifying the cluster</span></span>
+<span>    <span class="co"># A dataframe with three columns: feature, cluster, and gene. Feature</span></span>
+<span>    <span class="co"># contains</span></span>
+<span>    <span class="co"># the integer index of the feature, cluster the integer specifying the</span></span>
+<span>    <span class="co"># cluster</span></span>
 <span>    <span class="co"># number, and gene the string of the gene, such as "CLSTN2".</span></span>
 <span>    cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    databases <span class="op">=</span> <span class="va">databases</span>,</span>

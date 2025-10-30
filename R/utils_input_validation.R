@@ -2746,8 +2746,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 "spline_type",
                 "degree",
                 "dof"
-                # "knots",
-                # "bknots"
             )
 
             # Check for exact match of column names and order
@@ -2891,24 +2889,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 spline_type <- row[["spline_type"]]
                 dof <- row[["dof"]]
                 degree <- row[["degree"]]
-                knots <- row[["knots"]]
-
-                # Calculate k and DoF if dof is NA
-                if (is.na(dof)) {
-                    k <- length(knots)
-                    if (spline_type == "b") {
-                        dof <- k + degree
-                    } else if (spline_type == "n") {
-                        dof <- k + 1
-                    } else {
-                        stop(
-                            "Unknown spline type '",
-                            spline_type,
-                            "' at row ",
-                            i
-                            )
-                    }
-                }
 
                 # Check if calculated or provided DoF is valid
                 if (dof < 2) {

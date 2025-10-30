@@ -121,22 +121,31 @@ contrast <- makeContrasts(
 # Summary
 
 1. **Intercept or No Intercept:**
-   - Starting with `~ 0` means no intercept (i.e., not including a baseline group in the model).
+   - Starting with `~ 0` means no intercept (i.e., not including a baseline 
+   group in the model).
    - Starting with `~ 1` (or just `~`) includes an intercept (baseline group).
 
 2. **Additive Factors:**
-   - Factors separated by `+` indicate additive effects. For example, `~ 0 + factor1 + factor2` means you are modeling the effects of `factor1` and `factor2` additively, without considering interactions.
+   - Factors separated by `+` indicate additive effects. For example,
+   `~ 0 + factor1 + factor2` means you are modeling the effects of `factor1` 
+   and `factor2` additively, without considering interactions.
 
 3. **Interaction Terms:**
-   - The `*` symbol is used to model interactions between factors. For example, `~ 0 + factor1 * factor2` will include `factor1`, `factor2`, and their interaction (`factor1:factor2`).
-   - Alternatively, you can specify the interaction explicitly with `:`. For example, `~ 0 + factor1 + factor2 + factor1:factor2` is equivalent to `~ 0 + factor1 * factor2`.
+   - The `*` symbol is used to model interactions between factors. For example,
+   `~ 0 + factor1 * factor2` will include `factor1`, `factor2`, and their
+   interaction (`factor1:factor2`).
+   - Alternatively, you can specify the interaction explicitly with `:`. For
+   example, `~ 0 + factor1 + factor2 + factor1:factor2` is equivalent 
+   to `~ 0 + factor1 * factor2`.
 
 ## Some examples:
 
 - `~ 0 + factor1 + factor2`: Additive model without an intercept.
 - `~ 1 + factor1 + factor2`: Additive model with an intercept.
-- `~ 0 + factor1 * factor2`: Model with main effects and their interaction, no intercept.
-- `~ 1 + factor1 * factor2`: Model with intercept, main effects, and their interaction.
+- `~ 0 + factor1 * factor2`: Model with main effects and their interaction, 
+no intercept.
+- `~ 1 + factor1 * factor2`: Model with intercept, main effects, and their 
+interaction.
 
 # Session Info
 

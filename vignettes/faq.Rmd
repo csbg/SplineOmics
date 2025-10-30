@@ -1,0 +1,163 @@
+---
+title: "FAQ"
+author: "Thomas Rauter"
+date: "30 Oktober, 2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{faq}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Frequently Asked Questions
+
+--------------------------------------------------------------------------------
+
+## FAQ on data pre-processing
+
+### Does SplineOmics handle missing values?
+
+Yes. SplineOmics can handle missing values gracefully because it uses 
+`limma` as the statistical engine for model fitting and differential 
+analysis. The `limma` package is designed to work with incomplete 
+expression matrices — missing values are simply ignored when estimating 
+model parameters and computing contrasts, without causing errors.
+
+This means you do not necessarily need to impute or remove features with 
+a few missing entries before running SplineOmics. However, if a feature 
+has too many missing values (for example, across most samples), consider 
+removing it.
+
+--------------------------------------------------------------------------------
+
+## FAQ on parameter selection
+
+### Which design formula should I use?
+
+The choice of design formula depends on your experimental setup and on 
+whether you want to model your conditions independently or jointly.
+
+- Isolated designs (no interaction between condition and time)  
+  Use this when you want to analyse each condition completely separately, 
+  for example, to get independent spline fits for each treatment.  
+  In this case, `SplineOmics` will simply process each dataset 
+  sequentially for convenience, so you do not need to run the code twice.  
+  This approach is ideal when you do not expect conditions to share 
+  information or influence one another.
+
+- Integrated designs (conditions modelled jointly with a time interaction)  
+  Use this when you want to fit all conditions in a single model and 
+  allow their time trends to differ through an interaction term between 
+  condition and time.  
+  With this approach, datasets are modelled jointly and can borrow 
+  statistical power from each other, leading to more stable variance 
+  estimates and more sensitive detection of shared temporal patterns.  
+  This also enables access to the full range of `limma` result categories, 
+  including category 2 and category 3 results (see the vignette on 
+  [limma result categories](limma_result_categories.html)).
+
+### Should I use B-splines or natural cubic splines?
+
+Both spline types can model smooth trends across time or another 
+continuous variable, but they differ in how local their flexibility is.
+
+- B-splines are locally adaptive: changing one knot affects the fitted 
+  curve only in a small neighbourhood around that knot.  
+  This makes them ideal when you expect local variations (for example, 
+  short-term biological responses) and want the rest of the curve to 
+  remain stable. The trade-off is that B-splines typically use more 
+  degrees of freedom, so the model can become more complex.
+
+- Natural cubic splines enforce global smoothness: each basis function 
+  extends across the entire range, so adjusting one part of the curve 
+  slightly influences the whole fit. They use fewer degrees of freedom 
+  and can be more stable when you expect overall smooth behaviour, but 
+  they are less suitable if local detail is important.
+
+In short:  
+> Choose B-splines when local flexibility matters, and natural cubic 
+> splines when you want a smoother, more global trend.
+
+### How many degrees of freedom should I use for the splines?
+
+There is no single optimal choice — the best number of degrees of 
+freedom (dof) depends on the smoothness and complexity of your data.  
+In practice, 2 or 3 degrees of freedom work well in most cases.
+
+Using more degrees of freedom makes the spline wigglier and increases 
+the risk of overfitting, while using only 1 degree of freedom is usually 
+too restrictive to capture meaningful trends.
+
+If you set the degrees of freedom to 0, `SplineOmics` will automatically 
+determine the optimal value using leave-one-out cross-validation, 
+selecting the dof that provides the best predictive performance for your 
+dataset.
+
+### Should I use array weights?
+
+Yes, in most cases this is recommended. Since `SplineOmics` builds on 
+`limma`, it inherits support for array weights, which help to correct 
+for heteroskedasticity (unequal variances) often present in time-series 
+data.
+
+By estimating a quality weight for each sample, `SplineOmics` can give 
+less influence to noisier samples and more weight to consistent ones, 
+resulting in smoother spline fits and higher statistical power.
+
+### How many clusters should I use?
+
+There is no universal rule for choosing the optimal number of clusters.  
+Using more clusters makes each cluster purer — its centroid represents 
+its members more precisely — but it also makes downstream interpretation 
+more complex and fragmented.
+
+To help with this choice, `SplineOmics` provides several aids:
+
+- For each cluster, it reports the variance explained by the cluster 
+  centroid, both as a mean value and as a distribution histogram, with 
+  guidance on how to interpret these values.  
+- For each individual feature, it shows how well it is represented by its 
+  cluster centroid.  
+- You can specify a range or custom set of cluster numbers (for example, 
+  2–10 or {2, 5, 6}), and `SplineOmics` automatically selects the best 
+  one using the Bayesian Information Criterion (BIC):
+
+  \[
+  \text{BIC} = n_{\text{obs}} 
+  \log\left(\frac{\text{tot\_within}}{n_{\text{obs}}}\right) 
+  + k \log(n_{\text{obs}}) \times p
+  \]
+
+The model with the lowest BIC is chosen as the optimal clustering 
+configuration.
+
+--------------------------------------------------------------------------------
+
+## General FAQ
+
+### Can SplineOmics handle datasets with more than two conditions?
+
+Not directly. `SplineOmics` is designed for pairwise comparisons between 
+conditions. You can, however, analyse experiments with more than two 
+conditions by either:
+
+- using an isolated design, where each condition is analysed separately, 
+  or  
+- performing all pairwise comparisons among the conditions of interest.
+
+These approaches allow you to explore multiple conditions, but they do 
+not integrate them into a single joint model. Integrated designs are 
+currently limited to comparisons between two conditions at a time.
+
+# Session Info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

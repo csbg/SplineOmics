@@ -23,20 +23,23 @@ name, Geneset, with the genesets, and Gene, with the gene names."></head><body>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/get_started.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/CHANGELOG.html">Changelog</a></li>
-    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a Limma Design Formula</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
+    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a limma design formula</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker container instructions</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker permission denied</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../articles/faq.html">FAQ</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -76,21 +79,21 @@ name, Geneset, with the genesets, and Gene, with the gene names.</p>
 
 
 <dl><dt id="arg-gene-set-lib">gene_set_lib<a class="anchor" aria-label="anchor" href="#arg-gene-set-lib"></a></dt>
-<dd><p>A character vector of database names to download from
-Enrichr, for example: c("WikiPathways_2019_Human",
-"NCI-Nature_2016",)</p></dd>
+<dd><p><code><a href="https://rdrr.io/r/base/character.html" class="external-link">character()</a></code>: A character vector of database names to
+download from Enrichr, for example:
+<code>c("WikiPathways_2019_Human", "NCI-Nature_2016")</code>.</p></dd>
 
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
-<dd><p>A string specifying the output directory where the
-<code>.tsv</code> file will be saved. Defaults to the current project directory
-as defined by <code><a href="https://here.r-lib.org/reference/here.html" class="external-link">here::here()</a></code>.</p></dd>
+<dd><p><code>character(1)</code>: A string specifying the output directory
+where the <code>.tsv</code> file will be saved. Defaults to the current project
+directory as defined by <code><a href="https://here.r-lib.org/reference/here.html" class="external-link">here::here()</a></code>.</p></dd>
 
 
 <dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
-<dd><p>Name of the output file (with file extension. Due to commas
-present in some terms, .tsv is recommended). When left out,
-the file is named all_databases_timestamp.tsv.</p></dd>
+<dd><p><code>character(1)</code>: Name of the output file (with file
+extension). Due to commas present in some terms, <code>.tsv</code> is recommended.
+When left out, the file is named <code>all_databases_timestamp.tsv</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -110,6 +113,20 @@ the file is named all_databases_timestamp.tsv.</p></dd>
 table to disk as a <code>.tsv</code> file in the specified <code>output_dir</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">libs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"WikiPathways_2019_Human"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu">download_enrichr_databases</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    gene_set_lib <span class="op">=</span> <span class="va">libs</span>,</span></span>
+<span class="r-in"><span>    output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    filename <span class="op">=</span> <span class="st">"enrichr_demo.tsv"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

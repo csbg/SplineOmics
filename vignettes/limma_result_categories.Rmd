@@ -11,20 +11,28 @@ vignette: >
 
 # limma Result Categories
 
-limma analysis results can be divided into three categories, which are defined in this document:
+limma analysis results can be divided into three categories, which are defined
+in this document:
 
-1.  **Time Effect**: This category focuses on the changes of the feature (e.g. protein) value that occur over time within a single condition.
+1.  **Time Effect**: This category focuses on the changes of the feature
+(e.g. protein) value that occur over time within a single condition.
 
-2.  **Average Difference Between Conditions**: This category compares the average feature values for levels within a condition, regardless of time.
+2.  **Average Difference Between Conditions**: This category compares the
+average feature values for levels within a condition, regardless of time.
 
-3.  **Interaction Between Condition and Time**: This category examines the interaction between time and condition. It identifies features whose value changes differently over time depending on the condition.
+3.  **Interaction Between Condition and Time**: This category examines the
+interaction between time and condition. It identifies features whose value
+changes differently over time depending on the condition.
 
 ------------------------------------------------------------------------
 
 ### Legend:
 
--   **A hit** is a feature (e.g. a protein) that is significantly changed over time.
--   **Levels** are the different factors of a condition of the experiment. For example, bioreactor phase is a condition, and exponential and stationary are levels within that condition.
+-   **A hit** is a feature (e.g. a protein) that is significantly changed
+over time.
+-   **Levels** are the different factors of a condition of the experiment.
+For example, bioreactor phase is a condition, and exponential and stationary 
+are levels within that condition.
 
 ## Category 1 (time effect)
 
@@ -47,7 +55,15 @@ plot(x, y,
 #### Example of No Hit
 
 ```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="No clear temporal pattern"}
-plot(1:10, rep(5, 10), type = "l", lwd = 2, col = "red", ylab = "Feature Value", xlab = "Time", main = "Category 1: No Hit")
+plot(
+    1:10,
+    rep(5, 10),
+    type = "l", lwd = 2,
+    col = "red",
+    ylab = "Feature Value",
+    xlab = "Time", 
+    main = "Category 1: No Hit"
+    )
 ```
 
 ## Category 2 (average difference conditions)
@@ -102,7 +118,9 @@ legend("topright",
 
 ## Category 3 (interaction condition & time)
 
-Treatment interacting with time for a feature (time effect changing with treatment, the feature must have different temporal patterns in both conditions/levels) → Hit
+Treatment interacting with time for a feature (time effect changing with
+treatment, the feature must have different temporal patterns
+in both conditions/levels) → Hit
 
 #### Examples of Hits
 
@@ -155,7 +173,8 @@ legend("topright",
 ```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6, fig.cap="Overall the same temporal pattern of a feature for both levels."}
 x <- seq(1, 10, length.out = 100) # More data points for smooth lines
 y1 <- 0.75 - 0.5 * (x / max(x)) # First downward trend
-y2 <- 0.65 - 0.4 * (x / max(x)) # Second downward trend with a slightly different slope
+# Second downward trend with a slightly different slope
+y2 <- 0.65 - 0.4 * (x / max(x)) 
 
 # Adjust margins to create space for the legend
 par(mar = c(5, 4, 4, 8)) # Increase the right margin

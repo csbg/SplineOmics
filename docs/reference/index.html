@@ -15,20 +15,23 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/get_started.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/CHANGELOG.html">Changelog</a></li>
-    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a Limma Design Formula</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker_permission_denied</a></li>
-    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker-instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/get-started.html">get-started</a></li>
-    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma_result_categories</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">methylation-data-analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">PVC_analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq-analysis</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
+    <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
+    <li><a class="dropdown-item" href="../articles/design_limma_design_formula.html">Designing a limma design formula</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker-instructions.html">Docker container instructions</a></li>
+    <li><a class="dropdown-item" href="../articles/Docker_permission_denied.html">Docker permission denied</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../articles/faq.html">FAQ</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/CHANGELOG.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -57,28 +60,34 @@
 
       <dl><dt>
 
+          <code><a href="compare_results.html">compare_results()</a></code>
+
+        </dt>
+        <dd>Compare hits between two SplineOmics results</dd>
+      </dl><dl><dt>
+
           <code><a href="cluster_hits.html">cluster_hits()</a></code>
 
         </dt>
-        <dd>cluster_hits()</dd>
+        <dd>Cluster the significant features based on spline similarity</dd>
       </dl><dl><dt>
 
           <code><a href="create_limma_report.html">create_limma_report()</a></code>
 
         </dt>
-        <dd>create_limma_report()</dd>
+        <dd>Generate HTML report with p-value histograms of all the features</dd>
       </dl><dl><dt>
 
           <code><a href="create_splineomics.html">create_splineomics()</a></code>
 
         </dt>
-        <dd>create_splineomics()</dd>
+        <dd>Create an object containing variables often used by SplineOmics functions</dd>
       </dl><dl><dt>
 
           <code><a href="extract_gene_sets.html">extract_gene_sets()</a></code>
 
         </dt>
-        <dd>Download Gene Set Annotations from Bioconductor Organism Databases</dd>
+        <dd>Download gene set annotations from Bioconductor organism databases</dd>
       </dl><dl><dt>
 
           <code><a href="download_enrichr_databases.html">download_enrichr_databases()</a></code>
@@ -90,25 +99,25 @@
           <code><a href="explore_data.html">explore_data()</a></code>
 
         </dt>
-        <dd>explore_data()</dd>
+        <dd>Automatically perform exploratory data analysis (EDA)</dd>
       </dl><dl><dt>
 
           <code><a href="extract_data.html">extract_data()</a></code>
 
         </dt>
-        <dd>extract_data()</dd>
+        <dd>Extract a rectangular block from a dataframe and make it to a matrix</dd>
       </dl><dl><dt>
 
           <code><a href="find_pvc.html">find_pvc()</a></code>
 
         </dt>
-        <dd>Find Peaks and Valleys in Time-Series Omics Data</dd>
+        <dd>Find peaks and valleys in time-series omics data</dd>
       </dl><dl><dt>
 
           <code><a href="preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code>
 
         </dt>
-        <dd>preprocess_rna_seq_data()</dd>
+        <dd>Perform essential preprocessing steps for raw RNA-seq counts</dd>
       </dl><dl><dt>
 
           <code><a href="print.SplineOmics.html">print(<i>&lt;SplineOmics&gt;</i>)</a></code>
@@ -120,19 +129,19 @@
           <code><a href="run_ora.html">run_ora()</a></code>
 
         </dt>
-        <dd>run_ora()</dd>
+        <dd>Perform over-representation analysis with the results from cluster_hits()</dd>
       </dl><dl><dt>
 
           <code><a href="run_limma_splines.html">run_limma_splines()</a></code>
 
         </dt>
-        <dd>run_limma_splines()</dd>
+        <dd>Perform a limma spline analysis to identify significant features</dd>
       </dl><dl><dt>
 
           <code><a href="update_splineomics.html">update_splineomics()</a></code>
 
         </dt>
-        <dd>update_splineomics()</dd>
+        <dd>Update the variables in a SplineOmics object</dd>
       </dl></div>
   </main></div>
 

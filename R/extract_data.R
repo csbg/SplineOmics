@@ -1,4 +1,4 @@
-#' extract_data()
+#' Extract a rectangular block from a dataframe and make it to a matrix
 #'
 #' @description
 #' This function extracts a rectangular block from a dataframe using
@@ -8,31 +8,35 @@
 #' It ensures the block contains only numeric values or NAs, and returns a
 #' cleaned matrix.
 #'
-#' @param data A dataframe containing the full input, including annotation
-#' columns and the numeric block to extract.
+#' @param data `data.frame`: A dataframe containing the full input, including 
+#' annotation columns and the numeric block to extract.
 #'
-#' @param top_row Integer. Specifies the first (top) row of the numeric data
-#' block. Row indexing is 1-based.
+#' @param top_row `integer(1)`: Specifies the first (top) row of the numeric 
+#' data block. Row indexing is 1-based.
 #'
-#' @param bottom_row Integer. Specifies the last (bottom) row of the numeric
-#' data block. Must be >= `top_row`.
+#' @param bottom_row `integer(1)`: Specifies the last (bottom) row of the 
+#' numeric data block. Must be >= `top_row`.
 #'
-#' @param left_col Column specifier for the left-most column of the data block.
-#' Can be either:
+#' @param left_col `integer(1)` | `character(1)`: Column specifier for the 
+#' left-most column of the data block. Can be either:
 #'   - An integer index (e.g., 2 for the second column), or
 #'   - A character string using Excel-style letters (e.g., "A", "AB").
 #'
-#' Column names (e.g., "age") are **not** allowed here. Only letters or numeric
+#' Column names (e.g., "age") are **not** allowed here. Only letters or numeric 
 #' indices are accepted.
 #'
-#' @param right_col Same format as `left_col`. Specifies the right-most column
-#' of the numeric block. Must be >= `left_col` after conversion.
+#' @param right_col `integer(1)` | `character(1)`: Same format as `left_col`. 
+#' Specifies the right-most column of the numeric block. Must be >= `left_col` 
+#' after conversion.
 #'
-#' @param feature_name_columns Optional character vector specifying columns in
-#' `data` to be used as row (feature) names in the output. If `NA`, generic
-#' feature names are used.
-#' @param use_row_index Logical. If \code{TRUE}, prepend the row index to each
-#'  combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
+#' @param feature_name_columns `character()` | `NULL`: Optional character 
+#' vector specifying columns in `data` to be used as row (feature) names in 
+#' the output. If `NA`, generic feature names are used. These row names are 
+#' used everywhere to label the features, such as to label the plots in the 
+#' `cluster_hits()` function report.
+#'
+#' @param use_row_index `logical(1)`: If \code{TRUE}, prepend the row index to 
+#' each combined feature name to ensure uniqueness. Defaults to \code{FALSE}.
 #'
 #' @return A numeric matrix with cleaned values and appropriate column names.
 #'

@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_pvc.R
 \name{find_pvc}
 \alias{find_pvc}
-\title{Find Peaks and Valleys in Time-Series Omics Data}
+\title{Find peaks and valleys in time-series omics data}
 \usage{
 find_pvc(
   splineomics,
@@ -15,60 +15,62 @@ find_pvc(
 )
 }
 \arguments{
-\item{splineomics}{A list containing the preprocessed time-series
+\item{splineomics}{\code{list}: A list containing the preprocessed time-series
 input data. Must include the following named elements:
 
 \itemize{
-\item \code{data}: Numeric matrix of feature values. Rows are features
-(e.g., genes or proteins), columns are samples (timepoint–replicate
-combinations).
+\item \code{data}: \code{matrix} Numeric matrix of feature values. Rows are
+features (e.g., genes or proteins), columns are samples
+(timepoint–replicate combinations).
 
-\item \code{meta}: Data frame of sample metadata corresponding to the
-columns of \code{data}. Must include a \code{"Time"} column, and
-typically other columns describing conditions or experimental factors.
+\item \code{meta}: \code{data.frame} Data frame of sample metadata
+corresponding to the columns of \code{data}. Must include a
+\code{"Time"} column, and typically other columns describing conditions
+or experimental factors.
 
-\item \code{meta_batch_column}: Character string giving the column name
-in \code{meta} that identifies replicates or batches.
+\item \code{meta_batch_column}: \code{character(1)} Character string giving
+the column name in \code{meta} that identifies replicates or batches.
 
-\item \code{padjust_method}: Character string specifying the method for
-p-value adjustment (e.g., \code{"BH"}, \code{"bonferroni"}).
+\item \code{padjust_method}: \code{character(1)} Character string specifying
+the method for p-value adjustment (e.g., \code{"BH"},
+\code{"bonferroni"}).
 }}
 
-\item{alphas}{A single numeric value or a named list of numeric
-thresholds used to identify significant excursion points. If a single
-value is provided (numeric scalar or list of length 1), the same
-threshold is applied to all condition levels. If a named list is
-provided, it must contain one numeric value per condition level, with
-names matching the condition levels exactly. This input is normalized
-internally to ensure consistent per-level access.}
+\item{alphas}{\code{numeric(1)} | \code{list(numeric)}: A single numeric value or a
+named list of numeric thresholds used to identify significant excursion
+points. If a single value is provided (numeric scalar or list of length 1),
+the same threshold is applied to all condition levels. If a named list is
+provided, it must contain one numeric value per condition level, with names
+matching the condition levels exactly. This input is normalized internally
+to ensure consistent per-level access.}
 
-\item{padjust_method}{A character string specifying the method for
-multiple testing correction. Defaults to \code{"BH"}
+\item{padjust_method}{\code{character(1)}: A character string specifying the
+method for multiple testing correction. Defaults to \code{"BH"}
 (Benjamini-Hochberg).}
 
-\item{support}{Minimum amount of non-NA values in each timepoint that
-influence a PVC-test result. For example, with timepoints 10, 15, 20
-and support = 1, then for timepoint 15 for a given feature, the
-timepoints 10, 15, and 20 each must have at least 1 non-NA value. If
-one or more of those timepoints for that feature don't meet this
-criterium, then the p-value for that feature at timepoint 15 is set
-to NA.}
+\item{support}{\code{numeric(1)}: Minimum amount of non-NA values in each
+timepoint that influence a PVC-test result. For example, with timepoints
+10, 15, 20 and support = 1, then for timepoint 15 for a given feature, the
+timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or
+more of those timepoints for that feature don't meet this criterium, then
+the p-value for that feature at timepoint 15 is set to NA.}
 
-\item{plot_info}{List with optional elements used to annotate spline plots:
+\item{plot_info}{\code{list}: List with optional elements used to annotate spline
+plots:
 \itemize{
-\item \code{y_axis_label}: single string for the y-axis label.
-\item \code{time_unit}: single string used in the x-axis label.
-\item \code{treatment_labels}: named list of single strings.
-\item \code{treatment_timepoints}: named list of single numeric values.
+\item \code{y_axis_label}: \code{character(1)} single string for the y-axis label.
+\item \code{time_unit}: \code{character(1)} single string used in the x-axis label.
+\item \code{treatment_labels}: \code{list(character(1))} named list of single strings.
+\item \code{treatment_timepoints}: \code{list(numeric(1))} named list of single numeric
+values.
 }
 
 If any treatment list is present, both must be present. The two lists must
-have identical name sets. Allowed names are the values of \code{meta[[condition]]}
-and the special name \code{"double_spline_plots"}, which generates a
-treatment line
-for the plots of limma category 2 and 3 (average difference between
-conditions
-and the interaction between condition and time).
+have identical name sets. Allowed names are the values of
+\code{meta[[condition]]} and the special name \code{"double_spline_plots"}, which
+generates a treatment line for the plots of limma category 2 and 3 (average
+difference between conditions and the interaction between condition and
+time).
 
 Vertical dashed lines are drawn at the given timepoints for facets whose
 level name matches a list name, and labeled with the corresponding string
@@ -92,8 +94,8 @@ Example:
 )
 }\if{html}{\out{</div>}}}
 
-\item{report_dir}{Character string specifying the directory path
-where the HTML report and any other output files should be saved.}
+\item{report_dir}{\code{character(1)}: Character string specifying the directory
+path where the HTML report and any other output files should be saved.}
 }
 \value{
 A named list of ggplot objects, where each element corresponds

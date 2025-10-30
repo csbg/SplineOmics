@@ -2,12 +2,12 @@
 % Please edit documentation in R/splineomics_object.R
 \name{update_splineomics}
 \alias{update_splineomics}
-\title{update_splineomics()}
+\title{Update the variables in a SplineOmics object}
 \usage{
 update_splineomics(splineomics, ...)
 }
 \arguments{
-\item{splineomics}{A SplineOmics object to be updated.}
+\item{splineomics}{\code{SplineOmics}: A SplineOmics object to be updated.}
 
 \item{...}{Named arguments with new values for fields to be updated or added.}
 }

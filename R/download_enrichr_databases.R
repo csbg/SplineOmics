@@ -7,16 +7,17 @@
 #' stored in a single file). This file has 3 columns: DB containing the database
 #' name, Geneset, with the genesets, and Gene, with the gene names.
 #'
-#' @param gene_set_lib A character vector of database names to download from
-#'                     Enrichr, for example: c("WikiPathways_2019_Human",
-#'                     "NCI-Nature_2016",)
-#' @param output_dir A string specifying the output directory where the
-#' `.tsv` file will be saved. Defaults to the current project directory
-#' as defined by `here::here()`.
+#' @param gene_set_lib `character()`: A character vector of database names to 
+#' download from Enrichr, for example: 
+#' \code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.
 #'
-#' @param filename Name of the output file (with file extension. Due to commas
-#'                 present in some terms, .tsv is recommended). When left out,
-#'                 the file is named all_databases_timestamp.tsv.
+#' @param output_dir `character(1)`: A string specifying the output directory 
+#' where the `.tsv` file will be saved. Defaults to the current project 
+#' directory as defined by `here::here()`.
+#'
+#' @param filename `character(1)`: Name of the output file (with file 
+#' extension). Due to commas present in some terms, `.tsv` is recommended. 
+#' When left out, the file is named `all_databases_timestamp.tsv`.
 #'
 #' @return
 #' A `data.frame` of gene set annotations with three columns:
@@ -29,6 +30,17 @@
 #'
 #' In addition to returning the `data.frame`, the function also writes the same
 #' table to disk as a `.tsv` file in the specified `output_dir`.
+#' 
+#' @examples
+#' if (interactive()) {
+#'   libs <- c("WikiPathways_2019_Human")
+#'   out <- download_enrichr_databases(
+#'     gene_set_lib = libs,
+#'     output_dir = tempdir(),
+#'     filename = "enrichr_demo.tsv"
+#'   )
+#'   head(out)
+#' }
 #'
 #' @importFrom here here
 #' @importFrom rlang .data

@@ -21,18 +21,34 @@ knitr::opts_chunk$set(
 
 # About this tutorial
 
-This tutorial demonstrates the **excursion-analysis** capabilities of the `SplineOmics` package by walking through a complete, real-world phosphoproteomics example from
+This tutorial demonstrates the **excursion-analysis** capabilities of the
+`SplineOmics` package by walking through a complete, real-world
+phosphoproteomics example from
 start to finish.
 
-In the context of time series data, an **excursion** refers to a **transient deviation from a baseline** — a concept borrowed from signal processing. These short-term, local shifts can reveal biologically meaningful events that are not captured by global trends.
+In the context of time series data, an **excursion** refers to a
+**transient deviation from a baseline** — a concept borrowed from signal
+processing. These short-term, local shifts can reveal biologically meaningful
+events that are not captured by global trends.
 
-Details of how excursions are detected are described in the section on the **PVC test**, a method specifically designed to identify such local patterns.
+Details of how excursions are detected are described in the section on the
+**PVC test**, a method specifically designed to identify such local patterns.
 
-While the core strength of `SplineOmics` lies in modeling **global temporal patterns** using smoothing splines, many biologically important phenomena present as **localized events**. These may not be well captured by standard spline fits due to their smooth and global nature.
+While the core strength of `SplineOmics` lies in modeling
+**global temporal patterns** using smoothing splines, many biologically
+important phenomena present as **localized events**. These may not be well
+captured by standard spline fits due to their smooth and global nature.
 
-For example, in phosphoproteomics data, you might observe a **sharp, temporary phosphorylation spike** at a specific timepoint following a stimulus — a pattern that returns to baseline shortly afterward. Such a transient peak can indicate a key signaling activation event that is **functionally critical**, but would be smoothed out or diluted in traditional spline-based analyses.
+For example, in phosphoproteomics data, you might observe a
+**sharp, temporary phosphorylation spike** at a specific timepoint following
+a stimulus — a pattern that returns to baseline shortly afterward. Such a
+transient peak can indicate a key signaling activation event that is
+**functionally critical**, but would be smoothed out or diluted in traditional
+spline-based analyses.
 
-To handle these scenarios, we developed the **PVC test** (described below), which is specifically designed to detect such **sharp, local excursions** in time-resolved omics data.
+To handle these scenarios, we developed the **PVC test** (described below),
+which is specifically designed to detect such **sharp, local excursions** in
+time-resolved omics data.
 
 ## Note 1
 
@@ -49,47 +65,68 @@ of `SplineOmics` are explained in the **get-started** vignette.
 
 # The PVC Test
 
-**PVC** stands for **P**eak, **V**alley, and **C**liff. The PVC test is a method to identify these distinct local patterns (called excursions) in time series data using a compound contrast approach within the **limma** framework.
+**PVC** stands for **P**eak, **V**alley, and **C**liff. The PVC test is a
+method to identify these distinct local patterns (called excursions) in time
+series data using a compound contrast approach within the **limma** framework.
 
 In this context:
 
-- A **peak** occurs when a timepoint is significantly **higher** than both its immediate neighbors.
-- A **valley** occurs when a timepoint is significantly **lower** than both its neighbors.
-- A **cliff** describes a sharp directional shift: when one neighbor is similar in value, but the other is **significantly different** (higher or lower).
+- A **peak** occurs when a timepoint is significantly **higher** than both its
+immediate neighbors.
+- A **valley** occurs when a timepoint is significantly **lower** than both
+its neighbors.
+- A **cliff** describes a sharp directional shift: when one neighbor is
+similar in value, but the other is **significantly different** 
+(higher or lower).
 
 
 ## Method
 
-The PVC analysis is implemented as a **rolling, compound contrast** applied across the time series. Specifically, a window of three consecutive timepoints is evaluated at a time:  
+The PVC analysis is implemented as a **rolling, compound contrast** applied
+across the time series. Specifically, a window of three consecutive timepoints
+is evaluated at a time:  
 `(Tᵢ₋₁, Tᵢ, Tᵢ₊₁)`  
 where `Tᵢ` is the center of the window.
 
-The first and last timepoints are excluded from this analysis, since they lack both left and right neighbors.
+The first and last timepoints are excluded from this analysis, since they
+lack both left and right neighbors.
 
 For each triplet, a contrast is defined as:
 
 2*Tᵢ - Tᵢ₋₁ - Tᵢ₊₁ 
 
-This contrast measures whether the center point `Tᵢ` deviates from both its neighbors in the same direction:
+This contrast measures whether the center point `Tᵢ` deviates from both its
+neighbors in the same direction:
 
-- If `Tᵢ` is **greater than both neighbors** → large positive contrast → indicates a **peak**
-- If `Tᵢ` is **lower than both neighbors** → large negative contrast → indicates a **valley**
-- If `Tᵢ` lies **between** its neighbors → effects cancel → contrast is near zero → **no signal**
+- If `Tᵢ` is **greater than both neighbors** → large positive contrast →
+indicates a **peak**
+- If `Tᵢ` is **lower than both neighbors** → large negative contrast → 
+indicates a **valley**
+- If `Tᵢ` lies **between** its neighbors → effects cancel → contrast is
+near zero → **no signal**
 
-This contrast is tested using `limma`, and the result is a p-value that indicates whether the observed pattern is statistically significant for each feature (e.g., gene, phosphosite).
+This contrast is tested using `limma`, and the result is a p-value that 
+indicates whether the observed pattern is statistically significant for each
+feature (e.g., gene, phosphosite).
 
 
 ## Multiple Testing Correction
 
-Because the test is performed independently at each center timepoint across all features, **multiple testing correction** is applied at the **timepoint level**. This ensures that significance is not inflated due to repeated testing across features.
+Because the test is performed independently at each center timepoint across
+all features, **multiple testing correction** is applied at the
+**timepoint level**. This ensures that significance is not inflated due to
+repeated testing across features.
 
-Importantly, PVC does **not** assess whether an entire feature contains a full peak/valley/cliff pattern over time — it evaluates **each timepoint independently** for such local patterns.
+Importantly, PVC does **not** assess whether an entire feature contains a 
+full peak/valley/cliff pattern over time — it evaluates
+**each timepoint independently** for such local patterns.
 
 
 
 # Details about the dataset
 
-The example dataset used here involves a **time-series phosphoproteomics experiment**,
+The example dataset used here involves a 
+**time-series phosphoproteomics experiment**,
 where CHO (chinese hamster ovary) cells were cultivated in three bioreactors
 (three biological replicates). The experiment includes the following
 setup:
