@@ -37,59 +37,39 @@ InputControl <- R6::R6Class("InputControl",
         #' checks specific aspects of the input arguments and raises an error if
         #' the validation fails.
         #'
-        #' The following validation methods are called in sequence:
-        #' - \code{self$check_data_and_meta()}
-        #' - \code{self$check_datas_and_metas()}
-        #' - \code{self$check_datas_descr()}
-        #' - \code{self$check_design_formula()}
-        #' - \code{self$check_mode()}
-        #' - \code{self$check_modes()}
-        #' - \code{self$check_designs_and_metas()}
-        #' - \code{self$check_spline_params()}
-        #' - \code{self$check_spline_test_configs()}
-        #' - \code{self$check_adj_pthresholds()}
-        #' - \code{self$check_clusters()}
-        #' - \code{self$check_time_unit()}
-        #' - \code{self$check_raw_data()}
-        #' - \code{self$check_report_dir()}
-        #' - \code{self$check_padjust_method()}
-        #' - \code{self$check_report_info()}
-        #' - \code{self$check_report()}
-        #' - \code{self$check_feature_name_columns()}
-        #'
         #' @return NULL. The function is used for its side effects of validating
         #' input
         #' arguments and raising errors if any validation fails.
         #'
         auto_validate = function() {
-            self$check_data_and_meta()
+            self$check_adj_pthresholds()
+            self$check_adj_pthresh_limma_category_2_3()
             self$check_annotation()
             self$check_alphas()
             self$check_batch_effects()
+            self$check_clusters()
+            self$check_design_formula()
+            self$check_data_and_meta()
             self$check_datas_and_metas()
             self$check_datas_descr()
-            self$check_top_tables()
-            self$check_design_formula()
-            self$check_robust_fit()
+            self$check_designs_and_metas()
             self$check_dream_params()
+            self$check_feature_name_columns()
+            self$check_genes()
             self$check_mode()
             self$check_modes()
-            self$check_designs_and_metas()
-            self$check_spline_params()
-            self$check_spline_test_configs()
-            self$check_adj_pthresholds()
-            self$check_adj_pthresh_limma_category_2_3()
-            self$check_clusters()
-            self$check_genes()
+            self$check_padjust_method()
             self$check_plot_info()
             self$check_plot_options()
             self$check_raw_data()
             self$check_report_dir()
-            self$check_padjust_method()
-            self$check_report_info()
             self$check_report()
+            self$check_report_info()
+            self$check_robust_fit()
+            self$check_spline_params()
+            self$check_spline_test_configs()
             self$check_support()
-            self$check_feature_name_columns()
+            self$check_top_tables()
             self$check_verbose()
         },
 
@@ -1287,102 +1267,116 @@ InputControl <- R6::R6Class("InputControl",
         #' @noRd
         #'
         #' @description
-        #' Verifies the `nr_clusters` argument provided to the object.
+        #' Verifies the `nr_clusters` argument provided to the
+        #' object.
         #'
         #' @details
-        #' * `nr_clusters` must be a list with exactly two named elements whose
-        #'   names match the two unique levels in `meta[[condition]]`.
-        #' * Each element must be a positive integer (e.g. 3) or a vector of
-        #'   positive integers (e.g. 2:6).
-        #'
+        #' * `nr_clusters` must be a list whose named elements
+        #'   match the unique levels in `meta[[condition]]`.
+        #' * Each element must be a positive integer (e.g. 3) or a
+        #'   vector of positive integers (e.g. 2:6).
         check_clusters = function() {
+            
             nr_clusters <- self$args[["nr_clusters"]]
             meta <- self$args[["meta"]]
             condition <- self$args[["condition"]]
-
+            
             # If any required field is missing, exit quietly
             if (any(vapply(
                 list(nr_clusters, meta, condition),
                 is.null,
-                logical(1)))
-                ) {
+                logical(1L)
+            ))) {
                 return(NULL)
             }
-
-            # --- Extract and validate condition levels (must be exactly 2) ---
+            
+            # --- Extract and validate condition levels ---
             cond_vals <- meta[[condition]]
             if (is.null(cond_vals)) {
-                stop_call_false("Column '", condition, "' not found in 'meta'.")
-            }
-            # Coerce to character to avoid factor level surprises
-            cond_levels <- sort(unique(as.character(cond_vals)))
-            n_levels <- length(cond_levels)
-            if (n_levels != 2L) {
                 stop_call_false(
-                    "Column '",
-                    condition,
-                    "' in 'meta' must have exactly 2 unique ",
-                    "values, but has ", n_levels, " (",
-                    paste(cond_levels, collapse = ", "), ")."
+                    "Column '", condition,
+                    "' not found in 'meta'."
                 )
             }
-
+            
+            cond_levels <- tryCatch(
+                sort(unique(as.character(cond_vals))),
+                error = function(e) NULL
+            )
+            
+            if (is.null(cond_levels)) {
+                stop_call_false(
+                    "Could not obtain condition values as a string ",
+                    "vector from 'meta[[condition]]'."
+                )
+            }
+            
             # --- Top-level type, length, and names of nr_clusters ---
             if (!is.list(nr_clusters)) {
                 stop_call_false(
-                    "'nr_clusters' must be a list with exactly two named",
+                    "'nr_clusters' must be a list with named ",
                     "elements."
                 )
             }
-            if (length(nr_clusters) != 2L) {
+            
+            if (length(nr_clusters) != length(cond_levels)) {
                 stop_call_false(
-                    "'nr_clusters' must have length 2, but has length ",
-                    length(nr_clusters), "."
+                    "'nr_clusters' must have length ",
+                    length(cond_levels),
+                    " to match the unique condition levels, but ",
+                    "has length ", length(nr_clusters), "."
                 )
             }
+            
             nms <- names(nr_clusters)
             if (is.null(nms) || any(is.na(nms)) || any(nms == "")) {
                 stop_call_false(
-                    "'nr_clusters' must be a named list; names must be",
-                    "non-empty."
+                    "'nr_clusters' must be a named list; names ",
+                    "must be non-empty."
                 )
             }
-            # Names must match the two condition levels exactly 
+            
+            # Names must match the condition levels exactly
             if (!setequal(nms, cond_levels)) {
                 stop_call_false(
-                    "Names of 'nr_clusters' must match levels in '",
-                    condition,
-                    "'. ",
-                    "Expected {", paste(cond_levels, collapse = ", "),
+                    "Names of 'nr_clusters' must match levels in ",
+                    "'", condition, "'. Expected {",
+                    paste(cond_levels, collapse = ", "),
                     "}, got {",
                     paste(nms, collapse = ", "), "}."
                 )
             }
-
+            
             # --- Element-wise validation ---
             for (i in seq_along(nr_clusters)) {
                 vec <- nr_clusters[[i]]
+                
                 if (!is.numeric(vec) || any(vec != as.integer(vec))) {
                     stop_call_false(
                         "Element '", nms[i],
-                        "' of 'nr_clusters' must be an integer vector",
-                        "(e.g. 3 or 2:6)."
+                        "' of 'nr_clusters' must be an integer ",
+                        "vector (e.g. 3 or 2:6)."
                     )
                 }
+                
                 if (any(vec <= 0)) {
                     stop_call_false(
-                        "All integers inside 'nr_clusters' must be positive ",
-                        "(problem at element '", nms[i], "')."
+                        "All integers inside 'nr_clusters' must be ",
+                        "positive (problem at element '",
+                        nms[i], "')."
                     )
                 }
+                
                 if (max(vec) > 100) {
                     stop_call_false(
-                        "Element '", nms[i], "' of 'nr_clusters' has a value (",
-                        max(vec), ") greater than the allowed maximum of 100."
+                        "Element '", nms[i],
+                        "' of 'nr_clusters' has a value (",
+                        max(vec),
+                        ") greater than the allowed maximum of 100."
                     )
                 }
             }
-
+            
             invisible(TRUE)
         },
 
@@ -2386,27 +2380,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 ))
             }
 
-            # Ensure the condition column has at most two levels
-            cond_vals <- meta[[condition]]
-            # Count distinct observed values (ignore unused factor levels)
-            n_levels <- length(unique(if (is.factor(cond_vals)) {
-                droplevels(cond_vals)
-            } else {
-                cond_vals
-            }))
-            if (n_levels > 2) {
-                levs <- sort(unique(as.character(cond_vals)))
-                msg <- sprintf(
-                    "The condition column '%s' must have at most two levels,
-          but found %d: %s",
-                    condition,
-                    n_levels,
-                    paste(levs, collapse = ", ")
-                )
-                stop_call_false(self$create_error_message(msg, data_meta_index))
-            }
-
-            # Check if the factor column is of appropriate type
+            # Check if the condition column is of appropriate type
             if (!is.factor(meta[[condition]]) &&
                 !is.character(meta[[condition]])) {
                 stop(
@@ -2417,6 +2391,38 @@ Level2Functions <- R6::R6Class("Level2Functions",
                     ),
                     call. = FALSE
                 )
+            }
+            
+            # Check for illegal characters in condition values
+            cond_vals <- as.character(meta[[condition]])
+            
+            illegal_pat <- "[^A-Za-z0-9_]"
+            has_illegal <- grepl(illegal_pat, cond_vals)
+            
+            if (any(has_illegal)) {
+                bad_vals <- unique(cond_vals[has_illegal])
+                
+                detail <- vapply(
+                    bad_vals,
+                    function(v) {
+                        chars <- regmatches(
+                            v,
+                            gregexpr(illegal_pat, v)
+                        )[[1]]
+                        paste("'", v, "' (bad: ", paste(chars, collapse = " "),
+                              ")", sep = "")
+                    },
+                    character(1)
+                )
+                
+                msg <- paste(
+                    "Values in column '", condition, "' contain illegal ",
+                    "characters.\nAllowed: A–Z, a–z, 0–9, _\nOffending:\n",
+                    paste0("  - ", detail, collapse = "\n"),
+                    sep = ""
+                )
+                
+                stop_call_false(msg)
             }
 
             if (!is.character(meta_batch2_column)) {

@@ -40,6 +40,15 @@ Each release section should follow the structure below:
 
 --------------------------------------------------------------------------------
 
+### [v0.4.0]
+
+#### Changed
+- SplineOmics now supports any amount of conditions (values in the meta
+  condition column).
+
+
+
+
 ### [v0.3.4]
 
 #### Changed

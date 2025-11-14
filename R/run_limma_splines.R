@@ -296,7 +296,7 @@ run_limma_splines <- function(
         limma_splines_result <- list(
             time_effect = isolated_within_level_top_tables
         )
-    } else if (mode == "integrated") {
+    } else {   # mode == integrated
         effects <- extract_effects(design)
 
         if (spline_params[["dof"]][1] == 0) { # auto-dof.
@@ -776,66 +776,103 @@ extract_within_level_time_effects <- function(
 }
 
 
-#' Extract pairwise contrasts for a condition from a fitted limma model
+#' Extract pairwise contrasts for all condition levels
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper function that extracts condition-only and interaction
-#' contrasts for all pairwise combinations of levels within a condition
-#' factor. Works with fitted limma or dream models stored in a structured
-#' list returned by a global model fitting function.
-#'
-#' @param fit_obj A list containing:
-#'   - `fit`: fitted model object from `lmFit()` or `dream()`
-#'   - `meta`: sample metadata used in the model
-#'   - `design_matrix`: the design matrix used for fitting
-#'   - `feature_names`: optional row annotations
-#'   - `condition`: the condition factor used
-#'   - `padjust_method`: method for p-value adjustment
-#'
-#' @param condition A string indicating the column in `meta` that contains
-#'   the condition factor for which pairwise contrasts should be extracted.
-#'
-#' @return A named list with two elements:
+#' Internal helper function that computes pairwise contrasts between
+#' all levels of a condition factor. For each level pair, two types of
+#' contrasts are extracted:
 #' \itemize{
-#'   \item \code{condition_only}: A dataframe with the average condition-level
-#'   differences for the single contrast between the two levels.
-#'   \item \code{condition_time}: A dataframe with the condition × time
-#'   interaction effects for the same contrast.
+#'   \item condition-only (average difference across time)
+#'   \item condition × time interaction (difference in temporal pattern)
 #' }
 #'
-#' Each is itself a list of results for all level combinations.
+#' This works with fitted limma or dream models as stored in the
+#' structured list returned by the package's model-fitting workflow.
 #'
+#' @param fit_obj A list containing:
+#'   \itemize{
+#'     \item \code{fit}: fitted model object from \code{lmFit()} or
+#'       \code{dream()}
+#'     \item \code{meta}: sample metadata used in the model
+#'     \item \code{design_matrix}: the design matrix used when fitting
+#'     \item \code{feature_names}: optional feature annotations
+#'     \item \code{padjust_method}: method for p-value adjustment
+#'   }
+#'
+#' @param condition A string naming the column of \code{meta} that
+#'   contains the condition factor. All unique levels of this factor are
+#'   tested in pairwise comparison.
+#'
+#' @param random_effects Logical; if \code{TRUE}, the function uses
+#'   dream-compatible extraction functions from \pkg{variancePartition}.
+#'
+#' @return A named list with two elements:
+#'   \itemize{
+#'     \item \code{condition_only}: a named list of data frames, one for
+#'       each level pair, containing the average condition-level
+#'       differences.
+#'     \item \code{condition_time}: a named list of data frames, one for
+#'       each level pair, containing condition × time interaction effects.
+#'   }
+#'
+#' Each element of these lists is a tibble/data frame corresponding to a
+#' single pairwise contrast, named according to the level comparison.
+#' 
 extract_between_level_contrasts <- function(
-    fit_obj,
-    condition,
-    random_effects) {
-    levels <- unique(fit_obj$meta[[condition]])
-
-    contrast_result <- extract_contrast_for_pair(
-        fit_obj = fit_obj,
-        condition = condition,
-        level_pair = levels,
-        random_effects = random_effects
-    )
-
-    # Name the results as before
-    cond_name <- paste0("avrg_diff_", levels[1], "_vs_", levels[2])
-    time_name <- paste0("time_interaction_", levels[1], "_vs_", levels[2])
-
-    cond_df <- contrast_result$condition_only
-    if (nrow(cond_df) > 0) cond_df$contrast <- cond_name
-
-    time_df <- contrast_result$condition_time
-    if (nrow(time_df) > 0) time_df$contrast <- time_name
-
+        fit_obj,
+        condition,
+        random_effects
+) {
+    cond_vals <- fit_obj$meta[[condition]]
+    levels_cond <- levels(factor(cond_vals))
+    
+    if (length(levels_cond) < 2L) {
+        stop(
+            "Need at least two levels in '", condition,
+            "' to extract between-level contrasts."
+        )
+    }
+    
+    # All pairwise combinations of condition levels
+    level_pairs <- combn(levels_cond, 2L, simplify = FALSE)
+    
+    condition_only_list <- list()
+    condition_time_list <- list()
+    
+    for (i in seq_along(level_pairs)) {
+        pair <- level_pairs[[i]]
+        
+        contrast_result <- extract_contrast_for_pair(
+            fit_obj = fit_obj,
+            condition = condition,
+            level_pair = pair,
+            random_effects = random_effects
+        )
+        
+        cond_name <- paste0("avrg_diff_", pair[1], "_vs_", pair[2])
+        time_name <- paste0("time_interaction_", pair[1], "_vs_", pair[2])
+        
+        cond_df <- contrast_result$condition_only
+        if (!is.null(cond_df) && nrow(cond_df) > 0L) {
+            cond_df$contrast <- cond_name
+            condition_only_list[[cond_name]] <- cond_df
+        }
+        
+        time_df <- contrast_result$condition_time
+        if (!is.null(time_df) && nrow(time_df) > 0L) {
+            time_df$contrast <- time_name
+            condition_time_list[[time_name]] <- time_df
+        }
+    }
+    
     list(
-        condition_only = cond_df,
-        condition_time = time_df
+        condition_only = condition_only_list,
+        condition_time = condition_time_list
     )
 }
-
 
 
 # Level 2 internal functions ---------------------------------------------------
@@ -1425,13 +1462,29 @@ build_spline_contrast <- function(
     } else {
         for (k in seq_len(dof)) {
             contrast_matrix[k, spline_terms[k]] <- 1
-
-            # Find interaction column dynamically
-            col_idx <- which(
-                grepl(spline_terms[k], design_cols) &
-                    grepl(paste0(condition, lev), design_cols)
+            # Try both possible interaction name orders:
+            # ConditionLev:Xk  and  Xk:ConditionLev
+            pattern1 <- paste0(
+                "^",
+                condition,
+                lev,
+                ":",
+                spline_terms[k],
+                "$"
             )
-            if (length(col_idx) != 1) {
+            pattern2 <- paste0(
+                "^",
+                spline_terms[k],
+                ":",
+                condition,
+                lev,
+                "$"
+            )
+            col_idx <- grep(pattern1, design_cols)
+            if (length(col_idx) == 0L) {
+                col_idx <- grep(pattern2, design_cols)
+            }
+            if (length(col_idx) != 1L) {
                 stop_call_false(
                     "Could not uniquely identify interaction term for ",
                     spline_terms[k], " and ", condition, lev
@@ -1501,8 +1554,8 @@ modify_limma_top_table <- function(
 
     # Convert feature_nr to integer
     top_table <- top_table |>
-        dplyr::mutate(feature_nr = as.integer(.data$feature_nr)) |>
-        dplyr::relocate(.data$feature_nr, .after = dplyr::last_col())
+        dplyr::mutate(feature_nr = as.integer(feature_nr)) |>
+        dplyr::relocate(feature_nr, .after = dplyr::last_col())
 
     # Sort and add feature names based on the feature_nr
     sorted_feature_names <- feature_names[top_table$feature_nr]
