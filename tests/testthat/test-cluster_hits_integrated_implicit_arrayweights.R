@@ -56,7 +56,6 @@ test_that("cluster_hits() returns correctly structured result", {
     splineomics <- SplineOmics::run_limma_splines(splineomics)
 
     # Inputs for clustering
-    adj_pthresholds <- c(0.05, 0.05)
     nr_clusters <- list(
         Exponential = 2:6,
         Stationary = 2
@@ -83,16 +82,13 @@ test_that("cluster_hits() returns correctly structured result", {
 
     clustering_results <- SplineOmics::cluster_hits(
         splineomics = splineomics,
-        adj_pthresholds = adj_pthresholds,
         nr_clusters = nr_clusters,
         genes = genes,
         plot_info = plot_info,
         plot_options = plot_options,
         raw_data = raw_data,
         report_dir = withr::local_tempdir(),
-        max_hit_number = 25,
-        adj_pthresh_avrg_diff_conditions = 0.05,
-        adj_pthresh_interaction_condition_time = 0.05
+        max_hit_number = 25
     )
 
     # cluster_hits() returns a list: cluster_table + plots
@@ -107,7 +103,7 @@ test_that("cluster_hits() returns correctly structured result", {
     # cluster_table: structure + minimal integrity checks
     cs <- clustering_results$cluster_table
     expect_s3_class(cs, c("tbl_df", "tbl", "data.frame"))
-
+    browser()
     # required metadata cols
     req_cols <- c("feature_nr", "feature_name", "gene")
     expect_true(all(req_cols %in% names(cs)))

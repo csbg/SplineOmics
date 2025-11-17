@@ -1116,106 +1116,96 @@ InputControl <- R6::R6Class("InputControl",
         },
 
 
-        #' Check Adjusted p-Thresholds
+        #' Validate Adjusted p-Value Thresholds
         #'
         #' @noRd
         #'
         #' @description
-        #' This function checks the validity of the adjusted p-thresholds
-        #'  vector,
-        #' ensuring that
-        #' all elements are numeric, greater than 0, and less than 1. If any of
-        #' these
-        #' conditions
-        #' are not met, the function stops execution and returns an error
-        #'  message
-        #' indicating the
-        #' offending elements.
+        #' Checks the validity of the three adjusted p-value thresholds used in
+        #'  the SplineOmics analysis:
         #'
-        #' @param adj_pthresholds A numeric vector of adjusted p-thresholds.
+        #' \itemize{
+        #'   \item \code{adj_pthresh_time_effect} — threshold for the
+        #'    time–effect tests
+        #'   \item \code{adj_pthresh_avrg_diff_conditions} — threshold for
+        #'    average differences between conditions (Cat2)
+        #'   \item \code{adj_pthresh_interaction_condition_time} — threshold
+        #'    for the interaction (Cat3)
+        #' }
         #'
-        #' @return Returns TRUE if all checks pass. Stops execution and
-        #'  returns an
-        #' error message if any check fails.
+        #' All three must be present, numeric, finite, scalar (length 1),
+        #'  strictly
+        #' greater than 0 and strictly less than 1.
+        #'
+        #' This function stops with a descriptive error message if any value is
+        #'  invalid.
+        #'
+        #' @return
+        #' Returns \code{TRUE} if all thresholds pass validation.
+        #' Stops with an informative error message otherwise.
         #'
         check_adj_pthresholds = function() {
-            thresh_timeeffect <- self$args[["adj_pthresholds"]]
-            thresh_avrdiff <- self$args[["adj_pthresh_avrg_diff_conditions"]]
-            thresh_interact <- 
-                self$args[["adj_pthresh_interaction_condition_time"]]
-
+            thresh_time <- self$args[["adj_pthresh_time_effect"]]
+            thresh_avr  <- self$args[["adj_pthresh_avrg_diff_conditions"]]
+            thresh_int  <- self$args[["adj_pthresh_interaction_condition_time"]]
+            
             required_args <- list(
-                adj_pthresholds                         = thresh_timeeffect,
-                adj_pthresh_avrg_diff_conditions        = thresh_avrdiff,
-                adj_pthresh_interaction_condition_time  = thresh_interact
+                adj_pthresh_time_effect               = thresh_time,
+                adj_pthresh_avrg_diff_conditions      = thresh_avr,
+                adj_pthresh_interaction_condition_time = thresh_int
             )
-
-            # If any is missing, do nothing (preserve your current behavior)
+            
+            # If any is missing, keep current behavior: do nothing
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
-            validate_vec <- function(name, x) {
-                if (!is.numeric(x) || !is.atomic(x) || !is.null(dim(x))) {
+            
+            validate_scalar <- function(name, x) {
+                
+                # must be numeric, atomic, not matrix/dataframe
+                if (!is.numeric(x) || length(x) != 1L || !is.atomic(x)) {
                     stop(
-                        paste0("'", name, "' must be a numeric vector."),
+                        sprintf("'%s' must be a single numeric value.", name),
                         call. = FALSE
                     )
                 }
-
-                if (length(x) == 0) {
+                
+                # must be finite
+                if (!is.finite(x)) {
                     stop(
-                        paste0("'", name, "' must have length >= 1."),
-                        call. = FALSE
-                    )
-                }
-
-                if (any(!is.finite(x))) {
-                    idx <- which(!is.finite(x))
-                    stop(
-                        paste0(
-                            "'", name, "' must not contain NA/NaN/Inf. ",
-                            "Offending indices: ", paste(idx, collapse = ", "),
-                            ". Values: ",
-                            paste(as.character(x[idx]), collapse = ", "),
-                            "."
+                        sprintf(
+                            "'%s' must be finite and not NA/NaN/Inf. Value: %s",
+                            name, as.character(x)
                         ),
                         call. = FALSE
                     )
                 }
-
-                if (any(x < 0)) {
-                    idx <- which(x < 0)
+                
+                # > 0
+                if (x <= 0) {
                     stop(
-                        paste0(
-                            "'", name, "' must have all elements > 0. ",
-                            "Offending indices: ", paste(idx, collapse = ", "),
-                            ". Values: ", paste(x[idx], collapse = ", "), "."
-                        ),
+                        sprintf("'%s' must be > 0. Value: %g", name, x),
                         call. = FALSE
                     )
                 }
-
-                if (any(x > 1)) {
-                    idx <- which(x > 1)
+                
+                # < 1
+                if (x >= 1) {
                     stop(
-                        paste0(
-                            "'", name, "' must have all elements < 1. ",
-                            "Offending indices: ", paste(idx, collapse = ", "),
-                            ". Values: ", paste(x[idx], collapse = ", "), "."
-                        ),
+                        sprintf("'%s' must be < 1. Value: %g", name, x),
                         call. = FALSE
                     )
                 }
-
+                
                 TRUE
             }
-
-            # Validate all three
-            invisible(lapply(names(required_args), function(nm) {
-                validate_vec(nm, required_args[[nm]])
-            }))
-
+            
+            # Validate all three thresholds
+            invisible(lapply(
+                names(required_args),
+                function(nm) validate_scalar(nm, required_args[[nm]])
+            ))
+            
             return(TRUE)
         },
 
@@ -1471,7 +1461,6 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             allowed <- unique(as.character(meta[[condition_column]]))
-            allowed <- c(allowed, "double_spline_plots")
 
             invalid_l <- setdiff(nms_l, allowed)
             invalid_t <- setdiff(nms_t, allowed)
@@ -1480,8 +1469,8 @@ InputControl <- R6::R6Class("InputControl",
                 stop(
                     paste0(
                         "Invalid names in treatment lists. Allowed names are",
-                        "values of `",
-                        condition_column, "` and 'double_spline_plots'."
+                        "the values of `",
+                        condition_column
                     ),
                     call. = FALSE
                 )

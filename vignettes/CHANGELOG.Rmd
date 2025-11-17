@@ -45,8 +45,18 @@ Each release section should follow the structure below:
 #### Changed
 - SplineOmics now supports any amount of conditions (values in the meta
   condition column).
-
-
+  
+- adj_pthresholds argument of cluster_hits() renamed to adj_pthresh_time_effect.
+  Now, it instead requires a single numeric input specifying the adj. p-value
+  treshold for all conditions (e.g. 0.05), and does not support anymore setting
+  a separate value for each condition. This is because using separate values 
+  break the uniformity of inference and introduces uncontrolled type I error 
+  inflation.
+  
+- plot_info argument of cluster_hits() now does not accept anymore the value
+  'double_spline_plots' in the treatment_labels and treatment_timepoints lists.
+  Instead, the treatment lines specified for the conditions will automatically
+  be applied to all pairwise comparisons where this condition appears.
 
 
 ### [v0.3.4]

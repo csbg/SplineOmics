@@ -497,15 +497,6 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
 ```{r prepare cluster_hits() arguments, eval = TRUE}
-# Important note: When you define parameters for the levels, always define them
-# in the order those levels appear in the meta condition column! Otherwise,
-# there will be a mixup!
-
-adj_pthresholds <- c(
-    0.05,
-    0.05
-)
-
 # The amount of clusters can be a fixed number (e.g. 6) or a range. When you
 # specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the
 # cluster_hits() function tries all those cluster numbers and picks the one with
@@ -522,13 +513,11 @@ plot_info <- list( # For the spline plots
     time_unit = "min", # our measurements were in minutes
     treatment_labels = list(
         Exponential = "feeding",
-        Stationary = "feeding",
-        double_spline_plots = "feeding"
+        Stationary = "feeding"
     ),
     treatment_timepoints = list(
         Exponential = 0,
-        Stationary = 0,
-        double_spline_plots = 0
+        Stationary = 0
     )
 )
 
@@ -555,14 +544,14 @@ dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
-    adj_pthresholds = adj_pthresholds,
+    adj_pthresh_time_effect = 0.05,
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
     genes = genes,
     plot_info = plot_info,
     plot_options = plot_options,
-    report_dir = report_dir,
-    adj_pthresh_avrg_diff_conditions = 0.05,
-    adj_pthresh_interaction_condition_time = 0.05
+    report_dir = report_dir
 )
 ```
 

@@ -106,17 +106,15 @@
 #'     condition2 = 2:6
 #'   )
 #'
-#' @param adj_pthresholds `numeric()`: Numeric vector of p-value thresholds for 
-#' hits in each top table. The order of the elements determines which 
-#' adj.p-value threshold is assigned to which condition (the first element gets 
-#' assigned to the first condition, the second to the second, etc.).
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
 #'
-#' @param adj_pthresh_avrg_diff_conditions `numeric(1)`: p-value threshold for 
-#' the results from the average difference of the condition limma result.
+#' @param adj_pthresh_avrg_diff_conditions `numeric(1)`: adj. p-value threshold
+#' for the limma average difference between conditions results (category 2).
 #'
-#' @param adj_pthresh_interaction_condition_time `numeric(1)`: p-value 
-#' threshold for the results from the interaction of condition and time limma 
-#' result.
+#' @param adj_pthresh_interaction_condition_time `numeric(1)`: adj. p-value 
+#' threshold for the limma interaction of condition and time results
+#' (category 3).
 #'
 #' @param min_effect_size `list`: A named list that specifies the minimum 
 #' effect size thresholds to consider a feature as biologically meaningful, in 
@@ -162,11 +160,11 @@
 #'
 #' If any treatment list is present, both must be present. The two lists must 
 #' have identical name sets. Allowed names are the values of 
-#' `meta[[condition]]` and the special name `"double_spline_plots"`, which 
-#' generates a treatment line for the plots of limma category 2 and 3 (average 
-#' difference between conditions and the interaction between condition and 
-#' time).
-#'
+#' `meta[[condition]]`. For the time effect spline plots of that condition, as
+#' well as for all pairwise comparisons of the average difference between 
+#' conditions and interaction condition time results where the mentioned
+#' condition appears, the treatment lines are inserted.
+#' 
 #' Vertical dashed lines are drawn at the given timepoints for facets whose 
 #' level name matches a list name, and labeled with the corresponding string 
 #' (e.g., feeding, temperature shift).
@@ -179,13 +177,11 @@
 #'   time_unit = "hours",
 #'   treatment_labels = list(
 #'     WT = "Feeding",
-#'     KO = "Temperature shift",
-#'     double_spline_plots = "Treatment line"
+#'     KO = "Temperature shift"
 #'   ),
 #'   treatment_timepoints = list(
 #'     WT = 12,
-#'     KO = 24,
-#'     double_spline_plots = 18
+#'     KO = 24
 #'   )
 #' )
 #' }
@@ -377,7 +373,7 @@
 #' out <- cluster_hits(
 #'     splineomics = toy_splineomics,
 #'     nr_clusters = nr_k,
-#'     adj_pthresholds = c(0.05, 0.05),
+#'     adj_pthresh_time_effect = 0.05,
 #'     adj_pthresh_avrg_diff_conditions = 0.05,
 #'     adj_pthresh_interaction_condition_time = 0.05,
 #'     min_effect_size = list(
@@ -401,7 +397,7 @@
 cluster_hits <- function(
     splineomics,
     nr_clusters,
-    adj_pthresholds = c(0.05),
+    adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     min_effect_size = list(
@@ -459,16 +455,9 @@ cluster_hits <- function(
     meta_batch2_column <- splineomics[["meta_batch2_column"]]
     feature_name_columns <- splineomics[["feature_name_columns"]]
 
-    # To set the default p-value threshold for ALL levels.
-    if (is.numeric(adj_pthresholds) &&
-        length(adj_pthresholds) == 1 && adj_pthresholds[1] == 0.05) {
-        levels <- unique(meta[[condition]])
-        adj_pthresholds <- rep(adj_pthresholds[1], length(levels))
-    }
-
     within_level_top_tables <- filter_top_tables(
         top_tables = top_tables,
-        adj_pthresholds = adj_pthresholds,
+        adj_pthresh_time_effect = adj_pthresh_time_effect,
         meta = meta,
         condition = condition
     )
@@ -489,7 +478,7 @@ cluster_hits <- function(
         predicted_timecurves,
         min_effect_sizes = min_effect_size
     )
-    
+
     if (
         (mode != "isolated") &&
             (adj_pthresh_avrg_diff_conditions > 0 ||
@@ -586,7 +575,7 @@ cluster_hits <- function(
             annotation = annotation,
             genes = genes,
             spline_params = spline_params,
-            adj_pthresholds = adj_pthresholds,
+            adj_pthresh_time_effect = adj_pthresh_time_effect,
             adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
             adj_pthresh_interaction_condition_time =
                 adj_pthresh_interaction_condition_time,
@@ -740,8 +729,8 @@ check_inputs_cluster_hits <- function(
 #'
 #' @param top_tables A list of limma top tables, where each top table
 #' corresponds to a specific level or comparison.
-#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds,
-#'   one for each level in the condition.
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
 #' @param meta A dataframe containing metadata for the RNA-seq data,
 #'   including the condition column used to identify levels.
 #' @param condition A character string specifying the name of the condition
@@ -769,7 +758,7 @@ check_inputs_cluster_hits <- function(
 #'
 filter_top_tables <- function(
     top_tables,
-    adj_pthresholds,
+    adj_pthresh_time_effect,
     meta,
     condition) {
     result <- check_between_level_pattern(top_tables)
@@ -797,11 +786,11 @@ filter_top_tables <- function(
             hit_indices <- get_level_hit_indices(
                 between_level_top_tables,
                 level,
-                adj_pthresholds
+                adj_pthresh_time_effect
             )
         } else { # within level
             hit_indices <- within_level_top_table[["feature_nr"]][
-                within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
+                within_level_top_table[["adj.P.Val"]] < adj_pthresh_time_effect
             ]
         }
 
@@ -1576,11 +1565,12 @@ get_category_2_and_3_hits <- function(
 #'                   such as gene and uniprotID, for example.
 #' @param genes Character vector containing the genes of the features.
 #' @param spline_params A list of spline parameters for the analysis.
-#' @param adj_pthresholds Numeric vector, containing a float < 1 > 0 as each
-#'                        value. There is one float for every level, and this is
-#'                        the adj. p-value threshold.
-#' @param adj_pthresh_avrg_diff_conditions Float
-#' @param adj_pthresh_interaction_condition_time Float
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
+#' @param adj_pthresh_avrg_diff_conditions adj. p-value threshold
+#' for the limma average difference between conditions results (category 2).
+#' @param adj_pthresh_interaction_condition_time adj. p-value threshold
+#' for the limma interaction condition time results (category 3).
 #' @param category_2_and_3_hits List of dataframes, where each df is the part
 #' of the toptable that contains the significant features of the respective
 #' limma result category (2 or 3).
@@ -1651,7 +1641,7 @@ make_clustering_report <- function(
     annotation,
     genes,
     spline_params,
-    adj_pthresholds,
+    adj_pthresh_time_effect,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction_condition_time,
     category_2_and_3_hits,
@@ -1765,7 +1755,7 @@ make_clustering_report <- function(
             header_info <- list(
                 header_name = header_name,
                 nr_hits = nr_hits,
-                adj_pvalue_threshold = adj_pthresholds[i]
+                adj_pvalue_threshold = adj_pthresh_time_effect
             )
 
             level_headers_info[[i]] <- header_info
@@ -1829,7 +1819,7 @@ make_clustering_report <- function(
                 predicted_timecurves = predicted_timecurves,
                 time_unit_label = time_unit_label,
                 plot_info = plot_info,
-                adj_pthreshold = adj_pthresholds[i],
+                adj_pthreshold = adj_pthresh_time_effect,
                 replicate_column = plot_options[["meta_replicate_column"]],
                 level = level,
                 raw_data = raw_data_level,
@@ -1924,7 +1914,7 @@ make_clustering_report <- function(
         topTables = topTables,
         category_2_and_3_hits = category_2_and_3_hits,
         enrichr_format = enrichr_format,
-        adj_pthresholds = adj_pthresholds,
+        adj_pthresh_time_effect = adj_pthresh_time_effect,
         adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
         adj_pthresh_interaction_condition_time =
             adj_pthresh_interaction_condition_time,
@@ -2476,15 +2466,22 @@ construct_cluster_table <- function(
     # Category 3: per contrast
     if (has_c3) {
         c3_hits <- category_2_and_3_hits$category_3_hits
+        ic_res  <- limma_splines_results$interaction_condition_time
         
-        for (cn in names(c3_hits)) {
+        # drive contrasts from the limma interaction tables,
+        # so we always create columns, even if there are zero hits
+        for (cn in names(ic_res)) {
             hit_tbl <- c3_hits[[cn]]
-            if (is.null(hit_tbl) || nrow(hit_tbl) == 0) next
             
-            sig_c3 <- hit_tbl |>
-                dplyr::transmute(feature_nr = .data$feature_nr) |>
-                dplyr::distinct() |>
-                dplyr::pull(.data$feature_nr)
+            # build vector of significant features (may be empty)
+            if (!is.null(hit_tbl) && nrow(hit_tbl) > 0) {
+                sig_c3 <- hit_tbl |>
+                    dplyr::transmute(feature_nr = .data$feature_nr) |>
+                    dplyr::distinct() |>
+                    dplyr::pull(.data$feature_nr)
+            } else {
+                sig_c3 <- integer(0)  # no hits -> all rows should become NA
+            }
             
             suffix <- sub("^time_interaction_", "", cn)
             parts <- strsplit(suffix, "_vs_")[[1]]
@@ -2538,12 +2535,11 @@ construct_cluster_table <- function(
 #'
 #' @description
 #' For \code{category_2_and_3_hits$category_3_hits}, add per-condition
-#' time-effect columns \code{cT} (single condition) or
-#' \code{cT_<name>} (multiple conditions), mapped by \code{feature_nr}
-#' into the corresponding effect-size vectors in
-#' \code{time_effect_effect_size}. Also add a combined interaction
-#' column \code{cDT} taken from \code{interaction_effect_size}, again
-#' mapped by \code{feature_nr}.
+#' time-effect columns \code{cT_<cond>} (one per condition in the
+#' contrast), mapped by \code{feature_nr} into the corresponding
+#' effect-size vectors in \code{time_effect_effect_size}. Also add a
+#' combined interaction column \code{cDT} taken from
+#' \code{interaction_effect_size}, again mapped by \code{feature_nr}.
 #'
 #' \code{category_2_and_3_hits$category_3_hits} is expected to be a
 #' named list of tibbles/data frames, one per pairwise contrast. Each
@@ -2559,15 +2555,26 @@ construct_cluster_table <- function(
 #'
 #' @param time_effect_effect_size
 #'   A named list of numeric vectors. Each vector holds per-feature
-#'   time-effect sizes for one condition level. Names are used to match
-#'   \code{Condition_<name>} tibbles in \code{within_level_top_tables}
-#'   and to create \code{cT_<name>} columns in the category 3 hit tables
-#'   when multiple conditions are present.
+#'   time-effect sizes for one condition level. Names are the "short"
+#'   condition labels (e.g. \code{"A"}, \code{"B"}, \code{"constant"})
+#'   as used in contrast suffixes like \code{"A_vs_B"}. These names are
+#'   used to:
+#'   \itemize{
+#'     \item create \code{cT_<cond>} columns in the Category 3 hit
+#'       tables (only for the two conditions participating in each
+#'       contrast), and
+#'     \item match within-level top tables named \code{Condition_<cond>}
+#'       in \code{within_level_top_tables}.
+#'   }
 #'
 #' @param interaction_effect_size
-#'   A numeric vector of per-feature interaction effect sizes. Values
-#'   are mapped into a \code{cDT} column in each Category 3 hit table
-#'   using \code{feature_nr}.
+#'   A named list of numeric vectors, one per contrast. Names are
+#'   contrast suffixes such as \code{"A_vs_B"}. Each vector holds
+#'   per-feature interaction effect sizes for that contrast, and is
+#'   mapped into a \code{cDT} column in the corresponding Category 3
+#'   hit table using \code{feature_nr}. For backward compatibility, a
+#'   single numeric vector is also accepted and is used for all
+#'   contrasts.
 #'
 #' @param category_2_and_3_hits
 #'   A list returned by \code{get_category_2_and_3_hits()}, containing
@@ -2577,7 +2584,7 @@ construct_cluster_table <- function(
 #'
 #' @param within_level_top_tables
 #'   A list of tibbles/data frames, typically named
-#'   \code{Condition_<name>}, each containing a numeric
+#'   \code{Condition_<cond>}, each containing a numeric
 #'   \code{feature_nr} column. These are within-level time-effect top
 #'   tables to which a \code{cT} column is added.
 #'
@@ -2587,8 +2594,8 @@ construct_cluster_table <- function(
 #'     \item \code{within_level_top_tables}: updated list of tibbles
 #'       with added \code{cT} columns.
 #'     \item \code{category_2_and_3_hits}: updated list with
-#'       \code{category_3_hits} tables now containing \code{cT}/
-#'       \code{cT_<name>} and \code{cDT} columns.
+#'       \code{category_3_hits} tables now containing per-contrast
+#'       \code{cT_<cond>} and \code{cDT} columns.
 #'   }
 #'
 add_effect_size_columns <- function(
@@ -2605,7 +2612,7 @@ add_effect_size_columns <- function(
         out
     }
     
-    # ---- Update category_3_hits (Category 3 tables) ----
+    # Category 3 hit tables (cT, cDT)
     if (!is.null(category_2_and_3_hits)) {
         cat3 <- category_2_and_3_hits[["category_3_hits"]]
         
@@ -2619,25 +2626,42 @@ add_effect_size_columns <- function(
                 cat3_list <- cat3
             }
             
-            cat3_list <- lapply(cat3_list, function(tbl) {
-                if (!is.data.frame(tbl)) {
-                    return(tbl)
-                }
-                if (!("feature_nr" %in% names(tbl))) {
-                    return(tbl)
+            cat3_names <- names(cat3_list)
+            if (is.null(cat3_names)) {
+                cat3_names <- paste0("contrast_", seq_along(cat3_list))
+            }
+            
+            for (k in seq_along(cat3_list)) {
+                tbl <- cat3_list[[k]]
+                
+                if (!is.data.frame(tbl) ||
+                    !("feature_nr" %in% names(tbl))) {
+                    cat3_list[[k]] <- tbl
+                    next
                 }
                 
-                # Add cT / cT_<name> columns
-                if (length(time_effect_effect_size) == 1L) {
+                contrast_name <- cat3_names[k]
+                # expected: "time_interaction_A_vs_B" or just "A_vs_B"
+                suffix <- sub("^time_interaction_", "", contrast_name)
+                parts <- strsplit(suffix, "_vs_")[[1]]
+                
+                # cT_<cond> columns: only for the two conditions in this
+                # contrast
+                if (length(time_effect_effect_size) == 1L &&
+                    length(parts) < 2L) {
+                    # degenerate single-condition case
                     vec <- time_effect_effect_size[[1L]]
                     tbl[["cT"]] <- get_by_index(
                         vec,
                         tbl[["feature_nr"]]
                     )
-                } else {
-                    for (nm in names(time_effect_effect_size)) {
-                        vec <- time_effect_effect_size[[nm]]
-                        col_nm <- paste0("cT_", nm)
+                } else if (length(parts) >= 2L) {
+                    for (cond_short in parts[1:2]) {
+                        if (!cond_short %in% names(time_effect_effect_size)) {
+                            next
+                        }
+                        vec <- time_effect_effect_size[[cond_short]]
+                        col_nm <- paste0("cT_", cond_short)
                         tbl[[col_nm]] <- get_by_index(
                             vec,
                             tbl[["feature_nr"]]
@@ -2645,14 +2669,28 @@ add_effect_size_columns <- function(
                     }
                 }
                 
-                # Add cDT column from interaction_effect_size
-                tbl[["cDT"]] <- get_by_index(
-                    interaction_effect_size,
-                    tbl[["feature_nr"]]
-                )
+                ## --- cDT column from interaction_effect_size (per contrast)
+                if (is.list(interaction_effect_size)) {
+                    ies_vec <- interaction_effect_size[[suffix]]
+                    if (is.null(ies_vec)) {
+                        ies_vec <- interaction_effect_size[[contrast_name]]
+                    }
+                } else {
+                    # backward/simple case: single vector for all contrasts
+                    ies_vec <- interaction_effect_size
+                }
                 
-                tbl
-            })
+                if (!is.null(ies_vec)) {
+                    tbl[["cDT"]] <- get_by_index(
+                        ies_vec,
+                        tbl[["feature_nr"]]
+                    )
+                } else {
+                    tbl[["cDT"]] <- NA_real_
+                }
+                
+                cat3_list[[k]] <- tbl
+            }
             
             if (cat3_was_df) {
                 category_2_and_3_hits[["category_3_hits"]] <- cat3_list[[1L]]
@@ -2662,7 +2700,7 @@ add_effect_size_columns <- function(
         }
     }
     
-    # ---- Update within_level_top_tables (within-level cT) ----
+    # within_level_top_tables: per-condition cT
     for (nm in names(time_effect_effect_size)) {
         tt_names <- names(within_level_top_tables)
         # match nm to suffix after first underscore in tt_names
@@ -2776,8 +2814,8 @@ check_between_level_pattern <- function(top_tables) {
 #' between-level top tables.
 #' @param level A string specifying the level to search for within the names
 #' of the data frames.
-#' @param adj_pthresholds A numeric vector of adjusted p-value thresholds for
-#' each data frame in `between_level_top_tables`.
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
 #'
 #' @return A vector of unique feature indices that meet the adjusted p-value
 #' threshold criteria for the specified level.
@@ -2792,7 +2830,7 @@ check_between_level_pattern <- function(top_tables) {
 get_level_hit_indices <- function(
     between_level_top_tables,
     level,
-    adj_pthresholds) {
+    adj_pthresh_time_effect) {
     unique_hit_indices <- c()
 
     # Loop through the elements of the list
@@ -2807,7 +2845,7 @@ get_level_hit_indices <- function(
 
             # Find the row indices that meet the condition
             hit_indices <-which(
-                within_level_top_table[["adj.P.Val"]] < adj_pthresholds[i]
+                within_level_top_table[["adj.P.Val"]] < adj_pthresh_time_effect
                 )
 
             # Extract the feature indices from the identified rows
@@ -3808,7 +3846,7 @@ plot_spline_comparisons <- function(
         max_n = max_hit_number
     )
     
-    # (Optional) sanity check: ensure features exist in prediction matrices
+    # sanity check: ensure features exist in prediction matrices
     if (!is.null(rownames(pred_mat_1))) {
         features_to_plot <- features_to_plot[
             features_to_plot$feature_names %in% rownames(pred_mat_1) &
@@ -4196,7 +4234,8 @@ plot_spline_comparisons <- function(
             result <- maybe_add_dashed_lines(
                 p = p,
                 plot_info = plot_info,
-                level = "double_spline_plots",
+                condition_1 = condition_1,
+                condition_2 = condition_2,
                 y_pos = y_pos_label,
                 horizontal_labels = TRUE
             )
@@ -4374,7 +4413,8 @@ prepare_gene_lists_for_enrichr <- function(
 #' @param plots_sizes A list of integers specifying the size of each plot.
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters.
-#' @param adj_pthresholds Float vector with values for any level for adj.p.tresh
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
 #' @param adj_pthresh_avrg_diff_conditions Float
 #' @param adj_pthresh_interaction_condition_time Float
 #' @param row_counts_dict A nested list containing row counts for dataframes
@@ -4402,7 +4442,7 @@ build_cluster_hits_report <- function(
     plots_sizes,
     level_headers_info,
     spline_params,
-    adj_pthresholds,
+    adj_pthresh_time_effect,
     adj_pthresh_avrg_diff_conditions,
     adj_pthresh_interaction_condition_time,
     category_2_and_3_hit_counts,
@@ -4571,7 +4611,7 @@ build_cluster_hits_report <- function(
                     "</div>"
                 )
             } else { # element_name == "individual_spline_plots"
-                adjusted_p_val <- adj_pthresholds[level_index]
+                adjusted_p_val <- adj_pthresh_time_effect
                 header_text <- "Individual Significant Features (Hits) Splines"
                 asterisks_definition <- 
                     generate_asterisks_definition(adjusted_p_val)
@@ -4645,32 +4685,30 @@ build_cluster_hits_report <- function(
         pb$tick()
     }
     pb$terminate()
-
-    # Add sections for limma_result_2_and_3_plots
+    
+    # Avrg diff conditions & interaction condition time (per contrast)
     if (length(limma_result_2_and_3_plots) > 0) {
-        # Create a new main header for the limma result plots
+        # Main header for the whole limma section
         header_index <- header_index + 1
-
-        # Add the main header and anchor it
+        
         limma_main_header <- sprintf(
             "<h2 style='%s' id='section%d'>%s</h2>",
             section_header_style,
             header_index,
             "Avrg diff conditions & interaction condition time"
         )
-
+        
         html_content <- paste(
             html_content,
             limma_main_header,
             sep = "\n"
         )
-
-        # Define the asterisks definition for both adjusted p-values,
-        # centered, with larger p-value text
+        
+        # Asterisks definitions (shared for all contrasts)
         asterisks_definition_avrg_diff <- paste(
             "<div style='text-align:center; margin-bottom: 20px;'>",
-            "<b><span style='font-size:24pt;
-      '>Asterisks definition (Average Diff Conditions):</span></b><br>",
+            "<b><span style='font-size:24pt;",
+            "'>Asterisks definition (Average Diff Conditions):</span></b><br>",
             paste(
                 "<span style='font-size:18pt;'>Adj. p-value <",
                 adj_pthresh_avrg_diff_conditions,
@@ -4701,11 +4739,11 @@ build_cluster_hits_report <- function(
             "</div>",
             sep = "\n"
         )
-
+        
         asterisks_definition_interaction <- paste(
             "<div style='text-align:center; margin-bottom: 40px;'>",
-            "<b><span style='font-size:24pt;
-      '>Asterisks definition (Interaction):</span></b><br>",
+            "<b><span style='font-size:24pt;",
+            "'>Asterisks definition (Interaction):</span></b><br>",
             paste(
                 "<span style='font-size:18pt;'>Adj. p-value <",
                 adj_pthresh_interaction_condition_time,
@@ -4736,16 +4774,15 @@ build_cluster_hits_report <- function(
             "</div>",
             sep = "\n"
         )
-
-        # Add the asterisks definitions to the HTML content
+        
         html_content <- paste(
             html_content,
             asterisks_definition_avrg_diff,
             asterisks_definition_interaction,
             sep = "\n"
         )
-
-        # Add an entry in the table of contents for this new section
+        
+        # TOC entry for the whole limma section
         toc_entry <- sprintf(
             "<li style='%s'><a href='#section%d'>%s</a></li>",
             toc_style,
@@ -4757,93 +4794,108 @@ build_cluster_hits_report <- function(
             toc_entry,
             sep = "\n"
         )
-
-        comparison_name <- names(limma_result_2_and_3_plots)[1]
-
-        # Create a subheader for this single comparison
-        header_index <- header_index + 1
-        subheader <- sprintf(
-            "<h3 style='font-size: 3.5em; color: #001F3F; text-align: center;'
-      id='section%d'>%s</h3>",
-            header_index,
-            comparison_name
-        )
-
-        # Access row counts directly
-        avrg_diff_hits <- category_2_and_3_hit_counts[["category_2"]]
-        interaction_hits <- category_2_and_3_hit_counts[["category_3"]]
-
-        # Create the HTML for hits
-        hits_info <- sprintf(
-            paste0(
-                "<p style='font-size: 2em; text-align: center;'>",
-                "Avrg diff conditions hits: %d</p>",
-                "<p style='font-size: 2em; text-align: center;'>",
-                "Interaction condition time hits: %d</p>",
-                "<hr>"
-            ),
-            avrg_diff_hits,
-            interaction_hits
-        )
-
-        html_content <- paste(
-            html_content,
-            subheader,
-            hits_info,
-            sep = "\n"
-        )
-
-        # Add an entry in the TOC
-        toc_entry <- paste0(
-            "<li style='margin-left: 30px; font-size: 30px;'>",
-            "<a href='#section",
-            header_index,
-            "'>",
-            comparison_name,
-            "</a></li>"
-        )
-
-        toc <- paste(
-            toc,
-            toc_entry,
-            sep = "\n"
-        )
-
-        # Extract plots + feature names
-        comparison <- limma_result_2_and_3_plots[[comparison_name]]
-        comparison_plots <- comparison$plots
-        comparison_feature_names <- comparison$feature_names
-
-        # Iterate through each plot and its feature name
-        for (i in seq_along(comparison_plots)) {
-            # Feature name above plot
-            feature_name_div <- sprintf(
-                '<div style="text-align: center;
-    font-size: 36px; margin-bottom: 10px;">%s</div>',
-                comparison_feature_names[[i]]
+        
+        # Per-contrast subsections
+        c2_counts <- category_2_and_3_hit_counts[["category_2"]]
+        c3_counts <- category_2_and_3_hit_counts[["category_3"]]
+        
+        for (comparison_name in names(limma_result_2_and_3_plots)) {
+            # Build the full title including the comparison name
+            header_index <- header_index + 1
+            subsection_title <- comparison_name
+            
+            subheader <- sprintf(
+                "<h3 style='font-size: 3.5em;
+                color: #001F3F; text-align: center;'id='section%d'>%s</h3>",
+                header_index,
+                subsection_title
             )
-
+            
+            # map suffix (e.g. "A_vs_B") to count names
+            avrg_key <- paste0("avrg_diff_", comparison_name)
+            inter_key <- paste0("time_interaction_", comparison_name)
+            
+            avrg_diff_hits <- if (!is.null(c2_counts) &&
+                                  avrg_key %in% names(c2_counts)) {
+                c2_counts[[avrg_key]]
+            } else {
+                0L
+            }
+            
+            interaction_hits <- if (!is.null(c3_counts) &&
+                                    inter_key %in% names(c3_counts)) {
+                c3_counts[[inter_key]]
+            } else {
+                0L
+            }
+            
+            hits_info <- sprintf(
+                paste0(
+                    "<p style='font-size: 2em; text-align: center;'>",
+                    "Avrg diff conditions hits: %d</p>",
+                    "<p style='font-size: 2em; text-align: center;'>",
+                    "Interaction condition time hits: %d</p>",
+                    "<hr>"
+                ),
+                avrg_diff_hits,
+                interaction_hits
+            )
+            
             html_content <- paste(
                 html_content,
-                feature_name_div,
+                subheader,
+                hits_info,
                 sep = "\n"
             )
-
-            # Insert plot
-            result <- process_plots(
-                plots_element = comparison_plots[[i]],
-                plots_size = 1.5,
-                html_content = html_content,
-                toc = toc,
-                header_index = header_index,
-                element_name = ""
+            
+            # TOC entry for this comparison
+            toc_entry <- paste0(
+                "<li style='margin-left: 30px; font-size: 30px;'>",
+                "<a href='#section",
+                header_index,
+                "'>",
+                subsection_title,
+                "</a></li>"
             )
-
-            html_content <- result$html_content
-            toc <- result$toc
+            toc <- paste(
+                toc,
+                toc_entry,
+                sep = "\n"
+            )
+            
+            # Extract plots + feature names for this comparison
+            comparison <- limma_result_2_and_3_plots[[comparison_name]]
+            comparison_plots <- comparison$plots
+            comparison_feature_names <- comparison$feature_names
+            
+            for (i in seq_along(comparison_plots)) {
+                feature_name_div <- sprintf(
+                    '<div style="text-align: center;
+    font-size: 36px; margin-bottom: 10px;">%s</div>',
+                    comparison_feature_names[[i]]
+                )
+                
+                html_content <- paste(
+                    html_content,
+                    feature_name_div,
+                    sep = "\n"
+                )
+                
+                result <- process_plots(
+                    plots_element = comparison_plots[[i]],
+                    plots_size = 1.5,
+                    html_content = html_content,
+                    toc = toc,
+                    header_index = header_index,
+                    element_name = ""
+                )
+                
+                html_content <- result$html_content
+                toc <- result$toc
+            }
         }
     }
-
+    
     generate_and_write_html(
         toc = toc,
         html_content = html_content,
@@ -5785,64 +5837,141 @@ plot_single_and_mean_splines <- function(
 #'
 #' @description
 #' This internal function checks whether there are valid treatment
-#' timepoints and labels in the `plot_info` list. If found, it adds
-#' dashed vertical lines and their corresponding x-axis values to the plot.
+#' timepoints and labels in the `plot_info` list and, if so, adds
+#' dashed vertical lines (and corresponding legend entries) to a
+#' ggplot object.
 #'
-#' @param p A ggplot object. The plot to which dashed lines and labels
-#' will be added.
-#' @param plot_info A list containing the treatment timepoints and
-#' treatment labels. Treatment timepoints and labels can either be
-#' unnamed elements or named lists where each element corresponds
-#' to a different `level`.
-#' @param level A character string. Used to extract the treatment
-#' timepoints and labels when they are stored in named lists.
+#' There are two modes of operation:
+#' \itemize{
+#'   \item \strong{Level-specific mode}: if `level` is not `NA`, the
+#'     function looks for entries named `level` in
+#'     `plot_info$treatment_labels` and `plot_info$treatment_timepoints`.
+#'     If both are present and valid, a single set of dashed lines is
+#'     added for that level.
+#'
+#'   \item \strong{Pairwise mode}: if `level` is `NA`, the function
+#'     instead looks for entries named `condition_1` and `condition_2`
+#'     (if provided) in `plot_info$treatment_labels` and
+#'     `plot_info$treatment_timepoints`. For each condition that is
+#'     present in both lists, its treatment lines are added. This can
+#'     result in up to two sets of treatment lines (one per condition).
+#' }
+#'
+#' In all cases, treatment labels and timepoints must be non-empty and
+#' non-`NA`. When multiple sets are combined (pairwise mode), all
+#' labels and timepoints are concatenated and passed together to
+#' `add_dashed_lines()`. A color is assigned to each treatment label
+#' using `scales::hue_pal()`, and the resulting named color vector is
+#' returned for use in the plot's legend.
+#'
+#' @param p A ggplot object to which dashed lines and labels may be
+#'   added.
+#' @param plot_info A list containing treatment metadata. It is expected
+#'   to contain:
+#'   \itemize{
+#'     \item `treatment_labels`: a named list or vector of labels.
+#'     \item `treatment_timepoints`: a named list or vector of numeric
+#'       timepoints.
+#'   }
+#'   When used in level-specific or pairwise mode, `treatment_labels`
+#'   and `treatment_timepoints` must be named, with names matching
+#'   `level`, `condition_1`, and/or `condition_2`.
+#' @param level A character string or `NA`. When not `NA`, used to look
+#'   up level-specific treatment labels and timepoints. When `NA`, the
+#'   function instead checks `condition_1` and `condition_2`.
+#' @param condition_1 A character string or `NA`. When `level` is `NA`,
+#'   this is used as a name to look up treatment labels and timepoints
+#'   for the first condition.
+#' @param condition_2 A character string or `NA`. When `level` is `NA`,
+#'   this is used as a name to look up treatment labels and timepoints
+#'   for the second condition.
 #' @param y_pos A numeric value specifying the y-axis position where
-#' the text labels should be placed. Defaults to 1.
-#' @param horizontal_labels Boolean flag indicating whether to have a vertical
-#' label (default) or horizontal label.
+#'   the text labels should be placed.
+#' @param horizontal_labels Logical flag indicating whether to place
+#'   the treatment labels horizontally (`TRUE`) or vertically
+#'   (`FALSE`, default).
 #'
-#' @return A list containing:
-#' - `p`: The ggplot object with possibly added dashed lines and labels.
-#' - `treatment_colors`: A named vector of colors used for the treatment labels.
+#' @return A list with components:
+#'   \itemize{
+#'     \item `p`: The ggplot object with possibly added dashed lines
+#'       and labels.
+#'     \item `treatment_colors`: A named character vector of colors
+#'       used for the treatment labels. Names correspond to the label
+#'       strings.
+#'   }
 #'
 #' @importFrom scales hue_pal
 #'
 maybe_add_dashed_lines <- function(
-    p,
-    plot_info,
-    level,
-    y_pos = 1,
-    horizontal_labels = FALSE) {
+        p,
+        plot_info,
+        level = NA,
+        condition_1 = NA,
+        condition_2 = NA,
+        y_pos = 1,
+        horizontal_labels = FALSE) {
+    
     treatment_colors <- c()
-
+    
     labs <- plot_info$treatment_labels
-    tps <- plot_info$treatment_timepoints
-
-    # Require explicit naming and presence of `level` in both lists
-    if (is.null(labs) ||
-        is.null(tps) ||
-        is.null(names(labs)) ||
-        is.null(names(tps)) ||
-        !(level %in% names(labs)) ||
-        !(level %in% names(tps))) {
+    tps  <- plot_info$treatment_timepoints
+    
+    # If there is no treatment info at all, nothing to do
+    if (is.null(labs) || is.null(tps)) {
         return(list(p = p, treatment_colors = treatment_colors))
     }
-
-    # Extract values for this level
-    chosen_labels <- as.character(labs[[level]])
-    chosen_tps <- as.numeric(tps[[level]])
-
-    # Skip if empty or NA
-    if (length(chosen_labels) == 0 ||
-        length(chosen_tps) == 0 ||
-        anyNA(chosen_labels) ||
-        anyNA(chosen_tps)) {
+    
+    # Helper to extract labels/timepoints for a single name
+    extract_for_name <- function(nm) {
+        if (is.null(nm) || is.na(nm)) {
+            return(list(labels = character(0), tps = numeric(0)))
+        }
+        if (is.null(names(labs)) || is.null(names(tps))) {
+            return(list(labels = character(0), tps = numeric(0)))
+        }
+        if (!(nm %in% names(labs)) || !(nm %in% names(tps))) {
+            return(list(labels = character(0), tps = numeric(0)))
+        }
+        
+        lbls <- as.character(labs[[nm]])
+        tpts <- as.numeric(tps[[nm]])
+        
+        if (length(lbls) == 0L ||
+            length(tpts) == 0L ||
+            anyNA(lbls) ||
+            anyNA(tpts)) {
+            return(list(labels = character(0), tps = numeric(0)))
+        }
+        
+        list(labels = lbls, tps = tpts)
+    }
+    
+    chosen_labels <- character(0)
+    chosen_tps    <- numeric(0)
+    
+    if (!is.na(level)) {
+        # Level-specific mode: use only `level`
+        res <- extract_for_name(level)
+        chosen_labels <- res$labels
+        chosen_tps    <- res$tps
+    } else {
+        # Pairwise mode: look at condition_1 and condition_2
+        res1 <- extract_for_name(condition_1)
+        res2 <- extract_for_name(condition_2)
+        
+        chosen_labels <- c(res1$labels, res2$labels)
+        chosen_tps    <- c(res1$tps,    res2$tps)
+    }
+    
+    # If nothing valid was found, return unchanged
+    if (length(chosen_labels) == 0L ||
+        length(chosen_tps) == 0L) {
         return(list(p = p, treatment_colors = treatment_colors))
     }
-
+    
     treatment_colors <- scales::hue_pal()(length(chosen_labels))
     names(treatment_colors) <- chosen_labels
-
+    
     p <- add_dashed_lines(
         p = p,
         treatment_timepoints = chosen_tps,
@@ -5850,14 +5979,12 @@ maybe_add_dashed_lines <- function(
         y_pos = y_pos,
         horizontal_labels = horizontal_labels
     )
-
+    
     list(
         p = p,
         treatment_colors = treatment_colors
     )
 }
-
-
 
 
 #' Generate Asterisks Definition HTML

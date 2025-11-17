@@ -7,7 +7,7 @@
 cluster_hits(
   splineomics,
   nr_clusters,
-  adj_pthresholds = c(0.05),
+  adj_pthresh_time_effect = 0.05,
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05,
   min_effect_size = list(time_effect = 0, avg_diff_cond = 0, interaction_cond_time = 0),
@@ -119,17 +119,15 @@ condition1 = 4,
 condition2 = 2:6
 )}
 
-\item{adj_pthresholds}{\code{numeric()}: Numeric vector of p-value thresholds for
-hits in each top table. The order of the elements determines which
-adj.p-value threshold is assigned to which condition (the first element gets
-assigned to the first condition, the second to the second, etc.).}
+\item{adj_pthresh_time_effect}{\code{numeric(1)}: adj. p-value threshold
+for the limma time effect results (category 1).}
 
-\item{adj_pthresh_avrg_diff_conditions}{\code{numeric(1)}: p-value threshold for
-the results from the average difference of the condition limma result.}
+\item{adj_pthresh_avrg_diff_conditions}{\code{numeric(1)}: adj. p-value threshold
+for the limma average difference between conditions results (category 2).}
 
-\item{adj_pthresh_interaction_condition_time}{\code{numeric(1)}: p-value
-threshold for the results from the interaction of condition and time limma
-result.}
+\item{adj_pthresh_interaction_condition_time}{\code{numeric(1)}: adj. p-value
+threshold for the limma interaction of condition and time results
+(category 3).}
 
 \item{min_effect_size}{\code{list}: A named list that specifies the minimum
 effect size thresholds to consider a feature as biologically meaningful, in
@@ -177,10 +175,10 @@ values.
 
 If any treatment list is present, both must be present. The two lists must
 have identical name sets. Allowed names are the values of
-\code{meta[[condition]]} and the special name \code{"double_spline_plots"}, which
-generates a treatment line for the plots of limma category 2 and 3 (average
-difference between conditions and the interaction between condition and
-time).
+\code{meta[[condition]]}. For the time effect spline plots of that condition, as
+well as for all pairwise comparisons of the average difference between
+conditions and interaction condition time results where the mentioned
+condition appears, the treatment lines are inserted.
 
 Vertical dashed lines are drawn at the given timepoints for facets whose
 level name matches a list name, and labeled with the corresponding string
@@ -194,13 +192,11 @@ plot_info <- list(
   time_unit = "hours",
   treatment_labels = list(
     WT = "Feeding",
-    KO = "Temperature shift",
-    double_spline_plots = "Treatment line"
+    KO = "Temperature shift"
   ),
   treatment_timepoints = list(
     WT = 12,
-    KO = 24,
-    double_spline_plots = 18
+    KO = 24
   )
 )
 }}
@@ -403,7 +399,7 @@ nr_k <- list(WT = 2L, KO = 2L)
 out <- cluster_hits(
     splineomics = toy_splineomics,
     nr_clusters = nr_k,
-    adj_pthresholds = c(0.05, 0.05),
+    adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     min_effect_size = list(

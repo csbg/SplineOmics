@@ -33,8 +33,8 @@
 #'                       of background genes.
 #' @param level_headers_info A list of header information for each level.
 #' @param spline_params A list of spline parameters, such as dof and type.
-#' @param adj_pthresholds Numeric vector with the values for the adj.p.tresholds
-#'                        for each level.
+#' @param adj_pthresh_time_effect `numeric(1)`: adj. p-value threshold
+#' for the limma time effect results (category 1).
 #' @param adj_pthresh_avrg_diff_conditions Float, only for cluster_hits()
 #' @param adj_pthresh_interaction_condition_time Float, only for cluster_hits()
 #' @param report_type A character string specifying the report type
@@ -76,7 +76,7 @@ generate_report_html <- function(
     enrichr_format = NA,
     level_headers_info = NA,
     spline_params = NA,
-    adj_pthresholds = NA,
+    adj_pthresh_time_effect = NA,
     adj_pthresh_avrg_diff_conditions = NA, # only for cluster_hits()
     adj_pthresh_interaction_condition_time = NA, # only for cluster_hits()
     report_type = "explore_data",
@@ -299,7 +299,7 @@ generate_report_html <- function(
         # names of Excel files) --> every df becomes a sheet.
         category_2_and_3_hits <- truncate_hit_labels(category_2_and_3_hits)
     }
-    browser()
+
     for (field in download_fields) {
         base64_df <- process_field(
             field = field,
@@ -443,7 +443,7 @@ generate_report_html <- function(
             plots_sizes = plots_sizes,
             level_headers_info = level_headers_info,
             spline_params = spline_params,
-            adj_pthresholds = adj_pthresholds,
+            adj_pthresh_time_effect = adj_pthresh_time_effect,
             adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
             adj_pthresh_interaction_condition_time =
                 adj_pthresh_interaction_condition_time,
@@ -1137,22 +1137,39 @@ get_header_section <- function(
 }
 
 
-#' Encode DataFrame to Base64 for HTML Embedding
+#' Encode Data Frame or List of Data Frames to Base64 (Excel) for HTML Embedding
 #'
 #' @noRd
 #'
 #' @description
-#' This function takes a dataframe as input and returns a base64 encoded
-#' CSV object. The encoded object can be embedded into an HTML document
-#' directly, with a button to download the file without pointing to a
-#' local file.
+#' This function accepts either:
+#' \itemize{
+#'   \item a single data frame/tibble, or
+#'   \item a \strong{named list of data frames} (e.g., per-contrast hit tables),
+#' }
+#' and converts the input into a Base64-encoded Excel (\code{.xlsx}) file.
 #'
-#' @param df A dataframe to be encoded.
-#' @param report_type (Optional) A string specifying for which report generation
-#'                    this function is called. Generates different Excel sheet
-#'                    names based on the report_type.
+#' The encoded Excel file is returned as a \strong{data URI string}, suitable
+#' for embedding directly in HTML documents as a \code{download=} link.
 #'
-#' @return A character string containing the base64 encoded CSV data.
+#' When a list of data frames is provided, each element becomes a separate
+#' sheet in the Excel file. Sheet names are taken from the list names and
+#' sanitized to comply with Excel's restrictions (forbidden characters and
+#' 31-character limit).
+#'
+#' This function is fully backward compatible: it supports legacy flat
+#' data-frame inputs as well as the new multi-contrast nested structures in
+#' SplineOmics.
+#'
+#' @param df A data frame/tibble, or a \strong{list of data frames}. Lists
+#'   must contain only data frames; otherwise an error is thrown.
+#'
+#' @param report_type (Optional) A string indicating the report context.
+#'   Currently used only to adjust sheet naming conventions in specific
+#'   reporting workflows.
+#'
+#' @return A character string containing a Base64-encoded Excel file,
+#'   prefixed as a data URI (suitable for embedding in HTML).
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom base64enc base64encode
@@ -1195,13 +1212,10 @@ encode_df_to_base64 <- function(
     } else if (is.list(df) && all(vapply(df, is.data.frame, logical(1)))) {
         nm <- names(df)
         if (is.null(nm)) nm <- paste0("Sheet", seq_along(df))
-
-        # keep your special naming if needed
-        if (!is.na(report_type) && identical(report_type, "run_ora")) {
-            nm <- make.unique(nm)
-        } else {
-            nm <- make.unique(nm)
-        }
+        
+        # strip known prefixes at the beginning of the name, if present
+        nm <- sub("^(time_interaction_|Condition_|avrg_diff_)", "", nm)
+        nm <- make.unique(nm)
         nm <- sanitize_sheet(nm)
 
         # apply sanitize_df to each dataframe
@@ -1231,62 +1245,75 @@ encode_df_to_base64 <- function(
 }
 
 
-#' Count Rows in Category 2 and 3 Dataframes
+#' Count Rows in Category 2 and 3 Hit Tables (per contrast)
 #'
 #' @noRd
 #'
 #' @description
-#' This function processes the **flat list** `category_2_and_3_hits`
-#' (with two data frames: `category_2_hits` and `category_3_hits`)
-#' to count the number of rows in each. If an `adj.P.Val` column is
-#' present, rows with `NA` in this column are excluded before counting.
+#' This function processes the nested list `category_2_and_3_hits`,
+#' where `category_2_hits` and `category_3_hits` are named lists of
+#' tibbles (one per contrast). For each contrast, it counts the number
+#' of rows. If an `adj.P.Val` column is present, rows with `NA` in this
+#' column are excluded before counting.
 #'
-#' @param hit_list A list with two elements:
-#'   - `category_2_hits`: a data frame of condition-level differences
-#'   - `category_3_hits`: a data frame of condition x time interactions
+#' @param hit_list A list with elements:
+#'   - `category_2_hits`: named list of data frames/tibbles (one per
+#'     contrast) of condition-level differences.
+#'   - `category_3_hits`: named list of data frames/tibbles (one per
+#'     contrast) of condition x time interactions.
 #'
-#' @return A named list with two integers:
-#'   - `category_2`: number of rows in `category_2_hits`
-#'   - `category_3`: number of rows in `category_3_hits`
-#'
+#' @return A list with two named integer vectors:
+#'   - `category_2`: counts per contrast in `category_2_hits`
+#'   - `category_3`: counts per contrast in `category_3_hits`
 #'
 count_hits <- function(hit_list) {
-    # Helper function to count rows safely
+    # count rows within a single tibble/data frame
     count_rows <- function(df) {
         if (!is.data.frame(df)) {
             return(0L)
         }
         if ("adj.P.Val" %in% colnames(df)) {
-            df <- df[!is.na(df$adj.P.Val), ]
+            df <- df[!is.na(df$adj.P.Val), , drop = FALSE]
         }
         nrow(df)
     }
-
+    
+    # apply count_rows to each element of a named list (per contrast)
+    count_list <- function(lst) {
+        if (!is.list(lst)) {
+            return(integer(0))
+        }
+        vapply(lst, count_rows, integer(1L))
+    }
+    
     list(
-        category_2 = count_rows(hit_list$category_2_hits),
-        category_3 = count_rows(hit_list$category_3_hits)
+        category_2 = count_list(hit_list$category_2_hits),
+        category_3 = count_list(hit_list$category_3_hits)
     )
 }
 
 
-#' Truncate label values in flat hit tables
+#' Truncate label values in nested hit tables (per contrast)
 #'
 #' @noRd
 #'
 #' @description
-#' Given a flat list with two data frames (`category_2_hits`,
-#' `category_3_hits`), truncate long label values inside a chosen
-#' column (default: \code{"contrast"}) to at most \code{max_length}
-#' characters. If a value matches the pattern \code{"*_X_vs_Y"}, the
-#' function truncates \code{X} and \code{Y} *evenly* so the full
-#' label remains within the limit.
+#' Given a nested list with two elements (`category_2_hits`,
+#' `category_3_hits`), where each of these is a **named list of
+#' tibbles/data frames** (one per contrast), truncate long label values
+#' inside a chosen column (default: \code{"contrast"}) to at most
+#' \code{max_length} characters.
 #'
-#' @param hit_list A list with two data frames:
+#' If a value matches the pattern \code{"*_X_vs_Y"}, the function
+#' truncates \code{X} and \code{Y} *evenly* so the full label remains
+#' within the limit.
+#'
+#' @param hit_list A list with two elements:
 #'   \itemize{
-#'     \item \code{category_2_hits}: data frame of condition-level
-#'       differences.
-#'     \item \code{category_3_hits}: data frame of condition x time
-#'       interactions.
+#'     \item \code{category_2_hits}: named list of data frames/tibbles
+#'       (one per contrast) of condition-level differences.
+#'     \item \code{category_3_hits}: named list of data frames/tibbles
+#'       (one per contrast) of condition x time interactions.
 #'   }
 #'
 #' @param col Character scalar. The column name in which to truncate
@@ -1296,55 +1323,66 @@ count_hits <- function(hit_list) {
 #' @param max_length Integer scalar. Maximum allowed label length
 #'   (default: 30).
 #'
-#' @return The same list, with the specified column's values truncated
-#'   in each present data frame.
+#' @return The same list structure, with the specified column's values
+#'   truncated in each present data frame (per contrast).
 #'
 truncate_hit_labels <- function(
-    hit_list,
-    col = "contrast",
-    max_length = 30) {
+        hit_list,
+        col = "contrast",
+        max_length = 30) {
+    
     # helper to truncate a single label
     trunc_label <- function(x) {
         x <- as.character(x %||% "")
         if (nchar(x) <= max_length) {
             return(x)
         }
-
+        
         # If matches "..._X_vs_Y", balance truncation across X and Y
         if (grepl("_.*_vs_.*$", x)) {
             base <- sub("(.*)_(.*)_vs_(.*)$", "\\1", x)
-            s1 <- sub("(.*)_(.*)_vs_(.*)$", "\\2", x)
-            s2 <- sub("(.*)_(.*)_vs_(.*)$", "\\3", x)
-
-            base_len <- nchar(base)
+            s1   <- sub("(.*)_(.*)_vs_(.*)$", "\\2", x)
+            s2   <- sub("(.*)_(.*)_vs_(.*)$", "\\3", x)
+            
+            base_len  <- nchar(base)
             # 5 chars for "_vs_"
             remaining <- max_length - base_len - 5
             if (remaining > 0) {
                 half <- floor(remaining / 2)
-                s1 <- substr(s1, 1L, half)
-                s2 <- substr(s2, 1L, remaining - half) # handle odd char
+                s1   <- substr(s1, 1L, half)
+                s2   <- substr(s2, 1L, remaining - half) # handle odd char
                 return(paste0(base, "_", s1, "_vs_", s2))
             }
             # If no room for substrings, hard truncate
             return(substr(x, 1L, max_length))
         }
-
+        
         # default hard truncate
         substr(x, 1L, max_length)
     }
-
-    # apply to each df if the column exists
-    for (nm in c("category_2_hits", "category_3_hits")) {
-        df <- hit_list[[nm]]
-        if (is.data.frame(df) && col %in% names(df)) {
-            df[[col]] <- vapply(
-                df[[col]],
-                trunc_label,
-                FUN.VALUE = character(1)
-                )
-            hit_list[[nm]] <- df
+    
+    # helper to truncate labels in a single df
+    truncate_df <- function(df) {
+        if (!is.data.frame(df) || !(col %in% names(df))) {
+            return(df)
         }
+        df[[col]] <- vapply(
+            df[[col]],
+            trunc_label,
+            FUN.VALUE = character(1)
+        )
+        df
     }
+    
+    # apply to each df in the nested lists
+    for (nm in c("category_2_hits", "category_3_hits")) {
+        lst <- hit_list[[nm]]
+        if (!is.list(lst)) {
+            next
+        }
+        hit_list[[nm]] <- lapply(lst, truncate_df)
+    }
+    
     hit_list
 }
 
@@ -1706,7 +1744,6 @@ process_field <- function(
             </button></a>',
             encode_df_to_base64(category_2_and_3_hits[[1]]) # category 2
         )
-        browser()
     } else if (field == "limma_topTables_interaction_condition_time_hits") {
         base64_df <- sprintf(
             '<a href="%s"

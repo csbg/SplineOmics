@@ -388,11 +388,6 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
 ```{r cluster the hits, eval = TRUE}
-adj_pthresholds <- c(
-    0.05,
-    0.05
-)
-
 nr_clusters <- list(
     constant = 4,
     temp_shift = 4
@@ -407,12 +402,10 @@ plot_info <- list( # For the spline plots
     y_axis_label = "log2 counts",
     time_unit = "hours",
     treatment_labels = list(
-        temp_shift = "temp shift",
-        double_spline_plots = "temp shift"
+        temp_shift = "temp shift"
     ),
     treatment_timepoints = list(
-        temp_shift = 146,
-        double_spline_plots = 146
+        temp_shift = 146
     )
 )
 
@@ -426,15 +419,15 @@ plot_options <- list(
 
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
-    adj_pthresholds = adj_pthresholds,
+    adj_pthresh_time_effect = 0.05,
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
     genes = genes,
     plot_info = plot_info,
     max_hit_number = 20, # maximum number of plots per result category
     plot_options = plot_options,
-    report_dir = withr::local_tempdir(),
-    adj_pthresh_avrg_diff_conditions = 0.05,
-    adj_pthresh_interaction_condition_time = 0.05
+    report_dir = withr::local_tempdir()
 )
 ```
 

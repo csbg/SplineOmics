@@ -233,11 +233,6 @@ plots <- SplineOmics::create_limma_report(
 # Cluster the hits (significant features)
 
 ```{r cluster the hits, eval = TRUE}
-adj_pthresholds <- c(
-    0.05, # constant (temperature)
-    0.05 # temp_shift
-)
-
 nr_clusters <- list(
     Constant   = 2:6,
     Temp_shift = 2:6
@@ -252,12 +247,10 @@ plot_info <- list( # For the spline plots
     y_axis_label = "beta value",
     time_unit = "hours",
     treatment_labels = list(
-        Temp_shift = "temp shift",
-        double_spline_plots = "temp shift"
+        Temp_shift = "temp shift"
     ),
     treatment_timepoints = list(
-        Temp_shift = 146,
-        double_spline_plots = 146
+        Temp_shift = 146
     )
 )
 
@@ -270,14 +263,14 @@ plot_options <- list(
 
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
-    adj_pthresholds = adj_pthresholds,
+    adj_pthresh_time_effect = 0.05,
+    adj_pthresh_avrg_diff_conditions = 0.05,
+    adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
     genes = genes,
     plot_info = plot_info,
     plot_options = plot_options,
-    report_dir = withr::local_tempdir(),
-    adj_pthresh_avrg_diff_conditions = 0.05,
-    adj_pthresh_interaction_condition_time = 0.05
+    report_dir = withr::local_tempdir()
 )
 ```
 
