@@ -745,17 +745,17 @@ process_result <- function(
 #' \code{generate_and_write_html()} writes the complete HTML document.
 #'
 build_run_ora_report <- function(
-    header_section,
-    sections,
-    report_info,
-    output_file_path) {
+        header_section,
+        sections,
+        report_info,
+        output_file_path) {
     html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
-
+    
     toc <- create_toc()
     styles <- define_html_styles()
     section_header_style <- styles$section_header_style
     toc_style <- styles$toc_style
-
+    
     # Helper to decide if a "plot" is really renderable
     plot_is_valid <- function(p) {
         if (is.null(p)) {
@@ -772,7 +772,7 @@ build_run_ora_report <- function(
         }
         FALSE
     }
-
+    
     # Progress bar over valid plots only
     total_plots <- sum(vapply(sections, function(s) {
         ps <- s$plots
@@ -783,17 +783,17 @@ build_run_ora_report <- function(
         sum(vapply(ps, plot_is_valid, logical(1)))
     }, integer(1)))
     pb <- create_progress_bar(seq_len(max(total_plots, 1)))
-
+    
     for (s_idx in seq_along(sections)) {
         sec <- sections[[s_idx]]
         header_name <- if (
             !is.null(sec$header_name) && nzchar(sec$header_name)
-            ) {
+        ) {
             sec$header_name
         } else {
             paste0("Section ", s_idx)
         }
-
+        
         # Header + optional HR
         section_header <- sprintf(
             "<h2 style='%s' id='section%d'>%s</h2>",
@@ -805,18 +805,18 @@ build_run_ora_report <- function(
             section_header,
             sep = "\n"
         )
-
+        
         # TOC entry
         toc_entry <- sprintf(
             "<li style='%s'><a href='#section%d'>%s</a></li>",
             toc_style, s_idx, header_name
         )
         toc <- paste(toc, toc_entry, sep = "\n")
-
+        
         # Normalize and filter plots
         plots <- sec$plots
         if (!is.list(plots) || inherits(plots, "ggplot")) plots <- list(plots)
-
+        
         sizes <- sec$plot_sizes
         if (!is.list(sizes)) {
             sizes <- as.list(rep_len(
@@ -824,11 +824,11 @@ build_run_ora_report <- function(
                 length(plots)
             ))
         }
-
+        
         valid <- vapply(plots, plot_is_valid, logical(1))
         plots <- plots[valid]
         sizes <- sizes[valid]
-
+        
         if (length(plots) == 0L) {
             # No valid plot -> tidy note instead of broken image
             html_content <- paste(
@@ -853,7 +853,7 @@ build_run_ora_report <- function(
                 pb$tick()
             }
         }
-
+        
         # Append filtered table + download (your existing function)
         if (!is.null(sec$ora_results)) {
             add <- generate_section_content(
@@ -880,7 +880,7 @@ build_run_ora_report <- function(
             )
         }
     }
-
+    
     generate_and_write_html(
         toc = toc,
         html_content = html_content,
@@ -1903,37 +1903,61 @@ level_columns <- function(cr) {
 }
 
 
-#' Derive display names for enrichment levels
+#' Derive display names for enrichment levels (multi-condition)
 #'
 #' @noRd
 #'
 #' @description
 #' Generates human-readable labels for the enrichment levels present in a
-#' \code{clustering_results} table. Time-effect condition columns
-#' (\code{cluster_*} except \code{cluster_cat2}/\code{cluster_cat3}) are
-#' mapped to \code{"time_effect_condition_<cond>"}, while category columns
-#' (if present) are named \code{"avrg_diff_conditions"} (cat2) and
-#' \code{"interaction_condition_time"} (cat3).
+#' multi-condition \code{cluster_table}. The function inspects the column
+#' names returned by \code{level_columns(cluster_table)} and maps them to
+#' descriptive strings based on their prefixes:
+#'
+#' \itemize{
+#'   \item \code{"cluster_Condition_<cond>"}  
+#'         \eqn{\rightarrow} \code{"Time effect: <cond>"}
+#'   \item \code{"cluster_cat2_<condA>_vs_<condB>"}  
+#'         \eqn{\rightarrow} \code{"Avrg diff conditions: <condA> vs <condB>"}
+#'   \item \code{"cluster_cat3_<condA>_vs_<condB>"}  
+#'         \eqn{\rightarrow} \code{"Interaction condition time: <condA> vs
+#'          <condB>"}
+#' }
+#'
+#' Any \code{cluster_*} column that does not match one of the above
+#' patterns is returned as-is.
 #'
 #' @param cr A tibble/data frame like that produced by
-#'   \code{construct_cluster_summary()} containing \code{cluster_*}
-#'   columns.
+#'   \code{construct_cluster_table()} containing \code{cluster_*} columns.
 #'
 #' @return A character vector of display names ordered to match the level
 #'   columns returned by \code{level_columns(cr)}.
 #'
-#' @details
-#' Condition names are derived by stripping the \code{"cluster_"} prefix
-#' from the corresponding column names. Category labels are included only
-#' if the respective columns exist in \code{cr}.
-#'
 level_display_names <- function(cr) {
-    allc <- grep("^cluster_", names(cr), value = TRUE)
-    cond <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
-    c(
-        paste0("time_effect_condition_", sub("^cluster_", "", cond)),
-        if ("cluster_cat2" %in% allc) "avrg_diff_conditions",
-        if ("cluster_cat3" %in% allc) "interaction_condition_time"
+    cols <- level_columns(cr)
+    
+    vapply(
+        cols,
+        function(col) {
+            if (grepl("^cluster_Condition_", col)) {
+                cond <- sub("^cluster_Condition_", "", col)
+                paste0("Time effect: ", cond)
+                
+            } else if (grepl("^cluster_cat2_", col)) {
+                contrast <- sub("^cluster_cat2_", "", col)
+                contrast_label <- gsub("_vs_", " vs ", contrast)
+                paste0("Avrg diff conditions: ", contrast_label)
+                
+            } else if (grepl("^cluster_cat3_", col)) {
+                contrast <- sub("^cluster_cat3_", "", col)
+                contrast_label <- gsub("_vs_", " vs ", contrast)
+                paste0("Interaction condition time: ", contrast_label)
+                
+            } else {
+                # Fallback: just use the raw column name
+                col
+            }
+        },
+        FUN.VALUE = character(1)
     )
 }
 
