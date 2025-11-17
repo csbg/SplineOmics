@@ -489,7 +489,7 @@ cluster_hits <- function(
         predicted_timecurves,
         min_effect_sizes = min_effect_size
     )
-
+    
     if (
         (mode != "isolated") &&
             (adj_pthresh_avrg_diff_conditions > 0 ||
@@ -622,7 +622,7 @@ cluster_hits <- function(
         category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
         genes = genes
     )
-
+    
     if (verbose) {
         end_time <- Sys.time()
         elapsed <- difftime(
@@ -1079,9 +1079,9 @@ predict_timecurves <- function(
 #' @description
 #' Computes two effect sizes for each feature from predicted time curves:
 #' (1) cat1 cumulative travel per condition (sum of absolute successive
-#' differences), and (2) cat3 differential travel across conditions
-#' (sum of absolute differences between successive changes of the two
-#' conditions). Thresholds are read from `min_effect_sizes`.
+#' differences), and (2) cat3 differential travel for each pair of
+#' conditions (sum of absolute differences between successive changes of
+#' the two conditions). Thresholds are read from `min_effect_sizes`.
 #'
 #' @param predicted_timecurves A list returned by `predict_timecurves()`
 #'   with a `$predictions` element. `$predictions` is a named list of
@@ -1097,85 +1097,126 @@ predict_timecurves <- function(
 #'   * `time_effect_effect_size`: list per condition of numeric vectors
 #'     (cumulative travel per feature, cat1).
 #'   * `time_effect_passed_threshold`: list per condition of logical
-#'     vectors indicating cat1 pass/fail vs `min_effect_sizes$time_effect`.
-#'   * `interaction_effect_size`: numeric vector per feature with the
-#'     cat3 differential travel (two conditions required).
-#'   * `interaction_passed_threshold`: logical vector indicating cat3
-#'     pass/fail vs `min_effect_sizes$interaction_cond_time`.
+#'     vectors indicating cat1 pass/fail vs
+#'     `min_effect_sizes$time_effect`.
+#'   * `interaction_effect_size`: named list of numeric vectors, one per
+#'     unordered condition pair. Each entry corresponds to a contrast
+#'     named `"<cond1>_vs_<cond2>"` and stores the cat3 differential
+#'     travel per feature for that pair.
+#'   * `interaction_passed_threshold`: named list of logical vectors
+#'     with the same structure as `interaction_effect_size`, indicating
+#'     cat3 pass/fail vs `min_effect_sizes$interaction_cond_time` for
+#'     each condition pair.
 #'
 #' @details
 #' Cat1 cumulative travel for a feature in a condition is
 #' `sum_{j=1}^{T-1} |x_{j+1} - x_j|`. It measures total movement of the
 #' curve regardless of direction.
 #'
-#' Cat3 differential travel (two conditions) is computed on successive
-#' steps `d1_j = x1_{j+1}-x1_j` and `d2_j = x2_{j+1}-x2_j` and summed as
-#' `sum_{j=1}^{T-1} |d1_j - d2_j|`. It is large when the conditions move
-#' differently over time and zero when they change in lockstep.
-#'
-#' The cat3 computation requires exactly two condition matrices with the
-#' same row names and number of timepoints.
+#' For cat3, we consider all unordered condition pairs. For a pair
+#' (k1, k2), we take successive steps
+#' `d1_j = x1_{j+1}-x1_j` and `d2_j = x2_{j+1}-x2_j` and sum
+#' `sum_{j=1}^{T-1} |d1_j - d2_j|`. This is large when the two
+#' conditions move differently over time and zero when they change in
+#' lockstep. The result is stored per pair and per feature.
 #'
 add_cat1_and_cat3_effectsizes <- function(
-    predicted_timecurves,
-    min_effect_sizes) {
+        predicted_timecurves,
+        min_effect_sizes) {
+    
     thr_cat1 <- min_effect_sizes[["time_effect"]]
     thr_cat3 <- min_effect_sizes[["interaction_cond_time"]]
-
+    
     # helper: cumulative travel per row
     cum_travel <- function(mat) {
         if (!is.matrix(mat)) {
             mat <- as.matrix(mat)
         }
-        if (ncol(mat) < 2) {
+        if (ncol(mat) < 2L) {
             out <- rep(0, nrow(mat))
             names(out) <- rownames(mat)
             return(out)
         }
         tr <- rowSums(
-            abs(mat[, -1, drop = FALSE] - mat[, -ncol(mat), drop = FALSE])
+            abs(
+                mat[, -1, drop = FALSE] -
+                    mat[, -ncol(mat), drop = FALSE]
+            )
         )
-        if (!is.null(rownames(mat))) names(tr) <- rownames(mat)
+        if (!is.null(rownames(mat))) {
+            names(tr) <- rownames(mat)
+        }
         tr
     }
-
+    
     # cat1 per level
     if (!is.list(predicted_timecurves$predictions) ||
         length(predicted_timecurves$predictions) < 1L) {
         stop_call_false(
             "`predicted_timecurves$predictions` is missing or empty."
-            )
+        )
     }
-    cat1_effects <- lapply(predicted_timecurves$predictions, cum_travel)
-    cat1_passed <- lapply(cat1_effects, function(x) x >= thr_cat1)
-
+    
+    preds <- predicted_timecurves$predictions
+    
+    cat1_effects <- lapply(preds, cum_travel)
+    cat1_passed <- lapply(
+        cat1_effects,
+        function(x) x >= thr_cat1
+    )
+    
     predicted_timecurves$time_effect_effect_size <- cat1_effects
     predicted_timecurves$time_effect_passed_threshold <- cat1_passed
-
-    # cat3: movement-difference using the two conditions
-    levs <- names(predicted_timecurves$predictions)
-    if (length(levs) == 2L) {
-        m1 <- as.matrix(predicted_timecurves$predictions[[levs[1]]])
-        m2 <- as.matrix(predicted_timecurves$predictions[[levs[2]]])
-
-        if (ncol(m1) < 2L) {
-            md <- rep(0, nrow(m1))
-            names(md) <- rownames(m1)
-        } else {
-            d1 <- m1[, -1, drop = FALSE] - m1[, -ncol(m1), drop = FALSE]
-            d2 <- m2[, -1, drop = FALSE] - m2[, -ncol(m2), drop = FALSE]
-            md <- rowSums(abs(d1 - d2))
-            names(md) <- rownames(m1)
+    
+    # cat3: movement-difference for all condition pairs
+    levs <- names(preds)
+    
+    interaction_effect_size <- list()
+    interaction_passed_threshold <- list()
+    
+    if (length(levs) >= 2L) {
+        combs <- utils::combn(levs, 2L, simplify = FALSE)
+        
+        for (pair in combs) {
+            k1 <- pair[1L]
+            k2 <- pair[2L]
+            
+            m1 <- as.matrix(preds[[k1]])
+            m2 <- as.matrix(preds[[k2]])
+            
+            if (!identical(dim(m1), dim(m2))) {
+                stop_call_false(
+                    "Predicted matrices for conditions '",
+                    k1,
+                    "' and '",
+                    k2,
+                    "' must have the same dimensions."
+                )
+            }
+            
+            if (ncol(m1) < 2L) {
+                md <- rep(0, nrow(m1))
+                names(md) <- rownames(m1)
+            } else {
+                d1 <- m1[, -1, drop = FALSE] -
+                    m1[, -ncol(m1), drop = FALSE]
+                d2 <- m2[, -1, drop = FALSE] -
+                    m2[, -ncol(m2), drop = FALSE]
+                md <- rowSums(abs(d1 - d2))
+                names(md) <- rownames(m1)
+            }
+            
+            cname <- paste0(k1, "_vs_", k2)
+            interaction_effect_size[[cname]] <- md
+            interaction_passed_threshold[[cname]] <- (md >= thr_cat3)
         }
-
-        predicted_timecurves$interaction_effect_size <- md
-        predicted_timecurves$interaction_passed_threshold <- (md >= thr_cat3)
-    } else {
-        # if not exactly two levels, define empty vectors for cat3
-        predicted_timecurves$interaction_effect_size <- numeric(0)
-        predicted_timecurves$interaction_passed_threshold <- logical(0)
     }
-
+    
+    predicted_timecurves$interaction_effect_size <-
+        interaction_effect_size
+    predicted_timecurves$interaction_passed_threshold <-
+        interaction_passed_threshold
+    
     predicted_timecurves
 }
 
@@ -1311,82 +1352,203 @@ perform_clustering <- function(
 #' @noRd
 #'
 #' @description
-#' This function filters the `limma` top tables in the `splineomics` object to
-#' identify significant features in two categories:
+#' Filter limma/dream top tables in the \code{splineomics} object to
+#' identify significant features in two categories, across all pairwise
+#' condition contrasts:
 #' \itemize{
-#'   \item \strong{Category 2}: Features with a significant average difference
-#'   between conditions, based on both adjusted p-value and a minimum absolute
-#'   effect size threshold.
-#'   \item \strong{Category 3}: Features with a significant condition x time
-#'   interaction, based on adjusted p-value, and that also exceed a minimum
-#'   time-effect effect size in at least one condition (as provided in
-#'   `predicted_timecurves$effect_size`).
+#'   \item \strong{Category 2}: Features with a significant average
+#'   difference between conditions, based on both adjusted p-value and a
+#'   minimum absolute effect size threshold.
+#'   \item \strong{Category 3}: Features with a significant condition ×
+#'   time interaction (adjusted p-value), that also pass a precomputed
+#'   interaction effect-size threshold stored in
+#'   \code{predicted_timecurves$interaction_passed_threshold}.
 #' }
 #'
-#' @param splineomics An S3 object containing the `limma` top tables. It must
-#' include the elements \code{avrg_diff_conditions} and
-#' \code{interaction_condition_time}, each a dataframe of results.
-#' @param adj_pthresh_avrg_diff_conditions Numeric. Threshold for adjusted
-#' p-value when testing average differences between conditions.
-#' @param adj_pthresh_interaction Numeric. Threshold for adjusted p-value when
-#' testing the interaction between condition and time.
-#' @param min_effect_size A named list specifying effect size thresholds:
-#' \itemize{
-#'   \item \code{avg_diff_cond}: Minimum absolute effect size required for
-#'   category 2 hits.
-#'   \item \code{time_effect}: Minimum time-effect effect size required in at
-#'   least one condition for category 3 hits.
-#' }
-#' @param predicted_timecurves A list of model predictions, which must contain
-#' an element \code{effect_size}. This should be a named list of numeric
-#' vectors,
-#' with one vector per condition and feature names as names, providing the
-#' time-effect effect sizes.
+#' @param splineomics An S3 object containing spline-based limma/dream
+#'   results. It must include a \code{limma_splines_result} element with:
+#'   \itemize{
+#'     \item \code{avrg_diff_conditions}: a named list of data frames,
+#'       one per contrast, each containing average condition differences.
+#'     \item \code{interaction_condition_time}: a named list of data
+#'       frames, one per contrast, each containing condition × time
+#'       interaction statistics.
+#'   }
+#'   For backward compatibility, these elements may also be single data
+#'   frames, in which case they are treated as single-contrast lists.
 #'
-#' @return A list with two dataframes:
+#' @param adj_pthresh_avrg_diff_conditions Numeric. Threshold for the
+#'   adjusted p-value when testing average differences between
+#'   conditions (Category 2).
+#'
+#' @param adj_pthresh_interaction Numeric. Threshold for the adjusted
+#'   p-value when testing the interaction between condition and time
+#'   (Category 3).
+#'
+#' @param avg_diff_cond_threshold Numeric. Minimum absolute effect size
+#'   required for Category 2 hits (applied to the main effect column,
+#'   e.g. \code{logFC}).
+#'
+#' @param predicted_timecurves A list of model predictions. It must
+#'   contain an element \code{interaction_passed_threshold}. In the
+#'   multi-condition setting this is a named list of logical vectors,
+#'   one per unordered condition pair (contrast). Each element is named
+#'   like \code{"A_vs_B"} and its entries are named by feature
+#'   identifiers (e.g. feature names), indicating whether the Cat3
+#'   interaction effect-size threshold was passed for that feature in
+#'   that contrast. For backward compatibility it may also be a single
+#'   logical vector (old two-condition behaviour).
+#'
+#' @return A list with two named lists of data frames:
 #' \itemize{
-#'   \item \code{category_2_hits}: Filtered subset of
-#'   \code{avrg_diff_conditions}.
-#'   \item \code{category_3_hits}: Filtered subset of
-#'   \code{interaction_condition_time}.
+#'   \item \code{category_2_hits}: named list of filtered top tables for
+#'     average condition differences, one element per contrast.
+#'   \item \code{category_3_hits}: named list of filtered top tables for
+#'     condition × time interaction, one element per contrast.
 #' }
+#' Each inner data frame contains only the features that pass the
+#' respective filters for that contrast.
 #'
 get_category_2_and_3_hits <- function(
-    splineomics,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction,
-    avg_diff_cond_threshold,
-    predicted_timecurves) {
+        splineomics,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction,
+        avg_diff_cond_threshold,
+        predicted_timecurves
+) {
     avrg_diff_conditions <-
         splineomics[["limma_splines_result"]][["avrg_diff_conditions"]]
     interaction_condition_time <-
         splineomics[["limma_splines_result"]][["interaction_condition_time"]]
-
-    # Category 2: p-value + effect size (abs(col1))
-    category_2_hits <- avrg_diff_conditions[
-        avrg_diff_conditions$adj.P.Val < adj_pthresh_avrg_diff_conditions &
-            abs(avrg_diff_conditions[[1]]) >= avg_diff_cond_threshold, ,
-        drop = FALSE
-    ]
-
-    # Category 3: p-value filter, then use precomputed interaction flags
-    category_3_hits <- interaction_condition_time[
-        interaction_condition_time$adj.P.Val < adj_pthresh_interaction, ,
-        drop = FALSE
-    ]
-
-    if (nrow(category_3_hits) == 0L) {
-        return(list(
-            category_2_hits = category_2_hits,
-            category_3_hits = category_3_hits
-        ))
+    
+    # Backward-compat: if old structure was a single data.frame
+    if (is.data.frame(avrg_diff_conditions)) {
+        avrg_diff_conditions <- list(contrast_1 = avrg_diff_conditions)
     }
-
-    pass_vec <- predicted_timecurves$interaction_passed_threshold
-    keep <- pass_vec[as.character(category_3_hits$feature_names)]
-    keep[is.na(keep)] <- FALSE
-    category_3_hits <- category_3_hits[keep, , drop = FALSE]
-
+    if (is.data.frame(interaction_condition_time)) {
+        interaction_condition_time <-
+            list(contrast_1 = interaction_condition_time)
+    }
+    
+    # Helper: find effect-size column for category 2
+    get_effect_col <- function(df) {
+        if ("logFC" %in% names(df)) {
+            "logFC"
+        } else {
+            num_cols <- which(vapply(df, is.numeric, logical(1L)))
+            if (length(num_cols) == 0L) {
+                stop(
+                    "No numeric columns found in avrg_diff_conditions ",
+                    "table; cannot apply effect size threshold."
+                )
+            }
+            names(df)[num_cols[1L]]
+        }
+    }
+    
+    # Category 2: p-value + effect size threshold, per contrast
+    category_2_hits <- lapply(
+        avrg_diff_conditions,
+        function(df) {
+            if (nrow(df) == 0L) {
+                return(df)
+            }
+            eff_col <- get_effect_col(df)
+            
+            keep <- df$adj.P.Val < adj_pthresh_avrg_diff_conditions &
+                abs(df[[eff_col]]) >= avg_diff_cond_threshold
+            
+            df[keep, , drop = FALSE]
+        }
+    )
+    
+    # Category 3: p-value filter + interaction_passed_threshold,
+    # per contrast
+    pass_obj <- predicted_timecurves$interaction_passed_threshold
+    if (is.null(pass_obj)) {
+        stop(
+            "'predicted_timecurves$interaction_passed_threshold' ",
+            "must be provided for Category 3 filtering."
+        )
+    }
+    
+    # Helper: given a contrast-name from interaction_condition_time and
+    # pass_obj, return the appropriate logical vector (or NULL).
+    get_pass_vec_for_contrast <- function(contrast_name) {
+        # Backward compat: single logical vector
+        if (is.logical(pass_obj) && !is.list(pass_obj)) {
+            return(pass_obj)
+        }
+        
+        if (!is.list(pass_obj) || is.null(names(pass_obj))) {
+            return(NULL)
+        }
+        
+        nm <- names(pass_obj)
+        
+        # Strip common prefixes from contrast names, e.g.
+        # "time_interaction_A_vs_B" -> "A_vs_B"
+        stripped <- sub("^time_interaction_", "", contrast_name)
+        stripped <- sub("^interaction_", "", stripped)
+        
+        cand <- c(contrast_name, stripped)
+        
+        idx <- which(nm %in% cand)[1L]
+        if (length(idx) == 0L || is.na(idx)) {
+            return(NULL)
+        }
+        
+        pass_obj[[idx]]
+    }
+    
+    category_3_hits <- vector(
+        mode = "list",
+        length = length(interaction_condition_time)
+    )
+    names(category_3_hits) <- names(interaction_condition_time)
+    
+    for (nm in names(interaction_condition_time)) {
+        df <- interaction_condition_time[[nm]]
+        
+        if (nrow(df) == 0L) {
+            category_3_hits[[nm]] <- df
+            next
+        }
+        
+        # First: p-value filter
+        keep_p <- df$adj.P.Val < adj_pthresh_interaction
+        if (!any(keep_p)) {
+            category_3_hits[[nm]] <- df[FALSE, , drop = FALSE]
+            next
+        }
+        
+        df_sub <- df[keep_p, , drop = FALSE]
+        
+        if (!"feature_names" %in% names(df_sub)) {
+            stop(
+                "Expected column 'feature_names' in ",
+                "'interaction_condition_time' table."
+            )
+        }
+        
+        pass_vec <- get_pass_vec_for_contrast(nm)
+        
+        if (is.null(pass_vec) || length(pass_vec) == 0L) {
+            # No matching effect-size vector -> fall back to p-value only
+            category_3_hits[[nm]] <- df_sub
+            next
+        }
+        
+        keys <- as.character(df_sub$feature_names)
+        keep_effect <- pass_vec[keys]
+        
+        # unmatched or NA entries are treated as not passing the effect
+        keep_effect[is.na(keep_effect)] <- FALSE
+        keep_effect[is.null(keep_effect)] <- FALSE
+        
+        category_3_hits[[nm]] <- df_sub[keep_effect, , drop = FALSE]
+    }
+    
     list(
         category_2_hits = category_2_hits,
         category_3_hits = category_3_hits
@@ -1509,7 +1671,6 @@ make_clustering_report <- function(
     verbose) {
     design <- gsub("Time", "X", design)
     effects <- extract_effects(design)
-
     datas <- split_data_by_condition(
         data = data,
         meta = meta,
@@ -1573,7 +1734,6 @@ make_clustering_report <- function(
     plots_sizes <- list()
     q <- 0
 
-
     for (i in seq_along(all_levels_clustering)) {
         # When a level has < 2 hits
         if (is.null(all_levels_clustering[[i]]) ||
@@ -1592,7 +1752,7 @@ make_clustering_report <- function(
 
             # Get indices of columns in meta that match the given level
             # (condition)
-            condition_indices <- which(meta[["condition"]] == level)
+            condition_indices <- which(meta[[condition]] == level)
 
             # Subset raw_data to only include these columns (keeping all rows)
             raw_data_level <- raw_data[, condition_indices, drop = FALSE]
@@ -1784,221 +1944,328 @@ make_clustering_report <- function(
 #' @noRd
 #'
 #' @description
-#' Generates the "double spline plots" (limma result categories 2 & 3).
-#' This function generates spline comparison plots for all pairwise
-#' combinations of conditions in the metadata. For each condition pair, it
-#' compares the time effects of two conditions, plots the data points, and
-#' overlays the fitted spline curves. The function only generates plots if
-#' the adjusted p-values for the average difference between conditions and the
-#' interaction between condition and time are below the specified thresholds.
+#' Generates the "double spline plots" (limma result categories 2 & 3)
+#' for all pairwise combinations of condition levels in the metadata.
+#' For each condition pair, the function:
+#' \itemize{
+#'   \item extracts the spline-based time effects for both conditions,
+#'   \item subsets the corresponding average-difference (Category 2) and
+#'     interaction (Category 3) top tables for that pair,
+#'   \item calls \code{plot_spline_comparisons()} to plot data points and
+#'     overlay fitted spline curves.
+#' }
+#' Plots are only generated for features that pass the adjusted p-value
+#' thresholds and additional effect-size criteria applied upstream in
+#' \code{get_category_2_and_3_hits()}.
 #'
 #' @param splineomics A list containing the splineomics results, including
-#'  time effects,
-#' average difference between conditions, and interaction between condition
-#' and time.
+#'   per-condition time effects and pairwise contrast tables produced by
+#'   the spline-based limma/dream workflow.
 #' @param data The data matrix containing the measurements.
 #' @param meta The metadata associated with the measurements, which includes
-#'  the condition.
-#' @param condition Column name of meta that contains the levels of the
-#' experiment.
-#' @param replicate_column Column name of the meta column that specifies the
-#' replicates per timepoint. For example Reactor with the unique values:
-#' 'ReactorE16', 'ReactorE17', ... which means that multiple bioreactors where
-#' running this experiment and each timepoint has one sample from each reactor.
+#'   the condition column.
+#' @param condition Column name of \code{meta} that contains the experimental
+#'   condition levels.
+#' @param replicate_column Column name of the \code{meta} column that
+#'   specifies the replicates per timepoint. For example \code{Reactor} with
+#'   values like \code{"ReactorE16"}, \code{"ReactorE17"}, etc., indicating
+#'   multiple bioreactors contributing samples at each timepoint.
 #' @param plot_info A list containing plotting information such as time unit
-#' and axis labels.
-#' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
-#'  the average
-#' difference between conditions.
-#' @param adj_pthresh_interaction The adjusted p-value threshold for the
-#' interaction
-#' between condition and time.
-#' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
-#' containing NA values. When provided, it highlights the datapoints in the
-#' spline plots that originally where NA and that were imputed.
+#'   and axis labels.
+#' @param raw_data Optional data matrix with the raw (unimputed) data,
+#'   still containing \code{NA} values. When provided, datapoints that were
+#'   originally \code{NA} and later imputed can be highlighted in the plots.
 #' @param predicted_timecurves A list containing:
 #'   \describe{
-#'     \item{`time_grid`}{A numeric vector of dense time points used for
+#'     \item{time_grid}{Numeric vector of dense time points used for
 #'       evaluation.}
-#'     \item{`predictions`}{A named list of matrices, one per condition level.
+#'     \item{predictions}{Named list of matrices, one per condition level.
 #'       Each matrix contains predicted values (rows = features, columns =
-#'       timepoints).}
+#'       time points).}
 #'   }
-#' @param max_hit_number Maximum number of hits for which the individual spline
-#' plots are shown. This can be used to limit the computation time and size of
-#' the HTML report in the case of many hits.
+#' @param max_hit_number Maximum number of hits per condition pair for which
+#'   individual spline plots are shown. This can be used to limit computation
+#'   time and the size of the HTML report when many hits are present.
+#' @param category_2_and_3_hits List returned by
+#'   \code{get_category_2_and_3_hits()}, containing per-contrast Category 2
+#'   and Category 3 hit tables (one element per pairwise comparison).
+#' @param adj_pthresh_avrg_diff_conditions Adjusted p-value threshold for
+#'   the average difference between conditions (Category 2). Passed through
+#'   to plotting helpers for annotation or additional filtering.
+#' @param adj_pthresh_interaction Adjusted p-value threshold for the
+#'   condition × time interaction (Category 3). Passed through to plotting
+#'   helpers for annotation or additional filtering.
 #'
-#' @return A list of lists containing the comparison plots and feature names
-#'         for each condition pair.
+#' @return A named list of lists. Each top-level element corresponds to a
+#'   condition pair (e.g. \code{"A_vs_B"}) and contains the comparison plots
+#'   and associated feature names for that pair.
 #'
 generate_spline_comparisons <- function(
-    splineomics,
-    data,
-    meta,
-    condition,
-    replicate_column,
-    plot_info,
-    raw_data,
-    predicted_timecurves,
-    max_hit_number,
-    category_2_and_3_hits,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction) {
+        splineomics,
+        data,
+        meta,
+        condition,
+        replicate_column,
+        plot_info,
+        raw_data,
+        predicted_timecurves,
+        max_hit_number,
+        category_2_and_3_hits,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction
+) {
     # Ensure `condition` column is character
     meta[[condition]] <- as.character(meta[[condition]])
-    levels <- unique(meta[[condition]])
-
-    c1 <- levels[1]
-    c2 <- levels[2]
-    pair_name <- paste0(c1, "_vs_", c2)
-
-    # time effects for the two levels
-    te_list <- splineomics[["limma_splines_result"]][["time_effect"]]
-    te1 <- te_list[[paste0(condition, "_", c1)]]
-    te2 <- te_list[[paste0(condition, "_", c2)]]
-
-    # Call the plotting helper once for the single pair
-    plots_and_feature_names <- plot_spline_comparisons(
-        time_effect_1 = te1,
-        condition_1 = c1,
-        time_effect_2 = te2,
-        condition_2 = c2,
-        avrg_diff_conditions = category_2_and_3_hits[["category_2_hits"]],
-        interaction_condition_time = category_2_and_3_hits[["category_3_hits"]],
-        data = data,
-        meta = meta,
-        condition = condition,
-        replicate_column = replicate_column,
-        predicted_timecurves = predicted_timecurves,
-        adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-        adj_pthresh_interaction = adj_pthresh_interaction,
-        plot_info = plot_info,
-        raw_data = raw_data,
-        max_hit_number = max_hit_number
+    
+    limma_res <- splineomics[["limma_splines_result"]]
+    te_list <- limma_res[["time_effect"]]
+    avrg_list <- limma_res[["avrg_diff_conditions"]]
+    inter_list <- limma_res[["interaction_condition_time"]]
+    
+    if (is.null(avrg_list) && is.null(inter_list)) {
+        return(list())
+    }
+    
+    # Derive contrast suffixes like "A_vs_B" from list names
+    suffix_from_avrg <- if (!is.null(avrg_list)) {
+        sub("^avrg_diff_", "", names(avrg_list))
+    } else {
+        character(0)
+    }
+    
+    suffix_from_inter <- if (!is.null(inter_list)) {
+        sub("^time_interaction_", "", names(inter_list))
+    } else {
+        character(0)
+    }
+    
+    suffixes <- sort(unique(c(suffix_from_avrg, suffix_from_inter)))
+    suffixes <- suffixes[nzchar(suffixes)]
+    
+    if (length(suffixes) == 0L) {
+        return(list())
+    }
+    
+    comparison_plots <- vector("list", length(suffixes))
+    names(comparison_plots) <- suffixes
+    
+    empty_tbl <- tibble::tibble(
+        feature_nr = numeric(0),
+        feature_names = character(0)
     )
+    
+    for (suffix in suffixes) {
+        # suffix is e.g. "A_vs_B"
+        parts <- strsplit(suffix, "_vs_")[[1L]]
+        if (length(parts) != 2L) {
+            next
+        }
+        c1 <- parts[1L]
+        c2 <- parts[2L]
+        
+        # time_effect names like "condition_A", "condition_B", ...
+        te_name_1 <- paste0(condition, "_", c1)
+        te_name_2 <- paste0(condition, "_", c2)
+        time_effect_1 <- te_list[[te_name_1]]
+        time_effect_2 <- te_list[[te_name_2]]
+        
+        # per-contrast limma tables
+        avrg_name <- paste0("avrg_diff_", suffix)
+        inter_name <- paste0("time_interaction_", suffix)
+        
+        avrg_diff_df <- if (!is.null(avrg_list) &&
+                            avrg_name %in% names(avrg_list)) {
+            
+            avrg_list[[avrg_name]]
+        } else {
+            empty_tbl
+        }
+        
+        interaction_df <- if (!is.null(inter_list) &&
+                              inter_name %in% names(inter_list)) {
+            
+            inter_list[[inter_name]]
+        } else {
+            empty_tbl
+        }
 
-    comparison_plots <- list()
-    comparison_plots[[pair_name]] <- plots_and_feature_names
+        plots_and_feature_names <- plot_spline_comparisons(
+            time_effect_1 = time_effect_1,
+            condition_1 = c1,
+            time_effect_2 = time_effect_2,
+            condition_2 = c2,
+            avrg_diff_conditions = avrg_diff_df,
+            interaction_condition_time = interaction_df,
+            data = data,
+            meta = meta,
+            condition = condition,
+            replicate_column = replicate_column,
+            predicted_timecurves = predicted_timecurves,
+            adj_pthresh_avrg_diff_conditions =
+                adj_pthresh_avrg_diff_conditions,
+            adj_pthresh_interaction = adj_pthresh_interaction,
+            plot_info = plot_info,
+            raw_data = raw_data,
+            max_hit_number = max_hit_number
+        )
+        
+        comparison_plots[[suffix]] <- plots_and_feature_names
+    }
     comparison_plots
 }
 
 
-#' Construct unified cluster summary table
+#' Construct unified cluster summary table (multi-condition)
 #'
 #' @noRd
 #'
 #' @description
-#' Builds a unified cluster summary across category 1 (time effect),
-#' and if available category 2 (average difference between conditions)
-#' and category 3 (condition time interaction). It merges per condition
-#' cluster assignments, gene annotations, and feature names into a
-#' single flat tibble.
+#' Builds a unified cluster summary across:
+#' * **Category 1** (per-condition time-effect clusters),
+#' * **Category 2** (per-contrast average differences),
+#' * **Category 3** (per-contrast condition–time interactions).
 #'
-#' Category 3: clusters are taken directly from the paired concatenation
-#' result stored in all_levels_clustering$paired_category_3. This
-#' is obtained by concatenating the two condition curves per feature and
-#' clustering them. The resulting integer cluster index is exposed as
-#' cluster_cat3. By default cluster_cat3 is only shown for features in
-#' category_2_and_3_hits$category_3_hits; other features are set to NA.
+#' The table merges:
+#'   * per-condition cluster assignments,
+#'   * per-contrast Category 2 and Category 3 assignments,
+#'   * gene annotations,
+#'   * feature names
 #'
-#' Category 2: when cat2 results exist, cluster_cat2 encodes the
-#' direction of the signed contrast between the two conditions. It uses
-#' two labels: "<cond1>_higher" or "<cond2>_higher" (condition names are
-#' taken from the per condition clustering result names, with underscores
-#' removed). The sign is read from the numeric contrast column in
-#' avrg_diff_conditions corresponding to condition2 vs condition1.
-#' Positive values give "<cond2>_higher", negative values give
-#' "<cond1>_higher". Features not in the cat2 hit set are set to NA.
+#' into a single flat tibble where each feature appears once.
 #'
-#' If only time effect results are present, cat2 and cat3 logic is
-#' skipped and those columns are omitted.
+#'
+#' ## Category 1 (time effect)
+#' For every condition we create one column:
+#'
+#' \preformatted{
+#'   cluster_<condition>
+#' }
+#'
+#' where `<condition>` is taken from `names(all_levels_clustering)`
+#' (excluding any `"paired_category_3"` entry).  
+#' Values are the cluster indices from the `clustered_hits` table of that
+#' condition.  
+#'
+#'
+#' ## Category 2 (average difference, per contrast)
+#' For every contrast listed in
+#' `limma_splines_results$avrg_diff_conditions` we create a column:
+#'
+#' \preformatted{
+#'   cluster_cat2_<suffix>
+#' }
+#'
+#' where `<suffix>` is the contrast name **without the `"avrg_diff_"` prefix**,  
+#' e.g. `"A_vs_B"`, `"constant_vs_more_oxygen"`, etc.
+#'
+#' Let `<cond1>_vs_<cond2>` be that suffix.  
+#' The numeric effect column is assumed to be `"logFC"` if present,
+#' otherwise the first numeric column other than `feature_nr`.
+#' A positive sign yields `"<cond2>_higher"`, a negative sign yields
+#' `"<cond1>_higher"`.  
+#'
+#' Only features present in the corresponding
+#' `category_2_and_3_hits$category_2_hits[[suffix]]` are assigned a label;
+#' all others receive `NA`.
+#'
+#'
+#' ## Category 3 (interaction, per contrast)
+#' For every contrast listed in
+#' `limma_splines_results$interaction_condition_time` we create a column:
+#'
+#' \preformatted{
+#'   cluster_cat3_<suffix>
+#' }
+#'
+#' where `<suffix>` is the contrast name 
+#' **without the `"time_interaction_"` prefix**,  
+#' again of the form `<cond1>_vs_<cond2>`.
+#'
+#' The value is a string:
+#'
+#' \preformatted{
+#'   "<cluster_of_cond1>_<cluster_of_cond2>"
+#' }
+#'
+#' obtained by reading the Category 1 clusters from  
+#' `cluster_<cond1>` and `cluster_<cond2>`.  
+#' `"ns"` is inserted wherever a per-condition cluster is missing.
+#'
+#' Only features present in the corresponding
+#' `category_2_and_3_hits$category_3_hits[[suffix]]` are assigned a label;
+#' all others receive `NA`.
+#'
 #'
 #' @param limma_splines_results A list with:
-#'   * time_effect: length 2 list or tibbles (one per condition)
-#'     containing at least feature_nr and feature_names.
-#'   * avrg_diff_conditions (optional): tibble with at least feature_nr
-#'     and a signed numeric contrast column for condition2 vs condition1.
-#'   * interaction_condition_time (optional): tibble with at least
-#'     feature_nr; used to decide if cat3 is present and to gate which
-#'     features receive cluster_cat3.
+#'   * `time_effect`: named list of per-condition tibbles containing at
+#'     least `feature_nr` and feature name columns.
+#'   * `avrg_diff_conditions`: named list of per-contrast tibbles (names
+#'     beginning with `"avrg_diff_"`), each containing at least
+#'     `feature_nr` and one numeric contrast column.
+#'   * `interaction_condition_time`: named list of per-contrast tibbles
+#'     (names beginning with `"time_interaction_"`), each containing at
+#'     least `feature_nr`.
 #'
-#' @param all_levels_clustering A named list containing the per condition
-#'   clustering outputs and a paired_category_3 entry. Each per condition
-#'   entry is either a character message or a list with element
-#'   $clustered_hits (data frame with columns feature and cluster).
-#'   The paired_category_3 entry must be a list with $clustered_hits
-#'   containing the paired concatenation clustering result (columns
-#'   feature, cluster) used to populate cluster_cat3.
+#' @param all_levels_clustering A named list with one entry per
+#'   condition, each containing a `clustered_hits` data frame with
+#'   columns `feature_nr` and `cluster`. An optional
+#'   `"paired_category_3"` entry is ignored here.
 #'
-#' @param category_2_and_3_hits A list with optional elements
-#'   category_2_hits and category_3_hits (each a tibble with at least
-#'   feature_nr). When present these sets are used to mask cluster_cat2
-#'   and cluster_cat3 respectively (non hit features receive NA).
+#' @param category_2_and_3_hits A list containing:
+#'   * `category_2_hits`: named list of per-contrast tibbles (same names
+#'     as in `avrg_diff_conditions`), each containing at least
+#'     `feature_nr`.
+#'   * `category_3_hits`: named list of per-contrast tibbles (same names
+#'     as in `interaction_condition_time`), each containing at least
+#'     `feature_nr`.
+#'   These define which features are allowed non-NA entries in the
+#'   Cat2/Cat3 result columns.
 #'
-#' @param genes A character vector of gene symbols (or names) indexed by
-#'   feature_nr (genes i corresponds to feature i). Use NULL to skip
-#'   gene annotations.
+#' @param genes Optional character vector of gene symbols indexed by
+#'   `feature_nr`. Use `NULL` to disable gene annotation.
 #'
-#' @return A tibble with columns:
-#'   * feature_nr: numeric feature identifier.
-#'   * feature_name: preferred feature name from available sources.
-#'   * gene: preferred gene symbol or name (from genes or cluster data).
-#'   * cluster_<cond1>, cluster_<cond2>: category 1 cluster labels for
-#'     each condition. NA means not a cat1 hit.
-#'   * cluster_cat2: present only if cat2 exists; one of "<cond1>_higher"
-#'     or "<cond2>_higher" based on the sign of the contrast column,
-#'     masked to the cat2 hit set if provided; otherwise NA.
-#'   * cluster_cat3: present only if cat3 exists; integer cluster index
-#'     taken directly from all_levels_clustering$paired_category_3,
-#'     masked to the cat3 hit set if provided; otherwise NA.
+#' @return A tibble with one row per feature and columns:
+#'   * `feature_nr`
+#'   * `feature_name`
+#'   * `gene`
+#'   * `cluster_<condition>` for each condition
+#'   * `cluster_cat2_<suffix>` for each Cat2 contrast
+#'   * `cluster_cat3_<suffix>` for each Cat3 contrast
 #'
 #' @importFrom dplyr mutate transmute filter select rename left_join
 #'   arrange distinct group_by ungroup slice_head bind_rows coalesce
-#'   case_when
+#'   case_when rowwise c_across
 #' @importFrom tibble as_tibble tibble
 #' @importFrom rlang sym .data
 #'
 construct_cluster_table <- function(
-    limma_splines_results,
-    all_levels_clustering,
-    category_2_and_3_hits,
-    genes) {
-    clustered_hits_levels <- list()
-
-    for (i in seq_along(all_levels_clustering)) {
-        clustering_level <- all_levels_clustering[[i]]
-        element_name <- names(all_levels_clustering)[i]
-
-        if (any(is.character(clustering_level))) {
-            clustered_hits_levels[[element_name]] <-
-                clustering_level
-        } else { # normal list result
-            clustered_hits_levels[[element_name]] <-
-                clustering_level$clustered_hits
+        limma_splines_results,
+        all_levels_clustering,
+        category_2_and_3_hits,
+        genes) {
+    # condition names from clustering
+    cond_names <- setdiff(names(all_levels_clustering), "paired_category_3")
+    
+    # short condition IDs used in contrast suffixes: strip
+    # "Condition_" or "condition_"
+    short_cond_names <- sub("^(?i)condition_", "", cond_names, perl = TRUE)
+    names(short_cond_names) <- short_cond_names  # name by short id
+    
+    map_short_to_full <- function(short) {
+        idx <- match(short, short_cond_names)
+        if (is.na(idx)) {
+            stop("Cannot map condition label '", short,
+                 "' to all_levels_clustering names.")
         }
+        cond_names[[idx]]
     }
-
-    nm_all <- names(clustered_hits_levels)
-    # exclude the paired entry when determining the two condition levels
-    cond_names <- setdiff(nm_all, "paired_category_3")
-
-    if (is.null(cond_names) ||
-        length(cond_names) != 2 ||
-        any(is.na(cond_names) | cond_names == "")) {
-        cond_names <- c("condition1", "condition2")
-    }
-
-    c1 <- paste0("cluster_", cond_names[[1]])
-    c2 <- paste0("cluster_", cond_names[[2]])
-    nmc <- gsub("_", "", cond_names)
-
+    
     has_c2 <- is.list(category_2_and_3_hits) &&
         "category_2_hits" %in% names(category_2_and_3_hits)
-
+    
     has_c3 <- is.list(category_2_and_3_hits) &&
         "category_3_hits" %in% names(category_2_and_3_hits)
-    use_cat23 <- has_c2 || has_c3
-
+    
     no_genes <- is.null(genes)
     anot <- if (no_genes) {
         tibble(feature_nr = numeric(0), gan = character(0))
@@ -2009,39 +2276,48 @@ construct_cluster_table <- function(
         ) |>
             dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
     }
-
-    cl1 <- ncl(clustered_hits_levels[[cond_names[1]]], c1)
-    cl2 <- ncl(clustered_hits_levels[[cond_names[2]]], c2)
-
-    te <- limma_splines_results$time_effect
-    add_parts <- list(
-        toptbl_to_fn(te[[1]]),
-        toptbl_to_fn(te[[2]])
+    
+    # per-condition cluster tables (Cat1)
+    clustered_hits_levels <- lapply(
+        all_levels_clustering,
+        function(x) x$clustered_hits
     )
+    
+    cl_list <- list()
+    for (cond in cond_names) {
+        cl_name <- paste0("cluster_", cond)
+        cl_list[[cond]] <- ncl(clustered_hits_levels[[cond]], cl_name)
+    }
+    
+    # feature-name table from time_effect and all limma tables
+    te_list <- limma_splines_results$time_effect
+    add_parts <- lapply(te_list, toptbl_to_fn)
+    
     if (has_c2) {
-        add_parts <- c(
-            add_parts,
-            list(toptbl_to_fn(limma_splines_results$avrg_diff_conditions))
-        )
+        c2_all <- dplyr::bind_rows(limma_splines_results$avrg_diff_conditions)
+        add_parts <- c(add_parts, list(toptbl_to_fn(c2_all)))
     }
     if (has_c3) {
-        add_parts <- c(
-            add_parts,
-            list(
-                toptbl_to_fn(limma_splines_results$interaction_condition_time)
-            )
+        c3_all <- dplyr::bind_rows(
+            limma_splines_results$interaction_condition_time
         )
+        add_parts <- c(add_parts, list(toptbl_to_fn(c3_all)))
     }
+    
     fn_tbl <- dplyr::bind_rows(add_parts) |>
         dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-
+    
     fn_from_cl <- dplyr::bind_rows(
-        cl1 |>
-            dplyr::select(.data$feature_nr, .data$fnsrc) |>
-            dplyr::rename(fname_cl = .data$fnsrc),
-        cl2 |>
-            dplyr::select(.data$feature_nr, .data$fnsrc) |>
-            dplyr::rename(fname_cl = .data$fnsrc)
+        lapply(
+            cl_list,
+            function(x) {
+                x |>
+                    dplyr::select(
+                        .data$feature_nr,
+                        fname_cl = .data$fnsrc
+                    )
+            }
+        )
     ) |>
         dplyr::filter(
             !is.na(.data$feature_nr),
@@ -2049,63 +2325,48 @@ construct_cluster_table <- function(
             .data$fname_cl != ""
         ) |>
         dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-
-    allf_parts <- list(
+    
+    allf <- dplyr::bind_rows(
         anot |> dplyr::select(.data$feature_nr),
-        cl1 |> dplyr::select(.data$feature_nr),
-        cl2 |> dplyr::select(.data$feature_nr),
+        dplyr::bind_rows(
+            lapply(
+                cl_list,
+                function(x) x |> dplyr::select(.data$feature_nr)
+            )
+        ),
         fn_tbl |> dplyr::select(.data$feature_nr)
-    )
-
-    if (use_cat23) {
-        cat2h <- if (has_c2) {
-            category_2_and_3_hits$category_2_hits |>
-                stbl() |>
-                dplyr::transmute(feature_nr = .data$feature_nr) |>
-                dplyr::distinct()
-        } else {
-            tibble(feature_nr = numeric(0))
-        }
-        cat3h <- if (has_c3) {
-            category_2_and_3_hits$category_3_hits |>
-                stbl() |>
-                dplyr::transmute(feature_nr = .data$feature_nr) |>
-                dplyr::distinct()
-        } else {
-            tibble(feature_nr = numeric(0))
-        }
-        allf_parts <- c(allf_parts, list(cat2h, cat3h))
-    }
-
-    allf <- dplyr::bind_rows(allf_parts) |>
+    ) |>
         dplyr::distinct(.data$feature_nr) |>
         dplyr::filter(!is.na(.data$feature_nr)) |>
         dplyr::arrange(.data$feature_nr)
-
+    
     base <- allf |>
-        dplyr::left_join(anot, by = "feature_nr") |>
-        dplyr::left_join(
-            cl1 |>
-                dplyr::select(
-                    .data$feature_nr,
-                    !!rlang::sym(c1),
-                    .data$gcl,
-                    .data$fnsrc
-                ),
-            by = "feature_nr"
-        ) |>
-        dplyr::rename(gcl1 = .data$gcl, fnsrc1 = .data$fnsrc) |>
-        dplyr::left_join(
-            cl2 |>
-                dplyr::select(
-                    .data$feature_nr,
-                    !!rlang::sym(c2),
-                    .data$gcl,
-                    .data$fnsrc
-                ),
-            by = "feature_nr"
-        ) |>
-        dplyr::rename(gcl2 = .data$gcl, fnsrc2 = .data$fnsrc) |>
+        dplyr::left_join(anot, by = "feature_nr")
+    
+    gcl_cols <- character(0)
+    
+    for (cond in cond_names) {
+        cluster_col <- paste0("cluster_", cond)
+        gcl_col <- paste0("gcl_", cond)
+        
+        cl <- cl_list[[cond]]
+        
+        base <- base |>
+            dplyr::left_join(
+                cl |>
+                    dplyr::select(
+                        .data$feature_nr,
+                        !!rlang::sym(cluster_col),
+                        gcl = .data$gcl
+                    ) |>
+                    dplyr::rename(!!gcl_col := .data$gcl),
+                by = "feature_nr"
+            )
+        
+        gcl_cols <- c(gcl_cols, gcl_col)
+    }
+    
+    base <- base |>
         dplyr::left_join(fn_from_cl, by = "feature_nr") |>
         dplyr::left_join(fn_tbl, by = "feature_nr") |>
         dplyr::group_by(.data$feature_nr) |>
@@ -2115,118 +2376,156 @@ construct_cluster_table <- function(
             feature_name = dplyr::coalesce(
                 .data$fname_tbl,
                 .data$fname_cl,
-                .data$fnsrc1,
-                .data$fnsrc2,
                 as.character(.data$feature_nr)
-            ),
-            gene = if (no_genes) {
-                NA_character_
-            } else {
-                dplyr::coalesce(.data$gan, .data$gcl1, .data$gcl2)
-            }
-        )
-
-    keep <- intersect(unique(c(c1, c2)), names(base))
-    base <- dplyr::select(base, c("feature_nr", "feature_name", "gene", keep))
-
-    if (!use_cat23) {
-        return(
-            base |>
-                dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
-                dplyr::arrange(.data$feature_nr)
-        )
-    }
-
-    # cat2: direction by <cond2 score> -> "<cond>_higher"
-    out <- base
-    if (has_c2) {
-        c2_tbl <- stbl(limma_splines_results$avrg_diff_conditions)
-
-        # pick cond2 score column ignoring underscores
-        score_col <- find_col_ignore_underscores_rx(c2_tbl, cond_names[[2]])
-        if (is.na(score_col) || !is.numeric(c2_tbl[[score_col]])) {
-            stop_call_false(
-                "Missing logFC column in topTable for avr diff conditions."
             )
-        }
-
-        c2_df <- c2_tbl |>
-            dplyr::transmute(
-                feature_nr = .data$feature_nr,
-                cluster_cat2 = dplyr::case_when(
-                    .data[[score_col]] > 0 ~ paste0(
-                        gsub("_", "", cond_names[[2]]),
-                        "_higher"
-                    ),
-                    .data[[score_col]] < 0 ~ paste0(
-                        gsub("_", "", cond_names[[1]]),
-                        "_higher"
-                    ),
-                    TRUE ~ NA_character_
-                )
-            ) |>
-            dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
-
-        if (!is.null(category_2_and_3_hits$category_2_hits) &&
-            nrow(category_2_and_3_hits$category_2_hits) > 0) {
-            cat2h <- category_2_and_3_hits$category_2_hits |>
-                stbl() |>
-                dplyr::transmute(feature_nr = .data$feature_nr) |>
-                dplyr::distinct()
-            c2_df <- c2_df |>
-                dplyr::mutate(
-                    cluster_cat2 = ifelse(
-                        .data$feature_nr %in% cat2h$feature_nr,
-                        .data$cluster_cat2,
-                        NA_character_
-                    )
-                )
-        }
-
-        out <- out |> dplyr::left_join(c2_df, by = "feature_nr")
-    }
-
-    # Build vector of significant cat3 features (if available)
-    sig_c3 <- if (!is.null(category_2_and_3_hits$category_3_hits) &&
-        nrow(category_2_and_3_hits$category_3_hits) > 0) {
-        category_2_and_3_hits$category_3_hits |>
-            stbl() |>
-            dplyr::transmute(feature_nr = .data$feature_nr) |>
-            dplyr::distinct() |>
-            dplyr::pull(.data$feature_nr)
+        )
+    
+    if (no_genes) {
+        base <- base |>
+            dplyr::mutate(gene = NA_character_)
     } else {
-        integer(0)
-    }
-
-    # Construct cat3 only for significant features; else NA
-    out <- out |>
-        dplyr::mutate(
-            cluster_cat3 = dplyr::case_when(
-                !(.data$feature_nr %in% sig_c3) ~ NA_character_,
-                TRUE ~ paste0(
-                    ifelse(
-                        is.na(.data[[c1]]), "ns", as.character(.data[[c1]])
-                    ),
-                    "_",
-                    ifelse(
-                        is.na(.data[[c2]]), "ns", as.character(.data[[c2]])
+        base <- base |>
+            dplyr::rowwise() |>
+            dplyr::mutate(
+                gene = {
+                    vals <- dplyr::c_across(
+                        c("gan", gcl_cols[gcl_cols %in% names(base)])
                     )
-                )
-            )
+                    idx <- which(!is.na(vals) & vals != "")[1]
+                    if (is.na(idx)) NA_character_ else vals[[idx]]
+                }
+            ) |>
+            dplyr::ungroup()
+    }
+    
+    keep_clusters <- paste0("cluster_", cond_names)
+    keep_clusters <- intersect(keep_clusters, names(base))
+    
+    out <- base |>
+        dplyr::select(
+            "feature_nr", "feature_name", "gene",
+            tidyselect::all_of(keep_clusters)
         )
-    n_cat3 <- out |>
-        dplyr::filter(!is.na(.data$cluster_cat3)) |>
-        dplyr::distinct(.data$cluster_cat3) |>
-        nrow()
-    message(sprintf(
-        paste(
-            "%d clusters for the condition effect
-            (interaction between condition",
-            "and time)"
-        ),
-        n_cat3
-    ))
-
+    
+    # Category 2: per contrast
+    if (has_c2) {
+        c2_res  <- limma_splines_results$avrg_diff_conditions
+        c2_hits <- category_2_and_3_hits$category_2_hits
+        
+        for (cn in names(c2_res)) {
+            c2_tbl <- c2_res[[cn]]
+            if (is.null(c2_tbl) || nrow(c2_tbl) == 0) next
+            
+            score_col <- if ("logFC" %in% names(c2_tbl)) {
+                "logFC"
+            } else {
+                num_cols <- names(c2_tbl)[
+                    vapply(c2_tbl, is.numeric, logical(1))
+                ]
+                num_cols <- setdiff(num_cols, "feature_nr")
+                if (length(num_cols) == 0) next
+                num_cols[[1]]
+            }
+            
+            suffix <- sub("^avrg_diff_", "", cn)
+            parts <- strsplit(suffix, "_vs_")[[1]]
+            cond1_short <- parts[1]
+            cond2_short <- parts[2]
+            
+            c2_df <- c2_tbl |>
+                dplyr::transmute(
+                    feature_nr = .data$feature_nr,
+                    cat2_tmp = dplyr::case_when(
+                        .data[[score_col]] > 0 ~ paste0(
+                            gsub("_", "", cond2_short),
+                            "_higher"
+                        ),
+                        .data[[score_col]] < 0 ~ paste0(
+                            gsub("_", "", cond1_short),
+                            "_higher"
+                        ),
+                        TRUE ~ NA_character_
+                    )
+                ) |>
+                dplyr::distinct(.data$feature_nr, .keep_all = TRUE)
+            
+            hit_tbl <- c2_hits[[cn]]
+            if (!is.null(hit_tbl) && nrow(hit_tbl) > 0) {
+                cat2h <- hit_tbl |>
+                    dplyr::transmute(feature_nr = .data$feature_nr) |>
+                    dplyr::distinct()
+                c2_df <- c2_df |>
+                    dplyr::mutate(
+                        cat2_tmp = ifelse(
+                            .data$feature_nr %in% cat2h$feature_nr,
+                            .data$cat2_tmp,
+                            NA_character_
+                        )
+                    )
+            }
+            
+            out_col <- paste0("cluster_cat2_", suffix)
+            c2_df <- c2_df |>
+                dplyr::rename(!!rlang::sym(out_col) := .data$cat2_tmp)
+            
+            out <- out |>
+                dplyr::left_join(c2_df, by = "feature_nr")
+        }
+    }
+    
+    # Category 3: per contrast
+    if (has_c3) {
+        c3_hits <- category_2_and_3_hits$category_3_hits
+        
+        for (cn in names(c3_hits)) {
+            hit_tbl <- c3_hits[[cn]]
+            if (is.null(hit_tbl) || nrow(hit_tbl) == 0) next
+            
+            sig_c3 <- hit_tbl |>
+                dplyr::transmute(feature_nr = .data$feature_nr) |>
+                dplyr::distinct() |>
+                dplyr::pull(.data$feature_nr)
+            
+            suffix <- sub("^time_interaction_", "", cn)
+            parts <- strsplit(suffix, "_vs_")[[1]]
+            cond1_short <- parts[1]
+            cond2_short <- parts[2]
+            
+            cond1_full <- map_short_to_full(cond1_short)
+            cond2_full <- map_short_to_full(cond2_short)
+            
+            col1 <- paste0("cluster_", cond1_full)
+            col2 <- paste0("cluster_", cond2_full)
+            
+            out_col <- paste0("cluster_cat3_", suffix)
+            
+            tmp <- out |>
+                dplyr::transmute(
+                    feature_nr = .data$feature_nr,
+                    cat3_tmp = dplyr::case_when(
+                        !(.data$feature_nr %in% sig_c3) ~ NA_character_,
+                        TRUE ~ paste0(
+                            ifelse(
+                                is.na(.data[[col1]]),
+                                "ns",
+                                as.character(.data[[col1]])
+                            ),
+                            "_",
+                            ifelse(
+                                is.na(.data[[col2]]),
+                                "ns",
+                                as.character(.data[[col2]])
+                            )
+                        )
+                    )
+                ) |>
+                dplyr::rename(!!rlang::sym(out_col) := .data$cat3_tmp)
+            
+            out <- out |>
+                dplyr::left_join(tmp, by = "feature_nr")
+        }
+    }
+    
     out |>
         dplyr::distinct(.data$feature_nr, .keep_all = TRUE) |>
         dplyr::arrange(.data$feature_nr)
@@ -2238,87 +2537,143 @@ construct_cluster_table <- function(
 #' @noRd
 #'
 #' @description
-#' For `category_2_and_3_hits$category_3_hits`, add per-condition columns
-#' `cT` (single effect) or `cT_<name>` (multiple effects), mapped by
-#' `feature_nr` into the corresponding effect-size vectors in
-#' `time_effect_effect_size`. Also add a single combined column `cDT`
-#' taken from `interaction_effect_size`, again by `feature_nr`.
+#' For \code{category_2_and_3_hits$category_3_hits}, add per-condition
+#' time-effect columns \code{cT} (single condition) or
+#' \code{cT_<name>} (multiple conditions), mapped by \code{feature_nr}
+#' into the corresponding effect-size vectors in
+#' \code{time_effect_effect_size}. Also add a combined interaction
+#' column \code{cDT} taken from \code{interaction_effect_size}, again
+#' mapped by \code{feature_nr}.
 #'
-#' For `within_level_top_tables`, add a `cT` column to each tibble named
-#' `Condition_<name>`, where `<name>` matches the names in
-#' `time_effect_effect_size`.
+#' \code{category_2_and_3_hits$category_3_hits} is expected to be a
+#' named list of tibbles/data frames, one per pairwise contrast. Each
+#' element must contain a numeric \code{feature_nr} column. For backward
+#' compatibility, a single tibble is also accepted and is treated as a
+#' single-element list.
+#'
+#' For \code{within_level_top_tables}, a \code{cT} column is added to
+#' each tibble whose name matches the entries in
+#' \code{time_effect_effect_size}. Matching is done via stripping the
+#' prefix up to the first underscore (e.g. \code{"Condition_A"} →
+#' \code{"A"}).
 #'
 #' @param time_effect_effect_size
 #'   A named list of numeric vectors. Each vector holds per-feature
-#'   effect sizes. Names are used to match `Condition_<name>` tibbles
-#'   in `top_tables`.
+#'   time-effect sizes for one condition level. Names are used to match
+#'   \code{Condition_<name>} tibbles in \code{within_level_top_tables}
+#'   and to create \code{cT_<name>} columns in the category 3 hit tables
+#'   when multiple conditions are present.
+#'
 #' @param interaction_effect_size
-#'   A numeric vector for interaction effect sizes. Included for
-#'   completeness; not used to create columns here.
+#'   A numeric vector of per-feature interaction effect sizes. Values
+#'   are mapped into a \code{cDT} column in each Category 3 hit table
+#'   using \code{feature_nr}.
+#'
 #' @param category_2_and_3_hits
-#'   A list that contains a tibble named `category_3_hits` with a
-#'   numeric `feature_nr` column.
-#' @param top_tables
-#'   A list of tibbles named `Condition_<name>` with a numeric
-#'   `feature_nr` column.
+#'   A list returned by \code{get_category_2_and_3_hits()}, containing
+#'   an element \code{category_3_hits}. This element is a named list of
+#'   tibbles (one per contrast) or a single tibble, each with a numeric
+#'   \code{feature_nr} column.
+#'
+#' @param within_level_top_tables
+#'   A list of tibbles/data frames, typically named
+#'   \code{Condition_<name>}, each containing a numeric
+#'   \code{feature_nr} column. These are within-level time-effect top
+#'   tables to which a \code{cT} column is added.
 #'
 #' @return
 #'   A list with elements:
-#'   - `top_tables`: updated list of tibbles
-#'   - `category_2_and_3_hits`: updated list with `category_3_hits`
+#'   \itemize{
+#'     \item \code{within_level_top_tables}: updated list of tibbles
+#'       with added \code{cT} columns.
+#'     \item \code{category_2_and_3_hits}: updated list with
+#'       \code{category_3_hits} tables now containing \code{cT}/
+#'       \code{cT_<name>} and \code{cDT} columns.
+#'   }
 #'
 add_effect_size_columns <- function(
-    time_effect_effect_size,
-    interaction_effect_size,
-    category_2_and_3_hits,
-    within_level_top_tables) {
-    get_by_index <- function(
-        vec,
-        idx) {
+        time_effect_effect_size,
+        interaction_effect_size,
+        category_2_and_3_hits,
+        within_level_top_tables
+) {
+    get_by_index <- function(vec, idx) {
         idx <- as.integer(idx)
         bad <- is.na(idx) | idx < 1L | idx > length(vec)
         out <- vec[idx]
         out[bad] <- NA_real_
         out
     }
-
+    
+    # ---- Update category_3_hits (Category 3 tables) ----
     if (!is.null(category_2_and_3_hits)) {
         cat3 <- category_2_and_3_hits[["category_3_hits"]]
-
-        if (length(time_effect_effect_size) == 1L) {
-            vec <- time_effect_effect_size[[1L]]
-            cat3[["cT"]] <- get_by_index(
-                vec,
-                cat3[["feature_nr"]]
-            )
-        } else {
-            for (nm in names(time_effect_effect_size)) {
-                vec <- time_effect_effect_size[[nm]]
-                col_nm <- paste0("cT_", nm)
-                cat3[[col_nm]] <- get_by_index(
-                    vec,
-                    cat3[["feature_nr"]]
+        
+        if (!is.null(cat3)) {
+            # Backward compat: single tibble vs list of tibbles
+            cat3_was_df <- is.data.frame(cat3)
+            if (cat3_was_df) {
+                cat3_list <- list(cat3)
+                names(cat3_list) <- "contrast_1"
+            } else {
+                cat3_list <- cat3
+            }
+            
+            cat3_list <- lapply(cat3_list, function(tbl) {
+                if (!is.data.frame(tbl)) {
+                    return(tbl)
+                }
+                if (!("feature_nr" %in% names(tbl))) {
+                    return(tbl)
+                }
+                
+                # Add cT / cT_<name> columns
+                if (length(time_effect_effect_size) == 1L) {
+                    vec <- time_effect_effect_size[[1L]]
+                    tbl[["cT"]] <- get_by_index(
+                        vec,
+                        tbl[["feature_nr"]]
+                    )
+                } else {
+                    for (nm in names(time_effect_effect_size)) {
+                        vec <- time_effect_effect_size[[nm]]
+                        col_nm <- paste0("cT_", nm)
+                        tbl[[col_nm]] <- get_by_index(
+                            vec,
+                            tbl[["feature_nr"]]
+                        )
+                    }
+                }
+                
+                # Add cDT column from interaction_effect_size
+                tbl[["cDT"]] <- get_by_index(
+                    interaction_effect_size,
+                    tbl[["feature_nr"]]
                 )
+                
+                tbl
+            })
+            
+            if (cat3_was_df) {
+                category_2_and_3_hits[["category_3_hits"]] <- cat3_list[[1L]]
+            } else {
+                category_2_and_3_hits[["category_3_hits"]] <- cat3_list
             }
         }
-
-        cat3[["cDT"]] <- get_by_index(
-            interaction_effect_size,
-            cat3[["feature_nr"]]
-        )
-
-        category_2_and_3_hits[["category_3_hits"]] <- cat3
     }
-
+    
+    # ---- Update within_level_top_tables (within-level cT) ----
     for (nm in names(time_effect_effect_size)) {
         tt_names <- names(within_level_top_tables)
-        idx <- match(nm, sub("^[^_]*_", "", tt_names))
+        # match nm to suffix after first underscore in tt_names
+        suffixes <- sub("^[^_]*_", "", tt_names)
+        idx <- match(nm, suffixes)
         if (is.na(idx)) next
+        
         tt_name <- tt_names[[idx]]
-
         tt <- within_level_top_tables[[tt_name]]
-
-        # skip if element is NA or not a data.frame
+        
+        # skip if element is NA-like or not a data.frame
         if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) {
             next
         }
@@ -2328,7 +2683,7 @@ add_effect_size_columns <- function(
         if (!("feature_nr" %in% names(tt))) {
             next
         }
-
+        
         vec <- time_effect_effect_size[[nm]]
         cT_vals <- get_by_index(
             vec,
@@ -2337,7 +2692,7 @@ add_effect_size_columns <- function(
         tt[["cT"]] <- cT_vals
         within_level_top_tables[[tt_name]] <- tt
     }
-
+    
     list(
         within_level_top_tables = within_level_top_tables,
         category_2_and_3_hits = category_2_and_3_hits
@@ -2539,7 +2894,7 @@ split_data_by_condition <- function(
 #' cluster. This can be used to limit the computation time and size of
 #' the HTML report in the case of many hits.
 #'
-#' @return A list of ComplexHeatmap heatmap objects for each level.
+#' @return A list of ComplexHeatmap heatmap objects for (one for each level).
 #'
 #' @seealso
 #' \link[ComplexHeatmap]{Heatmap}, \link[dplyr]{arrange}
@@ -2653,6 +3008,8 @@ plot_heatmap <- function(
 
         heatmaps[[length(heatmaps) + 1]] <- ht
     }
+    # name the list elements by condition level
+    names(heatmaps) <- levels[seq_along(heatmaps)]
     heatmaps
 }
 
@@ -3387,22 +3744,23 @@ plot_splines <- function(
 #' @importFrom rlang .data
 #'
 plot_spline_comparisons <- function(
-    time_effect_1,
-    condition_1,
-    time_effect_2,
-    condition_2,
-    avrg_diff_conditions,
-    interaction_condition_time,
-    data,
-    meta,
-    condition,
-    replicate_column,
-    predicted_timecurves,
-    plot_info,
-    adj_pthresh_avrg_diff_conditions,
-    adj_pthresh_interaction,
-    raw_data,
-    max_hit_number) {
+        time_effect_1,
+        condition_1,
+        time_effect_2,
+        condition_2,
+        avrg_diff_conditions,
+        interaction_condition_time,
+        data,
+        meta,
+        condition,
+        replicate_column,
+        predicted_timecurves,
+        plot_info,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction,
+        raw_data,
+        max_hit_number) {
+    
     # optional replicate mapping
     if (!is.null(replicate_column)) {
         replicate_mapping <- setNames(
@@ -3410,7 +3768,7 @@ plot_spline_comparisons <- function(
             unique(meta[[replicate_column]])
         )
     }
-
+    
     # sort inputs for stable behavior
     time_effect_1 <- dplyr::arrange(time_effect_1, .data$feature_names)
     time_effect_2 <- dplyr::arrange(time_effect_2, .data$feature_names)
@@ -3422,18 +3780,18 @@ plot_spline_comparisons <- function(
         interaction_condition_time,
         .data$feature_names
     )
-
+    
     smooth_timepoints <- predicted_timecurves$time_grid
     pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
     pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
-
+    
     # meta/time and titles
     time_points <- meta$Time
     titles <- data.frame(
         FeatureID = time_effect_1$feature_nr,
         feature_names = time_effect_1$feature_names
     )
-
+    
     features_to_plot <- select_balanced_hits(
         avrg_df = dplyr::select(
             avrg_diff_conditions,
@@ -3449,7 +3807,7 @@ plot_spline_comparisons <- function(
         ),
         max_n = max_hit_number
     )
-
+    
     # (Optional) sanity check: ensure features exist in prediction matrices
     if (!is.null(rownames(pred_mat_1))) {
         features_to_plot <- features_to_plot[
@@ -3458,10 +3816,10 @@ plot_spline_comparisons <- function(
             drop = FALSE
         ]
     }
-
+    
     plot_list <- list()
     feature_names_list <- list()
-
+    
     # helper for stars (annotation only)
     stars_from <- function(pval, thresh) {
         if (is.na(pval)) {
@@ -3479,7 +3837,7 @@ plot_spline_comparisons <- function(
             ""
         }
     }
-
+    
     # precompute shape mapping if replicates used
     if (!is.null(replicate_column)) {
         distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)
@@ -3490,14 +3848,16 @@ plot_spline_comparisons <- function(
             uniq_rep
         )
     }
-
+    
     for (i in seq_len(nrow(features_to_plot))) {
         hit_index <- as.numeric(features_to_plot$feature_nr[i])
         feature_name <- features_to_plot$feature_names[i]
-        # Determine membership (feature is in which category table)
+        
+        # membership (feature is in which category table)
         is_cat2 <- feature_name %in% avrg_diff_conditions$feature_names
-        is_cat3 <- feature_name %in% interaction_condition_time$feature_names
-
+        is_cat3 <- feature_name %in%
+            interaction_condition_time$feature_names
+        
         # Category 2 effect size (from FIRST column of avrg_diff_conditions)
         cat2_eff <- NA_real_
         cat2_colname <- colnames(avrg_diff_conditions)[1]
@@ -3507,24 +3867,17 @@ plot_spline_comparisons <- function(
                 drop = FALSE
             ]
             if (nrow(row_cat2) > 0) {
-                cat2_eff <- as.numeric(row_cat2[[1]]) 
+                cat2_eff <- as.numeric(row_cat2[[1]])
             }
         }
-
-        # Category 3 effect sizes per condition
+        
+        # Category 3 effect sizes per condition and per contrast
         es1 <- NA_real_
         es2 <- NA_real_
-        # Category 3 combined differential travel (cat3 effect size)
         diff_es <- NA_real_
+        
         if (is_cat3) {
-            ies <- predicted_timecurves$interaction_effect_size
-            if (!is.null(ies)) {
-                tmp <- unname(ies[feature_name])
-                if (length(tmp)) diff_es <- tmp[1]
-            }
-        }
-
-        if (is_cat3) {
+            # per-condition Cat1 effect sizes (unchanged structure)
             es_list <- predicted_timecurves$time_effect_effect_size
             if (!is.null(es_list[[condition_1]])) {
                 es1 <- unname(es_list[[condition_1]][feature_name])
@@ -3532,24 +3885,75 @@ plot_spline_comparisons <- function(
             if (!is.null(es_list[[condition_2]])) {
                 es2 <- unname(es_list[[condition_2]][feature_name])
             }
+            
+            # per-contrast Cat3 effect sizes (new structure: list)
+            ies <- predicted_timecurves$interaction_effect_size
+            if (!is.null(ies)) {
+                ies_vec <- NULL
+                if (is.list(ies)) {
+                    pair_name <- paste0(
+                        condition_1,
+                        "_vs_",
+                        condition_2
+                    )
+                    ies_vec <- ies[[pair_name]]
+                    if (is.null(ies_vec)) {
+                        # optional: try reversed name if used upstream
+                        pair_name_rev <- paste0(
+                            condition_2,
+                            "_vs_",
+                            condition_1
+                        )
+                        ies_vec <- ies[[pair_name_rev]]
+                    }
+                } else {
+                    # backward/simple case: single vector
+                    ies_vec <- ies
+                }
+                
+                if (!is.null(ies_vec)) {
+                    tmp <- unname(ies_vec[feature_name])
+                    if (length(tmp)) diff_es <- tmp[1]
+                }
+            }
         }
-
+        
         row_values <- data[hit_index, ]
-
+        
         # imputation flags (by condition)
         if (!is.null(raw_data)) {
-            columns_condition_1 <- which(meta[[condition]] == condition_1)
-            columns_condition_2 <- which(meta[[condition]] == condition_2)
+            columns_condition_1 <- which(
+                meta[[condition]] == condition_1
+            )
+            columns_condition_2 <- which(
+                meta[[condition]] == condition_2
+            )
             na_indices_cond1 <- columns_condition_1[
-                which(is.na(raw_data[hit_index, columns_condition_1]))
+                which(
+                    is.na(
+                        raw_data[hit_index, columns_condition_1]
+                    )
+                )
             ]
             na_indices_cond2 <- columns_condition_2[
-                which(is.na(raw_data[hit_index, columns_condition_2]))
+                which(
+                    is.na(
+                        raw_data[hit_index, columns_condition_2]
+                    )
+                )
             ]
             plot_data <- data.frame(
                 Time = time_points,
-                Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
-                Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
+                Y1 = ifelse(
+                    meta[[condition]] == condition_1,
+                    row_values,
+                    NA
+                ),
+                Y2 = ifelse(
+                    meta[[condition]] == condition_2,
+                    row_values,
+                    NA
+                ),
                 IsImputed1 = ifelse(
                     seq_along(row_values) %in% na_indices_cond1,
                     "Imputed",
@@ -3566,24 +3970,32 @@ plot_spline_comparisons <- function(
         } else {
             plot_data <- data.frame(
                 Time = time_points,
-                Y1 = ifelse(meta[[condition]] == condition_1, row_values, NA),
-                Y2 = ifelse(meta[[condition]] == condition_2, row_values, NA),
+                Y1 = ifelse(
+                    meta[[condition]] == condition_1,
+                    row_values,
+                    NA
+                ),
+                Y2 = ifelse(
+                    meta[[condition]] == condition_2,
+                    row_values,
+                    NA
+                ),
                 IsImputed1 = "Measured",
                 IsImputed2 = "Measured"
             )
             has_imputed_1 <- FALSE
             has_imputed_2 <- FALSE
         }
-
+        
         if (!is.null(replicate_column)) {
             plot_data$Replicate <- meta[[replicate_column]]
-            plot_data$ReplicateLabel <- 
+            plot_data$ReplicateLabel <-
                 replicate_mapping[meta[[replicate_column]]]
         }
-
+        
         fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
         fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
-
+        
         # pull p-values for annotation (dfs are already filtered)
         avrg_diff_pval <- safe_pull_pval(
             avrg_diff_conditions,
@@ -3595,7 +4007,7 @@ plot_spline_comparisons <- function(
             feature_name,
             "adj.P.Val"
         )
-
+        
         avrg_diff_stars <- stars_from(
             avrg_diff_pval,
             adj_pthresh_avrg_diff_conditions
@@ -3604,7 +4016,7 @@ plot_spline_comparisons <- function(
             interaction_pval,
             adj_pthresh_interaction
         )
-
+        
         # average CV per condition
         cv_1 <- calc_cv(
             time_values = plot_data$Time,
@@ -3614,7 +4026,7 @@ plot_spline_comparisons <- function(
             time_values = plot_data$Time,
             response_values = plot_data$Y2
         )
-
+        
         plot_data$ColorLabel1 <- ifelse(
             plot_data$IsImputed1 == "Imputed",
             paste("Imputed data", condition_1),
@@ -3625,11 +4037,11 @@ plot_spline_comparisons <- function(
             paste("Imputed data", condition_2),
             paste("Data", condition_2)
         )
-
+        
         fmt_p_for_title <- function(p) {
             if (is.na(p)) "ns" else as.character(signif(p, 2))
         }
-
+        
         p <- local({
             p <- ggplot2::ggplot() +
                 ggplot2::geom_point(
@@ -3639,7 +4051,7 @@ plot_spline_comparisons <- function(
                         color = .data$ColorLabel1,
                         shape = if (
                             !is.null(replicate_column)
-                            ) .data$Replicate else NULL
+                        ) .data$Replicate else NULL
                     ),
                     na.rm = TRUE, alpha = 0.5
                 ) +
@@ -3661,7 +4073,7 @@ plot_spline_comparisons <- function(
                         color = .data$ColorLabel2,
                         shape = if (
                             !is.null(replicate_column)
-                            ) .data$Replicate else NULL
+                        ) .data$Replicate else NULL
                     ),
                     na.rm = TRUE, alpha = 0.5
                 ) +
@@ -3682,9 +4094,11 @@ plot_spline_comparisons <- function(
                 ) +
                 ggplot2::scale_x_continuous(
                     labels = scales::label_number_auto()
-                    ) +
-                ggplot2::guides(x = ggplot2::guide_axis(check.overlap = TRUE))
-
+                ) +
+                ggplot2::guides(
+                    x = ggplot2::guide_axis(check.overlap = TRUE)
+                )
+            
             title_lines <- c(
                 feature_name,
                 paste(
@@ -3698,12 +4112,14 @@ plot_spline_comparisons <- function(
                     interaction_stars
                 )
             )
-
-            # Append effect-size lines according to the category
+            
             if (is_cat2 && !is.na(cat2_eff)) {
                 title_lines <- c(
                     title_lines,
-                    paste0("Avrg diff conditions: ", signif(cat2_eff, 3))
+                    paste0(
+                        "Avrg diff conditions: ",
+                        signif(cat2_eff, 3)
+                    )
                 )
             }
             if (is_cat3 && (!is.na(es1) || !is.na(es2))) {
@@ -3712,24 +4128,30 @@ plot_spline_comparisons <- function(
                     paste0(
                         "cT: ",
                         condition_1,
-                        "=", ifelse(
-                            is.na(es1), "NA", signif(es1, 3)
-                            ),
+                        "=",
+                        ifelse(
+                            is.na(es1),
+                            "NA",
+                            signif(es1, 3)
+                        ),
                         " | ",
                         condition_2,
                         "=",
                         ifelse(
-                            is.na(es2), "NA", signif(es2, 3)
-                            ),
+                            is.na(es2),
+                            "NA",
+                            signif(es2, 3)
+                        ),
                         " | cDT: ",
                         ifelse(
-                            is.na(diff_es), "NA", signif(diff_es, 3)
-                            )
+                            is.na(diff_es),
+                            "NA",
+                            signif(diff_es, 3)
+                        )
                     )
                 )
             }
-
-            # CV line (kept as before)
+            
             title_lines <- c(
                 title_lines,
                 paste0(
@@ -3737,21 +4159,20 @@ plot_spline_comparisons <- function(
                     "avg CV ", condition_2, ": ", round(cv_2, 2), "%"
                 )
             )
-
+            
             p <- p + ggplot2::labs(
                 title = paste(title_lines, collapse = "\n"),
                 x = paste0("Time [", plot_info[["time_unit"]], "]"),
                 y = plot_info[["y_axis_label"]]
             )
-
-
+            
             if (!is.null(replicate_column)) {
                 p <- p + ggplot2::scale_shape_manual(
                     values = shape_mapping,
                     name = "Replicate"
                 )
             }
-
+            
             p <- p + ggplot2::theme_minimal() +
                 ggplot2::theme(
                     legend.position = "right",
@@ -3765,13 +4186,13 @@ plot_spline_comparisons <- function(
                     axis.text.x = ggplot2::element_text(size = 12),
                     axis.text.y = ggplot2::element_text(size = 12)
                 )
-
+            
             y_combined <- c(plot_data$Y1, plot_data$Y2)
             y_max <- max(y_combined, na.rm = TRUE)
             y_min <- min(y_combined, na.rm = TRUE)
             y_extension <- (y_max - y_min) * 0.1
             y_pos_label <- y_max + y_extension * 0.5
-
+            
             result <- maybe_add_dashed_lines(
                 p = p,
                 plot_info = plot_info,
@@ -3781,9 +4202,13 @@ plot_spline_comparisons <- function(
             )
             p <- result$p
             treatment_colors <- result$treatment_colors
-
+            
             color_values <- setNames(
-                c("orange", "orange", "purple", "purple", "red", "dodgerblue"),
+                c(
+                    "orange", "orange",
+                    "purple", "purple",
+                    "red", "dodgerblue"
+                ),
                 c(
                     paste("Data", condition_1),
                     paste("Spline", condition_1),
@@ -3793,7 +4218,7 @@ plot_spline_comparisons <- function(
                     paste("Imputed data", condition_2)
                 )
             )
-
+            
             filtered_labels <- c(
                 paste("Data", condition_1),
                 paste("Spline", condition_1),
@@ -3803,33 +4228,30 @@ plot_spline_comparisons <- function(
             if (has_imputed_1) {
                 filtered_labels <- c(
                     filtered_labels,
-                    paste(
-                        "Imputed data",
-                        condition_1
-                    )
+                    paste("Imputed data", condition_1)
                 )
             }
             if (has_imputed_2) {
                 filtered_labels <- c(
                     filtered_labels,
-                    paste(
-                        "Imputed data",
-                        condition_2
-                    )
+                    paste("Imputed data", condition_2)
                 )
             }
-
+            
             color_values <- c(
-                color_values[names(color_values) %in% filtered_labels],
+                color_values[
+                    names(color_values) %in% filtered_labels
+                ],
                 treatment_colors
             )
             p + ggplot2::scale_color_manual(values = color_values)
         })
-
+        
         plot_list[[length(plot_list) + 1]] <- p
-        feature_names_list[[length(feature_names_list) + 1]] <- feature_name
+        feature_names_list[[length(feature_names_list) + 1]] <-
+            feature_name
     }
-
+    
     list(
         plots = plot_list,
         feature_names = feature_names_list

@@ -299,7 +299,7 @@ generate_report_html <- function(
         # names of Excel files) --> every df becomes a sheet.
         category_2_and_3_hits <- truncate_hit_labels(category_2_and_3_hits)
     }
-
+    browser()
     for (field in download_fields) {
         base64_df <- process_field(
             field = field,
@@ -1706,6 +1706,7 @@ process_field <- function(
             </button></a>',
             encode_df_to_base64(category_2_and_3_hits[[1]]) # category 2
         )
+        browser()
     } else if (field == "limma_topTables_interaction_condition_time_hits") {
         base64_df <- sprintf(
             '<a href="%s"
