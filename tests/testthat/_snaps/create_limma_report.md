@@ -85,7 +85,7 @@
       [1] 1
       
       [[5]]$title
-      [1] "P-Value Histogram: Average Difference Conditions"
+      [1] "P-Value Histogram: Exponential_vs_Stationary"
       
       
       [[6]]
@@ -104,7 +104,7 @@
       [1] 1
       
       [[7]]$title
-      [1] "P-Value Histogram: Interaction of Condition and Time"
+      [1] "P-Value Histogram: Exponential_vs_Stationary"
       
       
 

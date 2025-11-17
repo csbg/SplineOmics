@@ -190,11 +190,7 @@ generate_report_html <- function(
     if (!all(is.na(topTables))) {
         download_fields <- c(
             download_fields,
-            if (report_type == "cluster_hits") {
-                "limma_topTables_clustered_time_effect_hits"
-            } else {
-                "limma_topTables"
-            }
+            "limma_topTables_clustered_time_effect_hits"
         )
     }
 
@@ -1727,12 +1723,6 @@ process_field <- function(
             <button>Download limma_topTables_clustered_time_effect_hits.xlsx
             </button>
             </a>',
-            encode_df_to_base64(topTables)
-        )
-    } else if (field == "limma_topTables" && !any(is.na(topTables))) {
-        base64_df <- sprintf(
-            '<a href="%s" download="limma_topTables.xlsx" class="embedded-file">
-       <button>Download limma_topTables.xlsx</button></a>',
             encode_df_to_base64(topTables)
         )
     } else if (field == "limma_topTables_avrg_diff_conditions_hits") {

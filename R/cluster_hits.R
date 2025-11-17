@@ -2347,9 +2347,9 @@ construct_cluster_table <- function(
                     dplyr::select(
                         .data$feature_nr,
                         !!rlang::sym(cluster_col),
-                        gcl = .data$gcl
+                        gcl = gcl
                     ) |>
-                    dplyr::rename(!!gcl_col := .data$gcl),
+                    dplyr::rename(!!gcl_col := gcl),
                 by = "feature_nr"
             )
         

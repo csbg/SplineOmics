@@ -7,36 +7,36 @@
 #' results for time effects, average differences between conditions,
 #' and interaction effects between condition and time.
 #'
-#' @param splineomics `SplineOmics`: An S3 object of class `SplineOmics` that 
+#' @param splineomics `SplineOmics`: An S3 object of class `SplineOmics` that
 #' contains all the necessary data and parameters for the analysis, including:
 #' \itemize{
-#'   \item \code{limma_splines_result}: `list` A list containing top tables 
-#'   from differential expression analysis for the three different limma 
+#'   \item \code{limma_splines_result}: `list` A list containing top tables
+#'   from differential expression analysis for the three different limma
 #'   results.
 #'
-#'   \item \code{meta}: `data.frame` A data frame with sample metadata. Must 
+#'   \item \code{meta}: `data.frame` A data frame with sample metadata. Must
 #'   contain a column `"Time"`.
 #'
-#'   \item \code{condition}: `character(1)` A character string specifying the 
-#'   column name in the metadata (\code{meta}) that defines groups for 
-#'   analysis. This column contains levels such as `"exponential"` and 
+#'   \item \code{condition}: `character(1)` A character string specifying the
+#'   column name in the metadata (\code{meta}) that defines groups for
+#'   analysis. This column contains levels such as `"exponential"` and
 #'   `"stationary"` for phases, or `"drug"` and `"no_drug"` for treatments.
 #'
-#'   \item \code{annotation}: `data.frame` A data frame containing feature 
-#'   information, such as gene and protein names, associated with the 
+#'   \item \code{annotation}: `data.frame` A data frame containing feature
+#'   information, such as gene and protein names, associated with the
 #'   expression data.
 #'
-#'   \item \code{report_info}: `list` A list containing metadata about the 
+#'   \item \code{report_info}: `list` A list containing metadata about the
 #'   analysis for reporting purposes.
 #' }
 #'
-#' @param adj_pthresh `numeric(1)`: A numeric value specifying the adjusted 
+#' @param adj_pthresh `numeric(1)`: A numeric value specifying the adjusted
 #' p-value threshold for significance. Default is 0.05. Must be > 0 and < 1.
 #'
-#' @param report_dir `character(1)`: A string specifying the directory where 
+#' @param report_dir `character(1)`: A string specifying the directory where
 #' the report should be saved. Default is the current working directory.
 #'
-#' @param verbose `logical(1)`: Boolean flag controlling the display of 
+#' @param verbose `logical(1)`: Boolean flag controlling the display of
 #' messages.
 #'
 #' @return A list of plots included in the generated HTML report.
@@ -186,7 +186,7 @@ create_limma_report <- function(
     # Get the top_tables of the three limma analysis categories
     time_effect <- limma_splines_result$time_effect
     avrg_diff_conditions <- limma_splines_result$avrg_diff_conditions
-    interaction_condition_time <- 
+    interaction_condition_time <-
         limma_splines_result$interaction_condition_time
 
     plots <- list()
@@ -212,7 +212,12 @@ create_limma_report <- function(
         result$section_headers_info
     )
 
-    if (!is.null(avrg_diff_conditions) && nrow(avrg_diff_conditions) > 0) {
+    if (!is.null(avrg_diff_conditions) &&
+        length(avrg_diff_conditions) > 0 &&
+        any(vapply(avrg_diff_conditions,
+                   function(x) is.data.frame(x) && nrow(x) > 0,
+                   logical(1)))) {
+
         result <- generate_avrg_diff_plots(
             avrg_diff_conditions,
             adj_pthresh
@@ -233,7 +238,11 @@ create_limma_report <- function(
     }
 
     if (!is.null(interaction_condition_time) &&
-        nrow(interaction_condition_time) > 0) {
+        length(interaction_condition_time) > 0 &&
+        any(vapply(interaction_condition_time,
+                   function(x) is.data.frame(x) && nrow(x) > 0,
+                   logical(1)))) {
+
         result <- generate_interaction_plots(
             interaction_condition_time,
             adj_pthresh
@@ -253,37 +262,73 @@ create_limma_report <- function(
         )
     }
 
-    all_top_tables <- c(
-        time_effect,
-        list(avrg_diff_conditions = avrg_diff_conditions),
-        list(interaction_condition_time = interaction_condition_time)
-    )
-
     unique_values <- unique(meta[[condition]])
-    new_names <- vapply(
-        names(all_top_tables),
-        shorten_names,
-        unique_values = unique_values,
-        FUN.VALUE = character(1)
-    )
-    names(all_top_tables) <- new_names
 
-    # replace NA / NULL list elements with empty data.frames (necessary for
-    # downstream code. Yes, this is a quickfix..)
-    all_top_tables <- lapply(all_top_tables, function(tbl) {
-        if (is.null(tbl) ||
-            (is.atomic(tbl) && length(tbl) == 1 && is.na(tbl))) {
-            data.frame()
-        } else {
-            tbl
-        }
-    })
+    shorten_vec <- function(nm_vec) {
+        vapply(
+            nm_vec,
+            shorten_names,
+            unique_values = unique_values,
+            FUN.VALUE = character(1)
+        )
+    }
 
+    time_effect_tables <- time_effect
+    avrg_tables        <- avrg_diff_conditions
+    inter_tables       <- interaction_condition_time
+
+    # Apply name shortening within each group
+    if (!is.null(names(time_effect_tables))) {
+        names(time_effect_tables) <- shorten_vec(names(time_effect_tables))
+    }
+    if (!is.null(names(avrg_tables))) {
+        names(avrg_tables) <- shorten_vec(names(avrg_tables))
+    }
+    if (!is.null(names(inter_tables))) {
+        names(inter_tables) <- shorten_vec(names(inter_tables))
+    }
+
+    # Replace NULL / NA-like elements with empty data.frames
+    clean_tbl_list <- function(lst) {
+        lapply(lst, function(tbl) {
+            if (is.null(tbl) ||
+                (is.atomic(tbl) && length(tbl) == 1 && is.na(tbl))) {
+                data.frame()
+            } else {
+                tbl
+            }
+        })
+    }
+
+    time_effect_tables <- clean_tbl_list(time_effect_tables)
+    avrg_tables        <- clean_tbl_list(avrg_tables)
+    inter_tables       <- clean_tbl_list(inter_tables)
+
+    # Optionally merge annotation into each table
     if (!is.null(annotation)) {
-        all_top_tables <- lapply(
-            all_top_tables,
+        time_effect_tables <- lapply(
+            time_effect_tables,
             merge_top_table_with_annotation,
             annotation = annotation
+        )
+        avrg_tables <- lapply(
+            avrg_tables,
+            merge_top_table_with_annotation,
+            annotation = annotation
+        )
+        inter_tables <- lapply(
+            inter_tables,
+            merge_top_table_with_annotation,
+            annotation = annotation
+        )
+    }
+
+    if (length(avrg_tables) == 0 && length(inter_tables) == 0) {
+        category_2_and_3_hits <- NA
+    } else {
+        category_2_and_3_hits <- list(
+            category_2_hits = avrg_tables,
+            category_3_hits = inter_tables
         )
     }
 
@@ -293,7 +338,8 @@ create_limma_report <- function(
         plots,
         plots_sizes,
         report_info,
-        topTables = all_top_tables,
+        topTables = time_effect_tables,
+        category_2_and_3_hits = category_2_and_3_hits,
         level_headers_info = section_headers_info,
         report_type = "create_limma_report",
         filename = "limma_report",
@@ -344,7 +390,6 @@ generate_time_effect_plots <- function(
         top_table <- time_effect[[i]]
 
         title <- paste("P-Value Histogram:", element_name)
-
         p_value_hist <- create_p_value_histogram(
             top_table = top_table,
             title = title
@@ -370,43 +415,93 @@ generate_time_effect_plots <- function(
 #' @noRd
 #'
 #' @description
-#' Creates a p-value histogram for the average difference between conditions
-#' from a single LIMMA top table. This function is used internally in the
-#' `create_limma_report` function.
+#' Creates p-value histograms for the **average difference between
+#' conditions**, using a **list of LIMMA top tables** (one per contrast).
+#' This function is used internally by `create_limma_report`.
 #'
-#' @param avrg_diff_conditions A dataframe from the LIMMA analysis
-#' representing the average difference between conditions.
-#' @param adj_pthresh A numeric value specifying the adjusted p-value threshold
-#' for significance.
+#' The first element in the returned `plots` list is a character label:
 #'
-#' @return A list containing:
-#' \itemize{
-#'   \item \code{plots}: A list of plots, including the p-value histogram.
-#'   \item \code{plots_sizes}: A numeric vector giving relative plot sizes.
-#'   \item \code{section_headers_info}: Metadata for section headers in the
-#'    report.
+#' \preformatted{
+#'   "Average Difference Conditions"
 #' }
 #'
+#' which becomes the section header in the HTML report.
+#'
+#' Then, for each contrast contained in `avrg_diff_conditions`, the
+#' function appends a p-value histogram.
+#'
+#' @param avrg_diff_conditions
+#'   A named list of data frames produced by the LIMMA analysis, each
+#'   representing average differences between conditions for a specific
+#'   contrast. Names typically start with `"avrg_diff_"`, e.g.
+#'   `"avrg_diff_A_vs_B"`.
+#'
+#' @param adj_pthresh
+#'   A numeric value specifying the adjusted p-value threshold for
+#'   significance (used only for labeling; not directly inside the
+#'   histogram itself).
+#'
+#' @return A list with:
+#'   \itemize{
+#'     \item \code{plots}: A list whose first element is the label
+#'       `"Average Difference Conditions"`, followed by one histogram
+#'       plot per contrast.
+#'     \item \code{plots_sizes}: A numeric vector where the first element
+#'       is a large sentinel (999) and each histogram uses size 1.
+#'     \item \code{section_headers_info}: A one-element list containing
+#'       the header metadata for the report.
+#'   }
+#'
 generate_avrg_diff_plots <- function(
-    avrg_diff_conditions,
-    adj_pthresh) {
+        avrg_diff_conditions,
+        adj_pthresh) {
+
+    # Add section label and sentinel size for the report
     plots <- list("Average Difference Conditions")
     plots_sizes <- c(999)
 
     header_info <- list(header_name = "Average Difference Conditions")
     section_headers_info <- list(header_info)
 
-    # Directly use the dataframe
-    title <- "P-Value Histogram: Average Difference Conditions"
+    # No contrast tables → return only section header
+    if (is.null(avrg_diff_conditions) ||
+        length(avrg_diff_conditions) == 0) {
+        return(list(
+            plots = plots,
+            plots_sizes = plots_sizes,
+            section_headers_info = section_headers_info
+        ))
+    }
 
-    p_value_hist <- create_p_value_histogram(
-        top_table = avrg_diff_conditions,
-        title = title
-    )
+    nm <- names(avrg_diff_conditions)
+    if (is.null(nm)) {
+        nm <- paste0("contrast_", seq_along(avrg_diff_conditions))
+    }
 
-    # Append only the p-value histogram now
-    plots <- c(plots, list(p_value_hist))
-    plots_sizes <- c(plots_sizes, 1)
+    # Generate histogram per contrast
+    for (i in seq_along(avrg_diff_conditions)) {
+        tt <- avrg_diff_conditions[[i]]
+        if (is.null(tt) || !is.data.frame(tt) || nrow(tt) == 0) {
+            next
+        }
+
+        raw_name <- nm[i]
+        suffix <- sub("^avrg_diff_", "", raw_name)
+        pretty_name <- if (nzchar(suffix)) suffix else raw_name
+
+        title <- sprintf(
+            "P-Value Histogram: %s",
+            pretty_name
+        )
+
+        p_value_hist <- create_p_value_histogram(
+            top_table = tt,
+            title = title
+        )
+
+        plots <- c(plots, list(p_value_hist))
+        plots_sizes <- c(plots_sizes, 1)
+    }
 
     list(
         plots = plots,
@@ -421,41 +516,84 @@ generate_avrg_diff_plots <- function(
 #' @noRd
 #'
 #' @description
-#' Creates a p-value histogram for the interaction of condition and time
-#' from a single LIMMA top table. This function is used internally in the
-#' `create_limma_report` function.
+#' Creates p-value histograms for the interaction of condition and time
+#' from a **list of LIMMA top tables** (one per contrast). This function
+#' is used internally in the `create_limma_report` function.
 #'
-#' @param interaction_condition_time A dataframe from the LIMMA analysis
-#' representing the interaction effects between condition and time.
-#' @param adj_pthresh A numeric value specifying the adjusted p-value threshold
-#' for significance.
+#' The first entry in the returned `plots` list is a character label
+#' ("Interaction of Condition and Time") that is used as a section header
+#' in the report. For each contrast in
+#' `interaction_condition_time`, an additional histogram plot is added.
+#'
+#' @param interaction_condition_time
+#'   A named list of data frames from the LIMMA analysis, each
+#'   representing interaction effects between condition and time for a
+#'   specific contrast. The names typically start with
+#'   `"time_interaction_"`, e.g. `"time_interaction_A_vs_B"`.
+#' @param adj_pthresh A numeric value specifying the adjusted p-value
+#'   threshold for significance (currently used only for reporting /
+#'   context, not inside the histogram itself).
 #'
 #' @return A list containing:
 #' \itemize{
-#'   \item \code{plots}: A list of plots, including the p-value histogram.
-#'   \item \code{plots_sizes}: A numeric vector giving relative plot sizes.
-#'   \item \code{section_headers_info}: Metadata for section headers in the
-#'    report.
+#'   \item \code{plots}: A list whose first element is the section label
+#'         `"Interaction of Condition and Time"`, followed by one
+#'         p-value histogram per contrast.
+#'   \item \code{plots_sizes}: A numeric vector giving relative plot
+#'         sizes. The first entry (the section label) uses a large
+#'         sentinel value (e.g. 999), and each histogram uses size 1.
+#'   \item \code{section_headers_info}: A one-element list with a
+#'         `header_name` entry used to build the report section header.
 #' }
 #'
 generate_interaction_plots <- function(
-    interaction_condition_time,
-    adj_pthresh) {
+        interaction_condition_time,
+        adj_pthresh) {
+
+    # Section label + size sentinel
     plots <- list("Interaction of Condition and Time")
     plots_sizes <- c(999)
 
     header_info <- list(header_name = "Interaction of Condition and Time")
     section_headers_info <- list(header_info)
 
-    # Single dataframe → single histogram
-    title <- "P-Value Histogram: Interaction of Condition and Time"
-    p_value_hist <- create_p_value_histogram(
-        top_table = interaction_condition_time,
-        title = title
-    )
+    if (is.null(interaction_condition_time) ||
+        length(interaction_condition_time) == 0) {
+        return(list(
+            plots = plots,
+            plots_sizes = plots_sizes,
+            section_headers_info = section_headers_info
+        ))
+    }
 
-    plots <- c(plots, list(p_value_hist))
-    plots_sizes <- c(plots_sizes, 1)
+    nm <- names(interaction_condition_time)
+    if (is.null(nm)) {
+        nm <- paste0("contrast_", seq_along(interaction_condition_time))
+    }
+
+    for (i in seq_along(interaction_condition_time)) {
+        tt <- interaction_condition_time[[i]]
+        if (is.null(tt) || !is.data.frame(tt) || nrow(tt) == 0) {
+            next
+        }
+
+        raw_name <- nm[i]
+        suffix <- sub("^time_interaction_", "", raw_name)
+        pretty_name <- if (nzchar(suffix)) suffix else raw_name
+
+        title <- sprintf(
+            "P-Value Histogram: %s",
+            pretty_name
+        )
+
+        p_value_hist <- create_p_value_histogram(
+            top_table = tt,
+            title = title
+        )
+
+        plots <- c(plots, list(p_value_hist))
+        plots_sizes <- c(plots_sizes, 1)
+    }
 
     list(
         plots = plots,

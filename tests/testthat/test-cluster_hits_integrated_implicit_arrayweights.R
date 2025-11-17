@@ -103,7 +103,7 @@ test_that("cluster_hits() returns correctly structured result", {
     # cluster_table: structure + minimal integrity checks
     cs <- clustering_results$cluster_table
     expect_s3_class(cs, c("tbl_df", "tbl", "data.frame"))
-    browser()
+
     # required metadata cols
     req_cols <- c("feature_nr", "feature_name", "gene")
     expect_true(all(req_cols %in% names(cs)))
