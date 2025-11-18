@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -220,6 +220,139 @@ configuration.</p>
 </div>
 </div>
 <div class="section level3">
+<h3 id="faq-on-interpreting-the-results">FAQ on interpreting the results<a class="anchor" aria-label="anchor" href="#faq-on-interpreting-the-results"></a>
+</h3>
+<div class="section level4">
+<h4 id="how-is-fdr-handled-in-run_limma_splines-when-conditions-are-modelled">How is FDR handled in <code>run_limma_splines()</code> when
+conditions are modelled<a class="anchor" aria-label="anchor" href="#how-is-fdr-handled-in-run_limma_splines-when-conditions-are-modelled"></a>
+</h4>
+<p>jointly (`mode = “integrated”)?</p>
+<p>The joint spline model is fitted once across all conditions, but FDR
+is controlled separately for each logical family of tests. There are
+three types of results, each with its own FDR correction:</p>
+<ol style="list-style-type: decimal">
+<li><p>Per-condition time effects
+(<code>extract_within_level_time_effects()</code>): For each condition
+level, spline (and interaction) contrasts are tested using an F-test (or
+t-test if <code>dof = 1</code>). P-values are adjusted across all genes
+within that condition. FDR is controlled per condition-specific time
+effect, not across conditions.</p></li>
+<li><p>Pairwise average differences between conditions
+(<code>condition_only</code> results): For each condition pair, the main
+condition effect plus its time-related terms are tested jointly.
+P-values are adjusted across all genes for that pairwise contrast. FDR
+is controlled per average-difference contrast per pair, not across all
+pairs.</p></li>
+<li><p>Pairwise condition×time interactions (<code>condition_time</code>
+results): For each condition pair, only the spline interaction terms are
+tested, via F- or t-tests depending on the degrees of freedom. P-values
+are adjusted across all genes for that interaction contrast. FDR is
+controlled per time-interaction contrast per pair, not jointly with
+average-difference contrasts or other pairs.</p></li>
+</ol>
+</div>
+<div class="section level4">
+<h4 id="how-is-fdr-handled-in-run_ora">How is FDR handled in <code>run_ora()</code>?<a class="anchor" aria-label="anchor" href="#how-is-fdr-handled-in-run_ora"></a>
+</h4>
+<p>FDR is controlled in a structured way across three levels of
+testing:</p>
+<ol style="list-style-type: decimal">
+<li><p>Limma spline results (highest level):<br>
+Each limma spline result (e.g., time effect for one condition,
+interaction effects, etc.) represents a separate biological
+question.<br>
+Therefore, FDR is not shared or adjusted across different limma
+results.</p></li>
+<li><p>Clusters within a limma result:<br>
+A limma result produces a set of hit genes that are clustered.<br>
+All clusters belong to the same biological comparison, so they form a
+shared multiple-testing family.</p></li>
+<li><p>Databases within a limma result:<br>
+Each gene-set database (GO BP, KEGG, Reactome, etc.) is analyzed
+independently because they differ in size, structure, and hypothesis
+space.<br>
+Therefore, FDR is controlled per database, not across
+databases.</p></li>
+</ol>
+<p>run_ora() retains all tested terms (no internal filtering), collects
+all p-values for each database across all clusters of a given limma
+result, and applies a single multiple-testing correction within that
+database. The resulting adjusted p-values are stored in
+<code>p_adj_by_db</code> and are used for all downstream filtering and
+visualization.</p>
+</div>
+<div class="section level4">
+<h4 id="how-do-i-interpret-category-2-average-difference-between-conditions-over-representation-results">How do I interpret category 2 (average difference between
+conditions) over-representation results?<a class="anchor" aria-label="anchor" href="#how-do-i-interpret-category-2-average-difference-between-conditions-over-representation-results"></a>
+</h4>
+<p>Category 2 evaluates average differences between conditions after
+accounting<br>
+for time. Each pairwise contrast creates one
+<code>cluster_cat2_&lt;cond1&gt;_vs_&lt;cond2&gt;</code><br>
+column in the cluster table.</p>
+<p>For each feature, this column contains:</p>
+<ul>
+<li>
+<code>"cond1_higher"</code> — significantly higher on average in
+cond1<br>
+</li>
+<li>
+<code>"cond2_higher"</code> — significantly higher on average in
+cond2<br>
+</li>
+<li>
+<code>NA</code> — not significant</li>
+</ul>
+<p>These labels define two gene sets: genes higher in cond1, and genes
+higher in<br>
+cond2. SplineOmics runs over-representation analysis separately for
+these<br>
+two sets, using all modeled features as the background universe.</p>
+<p>Thus, Category 2 enrichment answers:</p>
+<ul>
+<li>Which biological processes are higher in condition A than B?<br>
+</li>
+<li>Which processes are higher in condition B than A?</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="how-do-i-interpret-category-3-conditiontime-interaction-over-representation-results">How do I interpret Category 3 (condition–time interaction)
+over-representation results?<a class="anchor" aria-label="anchor" href="#how-do-i-interpret-category-3-conditiontime-interaction-over-representation-results"></a>
+</h4>
+<p>Category 3 evaluates whether the time trajectories differ between two
+conditions. For each pairwise contrast, SplineOmics creates one
+<code>cluster_cat3_&lt;cond1&gt;_vs_&lt;cond2&gt;</code> column in the
+cluster table.</p>
+<p>For each feature, this column contains:</p>
+<ul>
+<li>
+<code>"&lt;k1&gt;_&lt;k2&gt;"</code> — the combo cluster, built from
+the time-effect cluster of the feature in <code>cond1</code>
+(<code>k1</code>) and in <code>cond2</code> (<code>k2</code>)</li>
+<li>
+<code>"ns"</code> replaces a missing cluster if the feature is not
+significant in that condition (e.g. <code>"2_ns"</code>)</li>
+<li>
+<code>NA</code> — the feature is not significant for the interaction
+contrast</li>
+</ul>
+<p>Each unique combo cluster (e.g. <code>2_3</code>, <code>1_4</code>,
+<code>2_ns</code>) defines a gene set. SplineOmics performs
+over-representation analysis for each such set, using all modeled
+features as the background universe.</p>
+<p>Thus, Category 3 enrichment answers questions such as:</p>
+<ul>
+<li>Which biological processes are enriched among genes that rise in
+condition A but fall in condition B?</li>
+<li>Which processes are specific to genes that change only in one
+condition?</li>
+</ul>
+<p>This highlights biological pathways whose time-course behavior
+differs between the compared conditions.</p>
+<hr>
+</div>
+</div>
+<div class="section level3">
 <h3 id="general-faq">General FAQ<a class="anchor" aria-label="anchor" href="#general-faq"></a>
 </h3>
 <div class="section level4">
@@ -244,7 +377,7 @@ currently limited to comparisons between two conditions at a time.</p>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">## R version 4.5.1 (2025-06-13)</span></span>
+<pre><code><span><span class="co">## R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 22.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -272,8 +405,8 @@ currently limited to comparisons between two conditions at a time.</p>
 <span><span class="co">##  [7] knitr_1.50          htmltools_0.5.8.1   rmarkdown_2.29     </span></span>
 <span><span class="co">## [10] lifecycle_1.0.4     cli_3.6.5           sass_0.4.10        </span></span>
 <span><span class="co">## [13] pkgdown_2.1.3       textshaping_1.0.1   jquerylib_0.1.4    </span></span>
-<span><span class="co">## [16] renv_1.1.5          systemfonts_1.2.3   compiler_4.5.1     </span></span>
-<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.5.1         ragg_1.4.0         </span></span>
+<span><span class="co">## [16] renv_1.1.5          systemfonts_1.2.3   compiler_4.5.2     </span></span>
+<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.5.2         ragg_1.4.0         </span></span>
 <span><span class="co">## [22] bslib_0.9.0         evaluate_1.0.4      yaml_2.3.10        </span></span>
 <span><span class="co">## [25] BiocManager_1.30.26 jsonlite_2.0.0      htmlwidgets_1.6.4  </span></span>
 <span><span class="co">## [28] rlang_1.1.6         fs_1.6.6</span></span></code></pre>

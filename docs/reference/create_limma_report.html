@@ -15,7 +15,7 @@ and interaction effects between condition and time."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -165,15 +165,23 @@ messages.</p></dd>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Structure expected by create_limma_report():</span></span></span>
+<span class="r-in"><span><span class="co"># time_effect: list of per-condition tables</span></span></span>
+<span class="r-in"><span><span class="co"># avrg_diff_conditions: list of per-contrast tables</span></span></span>
+<span class="r-in"><span><span class="co"># interaction_condition_time: list of per-contrast tables</span></span></span>
 <span class="r-in"><span><span class="va">toy_limma_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    time_effect <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>        <span class="st">"Time"</span> <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span>,</span></span>
-<span class="r-in"><span>    avrg_diff_conditions <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    interaction_condition_time <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>   time_effect <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>       <span class="st">"Condition_Ctrl"</span> <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>       <span class="st">"Condition_Trt"</span>  <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>   <span class="op">)</span>,</span></span>
+<span class="r-in"><span>   avrg_diff_conditions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>       <span class="st">"avrg_diff_Ctrl_vs_Trt"</span> <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>   <span class="op">)</span>,</span></span>
+<span class="r-in"><span>   interaction_condition_time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>       <span class="st">"time_interaction_Ctrl_vs_Trt"</span> <span class="op">=</span> <span class="fu">make_tt</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>   <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># --- Build SplineOmics object (note: condition is the COLUMN NAME) ---</span></span></span>
+<span class="r-in"><span><span class="co"># Build SplineOmics object</span></span></span>
 <span class="r-in"><span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_splineomics.html">create_splineomics</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    data <span class="op">=</span> <span class="va">toy_data</span>,</span></span>
 <span class="r-in"><span>    meta <span class="op">=</span> <span class="va">toy_meta</span>,</span></span>

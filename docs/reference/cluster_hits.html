@@ -23,7 +23,7 @@ compiled into an HTML report."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@ compiled into an HTML report.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_hits</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
 <span>  <span class="va">nr_clusters</span>,</span>
-<span>  adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>  adj_pthresh_time_effect <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  min_effect_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>time_effect <span class="op">=</span> <span class="fl">0</span>, avg_diff_cond <span class="op">=</span> <span class="fl">0</span>, interaction_cond_time <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
@@ -147,9 +147,10 @@ specifying the column name in the metadata used for batch effect removal.</p></l
 <li><p><code>meta_batch2_column</code>: <code>character(1)</code> A character string
 specifying the second column name in the metadata used for batch effect
 removal.</p></li>
-<li><p><code>limma_splines_result</code>: <code>list(data.frame)</code> A list of data
-frames, each representing a top table from differential expression
-analysis, containing at least 'adj.P.Val' and expression data columns.</p></li>
+<li><p><code>limma_splines_result</code>: <code>list(data.frame)</code> and
+<code>list(list(data.frame))</code> A list containing dataframes or lists of
+dataframes. Each df represents a top table from the limma spline analysis
+of the run_limma_splines() function that has to be run before.</p></li>
 <li><p><code>feature_name_columns</code>: <code><a href="https://rdrr.io/r/base/character.html" class="external-link">character()</a></code> Character vector of
 strings that each specify a column of the original data dataframe which
 were used to automatically build the feature names with the
@@ -188,22 +189,20 @@ condition2 = 2:6
 )</p></dd>
 
 
-<dt id="arg-adj-pthresholds">adj_pthresholds<a class="anchor" aria-label="anchor" href="#arg-adj-pthresholds"></a></dt>
-<dd><p><code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric()</a></code>: Numeric vector of p-value thresholds for
-hits in each top table. The order of the elements determines which
-adj.p-value threshold is assigned to which condition (the first element gets
-assigned to the first condition, the second to the second, etc.).</p></dd>
+<dt id="arg-adj-pthresh-time-effect">adj_pthresh_time_effect<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-time-effect"></a></dt>
+<dd><p><code>numeric(1)</code>: adj. p-value threshold
+for the limma time effect results (category 1).</p></dd>
 
 
 <dt id="arg-adj-pthresh-avrg-diff-conditions">adj_pthresh_avrg_diff_conditions<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-avrg-diff-conditions"></a></dt>
-<dd><p><code>numeric(1)</code>: p-value threshold for
-the results from the average difference of the condition limma result.</p></dd>
+<dd><p><code>numeric(1)</code>: adj. p-value threshold
+for the limma average difference between conditions results (category 2).</p></dd>
 
 
 <dt id="arg-adj-pthresh-interaction-condition-time">adj_pthresh_interaction_condition_time<a class="anchor" aria-label="anchor" href="#arg-adj-pthresh-interaction-condition-time"></a></dt>
-<dd><p><code>numeric(1)</code>: p-value
-threshold for the results from the interaction of condition and time limma
-result.</p></dd>
+<dd><p><code>numeric(1)</code>: adj. p-value
+threshold for the limma interaction of condition and time results
+(category 3).</p></dd>
 
 
 <dt id="arg-min-effect-size">min_effect_size<a class="anchor" aria-label="anchor" href="#arg-min-effect-size"></a></dt>
@@ -247,10 +246,10 @@ plots:</p><ul><li><p><code>y_axis_label</code>: <code>character(1)</code> single
 values.</p></li>
 </ul><p>If any treatment list is present, both must be present. The two lists must
 have identical name sets. Allowed names are the values of
-<code>meta[[condition]]</code> and the special name <code>"double_spline_plots"</code>, which
-generates a treatment line for the plots of limma category 2 and 3 (average
-difference between conditions and the interaction between condition and
-time).</p>
+<code>meta[[condition]]</code>. For the time effect spline plots of that condition, as
+well as for all pairwise comparisons of the average difference between
+conditions and interaction condition time results where the mentioned
+condition appears, the treatment lines are inserted.</p>
 <p>Vertical dashed lines are drawn at the given timepoints for facets whose
 level name matches a list name, and labeled with the corresponding string
 (e.g., feeding, temperature shift).</p>
@@ -261,13 +260,11 @@ level name matches a list name, and labeled with the corresponding string
 <span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>,</span>
 <span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    WT <span class="op">=</span> <span class="st">"Feeding"</span>,</span>
-<span>    KO <span class="op">=</span> <span class="st">"Temperature shift"</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="st">"Treatment line"</span></span>
+<span>    KO <span class="op">=</span> <span class="st">"Temperature shift"</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    WT <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>    KO <span class="op">=</span> <span class="fl">24</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="fl">18</span></span>
+<span>    KO <span class="op">=</span> <span class="fl">24</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div></dd>
 
@@ -496,7 +493,7 @@ condition and time (category 3) hits.</p></dd>
 <span class="r-in"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu">cluster_hits</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    splineomics <span class="op">=</span> <span class="va">toy_splineomics</span>,</span></span>
 <span class="r-in"><span>    nr_clusters <span class="op">=</span> <span class="va">nr_k</span>,</span></span>
-<span class="r-in"><span>    adj_pthresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.05</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    adj_pthresh_time_effect <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
 <span class="r-in"><span>    adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
 <span class="r-in"><span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
 <span class="r-in"><span>    min_effect_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -528,11 +525,9 @@ condition and time (category 3) hits.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Generating report. This takes a few seconds.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/Rtmpyq9FLq .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpD8INMF .</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 5 clusters for the condition effect</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>             (interaction between condition and time)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Running this function took 0.1 min</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

@@ -148,34 +148,64 @@ configuration.
 
 ## FAQ on interpreting the results
 
+### How is FDR handled in `run_limma_splines()` when conditions are modelled
+
+jointly (\`mode = "integrated")?
+
+The joint spline model is fitted once across all conditions, but FDR is
+controlled separately for each logical family of tests. There are three
+types of results, each with its own FDR correction:
+
+1.  Per-condition time effects (`extract_within_level_time_effects()`):
+    For each condition level, spline (and interaction) contrasts are
+    tested using an F-test (or t-test if `dof = 1`). P-values are
+    adjusted across all genes within that condition. FDR is controlled
+    per condition-specific time effect, not across conditions.
+
+2.  Pairwise average differences between conditions (`condition_only`
+    results): For each condition pair, the main condition effect plus
+    its time-related terms are tested jointly. P-values are adjusted
+    across all genes for that pairwise contrast. FDR is controlled per
+    average-difference contrast per pair, not across all pairs.
+
+3.  Pairwise condition×time interactions (`condition_time` results): For
+    each condition pair, only the spline interaction terms are tested,
+    via F- or t-tests depending on the degrees of freedom. P-values are
+    adjusted across all genes for that interaction contrast. FDR is
+    controlled per time-interaction contrast per pair, not jointly with
+    average-difference contrasts or other pairs.
 
 ### How is FDR handled in `run_ora()`?
 
 FDR is controlled in a structured way across three levels of testing:
 
-1. **Limma spline results (highest level):**  
-   Each limma spline result (e.g., time effect for one condition, interaction effects, etc.) represents a separate biological question.  
-   Therefore, FDR is not shared or adjusted across different limma results.
+1.  Limma spline results (highest level):\
+    Each limma spline result (e.g., time effect for one condition,
+    interaction effects, etc.) represents a separate biological
+    question.\
+    Therefore, FDR is not shared or adjusted across different limma
+    results.
 
-2. **Clusters within a limma result:**  
-   A limma result produces a set of hit genes that are clustered.  
-   All clusters belong to the same biological comparison, so they form a 
-   shared multiple-testing family.
+2.  Clusters within a limma result:\
+    A limma result produces a set of hit genes that are clustered.\
+    All clusters belong to the same biological comparison, so they form
+    a shared multiple-testing family.
 
-3. **Databases within a limma result:**  
-   Each gene-set database (GO BP, KEGG, Reactome, etc.) is analyzed 
-   independently because they differ in size, structure, and hypothesis space.  
-   Therefore, FDR is controlled per database, not across databases.
+3.  Databases within a limma result:\
+    Each gene-set database (GO BP, KEGG, Reactome, etc.) is analyzed
+    independently because they differ in size, structure, and hypothesis
+    space.\
+    Therefore, FDR is controlled per database, not across databases.
 
-run_ora() retains all tested terms (no internal filtering), collects all 
-p-values for each database across all clusters of a given limma result, and 
-applies a single multiple-testing correction within that database. The resulting adjusted p-values are stored in `p_adj_by_db` and are used for all downstream filtering and visualization.
-
-
+run_ora() retains all tested terms (no internal filtering), collects all
+p-values for each database across all clusters of a given limma result,
+and applies a single multiple-testing correction within that database.
+The resulting adjusted p-values are stored in `p_adj_by_db` and are used
+for all downstream filtering and visualization.
 
 ### How do I interpret category 2 (average difference between conditions) over-representation results?
 
-Category 2 evaluates *average differences between conditions* after
+Category 2 evaluates average differences between conditions after
 accounting\
 for time. Each pairwise contrast creates one
 `cluster_cat2_<cond1>_vs_<cond2>`\
@@ -183,47 +213,47 @@ column in the cluster table.
 
 For each feature, this column contains:
 
--   `"cond1_higher"` — significantly higher on average in *cond1*\
--   `"cond2_higher"` — significantly higher on average in *cond2*\
+-   `"cond1_higher"` — significantly higher on average in cond1\
+-   `"cond2_higher"` — significantly higher on average in cond2\
 -   `NA` — not significant
 
 These labels define two gene sets: genes higher in cond1, and genes
 higher in\
-cond2. SplineOmics runs over-representation analysis **separately** for
+cond2. SplineOmics runs over-representation analysis separately for
 these\
 two sets, using all modeled features as the background universe.
 
 Thus, Category 2 enrichment answers:
 
--   *Which biological processes are higher in condition A than B?*\
--   *Which processes are higher in condition B than A?*
+-   Which biological processes are higher in condition A than B?\
+-   Which processes are higher in condition B than A?
 
-## How do I interpret Category 3 (condition–time interaction) over-representation results?
+### How do I interpret Category 3 (condition–time interaction) over-representation results?
 
-Category 3 evaluates whether **the time trajectories differ between two
-conditions**. For each pairwise contrast, SplineOmics creates one
+Category 3 evaluates whether the time trajectories differ between two
+conditions. For each pairwise contrast, SplineOmics creates one
 `cluster_cat3_<cond1>_vs_<cond2>` column in the cluster table.
 
 For each feature, this column contains:
 
--   `"<k1>_<k2>"` — the **combo cluster**, built from the time-effect
+-   `"<k1>_<k2>"` — the combo cluster, built from the time-effect
     cluster of the feature in `cond1` (`k1`) and in `cond2` (`k2`)
 -   `"ns"` replaces a missing cluster if the feature is not significant
     in that condition (e.g. `"2_ns"`)
--   `NA` — the feature is *not significant* for the interaction contrast
+-   `NA` — the feature is not significant for the interaction contrast
 
-Each unique combo cluster (e.g. `2_3`, `1_4`, `2_ns`) defines a **gene
-set**. SplineOmics performs over-representation analysis for *each* such
+Each unique combo cluster (e.g. `2_3`, `1_4`, `2_ns`) defines a gene
+set. SplineOmics performs over-representation analysis for each such
 set, using all modeled features as the background universe.
 
 Thus, Category 3 enrichment answers questions such as:
 
--   *Which biological processes are enriched among genes that rise in
-    condition A but fall in condition B?*
--   *Which processes are specific to genes that change only in one
-    condition?*
+-   Which biological processes are enriched among genes that rise in
+    condition A but fall in condition B?
+-   Which processes are specific to genes that change only in one
+    condition?
 
-This highlights biological pathways whose **time-course behavior**
+This highlights biological pathways whose time-course behavior
 differs between the compared conditions.
 
 ------------------------------------------------------------------------

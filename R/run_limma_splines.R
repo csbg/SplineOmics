@@ -744,8 +744,7 @@ extract_within_level_time_effects <- function(
             fit_obj$fit,
             contrast_matrix
         )
-
-        contrast_fit <- eBayes_fun(contrast_fit)
+        contrast_fit <- suppressWarnings(eBayes_fun(contrast_fit))
         coef_names <- colnames(contrast_matrix)
 
         top <- top_fun(

@@ -837,17 +837,7 @@ build_run_ora_report <- function(
         plots <- plots[valid]
         sizes <- sizes[valid]
         
-        if (length(plots) == 0L) {
-            # No valid plot -> tidy note instead of broken image
-            html_content <- paste(
-                html_content,
-                "<p style='font-size:14px;color:#666;margin:0.5em 0 1em 0;
-             text-align:center;'>",
-                "No enrichment plot available for this section.",
-                "</p>",
-                sep = "\n"
-            )
-        } else {
+        if (length(plots) != 0L) {
             for (i in seq_along(plots)) {
                 res <- process_plots(
                     plots_element = plots[[i]],
@@ -876,13 +866,12 @@ build_run_ora_report <- function(
                 toc_style = toc_style
             )
             html_content <- add$html_content
-        } else if (length(plots) == 0L) {
-            # No ORA results AND no plots -> show a single concise note
+        } else {
             html_content <- paste(
                 html_content,
-                "<p style='font-size:14px;color:#666;margin:0.25em 0 1.25em 0;
+                "<p style='font-size:30px;color:#666;margin:0.25em 0 1.25em 0;
              text-align:center;'>",
-                "No enrichment results for this section.",
+                "No enrichment results",
                 "</p>",
                 sep = "\n"
             )
@@ -1798,16 +1787,20 @@ run_ora_level <- function(
 #' @return A list with updated HTML content and TOC.
 #'
 generate_section_content <- function(
-    section_info,
-    index,
-    toc,
-    html_content,
-    section_header_style,
-    toc_style) {
+        section_info,
+        index,
+        toc,
+        html_content,
+        section_header_style,
+        toc_style) {
+    
     ora_results <- section_info$ora_results
-
+    
     # Filtered results (only Count >= 2 and adjusted p < 0.05)
     top_df <- prepare_plot_data(ora_results)
+    
+    # Full unfiltered results (used for download in all cases)
+    full_df <- flatten_ora_results(ora_results)
     
     # Format selected numeric columns for display (3 significant digits,
     # scientific when very small)
@@ -1818,75 +1811,21 @@ generate_section_content <- function(
     
     if (length(fmt_cols) > 0) {
         top_df[fmt_cols] <- lapply(top_df[fmt_cols], function(x) {
-            # keep NAs as NA, otherwise format as string
             out <- ifelse(
                 is.na(x),
                 NA_character_,
-                formatC(x, format = "g", digits = 3)  # 3 sig digits, auto sci
+                formatC(x, format = "g", digits = 3)
             )
             out
         })
     }
     
-    if (nrow(top_df) == 0) {
-        no_results_message <- paste0(
-            "<p style='font-size: 40px; color: #FF0000;'>",
-            "No gene set showed statistically significant ",
-            "overrepresentation in any cluster.",
-            "</p>"
-        )
-    }
-
-    if (nrow(top_df) == 0) {
-        no_results_message <- paste0(
-            "<p style='font-size: 40px; color: #FF0000;'>",
-            "No gene set showed statistically significant ",
-            "overrepresentation in any cluster.",
-            "</p>"
-        )
-
-        html_content <- paste(
-            html_content,
-            no_results_message,
-            sep = "\n"
-        )
-
-        return(list(html_content = html_content))
-    }
-
-    # Full unfiltered results
-    full_df <- flatten_ora_results(ora_results)
-
-    # Header for filtered ORA results shown in HTML
-    ora_results_header <- paste0(
-        "<h3 style='font-size: 30px; font-weight: bold; color: #333;'>",
-        "Filtered Overrepresentation Analysis (ORA) Results</h3>"
-    )
-
-    # Create HTML table for filtered results
-    html_table <- "<table style='width:100%;border-collapse:collapse;'>"
-    html_table <- paste0(html_table, "<thead><tr>")
-    for (header in colnames(top_df)) {
-        html_table <- paste0(html_table, "<th>", header, "</th>")
-    }
-    html_table <- paste0(html_table, "</tr></thead><tbody>")
-
-    for (i in seq_len(nrow(top_df))) {
-        html_table <- paste0(html_table, "<tr>")
-        for (j in seq_len(ncol(top_df))) {
-            html_table <- paste0(html_table, "<td>", top_df[i, j], "</td>")
-        }
-        html_table <- paste0(html_table, "</tr>")
-    }
-
-    ora_results_html <- paste0(html_table, "</tbody></table>")
-
     # Header for Excel download of full ORA results
     full_ora_header <- paste0(
         "<h3 style='font-size: 30px; font-weight: bold; color: #333;'>",
         "Full ORA Results (including terms supported by < 2 genes)</h3>"
     )
-
+    
     # Generate base64 download for full ORA result
     base64_df <- sprintf(
         '<a href="%s" download="full_ora_results.xlsx">
@@ -1896,7 +1835,53 @@ generate_section_content <- function(
             "run_ora"
         )
     )
-
+    
+    if (nrow(top_df) == 0) {
+        # No filtered (Count >= 2) significant results, but still show download
+        no_results_message <- paste0(
+            "<p style='font-size:25px;color:#666;margin:0.5em 0 1em 0;",
+            "text-align:center;'>",
+            "No gene set showed statistically significant ",
+            "over-representation supported by more than one gene ",
+            "in any cluster.",
+            "</p>"
+        )
+        
+        html_content <- paste(
+            html_content,
+            no_results_message,
+            full_ora_header,
+            base64_df,
+            sep = "\n"
+        )
+        
+        return(list(html_content = html_content))
+    }
+    
+    # Header for filtered ORA results shown in HTML
+    ora_results_header <- paste0(
+        "<h3 style='font-size: 30px; font-weight: bold; color: #333;'>",
+        "Filtered Overrepresentation Analysis (ORA) Results</h3>"
+    )
+    
+    # Create HTML table for filtered results
+    html_table <- "<table style='width:100%;border-collapse:collapse;'>"
+    html_table <- paste0(html_table, "<thead><tr>")
+    for (header in colnames(top_df)) {
+        html_table <- paste0(html_table, "<th>", header, "</th>")
+    }
+    html_table <- paste0(html_table, "</tr></thead><tbody>")
+    
+    for (i in seq_len(nrow(top_df))) {
+        html_table <- paste0(html_table, "<tr>")
+        for (j in seq_len(ncol(top_df))) {
+            html_table <- paste0(html_table, "<td>", top_df[i, j], "</td>")
+        }
+        html_table <- paste0(html_table, "</tr>")
+    }
+    
+    ora_results_html <- paste0(html_table, "</tbody></table>")
+    
     html_content <- paste(
         html_content,
         ora_results_header,
@@ -1905,7 +1890,7 @@ generate_section_content <- function(
         base64_df,
         sep = "\n"
     )
-
+    
     list(html_content = html_content)
 }
 
@@ -2441,6 +2426,9 @@ check_gene_overlap <- function(
 
 #' Add database-wise adjusted p-values across clusters
 #'
+#' @noRd
+#'
+#' @description
 #' For a single limma result, this function performs multiple testing
 #' correction per gene set database across all clusters.
 #'
@@ -2470,6 +2458,10 @@ add_p_adj_by_db <- function(
         ora_results,
         p_adjust_method = "BH"
 ) {
+    # Early exit: nothing to do for an empty list
+    if (length(ora_results) == 0L) {
+        return(ora_results)
+    }
     p_col    <- "pvalue"
     padj_col <- "p_adj_by_db"
     
@@ -2565,7 +2557,10 @@ add_p_adj_by_db <- function(
 
 
 #' Filter ORA results by globally adjusted p-values
+#' 
+#' @noRd
 #'
+#' @description
 #' Assumes \code{add_p_adj_by_db()} has already been run, so each
 #' ORA data.frame contains a column \code{p_adj_by_db}. For each
 #' cluster and database, rows with \code{p_adj_by_db} greater than
@@ -2585,6 +2580,10 @@ filter_ora_by_padj <- function(
         ora_results,
         cutoff
 ) {
+    # Early exit: nothing to do for an empty list
+    if (length(ora_results) == 0L) {
+        return(ora_results)
+    }
     padj_col <- "p_adj_by_db"
     cluster_names <- names(ora_results)
     if (is.null(cluster_names)) {

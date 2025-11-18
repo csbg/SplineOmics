@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,10 +137,37 @@ future.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="v0-3-4">[v0.3.4]<a class="anchor" aria-label="anchor" href="#v0-3-4"></a>
+<h4 id="v0-4-0">[v0.4.0]<a class="anchor" aria-label="anchor" href="#v0-4-0"></a>
 </h4>
 <div class="section level5">
 <h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+</h5>
+<ul>
+<li><p>SplineOmics now supports any amount of conditions (values in the
+meta condition column).</p></li>
+<li><p>adj_pthresholds argument of cluster_hits() renamed to
+adj_pthresh_time_effect. Now, it instead requires a single numeric input
+specifying the adj. p-value treshold for all conditions (e.g. 0.05), and
+does not support anymore setting a separate value for each condition.
+This is because using separate values break the uniformity of inference
+and introduces uncontrolled type I error inflation.</p></li>
+<li><p>plot_info argument of cluster_hits() now does not accept anymore
+the value ‘double_spline_plots’ in the treatment_labels and
+treatment_timepoints lists. Instead, the treatment lines specified for
+the conditions will automatically be applied to all pairwise comparisons
+where this condition appears.</p></li>
+<li><p>Updated ORA workflow to disable internal filtering, apply
+database-wise multiple-testing correction across all clusters via a new
+<code>p_adj_by_db</code> column, and use this value for all downstream
+significance filtering to ensure consistent FDR control.</p></li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="v0-3-4">[v0.3.4]<a class="anchor" aria-label="anchor" href="#v0-3-4"></a>
+</h4>
+<div class="section level5">
+<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
 </h5>
 <ul>
 <li><p>Renamed the function download_bioconductor_database() to
@@ -198,7 +225,7 @@ that.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
+<h5 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
 </h5>
 <ul>
 <li><p>Changed cluster quality metric from Silhouette score to signed
@@ -279,7 +306,7 @@ names.</p></li>
 <h4 id="section">[0.3.0]<a class="anchor" aria-label="anchor" href="#section"></a>
 </h4>
 <div class="section level5">
-<h5 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
+<h5 id="changed-4">Changed<a class="anchor" aria-label="anchor" href="#changed-4"></a>
 </h5>
 <ul>
 <li><p>cluster_hits() returns. Now it returns only the plots and a large
@@ -424,7 +451,7 @@ would just confuse the user).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="changed-4">Changed<a class="anchor" aria-label="anchor" href="#changed-4"></a>
+<h5 id="changed-5">Changed<a class="anchor" aria-label="anchor" href="#changed-5"></a>
 </h5>
 <ul>
 <li><p>Replicates in the double spline plots (limma result category 2
@@ -555,7 +582,7 @@ and this, which is twice the maintainance effort.</li>
 </h4>
 </div>
 <div class="section level4">
-<h4 id="changed-5">Changed<a class="anchor" aria-label="anchor" href="#changed-5"></a>
+<h4 id="changed-6">Changed<a class="anchor" aria-label="anchor" href="#changed-6"></a>
 </h4>
 <ul>
 <li>The design formula must now contain the string ‘Time’ rather than
@@ -610,7 +637,7 @@ and 3).</li>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">## R version 4.5.1 (2025-06-13)</span></span>
+<pre><code><span><span class="co">## R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 22.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -638,8 +665,8 @@ and 3).</li>
 <span><span class="co">##  [7] knitr_1.50          htmltools_0.5.8.1   rmarkdown_2.29     </span></span>
 <span><span class="co">## [10] lifecycle_1.0.4     cli_3.6.5           sass_0.4.10        </span></span>
 <span><span class="co">## [13] pkgdown_2.1.3       textshaping_1.0.1   jquerylib_0.1.4    </span></span>
-<span><span class="co">## [16] renv_1.1.5          systemfonts_1.2.3   compiler_4.5.1     </span></span>
-<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.5.1         ragg_1.4.0         </span></span>
+<span><span class="co">## [16] renv_1.1.5          systemfonts_1.2.3   compiler_4.5.2     </span></span>
+<span><span class="co">## [19] rstudioapi_0.17.1   tools_4.5.2         ragg_1.4.0         </span></span>
 <span><span class="co">## [22] bslib_0.9.0         evaluate_1.0.4      yaml_2.3.10        </span></span>
 <span><span class="co">## [25] BiocManager_1.30.26 jsonlite_2.0.0      htmlwidgets_1.6.4  </span></span>
 <span><span class="co">## [28] rlang_1.1.6         fs_1.6.6</span></span></code></pre>

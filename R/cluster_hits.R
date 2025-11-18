@@ -2099,7 +2099,6 @@ generate_spline_comparisons <- function(
             raw_data = raw_data,
             max_hit_number = max_hit_number
         )
-        
         comparison_plots[[suffix]] <- plots_and_feature_names
     }
     comparison_plots
@@ -3927,7 +3926,7 @@ plot_spline_comparisons <- function(
         ),
         max_n = max_hit_number
     )
-    
+
     # sanity check: ensure features exist in prediction matrices
     if (!is.null(rownames(pred_mat_1))) {
         features_to_plot <- features_to_plot[
@@ -4798,7 +4797,7 @@ build_cluster_hits_report <- function(
     if (length(limma_result_2_and_3_plots) > 0) {
         # Main header for the whole limma section
         header_index <- header_index + 1
-        
+
         limma_main_header <- sprintf(
             "<h2 style='%s' id='section%d'>%s</h2>",
             section_header_style,
@@ -4908,34 +4907,30 @@ build_cluster_hits_report <- function(
         c3_counts <- category_2_and_3_hit_counts[["category_3"]]
         
         for (comparison_name in names(limma_result_2_and_3_plots)) {
-            # Build the full title including the comparison name
+            # Build title including comparison name
             header_index <- header_index + 1
             subsection_title <- comparison_name
             
             subheader <- sprintf(
-                "<h3 style='font-size: 3.5em;
-                color: #001F3F; text-align: center;'id='section%d'>%s</h3>",
+                "<h3 style='font-size: 3.5em; color: #001F3F;
+                text-align: center;' id='section%d'>%s</h3>",
                 header_index,
                 subsection_title
             )
             
-            # map suffix (e.g. "A_vs_B") to count names
+            # Map suffix to count names
             avrg_key <- paste0("avrg_diff_", comparison_name)
             inter_key <- paste0("time_interaction_", comparison_name)
             
             avrg_diff_hits <- if (!is.null(c2_counts) &&
                                   avrg_key %in% names(c2_counts)) {
                 c2_counts[[avrg_key]]
-            } else {
-                0L
-            }
+            } else 0L
             
             interaction_hits <- if (!is.null(c3_counts) &&
                                     inter_key %in% names(c3_counts)) {
                 c3_counts[[inter_key]]
-            } else {
-                0L
-            }
+            } else 0L
             
             hits_info <- sprintf(
                 paste0(
@@ -4959,9 +4954,7 @@ build_cluster_hits_report <- function(
             # TOC entry for this comparison
             toc_entry <- paste0(
                 "<li style='margin-left: 30px; font-size: 30px;'>",
-                "<a href='#section",
-                header_index,
-                "'>",
+                "<a href='#section", header_index, "'>",
                 subsection_title,
                 "</a></li>"
             )
@@ -4977,13 +4970,15 @@ build_cluster_hits_report <- function(
             comparison_feature_names <- comparison$feature_names
             
             for (i in seq_along(comparison_plots)) {
+                
                 feature_name_div <- sprintf(
                     '<div style="text-align: center;
-    font-size: 36px; margin-bottom: 10px;">%s</div>',
+                    font-size: 36px; margin-bottom: 10px;">%s</div>',
                     comparison_feature_names[[i]]
                 )
                 
-                html_content <- paste(
+                # Corrected: build the new HTML first, then pass it in
+                updated_html <- paste(
                     html_content,
                     feature_name_div,
                     sep = "\n"
@@ -4991,11 +4986,11 @@ build_cluster_hits_report <- function(
                 
                 result <- process_plots(
                     plots_element = comparison_plots[[i]],
-                    plots_size = 1.5,
-                    html_content = html_content,
-                    toc = toc,
-                    header_index = header_index,
-                    element_name = ""
+                    plots_size    = 1.5,
+                    html_content  = updated_html,
+                    toc           = toc,
+                    header_index  = header_index,
+                    element_name  = ""
                 )
                 
                 html_content <- result$html_content
@@ -6345,109 +6340,85 @@ plot_cluster_quality_distribution <- function(
 #'
 #' @importFrom dplyr bind_rows select distinct slice_head arrange anti_join
 #'                   any_of
+#' @importFrom rlang .data
 #'
 select_balanced_hits <- function(
         avrg_df,
         inter_df,
-        max_n) {
-    # If no cap or Inf: just return unique union (original behavior)
-    if (is.null(max_n) || is.infinite(max_n)) {
-        return(
-            dplyr::bind_rows(
-                dplyr::select(
-                    avrg_df,
-                    "feature_nr",
-                    "feature_names"
-                ),
-                dplyr::select(
-                    inter_df,
-                    "feature_nr",
-                    "feature_names"
-                )
-            ) |>
-                dplyr::distinct()
-        )
-    }
+        max_n
+        ) {
+    # Filter to significant hits only (those appearing in at least one category)
+    has_p_avrg <- "adj.P.Val" %in% names(avrg_df)
+    has_p_inter <- "adj.P.Val" %in% names(inter_df)
     
-    # Helper: rank table by adj.P.Val if present, else keep current order
+    # rank each category by adj.P.Val (smaller first), fallback to feature_names
     rank_tbl <- function(tbl) {
-        has_p <- "adj.P.Val" %in% names(tbl)
-        if (has_p) {
-            tbl |>
-                dplyr::arrange(.data$adj.P.Val, .data$feature_names)
+        if ("adj.P.Val" %in% names(tbl)) {
+            dplyr::arrange(tbl, .data$adj.P.Val, .data$feature_names)
         } else {
-            tbl # keep incoming order
+            dplyr::arrange(tbl, .data$feature_names)
         }
     }
     
     avrg_ranked <- avrg_df |>
         rank_tbl() |>
-        dplyr::select(
-            "feature_nr",
-            "feature_names"
-        )
+        dplyr::select(.data$feature_nr, .data$feature_names)
+    
     inter_ranked <- inter_df |>
         rank_tbl() |>
-        dplyr::select(
-            "feature_nr",
-            "feature_names"
+        dplyr::select(.data$feature_nr, .data$feature_names)
+    
+    # Union of significant features
+    union_tbl <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
+        dplyr::distinct(.data$feature_names, .keep_all = TRUE)
+    
+    if (nrow(union_tbl) == 0L) {
+        return(union_tbl)
+    }
+    
+    # Prepare round-robin pools
+    pool2 <- avrg_ranked
+    pool3 <- inter_ranked
+    
+    selected <- dplyr::tibble(
+        feature_nr = integer(),
+        feature_names = character()
         )
     
-    half1 <- floor(max_n / 2)
-    half2 <- max_n - half1
+    # alternate between cat2 and cat3
+    turn <- 2  # start with category 2
     
-    # pick top unique from avrg, then from inter (excluding already picked)
-    pick_unique <- function(tbl, already) {
-        dplyr::anti_join(tbl, already, by = "feature_names")
+    while (nrow(selected) < max_n && (nrow(pool2) > 0 || nrow(pool3) > 0)) {
+        
+        if (turn == 2 && nrow(pool2) > 0) {
+            chosen <- pool2[1, ]
+            selected <- dplyr::bind_rows(selected, chosen)
+            # remove from both pools to avoid duplication
+            pool2 <- pool2[-1, , drop = FALSE]
+            pool3 <- dplyr::filter(
+                pool3,
+                .data$feature_names != chosen$feature_names
+                )
+            turn <- 3
+            
+        } else if (turn == 3 && nrow(pool3) > 0) {
+            chosen <- pool3[1, ]
+            selected <- dplyr::bind_rows(selected, chosen)
+            # remove from both pools
+            pool3 <- pool3[-1, , drop = FALSE]
+            pool2 <- dplyr::filter(
+                pool2,
+                .data$feature_names != chosen$feature_names
+                )
+            turn <- 2
+            
+        } else {
+            # current category empty → switch to the other and continue
+            turn <- ifelse(turn == 2, 3, 2)
+        }
     }
     
-    chosen_avrg <- avrg_ranked |> dplyr::slice_head(n = half1)
-    # dedupe by name within chosen set (just in case)
-    chosen_avrg <- chosen_avrg |>
-        dplyr::distinct("feature_names", .keep_all = TRUE)
-    
-    inter_pool <- pick_unique(inter_ranked, chosen_avrg)
-    chosen_inter <- inter_pool |> dplyr::slice_head(n = half2)
-    
-    # If any side underfilled, let the other take over
-    need_from_inter <- half2 - nrow(chosen_inter)
-    if (need_from_inter > 0) {
-        extra <- pick_unique(
-            inter_ranked,
-            dplyr::bind_rows(chosen_avrg, chosen_inter)
-        ) |>
-            dplyr::slice_head(n = need_from_inter)
-        chosen_inter <- dplyr::bind_rows(chosen_inter, extra)
-    }
-    
-    need_from_avrg <- half1 - nrow(chosen_avrg)
-    if (need_from_avrg > 0) {
-        extra <- pick_unique(
-            avrg_ranked,
-            dplyr::bind_rows(chosen_avrg, chosen_inter)
-        ) |>
-            dplyr::slice_head(n = need_from_avrg)
-        chosen_avrg <- dplyr::bind_rows(chosen_avrg, extra)
-    }
-    
-    # Final fill if still < max_n (e.g., overall too few hits)
-    combined <- dplyr::bind_rows(chosen_avrg, chosen_inter) |>
-        dplyr::distinct("feature_names", .keep_all = TRUE)
-    if (nrow(combined) < max_n) {
-        # pull remaining from the union in ranked order (avrg first,
-        # then inter)
-        union_ranked <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
-            dplyr::distinct("feature_names", .keep_all = TRUE)
-        extra <- dplyr::anti_join(
-            union_ranked,
-            combined,
-            by = "feature_names"
-        ) |>
-            dplyr::slice_head(n = max_n - nrow(combined))
-        combined <- dplyr::bind_rows(combined, extra)
-    }
-    
-    dplyr::slice_head(combined, n = max_n)
+    selected |> dplyr::slice_head(n = max_n)
 }
 
 
