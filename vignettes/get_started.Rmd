@@ -342,7 +342,13 @@ object when it is passed to the respective function.
 -   **data**: A matrix with the data
 -   **meta**: Metadata associated with the data.
 -   **condition**: Meta column name of the levels (e.g., Exponential and
-    Stationary).
+    Stationary). In this analysis we illustrate a case with two conditions, but
+    SplineOmics supports any number of conditions. All conditions are modeled
+    jointly, and SplineOmics automatically performs all pairwise comparisons.
+    For each pair of conditions, it computes both the average difference (limma
+    Category 2) and the condition–time interaction (limma Category 3), providing
+    a complete set of contrast results regardless of how many conditions are
+    included.
 
 ## Optional Arguments `create_splineomics()`
 

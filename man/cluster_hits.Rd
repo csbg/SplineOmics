@@ -72,9 +72,10 @@ specifying the column name in the metadata used for batch effect removal.
 \item \code{meta_batch2_column}: \code{character(1)} A character string
 specifying the second column name in the metadata used for batch effect
 removal.
-\item \code{limma_splines_result}: \code{list(data.frame)} A list of data
-frames, each representing a top table from differential expression
-analysis, containing at least 'adj.P.Val' and expression data columns.
+\item \code{limma_splines_result}: \code{list(data.frame)} and
+\code{list(list(data.frame))} A list containing dataframes or lists of
+dataframes. Each df represents a top table from the limma spline analysis
+of the run_limma_splines() function that has to be run before.
 \item \code{feature_name_columns}: \code{character()} Character vector of
 strings that each specify a column of the original data dataframe which
 were used to automatically build the feature names with the

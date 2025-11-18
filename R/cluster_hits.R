@@ -2229,311 +2229,6 @@ generate_spline_comparisons <- function(
 #' @importFrom tibble as_tibble tibble
 #' @importFrom rlang sym .data
 #'
-# construct_cluster_table <- function(
-#         limma_splines_results,
-#         all_levels_clustering,
-#         category_2_and_3_hits,
-#         genes) {
-#     # condition names from clustering
-#     cond_names <- setdiff(names(all_levels_clustering), "paired_category_3")
-#     
-#     # short condition IDs used in contrast suffixes: strip
-#     # "Condition_" or "condition_"
-#     short_cond_names <- sub("^(?i)condition_", "", cond_names, perl = TRUE)
-#     names(short_cond_names) <- short_cond_names  # name by short id
-#     
-#     map_short_to_full <- function(short) {
-#         idx <- match(short, short_cond_names)
-#         if (is.na(idx)) {
-#             stop("Cannot map condition label '", short,
-#                  "' to all_levels_clustering names.")
-#         }
-#         cond_names[[idx]]
-#     }
-#     
-#     has_c2 <- is.list(category_2_and_3_hits) &&
-#         "category_2_hits" %in% names(category_2_and_3_hits)
-#     
-#     has_c3 <- is.list(category_2_and_3_hits) &&
-#         "category_3_hits" %in% names(category_2_and_3_hits)
-#     
-#     no_genes <- is.null(genes)
-#     anot <- if (no_genes) {
-#         tibble(feature_nr = numeric(0), gan = character(0))
-#     } else {
-#         tibble(
-#             feature_nr = seq_along(genes),
-#             gan = as.character(genes)
-#         ) |>
-#             # tidyselect-friendly: no .data here
-#             dplyr::distinct(dplyr::across("feature_nr"), .keep_all = TRUE)
-#     }
-#     
-#     # per-condition cluster tables (Cat1)
-#     clustered_hits_levels <- lapply(
-#         all_levels_clustering[cond_names],
-#         function(x) x$clustered_hits
-#     )
-#     
-#     cl_list <- list()
-#     for (cond in cond_names) {
-#         cl_name <- paste0("cluster_", cond)
-#         cl_list[[cond]] <- ncl(clustered_hits_levels[[cond]], cl_name)
-#     }
-#     
-#     # feature-name table from time_effect and all limma tables
-#     te_list <- limma_splines_results$time_effect
-#     add_parts <- lapply(te_list, toptbl_to_fn)
-#     
-#     if (has_c2) {
-#         c2_all <- dplyr::bind_rows(limma_splines_results$avrg_diff_conditions)
-#         add_parts <- c(add_parts, list(toptbl_to_fn(c2_all)))
-#     }
-#     if (has_c3) {
-#         c3_all <- dplyr::bind_rows(
-#             limma_splines_results$interaction_condition_time
-#         )
-#         add_parts <- c(add_parts, list(toptbl_to_fn(c3_all)))
-#     }
-#     
-#     fn_tbl <- dplyr::bind_rows(add_parts) |>
-#         dplyr::distinct(dplyr::across("feature_nr"), .keep_all = TRUE)
-#     
-#     fn_from_cl <- dplyr::bind_rows(
-#         lapply(
-#             cl_list,
-#             function(x) {
-#                 x |>
-#                     dplyr::transmute(
-#                         feature_nr = .data$feature_nr,
-#                         fname_cl   = .data$fnsrc
-#                     )
-#             }
-#         )
-#     ) |>
-#         dplyr::filter(
-#             !is.na(.data$feature_nr),
-#             !is.na(.data$fname_cl),
-#             .data$fname_cl != ""
-#         ) |>
-#         dplyr::distinct(dplyr::across("feature_nr"), .keep_all = TRUE)
-# 
-#     allf <- dplyr::bind_rows(
-#         anot |> dplyr::select("feature_nr"),
-#         dplyr::bind_rows(
-#             lapply(
-#                 cl_list,
-#                 function(x) x |> dplyr::select("feature_nr")
-#             )
-#         ),
-#         fn_tbl |> dplyr::select("feature_nr")
-#     ) |>
-#         dplyr::distinct(
-#             dplyr::across("feature_nr")
-#         ) |>
-#         dplyr::filter(!is.na(.data$feature_nr)) |>
-#         dplyr::arrange(.data$feature_nr)
-# 
-#     base <- allf |>
-#         dplyr::left_join(anot, by = "feature_nr")
-#     
-#     gcl_cols <- character(0)
-#     
-#     for (cond in cond_names) {
-#         cluster_col <- paste0("cluster_", cond)
-#         gcl_col <- paste0("gcl_", cond)
-#         
-#         cl <- cl_list[[cond]]
-#         
-#         base <- base |>
-#             dplyr::left_join(
-#                 cl |>
-#                     # data-masking: .data is fine in mutate/transmute,
-#                     # but we only need selection plus renaming here; use
-#                     # transmute again.
-#                     dplyr::transmute(
-#                         feature_nr   = .data$feature_nr,
-#                         !!cluster_col := .data[[cluster_col]],
-#                         gcl          = gcl
-#                     ) |>
-#                     dplyr::rename(!!gcl_col := gcl),
-#                 by = "feature_nr"
-#             )
-#         
-#         gcl_cols <- c(gcl_cols, gcl_col)
-#     }
-#     
-#     base <- base |>
-#         dplyr::left_join(fn_from_cl, by = "feature_nr") |>
-#         dplyr::left_join(fn_tbl, by = "feature_nr") |>
-#         dplyr::group_by(.data$feature_nr) |>
-#         dplyr::slice_head(n = 1) |>
-#         dplyr::ungroup() |>
-#         dplyr::mutate(
-#             feature_name = dplyr::coalesce(
-#                 .data$fname_tbl,
-#                 .data$fname_cl,
-#                 as.character(.data$feature_nr)
-#             )
-#         )
-#     
-#     if (no_genes) {
-#         base <- base |>
-#             dplyr::mutate(gene = NA_character_)
-#     } else {
-#         base <- base |>
-#             dplyr::rowwise() |>
-#             dplyr::mutate(
-#                 gene = {
-#                     vals <- dplyr::c_across(
-#                         c("gan", gcl_cols[gcl_cols %in% names(base)])
-#                     )
-#                     idx <- which(!is.na(vals) & vals != "")[1]
-#                     if (is.na(idx)) NA_character_ else vals[[idx]]
-#                 }
-#             ) |>
-#             dplyr::ungroup()
-#     }
-#     
-#     keep_clusters <- paste0("cluster_", cond_names)
-#     keep_clusters <- intersect(keep_clusters, names(base))
-#     
-#     out <- base |>
-#         dplyr::select(
-#             "feature_nr", "feature_name", "gene",
-#             tidyselect::all_of(keep_clusters)
-#         )
-#     
-#     # Category 2: per contrast
-#     if (has_c2) {
-#         c2_res  <- limma_splines_results$avrg_diff_conditions
-#         c2_hits <- category_2_and_3_hits$category_2_hits
-#         
-#         for (cn in names(c2_res)) {
-#             c2_tbl <- c2_res[[cn]]
-#             if (is.null(c2_tbl) || nrow(c2_tbl) == 0) next
-#             
-#             score_col <- if ("logFC" %in% names(c2_tbl)) {
-#                 "logFC"
-#             } else {
-#                 num_cols <- names(c2_tbl)[
-#                     vapply(c2_tbl, is.numeric, logical(1))
-#                 ]
-#                 num_cols <- setdiff(num_cols, "feature_nr")
-#                 if (length(num_cols) == 0) next
-#                 num_cols[[1]]
-#             }
-#             
-#             suffix <- sub("^avrg_diff_", "", cn)
-#             parts <- strsplit(suffix, "_vs_")[[1]]
-#             cond1_short <- parts[1]
-#             cond2_short <- parts[2]
-#             
-#             c2_df <- c2_tbl |>
-#                 dplyr::transmute(
-#                     feature_nr = .data$feature_nr,
-#                     cat2_tmp = dplyr::case_when(
-#                         .data[[score_col]] > 0 ~ paste0(
-#                             gsub("_", "", cond2_short),
-#                             "_higher"
-#                         ),
-#                         .data[[score_col]] < 0 ~ paste0(
-#                             gsub("_", "", cond1_short),
-#                             "_higher"
-#                         ),
-#                         TRUE ~ NA_character_
-#                     )
-#                 ) |>
-#                 dplyr::distinct(dplyr::across("feature_nr"), .keep_all = TRUE)
-#             
-#             hit_tbl <- c2_hits[[cn]]
-#             if (!is.null(hit_tbl) && nrow(hit_tbl) > 0) {
-#                 cat2h <- hit_tbl |>
-#                     dplyr::transmute(feature_nr = .data$feature_nr) |>
-#                     dplyr::distinct()
-#                 c2_df <- c2_df |>
-#                     dplyr::mutate(
-#                         cat2_tmp = ifelse(
-#                             .data$feature_nr %in% cat2h$feature_nr,
-#                             .data$cat2_tmp,
-#                             NA_character_
-#                         )
-#                     )
-#             }
-#             
-#             out_col <- paste0("cluster_cat2_", suffix)
-#             c2_df <- c2_df |>
-#                 dplyr::rename(!!rlang::sym(out_col) := .data$cat2_tmp)
-#             
-#             out <- out |>
-#                 dplyr::left_join(c2_df, by = "feature_nr")
-#         }
-#     }
-#     
-#     # Category 3: per contrast
-#     if (has_c3) {
-#         c3_hits <- category_2_and_3_hits$category_3_hits
-#         ic_res  <- limma_splines_results$interaction_condition_time
-#         
-#         # drive contrasts from the limma interaction tables,
-#         # so we always create columns, even if there are zero hits
-#         for (cn in names(ic_res)) {
-#             hit_tbl <- c3_hits[[cn]]
-#             
-#             # build vector of significant features (may be empty)
-#             if (!is.null(hit_tbl) && nrow(hit_tbl) > 0) {
-#                 sig_c3 <- hit_tbl |>
-#                     dplyr::transmute(feature_nr = .data$feature_nr) |>
-#                     dplyr::distinct() |>
-#                     dplyr::pull("feature_nr")
-#             } else {
-#                 sig_c3 <- integer(0)  # no hits -> all rows should become NA
-#             }
-#             
-#             suffix <- sub("^time_interaction_", "", cn)
-#             parts <- strsplit(suffix, "_vs_")[[1]]
-#             cond1_short <- parts[1]
-#             cond2_short <- parts[2]
-#             
-#             cond1_full <- map_short_to_full(cond1_short)
-#             cond2_full <- map_short_to_full(cond2_short)
-#             
-#             col1 <- paste0("cluster_", cond1_full)
-#             col2 <- paste0("cluster_", cond2_full)
-#             
-#             out_col <- paste0("cluster_cat3_", suffix)
-#             
-#             tmp <- out |>
-#                 dplyr::transmute(
-#                     feature_nr = .data$feature_nr,
-#                     cat3_tmp = dplyr::case_when(
-#                         !(.data$feature_nr %in% sig_c3) ~ NA_character_,
-#                         TRUE ~ paste0(
-#                             ifelse(
-#                                 is.na(.data[[col1]]),
-#                                 "ns",
-#                                 as.character(.data[[col1]])
-#                             ),
-#                             "_",
-#                             ifelse(
-#                                 is.na(.data[[col2]]),
-#                                 "ns",
-#                                 as.character(.data[[col2]])
-#                             )
-#                         )
-#                     )
-#                 ) |>
-#                 dplyr::rename(!!rlang::sym(out_col) := .data$cat3_tmp)
-#             
-#             out <- out |>
-#                 dplyr::left_join(tmp, by = "feature_nr")
-#         }
-#     }
-#     
-#     out |>
-#         dplyr::distinct(dplyr::across("feature_nr"), .keep_all = TRUE) |>
-#         dplyr::arrange(.data$feature_nr)
-# }
 construct_cluster_table <- function(
         limma_splines_results,
         all_levels_clustering,
@@ -2699,9 +2394,12 @@ construct_cluster_table <- function(
                     dplyr::transmute(
                         feature_nr = .data$feature_nr,
                         !!cluster_col := .data[[cluster_col]],
-                        gcl = gcl
+                        gcl = .data$gcl
                     ) |>
-                    dplyr::rename(!!gcl_col := gcl),
+                    dplyr::rename_with(
+                        ~ gcl_col,
+                        .cols = "gcl"
+                    ),
                 by = "feature_nr"
             )
         
@@ -2751,13 +2449,13 @@ construct_cluster_table <- function(
     keep_clusters <- paste0("cluster_", cond_names)
     keep_clusters <- intersect(keep_clusters, names(base))
     
-    out <- base |>
-        dplyr::select(
-            "feature_nr",
-            "feature_name",
-            "gene",
-            tidyselect::all_of(keep_clusters)
-        )
+    cols <- c(
+        "feature_nr",
+        "feature_name",
+        "gene",
+        keep_clusters
+    )
+    out <- base[, cols]
     
     # Category 2: per contrast
     if (has_c2) {
@@ -2825,7 +2523,10 @@ construct_cluster_table <- function(
             
             out_col <- paste0("cluster_cat2_", suffix)
             c2_df <- c2_df |>
-                dplyr::rename(!!rlang::sym(out_col) := cat2_tmp)
+                dplyr::rename_with(
+                    ~ out_col,
+                    .cols = "cat2_tmp"
+                )
             
             out <- out |>
                 dplyr::left_join(c2_df, by = "feature_nr")
@@ -2885,7 +2586,10 @@ construct_cluster_table <- function(
                         )
                     )
                 ) |>
-                dplyr::rename(!!rlang::sym(out_col) := cat3_tmp)
+                dplyr::rename_with(
+                    ~ out_col,
+                    .cols = "cat3_tmp"
+                )
             
             out <- out |>
                 dplyr::left_join(tmp, by = "feature_nr")
@@ -2899,7 +2603,6 @@ construct_cluster_table <- function(
         ) |>
         dplyr::arrange(.data$feature_nr)
 }
-
 
 
 #' Add cT and cDT columns to hit and top tables

@@ -89,15 +89,23 @@
 #' }
 #'
 #' # Structure expected by create_limma_report():
+#' # time_effect: list of per-condition tables
+#' # avrg_diff_conditions: list of per-contrast tables
+#' # interaction_condition_time: list of per-contrast tables
 #' toy_limma_res <- list(
-#'     time_effect = list(
-#'         "Time" = make_tt()
-#'     ),
-#'     avrg_diff_conditions = make_tt(),
-#'     interaction_condition_time = make_tt()
+#'    time_effect = list(
+#'        "Condition_Ctrl" = make_tt(),
+#'        "Condition_Trt"  = make_tt()
+#'    ),
+#'    avrg_diff_conditions = list(
+#'        "avrg_diff_Ctrl_vs_Trt" = make_tt()
+#'    ),
+#'    interaction_condition_time = list(
+#'        "time_interaction_Ctrl_vs_Trt" = make_tt()
+#'    )
 #' )
 #'
-#' # --- Build SplineOmics object (note: condition is the COLUMN NAME) ---
+#' # Build SplineOmics object
 #' so <- create_splineomics(
 #'     data = toy_data,
 #'     meta = toy_meta,

@@ -1125,11 +1125,11 @@ InputControl <- R6::R6Class("InputControl",
         #'  the SplineOmics analysis:
         #'
         #' \itemize{
-        #'   \item \code{adj_pthresh_time_effect} — threshold for the
-        #'    time–effect tests
-        #'   \item \code{adj_pthresh_avrg_diff_conditions} — threshold for
+        #'   \item \code{adj_pthresh_time_effect} - threshold for the
+        #'    time-effect tests
+        #'   \item \code{adj_pthresh_avrg_diff_conditions} - threshold for
         #'    average differences between conditions (Cat2)
-        #'   \item \code{adj_pthresh_interaction_condition_time} — threshold
+        #'   \item \code{adj_pthresh_interaction_condition_time} - threshold
         #'    for the interaction (Cat3)
         #' }
         #'
@@ -2406,7 +2406,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 
                 msg <- paste(
                     "Values in column '", condition, "' contain illegal ",
-                    "characters.\nAllowed: A–Z, a–z, 0–9, _\nOffending:\n",
+                    "characters.\nAllowed: A-Z, a-z, 0-9, _\nOffending:\n",
                     paste0("  - ", detail, collapse = "\n"),
                     sep = ""
                 )
