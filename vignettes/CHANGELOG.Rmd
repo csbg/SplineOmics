@@ -57,6 +57,12 @@ Each release section should follow the structure below:
   'double_spline_plots' in the treatment_labels and treatment_timepoints lists.
   Instead, the treatment lines specified for the conditions will automatically
   be applied to all pairwise comparisons where this condition appears.
+  
+- Updated ORA workflow to disable internal filtering, apply database-wise
+  multiple-testing correction across all clusters via a new `p_adj_by_db` 
+  column, and use this value for all downstream significance filtering to 
+  ensure consistent FDR control.
+
 
 
 ### [v0.3.4]

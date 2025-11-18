@@ -221,5 +221,5 @@ extract_gene_sets <- function(
         "\nDownload complete! The file has been saved as: ",
         filename_path
     )
-    genesets
+    invisible(genesets)
 }

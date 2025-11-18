@@ -8,28 +8,37 @@
 #' files containing the enrichment results, and dotplots visualizing the
 #' enrichment.
 #'
-#' @param cluster_table `tibble`: A tibble containing one row per 
-#'   \code{feature_nr} with metadata and cluster assignments across the 
-#'   analysis categories. It includes:
+#' @param cluster_table `tibble`: A tibble containing one row per
+#'   `feature_nr` with metadata and cluster assignments across analysis
+#'   categories. It includes:
+#'
 #'   \itemize{
 #'     \item \code{feature_nr}: `numeric(1)` Numeric feature identifier.
-#'     \item \code{feature_name}: `character(1)` Preferred feature name from 
-#'       the source data, falling back to the numeric ID if none is available.
-#'     \item \code{gene}: `character(1)` Preferred gene symbol from the 
-#'       annotation or cluster data.
-#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>}: `integer(1)` 
-#'       Cluster assignments for each time-effect condition.
-#'     \item \code{cluster_cat2}: `character(1)` (Optional) Combined cluster 
-#'       label for category 2 hits in the form 
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the 
-#'       feature was not a category 2 hit.
-#'     \item \code{cluster_cat3}: `character(1)` (Optional) Combined cluster 
-#'       label for category 3 hits in the form 
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the 
-#'       feature was not a category 3 hit.
+#'
+#'     \item \code{feature_name}: `character(1)` Preferred feature name
+#'       derived from limma tables or falling back to the numeric ID.
+#'
+#'     \item \code{gene}: `character(1)` Preferred gene symbol obtained
+#'       from the annotation or from cluster-level metadata.
+#'
+#'     \item \code{cluster_<condition>}: `integer(1)` Cluster assignment
+#'       for each time-effect condition (Category 1). One column per
+#'       condition.
+#'
+#'     \item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
+#'       Category 2 label for each contrast. Indicates which condition
+#'       shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
+#'       the feature is not a category 2 hit.
+#'
+#'     \item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
+#'       Category 3 label for each contrast. Encodes the pair of
+#'       time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
+#'       `"2_4"`). \code{NA} indicates the feature is not a category 3
+#'       hit.
 #'   }
-#'   For any category-specific cluster column, a value of \code{NA} indicates 
-#'   that the feature was not significant (not a hit) in that category.
+#'
+#'   For any category-specific column, a value of \code{NA} indicates that
+#'   the feature was not significant (i.e., not a hit) in that category.
 #'
 #' @param databases `data.frame`: A \code{data.frame} that defines the gene set 
 #'   collections to be tested in the overrepresentation analysis. Must contain 
@@ -227,7 +236,6 @@
 #'     # --- permissive params for tiny example --------------------------------
 #'     clusterProfiler_params <- list(
 #'         pvalueCutoff = 1,
-#'         qvalueCutoff = 1,
 #'         minGSSize    = 1,
 #'         maxGSSize    = 500
 #'     )
@@ -1267,8 +1275,7 @@ check_params <- function(params) {
         pvalueCutoff = "numeric",
         pAdjustMethod = "character",
         minGSSize = "numeric",
-        maxGSSize = "numeric",
-        qvalueCutoff = "numeric"
+        maxGSSize = "numeric"
     )
 
     # Check if params is a list
@@ -1282,8 +1289,7 @@ check_params <- function(params) {
         stop_call_false(
             paste(
                 "The list contains extra elements besides the allowed elements",
-                "pvalueCutoff, pAdjustMethod, minGSSize, maxGSSize and",
-                "qvalueCutoff:",
+                "pvalueCutoff, pAdjustMethod, minGSSize, and maxGSSize",
                 paste(extra_params, collapse = ", ")
             )
         )
@@ -1700,12 +1706,12 @@ run_ora_level <- function(
                     OrgDb = cfg$OrgDb,
                     keyType = cfg$keyType,
                     ont = cfg$ontology,
-                    pvalueCutoff = params$pvalueCutoff,
+                    pvalueCutoff = 1,
                     pAdjustMethod = params$pAdjustMethod,
                     universe = universe,
                     minGSSize = params$minGSSize,
                     maxGSSize = params$maxGSSize,
-                    qvalueCutoff = params$qvalueCutoff
+                    qvalueCutoff = 1
                 )
                 # Only simplify if there are results
                 if (
@@ -1722,12 +1728,12 @@ run_ora_level <- function(
                 )
                 ora_result <- clusterProfiler::enricher(
                     gene = fg,
-                    pvalueCutoff = params$pvalueCutoff,
+                    pvalueCutoff = 1,
                     pAdjustMethod = params$pAdjustMethod,
                     universe = universe,
                     minGSSize = params$minGSSize,
                     maxGSSize = params$maxGSSize,
-                    qvalueCutoff = params$qvalueCutoff,
+                    qvalueCutoff = 1,
                     gson = NULL,
                     TERM2GENE = gene_set_map,
                     TERM2NAME = NA
@@ -1741,6 +1747,14 @@ run_ora_level <- function(
     }
 
     ora_results <- add_odds_ratios_to_ora(ora_results)
+    ora_results <- add_p_adj_by_db(
+        ora_results = ora_results,
+        p_adjust_method = params$pAdjustMethod
+        )
+    ora_results <- filter_ora_by_padj(
+        ora_results = ora_results,
+        cutoff = params$pvalueCutoff
+    )
 
     any_result <- any(vapply(ora_results, function(cluster_entry) {
         any(vapply(cluster_entry, function(res) {
@@ -1794,6 +1808,34 @@ generate_section_content <- function(
 
     # Filtered results (only Count >= 2 and adjusted p < 0.05)
     top_df <- prepare_plot_data(ora_results)
+    
+    # Format selected numeric columns for display (3 significant digits,
+    # scientific when very small)
+    fmt_cols <- intersect(
+        c("p_adj_by_db", "odds_ratio"),
+        names(top_df)
+    )
+    
+    if (length(fmt_cols) > 0) {
+        top_df[fmt_cols] <- lapply(top_df[fmt_cols], function(x) {
+            # keep NAs as NA, otherwise format as string
+            out <- ifelse(
+                is.na(x),
+                NA_character_,
+                formatC(x, format = "g", digits = 3)  # 3 sig digits, auto sci
+            )
+            out
+        })
+    }
+    
+    if (nrow(top_df) == 0) {
+        no_results_message <- paste0(
+            "<p style='font-size: 40px; color: #FF0000;'>",
+            "No gene set showed statistically significant ",
+            "overrepresentation in any cluster.",
+            "</p>"
+        )
+    }
 
     if (nrow(top_df) == 0) {
         no_results_message <- paste0(
@@ -2036,8 +2078,7 @@ set_default_params <- function(params) {
         pvalueCutoff = 0.05,
         pAdjustMethod = "BH",
         minGSSize = 10,
-        maxGSSize = 500,
-        qvalueCutoff = 0.2
+        maxGSSize = 500
     )
 
     if (any(is.na(params))) {
@@ -2240,7 +2281,7 @@ make_enrich_dotplot <- function(
         ggplot2::aes(
             x = .data$cluster,
             y = .data$term,
-            size = -log10(.data$adj.p_value)
+            size = -log10(.data$p_adj_by_db)
         )
     ) +
         ggplot2::geom_point(aes(color = .data$odds_ratio), na.rm = TRUE) +
@@ -2398,6 +2439,190 @@ check_gene_overlap <- function(
 }
 
 
+#' Add database-wise adjusted p-values across clusters
+#'
+#' For a single limma result, this function performs multiple testing
+#' correction per gene set database across all clusters.
+#'
+#' For each database (e.g. GO_Biological_Process, KEGG_2019_Human, ...),
+#' it collects the `pvalue` column from all clusters, applies
+#' \code{stats::p.adjust()} with the chosen method, and writes the adjusted
+#' p-values back into each ORA result data frame as a new column
+#' \code{p_adj_by_db}.
+#'
+#' Entries in \code{ora_results} that are not data.frames (e.g. \code{NA},
+#' \code{FALSE}) are skipped.
+#'
+#' @param ora_results A nested list of ORA results of the form
+#'   \code{ora_results[[cluster]][[database]]}, where each leaf is either
+#'   a data.frame with a \code{pvalue} column (from clusterProfiler) or
+#'   a non-data.frame placeholder (e.g. \code{NA}).
+#' @param p_adjust_method Character scalar specifying the multiple-testing
+#'   correction method to use. Passed to \code{stats::p.adjust(method = ...)}.
+#'   Typical choices are \code{"BH"} (default), \code{"bonferroni"},
+#'   \code{"holm"}, \code{"BY"}, etc.
+#'
+#' @return The same \code{ora_results} object, with each ORA data.frame
+#'   containing an additional numeric column \code{p_adj_by_db}, holding
+#'   p-values adjusted across all clusters for that database.
+#'
+add_p_adj_by_db <- function(
+        ora_results,
+        p_adjust_method = "BH"
+) {
+    p_col    <- "pvalue"
+    padj_col <- "p_adj_by_db"
+    
+    cluster_names <- names(ora_results)
+    if (is.null(cluster_names)) {
+        stop("`ora_results` must be a named list of clusters.")
+    }
+    
+    # collect all database names across clusters (some clusters may have fewer)
+    db_names <- unique(unlist(lapply(ora_results, names)))
+    db_names <- db_names[!is.na(db_names)]
+    
+    for (db in db_names) {
+        all_pvals <- numeric(0)
+        mapping   <- list()  # to remember where each chunk came from
+        
+        for (cl in cluster_names) {
+            cluster_entry <- ora_results[[cl]]
+            
+            # cluster might not have this database at all
+            if (!db %in% names(cluster_entry)) {
+                next
+            }
+            
+            df <- cluster_entry[[db]]
+            
+            # skip entries that are not data.frames (e.g. NA / logical)
+            if (!is.data.frame(df) || nrow(df) == 0L) {
+                next
+            }
+            
+            if (!p_col %in% names(df)) {
+                stop(sprintf(
+                    "Column '%s' not found in ORA result for cluster '%s',
+                    database '%s'.",
+                    p_col, cl, db
+                ))
+            }
+            
+            idx <- seq_len(nrow(df))
+            
+            all_pvals <- c(all_pvals, df[[p_col]])
+            mapping[[length(mapping) + 1L]] <- list(
+                cluster = cl,
+                rows    = idx
+            )
+        }
+        
+        # nothing to adjust for this database
+        if (length(all_pvals) == 0L) {
+            next
+        }
+        
+        # adjusted p-values for this database across all clusters
+        all_padj <- stats::p.adjust(all_pvals, method = p_adjust_method)
+        
+        # write adjusted p-values back into the original data.frames
+        start <- 1L
+        for (m in mapping) {
+            cl   <- m$cluster
+            rows <- m$rows
+            n    <- length(rows)
+            end  <- start + n - 1L
+            
+            df <- ora_results[[cl]][[db]]
+            
+            # ensure the column exists and is placed after 'p.adjust' if present
+            if (!padj_col %in% names(df)) {
+                df[[padj_col]] <- NA_real_
+                col_order <- names(df)
+                p_adj_idx <- match("p.adjust", col_order)
+                
+                if (!is.na(p_adj_idx)) {
+                    # move p_adj_by_db to right after p.adjust
+                    col_order <- append(col_order[col_order != padj_col],
+                                        padj_col,
+                                        after = p_adj_idx)
+                    df <- df[, col_order, drop = FALSE]
+                }
+            }
+            
+            df[[padj_col]][rows] <- all_padj[start:end]
+            
+            # write back the modified df
+            ora_results[[cl]][[db]] <- df
+            
+            start <- end + 1L
+        }
+    }
+    
+    ora_results
+}
+
+
+#' Filter ORA results by globally adjusted p-values
+#'
+#' Assumes \code{add_p_adj_by_db()} has already been run, so each
+#' ORA data.frame contains a column \code{p_adj_by_db}. For each
+#' cluster and database, rows with \code{p_adj_by_db} greater than
+#' \code{cutoff} (or NA) are removed. If no rows remain, the entry
+#' is set to \code{NA}.
+#'
+#' @param ora_results Nested list of ORA results:
+#'   \code{ora_results[[cluster]][[database]]} is either a data.frame
+#'   with \code{p_adj_by_db} or a non-data.frame placeholder.
+#' @param cutoff Numeric scalar, FDR threshold applied to
+#'   \code{p_adj_by_db}. Typically \code{params$pvalueCutoff}.
+#'
+#' @return The same structure as \code{ora_results}, but with
+#'   non-significant rows removed.
+#'   
+filter_ora_by_padj <- function(
+        ora_results,
+        cutoff
+) {
+    padj_col <- "p_adj_by_db"
+    cluster_names <- names(ora_results)
+    if (is.null(cluster_names)) {
+        stop("`ora_results` must be a named list of clusters.")
+    }
+    
+    for (cl in cluster_names) {
+        db_names <- names(ora_results[[cl]])
+        for (db in db_names) {
+            df <- ora_results[[cl]][[db]]
+            
+            if (!is.data.frame(df) || nrow(df) == 0L) {
+                next
+            }
+            
+            if (!padj_col %in% names(df)) {
+                stop(sprintf(
+                    "Column '%s' not found in ORA result for cluster '%s',
+                    database '%s'.",
+                    padj_col, cl, db
+                ))
+            }
+            
+            keep <- !is.na(df[[padj_col]]) & df[[padj_col]] <= cutoff
+            df_filt <- df[keep, , drop = FALSE]
+            
+            if (nrow(df_filt) == 0L) {
+                ora_results[[cl]][[db]] <- NA
+            } else {
+                ora_results[[cl]][[db]] <- df_filt
+            }
+        }
+    }
+    
+    ora_results
+}
+
+
 # Level 4 internal functions ---------------------------------------------------
 
 
@@ -2422,7 +2647,7 @@ check_gene_overlap <- function(
 #' \describe{
 #'   \item{cluster}{Cluster identifier (character).}
 #'   \item{term}{Combined gene set and term description label.}
-#'   \item{adj.p_value}{Adjusted p-value for the enrichment term.}
+#'   \item{p_adj_by_db}{Adjusted p-value for the enrichment term.}
 #'   \item{odds_ratio}{Odds ratio of the enrichment.}
 #' }
 #'
@@ -2455,11 +2680,11 @@ prepare_plot_data <- function(ora_results) {
 
     # Filter for top plot: only supported by >= 2 genes
     top_df <- full_df[full_df$Count >= 2, ]
-    top_df <- top_df[, c("cluster", "term", "p.adjust", "odds_ratio")]
+    top_df <- top_df[, c("cluster", "term", "p_adj_by_db", "odds_ratio")]
     colnames(top_df) <- c(
         "cluster",
         "term",
-        "adj.p_value",
+        "p_adj_by_db",
         "odds_ratio"
     )
 

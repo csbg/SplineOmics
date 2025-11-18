@@ -19,27 +19,38 @@ run_ora(
 }
 \arguments{
 \item{cluster_table}{\code{tibble}: A tibble containing one row per
-\code{feature_nr} with metadata and cluster assignments across the
-analysis categories. It includes:
+\code{feature_nr} with metadata and cluster assignments across analysis
+categories. It includes:
+
 \itemize{
 \item \code{feature_nr}: \code{numeric(1)} Numeric feature identifier.
-\item \code{feature_name}: \code{character(1)} Preferred feature name from
-the source data, falling back to the numeric ID if none is available.
-\item \code{gene}: \code{character(1)} Preferred gene symbol from the
-annotation or cluster data.
-\item \code{cluster_<cond1>} / \code{cluster_<cond2>}: \code{integer(1)}
-Cluster assignments for each time-effect condition.
-\item \code{cluster_cat2}: \code{character(1)} (Optional) Combined cluster
-label for category 2 hits in the form
-\code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-feature was not a category 2 hit.
-\item \code{cluster_cat3}: \code{character(1)} (Optional) Combined cluster
-label for category 3 hits in the form
-\code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-feature was not a category 3 hit.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item \code{feature_name}: `character(1)` Preferred feature name
+  derived from limma tables or falling back to the numeric ID.
+
+\\item \code{gene}: `character(1)` Preferred gene symbol obtained
+  from the annotation or from cluster-level metadata.
+
+\\item \code{cluster_<condition>}: `integer(1)` Cluster assignment
+  for each time-effect condition (Category 1). One column per
+  condition.
+
+\\item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
+  Category 2 label for each contrast. Indicates which condition
+  shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
+  the feature is not a category 2 hit.
+
+\\item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
+  Category 3 label for each contrast. Encodes the pair of
+  time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
+  `"2_4"`). \code{NA} indicates the feature is not a category 3
+  hit.
+}\if{html}{\out{</div>}}
+
 }
-For any category-specific cluster column, a value of \code{NA} indicates
-that the feature was not significant (not a hit) in that category.}
+
+For any category-specific column, a value of \code{NA} indicates that
+the feature was not significant (i.e., not a hit) in that category.}
 
 \item{databases}{\code{data.frame}: A \code{data.frame} that defines the gene set
 collections to be tested in the overrepresentation analysis. Must contain
@@ -241,7 +252,6 @@ enrichment.
     # --- permissive params for tiny example --------------------------------
     clusterProfiler_params <- list(
         pvalueCutoff = 1,
-        qvalueCutoff = 1,
         minGSSize    = 1,
         maxGSSize    = 500
     )

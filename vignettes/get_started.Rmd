@@ -703,8 +703,7 @@ clusterProfiler_params <- list(
     pvalueCutoff = 0.05,
     pAdjustMethod = "BH",
     minGSSize = 10,
-    maxGSSize = 500,
-    qvalueCutoff = 0.2
+    maxGSSize = 500
 )
 
 mapping_cfg <- list(
