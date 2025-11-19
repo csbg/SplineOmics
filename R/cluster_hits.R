@@ -1724,7 +1724,11 @@ make_clustering_report <- function(
     plots <- list()
     plots_sizes <- list()
     q <- 0
-    levels <- sub("^treatment_", "", names(all_levels_clustering))
+    levels <- sub(
+        paste0("^", condition, "_"),
+        "",
+        names(all_levels_clustering)
+        )
     
     for (i in seq_along(all_levels_clustering)) {
         # When a level has < 2 hits
@@ -6358,11 +6362,17 @@ select_balanced_hits <- function(
     
     avrg_ranked <- avrg_df |>
         rank_tbl() |>
-        dplyr::select(.data$feature_nr, .data$feature_names)
+        dplyr::select(
+            feature_nr, 
+            feature_names
+            )
     
     inter_ranked <- inter_df |>
         rank_tbl() |>
-        dplyr::select(.data$feature_nr, .data$feature_names)
+        dplyr::select(
+            feature_nr,
+            feature_names
+            )
     
     # Union of significant features
     union_tbl <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
