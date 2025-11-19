@@ -1965,11 +1965,7 @@ level_display_names <- function(cr) {
     vapply(
         cols,
         function(col) {
-            if (grepl("^cluster_Condition_", col)) {
-                cond <- sub("^cluster_Condition_", "", col)
-                paste0("Time effect: ", cond)
-                
-            } else if (grepl("^cluster_cat2_", col)) {
+            if (grepl("^cluster_cat2_", col)) {
                 contrast <- sub("^cluster_cat2_", "", col)
                 contrast_label <- gsub("_vs_", " vs ", contrast)
                 paste0("Avrg diff conditions: ", contrast_label)
@@ -1980,8 +1976,8 @@ level_display_names <- function(cr) {
                 paste0("Interaction condition time: ", contrast_label)
                 
             } else {
-                # Fallback: just use the raw column name
-                col
+                cond <- sub("^cluster_", "", col)
+                paste0("Time effect: ", cond)
             }
         },
         FUN.VALUE = character(1)

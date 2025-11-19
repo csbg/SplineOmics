@@ -62,6 +62,13 @@ Each release section should follow the structure below:
   multiple-testing correction across all clusters via a new `p_adj_by_db` 
   column, and use this value for all downstream significance filtering to 
   ensure consistent FDR control.
+  
+  
+### Removed
+
+- qvalueCutoff value in clusterProfiler_params argument of run_ora(). The reason
+  is that the qvalueCutoff is no longer statistically meaningfull with the new
+  way the raw p-values are adjusted (see above).
 
 
 

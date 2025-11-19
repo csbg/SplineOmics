@@ -1724,7 +1724,8 @@ make_clustering_report <- function(
     plots <- list()
     plots_sizes <- list()
     q <- 0
-
+    levels <- sub("^treatment_", "", names(all_levels_clustering))
+    
     for (i in seq_along(all_levels_clustering)) {
         # When a level has < 2 hits
         if (is.null(all_levels_clustering[[i]]) ||
@@ -1733,10 +1734,7 @@ make_clustering_report <- function(
         } else {
             q <- q + 1
         }
-
         level_clustering <- all_levels_clustering[[i]]
-
-        levels <- unique(meta[[condition]])
 
         if (length(levels) >= i) {
             level <- as.character(levels[i])
@@ -1780,8 +1778,6 @@ make_clustering_report <- function(
         )
 
         top_table <- level_clustering$top_table
-        levels <- as.character(unique(meta[[condition]]))
-
         col_indices <- which(meta[[condition]] == levels[i])
 
         if (mode == "integrated") {
