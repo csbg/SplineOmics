@@ -231,26 +231,15 @@ preprocess_rna_seq_data <- function(
         level_index = 1,
         design = effects[["fixed_effects"]]
     )
+    design_matrix <- design2design_matrix_result[["design_matrix"]]
 
     # Step 4: Apply voom transformation to get logCPM values and weights
     if (effects[["random_effects"]] != "") { # use the variancePartition fun()
-
-        if (!is.null(use_array_weights) && use_array_weights == TRUE) {
-            warning(
-                "Argument `use_array_weights = TRUE` is ignored",
-                "for mixed-model RNA-seq; ",
-                "voomWithDreamWeights already models heteroscedasticity",
-                "across genes and samples.",
-                call. = FALSE,
-                immediate. = TRUE
-            )
-        }
-
         param <- bp_setup(
             bp_cfg = bp_cfg,
             verbose = verbose
         )
-
+        # Apply voomWithDreamWeights first (observation-level precision weights)
         voom_obj <- variancePartition::voomWithDreamWeights(
             counts = y,
             formula = stats::as.formula(design),
@@ -261,9 +250,22 @@ preprocess_rna_seq_data <- function(
         if (inherits(param, "SnowParam")) { 
             BiocParallel::bpstop(param) # cleanly shuts down workers
         }
+        if (isTRUE(use_array_weights)) {
+            if (verbose) {
+                message("Applying array weights via applyQualityWeights()")
+            }
+            # Sample-level weights (length = n_samples)
+            sample_w <- limma::arrayWeights(
+                object = voom_obj$E,
+                design = design_matrix
+            )
+            # Combine array weights with voom precision weights
+            voom_obj <- variancePartition::applyQualityWeights(
+                voom_obj,
+                sample_w
+            )
+        }
     } else { # use the functions from limma
-        design_matrix <- design2design_matrix_result[["design_matrix"]]
-
         if (is.null(use_array_weights)) { # means fallback to implicit handling
             # Run voom normally first
             voom_obj <- limma::voom(

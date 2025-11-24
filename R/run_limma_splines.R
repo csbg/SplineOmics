@@ -231,7 +231,16 @@ run_limma_splines <- function(
     dream_params <- splineomics[["dream_params"]]
     mode <- splineomics[["mode"]]
     condition <- splineomics[["condition"]]
-    use_array_weights <- splineomics[["use_array_weights"]]
+    if (is.null(rna_seq_data)) {     
+        use_array_weights <- splineomics[["use_array_weights"]]
+    } else {     # For RNA-seq data, array weights were handled beforehand.
+        use_array_weights <- FALSE
+        message(
+            "Array weights are ignored at this stage for RNA-seq data, ",
+            "as they were already incorporated during the preprocessing step."
+        )
+    }
+    
     bp_cfg <- splineomics[["bp_cfg"]]
 
     # Because at first I enforced that X in the design formula stands for the
@@ -1718,16 +1727,8 @@ resolve_array_weights <- function(
     design2design_matrix_result,
     condition = NULL,
     use_array_weights = TRUE,
-    random_effects = FALSE) {
-    # Default case: already handled for RNA-seq
-    if (!is.null(rna_seq_data)) {
-        return(list(
-            weights = NULL,
-            use_weights = FALSE,
-            homosc_violation_result = NULL
-        ))
-    }
-
+    random_effects = FALSE
+    ) {
     # Auto-detect violation if user has not explicitly set the flag
     if (is.null(use_array_weights)) {
         homosc_violation_result <- check_homoscedasticity_violation(
@@ -1751,10 +1752,27 @@ resolve_array_weights <- function(
             object = data,
             design = design2design_matrix_result$design_matrix
         )
+        pretty_weights <- data.frame(
+            Sample = colnames(data),
+            Weight = round(weights, 4)
+        )
+        header <- sprintf("%-25s %10s", "Sample", "Weight")
+        rows <- sprintf(
+            "%-25s %10.4f",
+            pretty_weights$Sample,
+            pretty_weights$Weight
+            )
+        weights_msg <- paste(
+            c("Array weights:", header, rows),
+            collapse = "\n"
+        )
+        message(weights_msg)
+        
         if (random_effects) { # no random effects present
             weights <- matrix(
-                rep(weights, each = nrow(data)),
+                weights,
                 nrow = nrow(data),
+                ncol = ncol(data),
                 byrow = TRUE
             )
         }

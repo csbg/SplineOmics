@@ -163,6 +163,7 @@ generate_report_html <- function(
         "mode",
         "use_array_weights",
         "heteroscedasticity",
+        "min_effect_size",
         "analyst_name",
         "contact_info",
         "project_name",
@@ -1896,6 +1897,36 @@ process_field <- function(
                 sprintf("%s: %s", names(weights), as.character(weights)),
                 collapse = "; "
             )
+        }
+    } else if (field == "min_effect_size") {
+        min_effect_size <- report_info[[field]]
+        
+        # Handle named list
+        if (is.list(min_effect_size)) {
+            
+            if (is.null(names(min_effect_size))) {
+                # Unnamed list: just collapse values
+                base64_df <- paste(
+                    as.character(unlist(min_effect_size)),
+                    collapse = "; "
+                    )
+            } else {
+                # Named list: create "name: value" entries
+                base64_df <- paste(
+                    sprintf("%s: %s",
+                            names(min_effect_size),
+                            vapply(
+                                min_effect_size,
+                                as.character,
+                                FUN.VALUE = character(1))
+                            ),
+                    collapse = "; "
+                )
+            }
+            
+        } else {
+            # Fallback for vectors
+            base64_df <- as.character(min_effect_size)
         }
     } else {
         base64_df <- ifelse(

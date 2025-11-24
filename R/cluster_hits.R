@@ -542,6 +542,7 @@ cluster_hits <- function(
     )
     report_info[["homosc_violation_result"]] <-
         splineomics[["homosc_violation_result"]]
+    report_info[["min_effect_size"]] <- min_effect_size
 
     if (!is.null(splineomics[["use_array_weights"]])) {
         report_info[["use_array_weights"]] <- splineomics[["use_array_weights"]]
@@ -3924,7 +3925,9 @@ plot_spline_comparisons <- function(
             "feature_names",
             dplyr::any_of("adj.P.Val")
         ),
-        max_n = max_hit_number
+        max_n = max_hit_number,
+        adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction = adj_pthresh_interaction
     )
 
     # sanity check: ensure features exist in prediction matrices
@@ -6334,6 +6337,11 @@ plot_cluster_quality_distribution <- function(
 #'   it may also contain `adj.P.Val` for ranking.
 #' @param max_n Integer scalar. Maximum number of features to return.
 #'   If `NULL` or `Inf`, all unique features from both inputs are returned.
+#' @param adj_pthresh_avrg_diff_conditions `numeric(1)`: adj. p-value threshold
+#' for the limma average difference between conditions results (category 2).
+#' @param adj_pthresh_interaction_condition_time `numeric(1)`: adj. p-value 
+#' threshold for the limma interaction of condition and time results
+#' (category 3).
 #'
 #' @return A data frame with up to `max_n` rows and columns
 #'   `feature_nr` and `feature_names`, containing the selected features.
@@ -6345,11 +6353,22 @@ plot_cluster_quality_distribution <- function(
 select_balanced_hits <- function(
         avrg_df,
         inter_df,
-        max_n
-        ) {
-    # Filter to significant hits only (those appearing in at least one category)
-    has_p_avrg <- "adj.P.Val" %in% names(avrg_df)
-    has_p_inter <- "adj.P.Val" %in% names(inter_df)
+        max_n,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction
+) {
+    # keep only significant hits in each category (if adj.P.Val is present)
+    if (!is.null(adj_pthresh_avrg_diff_conditions) &&
+        "adj.P.Val" %in% names(avrg_df)) {
+        avrg_df <- avrg_df |>
+            dplyr::filter(.data$adj.P.Val <= adj_pthresh_avrg_diff_conditions)
+    }
+    
+    if (!is.null(adj_pthresh_interaction) &&
+        "adj.P.Val" %in% names(inter_df)) {
+        inter_df <- inter_df |>
+            dplyr::filter(.data$adj.P.Val <= adj_pthresh_interaction)
+    }
     
     # rank each category by adj.P.Val (smaller first), fallback to feature_names
     rank_tbl <- function(tbl) {
@@ -6365,20 +6384,24 @@ select_balanced_hits <- function(
         dplyr::select(
             feature_nr, 
             feature_names
-            )
+        )
     
     inter_ranked <- inter_df |>
         rank_tbl() |>
         dplyr::select(
             feature_nr,
             feature_names
-            )
+        )
     
     # Union of significant features
     union_tbl <- dplyr::bind_rows(avrg_ranked, inter_ranked) |>
         dplyr::distinct(.data$feature_names, .keep_all = TRUE)
     
     if (nrow(union_tbl) == 0L) {
+        return(union_tbl)
+    }
+    
+    if (is.null(max_n) || is.infinite(max_n)) {
         return(union_tbl)
     }
     
@@ -6389,7 +6412,7 @@ select_balanced_hits <- function(
     selected <- dplyr::tibble(
         feature_nr = integer(),
         feature_names = character()
-        )
+    )
     
     # alternate between cat2 and cat3
     turn <- 2  # start with category 2
@@ -6404,7 +6427,7 @@ select_balanced_hits <- function(
             pool3 <- dplyr::filter(
                 pool3,
                 .data$feature_names != chosen$feature_names
-                )
+            )
             turn <- 3
             
         } else if (turn == 3 && nrow(pool3) > 0) {
@@ -6415,7 +6438,7 @@ select_balanced_hits <- function(
             pool2 <- dplyr::filter(
                 pool2,
                 .data$feature_names != chosen$feature_names
-                )
+            )
             turn <- 2
             
         } else {
