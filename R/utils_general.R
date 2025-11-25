@@ -47,7 +47,7 @@ create_progress_bar <- function(
 #' It accommodates both B-splines and natural cubic splines based on the
 #' provided spline type and parameters.
 #'
-#' @param meta A dataframe containing the metadata, including the time column.
+#' @param meta A dataframe containing the metadata, including the Time column.
 #' @param spline_params A list containing the spline parameters. This list can
 #' include `dof` (degrees of freedom), `spline_type`, and `degree`.
 #' @param level_index An integer representing the current level index for which
@@ -65,11 +65,12 @@ design2design_matrix <- function(
     meta,
     spline_params,
     level_index,
-    design) {
+    design
+    ) {
     args <- list(
         x = meta$Time,
         intercept = FALSE
-    ) # Time column is mandatory
+    ) 
 
     if (!is.null(spline_params$dof)) {
         args$df <- spline_params$dof[level_index]

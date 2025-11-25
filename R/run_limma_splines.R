@@ -205,7 +205,8 @@
 #'
 run_limma_splines <- function(
     splineomics,
-    verbose = TRUE) {
+    verbose = TRUE
+    ) {
     start_time <- Sys.time()
     check_splineomics_elements(
         splineomics = splineomics,
@@ -589,7 +590,8 @@ fit_global_model <- function(
     padjust_method,
     use_array_weights,
     bp_cfg,
-    verbose) {
+    verbose
+    ) {
     design2design_matrix_result <- design2design_matrix(
         meta = meta,
         spline_params = spline_params,
@@ -720,12 +722,13 @@ extract_within_level_time_effects <- function(
     condition,
     feature_names,
     dof,
-    random_effects) {
+    random_effects
+    ) {
     levels_in_condition <- levels(factor(fit_obj$meta[[condition]]))
     baseline <- levels_in_condition[1]
     design_cols <- colnames(fit_obj$design_matrix)
     spline_terms <- paste0("X", seq_len(dof))
-    if ("X" %in% design_cols) spline_terms[1L] <- "X" # In case of dof = 1
+    if ("X" %in% design_cols) spline_terms <- "X"  # In case of dof = 1
 
     eBayes_fun <- if (random_effects) {
         variancePartition::eBayes
@@ -836,7 +839,7 @@ extract_between_level_contrasts <- function(
 ) {
     cond_vals <- fit_obj$meta[[condition]]
     levels_cond <- levels(factor(cond_vals))
-    
+
     if (length(levels_cond) < 2L) {
         stop(
             "Need at least two levels in '", condition,
@@ -845,7 +848,11 @@ extract_between_level_contrasts <- function(
     }
     
     # All pairwise combinations of condition levels
-    level_pairs <- combn(levels_cond, 2L, simplify = FALSE)
+    level_pairs <- combn(
+        levels_cond,
+        2L,
+        simplify = FALSE
+        )
     
     condition_only_list <- list()
     condition_time_list <- list()
@@ -860,8 +867,18 @@ extract_between_level_contrasts <- function(
             random_effects = random_effects
         )
         
-        cond_name <- paste0("avrg_diff_", pair[1], "_vs_", pair[2])
-        time_name <- paste0("time_interaction_", pair[1], "_vs_", pair[2])
+        cond_name <- paste0(
+            "avrg_diff_",
+            pair[1],
+            "_vs_",
+            pair[2]
+            )
+        time_name <- paste0(
+            "time_interaction_",
+            pair[1],
+            "_vs_",
+            pair[2]
+            )
         
         cond_df <- contrast_result$condition_only
         if (!is.null(cond_df) && nrow(cond_df) > 0L) {
@@ -908,7 +925,8 @@ extract_between_level_contrasts <- function(
 #'
 process_top_table <- function(
     process_within_level_result,
-    feature_names) {
+    feature_names
+    ) {
     top_table <- process_within_level_result$top_table
     fit <- process_within_level_result$fit
 
@@ -984,7 +1002,8 @@ process_within_level <- function(
     padjust_method,
     use_array_weights,
     bp_cfg,
-    verbose) {
+    verbose
+    ) {
     effects <- extract_effects(design)
 
     if (spline_params[["dof"]][level_index] == 0) {
@@ -1014,7 +1033,8 @@ process_within_level <- function(
         design = design,
         design2design_matrix_result = design2design_matrix_result,
         use_array_weights = use_array_weights,
-        random_effects = effects[["random_effects"]] != ""
+        random_effects = effects[["random_effects"]] != "",
+        verbose = verbose
     )
 
     if (!is.null(rna_seq_data)) {
@@ -1167,7 +1187,8 @@ extract_contrast_for_pair <- function(
     fit_obj,
     condition,
     level_pair,
-    random_effects) {
+    random_effects
+    ) {
     fit <- fit_obj[["fit"]]
     design_matrix <- fit_obj[["design_matrix"]]
     feature_names <- fit_obj[["feature_names"]]
@@ -1451,7 +1472,8 @@ build_spline_contrast <- function(
     condition,
     spline_terms,
     design_cols,
-    dof) {
+    dof
+    ) {
     contrast_matrix <- matrix(
         0,
         nrow = dof,
@@ -1716,6 +1738,7 @@ analytic_loocv <- function(
 #' @param p_threshold p-value threshold for Levene's test
 #' @param fraction_threshold Fraction of features needing to fail to trigger
 #'  use of weights
+#' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list with `weights`, `use_weights`, and `homosc_violation_result`
 #'
@@ -1727,7 +1750,8 @@ resolve_array_weights <- function(
     design2design_matrix_result,
     condition = NULL,
     use_array_weights = TRUE,
-    random_effects = FALSE
+    random_effects = FALSE,
+    verbose = FALSE
     ) {
     # Auto-detect violation if user has not explicitly set the flag
     if (is.null(use_array_weights)) {
@@ -1745,9 +1769,11 @@ resolve_array_weights <- function(
     }
 
     if (isTRUE(use_array_weights)) {
-        message(
-            "Using arrayWeights strategy for heteroscedasticity adjustment."
+        if (verbose) {
+            message(
+                "Using arrayWeights strategy for heteroscedasticity adjustment."
             )
+        }
         weights <- limma::arrayWeights(
             object = data,
             design = design2design_matrix_result$design_matrix
@@ -1766,7 +1792,9 @@ resolve_array_weights <- function(
             c("Array weights:", header, rows),
             collapse = "\n"
         )
-        message(weights_msg)
+        if (verbose) {
+            message(weights_msg)
+        }
         
         if (random_effects) { # no random effects present
             weights <- matrix(
