@@ -203,7 +203,7 @@ and applies a single multiple-testing correction within that database.
 The resulting adjusted p-values are stored in `p_adj_by_db` and are used
 for all downstream filtering and visualization.
 
-### How do I interpret category 2 (average difference between conditions) over-representation results?
+### How do I interpret category 2 (avrg diff between conditions) ORA results?
 
 Category 2 evaluates average differences between conditions after
 accounting\
@@ -228,7 +228,7 @@ Thus, Category 2 enrichment answers:
 -   Which biological processes are higher in condition A than B?\
 -   Which processes are higher in condition B than A?
 
-### How do I interpret Category 3 (condition–time interaction) over-representation results?
+### How do I interpret Category 3 (condition–time interaction) ORA results?
 
 Category 3 evaluates whether the time trajectories differ between two
 conditions. For each pairwise contrast, SplineOmics creates one

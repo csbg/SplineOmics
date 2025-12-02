@@ -72,7 +72,8 @@ the newest version or the specific version you need by visiting the
 docker pull thomasrauter/splineomics:latest
 ```
 
-If you face 'permission denied' issues, check out [this vignette](https://raw.githubusercontent.com/csbg/SplineOmics/main/doc/Docker_permission_denied.html)
+If you face 'permission denied' issues, check out the 'Docker permission denied'
+vignette of SplineOmics.
 
 # Running the `Docker` Container
 
@@ -154,9 +155,12 @@ directory on your local machine.
 
 | **Local Directory** | **Docker Container Directory** | **Description**                                                |
 |-------------------|--------------------|---------------------------------|
-|                     | `/home/rstudio/`               | Working directory in the RStudio session inside the container. |
-| `input/`            | `/home/rstudio/input/`         | Place your input files here on your local machine.             |
-| `output/`           | `/home/rstudio/output/`        | Files generated in the container will appear here locally.     |
+|                     | `/home/rstudio/`               | Working directory in
+the RStudio session inside the container. |
+| `input/`            | `/home/rstudio/input/`         | Place your input files
+here on your local machine.             |
+| `output/`           | `/home/rstudio/output/`        | Files generated in
+the container will appear here locally.     |
 
 # Inspect `Docker` container installations
 

@@ -96,8 +96,8 @@ was not yet published at the time of making the SplineOmics package
 public. Instead, the dataset includes randomly generated gene symbols
 and gene names corresponding to Cricetulus griseus (Chinese Hamster) for
 each row. This is intended to demonstrate the functionality of the
-package. Further, the dataset was subsamples to 1165 proteins to limit the size
-of this package.
+package. Further, the dataset was subsamples to 1165 proteins to limit
+the size of this package.
 
 The left part of data contains the numeric values, and the right part
 the annotation info, which can be copied in a separate dataframe, as
@@ -180,7 +180,6 @@ Three comments about the characteristics the input data should have:
     measurements of the same subject), this assumption is violated,
     which can lead to incorrect statistical inferences.
 
-
 ## Bring the Inputs into the Standardized Format
 
 Since `data` is not in the format required by the **SplineOmics**
@@ -194,8 +193,8 @@ this more easily
 
 `extract_data()` can:
 
--   **Extract the data matrix field** by specifying the location of the corners 
-    of the matrix.
+-   **Extract the data matrix field** by specifying the location of the
+    corners of the matrix.
 -   **Create column headers** from the information written in the cells
     above the respective columns of the data matrix field.
 -   **Assign rowheaders**:
@@ -342,12 +341,13 @@ object when it is passed to the respective function.
 -   **data**: A matrix with the data
 -   **meta**: Metadata associated with the data.
 -   **condition**: Meta column name of the levels (e.g., Exponential and
-    Stationary). In this analysis we illustrate a case with two conditions, but
-    SplineOmics supports any number of conditions. All conditions are modeled
-    jointly, and SplineOmics automatically performs all pairwise comparisons.
-    For each pair of conditions, it computes both the average difference (limma
-    Category 2) and the condition–time interaction (limma Category 3), providing
-    a complete set of contrast results regardless of how many conditions are
+    Stationary). In this analysis we illustrate a case with two
+    conditions, but SplineOmics supports any number of conditions. All
+    conditions are modeled jointly, and SplineOmics automatically
+    performs all pairwise comparisons. For each pair of conditions, it
+    computes both the average difference (limma Category 2) and the
+    condition–time interaction (limma Category 3), providing a complete
+    set of contrast results regardless of how many conditions are
     included.
 
 ## Optional Arguments `create_splineomics()`
@@ -393,8 +393,8 @@ batch-corrected data, and
 [here](https://csbg.github.io/SplineOmics_html_reports/explore_batch_corrected_data_PTX.html)
 the report for the batch-corrected data.
 
-Note that any report linked in this vignette might have been created with an
-older version of SplineOmics, and not updated yet. 
+Note that any report linked in this vignette might have been created
+with an older version of SplineOmics, and not updated yet.
 
 The EDA plots can tell you a range of things. The plots in the HTML
 report are grouped into three categories: Distribution and Variability
@@ -403,7 +403,7 @@ Clustering.
 
 If you look at the correlation heatmaps in the HTML report, you can see
 that the samples E12_TP05_Exponential and E10_TP10_Stationary stick out.
-Seeing this, you might want to remove them from the data. 
+Seeing this, you might want to remove them from the data.
 
 # Run limma spline analysis
 
@@ -572,8 +572,8 @@ contains an interaction effect).
 # Perform overrepresentation analysis (ORA)
 
 Once the clustered hits are identified, a subsequent step to gain
-biological insights is to perform ORA For this, the respective genes
-can be assigned to each clustered hit, and ORA can be carried out. To
+biological insights is to perform ORA For this, the respective genes can
+be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
 ```{r download Enrichr databases, eval = FALSE}
@@ -609,9 +609,9 @@ is the root dir of the R project.
 
 To run ORA, the downloaded database file has to be loaded as a
 dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function run_ora() runs ORA
-using clusterProfiler, generates an HTML report and returns the ORA
-dotplots in R.
+report dir can be specified. The function run_ora() runs ORA using
+clusterProfiler, generates an HTML report and returns the ORA dotplots
+in R.
 
 ```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
@@ -671,10 +671,10 @@ results, that is stated with a red message.
 
 # Perform ORA with the Bioconductor database
 
-The ORA can also be performed with any other database that is in the format
-DB, Geneset, Gene (see documentation of the run_ora function). The BioConductor
-databases are an example for that, and SplineOmics also contains a function
-to conveniently download these.
+The ORA can also be performed with any other database that is in the
+format DB, Geneset, Gene (see documentation of the run_ora function).
+The BioConductor databases are an example for that, and SplineOmics also
+contains a function to conveniently download these.
 
 ```{r download BioConductor mouse database, eval = FALSE}
 SplineOmics::extract_gene_sets(

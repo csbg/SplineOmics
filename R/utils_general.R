@@ -327,8 +327,8 @@ extract_effects <- function(formula_string) {
 #'                                    of that function).
 #' @param condition A character string of the column name of meta that contains
 #'                  the levels of the experimental condition.
-#' @param random_effects Boolean flag specifying if random effects are in the
-#'                       design formula.
+#' @param use_random_effects Boolean flag specifying if random effects are in
+#'  the design formula.
 #' @param data_type String specifying the omics data type ("rna-seq" or
 #'                  "other-omics"). Used to determine the recommendation
 #'                  message in case of heteroscedasticity.
@@ -371,7 +371,7 @@ check_homoscedasticity_violation <- function(
     design,
     design2design_matrix_result,
     condition,
-    random_effects = FALSE,
+    use_random_effects = FALSE,
     data_type = "other-omics",
     p_threshold = 0.05,
     fraction_threshold = 0.1) {
@@ -380,7 +380,7 @@ check_homoscedasticity_violation <- function(
         "decide whether to use the limma array weights or not."
     ))
 
-    if (random_effects) {
+    if (use_random_effects) {
         message(
             "Checking for heteroscedasticity violation with Levene's test in
       the presence of random effects is currently out of order. Hopefully,

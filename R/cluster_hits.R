@@ -2146,7 +2146,8 @@ generate_spline_comparisons <- function(
 #'   cluster_cat2_<suffix>
 #' }
 #'
-#' where `<suffix>` is the contrast name **without the `"avrg_diff_"` prefix**,  
+#' where `<suffix>` is the contrast name 
+#' **without the `"avrg_diff_"` prefix**,  
 #' e.g. `"A_vs_B"`, `"constant_vs_more_oxygen"`, etc.
 #'
 #' Let `<cond1>_vs_<cond2>` be that suffix.  
@@ -2732,7 +2733,7 @@ add_effect_size_columns <- function(
                         tbl[["feature_nr"]]
                     )
                 } else if (length(parts) >= 2L) {
-                    for (cond_short in parts[1:2]) {
+                    for (cond_short in parts[seq_len(2)]) {
                         if (!cond_short %in% names(time_effect_effect_size)) {
                             next
                         }
@@ -6382,15 +6383,13 @@ select_balanced_hits <- function(
     avrg_ranked <- avrg_df |>
         rank_tbl() |>
         dplyr::select(
-            feature_nr, 
-            feature_names
+            dplyr::all_of(c("feature_nr", "feature_names"))
         )
     
     inter_ranked <- inter_df |>
         rank_tbl() |>
         dplyr::select(
-            feature_nr,
-            feature_names
+            dplyr::all_of(c("feature_nr", "feature_names"))
         )
     
     # Union of significant features

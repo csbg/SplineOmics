@@ -275,7 +275,8 @@ run_limma_splines <- function(
             padjust_method = padjust_method,
             mode = mode,
             use_array_weights = use_array_weights,
-            bp_cfg = bp_cfg
+            bp_cfg = bp_cfg,
+            verbose = verbose
         )
 
         results_nested <- purrr::imap(
@@ -467,7 +468,8 @@ fit_within_condition_isolated <- function(
     mode,
     use_array_weights,
     bp_cfg,
-    verbose) {
+    verbose
+    ) {
     samples <- which(meta[[condition]] == level)
     data_copy <- data[, samples]
     meta_copy <- meta[meta[[condition]] == level, , drop = FALSE]
@@ -612,7 +614,7 @@ fit_global_model <- function(
         design2design_matrix_result = design2design_matrix_result,
         condition = condition,
         use_array_weights = use_array_weights,
-        random_effects = effects[["random_effects"]] != ""
+        use_random_effects = effects[["random_effects"]] != ""
     )
 
     if (verbose) {
@@ -1033,7 +1035,7 @@ process_within_level <- function(
         design = design,
         design2design_matrix_result = design2design_matrix_result,
         use_array_weights = use_array_weights,
-        random_effects = effects[["random_effects"]] != "",
+        use_random_effects = effects[["random_effects"]] != "",
         verbose = verbose
     )
 
@@ -1629,9 +1631,9 @@ modify_limma_top_table <- function(
 get_condition_contrast_coefs <- function(
     condition,
     level_pair,
-    design_matrix) {
+    design_matrix
+    ) {
     cols <- colnames(design_matrix)
-
     level1 <- make.names(paste0(condition, level_pair[1]))
     level2 <- make.names(paste0(condition, level_pair[2]))
 
@@ -1733,7 +1735,7 @@ analytic_loocv <- function(
 #' @param design2design_matrix_result Result from design2design_matrix()
 #' @param condition Condition column name used for group testing
 #' @param use_array_weights User-specified flag (TRUE/FALSE/NULL)
-#' @param random_effects Boolean, whether model includes random effects
+#' @param use_random_effects Boolean, whether model includes random effects
 #' @param data_type Type of omics data (used for logging only)
 #' @param p_threshold p-value threshold for Levene's test
 #' @param fraction_threshold Fraction of features needing to fail to trigger
@@ -1750,7 +1752,7 @@ resolve_array_weights <- function(
     design2design_matrix_result,
     condition = NULL,
     use_array_weights = TRUE,
-    random_effects = FALSE,
+    use_random_effects = FALSE,   
     verbose = FALSE
     ) {
     # Auto-detect violation if user has not explicitly set the flag
@@ -1761,7 +1763,7 @@ resolve_array_weights <- function(
             design = design,
             design2design_matrix_result = design2design_matrix_result,
             condition = condition,
-            random_effects = random_effects
+            use_random_effects = use_random_effects
         )
         use_array_weights <- homosc_violation_result$violation
     } else {
@@ -1796,7 +1798,7 @@ resolve_array_weights <- function(
             message(weights_msg)
         }
         
-        if (random_effects) { # no random effects present
+        if (use_random_effects) { # no random effects present
             weights <- matrix(
                 weights,
                 nrow = nrow(data),
@@ -1804,7 +1806,7 @@ resolve_array_weights <- function(
                 byrow = TRUE
             )
         }
-    } else {
+    } else {                 # use_array_weights is FALSE
         weights <- NULL
     }
 

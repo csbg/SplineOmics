@@ -1277,8 +1277,9 @@ check_params <- function(params) {
     if (length(extra_params) > 0) {
         stop_call_false(
             paste(
-                "The list contains extra elements besides the allowed elements",
-                "pvalueCutoff, pAdjustMethod, minGSSize, and maxGSSize",
+                "clusterProfiler_params contains the following extra ",
+                "element(s) besides the allowed elements ",
+                "pvalueCutoff, pAdjustMethod, minGSSize, and maxGSSize: ",
                 paste(extra_params, collapse = ", ")
             )
         )
