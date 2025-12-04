@@ -77,7 +77,8 @@ test_that("cluster_genes_multiomics snapshot with mixed layers", {
         blocks     = blocks,
         block_meta = block_meta,
         layer_meta = layer_meta,
-        gene_mode  = "union"
+        gene_mode  = "union",
+        verbose = FALSE
     )
 
     expect_snapshot_value(

@@ -51,9 +51,13 @@
 #'   \item{\code{layer_k}}{Number of pattern clusters to use for building
 #'   pattern signatures for many-to-one layers. \code{NA} for layers that are
 #'   already gene-level.}
-#'   \item{\code{layer_w}}{Relative weight of this layer in the block-specific
-#'   distance integration. Weights are normalized to sum to 1 within each
-#'   block.}
+#'   \item{\code{layer_w}}{
+#'     Relative weight of this layer when combining layer-specific
+#'     gene–gene distances within the block. Values are treated as
+#'     *relative* weights and are normalized internally, so they do not
+#'     need to sum to 1 (e.g. 1, 1, 2 means the third layer has twice
+#'     the weight of the others).
+#'   }
 #' }
 #'
 #' @param gene_mode
@@ -68,6 +72,8 @@
 #'   pair, with weights renormalized accordingly. Increases coverage but results
 #'   in heterogeneous information across genes.}
 #' }
+#' 
+#' @param verbose Boolean flag indicating if info messages are be shown.
 #'
 #' @return
 #' A tibble \code{cluster_table} with one row per gene and columns containing
@@ -153,17 +159,18 @@ cluster_genes_multiomics <- function(
         blocks,
         block_meta,
         layer_meta,
-        gene_mode = "intersection"
+        gene_mode = "intersection",
+        verbose = TRUE
 ) {
+    start_time <- Sys.time()
     .check_cluster_genes_multiomics_input(
         blocks     = blocks,
         block_meta = block_meta,
         layer_meta = layer_meta,
-        gene_mode  = gene_mode
+        gene_mode  = gene_mode,
+        verbose = verbose
     )
-    
-    gene_mode <- match.arg(gene_mode, c("intersection", "union"))
-    
+
     block_ids <- unique(block_meta$block)
     block_clusters <- vector("list", length(block_ids))
     names(block_clusters) <- block_ids
@@ -171,13 +178,26 @@ cluster_genes_multiomics <- function(
     centroid_list <- vector("list", length(block_ids))
     names(centroid_list) <- block_ids
     
-    for (b in block_ids) {
+    for (i in seq_along(block_ids)) {
+        b <- block_ids[i]
+        if (verbose) {
+            message(
+                "[cluster_genes_multiomics] Block ",
+                i,
+                "/",
+                length(block_ids),
+                ": '",
+                b,
+                "'"
+            )
+        }
         res_b <- .cluster_genes_multiomics_block(
             block_id   = b,
             blocks     = blocks,
             block_meta = block_meta,
             layer_meta = layer_meta,
-            gene_mode  = gene_mode
+            gene_mode  = gene_mode,
+            verbose = verbose
         )
         
         block_clusters[[b]] <- res_b$cl_b
@@ -192,7 +212,8 @@ cluster_genes_multiomics <- function(
         stringsAsFactors = FALSE
     )
     
-    for (b in block_ids) {
+    for (i in seq_along(block_ids)) {
+        b <- block_ids[i]
         cl_b <- block_clusters[[b]]
         if (is.null(cl_b)) next
         
@@ -227,6 +248,12 @@ cluster_genes_multiomics <- function(
         centroid_list
     )
     
+    if (verbose) {
+        end_time <- Sys.time()
+        elapsed  <- end_time - start_time
+        formatted <- format(elapsed, digits = 2)
+        message("[cluster_genes_multiomics] total runtime: ", formatted)
+    }
     list(
         cluster_table = tibble::as_tibble(cluster_table),
         centroid_info = tibble::as_tibble(centroid_info)
@@ -289,6 +316,8 @@ cluster_genes_multiomics <- function(
 #' layers within a block.  
 #' Must be either \code{"intersection"} or \code{"union"} and is
 #' validated via \code{\link[base]{match.arg}}.
+#' 
+#' @param verbose Boolean flag indicating if info messages are be shown.
 #'
 #' @return
 #' Invisibly returns \code{TRUE} if all checks pass.  
@@ -299,7 +328,8 @@ cluster_genes_multiomics <- function(
         blocks,
         block_meta,
         layer_meta,
-        gene_mode
+        gene_mode,
+        verbose
 ) {
     .check_cluster_genes_multiomics_gene_mode(gene_mode)
     .check_cluster_genes_multiomics_blocks(blocks)
@@ -310,6 +340,13 @@ cluster_genes_multiomics <- function(
         block_meta,
         layer_meta
         )
+    
+    # verbose must be TRUE or FALSE (length 1 logical)
+    if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose)) {
+        stop_call_false(
+            "`verbose` must be either TRUE or FALSE (a single logical value)."
+        )
+    }
     
     invisible(TRUE)
 }
@@ -382,7 +419,8 @@ cluster_genes_multiomics <- function(
         blocks,
         block_meta,
         layer_meta,
-        gene_mode
+        gene_mode,
+        verbose
 ) {
     meta_b_block <- block_meta[block_meta$block == block_id, , drop = FALSE]
     meta_b_layer <- layer_meta[layer_meta$block == block_id, , drop = FALSE]
@@ -400,6 +438,14 @@ cluster_genes_multiomics <- function(
     
     layer_mats <- vector("list", length(layer_names))
     names(layer_mats) <- layer_names
+    
+    if (verbose) {
+        message(
+            "  [block '",
+            block_id,
+            "'] building gene-level layer matrices..."
+            )
+    }
     
     for (i in seq_along(layer_names)) {
         ln      <- layer_names[i]
@@ -426,54 +472,36 @@ cluster_genes_multiomics <- function(
     
     genes_per_layer <- lapply(layer_mats, rownames)
     
-    if (gene_mode == "intersection") {
-        genes_block <- Reduce(intersect, genes_per_layer)
-        genes_block <- sort(genes_block)
-        
-        dist_list <- lapply(
-            layer_names,
-            function(ln) {
-                mat <- layer_mats[[ln]][genes_block, , drop = FALSE]
-                .compute_layer_distance(mat)
-            }
-        )
-        names(dist_list) <- layer_names
-        
-        D_block <- .combine_layer_distances(
-            dist_list = dist_list,
-            weights   = layer_weights
-        )
-    } else {
-        genes_block <- Reduce(union, genes_per_layer)
-        genes_block <- sort(genes_block)
-        
-        n_g    <- length(genes_block)
-        D_block <- matrix(0, nrow = n_g, ncol = n_g)
-        W_block <- matrix(0, nrow = n_g, ncol = n_g)
-        rownames(D_block) <- genes_block
-        colnames(D_block) <- genes_block
-        rownames(W_block) <- genes_block
-        colnames(W_block) <- genes_block
-        
-        for (i in seq_along(layer_names)) {
-            ln <- layer_names[i]
-            w  <- layer_weights[i]
-            
-            mat_l   <- layer_mats[[ln]]
-            genes_l <- rownames(mat_l)
-            
-            idx <- match(genes_l, genes_block)
-            
-            D_l <- .compute_layer_distance(mat_l)
-            D_block[idx, idx] <- D_block[idx, idx] + w * D_l
-            W_block[idx, idx] <- W_block[idx, idx] + w
-        }
-        
-        valid <- W_block > 0
-        D_block[valid] <- D_block[valid] / W_block[valid]
-        diag(D_block) <- 0
+    if (verbose) {
+        message(
+            "  [block '",
+            block_id,
+            "'] computing and combining layer-wise distance matrices..."
+            )
     }
     
+    if (gene_mode == "intersection") {
+        D_block <- .compute_block_distance_intersection(
+            layer_mats    = layer_mats,
+            layer_names   = layer_names,
+            layer_weights = layer_weights
+        )
+    } else {    # gene_mode == "union"
+        D_block <- .compute_block_distance_union(
+            layer_mats    = layer_mats,
+            layer_names   = layer_names,
+            layer_weights = layer_weights
+        )
+    }
+    if (verbose) {
+        message(
+            "  [block '",
+            block_id,
+            "'] clustering genes (k = ",
+            block_k,
+            ")..."
+            )
+    }
     cl_b <- .cluster_with_kmeans(
         dist_mat = D_block,
         k        = block_k
@@ -625,96 +653,148 @@ cluster_genes_multiomics <- function(
 }
 
 
-#' Compute pairwise distances for an omics layer
+#' Compute block-level distance matrix (intersection mode)
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that computes a pairwise distance matrix between all
-#' rows (features or genes) of a layer matrix.  
-#' The matrix is first z-scored across rows, and Euclidean distances are
-#' then computed using \code{\link[stats]{dist}}.
+#' Internal helper that computes a block-level gene-gene distance matrix
+#' in \code{gene_mode = "intersection"}.  
 #'
-#' @param layer_mat
-#' Numeric matrix (\code{n_features x n_points}) where each row is a
-#' feature- or gene-level trajectory (e.g. spline-evaluated time course).
-#' Row names identify the features/genes and are propagated to the output
-#' distance matrix.
+#' Only genes present in \emph{all} layers of the block are retained.
+#' For this common gene set, the function:
+#' \itemize{
+#'   \item computes a layer-specific distance matrix for each layer, and
+#'   \item combines these matrices via a weighted sum using
+#'         \code{layer_weights}.
+#' }
+#'
+#' The result is a single symmetric distance matrix whose row and column
+#' names correspond to the intersected gene set.
+#'
+#' @param layer_mats
+#' Named list of gene-level matrices, one per layer, with matching layer
+#' names in \code{layer_names}. Row names are gene identifiers.
+#'
+#' @param layer_names
+#' Character vector of layer names to use when extracting from
+#' \code{layer_mats}.
+#'
+#' @param layer_weights
+#' Numeric vector of layer weights, same length and order as
+#' \code{layer_names}. Used as relative weights when combining
+#' layer-specific distance matrices.
 #'
 #' @return
-#' A square numeric matrix \code{D} of size
-#' \code{n_features x n_features}, where  
-#' \code{D[i, j]} is the Euclidean distance between the scaled rows
-#' \code{layer_mat[i, ]} and \code{layer_mat[j, ]}.  
-#' Row and column names correspond to the row names of
-#' \code{layer_mat}.
+#' A numeric symmetric matrix \code{D_block} containing gene-gene
+#' distances for the intersection of genes across all layers.  
+#' Row and column names are the retained gene identifiers.
 #'
-#' @importFrom stats dist
-#' 
-.compute_layer_distance <- function(layer_mat) {
-    mat_scaled <- scale(layer_mat)
-    d <- stats::dist(
-        mat_scaled,
-        method = "euclidean"
-        )
-    D <- as.matrix(d)
+.compute_block_distance_intersection <- function(
+        layer_mats,
+        layer_names,
+        layer_weights
+) {
+    genes_per_layer <- lapply(layer_mats, rownames)
+    genes_block <- Reduce(intersect, genes_per_layer)
+    genes_block <- sort(genes_block)
+    
+    dist_list <- lapply(
+        layer_names,
+        function(ln) {
+            mat <- layer_mats[[ln]][genes_block, , drop = FALSE]
+            .compute_layer_distance(mat)
+        }
+    )
+    names(dist_list) <- layer_names
+    
+    D_block <- .combine_layer_distances(
+        dist_list = dist_list,
+        weights   = layer_weights
+    )
+    
+    D_block
 }
 
 
-#' Combine layer-specific distance matrices into a unified distance matrix
+#' Compute block-level distance matrix (union mode)
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that merges multiple layer-specific gene–gene distance
-#' matrices into a single unified distance matrix for a block.  
-#' Each layer contributes proportionally to its user-defined weight, and
-#' all weights are internally normalized to sum to 1.
+#' Internal helper that computes a block-level gene-gene distance matrix
+#' in \code{gene_mode = "union"}.  
 #'
-#' @param dist_list
-#' A list of square numeric matrices.  
-#' Each matrix must represent pairwise distances between the same set of
-#' genes (identical row and column names, identical ordering).
+#' All genes present in \emph{any} layer of the block are retained.
+#' Distances are combined in a pairwise, coverage-aware fashion:
+#' for each gene pair \code{(gi, gj)}, the function:
+#' \itemize{
+#'   \item considers only layers where \emph{both} genes are present,
+#'   \item computes the layer-specific distance for that pair,
+#'   \item accumulates \code{weight * distance} in a numerator matrix,
+#'   \item accumulates \code{weight} in a denominator matrix, and
+#'   \item forms a weighted average over all contributing layers.
+#' }
 #'
-#' @param weights
-#' Numeric vector of the same length as \code{dist_list}, giving the
-#' relative weight of each layer when building the combined distance
-#' matrix.  
-#' Values may be any non-negative numbers; they are internally
-#' normalized so that the sum of weights equals 1.
+#' Pairs of genes that never co-occur in any layer effectively receive no
+#' distance information and remain unused in practice.
+#'
+#' @param layer_mats
+#' Named list of gene-level matrices, one per layer, with matching layer
+#' names in \code{layer_names}. Row names are gene identifiers.
+#'
+#' @param layer_names
+#' Character vector of layer names to use when extracting from
+#' \code{layer_mats}.
+#'
+#' @param layer_weights
+#' Numeric vector of layer weights, same length and order as
+#' \code{layer_names}. Used as relative weights when combining
+#' layer-specific distances.
 #'
 #' @return
-#' A numeric matrix of the same dimensions as the matrices in
-#' \code{dist_list}.  
-#' The \code{(i, j)} entry is the weighted sum of the corresponding
-#' distances from each layer:
-#' \deqn{
-#'   D_{ij} = \sum_{l=1}^{L} w_l \cdot D^{(l)}_{ij}
-#' }
-#' where \(w_l\) are the normalized weights.
+#' A numeric symmetric matrix \code{D_block} containing gene-gene
+#' distances for the union of genes across all layers.  
+#' Each entry corresponds to a pairwise weighted average of distances
+#' over the layers where both genes are observed.
 #'
-#' Row and column names are inherited from the first element of
-#' \code{dist_list}.
-#' 
-.combine_layer_distances <- function(
-        dist_list,
-        weights
-        ) {
-    w <- weights / sum(weights)
+.compute_block_distance_union <- function(
+        layer_mats,
+        layer_names,
+        layer_weights
+) {
+    genes_per_layer <- lapply(layer_mats, rownames)
+    genes_block <- Reduce(union, genes_per_layer)
+    genes_block <- sort(genes_block)
     
-    D_unified <- matrix(
-        0,
-        nrow = nrow(dist_list[[1L]]),
-        ncol = ncol(dist_list[[1L]])
-    )
-    rownames(D_unified) <- rownames(dist_list[[1L]])
-    colnames(D_unified) <- colnames(dist_list[[1L]])
+    n_g <- length(genes_block)
+    D_block <- matrix(0, nrow = n_g, ncol = n_g)
+    W_block <- matrix(0, nrow = n_g, ncol = n_g)
+    rownames(D_block) <- genes_block
+    colnames(D_block) <- genes_block
+    rownames(W_block) <- genes_block
+    colnames(W_block) <- genes_block
     
-    for (i in seq_along(dist_list)) {
-        D_unified <- D_unified + w[i] * dist_list[[i]]
+    for (i in seq_along(layer_names)) {
+        ln <- layer_names[i]
+        w  <- layer_weights[i]
+        
+        mat_l   <- layer_mats[[ln]]
+        genes_l <- rownames(mat_l)
+        
+        idx <- match(genes_l, genes_block)
+        
+        D_l <- .compute_layer_distance(mat_l)
+        
+        D_block[idx, idx] <- D_block[idx, idx] + w * D_l
+        W_block[idx, idx] <- W_block[idx, idx] + w
     }
     
-    D_unified
+    valid <- W_block > 0
+    D_block[valid] <- D_block[valid] / W_block[valid]
+    diag(D_block) <- 0
+    
+    D_block
 }
 
 
@@ -1596,4 +1676,100 @@ cluster_genes_multiomics <- function(
     }
     
     invisible(TRUE)
+}
+
+
+# Level 3 function definitions -------------------------------------------------
+
+
+#' Compute pairwise distances for an omics layer
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that computes a pairwise distance matrix between all
+#' rows (features or genes) of a layer matrix.  
+#' The matrix is first z-scored across rows, and Euclidean distances are
+#' then computed using \code{\link[stats]{dist}}.
+#'
+#' @param layer_mat
+#' Numeric matrix (\code{n_features x n_points}) where each row is a
+#' feature- or gene-level trajectory (e.g. spline-evaluated time course).
+#' Row names identify the features/genes and are propagated to the output
+#' distance matrix.
+#'
+#' @return
+#' A square numeric matrix \code{D} of size
+#' \code{n_features x n_features}, where  
+#' \code{D[i, j]} is the Euclidean distance between the scaled rows
+#' \code{layer_mat[i, ]} and \code{layer_mat[j, ]}.  
+#' Row and column names correspond to the row names of
+#' \code{layer_mat}.
+#'
+#' @importFrom stats dist
+#' 
+.compute_layer_distance <- function(layer_mat) {
+    mat_scaled <- scale(layer_mat)
+    d <- stats::dist(
+        mat_scaled,
+        method = "euclidean"
+    )
+    D <- as.matrix(d)
+}
+
+
+#' Combine layer-specific distance matrices into a unified distance matrix
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that merges multiple layer-specific gene–gene distance
+#' matrices into a single unified distance matrix for a block.  
+#' Each layer contributes proportionally to its user-defined weight, and
+#' all weights are internally normalized to sum to 1.
+#'
+#' @param dist_list
+#' A list of square numeric matrices.  
+#' Each matrix must represent pairwise distances between the same set of
+#' genes (identical row and column names, identical ordering).
+#'
+#' @param weights
+#' Numeric vector of the same length as \code{dist_list}, giving the
+#' relative weight of each layer when building the combined distance
+#' matrix.  
+#' Values may be any non-negative numbers; they are internally
+#' normalized so that the sum of weights equals 1.
+#'
+#' @return
+#' A numeric matrix of the same dimensions as the matrices in
+#' \code{dist_list}.  
+#' The \code{(i, j)} entry is the weighted sum of the corresponding
+#' distances from each layer:
+#' \deqn{
+#'   D_{ij} = \sum_{l=1}^{L} w_l \cdot D^{(l)}_{ij}
+#' }
+#' where \(w_l\) are the normalized weights.
+#'
+#' Row and column names are inherited from the first element of
+#' \code{dist_list}.
+#' 
+.combine_layer_distances <- function(
+        dist_list,
+        weights
+) {
+    w <- weights / sum(weights)
+    
+    D_unified <- matrix(
+        0,
+        nrow = nrow(dist_list[[1L]]),
+        ncol = ncol(dist_list[[1L]])
+    )
+    rownames(D_unified) <- rownames(dist_list[[1L]])
+    colnames(D_unified) <- colnames(dist_list[[1L]])
+    
+    for (i in seq_along(dist_list)) {
+        D_unified <- D_unified + w[i] * dist_list[[i]]
+    }
+    
+    D_unified
 }

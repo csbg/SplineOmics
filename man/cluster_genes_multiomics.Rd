@@ -8,7 +8,8 @@ cluster_genes_multiomics(
   blocks,
   block_meta,
   layer_meta,
-  gene_mode = "intersection"
+  gene_mode = "intersection",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -45,9 +46,13 @@ layer). Must include:
 \item{\code{layer_k}}{Number of pattern clusters to use for building
 pattern signatures for many-to-one layers. \code{NA} for layers that are
 already gene-level.}
-\item{\code{layer_w}}{Relative weight of this layer in the block-specific
-distance integration. Weights are normalized to sum to 1 within each
-block.}
+\item{\code{layer_w}}{
+Relative weight of this layer when combining layer-specific
+gene–gene distances within the block. Values are treated as
+\emph{relative} weights and are normalized internally, so they do not
+need to sum to 1 (e.g. 1, 1, 2 means the third layer has twice
+the weight of the others).
+}
 }}
 
 \item{gene_mode}{Character string specifying how genes should be harmonized across layers
@@ -61,6 +66,8 @@ block. Gene–gene distances are computed using only shared layers per gene
 pair, with weights renormalized accordingly. Increases coverage but results
 in heterogeneous information across genes.}
 }}
+
+\item{verbose}{Boolean flag indicating if info messages are be shown.}
 }
 \value{
 A tibble \code{cluster_table} with one row per gene and columns containing
