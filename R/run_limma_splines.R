@@ -320,13 +320,29 @@ run_limma_splines <- function(
             )
             spline_params$dof[1] <- best_dof
         }
+        
+        design2design_matrix_result <- design2design_matrix(
+            meta = meta,
+            spline_params = spline_params,
+            level_index = 1,
+            design = effects[["fixed_effects"]]
+        )
 
+        contrast_plan <- build_contrast_plan(
+            condition = condition,
+            meta = design2design_matrix_result[["meta"]],
+            cols = colnames(design2design_matrix_result[["design_matrix"]]),
+            dof = spline_params[["dof"]]
+        )
+        
         # Step 1: Fit the global model once
         fit_obj <- fit_global_model(
             data = data,
             rna_seq_data = rna_seq_data,
             meta = meta,
             design = design,
+            design2design_matrix_result = design2design_matrix_result,
+            contrast_plan = contrast_plan,
             effects = effects,
             dream_params = dream_params,
             spline_params = spline_params,
@@ -336,30 +352,13 @@ run_limma_splines <- function(
             bp_cfg = bp_cfg,
             verbose = verbose
         )
-
-        # Step 2: Extract the time_effects within each condition (spline coeffs)
-        integrated_time_effects <- extract_within_level_time_effects(
+        
+        limma_splines_result <- create_all_toptables_limma(
             fit_obj = fit_obj,
+            contrast_plan = contrast_plan,
             condition = condition,
-            feature_names = feature_names,
-            dof = spline_params[["dof"]],
-            random_effects = (effects[["random_effects"]] != "")
+            feature_names = feature_names
         )
-
-        # Step 3: Extract pairwise contrasts for all level combinations
-        contrast_results <- extract_between_level_contrasts(
-            fit_obj = fit_obj,
-            condition = condition,
-            random_effects = (effects[["random_effects"]] != "")
-        )
-
-        limma_splines_result <- list(
-            time_effect = integrated_time_effects
-        )
-        limma_splines_result[["avrg_diff_conditions"]] <-
-            contrast_results[["condition_only"]]
-        limma_splines_result[["interaction_condition_time"]] <-
-            contrast_results[["condition_time"]]
     }
 
     args <- list(
@@ -526,6 +525,203 @@ fit_within_condition_isolated <- function(
 }
 
 
+#' Build a unified contrast plan (joint L matrix + mapping)
+#'
+#' @noRd
+#'
+#' @description
+#' Builds a single joint contrast matrix \code{L_all} (rows = model
+#' coefficients, columns = contrasts) and a mapping object
+#' \code{map_for_L_all} that groups contrast column names into reporting
+#' categories:
+#' \itemize{
+#'   \item within-level spline time effects (per level)
+#'   \item between-level condition main effect differences (per pair)
+#'   \item between-level condition-by-time differences (per pair)
+#' }
+#'
+#' The output supports a unified downstream workflow:
+#' \itemize{
+#'   \item limma: \code{contrasts.fit(fit, L_all)} post hoc
+#'   \item dream: pass \code{L_all} as \code{L=} into
+#'     \code{variancePartition::dream()}
+#' }
+#'
+#' @param condition Character scalar. Condition or factor name.
+#' @param meta data.frame. Sample metadata containing
+#'   \code{meta[[condition]]}.
+#' @param cols Character vector. Coefficient names used by the fitted
+#'   model. Must match \code{colnames(fit$coefficients)} exactly.
+#' @param dof Integer. Number of spline basis terms.
+#' @param include_within_time Logical. Include within-level time effects.
+#' @param include_between_pairs Logical. Include all pairwise contrasts.
+#'
+#' @return A list with elements:
+#' \describe{
+#'   \item{L_all}{Numeric matrix. Rows correspond to \code{cols}.}
+#'   \item{map_for_L_all}{Nested list mapping categories to contrast names.}
+#'   \item{spline_cols}{Character vector of spline basis column names.}
+#'   \item{levels_in_condition}{Levels of the condition factor.}
+#' }
+#'
+build_contrast_plan <- function(
+        condition,
+        meta,
+        cols,
+        dof
+) {
+    dof <- as.integer(dof)
+    
+    levels_in_condition <- levels(factor(meta[[condition]]))
+    if (length(levels_in_condition) < 2L) {
+        stop("Condition must have at least two levels.")
+    }
+    
+    baseline <- levels_in_condition[1]
+    
+    spline_cols <- grep("^X$|^X\\d+$", cols, value = TRUE)
+    if (length(spline_cols) < 1L) {
+        stop("No spline basis columns found in 'cols'.")
+    }
+    
+    if (length(spline_cols) != dof) {
+        stop(
+            "Mismatch between dof (", dof,
+            ") and detected spline columns (",
+            length(spline_cols), ")."
+        )
+    }
+    
+    sanitize_level <- function(x) {
+        x <- as.character(x)
+        x <- gsub("[^A-Za-z0-9_]+", "_", x)
+        x <- gsub("_+", "_", x)
+        x <- gsub("^_|_$", "", x)
+        x
+    }
+    
+    dummy_design_matrix <- matrix(
+        0,
+        nrow = 1L,
+        ncol = length(cols),
+        dimnames = list(NULL, cols)
+    )
+    
+    L_blocks <- list()
+    
+    map_for_L_all <- list(
+        within_time = list(),
+        between_condition_only = list(),
+        between_condition_time = list()
+    )
+    
+    for (lev in levels_in_condition) {
+        L_lev <- build_spline_contrast(
+            lev = lev,
+            baseline = baseline,
+            condition = condition,
+            spline_terms = spline_cols,
+            design_cols = cols,
+            dof = dof
+        )
+        
+        if (!identical(rownames(L_lev), cols)) {
+            stop(
+                "Spline contrast rownames do not match 'cols' ",
+                "for level '", lev, "'."
+            )
+        }
+        
+        lev_key <- sanitize_level(lev)
+        
+        new_names <- paste0(
+            "within_",
+            sanitize_level(condition),
+            "_",
+            lev_key,
+            "__",
+            spline_cols
+        )
+        
+        colnames(L_lev) <- new_names
+        
+        L_blocks[[paste0("within_", lev_key)]] <- L_lev
+        map_for_L_all$within_time[[lev_key]] <- new_names
+    }
+    
+    pairs <- utils::combn(levels_in_condition, 2, simplify = FALSE)
+    
+    for (pair in pairs) {
+        lev1 <- pair[1]
+        lev2 <- pair[2]
+        
+        cm <- get_condition_contrast_coefs(
+            condition = condition,
+            level_pair = c(lev1, lev2),
+            design_matrix = dummy_design_matrix
+        )
+        
+        L_pair <- cm$L
+        
+        if (!identical(rownames(L_pair), cols)) {
+            stop(
+                "Pairwise contrast rownames do not match 'cols' ",
+                "for pair '", lev1, "' vs '", lev2, "'."
+            )
+        }
+        
+        key <- paste0(
+            sanitize_level(lev1),
+            "_vs_",
+            sanitize_level(lev2)
+        )
+        
+        prefix <- paste0(
+            "pair_",
+            sanitize_level(condition),
+            "_",
+            key,
+            "__"
+        )
+        
+        colnames(L_pair) <- paste0(prefix, colnames(L_pair))
+        
+        L_blocks[[paste0("pair_", key)]] <- L_pair
+        
+        map_for_L_all$between_condition_only[[key]] <-
+            paste0(prefix, "diff_main")
+        
+        map_for_L_all$between_main_and_time[[key]] <-
+            c(
+                paste0(prefix, "diff_main"),
+                paste0(prefix, paste0("diff_", spline_cols))
+            )
+        
+        map_for_L_all$between_condition_time[[key]] <-
+            paste0(prefix, paste0("diff_", spline_cols))
+    }
+    
+    if (length(L_blocks) < 1L) {
+        stop("No contrast blocks were constructed.")
+    }
+    
+    L_all <- do.call(cbind, L_blocks)
+    L_all <- as.matrix(L_all)
+    storage.mode(L_all) <- "double"
+    
+    if (!identical(rownames(L_all), cols)) {
+        stop("Internal error: L_all rownames do not match 'cols'.")
+    }
+    
+    list(
+        L_all = L_all,
+        map_for_L_all = map_for_L_all,
+        spline_cols = spline_cols,
+        levels_in_condition = levels_in_condition
+    )
+}
+
+
 #' Between Level Analysis
 #'
 #' @noRd
@@ -539,6 +735,8 @@ fit_within_condition_isolated <- function(
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
 #' @param meta A dataframe containing metadata, including a 'Time' column.
 #' @param design A design formula or matrix for the limma analysis.
+#' @param design2design_matrix_result
+#' @param contrast_plan 
 #' @param effects Strings of the fixed and potentially random effects of the 
 #' design.
 #' @param dream_params A named list or NULL. When not NULL, it must at least
@@ -585,6 +783,8 @@ fit_global_model <- function(
     rna_seq_data,
     meta,
     design,
+    design2design_matrix_result,
+    contrast_plan,
     effects,
     dream_params,
     spline_params,
@@ -594,12 +794,6 @@ fit_global_model <- function(
     bp_cfg,
     verbose
     ) {
-    design2design_matrix_result <- design2design_matrix(
-        meta = meta,
-        spline_params = spline_params,
-        level_index = 1,
-        design = effects[["fixed_effects"]]
-    )
     design_matrix <- design2design_matrix_result[["design_matrix"]]
 
     if (!is.null(rna_seq_data)) {
@@ -661,10 +855,6 @@ fit_global_model <- function(
             design = design_matrix,
             weights = aw_result[["weights"]]
         )
-        fit <- limma::eBayes(
-            fit = fit,
-            robust = aw_result[["use_weights"]]
-        )
     }
 
     list(
@@ -676,6 +866,190 @@ fit_global_model <- function(
         padjust_method = padjust_method,
         homosc_violation_result = aw_result[["homosc_violation_result"]],
         spline_params = spline_params
+    )
+}
+
+
+#' Create All Top Tables for limma Spline Contrasts
+#'
+#' @noRd
+#'
+#' @description
+#' Creates all required limma top tables from a single global fit using a
+#' unified contrast plan. The function applies all contrasts in one step using
+#' `limma::contrasts.fit()`, moderates statistics with `limma::eBayes()`, and
+#' then produces three categories of results:
+#' \itemize{
+#'   \item within-level spline time effects for each condition level
+#'   \item average differences between condition levels (main and time terms)
+#'   \item condition-time interaction differences (time terms only)
+#' }
+#'
+#' For the between-level categories, the coefficient columns in the returned
+#' top tables are renamed to match the historical convention:
+#' `diff_main` followed by `diff_X1`, `diff_X2`, ... (or `diff_X` when dof = 1)
+#' for the average differences, and `diff_X*` for the interaction-only tests.
+#'
+#' @param fit_obj A list containing the fitted limma model object in `fit`,
+#'   the original design matrix, and analysis metadata. The model in `fit` must
+#'   be the output of `limma::lmFit()` (not already moderated), as moderation is
+#'   performed after contrasts are applied.
+#' @param contrast_plan A list containing a joint contrast matrix `L_all`, a
+#'   mapping object `map_for_L_all`, and `spline_cols`. These are typically the
+#'   outputs of `build_contrast_plan()`.
+#' @param condition A character string of the column name of `meta` that
+#'   contains the experimental condition levels. This is used to create stable
+#'   names for the within-level time effect results.
+#' @param feature_names Optional character vector of feature identifiers. When
+#'   `NULL`, defaults to `fit_obj[["feature_names"]]`.
+#'
+#' @return A named list containing three result categories:
+#' \describe{
+#'   \item{time_effect}{A list of within-level spline time-effect results.}
+#'   \item{avrg_diff_conditions}{A list of between-level average-difference
+#'     results named with the prefix `avrg_diff_`.}
+#'   \item{interaction_condition_time}{A list of between-level interaction
+#'     results named with the prefix `time_interaction_`.}
+#' }
+#'
+#' @seealso
+#' \code{\link[limma]{lmFit}}, \code{\link[limma]{contrasts.fit}},
+#' \code{\link[limma]{eBayes}}, \code{\link[limma]{topTable}}
+#'
+#' @importFrom limma contrasts.fit eBayes topTable
+#' 
+create_all_toptables_limma <- function(
+        fit_obj,
+        contrast_plan,
+        condition,
+        feature_names = NULL
+) {
+    if (is.null(feature_names)) {
+        feature_names <- fit_obj[["feature_names"]]
+    }
+    
+    L_all <- contrast_plan[["L_all"]]
+    map <- contrast_plan[["map_for_L_all"]]
+    spline_cols <- contrast_plan[["spline_cols"]]
+    
+    fit0 <- fit_obj[["fit"]]
+    if (is.null(fit0)) {
+        stop("fit_obj$fit is required.")
+    }
+    
+    fit_c <- limma::contrasts.fit(fit0, L_all)
+    
+    fit_c <- limma::eBayes(
+        fit_c,
+        robust = isTRUE(
+            fit_obj[["homosc_violation_result"]][["use_weights"]]
+        )
+    )
+    
+    padj <- fit_obj[["padjust_method"]]
+    if (is.null(padj)) {
+        padj <- "BH"
+    }
+    
+    top_one <- function(coef_names) {
+        limma::topTable(
+            fit_c,
+            coef = coef_names,
+            adjust.method = padj,
+            number = Inf,
+            sort.by = if (length(coef_names) > 1L) "F" else "t"
+        )
+    }
+    
+    rename_diff_cols <- function(tt, has_main) {
+        coef_cols <- grep("^Coef[0-9]+$", colnames(tt), value = TRUE)
+        
+        if (length(coef_cols) < 1L) {
+            return(tt)
+        }
+        
+        new_names <- character(length(coef_cols))
+        
+        if (isTRUE(has_main)) {
+            new_names[1] <- "diff_main"
+            if (length(coef_cols) > 1L) {
+                new_names[-1] <- paste0(
+                    "diff_",
+                    spline_cols[seq_len(length(coef_cols) - 1L)]
+                )
+            }
+        } else {
+            new_names <- paste0(
+                "diff_",
+                spline_cols[seq_len(length(coef_cols))]
+            )
+        }
+        
+        colnames(tt)[match(coef_cols, colnames(tt))] <- new_names
+        tt
+    }
+    
+    lev_keys <- names(map$within_time)
+    time_effect <- lapply(lev_keys, function(lev_key) {
+        coef_names <- map$within_time[[lev_key]]
+        top <- top_one(coef_names)
+
+        process_top_table(
+            list(top_table = top, fit = fit_c),
+            feature_names = feature_names,
+            intercept_fit = fit0
+        )
+    })
+    names(time_effect) <- paste(condition, lev_keys, sep = "_")
+    
+    if (!is.null(map$between_main_and_time)) {
+        pair_keys <- names(map$between_main_and_time)
+        cond_only <- lapply(pair_keys, function(pair_key) {
+            coef_names <- map$between_main_and_time[[pair_key]]
+            top <- top_one(coef_names)
+            top <- rename_diff_cols(top, has_main = TRUE)
+            
+            process_top_table(
+                list(top_table = top, fit = fit_c),
+                feature_names = feature_names,
+                intercept_fit = fit0
+            )
+        })
+        names(cond_only) <- paste0("avrg_diff_", pair_keys)
+    } else {
+        pair_keys <- names(map$between_condition_only)
+        cond_only <- lapply(pair_keys, function(pair_key) {
+            coef_name <- map$between_condition_only[[pair_key]]
+            top <- top_one(coef_name)
+            top <- rename_diff_cols(top, has_main = TRUE)
+            
+            process_top_table(
+                list(top_table = top, fit = fit_c),
+                feature_names = feature_names,
+                intercept_fit = fit0
+            )
+        })
+        names(cond_only) <- paste0("avrg_diff_", pair_keys)
+    }
+    
+    pair_keys2 <- names(map$between_condition_time)
+    cond_time <- lapply(pair_keys2, function(pair_key) {
+        coef_names <- map$between_condition_time[[pair_key]]
+        top <- top_one(coef_names)
+        top <- rename_diff_cols(top, has_main = FALSE)
+        
+        process_top_table(
+            list(top_table = top, fit = fit_c),
+            feature_names = feature_names,
+            intercept_fit = fit0
+        )
+    })
+    names(cond_time) <- paste0("time_interaction_", pair_keys2)
+    
+    list(
+        time_effect = time_effect,
+        avrg_diff_conditions = cond_only,
+        interaction_condition_time = cond_time
     )
 }
 
@@ -754,7 +1128,7 @@ extract_within_level_time_effects <- function(
             dof = dof
         )
 
-        contrast_fit <- limma::contrasts.fit(
+                contrast_fit <- limma::contrasts.fit(
             fit_obj$fit,
             contrast_matrix
         )
@@ -861,7 +1235,7 @@ extract_between_level_contrasts <- function(
     
     for (i in seq_along(level_pairs)) {
         pair <- level_pairs[[i]]
-        
+
         contrast_result <- extract_contrast_for_pair(
             fit_obj = fit_obj,
             condition = condition,
@@ -926,23 +1300,37 @@ extract_between_level_contrasts <- function(
 #' @importFrom stats coef
 #'
 process_top_table <- function(
-    process_within_level_result,
-    feature_names
-    ) {
+        process_within_level_result,
+        feature_names,
+        intercept_fit = NULL
+) {
     top_table <- process_within_level_result$top_table
     fit <- process_within_level_result$fit
-
+    
     top_table <- modify_limma_top_table(
         top_table,
         feature_names
     )
-
-    intercepts <- as.data.frame(stats::coef(fit)[, "(Intercept)", drop = FALSE])
+    
+    fit_i <- intercept_fit
+    if (is.null(fit_i)) {
+        fit_i <- fit
+    }
+    
+    coefs_i <- stats::coef(fit_i)
+    if (!"(Intercept)" %in% colnames(coefs_i)) {
+        stop(
+            "No (Intercept) in fit used for intercept extraction."
+        )
+    }
+    
+    intercepts <- as.data.frame(coefs_i[, "(Intercept)", drop = FALSE])
     intercepts_ordered <- intercepts[top_table$feature_nr, , drop = FALSE]
     top_table$intercept <- intercepts_ordered[, 1]
-
+    
     top_table
 }
+
 
 
 #' Process Within Level
@@ -1159,91 +1547,135 @@ remove_intercept <- function(formula) {
 }
 
 
-#' Extract contrasts for a single pair of condition levels
-#'
+resolve_coef <- function(fit, coef) {
+    cn <- colnames(fit$coefficients)
+    
+    if (is.numeric(coef)) {
+        if (any(coef < 1L | coef > length(cn))) {
+            stop("coef index out of bounds for current fit.")
+        }
+        return(coef)
+    }
+    
+    idx <- match(coef, cn)
+    if (anyNA(idx)) {
+        missing <- coef[is.na(idx)]
+        stop(
+            "coef not found in fit: ",
+            paste(missing, collapse = ", ")
+        )
+    }
+    idx
+}
+
+
+#' Construct contrast coefficients for condition differences over time
+#' 
 #' @noRd
 #'
 #' @description
-#' Extracts both the condition-only and condition-time interaction
-#' contrasts for a given pair of condition levels from a fitted limma
-#' model. Designed to be called from a wrapper function that loops over
-#' all pairwise combinations.
+#' Build a contrast matrix comparing two levels of a condition, including
+#' both the main effect and time-varying (spline-based) interaction effects.
+#' Interaction terms may appear in either order in the design matrix
+#' (e.g. `X1:PhaseStationary` or `PhaseStationary:X1`) and are matched
+#' accordingly.
 #'
-#' @param fit_obj A list containing:
-#'   - `fit`: fitted model object from `lmFit()` or `dream()`
-#'   - `design_matrix`: the design matrix used in fitting
-#'   - `feature_names`: optional row annotations
-#'   - `padjust_method`: method for p-value adjustment
+#' The function assumes spline basis columns are named `X`, `X1`, `X2`, ...
+#' and that interaction terms combine exactly one spline column with one
+#' condition-level column.
 #'
-#' @param condition A string giving the name of the condition factor used
-#'   in the design.
-#'
-#' @param level_pair A character vector of length 2 giving the levels to
-#'   compare.
-#'
-#' @return A named list with two elements:
-#'   - `condition_only`: the top table for the condition effect
-#'   - `condition_time`: the top table for the interaction effect
-#'
+#' @param condition Character scalar giving the prefix used for condition
+#'   levels in the design matrix (e.g. `"Phase"`).
+#' @param level_pair Character vector of length two giving the two condition
+#'   levels to contrast (e.g. `c("Stationary", "Dynamic")`).
+#' @param design_matrix Numeric design matrix used for model fitting, with
+#'   column names encoding main effects and spline interactions.
+#'   
+#' @importFrom limma contrasts.fit eBayes topTable
+#' 
 extract_contrast_for_pair <- function(
-    fit_obj,
-    condition,
-    level_pair,
-    random_effects
-    ) {
+        fit_obj,
+        condition,
+        level_pair,
+        random_effects
+) {
     fit <- fit_obj[["fit"]]
     design_matrix <- fit_obj[["design_matrix"]]
     feature_names <- fit_obj[["feature_names"]]
     padjust_method <- fit_obj[["padjust_method"]]
-
-    coefs <- get_condition_contrast_coefs(
+    
+    cm <- get_condition_contrast_coefs(
         condition = condition,
         level_pair = level_pair,
         design_matrix = design_matrix
     )
+    
+    fit_c  <- limma::contrasts.fit(fit, cm$L)
 
+    # fit_c <- limma::contrasts.fit(fit, cm$L)
+    # 
+    # if (random_effects) {
+    #     browser()
+    #     fit_c <- variancePartition::eBayes(fit_c)
+    #     top_fun <- variancePartition::topTable
+    # } else {
+    #     fit_c <- limma::eBayes(fit_c)
+    #     top_fun <- limma::topTable
+    # }
     if (random_effects) {
-        top_fun <- variancePartition::topTable
+        # 1) moderate the original dream fit
+        fit_eb <- variancePartition::eBayes(fit)
+        
+        # 2) move into contrast space using limma
+        fit_c  <- limma::contrasts.fit(fit_eb, cm$L)
+        fit_c  <- limma::eBayes(fit_c)
+        # 3) use limma's topTable on the contrast-space object
+        top_fun <- limma::topTable
     } else {
+        
+        fit_c  <- limma::eBayes(fit_c)
         top_fun <- limma::topTable
     }
-
-    # Extract average difference condition top table
+    
+    
+    coef_all <- resolve_coef(fit_c, cm$main_and_time_names)
+    coef_shp <- resolve_coef(fit_c, cm$shape_names)
+    
     condition_only <- top_fun(
-        fit,
-        coef = coefs$condition_main_and_time,
-        adjust.method = padjust_method,
-        number = Inf
-    )
-
-    # Extract condition-time interaction top table (difference in shapes)
-    coef <- coefs$condition_time_interaction_only
-    condition_time <- top_fun(
-        fit,
-        coef = coef,
+        fit_c,
+        coef = coef_all,
         adjust.method = padjust_method,
         number = Inf,
-        sort.by = if (length(coef) > 1) "F" else "t"
+        sort.by = if (length(coef_all) > 1L) "F" else "t"
     )
 
-    # Wrap results in lists to pass through process_top_table
+    condition_time <- top_fun(
+        fit_c,
+        coef = coef_shp,
+        adjust.method = padjust_method,
+        number = Inf,
+        sort.by = if (length(coef_shp) > 1L) "F" else "t"
+    )
+    
     condition_only_result <- list(
         top_table = condition_only,
-        fit = fit
-    )
+        fit = fit_c
+        )
     condition_time_result <- list(
         top_table = condition_time,
-        fit = fit
-    )
-
+        fit = fit_c
+        )
+    
     list(
         condition_only = process_top_table(
             condition_only_result,
-            feature_names
+            feature_names,
+            intercept_fit = fit
         ),
         condition_time = process_top_table(
             condition_time_result,
-            feature_names
+            feature_names,
+            intercept_fit = fit
         )
     )
 }
@@ -1553,7 +1985,8 @@ build_spline_contrast <- function(
 #'
 modify_limma_top_table <- function(
     top_table,
-    feature_names) {
+    feature_names
+    ) {
     is_integer_string <- function(x) {
         return(grepl("^[0-9]+$", x))
     }
@@ -1604,15 +2037,17 @@ modify_limma_top_table <- function(
 }
 
 
-#' Construct coefficient names for condition contrasts
+#' Construct contrast matrix for condition differences over time
 #'
 #' @noRd
 #'
 #' @description
-#' Collects the coefficient names used for extracting the condition main
-#' effect (average difference across time) and the condition-time interaction
-#' effects (differences in temporal pattern) between two condition levels.
-#' Assumes a design matrix where one condition level is used as the reference.
+#' Builds a contrast matrix \code{L} for comparing two condition levels in a
+#' spline-based time model. The first contrast (\code{diff_main}) captures the
+#' average condition difference, while the remaining contrasts (\code{diff_X*})
+#' capture differences in temporal shape via condition-by-spline interactions.
+#' Assumes a design matrix in which at most one level is represented explicitly
+#' as main and interaction terms, with the other treated as the reference.
 #'
 #' @param condition A string giving the name of the condition factor.
 #'
@@ -1620,59 +2055,124 @@ modify_limma_top_table <- function(
 #'   to be compared.
 #'
 #' @param design_matrix The design matrix used for model fitting, whose column
-#'   names determine which condition level is modeled explicitly.
+#'   names determine which condition level is modeled explicitly and which is
+#'   treated as the reference.
 #'
-#' @return A named list with two elements:
-#'   - `condition_main_and_time`: vector of coefficient names for both the
-#'     condition main effect and the condition-time interactions
-#'   - `condition_time_interaction_only`: vector of coefficient names for the
-#'     condition-time interaction terms only
+#' @return A named list with elements:
+#'   - \code{L}: contrast matrix with rows aligned to
+#'     \code{colnames(design_matrix)} and columns \code{diff_main} and
+#'     \code{diff_<spline>} for each spline basis term
+#'   - \code{main_and_time_names}: column names of \code{L}, including the main
+#'     difference and all shape terms
+#'   - \code{shape_names}: column names of \code{L} excluding
+#'     \code{diff_main}
+#'   - \code{spline_cols}: detected spline basis column names (e.g. \code{X},
+#'     \code{X1}, \code{X2}, ...)
+#'   - \code{main_cols}: named character vector mapping \code{level1} and
+#'     \code{level2} to their expected main-effect column names in the design
+#'     matrix
 #'
 get_condition_contrast_coefs <- function(
-    condition,
-    level_pair,
-    design_matrix
-    ) {
+        condition,
+        level_pair,
+        design_matrix
+) {
+    level1 <- level_pair[1]
+    level2 <- level_pair[2]
+    
     cols <- colnames(design_matrix)
-    level1 <- make.names(paste0(condition, level_pair[1]))
-    level2 <- make.names(paste0(condition, level_pair[2]))
-
-    if (any(grepl(level1, cols))) {
-        modeled_level <- level_pair[1]
-    } else if (any(grepl(level2, cols))) {
-        modeled_level <- level_pair[2]
-    } else {
-        stop("Neither level appears in design_matrix columns.")
+    if (is.null(cols) || anyNA(cols) || any(cols == "")) {
+        stop("design_matrix must have non-empty column names.")
     }
-
-    condition_contrast <- make.names(paste0(condition, modeled_level))
-
-    spline_cols <- grep(
-        "^X\\d*$",
-        cols,
-        value = TRUE
+    
+    spline_cols <- grep("^X$|^X\\d+$", cols, value = TRUE)
+    if (length(spline_cols) < 1L) {
+        stop("No spline basis columns found (expected X or X1, X2, ...).")
+    }
+    
+    main1 <- paste0(condition, level1)
+    main2 <- paste0(condition, level2)
+    
+    idx_main1 <- match(main1, cols)
+    idx_main2 <- match(main2, cols)
+    
+    blk1 <- match_int_either(
+        main = main1,
+        spline_cols = spline_cols,
+        cols = cols
     )
-
-    # Dynamically find interaction columns between spline and condition
-    interaction_contrasts <- vapply(spline_cols, function(spline_col) {
-        possible_matches <- cols[
-            grepl(condition_contrast, cols) & grepl(spline_col, cols)
-        ]
-        if (length(possible_matches) != 1) {
-            stop(
-                "Could not uniquely identify interaction column for: ",
-                condition_contrast, " and ", spline_col
-            )
+    blk2 <- match_int_either(
+        main = main2,
+        spline_cols = spline_cols,
+        cols = cols
+    )
+    
+    idx_int1 <- blk1$idx
+    idx_int2 <- blk2$idx
+    
+    if (all(is.na(c(idx_main1, idx_main2, idx_int1, idx_int2)))) {
+        stop(
+            "Neither level appears in design_matrix columns. ",
+            "Check 'condition' prefix and factor levels."
+        )
+    }
+    
+    check_block_complete(
+        level = level1,
+        idx_main = idx_main1,
+        idx_int = idx_int1,
+        main = main1,
+        spline_cols = spline_cols
+    )
+    check_block_complete(
+        level = level2,
+        idx_main = idx_main2,
+        idx_int = idx_int2,
+        main = main2,
+        spline_cols = spline_cols
+    )
+    
+    p <- ncol(design_matrix)
+    k <- length(spline_cols)
+    
+    L <- matrix(
+        0,
+        nrow = p,
+        ncol = 1L + k
+    )
+    rownames(L) <- cols
+    colnames(L) <- c(
+        "diff_main",
+        paste0("diff_", spline_cols)
+    )
+    
+    if (!is.na(idx_main2)) {
+        L[idx_main2, "diff_main"] <- 1
+    }
+    if (!is.na(idx_main1)) {
+        L[idx_main1, "diff_main"] <- -1
+    }
+    
+    for (j in seq_len(k)) {
+        cn <- paste0("diff_", spline_cols[j])
+        
+        if (!is.na(idx_int2[j])) {
+            L[idx_int2[j], cn] <- 1
         }
-        possible_matches
-    }, character(1))
-
+        if (!is.na(idx_int1[j])) {
+            L[idx_int1[j], cn] <- -1
+        }
+    }
+    
     list(
-        condition_main_and_time = c(
-            condition_contrast,
-            interaction_contrasts
-        ),
-        condition_time_interaction_only = interaction_contrasts
+        L = L,
+        main_and_time_names = colnames(L),
+        shape_names = colnames(L)[-1L],
+        spline_cols = spline_cols,
+        main_cols = c(
+            level1 = main1,
+            level2 = main2
+        )
     )
 }
 
@@ -1814,5 +2314,108 @@ resolve_array_weights <- function(
         weights = weights,
         use_weights = use_array_weights,
         homosc_violation_result = homosc_violation_result
+    )
+}
+
+
+# Level 4 internal functions ---------------------------------------------------
+
+
+#' Check completeness of an interaction block
+#'
+#' @noRd
+#'
+#' @description
+#' Validate that, for a given level, all required interaction terms between a
+#' main effect and its spline terms are present whenever any part of the block
+#' is used. If some interactions are missing, an error is raised.
+#'
+#' @param level Character scalar identifying the level being checked.
+#' @param idx_main Integer index of the main-effect column, or \code{NA} if
+#'   absent.
+#' @param idx_int Integer vector of indices for interaction terms corresponding
+#'   to \code{spline_cols}, with \code{NA} indicating missing interactions.
+#' @param main Character scalar giving the name of the main effect.
+#' @param spline_cols Character vector of spline term names.
+#'
+#' @return Invisibly returns \code{NULL}. Called for its side effect of throwing
+#'   an error when the interaction block is incomplete.
+#'   
+check_block_complete <- function(
+        level,
+        idx_main,
+        idx_int,
+        main,
+        spline_cols
+) {
+    has_any <- !is.na(idx_main) || any(!is.na(idx_int))
+    
+    if (has_any && any(is.na(idx_int))) {
+        missing_spl <- spline_cols[is.na(idx_int)]
+        missing_terms <- c(
+            paste0(missing_spl, ":", main),
+            paste0(main, ":", missing_spl)
+        )
+        
+        stop(
+            "Interaction block incomplete for level '", level,
+            "' (", main, "). Missing (either order): ",
+            paste(missing_terms, collapse = ", ")
+        )
+    }
+}
+
+
+#' Match interaction columns irrespective of order
+#'
+#' @noRd
+#'
+#' @description
+#' Identify interaction terms between a main effect and spline terms in a
+#' vector of column names, allowing for either ordering of the interaction
+#' (\code{spline:main} or \code{main:spline}). Ambiguous cases where both
+#' orderings are present are rejected.
+#'
+#' @param main Character scalar giving the name of the main effect.
+#' @param spline_cols Character vector of spline term names.
+#' @param cols Character vector of column names in which to search.
+#'
+#' @return A list with elements:
+#'   \describe{
+#'     \item{idx}{Integer vector of indices into \code{cols} for the matched
+#'       interaction terms, or \code{NA} if no match is found.}
+#'     \item{terms_a}{Character vector of interaction terms of the form
+#'       \code{spline:main}.}
+#'     \item{terms_b}{Character vector of interaction terms of the form
+#'       \code{main:spline}.}
+#'   }
+#'   
+match_int_either <- function(
+        main,
+        spline_cols,
+        cols
+) {
+    a <- paste0(spline_cols, ":", main)
+    b <- paste0(main, ":", spline_cols)
+    
+    idx_a <- match(a, cols)
+    idx_b <- match(b, cols)
+    
+    idx <- ifelse(!is.na(idx_a), idx_a, idx_b)
+    
+    both <- !is.na(idx_a) & !is.na(idx_b)
+    if (any(both)) {
+        stop(
+            "Ambiguous interaction columns for '", main,
+            "': both orders present for ",
+            paste(spline_cols[both], collapse = ", "),
+            ". Remove one convention or disambiguate before fitting."
+        )
+    }
+    
+    list(
+        idx = idx,
+        terms_a = a,
+        terms_b = b
     )
 }
