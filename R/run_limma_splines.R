@@ -353,9 +353,8 @@ run_limma_splines <- function(
             verbose = verbose
         )
         
-        limma_splines_result <- create_all_toptables_limma(
+        limma_splines_result <- create_all_toptables(
             fit_obj = fit_obj,
-            contrast_plan = contrast_plan,
             condition = condition,
             feature_names = feature_names
         )
@@ -577,8 +576,6 @@ build_contrast_plan <- function(
         stop("Condition must have at least two levels.")
     }
     
-    baseline <- levels_in_condition[1]
-    
     spline_cols <- grep("^X$|^X\\d+$", cols, value = TRUE)
     if (length(spline_cols) < 1L) {
         stop("No spline basis columns found in 'cols'.")
@@ -592,12 +589,16 @@ build_contrast_plan <- function(
         )
     }
     
-    sanitize_level <- function(x) {
-        x <- as.character(x)
-        x <- gsub("[^A-Za-z0-9_]+", "_", x)
-        x <- gsub("_+", "_", x)
-        x <- gsub("^_|_$", "", x)
-        x
+    main_terms <- paste0(condition, levels_in_condition)
+    idx_main <- match(main_terms, cols)
+    missing_main <- is.na(idx_main)
+    
+    if (sum(missing_main) == 1L) {
+        baseline <- levels_in_condition[missing_main]
+    } else {
+        stop(
+            "Could not infer baseline of design matrix."
+        )
     }
     
     dummy_design_matrix <- matrix(
@@ -612,6 +613,7 @@ build_contrast_plan <- function(
     map_for_L_all <- list(
         within_time = list(),
         between_condition_only = list(),
+        between_main_and_time = list(),
         between_condition_time = list()
     )
     
@@ -632,11 +634,11 @@ build_contrast_plan <- function(
             )
         }
         
-        lev_key <- sanitize_level(lev)
+        lev_key <- as.character(lev)
         
         new_names <- paste0(
             "within_",
-            sanitize_level(condition),
+            as.character(condition),
             "_",
             lev_key,
             "__",
@@ -670,15 +672,11 @@ build_contrast_plan <- function(
             )
         }
         
-        key <- paste0(
-            sanitize_level(lev1),
-            "_vs_",
-            sanitize_level(lev2)
-        )
+        key <- paste0(as.character(lev1), "_vs_", as.character(lev2))
         
         prefix <- paste0(
             "pair_",
-            sanitize_level(condition),
+            as.character(condition),
             "_",
             key,
             "__"
@@ -713,11 +711,26 @@ build_contrast_plan <- function(
         stop("Internal error: L_all rownames do not match 'cols'.")
     }
     
+    if (anyDuplicated(colnames(L_all)) > 0L) {
+        stop("Internal error: L_all has duplicated column names.")
+    }
+    
+    mapped <- unique(unlist(map_for_L_all, use.names = FALSE))
+    missing <- setdiff(mapped, colnames(L_all))
+    
+    if (length(missing) > 0L) {
+        stop(
+            "Internal error: map_for_L_all contains names not in L_all: ",
+            paste(missing, collapse = ", ")
+        )
+    }
+    
     list(
         L_all = L_all,
         map_for_L_all = map_for_L_all,
         spline_cols = spline_cols,
-        levels_in_condition = levels_in_condition
+        levels_in_condition = levels_in_condition,
+        baseline = baseline
     )
 }
 
@@ -731,14 +744,31 @@ build_contrast_plan <- function(
 #' within a condition.
 #'
 #' @param data A matrix of data values.
+#' 
 #' @param rna_seq_data An object containing the preprocessed RNA-seq data,
 #' such as the output from `limma::voom` or a similar preprocessing pipeline.
+#' 
 #' @param meta A dataframe containing metadata, including a 'Time' column.
+#' 
 #' @param design A design formula or matrix for the limma analysis.
-#' @param design2design_matrix_result
-#' @param contrast_plan 
+#' 
+#' @param design2design_matrix_result A named list returned by
+#'   `design2design_matrix()` containing at least the elements
+#'   `design_matrix`, which is the fixed-effects design matrix used for
+#'   limma fits, and `meta`, which is the spline-transformed metadata
+#'   passed to `variancePartition::dream()` when random effects are used.
+#'   
+#' @param contrast_plan A list describing the unified contrast structure
+#'   for the analysis. It must contain a joint contrast matrix `L_all`,
+#'   a mapping object `map_for_L_all` that defines how contrast columns
+#'   correspond to reported effect categories, and `spline_cols`. For
+#'   variancePartition fits, this contrast plan is applied at model
+#'   fitting time via the `L` argument to `dream()`. For limma fits, the
+#'   same plan is used downstream to apply contrasts post hoc.
+#'   
 #' @param effects Strings of the fixed and potentially random effects of the 
 #' design.
+#' 
 #' @param dream_params A named list or NULL. When not NULL, it must at least
 #' contain the named element 'random_effects', which must contain a string that
 #' is a formula for the random effects of the mixed models by dream.
@@ -746,12 +776,17 @@ build_contrast_plan <- function(
 #' bigger than 1, which is the degree of freedom for the dream topTable, and
 #' the named element KenwardRoger, which must be a bool, specifying whether
 #' to use that method or not.
+#' 
 #' @param spline_params A list of spline parameters for the analysis.
+#' 
 #' @param condition A character string of the column name of meta that contains
 #'                  the levels of the experimental condition.
+#'                  
 #' @param padjust_method A character string specifying the p-adjustment method.
+#' 
 #' @param use_array_weights Boolean value specifying whether to use array
 #' weights for limma or variancePartition.
+#' 
 #' @param bp_cfg A named numeric vector specifying the parallelization
 #'   configuration, with expected names `"n_cores"` and `"blas_threads"`.
 #'
@@ -762,6 +797,7 @@ build_contrast_plan <- function(
 #'   If `bp_cfg` is `NULL`, missing, or any of its required fields is
 #'   `NA`, both `n_cores` and `blas_threads` default to `1`. This effectively
 #'   disables parallelization and avoids oversubscription of CPU threads.
+#'   
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list containing top tables for the factor only and factor-time
@@ -829,7 +865,8 @@ fit_global_model <- function(
             bp_cfg = bp_cfg,
             verbose = verbose
         )
-
+        
+        contrast_plan <- filter_contrast_plan_for_dream(contrast_plan)
         fit <- variancePartition::dream(
             exprObj = data,
             formula = stats::as.formula(design),
@@ -838,6 +875,7 @@ fit_global_model <- function(
             ddf = method,
             useWeights = aw_result[["use_weights"]],
             weightsMatrix = aw_result[["weights"]],
+            L = contrast_plan[["L_all"]],
             BPPARAM = param # parallelization
         )
 
@@ -859,6 +897,7 @@ fit_global_model <- function(
 
     list(
         fit = fit,
+        contrast_plan = contrast_plan,
         design_matrix = design_matrix,
         meta = design2design_matrix_result[["meta"]],
         condition = condition,
@@ -870,15 +909,23 @@ fit_global_model <- function(
 }
 
 
-#' Create All Top Tables for limma Spline Contrasts
+#' Create All Top Tables for Spline-Based Analyses
 #'
 #' @noRd
 #'
 #' @description
-#' Creates all required limma top tables from a single global fit using a
-#' unified contrast plan. The function applies all contrasts in one step using
-#' `limma::contrasts.fit()`, moderates statistics with `limma::eBayes()`, and
-#' then produces three categories of results:
+#' Creates all required top tables from a single global spline-based model
+#' fit using a unified contrast plan. The function automatically dispatches
+#' between limma and variancePartition (dream) based on the fitted model
+#' object and applies the appropriate contrast and moderation strategy.
+#'
+#' For limma fits, contrasts are applied post hoc using
+#' `limma::contrasts.fit()` followed by moderation with
+#' `limma::eBayes()`. For variancePartition fits, contrasts are evaluated
+#' during model fitting via `dream(..., L = ...)`, and statistics are
+#' extracted directly from the fitted object.
+#'
+#' The function produces three categories of results:
 #' \itemize{
 #'   \item within-level spline time effects for each condition level
 #'   \item average differences between condition levels (main and time terms)
@@ -887,25 +934,26 @@ fit_global_model <- function(
 #'
 #' For the between-level categories, the coefficient columns in the returned
 #' top tables are renamed to match the historical convention:
-#' `diff_main` followed by `diff_X1`, `diff_X2`, ... (or `diff_X` when dof = 1)
-#' for the average differences, and `diff_X*` for the interaction-only tests.
+#' `diff_main` followed by `diff_X1`, `diff_X2`, ... (or `diff_X` when
+#' dof = 1) for average differences, and `diff_X*` for interaction-only
+#' tests. Within-level time effect tables use `spline_c1`, `spline_c2`,
+#' ... as coefficient column names.
 #'
-#' @param fit_obj A list containing the fitted limma model object in `fit`,
-#'   the original design matrix, and analysis metadata. The model in `fit` must
-#'   be the output of `limma::lmFit()` (not already moderated), as moderation is
-#'   performed after contrasts are applied.
-#' @param contrast_plan A list containing a joint contrast matrix `L_all`, a
-#'   mapping object `map_for_L_all`, and `spline_cols`. These are typically the
-#'   outputs of `build_contrast_plan()`.
+#' @param fit_obj A list containing the fitted model object in `fit`, the
+#'   unified contrast plan in `contrast_plan`, and analysis metadata. For
+#'   limma fits, `fit` must be the output of `limma::lmFit()` (not already
+#'   moderated). For variancePartition fits, `fit` must be the output of
+#'   `variancePartition::dream()` with contrasts supplied at fit time.
 #' @param condition A character string of the column name of `meta` that
-#'   contains the experimental condition levels. This is used to create stable
-#'   names for the within-level time effect results.
-#' @param feature_names Optional character vector of feature identifiers. When
-#'   `NULL`, defaults to `fit_obj[["feature_names"]]`.
+#'   contains the experimental condition levels. This is used to generate
+#'   stable names for the within-level time effect results.
+#' @param feature_names Optional character vector of feature identifiers.
+#'   When `NULL`, defaults to `fit_obj[["feature_names"]]`.
 #'
 #' @return A named list containing three result categories:
 #' \describe{
-#'   \item{time_effect}{A list of within-level spline time-effect results.}
+#'   \item{time_effect}{A list of within-level spline time-effect results,
+#'     named by condition and level.}
 #'   \item{avrg_diff_conditions}{A list of between-level average-difference
 #'     results named with the prefix `avrg_diff_`.}
 #'   \item{interaction_condition_time}{A list of between-level interaction
@@ -914,13 +962,14 @@ fit_global_model <- function(
 #'
 #' @seealso
 #' \code{\link[limma]{lmFit}}, \code{\link[limma]{contrasts.fit}},
-#' \code{\link[limma]{eBayes}}, \code{\link[limma]{topTable}}
+#' \code{\link[limma]{eBayes}}, \code{\link[limma]{topTable}},
+#' \code{\link[variancePartition]{dream}},
+#' \code{\link[variancePartition]{topTable}}
 #'
 #' @importFrom limma contrasts.fit eBayes topTable
-#' 
-create_all_toptables_limma <- function(
+#'
+create_all_toptables <- function(
         fit_obj,
-        contrast_plan,
         condition,
         feature_names = NULL
 ) {
@@ -928,37 +977,82 @@ create_all_toptables_limma <- function(
         feature_names <- fit_obj[["feature_names"]]
     }
     
-    L_all <- contrast_plan[["L_all"]]
-    map <- contrast_plan[["map_for_L_all"]]
-    spline_cols <- contrast_plan[["spline_cols"]]
-    
-    fit0 <- fit_obj[["fit"]]
-    if (is.null(fit0)) {
+    fit <- fit_obj[["fit"]]
+    if (is.null(fit)) {
         stop("fit_obj$fit is required.")
     }
     
-    fit_c <- limma::contrasts.fit(fit0, L_all)
+    contrast_plan <- fit_obj[["contrast_plan"]]
+    if (is.null(contrast_plan)) {
+        stop("fit_obj$contrast_plan is required.")
+    }
     
-    fit_c <- limma::eBayes(
-        fit_c,
-        robust = isTRUE(
-            fit_obj[["homosc_violation_result"]][["use_weights"]]
-        )
-    )
+    map <- contrast_plan[["map_for_L_all"]]
+    spline_cols <- contrast_plan[["spline_cols"]]
+    
+    if (is.null(map) || is.null(spline_cols)) {
+        stop("contrast_plan must contain map_for_L_all and spline_cols.")
+    }
     
     padj <- fit_obj[["padjust_method"]]
     if (is.null(padj)) {
         padj <- "BH"
     }
     
-    top_one <- function(coef_names) {
-        limma::topTable(
+    is_dream_fit <- inherits(fit, "MArrayLM2") || inherits(fit, "dream")
+    use_dream <- isTRUE(is_dream_fit)
+    
+    if (!use_dream) {
+        L_all <- contrast_plan[["L_all"]]
+        if (is.null(L_all)) {
+            stop("contrast_plan$L_all is required for limma fits.")
+        }
+        
+        fit_c <- limma::contrasts.fit(fit, L_all)
+        
+        fit_c <- limma::eBayes(
             fit_c,
-            coef = coef_names,
-            adjust.method = padj,
-            number = Inf,
-            sort.by = if (length(coef_names) > 1L) "F" else "t"
+            robust = isTRUE(
+                fit_obj[["homosc_violation_result"]][["use_weights"]]
+            )
         )
+        
+        top_fun <- function(coef_names) {
+            limma::topTable(
+                fit_c,
+                coef = coef_names,
+                adjust.method = padj,
+                number = Inf,
+                sort.by = if (length(coef_names) > 1L) "F" else "t"
+            )
+        }
+        
+        fit_for_proc <- fit_c
+        intercept_fit <- fit
+    } else {
+        top_fun <- function(coef_names) {
+            variancePartition::topTable(
+                fit,
+                coef = coef_names,
+                adjust.method = padj,
+                number = Inf,
+                sort.by = if (length(coef_names) > 1L) "F" else "t"
+            )
+        }
+        
+        fit_for_proc <- fit
+        intercept_fit <- fit
+    }
+    
+    rename_spline_c <- function(tt) {
+        coef_cols <- grep("^Coef[0-9]+$", colnames(tt), value = TRUE)
+        if (length(coef_cols) < 1L) {
+            return(tt)
+        }
+        
+        colnames(tt)[match(coef_cols, colnames(tt))] <-
+            paste0("spline_c", seq_along(coef_cols))
+        tt
     }
     
     rename_diff_cols <- function(tt, has_main) {
@@ -992,12 +1086,13 @@ create_all_toptables_limma <- function(
     lev_keys <- names(map$within_time)
     time_effect <- lapply(lev_keys, function(lev_key) {
         coef_names <- map$within_time[[lev_key]]
-        top <- top_one(coef_names)
-
+        top <- top_fun(coef_names)
+        top <- rename_spline_c(top)
+        
         process_top_table(
-            list(top_table = top, fit = fit_c),
+            list(top_table = top, fit = fit_for_proc),
             feature_names = feature_names,
-            intercept_fit = fit0
+            intercept_fit = intercept_fit
         )
     })
     names(time_effect) <- paste(condition, lev_keys, sep = "_")
@@ -1006,13 +1101,13 @@ create_all_toptables_limma <- function(
         pair_keys <- names(map$between_main_and_time)
         cond_only <- lapply(pair_keys, function(pair_key) {
             coef_names <- map$between_main_and_time[[pair_key]]
-            top <- top_one(coef_names)
+            top <- top_fun(coef_names)
             top <- rename_diff_cols(top, has_main = TRUE)
             
             process_top_table(
-                list(top_table = top, fit = fit_c),
+                list(top_table = top, fit = fit_for_proc),
                 feature_names = feature_names,
-                intercept_fit = fit0
+                intercept_fit = intercept_fit
             )
         })
         names(cond_only) <- paste0("avrg_diff_", pair_keys)
@@ -1020,13 +1115,13 @@ create_all_toptables_limma <- function(
         pair_keys <- names(map$between_condition_only)
         cond_only <- lapply(pair_keys, function(pair_key) {
             coef_name <- map$between_condition_only[[pair_key]]
-            top <- top_one(coef_name)
+            top <- top_fun(coef_name)
             top <- rename_diff_cols(top, has_main = TRUE)
             
             process_top_table(
-                list(top_table = top, fit = fit_c),
+                list(top_table = top, fit = fit_for_proc),
                 feature_names = feature_names,
-                intercept_fit = fit0
+                intercept_fit = intercept_fit
             )
         })
         names(cond_only) <- paste0("avrg_diff_", pair_keys)
@@ -1035,13 +1130,13 @@ create_all_toptables_limma <- function(
     pair_keys2 <- names(map$between_condition_time)
     cond_time <- lapply(pair_keys2, function(pair_key) {
         coef_names <- map$between_condition_time[[pair_key]]
-        top <- top_one(coef_names)
+        top <- top_fun(coef_names)
         top <- rename_diff_cols(top, has_main = FALSE)
         
         process_top_table(
-            list(top_table = top, fit = fit_c),
+            list(top_table = top, fit = fit_for_proc),
             feature_names = feature_names,
-            intercept_fit = fit0
+            intercept_fit = intercept_fit
         )
     })
     names(cond_time) <- paste0("time_interaction_", pair_keys2)
@@ -1050,228 +1145,6 @@ create_all_toptables_limma <- function(
         time_effect = time_effect,
         avrg_diff_conditions = cond_only,
         interaction_condition_time = cond_time
-    )
-}
-
-
-#' Extract per-condition time effects (from splines) from one global fit
-#'
-#' @noRd
-#'
-#' @description
-#' Takes a **single global LIMMA / dream fit** (returned by
-#' `fit_global_model()`) whose design contains a spline expansion of *Time*
-#' and an interaction with a condition factor (e.g.
-#' `~ Phase * ns(Time, df = dof)`).
-#' The function:
-#'
-#' * builds the appropriate contrast matrix so that, for each level of
-#'   the condition factor, the full spline for that level is tested
-#'   – for the reference level this is just the spline columns
-#'   – for the other levels it is *(spline + interaction)*
-#' * runs `limma::contrasts.fit()` + `eBayes()` (or the dream equivalent)
-#'   to obtain an F-test over all spline degrees of freedom;
-#' * renames `Coef1…CoefS` produced by `topTable()` back to `X1…XS`
-#'   so they match the column names used elsewhere;
-#' * passes the result through `process_top_table()` so the output is
-#'   uniform with the rest of the SplineOmics pipeline (adds intercepts,
-#'   feature numbers, etc.);
-#' * returns a named list whose elements are
-#'   `"Phase_Exponential"`, `"Phase_Stationary"`, … (i.e.
-#'   `<condition>_<level>`), each containing the fully processed top-table
-#'   for that condition’s time effect.
-#'
-#' @param fit_obj   list returned by fit_global_model()
-#' @param condition factor column in meta that encodes the condition
-#'  (e.g. "Phase")
-#' @param feature_names Char vector of names of the features
-#' @param dof Integer specifying the number of spline degrees of freedom used
-#'   in the model (i.e., how many basis functions were fitted for the time
-#'   effect).
-#' @param random_effects Boolean value specifying whether random effects are
-#' used.
-#'
-#' @return named list of topTable results, one per condition level
-#'
-extract_within_level_time_effects <- function(
-    fit_obj,
-    condition,
-    feature_names,
-    dof,
-    random_effects
-    ) {
-    levels_in_condition <- levels(factor(fit_obj$meta[[condition]]))
-    baseline <- levels_in_condition[1]
-    design_cols <- colnames(fit_obj$design_matrix)
-    spline_terms <- paste0("X", seq_len(dof))
-    if ("X" %in% design_cols) spline_terms <- "X"  # In case of dof = 1
-
-    eBayes_fun <- if (random_effects) {
-        variancePartition::eBayes
-    } else {
-        limma::eBayes
-    }
-
-    top_fun <- if (random_effects) {
-        variancePartition::topTable
-    } else {
-        limma::topTable
-    }
-
-    results_by_level <- lapply(levels_in_condition, function(lev) {
-        contrast_matrix <- build_spline_contrast(
-            lev = lev,
-            baseline = baseline,
-            condition = condition,
-            spline_terms = spline_terms,
-            design_cols = design_cols,
-            dof = dof
-        )
-
-                contrast_fit <- limma::contrasts.fit(
-            fit_obj$fit,
-            contrast_matrix
-        )
-        contrast_fit <- suppressWarnings(eBayes_fun(contrast_fit))
-        coef_names <- colnames(contrast_matrix)
-
-        top <- top_fun(
-            contrast_fit,
-            coef = if (length(coef_names) == 1L) 1L else coef_names,
-            number = Inf,
-            sort.by = if (length(coef_names) > 1) "F" else "t",
-            adjust.method = fit_obj$padjust_method
-        )
-
-        colnames(top) <- sub("^Coef", "X", colnames(top))
-
-        process_top_table(
-            list(
-                top_table = top,
-                fit = fit_obj$fit
-            ),
-            feature_names = feature_names
-        )
-    })
-
-    names(results_by_level) <- paste(
-        condition,
-        levels_in_condition,
-        sep = "_"
-    )
-    results_by_level
-}
-
-
-#' Extract pairwise contrasts for all condition levels
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper function that computes pairwise contrasts between
-#' all levels of a condition factor. For each level pair, two types of
-#' contrasts are extracted:
-#' \itemize{
-#'   \item condition-only (average difference across time)
-#'   \item condition × time interaction (difference in temporal pattern)
-#' }
-#'
-#' This works with fitted limma or dream models as stored in the
-#' structured list returned by the package's model-fitting workflow.
-#'
-#' @param fit_obj A list containing:
-#'   \itemize{
-#'     \item \code{fit}: fitted model object from \code{lmFit()} or
-#'       \code{dream()}
-#'     \item \code{meta}: sample metadata used in the model
-#'     \item \code{design_matrix}: the design matrix used when fitting
-#'     \item \code{feature_names}: optional feature annotations
-#'     \item \code{padjust_method}: method for p-value adjustment
-#'   }
-#'
-#' @param condition A string naming the column of \code{meta} that
-#'   contains the condition factor. All unique levels of this factor are
-#'   tested in pairwise comparison.
-#'
-#' @param random_effects Logical; if \code{TRUE}, the function uses
-#'   dream-compatible extraction functions from \pkg{variancePartition}.
-#'
-#' @return A named list with two elements:
-#'   \itemize{
-#'     \item \code{condition_only}: a named list of data frames, one for
-#'       each level pair, containing the average condition-level
-#'       differences.
-#'     \item \code{condition_time}: a named list of data frames, one for
-#'       each level pair, containing condition × time interaction effects.
-#'   }
-#'
-#' Each element of these lists is a tibble/data frame corresponding to a
-#' single pairwise contrast, named according to the level comparison.
-#' 
-extract_between_level_contrasts <- function(
-        fit_obj,
-        condition,
-        random_effects
-) {
-    cond_vals <- fit_obj$meta[[condition]]
-    levels_cond <- levels(factor(cond_vals))
-
-    if (length(levels_cond) < 2L) {
-        stop(
-            "Need at least two levels in '", condition,
-            "' to extract between-level contrasts."
-        )
-    }
-    
-    # All pairwise combinations of condition levels
-    level_pairs <- combn(
-        levels_cond,
-        2L,
-        simplify = FALSE
-        )
-    
-    condition_only_list <- list()
-    condition_time_list <- list()
-    
-    for (i in seq_along(level_pairs)) {
-        pair <- level_pairs[[i]]
-
-        contrast_result <- extract_contrast_for_pair(
-            fit_obj = fit_obj,
-            condition = condition,
-            level_pair = pair,
-            random_effects = random_effects
-        )
-        
-        cond_name <- paste0(
-            "avrg_diff_",
-            pair[1],
-            "_vs_",
-            pair[2]
-            )
-        time_name <- paste0(
-            "time_interaction_",
-            pair[1],
-            "_vs_",
-            pair[2]
-            )
-        
-        cond_df <- contrast_result$condition_only
-        if (!is.null(cond_df) && nrow(cond_df) > 0L) {
-            cond_df$contrast <- cond_name
-            condition_only_list[[cond_name]] <- cond_df
-        }
-        
-        time_df <- contrast_result$condition_time
-        if (!is.null(time_df) && nrow(time_df) > 0L) {
-            time_df$contrast <- time_name
-            condition_time_list[[time_name]] <- time_df
-        }
-    }
-    
-    list(
-        condition_only = condition_only_list,
-        condition_time = condition_time_list
     )
 }
 
@@ -1330,7 +1203,6 @@ process_top_table <- function(
     
     top_table
 }
-
 
 
 #' Process Within Level
@@ -1544,140 +1416,6 @@ remove_intercept <- function(formula) {
     formula_str <- sub(pattern, "\\10\\3", formula_str)
 
     new_formula <- as.formula(formula_str)
-}
-
-
-resolve_coef <- function(fit, coef) {
-    cn <- colnames(fit$coefficients)
-    
-    if (is.numeric(coef)) {
-        if (any(coef < 1L | coef > length(cn))) {
-            stop("coef index out of bounds for current fit.")
-        }
-        return(coef)
-    }
-    
-    idx <- match(coef, cn)
-    if (anyNA(idx)) {
-        missing <- coef[is.na(idx)]
-        stop(
-            "coef not found in fit: ",
-            paste(missing, collapse = ", ")
-        )
-    }
-    idx
-}
-
-
-#' Construct contrast coefficients for condition differences over time
-#' 
-#' @noRd
-#'
-#' @description
-#' Build a contrast matrix comparing two levels of a condition, including
-#' both the main effect and time-varying (spline-based) interaction effects.
-#' Interaction terms may appear in either order in the design matrix
-#' (e.g. `X1:PhaseStationary` or `PhaseStationary:X1`) and are matched
-#' accordingly.
-#'
-#' The function assumes spline basis columns are named `X`, `X1`, `X2`, ...
-#' and that interaction terms combine exactly one spline column with one
-#' condition-level column.
-#'
-#' @param condition Character scalar giving the prefix used for condition
-#'   levels in the design matrix (e.g. `"Phase"`).
-#' @param level_pair Character vector of length two giving the two condition
-#'   levels to contrast (e.g. `c("Stationary", "Dynamic")`).
-#' @param design_matrix Numeric design matrix used for model fitting, with
-#'   column names encoding main effects and spline interactions.
-#'   
-#' @importFrom limma contrasts.fit eBayes topTable
-#' 
-extract_contrast_for_pair <- function(
-        fit_obj,
-        condition,
-        level_pair,
-        random_effects
-) {
-    fit <- fit_obj[["fit"]]
-    design_matrix <- fit_obj[["design_matrix"]]
-    feature_names <- fit_obj[["feature_names"]]
-    padjust_method <- fit_obj[["padjust_method"]]
-    
-    cm <- get_condition_contrast_coefs(
-        condition = condition,
-        level_pair = level_pair,
-        design_matrix = design_matrix
-    )
-    
-    fit_c  <- limma::contrasts.fit(fit, cm$L)
-
-    # fit_c <- limma::contrasts.fit(fit, cm$L)
-    # 
-    # if (random_effects) {
-    #     browser()
-    #     fit_c <- variancePartition::eBayes(fit_c)
-    #     top_fun <- variancePartition::topTable
-    # } else {
-    #     fit_c <- limma::eBayes(fit_c)
-    #     top_fun <- limma::topTable
-    # }
-    if (random_effects) {
-        # 1) moderate the original dream fit
-        fit_eb <- variancePartition::eBayes(fit)
-        
-        # 2) move into contrast space using limma
-        fit_c  <- limma::contrasts.fit(fit_eb, cm$L)
-        fit_c  <- limma::eBayes(fit_c)
-        # 3) use limma's topTable on the contrast-space object
-        top_fun <- limma::topTable
-    } else {
-        
-        fit_c  <- limma::eBayes(fit_c)
-        top_fun <- limma::topTable
-    }
-    
-    
-    coef_all <- resolve_coef(fit_c, cm$main_and_time_names)
-    coef_shp <- resolve_coef(fit_c, cm$shape_names)
-    
-    condition_only <- top_fun(
-        fit_c,
-        coef = coef_all,
-        adjust.method = padjust_method,
-        number = Inf,
-        sort.by = if (length(coef_all) > 1L) "F" else "t"
-    )
-
-    condition_time <- top_fun(
-        fit_c,
-        coef = coef_shp,
-        adjust.method = padjust_method,
-        number = Inf,
-        sort.by = if (length(coef_shp) > 1L) "F" else "t"
-    )
-    
-    condition_only_result <- list(
-        top_table = condition_only,
-        fit = fit_c
-        )
-    condition_time_result <- list(
-        top_table = condition_time,
-        fit = fit_c
-        )
-    
-    list(
-        condition_only = process_top_table(
-            condition_only_result,
-            feature_names,
-            intercept_fit = fit
-        ),
-        condition_time = process_top_table(
-            condition_time_result,
-            feature_names,
-            intercept_fit = fit
-        )
-    )
 }
 
 
@@ -1961,6 +1699,111 @@ build_spline_contrast <- function(
     # Transpose → rows = coefficients in the model,
     # columns = pseudo-contrasts (one per spline term)
     t(contrast_matrix)
+}
+
+
+#' Filter Contrast Plan for variancePartition (dream)
+#'
+#' @noRd
+#'
+#' @description
+#' Adapts a unified contrast plan for use with variancePartition (dream) by
+#' removing redundant contrasts that consist of a single non-zero coefficient.
+#' Such contrasts are already evaluated by default in dream and would
+#' otherwise trigger warnings when supplied via the `L` argument.
+#'
+#' The function removes these redundant contrast columns from the joint
+#' contrast matrix and updates the corresponding contrast mappings so that
+#' downstream coefficient extraction remains consistent. Dropped contrasts
+#' are replaced by aliases pointing to the underlying model coefficient
+#' names, ensuring that all requested tests can still be resolved by
+#' `variancePartition::topTable()`.
+#'
+#' This transformation is intended to be applied only in the dream fitting
+#' branch and allows the same high-level contrast definitions to be reused
+#' across both limma and variancePartition backends.
+#'
+#' @param contrast_plan A list containing a joint contrast matrix `L_all` and
+#'   a mapping object `map_for_L_all`, typically produced by
+#'   `build_contrast_plan()`.
+#'
+#' @return A modified contrast plan with redundant single-term contrasts
+#'   removed from `L_all`, updated mappings in `map_for_L_all`, and an
+#'   additional element `alias` that records the correspondence between
+#'   dropped contrast names and the underlying model coefficients.
+#'
+#' @seealso
+#' \code{\link[variancePartition]{dream}},
+#' \code{\link[variancePartition]{topTable}}
+#'
+#' @importFrom variancePartition dream
+#'
+filter_contrast_plan_for_dream <- function(contrast_plan) {
+    L_all <- contrast_plan[["L_all"]]
+    map <- contrast_plan[["map_for_L_all"]]
+    
+    if (is.null(L_all) || is.null(map)) {
+        stop("contrast_plan must contain L_all and map_for_L_all.")
+    }
+    
+    nz <- colSums(L_all != 0)
+    keep <- nz != 1L
+    drop <- nz == 1L
+    
+    alias <- list()
+    
+    if (any(drop)) {
+        drop_names <- colnames(L_all)[drop]
+        
+        for (cn in drop_names) {
+            v <- L_all[, cn]
+            i <- which(v != 0)
+            if (length(i) != 1L) {
+                next
+            }
+            alias[[cn]] <- rownames(L_all)[i]
+        }
+    }
+    
+    L_new <- L_all[, keep, drop = FALSE]
+    
+    replace_alias <- function(x) {
+        if (length(x) < 1L) {
+            return(x)
+        }
+        
+        unname(vapply(x, function(nm) {
+            if (!is.null(alias[[nm]])) {
+                alias[[nm]]
+            } else {
+                nm
+            }
+        }, character(1)))
+    }
+    
+    map_new <- map
+    map_new$within_time <- lapply(map$within_time, replace_alias)
+    
+    if (!is.null(map$between_condition_only)) {
+        map_new$between_condition_only <-
+            lapply(map$between_condition_only, replace_alias)
+    }
+    
+    if (!is.null(map$between_condition_time)) {
+        map_new$between_condition_time <-
+            lapply(map$between_condition_time, replace_alias)
+    }
+    
+    if (!is.null(map$between_main_and_time)) {
+        map_new$between_main_and_time <-
+            lapply(map$between_main_and_time, replace_alias)
+    }
+    
+    contrast_plan[["L_all"]] <- L_new
+    contrast_plan[["map_for_L_all"]] <- map_new
+    contrast_plan[["alias"]] <- alias
+    
+    contrast_plan
 }
 
 
