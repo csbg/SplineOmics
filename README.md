@@ -376,7 +376,7 @@ of `SplineOmics`. Thank you for using our package!
 - [Veronika Schäpertöns](https://github.com/VSchaepertoens) - Developed
   one internal plotting function, as well as some code for the
   exploratory data analysis plots, and the overall approach together
-  with Thomas Rauter. dh2305
+  with Thomas Rauter.
 - [Dominik Hofreither](https://github.com/dh2305) - was (i) actively
   involved as a tester, (ii) provided datasets that helped define the
   problem addressed by the package, (iii) contributed numerous ideas

@@ -77,6 +77,7 @@ reference:
       - run_ora
       - run_limma_splines
       - update_splineomics
+      - cluster_genes_multiomics
 
 extra_files:
   - googleabfeff244193b2bc.html

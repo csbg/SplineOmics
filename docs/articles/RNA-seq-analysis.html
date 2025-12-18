@@ -1594,11 +1594,12 @@ correctly processed.</p>
 <span><span class="co">#&gt; Hint: The data contains negative values.  This may occur if the data has been  transformed (e.g., log-transformed or  normalized) and is valid in such cases.  Ensure that the data preprocessing aligns  with your analysis requirements.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
+<span><span class="co">#&gt; Array weights are ignored at this stage for RNA-seq data, as they were already incorporated during the preprocessing step.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fitting global model...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; NOTE: If you manually stop run_limma_splines() in RStudio and  used parallelization for variancePartition::dream(), then those parallelized processes may continue running. Use your system's process manager to terminate them manually!</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 0.5 min</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 0.6 min</span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
 document</a> for an explanation of the different result categories. Each
@@ -1627,7 +1628,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpfBIvow/filedc9364995317 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpZwazec/file3dce7499b3de .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1699,10 +1700,10 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpfBIvow/filedc93577d8279 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpZwazec/file3dce7104b0b .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
-<span><span class="co">#&gt; Running this function took 0.5 min</span></span></code></pre></div>
+<span><span class="co">#&gt; Running this function took 0.6 min</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?export=view&amp;id=1EvPiEwHyGnBQFxRets00s87tochgyGK4" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The

@@ -20,10 +20,24 @@ Each element of the outer list is itself a named list whose elements are
 \emph{layers} (e.g., \code{rna}, \code{protein}, \code{phospho}), each being
 a numeric matrix of dimension \code{features x spline_points}.
 
-For gene-level layers, rows represent genes.
+For one-to-one (gene-level) layers, rows represent genes directly.
+In this case, row names must be the gene identifiers themselves and must
+follow the pattern \code{<gene_id>}. The angle brackets are shown for
+illustration only and must not be included in the actual row names.
+Gene identifiers must be consistent across all one-to-one layers; otherwise,
+genes cannot be matched across omics layers during distance computation and
+clustering.
+
 For many-to-one layers (e.g., phospho sites, probes), rows represent features
-mapped externally to genes and summarized into pattern signatures based on
-the metadata tables.}
+that map to genes and are summarized into gene-level pattern signatures
+based on the metadata tables. For these layers, row names must follow the
+pattern \code{<gene_id>_<feature_id>}, where the gene identifier precedes
+the first underscore. Again, the angle brackets are for illustration only
+and must not be included in the actual row names.
+
+This row-naming convention is critical, as it defines how features are
+associated with genes and how genes are aligned across layers prior to
+signature construction and downstream clustering.}
 
 \item{block_meta}{A data frame containing \emph{block-level metadata}. One row per block.
 Must include:
