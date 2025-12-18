@@ -503,6 +503,7 @@ cluster_hits <- function(
             category_2_and_3_hits = category_2_and_3_hits,
             adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
             adj_pthresh_interaction = adj_pthresh_interaction_condition_time,
+            min_effect_size = min_effect_size,
             raw_data = raw_data,
             predicted_timecurves = predicted_timecurves,
             max_hit_number = max_hit_number
@@ -1953,20 +1954,27 @@ make_clustering_report <- function(
 #' @param splineomics A list containing the splineomics results, including
 #'   per-condition time effects and pairwise contrast tables produced by
 #'   the spline-based limma/dream workflow.
+#'   
 #' @param data The data matrix containing the measurements.
+#' 
 #' @param meta The metadata associated with the measurements, which includes
 #'   the condition column.
+#'   
 #' @param condition Column name of \code{meta} that contains the experimental
 #'   condition levels.
+#'   
 #' @param replicate_column Column name of the \code{meta} column that
 #'   specifies the replicates per timepoint. For example \code{Reactor} with
 #'   values like \code{"ReactorE16"}, \code{"ReactorE17"}, etc., indicating
 #'   multiple bioreactors contributing samples at each timepoint.
+#'   
 #' @param plot_info A list containing plotting information such as time unit
 #'   and axis labels.
+#'   
 #' @param raw_data Optional data matrix with the raw (unimputed) data,
 #'   still containing \code{NA} values. When provided, datapoints that were
 #'   originally \code{NA} and later imputed can be highlighted in the plots.
+#'   
 #' @param predicted_timecurves A list containing:
 #'   \describe{
 #'     \item{time_grid}{Numeric vector of dense time points used for
@@ -1975,18 +1983,49 @@ make_clustering_report <- function(
 #'       Each matrix contains predicted values (rows = features, columns =
 #'       time points).}
 #'   }
+#'   
 #' @param max_hit_number Maximum number of hits per condition pair for which
 #'   individual spline plots are shown. This can be used to limit computation
 #'   time and the size of the HTML report when many hits are present.
+#'   
 #' @param category_2_and_3_hits List returned by
 #'   \code{get_category_2_and_3_hits()}, containing per-contrast Category 2
 #'   and Category 3 hit tables (one element per pairwise comparison).
+#'   
 #' @param adj_pthresh_avrg_diff_conditions Adjusted p-value threshold for
 #'   the average difference between conditions (Category 2). Passed through
 #'   to plotting helpers for annotation or additional filtering.
+#'   
 #' @param adj_pthresh_interaction Adjusted p-value threshold for the
 #'   condition × time interaction (Category 3). Passed through to plotting
 #'   helpers for annotation or additional filtering.
+#'   
+#' @param min_effect_size `list`: A named list that specifies the minimum 
+#' effect size thresholds to consider a feature as biologically meaningful, in 
+#' addition to statistical significance. This allows users to filter out 
+#' "trivial" hits that pass adjusted p-value cutoffs but show negligible effect 
+#' sizes.
+#'
+#'   The list must contain the following elements:
+#'   - `time_effect`: `numeric(1)` Minimum cumulative travel for time effects 
+#'     (Category 1). Features with a smaller travel will be ignored even if 
+#'     significant.
+#'   - `avg_diff_cond`: `numeric(1)` Minimum absolute effect size for average 
+#'     differences between conditions (Category 2). Ensures that only contrasts 
+#'     with a relevant magnitude are reported.
+#'   - `interaction_cond_time`: `numeric(1)` Minimum effect size for the 
+#'     interaction between condition and time (Category 3). This controls how 
+#'     large the differential curve travel must be across conditions to count 
+#'     as a hit.
+#'
+#'   Values should be numeric scalars (typically >0). For example: 
+#'   `min_effect_size = list(time_effect = 1, avg_diff_cond = 1, 
+#'   interaction_cond_time = 2)` will only keep features with cumulative 
+#'   travels or condition-time differences above those cutoffs. Use smaller 
+#'   values (e.g., 0.1) for permissive filtering, or larger values for more 
+#'   conservative thresholds.
+#'
+#'   The default is 0 for all three elements.
 #'
 #' @return A named list of lists. Each top-level element corresponds to a
 #'   condition pair (e.g. \code{"A_vs_B"}) and contains the comparison plots
@@ -2004,7 +2043,8 @@ generate_spline_comparisons <- function(
         max_hit_number,
         category_2_and_3_hits,
         adj_pthresh_avrg_diff_conditions,
-        adj_pthresh_interaction
+        adj_pthresh_interaction,
+        min_effect_size
 ) {
     # Ensure `condition` column is character
     meta[[condition]] <- as.character(meta[[condition]])
@@ -2096,6 +2136,7 @@ generate_spline_comparisons <- function(
             adj_pthresh_avrg_diff_conditions =
                 adj_pthresh_avrg_diff_conditions,
             adj_pthresh_interaction = adj_pthresh_interaction,
+            min_effect_size = min_effect_size,
             plot_info = plot_info,
             raw_data = raw_data,
             max_hit_number = max_hit_number
@@ -3843,6 +3884,32 @@ plot_splines <- function(
 #' @param adj_pthresh_interaction The adjusted p-value threshold for the
 #' interaction between
 #' condition and time.
+#' @param min_effect_size `list`: A named list that specifies the minimum 
+#' effect size thresholds to consider a feature as biologically meaningful, in 
+#' addition to statistical significance. This allows users to filter out 
+#' "trivial" hits that pass adjusted p-value cutoffs but show negligible effect 
+#' sizes.
+#'
+#'   The list must contain the following elements:
+#'   - `time_effect`: `numeric(1)` Minimum cumulative travel for time effects 
+#'     (Category 1). Features with a smaller travel will be ignored even if 
+#'     significant.
+#'   - `avg_diff_cond`: `numeric(1)` Minimum absolute effect size for average 
+#'     differences between conditions (Category 2). Ensures that only contrasts 
+#'     with a relevant magnitude are reported.
+#'   - `interaction_cond_time`: `numeric(1)` Minimum effect size for the 
+#'     interaction between condition and time (Category 3). This controls how 
+#'     large the differential curve travel must be across conditions to count 
+#'     as a hit.
+#'
+#'   Values should be numeric scalars (typically >0). For example: 
+#'   `min_effect_size = list(time_effect = 1, avg_diff_cond = 1, 
+#'   interaction_cond_time = 2)` will only keep features with cumulative 
+#'   travels or condition-time differences above those cutoffs. Use smaller 
+#'   values (e.g., 0.1) for permissive filtering, or larger values for more 
+#'   conservative thresholds.
+#'
+#'   The default is 0 for all three elements.
 #' @param raw_data Optional. Data matrix with the raw (unimputed) data, still
 #' containing NA values. When provided, it highlights the datapoints in the
 #' spline plots that originally where NA and that were imputed.
@@ -3873,277 +3940,128 @@ plot_spline_comparisons <- function(
         plot_info,
         adj_pthresh_avrg_diff_conditions,
         adj_pthresh_interaction,
+        min_effect_size,
         raw_data,
-        max_hit_number) {
+        max_hit_number
+) {
+    replicate_mapping <- .make_replicate_mapping(
+        meta,
+        replicate_column
+    )
     
-    # optional replicate mapping
-    if (!is.null(replicate_column)) {
-        replicate_mapping <- setNames(
-            seq_along(unique(meta[[replicate_column]])),
-            unique(meta[[replicate_column]])
-        )
-    }
+    shape_mapping <- .make_shape_mapping(
+        meta,
+        replicate_column
+    )
     
-    # sort inputs for stable behavior
-    time_effect_1 <- dplyr::arrange(
+    sorted <- .sort_inputs_for_plotting(
         time_effect_1,
-        .data$feature_names
-    )
-    time_effect_2 <- dplyr::arrange(
         time_effect_2,
-        .data$feature_names
-    )
-    avrg_diff_conditions <- dplyr::arrange(
         avrg_diff_conditions,
-        .data$feature_names
+        interaction_condition_time
     )
-    interaction_condition_time <- dplyr::arrange(
+    time_effect_1 <- sorted$time_effect_1
+    time_effect_2 <- sorted$time_effect_2
+    avrg_diff_conditions <- sorted$avrg_diff_conditions
+    interaction_condition_time <- sorted$interaction_condition_time
+    
+    mats <- .get_prediction_mats(
+        predicted_timecurves,
+        condition_1,
+        condition_2
+    )
+    smooth_timepoints <- mats$smooth_timepoints
+    pred_mat_1 <- mats$pred_mat_1
+    pred_mat_2 <- mats$pred_mat_2
+    
+    features_to_plot <- .select_features_to_plot(
+        avrg_diff_conditions,
         interaction_condition_time,
-        .data$feature_names
+        max_hit_number,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction
     )
     
-    smooth_timepoints <- predicted_timecurves$time_grid
-    pred_mat_1 <- predicted_timecurves$predictions[[condition_1]]
-    pred_mat_2 <- predicted_timecurves$predictions[[condition_2]]
-    
-    # meta/time and titles
-    time_points <- meta$Time
-    titles <- data.frame(
-        FeatureID = time_effect_1$feature_nr,
-        feature_names = time_effect_1$feature_names
+    features_to_plot <- .filter_features_in_prediction_mats(
+        features_to_plot,
+        pred_mat_1,
+        pred_mat_2
     )
-    
-    features_to_plot <- select_balanced_hits(
-        avrg_df = dplyr::select(
-            avrg_diff_conditions,
-            "feature_nr",
-            "feature_names",
-            dplyr::any_of("adj.P.Val")
-        ),
-        inter_df = dplyr::select(
-            interaction_condition_time,
-            "feature_nr",
-            "feature_names",
-            dplyr::any_of("adj.P.Val")
-        ),
-        max_n = max_hit_number,
-        adj_pthresh_avrg_diff_conditions = adj_pthresh_avrg_diff_conditions,
-        adj_pthresh_interaction = adj_pthresh_interaction
-    )
-
-    # sanity check: ensure features exist in prediction matrices
-    if (!is.null(rownames(pred_mat_1))) {
-        features_to_plot <- features_to_plot[
-            features_to_plot$feature_names %in% rownames(pred_mat_1) &
-                features_to_plot$feature_names %in% rownames(pred_mat_2),
-            ,
-            drop = FALSE
-        ]
-    }
     
     plot_list <- list()
     feature_names_list <- list()
-    
-    # helper for stars (annotation only)
-    stars_from <- function(pval, thresh) {
-        if (is.na(pval)) {
-            return("")
-        }
-        if (pval < thresh / 500) {
-            "****"
-        } else if (pval < thresh / 50) {
-            "***"
-        } else if (pval < thresh / 5) {
-            "**"
-        } else if (pval < thresh) {
-            "*"
-        } else {
-            ""
-        }
-    }
-    
-    # precompute shape mapping if replicates used
-    if (!is.null(replicate_column)) {
-        distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)
-        fallback_shapes <- rep(1, 100)
-        uniq_rep <- unique(meta[[replicate_column]])
-        shape_mapping <- setNames(
-            c(distinct_shapes, fallback_shapes)[seq_along(uniq_rep)],
-            uniq_rep
-        )
-    }
     
     for (i in seq_len(nrow(features_to_plot))) {
         hit_index <- as.numeric(features_to_plot$feature_nr[i])
         feature_name <- features_to_plot$feature_names[i]
         
-        # membership (feature is in which category table)
-        is_cat2 <- feature_name %in% avrg_diff_conditions$feature_names
-        is_cat3 <- feature_name %in%
-            interaction_condition_time$feature_names
+        cat2_eff <- .get_cat2_effect(
+            avrg_diff_conditions,
+            feature_name
+        )
         
-        # Category 2 effect size (from FIRST column of
-        # avrg_diff_conditions)
-        cat2_eff <- NA_real_
-        cat2_colname <- colnames(avrg_diff_conditions)[1]
-        if (is_cat2) {
-            row_cat2 <- avrg_diff_conditions[
-                avrg_diff_conditions$feature_names == feature_name,
-                ,
-                drop = FALSE
-            ]
-            if (nrow(row_cat2) > 0) {
-                cat2_eff <- as.numeric(row_cat2[[1]])
-            }
-        }
+        cat3 <- .get_cat3_effects(
+            predicted_timecurves,
+            condition_1,
+            condition_2,
+            feature_name
+        )
+        es1 <- cat3$es1
+        es2 <- cat3$es2
+        diff_es <- cat3$diff_es
         
-        # Category 3 effect sizes per condition and per contrast
-        es1 <- NA_real_
-        es2 <- NA_real_
-        diff_es <- NA_real_
-        
-        if (is_cat3) {
-            # per-condition Cat1 effect sizes (unchanged structure)
-            es_list <- predicted_timecurves$time_effect_effect_size
-            if (!is.null(es_list[[condition_1]])) {
-                es1 <- unname(es_list[[condition_1]][feature_name])
-            }
-            if (!is.null(es_list[[condition_2]])) {
-                es2 <- unname(es_list[[condition_2]][feature_name])
-            }
-            
-            # per-contrast Cat3 effect sizes (new structure: list)
-            ies <- predicted_timecurves$interaction_effect_size
-            if (!is.null(ies)) {
-                ies_vec <- NULL
-                if (is.list(ies)) {
-                    pair_name <- paste0(
-                        condition_1,
-                        "_vs_",
-                        condition_2
-                    )
-                    ies_vec <- ies[[pair_name]]
-                    if (is.null(ies_vec)) {
-                        # optional: try reversed name if used upstream
-                        pair_name_rev <- paste0(
-                            condition_2,
-                            "_vs_",
-                            condition_1
-                        )
-                        ies_vec <- ies[[pair_name_rev]]
-                    }
-                } else {
-                    # backward/simple case: single vector
-                    ies_vec <- ies
-                }
-                
-                if (!is.null(ies_vec)) {
-                    tmp <- unname(ies_vec[feature_name])
-                    if (length(tmp)) diff_es <- tmp[1]
-                }
-            }
-        }
-        
-        row_values <- data[hit_index, ]
-        
-        # imputation flags (by condition)
-        if (!is.null(raw_data)) {
-            columns_condition_1 <- which(
-                meta[[condition]] == condition_1
-            )
-            columns_condition_2 <- which(
-                meta[[condition]] == condition_2
-            )
-            na_indices_cond1 <- columns_condition_1[
-                which(
-                    is.na(
-                        raw_data[hit_index, columns_condition_1]
-                    )
-                )
-            ]
-            na_indices_cond2 <- columns_condition_2[
-                which(
-                    is.na(
-                        raw_data[hit_index, columns_condition_2]
-                    )
-                )
-            ]
-            plot_data <- data.frame(
-                Time = time_points,
-                Y1 = ifelse(
-                    meta[[condition]] == condition_1,
-                    row_values,
-                    NA
-                ),
-                Y2 = ifelse(
-                    meta[[condition]] == condition_2,
-                    row_values,
-                    NA
-                ),
-                IsImputed1 = ifelse(
-                    seq_along(row_values) %in% na_indices_cond1,
-                    "Imputed",
-                    "Measured"
-                ),
-                IsImputed2 = ifelse(
-                    seq_along(row_values) %in% na_indices_cond2,
-                    "Imputed",
-                    "Measured"
-                )
-            )
-            has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
-            has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
-        } else {
-            plot_data <- data.frame(
-                Time = time_points,
-                Y1 = ifelse(
-                    meta[[condition]] == condition_1,
-                    row_values,
-                    NA
-                ),
-                Y2 = ifelse(
-                    meta[[condition]] == condition_2,
-                    row_values,
-                    NA
-                ),
-                IsImputed1 = "Measured",
-                IsImputed2 = "Measured"
-            )
-            has_imputed_1 <- FALSE
-            has_imputed_2 <- FALSE
-        }
-        
-        if (!is.null(replicate_column)) {
-            plot_data$Replicate <- meta[[replicate_column]]
-            plot_data$ReplicateLabel <-
-                replicate_mapping[meta[[replicate_column]]]
-        }
-        
-        fitted_values_1 <- as.numeric(pred_mat_1[feature_name, ])
-        fitted_values_2 <- as.numeric(pred_mat_2[feature_name, ])
-        
-        # pull p-values for annotation (dfs are already filtered)
         avrg_diff_pval <- safe_pull_pval(
             avrg_diff_conditions,
             feature_name,
             "adj.P.Val"
         )
+        
         interaction_pval <- safe_pull_pval(
             interaction_condition_time,
             feature_name,
             "adj.P.Val"
         )
         
-        avrg_diff_stars <- stars_from(
+        cat2_ok <- .is_sig_and_rel(
             avrg_diff_pval,
-            adj_pthresh_avrg_diff_conditions
-        )
-        interaction_stars <- stars_from(
-            interaction_pval,
-            adj_pthresh_interaction
+            adj_pthresh_avrg_diff_conditions,
+            cat2_eff,
+            min_effect_size[["avg_diff_cond"]]
         )
         
-        # average CV per condition
+        cat3_ok <- .is_sig_and_rel(
+            interaction_pval,
+            adj_pthresh_interaction,
+            diff_es,
+            min_effect_size[["interaction_cond_time"]]
+        )
+        
+        if (!(cat2_ok || cat3_ok)) {
+            next
+        }
+        
+        pd <- .build_plot_data(
+            data,
+            raw_data,
+            meta,
+            condition,
+            replicate_column,
+            replicate_mapping,
+            hit_index,
+            condition_1,
+            condition_2
+        )
+        plot_data <- pd$plot_data
+        has_imputed_1 <- pd$has_imputed_1
+        has_imputed_2 <- pd$has_imputed_2
+        
+        fitted_values_1 <- as.numeric(
+            pred_mat_1[feature_name, ]
+        )
+        fitted_values_2 <- as.numeric(
+            pred_mat_2[feature_name, ]
+        )
+        
         cv_1 <- calc_cv(
             time_values = plot_data$Time,
             response_values = plot_data$Y1
@@ -4153,249 +4071,39 @@ plot_spline_comparisons <- function(
             response_values = plot_data$Y2
         )
         
-        plot_data$ColorLabel1 <- ifelse(
-            plot_data$IsImputed1 == "Imputed",
-            paste("Imputed data", condition_1),
-            paste("Data", condition_1)
-        )
-        plot_data$ColorLabel2 <- ifelse(
-            plot_data$IsImputed2 == "Imputed",
-            paste("Imputed data", condition_2),
-            paste("Data", condition_2)
+        title_lines <- .build_title_lines(
+            feature_name = feature_name,
+            avrg_diff_pval = avrg_diff_pval,
+            interaction_pval = interaction_pval,
+            adj_pthresh_avrg_diff_conditions =
+                adj_pthresh_avrg_diff_conditions,
+            adj_pthresh_interaction =
+                adj_pthresh_interaction,
+            cat2_eff = cat2_eff,
+            es1 = es1,
+            es2 = es2,
+            diff_es = diff_es,
+            condition_1 = condition_1,
+            condition_2 = condition_2,
+            min_effect_size = min_effect_size,
+            cv_1 = cv_1,
+            cv_2 = cv_2
         )
         
-        fmt_p_for_title <- function(p) {
-            if (is.na(p)) "ns" else as.character(signif(p, 2))
-        }
-        
-        p <- local({
-            p <- ggplot2::ggplot() +
-                ggplot2::geom_point(
-                    data = plot_data,
-                    ggplot2::aes(
-                        x = .data$Time,
-                        y = .data$Y1,
-                        color = .data$ColorLabel1,
-                        shape = if (!is.null(replicate_column)) {
-                            .data$Replicate
-                        } else {
-                            NULL
-                        }
-                    ),
-                    na.rm = TRUE,
-                    alpha = 0.5
-                ) +
-                ggplot2::geom_line(
-                    data = data.frame(
-                        Time = smooth_timepoints,
-                        Fitted = fitted_values_1
-                    ),
-                    ggplot2::aes(
-                        x = .data$Time,
-                        y = .data$Fitted,
-                        color = paste("Spline", condition_1)
-                    )
-                ) +
-                ggplot2::geom_point(
-                    data = plot_data,
-                    ggplot2::aes(
-                        x = .data$Time,
-                        y = .data$Y2,
-                        color = .data$ColorLabel2,
-                        shape = if (!is.null(replicate_column)) {
-                            .data$Replicate
-                        } else {
-                            NULL
-                        }
-                    ),
-                    na.rm = TRUE,
-                    alpha = 0.5
-                ) +
-                ggplot2::geom_line(
-                    data = data.frame(
-                        Time = smooth_timepoints,
-                        Fitted = fitted_values_2
-                    ),
-                    ggplot2::aes(
-                        x = .data$Time,
-                        y = .data$Fitted,
-                        color = paste("Spline", condition_2)
-                    )
-                ) +
-                ggplot2::guides(
-                    color = ggplot2::guide_legend(title = NULL),
-                    shape = ggplot2::guide_legend(title = "Replicate")
-                ) +
-                ggplot2::scale_x_continuous(
-                    labels = scales::label_number_auto()
-                ) +
-                ggplot2::guides(
-                    x = ggplot2::guide_axis(check.overlap = TRUE)
-                )
-            
-            title_lines <- c(
-                feature_name,
-                paste(
-                    "adj.P.Val avrg_diff_conditions:",
-                    fmt_p_for_title(avrg_diff_pval),
-                    avrg_diff_stars
-                ),
-                paste(
-                    "adj.P.Val interaction_condition_time:",
-                    fmt_p_for_title(interaction_pval),
-                    interaction_stars
-                )
-            )
-            
-            if (is_cat2 && !is.na(cat2_eff)) {
-                title_lines <- c(
-                    title_lines,
-                    paste0(
-                        "Avrg diff conditions: ",
-                        signif(cat2_eff, 3)
-                    )
-                )
-            }
-            if (is_cat3 && (!is.na(es1) || !is.na(es2))) {
-                title_lines <- c(
-                    title_lines,
-                    paste0(
-                        "cT: ",
-                        condition_1,
-                        "=",
-                        ifelse(
-                            is.na(es1),
-                            "NA",
-                            signif(es1, 3)
-                        ),
-                        " | ",
-                        condition_2,
-                        "=",
-                        ifelse(
-                            is.na(es2),
-                            "NA",
-                            signif(es2, 3)
-                        ),
-                        " | cDT: ",
-                        ifelse(
-                            is.na(diff_es),
-                            "NA",
-                            signif(diff_es, 3)
-                        )
-                    )
-                )
-            }
-            
-            title_lines <- c(
-                title_lines,
-                paste0(
-                    "avg CV ",
-                    condition_1,
-                    ": ",
-                    round(cv_1, 2),
-                    "% | ",
-                    "avg CV ",
-                    condition_2,
-                    ": ",
-                    round(cv_2, 2),
-                    "%"
-                )
-            )
-            
-            p <- p + ggplot2::labs(
-                title = paste(title_lines, collapse = "\n"),
-                x = paste0(
-                    "Time [",
-                    plot_info[["time_unit"]],
-                    "]"
-                ),
-                y = plot_info[["y_axis_label"]]
-            )
-            
-            if (!is.null(replicate_column)) {
-                p <- p + ggplot2::scale_shape_manual(
-                    values = shape_mapping,
-                    name = "Replicate"
-                )
-            }
-            
-            p <- p + ggplot2::theme_minimal() +
-                ggplot2::theme(
-                    legend.position = "right",
-                    legend.title = ggplot2::element_blank(),
-                    plot.title = ggplot2::element_text(size = 7),
-                    legend.text = ggplot2::element_text(size = 8),
-                    legend.key.height = ggplot2::unit(0.4, "cm"),
-                    legend.key.width = ggplot2::unit(0.8, "cm"),
-                    axis.title.x = ggplot2::element_text(size = 14),
-                    axis.title.y = ggplot2::element_text(size = 14),
-                    axis.text.x = ggplot2::element_text(size = 12),
-                    axis.text.y = ggplot2::element_text(size = 12)
-                )
-            
-            y_combined <- c(plot_data$Y1, plot_data$Y2)
-            y_max <- max(y_combined, na.rm = TRUE)
-            y_min <- min(y_combined, na.rm = TRUE)
-            y_extension <- (y_max - y_min) * 0.1
-            y_pos_label <- y_max + y_extension * 0.5
-            
-            result <- maybe_add_dashed_lines(
-                p = p,
-                plot_info = plot_info,
-                condition_1 = condition_1,
-                condition_2 = condition_2,
-                y_pos = y_pos_label,
-                horizontal_labels = TRUE
-            )
-            p <- result$p
-            treatment_colors <- result$treatment_colors
-            
-            color_values <- setNames(
-                c(
-                    "orange",
-                    "orange",
-                    "purple",
-                    "purple",
-                    "red",
-                    "dodgerblue"
-                ),
-                c(
-                    paste("Data", condition_1),
-                    paste("Spline", condition_1),
-                    paste("Data", condition_2),
-                    paste("Spline", condition_2),
-                    paste("Imputed data", condition_1),
-                    paste("Imputed data", condition_2)
-                )
-            )
-            
-            filtered_labels <- c(
-                paste("Data", condition_1),
-                paste("Spline", condition_1),
-                paste("Data", condition_2),
-                paste("Spline", condition_2)
-            )
-            if (has_imputed_1) {
-                filtered_labels <- c(
-                    filtered_labels,
-                    paste("Imputed data", condition_1)
-                )
-            }
-            if (has_imputed_2) {
-                filtered_labels <- c(
-                    filtered_labels,
-                    paste("Imputed data", condition_2)
-                )
-            }
-            
-            color_values <- c(
-                color_values[
-                    names(color_values) %in% filtered_labels
-                ],
-                treatment_colors
-            )
-            p + ggplot2::scale_color_manual(values = color_values)
-        })
+        p <- .build_comparison_plot(
+            plot_data = plot_data,
+            smooth_timepoints = smooth_timepoints,
+            fitted_values_1 = fitted_values_1,
+            fitted_values_2 = fitted_values_2,
+            condition_1 = condition_1,
+            condition_2 = condition_2,
+            replicate_column = replicate_column,
+            shape_mapping = shape_mapping,
+            plot_info = plot_info,
+            title_lines = title_lines,
+            has_imputed_1 = has_imputed_1,
+            has_imputed_2 = has_imputed_2
+        )
         
         plot_list[[length(plot_list) + 1]] <- p
         feature_names_list[[length(feature_names_list) + 1]] <-
@@ -4642,7 +4350,10 @@ build_cluster_hits_report <- function(
                     ),
                     adj_pvalue_threshold,
                     nr_hits,
-                    generate_asterisks_definition(adj_pvalue_threshold)
+                    generate_asterisks_definition(
+                        adj_pvalue_threshold = adj_pvalue_threshold,
+                        include_ns = FALSE
+                        )
                 )
 
                 html_content <- paste(
@@ -4725,7 +4436,10 @@ build_cluster_hits_report <- function(
                 adjusted_p_val <- adj_pthresh_time_effect
                 header_text <- "Individual Significant Features (Hits) Splines"
                 asterisks_definition <- 
-                    generate_asterisks_definition(adjusted_p_val)
+                    generate_asterisks_definition(
+                        adj_pvalue_threshold = adj_pvalue_threshold,
+                        include_ns = FALSE
+                    )
             }
 
             # Add the main title as a section title with an anchor
@@ -4815,37 +4529,17 @@ build_cluster_hits_report <- function(
             sep = "\n"
         )
         
-        # Asterisks definitions (shared for all contrasts)
         asterisks_definition_avrg_diff <- paste(
             "<div style='text-align:center; margin-bottom: 20px;'>",
-            "<b><span style='font-size:24pt;",
-            "'>Asterisks definition (Average Diff Conditions):</span></b><br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_avrg_diff_conditions,
-                "--> *</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_avrg_diff_conditions / 5,
-                "--> **</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_avrg_diff_conditions / 50,
-                "--> ***</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_avrg_diff_conditions / 500,
-                "--> ****</span>",
-                sep = " "
+            generate_asterisks_definition(
+                adj_pvalue_threshold =
+                    adj_pthresh_avrg_diff_conditions,
+                header_html = paste(
+                    "<b><span style='font-size:24pt;'>",
+                    "Asterisks definition (Average Diff Conditions):",
+                    "</span></b>",
+                    sep = ""
+                )
             ),
             "</div>",
             sep = "\n"
@@ -4853,34 +4547,15 @@ build_cluster_hits_report <- function(
         
         asterisks_definition_interaction <- paste(
             "<div style='text-align:center; margin-bottom: 40px;'>",
-            "<b><span style='font-size:24pt;",
-            "'>Asterisks definition (Interaction):</span></b><br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_interaction_condition_time,
-                "--> *</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_interaction_condition_time / 5,
-                "--> **</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_interaction_condition_time / 50,
-                "--> ***</span>",
-                sep = " "
-            ),
-            "<br>",
-            paste(
-                "<span style='font-size:18pt;'>Adj. p-value <",
-                adj_pthresh_interaction_condition_time / 500,
-                "--> ****</span>",
-                sep = " "
+            generate_asterisks_definition(
+                adj_pvalue_threshold =
+                    adj_pthresh_interaction_condition_time,
+                header_html = paste(
+                    "<b><span style='font-size:24pt;'>",
+                    "Asterisks definition (Interaction):",
+                    "</span></b>",
+                    sep = ""
+                )
             ),
             "</div>",
             sep = "\n"
@@ -6099,47 +5774,82 @@ maybe_add_dashed_lines <- function(
 #' @noRd
 #'
 #' @description
-#' This function generates an HTML string that defines the asterisk notation
-#' based on the adjusted p-value threshold.
+#' Generate an HTML string defining the asterisk notation based on an adjusted
+#' p-value threshold. Allows an optional title/header string and optional
+#' inclusion of the "ns" (not significant) definition line.
 #'
 #' @param adj_pvalue_threshold Numeric. The adjusted p-value threshold.
+#' @param header_html Character. Optional HTML shown above the definition lines
+#'   (e.g., a <div> with centered title). If NULL, a default header is used.
+#' @param include_ns Logical. Whether to include the "Adj. p-value > threshold
+#'   --> ns" line. Default TRUE.
+#' @param ns_label Character. Label appended after "ns". Default "ns".
 #'
 #' @return A character string containing the HTML definition for the asterisks.
 #'
-#' @examples
-#' generate_asterisks_definition(0.05)
-#' # Returns an HTML string for the asterisk definitions.
-generate_asterisks_definition <- function(adj_pvalue_threshold) {
-    paste(
-        "<b><span style='font-size:20pt; margin-bottom: 0;'>",
-        "Asterisks definition:</span></b>",
+generate_asterisks_definition <- function(
+        adj_pvalue_threshold,
+        header_html = NULL,
+        include_ns = TRUE,
+        ns_label = "ns"
+) {
+    if (is.null(header_html)) {
+        header_html <- paste(
+            "<b><span style='font-size:20pt; margin-bottom: 0;'>",
+            "Asterisks definition time effect:</span></b>",
+            sep = ""
+        )
+    }
+    
+    lines <- character(0)
+    
+    if (isTRUE(include_ns)) {
+        lines <- c(
+            lines,
+            paste(
+                "Adj. p-value >",
+                adj_pvalue_threshold,
+                "-->",
+                ns_label,
+                sep = " "
+            )
+        )
+    }
+    
+    lines <- c(
+        lines,
         paste(
             "Adj. p-value <",
             adj_pvalue_threshold,
             "--> *",
             sep = " "
-            ),
+        ),
         paste(
             "Adj. p-value <",
             adj_pvalue_threshold / 5,
             "--> **",
             sep = " "
-            ),
+        ),
         paste(
             "Adj. p-value <",
             adj_pvalue_threshold / 50,
             "--> ***",
             sep = " "
-            ),
+        ),
         paste(
             "Adj. p-value <",
             adj_pvalue_threshold / 500,
             "--> ****",
             sep = " "
-            ),
-        sep = "<br>"
+        )
+    )
+    
+    paste(
+        c(header_html, lines),
+        collapse = "<br>"
     )
 }
+
 
 
 #' Preselect features for plotting based on significance
@@ -6525,6 +6235,1113 @@ safe_pull_pval <- function(
         dplyr::filter(.data$feature_names == feature_name) |>
         dplyr::pull({{ col }})
     if (length(v) == 0 || is.na(v[1])) NA_real_ else as.numeric(v[1])
+}
+
+
+#' Sort result tables by feature name for stable plotting
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function sorts the provided result tables by
+#' `feature_names` to ensure stable and reproducible downstream behavior
+#' (e.g., consistent plot ordering and matching across tables).
+#'
+#' @param time_effect_1 A data frame for the first condition containing a
+#'   `feature_names` column.
+#' @param time_effect_2 A data frame for the second condition containing a
+#'   `feature_names` column.
+#' @param avrg_diff_conditions A data frame containing `feature_names` for
+#'   average-difference (category 2) results.
+#' @param interaction_condition_time A data frame containing `feature_names`
+#'   for interaction (category 3) results.
+#'
+#' @return
+#' A named list with four elements: `time_effect_1`, `time_effect_2`,
+#' `avrg_diff_conditions`, and `interaction_condition_time`, each sorted by
+#' `feature_names`.
+#'
+#' @importFrom dplyr arrange
+#'
+.sort_inputs_for_plotting <- function(
+        time_effect_1,
+        time_effect_2,
+        avrg_diff_conditions,
+        interaction_condition_time
+) {
+    list(
+        time_effect_1 = dplyr::arrange(
+            time_effect_1,
+            .data$feature_names
+        ),
+        time_effect_2 = dplyr::arrange(
+            time_effect_2,
+            .data$feature_names
+        ),
+        avrg_diff_conditions = dplyr::arrange(
+            avrg_diff_conditions,
+            .data$feature_names
+        ),
+        interaction_condition_time = dplyr::arrange(
+            interaction_condition_time,
+            .data$feature_names
+        )
+    )
+}
+
+
+#' Extract prediction matrices and time grid for two conditions
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function retrieves the spline prediction matrices
+#' and the corresponding time grid for two specified conditions from a
+#' `predicted_timecurves` object. The returned components are used for
+#' plotting fitted spline curves alongside observed data.
+#'
+#' @param predicted_timecurves A list-like object containing a numeric vector
+#'   `time_grid` and a named list `predictions`, where each element is a
+#'   matrix of predicted values indexed by feature and time.
+#' @param condition_1 A character scalar giving the name of the first
+#'   condition to extract from `predicted_timecurves$predictions`.
+#' @param condition_2 A character scalar giving the name of the second
+#'   condition to extract from `predicted_timecurves$predictions`.
+#'
+#' @return
+#' A named list with three elements: `smooth_timepoints` (the shared time
+#' grid), `pred_mat_1` (prediction matrix for `condition_1`), and
+#' `pred_mat_2` (prediction matrix for `condition_2`).
+#'
+#' @details
+#' The function assumes that `condition_1` and `condition_2` are valid names
+#' in `predicted_timecurves$predictions`. No additional validation is
+#' performed; missing entries will propagate as `NULL` and should be
+#' handled by the calling code.
+#'
+.get_prediction_mats <- function(
+        predicted_timecurves,
+        condition_1,
+        condition_2
+) {
+    list(
+        smooth_timepoints = predicted_timecurves$time_grid,
+        pred_mat_1 = predicted_timecurves$predictions[[condition_1]],
+        pred_mat_2 = predicted_timecurves$predictions[[condition_2]]
+    )
+}
+
+
+#' Select a balanced set of features for spline comparison plots
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function delegates to `select_balanced_hits()` to
+#' choose a limited, balanced set of features for plotting based on
+#' category-2 (average difference) and category-3 (interaction) results.
+#' Selection is driven by adjusted p-values and user-defined thresholds.
+#'
+#' @param avrg_diff_conditions A data frame containing category-2 results,
+#'   including columns `feature_nr`, `feature_names`, and optionally
+#'   `adj.P.Val`.
+#' @param interaction_condition_time A data frame containing category-3
+#'   results, including columns `feature_nr`, `feature_names`, and optionally
+#'   `adj.P.Val`.
+#' @param max_hit_number Integer. The maximum number of features to select
+#'   for plotting.
+#' @param adj_pthresh_avrg_diff_conditions Numeric. Adjusted p-value
+#'   threshold used for category-2 results.
+#' @param adj_pthresh_interaction Numeric. Adjusted p-value threshold used
+#'   for category-3 interaction results.
+#'
+#' @return
+#' A data frame with at least the columns `feature_nr` and `feature_names`,
+#' containing the features selected for plotting.
+#'
+#' @details
+#' The function performs no additional filtering beyond delegating to
+#' `select_balanced_hits()`. It ensures that only the required columns are
+#' passed downstream, providing a stable interface for the plotting
+#' pipeline.
+#'
+#' @importFrom dplyr select any_of
+#'
+.select_features_to_plot <- function(
+        avrg_diff_conditions,
+        interaction_condition_time,
+        max_hit_number,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction
+) {
+    select_balanced_hits(
+        avrg_df = dplyr::select(
+            avrg_diff_conditions,
+            "feature_nr",
+            "feature_names",
+            dplyr::any_of("adj.P.Val")
+        ),
+        inter_df = dplyr::select(
+            interaction_condition_time,
+            "feature_nr",
+            "feature_names",
+            dplyr::any_of("adj.P.Val")
+        ),
+        max_n = max_hit_number,
+        adj_pthresh_avrg_diff_conditions =
+            adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction =
+            adj_pthresh_interaction
+    )
+}
+
+
+#' Filter selected features to those present in prediction matrices
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function restricts a set of selected features to
+#' those that are present in both prediction matrices used for plotting.
+#' This prevents downstream subsetting errors when extracting fitted
+#' spline values by feature name.
+#'
+#' @param features_to_plot A data frame containing at least a
+#'   `feature_names` column identifying selected features.
+#' @param pred_mat_1 A numeric matrix of predicted values for the first
+#'   condition, with row names corresponding to feature identifiers.
+#' @param pred_mat_2 A numeric matrix of predicted values for the second
+#'   condition, with row names corresponding to feature identifiers.
+#'
+#' @return
+#' A data frame containing only those rows of `features_to_plot` whose
+#' `feature_names` occur as row names in both `pred_mat_1` and `pred_mat_2`.
+#'
+#' @details
+#' If `pred_mat_1` has no row names, no filtering is applied and
+#' `features_to_plot` is returned unchanged. The function assumes that
+#' `pred_mat_1` and `pred_mat_2` use the same feature identifiers.
+#'
+.filter_features_in_prediction_mats <- function(
+        features_to_plot,
+        pred_mat_1,
+        pred_mat_2
+) {
+    if (is.null(rownames(pred_mat_1))) {
+        return(features_to_plot)
+    }
+    
+    features_to_plot[
+        features_to_plot$feature_names %in% rownames(pred_mat_1) &
+            features_to_plot$feature_names %in% rownames(pred_mat_2),
+        ,
+        drop = FALSE
+    ]
+}
+
+
+#' Create a replicate-to-index mapping for plotting
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function generates a named integer vector that maps
+#' replicate identifiers to consecutive numeric indices. The mapping is
+#' used to provide stable shape assignments when plotting replicate-level
+#' observations.
+#'
+#' @param meta A data frame containing sample-level metadata.
+#' @param replicate_column A character scalar giving the name of the column
+#'   in `meta` that identifies biological or technical replicates. If
+#'   `NULL`, no mapping is created.
+#'
+#' @return
+#' A named integer vector mapping replicate identifiers to indices, or
+#' `NULL` if `replicate_column` is `NULL`.
+#'
+#' @details
+#' Replicate identifiers are taken in the order returned by
+#' `unique(meta[[replicate_column]])`. The mapping is intended for use with
+#' discrete aesthetics such as point shapes in ggplot2.
+#'
+.make_replicate_mapping <- function(
+        meta,
+        replicate_column
+) {
+    if (is.null(replicate_column)) {
+        return(NULL)
+    }
+    
+    setNames(
+        seq_along(unique(meta[[replicate_column]])),
+        unique(meta[[replicate_column]])
+    )
+}
+
+
+#' Create a shape mapping for replicate identifiers
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function assigns point shapes to replicate
+#' identifiers for use in ggplot2 visualizations. A set of distinct shapes
+#' is used first, followed by a fallback shape if the number of replicates
+#' exceeds the distinct set.
+#'
+#' @param meta A data frame containing sample-level metadata.
+#' @param replicate_column A character scalar giving the name of the column
+#'   in `meta` that identifies biological or technical replicates. If
+#'   `NULL`, no shape mapping is created.
+#'
+#' @return
+#' A named integer vector mapping replicate identifiers to ggplot2 shape
+#' codes, or `NULL` if `replicate_column` is `NULL`.
+#'
+#' @details
+#' The function assigns shapes in the order of
+#' `unique(meta[[replicate_column]])`. If the number of replicates exceeds
+#' the predefined set of distinct shapes, the remaining replicates are
+#' assigned a fallback shape to avoid errors.
+#'
+.make_shape_mapping <- function(
+        meta,
+        replicate_column
+) {
+    if (is.null(replicate_column)) {
+        return(NULL)
+    }
+    
+    distinct_shapes <- c(21, 22, 23, 24, 25, 3, 4, 8)
+    fallback_shapes <- rep(1, 100)
+    uniq_rep <- unique(meta[[replicate_column]])
+    
+    setNames(
+        c(distinct_shapes, fallback_shapes)[seq_along(uniq_rep)],
+        uniq_rep
+    )
+}
+
+
+#' Extract category-2 (average difference) effect size for a feature
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function retrieves the category-2 effect size
+#' (average difference between conditions) for a given feature from the
+#' corresponding results table. If the feature is not present, a numeric
+#' `NA` is returned.
+#'
+#' @param avrg_diff_conditions A data frame containing category-2 results,
+#'   including a `feature_names` column and an effect-size column in the
+#'   first position.
+#' @param feature_name A character scalar giving the feature identifier
+#'   to extract.
+#'
+#' @return
+#' A single numeric value: the category-2 effect size for the feature, or
+#' `NA_real_` if the feature is not present in `avrg_diff_conditions`.
+#'
+#' @details
+#' The function assumes that the first column of `avrg_diff_conditions`
+#' contains the effect size of interest. No assumptions are made about the
+#' column name, allowing flexibility in upstream result formatting.
+#'
+.get_cat2_effect <- function(
+        avrg_diff_conditions,
+        feature_name
+) {
+    if (!feature_name %in% avrg_diff_conditions$feature_names) {
+        return(NA_real_)
+    }
+    
+    row_cat2 <- avrg_diff_conditions[
+        avrg_diff_conditions$feature_names == feature_name,
+        ,
+        drop = FALSE
+    ]
+    
+    if (nrow(row_cat2) == 0) {
+        return(NA_real_)
+    }
+    
+    as.numeric(row_cat2[[1]])
+}
+
+
+#' Extract category-3 (interaction) effect sizes for a feature
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function retrieves category-3 effect size information
+#' for a given feature, including per-condition time effects (category 1)
+#' and the interaction effect between two conditions. Missing values are
+#' returned as numeric `NA`s to ensure safe downstream handling.
+#'
+#' @param predicted_timecurves A list-like object containing precomputed
+#'   effect sizes, including `time_effect_effect_size` (per condition) and
+#'   `interaction_effect_size` (per condition pair or a single vector).
+#' @param condition_1 A character scalar giving the name of the first
+#'   condition.
+#' @param condition_2 A character scalar giving the name of the second
+#'   condition.
+#' @param feature_name A character scalar giving the feature identifier
+#'   for which effect sizes should be extracted.
+#'
+#' @return
+#' A named list with three numeric elements:
+#' \describe{
+#'   \item{es1}{Per-condition time effect size for `condition_1`, or
+#'   `NA_real_` if unavailable.}
+#'   \item{es2}{Per-condition time effect size for `condition_2`, or
+#'   `NA_real_` if unavailable.}
+#'   \item{diff_es}{Interaction (category-3) effect size between
+#'   `condition_1` and `condition_2`, or `NA_real_` if unavailable.}
+#' }
+#'
+#' @details
+#' The function supports two interaction effect representations:
+#' a named list indexed by condition-pair strings of the form
+#' `"<cond1>_vs_<cond2>"` (with automatic fallback to the reversed order),
+#' or a single unnamed vector for backward compatibility. All extracted
+#' values are returned as numerics.
+#'
+.get_cat3_effects <- function(
+        predicted_timecurves,
+        condition_1,
+        condition_2,
+        feature_name
+) {
+    es1 <- NA_real_
+    es2 <- NA_real_
+    diff_es <- NA_real_
+    
+    es_list <- predicted_timecurves$time_effect_effect_size
+    
+    if (!is.null(es_list[[condition_1]])) {
+        es1 <- unname(es_list[[condition_1]][feature_name])
+    }
+    
+    if (!is.null(es_list[[condition_2]])) {
+        es2 <- unname(es_list[[condition_2]][feature_name])
+    }
+    
+    ies <- predicted_timecurves$interaction_effect_size
+    
+    if (!is.null(ies)) {
+        if (is.list(ies)) {
+            pair_name <- paste0(
+                condition_1,
+                "_vs_",
+                condition_2
+            )
+            ies_vec <- ies[[pair_name]]
+            
+            if (is.null(ies_vec)) {
+                pair_name_rev <- paste0(
+                    condition_2,
+                    "_vs_",
+                    condition_1
+                )
+                ies_vec <- ies[[pair_name_rev]]
+            }
+        } else {
+            ies_vec <- ies
+        }
+        
+        if (!is.null(ies_vec)) {
+            tmp <- unname(ies_vec[feature_name])
+            
+            if (length(tmp)) {
+                diff_es <- tmp[1]
+            }
+        }
+    }
+    
+    list(
+        es1 = es1,
+        es2 = es2,
+        diff_es = diff_es
+    )
+}
+
+
+#' Build plotting data for a two-condition spline comparison
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function constructs the long-format data frame used
+#' for plotting observed values for two conditions across time. It also
+#' marks imputed versus measured observations (when `raw_data` is provided)
+#' and optionally attaches replicate identifiers for shape mapping.
+#'
+#' @param data A numeric matrix or data frame of processed values used for
+#'   plotting, with features in rows and samples in columns.
+#' @param raw_data Optional. A numeric matrix or data frame of raw (pre-
+#'   imputation) values with the same shape as `data`. Missing entries are
+#'   used to flag imputed observations. If `NULL`, all observations are
+#'   treated as measured.
+#' @param meta A data frame of sample metadata containing a numeric `Time`
+#'   column and the grouping column specified by `condition`.
+#' @param condition A character scalar naming the condition column in `meta`
+#'   used to split samples into `condition_1` and `condition_2`.
+#' @param replicate_column Optional. A character scalar naming the replicate
+#'   column in `meta`. If `NULL`, replicate fields are not added.
+#' @param replicate_mapping Optional. A named integer vector mapping
+#'   replicate identifiers to indices, typically produced by
+#'   `.make_replicate_mapping()`.
+#' @param hit_index Integer. Row index of the feature in `data`/`raw_data`
+#'   to extract for plotting.
+#' @param condition_1 A character scalar giving the first condition level.
+#' @param condition_2 A character scalar giving the second condition level.
+#'
+#' @return
+#' A named list with three elements:
+#' \describe{
+#'   \item{plot_data}{A data frame containing columns `Time`, `Y1`, `Y2`,
+#'   `IsImputed1`, and `IsImputed2`, and optionally `Replicate` and
+#'   `ReplicateLabel`.}
+#'   \item{has_imputed_1}{Logical indicating whether any imputed values are
+#'   present for `condition_1` in the extracted row.}
+#'   \item{has_imputed_2}{Logical indicating whether any imputed values are
+#'   present for `condition_2` in the extracted row.}
+#' }
+#'
+#' @details
+#' The function creates `Y1` and `Y2` vectors by assigning the feature's
+#' values to the matching condition and `NA` otherwise. When `raw_data` is
+#' provided, imputation flags are derived from `NA` entries in the raw
+#' matrix for the corresponding condition-specific sample columns.
+#'
+.build_plot_data <- function(
+        data,
+        raw_data,
+        meta,
+        condition,
+        replicate_column,
+        replicate_mapping,
+        hit_index,
+        condition_1,
+        condition_2
+) {
+    time_points <- meta$Time
+    row_values <- data[hit_index, ]
+    
+    if (!is.null(raw_data)) {
+        columns_condition_1 <- which(
+            meta[[condition]] == condition_1
+        )
+        columns_condition_2 <- which(
+            meta[[condition]] == condition_2
+        )
+        
+        na_indices_cond1 <- columns_condition_1[
+            which(
+                is.na(
+                    raw_data[hit_index, columns_condition_1]
+                )
+            )
+        ]
+        na_indices_cond2 <- columns_condition_2[
+            which(
+                is.na(
+                    raw_data[hit_index, columns_condition_2]
+                )
+            )
+        ]
+        
+        plot_data <- data.frame(
+            Time = time_points,
+            Y1 = ifelse(
+                meta[[condition]] == condition_1,
+                row_values,
+                NA
+            ),
+            Y2 = ifelse(
+                meta[[condition]] == condition_2,
+                row_values,
+                NA
+            ),
+            IsImputed1 = ifelse(
+                seq_along(row_values) %in% na_indices_cond1,
+                "Imputed",
+                "Measured"
+            ),
+            IsImputed2 = ifelse(
+                seq_along(row_values) %in% na_indices_cond2,
+                "Imputed",
+                "Measured"
+            )
+        )
+    } else {
+        plot_data <- data.frame(
+            Time = time_points,
+            Y1 = ifelse(
+                meta[[condition]] == condition_1,
+                row_values,
+                NA
+            ),
+            Y2 = ifelse(
+                meta[[condition]] == condition_2,
+                row_values,
+                NA
+            ),
+            IsImputed1 = "Measured",
+            IsImputed2 = "Measured"
+        )
+    }
+    
+    has_imputed_1 <- any(plot_data$IsImputed1 == "Imputed")
+    has_imputed_2 <- any(plot_data$IsImputed2 == "Imputed")
+    
+    if (!is.null(replicate_column)) {
+        plot_data$Replicate <- meta[[replicate_column]]
+        plot_data$ReplicateLabel <- replicate_mapping[
+            meta[[replicate_column]]
+        ]
+    }
+    
+    list(
+        plot_data = plot_data,
+        has_imputed_1 = has_imputed_1,
+        has_imputed_2 = has_imputed_2
+    )
+}
+
+
+#' Convert an adjusted p-value to an asterisk significance label
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function maps a numeric p-value to a conventional
+#' asterisk-based significance label (`*`, `**`, `***`, `****`) or `"ns"`
+#' (not significant) based on a supplied adjusted p-value threshold.
+#'
+#' @param pval A numeric scalar giving the adjusted p-value. If `NA`, an
+#'   empty string is returned.
+#' @param thresh A numeric scalar specifying the adjusted p-value threshold
+#'   used to define significance levels.
+#'
+#' @return
+#' A character scalar containing the significance label corresponding to
+#' `pval`, or an empty string if `pval` is `NA`.
+#'
+#' @details
+#' The mapping follows a standard convention:
+#' \itemize{
+#'   \item `pval < thresh` \eqn{\rightarrow} `*`
+#'   \item `pval < thresh / 5` \eqn{\rightarrow} `**`
+#'   \item `pval < thresh / 50` \eqn{\rightarrow} `***`
+#'   \item `pval < thresh / 500` \eqn{\rightarrow} `****`
+#'   \item otherwise \eqn{\rightarrow} `ns`
+#' }
+#' The function assumes `thresh` is positive and non-zero.
+#'
+.stars_from <- function(
+        pval,
+        thresh
+) {
+    if (is.na(pval)) {
+        return("")
+    }
+    
+    if (pval < thresh / 500) {
+        "****"
+    } else if (pval < thresh / 50) {
+        "***"
+    } else if (pval < thresh / 5) {
+        "**"
+    } else if (pval < thresh) {
+        "*"
+    } else {
+        "ns"
+    }
+}
+
+
+#' Format a p-value for inclusion in plot titles
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function formats a numeric p-value for display in
+#' plot titles. Finite values are rounded to two significant digits, while
+#' missing values are represented as `"NA"`.
+#'
+#' @param p A numeric scalar giving a p-value.
+#'
+#' @return
+#' A character scalar suitable for inclusion in plot titles: a formatted
+#' numeric string for non-missing values, or `"NA"` if `p` is `NA`.
+#'
+#' @details
+#' The function performs no significance assessment; it only controls
+#' textual formatting. Significance annotations (e.g., asterisks or `"ns"`)
+#' are handled separately.
+#'
+.fmt_p_for_title <- function(
+        p
+) {
+    if (is.na(p)) {
+        "NA"
+    } else {
+        as.character(signif(p, 2))
+    }
+}
+
+
+#' Test whether a result is statistically significant and relevant
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function evaluates whether a result satisfies both
+#' statistical significance and effect-size relevance criteria. It is used
+#' to gate plotting and reporting to features that pass both thresholds.
+#'
+#' @param pval A numeric scalar giving the adjusted p-value.
+#' @param pthr A numeric scalar specifying the adjusted p-value significance
+#'   threshold.
+#' @param eff A numeric scalar giving the effect size.
+#' @param effthr A numeric scalar specifying the minimum effect-size
+#'   threshold required for relevance.
+#'
+#' @return
+#' A logical scalar: `TRUE` if the result is both statistically significant
+#' (`pval < pthr`) and relevant (`abs(eff) >= effthr`), otherwise `FALSE`.
+#'
+#' @details
+#' Missing values in any of the inputs cause the function to return `FALSE`,
+#' ensuring conservative behavior when gating downstream plots or summaries.
+#'
+.is_sig_and_rel <- function(
+        pval,
+        pthr,
+        eff,
+        effthr
+) {
+    isTRUE(!is.na(pval) && pval < pthr) &&
+        isTRUE(
+            !is.na(eff) &&
+                !is.na(effthr) &&
+                abs(eff) >= effthr
+        )
+}
+
+
+#' Build title lines for a spline comparison plot
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function assembles the multi-line plot title used in
+#' spline comparison visualizations. The title summarizes statistical
+#' significance, effect sizes, relevance annotations, and average coefficient
+#' of variation (CV) for the two compared conditions.
+#'
+#' @param feature_name A character scalar giving the feature identifier.
+#' @param avrg_diff_pval A numeric scalar giving the adjusted p-value for the
+#'   category-2 (average difference) test.
+#' @param interaction_pval A numeric scalar giving the adjusted p-value for
+#'   the category-3 (interaction) test.
+#' @param adj_pthresh_avrg_diff_conditions Numeric. Adjusted p-value threshold
+#'   for category-2 significance.
+#' @param adj_pthresh_interaction Numeric. Adjusted p-value threshold for
+#'   category-3 significance.
+#' @param cat2_eff A numeric scalar giving the category-2 effect size, or
+#'   `NA_real_` if unavailable.
+#' @param es1 A numeric scalar giving the per-condition time effect size for
+#'   `condition_1`, or `NA_real_`.
+#' @param es2 A numeric scalar giving the per-condition time effect size for
+#'   `condition_2`, or `NA_real_`.
+#' @param diff_es A numeric scalar giving the category-3 interaction effect
+#'   size between the two conditions, or `NA_real_`.
+#' @param condition_1 A character scalar naming the first condition.
+#' @param condition_2 A character scalar naming the second condition.
+#' @param min_effect_size A named list of minimum effect-size thresholds,
+#'   used to label effects as not relevant (`"nr"`).
+#' @param cv_1 Numeric. Average coefficient of variation for `condition_1`.
+#' @param cv_2 Numeric. Average coefficient of variation for `condition_2`.
+#'
+#' @return
+#' A character vector of title lines to be collapsed with newline separators
+#' when added to a ggplot object.
+#'
+#' @details
+#' The title includes:
+#' \itemize{
+#'   \item The feature name.
+#'   \item Adjusted p-values for category-2 and category-3 tests with
+#'   asterisk or `"ns"` annotations.
+#'   \item Category-2 and category-3 effect sizes, annotated with `"nr"`
+#'   when below the corresponding effect-size thresholds.
+#'   \item Average CV values for both conditions.
+#' }
+#' All numeric values are formatted for concise display, and missing values
+#' are rendered as `"NA"`.
+#'
+.build_title_lines <- function(
+        feature_name,
+        avrg_diff_pval,
+        interaction_pval,
+        adj_pthresh_avrg_diff_conditions,
+        adj_pthresh_interaction,
+        cat2_eff,
+        es1,
+        es2,
+        diff_es,
+        condition_1,
+        condition_2,
+        min_effect_size,
+        cv_1,
+        cv_2
+) {
+    avrg_diff_stars <- .stars_from(
+        avrg_diff_pval,
+        adj_pthresh_avrg_diff_conditions
+    )
+    interaction_stars <- .stars_from(
+        interaction_pval,
+        adj_pthresh_interaction
+    )
+    
+    title_lines <- c(
+        feature_name,
+        paste(
+            "adj.P.Val avrg_diff_conditions:",
+            .fmt_p_for_title(avrg_diff_pval),
+            avrg_diff_stars
+        ),
+        paste(
+            "adj.P.Val interaction_condition_time:",
+            .fmt_p_for_title(interaction_pval),
+            interaction_stars
+        )
+    )
+    
+    if (!is.na(cat2_eff)) {
+        cat2_lab <- signif(cat2_eff, 3)
+        cat2_nr <- !is.null(min_effect_size[["avg_diff_cond"]]) &&
+            !is.na(min_effect_size[["avg_diff_cond"]]) &&
+            abs(cat2_eff) < min_effect_size[["avg_diff_cond"]]
+        
+        title_lines <- c(
+            title_lines,
+            paste0(
+                "Avrg diff conditions: ",
+                cat2_lab,
+                if (cat2_nr) " nr" else ""
+            )
+        )
+    }
+    
+    if (!is.na(es1) || !is.na(es2) || !is.na(diff_es)) {
+        ct1 <- if (is.na(es1)) {
+            "NA"
+        } else {
+            as.character(signif(es1, 3))
+        }
+        
+        ct2 <- if (is.na(es2)) {
+            "NA"
+        } else {
+            as.character(signif(es2, 3))
+        }
+        
+        cdt <- if (is.na(diff_es)) {
+            "NA"
+        } else {
+            as.character(signif(diff_es, 3))
+        }
+        
+        cdt_nr <- !is.null(min_effect_size[["interaction_cond_time"]]) &&
+            !is.na(min_effect_size[["interaction_cond_time"]]) &&
+            !is.na(diff_es) &&
+            abs(diff_es) < min_effect_size[["interaction_cond_time"]]
+        
+        title_lines <- c(
+            title_lines,
+            paste0(
+                "cT: ",
+                condition_1,
+                "=",
+                ct1,
+                " | ",
+                condition_2,
+                "=",
+                ct2,
+                " | cDT: ",
+                cdt,
+                if (cdt_nr) " nr" else ""
+            )
+        )
+    }
+    
+    title_lines <- c(
+        title_lines,
+        paste0(
+            "avg CV ",
+            condition_1,
+            ": ",
+            round(cv_1, 2),
+            "% | avg CV ",
+            condition_2,
+            ": ",
+            round(cv_2, 2),
+            "%"
+        )
+    )
+    
+    title_lines
+}
+
+
+#' Build a two-condition spline comparison ggplot
+#'
+#' @noRd
+#'
+#' @description
+#' This internal helper function constructs the ggplot object for a spline
+#' comparison between two conditions. It overlays observed data points and
+#' fitted spline curves, optionally encodes replicate identity via point
+#' shape, and configures legend entries for measured versus imputed data.
+#'
+#' @param plot_data A data frame produced by `.build_plot_data()`, containing
+#'   `Time`, condition-specific response columns (`Y1`, `Y2`), and imputation
+#'   flags (`IsImputed1`, `IsImputed2`). If `replicate_column` is used, it
+#'   should also contain `Replicate`.
+#' @param smooth_timepoints A numeric vector of time points used to draw
+#'   fitted spline curves.
+#' @param fitted_values_1 A numeric vector of fitted spline values for
+#'   `condition_1`, aligned to `smooth_timepoints`.
+#' @param fitted_values_2 A numeric vector of fitted spline values for
+#'   `condition_2`, aligned to `smooth_timepoints`.
+#' @param condition_1 A character scalar naming the first condition.
+#' @param condition_2 A character scalar naming the second condition.
+#' @param replicate_column Optional. A character scalar naming the replicate
+#'   column in `plot_data`. If `NULL`, replicate shapes are not mapped.
+#' @param shape_mapping Optional. A named integer vector mapping replicate
+#'   identifiers to ggplot2 shape codes, typically produced by
+#'   `.make_shape_mapping()`.
+#' @param plot_info A named list of plotting metadata, including `time_unit`
+#'   and `y_axis_label`.
+#' @param title_lines A character vector of title lines, typically produced
+#'   by `.build_title_lines()`, which will be collapsed with newlines.
+#' @param has_imputed_1 Logical. Provided for compatibility; recomputed
+#'   internally based on non-`NA` plotted points for `condition_1`.
+#' @param has_imputed_2 Logical. Provided for compatibility; recomputed
+#'   internally based on non-`NA` plotted points for `condition_2`.
+#'
+#' @return
+#' A ggplot object showing observed points and fitted spline curves for both
+#' conditions, with legends for data/spline elements and optional imputation
+#' labels.
+#'
+#' @details
+#' To prevent legend entries for imputed data when no imputed points are
+#' actually plotted, the function subsets the input into condition-specific
+#' point data (`plot_data_1`, `plot_data_2`) by removing rows with `NA`
+#' responses. Imputation presence is then evaluated on these subsets and
+#' used to control which legend labels are included in the manual color
+#' scale.
+#'
+.build_comparison_plot <- function(
+        plot_data,
+        smooth_timepoints,
+        fitted_values_1,
+        fitted_values_2,
+        condition_1,
+        condition_2,
+        replicate_column,
+        shape_mapping,
+        plot_info,
+        title_lines,
+        has_imputed_1,
+        has_imputed_2
+) {
+    plot_data$ColorLabel1 <- ifelse(
+        plot_data$IsImputed1 == "Imputed",
+        paste("Imputed data", condition_1),
+        paste("Data", condition_1)
+    )
+    plot_data$ColorLabel2 <- ifelse(
+        plot_data$IsImputed2 == "Imputed",
+        paste("Imputed data", condition_2),
+        paste("Data", condition_2)
+    )
+    
+    plot_data_1 <- plot_data[!is.na(plot_data$Y1), , drop = FALSE]
+    plot_data_2 <- plot_data[!is.na(plot_data$Y2), , drop = FALSE]
+    
+    has_imputed_1 <- any(plot_data_1$IsImputed1 == "Imputed")
+    has_imputed_2 <- any(plot_data_2$IsImputed2 == "Imputed")
+    
+    p <- ggplot2::ggplot() +
+        ggplot2::geom_point(
+            data = plot_data_1,
+            ggplot2::aes(
+                x = .data$Time,
+                y = .data$Y1,
+                color = .data$ColorLabel1,
+                shape = if (!is.null(replicate_column)) {
+                    .data$Replicate
+                } else {
+                    NULL
+                }
+            ),
+            na.rm = TRUE,
+            alpha = 0.5
+        ) +
+        ggplot2::geom_line(
+            data = data.frame(
+                Time = smooth_timepoints,
+                Fitted = fitted_values_1
+            ),
+            ggplot2::aes(
+                x = .data$Time,
+                y = .data$Fitted,
+                color = paste("Spline", condition_1)
+            )
+        ) +
+        ggplot2::geom_point(
+            data = plot_data_2,
+            ggplot2::aes(
+                x = .data$Time,
+                y = .data$Y2,
+                color = .data$ColorLabel2,
+                shape = if (!is.null(replicate_column)) {
+                    .data$Replicate
+                } else {
+                    NULL
+                }
+            ),
+            na.rm = TRUE,
+            alpha = 0.5
+        ) +
+        ggplot2::geom_line(
+            data = data.frame(
+                Time = smooth_timepoints,
+                Fitted = fitted_values_2
+            ),
+            ggplot2::aes(
+                x = .data$Time,
+                y = .data$Fitted,
+                color = paste("Spline", condition_2)
+            )
+        ) +
+        ggplot2::guides(
+            color = ggplot2::guide_legend(title = NULL),
+            shape = ggplot2::guide_legend(title = "Replicate")
+        ) +
+        ggplot2::scale_x_continuous(
+            labels = scales::label_number_auto()
+        ) +
+        ggplot2::guides(
+            x = ggplot2::guide_axis(check.overlap = TRUE)
+        ) +
+        ggplot2::labs(
+            title = paste(title_lines, collapse = "\n"),
+            x = paste0(
+                "Time [",
+                plot_info[["time_unit"]],
+                "]"
+            ),
+            y = plot_info[["y_axis_label"]]
+        )
+    
+    if (!is.null(replicate_column)) {
+        p <- p + ggplot2::scale_shape_manual(
+            values = shape_mapping,
+            name = "Replicate"
+        )
+    }
+    
+    p <- p + ggplot2::theme_minimal() +
+        ggplot2::theme(
+            legend.position = "right",
+            legend.title = ggplot2::element_blank(),
+            plot.title = ggplot2::element_text(size = 7),
+            legend.text = ggplot2::element_text(size = 8),
+            legend.key.height = ggplot2::unit(0.4, "cm"),
+            legend.key.width = ggplot2::unit(0.8, "cm"),
+            axis.title.x = ggplot2::element_text(size = 14),
+            axis.title.y = ggplot2::element_text(size = 14),
+            axis.text.x = ggplot2::element_text(size = 12),
+            axis.text.y = ggplot2::element_text(size = 12)
+        )
+    
+    y_combined <- c(plot_data$Y1, plot_data$Y2)
+    y_max <- max(y_combined, na.rm = TRUE)
+    y_min <- min(y_combined, na.rm = TRUE)
+    y_extension <- (y_max - y_min) * 0.1
+    y_pos_label <- y_max + y_extension * 0.5
+    
+    res <- maybe_add_dashed_lines(
+        p = p,
+        plot_info = plot_info,
+        condition_1 = condition_1,
+        condition_2 = condition_2,
+        y_pos = y_pos_label,
+        horizontal_labels = TRUE
+    )
+    p <- res$p
+    treatment_colors <- res$treatment_colors
+    
+    color_values <- setNames(
+        c(
+            "orange",
+            "orange",
+            "purple",
+            "purple",
+            "red",
+            "dodgerblue"
+        ),
+        c(
+            paste("Data", condition_1),
+            paste("Spline", condition_1),
+            paste("Data", condition_2),
+            paste("Spline", condition_2),
+            paste("Imputed data", condition_1),
+            paste("Imputed data", condition_2)
+        )
+    )
+    
+    filtered_labels <- c(
+        paste("Data", condition_1),
+        paste("Spline", condition_1),
+        paste("Data", condition_2),
+        paste("Spline", condition_2)
+    )
+    
+    if (has_imputed_1) {
+        filtered_labels <- c(
+            filtered_labels,
+            paste("Imputed data", condition_1)
+        )
+    }
+    
+    if (has_imputed_2) {
+        filtered_labels <- c(
+            filtered_labels,
+            paste("Imputed data", condition_2)
+        )
+    }
+    
+    color_values <- c(
+        color_values[
+            names(color_values) %in% filtered_labels
+        ],
+        treatment_colors
+    )
+    
+    p + ggplot2::scale_color_manual(
+        values = color_values,
+        drop = TRUE
+    )
 }
 
 

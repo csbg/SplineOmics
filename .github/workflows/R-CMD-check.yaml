@@ -53,7 +53,15 @@ jobs:
         run: |
           echo 'options(repos = BiocManager::repositories(version = "devel"))' >> ~/.Rprofile
 
+      - uses: r-lib/actions/setup-renv@v2
+        if: matrix.config.r != 'devel'
+
+      - name: Install rcmdcheck
+        if: matrix.config.r != 'devel'
+        run: Rscript -e 'install.packages("rcmdcheck")'
+
       - uses: r-lib/actions/setup-r-dependencies@v2
+        if: matrix.config.r == 'devel'
         with:
           extra-packages: any::rcmdcheck
           needs: check
