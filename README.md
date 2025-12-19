@@ -43,6 +43,7 @@ Workflow</figcaption>
 - [🎓 Citation](#-citation)
 - [🌟 Contributors](#-contributors)
 - [🙏 Acknowledgements](#-acknowledgements)
+- [⭐ Liking this project](#liking-this-project)
 
 ## 📘 Introduction
 
@@ -396,3 +397,15 @@ the Computational Systems Biology working group at the Paris Lodron
 University of Salzburg, Austria. You can find more information about
 Prof. Fortelny’s research group
 [here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).
+
+## ⭐ Liking this project
+
+If you find this package useful for your research or analysis, please
+consider giving the repository a **star** on GitHub. Starring helps
+increase the visibility of the project and supports its continued
+development.
+
+To star the repository, you need to be logged in to your GitHub account
+and click the **“Star”** button in the top-right corner of this page.
+
+Thank you for your support!

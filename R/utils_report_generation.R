@@ -1034,7 +1034,8 @@ get_header_section <- function(
             '<ul style="font-size: 2em; padding-left: 20px;">',
             
             '<li style="margin-bottom: 15px;">Clustering of ',
-            'features that show significant changes over time ',
+            'features that show significant and relevant ',
+            '(> effect size threshold) changes over time ',
             '(= hits).</li>',
             
             '<li style="margin-bottom: 15px;">Clustering was ',

@@ -2275,13 +2275,13 @@ construct_cluster_table <- function(
         limma_splines_results,
         all_levels_clustering,
         category_2_and_3_hits,
-        genes) {
+        genes
+        ) {
     # condition names from clustering
     cond_names <- setdiff(
         names(all_levels_clustering),
         "paired_category_3"
     )
-    
     # short condition IDs used in contrast suffixes: strip
     # "Condition_" or "condition_"
     short_cond_names <- sub("^(?i)condition_", "", cond_names, perl = TRUE)
@@ -2616,13 +2616,13 @@ construct_cluster_table <- function(
                         TRUE ~ paste0(
                             ifelse(
                                 is.na(.data[[col1]]),
-                                "ns",
+                                "nohit",
                                 as.character(.data[[col1]])
                             ),
                             "_",
                             ifelse(
                                 is.na(.data[[col2]]),
-                                "ns",
+                                "nohit",
                                 as.character(.data[[col2]])
                             )
                         )
