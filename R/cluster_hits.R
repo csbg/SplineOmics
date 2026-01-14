@@ -2722,130 +2722,70 @@ add_effect_size_columns <- function(
         category_2_and_3_hits,
         within_level_top_tables
 ) {
-    get_by_index <- function(vec, idx) {
-        idx <- as.integer(idx)
-        bad <- is.na(idx) | idx < 1L | idx > length(vec)
-        out <- vec[idx]
-        out[bad] <- NA_real_
-        out
-    }
-    
-    # Category 3 hit tables (cT, cDT)
+    # Category 3 top tables (cT, cDT)
     if (!is.null(category_2_and_3_hits)) {
         cat3 <- category_2_and_3_hits[["category_3_hits"]]
+        norm <- normalize_cat3_hits(cat3)
         
-        if (!is.null(cat3)) {
-            # Backward compat: single tibble vs list of tibbles
-            cat3_was_df <- is.data.frame(cat3)
-            if (cat3_was_df) {
-                cat3_list <- list(cat3)
-                names(cat3_list) <- "contrast_1"
-            } else {
-                cat3_list <- cat3
-            }
+        if (!is.null(norm$list)) {
+            cat3_list <- norm$list
             
-            cat3_names <- names(cat3_list)
-            if (is.null(cat3_names)) {
-                cat3_names <- paste0("contrast_", seq_along(cat3_list))
-            }
-            
-            for (k in seq_along(cat3_list)) {
+            cat3_list <- lapply(seq_along(cat3_list), function(k) {
                 tbl <- cat3_list[[k]]
+                contrast_name <- names(cat3_list)[k]
                 
-                if (!is.data.frame(tbl) ||
-                    !("feature_nr" %in% names(tbl))) {
-                    cat3_list[[k]] <- tbl
-                    next
-                }
+                # If tbl not suitable, return unchanged
+                if (!is.data.frame(tbl) 
+                    || !("feature_nr" %in% names(tbl))) return(tbl)
                 
-                contrast_name <- cat3_names[k]
-                # expected: "time_interaction_A_vs_B" or just "A_vs_B"
-                suffix <- sub("^time_interaction_", "", contrast_name)
-                parts <- strsplit(suffix, "_vs_")[[1]]
+                parsed <- parse_contrast_conditions(contrast_name)
+                suffix <- parsed$suffix
+                parts  <- parsed$parts
                 
-                # cT_<cond> columns: only for the two conditions in this
-                # contrast
-                if (length(time_effect_effect_size) == 1L &&
-                    length(parts) < 2L) {
-                    # degenerate single-condition case
-                    vec <- time_effect_effect_size[[1L]]
-                    tbl[["cT"]] <- get_by_index(
-                        vec,
-                        tbl[["feature_nr"]]
+                tbl <- add_cat3_cT(
+                    tbl,
+                    time_effect_effect_size,
+                    parts
                     )
-                } else if (length(parts) >= 2L) {
-                    for (cond_short in parts[seq_len(2)]) {
-                        if (!cond_short %in% names(time_effect_effect_size)) {
-                            next
-                        }
-                        vec <- time_effect_effect_size[[cond_short]]
-                        col_nm <- paste0("cT_", cond_short)
-                        tbl[[col_nm]] <- get_by_index(
-                            vec,
-                            tbl[["feature_nr"]]
-                        )
-                    }
-                }
                 
-                ## --- cDT column from interaction_effect_size (per contrast)
-                if (is.list(interaction_effect_size)) {
-                    ies_vec <- interaction_effect_size[[suffix]]
-                    if (is.null(ies_vec)) {
-                        ies_vec <- interaction_effect_size[[contrast_name]]
-                    }
-                } else {
-                    # backward/simple case: single vector for all contrasts
-                    ies_vec <- interaction_effect_size
-                }
-                
-                if (!is.null(ies_vec)) {
-                    tbl[["cDT"]] <- get_by_index(
-                        ies_vec,
-                        tbl[["feature_nr"]]
-                    )
-                } else {
-                    tbl[["cDT"]] <- NA_real_
-                }
-                
-                cat3_list[[k]] <- tbl
-            }
+                ies_vec <- get_interaction_es_vec(
+                    interaction_effect_size = interaction_effect_size,
+                    suffix = suffix,
+                    contrast_name = contrast_name
+                )
+
+                tbl <- add_cat3_cDT(tbl, ies_vec)
+                tbl
+            })
             
-            if (cat3_was_df) {
-                category_2_and_3_hits[["category_3_hits"]] <- cat3_list[[1L]]
+            # restore original structure (df vs list)
+            category_2_and_3_hits[["category_3_hits"]] <- if (norm$was_df) {
+                cat3_list[[1L]]
             } else {
-                category_2_and_3_hits[["category_3_hits"]] <- cat3_list
+                cat3_list
             }
         }
     }
     
-    # within_level_top_tables: per-condition cT
+    # category 1: within_level_top_tables: per-condition cT
     for (nm in names(time_effect_effect_size)) {
-        tt_names <- names(within_level_top_tables)
-        # match nm to suffix after first underscore in tt_names
-        suffixes <- sub("^[^_]*_", "", tt_names)
-        idx <- match(nm, suffixes)
-        if (is.na(idx)) next
         
-        tt_name <- tt_names[[idx]]
+        tt_name <- find_within_level_table_name(
+            within_level_top_tables,
+            nm
+            )
+        if (is.na(tt_name)) next
+        
         tt <- within_level_top_tables[[tt_name]]
         
-        # skip if element is NA-like or not a data.frame
-        if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) {
-            next
-        }
-        if (!is.data.frame(tt)) {
-            next
-        }
-        if (!("feature_nr" %in% names(tt))) {
-            next
-        }
+        # skip NA-like placeholders
+        if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) next
+        if (!is.data.frame(tt)) next
+        if (!("feature_nr" %in% names(tt))) next
         
         vec <- time_effect_effect_size[[nm]]
-        cT_vals <- get_by_index(
-            vec,
-            tt[["feature_nr"]]
-        )
-        tt[["cT"]] <- cT_vals
+        tt[["cT"]] <- get_by_index(vec, tt[["feature_nr"]])
+        
         within_level_top_tables[[tt_name]] <- tt
     }
     
@@ -4971,7 +4911,8 @@ mkc <- function(
     df,
     hits,
     c1,
-    c2) {
+    c2
+    ) {
     df |>
         dplyr::mutate(
             .cmb = paste0(!!rlang::sym(c1), "_", !!rlang::sym(c2)),
@@ -5007,7 +4948,10 @@ mkc <- function(
 #' the first is returned. Only underscores are ignored; other differences
 #' (e.g., case, hyphens) are not.
 
-find_col_ignore_underscores_rx <- function(df, target) {
+find_col_ignore_underscores_rx <- function(
+        df,
+        target
+        ) {
     nn <- names(df)
     key <- gsub("_", "", target)
     hit <- which(gsub("_", "", nn) == key)
@@ -5055,7 +4999,8 @@ find_col_ignore_underscores_rx <- function(df, target) {
 #'
 transfer_sr2cc <- function(
     topTables,
-    all_levels_clustering) {
+    all_levels_clustering
+    ) {
     out <- topTables
     lvl_names <- intersect(names(all_levels_clustering), names(out))
     if (length(lvl_names) == 0L) {
@@ -5094,6 +5039,336 @@ transfer_sr2cc <- function(
     }
 
     out
+}
+
+
+#' Safely index a numeric vector by 1-based feature indices
+#'
+#' @noRd
+#'
+#' @description
+#' Convert `idx` to integer and use it to subset `vec` (1-based).
+#' Indices that are `NA`, less than 1, or larger than `length(vec)` are
+#' treated as invalid and return `NA_real_` in the output at the
+#' corresponding positions.
+#'
+#' This helper is used to map per-feature effect-size vectors into
+#' tables via a `feature_nr` column without throwing out-of-range
+#' errors.
+#'
+#' @param vec
+#'   A numeric vector of per-feature values.
+#' @param idx
+#'   A vector of indices (typically `feature_nr`) that will be coerced
+#'   to integer and used for 1-based indexing.
+#'
+#' @return
+#'   A numeric vector of the same length as `idx`, containing
+#'   `vec[idx]` for valid indices and `NA_real_` for invalid indices.
+#'   
+get_by_index <- function(
+        vec,
+        idx
+        ) {
+    idx <- as.integer(idx)
+    bad <- is.na(idx) | idx < 1L | idx > length(vec)
+    out <- vec[idx]
+    out[bad] <- NA_real_
+    out
+}
+
+
+#' Normalize Category 3 hit tables to a named list
+#'
+#' @noRd
+#'
+#' @description
+#' `category_2_and_3_hits$category_3_hits` may be provided either as a
+#' single data frame/tibble (backward compatibility) or as a named list
+#' of data frames/tibbles (one per contrast).
+#'
+#' This helper converts the input to a named list and returns a flag
+#' indicating whether the original input was a single data frame, so
+#' the caller can restore the original structure.
+#'
+#' If the input is a list without names, default names of the form
+#' `contrast_<k>` are assigned.
+#'
+#' @param cat3
+#'   Either a single data frame/tibble (one contrast) or a list of data
+#'   frames/tibbles (multiple contrasts). May be `NULL`.
+#'
+#' @return
+#'   A list with elements:
+#'   - `list`: a named list of data frames/tibbles (or `NULL` if `cat3`
+#'     was `NULL`).
+#'   - `was_df`: logical; `TRUE` if the input was a single data frame.
+#'   
+normalize_cat3_hits <- function(cat3) {
+    if (is.null(cat3)) {
+        return(list(list = NULL, was_df = FALSE))
+    }
+    
+    was_df <- is.data.frame(cat3)
+    
+    if (was_df) {
+        cat3_list <- list(cat3)
+        names(cat3_list) <- "contrast_1"
+    } else {
+        cat3_list <- cat3
+        if (is.null(names(cat3_list))) {
+            names(cat3_list) <- paste0("contrast_", seq_along(cat3_list))
+        }
+    }
+    
+    list(list = cat3_list, was_df = was_df)
+}
+
+
+#' Parse a contrast name into suffix and condition parts
+#'
+#' @noRd
+#'
+#' @description
+#' Remove the optional `time_interaction_` prefix from `contrast_name`
+#' and split the remainder on the literal delimiter `_vs_`.
+#'
+#' The function returns:
+#' - `suffix`: the contrast suffix, typically `A_vs_B`
+#' - `parts`: the vector of parts from splitting `suffix` on `_vs_`
+#'
+#' @param contrast_name
+#'   A contrast identifier such as `time_interaction_A_vs_B` or
+#'   `A_vs_B`.
+#'
+#' @return
+#'   A list with elements:
+#'   - `suffix`: character scalar (prefix-stripped name).
+#'   - `parts`: character vector obtained by splitting `suffix`.
+#'   
+parse_contrast_conditions <- function(contrast_name) {
+    suffix <- sub("^time_interaction_", "", contrast_name)
+    parts <- strsplit(suffix, "_vs_", fixed = TRUE)[[1]]
+    list(suffix = suffix, parts = parts)
+}
+
+
+#' Retrieve an interaction effect-size vector for a contrast
+#'
+#' @noRd
+#'
+#' @description
+#' Select the appropriate interaction effect-size vector for a Category
+#' 3 contrast. If `interaction_effect_size` is a single numeric vector,
+#' it is returned directly (backward compatibility).
+#'
+#' If `interaction_effect_size` is a named list, the function attempts
+#' to match the contrast by several candidate keys derived from
+#' `suffix` and `contrast_name`, including:
+#' - with and without the `time_interaction_` prefix, and
+#' - both orientations of the contrast (e.g. `A_vs_B` and `B_vs_A`).
+#'
+#' The first matching element is returned; if no match is found, `NULL`
+#' is returned.
+#'
+#' @param interaction_effect_size
+#'   Either a numeric vector (used for all contrasts) or a named list of
+#'   numeric vectors keyed by contrast identifiers such as `A_vs_B`.
+#' @param suffix
+#'   Contrast suffix, typically `A_vs_B`.
+#' @param contrast_name
+#'   Full contrast name, e.g. `time_interaction_A_vs_B` or `A_vs_B`.
+#'
+#' @return
+#'   A numeric vector for the matched contrast, or `NULL` if no match
+#'   exists and `interaction_effect_size` is a list.
+#'   
+get_interaction_es_vec <- function(
+        interaction_effect_size,
+        suffix,
+        contrast_name
+) {
+    if (!is.list(interaction_effect_size)) {
+        return(interaction_effect_size)
+    }
+    
+    reverse_suffix <- function(s) {
+        parts <- strsplit(s, "_vs_", fixed = TRUE)[[1]]
+        if (length(parts) < 2L) return(NA_character_)
+        paste0(parts[2], "_vs_", parts[1])
+    }
+    
+    suffix2 <- sub("^time_interaction_", "", contrast_name)
+    rev1 <- reverse_suffix(suffix)
+    rev2 <- reverse_suffix(suffix2)
+    
+    candidates <- c(
+        suffix,
+        suffix2,
+        contrast_name,
+        paste0("time_interaction_", suffix),
+        paste0("time_interaction_", suffix2),
+        rev1,
+        rev2,
+        if (!is.na(rev1)) paste0("time_interaction_", rev1) else NA_character_,
+        if (!is.na(rev2)) paste0("time_interaction_", rev2) else NA_character_
+    )
+    candidates <- candidates[!is.na(candidates)]
+    candidates <- unique(candidates)
+    
+    for (key in candidates) {
+        v <- interaction_effect_size[[key]]
+        if (!is.null(v)) return(v)
+    }
+    
+    NULL
+}
+
+
+#' Add per-condition time-effect columns to a Category 3 hit table
+#'
+#' @noRd
+#'
+#' @description
+#' Add time-effect columns derived from `time_effect_effect_size` to a
+#' Category 3 hit table `tbl`. Mapping is performed by using the
+#' table's `feature_nr` column as 1-based indices into the per-feature
+#' effect-size vectors.
+#'
+#' For contrasts of the form `A_vs_B`, the function attempts to add
+#' `cT_A` and `cT_B` (only for conditions that exist in
+#' `time_effect_effect_size`).
+#'
+#' For a degenerate case where `time_effect_effect_size` contains only
+#' one vector and fewer than two conditions can be parsed from `parts`,
+#' the function adds a single `cT` column.
+#'
+#' If `tbl` is not a data frame/tibble or does not contain `feature_nr`,
+#' it is returned unchanged.
+#'
+#' @param tbl
+#'   A data frame/tibble that should contain a numeric `feature_nr`
+#'   column.
+#' @param time_effect_effect_size
+#'   A named list of numeric vectors of per-feature time-effect sizes.
+#'   Names correspond to the short condition labels used in contrasts.
+#' @param parts
+#'   Character vector of condition parts produced by splitting a
+#'   contrast suffix on `_vs_`.
+#'
+#' @return
+#'   The input table with added `cT_<cond>` columns (or `cT` in the
+#'   degenerate case).
+#'   
+add_cat3_cT <- function(
+        tbl,
+        time_effect_effect_size, parts
+        ) {
+    if (!is.data.frame(tbl) || !("feature_nr" %in% names(tbl))) {
+        return(tbl)
+    }
+    
+    if (length(time_effect_effect_size) == 1L && length(parts) < 2L) {
+        vec <- time_effect_effect_size[[1L]]
+        tbl[["cT"]] <- get_by_index(vec, tbl[["feature_nr"]])
+        return(tbl)
+    }
+    
+    if (length(parts) >= 2L) {
+        conds <- parts[seq_len(2)]
+        for (cond_short in conds) {
+            if (!cond_short %in% names(time_effect_effect_size)) next
+            vec <- time_effect_effect_size[[cond_short]]
+            col_nm <- paste0("cT_", cond_short)
+            tbl[[col_nm]] <- get_by_index(vec, tbl[["feature_nr"]])
+        }
+    }
+    
+    tbl
+}
+
+
+#' Add a cDT interaction column to a Category 3 hit table
+#'
+#' @noRd
+#'
+#' @description
+#' Add the `cDT` column to `tbl` using the interaction effect-size
+#' vector `ies_vec`, mapped by the table's `feature_nr` column (1-based
+#' indexing). If `ies_vec` is `NULL`, `cDT` is created and filled with
+#' `NA_real_`.
+#'
+#' If `tbl` is not a data frame/tibble or does not contain `feature_nr`,
+#' it is returned unchanged.
+#'
+#' @param tbl
+#'   A data frame/tibble that should contain a numeric `feature_nr`
+#'   column.
+#' @param ies_vec
+#'   Numeric vector of per-feature interaction effect sizes for the
+#'   relevant contrast, or `NULL` if not available.
+#'
+#' @return
+#'   The input table with a `cDT` numeric column added (or replaced).
+#'   
+add_cat3_cDT <- function(
+        tbl,
+        ies_vec
+        ) {
+    if (!is.data.frame(tbl) || !("feature_nr" %in% names(tbl))) {
+        return(tbl)
+    }
+    
+    if (is.null(ies_vec)) {
+        tbl[["cDT"]] <- NA_real_
+    } else {
+        tbl[["cDT"]] <- get_by_index(ies_vec, tbl[["feature_nr"]])
+    }
+    
+    tbl
+}
+
+
+#' Find the within-level top table name for a condition
+#'
+#' @noRd
+#'
+#' @description
+#' Identify the element of `within_level_top_tables` that corresponds to
+#' the short condition label `nm`.
+#'
+#' Matching follows a two-step strategy:
+#' 1. Prefer the exact documented convention `Condition_<nm>`.
+#' 2. For backward compatibility, strip the prefix up to the first
+#'    underscore from each table name and match the remainder to `nm`.
+#'
+#' If no match is found, `NA_character_` is returned.
+#'
+#' @param within_level_top_tables
+#'   A named list of tibbles/data frames, typically named
+#'   `Condition_<cond>`.
+#' @param nm
+#'   Character scalar giving the short condition label to match.
+#'
+#' @return
+#'   A character scalar giving the matched table name, or
+#'   `NA_character_` if no match exists.
+#'   
+find_within_level_table_name <- function(
+        within_level_top_tables,
+        nm
+        ) {
+    tt_names <- names(within_level_top_tables)
+    if (is.null(tt_names)) return(NA_character_)
+    
+    exact <- paste0("Condition_", nm)
+    if (exact %in% tt_names) return(exact)
+    
+    suffixes <- sub("^[^_]*_", "", tt_names)
+    idx <- match(nm, suffixes)
+    if (!is.na(idx)) return(tt_names[[idx]])
+    
+    NA_character_
 }
 
 
