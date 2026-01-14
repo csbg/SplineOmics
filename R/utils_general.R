@@ -227,66 +227,81 @@ stop_call_false <- function(...) {
 }
 
 
-#' Extract fixed and random effects from a model formula string.
+#' Extract fixed and random effects from a model formula string
 #'
 #' @noRd
 #'
 #' @description
-#' This function processes a model formula string by separating it into
-#' fixed effects and random effects. Random effects are substrings in the
-#' format "(...)", and fixed effects are the remaining part of the string.
+#' Split a model formula string into fixed-effect and random-effect
+#' components using lme4's formula parsing utilities.
 #'
-#' @param formula_string A character string representing the model formula.
+#' Fixed effects are obtained via `lme4::nobars()`. Random effects are
+#' obtained via `lme4::findbars()` and returned concatenated as a single
+#' string (separated by a single space). The fixed-effects string is
+#' returned after light cleanup to remove redundant operators and
+#' whitespace.
 #'
-#' @return A list containing two components:
-#'         - `fixed_effects`: The cleaned fixed effects string.
-#'         - `random_effects`: The concatenated random effects string.
+#' This approach is robust to nested parentheses and fixed-effect
+#' function calls such as `poly()` or `splines::ns()`, because only
+#' lme4-style random-effect terms `( ... | ... )` are removed.
 #'
-#' @examples
-#' extract_effects("~ 1 + Condition*Time + Plate + (1|Reactor)")
-#' # Returns:
-#' # $fixed_effects
-#' # [1] "~ 1 + Condition*Time + Plate"
-#' #
-#' # $random_effects
-#' # [1] "(1|Reactor)"
+#' @param formula_string
+#'   A character scalar representing the model formula.
+#'
+#' @return
+#'   A list with elements:
+#'   - `fixed_effects`: cleaned fixed-effects string.
+#'   - `random_effects`: concatenated random-effect terms or `""`.
+#'   
+#' @importFrom stats as.formula
+#' @importFrom lme4 nobars findbars
+#'   
 extract_effects <- function(formula_string) {
-    # Match all substrings in the format "(...)"
-    matches <- gregexpr("\\([^)]*\\)", formula_string, perl = TRUE)
-    substrings <- regmatches(formula_string, matches)[[1]]
-
-    # If there are random effects, clean them
-    if (length(substrings) > 0) {
-        # Remove one non-whitespace character before and after each match
-        cleaned_random_effects <- vapply(substrings, function(substring) {
-            substring <- sub("\\S\\(", "(", substring)
-            substring <- sub("\\)\\S", ")", substring)
-            return(substring)
-        }, FUN.VALUE = character(1))
-
-        # Concatenate random effects into a single string
-        random_effects <- paste(cleaned_random_effects, collapse = " ")
-    } else {
-        random_effects <- ""
+    s <- as.character(formula_string)
+    s <- paste(s, collapse = "")
+    
+    if (nchar(s) == 0L) {
+        return(list(fixed_effects = "", random_effects = ""))
     }
-
-    # Remove all random effects from the original string to get fixed effects
-    fixed_effects <- formula_string
-    if (length(substrings) > 0) {
-        for (substring in substrings) {
-            fixed_effects <- sub(substring, "", fixed_effects, fixed = TRUE)
-        }
+    
+    f <- tryCatch(
+        stats::as.formula(s),
+        error = function(e) NULL
+    )
+    
+    if (is.null(f)) {
+        return(list(
+            fixed_effects = .clean_fixed(s),
+            random_effects = "")
+            )
     }
+    
+    fixed_f <- lme4::nobars(f)
+    fixed_s <- paste(deparse(fixed_f), collapse = "")
+    fixed_s <- .clean_fixed(fixed_s)
+    
+    bars <- lme4::findbars(f)
+    random_s <- ""
+    
+    if (length(bars) > 0L) {
+        random_terms <- vapply(
+            bars,
+            function(x) paste(deparse(x), collapse = ""),
+            FUN.VALUE = character(1)
+        )
+        random_s <- paste(random_terms, collapse = " ")
+        random_s <- trimws(gsub("\\s+", " ", random_s))
+    }
+    
+    list(fixed_effects = fixed_s, random_effects = random_s)
+}
 
-    # Clean up any extra '+' or whitespace from fixed effects
-    fixed_effects <- gsub("\\s*\\+\\s*$", "", fixed_effects)
-    fixed_effects <- trimws(fixed_effects)
-
-    # Return both fixed and random effects
-    return(list(
-        fixed_effects = fixed_effects,
-        random_effects = random_effects
-    ))
+.clean_fixed <- function(x) {
+    x <- gsub("\\s+", " ", x)
+    x <- gsub("\\+\\s*\\+", "+", x)
+    x <- gsub("\\+\\s*$", "", x)
+    x <- gsub("^\\s*\\+\\s*", "", x)
+    trimws(x)
 }
 
 

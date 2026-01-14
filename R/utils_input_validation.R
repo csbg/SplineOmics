@@ -918,12 +918,15 @@ InputControl <- R6::R6Class("InputControl",
                 )
             }
 
-            if (mode == "isolated" && grepl("[*|:]", design_str)) {
+            effects <- extract_effects(design_str)
+            
+            if (mode == "isolated" &&
+                grepl("[*:]", effects[["fixed_effects"]])) {
+                
                 warning(
-                    "In 'isolated' mode, the design formula ",
-                    "should not contain interaction terms ",
-                    "(e.g., '*' or ':'). These are not required ",
-                    "when each condition is modeled separately."
+                    "In 'isolated' mode, the fixed-effects design should not ",
+                    "contain interaction terms ('*' or ':'). These are not ",
+                    "required when each condition is modeled separately."
                 )
             }
             

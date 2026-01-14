@@ -1303,7 +1303,7 @@ process_within_level <- function(
         data <- rna_seq_data
     }
 
-    message(paste("Fitting model for level ", level_index))
+    message(paste("\nFitting model for level ", level_index))
 
     if (effects[["random_effects"]] != "") {
         colnames(data) <- rownames(meta) # dream wants it like this.
