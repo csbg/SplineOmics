@@ -1452,7 +1452,8 @@ select_spline_dof_loocv <- function(
     meta,
     spline_params,
     level_index,
-    fixed_effects) {
+    fixed_effects
+    ) {
     if (spline_params$spline_type[level_index] == "n") {
         candidate_dofs <- 2:min(10, length(unique(meta$Time)))
     } else if (spline_params$spline_type[level_index] == "b") {

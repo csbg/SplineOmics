@@ -1413,6 +1413,7 @@ truncate_hit_labels <- function(
 #' @importFrom ggplot2 ggsave
 #' @importFrom base64enc dataURI
 #' @importFrom svglite svglite
+#' @importFrom checkmate assert_number assert_choice assert_string assert
 #'
 plot2base64 <- function(
     plot,
@@ -1420,7 +1421,47 @@ plot2base64 <- function(
     width = 7,
     base_height_per_row = 2.5,
     units = "in",
-    html_img_width = "100%") {
+    html_img_width = "100%"
+    ) {
+    checkmate::assert_number(
+        height,
+        lower = 0,
+        finite = TRUE,
+        .var.name = "height"
+    )
+    
+    checkmate::assert_number(
+        width,
+        lower = 0,
+        finite = TRUE,
+        .var.name = "width"
+    )
+    
+    checkmate::assert_number(
+        base_height_per_row,
+        lower = 0,
+        finite = TRUE,
+        .var.name = "base_height_per_row"
+    )
+    
+    checkmate::assert_choice(
+        units,
+        choices = c("in", "cm", "mm", "px"),
+        .var.name = "units"
+    )
+    
+    checkmate::assert_string(
+        html_img_width,
+        min.chars = 1,
+        .var.name = "html_img_width"
+    )
+    
+    checkmate::assert(
+        height > 0,
+        .var.name = "height"
+    )
+    
+    # function code
     additional_height_per_row <- 2.1
     height <- base_height_per_row + (height - 1) * additional_height_per_row
 

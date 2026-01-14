@@ -164,22 +164,37 @@ explore_data <- function(
     data_list <- list(data = data)
 
     if (!is.null(meta_batch_column)) {
-        args <- list(
-            x = data,
-            batch = meta[[meta_batch_column]],
-            group = meta[[condition]]
-        )
-
+        batch_vec <- meta[[meta_batch_column]]
+        
+        has_batch <- length(unique(batch_vec[!is.na(batch_vec)])) >= 2L
+        
+        batch2_vec <- NULL
+        has_batch2 <- FALSE
         if (!is.null(meta_batch2_column)) {
-            args$batch2 <- meta[[meta_batch2_column]]
+            batch2_vec <- meta[[meta_batch2_column]]
+            has_batch2 <- length(unique(batch2_vec[!is.na(batch2_vec)])) >= 2L
         }
-
-        batch_corrected_data <- do.call(
-            removeBatchEffect,
-            args
-        )
-
-        data_list$batch_corrected_data <- batch_corrected_data
+        
+        group_vec <- meta[[condition]]
+        has_groups <- length(unique(group_vec[!is.na(group_vec)])) >= 2L
+        
+        if (has_batch || has_batch2) {
+            args <- list(
+                x = data,
+                batch = batch_vec
+            )
+            
+            if (has_groups) {
+                args$group <- group_vec
+            }
+            
+            if (!is.null(meta_batch2_column)) {
+                args$batch2 <- batch2_vec
+            }
+            
+            batch_corrected_data <- do.call(removeBatchEffect, args)
+            data_list$batch_corrected_data <- batch_corrected_data
+        }
     }
 
     all_plots <- list()
@@ -251,7 +266,8 @@ explore_data <- function(
 generate_explore_plots <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
     meta[[condition]] <- as.factor(meta[[condition]])
 
     plot_functions_and_sizes <- list(
@@ -288,9 +304,34 @@ generate_explore_plots <- function(
         all_plots_sizes <- c(all_plots_sizes, NA)
 
         if (is.null(result$size)) {
-            # Special handling for make_correlation_heatmaps
-            all_plots <- c(all_plots, result$plots$heatmaps)
-            all_plots_sizes <- c(all_plots_sizes, result$plots$heatmaps_sizes)
+            hm <- result$plots$heatmaps
+            hs <- result$plots$heatmaps_sizes
+            
+            # normalize NULL to empty
+            if (is.null(hm)) hm <- list()
+            if (is.null(hs)) hs <- numeric()
+            
+            # coerce atomic to list if needed
+            if (!is.list(hm)) hm <- as.list(hm)
+            
+            # If sizes are missing, fill with 1s
+            if (length(hs) == 0L && length(hm) > 0L) {
+                hs <- rep(1.5, length(hm))
+            }
+            
+            # If sizes length mismatches, error with a clear message
+            if (length(hm) != length(hs)) {
+                stop(
+                    "generate_explore_plots(): correlation",
+                    "heatmaps misaligned: ",
+                    "length(heatmaps) = ", length(hm),
+                    ", length(heatmaps_sizes) = ", length(hs),
+                    call. = FALSE
+                )
+            }
+            
+            all_plots <- c(all_plots, hm)
+            all_plots_sizes <- c(all_plots_sizes, hs)
         } else if (!is.null(result$flatten) && result$flatten == FALSE) {
             # Do not flatten the result, add it as a sublist
             all_plots <- c(all_plots, list(result$plots))
@@ -307,7 +348,14 @@ generate_explore_plots <- function(
             )
         }
     }
-
+    if (length(all_plots) != length(all_plots_sizes)) {
+        stop(
+            "generate_explore_plots(): plots and sizes misaligned: ",
+            length(all_plots), " vs ", length(all_plots_sizes),
+            call. = FALSE
+        )
+    }
+    
     list(
         plots = all_plots,
         plots_sizes = all_plots_sizes
@@ -344,7 +392,8 @@ build_explore_data_report <- function(
     plots,
     plots_sizes,
     report_info,
-    output_file_path) {
+    output_file_path
+    ) {
     html_content <- paste(header_section, "<!--TOC-->", sep = "\n")
 
     toc <- create_toc()
@@ -524,7 +573,8 @@ build_explore_data_report <- function(
 make_density_plots <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
     message("Making density plots...")
 
     custom_theme <- ggplot2::theme(
@@ -606,7 +656,6 @@ make_density_plots <- function(
 
     return(density_plots)
 }
-
 
 
 #' Generate Violin Box Plot
@@ -1050,30 +1099,48 @@ plot_lag1_differences <- function(
 plot_cv <- function(
     data,
     meta,
-    condition) {
+    condition
+    ) {
     message("Making cv plots...")
 
     plot_list <- list()
 
     for (cond in unique(meta[[condition]])) {
         condition_indices <- which(meta[[condition]] == cond)
-        data_subset <- data[, condition_indices]
+        data_subset <- data[, condition_indices, drop = FALSE]
 
-        # Compute CV of each feature
+        # Need at least 2 samples to compute sd() meaningfully
+        if (ncol(data_subset) < 2L) {
+            next
+        }
+        
+        # Compute CV of each feature; protect against mean == 0
         cvs <- apply(data_subset, 1, function(feature) {
-            sd(feature) / mean(feature)
+            m <- mean(feature, na.rm = TRUE)
+            s <- stats::sd(feature, na.rm = TRUE)
+            if (!is.finite(m) || m == 0) return(NA_real_)
+            s / m
         })
-
-        # Calculate mean and standard deviation of CVs
-        mean_cv <- mean(cvs, na.rm = TRUE)
-        std_cv <- stats::sd(cvs, na.rm = TRUE)
-
-        # Remove non-finite values from CVs and adjust related data
-        valid_indices <- which(is.finite(cvs)) # Find valid rows
-        cvs <- cvs[valid_indices] # Subset CVs to valid rows
-        data_subset <- data_subset[valid_indices, ] # Subset data to valid rows
-
-        binwidth <- max(0.01, diff(range(cvs, na.rm = TRUE)) / 30)
+        
+        # Keep only finite CVs
+        valid_indices <- which(is.finite(cvs))
+        if (length(valid_indices) == 0L) {
+            next
+        }
+        
+        cvs <- cvs[valid_indices]
+        
+        # Summary stats on the plotted values
+        mean_cv <- mean(cvs)
+        std_cv <- stats::sd(cvs)
+        
+        # Ensure a sensible binwidth even if all CVs are identical
+        cv_rng <- range(cvs)
+        bw <- diff(cv_rng) / 30
+        if (!is.finite(bw) || bw <= 0) {
+            bw <- 0.01
+        }
+        binwidth <- bw
 
         # Create a data frame for plotting
         cv_data <- data.frame(
@@ -1390,14 +1457,14 @@ make_correlation_heatmaps <- function(
             column_names_rot = 60
         )
         heatmaps <- c(heatmaps, list(heatmap_all))
+        
+        # Custom scaling logic for the HTML report
+        heatmap_all_size <- max(
+            1.5 * length(meta[[condition]]) / 25,
+            1
+        )
+        heatmaps_sizes <- c(heatmaps_sizes, heatmap_all_size)
     }
-
-    # Custom scaling logic for the HTML report
-    heatmap_all_size <- max(
-        1.5 * length(meta[[condition]]) / 25,
-        1
-    )
-    heatmaps_sizes <- c(heatmaps_sizes, heatmap_all_size)
 
     # Create correlation heatmaps for each level of the condition
     levels <- unique(meta[[condition]])
