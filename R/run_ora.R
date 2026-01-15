@@ -8,33 +8,42 @@
 #' files containing the enrichment results, and dotplots visualizing the
 #' enrichment.
 #'
-#' @param cluster_table `tibble`: A tibble containing one row per
+#' @param cluster_table `tibble` A tibble containing one row per
 #'   `feature_nr` with metadata and cluster assignments across analysis
 #'   categories. It includes:
 #'
-#'   \itemize{
-#'     \item \code{feature_nr}: `numeric(1)` Numeric feature identifier.
+#'   \describe{
+#'     \item{\code{feature_nr}}{
+#'       `numeric(1)` Numeric feature identifier.
+#'     }
 #'
-#'     \item \code{feature_name}: `character(1)` Preferred feature name
-#'       derived from limma tables or falling back to the numeric ID.
+#'     \item{\code{feature_name}}{
+#'       `character(1)` Preferred feature name derived from limma tables
+#'       or falling back to the numeric ID.
+#'     }
 #'
-#'     \item \code{gene}: `character(1)` Preferred gene symbol obtained
-#'       from the annotation or from cluster-level metadata.
+#'     \item{\code{gene}}{
+#'       `character(1)` Preferred gene symbol obtained from the annotation
+#'       or from cluster-level metadata.
+#'     }
 #'
-#'     \item \code{cluster_<condition>}: `integer(1)` Cluster assignment
-#'       for each time-effect condition (Category 1). One column per
-#'       condition.
+#'     \item{\code{cluster_<condition>}}{
+#'       `integer(1)` Cluster assignment for each time-effect condition
+#'       (Category 1). One column per condition.
+#'     }
 #'
-#'     \item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
-#'       Category 2 label for each contrast. Indicates which condition
-#'       shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
-#'       the feature is not a category 2 hit.
+#'     \item{\code{cluster_cat2_<cond1>_vs_<cond2>}}{
+#'       `character(1)` Category 2 label for each contrast. Indicates which
+#'       condition shows higher expression (e.g. \code{"Ctrl_higher"}), or
+#'       \code{NA} if the feature is not a Category 2 hit.
+#'     }
 #'
-#'     \item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
-#'       Category 3 label for each contrast. Encodes the pair of
-#'       time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
-#'       `"2_4"`). \code{NA} indicates the feature is not a category 3
+#'     \item{\code{cluster_cat3_<cond1>_vs_<cond2>}}{
+#'       `character(1)` Category 3 label for each contrast. Encodes the
+#'       pair of time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
+#'       \code{"2_4"}). \code{NA} indicates the feature is not a Category 3
 #'       hit.
+#'     }
 #'   }
 #'
 #'   For any category-specific column, a value of \code{NA} indicates that
@@ -950,7 +959,7 @@ map_gene_symbols <- function(
     map_vec <- switch(method,
         "gprofiler" = {
             if (!requireNamespace("gprofiler2", quietly = TRUE)) {
-                stop_call_false(
+                stop(
                     "'gprofiler2' not installed; install it or set",
                     "method='none'."
                     )
@@ -962,12 +971,27 @@ map_gene_symbols <- function(
                 mthreshold = Inf,
                 filter_na = TRUE
             )
-            if (!all(c("input", "ortholog_name") %in% names(gp))) {
+            if (is.null(gp) || nrow(gp) == 0) {
                 stop(
-                    "gprofiler2::gorth returned unexpected columns: ",
+                    "No orthologs returned by gprofiler2::gorth. ",
+                    "This usually indicates that the provided gene ",
+                    "identifiers are invalid, ",
+                    "not recognized for organism '", from,
+                    "', or have no orthologs in '", to, "'."
+                )
+            }
+            required_cols <- c("input", "ortholog_name")
+            missing_cols <- setdiff(required_cols, names(gp))
+            if (length(missing_cols) > 0) {
+                stop(
+                    "Unexpected result from gprofiler2::gorth:",
+                    "missing column(s): ",
+                    paste(missing_cols, collapse = ", "),
+                    ". Returned columns were: ",
                     paste(names(gp), collapse = ", ")
                 )
             }
+            
             pick_first_per_input(gp,
                 in_col = "input",
                 out_col = "ortholog_name"
@@ -975,7 +999,7 @@ map_gene_symbols <- function(
         },
         "orthogene" = {
             if (!requireNamespace("orthogene", quietly = TRUE)) {
-                stop_call_false(
+                stop(
                     "'orthogene' not installed; install it or set",
                     "method='none'."
                     )
@@ -1174,28 +1198,47 @@ check_cluster_table <- function(cluster_table) {
 #' @return Invisibly returns \code{TRUE}. Stops only on type/length errors.
 #'
 check_genes <- function(
-    genes,
-    max_index_overall = NA_integer_) {
+        genes,
+        max_index_overall = NA_integer_
+) {
     if (!is.character(genes)) {
         stop("'genes' must be a character vector.", call. = FALSE)
     }
-
+    
+    # Reject obviously invalid identifiers (descriptions, annotations, etc.)
+    invalid <- grepl("[[:space:]();]", genes)
+    
+    if (any(invalid)) {
+        bad <- unique(genes[invalid])
+        stop(
+            "Invalid gene identifiers detected. Gene symbols or stable IDs ",
+            "must not contain whitespace, parentheses, or semicolons. ",
+            "Examples of invalid entries: ",
+            paste(utils::head(bad, 3L), collapse = ", "),
+            if (length(bad) > 3L) " ..."
+            , call. = FALSE)
+    }
+    
     if (!is.na(max_index_overall)) {
         if (!is.numeric(max_index_overall) ||
             length(max_index_overall) != 1L ||
             is.na(max_index_overall)) {
-            stop("'max_index_overall' must be a single numeric value.",
+            stop(
+                "'max_index_overall' must be a single numeric value.",
                 call. = FALSE
             )
         }
         if (length(genes) < as.integer(max_index_overall)) {
-            stop(sprintf(
-                "`genes` must have length >= %d (got %d).",
-                as.integer(max_index_overall), length(genes)
-            ), call. = FALSE)
+            stop(
+                sprintf(
+                    "`genes` must have length >= %d (got %d).",
+                    as.integer(max_index_overall), length(genes)
+                ),
+                call. = FALSE
+            )
         }
     }
-
+    
     invisible(TRUE)
 }
 

@@ -2733,11 +2733,7 @@ add_effect_size_columns <- function(
             cat3_list <- lapply(seq_along(cat3_list), function(k) {
                 tbl <- cat3_list[[k]]
                 contrast_name <- names(cat3_list)[k]
-                
-                # If tbl not suitable, return unchanged
-                if (!is.data.frame(tbl) 
-                    || !("feature_nr" %in% names(tbl))) return(tbl)
-                
+
                 parsed <- parse_contrast_conditions(contrast_name)
                 suffix <- parsed$suffix
                 parts  <- parsed$parts
@@ -2754,7 +2750,11 @@ add_effect_size_columns <- function(
                     contrast_name = contrast_name
                 )
 
-                tbl <- add_cat3_cDT(tbl, ies_vec)
+                tbl <- add_cat3_cDT(
+                    tbl,
+                    ies_vec,
+                    context = contrast_name
+                    )
                 tbl
             })
             
@@ -2780,11 +2780,13 @@ add_effect_size_columns <- function(
         
         # skip NA-like placeholders
         if (is.atomic(tt) && length(tt) == 1L && is.na(tt)) next
-        if (!is.data.frame(tt)) next
-        if (!("feature_nr" %in% names(tt))) next
-        
+
         vec <- time_effect_effect_size[[nm]]
-        tt[["cT"]] <- get_by_index(vec, tt[["feature_nr"]])
+        tt[["cT"]] <- map_effect_by_feature_strict(
+            effect_vec = vec,
+            table_features = tt[["feature_names"]],
+            context = paste0("within_level cT in ", tt_name)
+        )
         
         within_level_top_tables[[tt_name]] <- tt
     }
@@ -5231,9 +5233,9 @@ get_interaction_es_vec <- function(
 #'
 #' @description
 #' Add time-effect columns derived from `time_effect_effect_size` to a
-#' Category 3 hit table `tbl`. Mapping is performed by using the
-#' table's `feature_nr` column as 1-based indices into the per-feature
-#' effect-size vectors.
+#' Category 3 hit table `tbl`. Mapping is performed by matching the
+#' table's `feature_names` against `names()` of the per-feature effect
+#' size vectors (strict 1:1 match).
 #'
 #' For contrasts of the form `A_vs_B`, the function attempts to add
 #' `cT_A` and `cT_B` (only for conditions that exist in
@@ -5243,15 +5245,17 @@ get_interaction_es_vec <- function(
 #' one vector and fewer than two conditions can be parsed from `parts`,
 #' the function adds a single `cT` column.
 #'
-#' If `tbl` is not a data frame/tibble or does not contain `feature_nr`,
-#' it is returned unchanged.
+#' If `tbl` is not a data frame/tibble or does not contain
+#' `feature_names`, it is returned unchanged.
 #'
 #' @param tbl
-#'   A data frame/tibble that should contain a numeric `feature_nr`
+#'   A data frame/tibble that should contain a character `feature_names`
 #'   column.
 #' @param time_effect_effect_size
 #'   A named list of numeric vectors of per-feature time-effect sizes.
-#'   Names correspond to the short condition labels used in contrasts.
+#'   Each vector must be named, and names must match `feature_names`
+#'   in `tbl` 1:1. Names correspond to the short condition labels used
+#'   in contrasts.
 #' @param parts
 #'   Character vector of condition parts produced by splitting a
 #'   contrast suffix on `_vs_`.
@@ -5259,18 +5263,25 @@ get_interaction_es_vec <- function(
 #' @return
 #'   The input table with added `cT_<cond>` columns (or `cT` in the
 #'   degenerate case).
-#'   
+#'
 add_cat3_cT <- function(
         tbl,
-        time_effect_effect_size, parts
-        ) {
-    if (!is.data.frame(tbl) || !("feature_nr" %in% names(tbl))) {
+        time_effect_effect_size,
+        parts
+) {
+    if (!is.data.frame(tbl) || !("feature_names" %in% names(tbl))) {
         return(tbl)
     }
     
+    feats <- tbl[["feature_names"]]
+    
     if (length(time_effect_effect_size) == 1L && length(parts) < 2L) {
         vec <- time_effect_effect_size[[1L]]
-        tbl[["cT"]] <- get_by_index(vec, tbl[["feature_nr"]])
+        tbl[["cT"]] <- map_effect_by_feature_strict(
+            effect_vec = vec,
+            table_features = feats,
+            context = "Category 3: cT"
+        )
         return(tbl)
     }
     
@@ -5280,7 +5291,11 @@ add_cat3_cT <- function(
             if (!cond_short %in% names(time_effect_effect_size)) next
             vec <- time_effect_effect_size[[cond_short]]
             col_nm <- paste0("cT_", cond_short)
-            tbl[[col_nm]] <- get_by_index(vec, tbl[["feature_nr"]])
+            tbl[[col_nm]] <- map_effect_by_feature_strict(
+                effect_vec = vec,
+                table_features = feats,
+                context = paste0("Category 3: ", col_nm)
+            )
         }
     }
     
@@ -5294,36 +5309,56 @@ add_cat3_cT <- function(
 #'
 #' @description
 #' Add the `cDT` column to `tbl` using the interaction effect-size
-#' vector `ies_vec`, mapped by the table's `feature_nr` column (1-based
-#' indexing). If `ies_vec` is `NULL`, `cDT` is created and filled with
-#' `NA_real_`.
+#' vector `ies_vec`, mapped by matching the table's `feature_names`
+#' against `names(ies_vec)` (strict 1:1 match).
 #'
-#' If `tbl` is not a data frame/tibble or does not contain `feature_nr`,
-#' it is returned unchanged.
+#' If `ies_vec` is `NULL`, the function errors because strict matching
+#' cannot be performed.
+#'
+#' If `tbl` is not a data frame/tibble or does not contain
+#' `feature_names`, it is returned unchanged.
 #'
 #' @param tbl
-#'   A data frame/tibble that should contain a numeric `feature_nr`
+#'   A data frame/tibble that should contain a character `feature_names`
 #'   column.
 #' @param ies_vec
-#'   Numeric vector of per-feature interaction effect sizes for the
-#'   relevant contrast, or `NULL` if not available.
+#'   Named numeric vector of per-feature interaction effect sizes for
+#'   the relevant contrast. Names must match `feature_names` in `tbl`
+#'   1:1. If `NULL`, an error is raised.
+#' @param context
+#'   Optional string used to annotate error messages (e.g. contrast
+#'   name).
 #'
 #' @return
 #'   The input table with a `cDT` numeric column added (or replaced).
-#'   
+#'
 add_cat3_cDT <- function(
         tbl,
-        ies_vec
-        ) {
-    if (!is.data.frame(tbl) || !("feature_nr" %in% names(tbl))) {
+        ies_vec,
+        context = ""
+) {
+    if (!is.data.frame(tbl) || !("feature_names" %in% names(tbl))) {
         return(tbl)
     }
     
     if (is.null(ies_vec)) {
-        tbl[["cDT"]] <- NA_real_
-    } else {
-        tbl[["cDT"]] <- get_by_index(ies_vec, tbl[["feature_nr"]])
+        stop(
+            "add_cat3_cDT(): `ies_vec` is NULL; cannot add `cDT` with ",
+            "strict feature-name matching.",
+            if (nzchar(context)) paste0(" (", context, ")") else "",
+            call. = FALSE
+        )
     }
+    
+    tbl[["cDT"]] <- map_effect_by_feature_strict(
+        effect_vec = ies_vec,
+        table_features = tbl[["feature_names"]],
+        context = if (nzchar(context)) {
+            paste0("Category 3: cDT (", context, ")")
+        } else {
+            "Category 3: cDT"
+        }
+    )
     
     tbl
 }
@@ -5369,6 +5404,94 @@ find_within_level_table_name <- function(
     if (!is.na(idx)) return(tt_names[[idx]])
     
     NA_character_
+}
+
+
+#' Map a named effect-size vector into a table by feature name (subset OK)
+#'
+#' @noRd
+#'
+#' @description
+#' Transfer per-feature values from a named numeric effect-size vector
+#' into a table by matching `table_features` (e.g. `tbl$feature_names`)
+#' against `names(effect_vec)`.
+#'
+#' A strict requirement is enforced in one direction:
+#' - Every feature in `table_features` must be present in
+#'   `names(effect_vec)`.
+#'
+#' The effect vector may contain additional features not present in the
+#' table (these are ignored).
+#'
+#' Duplicates are not allowed on either side.
+#'
+#' @param effect_vec
+#'   A named numeric vector of effect sizes. Names must be non-empty and
+#'   unique.
+#' @param table_features
+#'   A character vector of feature identifiers from the table (e.g.
+#'   `tbl$feature_names`). Must be unique.
+#' @param context
+#'   A short string used to annotate error messages (e.g. column name,
+#'   condition, or contrast).
+#'
+#' @return
+#'   A numeric vector of effect sizes aligned to `table_features`.
+#'
+map_effect_by_feature_strict <- function(
+        effect_vec,
+        table_features,
+        context = ""
+        ) {
+    checkmate::assert_numeric(effect_vec, any.missing = FALSE)
+    checkmate::assert_character(table_features, any.missing = FALSE)
+    checkmate::assert_string(context, null.ok = TRUE)
+    
+    nms <- names(effect_vec)
+    if (is.null(nms)) {
+        stop("Effect-size vector has no names.", call. = FALSE)
+    }
+    if (anyNA(nms) || any(nms == "")) {
+        stop("Effect-size vector has missing/empty names.", call. = FALSE)
+    }
+    
+    if (anyDuplicated(nms)) {
+        dup <- unique(nms[duplicated(nms)])
+        stop(
+            "Effect-size vector has duplicated names: ",
+            paste(utils::head(dup, 10), collapse = ", "),
+            if (length(dup) > 10) " ..." else "",
+            if (nzchar(context)) paste0(" (", context, ")") else "",
+            call. = FALSE
+        )
+    }
+    
+    if (anyDuplicated(table_features)) {
+        dup <- unique(table_features[duplicated(table_features)])
+        stop(
+            "Table has duplicated feature_names: ",
+            paste(utils::head(dup, 10), collapse = ", "),
+            if (length(dup) > 10) " ..." else "",
+            if (nzchar(context)) paste0(" (", context, ")") else "",
+            call. = FALSE
+        )
+    }
+    
+    # Only enforce: table_features must be present in the vector names.
+    missing_in_vec <- setdiff(table_features, nms)
+    if (length(missing_in_vec) > 0L) {
+        stop(
+            "Missing in effect vector (present in table)",
+            if (nzchar(context)) paste0(" (", context, ")") else "",
+            ": ",
+            paste(utils::head(missing_in_vec, 10), collapse = ", "),
+            if (length(missing_in_vec) > 10) " ..." else "",
+            call. = FALSE
+        )
+    }
+    
+    # Reorder effect sizes to match table order
+    effect_vec[match(table_features, nms)]
 }
 
 

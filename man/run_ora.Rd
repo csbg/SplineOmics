@@ -18,33 +18,42 @@ run_ora(
 )
 }
 \arguments{
-\item{cluster_table}{\code{tibble}: A tibble containing one row per
+\item{cluster_table}{\code{tibble} A tibble containing one row per
 \code{feature_nr} with metadata and cluster assignments across analysis
 categories. It includes:
 
-\itemize{
-\item \code{feature_nr}: \code{numeric(1)} Numeric feature identifier.
+\describe{
+\item{\code{feature_nr}}{
+\code{numeric(1)} Numeric feature identifier.
+}
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item \code{feature_name}: `character(1)` Preferred feature name
-  derived from limma tables or falling back to the numeric ID.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item\{\code{feature_name}\}\{
+  `character(1)` Preferred feature name derived from limma tables
+  or falling back to the numeric ID.
+\}
 
-\\item \code{gene}: `character(1)` Preferred gene symbol obtained
-  from the annotation or from cluster-level metadata.
+\\item\{\code{gene}\}\{
+  `character(1)` Preferred gene symbol obtained from the annotation
+  or from cluster-level metadata.
+\}
 
-\\item \code{cluster_<condition>}: `integer(1)` Cluster assignment
-  for each time-effect condition (Category 1). One column per
-  condition.
+\\item\{\code{cluster_<condition>}\}\{
+  `integer(1)` Cluster assignment for each time-effect condition
+  (Category 1). One column per condition.
+\}
 
-\\item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
-  Category 2 label for each contrast. Indicates which condition
-  shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
-  the feature is not a category 2 hit.
+\\item\{\code{cluster_cat2_<cond1>_vs_<cond2>}\}\{
+  `character(1)` Category 2 label for each contrast. Indicates which
+  condition shows higher expression (e.g. \code{"Ctrl_higher"}), or
+  \code{NA} if the feature is not a Category 2 hit.
+\}
 
-\\item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
-  Category 3 label for each contrast. Encodes the pair of
-  time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
-  `"2_4"`). \code{NA} indicates the feature is not a category 3
+\\item\{\code{cluster_cat3_<cond1>_vs_<cond2>}\}\{
+  `character(1)` Category 3 label for each contrast. Encodes the
+  pair of time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
+  \code{"2_4"}). \code{NA} indicates the feature is not a Category 3
   hit.
+\}
 }\if{html}{\out{</div>}}
 
 }

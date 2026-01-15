@@ -708,8 +708,8 @@ clusterProfiler_params <- list(
 
 mapping_cfg <- list(
     method = "gprofiler",
-    from_species = "cgchok1gshd",
-    to_species = "mmusculus"
+    from_species = "mmusculus",
+    to_species = "cgchok1gshd"  
 )
 
 genes_clean <- genes[!grepl("-", genes)]
