@@ -11,39 +11,25 @@
 #' @param cluster_table `tibble` A tibble containing one row per
 #'   `feature_nr` with metadata and cluster assignments across analysis
 #'   categories. It includes:
-#'
-#'   \describe{
-#'     \item{\code{feature_nr}}{
-#'       `numeric(1)` Numeric feature identifier.
-#'     }
-#'
-#'     \item{\code{feature_name}}{
-#'       `character(1)` Preferred feature name derived from limma tables
-#'       or falling back to the numeric ID.
-#'     }
-#'
-#'     \item{\code{gene}}{
-#'       `character(1)` Preferred gene symbol obtained from the annotation
-#'       or from cluster-level metadata.
-#'     }
-#'
-#'     \item{\code{cluster_<condition>}}{
-#'       `integer(1)` Cluster assignment for each time-effect condition
-#'       (Category 1). One column per condition.
-#'     }
-#'
-#'     \item{\code{cluster_cat2_<cond1>_vs_<cond2>}}{
-#'       `character(1)` Category 2 label for each contrast. Indicates which
-#'       condition shows higher expression (e.g. \code{"Ctrl_higher"}), or
-#'       \code{NA} if the feature is not a Category 2 hit.
-#'     }
-#'
-#'     \item{\code{cluster_cat3_<cond1>_vs_<cond2>}}{
-#'       `character(1)` Category 3 label for each contrast. Encodes the
-#'       pair of time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
-#'       \code{"2_4"}). \code{NA} indicates the feature is not a Category 3
+#'   
+#'   \itemize{
+#'     \item \code{feature_nr}: `numeric(1)` Numeric feature identifier.
+#'     \item \code{feature_name}: `character(1)` Preferred feature name
+#'       derived from limma tables or falling back to the numeric ID.
+#'     \item \code{gene}: `character(1)` Preferred gene symbol obtained
+#'       from the annotation or from cluster-level metadata.
+#'     \item \code{cluster_<condition>}: `integer(1)` Cluster assignment
+#'       for each time-effect condition (Category 1). One column per
+#'       condition.
+#'     \item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
+#'       Category 2 label for each contrast. Indicates which condition
+#'       shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
+#'       the feature is not a category 2 hit.
+#'     \item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
+#'       Category 3 label for each contrast. Encodes the pair of
+#'       time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
+#'       `"2_4"`). \code{NA} indicates the feature is not a category 3
 #'       hit.
-#'     }
 #'   }
 #'
 #'   For any category-specific column, a value of \code{NA} indicates that
@@ -52,13 +38,13 @@
 #' @param databases `data.frame`: A \code{data.frame} that defines the gene set 
 #'   collections to be tested in the overrepresentation analysis. Must contain 
 #'   exactly three columns:
-#'   \describe{
-#'     \item{DB `character(1)`}{The database identifier (e.g., KEGG, GO_BP, 
-#'       Reactome).}
-#'     \item{Geneset `character(1)`}{The name of the gene set or pathway 
-#'       within the database.}
-#'     \item{Gene `character(1)`}{A gene identifier belonging to the gene set 
-#'       (e.g., gene symbol, Ensembl ID).}
+#'   \itemize{
+#'     \item \code{DB}: `character(1)` The database identifier
+#'       (e.g., KEGG, GO_BP, Reactome).
+#'     \item \code{Geneset}: `character(1)` The name of the gene set or
+#'       pathway within the database.
+#'     \item \code{Gene}: `character(1)` A gene identifier belonging to
+#'       the gene set (e.g., gene symbol, Ensembl ID).
 #'   }
 #'
 #'   Each row corresponds to one `(database, geneset, gene)` association. The 

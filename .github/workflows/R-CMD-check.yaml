@@ -49,10 +49,15 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
       
-      - name: Set Bioconductor devel repositories
-        if: matrix.config.r == 'devel'
+      - name: Set Bioconductor repositories
+        if: runner.os == 'Linux'
         run: |
-          echo 'options(repos = BiocManager::repositories(version = "devel"))' >> ~/.Rprofile
+          echo 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")' >> ~/.Rprofile
+          if [ "${{ matrix.config.r }}" = "devel" ]; then
+            echo 'options <- BiocManager::repositories(version = "devel"); options(repos = c(R = "https://cloud.r-project.org", R))' >> ~/.Rprofile
+          else
+            echo 'R <- BiocManager::repositories(); options(repos = c(R = "https://cloud.r-project.org", R))' >> ~/.Rprofile
+          fi
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

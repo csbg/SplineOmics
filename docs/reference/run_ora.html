@@ -89,30 +89,26 @@ enrichment.</p>
 
 
 <dl><dt id="arg-cluster-table">cluster_table<a class="anchor" aria-label="anchor" href="#arg-cluster-table"></a></dt>
-<dd><p><code>tibble</code>: A tibble containing one row per
+<dd><p><code>tibble</code> A tibble containing one row per
 <code>feature_nr</code> with metadata and cluster assignments across analysis
 categories. It includes:</p>
-<ul><li><p><code>feature_nr</code>: <code>numeric(1)</code> Numeric feature identifier.</p>
-<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>\item \code{feature_name}<span class="sc">:</span> <span class="st">`</span><span class="at">character(1)</span><span class="st">`</span> Preferred feature name</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  derived from limma tables or falling back to the numeric ID.</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>\item \code{gene}<span class="sc">:</span> <span class="st">`</span><span class="at">character(1)</span><span class="st">`</span> Preferred gene symbol obtained</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  from the annotation or from cluster<span class="sc">-</span>level metadata.</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>\item \code{cluster_<span class="sc">&lt;</span>condition<span class="sc">&gt;</span>}<span class="sc">:</span> <span class="st">`</span><span class="at">integer(1)</span><span class="st">`</span> Cluster assignment</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="cf">for</span> each time<span class="sc">-</span>effect <span class="fu">condition</span> (Category <span class="dv">1</span>). One column per</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  condition.</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>\item \code{cluster_cat2_<span class="sc">&lt;</span>cond1<span class="sc">&gt;</span>_vs_<span class="sc">&lt;</span>cond2<span class="sc">&gt;</span>}<span class="sc">:</span> <span class="st">`</span><span class="at">character(1)</span><span class="st">`</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  Category <span class="dv">2</span> label <span class="cf">for</span> each contrast. Indicates which condition</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  shows higher <span class="fu">expression</span> (e.g. <span class="st">`</span><span class="at">"Ctrl_higher"</span><span class="st">`</span>), or \code{<span class="cn">NA</span>} <span class="cf">if</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  the feature is not a category <span class="dv">2</span> hit.</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>\item \code{cluster_cat3_<span class="sc">&lt;</span>cond1<span class="sc">&gt;</span>_vs_<span class="sc">&lt;</span>cond2<span class="sc">&gt;</span>}<span class="sc">:</span> <span class="st">`</span><span class="at">character(1)</span><span class="st">`</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  Category <span class="dv">3</span> label <span class="cf">for</span> each contrast. Encodes the pair of</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  time<span class="sc">-</span>effect clusters <span class="cf">in</span> the form \code{<span class="st">"&lt;c1&gt;_&lt;c2&gt;"</span>} (e.g.</span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>  <span class="st">`</span><span class="at">"2_4"</span><span class="st">`</span>). \code{<span class="cn">NA</span>} indicates the feature is not a category <span class="dv">3</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>  hit.</span></code></pre><p></p></div></li>
+<ul><li><p><code>feature_nr</code>: <code>numeric(1)</code> Numeric feature identifier.</p></li>
+<li><p><code>feature_name</code>: <code>character(1)</code> Preferred feature name
+derived from limma tables or falling back to the numeric ID.</p></li>
+<li><p><code>gene</code>: <code>character(1)</code> Preferred gene symbol obtained
+from the annotation or from cluster-level metadata.</p></li>
+<li><p><code>cluster_&lt;condition&gt;</code>: <code>integer(1)</code> Cluster assignment
+for each time-effect condition (Category 1). One column per
+condition.</p></li>
+<li><p><code>cluster_cat2_&lt;cond1&gt;_vs_&lt;cond2&gt;</code>: <code>character(1)</code>
+Category 2 label for each contrast. Indicates which condition
+shows higher expression (e.g. <code>"Ctrl_higher"</code>), or <code>NA</code> if
+the feature is not a category 2 hit.</p></li>
+<li><p><code>cluster_cat3_&lt;cond1&gt;_vs_&lt;cond2&gt;</code>: <code>character(1)</code>
+Category 3 label for each contrast. Encodes the pair of
+time-effect clusters in the form <code>"&lt;c1&gt;_&lt;c2&gt;"</code> (e.g.
+<code>"2_4"</code>). <code>NA</code> indicates the feature is not a category 3
+hit.</p></li>
 </ul><p>For any category-specific column, a value of <code>NA</code> indicates that
 the feature was not significant (i.e., not a hit) in that category.</p></dd>
 
@@ -120,20 +116,13 @@ the feature was not significant (i.e., not a hit) in that category.</p></dd>
 <dt id="arg-databases">databases<a class="anchor" aria-label="anchor" href="#arg-databases"></a></dt>
 <dd><p><code>data.frame</code>: A <code>data.frame</code> that defines the gene set
 collections to be tested in the overrepresentation analysis. Must contain
-exactly three columns:</p><dl><dt>DB <code>character(1)</code></dt>
-<dd><p>The database identifier (e.g., KEGG, GO_BP,
-Reactome).</p></dd>
-
-<dt>Geneset <code>character(1)</code></dt>
-<dd><p>The name of the gene set or pathway
-within the database.</p></dd>
-
-<dt>Gene <code>character(1)</code></dt>
-<dd><p>A gene identifier belonging to the gene set
-(e.g., gene symbol, Ensembl ID).</p></dd>
-
-
-</dl><p>Each row corresponds to one <code>(database, geneset, gene)</code> association. The
+exactly three columns:</p><ul><li><p><code>DB</code>: <code>character(1)</code> The database identifier
+(e.g., KEGG, GO_BP, Reactome).</p></li>
+<li><p><code>Geneset</code>: <code>character(1)</code> The name of the gene set or
+pathway within the database.</p></li>
+<li><p><code>Gene</code>: <code>character(1)</code> A gene identifier belonging to
+the gene set (e.g., gene symbol, Ensembl ID).</p></li>
+</ul><p>Each row corresponds to one <code>(database, geneset, gene)</code> association. The
 same gene may appear in multiple gene sets.</p></dd>
 
 
@@ -385,10 +374,10 @@ list(
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Foreground genes overlapping with database: 2 (100%)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> ORA analysis completed successfully.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpdPGQHX/run_ora_demo .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/Rtmp5rZI76/run_ora_demo .</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "run_ora_report_TOY_19_12_2025-09_00_39.html"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "run_ora_report_TOY_15_01_2026-11_14_05.html"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
