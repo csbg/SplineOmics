@@ -67,10 +67,7 @@ values.
 
 If any treatment list is present, both must be present. The two lists must
 have identical name sets. Allowed names are the values of
-\code{meta[[condition]]} and the special name \code{"double_spline_plots"}, which
-generates a treatment line for the plots of limma category 2 and 3 (average
-difference between conditions and the interaction between condition and
-time).
+\code{meta[[condition]]}.
 
 Vertical dashed lines are drawn at the given timepoints for facets whose
 level name matches a list name, and labeled with the corresponding string
@@ -83,13 +80,11 @@ Example:
   time_unit = "hours",
   treatment_labels = list(
     WT = "Feeding",
-    KO = "Temperature shift",
-    double_spline_plots = "Treatment line"
+    KO = "Temperature shift"
   ),
   treatment_timepoints = list(
     WT = 12,
-    KO = 24,
-    double_spline_plots = 18
+    KO = 24
   )
 )
 }\if{html}{\out{</div>}}}

@@ -35,6 +35,8 @@ navbar:
           href: articles/methylation_data_analysis.html
         - text: "Peak-Valley-Cliff (PVC) analysis"
           href: articles/PVC_analysis.html
+        - text: "Gene-centric multiomics clustering"
+          href: articles/Gene_centric_multiomics_clustering.html
 
         - text: "---"   # divider between sections
 
@@ -64,6 +66,7 @@ reference:
           to the user in the SplineOmics package.
     contents:
       - compare_results
+      - cluster_genes_multiomics
       - cluster_hits
       - create_limma_report
       - create_splineomics
@@ -77,21 +80,21 @@ reference:
       - run_ora
       - run_limma_splines
       - update_splineomics
-      - cluster_genes_multiomics
 
 extra_files:
   - googleabfeff244193b2bc.html
 
 # Keep the articles index so pkgdown is happy (not linked in navbar).
 articles:
-  - title: "Use cases (apply to datasets)"
+  - title: "Further use cases"
     contents:
       - get_started
       - RNA-seq-analysis
       - glycan-analysis
       - methylation_data_analysis
       - PVC_analysis
-  - title: "Guides & Concepts"
+      - Gene_centric_multiomics_clustering
+  - title: "Guides"
     contents:
       - design_limma_design_formula
       - limma_result_categories

@@ -13,7 +13,7 @@ returning visualizations of all features with at least one excursion."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ returning visualizations of all features with at least one excursion."></head><b
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
     <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
@@ -131,10 +132,7 @@ plots:</p><ul><li><p><code>y_axis_label</code>: <code>character(1)</code> single
 values.</p></li>
 </ul><p>If any treatment list is present, both must be present. The two lists must
 have identical name sets. Allowed names are the values of
-<code>meta[[condition]]</code> and the special name <code>"double_spline_plots"</code>, which
-generates a treatment line for the plots of limma category 2 and 3 (average
-difference between conditions and the interaction between condition and
-time).</p>
+<code>meta[[condition]]</code>.</p>
 <p>Vertical dashed lines are drawn at the given timepoints for facets whose
 level name matches a list name, and labeled with the corresponding string
 (e.g., feeding, temperature shift).</p>
@@ -144,13 +142,11 @@ level name matches a list name, and labeled with the corresponding string
 <span>  time_unit <span class="op">=</span> <span class="st">"hours"</span>,</span>
 <span>  treatment_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    WT <span class="op">=</span> <span class="st">"Feeding"</span>,</span>
-<span>    KO <span class="op">=</span> <span class="st">"Temperature shift"</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="st">"Treatment line"</span></span>
+<span>    KO <span class="op">=</span> <span class="st">"Temperature shift"</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  treatment_timepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    WT <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>    KO <span class="op">=</span> <span class="fl">24</span>,</span>
-<span>    double_spline_plots <span class="op">=</span> <span class="fl">18</span></span>
+<span>    KO <span class="op">=</span> <span class="fl">24</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre><p></p></div></dd>
 
@@ -312,7 +308,7 @@ by the chosen <code>alpha</code>.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 3: p=0; v=0; b=0; t=0</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> PVC report generation completed successfully.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/Rtmp5rZI76 .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpVtsofh .</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
 <span class="r-in"><span></span></span>

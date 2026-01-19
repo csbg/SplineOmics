@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
     <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
@@ -137,10 +138,41 @@ future.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="v0-4-1">[v0.4.1]<a class="anchor" aria-label="anchor" href="#v0-4-1"></a>
+<h4 id="v0-4-2">[v0.4.2]<a class="anchor" aria-label="anchor" href="#v0-4-2"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+</h5>
+<ul>
+<li><p><code><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics()</a></code>, a gene-centric
+multi-omics clustering function that integrates multiple data modalities
+within analytical blocks via weighted gene–gene distance aggregation.
+The function returns both per-gene cluster assignments and
+modality-specific cluster centroid summaries, enabling interpretation of
+cluster structure, coverage, and within-cluster coherence across omics
+layers.</p></li>
+<li><p><code><a href="../reference/run_ora.html">run_ora()</a></code>: Gene names additional safety
+checks</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+</h5>
+<ul>
+<li><p><code><a href="../reference/cluster_hits.html">cluster_hits()</a></code>: cT and cDT results sheet
+bug</p></li>
+<li><p>1 condition bug in <code><a href="../reference/explore_data.html">explore_data()</a></code>.</p></li>
+<li><p><code>extract_effect()</code> internal function, made it much
+more robustly (had clear weaknesses before)</p></li>
+<li><p>Part of the documentation</p></li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="v0-4-1">[v0.4.1]<a class="anchor" aria-label="anchor" href="#v0-4-1"></a>
+</h4>
+<div class="section level5">
+<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
 </h5>
 <ul>
 <li><p>Effect size thresholds are now reported in the HTML report
@@ -156,7 +188,7 @@ vignette was added yet. This will be done in a future version.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
 </h5>
 <ul>
 <li><p>use_array_weights behavior for variancePartition linear mixed
@@ -184,7 +216,7 @@ fitting with contrast.fit.</p></li>
 meta condition column).</p></li>
 <li><p>adj_pthresholds argument of cluster_hits() renamed to
 adj_pthresh_time_effect. Now, it instead requires a single numeric input
-specifying the adj. p-value treshold for all conditions (e.g. 0.05), and
+specifying the adj. p-value treshold for all conditions (e.g. 0.05), and
 does not support anymore setting a separate value for each condition.
 This is because using separate values break the uniformity of inference
 and introduces uncontrolled type I error inflation.</p></li>
@@ -228,7 +260,7 @@ for plots.</p></li>
 <h4 id="v0-3-3">[v0.3.3]<a class="anchor" aria-label="anchor" href="#v0-3-3"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
+<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
 </h5>
 <ul>
 <li>Bugs occuring in the functions extract_data(), explore_data(), and
@@ -247,7 +279,7 @@ generated.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
+<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
 </h5>
 <ul>
 <li>The signed r² as the quality score for the cluster members is now
@@ -260,7 +292,7 @@ HTML report.</li>
 <h4 id="v0-3-2">[v0.3.2]<a class="anchor" aria-label="anchor" href="#v0-3-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
+<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
 </h5>
 <ul>
 <li>The cluster_hits() function now does not modify the gene symbols
@@ -310,7 +342,7 @@ default, no HMTL report is generated.</p></li>
 <h4 id="v0-3-1">[v0.3.1]<a class="anchor" aria-label="anchor" href="#v0-3-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
+<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
 </h5>
 <ul>
 <li><p>Effect size computations and thresholding for the splines.
@@ -337,7 +369,7 @@ run.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
+<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
 </h5>
 <ul>
 <li><p>Some documentation was outdated or too vague. Improved
@@ -403,7 +435,7 @@ is large, it uses the minibatch version of kmeans, which is a lot faster
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
+<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
 </h5>
 <ul>
 <li><p>Auto-dof with loocv: Introduced new capability, that
@@ -445,7 +477,7 @@ test.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
+<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
 </h5>
 <ul>
 <li><p>Red spline curves: Before, it was just generated with the help of
@@ -472,7 +504,7 @@ seemingly had no effect. This was now fixed.</p></li>
 <h4 id="section-1">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
+<h5 id="fixed-7">Fixed<a class="anchor" aria-label="anchor" href="#fixed-7"></a>
 </h5>
 <ul>
 <li><p>Bug that prevented the generation of the double spline plots when
@@ -501,12 +533,17 @@ would just confuse the user).</p></li>
 <h5 id="changed-5">Changed<a class="anchor" aria-label="anchor" href="#changed-5"></a>
 </h5>
 <ul>
-<li><p>Replicates in the double spline plots (limma result category 2
-and 3) are now shown with shapes instead of numbers besides the data
+<li>
+<p>Replicates in the double spline plots (limma result category 2
+and</p>
+<ol start="3" style="list-style-type: decimal">
+<li>are now shown with shapes instead of numbers besides the data
 points. This is now possible because the imputed values are not anymore
 shown with shapes in those plots, like in the single spline plots (limma
 result category 1), but with colors (red = imputed values for condition
-1, dodgerblue = imputed values for condition 2).</p></li>
+1, dodgerblue = imputed values for condition 2).</li>
+</ol>
+</li>
 <li><p>The images in the HTML reports are now considerably smaller, but
 zoomable, with the option to drag within the zoomed image. A single
 left-click with the mouse starts the zoom process. Then, you can zoom
@@ -547,7 +584,7 @@ not gsea (gene set enrichment analysis) in the stricter sense.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
+<h4 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
 </h4>
 <ul>
 <li><p>find_pvc() function. This function performs a compount contrast
@@ -592,14 +629,14 @@ example intergrated vs. isolated approach with the same data).</p></li>
 <h4 id="section-2">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
+<h5 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
 </h5>
 <ul>
 <li>Level name in title of overall spline plots.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-7">Fixed<a class="anchor" aria-label="anchor" href="#fixed-7"></a>
+<h5 id="fixed-8">Fixed<a class="anchor" aria-label="anchor" href="#fixed-8"></a>
 </h5>
 <ul>
 <li>Small bug that made it impossible having no treatment label for a
@@ -641,7 +678,7 @@ formula, rather than being passed as part of the dream_params.</li>
 </ul>
 </div>
 <div class="section level4">
-<h4 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
+<h4 id="added-8">Added<a class="anchor" aria-label="anchor" href="#added-8"></a>
 </h4>
 <ul>
 <li>Added linear mixed models for modeling random effects. The
@@ -672,7 +709,7 @@ in a separate field.</li>
 and 3).</li>
 </ul>
 <div class="section level5">
-<h5 id="fixed-8">Fixed<a class="anchor" aria-label="anchor" href="#fixed-8"></a>
+<h5 id="fixed-9">Fixed<a class="anchor" aria-label="anchor" href="#fixed-9"></a>
 </h5>
 <ul>
 <li>A few smaller visual things for the HTML reports.</li>

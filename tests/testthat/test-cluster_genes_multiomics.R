@@ -64,7 +64,7 @@ test_that("cluster_genes_multiomics snapshot with mixed layers", {
     # layer-level metadata:
     # - rna: one-to-one (layer_k = NA)
     # - site: many-to-one (layer_k > 0)
-    layer_meta <- data.frame(
+    modality_meta <- data.frame(
         block   = c("time_Ctrl", "time_Ctrl",
                     "time_Treat", "time_Treat"),
         layer   = c("rna", "site", "rna", "site"),
@@ -76,7 +76,7 @@ test_that("cluster_genes_multiomics snapshot with mixed layers", {
     clustering_results <- cluster_genes_multiomics(
         blocks     = blocks,
         block_meta = block_meta,
-        layer_meta = layer_meta,
+        modality_meta = modality_meta,
         gene_mode  = "union",
         verbose = FALSE
     )

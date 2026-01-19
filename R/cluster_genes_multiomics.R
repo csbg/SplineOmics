@@ -2,11 +2,12 @@
 #'
 #' @description
 #' Performs gene-centric clustering of multi-omics time-series data across
-#' multiple _blocks_ (e.g., time effect, interaction effect) and _layers_
-#' (e.g., transcript, protein, feature-level layers with many-to-one gene
-#' mapping). The function integrates multiple omics layers within each block by
-#' computing layer-specific gene–gene distances, combining them via user-defined
-#' weights, and clustering genes based on the resulting unified distance matrix.
+#' multiple blocks (e.g., time effect, interaction effect) and data modalities
+#' (e.g., transcript, protein, feature-level modalities with many-to-one gene
+#' mapping). The function integrates multiple modalities within each block by
+#' computing modality-specific gene–gene distances, combining them via 
+#' user-defined weights, and clustering genes based on the resulting unified
+#'  distance matrix.
 #'
 #' The function is flexible with respect to how spline trajectories,
 #' interaction representations, or feature-level signatures are constructed:
@@ -20,10 +21,10 @@
 #' The outer list corresponds to analytical \emph{blocks} (e.g.,
 #' \code{time_Ctrl}, \code{interaction_Ctrl_vs_Treat}).
 #' Each element of the outer list is itself a named list whose elements are
-#' \emph{layers} (e.g., \code{rna}, \code{protein}, \code{phospho}), each being
-#' a numeric matrix of dimension \code{features x spline_points}.
+#' \emph{modalities} (e.g., \code{rna}, \code{protein}, \code{phospho}), each
+#'  being a numeric matrix of dimension \code{features x spline_points}.
 #'
-#' For one-to-one (gene-level) layers, rows represent genes directly.
+#' For one-to-one (gene-level) modalities, rows represent genes directly.
 #' In this case, row names must be the gene identifiers themselves and must
 #' follow the pattern \code{<gene_id>}. The angle brackets are shown for
 #' illustration only and must not be included in the actual row names.
@@ -31,15 +32,16 @@
 #' genes cannot be matched across omics layers during distance computation and
 #' clustering.
 #'
-#' For many-to-one layers (e.g., phospho sites, probes), rows represent features
-#' that map to genes and are summarized into gene-level pattern signatures
-#' based on the metadata tables. For these layers, row names must follow the
+#' For many-to-one modalities (e.g., phospho sites, probes), rows represent
+#' features that map to genes and are summarized into gene-level pattern
+#' signatures
+#' based on the metadata tables. For these modalities, row names must follow the
 #' pattern \code{<gene_id>_<feature_id>}, where the gene identifier precedes
 #' the first underscore. Again, the angle brackets are for illustration only
 #' and must not be included in the actual row names.
 #'
 #' This row-naming convention is critical, as it defines how features are
-#' associated with genes and how genes are aligned across layers prior to
+#' associated with genes and how genes are aligned across modalities prior to
 #' signature construction and downstream clustering.
 #'
 #' @param block_meta
@@ -56,67 +58,58 @@
 #'   \code{NA} for single-condition blocks.}
 #' }
 #'
-#' @param layer_meta
-#' A data frame containing \emph{layer-level metadata}. One row per (block ×
-#' layer). Must include:
+#' @param modality_meta
+#' A data frame containing \emph{modality-level metadata}. One row per (block ×
+#' modality). Must include:
 #' \describe{
 #'   \item{\code{block}}{Block identifier linking to \code{block_meta}.}
-#'   \item{\code{layer}}{Layer name within the block.}
+#'   \item{\code{layer}}{Modality name within the block.}
 #'   \item{\code{layer_k}}{Number of pattern clusters to use for building
-#'   pattern signatures for many-to-one layers. \code{NA} for layers that are
-#'   already gene-level.}
+#'   pattern signatures for many-to-one modalities. \code{NA} for modalities
+#'   that are already gene-level.}
 #'   \item{\code{layer_w}}{
-#'     Relative weight of this layer when combining layer-specific
+#'     Relative weight of this modality when combining modality-specific
 #'     gene–gene distances within the block. Values are treated as
 #'     *relative* weights and are normalized internally, so they do not
-#'     need to sum to 1 (e.g. 1, 1, 2 means the third layer has twice
+#'     need to sum to 1 (e.g. 1, 1, 2 means the third modality has twice
 #'     the weight of the others).
 #'   }
 #' }
 #'
 #' @param gene_mode
-#' Character string specifying how genes should be harmonized across layers
+#' Character string specifying how genes should be harmonized across modalities
 #' within each block prior to clustering.  
 #' \describe{
 #'   \item{\code{"intersection"}}{Retain only genes present in \emph{all}
-#'   layers of the block. Produces the most interpretable multi-omics clusters.}
+#'   modalities of the block. Produces the most interpretable multi-omics
+#'    clusters.}
 #'
-#'   \item{\code{"union"}}{Retain genes present in \emph{any} layer of the
-#'   block. Gene–gene distances are computed using only shared layers per gene
-#'   pair, with weights renormalized accordingly. Increases coverage but results
-#'   in heterogeneous information across genes.}
+#'   \item{\code{"union"}}{Retain genes present in \emph{any} modality of the
+#'   block. Gene–gene distances are computed using only shared modalities per
+#'   gene pair, with weights renormalized accordingly. Increases coverage but
+#'   results in heterogeneous information across genes.}
 #' }
 #' 
 #' @param verbose Boolean flag indicating if info messages are be shown.
 #'
 #' @return
-#' A tibble \code{cluster_table} with one row per gene and columns containing
-#' all block-specific clustering results in a format suitable for downstream
-#' enrichment analyses.  
-#' The table includes:
+#' A named list with two tibbles:
 #'
 #' \describe{
-#'   \item{\code{gene}}{Gene identifier used for clustering.}
+#'   \item{\code{cluster_table}}{A tibble with one row per gene containing
+#'   block-specific cluster assignments suitable for downstream enrichment
+#'   analyses. Columns include the gene identifier and one clustering column
+#'   per analytical block (e.g., \code{cluster_<cond>} or
+#'   \code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
+#'   block are assigned \code{NA}.}
 #'
-#'   \item{\code{feature_nr}}{Optional numeric identifier if available in the
-#'   input.}
-#'
-#'   \item{\code{feature_name}}{Optional human-readable feature/gene name.}
-#'
-#'   \item{\code{cluster_<cond>}}{Integer cluster assignment for each
-#'    time-effect block (result category 1). One column per condition, derived
-#'    from \code{block_meta$cond1}.}
-#'
-#'   \item{\code{cluster_cat3_<cond1>_vs_<cond2>}}{Character cluster label for
-#'   each interaction block (result category 3). Column names follow the pattern
-#'   \code{"cluster_cat3_<cond1>_vs_<cond2>"}. Values are cluster assignments
-#'   for genes clustered in the corresponding block, and \code{NA} for genes
-#'   not included in that block.}
+#'   \item{\code{centroid_info}}{A tibble with one row per block, modality
+#'   (layer), and cluster, summarizing modality-specific cluster centroid
+#'   trajectories and within-cluster coherence. Columns include the block
+#'   and layer identifiers, cluster label, gene coverage statistics, mean
+#'   and standard deviation of per-gene \eqn{R^2} values, optional per-gene
+#'   \eqn{R^2} vectors, and the centroid trajectory stored as a list-column.}
 #' }
-#'
-#' All clustering columns contain \code{NA} for genes that were not included in
-#' the given block (e.g., due to \code{gene_mode = "intersection"} or missing
-#' layers in a block).
 #' 
 #' @examples
 #' set.seed(1)
@@ -150,7 +143,7 @@
 #'     stringsAsFactors = FALSE
 #' )
 #'
-#' layer_meta <- data.frame(
+#' modality_meta <- data.frame(
 #'     block   = c("time_Ctrl", "time_Treat"),
 #'     layer   = c("rna", "rna"),
 #'     layer_k = c(NA_real_, NA_real_),
@@ -161,7 +154,7 @@
 #' cluster_table <- cluster_genes_multiomics(
 #'     blocks     = blocks,
 #'     block_meta = block_meta,
-#'     layer_meta = layer_meta,
+#'     modality_meta = modality_meta,
 #'     gene_mode  = "intersection"
 #' )
 #'
@@ -172,7 +165,7 @@
 cluster_genes_multiomics <- function(
         blocks,
         block_meta,
-        layer_meta,
+        modality_meta,
         gene_mode = "intersection",
         verbose = TRUE
 ) {
@@ -180,7 +173,7 @@ cluster_genes_multiomics <- function(
     .check_cluster_genes_multiomics_input(
         blocks     = blocks,
         block_meta = block_meta,
-        layer_meta = layer_meta,
+        modality_meta = modality_meta,
         gene_mode  = gene_mode,
         verbose = verbose
     )
@@ -209,7 +202,7 @@ cluster_genes_multiomics <- function(
             block_id   = b,
             blocks     = blocks,
             block_meta = block_meta,
-            layer_meta = layer_meta,
+            modality_meta = modality_meta,
             gene_mode  = gene_mode,
             verbose = verbose
         )
@@ -275,7 +268,6 @@ cluster_genes_multiomics <- function(
 }
 
 
-
 # Level 1 function definitions -------------------------------------------------
 
 
@@ -290,7 +282,7 @@ cluster_genes_multiomics <- function(
 #' It performs:
 #' \itemize{
 #'   \item argument-wise checks for \code{blocks}, \code{block_meta},
-#'         \code{layer_meta}, and \code{gene_mode}, and
+#'         \code{modality_meta}, and \code{gene_mode}, and
 #'   \item cross-argument consistency checks linking blocks, layers,
 #'         and metadata.
 #' }
@@ -300,7 +292,7 @@ cluster_genes_multiomics <- function(
 #' \code{.check_cluster_genes_multiomics_gene_mode()},
 #' \code{.check_cluster_genes_multiomics_blocks()},
 #' \code{.check_cluster_genes_multiomics_block_meta()},
-#' \code{.check_cluster_genes_multiomics_layer_meta()}, and
+#' \code{.check_cluster_genes_multiomics_modality_meta()}, and
 #' \code{.check_cluster_genes_multiomics_cross_args()}.
 #'
 #' @param blocks
@@ -316,7 +308,7 @@ cluster_genes_multiomics <- function(
 #' The column \code{block_k} gives the number of clusters per block and
 #' must be positive and constant within each block.
 #'
-#' @param layer_meta
+#' @param modality_meta
 #' Data frame with layer-level metadata.  
 #' Must contain the columns \code{block}, \code{layer}, \code{layer_k},
 #' and \code{layer_w}.  
@@ -341,18 +333,18 @@ cluster_genes_multiomics <- function(
 .check_cluster_genes_multiomics_input <- function(
         blocks,
         block_meta,
-        layer_meta,
+        modality_meta,
         gene_mode,
         verbose
 ) {
     .check_cluster_genes_multiomics_gene_mode(gene_mode)
     .check_cluster_genes_multiomics_blocks(blocks)
     .check_cluster_genes_multiomics_block_meta(block_meta)
-    .check_cluster_genes_multiomics_layer_meta(layer_meta)
+    .check_cluster_genes_multiomics_modality_meta(modality_meta)
     .check_cluster_genes_multiomics_cross_args(
         blocks,
         block_meta,
-        layer_meta
+        modality_meta
         )
     
     # verbose must be TRUE or FALSE (length 1 logical)
@@ -403,7 +395,7 @@ cluster_genes_multiomics <- function(
 #' Used to obtain \code{block_k} and to filter metadata for the current
 #' block.
 #'
-#' @param layer_meta
+#' @param modality_meta
 #' Layer-level metadata table.  
 #' Used to retrieve layer names, layer types (\code{layer_k}), and
 #' layer weights for the current block.
@@ -432,12 +424,12 @@ cluster_genes_multiomics <- function(
         block_id,
         blocks,
         block_meta,
-        layer_meta,
+        modality_meta,
         gene_mode,
         verbose
 ) {
     meta_b_block <- block_meta[block_meta$block == block_id, , drop = FALSE]
-    meta_b_layer <- layer_meta[layer_meta$block == block_id, , drop = FALSE]
+    meta_b_layer <- modality_meta[modality_meta$block == block_id, , drop = FALSE]
     
     block_k <- meta_b_block$block_k[1L]
     
@@ -1010,6 +1002,9 @@ cluster_genes_multiomics <- function(
 #'         gene's z-scored trajectory and the centroid.}
 #'   \item{\code{sd_R2}}{Standard deviation of the \eqn{R^2} values
 #'         across genes.}
+#'   \item{\code{r2_member}}{List-column; each entry is a named numeric
+#'         vector of per-gene \eqn{R^2} values (names are gene IDs) for
+#'         genes used to compute the centroid in this layer and cluster.}
 #'   \item{\code{centroid}}{List-column; each entry is a numeric vector
 #'         giving the centroid trajectory (length
 #'         \code{ncol(layer_mats[[layer]])}).}
@@ -1048,6 +1043,7 @@ cluster_genes_multiomics <- function(
             
             if (n_used == 0L) {
                 centroid <- rep(NA_real_, ncol(mat_l))
+                r2_member  <- setNames(numeric(0), character(0))
                 mean_R2 <- NA_real_
                 sd_R2 <- NA_real_
             } else {
@@ -1058,7 +1054,7 @@ cluster_genes_multiomics <- function(
                 
                 if (n_used == 1L) {
                     centroid <- as.numeric(X_z[1L, ])
-                    r2_vec <- 1
+                    r2_member <- setNames(1, genes_layer)
                     mean_R2 <- 1
                     sd_R2 <- 0
                 } else {
@@ -1074,7 +1070,8 @@ cluster_genes_multiomics <- function(
                             r^2
                         }
                     )
-                    
+                    r2_member <- r2_vec
+                    names(r2_member) <- rownames(X_z)
                     mean_R2 <- mean(r2_vec, na.rm = TRUE)
                     sd_R2 <- stats::sd(r2_vec, na.rm = TRUE)
                 }
@@ -1083,14 +1080,15 @@ cluster_genes_multiomics <- function(
             row_i <- row_i + 1L
             centroid_rows[[row_i]] <- data.frame(
                 block           = block_id,
-                layer           = ln,
-                layer_type      = layer_type,
+                modality        = ln,
+                modality_type   = layer_type,
                 cluster         = c,
                 n_genes_cluster = n_cluster,
                 n_genes_used    = n_used,
                 coverage        = coverage,
                 mean_R2         = mean_R2,
                 sd_R2           = sd_R2,
+                r2_member       = I(list(r2_member)),
                 centroid        = I(list(centroid)),
                 stringsAsFactors = FALSE
             )
@@ -1100,14 +1098,15 @@ cluster_genes_multiomics <- function(
     if (length(centroid_rows) == 0L) {
         centroid_info_b <- data.frame(
             block           = character(0),
-            layer           = character(0),
-            layer_type      = character(0),
+            modality        = character(0),
+            modality_type   = character(0),
             cluster         = integer(0),
             n_genes_cluster = integer(0),
             n_genes_used    = integer(0),
             coverage        = numeric(0),
             mean_R2         = numeric(0),
             sd_R2           = numeric(0),
+            r2_member       = I(list()),
             centroid        = I(list()),
             stringsAsFactors = FALSE
         )
@@ -1366,17 +1365,17 @@ cluster_genes_multiomics <- function(
 }
 
 
-#' Validate the `layer_meta` argument
+#' Validate the `modality_meta` argument
 #'
 #' @noRd
 #'
 #' @description
 #' Internal helper that validates the layer-level metadata supplied in
-#' \code{layer_meta}.  
+#' \code{modality_meta}.  
 #'
 #' The function checks:
 #' \itemize{
-#'   \item that \code{layer_meta} is a data frame with required columns
+#'   \item that \code{modality_meta} is a data frame with required columns
 #'         \code{block}, \code{layer}, \code{layer_k}, and \code{layer_w},
 #'   \item that \code{layer_k} is numeric, positive where non-NA, and may
 #'         be \code{NA} to indicate one-to-one gene-level layers,
@@ -1386,109 +1385,109 @@ cluster_genes_multiomics <- function(
 #'         once.
 #' }
 #'
-#' @param layer_meta
+#' @param modality_meta
 #' Data frame containing layer-level metadata used by
 #' \code{cluster_genes_multiomics()}.  
 #' Must include valid entries for \code{layer_k} and \code{layer_w},
 #' and uniquely identify each layer within each block.
 #'
 #' @return
-#' Invisibly returns \code{layer_meta} if all checks pass.
+#' Invisibly returns \code{modality_meta} if all checks pass.
 #'
-.check_cluster_genes_multiomics_layer_meta <- function(layer_meta) {
-    # layer_meta: structure
-    if (!is.data.frame(layer_meta)) {
+.check_cluster_genes_multiomics_modality_meta <- function(modality_meta) {
+    # modality_meta: structure
+    if (!is.data.frame(modality_meta)) {
         stop(
-            "`layer_meta` must be a data.frame (or tibble) with ",
+            "`modality_meta` must be a data.frame (or tibble) with ",
             "layer-level metadata.",
             call. = FALSE
         )
     }
     required_layer_cols <- c("block", "layer", "layer_k", "layer_w")
-    missing_layer_cols <- setdiff(required_layer_cols, colnames(layer_meta))
+    missing_layer_cols <- setdiff(required_layer_cols, colnames(modality_meta))
     if (length(missing_layer_cols) > 0L) {
         stop(
-            "`layer_meta` is missing required columns: ",
+            "`modality_meta` is missing required columns: ",
             paste(missing_layer_cols, collapse = ", "),
             call. = FALSE
         )
     }
     
     # layer_k: NA or positive numeric
-    if (!is.numeric(layer_meta$layer_k)) {
+    if (!is.numeric(modality_meta$layer_k)) {
         stop(
-            "`layer_meta$layer_k` must be numeric (positive integers) ",
+            "`modality_meta$layer_k` must be numeric (positive integers) ",
             "or NA.",
             call. = FALSE
         )
     }
-    if (any(layer_meta$layer_k[!is.na(layer_meta$layer_k)] <= 0)) {
+    if (any(modality_meta$layer_k[!is.na(modality_meta$layer_k)] <= 0)) {
         stop(
-            "`layer_meta$layer_k` must be positive where it is not NA.",
+            "`modality_meta$layer_k` must be positive where it is not NA.",
             call. = FALSE
         )
     }
     
     # layer_w: numeric, non-negative; per-block sum > 0
-    if (!is.numeric(layer_meta$layer_w)) {
-        stop("`layer_meta$layer_w` must be numeric.", call. = FALSE)
+    if (!is.numeric(modality_meta$layer_w)) {
+        stop("`modality_meta$layer_w` must be numeric.", call. = FALSE)
     }
-    if (any(is.na(layer_meta$layer_w))) {
+    if (any(is.na(modality_meta$layer_w))) {
         stop(
-            "`layer_meta$layer_w` contains NA. Please provide weights ",
+            "`modality_meta$layer_w` contains NA. Please provide weights ",
             "for all rows.",
             call. = FALSE
         )
     }
-    if (any(layer_meta$layer_w < 0)) {
+    if (any(modality_meta$layer_w < 0)) {
         stop(
-            "`layer_meta$layer_w` must be non-negative.",
+            "`modality_meta$layer_w` must be non-negative.",
             call. = FALSE
         )
     }
     
-    w_by_block <- tapply(layer_meta$layer_w, layer_meta$block, sum)
+    w_by_block <- tapply(modality_meta$layer_w, modality_meta$block, sum)
     if (any(w_by_block <= 0)) {
         bad_blocks <- names(w_by_block)[w_by_block <= 0]
         stop(
-            "For each block, the sum of `layer_meta$layer_w` must be > 0. ",
+            "For each block, the sum of `modality_meta$layer_w` must be > 0. ",
             "Blocks with invalid weights: ",
             paste(bad_blocks, collapse = ", "),
             call. = FALSE
         )
     }
     
-    # ensure (block, layer) pairs in layer_meta are unique
-    bl_pairs <- paste(layer_meta$block, layer_meta$layer, sep = "||")
+    # ensure (block, layer) pairs in modality_meta are unique
+    bl_pairs <- paste(modality_meta$block, modality_meta$layer, sep = "||")
     if (any(duplicated(bl_pairs))) {
         dup <- unique(bl_pairs[duplicated(bl_pairs)])
         stop(
-            "Duplicate (block, layer) combinations in `layer_meta`: ",
+            "Duplicate (block, layer) combinations in `modality_meta`: ",
             paste(dup, collapse = ", "),
             ". Each (block, layer) must appear only once.",
             call. = FALSE
         )
     }
     
-    invisible(layer_meta)
+    invisible(modality_meta)
 }
 
 
-#' Cross-validate `blocks`, `block_meta`, and `layer_meta`
+#' Cross-validate `blocks`, `block_meta`, and `modality_meta`
 #'
 #' @noRd
 #'
 #' @description
 #' Internal helper that performs cross-argument consistency checks across
-#' \code{blocks}, \code{block_meta}, and \code{layer_meta}.  
+#' \code{blocks}, \code{block_meta}, and \code{modality_meta}.  
 #'
 #' The function verifies:
 #' \itemize{
 #'   \item that all blocks referenced in \code{block_meta} and
-#'         \code{layer_meta} exist in \code{blocks},
+#'         \code{modality_meta} exist in \code{blocks},
 #'   \item that every block in \code{block_meta} has at least one
-#'         corresponding row in \code{layer_meta},
-#'   \item that all blocks mentioned in \code{layer_meta} also appear in
+#'         corresponding row in \code{modality_meta},
+#'   \item that all blocks mentioned in \code{modality_meta} also appear in
 #'         \code{block_meta},
 #'   \item and issues a warning for blocks present in \code{blocks} but
 #'         not referenced in \code{block_meta}.
@@ -1517,7 +1516,7 @@ cluster_genes_multiomics <- function(
 #' \code{block} column that must match the block identifiers in
 #' \code{blocks}.
 #'
-#' @param layer_meta
+#' @param modality_meta
 #' Data frame with layer-level metadata, including \code{block},
 #' \code{layer}, and \code{layer_k} columns that must be consistent with
 #' \code{blocks} and \code{block_meta}.
@@ -1528,7 +1527,7 @@ cluster_genes_multiomics <- function(
 .check_cluster_genes_multiomics_cross_args <- function(
         blocks,
         block_meta,
-        layer_meta
+        modality_meta
 ) {
     # block_meta: blocks exist in blocks
     unknown_blocks <- setdiff(block_meta$block, names(blocks))
@@ -1540,21 +1539,21 @@ cluster_genes_multiomics <- function(
         )
     }
     
-    # each (block, layer) in layer_meta exists in blocks
-    for (i in seq_len(nrow(layer_meta))) {
-        b <- layer_meta$block[i]
-        l <- layer_meta$layer[i]
+    # each (block, layer) in modality_meta exists in blocks
+    for (i in seq_len(nrow(modality_meta))) {
+        b <- modality_meta$block[i]
+        l <- modality_meta$layer[i]
         
         if (!b %in% names(blocks)) {
             stop(
-                "Row ", i, " of `layer_meta` refers to block '", b,
+                "Row ", i, " of `modality_meta` refers to block '", b,
                 "', which is not present in `blocks`.",
                 call. = FALSE
             )
         }
         if (!l %in% names(blocks[[b]])) {
             stop(
-                "Row ", i, " of `layer_meta` refers to layer '", l,
+                "Row ", i, " of `modality_meta` refers to layer '", l,
                 "' in block '", b, "', which is not present in ",
                 "`blocks[[\"",
                 b, "\"]]`.",
@@ -1563,28 +1562,28 @@ cluster_genes_multiomics <- function(
         }
     }
     
-    # each block in block_meta must appear in layer_meta
+    # each block in block_meta must appear in modality_meta
     blocks_without_layers <- setdiff(
         block_meta$block,
-        unique(layer_meta$block)
+        unique(modality_meta$block)
     )
     if (length(blocks_without_layers) > 0L) {
         stop(
             "Blocks in `block_meta` with no corresponding rows in ",
-            "`layer_meta`: ",
+            "`modality_meta`: ",
             paste(blocks_without_layers, collapse = ", "),
             call. = FALSE
         )
     }
     
-    # consistency: blocks in layer_meta appear in block_meta
+    # consistency: blocks in modality_meta appear in block_meta
     unknown_in_block_meta <- setdiff(
-        unique(layer_meta$block),
+        unique(modality_meta$block),
         block_meta$block
     )
     if (length(unknown_in_block_meta) > 0L) {
         stop(
-            "Blocks in `layer_meta$block` not present in ",
+            "Blocks in `modality_meta$block` not present in ",
             "`block_meta$block`: ",
             paste(unknown_in_block_meta, collapse = ", "),
             call. = FALSE
@@ -1603,10 +1602,10 @@ cluster_genes_multiomics <- function(
     }
     
     # per-layer checks using meta: NA, one-to-one vs many-to-one
-    for (i in seq_len(nrow(layer_meta))) {
-        b  <- layer_meta$block[i]
-        l  <- layer_meta$layer[i]
-        lk <- layer_meta$layer_k[i]
+    for (i in seq_len(nrow(modality_meta))) {
+        b  <- modality_meta$block[i]
+        l  <- modality_meta$layer[i]
+        lk <- modality_meta$layer_k[i]
         mat <- blocks[[b]][[l]]
         
         if (any(is.na(mat))) {
@@ -1665,10 +1664,10 @@ cluster_genes_multiomics <- function(
     }
     
     # ensure gene-level layers within each block share some genes
-    for (b in unique(layer_meta$block)) {
-        rows_b <- layer_meta$block == b &
-            is.na(layer_meta$layer_k)
-        layers_gene <- layer_meta$layer[rows_b]
+    for (b in unique(modality_meta$block)) {
+        rows_b <- modality_meta$block == b &
+            is.na(modality_meta$layer_k)
+        layers_gene <- modality_meta$layer[rows_b]
         
         if (length(layers_gene) < 2L) {
             next

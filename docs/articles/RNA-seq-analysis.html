@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
     <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/limma_result_categories.html">limma result categories</a></li>
@@ -1569,7 +1570,7 @@ differential expression analysis.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; NOTE: If you manually stop run_limma_splines() in RStudio and  used parallelization for variancePartition::dream(), then those parallelized processes may continue running. Use your system's process manager to terminate them manually!</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished preprocessing RNA-seq</span></span>
-<span><span class="co">#&gt;         data in 0.3 minutes</span></span></code></pre></div>
+<span><span class="co">#&gt;         data in 0.2 minutes</span></span></code></pre></div>
 <p>You can customize the normalization method by providing a specific
 normalization function through the <code>normalize_func</code> argument
 in the <code><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function. For details on
@@ -1628,7 +1629,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpgRMV1y/file9a7371a636e3 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpCaqFzo/filef1f25a7cf05e .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1700,10 +1701,10 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpgRMV1y/file9a733128aea3 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpCaqFzo/filef1f27fbf4208 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
-<span><span class="co">#&gt; Running this function took 0.6 min</span></span></code></pre></div>
+<span><span class="co">#&gt; Running this function took 0.5 min</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?export=view&amp;id=1EvPiEwHyGnBQFxRets00s87tochgyGK4" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
@@ -1818,7 +1819,7 @@ levels, and generates the HTML report:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       here_1.0.1        readr_2.1.5      </span></span>
-<span><span class="co">#&gt; [5] SplineOmics_0.4.1</span></span>
+<span><span class="co">#&gt; [5] SplineOmics_0.4.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_2.0.0          </span></span>

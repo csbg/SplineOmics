@@ -7,7 +7,7 @@
 cluster_genes_multiomics(
   blocks,
   block_meta,
-  layer_meta,
+  modality_meta,
   gene_mode = "intersection",
   verbose = TRUE
 )
@@ -17,10 +17,10 @@ cluster_genes_multiomics(
 The outer list corresponds to analytical \emph{blocks} (e.g.,
 \code{time_Ctrl}, \code{interaction_Ctrl_vs_Treat}).
 Each element of the outer list is itself a named list whose elements are
-\emph{layers} (e.g., \code{rna}, \code{protein}, \code{phospho}), each being
-a numeric matrix of dimension \code{features x spline_points}.
+\emph{modalities} (e.g., \code{rna}, \code{protein}, \code{phospho}), each
+being a numeric matrix of dimension \code{features x spline_points}.
 
-For one-to-one (gene-level) layers, rows represent genes directly.
+For one-to-one (gene-level) modalities, rows represent genes directly.
 In this case, row names must be the gene identifiers themselves and must
 follow the pattern \code{<gene_id>}. The angle brackets are shown for
 illustration only and must not be included in the actual row names.
@@ -28,15 +28,16 @@ Gene identifiers must be consistent across all one-to-one layers; otherwise,
 genes cannot be matched across omics layers during distance computation and
 clustering.
 
-For many-to-one layers (e.g., phospho sites, probes), rows represent features
-that map to genes and are summarized into gene-level pattern signatures
-based on the metadata tables. For these layers, row names must follow the
+For many-to-one modalities (e.g., phospho sites, probes), rows represent
+features that map to genes and are summarized into gene-level pattern
+signatures
+based on the metadata tables. For these modalities, row names must follow the
 pattern \code{<gene_id>_<feature_id>}, where the gene identifier precedes
 the first underscore. Again, the angle brackets are for illustration only
 and must not be included in the actual row names.
 
 This row-naming convention is critical, as it defines how features are
-associated with genes and how genes are aligned across layers prior to
+associated with genes and how genes are aligned across modalities prior to
 signature construction and downstream clustering.}
 
 \item{block_meta}{A data frame containing \emph{block-level metadata}. One row per block.
@@ -52,73 +53,65 @@ condition for time-effect blocks, or first condition in a contrast).}
 \code{NA} for single-condition blocks.}
 }}
 
-\item{layer_meta}{A data frame containing \emph{layer-level metadata}. One row per (block ×
-layer). Must include:
+\item{modality_meta}{A data frame containing \emph{modality-level metadata}. One row per (block ×
+modality). Must include:
 \describe{
 \item{\code{block}}{Block identifier linking to \code{block_meta}.}
-\item{\code{layer}}{Layer name within the block.}
+\item{\code{layer}}{Modality name within the block.}
 \item{\code{layer_k}}{Number of pattern clusters to use for building
-pattern signatures for many-to-one layers. \code{NA} for layers that are
-already gene-level.}
+pattern signatures for many-to-one modalities. \code{NA} for modalities
+that are already gene-level.}
 \item{\code{layer_w}}{
-Relative weight of this layer when combining layer-specific
+Relative weight of this modality when combining modality-specific
 gene–gene distances within the block. Values are treated as
 \emph{relative} weights and are normalized internally, so they do not
-need to sum to 1 (e.g. 1, 1, 2 means the third layer has twice
+need to sum to 1 (e.g. 1, 1, 2 means the third modality has twice
 the weight of the others).
 }
 }}
 
-\item{gene_mode}{Character string specifying how genes should be harmonized across layers
+\item{gene_mode}{Character string specifying how genes should be harmonized across modalities
 within each block prior to clustering.
 \describe{
 \item{\code{"intersection"}}{Retain only genes present in \emph{all}
-layers of the block. Produces the most interpretable multi-omics clusters.}
+modalities of the block. Produces the most interpretable multi-omics
+clusters.}
 
-\item{\code{"union"}}{Retain genes present in \emph{any} layer of the
-block. Gene–gene distances are computed using only shared layers per gene
-pair, with weights renormalized accordingly. Increases coverage but results
-in heterogeneous information across genes.}
+\item{\code{"union"}}{Retain genes present in \emph{any} modality of the
+block. Gene–gene distances are computed using only shared modalities per
+gene pair, with weights renormalized accordingly. Increases coverage but
+results in heterogeneous information across genes.}
 }}
 
 \item{verbose}{Boolean flag indicating if info messages are be shown.}
 }
 \value{
-A tibble \code{cluster_table} with one row per gene and columns containing
-all block-specific clustering results in a format suitable for downstream
-enrichment analyses.
-The table includes:
+A named list with two tibbles:
 
 \describe{
-\item{\code{gene}}{Gene identifier used for clustering.}
+\item{\code{cluster_table}}{A tibble with one row per gene containing
+block-specific cluster assignments suitable for downstream enrichment
+analyses. Columns include the gene identifier and one clustering column
+per analytical block (e.g., \code{cluster_<cond>} or
+\code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
+block are assigned \code{NA}.}
 
-\item{\code{feature_nr}}{Optional numeric identifier if available in the
-input.}
-
-\item{\code{feature_name}}{Optional human-readable feature/gene name.}
-
-\item{\code{cluster_<cond>}}{Integer cluster assignment for each
-time-effect block (result category 1). One column per condition, derived
-from \code{block_meta$cond1}.}
-
-\item{\code{cluster_cat3_<cond1>_vs_<cond2>}}{Character cluster label for
-each interaction block (result category 3). Column names follow the pattern
-\code{"cluster_cat3_<cond1>_vs_<cond2>"}. Values are cluster assignments
-for genes clustered in the corresponding block, and \code{NA} for genes
-not included in that block.}
+\item{\code{centroid_info}}{A tibble with one row per block, modality
+(layer), and cluster, summarizing modality-specific cluster centroid
+trajectories and within-cluster coherence. Columns include the block
+and layer identifiers, cluster label, gene coverage statistics, mean
+and standard deviation of per-gene \eqn{R^2} values, optional per-gene
+\eqn{R^2} vectors, and the centroid trajectory stored as a list-column.}
 }
-
-All clustering columns contain \code{NA} for genes that were not included in
-the given block (e.g., due to \code{gene_mode = "intersection"} or missing
-layers in a block).
 }
 \description{
 Performs gene-centric clustering of multi-omics time-series data across
-multiple \emph{blocks} (e.g., time effect, interaction effect) and \emph{layers}
-(e.g., transcript, protein, feature-level layers with many-to-one gene
-mapping). The function integrates multiple omics layers within each block by
-computing layer-specific gene–gene distances, combining them via user-defined
-weights, and clustering genes based on the resulting unified distance matrix.
+multiple blocks (e.g., time effect, interaction effect) and data modalities
+(e.g., transcript, protein, feature-level modalities with many-to-one gene
+mapping). The function integrates multiple modalities within each block by
+computing modality-specific gene–gene distances, combining them via
+user-defined weights, and clustering genes based on the resulting unified
+distance matrix.
 
 The function is flexible with respect to how spline trajectories,
 interaction representations, or feature-level signatures are constructed:
@@ -159,7 +152,7 @@ block_meta <- data.frame(
     stringsAsFactors = FALSE
 )
 
-layer_meta <- data.frame(
+modality_meta <- data.frame(
     block   = c("time_Ctrl", "time_Treat"),
     layer   = c("rna", "rna"),
     layer_k = c(NA_real_, NA_real_),
@@ -170,7 +163,7 @@ layer_meta <- data.frame(
 cluster_table <- cluster_genes_multiomics(
     blocks     = blocks,
     block_meta = block_meta,
-    layer_meta = layer_meta,
+    modality_meta = modality_meta,
     gene_mode  = "intersection"
 )
 
