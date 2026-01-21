@@ -331,13 +331,9 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">block_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  block           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Constant"</span>, <span class="st">"Temp_shifted"</span><span class="op">)</span>,</span>
-<span>  block_k         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5L</span>, <span class="fl">5L</span><span class="op">)</span>,</span>
-<span>  result_category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  cond1           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Constant"</span>, <span class="st">"Temp_shifted"</span><span class="op">)</span>,</span>
-<span>  cond2           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_character_</span>, <span class="cn">NA_character_</span><span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="va">block_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    Constant     <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>    Temp_shifted <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">modality_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -346,8 +342,7 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <span>  layer_k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span>,</span>
 <span>              <span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>  layer_w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
-<span>              <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>              <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -358,7 +353,7 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics</a></span><span class="op">(</span></span>
 <span>  blocks        <span class="op">=</span> <span class="va">blocks</span>,</span>
-<span>  block_meta    <span class="op">=</span> <span class="va">block_meta</span>,</span>
+<span>  block_clusters <span class="op">=</span> <span class="va">block_clusters</span>,</span>
 <span>  modality_meta <span class="op">=</span> <span class="va">modality_meta</span>,</span>
 <span>  gene_mode     <span class="op">=</span> <span class="st">"intersection"</span>,</span>
 <span>  verbose       <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -371,7 +366,7 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <span><span class="co">#&gt;   [block 'Temp_shifted'] building gene-level layer matrices...</span></span>
 <span><span class="co">#&gt;   [block 'Temp_shifted'] computing and combining layer-wise distance matrices...</span></span>
 <span><span class="co">#&gt;   [block 'Temp_shifted'] clustering genes (k = 5)...</span></span>
-<span><span class="co">#&gt; [cluster_genes_multiomics] total runtime: 0.031 secs</span></span>
+<span><span class="co">#&gt; [cluster_genes_multiomics] total runtime: 0.034 secs</span></span>
 <span></span>
 <span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">cluster_table</span></span>
 <span><span class="va">centroid_info</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">centroid_info</span></span></code></pre></div>
@@ -385,28 +380,26 @@ these columns are named <code>cluster_&lt;cond&gt;</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cluster_table</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 40 × 3</span></span></span>
-<span><span class="co">#&gt;    gene   cluster_Constant cluster_Temp_shifted</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> gene1                 5                    3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> gene10                5                    3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> gene11                2                    4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> gene12                2                    4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> gene13                3                    2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> gene14                3                    2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> gene15                5                    3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> gene16                2                    4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> gene17                2                    4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> gene18                5                    3</span></span>
+<span><span class="co">#&gt;    gene   Constant Temp_shifted</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> gene1         5            3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> gene10        5            3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> gene11        2            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> gene12        2            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> gene13        3            2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> gene14        3            2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> gene15        5            3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> gene16        2            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> gene17        2            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> gene18        5            3</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">cluster_table</span><span class="op">$</span><span class="va">cluster_Constant</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  1  2  3  4  5 </span></span>
-<span><span class="co">#&gt;  4  7 10  8 11</span></span>
+<span><span class="co">#&gt; Warning: Unknown or uninitialised column: `cluster_Constant`.</span></span>
+<span><span class="co">#&gt; &lt; table of extent 0 &gt;</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">cluster_table</span><span class="op">$</span><span class="va">cluster_Temp_shifted</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  1  2  3  4  5 </span></span>
-<span><span class="co">#&gt;  8 10 11  7  4</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: Unknown or uninitialised column: `cluster_Temp_shifted`.</span></span>
+<span><span class="co">#&gt; &lt; table of extent 0 &gt;</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inspect-centroid_info">5. Inspect <code>centroid_info</code><a class="anchor" aria-label="anchor" href="#inspect-centroid_info"></a>

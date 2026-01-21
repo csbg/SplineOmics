@@ -74,8 +74,8 @@ enrichment.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_ora</span><span class="op">(</span></span>
 <span>  <span class="va">cluster_table</span>,</span>
 <span>  <span class="va">databases</span>,</span>
-<span>  <span class="va">report_info</span>,</span>
-<span>  <span class="va">cluster_hits_report_name</span>,</span>
+<span>  report_info <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cluster_hits_report_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clusterProfiler_params <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  mapping_cfg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"none"</span>, from_species <span class="op">=</span> <span class="cn">NULL</span>, to_species <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  enrichGO_cfg <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -90,28 +90,24 @@ enrichment.</p>
 
 
 <dl><dt id="arg-cluster-table">cluster_table<a class="anchor" aria-label="anchor" href="#arg-cluster-table"></a></dt>
-<dd><p><code>tibble</code> A tibble containing one row per
-<code>feature_nr</code> with metadata and cluster assignments across analysis
-categories. It includes:</p>
-<ul><li><p><code>feature_nr</code>: <code>numeric(1)</code> Numeric feature identifier.</p></li>
-<li><p><code>feature_name</code>: <code>character(1)</code> Preferred feature name
-derived from limma tables or falling back to the numeric ID.</p></li>
-<li><p><code>gene</code>: <code>character(1)</code> Preferred gene symbol obtained
-from the annotation or from cluster-level metadata.</p></li>
-<li><p><code>cluster_&lt;condition&gt;</code>: <code>integer(1)</code> Cluster assignment
-for each time-effect condition (Category 1). One column per
-condition.</p></li>
-<li><p><code>cluster_cat2_&lt;cond1&gt;_vs_&lt;cond2&gt;</code>: <code>character(1)</code>
-Category 2 label for each contrast. Indicates which condition
-shows higher expression (e.g. <code>"Ctrl_higher"</code>), or <code>NA</code> if
-the feature is not a category 2 hit.</p></li>
-<li><p><code>cluster_cat3_&lt;cond1&gt;_vs_&lt;cond2&gt;</code>: <code>character(1)</code>
-Category 3 label for each contrast. Encodes the pair of
-time-effect clusters in the form <code>"&lt;c1&gt;_&lt;c2&gt;"</code> (e.g.
-<code>"2_4"</code>). <code>NA</code> indicates the feature is not a category 3
-hit.</p></li>
-</ul><p>For any category-specific column, a value of <code>NA</code> indicates that
-the feature was not significant (i.e., not a hit) in that category.</p></dd>
+<dd><p><code>tibble</code> A tibble with one row per feature and at
+least one column named <code>gene</code>. The <code>gene</code> column must contain
+gene identifiers as <code>character(1)</code> (empty strings and <code>NA</code> are
+ignored).</p>
+<p>All remaining columns (except <code>feature_nr</code> and <code>feature_name</code>)
+are treated as <em>grouping columns</em>. Each grouping column defines a
+set of categories (clusters) via its distinct non-<code>NA</code> values. For
+a given grouping column, all rows that share the same value form one
+cluster, and overrepresentation analysis is performed separately for each
+cluster. The data type of grouping columns is not restricted (e.g.,
+integer, character, factor); values are compared by equality after being
+coerced to character.</p>
+<p>A value of <code>NA</code> in a grouping column indicates that the feature does
+not belong to any cluster for that grouping column and is excluded from
+the corresponding analysis.</p>
+<p>The columns <code>feature_nr</code> and <code>feature_name</code>, if present, are
+ignored. These columns are typically added by upstream functions in the
+SplineOmics pipeline.</p></dd>
 
 
 <dt id="arg-databases">databases<a class="anchor" aria-label="anchor" href="#arg-databases"></a></dt>
@@ -128,16 +124,16 @@ same gene may appear in multiple gene sets.</p></dd>
 
 
 <dt id="arg-report-info">report_info<a class="anchor" aria-label="anchor" href="#arg-report-info"></a></dt>
-<dd><p><code>list</code>: A list containing information for the report
-generation, such as omics_data_type and data_description (this is the list
-used for all report generating functions of this package).</p></dd>
+<dd><p><code>list</code> | <code>NULL</code>: A list containing information for the
+report generation, such as omics_data_type and data_description (this is the
+list used for all report generating functions of this package).</p></dd>
 
 
 <dt id="arg-cluster-hits-report-name">cluster_hits_report_name<a class="anchor" aria-label="anchor" href="#arg-cluster-hits-report-name"></a></dt>
-<dd><p><code>character(1)</code>: Single character string
-specifying the name of the cluster_hits() function report, that contains
-the results that were used for the overprepresentation analysis here. Must
-be specified, because otherwise, the connection is not documented.</p></dd>
+<dd><p><code>character(1)</code> | <code>NULL</code>: Single character
+string specifying the name of the cluster_hits() function report, that
+contains the results that were used for the overprepresentation analysis
+here.</p></dd>
 
 
 <dt id="arg-clusterprofiler-params">clusterProfiler_params<a class="anchor" aria-label="anchor" href="#arg-clusterprofiler-params"></a></dt>
@@ -294,8 +290,6 @@ list(
 <span class="r-in"><span>    <span class="co"># --- toy cluster table (two "conditions") ------------------------------</span></span></span>
 <span class="r-in"><span>    <span class="va">toy_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"G"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>        feature_nr    <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">8</span>,</span></span>
-<span class="r-in"><span>        feature_name  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"feat_"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        gene          <span class="op">=</span> <span class="va">toy_genes</span>,</span></span>
 <span class="r-in"><span>        cluster_condA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        cluster_condB <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
@@ -375,10 +369,10 @@ list(
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Foreground genes overlapping with database: 2 (100%)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> ORA analysis completed successfully.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpVtsofh/run_ora_demo .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpzfA6qH/run_ora_demo .</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "run_ora_report_TOY_19_01_2026-17_08_03.html"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "run_ora_report_TOY_21_01_2026-13_24_28.html"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

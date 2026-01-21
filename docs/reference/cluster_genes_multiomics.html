@@ -94,7 +94,7 @@ clustering.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cluster_genes_multiomics</span><span class="op">(</span></span>
 <span>  <span class="va">blocks</span>,</span>
-<span>  <span class="va">block_meta</span>,</span>
+<span>  <span class="va">block_clusters</span>,</span>
 <span>  <span class="va">modality_meta</span>,</span>
 <span>  gene_mode <span class="op">=</span> <span class="st">"intersection"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -131,28 +131,11 @@ associated with genes and how genes are aligned across modalities prior to
 signature construction and downstream clustering.</p></dd>
 
 
-<dt id="arg-block-meta">block_meta<a class="anchor" aria-label="anchor" href="#arg-block-meta"></a></dt>
-<dd><p>A data frame containing <em>block-level metadata</em>. One row per block.
-Must include:</p><dl><dt><code>block</code></dt>
-<dd><p>Block identifier (must match names in <code>blocks</code>).</p></dd>
-
-<dt><code>block_k</code></dt>
-<dd><p>Number of gene clusters for this block.</p></dd>
-
-<dt><code>result_category</code></dt>
-<dd><p>Numeric result category label (e.g., 1 for
-time effect, 3 for interaction).</p></dd>
-
-<dt><code>cond1</code></dt>
-<dd><p>Primary condition associated with this block (e.g.,
-condition for time-effect blocks, or first condition in a contrast).</p></dd>
-
-<dt><code>cond2</code></dt>
-<dd><p>Secondary condition for contrast-based blocks. Set to
-<code>NA</code> for single-condition blocks.</p></dd>
-
-
-</dl></dd>
+<dt id="arg-block-clusters">block_clusters<a class="anchor" aria-label="anchor" href="#arg-block-clusters"></a></dt>
+<dd><p>A named list specifying the amount of clusters per block. The list names
+must match the names of <code>blocks</code>. Each element value specifies the
+number of gene clusters (<code>k</code>) to compute for the corresponding
+block.</p></dd>
 
 
 <dt id="arg-modality-meta">modality_meta<a class="anchor" aria-label="anchor" href="#arg-modality-meta"></a></dt>
@@ -214,12 +197,12 @@ block are assigned <code>NA</code>.</p></dd>
 
 
 <dt><code>centroid_info</code></dt>
-<dd><p>A tibble with one row per block, modality
-(layer), and cluster, summarizing modality-specific cluster centroid
+<dd><p>A tibble with one row per block, modality,
+and cluster, summarizing modality-specific cluster centroid
 trajectories and within-cluster coherence. Columns include the block
 and layer identifiers, cluster label, gene coverage statistics, mean
-and standard deviation of per-gene \(R^2\) values, optional per-gene
-\(R^2\) vectors, and the centroid trajectory stored as a list-column.</p></dd>
+and standard deviation of per-gene R^2 values, optional per-gene
+R^2 vectors, and the centroid trajectory stored as a list-column.</p></dd>
 
 
 </dl></div>
@@ -271,39 +254,10 @@ and standard deviation of per-gene \(R^2\) values, optional per-gene
 <span class="r-in"><span>    modality_meta <span class="op">=</span> <span class="va">modality_meta</span>,</span></span>
 <span class="r-in"><span>    gene_mode  <span class="op">=</span> <span class="st">"intersection"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] Block 1/2: 'time_Ctrl'</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] building gene-level layer matrices...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] computing and combining layer-wise distance matrices...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] clustering genes (k = 2)...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] Block 2/2: 'time_Treat'</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] building gene-level layer matrices...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] computing and combining layer-wise distance matrices...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] clustering genes (k = 2)...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] total runtime: 0.018 secs</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in cluster_genes_multiomics(blocks = blocks, block_meta = block_meta,     modality_meta = modality_meta, gene_mode = "intersection"):</span> unused argument (block_meta = block_meta)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">cluster_table</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $cluster_table</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   gene  cluster_Ctrl cluster_Treat</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> gene1            1             2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> gene2            1             2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> gene3            1             1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> gene4            2             1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> gene5            1             2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> gene6            1             2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $centroid_info</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   block     modality modality_type cluster n_genes_cluster n_genes_used coverage</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> time_Ctrl rna      one_to_one          1               5            5        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> time_Ctrl rna      one_to_one          2               1            1        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> time_Tre… rna      one_to_one          1               2            2        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_Tre… rna      one_to_one          2               4            4        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: mean_R2 &lt;dbl&gt;, sd_R2 &lt;dbl&gt;, r2_member &lt;I&lt;list&gt;&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   centroid &lt;I&lt;list&gt;&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'cluster_table' not found</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

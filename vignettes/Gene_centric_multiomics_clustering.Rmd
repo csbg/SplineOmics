@@ -4,7 +4,7 @@ author: "Thomas Rauter"
 date: "19 January, 2026"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Gene_centric_multiomics_clustering}
+  %\VignetteIndexEntry{Gene-centric multiomics clustering}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -242,12 +242,9 @@ blocks <- list(
   )
 )
 
-block_meta <- data.frame(
-  block           = c("Constant", "Temp_shifted"),
-  block_k         = c(5L, 5L),
-  result_category = c(1, 1),
-  cond1           = c("Constant", "Temp_shifted"),
-  cond2           = c(NA_character_, NA_character_)
+block_clusters <- list(
+    Constant     = 5L,
+    Temp_shifted = 5L
 )
 
 modality_meta <- data.frame(
@@ -267,7 +264,7 @@ The function returns a list with `cluster_table` and `centroid_info`.
 ```{r run cluster_genes_multiomics, eval = TRUE}
 res <- cluster_genes_multiomics(
   blocks        = blocks,
-  block_meta    = block_meta,
+  block_clusters = block_clusters,
   modality_meta = modality_meta,
   gene_mode     = "intersection",
   verbose       = TRUE

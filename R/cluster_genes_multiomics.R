@@ -126,13 +126,9 @@
 #'     time_Treat = list(rna = rna_time_treat)
 #' )
 #'
-#' block_meta <- data.frame(
-#'     block           = c("time_Ctrl", "time_Treat"),
-#'     block_k         = c(2L, 2L),
-#'     result_category = c(1, 1),
-#'     cond1           = c("Ctrl", "Treat"),
-#'     cond2           = c(NA_character_, NA_character_),
-#'     stringsAsFactors = FALSE
+#' block_clusters <- list(
+#'     time_Ctrl = 2L,
+#'     time_Treat = 2L
 #' )
 #'
 #' modality_meta <- data.frame(
@@ -145,7 +141,7 @@
 #'
 #' cluster_table <- cluster_genes_multiomics(
 #'     blocks     = blocks,
-#'     block_meta = block_meta,
+#'     block_clusters = block_clusters,
 #'     modality_meta = modality_meta,
 #'     gene_mode  = "intersection"
 #' )
