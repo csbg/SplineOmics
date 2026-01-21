@@ -8,32 +8,27 @@
 #' files containing the enrichment results, and dotplots visualizing the
 #' enrichment.
 #'
-#' @param cluster_table `tibble` A tibble containing one row per
-#'   `feature_nr` with metadata and cluster assignments across analysis
-#'   categories. It includes:
-#'   
-#'   \itemize{
-#'     \item \code{feature_nr}: `numeric(1)` Numeric feature identifier.
-#'     \item \code{feature_name}: `character(1)` Preferred feature name
-#'       derived from limma tables or falling back to the numeric ID.
-#'     \item \code{gene}: `character(1)` Preferred gene symbol obtained
-#'       from the annotation or from cluster-level metadata.
-#'     \item \code{cluster_<condition>}: `integer(1)` Cluster assignment
-#'       for each time-effect condition (Category 1). One column per
-#'       condition.
-#'     \item \code{cluster_cat2_<cond1>_vs_<cond2>}: `character(1)`
-#'       Category 2 label for each contrast. Indicates which condition
-#'       shows higher expression (e.g. `"Ctrl_higher"`), or \code{NA} if
-#'       the feature is not a category 2 hit.
-#'     \item \code{cluster_cat3_<cond1>_vs_<cond2>}: `character(1)`
-#'       Category 3 label for each contrast. Encodes the pair of
-#'       time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
-#'       `"2_4"`). \code{NA} indicates the feature is not a category 3
-#'       hit.
-#'   }
+#' @param cluster_table `tibble` A tibble with one row per feature and at
+#'   least one column named \code{gene}. The \code{gene} column must contain
+#'   gene identifiers as `character(1)` (empty strings and \code{NA} are
+#'   ignored).
 #'
-#'   For any category-specific column, a value of \code{NA} indicates that
-#'   the feature was not significant (i.e., not a hit) in that category.
+#'   All remaining columns (except \code{feature_nr} and \code{feature_name})
+#'   are treated as \emph{grouping columns}. Each grouping column defines a
+#'   set of categories (clusters) via its distinct non-\code{NA} values. For
+#'   a given grouping column, all rows that share the same value form one
+#'   cluster, and overrepresentation analysis is performed separately for each
+#'   cluster. The data type of grouping columns is not restricted (e.g.,
+#'   integer, character, factor); values are compared by equality after being
+#'   coerced to character.
+#'
+#'   A value of \code{NA} in a grouping column indicates that the feature does
+#'   not belong to any cluster for that grouping column and is excluded from
+#'   the corresponding analysis.
+#'
+#'   The columns \code{feature_nr} and \code{feature_name}, if present, are
+#'   ignored. These columns are typically added by upstream functions in the
+#'   SplineOmics pipeline.
 #'
 #' @param databases `data.frame`: A \code{data.frame} that defines the gene set 
 #'   collections to be tested in the overrepresentation analysis. Must contain 
@@ -50,14 +45,14 @@
 #'   Each row corresponds to one `(database, geneset, gene)` association. The 
 #'   same gene may appear in multiple gene sets.
 #'
-#' @param report_info `list`: A list containing information for the report 
-#' generation, such as omics_data_type and data_description (this is the list 
-#' used for all report generating functions of this package).
+#' @param report_info `list` | `NULL`: A list containing information for the
+#' report generation, such as omics_data_type and data_description (this is the
+#' list used for all report generating functions of this package).
 #'
-#' @param cluster_hits_report_name `character(1)`: Single character string 
-#' specifying the name of the cluster_hits() function report, that contains 
-#' the results that were used for the overprepresentation analysis here. Must 
-#' be specified, because otherwise, the connection is not documented.
+#' @param cluster_hits_report_name `character(1)` | `NULL`: Single character
+#' string specifying the name of the cluster_hits() function report, that
+#' contains the results that were used for the overprepresentation analysis
+#' here. 
 #'
 #' @param clusterProfiler_params `list` | `NULL`: A named list of arguments 
 #' passed directly to the corresponding functions in the 
@@ -199,8 +194,6 @@
 #'     # --- toy cluster table (two "conditions") ------------------------------
 #'     toy_genes <- paste0("G", 1:8)
 #'     cluster_table <- tibble::tibble(
-#'         feature_nr    = 1:8,
-#'         feature_name  = paste0("feat_", 1:8),
 #'         gene          = toy_genes,
 #'         cluster_condA = c(1, 1, 2, 2, NA, NA, 1, 2),
 #'         cluster_condB = c(NA, 1, NA, 2, 1, 2, 1, NA)
@@ -256,8 +249,8 @@
 run_ora <- function(
     cluster_table,
     databases,
-    report_info,
-    cluster_hits_report_name,
+    report_info = NULL,
+    cluster_hits_report_name = NULL,
     clusterProfiler_params = NA,
     mapping_cfg = list(
         method = "none",
@@ -267,7 +260,8 @@ run_ora <- function(
     enrichGO_cfg = NULL,
     universe = NULL,
     report_dir = NULL,
-    verbose = TRUE) {
+    verbose = TRUE
+    ) {
     args <- lapply(
         as.list(
             match.call()[-1]
@@ -292,7 +286,8 @@ run_ora <- function(
     )
 
     ensure_clusterProfiler() # Deals with clusterProfiler installation.
-
+    
+    cluster_table <- prepare_cluster_table(cluster_table)
     cluster_table[["gene"]] <- map_gene_symbols(
         genes = cluster_table[["gene"]],
         mapping_cfg = mapping_cfg
@@ -310,22 +305,21 @@ run_ora <- function(
         )
     }
 
-    lvl_cols <- level_columns(cluster_table)
-    lvl_names <- level_display_names(cluster_table)
-
-    all_results <- mapply(function(col, nm) {
-        manage_ora_result_cat(
+    ignore <- c("gene", "feature_nr", "feature_name")
+    queries <- setdiff(names(cluster_table), ignore)
+    
+    all_results <- setNames(lapply(queries, function(level) {
+        process_ora_queries(
             cluster_table = cluster_table,
-            level_col = col,
+            level_col = level,
             databases = databases,
             clusterProfiler_params = clusterProfiler_params,
             enrichGO_cfg = enrichGO_cfg,
             universe = universe,
-            plot_title = nm, # use display name for the plot title
+            plot_title = level,
             verbose = verbose
         )
-    }, col = lvl_cols, nm = lvl_names, SIMPLIFY = FALSE)
-    names(all_results) <- lvl_names
+    }), queries)
 
     processed_results <- Map(
         function(res, nm) process_result(res, nm),
@@ -335,7 +329,7 @@ run_ora <- function(
     # Build a structured list of sections for the report
     sections <- lapply(seq_along(processed_results), function(i) {
         pr <- processed_results[[i]]
-        raw <- all_results[[i]] # <- has $ora_results from run_ora_level()
+        raw <- all_results[[i]] # <- has $ora_results from process_ora_query()
 
         plots <- pr$plot
         if (inherits(plots, "ggplot") || !is.list(plots)) plots <- list(plots)
@@ -491,7 +485,8 @@ control_inputs_run_ora <- function(
     enrichGO_cfg,
     background,
     cluster_hits_report_name,
-    verbose) {
+    verbose
+    ) {
     check_cluster_table(cluster_table)
 
     check_databases(databases)
@@ -513,10 +508,14 @@ control_inputs_run_ora <- function(
         }
     }
 
-    if (!is.character(cluster_hits_report_name) ||
-        length(cluster_hits_report_name) != 1) {
+    if (!is.null(cluster_hits_report_name) &&
+        (!is.character(cluster_hits_report_name) ||
+         length(cluster_hits_report_name) != 1)) {
         stop_call_false(
-            "`cluster_hits_report_name` must be a single character string."
+            paste(
+                "`cluster_hits_report_name` must be a single character string",
+                "or NULL."
+            )
         )
     }
 }
@@ -579,7 +578,7 @@ ensure_clusterProfiler <- function() {
 #' chosen level column (via \code{make_clustered_genes()}). For cat2 this
 #' yields at most two clusters (\code{"<cond1>_higher"},
 #' \code{"<cond2>_higher"}); other levels use their distinct cluster labels.
-#' The resulting foregrounds are passed to \code{run_ora_level()}.
+#' The resulting foregrounds are passed to \code{process_ora_query()}.
 #'
 #' @param cluster_table A tibble containing one row per
 #'   \code{feature_nr} with metadata and cluster assignments across the
@@ -607,7 +606,7 @@ ensure_clusterProfiler <- function() {
 #' @param level_col Character scalar naming the level column in
 #'   \code{cluster_table} to analyze (must exist).
 #' @param databases Gene set collections (data frame or list) consumed by
-#'   downstream helpers inside \code{run_ora_level()}.
+#'   downstream helpers inside \code{process_ora_query()}.
 #' @param clusterProfiler_params List of clusterProfiler parameters (e.g.,
 #'   \code{pvalueCutoff}, \code{pAdjustMethod}, \code{minGSSize}).
 #' @param enrichGO_cfg Optional named list with GO settings (e.g.,
@@ -618,11 +617,11 @@ ensure_clusterProfiler <- function() {
 #' @param plot_title String specifying the title of the plot.
 #' @param verbose Boolean flag controlling the display of messages.
 #'
-#' @return A list as returned by \code{run_ora_level()} with elements
+#' @return A list as returned by \code{process_ora_query()} with elements
 #'   \code{dotplot}, \code{dotplot_nrows}, and \code{ora_results}. If no
 #'   enrichment was obtained for any cluster, \code{NA} may be returned.
 #'
-manage_ora_result_cat <- function(
+process_ora_queries <- function(
     cluster_table,
     level_col,
     databases,
@@ -630,7 +629,8 @@ manage_ora_result_cat <- function(
     enrichGO_cfg,
     universe,
     plot_title,
-    verbose) {
+    verbose
+    ) {
     cg <- make_clustered_genes(
         cluster_table,
         level_col
@@ -639,7 +639,7 @@ manage_ora_result_cat <- function(
         message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
     }
 
-    run_ora_level(
+    process_ora_query(
         clustered_genes = cg,
         databases = databases,
         params = clusterProfiler_params,
@@ -1040,129 +1040,76 @@ map_gene_symbols <- function(
 #' @noRd
 #'
 #' @description
-#' Validates a unified clustering results tibble produced by
-#' \code{construct_cluster_summary()}. Ensures required metadata columns
-#' exist (\code{feature_nr}, \code{feature_name}, \code{gene}), verifies
-#' that there are at least two time-effect cluster columns named like
-#' \code{cluster_<cond1>} and \code{cluster_<cond2>}, checks that
-#' \code{feature_nr} is integer-like and unique, and that
-#' \code{feature_name} is non-missing and non-empty. Also validates the
-#' optional category columns \code{cluster_cat2} and \code{cluster_cat3}
-#' (when present) to be atomic vectors with values either \code{NA} or
-#' strings of the form \code{"<cluster_<cond1>>_<cluster_<cond2>>"}.
+#' Validates a clustering results table used for overrepresentation
+#' analysis (ORA). The table must contain a column named \code{gene}.
+#' All other columns (except \code{feature_nr} and \code{feature_name},
+#' when present) are treated as grouping columns. For each grouping
+#' column, distinct non-\code{NA} values define clusters; ORA is run per
+#' cluster. Grouping values are compared by equality after coercion to
+#' character. \code{NA} indicates that the feature is not part of any
+#' cluster for that grouping column.
 #'
-#' @param cluster_table A tibble containing one row per
-#'   \code{feature_nr} with metadata and cluster assignments across the
-#'   analysis categories. It includes:
-#'   \itemize{
-#'     \item \code{feature_nr} - Numeric feature identifier.
-#'     \item \code{feature_name} - Preferred feature name from the source
-#'       data, falling back to the numeric ID if none is available.
-#'     \item \code{gene} - Preferred gene symbol from the annotation or
-#'       cluster data.
-#'     \item \code{cluster_<cond1>} / \code{cluster_<cond2>} - Cluster
-#'       assignments for each time-effect condition.
-#'     \item \code{cluster_cat2} - (Optional) Combined cluster label for
-#'       category 2 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-#'       feature was not a category 2 hit.
-#'     \item \code{cluster_cat3} - (Optional) Combined cluster label for
-#'       category 3 hits in the form
-#'       \code{"<cluster_<cond1>>_<cluster_<cond2>>"}; \code{NA} if the
-#'       feature was not a category 3 hit.
-#'   }
-#'   For any category-specific cluster column, a value of \code{NA}
-#'   indicates that the feature was not significant (not a hit) in that
-#'   category.
+#' This function does not interpret column-name conventions (no implicit
+#' parsing of categories). If you want to exclude columns from ORA, do so
+#' before passing the table to downstream functions.
 #'
-#' @return Invisibly returns \code{TRUE} on success. The function
-#'   \emph{stops with an informative error} if any validation fails.
+#' @param cluster_table A data.frame/tibble with at least the column
+#'   \code{gene}. The \code{gene} column must be a character vector. Empty
+#'   strings and \code{NA} are allowed and are ignored downstream.
+#'   \code{feature_nr} and \code{feature_name}, if present, are ignored.
+#'   At least one additional column must be present to define clusters.
 #'
+#' @return Invisibly returns \code{TRUE} on success. Stops with an error
+#'   if any validation fails.
 check_cluster_table <- function(cluster_table) {
     if (!is.data.frame(cluster_table)) {
-        stop("cluster_table must be a data.frame/tibble.", call. = FALSE)
+        stop("cluster_table must be a data.frame/tibble.")
     }
-
-    req <- c("feature_nr", "feature_name", "gene")
-    missing <- setdiff(req, names(cluster_table))
-    if (length(missing) > 0) {
-        stop(paste0(
-            "Missing required columns: ",
-            paste(missing, collapse = ", ")
-        ), call. = FALSE)
+    
+    if (!("gene" %in% names(cluster_table))) {
+        stop("Missing required column: gene.")
     }
-
-    clust_cols <- grep("^cluster_", names(cluster_table), value = TRUE)
-    cond_cols <- setdiff(clust_cols, c("cluster_cat2", "cluster_cat3"))
-    if (length(cond_cols) < 2) {
-        stop("Expected at least two condition cluster columns named like ",
-            "'cluster_<cond1>' and 'cluster_<cond2>'.",
-            call. = FALSE
-        )
+    
+    g <- cluster_table[["gene"]]
+    
+    if (!is.atomic(g) && !is.factor(g)) {
+        stop("'gene' must be an atomic vector (or factor).")
     }
-
-    fn <- cluster_table$feature_nr
-    int_like <- is.integer(fn) ||
-        (is.numeric(fn) && all(fn == as.integer(fn), na.rm = TRUE))
-    if (!int_like) {
-        stop("'feature_nr' must be integer-like.", call. = FALSE)
+    if (is.factor(g)) g <- as.character(g)
+    if (!is.character(g)) {
+        stop("'gene' must be a character vector.")
     }
-
-    if (any(duplicated(cluster_table$feature_nr))) {
-        dups <- unique(cluster_table$feature_nr[
-            duplicated(cluster_table$feature_nr)
-        ])
-        stop(
-            paste0(
-                "Duplicate feature_nr values: ",
-                paste(head(dups, 10), collapse = ", "),
-                if (length(dups) > 10) " ..." else ""
-            ),
-            call. = FALSE
-        )
+    
+    bad_ws <- !is.na(g) & nzchar(g) & grepl("[[:space:][:cntrl:]]", g)
+    if (any(bad_ws)) {
+        stop("'gene' values must not contain whitespace/control characters.")
     }
-
-    fnm <- cluster_table$feature_name
-    if (any(is.na(fnm) | fnm == "")) {
-        stop("'feature_name' must be non-missing and non-empty.", call. = FALSE)
+    
+    ignore <- c("gene", "feature_nr", "feature_name")
+    lvl_cols <- setdiff(names(cluster_table), ignore)
+    if (length(lvl_cols) < 1L) {
+        stop("Provide at least one grouping column besides 'gene'.")
     }
-
-    for (cc in cond_cols) {
+    
+    bad_list <- function(x) {
+        if (!is.list(x)) return(FALSE)
+        any(vapply(x, function(el) {
+            is.data.frame(el) || is.matrix(el) || is.array(el)
+        }, logical(1)))
+    }
+    
+    for (cc in lvl_cols) {
         v <- cluster_table[[cc]]
-        if (!is.atomic(v)) {
-            stop(paste0("Condition cluster column '", cc, "' must be atomic."),
-                call. = FALSE
-            )
+        
+        if (is.data.frame(v) || is.matrix(v) || is.array(v)) {
+            stop(paste0("Grouping column '", cc, "' must be a vector."))
+        }
+        
+        if (bad_list(v)) {
+            stop(paste0("Grouping column '", cc, "' has non-scalar elements."))
         }
     }
-
-    for (cc in c("cluster_cat2", "cluster_cat3")) {
-        if (cc %in% names(cluster_table)) {
-            v <- cluster_table[[cc]]
-            if (!is.atomic(v)) {
-                stop(paste0("'", cc, "' must be atomic."), call. = FALSE)
-            }
-
-            if (cc == "cluster_cat2") {
-                bad <- !is.na(v) & !grepl("^[^_]+_[^_]+$", v)
-                if (any(bad)) {
-                    stop(paste0("'", cc, "' must be of the form 'a_b' or NA."),
-                        call. = FALSE
-                    )
-                }
-            }
-
-            if (cc == "cluster_cat3") {
-                bad <- !is.na(v) & !is.character(v)
-                if (any(bad)) {
-                    stop(paste0("'", cc, "' must be character or NA."),
-                        call. = FALSE
-                    )
-                }
-            }
-        }
-    }
-
+    
     invisible(TRUE)
 }
 
@@ -1690,7 +1637,7 @@ check_enrichGO_cfg <- function(enrichGO_cfg) {
 #'   }
 #'   If no enrichment is found for any cluster, returns \code{NA}.
 #'
-run_ora_level <- function(
+process_ora_query <- function(
     clustered_genes,
     databases,
     params = NA,
@@ -1925,96 +1872,6 @@ generate_section_content <- function(
 }
 
 
-#' Determine level columns in clustering summary table
-#'
-#' @noRd
-#'
-#' @description
-#' Returns the names of columns in a \code{clustering_results} data frame
-#' that represent enrichment levels. The order is:
-#' (1) time-effect condition columns (\code{cluster_*} except
-#' \code{cluster_cat2} and \code{cluster_cat3}), followed by
-#' (2) \code{cluster_cat2} if present, and
-#' (3) \code{cluster_cat3} if present.
-#'
-#' @param cr A tibble/data frame like that produced by
-#'   \code{construct_cluster_summary()}, containing \code{cluster_*}
-#'   columns.
-#'
-#' @return A character vector of level column names in the preferred
-#'   processing order.
-#'
-#' @details
-#' Columns are identified via \code{grep("^cluster_", names(cr))}. The
-#' time-effect condition columns retain their original ordering from
-#' \code{cr}; category columns are appended if present.
-#'
-level_columns <- function(cr) {
-    allc <- grep("^cluster_", names(cr), value = TRUE)
-    cond <- setdiff(allc, c("cluster_cat2", "cluster_cat3"))
-    c(
-        cond,
-        intersect("cluster_cat2", allc),
-        intersect("cluster_cat3", allc)
-    )
-}
-
-
-#' Derive display names for enrichment levels (multi-condition)
-#'
-#' @noRd
-#'
-#' @description
-#' Generates human-readable labels for the enrichment levels present in a
-#' multi-condition \code{cluster_table}. The function inspects the column
-#' names returned by \code{level_columns(cluster_table)} and maps them to
-#' descriptive strings based on their prefixes:
-#'
-#' \itemize{
-#'   \item \code{"cluster_Condition_<cond>"}  
-#'         \eqn{\rightarrow} \code{"Time effect: <cond>"}
-#'   \item \code{"cluster_cat2_<condA>_vs_<condB>"}  
-#'         \eqn{\rightarrow} \code{"Avrg diff conditions: <condA> vs <condB>"}
-#'   \item \code{"cluster_cat3_<condA>_vs_<condB>"}  
-#'         \eqn{\rightarrow} \code{"Interaction condition time: <condA> vs
-#'          <condB>"}
-#' }
-#'
-#' Any \code{cluster_*} column that does not match one of the above
-#' patterns is returned as-is.
-#'
-#' @param cr A tibble/data frame like that produced by
-#'   \code{construct_cluster_table()} containing \code{cluster_*} columns.
-#'
-#' @return A character vector of display names ordered to match the level
-#'   columns returned by \code{level_columns(cr)}.
-#'
-level_display_names <- function(cr) {
-    cols <- level_columns(cr)
-    
-    vapply(
-        cols,
-        function(col) {
-            if (grepl("^cluster_cat2_", col)) {
-                contrast <- sub("^cluster_cat2_", "", col)
-                contrast_label <- gsub("_vs_", " vs ", contrast)
-                paste0("Avrg diff conditions: ", contrast_label)
-                
-            } else if (grepl("^cluster_cat3_", col)) {
-                contrast <- sub("^cluster_cat3_", "", col)
-                contrast_label <- gsub("_vs_", " vs ", contrast)
-                paste0("Interaction condition time: ", contrast_label)
-                
-            } else {
-                cond <- sub("^cluster_", "", col)
-                paste0("Time effect: ", cond)
-            }
-        },
-        FUN.VALUE = character(1)
-    )
-}
-
-
 #' Build foreground gene sets for a level
 #'
 #' @noRd
@@ -2062,6 +1919,48 @@ make_clustered_genes <- function(
         stringsAsFactors = FALSE
     ) |>
         unique()
+}
+
+
+#' Prepare clustering table for ORA
+#'
+#' @noRd
+#'
+#' @description
+#' Prepares a clustering results table for downstream ORA by performing
+#' minimal, explicit transformations. Rows with invalid gene identifiers
+#' are removed, and all grouping columns are coerced to character. No
+#' additional validation or interpretation is performed.
+#'
+#' @param cluster_table A data.frame/tibble that has already passed
+#'   \code{check_cluster_table()}.
+#'
+#' @return A modified data.frame with invalid gene rows removed and
+#'   grouping columns coerced to character.
+#'
+prepare_cluster_table <- function(cluster_table) {
+    g <- cluster_table[["gene"]]
+    
+    if (is.factor(g)) g <- as.character(g)
+    
+    keep <- is.character(g) & !is.na(g) & nzchar(g)
+    cluster_table <- cluster_table[keep, , drop = FALSE]
+    
+    cluster_table[["gene"]] <- as.character(cluster_table[["gene"]])
+    
+    ignore <- c("gene", "feature_nr", "feature_name")
+    lvl_cols <- setdiff(names(cluster_table), ignore)
+    
+    for (cc in lvl_cols) {
+        v <- cluster_table[[cc]]
+        if (is.factor(v)) {
+            cluster_table[[cc]] <- as.character(v)
+        } else if (!is.character(v)) {
+            cluster_table[[cc]] <- as.character(v)
+        }
+    }
+    
+    cluster_table
 }
 
 

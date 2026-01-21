@@ -1,14 +1,12 @@
-test_that("run_ora example runs without error and has stable structure", {
-    skip_if_not_installed("clusterProfiler")
-    skip_if_not_installed("tibble")
+testthat::test_that("run_ora example runs without error and has stable structure", {
+    testthat::skip_if_not_installed("clusterProfiler")
+    testthat::skip_if_not_installed("tibble")
     
     set.seed(1)
     
     # --- toy cluster table (two "conditions") ------------------------------
     toy_genes <- paste0("G", 1:8)
     cluster_table <- tibble::tibble(
-        feature_nr    = 1:8,
-        feature_name  = paste0("feat_", 1:8),
         gene          = toy_genes,
         cluster_condA = c(1, 1, 2, 2, NA, NA, 1, 2),
         cluster_condB = c(NA, 1, NA, 2, 1, 2, 1, NA)

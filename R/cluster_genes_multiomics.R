@@ -103,12 +103,12 @@
 #'   \code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
 #'   block are assigned \code{NA}.}
 #'
-#'   \item{\code{centroid_info}}{A tibble with one row per block, modality
-#'   (layer), and cluster, summarizing modality-specific cluster centroid
+#'   \item{\code{centroid_info}}{A tibble with one row per block, modality,
+#'   and cluster, summarizing modality-specific cluster centroid
 #'   trajectories and within-cluster coherence. Columns include the block
 #'   and layer identifiers, cluster label, gene coverage statistics, mean
-#'   and standard deviation of per-gene \eqn{R^2} values, optional per-gene
-#'   \eqn{R^2} vectors, and the centroid trajectory stored as a list-column.}
+#'   and standard deviation of per-gene R^2 values, optional per-gene
+#'   R^2 vectors, and the centroid trajectory stored as a list-column.}
 #' }
 #' 
 #' @examples

@@ -3,5 +3,5 @@
     Code
       names(res)
     Output
-      [1] "Time effect: condA" "Time effect: condB"
+      [1] "cluster_condA" "cluster_condB"
 
