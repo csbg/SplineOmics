@@ -7,8 +7,8 @@
 run_ora(
   cluster_table,
   databases,
-  report_info,
-  cluster_hits_report_name,
+  report_info = NULL,
+  cluster_hits_report_name = NULL,
   clusterProfiler_params = NA,
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   enrichGO_cfg = NULL,
@@ -18,32 +18,27 @@ run_ora(
 )
 }
 \arguments{
-\item{cluster_table}{\code{tibble} A tibble containing one row per
-\code{feature_nr} with metadata and cluster assignments across analysis
-categories. It includes:
+\item{cluster_table}{\code{tibble} A tibble with one row per feature and at
+least one column named \code{gene}. The \code{gene} column must contain
+gene identifiers as \code{character(1)} (empty strings and \code{NA} are
+ignored).
 
-\itemize{
-\item \code{feature_nr}: \code{numeric(1)} Numeric feature identifier.
-\item \code{feature_name}: \code{character(1)} Preferred feature name
-derived from limma tables or falling back to the numeric ID.
-\item \code{gene}: \code{character(1)} Preferred gene symbol obtained
-from the annotation or from cluster-level metadata.
-\item \code{cluster_<condition>}: \code{integer(1)} Cluster assignment
-for each time-effect condition (Category 1). One column per
-condition.
-\item \code{cluster_cat2_<cond1>_vs_<cond2>}: \code{character(1)}
-Category 2 label for each contrast. Indicates which condition
-shows higher expression (e.g. \code{"Ctrl_higher"}), or \code{NA} if
-the feature is not a category 2 hit.
-\item \code{cluster_cat3_<cond1>_vs_<cond2>}: \code{character(1)}
-Category 3 label for each contrast. Encodes the pair of
-time-effect clusters in the form \code{"<c1>_<c2>"} (e.g.
-\code{"2_4"}). \code{NA} indicates the feature is not a category 3
-hit.
-}
+All remaining columns (except \code{feature_nr} and \code{feature_name})
+are treated as \emph{grouping columns}. Each grouping column defines a
+set of categories (clusters) via its distinct non-\code{NA} values. For
+a given grouping column, all rows that share the same value form one
+cluster, and overrepresentation analysis is performed separately for each
+cluster. The data type of grouping columns is not restricted (e.g.,
+integer, character, factor); values are compared by equality after being
+coerced to character.
 
-For any category-specific column, a value of \code{NA} indicates that
-the feature was not significant (i.e., not a hit) in that category.}
+A value of \code{NA} in a grouping column indicates that the feature does
+not belong to any cluster for that grouping column and is excluded from
+the corresponding analysis.
+
+The columns \code{feature_nr} and \code{feature_name}, if present, are
+ignored. These columns are typically added by upstream functions in the
+SplineOmics pipeline.}
 
 \item{databases}{\code{data.frame}: A \code{data.frame} that defines the gene set
 collections to be tested in the overrepresentation analysis. Must contain
@@ -60,14 +55,14 @@ the gene set (e.g., gene symbol, Ensembl ID).
 Each row corresponds to one \verb{(database, geneset, gene)} association. The
 same gene may appear in multiple gene sets.}
 
-\item{report_info}{\code{list}: A list containing information for the report
-generation, such as omics_data_type and data_description (this is the list
-used for all report generating functions of this package).}
+\item{report_info}{\code{list} | \code{NULL}: A list containing information for the
+report generation, such as omics_data_type and data_description (this is the
+list used for all report generating functions of this package).}
 
-\item{cluster_hits_report_name}{\code{character(1)}: Single character string
-specifying the name of the cluster_hits() function report, that contains
-the results that were used for the overprepresentation analysis here. Must
-be specified, because otherwise, the connection is not documented.}
+\item{cluster_hits_report_name}{\code{character(1)} | \code{NULL}: Single character
+string specifying the name of the cluster_hits() function report, that
+contains the results that were used for the overprepresentation analysis
+here.}
 
 \item{clusterProfiler_params}{\code{list} | \code{NULL}: A named list of arguments
 passed directly to the corresponding functions in the
@@ -213,8 +208,6 @@ enrichment.
     # --- toy cluster table (two "conditions") ------------------------------
     toy_genes <- paste0("G", 1:8)
     cluster_table <- tibble::tibble(
-        feature_nr    = 1:8,
-        feature_name  = paste0("feat_", 1:8),
         gene          = toy_genes,
         cluster_condA = c(1, 1, 2, 2, NA, NA, 1, 2),
         cluster_condB = c(NA, 1, NA, 2, 1, 2, 1, NA)

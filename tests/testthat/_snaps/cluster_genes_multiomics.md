@@ -1,7 +1,7 @@
-# cluster_genes_multiomics snapshot with mixed layers
+# cluster_genes_multiomics works.
 
     structure(list(gene = c("gene1", "gene2", "gene3", "gene4", "gene5", 
-    "gene6"), cluster_Ctrl = c(1L, 1L, 2L, 1L, 1L, 2L), cluster_Treat = c(2L, 
+    "gene6"), time_Ctrl = c(1L, 1L, 2L, 1L, 1L, 2L), time_Treat = c(2L, 
     1L, 2L, 2L, 1L, 2L)), class = c("tbl_df", "tbl", "data.frame"
     ), row.names = c(NA, -6L))
 

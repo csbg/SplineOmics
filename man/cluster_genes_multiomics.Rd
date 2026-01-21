@@ -6,7 +6,7 @@
 \usage{
 cluster_genes_multiomics(
   blocks,
-  block_meta,
+  block_clusters,
   modality_meta,
   gene_mode = "intersection",
   verbose = TRUE
@@ -40,18 +40,10 @@ This row-naming convention is critical, as it defines how features are
 associated with genes and how genes are aligned across modalities prior to
 signature construction and downstream clustering.}
 
-\item{block_meta}{A data frame containing \emph{block-level metadata}. One row per block.
-Must include:
-\describe{
-\item{\code{block}}{Block identifier (must match names in \code{blocks}).}
-\item{\code{block_k}}{Number of gene clusters for this block.}
-\item{\code{result_category}}{Numeric result category label (e.g., 1 for
-time effect, 3 for interaction).}
-\item{\code{cond1}}{Primary condition associated with this block (e.g.,
-condition for time-effect blocks, or first condition in a contrast).}
-\item{\code{cond2}}{Secondary condition for contrast-based blocks. Set to
-\code{NA} for single-condition blocks.}
-}}
+\item{block_clusters}{A named list specifying the amount of clusters per block. The list names
+must match the names of \code{blocks}. Each element value specifies the
+number of gene clusters (\code{k}) to compute for the corresponding
+block.}
 
 \item{modality_meta}{A data frame containing \emph{modality-level metadata}. One row per (block ×
 modality). Must include:
@@ -96,12 +88,12 @@ per analytical block (e.g., \code{cluster_<cond>} or
 \code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
 block are assigned \code{NA}.}
 
-\item{\code{centroid_info}}{A tibble with one row per block, modality
-(layer), and cluster, summarizing modality-specific cluster centroid
+\item{\code{centroid_info}}{A tibble with one row per block, modality,
+and cluster, summarizing modality-specific cluster centroid
 trajectories and within-cluster coherence. Columns include the block
 and layer identifiers, cluster label, gene coverage statistics, mean
-and standard deviation of per-gene \eqn{R^2} values, optional per-gene
-\eqn{R^2} vectors, and the centroid trajectory stored as a list-column.}
+and standard deviation of per-gene R^2 values, optional per-gene
+R^2 vectors, and the centroid trajectory stored as a list-column.}
 }
 }
 \description{
