@@ -171,34 +171,39 @@ install.packages("remotes")
 ``` r
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "v0.3.1",       # Specify the tag to install, e.g. v0.3.1 (check GitHub for the newest version!)
+  ref = "<tag>",        # Version to install, e.g. v0.4.2 
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
 )
 ```
 
-6.  **Verify** the **installation** of the `SplineOmics` package
+6.  **Verify** the **installation** of the `SplineOmics` package:
 
 ``` r
-# Verify the installation of the SplineOmics package
-if ("SplineOmics" %in% rownames(installed.packages())) {
-  message("SplineOmics was installed successfully.")
+pkg <- "SplineOmics"
+ver <- "0.4.2"
+
+status <- tryCatch({
+  library(pkg, character.only = TRUE)
+  packageVersion(pkg) == ver
+}, error = function(e) FALSE)
+
+if (status) {
+  message(sprintf("%s version %s is installed correctly.", pkg, ver))
 } else {
-  message("SplineOmics installation failed. Please check for errors during installation.")
+  message(sprintf("%s version %s is NOT installed correctly.", pkg, ver))
 }
 ```
 
 📌 **Note on documentation:**  
 The website only contains the documentation for the most recent
-`SplineOmics` version (also shown on the website in the top right
-corner). To get the documentation of older versions, run:
+`SplineOmics` version. To get the documentation of any currently
+installed version, run:
 
 ``` r
 help(package="SplineOmics")
 ```
-
-to get the documentation of your currently installed version.
 
 #### Troubleshooting
 

@@ -286,7 +286,7 @@ run_ora <- function(
     )
 
     ensure_clusterProfiler() # Deals with clusterProfiler installation.
-    
+
     cluster_table <- prepare_cluster_table(cluster_table)
     cluster_table[["gene"]] <- map_gene_symbols(
         genes = cluster_table[["gene"]],
@@ -636,7 +636,7 @@ process_ora_queries <- function(
         level_col
     )
     if (verbose) {
-        message(paste0("\n\n\n Running clusterProfiler for: ", level_col))
+        message(paste0("\n\n Running clusterProfiler for column: ", level_col))
     }
 
     process_ora_query(
@@ -1411,7 +1411,7 @@ check_mapping_cfg <- function(
         # Skip organism code checking entirely
         if (isTRUE(verbose)) {
             message(
-                "Note: `from_species` and `to_species` are not checked for",
+                "Note: `from_species` and `to_species` are not checked for ",
                 "validity.\n",
                 "Make sure they match g:Profiler's expected organism codes.",
                 "See:\n",
@@ -1644,7 +1644,8 @@ process_ora_query <- function(
     enrichGO_cfg = NULL,
     plot_title = "",
     universe = NULL,
-    verbose = TRUE) {
+    verbose = TRUE
+    ) {
     params <- set_default_params(params)
     gene_set_collections <- dbs_to_term2genes(databases)
     unique_clusters <- sort(unique(clustered_genes$cluster))
@@ -1679,12 +1680,6 @@ process_ora_query <- function(
                     maxGSSize = params$maxGSSize,
                     qvalueCutoff = 1
                 )
-                # Only simplify if there are results
-                if (
-                    !is.null(ora_result) && nrow(as.data.frame(ora_result)) > 0
-                    ) {
-                    ora_result <- clusterProfiler::simplify(ora_result)
-                }
             } else {
                 gene_set_map <- gene_set_collections[[gene_set_name]]
                 check_gene_overlap(
@@ -2175,7 +2170,7 @@ make_enrich_dotplot <- function(
         return(list(dotplot = p_empty, dotplot_height = 0.7))
     }
 
-    height_per_label <- 0.1
+    height_per_label <- 0.08
     num_labels <- length(unique(top_plot_data$term))
     plot_height <- max(num_labels * height_per_label, 0.70)
 

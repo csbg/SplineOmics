@@ -231,13 +231,9 @@ R^2 vectors, and the centroid trajectory stored as a list-column.</p></dd>
 <span class="r-in"><span>    time_Treat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rna <span class="op">=</span> <span class="va">rna_time_treat</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">block_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    block           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time_Ctrl"</span>, <span class="st">"time_Treat"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    block_k         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    result_category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    cond1           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ctrl"</span>, <span class="st">"Treat"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    cond2           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_character_</span>, <span class="cn">NA_character_</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="va">block_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    time_Ctrl <span class="op">=</span> <span class="fl">2L</span>,</span></span>
+<span class="r-in"><span>    time_Treat <span class="op">=</span> <span class="fl">2L</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">modality_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
@@ -250,14 +246,43 @@ R^2 vectors, and the centroid trajectory stored as a list-column.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="fu">cluster_genes_multiomics</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    blocks     <span class="op">=</span> <span class="va">blocks</span>,</span></span>
-<span class="r-in"><span>    block_meta <span class="op">=</span> <span class="va">block_meta</span>,</span></span>
+<span class="r-in"><span>    block_clusters <span class="op">=</span> <span class="va">block_clusters</span>,</span></span>
 <span class="r-in"><span>    modality_meta <span class="op">=</span> <span class="va">modality_meta</span>,</span></span>
 <span class="r-in"><span>    gene_mode  <span class="op">=</span> <span class="st">"intersection"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in cluster_genes_multiomics(blocks = blocks, block_meta = block_meta,     modality_meta = modality_meta, gene_mode = "intersection"):</span> unused argument (block_meta = block_meta)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] Block 1/2: 'time_Ctrl'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] building gene-level layer matrices...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] computing and combining layer-wise distance matrices...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Ctrl'] clustering genes (k = 2)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] Block 2/2: 'time_Treat'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] building gene-level layer matrices...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] computing and combining layer-wise distance matrices...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] clustering genes (k = 2)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] total runtime: 0.0081 secs</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">cluster_table</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'cluster_table' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $cluster_table</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   gene  time_Ctrl time_Treat</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> gene1         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> gene2         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> gene3         1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> gene4         2          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> gene5         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> gene6         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $centroid_info</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   block     modality modality_type cluster n_genes_cluster n_genes_used coverage</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> time_Ctrl rna      one_to_one          1               5            5        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> time_Ctrl rna      one_to_one          2               1            1        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> time_Tre… rna      one_to_one          1               2            2        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_Tre… rna      one_to_one          2               4            4        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: mean_R2 &lt;dbl&gt;, sd_R2 &lt;dbl&gt;, r2_member &lt;I&lt;list&gt;&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   centroid &lt;I&lt;list&gt;&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
