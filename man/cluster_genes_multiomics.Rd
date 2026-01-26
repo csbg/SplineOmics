@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_genes_multiomics.R
 \name{cluster_genes_multiomics}
 \alias{cluster_genes_multiomics}
-\title{Gene-Centric Multi-Omics Clustering Across Blocks and Layers}
+\title{Gene-Centric Multi-Omics Clustering Across Blocks and Data Modalities}
 \usage{
 cluster_genes_multiomics(
   blocks,
@@ -24,8 +24,8 @@ For one-to-one (gene-level) modalities, rows represent genes directly.
 In this case, row names must be the gene identifiers themselves and must
 follow the pattern \code{<gene_id>}. The angle brackets are shown for
 illustration only and must not be included in the actual row names.
-Gene identifiers must be consistent across all one-to-one layers; otherwise,
-genes cannot be matched across omics layers during distance computation and
+Gene identifiers must be consistent across all one-to-one modalities; otherwise,
+genes cannot be matched across omics modalities during distance computation and
 clustering.
 
 For many-to-one modalities (e.g., phospho sites, probes), rows represent
@@ -49,11 +49,11 @@ block.}
 modality). Must include:
 \describe{
 \item{\code{block}}{Block identifier linking to \code{block_meta}.}
-\item{\code{layer}}{Modality name within the block.}
-\item{\code{layer_k}}{Number of pattern clusters to use for building
+\item{\code{modality}}{Modality name within the block.}
+\item{\code{many_to_one_k}}{Number of pattern clusters to use for building
 pattern signatures for many-to-one modalities. \code{NA} for modalities
 that are already gene-level.}
-\item{\code{layer_w}}{
+\item{\code{modality_w}}{
 Relative weight of this modality when combining modality-specific
 gene–gene distances within the block. Values are treated as
 \emph{relative} weights and are normalized internally, so they do not
@@ -91,7 +91,7 @@ block are assigned \code{NA}.}
 \item{\code{centroid_info}}{A tibble with one row per block, modality,
 and cluster, summarizing modality-specific cluster centroid
 trajectories and within-cluster coherence. Columns include the block
-and layer identifiers, cluster label, gene coverage statistics, mean
+and modality identifiers, cluster label, gene coverage statistics, mean
 and standard deviation of per-gene R^2 values, optional per-gene
 R^2 vectors, and the centroid trajectory stored as a list-column.}
 }
@@ -142,9 +142,9 @@ block_clusters <- list(
 
 modality_meta <- data.frame(
     block   = c("time_Ctrl", "time_Treat"),
-    layer   = c("rna", "rna"),
-    layer_k = c(NA_real_, NA_real_),
-    layer_w = c(1, 1),
+    modality   = c("rna", "rna"),
+    many_to_one_k = c(NA_real_, NA_real_),
+    modality_w = c(1, 1),
     stringsAsFactors = FALSE
 )
 

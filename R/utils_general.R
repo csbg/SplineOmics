@@ -233,17 +233,17 @@ stop_call_false <- function(...) {
 #'
 #' @description
 #' Split a model formula string into fixed-effect and random-effect
-#' components using lme4's formula parsing utilities.
+#' components using reformulas's formula parsing utilities.
 #'
-#' Fixed effects are obtained via `lme4::nobars()`. Random effects are
-#' obtained via `lme4::findbars()` and returned concatenated as a single
+#' Fixed effects are obtained via `reformulas::nobars()`. Random effects are
+#' obtained via `reformulas::findbars()` and returned concatenated as a single
 #' string (separated by a single space). The fixed-effects string is
 #' returned after light cleanup to remove redundant operators and
 #' whitespace.
 #'
 #' This approach is robust to nested parentheses and fixed-effect
 #' function calls such as `poly()` or `splines::ns()`, because only
-#' lme4-style random-effect terms `( ... | ... )` are removed.
+#' reformulas-style random-effect terms `( ... | ... )` are removed.
 #'
 #' @param formula_string
 #'   A character scalar representing the model formula.
@@ -254,7 +254,7 @@ stop_call_false <- function(...) {
 #'   - `random_effects`: concatenated random-effect terms or `""`.
 #'   
 #' @importFrom stats as.formula
-#' @importFrom lme4 nobars findbars
+#' @importFrom reformulas nobars findbars
 #'   
 extract_effects <- function(formula_string) {
     s <- as.character(formula_string)
@@ -276,11 +276,11 @@ extract_effects <- function(formula_string) {
             )
     }
     
-    fixed_f <- lme4::nobars(f)
+    fixed_f <- reformulas::nobars(f)
     fixed_s <- paste(deparse(fixed_f), collapse = "")
     fixed_s <- .clean_fixed(fixed_s)
     
-    bars <- lme4::findbars(f)
+    bars <- reformulas::findbars(f)
     random_s <- ""
     
     if (length(bars) > 0L) {

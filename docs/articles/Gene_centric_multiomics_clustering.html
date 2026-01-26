@@ -315,8 +315,9 @@ many-to-one mapping.</p>
 <p>Each block is a list of modality matrices. <code>block_meta</code>
 defines the number of gene clusters per block and the result category.
 <code>modality_meta</code> specifies, per (block × modality), whether a
-modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
-(<code>layer_k</code> positive), and the relative layer weights.</p>
+modality is one-to-one (<code>many_to_one_k = NA</code>) or many-to-one
+(<code>many_to_one_k</code> positive), and the relative modality
+weights.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Constant <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -338,10 +339,10 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <span></span>
 <span><span class="va">modality_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  block   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Constant"</span>, <span class="st">"Temp_shifted"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  layer   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"protein"</span>, <span class="st">"phospho"</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  layer_k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span>,</span>
+<span>  modality   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"protein"</span>, <span class="st">"phospho"</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  many_to_one_k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span>,</span>
 <span>              <span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  layer_w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
+<span>  modality_w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
 <span>              <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -359,14 +360,20 @@ modality is one-to-one (<code>layer_k = NA</code>) or many-to- one
 <span>  verbose       <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [cluster_genes_multiomics] Block 1/2: 'Constant'</span></span>
-<span><span class="co">#&gt;   [block 'Constant'] building gene-level layer matrices...</span></span>
-<span><span class="co">#&gt;   [block 'Constant'] computing and combining layer-wise distance matrices...</span></span>
+<span><span class="co">#&gt;   [block 'Constant'] building gene-level modality matrices...</span></span>
+<span><span class="co">#&gt;     Modality: rna</span></span>
+<span><span class="co">#&gt;     Modality: protein</span></span>
+<span><span class="co">#&gt;     Modality: phospho</span></span>
+<span><span class="co">#&gt;   [block 'Constant'] building joint feature matrix for multi-omics clustering...</span></span>
 <span><span class="co">#&gt;   [block 'Constant'] clustering genes (k = 5)...</span></span>
 <span><span class="co">#&gt; [cluster_genes_multiomics] Block 2/2: 'Temp_shifted'</span></span>
-<span><span class="co">#&gt;   [block 'Temp_shifted'] building gene-level layer matrices...</span></span>
-<span><span class="co">#&gt;   [block 'Temp_shifted'] computing and combining layer-wise distance matrices...</span></span>
+<span><span class="co">#&gt;   [block 'Temp_shifted'] building gene-level modality matrices...</span></span>
+<span><span class="co">#&gt;     Modality: rna</span></span>
+<span><span class="co">#&gt;     Modality: protein</span></span>
+<span><span class="co">#&gt;     Modality: phospho</span></span>
+<span><span class="co">#&gt;   [block 'Temp_shifted'] building joint feature matrix for multi-omics clustering...</span></span>
 <span><span class="co">#&gt;   [block 'Temp_shifted'] clustering genes (k = 5)...</span></span>
-<span><span class="co">#&gt; [cluster_genes_multiomics] total runtime: 0.031 secs</span></span>
+<span><span class="co">#&gt; [cluster_genes_multiomics] total runtime: 0.04 secs</span></span>
 <span></span>
 <span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">cluster_table</span></span>
 <span><span class="va">centroid_info</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">centroid_info</span></span></code></pre></div>
@@ -382,16 +389,16 @@ these columns are named <code>cluster_&lt;cond&gt;</code>.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 40 × 3</span></span></span>
 <span><span class="co">#&gt;    gene   Constant Temp_shifted</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> gene1         5            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> gene10        5            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> gene11        2            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> gene12        2            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> gene13        3            2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> gene14        3            2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> gene15        5            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> gene16        2            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> gene17        2            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> gene18        5            3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> gene1         4            2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> gene10        4            2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> gene11        5            1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> gene12        5            1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> gene13        3            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> gene14        3            4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> gene15        4            2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> gene16        5            1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> gene17        5            1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> gene18        4            2</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">cluster_table</span><span class="op">$</span><span class="va">cluster_Constant</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
@@ -415,15 +422,15 @@ outliers within a cluster.</p>
 <span><span class="co">#&gt;    block    modality modality_type cluster n_genes_cluster n_genes_used coverage</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Constant rna      one_to_one          1               4            4        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Constant rna      one_to_one          2               7            7        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Constant rna      one_to_one          2               8            8        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Constant rna      one_to_one          3              10           10        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Constant rna      one_to_one          4               8            8        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Constant rna      one_to_one          5              11           11        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Constant rna      one_to_one          4              11           11        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Constant rna      one_to_one          5               7            7        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Constant protein  one_to_one          1               4            4        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Constant protein  one_to_one          2               7            7        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Constant protein  one_to_one          2               8            8        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Constant protein  one_to_one          3              10           10        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Constant protein  one_to_one          4               8            8        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Constant protein  one_to_one          5              11           11        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Constant protein  one_to_one          4              11           11        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Constant protein  one_to_one          5               7            7        1</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 20 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: mean_R2 &lt;dbl&gt;, sd_R2 &lt;dbl&gt;, r2_member &lt;I&lt;list&gt;&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   centroid &lt;I&lt;list&gt;&gt;</span></span></span>
@@ -438,10 +445,10 @@ outliers within a cluster.</p>
 <span><span class="co">#&gt;   block    modality cluster n_genes_used coverage mean_R2   sd_R2</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Constant rna            1            4        1   0.965 0.012<span style="text-decoration: underline;">7</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Constant rna            2            7        1   0.972 0.009<span style="text-decoration: underline;">39</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Constant rna            2            8        1   0.960 0.014<span style="text-decoration: underline;">2</span> </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Constant rna            3           10        1   0.967 0.016<span style="text-decoration: underline;">3</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Constant rna            4            8        1   0.960 0.014<span style="text-decoration: underline;">2</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Constant rna            5           11        1   0.966 0.018<span style="text-decoration: underline;">1</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Constant rna            4           11        1   0.966 0.018<span style="text-decoration: underline;">1</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Constant rna            5            7        1   0.972 0.009<span style="text-decoration: underline;">39</span></span></span></code></pre></div>
 <div class="section level4">
 <h4 id="plot-a-centroid-trajectory">5.1 Plot a centroid trajectory<a class="anchor" aria-label="anchor" href="#plot-a-centroid-trajectory"></a>
 </h4>
@@ -561,7 +568,7 @@ not exist, this section will be skipped.</p>
 <span><span class="co">#&gt; [1] ggplot2_3.5.2     tibble_3.3.0      SplineOmics_0.4.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] bitops_1.0-9             Rdpack_2.6.4             pbapply_1.7-2           </span></span>
+<span><span class="co">#&gt;   [1] Rdpack_2.6.4             bitops_1.0-9             pbapply_1.7-2           </span></span>
 <span><span class="co">#&gt;   [4] writexl_1.5.4            rlang_1.1.6              magrittr_2.0.3          </span></span>
 <span><span class="co">#&gt;   [7] clue_0.3-66              GetoptLong_1.0.5         matrixStats_1.5.0       </span></span>
 <span><span class="co">#&gt;  [10] compiler_4.5.2           reshape2_1.4.4           png_0.1-8               </span></span>
@@ -575,8 +582,8 @@ not exist, this section will be skipped.</p>
 <span><span class="co">#&gt;  [34] gmp_0.7-5                BiocParallel_1.42.1      broom_1.0.8             </span></span>
 <span><span class="co">#&gt;  [37] parallel_4.5.2           prettyunits_1.2.0        cluster_2.1.8.1         </span></span>
 <span><span class="co">#&gt;  [40] R6_2.6.1                 stringi_1.8.7            bslib_0.9.0             </span></span>
-<span><span class="co">#&gt;  [43] RColorBrewer_1.1-3       limma_3.64.1             car_3.1-3               </span></span>
-<span><span class="co">#&gt;  [46] boot_1.3-31              ClusterR_1.3.3           numDeriv_2016.8-1.1     </span></span>
+<span><span class="co">#&gt;  [43] RColorBrewer_1.1-3       limma_3.64.1             boot_1.3-31             </span></span>
+<span><span class="co">#&gt;  [46] car_3.1-3                ClusterR_1.3.3           numDeriv_2016.8-1.1     </span></span>
 <span><span class="co">#&gt;  [49] jquerylib_0.1.4          Rcpp_1.1.0               iterators_1.0.14        </span></span>
 <span><span class="co">#&gt;  [52] knitr_1.50               base64enc_0.1-3          IRanges_2.42.0          </span></span>
 <span><span class="co">#&gt;  [55] Matrix_1.7-3             splines_4.5.2            tidyselect_1.2.1        </span></span>

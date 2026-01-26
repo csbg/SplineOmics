@@ -5676,13 +5676,13 @@ kmeans_clustering <- function(
             clusters   = cluster_assignments
         )
     }
-
+    
     clustered_hits <- data.frame(
         feature = top_table$feature_nr,
         cluster = cluster_assignments
     )
     clustered_hits <- clustered_hits[, c("feature", "cluster")]
-
+    
     colnames(curve_values) <- smooth_timepoints
     curve_values <- as.data.frame(curve_values)
     curve_values$cluster <- cluster_assignments

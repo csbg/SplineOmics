@@ -1,4 +1,4 @@
-#' Gene-Centric Multi-Omics Clustering Across Blocks and Layers
+#' Gene-Centric Multi-Omics Clustering Across Blocks and Data Modalities
 #'
 #' @description
 #' Performs gene-centric clustering of multi-omics time-series data across
@@ -28,8 +28,8 @@
 #' In this case, row names must be the gene identifiers themselves and must
 #' follow the pattern \code{<gene_id>}. The angle brackets are shown for
 #' illustration only and must not be included in the actual row names.
-#' Gene identifiers must be consistent across all one-to-one layers; otherwise,
-#' genes cannot be matched across omics layers during distance computation and
+#' Gene identifiers must be consistent across all one-to-one modalities; otherwise,
+#' genes cannot be matched across omics modalities during distance computation and
 #' clustering.
 #'
 #' For many-to-one modalities (e.g., phospho sites, probes), rows represent
@@ -55,11 +55,11 @@
 #' modality). Must include:
 #' \describe{
 #'   \item{\code{block}}{Block identifier linking to \code{block_meta}.}
-#'   \item{\code{layer}}{Modality name within the block.}
-#'   \item{\code{layer_k}}{Number of pattern clusters to use for building
+#'   \item{\code{modality}}{Modality name within the block.}
+#'   \item{\code{many_to_one_k}}{Number of pattern clusters to use for building
 #'   pattern signatures for many-to-one modalities. \code{NA} for modalities
 #'   that are already gene-level.}
-#'   \item{\code{layer_w}}{
+#'   \item{\code{modality_w}}{
 #'     Relative weight of this modality when combining modality-specific
 #'     gene–gene distances within the block. Values are treated as
 #'     *relative* weights and are normalized internally, so they do not
@@ -98,7 +98,7 @@
 #'   \item{\code{centroid_info}}{A tibble with one row per block, modality,
 #'   and cluster, summarizing modality-specific cluster centroid
 #'   trajectories and within-cluster coherence. Columns include the block
-#'   and layer identifiers, cluster label, gene coverage statistics, mean
+#'   and modality identifiers, cluster label, gene coverage statistics, mean
 #'   and standard deviation of per-gene R^2 values, optional per-gene
 #'   R^2 vectors, and the centroid trajectory stored as a list-column.}
 #' }
@@ -133,9 +133,9 @@
 #'
 #' modality_meta <- data.frame(
 #'     block   = c("time_Ctrl", "time_Treat"),
-#'     layer   = c("rna", "rna"),
-#'     layer_k = c(NA_real_, NA_real_),
-#'     layer_w = c(1, 1),
+#'     modality   = c("rna", "rna"),
+#'     many_to_one_k = c(NA_real_, NA_real_),
+#'     modality_w = c(1, 1),
 #'     stringsAsFactors = FALSE
 #' )
 #'
@@ -253,7 +253,7 @@ cluster_genes_multiomics <- function(
 #' \itemize{
 #'   \item argument-wise checks for \code{blocks}, \code{block_meta},
 #'         \code{modality_meta}, and \code{gene_mode}, and
-#'   \item cross-argument consistency checks linking blocks, layers,
+#'   \item cross-argument consistency checks linking blocks, modalities,
 #'         and metadata.
 #' }
 #'
@@ -267,7 +267,7 @@ cluster_genes_multiomics <- function(
 #'
 #' @param blocks
 #' Named list of blocks, one element per block.  
-#' Each block is itself a named list of layers, where each layer is a
+#' Each block is itself a named list of modalities, where each modality is a
 #' numeric matrix (\code{features x spline_points}) with non-empty
 #' row names (feature or gene IDs).
 #'
@@ -279,17 +279,17 @@ cluster_genes_multiomics <- function(
 #' must be positive and constant within each block.
 #'
 #' @param modality_meta
-#' Data frame with layer-level metadata.  
-#' Must contain the columns \code{block}, \code{layer}, \code{layer_k},
-#' and \code{layer_w}.  
-#' The column \code{layer_k} encodes whether a layer is many-to-one
+#' Data frame with modality-level metadata.  
+#' Must contain the columns \code{block}, \code{modality}, \code{many_to_one_k},
+#' and \code{modality_w}.  
+#' The column \code{many_to_one_k} encodes whether a modality is many-to-one
 #' (positive integer) or one-to-one (NA).  
-#' The column \code{layer_w} provides non-negative layer weights whose
+#' The column \code{modality_w} provides non-negative modality weights whose
 #' sum must be positive within each block.
 #'
 #' @param gene_mode
 #' Character scalar specifying how genes should be combined across
-#' layers within a block.  
+#' modalities within a block.  
 #' Must be either \code{"intersection"} or \code{"union"} and is
 #' validated via \code{\link[base]{match.arg}}.
 #' 
@@ -330,7 +330,7 @@ cluster_genes_multiomics <- function(
 }
 
 
-#' Cluster genes within a single block and compute layer-wise centroids
+#' Cluster genes within a single block and compute modality-wise centroids
 #'
 #' @noRd
 #'
@@ -340,17 +340,17 @@ cluster_genes_multiomics <- function(
 #'
 #' For the specified block, the function:
 #' \itemize{
-#'   \item extracts the relevant block-level and layer-level metadata,
-#'   \item converts many-to-one layers into gene-level signatures,
+#'   \item extracts the relevant block-level and modality-level metadata,
+#'   \item converts many-to-one modalities into gene-level signatures,
 #'   \item selects genes according to the requested \code{gene_mode}
 #'         (\code{"intersection"} or \code{"union"}),
 #'   \item constructs a block-level distance matrix by combining
-#'         layer-level distances using per-layer weights, and
+#'         modality-level distances using per-modality weights, and
 #'   \item runs the clustering algorithm to obtain block-specific
 #'         gene–cluster assignments.
 #' }
 #'
-#' After clustering, it computes per-layer cluster centroids and quality
+#' After clustering, it computes per-modality cluster centroids and quality
 #' metrics through \code{.compute_block_centroids()}.
 #'
 #' @param block_id
@@ -360,7 +360,7 @@ cluster_genes_multiomics <- function(
 #' @param blocks
 #' Named list of blocks as supplied to
 #' \code{cluster_genes_multiomics()}.  
-#' Each block is a named list of raw layer matrices.
+#' Each block is a named list of raw modality matrices.
 #'
 #' @param block_meta
 #' Block-level metadata table.  
@@ -368,14 +368,14 @@ cluster_genes_multiomics <- function(
 #' block.
 #'
 #' @param modality_meta
-#' Layer-level metadata table.  
-#' Used to retrieve layer names, layer types (\code{layer_k}), and
-#' layer weights for the current block.
+#' Modality-level metadata table.  
+#' Used to retrieve modality names, modality types (\code{many_to_one_k}), and
+#' modality weights for the current block.
 #'
 #' @param gene_mode
-#' Character scalar specifying how to combine genes across layers:
+#' Character scalar specifying how to combine genes across modalities:
 #' either \code{"intersection"} or \code{"union"}.  
-#' Determines whether only shared genes or all genes across layers
+#' Determines whether only shared genes or all genes across modalities
 #' contribute to the block-level distance.
 #'
 #' @return
@@ -386,7 +386,7 @@ cluster_genes_multiomics <- function(
 #'   }
 #'
 #'   \item{\code{centroid_info}}{
-#'     Data frame with per-layer, per-cluster centroid trajectories and
+#'     Data frame with per-modality, per-cluster centroid trajectories and
 #'     associated summary metrics, as produced by
 #'     \code{.compute_block_centroids()}.
 #'   }
@@ -400,49 +400,60 @@ cluster_genes_multiomics <- function(
         gene_mode,
         verbose
 ) {
-    meta_b_layer <- 
+    meta_b_modality <- 
         modality_meta[modality_meta$block == block_id, , drop = FALSE]
     
-    layer_names <- meta_b_layer$layer
-    layer_weights <- meta_b_layer$layer_w
+    modality_names <- meta_b_modality$modality
+    modality_weights <- meta_b_modality$modality_w
     
-    layer_mats_raw <- lapply(
-        layer_names,
+    modality_mats_raw <- lapply(
+        modality_names,
         function(ln) blocks[[block_id]][[ln]]
     )
-    names(layer_mats_raw) <- layer_names
+    names(modality_mats_raw) <- modality_names
     
-    layer_mats <- vector("list", length(layer_names))
-    names(layer_mats) <- layer_names
+    modality_mats <- vector("list", length(modality_names))
+    names(modality_mats) <- modality_names
     
     if (isTRUE(verbose)) {
         message(
             "  [block '",
             block_id,
-            "'] building gene-level layer matrices..."
+            "'] building gene-level modality matrices..."
         )
     }
     
-    for (i in seq_along(layer_names)) {
-        ln <- layer_names[i]
-        lk <- meta_b_layer$layer_k[i]
-        mat_raw <- layer_mats_raw[[ln]]
+    many_to_one <- setNames(
+        rep(FALSE, length(modality_names)),
+        modality_names
+    )
+    
+    for (i in seq_along(modality_names)) {
+        ln <- modality_names[i]
+        if (isTRUE(verbose)) message("    Modality: ", ln)
         
-        if (is.na(lk)) {
-            layer_mats[[ln]] <- mat_raw
+        lk <- meta_b_modality$many_to_one_k[i]
+        mat_raw <- modality_mats_raw[[ln]]
+        
+        is_m2o <- !is.na(lk)
+        many_to_one[[ln]] <- is_m2o
+        
+        if (!is_m2o) {
+            modality_mats[[ln]] <- mat_raw
         } else {
             rn <- rownames(mat_raw)
             gene_ids <- sub("_.*$", "", rn)
             feature_to_gene <- gene_ids
             
             sig <- .build_site_signatures(
-                layer_mat = mat_raw,
-                feature_to_gene = feature_to_gene,
-                layer_k = lk
+                modality_mat     = mat_raw,
+                feature_to_gene  = feature_to_gene,
+                many_to_one_k    = lk,
+                seed             = 42
             )$signatures
             
             sig <- sig[order(rownames(sig)), , drop = FALSE]
-            layer_mats[[ln]] <- sig
+            modality_mats[[ln]] <- sig
         }
     }
     
@@ -450,22 +461,24 @@ cluster_genes_multiomics <- function(
         message(
             "  [block '",
             block_id,
-            "'] computing and combining layer-wise distance matrices..."
+            "'] building joint feature matrix for multi-omics clustering..."
         )
     }
-    
+
     if (gene_mode == "intersection") {
-        D_block <- .compute_block_distance_intersection(
-            layer_mats = layer_mats,
-            layer_names = layer_names,
-            layer_weights = layer_weights
+        X_block <- .build_block_feature_matrix_intersection(
+            modality_mats     = modality_mats,
+            modality_names    = modality_names,
+            modality_weights  = modality_weights,
+            many_to_one       = many_to_one
         )
     } else {
-        D_block <- .compute_block_distance_union(
-            layer_mats = layer_mats,
-            layer_names = layer_names,
-            layer_weights = layer_weights
-        )
+        X_block <- .build_block_feature_matrix_union(
+            modality_mats     = modality_mats,
+            modality_names    = modality_names,
+            modality_weights  = modality_weights,
+            many_to_one       = many_to_one
+        ) 
     }
     
     if (isTRUE(verbose)) {
@@ -477,17 +490,17 @@ cluster_genes_multiomics <- function(
             ")..."
         )
     }
-    
-    cl_b <- .cluster_with_kmeans(
-        dist_mat = D_block,
-        k = block_k
+
+    cl_b <- .cluster_feature_matrix(
+        feature_mat = X_block,
+        k           = block_k
     )
     
     centroid_info_b <- .compute_block_centroids(
         block_id = block_id,
-        layer_mats = layer_mats,
+        modality_mats = modality_mats,
         cl_b = cl_b,
-        meta_b_layer = meta_b_layer
+        meta_b_modality = meta_b_modality
     )
     
     list(
@@ -505,272 +518,352 @@ cluster_genes_multiomics <- function(
 #' @noRd
 #'
 #' @description
-#' Internal helper that converts a many-to-one omics layer (e.g. sites,
-#' probes) into **gene-level pattern signatures**.  
+#' Internal helper that converts a many-to-one omics modality (e.g. sites,
+#' probes) into **gene-level pattern signatures**.
 #'
-#' All features in the layer are first clustered *jointly* into
-#' \code{layer_k} global dynamic archetypes based on their temporal
-#' trajectories. These global archetypes represent recurring temporal
-#' shapes observed across the entire layer.
+#' All feature-level trajectories are first **clustered jointly** into
+#' \code{many_to_one_k} global temporal archetypes based directly on their
+#' numeric trajectories (after z-scoring). These archetypes represent
+#' recurring dynamic patterns shared across the entire modality.
 #'
 #' Each gene is then represented by a fixed-length signature vector that
 #' quantifies how its own features distribute across these shared
 #' archetypes—effectively a mixture over global temporal patterns.
 #'
-#' @param layer_mat
+#' @param modality_mat
 #' Numeric matrix (\code{features x spline_points}) where each row is a
-#' feature-level trajectory (e.g. phosphosite, probe).  
+#' feature-level trajectory (e.g. phosphosite, probe).
 #' Row names must uniquely identify features; no specific format is
 #' required.
 #'
 #' @param feature_to_gene
-#' Character vector of length \code{nrow(layer_mat)} mapping each feature
-#' (row of \code{layer_mat}) to its corresponding gene.  
-#' The mapping is **strictly positional**:  
-#' the \(i\)-th entry of \code{feature_to_gene} corresponds to the
-#' \(i\)-th row of \code{layer_mat}.  
-#' Names are ignored.
+#' Character vector of length \code{nrow(modality_mat)} mapping each feature
+#' (row of \code{modality_mat}) to its corresponding gene.
+#' The mapping is **strictly positional**: the \(i\)-th element of
+#' \code{feature_to_gene} corresponds to the \(i\)-th row of
+#' \code{modality_mat}. Names are ignored.
 #'
-#' @param layer_k
-#' Integer scalar giving the number of global archetype clusters to
-#' compute across all features.  
-#' Must satisfy \code{2 <= layer_k <= nrow(layer_mat)}.
+#' @param many_to_one_k
+#' Integer scalar giving the number of global temporal archetype clusters to
+#' compute across all features.
+#' Must satisfy \code{2 <= many_to_one_k < nrow(modality_mat)}.
 #'
 #' @param seed
-#' Optional integer seed passed to \code{\link[base]{set.seed}} to make
-#' the feature-level clustering reproducible.
+#' Optional integer seed passed to \code{\link[base]{set.seed}} to make the
+#' feature-level clustering reproducible.
 #'
 #' @return
 #' A list with two components:
 #'
 #' \describe{
-#'
 #'   \item{\code{signatures}}{
-#'     A numeric matrix of dimension \code{genes x layer_k}.  
+#'     Numeric matrix of dimension \code{genes x many_to_one_k}.
 #'     Each row represents a gene; each column corresponds to one global
-#'     temporal archetype.  
+#'     temporal archetype.
 #'
-#'     Values are the **proportion of that gene's features** assigned to
-#'     each archetype (rows sum to 1 for genes that have at least one
-#'     mapped feature).
+#'     Entries give the **fraction of that gene's features** assigned to
+#'     each archetype. Rows sum to 1 for genes with at least one mapped
+#'     feature.
 #'   }
 #'
 #'   \item{\code{feature_clusters}}{
-#'     Integer vector of length \code{nrow(layer_mat)} giving the
-#'     archetype assignment for each feature.  
-#'     Names correspond to feature IDs (rownames of
-#'     \code{layer_mat}).
+#'     Integer vector of length \code{nrow(modality_mat)} giving the
+#'     archetype assignment for each feature.
+#'     Names correspond to feature identifiers (rownames of
+#'     \code{modality_mat}).
 #'   }
-#'
 #' }
-#'
-#' @importFrom stats dist
 #' 
 .build_site_signatures <- function(
-        layer_mat,
+        modality_mat,
         feature_to_gene,
-        layer_k,
+        many_to_one_k,
         seed = NULL
 ) {
-    layer_k <- as.integer(layer_k)
+    many_to_one_k <- as.integer(many_to_one_k)
     
-    # positional mapping: i-th row of layer_mat -> feature_to_gene[i]
     feat_map <- as.character(feature_to_gene)
-    
-    if (length(feat_map) != nrow(layer_mat)) {
+    if (length(feat_map) != nrow(modality_mat)) {
         stop(
-            "`feature_to_gene` must have length equal to nrow(layer_mat). ",
+            "`feature_to_gene` must have length equal to nrow(modality_mat). ",
             "Mapping is positional: element i is the gene ID for row i.",
             call. = FALSE
         )
     }
-    
-    # 1) Global feature-by-feature distance matrix (all sites together)
-    D_feat <- .compute_layer_distance(layer_mat)
-    
-    # 2) Cluster all features (sites) into layer_k global shape archetypes
-    feature_clusters <- .cluster_with_kmeans(
-        dist_mat = D_feat,
-        k        = layer_k,
-        seed     = seed
+
+    feature_clusters <- .cluster_feature_matrix(
+        feature_mat = scale(modality_mat),
+        k           = many_to_one_k,
+        seed        = seed
     )
-    names(feature_clusters) <- rownames(layer_mat)
+    names(feature_clusters) <- rownames(modality_mat)
     
-    # 3) Build gene x K signature matrix (fractions per global archetype)
+    # 2) Build gene x K signature matrix (fractions per global archetype)
     genes <- sort(unique(feat_map))
     sig_mat <- matrix(
         0,
         nrow = length(genes),
-        ncol = layer_k
+        ncol = many_to_one_k
     )
     rownames(sig_mat) <- genes
-    colnames(sig_mat) <- paste0("cluster_", seq_len(layer_k))
+    colnames(sig_mat) <- paste0("cluster_", seq_len(many_to_one_k))
     
     for (g in genes) {
         idx <- which(feat_map == g)
-        if (length(idx) == 0L) {
-            next
-        }
+        if (length(idx) == 0L) next
         
-        clust_g <- feature_clusters[idx]
-        tab <- table(clust_g)
+        tab <- table(feature_clusters[idx])
         sig_mat[g, as.integer(names(tab))] <- as.numeric(tab)
         
-        row_sum <- sum(sig_mat[g, ])
-        if (row_sum > 0) {
-            sig_mat[g, ] <- sig_mat[g, ] / row_sum
-        }
+        rs <- sum(sig_mat[g, ])
+        if (rs > 0) sig_mat[g, ] <- sig_mat[g, ] / rs
     }
     
     list(
-        signatures       = sig_mat,        # genes x layer_k, fractions
-        feature_clusters = feature_clusters # site -> global pattern
+        signatures       = sig_mat,
+        feature_clusters = feature_clusters
     )
 }
 
 
-#' Compute block-level distance matrix (intersection mode)
+#' Build joint block-level feature matrix (intersection mode)
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that computes a block-level gene-gene distance matrix
-#' in \code{gene_mode = "intersection"}.  
+#' Internal helper that constructs a joint gene-level feature matrix for
+#' multi-omics clustering in \code{gene_mode = "intersection"}.
 #'
-#' Only genes present in \emph{all} layers of the block are retained.
+#' Only genes present in \emph{all} modalities of the block are retained.
 #' For this common gene set, the function:
 #' \itemize{
-#'   \item computes a layer-specific distance matrix for each layer, and
-#'   \item combines these matrices via a weighted sum using
-#'         \code{layer_weights}.
+#'   \item extracts gene-level representations per modality,
+#'   \item applies modality-specific preprocessing and transformations,
+#'   \item standardizes features within each modality,
+#'   \item rescales modality blocks to enforce user-defined weights while
+#'         correcting for differing feature dimensionalities, and
+#'   \item concatenates all modality blocks into a single joint feature
+#'         matrix suitable for Euclidean clustering.
 #' }
 #'
-#' The result is a single symmetric distance matrix whose row and column
-#' names correspond to the intersected gene set.
+#' Many-to-one modalities (e.g. site or probe signatures) are automatically
+#' transformed using a Hellinger (square-root) transform prior to
+#' standardization, yielding a geometry appropriate for Euclidean methods.
 #'
-#' @param layer_mats
-#' Named list of gene-level matrices, one per layer, with matching layer
-#' names in \code{layer_names}. Row names are gene identifiers.
+#' The resulting matrix can be passed directly to
+#' \code{.cluster_feature_matrix()} for joint gene-centric clustering across
+#' all modalities, without constructing gene--gene distance matrices.
 #'
-#' @param layer_names
-#' Character vector of layer names to use when extracting from
-#' \code{layer_mats}.
+#' @param modality_mats
+#' Named list of gene-level numeric matrices, one per modality. Row names
+#' are gene identifiers; columns are modality-specific features (e.g.
+#' spline points or signature components).
 #'
-#' @param layer_weights
-#' Numeric vector of layer weights, same length and order as
-#' \code{layer_names}. Used as relative weights when combining
-#' layer-specific distance matrices.
+#' @param modality_names
+#' Character vector specifying which modalities to include and in what
+#' order. Must correspond to names in \code{modality_mats}.
+#'
+#' @param modality_weights
+#' Numeric vector of non-negative modality weights, same length and order
+#' as \code{modality_names}. Weights control the relative contribution of
+#' each modality to the joint feature space.
+#'
+#' @param many_to_one
+#' Logical or character vector indicating which modalities represent
+#' many-to-one gene summaries (e.g. site signatures). If logical, it must
+#' be named by modality. If character, it is interpreted as the set of
+#' many-to-one modality names.
 #'
 #' @return
-#' A numeric symmetric matrix \code{D_block} containing gene-gene
-#' distances for the intersection of genes across all layers.  
-#' Row and column names are the retained gene identifiers.
+#' A numeric matrix of dimension \code{genes x features}, where each row
+#' corresponds to a gene present in all modalities and columns represent
+#' the weighted, standardized, and concatenated feature blocks across
+#' modalities. Row names are gene identifiers.
+#' 
+#' @importFrom purrr map reduce
+#' @importFrom dplyr case_when
+#' @importFrom rlang abort
+#' @importFrom stats setNames
 #'
-.compute_block_distance_intersection <- function(
-        layer_mats,
-        layer_names,
-        layer_weights
+.build_block_feature_matrix_intersection <- function(
+        modality_mats,
+        modality_names,
+        modality_weights,
+        many_to_one = NULL
 ) {
-    genes_per_layer <- lapply(layer_mats, rownames)
-    genes_block <- Reduce(intersect, genes_per_layer)
-    genes_block <- sort(genes_block)
+    if (is.null(many_to_one)) {
+        many_to_one <- rep(FALSE, length(modality_names))
+        names(many_to_one) <- modality_names
+    } else if (is.logical(many_to_one)) {
+        if (is.null(names(many_to_one))) {
+            names(many_to_one) <- modality_names
+        }
+        many_to_one <- many_to_one[modality_names]
+    } else {
+        many_to_one <- stats::setNames(
+            modality_names %in% many_to_one,
+            modality_names
+        )
+    }
     
-    dist_list <- lapply(
-        layer_names,
-        function(ln) {
-            mat <- layer_mats[[ln]][genes_block, , drop = FALSE]
-            .compute_layer_distance(mat)
+    genes_block <- modality_mats[modality_names] |>
+        purrr::map(rownames) |>
+        purrr::reduce(intersect) |>
+        sort()
+    
+    w <- modality_weights / sum(modality_weights)
+    names(w) <- modality_names
+    
+    blocks <- purrr::map(
+        modality_names,
+        function(m) {
+            X <- modality_mats[[m]][genes_block, , drop = FALSE] |>
+                as.matrix()
+            
+            if (isTRUE(many_to_one[[m]])) {
+                X <- sqrt(pmax(X, 0))
+            }
+            
+            Xs <- scale(X)
+            p  <- ncol(Xs)
+            
+            Xs * sqrt(w[[m]] / p)
         }
     )
-    names(dist_list) <- layer_names
     
-    D_block <- .combine_layer_distances(
-        dist_list = dist_list,
-        weights   = layer_weights
-    )
+    X_block <- purrr::reduce(blocks, cbind)
+    rownames(X_block) <- genes_block
     
-    D_block
+    X_block
 }
 
 
-#' Compute block-level distance matrix (union mode)
+#' Build joint block-level feature matrix (union mode)
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that computes a block-level gene-gene distance matrix
-#' in \code{gene_mode = "union"}.  
+#' Internal helper that constructs a joint gene-level feature matrix for
+#' multi-omics clustering in \code{gene_mode = "union"}.
 #'
-#' All genes present in \emph{any} layer of the block are retained.
-#' Distances are combined in a pairwise, coverage-aware fashion:
-#' for each gene pair \code{(gi, gj)}, the function:
+#' All genes present in \emph{any} modality of the block are retained. For
+#' each modality, genes not observed in that modality are represented by
+#' zero-valued feature blocks after standardization, such that the modality
+#' contributes no signal for those genes.
+#'
+#' For the union gene set, the function:
 #' \itemize{
-#'   \item considers only layers where \emph{both} genes are present,
-#'   \item computes the layer-specific distance for that pair,
-#'   \item accumulates \code{weight * distance} in a numerator matrix,
-#'   \item accumulates \code{weight} in a denominator matrix, and
-#'   \item forms a weighted average over all contributing layers.
+#'   \item aligns modality-specific gene-level feature matrices to the
+#'         union of genes,
+#'   \item applies modality-specific preprocessing and transformations,
+#'   \item standardizes features within each modality,
+#'   \item rescales modality blocks to enforce user-defined weights while
+#'         correcting for differing feature dimensionalities, and
+#'   \item concatenates all modality blocks into a single joint feature
+#'         matrix suitable for Euclidean clustering.
 #' }
 #'
-#' Pairs of genes that never co-occur in any layer effectively receive no
-#' distance information and remain unused in practice.
+#' Many-to-one modalities (e.g. site or probe signatures) are automatically
+#' transformed using a Hellinger (square-root) transform prior to
+#' standardization, yielding a geometry appropriate for Euclidean methods.
 #'
-#' @param layer_mats
-#' Named list of gene-level matrices, one per layer, with matching layer
-#' names in \code{layer_names}. Row names are gene identifiers.
+#' The resulting matrix can be passed directly to
+#' \code{.cluster_feature_matrix()} for joint gene-centric clustering across
+#' all modalities, without constructing gene--gene distance matrices.
 #'
-#' @param layer_names
-#' Character vector of layer names to use when extracting from
-#' \code{layer_mats}.
+#' @param modality_mats
+#' Named list of gene-level numeric matrices, one per modality. Row names
+#' are gene identifiers; columns are modality-specific features (e.g.
+#' spline points or signature components).
 #'
-#' @param layer_weights
-#' Numeric vector of layer weights, same length and order as
-#' \code{layer_names}. Used as relative weights when combining
-#' layer-specific distances.
+#' @param modality_names
+#' Character vector specifying which modalities to include and in what
+#' order. Must correspond to names in \code{modality_mats}.
+#'
+#' @param modality_weights
+#' Numeric vector of non-negative modality weights, same length and order
+#' as \code{modality_names}. Weights control the relative contribution of
+#' each modality to the joint feature space.
+#'
+#' @param many_to_one
+#' Logical or character vector indicating which modalities represent
+#' many-to-one gene summaries (e.g. site signatures). If logical, it must
+#' be named by modality. If character, it is interpreted as the set of
+#' many-to-one modality names.
 #'
 #' @return
-#' A numeric symmetric matrix \code{D_block} containing gene-gene
-#' distances for the union of genes across all layers.  
-#' Each entry corresponds to a pairwise weighted average of distances
-#' over the layers where both genes are observed.
+#' A numeric matrix of dimension \code{genes x features}, where each row
+#' corresponds to a gene present in at least one modality and columns
+#' represent the weighted, standardized, and concatenated feature blocks
+#' across modalities. Row names are gene identifiers.
 #'
-.compute_block_distance_union <- function(
-        layer_mats,
-        layer_names,
-        layer_weights
+#' @importFrom purrr map reduce
+#' @importFrom dplyr case_when
+#' @importFrom rlang abort
+#' @importFrom stats setNames
+#'
+.build_block_feature_matrix_union <- function(
+        modality_mats,
+        modality_names,
+        modality_weights,
+        many_to_one = NULL
 ) {
-    genes_per_layer <- lapply(layer_mats, rownames)
-    genes_block <- Reduce(union, genes_per_layer)
-    genes_block <- sort(genes_block)
-    
-    n_g <- length(genes_block)
-    D_block <- matrix(0, nrow = n_g, ncol = n_g)
-    W_block <- matrix(0, nrow = n_g, ncol = n_g)
-    rownames(D_block) <- genes_block
-    colnames(D_block) <- genes_block
-    rownames(W_block) <- genes_block
-    colnames(W_block) <- genes_block
-    
-    for (i in seq_along(layer_names)) {
-        ln <- layer_names[i]
-        w  <- layer_weights[i]
-        
-        mat_l   <- layer_mats[[ln]]
-        genes_l <- rownames(mat_l)
-        
-        idx <- match(genes_l, genes_block)
-        
-        D_l <- .compute_layer_distance(mat_l)
-        
-        D_block[idx, idx] <- D_block[idx, idx] + w * D_l
-        W_block[idx, idx] <- W_block[idx, idx] + w
+    if (is.null(many_to_one)) {
+        many_to_one <- rep(FALSE, length(modality_names))
+        names(many_to_one) <- modality_names
+    } else if (is.logical(many_to_one)) {
+        if (is.null(names(many_to_one))) {
+            names(many_to_one) <- modality_names
+        }
+        many_to_one <- many_to_one[modality_names]
+    } else {
+        many_to_one <- stats::setNames(
+            modality_names %in% many_to_one,
+            modality_names
+        )
     }
     
-    valid <- W_block > 0
-    D_block[valid] <- D_block[valid] / W_block[valid]
-    diag(D_block) <- 0
+    genes_block <- modality_mats[modality_names] |>
+        purrr::map(rownames) |>
+        purrr::reduce(union) |>
+        sort()
     
-    D_block
+    w <- modality_weights / sum(modality_weights)
+    names(w) <- modality_names
+    
+    blocks <- purrr::map(
+        modality_names,
+        function(m) {
+            mat <- modality_mats[[m]]
+            
+            X <- matrix(
+                0,
+                nrow = length(genes_block),
+                ncol = ncol(mat),
+                dimnames = list(
+                    genes_block,
+                    colnames(mat)
+                )
+            )
+            
+            idx <- match(rownames(mat), genes_block)
+            X[idx, ] <- as.matrix(mat)
+            
+            if (isTRUE(many_to_one[[m]])) {
+                X <- sqrt(pmax(X, 0))
+            }
+            
+            Xs <- scale(X)
+            p  <- ncol(Xs)
+            
+            Xs * sqrt(w[[m]] / p)
+        }
+    )
+    
+    X_block <- purrr::reduce(blocks, cbind)
+    rownames(X_block) <- genes_block
+    
+    X_block
 }
 
 
@@ -811,12 +904,24 @@ cluster_genes_multiomics <- function(
 #' @importFrom stats kmeans cmdscale dist
 #' @importFrom ClusterR MiniBatchKmeans predict_KMeans
 #' 
-.cluster_with_kmeans <- function(
-        dist_mat,
+.cluster_feature_matrix <- function(
+        feature_mat,
         k,
-        seed = NULL
+        seed = NULL,
+        verbose = FALSE
 ) {
-    n_obs <- nrow(dist_mat)
+    if (is.data.frame(feature_mat)) {
+        feature_mat <- as.matrix(feature_mat)
+    }
+    if (!is.matrix(feature_mat) || !is.numeric(feature_mat)) {
+        stop(
+            "`feature_mat` must be a numeric matrix (or data.frame coercible ",
+            "to one).",
+            call. = FALSE
+        )
+    }
+    
+    n_obs <- nrow(feature_mat)
     if (n_obs < 2L) {
         stop("Need at least 2 observations for clustering.", call. = FALSE)
     }
@@ -834,19 +939,24 @@ cluster_genes_multiomics <- function(
         )
     }
     
-    # embed distance matrix into Euclidean space (MDS)
-    k_mds <- min(10L, n_obs - 1L)
-    curve_values <- stats::cmdscale(
-        stats::as.dist(dist_mat),
-        k = k_mds
-    )
+    x <- feature_mat
+    if (anyNA(x) || any(!is.finite(x))) {
+        stop(
+            "`feature_mat` must not contain NA/NaN/Inf values.",
+            call. = FALSE
+        )
+    }
     
     use_mb <- n_obs > 1000L
     
     run_one_k <- function(kk) {
+        if (isTRUE(verbose)) {
+            message("Clustering with k = ", kk, " (n = ", n_obs, ")")
+        }
+        
         if (!use_mb) {
             fit <- stats::kmeans(
-                curve_values,
+                x,
                 centers  = kk,
                 nstart   = 10L,
                 iter.max = 300L
@@ -861,7 +971,7 @@ cluster_genes_multiomics <- function(
                 max(20L, 2L * kk, floor(0.05 * n_obs))
             )
             fit <- ClusterR::MiniBatchKmeans(
-                data            = curve_values,
+                data            = x,
                 clusters        = kk,
                 batch_size      = batch_size,
                 num_init        = 10L,
@@ -875,7 +985,7 @@ cluster_genes_multiomics <- function(
             list(
                 tot_within = sum(fit$WCSS_per_cluster),
                 cluster    = ClusterR::predict_KMeans(
-                    data      = curve_values,
+                    data      = x,
                     CENTROIDS = fit$centroids
                 )
             )
@@ -883,44 +993,45 @@ cluster_genes_multiomics <- function(
     }
     
     if (length(k_vec) == 1L) {
-        res <- run_one_k(k_vec)
-        cl <- res$cluster
-        names(cl) <- rownames(dist_mat)
+        cl <- run_one_k(k_vec)$cluster
+        rn <- rownames(x)
+        if (!is.null(rn)) names(cl) <- rn
         return(cl)
     }
     
     fits <- lapply(k_vec, run_one_k)
     tot_within <- vapply(
         fits,
-        function(x) x$tot_within,
+        function(z) z$tot_within,
         numeric(1)
     )
     
-    p <- ncol(curve_values)
+    p <- ncol(x)
     bic <- n_obs * log(tot_within / n_obs) +
         k_vec * log(n_obs) * p
     best_idx <- which.min(bic)
     
     cl <- fits[[best_idx]]$cluster
-    names(cl) <- rownames(dist_mat)
+    rn <- rownames(x)
+    if (!is.null(rn)) names(cl) <- rn
     
     cl
 }
 
 
-#' Compute per-layer cluster centroids within a block
+#' Compute per-modality cluster centroids within a block
 #'
 #' @noRd
 #'
 #' @description
 #' Internal helper that summarizes gene-level clusters for a single
-#' block by computing layer-specific centroid trajectories and quality
+#' block by computing modality-specific centroid trajectories and quality
 #' metrics.  
 #'
-#' For each layer and each cluster, the function:
+#' For each modality and each cluster, the function:
 #' \itemize{
 #'   \item identifies the genes assigned to that cluster,
-#'   \item restricts to those genes present in the layer matrix,
+#'   \item restricts to those genes present in the modality matrix,
 #'   \item z-scores each gene's trajectory (row-wise) to obtain
 #'         shape-centric profiles,
 #'   \item computes the centroid as the mean z-scored trajectory across
@@ -930,16 +1041,16 @@ cluster_genes_multiomics <- function(
 #'         standard deviation.
 #' }
 #'
-#' Layer types are inferred from \code{meta_b_layer$layer_k}:
-#' \code{NA} indicates a one-to-one gene-level layer; positive values
-#' indicate many-to-one layers.
+#' Modality types are inferred from \code{meta_b_modality$many_to_one_k}:
+#' \code{NA} indicates a one-to-one gene-level modality; positive values
+#' indicate many-to-one modalities.
 #'
 #' @param block_id
 #' Character (or factor) scalar giving the identifier of the block for
 #' which centroids are computed.
 #'
-#' @param layer_mats
-#' Named list of numeric matrices, one per layer in the block.  
+#' @param modality_mats
+#' Named list of numeric matrices, one per modality in the block.  
 #' Each matrix has dimensions \code{genes x spline_points}, with row
 #' names corresponding to gene identifiers.
 #'
@@ -947,63 +1058,63 @@ cluster_genes_multiomics <- function(
 #' Vector of cluster assignments for genes in the block.  
 #' Names must be gene IDs; values are cluster labels (e.g. integers).
 #'
-#' @param meta_b_layer
-#' Data frame with layer-level metadata for this block.  
-#' Must contain at least the columns \code{layer} (matching
-#' \code{names(layer_mats)}) and \code{layer_k} for layer-type
+#' @param meta_b_modality
+#' Data frame with modality-level metadata for this block.  
+#' Must contain at least the columns \code{modality} (matching
+#' \code{names(modality_mats)}) and \code{many_to_one_k} for modality-type
 #' inference.
 #'
 #' @return
-#' A data frame with one row per \code{(layer, cluster)} combination in
+#' A data frame with one row per \code{(modality, cluster)} combination in
 #' the block and the following columns:
 #' \describe{
 #'   \item{\code{block}}{Block identifier (same as \code{block_id}).}
-#'   \item{\code{layer}}{Layer name.}
-#'   \item{\code{layer_type}}{Character label, either
+#'   \item{\code{modality}}{Modality name.}
+#'   \item{\code{modality_type}}{Character label, either
 #'         \code{"one_to_one"} or \code{"many_to_one"}.}
 #'   \item{\code{cluster}}{Cluster label.}
 #'   \item{\code{n_genes_cluster}}{Number of genes in the cluster
 #'         (according to \code{cl_b}).}
 #'   \item{\code{n_genes_used}}{Number of cluster genes present in the
-#'         layer matrix and used to compute the centroid.}
+#'         modality matrix and used to compute the centroid.}
 #'   \item{\code{coverage}}{Fraction of cluster genes represented in the
-#'         layer (\code{n_genes_used / n_genes_cluster}).}
+#'         modality (\code{n_genes_used / n_genes_cluster}).}
 #'   \item{\code{mean_R2}}{Mean squared correlation between each used
 #'         gene's z-scored trajectory and the centroid.}
 #'   \item{\code{sd_R2}}{Standard deviation of the \eqn{R^2} values
 #'         across genes.}
 #'   \item{\code{r2_member}}{List-column; each entry is a named numeric
 #'         vector of per-gene \eqn{R^2} values (names are gene IDs) for
-#'         genes used to compute the centroid in this layer and cluster.}
+#'         genes used to compute the centroid in this modality and cluster.}
 #'   \item{\code{centroid}}{List-column; each entry is a numeric vector
 #'         giving the centroid trajectory (length
-#'         \code{ncol(layer_mats[[layer]])}).}
+#'         \code{ncol(modality_mats[[modality]])}).}
 #' }
 #'
 .compute_block_centroids <- function(
         block_id,
-        layer_mats,
+        modality_mats,
         cl_b,
-        meta_b_layer
+        meta_b_modality
 ) {
     centroid_rows <- list()
     row_i <- 0L
     
     clusters <- sort(unique(cl_b))
     
-    for (ln in names(layer_mats)) {
-        mat_l <- layer_mats[[ln]]
+    for (ln in names(modality_mats)) {
+        mat_l <- modality_mats[[ln]]
         
-        # determine layer type from meta_b_layer (NA = one-to-one)
-        lk <- meta_b_layer$layer_k[meta_b_layer$layer == ln][1L]
-        layer_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
+        # determine modality type from meta_b_modality (NA = one-to-one)
+        lk <- meta_b_modality$many_to_one_k[meta_b_modality$modality == ln][1L]
+        modality_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
         
         for (c in clusters) {
             genes_cluster <- names(cl_b)[cl_b == c]
             n_cluster <- length(genes_cluster)
             
-            genes_layer <- intersect(genes_cluster, rownames(mat_l))
-            n_used <- length(genes_layer)
+            genes_modality <- intersect(genes_cluster, rownames(mat_l))
+            n_used <- length(genes_modality)
             
             coverage <- if (n_cluster > 0L) {
                 n_used / n_cluster
@@ -1017,14 +1128,14 @@ cluster_genes_multiomics <- function(
                 mean_R2 <- NA_real_
                 sd_R2 <- NA_real_
             } else {
-                X <- mat_l[genes_layer, , drop = FALSE]
+                X <- mat_l[genes_modality, , drop = FALSE]
                 
                 # row-wise z-score (shape-centric)
                 X_z <- t(scale(t(X)))
                 
                 if (n_used == 1L) {
                     centroid <- as.numeric(X_z[1L, ])
-                    r2_member <- setNames(1, genes_layer)
+                    r2_member <- setNames(1, genes_modality)
                     mean_R2 <- 1
                     sd_R2 <- 0
                 } else {
@@ -1051,7 +1162,7 @@ cluster_genes_multiomics <- function(
             centroid_rows[[row_i]] <- data.frame(
                 block           = block_id,
                 modality        = ln,
-                modality_type   = layer_type,
+                modality_type   = modality_type,
                 cluster         = c,
                 n_genes_cluster = n_cluster,
                 n_genes_used    = n_used,
@@ -1099,11 +1210,11 @@ cluster_genes_multiomics <- function(
 #' Internal helper that checks the validity of the \code{gene_mode}
 #' argument used by \code{cluster_genes_multiomics()}.  
 #'
-#' The mode determines how genes across layers within a block should be
+#' The mode determines how genes across modalities within a block should be
 #' combined and must be one of the two supported options.
 #'
 #' @param gene_mode
-#' Character scalar specifying how genes are aggregated across layers.  
+#' Character scalar specifying how genes are aggregated across modalities.  
 #' Must be either \code{"intersection"} or \code{"union"}.  
 #' The value is validated using \code{\link[base]{match.arg}}.
 #'
@@ -1134,14 +1245,14 @@ cluster_genes_multiomics <- function(
 #' The function checks:
 #' \itemize{
 #'   \item that \code{blocks} is a non-empty named list of blocks,
-#'   \item that each block is a non-empty named list of layers, and
-#'   \item that each layer is a numeric matrix with non-empty row names
+#'   \item that each block is a non-empty named list of modalities, and
+#'   \item that each modality is a numeric matrix with non-empty row names
 #'         and non-zero dimensions.
 #' }
 #'
 #' @param blocks
 #' Named list of blocks, one element per block.  
-#' Each block contains a named list of layers, where each layer is a
+#' Each block contains a named list of modalities, where each modality is a
 #' numeric matrix (\code{features x spline_points}) with valid row names.
 #'
 #' @return
@@ -1171,45 +1282,45 @@ cluster_genes_multiomics <- function(
         if (!is.list(block_obj) || length(block_obj) == 0L) {
             stop(
                 "Each element of `blocks` must be a non-empty list of ",
-                "layers. Block '", block_name, "' is not valid.",
+                "modalities. Block '", block_name, "' is not valid.",
                 call. = FALSE
             )
         }
         if (is.null(names(block_obj)) || any(names(block_obj) == "")) {
             stop(
-                "Each block in `blocks` must be a named list of layers. ",
-                "Block '", block_name, "' has unnamed layers.",
+                "Each block in `blocks` must be a named list of modalities. ",
+                "Block '", block_name, "' has unnamed modalities.",
                 call. = FALSE
             )
         }
         
-        for (layer_name in names(block_obj)) {
-            mat <- block_obj[[layer_name]]
+        for (modality_name in names(block_obj)) {
+            mat <- block_obj[[modality_name]]
             
             if (!is.matrix(mat)) {
                 stop(
-                    "Layer '", layer_name, "' in block '", block_name,
+                    "Modality '", modality_name, "' in block '", block_name,
                     "' must be a numeric matrix (features x spline_points).",
                     call. = FALSE
                 )
             }
             if (!is.numeric(mat)) {
                 stop(
-                    "Layer '", layer_name, "' in block '", block_name,
+                    "Modality '", modality_name, "' in block '", block_name,
                     "' must be a numeric matrix.",
                     call. = FALSE
                 )
             }
             if (nrow(mat) == 0L || ncol(mat) == 0L) {
                 stop(
-                    "Layer '", layer_name, "' in block '", block_name,
+                    "Modality '", modality_name, "' in block '", block_name,
                     "' has zero rows or columns.",
                     call. = FALSE
                 )
             }
             if (is.null(rownames(mat)) || any(rownames(mat) == "")) {
                 stop(
-                    "Layer '", layer_name, "' in block '", block_name,
+                    "Modality '", modality_name, "' in block '", block_name,
                     "' must have rownames (feature or gene IDs).",
                     call. = FALSE
                 )
@@ -1320,26 +1431,27 @@ cluster_genes_multiomics <- function(
 #' @noRd
 #'
 #' @description
-#' Internal helper that validates the layer-level metadata supplied in
+#' Internal helper that validates the modality-level metadata supplied in
 #' \code{modality_meta}.  
 #'
 #' The function checks:
 #' \itemize{
 #'   \item that \code{modality_meta} is a data frame with required columns
-#'         \code{block}, \code{layer}, \code{layer_k}, and \code{layer_w},
-#'   \item that \code{layer_k} is numeric, positive where non-NA, and may
-#'         be \code{NA} to indicate one-to-one gene-level layers,
-#'   \item that \code{layer_w} is numeric, non-negative, non-missing,
+#'         \code{block}, \code{modality}, \code{many_to_one_k}, 
+#'         and \code{modality_w},
+#'   \item that \code{many_to_one_k} is numeric, positive where non-NA, and may
+#'         be \code{NA} to indicate one-to-one gene-level modalities,
+#'   \item that \code{modality_w} is numeric, non-negative, non-missing,
 #'         and sums to a strictly positive value within each block, and
-#'   \item that each \code{(block, layer)} combination appears exactly
+#'   \item that each \code{(block, modality)} combination appears exactly
 #'         once.
 #' }
 #'
 #' @param modality_meta
-#' Data frame containing layer-level metadata used by
+#' Data frame containing modality-level metadata used by
 #' \code{cluster_genes_multiomics()}.  
-#' Must include valid entries for \code{layer_k} and \code{layer_w},
-#' and uniquely identify each layer within each block.
+#' Must include valid entries for \code{many_to_one_k} and \code{modality_w},
+#' and uniquely identify each modality within each block.
 #'
 #' @return
 #' Invisibly returns \code{modality_meta} if all checks pass.
@@ -1349,72 +1461,75 @@ cluster_genes_multiomics <- function(
     if (!is.data.frame(modality_meta)) {
         stop(
             "`modality_meta` must be a data.frame (or tibble) with ",
-            "layer-level metadata.",
+            "modality-level metadata.",
             call. = FALSE
         )
     }
-    required_layer_cols <- c("block", "layer", "layer_k", "layer_w")
-    missing_layer_cols <- setdiff(required_layer_cols, colnames(modality_meta))
-    if (length(missing_layer_cols) > 0L) {
+    required_modality_cols <- c("block", "modality", "many_to_one_k", "modality_w")
+    missing_modality_cols <- setdiff(required_modality_cols, colnames(modality_meta))
+    if (length(missing_modality_cols) > 0L) {
         stop(
             "`modality_meta` is missing required columns: ",
-            paste(missing_layer_cols, collapse = ", "),
+            paste(missing_modality_cols, collapse = ", "),
             call. = FALSE
         )
     }
     
-    # layer_k: NA or positive numeric
-    if (!is.numeric(modality_meta$layer_k)) {
+    # many_to_one_k: NA or positive numeric
+    if (!is.numeric(modality_meta$many_to_one_k)) {
         stop(
-            "`modality_meta$layer_k` must be numeric (positive integers) ",
+            "`modality_meta$many_to_one_k` must be numeric ",
+            "(positive integers) ",
             "or NA.",
             call. = FALSE
         )
     }
-    if (any(modality_meta$layer_k[!is.na(modality_meta$layer_k)] <= 0)) {
+    if (any(modality_meta$many_to_one_k[!is.na(modality_meta$many_to_one_k)]
+            <= 0)) {
         stop(
-            "`modality_meta$layer_k` must be positive where it is not NA.",
+            "`modality_meta$many_to_one_k` must be positive when not NA.",
             call. = FALSE
         )
     }
     
-    # layer_w: numeric, non-negative; per-block sum > 0
-    if (!is.numeric(modality_meta$layer_w)) {
-        stop("`modality_meta$layer_w` must be numeric.", call. = FALSE)
+    # modality_w: numeric, non-negative; per-block sum > 0
+    if (!is.numeric(modality_meta$modality_w)) {
+        stop("`modality_meta$modality_w` must be numeric.", call. = FALSE)
     }
-    if (any(is.na(modality_meta$layer_w))) {
+    if (any(is.na(modality_meta$modality_w))) {
         stop(
-            "`modality_meta$layer_w` contains NA. Please provide weights ",
+            "`modality_meta$modality_w` contains NA. Please provide weights ",
             "for all rows.",
             call. = FALSE
         )
     }
-    if (any(modality_meta$layer_w < 0)) {
+    if (any(modality_meta$modality_w < 0)) {
         stop(
-            "`modality_meta$layer_w` must be non-negative.",
+            "`modality_meta$modality_w` must be non-negative.",
             call. = FALSE
         )
     }
     
-    w_by_block <- tapply(modality_meta$layer_w, modality_meta$block, sum)
+    w_by_block <- tapply(modality_meta$modality_w, modality_meta$block, sum)
     if (any(w_by_block <= 0)) {
         bad_blocks <- names(w_by_block)[w_by_block <= 0]
         stop(
-            "For each block, the sum of `modality_meta$layer_w` must be > 0. ",
+            "For each block, the sum of `modality_meta$modality_w` ",
+            "must be > 0. ",
             "Blocks with invalid weights: ",
             paste(bad_blocks, collapse = ", "),
             call. = FALSE
         )
     }
     
-    # ensure (block, layer) pairs in modality_meta are unique
-    bl_pairs <- paste(modality_meta$block, modality_meta$layer, sep = "||")
+    # ensure (block, modality) pairs in modality_meta are unique
+    bl_pairs <- paste(modality_meta$block, modality_meta$modality, sep = "||")
     if (any(duplicated(bl_pairs))) {
         dup <- unique(bl_pairs[duplicated(bl_pairs)])
         stop(
-            "Duplicate (block, layer) combinations in `modality_meta`: ",
+            "Duplicate (block, modality) combinations in `modality_meta`: ",
             paste(dup, collapse = ", "),
-            ". Each (block, layer) must appear only once.",
+            ". Each (block, modality) must appear only once.",
             call. = FALSE
         )
     }
@@ -1435,30 +1550,31 @@ cluster_genes_multiomics <- function(
 #' \itemize{
 #'   \item that \code{blocks} is a named list of blocks and each block is a
 #'   named list of numeric matrices,
-#'   \item that every (block, layer) in \code{modality_meta} exists in
+#'   \item that every (block, modality) in \code{modality_meta} exists in
 #'   \code{blocks},
-#'   \item that each block has metadata rows for all its layers (and no
-#'   extra rows for unknown layers),
-#'   \item and performs per-layer checks driven by \code{modality_meta}.
+#'   \item that each block has metadata rows for all its modalities (and no
+#'   extra rows for unknown modalities),
+#'   \item and performs per-modality checks driven by \code{modality_meta}.
 #' }
 #'
-#' Per-layer checks:
+#' Per-modality checks:
 #' \itemize{
-#'   \item no \code{NA} values in layer matrices,
-#'   \item one-to-one layers (\code{layer_k = NA}) have unique rownames,
-#'   \item many-to-one layers (\code{layer_k > 0}) have rownames containing
-#'   an underscore and have at least \code{max(2, layer_k)} rows.
+#'   \item no \code{NA} values in modality matrices,
+#'   \item one-to-one modalities (\code{many_to_one_k = NA}) have unique rownames,
+#'   \item many-to-one modalities (\code{many_to_one_k > 0}) have rownames
+#'   containing
+#'   an underscore and have at least \code{max(2, many_to_one_k)} rows.
 #' }
 #'
-#' Finally, within each block, all one-to-one layers share at least one
+#' Finally, within each block, all one-to-one modalities share at least one
 #' common gene ID.
 #'
 #' @param blocks Named list of blocks as used by
 #'   \code{cluster_genes_multiomics()}, where each block contains a named
-#'   list of layer matrices.
+#'   list of modality matrices.
 #'
-#' @param modality_meta Data frame with layer-level metadata, including at
-#'   least \code{block}, \code{layer}, and \code{layer_k}. Entries must be
+#' @param modality_meta Data frame with modality-level metadata, including at
+#'   least \code{block}, \code{modality}, and \code{many_to_one_k}. Entries must be
 #'   consistent with \code{blocks}.
 #'
 #' @return Invisibly returns \code{TRUE} if all checks pass.
@@ -1477,7 +1593,7 @@ cluster_genes_multiomics <- function(
         stop("`modality_meta` must be a data.frame/tibble.")
     }
     
-    req <- c("block", "layer", "layer_k")
+    req <- c("block", "modality", "many_to_one_k")
     miss <- setdiff(req, names(modality_meta))
     if (length(miss) > 0L) {
         stop(
@@ -1495,14 +1611,14 @@ cluster_genes_multiomics <- function(
             any(names(blk) == "")) {
             stop(
                 "`blocks[[", b,
-                "]]` must be a named list of layer matrices."
+                "]]` must be a named list of modality matrices."
             )
         }
     }
     
     for (i in seq_len(nrow(modality_meta))) {
         b <- modality_meta$block[i]
-        l <- modality_meta$layer[i]
+        l <- modality_meta$modality[i]
         
         if (!is.character(b) ||
             length(b) != 1L ||
@@ -1515,7 +1631,7 @@ cluster_genes_multiomics <- function(
             length(l) != 1L ||
             is.na(l) ||
             l == "") {
-            stop("`modality_meta$layer` must contain non-empty strings.")
+            stop("`modality_meta$modality` must contain non-empty strings.")
         }
         
         if (!b %in% b_names) {
@@ -1529,7 +1645,7 @@ cluster_genes_multiomics <- function(
         if (!l %in% names(blocks[[b]])) {
             stop(
                 "Row ", i,
-                " of `modality_meta` refers to unknown layer '",
+                " of `modality_meta` refers to unknown modality '",
                 l, "' in block '", b, "'."
             )
         }
@@ -1544,38 +1660,38 @@ cluster_genes_multiomics <- function(
             )
         }
         
-        layers_meta <- modality_meta$layer[rows_b]
-        layers_blk <- names(blocks[[b]])
+        modalitys_meta <- modality_meta$modality[rows_b]
+        modalitys_blk <- names(blocks[[b]])
         
-        miss_layers <- setdiff(layers_blk, layers_meta)
-        extra_layers <- setdiff(layers_meta, layers_blk)
+        miss_modalitys <- setdiff(modalitys_blk, modalitys_meta)
+        extra_modalitys <- setdiff(modalitys_meta, modalitys_blk)
         
-        if (length(miss_layers) > 0L) {
+        if (length(miss_modalitys) > 0L) {
             stop(
                 "Block '", b,
-                "' missing layer rows in `modality_meta`: ",
-                paste(miss_layers, collapse = ", ")
+                "' missing modality rows in `modality_meta`: ",
+                paste(miss_modalitys, collapse = ", ")
             )
         }
         
-        if (length(extra_layers) > 0L) {
+        if (length(extra_modalitys) > 0L) {
             stop(
                 "Block '", b,
-                "' has unknown layers in `modality_meta`: ",
-                paste(extra_layers, collapse = ", ")
+                "' has unknown modalities in `modality_meta`: ",
+                paste(extra_modalitys, collapse = ", ")
             )
         }
     }
     
     for (i in seq_len(nrow(modality_meta))) {
         b <- modality_meta$block[i]
-        l <- modality_meta$layer[i]
-        lk <- modality_meta$layer_k[i]
+        l <- modality_meta$modality[i]
+        lk <- modality_meta$many_to_one_k[i]
         mat <- blocks[[b]][[l]]
         
         if (!is.matrix(mat) || !is.numeric(mat)) {
             stop(
-                "Layer '", l,
+                "Modality '", l,
                 "' in block '", b,
                 "' must be a numeric matrix."
             )
@@ -1583,7 +1699,7 @@ cluster_genes_multiomics <- function(
         
         if (any(is.na(mat))) {
             stop(
-                "Layer '", l,
+                "Modality '", l,
                 "' in block '", b,
                 "' contains NA values."
             )
@@ -1594,7 +1710,7 @@ cluster_genes_multiomics <- function(
             any(is.na(rn)) ||
             any(rn == "")) {
             stop(
-                "Layer '", l,
+                "Modality '", l,
                 "' in block '", b,
                 "' must have non-empty rownames."
             )
@@ -1603,9 +1719,10 @@ cluster_genes_multiomics <- function(
         if (is.na(lk)) {
             if (any(duplicated(rn))) {
                 stop(
-                    "Layer '", l,
+                    "Modality '", l,
                     "' in block '", b,
-                    "' is gene-level (layer_k is NA) but has duplicated ",
+                    "' is gene-level (many_to_one_k is NA) but has ",
+                    "duplicated ",
                     "rownames."
                 )
             }
@@ -1615,15 +1732,16 @@ cluster_genes_multiomics <- function(
                 is.na(lk) ||
                 lk <= 0) {
                 stop(
-                    "`layer_k` must be NA or a positive numeric scalar for ",
-                    "layer '", l,
+                    "`many_to_one_k` must be NA or a positive numeric scalar ",
+                    "for ",
+                    "modality '", l,
                     "' in block '", b, "'."
                 )
             }
             
             if (!all(grepl("_", rn, fixed = TRUE))) {
                 stop(
-                    "Many-to-one layer '", l,
+                    "Many-to-one modality '", l,
                     "' in block '", b,
                     "' must use rownames '<gene>_<feature>'."
                 )
@@ -1632,7 +1750,7 @@ cluster_genes_multiomics <- function(
             min_n <- max(2L, as.integer(lk))
             if (nrow(mat) < min_n) {
                 stop(
-                    "Many-to-one layer '", l,
+                    "Many-to-one modality '", l,
                     "' in block '", b,
                     "' has too few rows. Need at least ",
                     min_n, "."
@@ -1641,9 +1759,10 @@ cluster_genes_multiomics <- function(
             
             if (nrow(mat) < lk) {
                 stop(
-                    "Many-to-one layer '", l,
+                    "Many-to-one modality '", l,
                     "' in block '", b,
-                    "' has nrow < layer_k. Reduce `layer_k` or add ",
+                    "' has nrow < many_to_one_k. Reduce `many_to_one_k` ",
+                    "or add ",
                     "features."
                 )
             }
@@ -1652,118 +1771,22 @@ cluster_genes_multiomics <- function(
     
     for (b in b_names) {
         rows_b <- modality_meta$block == b &
-            is.na(modality_meta$layer_k)
-        layers_gene <- modality_meta$layer[rows_b]
+            is.na(modality_meta$many_to_one_k)
+        modalitys_gene <- modality_meta$modality[rows_b]
         
-        if (length(layers_gene) < 2L) next
+        if (length(modalitys_gene) < 2L) next
         
-        mats_b <- blocks[[b]][layers_gene]
+        mats_b <- blocks[[b]][modalitys_gene]
         genes_lists <- lapply(mats_b, rownames)
         inter_b <- Reduce(intersect, genes_lists)
         
         if (length(inter_b) == 0L) {
             stop(
-                "No common genes across gene-level layers for block '",
+                "No common genes across gene-level modalities for block '",
                 b, "'."
             )
         }
     }
     
     invisible(TRUE)
-}
-
-
-# Level 3 function definitions -------------------------------------------------
-
-
-#' Compute pairwise distances for an omics layer
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that computes a pairwise distance matrix between all
-#' rows (features or genes) of a layer matrix.  
-#' The matrix is first z-scored across rows, and Euclidean distances are
-#' then computed using \code{\link[stats]{dist}}.
-#'
-#' @param layer_mat
-#' Numeric matrix (\code{n_features x n_points}) where each row is a
-#' feature- or gene-level trajectory (e.g. spline-evaluated time course).
-#' Row names identify the features/genes and are propagated to the output
-#' distance matrix.
-#'
-#' @return
-#' A square numeric matrix \code{D} of size
-#' \code{n_features x n_features}, where  
-#' \code{D[i, j]} is the Euclidean distance between the scaled rows
-#' \code{layer_mat[i, ]} and \code{layer_mat[j, ]}.  
-#' Row and column names correspond to the row names of
-#' \code{layer_mat}.
-#'
-#' @importFrom stats dist
-#' 
-.compute_layer_distance <- function(layer_mat) {
-    mat_scaled <- scale(layer_mat)
-    d <- stats::dist(
-        mat_scaled,
-        method = "euclidean"
-    )
-    D <- as.matrix(d)
-}
-
-
-#' Combine layer-specific distance matrices into a unified distance matrix
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that merges multiple layer-specific gene–gene distance
-#' matrices into a single unified distance matrix for a block.  
-#' Each layer contributes proportionally to its user-defined weight, and
-#' all weights are internally normalized to sum to 1.
-#'
-#' @param dist_list
-#' A list of square numeric matrices.  
-#' Each matrix must represent pairwise distances between the same set of
-#' genes (identical row and column names, identical ordering).
-#'
-#' @param weights
-#' Numeric vector of the same length as \code{dist_list}, giving the
-#' relative weight of each layer when building the combined distance
-#' matrix.  
-#' Values may be any non-negative numbers; they are internally
-#' normalized so that the sum of weights equals 1.
-#'
-#' @return
-#' A numeric matrix of the same dimensions as the matrices in
-#' \code{dist_list}.  
-#' The \code{(i, j)} entry is the weighted sum of the corresponding
-#' distances from each layer:
-#' \deqn{
-#'   D_{ij} = \sum_{l=1}^{L} w_l \cdot D^{(l)}_{ij}
-#' }
-#' where \(w_l\) are the normalized weights.
-#'
-#' Row and column names are inherited from the first element of
-#' \code{dist_list}.
-#' 
-.combine_layer_distances <- function(
-        dist_list,
-        weights
-) {
-    w <- weights / sum(weights)
-    
-    D_unified <- matrix(
-        0,
-        nrow = nrow(dist_list[[1L]]),
-        ncol = ncol(dist_list[[1L]])
-    )
-    rownames(D_unified) <- rownames(dist_list[[1L]])
-    colnames(D_unified) <- colnames(dist_list[[1L]])
-    
-    for (i in seq_along(dist_list)) {
-        D_unified <- D_unified + w[i] * dist_list[[i]]
-    }
-    
-    D_unified
 }

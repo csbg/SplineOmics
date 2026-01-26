@@ -225,8 +225,8 @@ for (i in seq_len(nrow(phospho_temp))) {
 
 Each block is a list of modality matrices. `block_meta` defines the number of
 gene clusters per block and the result category. `modality_meta` specifies, per
-(block × modality), whether a modality is one-to-one (`layer_k = NA`) or many-to-
-one (`layer_k` positive), and the relative layer weights.
+(block × modality), whether a modality is one-to-one (`many_to_one_k = NA`)
+or many-to-one (`many_to_one_k` positive), and the relative modality weights.
 
 ```{r prepare blocks and blocks meta, eval = TRUE}
 blocks <- list(
@@ -249,10 +249,10 @@ block_clusters <- list(
 
 modality_meta <- data.frame(
   block   = rep(c("Constant", "Temp_shifted"), each = 3),
-  layer   = rep(c("rna", "protein", "phospho"), times = 2),
-  layer_k = c(NA_real_, NA_real_, 4,
+  modality   = rep(c("rna", "protein", "phospho"), times = 2),
+  many_to_one_k = c(NA_real_, NA_real_, 4,
               NA_real_, NA_real_, 4),
-  layer_w = c(1, 1, 1,
+  modality_w = c(1, 1, 1,
               1, 1, 1)
 )
 ```

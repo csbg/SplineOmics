@@ -59,9 +59,9 @@ testthat::test_that(
                 "time_Ctrl", "time_Ctrl",
                 "time_Treat", "time_Treat"
             ),
-            layer = c("rna", "site", "rna", "site"),
-            layer_k = c(NA_real_, 3, NA_real_, 3),
-            layer_w = c(1, 1, 1, 1),
+            modality = c("rna", "site", "rna", "site"),
+            many_to_one_k = c(NA_real_, 3, NA_real_, 3),
+            modality_w = c(1, 1, 1, 1),
             stringsAsFactors = FALSE
         )
         
