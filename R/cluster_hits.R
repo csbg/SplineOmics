@@ -137,10 +137,22 @@
 #'
 #'   The default is 0 for all three elements.
 #'   
-#' @param min_cluster_r2 `numeric(1)`: A value >0 and <1 specifying the minimum
-#' allowed squared Pearson correlation of a any cluster member to the centroid
-#' of the cluster. All members that fall below the threshold are excluded from
-#' that cluster and are discarded.
+#' @param min_cluster_r2 `numeric(1)`: A value >=0 and <1
+#' specifying the minimum allowed squared Pearson correlation (r2) of any
+#' cluster member to the centroid of its assigned cluster.
+#'
+#' After k-means clustering, each cluster is iteratively pruned. Members whose
+#' r2 to the current cluster centroid falls below `min_cluster_r2` are removed
+#' from that cluster and reassigned to cluster `0` (the "other" cluster).
+#'
+#' Pruning is repeated until all remaining members satisfy the constraint, a
+#' maximum of 10 iterations is reached, or the cluster would shrink below a
+#' minimum size of 10 members. If a cluster cannot satisfy the constraint under
+#' these conditions, all of its remaining members are reassigned to cluster `0`.
+#'
+#' Cluster `0` therefore contains all features that do not meet the minimum
+#' centroid similarity criterion. These features are retained in the output but
+#' are not considered part of any valid cluster.
 #'
 #' @param genes `character()`: A character vector of gene names corresponding 
 #'  to the features to be analyzed. The order of entries must match the feature 
@@ -382,7 +394,7 @@ cluster_hits <- function(
         avg_diff_cond = 0,
         interaction_cond_time = 0
     ),
-    # min_cluster_r2 = 0.90,
+    min_cluster_r2 = 0,
     genes = NULL,
     verbose = TRUE
     ) {
@@ -394,8 +406,8 @@ cluster_hits <- function(
     )
 
     min_effect_size <- check_inputs_cluster_hits(
-        min_effect_size = min_effect_size
-        # min_cluster_r2 = min_cluster_r2
+        min_effect_size = min_effect_size,
+        min_cluster_r2 = min_cluster_r2
         )
 
     args <- lapply(
@@ -470,6 +482,7 @@ cluster_hits <- function(
         nr_clusters = nr_clusters,
         condition = condition,
         predicted_timecurves = predicted_timecurves,
+        min_cluster_r2 = min_cluster_r2,
         verbose = verbose
     )
 
@@ -539,6 +552,23 @@ cluster_hits <- function(
 #'   - `interaction_cond_time` (Category 3)
 #'   The list may contain any subset of these names; missing names are set
 #'   to 0. Any other names are rejected.
+#'   
+#' @param min_cluster_r2 `numeric(1)`: A value >=0 and <1
+#' specifying the minimum allowed squared Pearson correlation (r2) of any
+#' cluster member to the centroid of its assigned cluster.
+#'
+#' After k-means clustering, each cluster is iteratively pruned. Members whose
+#' r2 to the current cluster centroid falls below `min_cluster_r2` are removed
+#' from that cluster and reassigned to cluster `0` (the "other" cluster).
+#'
+#' Pruning is repeated until all remaining members satisfy the constraint, a
+#' maximum of 10 iterations is reached, or the cluster would shrink below a
+#' minimum size of 10 members. If a cluster cannot satisfy the constraint under
+#' these conditions, all of its remaining members are reassigned to cluster `0`.
+#'
+#' Cluster `0` therefore contains all features that do not meet the minimum
+#' centroid similarity criterion. These features are retained in the output but
+#' are not considered part of any valid cluster.
 #'
 #' @return The completed `min_effect_size` list with all three allowed
 #'   names present. Missing names are filled with 0. The function raises
@@ -550,14 +580,18 @@ cluster_hits <- function(
 #' - `max_hit_number` must be length 1 and either an integer >= 1 or `Inf`.
 #'
 check_inputs_cluster_hits <- function(
-    min_effect_size
-    # min_cluster_r2
+    min_effect_size,
+    min_cluster_r2
     ) {
     if (!is.list(min_effect_size)) {
         stop_call_false("`min_effect_size` must be a list.")
     }
 
-    allowed_names <- c("time_effect", "avg_diff_cond", "interaction_cond_time")
+    allowed_names <- c(
+        "time_effect",
+        "avg_diff_cond",
+        "interaction_cond_time"
+        )
     nm <- names(min_effect_size)
 
     # names must be a subset of the allowed set (no extras)
@@ -583,17 +617,17 @@ check_inputs_cluster_hits <- function(
         filled[[n]] <- val
     }
     
-    # # Check min_cluster_r2
-    # if (!is.numeric(min_cluster_r2) || 
-    #     length(min_cluster_r2) != 1L || 
-    #     min_cluster_r2 <= 0 || 
-    #     min_cluster_r2 >= 1) {
-    #     stop(paste(
-    #         "min_cluster_r2 must be a float >0 and <1 but is",
-    #         min_cluster_r2
-    #         ))
-    # }
-    # 
+    # Check min_cluster_r2
+    if (!is.numeric(min_cluster_r2) ||
+        length(min_cluster_r2) != 1L ||
+        min_cluster_r2 < 0 ||
+        min_cluster_r2 >= 1) {
+        stop(paste(
+            "min_cluster_r2 must be a float >=0 and <1 but is",
+            min_cluster_r2
+            ))
+    }
+
     # return the completed list (with zeros filled in)
     filled
 }
@@ -1116,6 +1150,22 @@ add_cat1_and_cat3_effectsizes <- function(
 #'   that encodes condition levels (e.g., `"Phase"`).
 #' @param predicted_timecurves A list containing smoothed predictions,
 #'   effect-size filters, and time grid.
+#' @param min_cluster_r2 `numeric(1)`: A value >=0 and <1
+#' specifying the minimum allowed squared Pearson correlation (r2) of any
+#' cluster member to the centroid of its assigned cluster.
+#'
+#' After k-means clustering, each cluster is iteratively pruned. Members whose
+#' r2 to the current cluster centroid falls below `min_cluster_r2` are removed
+#' from that cluster and reassigned to cluster `0` (the "other" cluster).
+#'
+#' Pruning is repeated until all remaining members satisfy the constraint, a
+#' maximum of 10 iterations is reached, or the cluster would shrink below a
+#' minimum size of 10 members. If a cluster cannot satisfy the constraint under
+#' these conditions, all of its remaining members are reassigned to cluster `0`.
+#'
+#' Cluster `0` therefore contains all features that do not meet the minimum
+#' centroid similarity criterion. These features are retained in the output but
+#' are not considered part of any valid cluster.
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A named list of clustering results (one entry per condition
@@ -1146,6 +1196,7 @@ perform_clustering <- function(
     nr_clusters,
     condition,
     predicted_timecurves,
+    min_cluster_r2,
     verbose
     ) {
     if (verbose) {
@@ -1201,6 +1252,7 @@ perform_clustering <- function(
             smooth_timepoints = time_grid,
             top_table         = top_table,
             condition_level   = level,
+            min_cluster_r2    = min_cluster_r2,
             verbose           = verbose
         )
     }
@@ -1232,7 +1284,7 @@ perform_clustering <- function(
 #'   \item \strong{Category 2}: Features with a significant average
 #'   difference between conditions, based on both adjusted p-value and a
 #'   minimum absolute effect size threshold.
-#'   \item \strong{Category 3}: Features with a significant condition ×
+#'   \item \strong{Category 3}: Features with a significant condition x
 #'   time interaction (adjusted p-value), that also pass a precomputed
 #'   interaction effect-size threshold stored in
 #'   \code{predicted_timecurves$interaction_passed_threshold}.
@@ -1244,7 +1296,7 @@ perform_clustering <- function(
 #'     \item \code{avrg_diff_conditions}: a named list of data frames,
 #'       one per contrast, each containing average condition differences.
 #'     \item \code{interaction_condition_time}: a named list of data
-#'       frames, one per contrast, each containing condition × time
+#'       frames, one per contrast, each containing condition x time
 #'       interaction statistics.
 #'   }
 #'   For backward compatibility, these elements may also be single data
@@ -1277,7 +1329,7 @@ perform_clustering <- function(
 #'   \item \code{category_2_hits}: named list of filtered top tables for
 #'     average condition differences, one element per contrast.
 #'   \item \code{category_3_hits}: named list of filtered top tables for
-#'     condition × time interaction, one element per contrast.
+#'     condition x time interaction, one element per contrast.
 #' }
 #' Each inner data frame contains only the features that pass the
 #' respective filters for that contrast.
@@ -1373,7 +1425,7 @@ get_category_2_and_3_hits <- function(
         
         pass_obj[[idx]]
     }
-    
+
     category_3_hits <- vector(
         mode = "list",
         length = length(interaction_condition_time)
@@ -1437,7 +1489,7 @@ get_category_2_and_3_hits <- function(
 #' Builds a unified cluster summary across:
 #' * **Category 1** (per-condition time-effect clusters),
 #' * **Category 2** (per-contrast average differences),
-#' * **Category 3** (per-contrast condition–time interactions).
+#' * **Category 3** (per-contrast condition-time interactions).
 #'
 #' The table merges:
 #'   * per-condition cluster assignments,
@@ -1568,7 +1620,7 @@ construct_cluster_table <- function(
     # "Condition_" or "condition_"
     short_cond_names <- sub("^(?i)condition_", "", cond_names, perl = TRUE)
     names(short_cond_names) <- short_cond_names  # name by short id
-    
+
     map_short_to_full <- function(short) {
         idx <- match(short, short_cond_names)
         if (is.na(idx)) {
@@ -1856,7 +1908,7 @@ construct_cluster_table <- function(
                 dplyr::left_join(c2_df, by = "feature_nr")
         }
     }
-    
+
     # Category 3: per contrast
     if (has_c3) {
         c3_hits <- category_2_and_3_hits$category_3_hits
@@ -1950,7 +2002,7 @@ construct_cluster_table <- function(
 #' For \code{within_level_top_tables}, a \code{cT} column is added to
 #' each tibble whose name matches the entries in
 #' \code{time_effect_effect_size}. Matching is done via stripping the
-#' prefix up to the first underscore (e.g. \code{"Condition_A"} →
+#' prefix up to the first underscore (e.g. \code{"Condition_A"} ->
 #' \code{"A"}).
 #'
 #' @param time_effect_effect_size
@@ -2008,37 +2060,40 @@ add_effect_size_columns <- function(
     if (!is.null(category_2_and_3_hits)) {
         cat3 <- category_2_and_3_hits[["category_3_hits"]]
         norm <- normalize_cat3_hits(cat3)
-        
+
         if (!is.null(norm$list)) {
             cat3_list <- norm$list
             
-            cat3_list <- lapply(seq_along(cat3_list), function(k) {
-                tbl <- cat3_list[[k]]
-                contrast_name <- names(cat3_list)[k]
-
-                parsed <- parse_contrast_conditions(contrast_name)
-                suffix <- parsed$suffix
-                parts  <- parsed$parts
-                
-                tbl <- add_cat3_cT(
-                    tbl,
-                    time_effect_effect_size,
-                    parts
-                    )
-                
-                ies_vec <- get_interaction_es_vec(
-                    interaction_effect_size = interaction_effect_size,
-                    suffix = suffix,
-                    contrast_name = contrast_name
+            cat3_list <- Map(
+                f = function(
+                        tbl,
+                        contrast_name
+                        ) {
+                        parsed <- parse_contrast_conditions(contrast_name)
+                        suffix <- parsed$suffix
+                        parts  <- parsed$parts
+                        
+                        tbl <- add_cat3_cT(
+                            tbl,
+                            time_effect_effect_size,
+                            parts
+                        )
+                        
+                        ies_vec <- get_interaction_es_vec(
+                            interaction_effect_size = interaction_effect_size,
+                            suffix = suffix,
+                            contrast_name = contrast_name
+                        )
+                        
+                        add_cat3_cDT(
+                            tbl,
+                            ies_vec,
+                            context = contrast_name
+                        )
+                    },
+                tbl = cat3_list,
+                contrast_name = names(cat3_list)
                 )
-
-                tbl <- add_cat3_cDT(
-                    tbl,
-                    ies_vec,
-                    context = contrast_name
-                    )
-                tbl
-            })
             
             # restore original structure (df vs list)
             category_2_and_3_hits[["category_3_hits"]] <- if (norm$was_df) {
@@ -2938,6 +2993,22 @@ normalize_curves <- function(
 #'  indices. Will be updated with cluster assignments.
 #' @param condition_level Character string indicating the current condition
 #' level (used for error messages).
+#' @param min_cluster_r2 `numeric(1)`: A value >=0 and <1
+#' specifying the minimum allowed squared Pearson correlation (r2) of any
+#' cluster member to the centroid of its assigned cluster.
+#'
+#' After k-means clustering, each cluster is iteratively pruned. Members whose
+#' r2 to the current cluster centroid falls below `min_cluster_r2` are removed
+#' from that cluster and reassigned to cluster `0` (the "other" cluster).
+#'
+#' Pruning is repeated until all remaining members satisfy the constraint, a
+#' maximum of 10 iterations is reached, or the cluster would shrink below a
+#' minimum size of 10 members. If a cluster cannot satisfy the constraint under
+#' these conditions, all of its remaining members are reassigned to cluster `0`.
+#'
+#' Cluster `0` therefore contains all features that do not meet the minimum
+#' centroid similarity criterion. These features are retained in the output but
+#' are not considered part of any valid cluster.
 #' @param verbose Boolean flag controlling the display of messages.
 #'
 #' @return A list with the following components:
@@ -2959,7 +3030,9 @@ kmeans_clustering <- function(
     smooth_timepoints,
     top_table,
     condition_level,
-    verbose) {
+    min_cluster_r2,
+    verbose
+    ) {
     if (nrow(curve_values) <= max(k_range)) { # Clustering would fail
         stop_call_false(paste(
             "For condition_level '", condition_level, "':",
@@ -3051,6 +3124,14 @@ kmeans_clustering <- function(
 
         curve_mat_num <- as.matrix(curve_values)
         storage.mode(curve_mat_num) <- "double"
+        
+        pr <- prune_clusters_by_min_r2(
+            curves_mat      = curve_mat_num,
+            clusters        = cluster_assignments,
+            min_cluster_r2  = min_cluster_r2
+        )
+        cluster_assignments <- pr$clusters
+        
         time_num <- as.numeric(gsub("^.*\\|", "", smooth_timepoints))
         if (!all(is.finite(time_num))) time_num <- NULL
 
@@ -3219,7 +3300,7 @@ select_balanced_hits <- function(
             turn <- 2
             
         } else {
-            # current category empty → switch to the other and continue
+            # current category empty -> switch to the other and continue
             turn <- ifelse(turn == 2, 3, 2)
         }
     }
@@ -3321,5 +3402,174 @@ compute_cluster_fits <- function(
         per_cluster_mean = per_cluster_mean,
         per_member       = per_member,
         overall_mean     = overall_mean
+    )
+}
+
+
+#' Prune cluster assignments by a minimum r-squared to centroid constraint
+#'
+#' @noRd
+#'
+#' @description
+#' Iteratively prunes each cluster so that every retained member achieves at
+#' least `min_cluster_r2` (squared Pearson correlation, r2) to the cluster
+#' centroid (mean curve). Members failing the constraint are reassigned to
+#' cluster `0` ("other").
+#'
+#' Pruning stops when the constraint is satisfied, after 10 iterations, or if
+#' the cluster would shrink below 10 members. If the constraint cannot be met
+#' under these rules, the entire cluster is reassigned to `0`.
+#'
+#' @param curves_mat `matrix`: Numeric matrix with rows as features/trajectories
+#'   and columns as timepoints.
+#' @param clusters `integer` or `numeric`: Cluster assignments of length
+#'   `nrow(curves_mat)`. Cluster `0` is reserved for "other". `NA` values are
+#'   treated as `0`.
+#' @param min_cluster_r2 `numeric(1)`: A value >=0 and <1
+#' specifying the minimum allowed squared Pearson correlation (r2) of any
+#' cluster member to the centroid of its assigned cluster.
+#'
+#' After k-means clustering, each cluster is iteratively pruned. Members whose
+#' r2 to the current cluster centroid falls below `min_cluster_r2` are removed
+#' from that cluster and reassigned to cluster `0` (the "other" cluster).
+#'
+#' Pruning is repeated until all remaining members satisfy the constraint, a
+#' maximum of 10 iterations is reached, or the cluster would shrink below a
+#' minimum size of 10 members. If a cluster cannot satisfy the constraint under
+#' these conditions, all of its remaining members are reassigned to cluster `0`.
+#'
+#' Cluster `0` therefore contains all features that do not meet the minimum
+#' centroid similarity criterion. These features are retained in the output but
+#' are not considered part of any valid cluster.
+#'
+#' @return A `list` with:
+#' \describe{
+#'   \item{clusters}{`integer`: Possibly pruned cluster assignments. Members in
+#'   "other" are labeled `0`.}
+#'   \item{kept}{`integer`: Sorted vector of retained cluster ids (> 0).}
+#'   \item{dropped}{`integer`: Sorted vector of cluster ids that were fully
+#'   reassigned to `0`.}
+#' }
+#'
+prune_clusters_by_min_r2 <- function(
+        curves_mat,
+        clusters,
+        min_cluster_r2
+) {
+    is_valid_r2 <- !is.null(min_cluster_r2) &&
+        is.finite(min_cluster_r2) &&
+        min_cluster_r2 > 0 &&
+        min_cluster_r2 < 1
+    
+    if (!is_valid_r2) {
+        cl <- as.integer(clusters)
+        cl[is.na(cl)] <- 0L
+        
+        return(list(
+            clusters = cl,
+            kept = sort(unique(cl[cl > 0L])),
+            dropped = integer()
+        ))
+    }
+    
+    min_cluster_size <- 10L
+    max_iter <- 10L
+    
+    n <- nrow(curves_mat)
+    if (n == 0L) {
+        return(list(
+            clusters = integer(),
+            kept = integer(),
+            dropped = integer()
+        ))
+    }
+    
+    cl <- as.integer(clusters)
+    cl[is.na(cl)] <- 0L
+    
+    uniq <- sort(unique(cl[cl > 0L]))
+    dropped_clusters <- integer(0)
+    
+    r2_to_vector <- function(
+        M,
+        v
+    ) {
+        p <- ncol(M)
+        
+        mu <- rowMeans(M)
+        Mc <- M - mu
+        ss <- rowSums(Mc * Mc)
+        sd <- sqrt(ss / (p - 1))
+        ok <- is.finite(sd) & sd > 0
+        
+        v_mu <- mean(v)
+        vc <- v - v_mu
+        v_sd <- sqrt(sum(vc * vc) / (p - 1))
+        
+        if (!is.finite(v_sd) || v_sd == 0) {
+            return(rep(0, nrow(M)))
+        }
+        
+        cov <- as.numeric(Mc %*% vc) / (p - 1)
+        
+        r <- rep(0, nrow(M))
+        r[ok] <- cov[ok] / (sd[ok] * v_sd)
+        r <- pmin(pmax(r, -1), 1)
+        
+        r * r
+    }
+    
+    for (k in uniq) {
+        members <- which(cl == k)
+        
+        if (length(members) < min_cluster_size) {
+            cl[members] <- 0L
+            dropped_clusters <- c(dropped_clusters, k)
+            next
+        }
+        
+        converged <- FALSE
+        
+        for (it in seq_len(max_iter)) {
+            centroid <- colMeans(curves_mat[members, , drop = FALSE])
+            
+            r2 <- r2_to_vector(
+                M = curves_mat[members, , drop = FALSE],
+                v = centroid
+            )
+            
+            keep <- r2 >= min_cluster_r2
+            
+            if (all(keep)) {
+                converged <- TRUE
+                break
+            }
+            
+            kept_members <- members[keep]
+            
+            if (length(kept_members) < min_cluster_size) {
+                cl[members] <- 0L
+                dropped_clusters <- c(dropped_clusters, k)
+                converged <- TRUE
+                members <- integer(0)
+                break
+            }
+            
+            removed <- members[!keep]
+            cl[removed] <- 0L
+            
+            members <- kept_members
+        }
+        
+        if (!converged && length(members) > 0L) {
+            cl[members] <- 0L
+            dropped_clusters <- c(dropped_clusters, k)
+        }
+    }
+    
+    list(
+        clusters = cl,
+        kept = sort(unique(cl[cl > 0L])),
+        dropped = sort(unique(dropped_clusters))
     )
 }

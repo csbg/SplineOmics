@@ -11,6 +11,7 @@ cluster_hits(
   adj_pthresh_avrg_diff_conditions = 0.05,
   adj_pthresh_interaction_condition_time = 0.05,
   min_effect_size = list(time_effect = 0, avg_diff_cond = 0, interaction_cond_time = 0),
+  min_cluster_r2 = 0,
   genes = NULL,
   verbose = TRUE
 )
@@ -151,6 +152,23 @@ values (e.g., 0.1) for permissive filtering, or larger values for more
 conservative thresholds.
 
 The default is 0 for all three elements.}
+
+\item{min_cluster_r2}{\code{numeric(1)}: A value >=0 and <1
+specifying the minimum allowed squared Pearson correlation (r2) of any
+cluster member to the centroid of its assigned cluster.
+
+After k-means clustering, each cluster is iteratively pruned. Members whose
+r2 to the current cluster centroid falls below \code{min_cluster_r2} are removed
+from that cluster and reassigned to cluster \code{0} (the "other" cluster).
+
+Pruning is repeated until all remaining members satisfy the constraint, a
+maximum of 10 iterations is reached, or the cluster would shrink below a
+minimum size of 10 members. If a cluster cannot satisfy the constraint under
+these conditions, all of its remaining members are reassigned to cluster \code{0}.
+
+Cluster \code{0} therefore contains all features that do not meet the minimum
+centroid similarity criterion. These features are retained in the output but
+are not considered part of any valid cluster.}
 
 \item{genes}{\code{character()}: A character vector of gene names corresponding
 to the features to be analyzed. The order of entries must match the feature

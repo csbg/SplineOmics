@@ -2403,7 +2403,7 @@ plot_cluster_quality_distribution <- function(
     # histogram with fixed 0.1 bins from -1 to 1
     if (n_valid >= 1) {
         p <- p + ggplot2::geom_histogram(
-            binwidth = 0.1,
+            binwidth = 0.05,
             boundary = -1,
             closed   = "right",
             fill     = "steelblue",
