@@ -8,7 +8,8 @@ create_clustering_report(
   report_payload,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
-  plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
+  plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL,
+    condition_colours = NULL),
   verbose = FALSE,
   max_hit_number = 25,
   raw_data = NULL,
@@ -58,10 +59,21 @@ customization. Supported entries include:
 \item \code{cluster_heatmap_columns} \code{logical(1)}
 (default = \code{FALSE}):
 Whether to cluster columns in the heatmap.
-\item \code{meta_replicate_column} \code{character(1)}
-(default = \code{NULL}):
-Column in \code{meta} encoding replicate information. When supplied,
-spline plot data points are colored by replicate.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item \code{meta_replicate_column} `character(1)`
+  (default = \code{NULL}):
+  Column in \code{meta} encoding replicate information. When supplied,
+  spline plot data points are colored by replicate.
+
+\\item \code{condition_colours} `list`
+  (default = \code{NULL}):
+  Optional named list mapping condition levels to colours. Names must
+  correspond to values in the condition column of \code{meta}, and
+  values must be valid R colour specifications accepted by
+  \code{ggplot2}. When provided, these colours override the default
+  colours for the corresponding conditions.
+}\if{html}{\out{</div>}}
+
 }}
 
 \item{verbose}{\code{logical(1)}: Logical flag controlling the verbosity of status

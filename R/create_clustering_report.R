@@ -50,12 +50,21 @@
 #'   customization. Supported entries include:
 #'   \itemize{
 #'     \item \code{cluster_heatmap_columns} `logical(1)`
-#'      (default = \code{FALSE}):
+#'       (default = \code{FALSE}):
 #'       Whether to cluster columns in the heatmap.
+#'
 #'     \item \code{meta_replicate_column} `character(1)`
-#'      (default = \code{NULL}):
+#'       (default = \code{NULL}):
 #'       Column in \code{meta} encoding replicate information. When supplied,
 #'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
 #'   }
 #'
 #' @param verbose `logical(1)`: Logical flag controlling the verbosity of status
@@ -100,14 +109,14 @@ create_clustering_report <- function(
         ),
         plot_options = list(
             cluster_heatmap_columns = FALSE,
-            meta_replicate_column = NULL
+            meta_replicate_column = NULL,
+            condition_colours = NULL
         ),
         verbose = FALSE,
         max_hit_number = 25,
         raw_data = NULL,
         report_dir = here::here()
         ) {
-    
     check_inputs_clustering_report(
         max_hit_number = max_hit_number
     )
@@ -116,11 +125,15 @@ create_clustering_report <- function(
         eval,
         parent.frame()
     )
-    args[["verbose"]] <- verbose
+    meta <- splineomics[["meta"]]
+    condition <- splineomics[["condition"]]
+    args[["meta"]]      <- meta
+    args[["condition"]] <- condition
+    args[["verbose"]]   <- verbose
     check_null_elements(args)
     input_control <- InputControl$new(args)
     input_control$auto_validate()
-    
+
     report_dir <- normalizePath(
         report_dir,
         mustWork = FALSE
@@ -128,9 +141,7 @@ create_clustering_report <- function(
     
     splineomics <- report_payload[["splineomics"]]
     data <- splineomics[["data"]]
-    meta <- splineomics[["meta"]]
     mode <- splineomics[["mode"]]
-    condition <- splineomics[["condition"]]
     spline_params <- splineomics[["spline_params"]]
     report_info <- splineomics[["report_info"]]
     design <- splineomics[["design"]]
@@ -146,6 +157,7 @@ create_clustering_report <- function(
         condition = condition,
         replicate_column = plot_options[["meta_replicate_column"]],
         plot_info = plot_info,
+        plot_options = plot_options,
         category_2_and_3_hits = report_payload[["category_2_and_3_hits"]],
         adj_pthresh_avrg_diff_conditions = 
             report_payload[["adj_pthresh_avrg_diff_conditions"]],
@@ -304,8 +316,26 @@ check_inputs_clustering_report <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
-#' @param plot_options List with specific fields (cluster_heatmap_columns =
-#' Bool) that allow for customization of plotting behavior.
+#' @param plot_options `list`: Named list controlling optional plot
+#'   customization. Supported entries include:
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} `logical(1)`
+#'       (default = \code{FALSE}):
+#'       Whether to cluster columns in the heatmap.
+#'
+#'     \item \code{meta_replicate_column} `character(1)`
+#'       (default = \code{NULL}):
+#'       Column in \code{meta} encoding replicate information. When supplied,
+#'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
+#'   }
 #' @param feature_name_columns Character vector containing the column names of
 #'                             the annotation info that describe the features.
 #'                             This argument is used to specify in the HTML
@@ -524,6 +554,7 @@ make_clustering_report <- function(
                 predicted_timecurves = predicted_timecurves,
                 time_unit_label = time_unit_label,
                 plot_info = plot_info,
+                plot_options = plot_options,
                 adj_pthreshold = adj_pthresh_time_effect,
                 replicate_column = plot_options[["meta_replicate_column"]],
                 level = level,
@@ -1107,6 +1138,27 @@ plot_all_mean_splines <- function(
 #' @param plot_info A list containing plotting information such as time unit
 #'   and axis labels.
 #'   
+#' @param plot_options `list`: Named list controlling optional plot
+#'   customization. Supported entries include:
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} `logical(1)`
+#'       (default = \code{FALSE}):
+#'       Whether to cluster columns in the heatmap.
+#'
+#'     \item \code{meta_replicate_column} `character(1)`
+#'       (default = \code{NULL}):
+#'       Column in \code{meta} encoding replicate information. When supplied,
+#'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
+#'   }
+#'   
 #' @param raw_data Optional data matrix with the raw (unimputed) data,
 #'   still containing \code{NA} values. When provided, datapoints that were
 #'   originally \code{NA} and later imputed can be highlighted in the plots.
@@ -1174,6 +1226,7 @@ generate_spline_comparisons <- function(
         condition,
         replicate_column,
         plot_info,
+        plot_options,
         raw_data,
         predicted_timecurves,
         max_hit_number,
@@ -1274,6 +1327,7 @@ generate_spline_comparisons <- function(
             adj_pthresh_interaction = adj_pthresh_interaction,
             min_effect_size = min_effect_size,
             plot_info = plot_info,
+            plot_options = plot_options,
             raw_data = raw_data,
             max_hit_number = max_hit_number
         )
@@ -1318,6 +1372,26 @@ generate_spline_comparisons <- function(
 #'                  and -timepoints are used to create vertical dashed lines,
 #'                  indicating the positions of the treatments (such as
 #'                  feeding, temperature shift, etc.).
+#' @param plot_options `list`: Named list controlling optional plot
+#'   customization. Supported entries include:
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} `logical(1)`
+#'       (default = \code{FALSE}):
+#'       Whether to cluster columns in the heatmap.
+#'
+#'     \item \code{meta_replicate_column} `character(1)`
+#'       (default = \code{NULL}):
+#'       Column in \code{meta} encoding replicate information. When supplied,
+#'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
+#'   }
 #' @param adj_pthreshold Double > 0 and < 1 specifying the adj. p-val threshold.
 #' @param replicate_column String specifying the column of the meta dataframe
 #' that contains the labels of the replicate measurents. When that is not
@@ -1346,6 +1420,7 @@ plot_splines <- function(
         predicted_timecurves,
         time_unit_label,
         plot_info,
+        plot_options,
         adj_pthreshold,
         replicate_column,
         level,
@@ -1481,6 +1556,16 @@ plot_splines <- function(
                 "Data" = "blue",
                 "Spline" = "red"
             )
+        }
+        
+        cc <- plot_options[["condition_colours"]]
+        
+        if (!is.null(cc) &&
+            is.list(cc) &&
+            level %in% names(cc) &&
+            is.character(cc[[level]]) &&
+            length(cc[[level]]) == 1L) {
+            color_values["Spline"] <- cc[[level]]
         }
         
         # Get adjusted p-value and significance stars
@@ -2527,6 +2612,26 @@ merge_top_table_with_annotation <- function(
 #'   }
 #' @param plot_info A list containing plotting information such as time unit
 #' and axis labels.
+#' @param plot_options `list`: Named list controlling optional plot
+#'   customization. Supported entries include:
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} `logical(1)`
+#'       (default = \code{FALSE}):
+#'       Whether to cluster columns in the heatmap.
+#'
+#'     \item \code{meta_replicate_column} `character(1)`
+#'       (default = \code{NULL}):
+#'       Column in \code{meta} encoding replicate information. When supplied,
+#'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
+#'   }
 #' @param adj_pthresh_avrg_diff_conditions The adjusted p-value threshold for
 #' the average difference
 #' between conditions.
@@ -2587,6 +2692,7 @@ plot_spline_comparisons <- function(
         replicate_column,
         predicted_timecurves,
         plot_info,
+        plot_options,
         adj_pthresh_avrg_diff_conditions,
         adj_pthresh_interaction,
         min_effect_size,
@@ -2749,6 +2855,7 @@ plot_spline_comparisons <- function(
             replicate_column = replicate_column,
             shape_mapping = shape_mapping,
             plot_info = plot_info,
+            plot_options = plot_options,
             title_lines = title_lines,
             has_imputed_1 = has_imputed_1,
             has_imputed_2 = has_imputed_2
@@ -2853,6 +2960,16 @@ plot_single_and_mean_splines <- function(
         ) |>
         dplyr::arrange(!!feature_col) |>
         dplyr::mutate(time = as.numeric(.data$time))
+    
+    max_lines <- 100L
+    
+    features <- unique(df_long$feature)
+    
+    if (length(features) > max_lines) {
+        set.seed(1L)
+        keep_features <- sample(features, size = max_lines)
+        df_long <- df_long[df_long$feature %in% keep_features, , drop = FALSE]
+    }
     
     # Compute consensus (mean of each column)
     consensus <- colMeans(time_series_data, na.rm = TRUE)
@@ -3370,25 +3487,57 @@ generate_asterisks_definition <- function(
 #'   `Time`, condition-specific response columns (`Y1`, `Y2`), and imputation
 #'   flags (`IsImputed1`, `IsImputed2`). If `replicate_column` is used, it
 #'   should also contain `Replicate`.
+#'   
 #' @param smooth_timepoints A numeric vector of time points used to draw
 #'   fitted spline curves.
+#'   
 #' @param fitted_values_1 A numeric vector of fitted spline values for
 #'   `condition_1`, aligned to `smooth_timepoints`.
+#'   
 #' @param fitted_values_2 A numeric vector of fitted spline values for
 #'   `condition_2`, aligned to `smooth_timepoints`.
+#'   
 #' @param condition_1 A character scalar naming the first condition.
+#' 
 #' @param condition_2 A character scalar naming the second condition.
+#' 
 #' @param replicate_column Optional. A character scalar naming the replicate
 #'   column in `plot_data`. If `NULL`, replicate shapes are not mapped.
+#'   
 #' @param shape_mapping Optional. A named integer vector mapping replicate
 #'   identifiers to ggplot2 shape codes, typically produced by
 #'   `.make_shape_mapping()`.
+#'   
 #' @param plot_info A named list of plotting metadata, including `time_unit`
 #'   and `y_axis_label`.
+#'   
+#' @param plot_options `list`: Named list controlling optional plot
+#'   customization. Supported entries include:
+#'   \itemize{
+#'     \item \code{cluster_heatmap_columns} `logical(1)`
+#'       (default = \code{FALSE}):
+#'       Whether to cluster columns in the heatmap.
+#'
+#'     \item \code{meta_replicate_column} `character(1)`
+#'       (default = \code{NULL}):
+#'       Column in \code{meta} encoding replicate information. When supplied,
+#'       spline plot data points are colored by replicate.
+#'
+#'     \item \code{condition_colours} `list`
+#'       (default = \code{NULL}):
+#'       Optional named list mapping condition levels to colours. Names must
+#'       correspond to values in the condition column of \code{meta}, and
+#'       values must be valid R colour specifications accepted by
+#'       \code{ggplot2}. When provided, these colours override the default
+#'       colours for the corresponding conditions.
+#'   }
+
 #' @param title_lines A character vector of title lines, typically produced
 #'   by `.build_title_lines()`, which will be collapsed with newlines.
+#'   
 #' @param has_imputed_1 Logical. Provided for compatibility; recomputed
 #'   internally based on non-`NA` plotted points for `condition_1`.
+#'   
 #' @param has_imputed_2 Logical. Provided for compatibility; recomputed
 #'   internally based on non-`NA` plotted points for `condition_2`.
 #'
@@ -3415,6 +3564,7 @@ generate_asterisks_definition <- function(
         replicate_column,
         shape_mapping,
         plot_info,
+        plot_options,
         title_lines,
         has_imputed_1,
         has_imputed_2
@@ -3565,6 +3715,26 @@ generate_asterisks_definition <- function(
             paste("Imputed data", condition_2)
         )
     )
+
+    cc <- plot_options[["condition_colours"]]
+    
+    if (!is.null(cc) &&
+        is.list(cc) &&
+        condition_1 %in% names(cc) &&
+        is.character(cc[[condition_1]]) &&
+        length(cc[[condition_1]]) == 1L) {
+        color_values[paste("Data", condition_1)] <- cc[[condition_1]]
+        color_values[paste("Spline", condition_1)] <- cc[[condition_1]]
+    }
+    
+    if (!is.null(cc) &&
+        is.list(cc) &&
+        condition_2 %in% names(cc) &&
+        is.character(cc[[condition_2]]) &&
+        length(cc[[condition_2]]) == 1L) {
+        color_values[paste("Data", condition_2)] <- cc[[condition_2]]
+        color_values[paste("Spline", condition_2)] <- cc[[condition_2]]
+    }
     
     filtered_labels <- c(
         paste("Data", condition_1),

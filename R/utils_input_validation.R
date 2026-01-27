@@ -1533,10 +1533,12 @@ InputControl <- R6::R6Class("InputControl",
         check_plot_options = function() {
             plot_options <- self$args[["plot_options"]]
             meta <- self$args[["meta"]]
+            condition <- self$args[["condition"]]
 
             required_args <- list(
                 plot_options,
-                meta
+                meta,
+                condition
             )
 
             # Check if any required arguments are NULL
@@ -1583,6 +1585,96 @@ InputControl <- R6::R6Class("InputControl",
                     stop_call_false(
                         "'cluster_heatmap_columns' must be TRUE or FALSE"
                     )
+                }
+            }
+
+            # Check if condition_colours is present and validate it
+            if ("condition_colours" %in% names(plot_options)) {
+                cc <- plot_options[["condition_colours"]]
+                
+                if (!is.null(cc)) {
+                    if (!is.list(cc)) {
+                        stop_call_false(
+                            "'condition_colours' must be a list or NULL."
+                        )
+                    }
+                    
+                    nm <- names(cc)
+                    
+                    if (is.null(nm) || any(!nzchar(nm))) {
+                        stop_call_false(
+                            "'condition_colours' must be a named list. ",
+                            "Names must be non-empty condition levels."
+                        )
+                    }
+                    
+                    if (anyDuplicated(nm)) {
+                        stop_call_false(
+                            "'condition_colours' has duplicated names."
+                        )
+                    }
+                    
+                    if (!is.character(condition) ||
+                        length(condition) != 1L) {
+                        stop_call_false(
+                            "'condition' must be a single string."
+                        )
+                    }
+                    
+                    if (!condition %in% colnames(meta)) {
+                        stop_call_false(
+                            "The value of 'condition' does not exist ",
+                            "as a column in the meta dataframe."
+                        )
+                    }
+                    
+                    cond_levels <- unique(meta[[condition]])
+                    cond_levels <- as.character(cond_levels)
+                    
+                    extra <- setdiff(nm, cond_levels)
+                    
+                    if (length(extra) > 0L) {
+                        stop_call_false(
+                            "Unknown condition(s) in 'condition_colours': ",
+                            paste(extra, collapse = ", ")
+                        )
+                    }
+                    
+                    bad_len <- vapply(cc, length, integer(1)) != 1L
+                    bad_chr <- vapply(cc, function(x) !is.character(x),
+                                      logical(1))
+                    bad_na <- vapply(cc, function(x) is.na(x),
+                                     logical(1))
+                    
+                    if (any(bad_len) || any(bad_chr) || any(bad_na)) {
+                        stop_call_false(
+                            "'condition_colours' values must be non-NA ",
+                            "character scalars."
+                        )
+                    }
+                    
+                    cols <- unlist(cc, use.names = FALSE)
+                    
+                    ok <- vapply(
+                        cols,
+                        function(col) {
+                            tryCatch({
+                                grDevices::col2rgb(col)
+                                TRUE
+                            }, error = function(e) {
+                                FALSE
+                            })
+                        },
+                        logical(1)
+                    )
+                    
+                    if (!all(ok)) {
+                        bad <- unique(cols[!ok])
+                        stop_call_false(
+                            "Invalid colour(s) in 'condition_colours': ",
+                            paste(bad, collapse = ", ")
+                        )
+                    }
                 }
             }
         },
