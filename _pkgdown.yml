@@ -12,7 +12,7 @@ navbar:
       - home
       - get-started
       - reference
-      - articles      # <- one Articles dropdown
+      - articles      
       - faq
       - changelog
 
@@ -68,7 +68,9 @@ reference:
       - compare_results
       - cluster_genes_multiomics
       - cluster_hits
+      - create_clustering_report
       - create_limma_report
+      - create_ora_report
       - create_splineomics
       - extract_gene_sets
       - download_enrichr_databases

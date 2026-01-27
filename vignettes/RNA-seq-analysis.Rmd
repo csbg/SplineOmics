@@ -380,14 +380,9 @@ function
 
 # Cluster the hits (significant features)
 
-After we obtained the limma spline results, we can cluster the hits
-based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are
-features (genes here) that have an adj. p-value below the threshold.
-Hierarchical clustering is used to place every hit in one of as many
-clusters as we have specified for that specific level.
+Prepare arguments:
 
-```{r cluster the hits, eval = TRUE}
+```{r prepare arguments, eval = TRUE}
 nr_clusters <- list(
     constant = 4,
     temp_shift = 4
@@ -416,17 +411,33 @@ plot_options <- list(
     # When meta_replicate_column is not there, all datapoints are blue.
     meta_replicate_column = "Reactor" # Colors the data points based on Reactor
 )
+```
 
+Run the clustering:
+
+```{r cluster the hits, eval = TRUE}
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
-    genes = genes,
+    genes = genes
+)
+```
+
+Generate the report:
+
+```{r generate clustering report, eval = TRUE}
+report_dir <- file.path(tempdir(), "splineomics_report")
+dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+
+plots <- SplineOmics::create_clustering_report(
+    report_payload = clustering_results$report_payload,
     plot_info = plot_info,
-    max_hit_number = 20, # maximum number of plots per result category
     plot_options = plot_options,
+    verbose = TRUE,
+    max_hit_number = 5,
     report_dir = withr::local_tempdir()
 )
 ```
@@ -506,22 +517,28 @@ report_dir <- here::here(
 )
 ```
 
-The function below runs the clusterProfiler for all clusters and all
-levels, and generates the HTML report:
+Run ORA:
 
-```{r run GSEA, eval = FALSE}
-result <- SplineOmics::run_gsea(
-    # A dataframe with three columns: feature, cluster, and gene. Feature
-    # contains
-    # the integer index of the feature, cluster the integer specifying the
-    # cluster
-    # number, and gene the string of the gene, such as "CLSTN2".
+```{r run ORA, eval = FALSE}
+ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
     clusterProfiler_params = clusterProfiler_params,
+    universe = genes,
+    mapping_cfg = mapping_cfg,
+    enrichGO_cfg = enrichGO_cfg
+)
+```
+
+Create ORA HTML report:
+
+```{r create ORA HTML report, eval = FALSE}
+plots <- SplineOmics::create_ora_report(
+    report_payload = ora_results$report_payload,
     report_info = report_info,
-    cluster_hits_report_name = "not meaningful here",
-    report_dir = report_dir
+    cluster_hits_report_name = "RNA_seq_analysis",
+    verbose = TRUE,
+    report_dir = results_dir
 )
 ```
 

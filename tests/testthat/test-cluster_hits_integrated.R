@@ -62,39 +62,18 @@ test_that("cluster_hits() returns correctly structured result", {
     )
     gene_column_name <- "Gene_symbol"
     genes <- annotation[[gene_column_name]]
-    plot_info <- list(
-        y_axis_label = "log2 intensity",
-        time_unit = "min",
-        treatment_labels = list(
-            Exponential = "feeding",
-            Stationary = "feeding"
-        ),
-        treatment_timepoints = list(
-            Exponential = 0,
-            Stationary = 0
-        )
-    )
-    plot_options <- list(
-        meta_replicate_column = "Reactor",
-        cluster_heatmap_columns = FALSE
-    )
-    raw_data <- splineomics$data
 
     clustering_results <- SplineOmics::cluster_hits(
         splineomics = splineomics,
         nr_clusters = nr_clusters,
-        genes = genes,
-        plot_info = plot_info,
-        plot_options = plot_options,
-        raw_data = raw_data,
-        report_dir = withr::local_tempdir()
+        genes = genes
     )
 
     # cluster_hits() returns a list: cluster_table + plots
     expect_type(clustering_results, "list")
     expect_named(
         clustering_results,
-        c("cluster_table", "spline_results", "plots"),
+        c("cluster_table", "spline_results", "report_payload"),
         ignore.order = FALSE
     )
     expect_length(clustering_results, 3)
@@ -123,15 +102,6 @@ test_that("cluster_hits() returns correctly structured result", {
     # gene column exists but may be all NA (e.g., non-gene omics)
     expect_true("gene" %in% names(cs))
     expect_true(is.character(cs$gene) | all(is.na(cs$gene)))
-
-
-    # plots: present and list-like (count may vary)
-    expect_type(clustering_results$plots, "list")
-    expect_gte(length(clustering_results$plots), 1)
-
-    # Check individual elements
-    expect_type(clustering_results$plots, "list")
-    expect_length(clustering_results$plots, 18)
 
     # snapshot VALUE (machine-readable JSON)
     testthat::expect_snapshot_value(cs, style = "json2")

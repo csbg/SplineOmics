@@ -320,14 +320,9 @@ function
 
 # Cluster the hits (significant features)
 
-After we obtained the limma spline results, we can cluster the hits
-based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are
-features (e.g. proteins) that have an adj. p-value below the threshold.
-Hierarchical clustering is used to place every hit in one of as many
-clusters as we have specified for that specific level.
+Prepare arguments:
 
-```{r cluster the hits, eval = TRUE}
+```{r prepare arguments, eval = TRUE}
 nr_clusters <- list(
     constant = 2,
     tshifted = 2
@@ -354,16 +349,30 @@ plot_options <- list(
     meta_replicate_column = "Reactor", # Colors the data points based on Reactor
     cluster_heatmap_columns = FALSE
 )
+```
 
+Run the clustering:
+
+```{r cluster the hits, eval = TRUE}
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
-    genes = genes,
+    genes = genes
+)
+```
+
+Generate the report:
+
+```{r generate clustering report, eval = TRUE}
+plots <- SplineOmics::create_clustering_report(
+    report_payload = clustering_results$report_payload,
     plot_info = plot_info,
     plot_options = plot_options,
+    verbose = TRUE,
+    max_hit_number = 5,
     report_dir = withr::local_tempdir()
 )
 ```

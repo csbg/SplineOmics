@@ -12,12 +12,6 @@ cluster_hits(
   adj_pthresh_interaction_condition_time = 0.05,
   min_effect_size = list(time_effect = 0, avg_diff_cond = 0, interaction_cond_time = 0),
   genes = NULL,
-  plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
-    treatment_timepoints = NA),
-  plot_options = list(cluster_heatmap_columns = FALSE, meta_replicate_column = NULL),
-  raw_data = NULL,
-  report_dir = NULL,
-  max_hit_number = 25,
   verbose = TRUE
 )
 }
@@ -164,68 +158,6 @@ order in \code{data}. Gene names should be standardized (cleaned) to ensure
 compatibility with downstream databases used for overrepresentation
 analysis after clustering.}
 
-\item{plot_info}{\code{list}: List with optional elements used to annotate spline
-plots:
-\itemize{
-\item \code{y_axis_label}: \code{character(1)} single string for the y-axis label.
-\item \code{time_unit}: \code{character(1)} single string used in the x-axis label.
-\item \code{treatment_labels}: \code{list(character(1))} named list of single strings.
-\item \code{treatment_timepoints}: \code{list(numeric(1))} named list of single numeric
-values.
-}
-
-If any treatment list is present, both must be present. The two lists must
-have identical name sets. Allowed names are the values of
-\code{meta[[condition]]}. For the time effect spline plots of that condition, as
-well as for all pairwise comparisons of the average difference between
-conditions and interaction condition time results where the mentioned
-condition appears, the treatment lines are inserted.
-
-Vertical dashed lines are drawn at the given timepoints for facets whose
-level name matches a list name, and labeled with the corresponding string
-(e.g., feeding, temperature shift).
-
-Example:
-
-\preformatted{
-plot_info <- list(
-  y_axis_label = "log2 expression",
-  time_unit = "hours",
-  treatment_labels = list(
-    WT = "Feeding",
-    KO = "Temperature shift"
-  ),
-  treatment_timepoints = list(
-    WT = 12,
-    KO = 24
-  )
-)
-}}
-
-\item{plot_options}{\code{list}: A named list controlling optional plot
-customization. The list can include one or both of the following entries
-(any not supplied will fall back to their default values):
-\itemize{
-\item \code{cluster_heatmap_columns} \code{logical(1)} (default =
-\code{FALSE}): Whether to cluster the columns in the heatmap.
-\item \code{meta_replicate_column} \code{character(1)} (default =
-\code{NULL}): Name of the column in \code{meta} that encodes replicate
-information. If supplied, spline plot data points are colored by
-replicate, allowing replicate-level variation to be assessed.
-}}
-
-\item{raw_data}{\code{matrix}: Data matrix with the raw (unimputed) data, still
-containing NA values. When provided, it highlights the datapoints in the
-spline plots that originally where NA and that were imputed.}
-
-\item{report_dir}{\code{character(1)}: Character string specifying the directory
-path where the HTML report and any other output files should be saved. When
-no path is specified, then the function runs but no HTML report is generated.}
-
-\item{max_hit_number}{\code{integer(1)}: Maximum number of hits which are plotted
-within each cluster. This can be used to limit the computation time and size
-of the HTML report in the case of many hits.}
-
 \item{verbose}{\code{logical(1)}: Boolean flag controlling the display of
 messages.}
 }
@@ -278,45 +210,41 @@ order used throughout the analysis.}
 \item{\code{time_effect_effect_size}}{Named list by condition with a
 numeric vector (length \eqn{N}) per condition giving the
 \emph{cumulative travel} (integrated temporal change) of each
-feature`s spline across \code{time_grid}. Larger values indicate
-stronger within-condition temporal modulation.}
-\item{\code{time_effect_passed_threshold}}{Named list by condition
-with a logical vector (length \eqn{N}) per condition indicating
-whether the corresponding \code{time_effect_effect_size} exceeds
-the user-defined effect-size threshold (i.e., time-effect hits).}
-\item{\code{interaction_effect_size}}{Numeric vector (length \eqn{N})
-giving the \emph{differential cumulative travel} between the two
-condition-specific splines of each feature, computed on the same
-\code{time_grid}. Larger values indicate stronger differences in
-temporal behaviour between conditions (condition-time interaction).}
-\item{\code{interaction_passed_threshold}}{Logical vector (length
-\eqn{N}) indicating whether \code{interaction_effect_size}
-exceeds the interaction effect-size threshold (i.e., features with
-significantly different temporal profiles across conditions).}
+feature\verb{s spline across \code{time_grid}. Larger values indicate stronger within-condition temporal modulation.\} \\item\{\code{time_effect_passed_threshold}\}\{Named list by condition with a logical vector (length \eqn{N}) per condition indicating whether the corresponding \code{time_effect_effect_size} exceeds the user-defined effect-size threshold (i.e., time-effect hits).\} \\item\{\code{interaction_effect_size}\}\{Numeric vector (length \eqn{N}) giving the \\emph\{differential cumulative travel\} between the two condition-specific splines of each feature, computed on the same \code{time_grid}. Larger values indicate stronger differences in temporal behaviour between conditions (condition-time interaction).\} \\item\{\code{interaction_passed_threshold}\}\{Logical vector (length \eqn{N}) indicating whether \code{interaction_effect_size} exceeds the interaction effect-size threshold (i.e., features with significantly different temporal profiles across conditions).\} \} Unless stated otherwise, vectors are aligned to the same feature order used in the prediction matrices; condition names match \code{levels(meta[[condition]])}. \} \\item\{\code{report_payload}\}\{ A structured list containing all information required to generate downstream clustering reports and visualizations, without recomputing any statistical results. This payload is designed to be consumed by dedicated reporting functions (e.g., \code{create_clustering_report()}) and enables a strict separation between computation and reporting. The contents of \code{report_payload} are intended to be treated as read-only and should not be modified by the user. Any changes to visualization or reporting behavior should be performed by supplying appropriate arguments to the reporting functions rather than altering the payload itself. The payload includes: \\describe\{ \\item\{\code{splineomics}\}\{ The original }SplineOmics\verb{object used for the analysis, providing access to the input data, metadata, design, spline parameters, and analysis settings. \} \\item\{\code{all_levels_clustering}\}\{ Clustering results for each condition level (Category 1) and, when available, clustering metadata for Categories 2/3. \} \\item\{\code{genes}\}\{}character()` Vector of gene or feature names corresponding to the
+analyzed features.
 }
-Unless stated otherwise, vectors are aligned to the same feature order
-used in the prediction matrices; condition names match
-\code{levels(meta[[condition]])}.
+\item{\code{adj_pthresh_time_effect}}{
+Adjusted p-value threshold used to define significant time-effect
+hits (Category 1).
 }
-\item{\code{plots}}{
-A list of all plots generated during the run, corresponding to the
-visualizations shown in the HTML report produced by this function.
-Additionally, this plots list also contains the plots showing the
-consensus clusters of the potential clustering of the interaction of
-condition and time (category 3) hits.
+\item{\code{adj_pthresh_avrg_diff_conditions}}{
+Adjusted p-value threshold used for average differences between
+conditions (Category 2).
+}
+\item{\code{adj_pthresh_interaction_condition_time}}{
+Adjusted p-value threshold used for condition--time interaction
+effects (Category 3).
+}
+\item{\code{category_2_and_3_hits}}{
+Data structure describing significant features from Categories 2 and
+3 (average differences and interactions), including effect-size
+annotations.
+}
+\item{\code{min_effect_size}}{
+Named list of effect-size thresholds applied in addition to
+statistical significance.
+}
+\item{\code{predicted_timecurves}}{
+Predicted spline trajectories and associated summaries (time grid,
+predictions per condition, and effect-size metrics).
+}
+}
 }
 }
 }
 \description{
-Performs clustering on hits from top tables generated by differential
-expression analysis.
-This function filters hits based on adjusted p-value thresholds, extracts
-spline coefficients for
-significant features, normalizes these coefficients, and applies hierarchical
-clustering. The results,
-including clustering assignments and normalized spline curves, are saved in a
-specified directory and
-compiled into an HTML report.
+Performs kmeans clustering of significant features from top tables
+generated by limma.
 }
 \examples{
 # Toy data: 4 features x 6 samples (two conditions, three time points)
@@ -409,14 +337,6 @@ out <- cluster_hits(
         interaction_cond_time = 0
     ),
     genes = toy_annot$gene,
-    plot_info = list(y_axis_label = "log2 expression", time_unit = "h"),
-    plot_options = list(
-        cluster_heatmap_columns = FALSE,
-        meta_replicate_column = "Replicate"
-    ),
-    raw_data = toy_data,
-    report_dir = tempdir(),
-    max_hit_number = 2
 )
 
 }

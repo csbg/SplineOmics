@@ -95,34 +95,6 @@ design2design_matrix <- function(
 }
 
 
-#' Merge Annotation with a Single Top Table
-#'
-#' @noRd
-#'
-#' @description
-#' This function merges annotation information into a single `top_table`
-#' dataframe based on the `feature_nr` column.
-#'
-#' @param top_table A dataframe containing the `top_table` with a `feature_nr`
-#'                  column.
-#' @param annotation A dataframe containing the annotation information.
-#'
-#' @return A dataframe with updated `top_table` containing merged annotation
-#'         information.
-#'
-merge_top_table_with_annotation <- function(
-    top_table,
-    annotation) {
-    if (!"feature_nr" %in% names(top_table)) {
-        top_table$feature_nr <- seq_len(nrow(top_table))
-    } else {
-        top_table$feature_nr <- as.integer(as.character(top_table$feature_nr))
-    }
-    annotation_rows <- annotation[top_table$feature_nr, ]
-    top_table <- cbind(top_table, annotation_rows)
-}
-
-
 #' Bind Data with Annotation
 #'
 #' @noRd

@@ -232,7 +232,9 @@ plots <- SplineOmics::create_limma_report(
 
 # Cluster the hits (significant features)
 
-```{r cluster the hits, eval = TRUE}
+Prepare arguments:
+
+```{r prepare arguments, eval = TRUE}
 nr_clusters <- list(
     Constant   = 2:6,
     Temp_shift = 2:6
@@ -260,16 +262,31 @@ plot_options <- list(
     # When meta_replicate_column is not there, all datapoints are blue.
     meta_replicate_column = "Reactor" # Colors the data points based on Reactor
 )
+```
 
+
+Run the clustering:
+
+```{r cluster the hits, eval = TRUE}
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
-    genes = genes,
+    genes = genes
+)
+```
+
+Generate the report:
+
+```{r generate clustering report, eval = TRUE}
+plots <- SplineOmics::create_clustering_report(
+    report_payload = clustering_results$report_payload,
     plot_info = plot_info,
     plot_options = plot_options,
+    verbose = TRUE,
+    max_hit_number = 5,
     report_dir = withr::local_tempdir()
 )
 ```

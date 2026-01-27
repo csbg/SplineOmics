@@ -499,10 +499,10 @@ After we obtained the limma spline results, we can cluster the hits
 based on their temporal pattern (their spline shape). We define what a
 hit is by setting an adj. p-value threshold for every level. Hits are
 features (e.g. proteins) that have an adj. p-value below the threshold.
-Hierarchical clustering is used to place every hit in one of as many
+K-means clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
-```{r prepare cluster_hits() arguments, eval = TRUE}
+```{r prepare clustering arguments, eval = TRUE}
 # The amount of clusters can be a fixed number (e.g. 6) or a range. When you
 # specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the
 # cluster_hits() function tries all those cluster numbers and picks the one with
@@ -542,26 +542,33 @@ plot_options <- list(
 )
 ```
 
-Run the function:
+Run the clustering:
 
 ```{r cluster the hits, eval = TRUE}
-report_dir <- file.path(tempdir(), "splineomics_report")
-dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
-
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
     nr_clusters = nr_clusters,
-    genes = genes,
-    plot_info = plot_info,
-    plot_options = plot_options,
-    report_dir = report_dir
+    genes = genes
 )
 ```
 
-You can view the generated analysis report of the cluster_hits function
+Generate the report:
+
+```{r generate clustering report, eval = TRUE}
+plots <- SplineOmics::create_clustering_report(
+    report_payload = clustering_results$report_payload,
+    plot_info = plot_info,
+    plot_options = plot_options,
+    verbose = TRUE,
+    max_hit_number = 5,
+    report_dir = withr::local_tempdir()
+)
+```
+
+You can view the generated analysis report of the clustering
 [here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html).
 
 As discussed before, there are three limma result categories. The
@@ -634,17 +641,26 @@ clusterProfiler_params <- list(
 )
 ```
 
-The function below runs the clusterProfiler for all clusters and all
-levels, and generates the HTML report:
+Run ORA:
 
 ```{r run ORA, eval = FALSE}
-result <- SplineOmics::run_ora(
+ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
     clusterProfiler_params = clusterProfiler_params,
+    universe = genes
+)
+```
+
+Create ORA HTML report:
+
+```{r create ORA HTML report, eval = FALSE}
+plots <- SplineOmics::create_ora_report(
+    report_payload = ora_results$report_payload,
     report_info = report_info,
-    cluster_hits_report_name = "report name",
-    report_dir = withr::local_tempdir()
+    cluster_hits_report_name = "get_started",
+    verbose = TRUE,
+    report_dir = results_dir
 )
 ```
 
@@ -733,16 +749,27 @@ enrichGO_cfg <- list(
 )
 ```
 
-```{r run ORA with BioConductor databases, eval = FALSE}
-result <- SplineOmics::run_ora(
+Run ORA:
+
+```{r run ORA bioconductor, eval = FALSE}
+ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
     clusterProfiler_params = clusterProfiler_params,
-    universe = genes_clean,
+    universe = genes,
     mapping_cfg = mapping_cfg,
-    enrichGO_cfg = enrichGO_cfg,
+    enrichGO_cfg = enrichGO_cfg
+)
+```
+
+Create ORA HTML report:
+
+```{r create ORA HTML report bioconductor, eval = FALSE}
+plots <- SplineOmics::create_ora_report(
+    report_payload = ora_results$report_payload,
     report_info = report_info,
-    cluster_hits_report_name = "report",
+    cluster_hits_report_name = "get_started",
+    verbose = TRUE,
     report_dir = results_dir
 )
 ```
