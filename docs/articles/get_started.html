@@ -1043,7 +1043,7 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpRKLMLB/file702f62684f43 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp6VhQCc/file44305d130c7a .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
@@ -1132,7 +1132,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpRKLMLB/file702f5d8a554c .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp6VhQCc/file443092680c4 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -1153,8 +1153,8 @@ result category 1.</p>
 based on their temporal pattern (their spline shape). We define what a
 hit is by setting an adj. p-value threshold for every level. Hits are
 features (e.g. proteins) that have an adj. p-value below the threshold.
-Hierarchical clustering is used to place every hit in one of as many
-clusters as we have specified for that specific level.</p>
+K-means clustering is used to place every hit in one of as many clusters
+as we have specified for that specific level.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># The amount of clusters can be a fixed number (e.g. 6) or a range. When you</span></span>
 <span><span class="co"># specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the</span></span>
@@ -1193,21 +1193,15 @@ clusters as we have specified for that specific level.</p>
 <span>    meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># Colors the data points based on Reactor</span></span>
 <span>    cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Per default FALSE, just for demonstration</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Run the function:</p>
+<p>Run the clustering:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"splineomics_report"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">report_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>    adj_pthresh_time_effect <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
-<span>    genes <span class="op">=</span> <span class="va">genes</span>,</span>
-<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
-<span>    plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
-<span>    report_dir <span class="op">=</span> <span class="va">report_dir</span></span>
+<span>    genes <span class="op">=</span> <span class="va">genes</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
@@ -1215,6 +1209,17 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  Exponential</span></span>
 <span><span class="co">#&gt; For the level:  Stationary</span></span>
+<span><span class="co">#&gt; Running this function took 0.0 min</span></span></code></pre></div>
+<p>Generate the report:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_clustering_report.html">create_clustering_report</a></span><span class="op">(</span></span>
+<span>    report_payload <span class="op">=</span> <span class="va">clustering_results</span><span class="op">$</span><span class="va">report_payload</span>,</span>
+<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>    plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
+<span>    verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    max_hit_number <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Generating heatmap...</span></span>
 <span><span class="co">#&gt; Generating cluster mean splines for level:  Exponential</span></span>
 <span><span class="co">#&gt; Generating spline plots...</span></span>
@@ -1223,12 +1228,10 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpRKLMLB/splineomics_report .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp6VhQCc/file44305c69fce3 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
-<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
-<span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>
-<p>You can view the generated analysis report of the cluster_hits
-function <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
+<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
+<p>You can view the generated analysis report of the clustering <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The
 cluster_hits() report shows the results of all three, if they are
 present (category 2 and 3 can only be generated when the design formula
@@ -1241,7 +1244,7 @@ contains an interaction effect).</p>
 biological insights is to perform ORA For this, the respective genes can
 be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a temporary directory for R CMD check</span></span>
 <span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"ora"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">report_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -1274,7 +1277,7 @@ dataframe. Further, optionally, the clusterProfiler parameters and the
 report dir can be specified. The function run_ora() runs ORA using
 clusterProfiler, generates an HTML report and returns the ORA dotplots
 in R.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
 <span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">results_dir</span>, <span class="st">"databases.tsv"</span><span class="op">)</span></span>
 <span></span>
@@ -1293,16 +1296,22 @@ in R.</p>
 <span>    maxGSSize <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>    qvalueCutoff <span class="op">=</span> <span class="fl">0.2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The function below runs the clusterProfiler for all clusters and all
-levels, and generates the HTML report:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
+<p>Run ORA:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ora_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
 <span>    cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    databases <span class="op">=</span> <span class="va">databases</span>,</span>
 <span>    clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
+<span>    universe <span class="op">=</span> <span class="va">genes</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Create ORA HTML report:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_ora_report.html">create_ora_report</a></span><span class="op">(</span></span>
+<span>    report_payload <span class="op">=</span> <span class="va">ora_results</span><span class="op">$</span><span class="va">report_payload</span>,</span>
 <span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"report name"</span>,</span>
-<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"get_started"</span>,</span>
+<span>    verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="va">results_dir</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the run_ora function <a href="https://csbg.github.io/SplineOmics_html_reports/run_ora_report_PTX.html">here</a>.</p>
 <p>This report first shows all enrichment results, where more than 2
@@ -1329,13 +1338,13 @@ results, that is stated with a red message.</p>
 format DB, Geneset, Gene (see documentation of the run_ora function).
 The BioConductor databases are an example for that, and SplineOmics also
 contains a function to conveniently download these.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/extract_gene_sets.html">extract_gene_sets</a></span><span class="op">(</span></span>
 <span>    organism_db <span class="op">=</span> <span class="st">"org.Mm.eg.db"</span>,</span>
 <span>    output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
 <span>    filename <span class="op">=</span> <span class="st">"bioconductor_database.tsv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify the filepath of the TSV file with the database info</span></span>
 <span><span class="va">downloaded_dbs_filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
 <span>    <span class="va">results_dir</span>,</span>
@@ -1382,16 +1391,23 @@ contains a function to conveniently download these.</p>
 <span>        ontology <span class="op">=</span> <span class="st">"CC"</span></span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
+<p>Run ORA:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ora_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_ora.html">run_ora</a></span><span class="op">(</span></span>
 <span>    cluster_table <span class="op">=</span> <span class="va">clustering_results</span><span class="op">[[</span><span class="st">"cluster_table"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    databases <span class="op">=</span> <span class="va">databases</span>,</span>
 <span>    clusterProfiler_params <span class="op">=</span> <span class="va">clusterProfiler_params</span>,</span>
-<span>    universe <span class="op">=</span> <span class="va">genes_clean</span>,</span>
+<span>    universe <span class="op">=</span> <span class="va">genes</span>,</span>
 <span>    mapping_cfg <span class="op">=</span> <span class="va">mapping_cfg</span>,</span>
-<span>    enrichGO_cfg <span class="op">=</span> <span class="va">enrichGO_cfg</span>,</span>
+<span>    enrichGO_cfg <span class="op">=</span> <span class="va">enrichGO_cfg</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Create ORA HTML report:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_ora_report.html">create_ora_report</a></span><span class="op">(</span></span>
+<span>    report_payload <span class="op">=</span> <span class="va">ora_results</span><span class="op">$</span><span class="va">report_payload</span>,</span>
 <span>    report_info <span class="op">=</span> <span class="va">report_info</span>,</span>
-<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"report"</span>,</span>
+<span>    cluster_hits_report_name <span class="op">=</span> <span class="st">"get_started"</span>,</span>
+<span>    verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    report_dir <span class="op">=</span> <span class="va">results_dir</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>

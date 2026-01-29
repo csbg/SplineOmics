@@ -944,7 +944,7 @@ generate p-value histograms an volcano plots.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpNCjWCK/file709b6ba41875 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpTOX0DJ/file44a6685bbb32 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
@@ -953,12 +953,7 @@ function <a href="https://drive.google.com/uc?id=1jgE8d5Gs12xnMATaitXxp28j2nAKCX
 <div class="section level2">
 <h2 id="cluster-the-hits-significant-features">Cluster the hits (significant features)<a class="anchor" aria-label="anchor" href="#cluster-the-hits-significant-features"></a>
 </h2>
-<p>After we obtained the limma spline results, we can cluster the hits
-based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are
-features (e.g. proteins) that have an adj. p-value below the threshold.
-Hierarchical clustering is used to place every hit in one of as many
-clusters as we have specified for that specific level.</p>
+<p>Prepare arguments:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nr_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    constant <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -985,18 +980,16 @@ clusters as we have specified for that specific level.</p>
 <span>    <span class="co"># When meta_replicate_column is not there, all datapoints are blue.</span></span>
 <span>    meta_replicate_column <span class="op">=</span> <span class="st">"Reactor"</span>, <span class="co"># Colors the data points based on Reactor</span></span>
 <span>    cluster_heatmap_columns <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Run the clustering:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">clustering_results</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/cluster_hits.html">cluster_hits</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>    adj_pthresh_time_effect <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
-<span>    genes <span class="op">=</span> <span class="va">genes</span>,</span>
-<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
-<span>    plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
-<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>    genes <span class="op">=</span> <span class="va">genes</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Hint: The data contains negative values.  This may occur if the data has been  transformed (e.g., log-transformed or  normalized) and is valid in such cases.  Ensure that the data preprocessing aligns  with your analysis requirements.</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1005,6 +998,17 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt;  Performing the clustering...</span></span>
 <span><span class="co">#&gt; For the level:  constant</span></span>
 <span><span class="co">#&gt; For the level:  tshifted</span></span>
+<span><span class="co">#&gt; Running this function took 0.0 min</span></span></code></pre></div>
+<p>Generate the report:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_clustering_report.html">create_clustering_report</a></span><span class="op">(</span></span>
+<span>    report_payload <span class="op">=</span> <span class="va">clustering_results</span><span class="op">$</span><span class="va">report_payload</span>,</span>
+<span>    plot_info <span class="op">=</span> <span class="va">plot_info</span>,</span>
+<span>    plot_options <span class="op">=</span> <span class="va">plot_options</span>,</span>
+<span>    verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    max_hit_number <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Generating heatmap...</span></span>
 <span><span class="co">#&gt; Generating cluster mean splines for level:  constant</span></span>
 <span><span class="co">#&gt; Generating spline plots...</span></span>
@@ -1013,10 +1017,9 @@ clusters as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpNCjWCK/file709b5a7bc496 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpTOX0DJ/file44a679c52c09 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
-<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span>
-<span><span class="co">#&gt; Running this function took 0.1 min</span></span></code></pre></div>
+<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
 function <a href="https://drive.google.com/uc?id=1HXKoyOniO6-tDC-uCiGgpaQcjUQ9-zyl" class="external-link">here</a>.</p>
 <p>As discussed before, there are three limma result categories. The

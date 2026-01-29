@@ -24,9 +24,9 @@ For one-to-one (gene-level) modalities, rows represent genes directly.
 In this case, row names must be the gene identifiers themselves and must
 follow the pattern \code{<gene_id>}. The angle brackets are shown for
 illustration only and must not be included in the actual row names.
-Gene identifiers must be consistent across all one-to-one modalities; otherwise,
-genes cannot be matched across omics modalities during distance computation and
-clustering.
+Gene identifiers must be consistent across all one-to-one modalities;
+otherwise, genes cannot be matched across omics modalities during distance
+computation and clustering.
 
 For many-to-one modalities (e.g., phospho sites, probes), rows represent
 features that map to genes and are summarized into gene-level pattern
@@ -78,7 +78,7 @@ results in heterogeneous information across genes.}
 \item{verbose}{Boolean flag indicating if info messages are be shown.}
 }
 \value{
-A named list with two tibbles:
+A named list with three tibbles:
 
 \describe{
 \item{\code{cluster_table}}{A tibble with one row per gene containing
@@ -89,11 +89,24 @@ per analytical block (e.g., \code{cluster_<cond>} or
 block are assigned \code{NA}.}
 
 \item{\code{centroid_info}}{A tibble with one row per block, modality,
-and cluster, summarizing modality-specific cluster centroid
-trajectories and within-cluster coherence. Columns include the block
-and modality identifiers, cluster label, gene coverage statistics, mean
-and standard deviation of per-gene R^2 values, optional per-gene
-R^2 vectors, and the centroid trajectory stored as a list-column.}
+and cluster, summarizing modality-specific cluster centroids and
+within-cluster coherence. Columns include the block and modality
+identifiers, cluster label, gene coverage statistics, the QC method
+used (\code{qc_method}; \code{"Pearson R2"} for one-to-one modalities
+and \code{"BC(HD)"} for many-to-one modalities), mean and standard
+deviation of per-gene QC values (\code{mean_qc}, \code{sd_qc}),
+optional per-gene QC vectors (\code{qc_member}) as a list-column, and
+the centroid representation stored as a list-column (\code{centroid}).}
+
+\item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL} if no
+many-to-one modalities are present) providing clustering quality
+diagnostics for many-to-one feature clustering steps. One row per
+block, modality, and feature-cluster, including the many-to-one
+\code{k} value used, the number of features used, the QC method
+(\code{"Pearson R2"}), mean and standard deviation of per-feature QC
+values (\code{mean_qc}, \code{sd_qc}), optional per-feature QC vectors
+(\code{qc_member}) as a list-column, and the centroid representation
+stored as a list-column (\code{centroid}).}
 }
 }
 \description{

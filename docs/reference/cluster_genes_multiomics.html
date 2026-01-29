@@ -116,9 +116,9 @@ being a numeric matrix of dimension <code>features x spline_points</code>.</p>
 In this case, row names must be the gene identifiers themselves and must
 follow the pattern <code>&lt;gene_id&gt;</code>. The angle brackets are shown for
 illustration only and must not be included in the actual row names.
-Gene identifiers must be consistent across all one-to-one modalities; otherwise,
-genes cannot be matched across omics modalities during distance computation and
-clustering.</p>
+Gene identifiers must be consistent across all one-to-one modalities;
+otherwise, genes cannot be matched across omics modalities during distance
+computation and clustering.</p>
 <p>For many-to-one modalities (e.g., phospho sites, probes), rows represent
 features that map to genes and are summarized into gene-level pattern
 signatures
@@ -186,7 +186,7 @@ results in heterogeneous information across genes.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with two tibbles:</p>
+    <p>A named list with three tibbles:</p>
 <dl><dt><code>cluster_table</code></dt>
 <dd><p>A tibble with one row per gene containing
 block-specific cluster assignments suitable for downstream enrichment
@@ -198,11 +198,26 @@ block are assigned <code>NA</code>.</p></dd>
 
 <dt><code>centroid_info</code></dt>
 <dd><p>A tibble with one row per block, modality,
-and cluster, summarizing modality-specific cluster centroid
-trajectories and within-cluster coherence. Columns include the block
-and modality identifiers, cluster label, gene coverage statistics, mean
-and standard deviation of per-gene R^2 values, optional per-gene
-R^2 vectors, and the centroid trajectory stored as a list-column.</p></dd>
+and cluster, summarizing modality-specific cluster centroids and
+within-cluster coherence. Columns include the block and modality
+identifiers, cluster label, gene coverage statistics, the QC method
+used (<code>qc_method</code>; <code>"Pearson R2"</code> for one-to-one modalities
+and <code>"BC(HD)"</code> for many-to-one modalities), mean and standard
+deviation of per-gene QC values (<code>mean_qc</code>, <code>sd_qc</code>),
+optional per-gene QC vectors (<code>qc_member</code>) as a list-column, and
+the centroid representation stored as a list-column (<code>centroid</code>).</p></dd>
+
+
+<dt><code>many_to_one_clustering_qc</code></dt>
+<dd><p>A tibble (or <code>NULL</code> if no
+many-to-one modalities are present) providing clustering quality
+diagnostics for many-to-one feature clustering steps. One row per
+block, modality, and feature-cluster, including the many-to-one
+<code>k</code> value used, the number of features used, the QC method
+(<code>"Pearson R2"</code>), mean and standard deviation of per-feature QC
+values (<code>mean_qc</code>, <code>sd_qc</code>), optional per-feature QC vectors
+(<code>qc_member</code>) as a list-column, and the centroid representation
+stored as a list-column (<code>centroid</code>).</p></dd>
 
 
 </dl></div>
@@ -260,30 +275,33 @@ R^2 vectors, and the centroid trajectory stored as a list-column.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     Modality: rna</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] building joint feature matrix for multi-omics clustering...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   [block 'time_Treat'] clustering genes (k = 2)...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] total runtime: 0.007 secs</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [cluster_genes_multiomics] total runtime: 0.011 secs</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">cluster_table</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $cluster_table</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   gene  time_Ctrl time_Treat</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> gene1         1          2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> gene2         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> gene1         2          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> gene2         2          2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> gene3         1          1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> gene4         2          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> gene5         1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> gene5         2          2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> gene6         1          2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $centroid_info</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   block     modality modality_type cluster n_genes_cluster n_genes_used coverage</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> time_Ctrl rna      one_to_one          1               5            5        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> time_Ctrl rna      one_to_one          2               1            1        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> time_Tre… rna      one_to_one          1               2            2        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_Tre… rna      one_to_one          2               4            4        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: mean_R2 &lt;dbl&gt;, sd_R2 &lt;dbl&gt;, r2_member &lt;I&lt;list&gt;&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   centroid &lt;I&lt;list&gt;&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 13</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cluster block     modality modality_type n_genes_cluster n_genes_used coverage</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>       1 time_Ctrl rna      one_to_one                  2            2        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>       2 time_Ctrl rna      one_to_one                  4            4        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>       1 time_Tre… rna      one_to_one                  2            2        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>       2 time_Tre… rna      one_to_one                  4            4        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 6 more variables: qc_method &lt;chr&gt;, mean_qc &lt;dbl&gt;, sd_qc &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   qc_member &lt;I&lt;list&gt;&gt;, centroid &lt;I&lt;list&gt;&gt;, avg_qc_score &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $many_to_one_clustering_qc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

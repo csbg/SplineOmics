@@ -28,9 +28,9 @@
 #' In this case, row names must be the gene identifiers themselves and must
 #' follow the pattern \code{<gene_id>}. The angle brackets are shown for
 #' illustration only and must not be included in the actual row names.
-#' Gene identifiers must be consistent across all one-to-one modalities; otherwise,
-#' genes cannot be matched across omics modalities during distance computation and
-#' clustering.
+#' Gene identifiers must be consistent across all one-to-one modalities;
+#' otherwise, genes cannot be matched across omics modalities during distance
+#' computation and clustering.
 #'
 #' For many-to-one modalities (e.g., phospho sites, probes), rows represent
 #' features that map to genes and are summarized into gene-level pattern
@@ -85,7 +85,7 @@
 #' @param verbose Boolean flag indicating if info messages are be shown.
 #'
 #' @return
-#' A named list with two tibbles:
+#' A named list with three tibbles:
 #'
 #' \describe{
 #'   \item{\code{cluster_table}}{A tibble with one row per gene containing
@@ -96,11 +96,24 @@
 #'   block are assigned \code{NA}.}
 #'
 #'   \item{\code{centroid_info}}{A tibble with one row per block, modality,
-#'   and cluster, summarizing modality-specific cluster centroid
-#'   trajectories and within-cluster coherence. Columns include the block
-#'   and modality identifiers, cluster label, gene coverage statistics, mean
-#'   and standard deviation of per-gene R^2 values, optional per-gene
-#'   R^2 vectors, and the centroid trajectory stored as a list-column.}
+#'   and cluster, summarizing modality-specific cluster centroids and
+#'   within-cluster coherence. Columns include the block and modality
+#'   identifiers, cluster label, gene coverage statistics, the QC method
+#'   used (\code{qc_method}; \code{"Pearson R2"} for one-to-one modalities
+#'   and \code{"BC(HD)"} for many-to-one modalities), mean and standard
+#'   deviation of per-gene QC values (\code{mean_qc}, \code{sd_qc}),
+#'   optional per-gene QC vectors (\code{qc_member}) as a list-column, and
+#'   the centroid representation stored as a list-column (\code{centroid}).}
+#'
+#'   \item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL} if no
+#'   many-to-one modalities are present) providing clustering quality
+#'   diagnostics for many-to-one feature clustering steps. One row per
+#'   block, modality, and feature-cluster, including the many-to-one
+#'   \code{k} value used, the number of features used, the QC method
+#'   (\code{"Pearson R2"}), mean and standard deviation of per-feature QC
+#'   values (\code{mean_qc}, \code{sd_qc}), optional per-feature QC vectors
+#'   (\code{qc_member}) as a list-column, and the centroid representation
+#'   stored as a list-column (\code{centroid}).}
 #' }
 #' 
 #' @examples
@@ -174,6 +187,8 @@ cluster_genes_multiomics <- function(
     
     centroid_list <- vector("list", length(block_ids))
     names(centroid_list) <- block_ids
+    many_to_one_clustering_qc_list <- vector("list", length(block_ids))
+    names(many_to_one_clustering_qc_list) <- block_ids
     
     for (i in seq_along(block_ids)) {
         b <- block_ids[i]
@@ -190,7 +205,7 @@ cluster_genes_multiomics <- function(
         }
         
         k <- block_clusters[[b]]
-        
+
         res_b <- .cluster_genes_multiomics_block(
             block_id = b,
             blocks = blocks,
@@ -202,6 +217,7 @@ cluster_genes_multiomics <- function(
         
         block_assignments[[b]] <- res_b$cl_b
         centroid_list[[b]] <- res_b$centroid_info
+        many_to_one_clustering_qc_list[[b]] <- res_b$many_to_one_clustering_qc
     }
     
     genes_all <- sort(unique(unlist(lapply(block_assignments, names))))
@@ -223,6 +239,18 @@ cluster_genes_multiomics <- function(
     }
     
     centroid_info <- do.call(rbind, centroid_list)
+    many_to_one_clustering_qc_list <- Filter(
+        Negate(is.null),
+        many_to_one_clustering_qc_list
+        )
+    
+    many_to_one_clustering_qc <- if (
+        length(many_to_one_clustering_qc_list) > 0L
+        ) {
+        do.call(rbind, many_to_one_clustering_qc_list)
+    } else {
+        NULL
+    }
     
     if (isTRUE(verbose)) {
         end_time <- Sys.time()
@@ -233,7 +261,13 @@ cluster_genes_multiomics <- function(
     
     list(
         cluster_table = tibble::as_tibble(cluster_table),
-        centroid_info = tibble::as_tibble(centroid_info)
+        centroid_info = tibble::as_tibble(centroid_info),
+        many_to_one_clustering_qc =
+            if (is.null(many_to_one_clustering_qc)) {
+                NULL
+            } else {
+                tibble::as_tibble(many_to_one_clustering_qc)
+            }
     )
 }
 
@@ -414,6 +448,7 @@ cluster_genes_multiomics <- function(
     
     modality_mats <- vector("list", length(modality_names))
     names(modality_mats) <- modality_names
+    feature_cluster_qc_by_modality <- list()
     
     if (isTRUE(verbose)) {
         message(
@@ -439,22 +474,48 @@ cluster_genes_multiomics <- function(
         many_to_one[[ln]] <- is_m2o
         
         if (!is_m2o) {
-            modality_mats[[ln]] <- mat_raw
+            # one-to-one: normalize trajectories (row-wise z-score)
+            modality_mats[[ln]] <- .normalize_modality_mat(
+                mat_raw,
+                is_many_to_one = FALSE
+                )
         } else {
             rn <- rownames(mat_raw)
             gene_ids <- sub("_.*$", "", rn)
             feature_to_gene <- gene_ids
             
-            sig <- .build_site_signatures(
+            sig_obj <- .build_site_signatures(
                 modality_mat     = mat_raw,
                 feature_to_gene  = feature_to_gene,
                 many_to_one_k    = lk,
                 seed             = 42
-            )$signatures
+            )
             
+            sig <- sig_obj$signatures
             sig <- sig[order(rownames(sig)), , drop = FALSE]
-            modality_mats[[ln]] <- sig
+            # many-to-one: Hellinger normalize signatures
+            modality_mats[[ln]] <- .normalize_modality_mat(
+                sig,
+                is_many_to_one = TRUE
+            )
+            
+            # collect QC if present/non-empty
+            qc <- sig_obj$many_to_one_clustering_qc
+            if (is.data.frame(qc) && nrow(qc) > 0L) {
+                qc$block <- block_id
+                qc$modality <- ln
+                qc$many_to_one_k <- lk
+                feature_cluster_qc_by_modality[[ln]] <- qc
+            }
         }
+    }
+    
+    many_to_one_clustering_qc <- if (
+        length(feature_cluster_qc_by_modality
+               ) > 0L) {
+        do.call(rbind, feature_cluster_qc_by_modality)
+    } else {
+        NULL
     }
     
     if (isTRUE(verbose)) {
@@ -495,17 +556,19 @@ cluster_genes_multiomics <- function(
         feature_mat = X_block,
         k           = block_k
     )
-    
+
     centroid_info_b <- .compute_block_centroids(
         block_id = block_id,
         modality_mats = modality_mats,
         cl_b = cl_b,
         meta_b_modality = meta_b_modality
     )
+    centroid_info_b <- .rank_clusters(centroid_info_b)
     
     list(
         cl_b = cl_b,
-        centroid_info = centroid_info_b
+        centroid_info = centroid_info_b,
+        many_to_one_clustering_qc = many_to_one_clustering_qc
     )
 }
 
@@ -596,7 +659,14 @@ cluster_genes_multiomics <- function(
         k           = many_to_one_k,
         seed        = seed
     )
-    names(feature_clusters) <- rownames(modality_mat)
+
+    many_to_one_clustering_qc <- .compute_cluster_centroids_qc(
+        X  = scale(modality_mat),
+        cl = feature_clusters,
+        qc_method = "Pearson R2",
+        center_scale_rows = TRUE,
+        require = "intersection"
+    )
     
     # 2) Build gene x K signature matrix (fractions per global archetype)
     genes <- sort(unique(feat_map))
@@ -621,7 +691,8 @@ cluster_genes_multiomics <- function(
     
     list(
         signatures       = sig_mat,
-        feature_clusters = feature_clusters
+        feature_clusters = feature_clusters,
+        many_to_one_clustering_qc = many_to_one_clustering_qc
     )
 }
 
@@ -705,7 +776,7 @@ cluster_genes_multiomics <- function(
             modality_names
         )
     }
-    
+
     genes_block <- modality_mats[modality_names] |>
         purrr::map(rownames) |>
         purrr::reduce(intersect) |>
@@ -719,15 +790,8 @@ cluster_genes_multiomics <- function(
         function(m) {
             X <- modality_mats[[m]][genes_block, , drop = FALSE] |>
                 as.matrix()
-            
-            if (isTRUE(many_to_one[[m]])) {
-                X <- sqrt(pmax(X, 0))
-            }
-            
-            Xs <- scale(X)
-            p  <- ncol(Xs)
-            
-            Xs * sqrt(w[[m]] / p)
+            p <- ncol(X)
+            X * sqrt(w[[m]] / p)
         }
     )
     
@@ -835,28 +899,16 @@ cluster_genes_multiomics <- function(
         modality_names,
         function(m) {
             mat <- modality_mats[[m]]
-            
             X <- matrix(
                 0,
                 nrow = length(genes_block),
                 ncol = ncol(mat),
-                dimnames = list(
-                    genes_block,
-                    colnames(mat)
-                )
+                dimnames = list(genes_block, colnames(mat))
             )
-            
             idx <- match(rownames(mat), genes_block)
             X[idx, ] <- as.matrix(mat)
-            
-            if (isTRUE(many_to_one[[m]])) {
-                X <- sqrt(pmax(X, 0))
-            }
-            
-            Xs <- scale(X)
-            p  <- ncol(Xs)
-            
-            Xs * sqrt(w[[m]] / p)
+            p <- ncol(X)
+            X * sqrt(w[[m]] / p)
         }
     )
     
@@ -910,17 +962,6 @@ cluster_genes_multiomics <- function(
         seed = NULL,
         verbose = FALSE
 ) {
-    if (is.data.frame(feature_mat)) {
-        feature_mat <- as.matrix(feature_mat)
-    }
-    if (!is.matrix(feature_mat) || !is.numeric(feature_mat)) {
-        stop(
-            "`feature_mat` must be a numeric matrix (or data.frame coercible ",
-            "to one).",
-            call. = FALSE
-        )
-    }
-    
     n_obs <- nrow(feature_mat)
     if (n_obs < 2L) {
         stop("Need at least 2 observations for clustering.", call. = FALSE)
@@ -945,6 +986,12 @@ cluster_genes_multiomics <- function(
             "`feature_mat` must not contain NA/NaN/Inf values.",
             call. = FALSE
         )
+    }
+    
+    rn <- rownames(x)
+    if (is.null(rn)) {
+        rn <- paste0("row_", seq_len(nrow(x)))
+        rownames(x) <- rn
     }
     
     use_mb <- n_obs > 1000L
@@ -991,76 +1038,90 @@ cluster_genes_multiomics <- function(
             )
         }
     }
-    
+
     if (length(k_vec) == 1L) {
         cl <- run_one_k(k_vec)$cluster
-        rn <- rownames(x)
-        if (!is.null(rn)) names(cl) <- rn
-        return(cl)
+    } else {
+        fits <- lapply(k_vec, run_one_k)
+        
+        tot_within <- vapply(
+            fits,
+            function(z) z$tot_within,
+            numeric(1)
+        )
+        
+        p <- ncol(x)
+        bic <- n_obs * log(tot_within / n_obs) +
+            k_vec * log(n_obs) * p
+        
+        best_idx <- which.min(bic)
+        cl <- fits[[best_idx]]$cluster
     }
     
-    fits <- lapply(k_vec, run_one_k)
-    tot_within <- vapply(
-        fits,
-        function(z) z$tot_within,
-        numeric(1)
-    )
-    
-    p <- ncol(x)
-    bic <- n_obs * log(tot_within / n_obs) +
-        k_vec * log(n_obs) * p
-    best_idx <- which.min(bic)
-    
-    cl <- fits[[best_idx]]$cluster
-    rn <- rownames(x)
-    if (!is.null(rn)) names(cl) <- rn
-    
+    names(cl) <- rownames(x)
     cl
 }
 
 
-#' Compute per-modality cluster centroids within a block
+#' Compute per-modality cluster centroids and QC metrics within a block
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that summarizes gene-level clusters for a single
-#' block by computing modality-specific centroid trajectories and quality
-#' metrics.  
+#' Internal wrapper that summarizes gene-level clusters for a single block
+#' by computing modality-specific centroid representations and associated
+#' quality-control (QC) metrics, then adding block- and modality-level
+#' bookkeeping such as coverage and modality type.
+#'
+#' Core centroid and QC calculations are delegated to
+#' \code{.compute_cluster_centroids_qc()} and are performed independently
+#' for each modality using a modality-appropriate similarity measure:
+#' \itemize{
+#'   \item \strong{one-to-one modalities}: Pearson correlation
+#'         coefficient squared (\eqn{R^2}),
+#'   \item \strong{many-to-one modalities}: Bhattacharyya coefficient in
+#'         Hellinger space (\code{"BC(HD)"}).
+#' }
+#'
+#' It is assumed that modality matrices have already been normalized
+#' upstream (row-wise z-scoring for one-to-one modalities; Hellinger
+#' transformation for many-to-one modalities). No additional scaling is
+#' applied here.
 #'
 #' For each modality and each cluster, the function:
 #' \itemize{
-#'   \item identifies the genes assigned to that cluster,
-#'   \item restricts to those genes present in the modality matrix,
-#'   \item z-scores each gene's trajectory (row-wise) to obtain
-#'         shape-centric profiles,
-#'   \item computes the centroid as the mean z-scored trajectory across
-#'         genes, and
-#'   \item evaluates per-gene agreement with the centroid via
-#'         squared correlation (\eqn{R^2}), summarizing with the mean and
-#'         standard deviation.
+#'   \item computes centroid vectors and per-gene QC values using
+#'         \code{.compute_cluster_centroids_qc()},
+#'   \item counts cluster membership (\code{n_genes_cluster}) from
+#'         \code{cl_b},
+#'   \item counts how many cluster genes are present in the modality
+#'         matrix (\code{n_genes_used}),
+#'   \item computes coverage as
+#'         \code{n_genes_used / n_genes_cluster}.
 #' }
 #'
 #' Modality types are inferred from \code{meta_b_modality$many_to_one_k}:
-#' \code{NA} indicates a one-to-one gene-level modality; positive values
-#' indicate many-to-one modalities.
+#' \code{NA} indicates a one-to-one gene-level modality; non-\code{NA}
+#' values indicate many-to-one modalities.
 #'
 #' @param block_id
-#' Character (or factor) scalar giving the identifier of the block for
-#' which centroids are computed.
+#' Character (or factor) scalar giving the identifier of the block for which
+#' centroids and QC metrics are computed.
 #'
 #' @param modality_mats
-#' Named list of numeric matrices, one per modality in the block.  
-#' Each matrix has dimensions \code{genes x spline_points}, with row
-#' names corresponding to gene identifiers.
+#' Named list of numeric matrices, one per modality in the block. Each
+#' matrix has dimensions \code{genes x features}, with row names
+#' corresponding to gene identifiers. Matrices are assumed to be already
+#' normalized according to modality type.
 #'
 #' @param cl_b
-#' Vector of cluster assignments for genes in the block.  
-#' Names must be gene IDs; values are cluster labels (e.g. integers).
+#' Named integer vector of cluster assignments for genes in the block.
+#' Names must be gene identifiers used to match rows in
+#' \code{modality_mats}; values are cluster labels.
 #'
 #' @param meta_b_modality
-#' Data frame with modality-level metadata for this block.  
-#' Must contain at least the columns \code{modality} (matching
+#' Data frame with modality-level metadata for this block. Must contain at
+#' least the columns \code{modality} (matching
 #' \code{names(modality_mats)}) and \code{many_to_one_k} for modality-type
 #' inference.
 #'
@@ -1073,41 +1134,56 @@ cluster_genes_multiomics <- function(
 #'   \item{\code{modality_type}}{Character label, either
 #'         \code{"one_to_one"} or \code{"many_to_one"}.}
 #'   \item{\code{cluster}}{Cluster label.}
-#'   \item{\code{n_genes_cluster}}{Number of genes in the cluster
-#'         (according to \code{cl_b}).}
+#'   \item{\code{n_genes_cluster}}{Number of genes in the cluster according
+#'         to \code{cl_b}.}
 #'   \item{\code{n_genes_used}}{Number of cluster genes present in the
-#'         modality matrix and used to compute the centroid.}
+#'         modality matrix and used to compute centroids and QC metrics.}
 #'   \item{\code{coverage}}{Fraction of cluster genes represented in the
 #'         modality (\code{n_genes_used / n_genes_cluster}).}
-#'   \item{\code{mean_R2}}{Mean squared correlation between each used
-#'         gene's z-scored trajectory and the centroid.}
-#'   \item{\code{sd_R2}}{Standard deviation of the \eqn{R^2} values
-#'         across genes.}
-#'   \item{\code{r2_member}}{List-column; each entry is a named numeric
-#'         vector of per-gene \eqn{R^2} values (names are gene IDs) for
-#'         genes used to compute the centroid in this modality and cluster.}
+#'   \item{\code{qc_method}}{QC metric used for this modality
+#'         (\code{"Pearson R2"} or \code{"BC(HD)"}).}
+#'   \item{\code{mean_qc}}{Mean QC value across genes used in this
+#'         modality and cluster.}
+#'   \item{\code{sd_qc}}{Standard deviation of the QC values across genes
+#'         used in this modality and cluster.}
+#'   \item{\code{qc_member}}{List-column; each entry is a named numeric
+#'         vector of per-gene QC values (names are gene IDs) for genes used
+#'         in this modality and cluster.}
 #'   \item{\code{centroid}}{List-column; each entry is a numeric vector
-#'         giving the centroid trajectory (length
-#'         \code{ncol(modality_mats[[modality]])}).}
+#'         giving the centroid representation for this modality and
+#'         cluster.}
 #' }
-#'
+#' 
 .compute_block_centroids <- function(
         block_id,
         modality_mats,
         cl_b,
         meta_b_modality
 ) {
-    centroid_rows <- list()
+    out <- list()
     row_i <- 0L
     
-    clusters <- sort(unique(cl_b))
+    clusters <- sort(unique(as.integer(cl_b)))
     
     for (ln in names(modality_mats)) {
         mat_l <- modality_mats[[ln]]
         
-        # determine modality type from meta_b_modality (NA = one-to-one)
         lk <- meta_b_modality$many_to_one_k[meta_b_modality$modality == ln][1L]
         modality_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
+        
+        qc_method <- if (modality_type == "one_to_one") {
+            "Pearson R2"
+        } else {
+            "BC(HD)"
+        }
+        
+        stats_l <- .compute_cluster_centroids_qc(
+            X  = mat_l,
+            cl = cl_b,
+            qc_method = qc_method,
+            center_scale_rows = FALSE,
+            require = "intersection"
+        )
         
         for (c in clusters) {
             genes_cluster <- names(cl_b)[cl_b == c]
@@ -1116,50 +1192,24 @@ cluster_genes_multiomics <- function(
             genes_modality <- intersect(genes_cluster, rownames(mat_l))
             n_used <- length(genes_modality)
             
-            coverage <- if (n_cluster > 0L) {
-                n_used / n_cluster
-            } else {
-                NA_real_
-            }
+            coverage <- if (n_cluster > 0L) n_used / n_cluster else NA_real_
             
-            if (n_used == 0L) {
-                centroid <- rep(NA_real_, ncol(mat_l))
-                r2_member  <- setNames(numeric(0), character(0))
-                mean_R2 <- NA_real_
-                sd_R2 <- NA_real_
-            } else {
-                X <- mat_l[genes_modality, , drop = FALSE]
-                
-                # row-wise z-score (shape-centric)
-                X_z <- t(scale(t(X)))
-                
-                if (n_used == 1L) {
-                    centroid <- as.numeric(X_z[1L, ])
-                    r2_member <- setNames(1, genes_modality)
-                    mean_R2 <- 1
-                    sd_R2 <- 0
-                } else {
-                    centroid <- colMeans(X_z, na.rm = TRUE)
-                    
-                    r2_vec <- apply(
-                        X_z,
-                        1L,
-                        function(x) {
-                            r <- suppressWarnings(
-                                stats::cor(x, centroid)
-                            )
-                            r^2
-                        }
-                    )
-                    r2_member <- r2_vec
-                    names(r2_member) <- rownames(X_z)
-                    mean_R2 <- mean(r2_vec, na.rm = TRUE)
-                    sd_R2 <- stats::sd(r2_vec, na.rm = TRUE)
-                }
+            st <- stats_l[stats_l$cluster == c, , drop = FALSE]
+            if (nrow(st) == 0L) {
+                st <- data.frame(
+                    cluster   = c,
+                    n_used    = 0L,
+                    qc_method = qc_method,
+                    mean_qc   = NA_real_,
+                    sd_qc     = NA_real_,
+                    qc_member = I(list(setNames(numeric(0), character(0)))),
+                    centroid  = I(list(rep(NA_real_, ncol(mat_l)))),
+                    stringsAsFactors = FALSE
+                )
             }
             
             row_i <- row_i + 1L
-            centroid_rows[[row_i]] <- data.frame(
+            out[[row_i]] <- data.frame(
                 block           = block_id,
                 modality        = ln,
                 modality_type   = modality_type,
@@ -1167,17 +1217,18 @@ cluster_genes_multiomics <- function(
                 n_genes_cluster = n_cluster,
                 n_genes_used    = n_used,
                 coverage        = coverage,
-                mean_R2         = mean_R2,
-                sd_R2           = sd_R2,
-                r2_member       = I(list(r2_member)),
-                centroid        = I(list(centroid)),
+                qc_method       = st$qc_method,
+                mean_qc         = st$mean_qc,
+                sd_qc           = st$sd_qc,
+                qc_member       = st$qc_member,
+                centroid        = st$centroid,
                 stringsAsFactors = FALSE
             )
         }
     }
     
-    if (length(centroid_rows) == 0L) {
-        centroid_info_b <- data.frame(
+    if (length(out) == 0L) {
+        return(data.frame(
             block           = character(0),
             modality        = character(0),
             modality_type   = character(0),
@@ -1185,20 +1236,16 @@ cluster_genes_multiomics <- function(
             n_genes_cluster = integer(0),
             n_genes_used    = integer(0),
             coverage        = numeric(0),
-            mean_R2         = numeric(0),
-            sd_R2           = numeric(0),
-            r2_member       = I(list()),
+            qc_method       = character(0),
+            mean_qc         = numeric(0),
+            sd_qc           = numeric(0),
+            qc_member       = I(list()),
             centroid        = I(list()),
             stringsAsFactors = FALSE
-        )
-    } else {
-        centroid_info_b <- do.call(
-            rbind,
-            centroid_rows
-        )
+        ))
     }
     
-    centroid_info_b
+    do.call(rbind, out)
 }
 
 
@@ -1465,8 +1512,16 @@ cluster_genes_multiomics <- function(
             call. = FALSE
         )
     }
-    required_modality_cols <- c("block", "modality", "many_to_one_k", "modality_w")
-    missing_modality_cols <- setdiff(required_modality_cols, colnames(modality_meta))
+    required_modality_cols <- c(
+        "block", 
+        "modality",
+        "many_to_one_k",
+        "modality_w"
+        )
+    missing_modality_cols <- setdiff(
+        required_modality_cols,
+        colnames(modality_meta)
+        )
     if (length(missing_modality_cols) > 0L) {
         stop(
             "`modality_meta` is missing required columns: ",
@@ -1560,7 +1615,8 @@ cluster_genes_multiomics <- function(
 #' Per-modality checks:
 #' \itemize{
 #'   \item no \code{NA} values in modality matrices,
-#'   \item one-to-one modalities (\code{many_to_one_k = NA}) have unique rownames,
+#'   \item one-to-one modalities (\code{many_to_one_k = NA}) have
+#'    unique rownames,
 #'   \item many-to-one modalities (\code{many_to_one_k > 0}) have rownames
 #'   containing
 #'   an underscore and have at least \code{max(2, many_to_one_k)} rows.
@@ -1574,8 +1630,8 @@ cluster_genes_multiomics <- function(
 #'   list of modality matrices.
 #'
 #' @param modality_meta Data frame with modality-level metadata, including at
-#'   least \code{block}, \code{modality}, and \code{many_to_one_k}. Entries must be
-#'   consistent with \code{blocks}.
+#'   least \code{block}, \code{modality}, and \code{many_to_one_k}. Entries
+#'    must be consistent with \code{blocks}.
 #'
 #' @return Invisibly returns \code{TRUE} if all checks pass.
 #' 
@@ -1789,4 +1845,308 @@ cluster_genes_multiomics <- function(
     }
     
     invisible(TRUE)
+}
+
+
+#' Rank cluster centroid summaries by overall within-cluster coherence
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that ranks cluster-level centroid summaries by their
+#' overall coherence across modalities.
+#'
+#' For each cluster, the function computes the average of the per-modality
+#' \code{mean_R2} values (ignoring missing values), yielding a single
+#' summary statistic that reflects how consistently cluster members align
+#' with their centroids across all available omics layers. The input table
+#' is then augmented with this average metric and sorted such that clusters
+#' with the highest overall coherence appear first.
+#'
+#' @param centroid_info_b
+#' Data frame as returned by \code{.compute_block_centroids()}, containing
+#' one row per \code{(block, modality, cluster)} combination and at least
+#' the columns \code{cluster} and \code{mean_R2}.
+#'
+#' @return
+#' A data frame with the same rows as \code{centroid_info_b}, augmented by an
+#' additional column \code{avg_mean_R2} giving the mean of \code{mean_R2}
+#' across modalities for each cluster. Rows are ordered in decreasing order
+#' of \code{avg_mean_R2}, with ties broken by cluster label and modality.
+#' 
+#' @importFrom stats aggregate
+#'
+.rank_clusters <- function(centroid_info_b) {
+    score <- centroid_info_b$mean_qc
+    is_hel <- centroid_info_b$qc_method == "BC(HD)"
+    score[is_hel] <- 1 - score[is_hel]
+    
+    tmp <- centroid_info_b
+    tmp$qc_score <- score
+    
+    avg <- stats::aggregate(
+        qc_score ~ cluster,
+        data = tmp,
+        FUN = function(x) mean(x, na.rm = TRUE)
+    )
+    names(avg)[names(avg) == "qc_score"] <- "avg_qc_score"
+    
+    out <- merge(
+        tmp,
+        avg,
+        by = "cluster",
+        all.x = TRUE,
+        sort = FALSE
+    )
+    
+    out <- out[order(-out$avg_qc_score, out$cluster, out$modality), ,
+               drop = FALSE]
+    
+    out$qc_score <- NULL
+    out
+}
+
+
+# Level 3 function definitions -------------------------------------------------
+
+
+#' Compute cluster centroids and per-member QC values
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that computes centroid representations and per-feature
+#' quality-control (QC) metrics for clusters defined on the rows of a
+#' numeric matrix. The function operates on a single matrix and a named
+#' cluster assignment vector and is agnostic to any higher-level biological,
+#' block, or modality-specific context.
+#'
+#' For each cluster, the function:
+#' \itemize{
+#'   \item restricts the input matrix to rows present in both \code{X} and
+#'         \code{cl},
+#'   \item optionally applies row-wise z-scoring to obtain shape-centric
+#'         profiles,
+#'   \item computes the centroid as the mean vector across rows, and
+#'   \item evaluates per-row agreement with the centroid using a
+#'         user-specified QC metric.
+#' }
+#'
+#' Two QC metrics are supported:
+#' \itemize{
+#'   \item \code{"Pearson R2"}: squared Pearson correlation between each
+#'         row and the centroid (higher values indicate stronger agreement),
+#'   \item \code{"BC(HD)"}: Bhattacharyya coefficient computed in Hellinger
+#'         space (assumes rows represent square-root–transformed
+#'         compositions; values lie in \eqn{[0,1]} with higher values
+#'         indicating greater similarity).
+#' }
+#'
+#' The function is designed to be reusable across contexts (e.g. block-level
+#' centroid summaries, site-level clustering quality control) and performs
+#' no bookkeeping beyond cluster-local statistics.
+#'
+#' @param X
+#' Numeric matrix with rows corresponding to features and columns to ordered
+#' measurements (e.g. spline points, time points, or signature components).
+#' Row names must uniquely identify features.
+#'
+#' @param cl
+#' Named integer vector of cluster assignments. Names must correspond to
+#' row names of \code{X} (or a subset thereof); values are cluster labels.
+#'
+#' @param qc_method
+#' Character scalar specifying the QC metric to use. Either
+#' \code{"Pearson R2"} or \code{"BC(HD)"}.
+#'
+#' @param center_scale_rows
+#' Logical scalar; if \code{TRUE}, each row of \code{X} is z-scored
+#' (centered and scaled) prior to centroid computation and QC evaluation.
+#' If \code{FALSE}, centroids and QC metrics are computed on the original
+#' scale of \code{X}.
+#'
+#' @param require
+#' Character scalar controlling behavior when there is no overlap between
+#' \code{names(cl)} and \code{rownames(X)}. If \code{"error"} (default), an
+#' error is raised; if \code{"intersection"}, an empty result is returned.
+#'
+#' @return
+#' A data frame with one row per cluster and the following columns:
+#' \describe{
+#'   \item{\code{cluster}}{Cluster label.}
+#'   \item{\code{n_used}}{Number of rows (features) used to compute the
+#'         centroid for this cluster.}
+#'   \item{\code{qc_method}}{QC metric used
+#'         (\code{"Pearson R2"} or \code{"BC(HD)"}).}
+#'   \item{\code{mean_qc}}{Mean QC value across rows in the cluster.}
+#'   \item{\code{sd_qc}}{Standard deviation of the QC values across rows.}
+#'   \item{\code{qc_member}}{List-column; each entry is a named numeric
+#'         vector of per-row QC values (names are feature IDs).}
+#'   \item{\code{centroid}}{List-column; each entry is a numeric vector
+#'         giving the centroid representation (length \code{ncol(X)}).}
+#' }
+#'
+.compute_cluster_centroids_qc <- function(
+        X,
+        cl,
+        qc_method = c("Pearson R2", "BC(HD)"),
+        center_scale_rows = FALSE,
+        require = c("intersection", "error")
+) {
+    qc_method <- match.arg(qc_method)
+    require <- match.arg(require)
+    
+    common <- intersect(names(cl), rownames(X))
+    if (length(common) == 0L) {
+        if (require == "error") {
+            stop_call_false("No overlap between names(cl) and rownames(X).")
+        }
+        return(data.frame(
+            cluster   = integer(0),
+            n_used    = integer(0),
+            qc_method = character(0),
+            mean_qc   = numeric(0),
+            sd_qc     = numeric(0),
+            qc_member = I(list()),
+            centroid  = I(list()),
+            stringsAsFactors = FALSE
+        ))
+    }
+    
+    X2  <- X[common, , drop = FALSE]
+    cl2 <- cl[common]
+    clusters <- sort(unique(as.integer(cl2)))
+    
+    rows <- vector("list", length(clusters))
+    for (i in seq_along(clusters)) {
+        c <- clusters[i]
+        idx <- which(cl2 == c)
+        feats <- names(cl2)[idx]
+        Xc <- X2[feats, , drop = FALSE]
+        n_used <- nrow(Xc)
+        
+        if (n_used == 0L) {
+            centroid  <- rep(NA_real_, ncol(X2))
+            qc_member <- setNames(numeric(0), character(0))
+            mean_qc <- NA_real_
+            sd_qc <- NA_real_
+        } else {
+            if (isTRUE(center_scale_rows)) {
+                X_use <- t(scale(t(Xc)))
+                X_use[is.na(X_use)] <- 0
+            } else {
+                X_use <- Xc
+            }
+            
+            if (n_used == 1L) {
+                centroid <- as.numeric(X_use[1L, ])
+                
+                if (qc_method == "Pearson R2") {
+                    qc_member <- setNames(1, rownames(X_use))
+                    mean_qc <- 1
+                    sd_qc <- 0
+                } else {
+                    qc_member <- setNames(1, rownames(X_use))
+                    mean_qc <- 1
+                    sd_qc <- 0
+                }
+            } else {
+                centroid <- colMeans(X_use, na.rm = TRUE)
+                
+                if (qc_method == "Pearson R2") {
+                    qc_vec <- apply(
+                        X_use,
+                        1L,
+                        function(x) {
+                            r <- suppressWarnings(stats::cor(x, centroid))
+                            r^2
+                        }
+                    )
+                } else {
+                    # Bhattacharyya coefficient in [0, 1] for Hellinger space
+                    # If X_use rows are sqrt(p) and centroid is their mean,
+                    # BC can be computed as sum_i x_i * centroid_i.
+                    qc_vec <- apply(
+                        X_use,
+                        1L,
+                        function(x) {
+                            sum(x * centroid)
+                        }
+                    )
+                    qc_vec <- pmax(0, pmin(1, qc_vec))
+                }
+                
+                names(qc_vec) <- rownames(X_use)
+                qc_member <- qc_vec
+                mean_qc <- mean(qc_vec, na.rm = TRUE)
+                sd_qc   <- stats::sd(qc_vec, na.rm = TRUE)
+            }
+        }
+        
+        rows[[i]] <- data.frame(
+            cluster   = c,
+            n_used    = n_used,
+            qc_method = qc_method,
+            mean_qc   = mean_qc,
+            sd_qc     = sd_qc,
+            qc_member = I(list(qc_member)),
+            centroid  = I(list(centroid)),
+            stringsAsFactors = FALSE
+        )
+    }
+    
+    do.call(rbind, rows)
+}
+
+
+#' Normalize a modality-specific gene feature matrix
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that applies modality-appropriate normalization to a
+#' gene-level feature matrix prior to multi-omics integration.
+#'
+#' For one-to-one modalities (e.g. transcriptomics, proteomics), features
+#' are interpreted as temporal trajectories and normalization is performed
+#' by row-wise z-scoring (shape-centric normalization), ensuring that
+#' clustering is driven by relative temporal patterns rather than absolute
+#' magnitudes.
+#'
+#' For many-to-one modalities (e.g. site- or probe-level signatures),
+#' normalization is performed using a Hellinger transform (square root of
+#' non-negative values), yielding a geometry appropriate for Euclidean
+#' methods when working with compositional or fractional signatures.
+#'
+#' @param mat
+#' Numeric matrix of dimension \code{genes x features}. Row names are gene
+#' identifiers; columns represent modality-specific features (e.g. spline
+#' points or signature components).
+#'
+#' @param is_many_to_one
+#' Logical scalar indicating whether the modality represents a many-to-one
+#' gene summary. If \code{TRUE}, Hellinger normalization is applied; if
+#' \code{FALSE}, row-wise z-scoring is used.
+#'
+#' @return
+#' A numeric matrix of the same dimension as \code{mat}, normalized according
+#' to the modality type. For one-to-one modalities, rows have mean zero and
+#' unit variance (with constant rows mapped to zero). For many-to-one
+#' modalities, entries are non-negative and square-root transformed.
+#'
+.normalize_modality_mat <- function(
+        mat,
+        is_many_to_one
+        ) {
+    mat <- as.matrix(mat)
+    
+    if (isTRUE(is_many_to_one)) {
+        # Hellinger (assumes non-negative; safe guard)
+        return(sqrt(pmax(mat, 0)))
+    }
+    
+    # one-to-one: row-wise z-score (shape-centric)
+    z <- t(scale(t(mat)))
+    z[is.na(z)] <- 0
+    z
 }

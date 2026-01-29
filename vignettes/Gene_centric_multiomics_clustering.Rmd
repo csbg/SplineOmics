@@ -263,131 +263,23 @@ The function returns a list with `cluster_table` and `centroid_info`.
 
 ```{r run cluster_genes_multiomics, eval = TRUE}
 res <- cluster_genes_multiomics(
-  blocks        = blocks,
+  blocks         = blocks,
   block_clusters = block_clusters,
-  modality_meta = modality_meta,
-  gene_mode     = "intersection",
-  verbose       = TRUE
+  modality_meta  = modality_meta,
+  gene_mode      = "intersection",
+  verbose        = TRUE
 )
+```
 
+Show outputs:
+
+```{r show outputs}
 cluster_table <- res$cluster_table
 centroid_info <- res$centroid_info
+
+print(cluster_table)
+print(centroid_info)
 ```
-
-## 4. Inspect `cluster_table`
-
-`cluster_table` contains one row per gene and one cluster assignment column per
-block. For time-effect blocks (result category 1), these columns are named
-`cluster_<cond>`.
-
-```{r inspect cluster_table, eval = TRUE}
-cluster_table
-
-table(cluster_table$cluster_Constant, useNA = "ifany")
-table(cluster_table$cluster_Temp_shifted, useNA = "ifany")
-```
-
-## 5. Inspect `centroid_info`
-
-`centroid_info` summarizes, for each (block × modality × cluster), the centroid
-trajectory (list-column) and coherence metrics (mean and sd of per-gene R²).
-If your implementation stores per-member R² values in `r2_member`, you can use
-those to inspect outliers within a cluster.
-
-```{r inspect centroid_info, eval = TRUE}
-centroid_info
-
-subset(
-  centroid_info,
-  block == "Constant" & modality == "rna",
-  select = c("block", "modality", "cluster", "n_genes_used",
-             "coverage", "mean_R2", "sd_R2")
-)
-```
-
-### 5.1 Plot a centroid trajectory
-
-Centroids are stored as numeric vectors in a list-column. Use `[[ ]]` to extract
-a single centroid and plot it.
-
-```{r plot centroid trajectory, eval = TRUE}
-ci_rna_const <- subset(
-  centroid_info,
-  block == "Constant" & modality == "rna"
-)
-
-i <- 1
-
-centroid_df <- data.frame(
-  time  = seq_along(ci_rna_const$centroid[[i]]),
-  value = ci_rna_const$centroid[[i]]
-)
-
-ggplot(centroid_df, aes(x = time, y = value)) +
-  geom_line(linewidth = 0.9) +
-  geom_point(size = 1.8) +
-  labs(
-    title = paste(
-      "Centroid trajectory:",
-      ci_rna_const$block[i],
-      ci_rna_const$modality[i],
-      "cluster", ci_rna_const$cluster[i]
-    ),
-    x = "Spline / time point",
-    y = "Centroid (z-scored)"
-  ) +
-  theme_bw()
-
-```
-
-### 5.2 Inspect per-member R² values
-
-If your `centroid_info` includes a list-column `r2_member` (named numeric
-vectors of per-gene R²), you can examine the distribution and identify low-fit
-genes. If the column does not exist, this section will be skipped.
-
-```{r inspect per-member R2 values, eval = TRUE}
-if ("r2_member" %in% names(ci_rna_const)) {
-
-  i <- 1
-  r2 <- ci_rna_const$r2_member[[i]]
-
-  print(head(r2))
-  print(summary(r2))
-
-  r2_df <- data.frame(
-    gene = names(r2),
-    R2   = unname(r2)
-  )
-
-  p <- ggplot(r2_df, aes(x = R2)) +
-    geom_histogram(
-      bins = 15,
-      colour = "black",
-      fill = "grey80"
-    ) +
-    labs(
-      title = paste(
-        "Per-gene R² to centroid:",
-        ci_rna_const$block[i],
-        ci_rna_const$modality[i],
-        "cluster", ci_rna_const$cluster[i]
-      ),
-      x = expression(R^2),
-      y = "Gene count"
-    ) +
-    theme_bw()
-
-  print(p)
-
-  bad <- r2_df$gene[r2_df$R2 < 0.2]
-  print(bad)
-
-} else {
-  message("No r2_member column found in centroid_info (optional feature).")
-}
-```
-
 
 # Session Info
 
