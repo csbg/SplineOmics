@@ -1,4 +1,4 @@
-# phosphoproteomics pipeline snapshot
+# find_pvc phosphoproteomics pipeline snapshot
 
     {
       "type": "list",
@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["warnings", "structure", "exponential", "stationary"]
+          "value": ["warnings", "structure", "exponential", "stationary", "attributes"]
         }
       },
       "value": [
@@ -21,29 +21,19 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["exp_names", "stat_names", "exp_plots_len", "stat_plots_len"]
+              "value": ["exp_names", "stat_names"]
             }
           },
           "value": [
             {
               "type": "character",
               "attributes": {},
-              "value": ["plots", "pvc_adj_pvals", "pvc_pattern_summary"]
+              "value": ["pvc_adj_pvals", "pvc_pattern_summary"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["plots", "pvc_adj_pvals", "pvc_pattern_summary"]
-            },
-            {
-              "type": "integer",
-              "attributes": {},
-              "value": [4]
-            },
-            {
-              "type": "integer",
-              "attributes": {},
-              "value": [64]
+              "value": ["pvc_adj_pvals", "pvc_pattern_summary"]
             }
           ]
         },
@@ -53,10 +43,13 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["pvc_adj_pvals_dim", "pvc_adj_pvals_head5", "pvc_pattern_summary"]
+              "value": ["alpha", "pvc_adj_pvals_dim", "pvc_adj_pvals_head5", "pvc_pattern_summary"]
             }
           },
           "value": [
+            {
+              "type": "NULL"
+            },
             {
               "type": "integer",
               "attributes": {},
@@ -149,10 +142,13 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["pvc_adj_pvals_dim", "pvc_adj_pvals_head5", "pvc_pattern_summary"]
+              "value": ["alpha", "pvc_adj_pvals_dim", "pvc_adj_pvals_head5", "pvc_pattern_summary"]
             }
           },
           "value": [
+            {
+              "type": "NULL"
+            },
             {
               "type": "integer",
               "attributes": {},
@@ -236,6 +232,27 @@
                   "value": [0, 0, 0, 0]
                 }
               ]
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "attributes": {
+            "names": {
+              "type": "character",
+              "attributes": {},
+              "value": ["padjust_method", "support", "batch_effects"]
+            }
+          },
+          "value": [
+            {
+              "type": "NULL"
+            },
+            {
+              "type": "NULL"
+            },
+            {
+              "type": "NULL"
             }
           ]
         }

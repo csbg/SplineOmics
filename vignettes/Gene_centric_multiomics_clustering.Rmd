@@ -25,27 +25,30 @@ if (capabilities("cairo")) options(bitmapType = "cairo")
 
 # Gene-centric multiomics clustering
 
-This vignette explains the approach taken by the `SplineOmics` function: 
+This vignette explains the approach taken by the `SplineOmics` function:
 `cluster_genes_multiomics`. Figure 1 shows the methodological approach.
 
-```{r fig-cluster-genes-multiomics, echo=FALSE, out.width="100%", fig.cap="Figure 1: Overview of the gene-centric multi-omics clustering approach. (A) Multi-omics time-series data are collected across several molecular data modalities Some modalities provide a single trajectory per gene, while others contain multiple features that map to the same gene. (B) For modalities with a many-to-one mapping to genes, all feature trajectories are jointly clustered into dynamic pattern groups (shape archetypes). For each gene, the distribution of its features across these pattern groups is summarized as a fixed-length pattern-signature vector. This preserves information from all features without collapsing them and ensures that each gene obtains a standardized representation, regardless of how many features map to it. (C) For every omics modality, a gene-gene distance matrix is computed using the corresponding gene-level trajectories or pattern-signature vectors. This yields one gene×gene distance matrix per modality, each capturing modality-specific similarity between genes. (D) The modality-specific distance matrices are combined into a unified multi-omics distance using user-defined block weights: D(i,j) = Σ w_l * d_l(i,j). The resulting integrated distance matrix reflects multi-modality similarity while preventing any single modality from dominating. (E) Genes are then clustered based on this unified distance to identify coherent multi-omics gene modules."}
-knitr::include_graphics("https://raw.githubusercontent.com/csbg/SplineOmics_html_reports/main/figures/SplineOmics_%20cluster_genes_multiomics_approach.png")
-```
+**Figure 1.** Overview of the gene-centric multi-omics clustering
+approach.\
+See the figure
+[**here**](https://raw.githubusercontent.com/csbg/SplineOmics_html_reports/main/figures/SplineOmics_%20cluster_genes_multiomics_approach.png).
 
 Here is now shown how to use `cluster_genes_multiomics()` on a small,
-synthetic dataset. The example generates multi-omics time-series trajectories,
-including a many-to-one modality (feature-level measurements mapping to genes),
-and shows how to assemble the required inputs:
+synthetic dataset. The example generates multi-omics time-series
+trajectories, including a many-to-one modality (feature-level
+measurements mapping to genes), and shows how to assemble the required
+inputs:
 
-- `blocks` (nested list of block × modality matrices)
-- `block_meta` (block-level metadata)
-- `modality_meta` (modality-level metadata)
+-   `blocks` (nested list of block × modality matrices)
+-   `block_meta` (block-level metadata)
+-   `modality_meta` (modality-level metadata)
 
 The function returns a named list with two tibbles:
 
-- `cluster_table`: per-gene cluster assignments per block
-- `centroid_info`: per-block, per-modality centroid trajectories and
-  within-cluster coherence summaries (and optionally per-member R² vectors)
+-   `cluster_table`: per-gene cluster assignments per block
+-   `centroid_info`: per-block, per-modality centroid trajectories and
+    within-cluster coherence summaries (and optionally per-member R²
+    vectors)
 
 ```{r Load the packages, eval = TRUE}
 library(SplineOmics)
@@ -55,15 +58,15 @@ library(ggplot2)
 
 ## 1. Simulate multi-omics time-series data
 
-We generate two blocks (conditions): `Constant` and `Temp_shifted`. Each block
-contains three modalities:
+We generate two blocks (conditions): `Constant` and `Temp_shifted`. Each
+block contains three modalities:
 
-- `rna` (one-to-one; one trajectory per gene)
-- `protein` (one-to-one; one trajectory per gene)
-- `phospho` (many-to-one; multiple features map to each gene)
+-   `rna` (one-to-one; one trajectory per gene)
+-   `protein` (one-to-one; one trajectory per gene)
+-   `phospho` (many-to-one; multiple features map to each gene)
 
-The synthetic data uses a small set of canonical temporal shapes and assigns
-each gene to one latent shape (for simulation only).
+The synthetic data uses a small set of canonical temporal shapes and
+assigns each gene to one latent shape (for simulation only).
 
 ```{r simulate dataset, eval = TRUE}
 set.seed(1)
@@ -98,9 +101,9 @@ gene_group <- sample(seq_len(true_k), n_genes, replace = TRUE)
 
 ### 1.1 Simulate RNA and protein (one-to-one)
 
-RNA is simulated from the latent shapes with noise. Protein is simulated as a
-lagged and scaled version of RNA (with additional noise), mimicking delayed
-protein dynamics relative to transcripts.
+RNA is simulated from the latent shapes with noise. Protein is simulated
+as a lagged and scaled version of RNA (with additional noise), mimicking
+delayed protein dynamics relative to transcripts.
 
 ```{r simulate one to one data modalities, eval = TRUE}
 .simulate_one_to_one <- function(genes, shapes, gene_group, noise_sd = 0.18) {
@@ -162,8 +165,8 @@ colnames(protein_temp) <- colnames(rna_temp)
 
 ### 1.2 Simulate phospho features (many-to-one)
 
-For each gene, we create 1–4 phospho features. Each feature follows the gene’s
-latent shape with feature-specific perturbations. Rows are named
+For each gene, we create 1–4 phospho features. Each feature follows the
+gene’s latent shape with feature-specific perturbations. Rows are named
 `<gene>_<feature>` to encode the many-to-one mapping.
 
 ```{r simulate many to one data modality, eval = TRUE}
@@ -223,10 +226,11 @@ for (i in seq_len(nrow(phospho_temp))) {
 
 ## 2. Build inputs for `cluster_genes_multiomics()`
 
-Each block is a list of modality matrices. `block_meta` defines the number of
-gene clusters per block and the result category. `modality_meta` specifies, per
-(block × modality), whether a modality is one-to-one (`many_to_one_k = NA`)
-or many-to-one (`many_to_one_k` positive), and the relative modality weights.
+Each block is a list of modality matrices. `block_meta` defines the
+number of gene clusters per block and the result category.
+`modality_meta` specifies, per (block × modality), whether a modality is
+one-to-one (`many_to_one_k = NA`) or many-to-one (`many_to_one_k`
+positive), and the relative modality weights.
 
 ```{r prepare blocks and blocks meta, eval = TRUE}
 blocks <- list(

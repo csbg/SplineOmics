@@ -273,7 +273,21 @@ splineomics <- SplineOmics::create_splineomics(
 
 # Run the PVC-analysis
 
-```{r Define plot_info, eval = TRUE}
+```{r run find_pvc function, eval = TRUE}
+# Check out the documentation of the function under the Reference tab.
+pvc_results <- SplineOmics::find_pvc(
+    splineomics = splineomics,
+    alphas = 0.025,
+    padjust_method = "BH",
+    support = 1
+)
+
+pvc_results
+```
+
+# Create the plots and HTML report
+
+```{r Create the plots and HTML report, eval = TRUE}
 plot_info <- list(
     y_axis_label = "log2 intensity",
     time_unit = "min",
@@ -286,16 +300,13 @@ plot_info <- list(
         Stationary = 146
     )
 )
-```
 
-```{r run find_pvc function, eval = TRUE}
-# Check out the documentation of the function under the Reference tab.
-excursion_plots <- SplineOmics::find_pvc(
+SplineOmics::create_pvc_report(
     splineomics = splineomics,
-    alphas = 0.025,
+    pvc_results = pvc_results,
     plot_info = plot_info,
-    report_dir = withr::local_tempdir()
-)
+    report_dir = file.path(tempdir(), "splineomics_pvc_report")
+) 
 ```
 
 The terminal output of the function gives information about the total amount

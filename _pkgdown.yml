@@ -71,6 +71,7 @@ reference:
       - create_clustering_report
       - create_limma_report
       - create_ora_report
+      - create_pvc_report
       - create_splineomics
       - extract_gene_sets
       - download_enrichr_databases

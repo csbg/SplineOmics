@@ -1,218 +1,123 @@
 #' Find peaks and valleys in time-series omics data
 #'
 #' @description
-#' Identifies significant local peaks or valleys (excursions) in
-#' time-series omics data using a Union-Intersection Test (UIT)-based
-#' approach. This function wraps the detection and plotting steps,
-#' returning visualizations of all features with at least one excursion.
+#' Identifies significant local peaks or valleys (excursions) in time-series
+#' omics data using a Union-Intersection Test (UIT)-based approach. This
+#' function performs statistical detection only and returns per-condition
+#' excursion statistics. Plotting and report generation are handled by
+#' `create_pvc_report()`.
 #'
-#' @param splineomics `list`: A list containing the preprocessed time-series 
-#' input data. Must include the following named elements:
-#'
+#' @param splineomics `list`: Preprocessed time-series input. Must include
+#'   at least:
 #' \itemize{
-#'   \item \code{data}: `matrix` Numeric matrix of feature values. Rows are 
-#'   features (e.g., genes or proteins), columns are samples 
-#'   (timepoint–replicate combinations).
-#'
-#'   \item \code{meta}: `data.frame` Data frame of sample metadata 
-#'   corresponding to the columns of \code{data}. Must include a 
-#'   \code{"Time"} column, and typically other columns describing conditions 
-#'   or experimental factors.
-#'
-#'   \item \code{meta_batch_column}: `character(1)` Character string giving 
-#'   the column name in \code{meta} that identifies replicates or batches.
-#'
-#'   \item \code{padjust_method}: `character(1)` Character string specifying 
-#'   the method for p-value adjustment (e.g., \code{"BH"}, 
-#'   \code{"bonferroni"}).
+#'   \item \code{data}: `matrix` Feature-by-sample numeric matrix.
+#'   \item \code{meta}: `data.frame` Sample metadata for \code{data} columns.
+#'     Must include a \code{"Time"} column and the column specified by
+#'     \code{condition}.
+#'   \item \code{condition}: `character(1)` Column name in \code{meta} that
+#'     defines condition levels.
+#'   \item \code{meta_batch_column}: `character(1)` Column name in \code{meta}
+#'     identifying replicates or batches.
+#'   \item \code{meta_batch2_column}: `character(1)` Optional second batch
+#'     column name in \code{meta}.
 #' }
 #'
-#' @param alphas `numeric(1)` | `list(numeric)`: A single numeric value or a 
-#' named list of numeric thresholds used to identify significant excursion 
-#' points. If a single value is provided (numeric scalar or list of length 1), 
-#' the same threshold is applied to all condition levels. If a named list is 
-#' provided, it must contain one numeric value per condition level, with names 
-#' matching the condition levels exactly. This input is normalized internally 
-#' to ensure consistent per-level access.
+#' @param alphas `numeric(1)` | `list(numeric)`: Significance threshold(s) for
+#'   excursion calls. A scalar applies to all condition levels. A named list
+#'   provides one threshold per condition level; names must match levels in
+#'   \code{meta[[condition]]}. Internally normalized for per-level access.
 #'
-#' @param padjust_method `character(1)`: A character string specifying the 
-#' method for multiple testing correction. Defaults to `"BH"` 
-#' (Benjamini-Hochberg).
+#' @param padjust_method `character(1)`: Multiple testing correction method
+#'   passed to `pvc_test()`. Defaults to `"BH"`.
 #'
-#' @param support `numeric(1)`: Minimum amount of non-NA values in each 
-#' timepoint that influence a PVC-test result. For example, with timepoints 
-#' 10, 15, 20 and support = 1, then for timepoint 15 for a given feature, the 
-#' timepoints 10, 15, and 20 each must have at least 1 non-NA value. If one or 
-#' more of those timepoints for that feature don't meet this criterium, then 
-#' the p-value for that feature at timepoint 15 is set to NA.
+#' @param support `numeric(1)`: Minimum number of non-NA values required per
+#'   timepoint neighborhood to keep a PVC p-value. For a given feature at a
+#'   target timepoint, the target and its neighboring timepoints must each
+#'   have at least \code{support} non-NA observations; otherwise the p-value
+#'   at the target timepoint is set to \code{NA}.
 #'
-#' @param plot_info `list`: List with optional elements used to annotate spline 
-#' plots:
-#'
-#' - `y_axis_label`: `character(1)` single string for the y-axis label.
-#' - `time_unit`: `character(1)` single string used in the x-axis label.
-#' - `treatment_labels`: `list(character(1))` named list of single strings.
-#' - `treatment_timepoints`: `list(numeric(1))` named list of single numeric 
-#'   values.
-#'
-#' If any treatment list is present, both must be present. The two lists must 
-#' have identical name sets. Allowed names are the values of 
-#' `meta[[condition]]`.
-#'
-#' Vertical dashed lines are drawn at the given timepoints for facets whose 
-#' level name matches a list name, and labeled with the corresponding string 
-#' (e.g., feeding, temperature shift).
-#'
-#' Example:
-#'
-#' ```r
-#' plot_info <- list(
-#'   y_axis_label = "log2 expression",
-#'   time_unit = "hours",
-#'   treatment_labels = list(
-#'     WT = "Feeding",
-#'     KO = "Temperature shift"
-#'   ),
-#'   treatment_timepoints = list(
-#'     WT = 12,
-#'     KO = 24
-#'   )
-#' )
-#' ```
-#'
-#' @param report_dir `character(1)`: Character string specifying the directory 
-#' path where the HTML report and any other output files should be saved.
-#'
-#' @return A named list of ggplot objects, where each element corresponds
-#' to a feature with at least one detected peak or valley. Each plot
-#' shows expression profiles across timepoints, highlights excursions in
-#' red, and annotates significant excursions with significance stars.
+#' @return A named list by condition level. Each element contains:
+#' \describe{
+#'   \item{\code{alpha}}{`numeric(1)` The threshold used for that level.}
+#'   \item{\code{pvc_adj_pvals}}{`matrix` Adjusted PVC p-values per feature and
+#'   timepoint (after support filtering).}
+#'   \item{\code{pvc_pattern_summary}}{`data.frame` Counts of excursion labels
+#'   (\code{p}, \code{v}, \code{b}, \code{t}) per timepoint.}
+#' }
+#' Attributes on the returned list include \code{padjust_method},
+#' \code{support}, and \code{batch_effects}.
 #'
 #' @details
-#' A peak or valley is a timepoint whose expression value is
-#' significantly different from both its neighbors and deviates in the
-#' same direction: either significantly higher than both (a peak) or
-#' significantly lower than both (a valley).
-#'
-#' Statistically, this is tested with a compound contrast in limma:
-#' (T - T_prev) + (T - T_next) = 2T - T_prev - T_next. The contrast has
-#' power only when `T` is an outlier vs. both neighbors in the same
-#' direction. The resulting p-value is FDR-adjusted and compared to
-#' `alpha`.
-#'
-#' - Validates inputs via `check_splineomics_elements()` and
-#'   `InputControl`.
-#' - Detects local excursions using `pvc_test()`.
-#' - Displays the number of total excursion hits found.
-#' - Generates plots with `plot_pvc()`, marking excursion significance
-#'   by the chosen `alpha`.
+#' A peak or valley is a timepoint whose value is significantly different
+#' from both neighbors and deviates in the same direction: higher than both
+#' (peak) or lower than both (valley). This is tested via a compound limma
+#' contrast: \eqn{(T - T_{prev}) + (T - T_{next}) = 2T - T_{prev} - T_{next}}.
+#' The resulting p-values are adjusted and compared to the per-level
+#' \code{alpha}.
 #'
 #' @examples
 #' set.seed(1)
 #'
-#' ## Minimal toy with 4 timepoints, flat with a single mid spike (t=2).
-#' ## 2 conditions (WT/KO), 3 replicates each → 24 samples total.
-#'
-#' ## Your original 8x6 toy matrix
 #' toy6 <- matrix(
-#'     c(
-#'         3, 5, 8, 12, 17, 23, # f1
-#'         23, 17, 13, 9, 6, 4, # f2
-#'         5, 3, 2, 2, 3, 5, # f3
-#'         1, 4, 9, 8, 4, 1, # f4
-#'         10, 10, 10, 10, 10, 10, # f5
-#'         2, 2, 2, 9, 12, 15, # f6
-#'         4, 5, 7, 10, 14, 19, # f7
-#'         12, 11, 9, 8, 9, 12 # f8
-#'     ),
-#'     nrow = 8, ncol = 6, byrow = TRUE,
-#'     dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+#'   c(
+#'     3, 5, 8, 12, 17, 23,
+#'     23, 17, 13, 9, 6, 4,
+#'     5, 3, 2, 2, 3, 5,
+#'     1, 4, 9, 8, 4, 1,
+#'     10, 10, 10, 10, 10, 10,
+#'     2, 2, 2, 9, 12, 15,
+#'     4, 5, 7, 10, 14, 19,
+#'     12, 11, 9, 8, 9, 12
+#'   ),
+#'   nrow = 8,
+#'   ncol = 6,
+#'   byrow = TRUE,
+#'   dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
 #' )
 #'
-#' ## Baselines per condition from toy6 (WT = cols 1:3, KO = cols 4:6)
 #' wt0 <- rowMeans(toy6[, 1:3])
 #' ko0 <- rowMeans(toy6[, 4:6])
 #'
-#' ## Make 4 flat timepoints; spike at one middle timepoint (default t=2)
-#' spike_tp <- 3 # 1=t0, 2=t1, 3=t2, 4=t3
+#' spike_tp <- 3
 #' spike_amp <- 3
 #'
-#' flat4 <- function(base) cbind(base, base, base, base) # 8 x 4
+#' flat4 <- function(base) cbind(base, base, base, base)
 #' wt <- flat4(wt0)
 #' wt[, spike_tp] <- wt[, spike_tp] + spike_amp
-#' ko <- flat4(ko0) # keep KO flat; spike KO too by adding the same line
-#' # ko[, spike_tp] <- ko[, spike_tp] + spike_amp
+#' ko <- flat4(ko0)
 #'
-#' ## Create 3 replicates by adding tiny noise and bind WT then KO
 #' rep3 <- function(M, sd = 0.2) {
-#'     do.call(cbind, lapply(1:3, function(i) {
-#'         M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
-#'     }))
+#'   do.call(cbind, lapply(1:3, function(i) {
+#'     M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
+#'   }))
 #' }
 #'
 #' toy_data <- cbind(rep3(wt), rep3(ko))
 #' rownames(toy_data) <- rownames(toy6)
-#' colnames(toy_data) <- paste0("s", seq_len(ncol(toy_data))) # s1..s24
+#' colnames(toy_data) <- paste0("s", seq_len(ncol(toy_data)))
 #'
-#' ## Matching meta: 2 conditions × 3 reps × 4 timepoints = 24 rows
 #' time <- 0:3
 #' toy_meta <- data.frame(
-#'     Time = rep(time, times = 2 * 3),
-#'     condition = rep(c("WT", "KO"), each = 3 * length(time)),
-#'     Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
-#'     row.names = colnames(toy_data),
-#'     stringsAsFactors = FALSE
-#' )
-#'
-#' # Minimal annotation & report info
-#' annotation <- data.frame(
-#'     id = rownames(toy_data),
-#'     row.names = rownames(toy_data)
-#' )
-#'
-#' report_info <- list(
-#'     omics_data_type      = "Transcriptomics",
-#'     data_description     = "Toy time-series (WT vs KO, t=0/1/2)",
-#'     data_collection_date = "2025-01-01",
-#'     analyst_name         = "Example",
-#'     contact_info         = "example@example.org",
-#'     project_name         = "find_pvc_toy"
+#'   Time = rep(time, times = 2 * 3),
+#'   condition = rep(c("WT", "KO"), each = 3 * length(time)),
+#'   Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
+#'   row.names = colnames(toy_data),
+#'   stringsAsFactors = FALSE
 #' )
 #'
 #' splineomics <- list(
-#'     data = toy_data,
-#'     meta = toy_meta,
-#'     annotation = annotation,
-#'     condition = "condition",
-#'     meta_batch_column = "Replicate",
-#'     padjust_method = "BH",
-#'     report_info = report_info,
-#'     feature_name_columns = "id"
+#'   data = toy_data,
+#'   meta = toy_meta,
+#'   condition = "condition",
+#'   meta_batch_column = "Replicate"
 #' )
 #'
-#' plot_info <- list(
-#'     y_axis_label = "log2 value",
-#'     time_unit = "hours",
-#'     treatment_labels = NA,
-#'     treatment_timepoints = NA
-#' )
-#'
-#' # Run with a lenient alpha to ensure toy detections;
-#' # write report to a temp dir to avoid clutter.
 #' res <- find_pvc(
-#'     splineomics = splineomics,
-#'     alphas = 0.05,
-#'     padjust_method = "BH",
-#'     support = 1,
-#'     plot_info = plot_info,
-#'     report_dir = tempdir()
+#'   splineomics = splineomics,
+#'   alphas = 0.05,
+#'   padjust_method = "BH",
+#'   support = 1
 #' )
-#'
-#' # Peek at one plot if available (WT first plot)
-#' if (!is.null(res[["WT"]][["plots"]]) &&
-#'     length(res[["WT"]][["plots"]]) > 0) {
-#'     print(res[["WT"]][["plots"]][[1]])
-#' }
 #'
 #' @export
 #'
@@ -220,14 +125,8 @@ find_pvc <- function(
     splineomics,
     alphas = 0.05,
     padjust_method = "BH",
-    support = 1,
-    plot_info = list(
-        y_axis_label = "Value",
-        time_unit = "min",
-        treatment_labels = NA,
-        treatment_timepoints = NA
-    ),
-    report_dir = here::here()) {
+    support = 1
+    ) {
     check_splineomics_elements(
         splineomics = splineomics,
         func_type = "find_peaks_valleys"
@@ -238,19 +137,15 @@ find_pvc <- function(
         eval,
         parent.frame()
     )
-
     check_null_elements(args)
     input_control <- InputControl$new(args)
     input_control$auto_validate()
 
     data <- splineomics[["data"]]
-    annotation <- splineomics[["annotation"]]
     meta <- splineomics[["meta"]]
     condition <- splineomics[["condition"]]
     meta_batch_column <- splineomics[["meta_batch_column"]]
     meta_batch2_column <- splineomics[["meta_batch2_column"]]
-    report_info <- splineomics[["report_info"]]
-    feature_name_columns <- splineomics[["feature_name_columns"]]
 
     batch_effects <- c(meta_batch_column, meta_batch2_column)
 
@@ -308,88 +203,17 @@ find_pvc <- function(
         pattern_summary <- rowSums(pattern_df)
         total_hits <- sum(pattern_summary)
 
-        # Compose message
-        message(
-            "\nDetected ",
-            total_hits,
-            " total pattern hits for condition level: ",
-            level,
-            "\n\n",
-            "Summary by pattern type:\n",
-            paste(
-                names(pattern_summary),
-                pattern_summary,
-                sep = ": ",
-                collapse = ", "
-            ),
-            "\n\n",
-            "Breakdown by timepoint:\n",
-            paste(
-                colnames(pattern_df),
-                apply(
-                    pattern_df,
-                    2,
-                    function(x) {
-                        paste(
-                            names(x),
-                            x,
-                            sep = "=",
-                            collapse = "; "
-                        )
-                    }
-                ),
-                sep = ": ",
-                collapse = "\n"
-            ),
-            "\n"
+        message_pvc_pattern_hits(
+            level = level,
+            total_hits = total_hits,
+            pattern_summary = pattern_summary,
+            pattern_df = pattern_df
         )
-
-        # Plot results
-        plots <- plot_pvc(
-            pvc_pvals = pvc_pvals,
-            data = sub_data,
-            meta = sub_meta,
-            meta_batch_column = meta_batch_column,
-            alpha = alpha,
-            plot_info = plot_info,
-            level = level
-        )
-
-        results[[as.character(level)]][["plots"]] <- plots
         results[[as.character(level)]][["pvc_adj_pvals"]] <- pvc_pvals
         results[[as.character(level)]][["pvc_pattern_summary"]] <- pattern_df
     }
 
-    # This info is passed like this so that it can be written in the HTML report
-    level_headers_info <- list(
-        pvc_settings = list(
-            adj_value_thresh = alphas,
-            padjust_method = padjust_method,
-            support = support,
-            batch_effects = batch_effects
-        )
-    )
-
-    generate_report_html(
-        plots = results,
-        # required, but statically handled downstream for the pvc HTML report.
-        plots_sizes = NULL,
-        report_info = report_info,
-        data = bind_data_with_annotation(data, annotation),
-        meta = meta,
-        level_headers_info = level_headers_info,
-        report_type = "find_pvc",
-        feature_name_columns = feature_name_columns,
-        filename = "pvc_report",
-        report_dir = report_dir
-    )
-
-    print_info_message(
-        message_prefix = "PVC report generation",
-        report_dir = report_dir
-    )
-
-    return(results)
+    results
 }
 
 
@@ -784,399 +608,63 @@ classify_excursions <- function(
 }
 
 
-#' Plot Peaks and Valleys in Time-Series Omics Data
+#' Emit a concise PVC excursion summary message for one condition level
 #'
+#' @param level character(1)
+#' @param total_hits integer(1)
+#' @param pattern_summary numeric
+#' @param pattern_df data.frame
+#'
+#' @return Invisibly returns NULL.
+#' 
 #' @noRd
-#'
-#' @description
-#' This function generates scatter plots for features that exhibit significant
-#' local peaks or valleys (excursions) in time-series omics data. Excursion
-#' points are highlighted in red, while normal points remain grey. If the
-#' excursion is statistically significant
-#' (based on the compound contrast test),
-#' a significance star is shown directly above the excursion point.
-#'
-#' @param results A list returned from `detect_excursions()`, containing
-#' `results_df` (excursion matrix) and `pairwise_pvals`
-#' (one-tailed p-values for the excursion contrast).
-#' @param data A numeric matrix, where rows correspond to features
-#' (e.g., genes, proteins, metabolites) and columns correspond to samples.
-#' @param meta A data frame containing metadata for the samples. Must include
-#' a column named `"Time"` that specifies the timepoint for each sample.
-#' @param meta_replicates_column A character string specifying the column name
-#' in `meta` that indicates biological replicates.
-#' @param alpha A numeric value specifying the significance threshold
-#' for displaying stars above excursion points. Defaults to `0.05`.
-#' @param plot_info List containing the elements y_axis_label (string),
-#'                  time_unit (string), treatment_labels (character vector),
-#'                  treatment_timepoints (integer vector). All can also be NA.
-#'                  This list is used to add this info to the spline plots.
-#'                  time_unit is used to label the x-axis, and treatment_labels
-#'                  and -timepoints are used to create vertical dashed lines,
-#'                  indicating the positions of the treatments (such as
-#'                  feeding, temperature shift, etc.).
-#'
-#' @return A named list of ggplot objects, where each element corresponds to a
-#' feature with at least one detected excursion. Each plot displays the
-#' expression levels across timepoints, with replicates distinguished by shape.
-#'
-#' @importFrom ggplot2 ggplot aes geom_point scale_shape_manual
-#'             scale_color_manual geom_text labs theme_minimal
-#' @importFrom rlang .data
-#'
-plot_pvc <- function(
-    pvc_pvals,
-    data,
-    meta,
-    meta_batch_column,
-    alpha = 0.05,
-    plot_info,
-    level) {
-    peak_valley_flags <- ifelse(
-        is.na(pvc_pvals),
-        0,
-        ifelse(pvc_pvals < alpha, 1, 0)
+#' 
+message_pvc_pattern_hits <- function(
+        level,
+        total_hits,
+        pattern_summary,
+        pattern_df
+) {
+    pattern_type_line <- paste(
+        names(pattern_summary),
+        pattern_summary,
+        sep = ": ",
+        collapse = ", "
     )
-
-    unique_timepoints <- sort(unique(meta$Time))
-    num_timepoints <- length(unique_timepoints)
-
-    unique_replicates <- unique(meta[[meta_batch_column]])
-    num_replicates <- length(unique_replicates)
-
-    symbols_available <- c(21, 22, 23, 24, 25, 7, 8, 10, 12)
-    symbols <- symbols_available[seq_len(num_replicates)]
-
-    plots <- list()
-
-    for (protein_index in which(rowSums(peak_valley_flags) > 0)) {
-        feature_name <- rownames(peak_valley_flags)[protein_index]
-        protein_data <- data[feature_name, ]
-
-        plot_data <- data.frame(
-            Time = meta$Time,
-            Feature_value = as.numeric(protein_data),
-            Replicate = as.factor(meta[[meta_batch_column]])
-        )
-
-        excursion_flags <- as.numeric(peak_valley_flags[protein_index, ])
-
-        # Step 1: define internal timepoints
-        internal_timepoints <- unique_timepoints[2:(num_timepoints - 1)]
-
-        # Step 2: map excursion flags to only internal timepoints
-        named_flags <- excursion_flags
-        names(named_flags) <- as.character(internal_timepoints)
-
-        # Step 3: assign only to matching timepoints
-        plot_data$Excursion <- named_flags[as.character(plot_data$Time)]
-        plot_data$Excursion[is.na(plot_data$Excursion)] <- 0
-
-        plot_data$Point_Type <- factor(
-            ifelse(
-                plot_data$Excursion == 1,
-                "Excursion",
-                "Normal"
-            ),
-            levels = c("Normal", "Excursion")
-        )
-
-        # For plotting significance stars directly above excursion points
-        sig_df <- data.frame(
-            Time = numeric(0),
-            Label = character(0),
-            y_pos = numeric(0)
-        )
-
-        get_stars <- function(p, alpha) {
-            if (p < alpha / 500) {
-                return("****")
-            } else if (p < alpha / 50) {
-                return("***")
-            } else if (p < alpha / 5) {
-                return("**")
-            } else if (p < alpha) {
-                return("*")
-            } else {
-                return("")
-            }
-        }
-
-        # Loop over internal timepoints
-        for (t in 2:(num_timepoints - 1)) {
-            timepoint <- unique_timepoints[t]
-            flag_index <- t - 1
-
-            if (excursion_flags[flag_index] == 1) {
-                p_val <- pvc_pvals[protein_index, flag_index]
-
-                if (p_val < alpha) {
-                    stars <- get_stars(p_val, alpha)
-
-                    max_value <- max(
-                        plot_data$Feature_value[plot_data$Time == timepoint],
-                        na.rm = TRUE
-                    )
-
-                    sig_df <- rbind(
-                        sig_df,
-                        data.frame(
-                            Time = timepoint,
-                            Label = stars,
-                            max_value = max_value,
-                            PValue = p_val
-                        )
-                    )
-                }
-            }
-        }
-
-        # Build the p-value string if any are significant
-        if (nrow(sig_df) > 0) {
-            pval_str <- paste0(
-                "adj.p-val: ",
-                paste0(
-                    "T=", sig_df$Time, " -> ",
-                    formatC(sig_df$PValue, format = "fg", digits = 4),
+    
+    per_timepoint_lines <- paste(
+        colnames(pattern_df),
+        apply(
+            pattern_df,
+            2,
+            function(x) {
+                paste(
+                    names(x),
+                    x,
+                    sep = "=",
                     collapse = "; "
                 )
-            )
-            plot_title <- paste(feature_name, "\n", pval_str)
-        } else {
-            plot_title <- feature_name
-        }
-
-        p <- ggplot2::ggplot(
-            plot_data,
-            ggplot2::aes(
-                x = !!rlang::sym("Time"),
-                y = !!rlang::sym("Feature_value")
-            )
-        ) +
-            ggplot2::geom_point(
-                ggplot2::aes(
-                    shape = !!rlang::sym("Replicate"),
-                    color = !!rlang::sym("Point_Type")
-                ),
-                size = 3,
-                stroke = 1.2,
-                fill = "white",
-                na.rm = TRUE
-            ) +
-            ggplot2::scale_shape_manual(values = symbols) +
-            ggplot2::geom_text(
-                data = sig_df,
-                ggplot2::aes(
-                    x = !!rlang::sym("Time"),
-                    y = !!rlang::sym("max_value"),
-                    label = !!rlang::sym("Label")
-                ),
-                size = 5,
-                hjust = 0.5,
-                vjust = -0.5
-            ) +
-            ggplot2::labs(
-                title = plot_title,
-                x = paste0("Time [", plot_info[["time_unit"]], "]"),
-                y = plot_info[["y_axis_label"]],
-                color = "Timepoints",
-                shape = "Replicates"
-            ) +
-            ggplot2::theme_minimal()
-
-        y_min <- min(plot_data$Feature_value, na.rm = TRUE)
-        y_max <- max(plot_data$Feature_value, na.rm = TRUE)
-        y_extension <- (y_max - y_min) * 0.1
-        y_pos <- y_max + y_extension
-
-        result <- maybe_add_dashed_lines(
-            p = p,
-            plot_info = plot_info,
-            level = level,
-            y_pos = y_pos
-        )
-
-        p <- result$p
-        treatment_colors <- result$treatment_colors
-
-        color_values <- c(
-            "Normal" = "grey40",
-            "Excursion" = "red",
-            treatment_colors
-        )
-
-        p <- p + ggplot2::scale_color_manual(
-            values = color_values,
-            guide = ggplot2::guide_legend(
-                override.aes = list(
-                    size = c(
-                        rep(1.5, 2),
-                        rep(0.5, length(treatment_colors))
-                    )
-                )
-            )
-        )
-
-        plots[[feature_name]] <- p
-    }
-
-    return(plots)
-}
-
-
-#' Build full PVC HTML report
-#'
-#' @noRd
-#'
-#' @description
-#' This function assembles the complete HTML report for PVC analysis, including
-#' section headers, significance metadata, subplot titles, plots, and a table
-#'  of contents. It processes a nested list of plots and writes the final
-#' report to the specified output file path.
-#'
-#' @param header_section A character string of HTML content that represents the
-#'   top-level header section of the report (e.g., title, description, metadata)
-#' @param plots A named list of plot objects, each containing a `plots` field
-#'   (itself a named list of ggplot2 objects). The names define report sections.
-#' @param level_headers_info A list of metadata associated with each report
-#'   section, including p-value thresholds and padjust methods, structured
-#'   under the `pvc_settings` key.
-#' @param report_info A list containing metadata about the entire report (e.g.,
-#'   parameters used, timestamps, version info) used in the report footer.
-#' @param output_file_path File path (character) where the final HTML report
-#'   should be written. Defaults to `here::here()` if not provided.
-#'
-#' @return Used for side effects only. The function writes an HTML file to disk.
-#'
-build_pvc_report <- function(
-    header_section,
-    plots,
-    level_headers_info,
-    report_info,
-    output_file_path = here::here()) {
-    html_content <- paste(
-        header_section,
-        "<!--TOC-->",
-        sep = "\n"
+            }
+        ),
+        sep = ": ",
+        collapse = "\n"
     )
-
-    toc <- create_toc()
-
-    styles <- define_html_styles()
-    section_header_style <- styles$section_header_style
-    toc_style <- styles$toc_style
-
-    current_header_index <- 1
-
-    # Flatten the nested structure into a list of (header_name, plot) pairs
-    flattened_plots <- list()
-    for (header_name in names(plots)) {
-        subplots <- plots[[header_name]]$plots
-        subplot_names <- names(subplots)
-
-        for (i in seq_along(subplots)) {
-            flattened_plots[[length(flattened_plots) + 1]] <- list(
-                header_name = header_name,
-                subplot_name = subplot_names[i],
-                plot = subplots[[i]]
-            )
-        }
-    }
-
-    # Clean up header info
-    levels <- names(plots)
-    n_plots_per_header <- vapply(plots, function(x) length(x$plots), integer(1))
-
-    # Track current section and plot offset
-    current_header_index <- 1
-    plots_processed_in_section <- 0
-
-    # Create progress bar
-    pb <- create_progress_bar(flattened_plots)
-
-    for (index in seq_along(flattened_plots)) {
-        if (plots_processed_in_section == 0) {
-            # Insert section header
-            level <- levels[[current_header_index]]
-
-            nr_of_hits <- n_plots_per_header[[current_header_index]]
-
-            html_content <- paste(
-                html_content,
-                generate_section_header_block(
-                    level = levels[[current_header_index]],
-                    index = index,
-                    section_header_style = section_header_style,
-                    level_headers_info = level_headers_info,
-                    nr_of_hits = nr_of_hits
-                ),
-                sep = "\n"
-            )
-
-            hits_info <- "<p style='text-align: center; font-size: 30px;'>"
-            html_content <- paste(
-                html_content,
-                hits_info,
-                sep = "\n"
-            )
-
-            toc_entry <- sprintf(
-                "<li style='%s'><a href='#section%d'>%s</a></li>",
-                toc_style,
-                index,
-                level
-            )
-            toc <- paste(
-                toc,
-                toc_entry,
-                sep = "\n"
-            )
-        }
-
-        # Add subplot name as an HTML sub-header
-        subplot_name <- flattened_plots[[index]]$subplot_name
-        subplot_header <- sprintf(
-            paste0(
-                '<h4 style="text-align: center; font-size: 20px; ',
-                'margin-top: 30px;">\n%s\n</h4>'
-            ),
-            subplot_name
-        )
-
-        # Inject it into the HTML content before the plot
-        html_content <- paste(
-            html_content,
-            subplot_header,
-            sep = "\n"
-        )
-
-        result <- process_plots(
-            plots_element = flattened_plots[[index]]$plot,
-            plots_size = 2,
-            html_content = html_content,
-            toc = toc,
-            header_index = current_header_index
-        )
-        html_content <- result$html_content
-        toc <- result$toc
-
-        # Update section counters
-        plots_processed_in_section <- plots_processed_in_section + 1
-        if (plots_processed_in_section >=
-            n_plots_per_header[[current_header_index]]) {
-            current_header_index <- current_header_index + 1
-            plots_processed_in_section <- 0
-        }
-
-        pb$tick()
-    }
-
-    generate_and_write_html(
-        toc = toc,
-        html_content = html_content,
-        report_info = report_info,
-        output_file_path = output_file_path
+    
+    message(
+        "\nDetected ",
+        total_hits,
+        " total pattern hits for condition level: ",
+        level,
+        "\n\n",
+        "Summary by pattern type:\n",
+        pattern_type_line,
+        "\n\n",
+        "Breakdown by timepoint:\n",
+        per_timepoint_lines,
+        "\n"
     )
+    
+    invisible(NULL)
 }
 
 
@@ -1217,122 +705,4 @@ classify_cliff <- function(
     } else {
         return(ifelse(next_change < 0, "t", "b")) # drop after point -> top
     }
-}
-
-
-#' Generate HTML header block for a condition level section
-#'
-#' @noRd
-#'
-#' @description
-#' Constructs an HTML block that includes the section header and related
-#' metadata
-#' for a given condition level. This includes the adjusted p-value threshold,
-#' the p-adjustment method, and a visual legend for significance stars based on
-#' the threshold. The output is centered and styled with inline HTML for use in
-#' reports or R Markdown rendering.
-#'
-#' @param level A character string representing the current condition level name
-#' @param index An integer index used to create a unique HTML section ID.
-#' @param section_header_style A character string of inline CSS styles to apply
-#'   to the section header (`<h2>` element).
-#' @param level_headers_info A list containing `pvc_settings`, with named
-#'   entries for `adj_value_thresh` (a named list of alpha values by level) and
-#'   `padjust_method` (a scalar string).
-#'
-#' @return A character string of HTML content to be included in the full HTML
-#'         output.
-#'
-generate_section_header_block <- function(
-    level,
-    index,
-    section_header_style,
-    level_headers_info,
-    nr_of_hits) {
-    # Access per-level alpha threshold
-    alpha_thresh <-
-        level_headers_info[["pvc_settings"]][["adj_value_thresh"]][[level]]
-
-    # Access global padjust_method
-    padjust_method <- level_headers_info[["pvc_settings"]][["padjust_method"]]
-    support <- level_headers_info[["pvc_settings"]][["support"]]
-    batch_effects <- level_headers_info[["pvc_settings"]][["batch_effects"]]
-
-    # Format alpha threshold smartly
-    format_alpha <- function(x) {
-        if (x >= 0.0001) {
-            # remove trailing zeros
-            sub("\\.?0+$", "", format(round(x, 4), nsmall = 0))
-        } else {
-            format(
-                x,
-                scientific = TRUE,
-                digits = 3
-            )
-        }
-    }
-
-    # Compute significance thresholds
-    thresholds <- c(
-        "*"    = alpha_thresh,
-        "**"   = alpha_thresh / 5,
-        "***"  = alpha_thresh / 50,
-        "****" = alpha_thresh / 500
-    )
-
-    thresholds_formatted <- vapply(
-        thresholds,
-        format_alpha,
-        character(1)
-    )
-    alpha_thresh_formatted <- format_alpha(alpha_thresh)
-
-    # Generate section header
-    section_header <- sprintf(
-        "<h2 style='%s' id='section%d'>%s</h2>",
-        section_header_style,
-        index,
-        level
-    )
-
-    batch_effects_formatted <- if (isFALSE(batch_effects)) {
-        "None"
-    } else {
-        paste(batch_effects, collapse = ", ")
-    }
-
-    # Generate info block
-    info_block <- sprintf(
-        "<div style='text-align: center; font-size: 24px; margin-bottom: 20px;'>
-       <p><strong>Adjusted p-value threshold:</strong> %s<br>
-       <strong>p-adjustment method:</strong> %s<br>
-       <strong>Support (min nr non-NA in all timepoints of hit):</strong> %s</p>
-       <strong>Batch effects removed:</strong> %s</p>
-       <strong>Number of hits:</strong> %s</p>
-       <p style='margin-top: 15px; font-size: 22px;'>
-         <strong>Significance stars:</strong><br>
-         <span>*</span> : p &lt; %s<br>
-         <span>**</span> : p &lt; %s<br>
-         <span>***</span> : p &lt; %s<br>
-         <span>****</span> : p &lt; %s
-       </p>
-       <hr style='border-top: 1px dashed #999; width: 100%%; margin-top: 15px;'>
-     </div>",
-        alpha_thresh_formatted,
-        padjust_method,
-        support,
-        batch_effects_formatted,
-        nr_of_hits,
-        thresholds_formatted["*"],
-        thresholds_formatted["**"],
-        thresholds_formatted["***"],
-        thresholds_formatted["****"]
-    )
-
-    # Combine and return the full HTML block
-    return(paste(
-        section_header,
-        info_block,
-        sep = "\n"
-    ))
 }
