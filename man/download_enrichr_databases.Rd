@@ -2,44 +2,40 @@
 % Please edit documentation in R/download_enrichr_databases.R
 \name{download_enrichr_databases}
 \alias{download_enrichr_databases}
-\title{Download the Enrichr databases}
+\title{Download Enrichr databases}
 \usage{
-download_enrichr_databases(
-  gene_set_lib,
-  output_dir = tempdir(),
-  filename = NULL
-)
+download_enrichr_databases(gene_set_lib, output_dir = NULL, filename = NULL)
 }
 \arguments{
-\item{gene_set_lib}{\code{character()}: A character vector of database names to
-download from Enrichr, for example:
-\code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.}
+\item{gene_set_lib}{\code{character()}. A character vector of Enrichr library names to download,
+e.g. \code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.}
 
-\item{output_dir}{\code{character(1)}: A string specifying the output directory
-where the \code{.tsv} file will be saved.}
+\item{output_dir}{\code{character(1)} or \code{NULL}. Output directory for writing a \code{.tsv} file. If
+\code{NULL}, no file is written.}
 
-\item{filename}{\code{character(1)}: Name of the output file (with file
-extension). Due to commas present in some terms, \code{.tsv} is recommended.
-When left out, the file is named \code{all_databases_timestamp.tsv}.}
+\item{filename}{\code{character(1)} or \code{NULL}. Output file name (not a path). If \code{NULL} and
+\code{output_dir} is not \code{NULL}, a default name of the form
+\code{enrichr_databases_YYYYmmdd-HHMMSS.tsv} is used. Due to commas in some
+terms, \code{.tsv} is recommended.}
 }
 \value{
-A \code{data.frame} of gene set annotations with three columns:
+A \code{data.frame} with three columns:
 \describe{
-\item{DB}{Database name (e.g. \code{"WikiPathways_2019_Human"},
-\code{"NCI-Nature_2016"}).}
-\item{Geneset}{The gene set or pathway term from that database.}
-\item{Gene}{A gene contained in the gene set.}
+\item{DB}{Enrichr library name.}
+\item{Geneset}{Gene set or pathway term within that library.}
+\item{Gene}{Gene symbol contained in the gene set.}
 }
 
-In addition to returning the \code{data.frame}, the function also writes the same
-table to disk as a \code{.tsv} file in the specified \code{output_dir}.
+If a requested library cannot be downloaded, it may be omitted from the
+result. The function errors if no gene sets can be retrieved.
 }
 \description{
-This function downloads gene sets from specified Enrichr databases and saves
-them to a specified output directory as a .tsv file per default. The file is
-named with a timestamp per default to ensure uniqueness (all databases are
-stored in a single file). This file has 3 columns: DB containing the database
-name, Geneset, with the genesets, and Gene, with the gene names.
+Download gene sets from one or more Enrichr libraries and return them as a
+table with one row per gene-set membership.
+
+If \code{output_dir} is provided, the same table is also written to disk as a
+tab-separated file (\code{.tsv}). If \code{filename} is \code{NULL}, a timestamped name is
+generated to ensure uniqueness.
 }
 \examples{
 if (interactive()) {

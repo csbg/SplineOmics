@@ -1,35 +1,38 @@
-#' Download the Enrichr databases
+#' Download Enrichr databases
 #'
 #' @description
-#' This function downloads gene sets from specified Enrichr databases and saves
-#' them to a specified output directory as a .tsv file per default. The file is
-#' named with a timestamp per default to ensure uniqueness (all databases are
-#' stored in a single file). This file has 3 columns: DB containing the database
-#' name, Geneset, with the genesets, and Gene, with the gene names.
+#' Download gene sets from one or more Enrichr libraries and return them as a
+#' table with one row per gene-set membership.
 #'
-#' @param gene_set_lib `character()`: A character vector of database names to 
-#' download from Enrichr, for example: 
-#' \code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.
+#' If `output_dir` is provided, the same table is also written to disk as a
+#' tab-separated file (`.tsv`). If `filename` is `NULL`, a timestamped name is
+#' generated to ensure uniqueness.
 #'
-#' @param output_dir `character(1)`: A string specifying the output directory 
-#' where the `.tsv` file will be saved. 
+#' @param gene_set_lib
+#' `character()`. A character vector of Enrichr library names to download,
+#' e.g. `c("WikiPathways_2019_Human", "NCI-Nature_2016")`.
 #'
-#' @param filename `character(1)`: Name of the output file (with file 
-#' extension). Due to commas present in some terms, `.tsv` is recommended. 
-#' When left out, the file is named `all_databases_timestamp.tsv`.
+#' @param output_dir
+#' `character(1)` or `NULL`. Output directory for writing a `.tsv` file. If
+#' `NULL`, no file is written.
+#'
+#' @param filename
+#' `character(1)` or `NULL`. Output file name (not a path). If `NULL` and
+#' `output_dir` is not `NULL`, a default name of the form
+#' `enrichr_databases_YYYYmmdd-HHMMSS.tsv` is used. Due to commas in some
+#' terms, `.tsv` is recommended.
 #'
 #' @return
-#' A `data.frame` of gene set annotations with three columns:
+#' A `data.frame` with three columns:
 #' \describe{
-#'   \item{DB}{Database name (e.g. `"WikiPathways_2019_Human"`,
-#'   `"NCI-Nature_2016"`).}
-#'   \item{Geneset}{The gene set or pathway term from that database.}
-#'   \item{Gene}{A gene contained in the gene set.}
+#'   \item{DB}{Enrichr library name.}
+#'   \item{Geneset}{Gene set or pathway term within that library.}
+#'   \item{Gene}{Gene symbol contained in the gene set.}
 #' }
 #'
-#' In addition to returning the `data.frame`, the function also writes the same
-#' table to disk as a `.tsv` file in the specified `output_dir`.
-#' 
+#' If a requested library cannot be downloaded, it may be omitted from the
+#' result. The function errors if no gene sets can be retrieved.
+#'
 #' @examples
 #' if (interactive()) {
 #'   libs <- c("WikiPathways_2019_Human")
@@ -41,97 +44,115 @@
 #'   head(out)
 #' }
 #'
-#' @importFrom rlang .data
+#' @importFrom rlang .data abort
 #' @importFrom tibble tibble
-#' @importFrom dplyr mutate
+#' @importFrom dplyr mutate bind_rows
 #' @importFrom utils write.table
 #'
 #' @export
 #'
 download_enrichr_databases <- function(
-    gene_set_lib,
-    output_dir = tempdir(),
-    filename = NULL
-    ) {
-    # Control the user inputs
-    if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
-        stop_call_false(
-            "gene_set_lib must be a character vector with length > 0"
+        gene_set_lib,
+        output_dir = NULL,
+        filename = NULL
+) {
+    check_dwld_enrichdb_args(
+        gene_set_lib = gene_set_lib,
+        output_dir = output_dir,
+        filename = filename
+    )
+    genesets_list <- tryCatch(
+        enrichr_get_genesets(databases = gene_set_lib),
+        error = function(e) {
+            rlang::abort(
+                c(
+                    "Failed to download Enrichr gene set libraries.",
+                    "i" = paste(
+                        "This can happen if you are offline or Enrichr is",
+                        "unreachable."
+                    ),
+                    "x" = conditionMessage(e)
+                )
             )
-    }
-
-    # Control the filename input (must be NULL or a valid string)
-    if (!is.null(filename) &&
-        (!is.character(filename) ||
-            length(filename) != 1)) {
-        stop_call_false("filename must be a single string or NULL.")
-    }
-
-    # Control the inputs
-    args <- lapply(as.list(match.call()[-1]), eval, parent.frame())
-    check_null_elements(args)
-    input_control <- InputControl$new(args)
-    input_control$auto_validate()
-
-    genesets <- enrichr_get_genesets(databases = gene_set_lib)
-
-    genesets <- do.call(rbind, lapply(names(genesets), function(db.nam) {
-        do.call(rbind, lapply(names(genesets[[db.nam]]), function(set.nam) {
-            tibble::tibble(
-                DB = db.nam,
-                Geneset = set.nam,
-                Gene = genesets[[db.nam]][[set.nam]]
+        }
+    )
+    
+    if (is.null(genesets_list) || length(genesets_list) == 0L) {
+        rlang::abort(
+            c(
+                "No Enrichr gene sets were retrieved.",
+                "i" = paste(
+                    "You may be offline, the endpoint may be down, or the",
+                    "library names may be invalid."
+                )
             )
-        }))
-    }))
-
-    # When the user is offline, genesets won't be available, raising a weird
-    # error
-    if (!exists("genesets") || is.null(genesets)) {
-        stop_call_false(
-            "Object `genesets` is missing or NULL - are you online?"
-            )
+        )
     }
+    
+    genesets <- do.call(
+        dplyr::bind_rows,
+        lapply(names(genesets_list), function(db.nam) {
+            db <- genesets_list[[db.nam]]
+            if (is.null(db) || length(db) == 0L) {
+                return(NULL)
+            }
+            
+            dplyr::bind_rows(lapply(names(db), function(set.nam) {
+                genes <- db[[set.nam]]
+                if (is.null(genes) || length(genes) == 0L) {
+                    return(NULL)
+                }
+                tibble::tibble(
+                    DB = db.nam,
+                    Geneset = set.nam,
+                    Gene = genes
+                )
+            }))
+        })
+    )
+    
+    if (is.null(genesets) || nrow(genesets) == 0L) {
+        rlang::abort(
+            c(
+                "Downloaded libraries contained no gene sets after parsing.",
+                "i" = paste(
+                    "This can happen if the libraries are empty or the",
+                    "download response format changed."
+                )
+            )
+        )
+    }
+    
     genesets <- genesets |>
-        dplyr::mutate(Gene = gsub(",.+$", "", .data$Gene))
-
-    dir.create(
-        output_dir,
-        recursive = TRUE,
-        showWarnings = FALSE
-    )
-
-    # Create filename if not specified
-    if (is.null(filename)) {
-        timestamp <- format(
-            Sys.time(),
-            "%d_%m_%Y-%H_%M_%S"
+        dplyr::mutate(
+            Gene = gsub(",.+$", "", .data$Gene)
         )
-        filename <- paste0(
-            "enrichr_databases_",
-            timestamp, ".tsv"
+    
+    if (!is.null(output_dir)) {
+        dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+        
+        if (is.null(filename)) {
+            timestamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
+            filename <- paste0("enrichr_databases_", timestamp, ".tsv")
+        }
+        
+        filename_path <- file.path(output_dir, filename)
+        
+        utils::write.table(
+            x = genesets,
+            file = filename_path,
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE,
+            quote = FALSE
+        )
+        
+        message(
+            "Download complete! The file has been saved as: ",
+            filename_path
         )
     }
-
-    filename_path <- file.path(
-        output_dir,
-        filename
-    )
-
-    utils::write.table(
-        x = genesets,
-        file = filename_path,
-        sep = "\t",
-        row.names = FALSE,
-        col.names = TRUE,
-        quote = FALSE # Do not quote strings
-    )
-
-    message(
-        "\nDownload complete! The file has been saved as: ",
-        filename_path
-    )
-
+    
     genesets
 }
 
@@ -139,75 +160,227 @@ download_enrichr_databases <- function(
 # Level 1 internal functions ---------------------------------------------------
 
 
+#' Validate inputs for Enrichr database download
+#'
+#' @noRd
+#'
+#' @description
+#' Validate and sanitize inputs used by the Enrichr database download
+#' functions.
+#'
+#' This function performs defensive checks on the provided arguments to
+#' ensure they are well-formed and safe to use for downloading data and
+#' optionally writing results to disk. Invalid inputs result in an error.
+#'
+#' @param gene_set_lib
+#' A character vector of Enrichr database names.
+#'
+#' @param output_dir
+#' A length-one character string specifying an output directory, or
+#' `NULL` to disable writing results to disk.
+#'
+#' @param filename
+#' A length-one character string specifying an output file name, or
+#' `NULL` to use a default name.
+#'
+#' @return
+#' Invisibly returns a list containing the validated input arguments.
+#' 
+check_dwld_enrichdb_args <- function(
+        gene_set_lib,
+        output_dir = NULL,
+        filename = NULL
+) {
+    if (!is.character(gene_set_lib) || length(gene_set_lib) < 1L) {
+        rlang::abort("`gene_set_lib` must be a non-empty character vector.")
+    }
+    if (anyNA(gene_set_lib) || any(!nzchar(gene_set_lib))) {
+        rlang::abort("`gene_set_lib` must not contain NA or empty strings.")
+    }
+    if (any(grepl("[\r\n\t]", gene_set_lib))) {
+        rlang::abort(
+            "`gene_set_lib` must not contain tabs or newlines."
+        )
+    }
+    
+    if (!is.null(output_dir)) {
+        if (!is.character(output_dir) || length(output_dir) != 1L) {
+            rlang::abort(
+                "`output_dir` must be NULL or a length-1 character string."
+            )
+        }
+        if (is.na(output_dir) || !nzchar(output_dir)) {
+            rlang::abort(
+                "`output_dir` must not be NA or an empty string."
+            )
+        }
+        if (grepl("[\r\n\t]", output_dir)) {
+            rlang::abort(
+                "`output_dir` must not contain tabs or newlines."
+            )
+        }
+    }
+    
+    if (!is.null(filename)) {
+        if (!is.character(filename) || length(filename) != 1L) {
+            rlang::abort(
+                "`filename` must be NULL or a length-1 character string."
+            )
+        }
+        if (is.na(filename) || !nzchar(filename)) {
+            rlang::abort("`filename` must not be NA or an empty string.")
+        }
+        if (grepl("[\r\n\t]", filename)) {
+            rlang::abort("`filename` must not contain tabs or newlines.")
+        }
+        
+        if (grepl("[/\\\\]", filename)) {
+            rlang::abort(
+                c(
+                    "`filename` must be a file name, not a path.",
+                    "i" = "Do not include '/' or '\\\\' in `filename`."
+                )
+            )
+        }
+        if (grepl("^\\.+$", filename)) {
+            rlang::abort(
+                "`filename` must not be '.' or '..'."
+            )
+        }
+    }
+    
+    invisible(
+        list(
+            gene_set_lib = gene_set_lib,
+            output_dir = output_dir,
+            filename = filename
+        )
+    )
+}
+
+
 #' Get Enrichr Gene Sets
 #'
 #' @noRd
 #'
 #' @description
-#' This function downloads gene sets from specified Enrichr databases.
-#' It returns a list where each element is a list corresponding to a database,
-#' with each element containing a vector of human gene symbols for a gene set.
+#' Download gene sets from specified Enrichr databases.
 #'
-#' @param databases A character vector of database names to download from
-#'                  Enrichr.
+#' The function returns a named list where each element corresponds to an
+#' Enrichr database. Each database element is itself a named list of gene
+#' sets, with gene set names as list names and character vectors of gene
+#' symbols as values.
 #'
-#' @return A named list of gene sets from the specified Enrichr databases. Each
-#'         database is represented as a list, with gene set names as list
-#'         names and vectors of human gene symbols as list elements.
+#' If a database cannot be downloaded (e.g., due to connectivity issues or an
+#' invalid database name), it is omitted from the result.
+#'
+#' @param databases
+#' A character vector of Enrichr database names.
+#'
+#' @return
+#' A named list of gene sets from the successfully downloaded Enrichr
+#' databases. Each database is represented as a named list of gene sets, with
+#' gene symbols stored as character vectors.
 #'
 enrichr_get_genesets <- function(databases) {
-    pb <- create_progress_bar(databases, message = "Downloading")
-
+    if (!requireNamespace("curl", quietly = TRUE)) {
+        rlang::abort("Package `curl` is required for Enrichr downloads.")
+    }
+    
+    if (!curl::has_internet()) {
+        rlang::abort(
+            c(
+                "No internet connection detected.",
+                "i" = "Enrichr gene set libraries cannot be downloaded."
+            )
+        )
+    }
+    
+    show_pb <- interactive()
+    pb <- NULL
+    if (show_pb) {
+        pb <- create_progress_bar(databases, message = "Downloading")
+    }
+    
     failed <- character(0)
-    success <- character(0) # <-- track successes
+    success <- character(0)
     results <- setNames(vector("list", length(databases)), databases)
-
+    
     for (dbx in databases) {
-        pb$tick()
-
+        if (show_pb) {
+            pb$tick()
+        }
+        
+        lib <- utils::URLencode(dbx, reserved = TRUE)
         url <- paste0(
             "https://maayanlab.cloud/Enrichr/geneSetLibrary?",
-            "mode=text&libraryName=", dbx
+            "mode=text&libraryName=",
+            lib
         )
-
-        dblines <- tryCatch(
-            readLines(url, warn = FALSE),
+        
+        txt <- tryCatch(
+            {
+                h <- curl::new_handle()
+                curl::handle_setopt(
+                    h,
+                    timeout = 30,
+                    useragent = "Bioconductor package"
+                )
+                res <- curl::curl_fetch_memory(url, handle = h)
+                rawToChar(res$content)
+            },
             error = function(e) NULL
         )
-
-        if (!is.null(dblines) && length(dblines) > 0) {
-            res <- strsplit(dblines, "\t")
-            names(res) <- vapply(res, `[`, 1, FUN.VALUE = character(1))
-            res <- lapply(res, function(x) x[-c(1, 2)]) # keep only genes
-            results[[dbx]] <- res
-            success <- c(success, dbx) # <-- record success
+        
+        if (!is.null(txt) && nzchar(txt)) {
+            dblines <- strsplit(txt, "\n", fixed = TRUE)[[1]]
+            dblines <- dblines[nzchar(dblines)]
+        } else {
+            dblines <- character(0)
+        }
+        
+        if (length(dblines) > 0L) {
+            res <- strsplit(dblines, "\t", fixed = TRUE)
+            
+            ok <- lengths(res) >= 3L
+            res <- res[ok]
+            
+            if (length(res) > 0L) {
+                nm <- vapply(res, `[`, 1L, FUN.VALUE = character(1))
+                res <- lapply(res, function(x) x[-c(1L, 2L)])
+                names(res) <- nm
+                results[[dbx]] <- res
+                success <- c(success, dbx)
+            } else {
+                failed <- c(failed, dbx)
+            }
         } else {
             failed <- c(failed, dbx)
         }
     }
-
-    # Keep only successfully downloaded libraries
+    
     results <- results[success]
-
-    # User-friendly summary
-    if (length(success) || length(failed)) {
-        msg <- c("\nEnrichr download summary:")
+    
+    if ((length(success) || length(failed)) && interactive()) {
+        msg <- c("Enrichr download summary:")
         if (length(success)) {
             msg <- c(
                 msg,
-                "  [OK] downloaded : ",
-                paste(success, collapse = ", ")
-                )
+                paste0("  [OK] downloaded: ", paste(success, collapse = ", "))
+            )
         }
         if (length(failed)) {
             msg <- c(
-                msg, "  [!!] not found  : ", paste(failed, collapse = ", "),
-                "\n      (Check spelling or run enrichR::listEnrichrDbs() ",
-                "for valid names)"
+                msg,
+                paste0("  [!!] not found: ", paste(failed, collapse = ", "))
+            )
+            msg <- c(
+                msg,
+                "      (Check spelling or run enrichR::listEnrichrDbs()"
             )
         }
         message(paste(msg, collapse = "\n"))
     }
-
+    
     invisible(results)
 }
