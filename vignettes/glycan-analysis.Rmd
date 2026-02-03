@@ -130,7 +130,6 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 
 ```{r setup, eval = TRUE}
 library(SplineOmics)
-library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
 library(compositions) # For clr transforming the glycan data
@@ -199,7 +198,8 @@ report_info <- list(
     project_name = "DGTX"
 )
 
-report_dir <- here::here(
+report_dir <- file.path(
+    tempdir(),
     "results",
     "explore_data"
 )

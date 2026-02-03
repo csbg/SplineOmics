@@ -60,7 +60,6 @@
 #' \code{\link{build_hyperparams_screen_report}},
 #' \code{\link{build_cluster_hits_report}}
 #'
-#' @importFrom here here
 #' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices dev.off
 #'
@@ -87,7 +86,8 @@ generate_report_html <- function(
         Sys.time(),
         "%d_%m_%Y-%H_%M_%S"
     ),
-    report_dir = here::here()) {
+    report_dir = tempdir()
+    ) {
     feature_names_formula <- ""
 
     if (report_type == "explore_data") {
@@ -395,7 +395,7 @@ generate_report_html <- function(
         )
     }
 
-    output_file_path <- here::here(
+    output_file_path <- file.path(
         report_dir,
         file_name
     )

@@ -4,7 +4,7 @@
 \alias{explore_data}
 \title{Automatically perform exploratory data analysis (EDA)}
 \usage{
-explore_data(splineomics, report_dir = here::here(), report = TRUE)
+explore_data(splineomics, report_dir = tempdir(), report = TRUE)
 }
 \arguments{
 \item{splineomics}{\code{SplineOmics}: A named list containing all required
@@ -52,9 +52,7 @@ second batch effect.
 }}
 
 \item{report_dir}{\code{character(1)}: A non-empty string specifying the report
-directory. The output HTML reports will be placed there. Default is the
-current working directory, determined with the here library:
-\code{here::here()}.}
+directory. The output HTML reports will be placed there.}
 
 \item{report}{\code{logical(1)}: A Boolean TRUE or FALSE value, specifying if a
 report should be generated or not.}

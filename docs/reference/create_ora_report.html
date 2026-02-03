@@ -36,7 +36,6 @@ directory must be provided."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
     <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -82,7 +81,7 @@ directory must be provided.</p>
 <span>  report_info <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cluster_hits_report_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  report_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -134,6 +133,72 @@ plots outside the HTML report.</p>
     <div class="dont-index"><p><code><a href="run_ora.html">run_ora()</a></code>, <code><a href="cluster_hits.html">cluster_hits()</a></code>, <code><a href="https://rdrr.io/pkg/clusterProfiler/man/enricher.html" class="external-link">clusterProfiler::enricher()</a></code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Toy example: build a minimal payload and generate a report in tempdir().</span></span></span>
+<span class="r-in"><span><span class="co"># This runs only if the internal report helpers are available.</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Minimal cluster table with two cluster labels</span></span></span>
+<span class="r-in"><span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  gene <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GeneA"</span>, <span class="st">"GeneB"</span>, <span class="st">"GeneC"</span>, <span class="st">"GeneD"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cluster <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Minimal "databases" descriptor as expected by the report</span></span></span>
+<span class="r-in"><span><span class="va">databases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  DB <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GO_BP"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A tiny ORA result table resembling clusterProfiler output</span></span></span>
+<span class="r-in"><span><span class="va">toy_enrich</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  ID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GO:0008150"</span>, <span class="st">"GO:0009987"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Description <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"biological_process"</span>, <span class="st">"cellular process"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  p.adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.02</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Count <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">1L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Minimal nested structure:</span></span></span>
+<span class="r-in"><span><span class="co"># all_results[[section]][[cluster]][[db]] -&gt; data.frame</span></span></span>
+<span class="r-in"><span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cluster <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    `1` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GO_BP <span class="op">=</span> <span class="va">toy_enrich</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    `2` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GO_BP <span class="op">=</span> <span class="va">toy_enrich</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">report_payload</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  all_results <span class="op">=</span> <span class="va">all_results</span>,</span></span>
+<span class="r-in"><span>  databases <span class="op">=</span> <span class="va">databases</span>,</span></span>
+<span class="r-in"><span>  clusterProfiler_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pAdjustMethod <span class="op">=</span> <span class="st">"BH"</span>, pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cluster_table <span class="op">=</span> <span class="va">cluster_table</span>,</span></span>
+<span class="r-in"><span>  universe <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">cluster_table</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Only run if the report backend is present (avoids failures on minimal</span></span></span>
+<span class="r-in"><span><span class="co"># check environments where reporting deps might not be installed).</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"generate_report_html"</span>, mode <span class="op">=</span> <span class="st">"function"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu">create_ora_report</span><span class="op">(</span></span></span>
+<span class="r-in"><span>      report_payload <span class="op">=</span> <span class="va">report_payload</span>,</span></span>
+<span class="r-in"><span>      report_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"Toy ORA"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      cluster_hits_report_name <span class="op">=</span> <span class="st">"toy_cluster_hits"</span>,</span></span>
+<span class="r-in"><span>      verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>      report_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp</span>, <span class="st">"splineomics_ora_toy_report"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Inspect returned ggplot objects (one per section)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

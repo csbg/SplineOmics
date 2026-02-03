@@ -7,7 +7,7 @@
 create_limma_report(
   splineomics,
   adj_pthresh = 0.05,
-  report_dir = here::here(),
+  report_dir = tempdir(),
   verbose = TRUE
 )
 }

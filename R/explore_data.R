@@ -54,9 +54,7 @@
 #' }
 #'
 #' @param report_dir `character(1)`: A non-empty string specifying the report
-#' directory. The output HTML reports will be placed there. Default is the
-#' current working directory, determined with the here library:
-#'  \code{here::here()}.
+#' directory. The output HTML reports will be placed there. 
 #'
 #' @param report `logical(1)`: A Boolean TRUE or FALSE value, specifying if a
 #' report should be generated or not.
@@ -133,8 +131,9 @@
 #'
 explore_data <- function(
     splineomics,
-    report_dir = here::here(),
-    report = TRUE) {
+    report_dir = tempdir(),
+    report = TRUE
+    ) {
     report_dir <- normalizePath(
         report_dir,
         mustWork = FALSE

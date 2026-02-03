@@ -9,7 +9,7 @@ create_ora_report(
   report_info = NULL,
   cluster_hits_report_name = NULL,
   verbose = TRUE,
-  report_dir = here::here()
+  report_dir = tempdir()
 )
 }
 \arguments{
@@ -51,6 +51,70 @@ The function is responsible for all visualization and reporting side
 effects. Statistical analysis is not recomputed. Calling this function
 implies that an HTML report should be generated; therefore, a valid output
 directory must be provided.
+}
+\examples{
+# Toy example: build a minimal payload and generate a report in tempdir().
+# This runs only if the internal report helpers are available.
+
+tmp <- tempdir()
+
+# Minimal cluster table with two cluster labels
+cluster_table <- data.frame(
+  gene = c("GeneA", "GeneB", "GeneC", "GeneD"),
+  cluster = c("1", "1", "2", "2"),
+  stringsAsFactors = FALSE
+)
+
+# Minimal "databases" descriptor as expected by the report
+databases <- data.frame(
+  DB = c("GO_BP"),
+  stringsAsFactors = FALSE
+)
+
+# A tiny ORA result table resembling clusterProfiler output
+toy_enrich <- data.frame(
+  ID = c("GO:0008150", "GO:0009987"),
+  Description = c("biological_process", "cellular process"),
+  p.adjust = c(0.01, 0.02),
+  Count = c(2L, 1L),
+  stringsAsFactors = FALSE
+)
+
+# Minimal nested structure:
+# all_results[[section]][[cluster]][[db]] -> data.frame
+all_results <- list(
+  cluster = list(
+    `1` = list(GO_BP = toy_enrich),
+    `2` = list(GO_BP = toy_enrich)
+  )
+)
+
+report_payload <- list(
+  all_results = all_results,
+  databases = databases,
+  clusterProfiler_params = list(pAdjustMethod = "BH", pvalueCutoff = 0.05),
+  cluster_table = cluster_table,
+  universe = unique(cluster_table$gene)
+)
+
+# Only run if the report backend is present (avoids failures on minimal
+# check environments where reporting deps might not be installed).
+if (exists("generate_report_html", mode = "function")) {
+  plots <- suppressMessages(
+    create_ora_report(
+      report_payload = report_payload,
+      report_info = list(project = "Toy ORA"),
+      cluster_hits_report_name = "toy_cluster_hits",
+      verbose = FALSE,
+      report_dir = file.path(tmp, "splineomics_ora_toy_report")
+    )
+  )
+
+  # Inspect returned ggplot objects (one per section)
+  names(plots)
+  plots[[1]]
+}
+
 }
 \seealso{
 \code{run_ora()}, \code{cluster_hits()}, \code{clusterProfiler::enricher()}

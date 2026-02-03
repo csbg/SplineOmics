@@ -146,7 +146,6 @@ annotation info, such as gene name, was randomly shuffled.
 
 ```{r setup, eval = TRUE}
 library(SplineOmics)
-library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
 ```

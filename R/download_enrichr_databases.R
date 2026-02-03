@@ -12,8 +12,7 @@
 #' \code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.
 #'
 #' @param output_dir `character(1)`: A string specifying the output directory 
-#' where the `.tsv` file will be saved. Defaults to the current project 
-#' directory as defined by `here::here()`.
+#' where the `.tsv` file will be saved. 
 #'
 #' @param filename `character(1)`: Name of the output file (with file 
 #' extension). Due to commas present in some terms, `.tsv` is recommended. 
@@ -42,7 +41,6 @@
 #'   head(out)
 #' }
 #'
-#' @importFrom here here
 #' @importFrom rlang .data
 #' @importFrom tibble tibble
 #' @importFrom dplyr mutate
@@ -52,8 +50,9 @@
 #'
 download_enrichr_databases <- function(
     gene_set_lib,
-    output_dir = here::here(),
-    filename = NULL) {
+    output_dir = tempdir(),
+    filename = NULL
+    ) {
     # Control the user inputs
     if (!is.character(gene_set_lib) || length(gene_set_lib) == 0) {
         stop_call_false(

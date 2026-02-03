@@ -37,7 +37,6 @@
 <li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
     <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -138,10 +137,41 @@ future.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="v0-4-2">[v0.4.2]<a class="anchor" aria-label="anchor" href="#v0-4-2"></a>
+<h4 id="v0-4-3-in-preparation">[v0.4.3] (in preparation)<a class="anchor" aria-label="anchor" href="#v0-4-3-in-preparation"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+</h5>
+<ul>
+<li><p>condition_colours support to plot options. Users can now provide
+a named list mapping condition levels to colours. When supplied, these
+colours override the default condition colours in plots, enabling
+consistent and user-defined visual styling across figures.</p></li>
+<li><p>min_cluster_r2 pruning with explicit ‘other’ cluster. Introduce
+a<br>
+min_cluster_r2 parameter to enforce a minimum r²-to-centroid constraint
+after k-means clustering.</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+</h5>
+<ul>
+<li><p>Quality control reporting and modality normalization in
+cluster_genes_multiomics().</p></li>
+<li><p>Separated statistical computations and plot/HTML-report
+generation for: cluster_hits(), run_ora(), and find_pvc(). Therefore,
+the new functions: create_clustering_report(), create_ora_report(), and
+create_pvc_report(); are now containing the plotting/HTML-report
+generation code for the mentioned statistical functions.</p></li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="v0-4-2">[v0.4.2]<a class="anchor" aria-label="anchor" href="#v0-4-2"></a>
+</h4>
+<div class="section level5">
+<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
 </h5>
 <ul>
 <li><p><code><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics()</a></code>, a gene-centric
@@ -172,7 +202,7 @@ more robustly (had clear weaknesses before)</p></li>
 <h4 id="v0-4-1">[v0.4.1]<a class="anchor" aria-label="anchor" href="#v0-4-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
+<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
 </h5>
 <ul>
 <li><p>Effect size thresholds are now reported in the HTML report
@@ -209,7 +239,7 @@ fitting with contrast.fit.</p></li>
 <h4 id="v0-4-0">[v0.4.0]<a class="anchor" aria-label="anchor" href="#v0-4-0"></a>
 </h4>
 <div class="section level5">
-<h5 id="changed-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1"></a>
+<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
 </h5>
 <ul>
 <li><p>SplineOmics now supports any amount of conditions (values in the
@@ -246,7 +276,7 @@ above).</li>
 <h4 id="v0-3-4">[v0.3.4]<a class="anchor" aria-label="anchor" href="#v0-3-4"></a>
 </h4>
 <div class="section level5">
-<h5 id="changed-2">Changed<a class="anchor" aria-label="anchor" href="#changed-2"></a>
+<h5 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
 </h5>
 <ul>
 <li><p>Renamed the function download_bioconductor_database() to
@@ -279,7 +309,7 @@ generated.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
+<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
 </h5>
 <ul>
 <li>The signed r² as the quality score for the cluster members is now
@@ -304,7 +334,7 @@ that.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="changed-3">Changed<a class="anchor" aria-label="anchor" href="#changed-3"></a>
+<h5 id="changed-4">Changed<a class="anchor" aria-label="anchor" href="#changed-4"></a>
 </h5>
 <ul>
 <li><p>Changed cluster quality metric from Silhouette score to signed
@@ -342,7 +372,7 @@ default, no HMTL report is generated.</p></li>
 <h4 id="v0-3-1">[v0.3.1]<a class="anchor" aria-label="anchor" href="#v0-3-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
+<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
 </h5>
 <ul>
 <li><p>Effect size computations and thresholding for the splines.
@@ -385,7 +415,7 @@ names.</p></li>
 <h4 id="section">[0.3.0]<a class="anchor" aria-label="anchor" href="#section"></a>
 </h4>
 <div class="section level5">
-<h5 id="changed-4">Changed<a class="anchor" aria-label="anchor" href="#changed-4"></a>
+<h5 id="changed-5">Changed<a class="anchor" aria-label="anchor" href="#changed-5"></a>
 </h5>
 <ul>
 <li><p>cluster_hits() returns. Now it returns only the plots and a large
@@ -435,7 +465,7 @@ is large, it uses the minibatch version of kmeans, which is a lot faster
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
+<h5 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
 </h5>
 <ul>
 <li><p>Auto-dof with loocv: Introduced new capability, that
@@ -530,7 +560,7 @@ would just confuse the user).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="changed-5">Changed<a class="anchor" aria-label="anchor" href="#changed-5"></a>
+<h5 id="changed-6">Changed<a class="anchor" aria-label="anchor" href="#changed-6"></a>
 </h5>
 <ul>
 <li>
@@ -584,7 +614,7 @@ not gsea (gene set enrichment analysis) in the stricter sense.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
+<h4 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
 </h4>
 <ul>
 <li><p>find_pvc() function. This function performs a compount contrast
@@ -629,7 +659,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 <h4 id="section-2">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
+<h5 id="added-8">Added<a class="anchor" aria-label="anchor" href="#added-8"></a>
 </h5>
 <ul>
 <li>Level name in title of overall spline plots.</li>
@@ -666,7 +696,7 @@ and this, which is twice the maintainance effort.</li>
 </h4>
 </div>
 <div class="section level4">
-<h4 id="changed-6">Changed<a class="anchor" aria-label="anchor" href="#changed-6"></a>
+<h4 id="changed-7">Changed<a class="anchor" aria-label="anchor" href="#changed-7"></a>
 </h4>
 <ul>
 <li>The design formula must now contain the string ‘Time’ rather than
@@ -678,7 +708,7 @@ formula, rather than being passed as part of the dream_params.</li>
 </ul>
 </div>
 <div class="section level4">
-<h4 id="added-8">Added<a class="anchor" aria-label="anchor" href="#added-8"></a>
+<h4 id="added-9">Added<a class="anchor" aria-label="anchor" href="#added-9"></a>
 </h4>
 <ul>
 <li>Added linear mixed models for modeling random effects. The

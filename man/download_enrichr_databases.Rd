@@ -6,7 +6,7 @@
 \usage{
 download_enrichr_databases(
   gene_set_lib,
-  output_dir = here::here(),
+  output_dir = tempdir(),
   filename = NULL
 )
 }
@@ -16,8 +16,7 @@ download from Enrichr, for example:
 \code{c("WikiPathways_2019_Human", "NCI-Nature_2016")}.}
 
 \item{output_dir}{\code{character(1)}: A string specifying the output directory
-where the \code{.tsv} file will be saved. Defaults to the current project
-directory as defined by \code{here::here()}.}
+where the \code{.tsv} file will be saved.}
 
 \item{filename}{\code{character(1)}: Name of the output file (with file
 extension). Due to commas present in some terms, \code{.tsv} is recommended.

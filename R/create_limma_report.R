@@ -41,8 +41,6 @@
 #'
 #' @return A list of plots included in the generated HTML report.
 #'
-#' @importFrom here here
-#'
 #' @examples
 #' set.seed(1)
 #'
@@ -139,8 +137,9 @@
 create_limma_report <- function(
     splineomics,
     adj_pthresh = 0.05,
-    report_dir = here::here(),
-    verbose = TRUE) {
+    report_dir = tempdir(),
+    verbose = TRUE
+    ) {
     report_dir <- normalizePath(
         report_dir,
         mustWork = FALSE
@@ -667,7 +666,8 @@ build_create_limma_report <- function(
     plots_sizes,
     level_headers_info,
     report_info,
-    output_file_path = here::here()) {
+    output_file_path
+    ) {
     # Read the text file and split it into blocks
     descriptions_path <- system.file(
         "descriptions",

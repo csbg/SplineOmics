@@ -34,7 +34,6 @@ report directory."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
     <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -74,7 +73,7 @@ report directory.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">explore_data</span><span class="op">(</span><span class="va">splineomics</span>, report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>, report <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">explore_data</span><span class="op">(</span><span class="va">splineomics</span>, report_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, report <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -120,9 +119,7 @@ second batch effect.</p></li>
 
 <dt id="arg-report-dir">report_dir<a class="anchor" aria-label="anchor" href="#arg-report-dir"></a></dt>
 <dd><p><code>character(1)</code>: A non-empty string specifying the report
-directory. The output HTML reports will be placed there. Default is the
-current working directory, determined with the here library:
-<code><a href="https://here.r-lib.org/reference/here.html" class="external-link">here::here()</a></code>.</p></dd>
+directory. The output HTML reports will be placed there.</p></dd>
 
 
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
@@ -217,14 +214,14 @@ report should be generated or not.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Making cv plots...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpOkZHlI/explore_data_demo .</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>  Your HTML reports are located in the directory:  /tmp/RtmpYhlIAc/explore_data_demo .</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  Please note that due to embedded files, the reports might be flagged as</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  harmful by other software. Rest assured that they provide no harm.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect what was written</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">report_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "explore_batch_corrected_data_PTX_29_01_2026-10_45_01.html"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "explore_data_PTX_29_01_2026-10_45_01.html"                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "explore_batch_corrected_data_PTX_03_02_2026-12_57_10.html"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "explore_data_PTX_03_02_2026-12_57_10.html"                </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># `plots` is a named list of ggplot objects (e.g., plots$raw_data$pca, etc.)</span></span></span>
 <span class="r-in"><span><span class="co"># print(plots$raw_data$pca)</span></span></span>

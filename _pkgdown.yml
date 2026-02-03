@@ -31,8 +31,6 @@ navbar:
           href: articles/RNA-seq-analysis.html
         - text: "Glycan analysis"
           href: articles/glycan-analysis.html
-        - text: "Epigenetics analysis"
-          href: articles/methylation_data_analysis.html
         - text: "Peak-Valley-Cliff (PVC) analysis"
           href: articles/PVC_analysis.html
         - text: "Gene-centric multiomics clustering"
@@ -94,7 +92,6 @@ articles:
       - get_started
       - RNA-seq-analysis
       - glycan-analysis
-      - methylation_data_analysis
       - PVC_analysis
       - Gene_centric_multiomics_clustering
   - title: "Guides"

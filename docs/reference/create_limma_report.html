@@ -30,7 +30,6 @@ and interaction effects between condition and time."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Further use cases</h6></li>
     <li><a class="dropdown-item" href="../articles/RNA-seq-analysis.html">RNA-seq analysis</a></li>
     <li><a class="dropdown-item" href="../articles/glycan-analysis.html">Glycan analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/methylation_data_analysis.html">Epigenetics analysis</a></li>
     <li><a class="dropdown-item" href="../articles/PVC_analysis.html">Peak-Valley-Cliff (PVC) analysis</a></li>
     <li><a class="dropdown-item" href="../articles/Gene_centric_multiomics_clustering.html">Gene-centric multiomics clustering</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -71,7 +70,7 @@ and interaction effects between condition and time.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_limma_report</span><span class="op">(</span></span>
 <span>  <span class="va">splineomics</span>,</span>
 <span>  adj_pthresh <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  report_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  report_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>

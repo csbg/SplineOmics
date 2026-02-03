@@ -10,7 +10,7 @@ create_pvc_report(
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
   verbose = TRUE,
-  report_dir = here::here()
+  report_dir = tempdir()
 )
 }
 \arguments{

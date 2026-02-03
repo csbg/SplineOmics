@@ -13,7 +13,7 @@ create_clustering_report(
   verbose = FALSE,
   max_hit_number = 25,
   raw_data = NULL,
-  report_dir = here::here()
+  report_dir = tempdir()
 )
 }
 \arguments{

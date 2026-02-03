@@ -66,10 +66,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 # Load the packages
 
 ```{r setup, eval = TRUE}
-# library(SplineOmics)
-library(devtools)
-devtools::load_all()
-library(here) # For managing filepaths
+library(SplineOmics)
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
 library(org.Mm.eg.db) # BioConductor database
@@ -301,7 +298,8 @@ report_info <- list(
     project_name = "DGTX"
 )
 
-report_dir <- here::here(
+report_dir <- file.path(
+    tempdir(),
     "results",
     "explore_data"
 )

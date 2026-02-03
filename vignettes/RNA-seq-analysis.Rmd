@@ -135,7 +135,6 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ```{r setup, eval = TRUE}
 library(SplineOmics)
 library(readr) # For reading the meta CSV file
-library(here) # For managing filepaths
 library(dplyr) # For data manipulation
 library(knitr) # For Showing the head of the data and the meta tables.
 ```
@@ -237,7 +236,8 @@ report_info <- list(
     project_name = "DGTX"
 )
 
-report_dir <- here::here(
+report_dir <- file.path(
+    tempdir(),
     "results",
     "explore_data"
 )
@@ -390,11 +390,6 @@ nr_clusters <- list(
     temp_shift = 4
 )
 
-report_dir <- here::here(
-    "results",
-    "clustering_reports"
-)
-
 plot_info <- list( # For the spline plots
     y_axis_label = "log2 counts",
     time_unit = "hours",
@@ -478,7 +473,7 @@ gene_set_lib <- c(
 
 SplineOmics::download_enrichr_databases(
     gene_set_lib = gene_set_lib,
-    output_dir = here::here(), # output into the current working dir (default)
+    output_dir = tempdir(), # output into the current working dir (default)
     filename = "databases.tsv" # just the name of the file, not the full path
 )
 ```
@@ -494,7 +489,8 @@ dotplots in R.
 
 ```{r prepare arguments for GSEA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
-downloaded_dbs_filepath <- here::here(
+downloaded_dbs_filepath <- file.path(
+    tempdir(),
     "databases.tsv"
 )
 
@@ -513,7 +509,8 @@ clusterProfiler_params <- list(
     maxGSSize = 500
 )
 
-report_dir <- here::here(
+report_dir <- file.path(
+    tempdir(),
     "results",
     "gsea_reports"
 )

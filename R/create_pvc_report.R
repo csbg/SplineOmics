@@ -36,8 +36,6 @@
 #' calls `generate_report_html()` with the plots, metadata, and report header
 #' settings derived from \code{pvc_results} and \code{splineomics}.
 #'
-#' @importFrom here here
-#'
 #' @export
 #'
 create_pvc_report <- function(
@@ -50,7 +48,7 @@ create_pvc_report <- function(
             treatment_timepoints = NA
         ),
         verbose = TRUE,
-        report_dir = here::here()
+        report_dir = tempdir()
 ) {
     check_splineomics_elements(
         splineomics = splineomics,
@@ -404,7 +402,7 @@ plot_pvc <- function(
 #' @param report_info A list containing metadata about the entire report (e.g.,
 #'   parameters used, timestamps, version info) used in the report footer.
 #' @param output_file_path File path (character) where the final HTML report
-#'   should be written. Defaults to `here::here()` if not provided.
+#'   should be written. 
 #'
 #' @return Used for side effects only. The function writes an HTML file to disk.
 #'
@@ -413,7 +411,8 @@ build_pvc_report <- function(
         plots,
         level_headers_info,
         report_info,
-        output_file_path = here::here()) {
+        output_file_path
+        ) {
     html_content <- paste(
         header_section,
         "<!--TOC-->",

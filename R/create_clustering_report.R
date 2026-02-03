@@ -115,7 +115,7 @@ create_clustering_report <- function(
         verbose = FALSE,
         max_hit_number = 25,
         raw_data = NULL,
-        report_dir = here::here()
+        report_dir = tempdir()
         ) {
     check_inputs_clustering_report(
         max_hit_number = max_hit_number
