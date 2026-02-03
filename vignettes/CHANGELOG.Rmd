@@ -56,9 +56,12 @@ Each release section should follow the structure below:
 #### Added
 
 -   condition_colours support to plot options. Users can now provide a named
-    list mapping condition levels to colours. When supplied, these colours           override the default condition colours in plots, enabling consistent and         user-defined visual styling across figures.
+    list mapping condition levels to colours. When supplied, these colours
+    override the default condition colours in plots, enabling consistent and 
+    user-defined visual styling across figures.
     
--   min_cluster_r2 pruning with explicit 'other' cluster. Introduce a                min_cluster_r2 parameter to enforce a minimum r²-to-centroid constraint
+-   min_cluster_r2 pruning with explicit 'other' cluster. Introduce a                
+    min_cluster_r2 parameter to enforce a minimum r²-to-centroid constraint
     after k-means clustering.
     
 #### Changed

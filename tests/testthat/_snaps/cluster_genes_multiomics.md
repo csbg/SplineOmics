@@ -1,13 +1,13 @@
 # cluster_genes_multiomics works.
 
     structure(list(gene = c("gene1", "gene2", "gene3", "gene4", "gene5", 
-    "gene6"), time_Ctrl = c(1L, 1L, 2L, 1L, 1L, 2L), time_Treat = c(1L, 
-    2L, 2L, 1L, 1L, 1L)), class = c("tbl_df", "tbl", "data.frame"
+    "gene6"), time_Ctrl = c(1L, 1L, 2L, 1L, 1L, 2L), time_Treat = c(2L, 
+    1L, 1L, 2L, 2L, 2L)), class = c("tbl_df", "tbl", "data.frame"
     ), row.names = c(NA, -6L))
 
 ---
 
-    structure(list(cluster = c(2L, 2L, 1L, 1L, 1L, 1L, 2L, 2L), block = c("time_Ctrl", 
+    structure(list(cluster = c(2L, 2L, 1L, 1L, 2L, 2L, 1L, 1L), block = c("time_Ctrl", 
     "time_Ctrl", "time_Ctrl", "time_Ctrl", "time_Treat", "time_Treat", 
     "time_Treat", "time_Treat"), modality = c("rna", "site", "rna", 
     "site", "rna", "site", "rna", "site"), modality_type = c("one_to_one", 
@@ -30,17 +30,17 @@
     ), c(gene2 = 0.467157630172925, gene3 = 0.467157630172925), c(gene2 = 0.902368927062182, 
     gene3 = 0.902368927062182)), class = "AsIs"), centroid = structure(list(
         c(1.21650717401778, -0.235376100617204, -0.954216800314583, 
-        -0.768567313941379, 0.74165304085539), c(cluster_1 = 0.696923425058676, 
-        cluster_2 = 0.288675134594813, cluster_3 = 0.408248290463863
+        -0.768567313941379, 0.74165304085539), c(cluster_1 = 0.408248290463863, 
+        cluster_2 = 0.288675134594813, cluster_3 = 0.696923425058676
         ), c(-0.104613070502927, 0.0837762408465411, 0.975020186792221, 
-        -0.0452338024357303, -0.908949554700105), c(cluster_1 = 0.433012701892219, 
-        cluster_2 = 0.492799279826744, cluster_3 = 0.538675134594813
+        -0.0452338024357303, -0.908949554700105), c(cluster_1 = 0.538675134594813, 
+        cluster_2 = 0.492799279826744, cluster_3 = 0.433012701892219
         ), c(0.892846776193118, -0.428811464463186, -1.17465501013733, 
         0.571428561969995, 0.139191136437407), c(cluster_1 = 0.802585857761269, 
-        cluster_2 = 0.433012701892219, cluster_3 = 0.144337567297406
+        cluster_2 = 0.144337567297406, cluster_3 = 0.433012701892219
         ), c(-0.0583438831701348, -0.504170180496948, 1.18735601849307, 
         -0.257599028437636, -0.367242926388351), c(cluster_1 = 0.696923425058676, 
-        cluster_2 = 0.577350269189626, cluster_3 = 0.288675134594813
+        cluster_2 = 0.288675134594813, cluster_3 = 0.577350269189626
         )), class = "AsIs"), avg_qc_score = c(0.580469652833516, 
     0.580469652833516, 0.36699362535084, 0.36699362535084, 0.41364802214812, 
     0.41364802214812, 0.282394351555371, 0.282394351555371)), class = c("tbl_df", 

@@ -53,13 +53,15 @@ in a total of **136 samples**.
 
 ### Additonal effects in the experiment: Reactor and Plate
 
-In this experiment, there are two effects to consider: **Reactor** and **Plate**.
+In this experiment, there are two effects to consider: **Reactor** and
+**Plate**.
 
 1. **Reactor**:
    - This refers to the different bioreactors used for cell cultivation, which
    can exhibit substantial variability.
    - Each reactor was assigned a single condition: either constant temperature
-   or temperature-shifted. As a result, **condition and reactor are confounded**.
+   or temperature-shifted. As a result,
+   **condition and reactor are confounded**.
    - Reactor should not be treated as a fixed effect to simply remove its 
    influence. Instead, it is treated as a **random effect**, which allows us
    to model its variability appropriately.

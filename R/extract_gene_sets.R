@@ -1,4 +1,4 @@
-#' Download gene set annotations from Bioconductor organism databases
+#' Extract gene set annotations from Bioconductor organism databases
 #'
 #' @description
 #' This function extracts gene-to-ontology mappings from a specified
@@ -15,8 +15,7 @@
 #' `"org.Mm.eg.db"` for mouse).
 #'
 #' @param output_dir `character(1)`: A string specifying the output directory 
-#' where the `.tsv` file will be saved. Defaults to the current project 
-#' directory as defined by `here::here()`.
+#' where the `.tsv` file will be saved.
 #'
 #' @param filename `character(1)` | `NULL`: An optional string specifying the 
 #' filename for the output file. If `NULL` (default), a filename is generated 
@@ -40,13 +39,13 @@
 #'   \item{Gene}{Gene symbol (\code{SYMBOL}).}
 #' }
 #' Note: Some \code{org.*.eg.db} packages no longer include KEGG mappings; in
-#' such cases the KEGG section will be empty.
+#' such cases the KEGG mappings may be absent.
 #'
 #' In addition to returning the `data.frame`, the function also writes the same
 #' table to disk as a `.tsv` file in the specified `output_dir`.
 #'
-#' @importFrom here here
-#' @importFrom rlang .data
+#' @importFrom rlang .data abort
+#' @importFrom dplyr mutate case_when select filter bind_rows distinct
 #'
 #' @examples
 #' # Minimal real example (runs only if org package is installed)
@@ -80,21 +79,25 @@
 #'
 extract_gene_sets <- function(
     organism_db = "org.Hs.eg.db",
-    output_dir = here::here(),
-    filename = NULL) {
+    output_dir = tempdir(),
+    filename = NULL
+    ) {
     # Dependencies (Not core of SplineOmics, must be downloaded for this
     # function)
     if (!requireNamespace(organism_db, quietly = TRUE)) {
-        stop_call_false(
-            "Organism database ",
-            organism_db,
-            " is not installed."
+        rlang::abort(
+            paste0(
+                "Organism database '",
+                organism_db,
+                "' is not installed."
+            )
         )
     }
+    
     if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
-        stop_call_false(
+        rlang::abort(
             "Package 'AnnotationDbi' is required but not installed."
-            )
+        )
     }
 
     # Load the org.* namespace and get the OrgDb object
@@ -107,6 +110,11 @@ extract_gene_sets <- function(
         orgdb,
         keytype = "ENTREZID"
     )
+    if (!length(entrez_keys)) {
+        rlang::abort(
+            "No ENTREZID keys were retrieved from the organism database."
+            )
+    }
 
     # GO (BP/MF/CC)
     go_df <- AnnotationDbi::select(
@@ -117,8 +125,14 @@ extract_gene_sets <- function(
             "GO",
             "ONTOLOGY"
         ),
-        keytype = "ENTREZID"
+        keytype = "ENTREZID",
+        check = FALSE
     )
+    if (!nrow(go_df)) {
+        rlang::abort(
+            "No GO mappings were retrieved from the organism database."
+            )
+    }
 
     go_df <- go_df[!is.na(go_df$GO), , drop = FALSE]
     go_df <- dplyr::mutate(
@@ -132,9 +146,20 @@ extract_gene_sets <- function(
         Geneset = .data$GO,
         Gene = .data$SYMBOL
     )
-    keep <- intersect(c("DB", "Geneset", "Gene"), names(go_df))
-    go_df <- dplyr::select(go_df, keep)
-    go_df <- dplyr::filter(go_df, !is.na(.data$DB), !is.na(.data$Gene))
+    keep <- intersect(c(
+        "DB",
+        "Geneset",
+        "Gene"
+        ), names(go_df))
+    go_df <- dplyr::select(
+        go_df,
+        dplyr::all_of(keep)
+    )
+    go_df <- dplyr::filter(
+        go_df,
+        !is.na(.data$DB), 
+        !is.na(.data$Gene)
+        )
 
     kegg_df <- NULL
     if ("PATH" %in% AnnotationDbi::columns(orgdb)) {
@@ -142,7 +167,8 @@ extract_gene_sets <- function(
             orgdb,
             keys    = entrez_keys,
             columns = c("SYMBOL", "PATH"),
-            keytype = "ENTREZID"
+            keytype = "ENTREZID",
+            check = FALSE
         )
         if (!is.null(kegg_raw) && nrow(kegg_raw)) {
             kegg_raw <- kegg_raw[!is.na(kegg_raw$PATH), , drop = FALSE]
@@ -154,27 +180,32 @@ extract_gene_sets <- function(
                         Gene    = .data$SYMBOL
                     ) |>
                     (\(d) {
-                        keep <- intersect(c("DB", "Geneset", "Gene"), names(d))
-                        dplyr::select(d, keep) 
+                        keep <- intersect(c(
+                            "DB",
+                            "Geneset",
+                            "Gene"
+                            ), names(d))
+                        dplyr::select(d, dplyr::all_of(keep))
                     })() |>
                     dplyr::filter(!is.na(.data$Gene))
             }
         }
     }
 
-    # Combine & de-duplicate
+    # Combine
     genesets <- if (!is.null(kegg_df)) {
         dplyr::bind_rows(go_df, kegg_df)
     } else {
-        {
-            go_df
-        } |>
-            dplyr::distinct(
-                .data$DB,
-                .data$Geneset,
-                .data$Gene
-            )
+        go_df
     }
+    
+    # De-duplicate (always)
+    genesets <- dplyr::distinct(
+        genesets,
+        .data$DB,
+        .data$Geneset,
+        .data$Gene
+    )
 
     # Output path
     dir.create(
@@ -218,7 +249,7 @@ extract_gene_sets <- function(
     )
 
     message(
-        "\nDownload complete! The file has been saved as: ",
+        "\nGene set extraction complete complete! The file has been saved as: ",
         filename_path
     )
     invisible(genesets)

@@ -2,11 +2,11 @@
 % Please edit documentation in R/extract_gene_sets.R
 \name{extract_gene_sets}
 \alias{extract_gene_sets}
-\title{Download gene set annotations from Bioconductor organism databases}
+\title{Extract gene set annotations from Bioconductor organism databases}
 \usage{
 extract_gene_sets(
   organism_db = "org.Hs.eg.db",
-  output_dir = here::here(),
+  output_dir = tempdir(),
   filename = NULL
 )
 }
@@ -16,8 +16,7 @@ organism annotation database to use (e.g., \code{"org.Hs.eg.db"} for human or
 \code{"org.Mm.eg.db"} for mouse).}
 
 \item{output_dir}{\code{character(1)}: A string specifying the output directory
-where the \code{.tsv} file will be saved. Defaults to the current project
-directory as defined by \code{here::here()}.}
+where the \code{.tsv} file will be saved.}
 
 \item{filename}{\code{character(1)} | \code{NULL}: An optional string specifying the
 filename for the output file. If \code{NULL} (default), a filename is generated
@@ -51,7 +50,7 @@ The TSV has three columns:
 \item{Gene}{Gene symbol (\code{SYMBOL}).}
 }
 Note: Some \code{org.*.eg.db} packages no longer include KEGG mappings; in
-such cases the KEGG section will be empty.
+such cases the KEGG mappings may be absent.
 
 In addition to returning the \code{data.frame}, the function also writes the same
 table to disk as a \code{.tsv} file in the specified \code{output_dir}.

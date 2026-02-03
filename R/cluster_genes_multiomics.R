@@ -487,8 +487,7 @@ cluster_genes_multiomics <- function(
             sig_obj <- .build_site_signatures(
                 modality_mat     = mat_raw,
                 feature_to_gene  = feature_to_gene,
-                many_to_one_k    = lk,
-                seed             = 42
+                many_to_one_k    = lk
             )
             
             sig <- sig_obj$signatures
@@ -611,10 +610,6 @@ cluster_genes_multiomics <- function(
 #' compute across all features.
 #' Must satisfy \code{2 <= many_to_one_k < nrow(modality_mat)}.
 #'
-#' @param seed
-#' Optional integer seed passed to \code{\link[base]{set.seed}} to make the
-#' feature-level clustering reproducible.
-#'
 #' @return
 #' A list with two components:
 #'
@@ -640,8 +635,7 @@ cluster_genes_multiomics <- function(
 .build_site_signatures <- function(
         modality_mat,
         feature_to_gene,
-        many_to_one_k,
-        seed = NULL
+        many_to_one_k
 ) {
     many_to_one_k <- as.integer(many_to_one_k)
     
@@ -656,8 +650,7 @@ cluster_genes_multiomics <- function(
 
     feature_clusters <- .cluster_feature_matrix(
         feature_mat = scale(modality_mat),
-        k           = many_to_one_k,
-        seed        = seed
+        k           = many_to_one_k
     )
 
     many_to_one_clustering_qc <- .compute_cluster_centroids_qc(
@@ -945,10 +938,6 @@ cluster_genes_multiomics <- function(
 #'   best solution is chosen via BIC.  
 #' All values must satisfy \code{2 <= k < nrow(dist_mat)}.
 #'
-#' @param seed
-#' Optional integer seed passed to \code{\link[base]{set.seed}} before
-#' clustering. If \code{NULL}, no seed is set.
-#'
 #' @return
 #' An integer vector of cluster assignments, one entry per gene.
 #' Names correspond to the row names of \code{dist_mat}.
@@ -959,18 +948,13 @@ cluster_genes_multiomics <- function(
 .cluster_feature_matrix <- function(
         feature_mat,
         k,
-        seed = NULL,
         verbose = FALSE
 ) {
     n_obs <- nrow(feature_mat)
     if (n_obs < 2L) {
         stop("Need at least 2 observations for clustering.", call. = FALSE)
     }
-    
-    if (!is.null(seed)) {
-        set.seed(seed)
-    }
-    
+
     k_vec <- sort(unique(as.integer(k)))
     k_vec <- k_vec[k_vec > 1L & k_vec < n_obs]
     if (length(k_vec) == 0L) {
@@ -1027,7 +1011,7 @@ cluster_genes_multiomics <- function(
                 early_stop_iter = 10L,
                 tol             = 1e-4,
                 verbose         = FALSE,
-                seed            = if (is.null(seed)) 42L else seed
+                seed            = 42
             )
             list(
                 tot_within = sum(fit$WCSS_per_cluster),
@@ -2058,7 +2042,10 @@ cluster_genes_multiomics <- function(
                         X_use,
                         1L,
                         function(x) {
-                            r <- suppressWarnings(stats::cor(x, centroid))
+                            r <- stats::cor(
+                                x,
+                                centroid
+                                )
                             r^2
                         }
                     )

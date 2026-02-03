@@ -2966,7 +2966,6 @@ plot_single_and_mean_splines <- function(
     features <- unique(df_long$feature)
     
     if (length(features) > max_lines) {
-        set.seed(1L)
         keep_features <- sample(features, size = max_lines)
         df_long <- df_long[df_long$feature %in% keep_features, , drop = FALSE]
     }

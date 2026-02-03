@@ -573,19 +573,20 @@ build_contrast_plan <- function(
     
     levels_in_condition <- levels(factor(meta[[condition]]))
     if (length(levels_in_condition) < 2L) {
-        stop("Condition must have at least two levels.")
+        rlang::abort("Condition must have at least two levels.")
     }
     
     spline_cols <- grep("^X$|^X\\d+$", cols, value = TRUE)
     if (length(spline_cols) < 1L) {
-        stop("No spline basis columns found in 'cols'.")
+        rlang::abort("No spline basis columns found in 'cols'.")
     }
     
     if (length(spline_cols) != dof) {
-        stop(
-            "Mismatch between dof (", dof,
-            ") and detected spline columns (",
-            length(spline_cols), ")."
+        rlang::abort(
+            paste0(
+                "Mismatch between dof (", dof,
+                ") and detected spline columns (", length(spline_cols), ")."
+            )
         )
     }
     
@@ -596,9 +597,7 @@ build_contrast_plan <- function(
     if (sum(missing_main) == 1L) {
         baseline <- levels_in_condition[missing_main]
     } else {
-        stop(
-            "Could not infer baseline of design matrix."
-        )
+        rlang::abort("Could not infer baseline of design matrix.")
     }
     
     dummy_design_matrix <- matrix(
@@ -628,9 +627,11 @@ build_contrast_plan <- function(
         )
         
         if (!identical(rownames(L_lev), cols)) {
-            stop(
-                "Spline contrast rownames do not match 'cols' ",
-                "for level '", lev, "'."
+            rlang::abort(
+                paste0(
+                    "Spline contrast rownames do not match 'cols' for level '",
+                    lev, "'."
+                )
             )
         }
         
@@ -666,9 +667,14 @@ build_contrast_plan <- function(
         L_pair <- cm$L
         
         if (!identical(rownames(L_pair), cols)) {
-            stop(
-                "Pairwise contrast rownames do not match 'cols' ",
-                "for pair '", lev1, "' vs '", lev2, "'."
+            rlang::abort(
+                paste0(
+                    "Pairwise contrast rownames do not match 'cols' for pair '",
+                    lev1,
+                    "' vs '",
+                    lev2,
+                    "'."
+                )
             )
         }
         
@@ -700,7 +706,7 @@ build_contrast_plan <- function(
     }
     
     if (length(L_blocks) < 1L) {
-        stop("No contrast blocks were constructed.")
+        rlang::abort("No contrast blocks were constructed.")
     }
     
     L_all <- do.call(cbind, L_blocks)
@@ -708,20 +714,22 @@ build_contrast_plan <- function(
     storage.mode(L_all) <- "double"
     
     if (!identical(rownames(L_all), cols)) {
-        stop("Internal error: L_all rownames do not match 'cols'.")
+        rlang::abort("L_all rownames do not match 'cols'.")
     }
     
     if (anyDuplicated(colnames(L_all)) > 0L) {
-        stop("Internal error: L_all has duplicated column names.")
+        rlang::abort("L_all has duplicated column names.")
     }
     
     mapped <- unique(unlist(map_for_L_all, use.names = FALSE))
     missing <- setdiff(mapped, colnames(L_all))
     
     if (length(missing) > 0L) {
-        stop(
-            "Internal error: map_for_L_all contains names not in L_all: ",
-            paste(missing, collapse = ", ")
+        rlang::abort(
+            paste0(
+                "map_for_L_all contains names not in L_all: ",
+                paste(missing, collapse = ", ")
+            )
         )
     }
     
