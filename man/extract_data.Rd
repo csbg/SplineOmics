@@ -10,7 +10,7 @@ extract_data(
   right_col,
   top_row = 1,
   left_col = 1,
-  feature_name_columns = NA,
+  feature_name_columns = NULL,
   use_row_index = FALSE
 )
 }

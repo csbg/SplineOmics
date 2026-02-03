@@ -86,8 +86,9 @@ extract_data <- function(
     right_col,
     top_row = 1,
     left_col = 1,
-    feature_name_columns = NA,
-    use_row_index = FALSE) {
+    feature_name_columns = NULL,
+    use_row_index = FALSE
+    ) {
     control_inputs_extract_data(
         data = data,
         top_row = top_row,
@@ -117,7 +118,7 @@ extract_data <- function(
     }, logical(1)))
 
     if (!valid_block) {
-        stop_call_false(
+        rlang::abort(
             "The selected block must contain only numeric values or NAs."
         )
     }
@@ -189,54 +190,58 @@ control_inputs_extract_data <- function(
     left_col,
     right_col,
     feature_name_columns,
-    use_row_index) {
+    use_row_index
+    ) {
     if (!is.data.frame(data)) {
-        stop_call_false(paste0(
-            "Input 'data' must be a dataframe, but got: ",
-            class(data)
+        rlang::abort(paste0(
+            "Input 'data' must be a data.frame, but got: ",
+            paste(class(data), collapse = ", ")
         ))
     }
-
+    
     if (nrow(data) == 0 || ncol(data) == 0) {
-        stop_call_false(paste0(
-            "Input dataframe is empty or has no columns (nrow = ",
+        rlang::abort(paste0(
+            "Input data.frame is empty or has no columns (nrow = ",
             nrow(data),
             ", ncol = ",
-            ncol(data), ")."
+            ncol(data),
+            ")."
         ))
     }
-
-    # Validate row inputs
+    
     if (!is.numeric(top_row) || !is.numeric(bottom_row)) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'top_row' and 'bottom_row' must be numeric. Got: top_row = ",
             top_row,
             ", bottom_row = ",
             bottom_row
         ))
     }
+    
     if (top_row <= 0 ||
         bottom_row <= 0 ||
         top_row != floor(top_row) ||
         bottom_row != floor(bottom_row)) {
-        stop_call_false(paste0(
-            "'top_row' and 'bottom_row' must be positive integers.",
+        rlang::abort(paste0(
+            "'top_row' and 'bottom_row' must be positive integers. ",
             "Got: top_row = ",
             top_row,
             ", bottom_row = ",
             bottom_row
         ))
     }
+    
     if (top_row > bottom_row) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'top_row' cannot be greater than 'bottom_row'. Got: top_row = ",
-            top_row, ",
-      bottom_row = ",
+            top_row,
+            ", bottom_row = ",
             bottom_row
         ))
     }
+    
     if (bottom_row > nrow(data)) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'bottom_row' (",
             bottom_row,
             ") exceeds number of rows in data (nrow = ",
@@ -244,31 +249,31 @@ control_inputs_extract_data <- function(
             ")."
         ))
     }
-
+    
     left_col_idx <- excel_col_to_index(left_col)
     right_col_idx <- excel_col_to_index(right_col)
-
+    
     if (any(is.na(c(left_col_idx, right_col_idx)))) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "Invalid column reference(s). Got: left_col = '",
             left_col,
             "', right_col = '",
             right_col,
-            "'"
+            "'."
         ))
     }
-
+    
     if (left_col_idx <= 0 || right_col_idx <= 0) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "Column indices must be positive integers. Got: left_col_idx = ",
             left_col_idx,
             ", right_col_idx = ",
             right_col_idx
         ))
     }
-
+    
     if (left_col_idx > right_col_idx) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'left_col' index (",
             left_col_idx,
             ") cannot be after 'right_col' index (",
@@ -276,9 +281,9 @@ control_inputs_extract_data <- function(
             ")."
         ))
     }
-
+    
     if (right_col_idx > ncol(data)) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'right_col' index (",
             right_col_idx,
             ") exceeds number of columns in data (ncol = ",
@@ -286,42 +291,43 @@ control_inputs_extract_data <- function(
             ")."
         ))
     }
-
-    # Validate feature name columns
-    if (!any(is.na(feature_name_columns))) {
+    
+    if (!any(is.null(feature_name_columns))) {
         if (!is.character(feature_name_columns)) {
-            stop_call_false(paste0(
+            rlang::abort(paste0(
                 "'feature_name_columns' must be a character vector. Got: ",
-                class(feature_name_columns)
+                paste(class(feature_name_columns), collapse = ", ")
             ))
         }
-
+        
         missing_columns <- setdiff(feature_name_columns, colnames(data))
         if (length(missing_columns) > 0) {
-            stop_call_false(paste0(
-                "The following 'feature_name_columns' are not present",
-                "in the data: ",
+            rlang::abort(paste0(
+                "The following 'feature_name_columns' are not present in ",
+                "the data: ",
                 paste(missing_columns, collapse = ", ")
             ))
         }
-
+        
         if (all(is.na(data[feature_name_columns]))) {
-            stop_call_false(paste0(
-                "Columns '", paste(feature_name_columns, collapse = ", "),
+            rlang::abort(paste0(
+                "Columns '",
+                paste(feature_name_columns, collapse = ", "),
                 "' contain only NA values."
             ))
         }
     }
-
-    # Validate use_row_index argument
+    
     if (!is.logical(use_row_index) ||
         length(use_row_index) != 1 ||
         is.na(use_row_index)) {
-        stop_call_false(paste0(
+        rlang::abort(paste0(
             "'use_row_index' must be either TRUE or FALSE. Got: ",
             use_row_index
         ))
     }
+    
+    invisible(TRUE)
 }
 
 
@@ -364,8 +370,16 @@ excel_col_to_index <- function(col) {
         }
         ch <- strsplit(cname, "", fixed = TRUE)[[1]]
 
-        # Validate A–Z only
-        if (any(ch < "A" | ch > "Z")) stop("Invalid column label: ", cname)
+        # Validate A-Z only
+        if (any(ch < "A" | ch > "Z")) {
+            rlang::abort(
+                c(
+                    "Invalid Excel-style column label.",
+                    "x" = paste0("Received: '", cname, "'."),
+                    "i" = "Only letters A-Z are allowed."
+                )
+            )
+        }
 
         nums <- vapply(ch, function(l) utf8ToInt(l) - 64L, integer(1))
         pows <- 26L^((length(nums) - 1L):0L)
@@ -404,7 +418,7 @@ excel_col_to_index <- function(col) {
 #' - Assigns the feature names to the rows of `data_matrix`.
 #' - If `feature_name_column` is `NA`, assigns sequential numbers
 #' (1, 2, 3, etc.)
-#'   as feature names and issues a message.
+#'   as feature names.
 #'
 #' @return The `data_matrix` dataframe with updated row names.
 #'
@@ -414,8 +428,9 @@ add_feature_names <- function(
     feature_name_columns,
     top_row,
     bottom_row,
-    use_row_index = FALSE) {
-    if (!any(is.na(feature_name_columns))) {
+    use_row_index = FALSE
+    ) {
+    if (!any(is.null(feature_name_columns))) {
         rows <- seq.int(top_row, bottom_row)
 
         data_filtered <- data[rows, , drop = FALSE]
@@ -438,13 +453,13 @@ add_feature_names <- function(
         }
 
         if (length(feature_names) != length(unique(feature_names))) {
-            stop_call_false(
+            rlang::abort(
                 "Combined feature names must be unique, ignoring NA values."
             )
         }
-
+        
         if (length(feature_names) != nrow(data_matrix)) {
-            stop_call_false(
+            rlang::abort(
                 paste(
                     "Length of combined feature names does not match",
                     "the number of",
@@ -456,10 +471,6 @@ add_feature_names <- function(
         rownames(data_matrix) <- feature_names
     } else {
         rownames(data_matrix) <- as.character(seq_len(nrow(data_matrix)))
-        message(paste(
-            "No feature_name column specified. Setting numbers 1, 2, 3,",
-            "etc. as the feature names"
-        ))
     }
     return(data_matrix)
 }
