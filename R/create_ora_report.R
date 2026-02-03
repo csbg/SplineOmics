@@ -111,7 +111,7 @@ create_ora_report <- function(
         report_payload,
         report_info = NULL,
         cluster_hits_report_name = NULL,
-        verbose = TRUE,
+        verbose = FALSE,
         report_dir = tempdir()
 ) {
     check_inputs_create_ora_report(

@@ -8,7 +8,7 @@ create_ora_report(
   report_payload,
   report_info = NULL,
   cluster_hits_report_name = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   report_dir = tempdir()
 )
 }

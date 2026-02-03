@@ -4,7 +4,13 @@
 \alias{find_pvc}
 \title{Find peaks and valleys in time-series omics data}
 \usage{
-find_pvc(splineomics, alphas = 0.05, padjust_method = "BH", support = 1)
+find_pvc(
+  splineomics,
+  alphas = 0.05,
+  padjust_method = "BH",
+  support = 1,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{splineomics}{\code{list}: Preprocessed time-series input. Must include
@@ -35,6 +41,9 @@ timepoint neighborhood to keep a PVC p-value. For a given feature at a
 target timepoint, the target and its neighboring timepoints must each
 have at least \code{support} non-NA observations; otherwise the p-value
 at the target timepoint is set to \code{NA}.}
+
+\item{verbose}{\code{logical(1)}: Boolean flag controlling the display of
+messages.}
 }
 \value{
 A named list by condition level. Each element contains:

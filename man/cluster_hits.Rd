@@ -13,7 +13,7 @@ cluster_hits(
   min_effect_size = list(time_effect = 0, avg_diff_cond = 0, interaction_cond_time = 0),
   min_cluster_r2 = 0,
   genes = NULL,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{

@@ -47,7 +47,7 @@ create_pvc_report <- function(
             treatment_labels = NA,
             treatment_timepoints = NA
         ),
-        verbose = TRUE,
+        verbose = FALSE,
         report_dir = tempdir()
 ) {
     check_splineomics_elements(

@@ -177,7 +177,7 @@ run_ora <- function(
     ),
     enrichGO_cfg = NULL,
     universe = NULL,
-    verbose = TRUE
+    verbose = FALSE
     ) {
     args <- lapply(
         as.list(

@@ -9,7 +9,7 @@ create_pvc_report(
   pvc_results,
   plot_info = list(y_axis_label = "Value", time_unit = "min", treatment_labels = NA,
     treatment_timepoints = NA),
-  verbose = TRUE,
+  verbose = FALSE,
   report_dir = tempdir()
 )
 }

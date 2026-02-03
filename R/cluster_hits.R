@@ -396,7 +396,7 @@ cluster_hits <- function(
     ),
     min_cluster_r2 = 0,
     genes = NULL,
-    verbose = TRUE
+    verbose = FALSE
     ) {
     start_time <- Sys.time()
 

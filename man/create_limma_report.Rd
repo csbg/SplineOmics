@@ -8,7 +8,7 @@ create_limma_report(
   splineomics,
   adj_pthresh = 0.05,
   report_dir = tempdir(),
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{

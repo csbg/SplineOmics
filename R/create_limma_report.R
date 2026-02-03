@@ -138,7 +138,7 @@ create_limma_report <- function(
     splineomics,
     adj_pthresh = 0.05,
     report_dir = tempdir(),
-    verbose = TRUE
+    verbose = FALSE
     ) {
     report_dir <- normalizePath(
         report_dir,

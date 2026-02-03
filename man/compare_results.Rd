@@ -10,7 +10,8 @@ compare_results(
   splineomics1_description = "SplineOmics_1",
   splineomics2_description = "SplineOmics_2",
   adj_p_tresh1 = 0.05,
-  adj_p_tresh2 = 0.05
+  adj_p_tresh2 = 0.05,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,9 @@ hits in analysis 1.}
 
 \item{adj_p_tresh2}{\code{numeric(1)}: Numeric p-value threshold for calling
 hits in analysis 2.}
+
+\item{verbose}{\code{Boolean(1)}: Boolean flag indicating whether info messages
+should be shown.}
 }
 \value{
 A list with components:

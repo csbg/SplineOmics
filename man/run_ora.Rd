@@ -11,7 +11,7 @@ run_ora(
   mapping_cfg = list(method = "none", from_species = NULL, to_species = NULL),
   enrichGO_cfg = NULL,
   universe = NULL,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{

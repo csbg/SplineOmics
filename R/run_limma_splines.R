@@ -205,7 +205,7 @@
 #'
 run_limma_splines <- function(
     splineomics,
-    verbose = TRUE
+    verbose = FALSE
     ) {
     start_time <- Sys.time()
     check_splineomics_elements(

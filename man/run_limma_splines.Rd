@@ -4,7 +4,7 @@
 \alias{run_limma_splines}
 \title{Perform a limma spline analysis to identify significant features}
 \usage{
-run_limma_splines(splineomics, verbose = TRUE)
+run_limma_splines(splineomics, verbose = FALSE)
 }
 \arguments{
 \item{splineomics}{\code{SplineOmics}: An S3 object of class \code{SplineOmics} that

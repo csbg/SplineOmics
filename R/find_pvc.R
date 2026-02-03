@@ -35,6 +35,9 @@
 #'   target timepoint, the target and its neighboring timepoints must each
 #'   have at least \code{support} non-NA observations; otherwise the p-value
 #'   at the target timepoint is set to \code{NA}.
+#'   
+#' @param verbose `logical(1)`: Boolean flag controlling the display of 
+#' messages.
 #'
 #' @return A named list by condition level. Each element contains:
 #' \describe{
@@ -125,7 +128,8 @@ find_pvc <- function(
     splineomics,
     alphas = 0.05,
     padjust_method = "BH",
-    support = 1
+    support = 1,
+    verbose = FALSE
     ) {
     check_splineomics_elements(
         splineomics = splineomics,
@@ -202,13 +206,15 @@ find_pvc <- function(
         pattern_df <- as.data.frame(pattern_counts)
         pattern_summary <- rowSums(pattern_df)
         total_hits <- sum(pattern_summary)
-
-        message_pvc_pattern_hits(
-            level = level,
-            total_hits = total_hits,
-            pattern_summary = pattern_summary,
-            pattern_df = pattern_df
-        )
+        
+        if(isTRUE(verbose)) {
+            message_pvc_pattern_hits(
+                level = level,
+                total_hits = total_hits,
+                pattern_summary = pattern_summary,
+                pattern_df = pattern_df
+            )
+        }
         results[[as.character(level)]][["pvc_adj_pvals"]] <- pvc_pvals
         results[[as.character(level)]][["pvc_pattern_summary"]] <- pattern_df
     }

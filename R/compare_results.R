@@ -27,6 +27,9 @@
 #'
 #' @param adj_p_tresh2 `numeric(1)`: Numeric p-value threshold for calling 
 #' hits in analysis 2.
+#' 
+#' @param verbose `Boolean(1)`: Boolean flag indicating whether info messages
+#' should be shown.
 #'
 #' @return A list with components:
 #' \describe{
@@ -94,16 +97,18 @@ compare_results <- function(
     splineomics1_description = "SplineOmics_1",
     splineomics2_description = "SplineOmics_2",
     adj_p_tresh1 = 0.05,
-    adj_p_tresh2 = 0.05
+    adj_p_tresh2 = 0.05,
+    verbose = FALSE
 ) {
   
   validate_compare_inputs(
-    splineomics1,
-    splineomics2,
-    splineomics1_description,
-    splineomics2_description,
-    adj_p_tresh1,
-    adj_p_tresh2
+    splineomics1 = splineomics1,
+    splineomics2 = splineomics2,
+    splineomics1_description = splineomics1_description,
+    splineomics2_description = splineomics2_description,
+    adj_p_tresh1 = adj_p_tresh1,
+    adj_p_tresh2 = adj_p_tresh2,
+    verbose = verbose
   )
   
   categories <- c(    # The three limma result categories
@@ -136,33 +141,47 @@ compare_results <- function(
     list1 <- splineomics1[["limma_splines_result"]][[category]]
     list2 <- splineomics2[["limma_splines_result"]][[category]]
     
-    if (!is.list(list1) || !is.list(list2)) {  # Can be NA when result not there
-      message(sprintf("Category '%s' missing or not a list", category))
-      next
-    }
-    
-    shared_names <- intersect(   # Those are the names of the conditions/groups
-      names(list1),
-      names(list2)
-      )
-    if (length(shared_names) == 0) {
-      message(sprintf("No matching subcategories in '%s'", category))
-      next
-    }
-    
-    for (subcat in shared_names) {    # loop over the conditions/groups
-      merged <- merge_limma_results(
-        list1[[subcat]],
-        list2[[subcat]]
-        )
-      if (is.null(merged)) {
-        message(sprintf(
-          "Invalid or no overlap in '%s' > '%s'",
-          category,
-          subcat
-          ))
+    if (!is.list(list1) || !is.list(list2)) {
+        if (isTRUE(verbose)) {
+            rlang::inform(sprintf(
+                "Category '%s' missing or not a list",
+                category
+            ))
+        }
         next
-      }
+    }
+    
+    shared_names <- intersect(
+        names(list1),
+        names(list2)
+    )
+    
+    if (length(shared_names) == 0L) {
+        if (isTRUE(verbose)) {
+            rlang::inform(sprintf(
+                "No matching subcategories in '%s'",
+                category
+            ))
+        }
+        next
+    }
+    
+    for (subcat in shared_names) {
+        merged <- merge_limma_results(
+            list1[[subcat]],
+            list2[[subcat]]
+        )
+        
+        if (is.null(merged)) {
+            if (isTRUE(verbose)) {
+                rlang::inform(sprintf(
+                    "Invalid or no overlap in '%s' > '%s'",
+                    category,
+                    subcat
+                ))
+            }
+            next
+        }
       
       # Full correlation ----
       corr <- stats::cor(
@@ -280,43 +299,76 @@ compare_results <- function(
 #'                                 (length 1).
 #' @param adj_p_tresh1 Numeric. P-value threshold between 0 and 1 (inclusive).
 #' @param adj_p_tresh2 Numeric. P-value threshold between 0 and 1 (inclusive).
+#' @param verbose `Boolean(1)`: Boolean flag indicating whether info messages
+#' should be shown.
 #'
 #' @return NULL. Throws an error if any check fails.
 #' 
 validate_compare_inputs <- function(
-    splineomics1,
-    splineomics2,
-    splineomics1_description,
-    splineomics2_description,
-    adj_p_tresh1,
-    adj_p_tresh2
+        splineomics1,
+        splineomics2,
+        splineomics1_description,
+        splineomics2_description,
+        adj_p_tresh1,
+        adj_p_tresh2,
+        verbose
 ) {
-  if (!inherits(splineomics1, "SplineOmics")) {
-    stop("`splineomics1` must be an S3 object of class 'SplineOmics'")
-  }
-  if (!inherits(splineomics2, "SplineOmics")) {
-    stop("`splineomics2` must be an S3 object of class 'SplineOmics'")
-  }
-  
-  if (!is.character(splineomics1_description) ||
-      length(splineomics1_description) != 1) {
-    stop("`splineomics1_description` must be a single character string")
-  }
-  if (!is.character(splineomics2_description) ||
-      length(splineomics2_description) != 1) {
-    stop("`splineomics2_description` must be a single character string")
-  }
-  
-  if (!is.numeric(adj_p_tresh1) || length(adj_p_tresh1) != 1 ||
-      adj_p_tresh1 < 0 || adj_p_tresh1 > 1) {
-    stop("`adj_p_tresh1` must be a numeric value between 0 and 1")
-  }
-  if (!is.numeric(adj_p_tresh2) || length(adj_p_tresh2) != 1 ||
-      adj_p_tresh2 < 0 || adj_p_tresh2 > 1) {
-    stop("`adj_p_tresh2` must be a numeric value between 0 and 1")
-  }
-  
-  invisible(NULL)
+    if (!inherits(splineomics1, "SplineOmics")) {
+        rlang::abort(
+            "`splineomics1` must be an S3 object of class 'SplineOmics'."
+        )
+    }
+    if (!inherits(splineomics2, "SplineOmics")) {
+        rlang::abort(
+            "`splineomics2` must be an S3 object of class 'SplineOmics'."
+        )
+    }
+    
+    if (!is.character(splineomics1_description) ||
+        length(splineomics1_description) != 1L ||
+        is.na(splineomics1_description) ||
+        !nzchar(splineomics1_description)) {
+        rlang::abort(
+            "`splineomics1_description` must be a length-1, non-empty string."
+        )
+    }
+    
+    if (!is.character(splineomics2_description) ||
+        length(splineomics2_description) != 1L ||
+        is.na(splineomics2_description) ||
+        !nzchar(splineomics2_description)) {
+        rlang::abort(
+            "`splineomics2_description` must be a length-1, non-empty string."
+        )
+    }
+    
+    if (!is.numeric(adj_p_tresh1) ||
+        length(adj_p_tresh1) != 1L ||
+        is.na(adj_p_tresh1) ||
+        adj_p_tresh1 < 0 ||
+        adj_p_tresh1 > 1) {
+        rlang::abort(
+            "`adj_p_tresh1` must be a single numeric value between 0 and 1."
+        )
+    }
+    
+    if (!is.numeric(adj_p_tresh2) ||
+        length(adj_p_tresh2) != 1L ||
+        is.na(adj_p_tresh2) ||
+        adj_p_tresh2 < 0 ||
+        adj_p_tresh2 > 1) {
+        rlang::abort(
+            "`adj_p_tresh2` must be a single numeric value between 0 and 1."
+        )
+    }
+    
+    if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose)) {
+        rlang::abort(
+            "`verbose` must be either TRUE or FALSE."
+        )
+    }
+    
+    invisible(NULL)
 }
 
 
