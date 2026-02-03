@@ -29,7 +29,7 @@
 #'
 #' @section Maintainer:
 #' - Name: Thomas Rauter
-#' - Email: thomas.rauter@plus.ac.at
+#' - Email: rauterthomas0@gmail.com
 #'
 #' @section License:
 #' - License: MIT

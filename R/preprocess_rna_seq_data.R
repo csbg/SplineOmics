@@ -136,7 +136,8 @@
 preprocess_rna_seq_data <- function(
     splineomics,
     normalize_func = NULL,
-    verbose = TRUE) {
+    verbose = FALSE
+    ) {
     start_time <- Sys.time()
     check_splineomics_elements(
         splineomics = splineomics,

@@ -4,7 +4,7 @@
 \alias{preprocess_rna_seq_data}
 \title{Perform essential preprocessing steps for raw RNA-seq counts}
 \usage{
-preprocess_rna_seq_data(splineomics, normalize_func = NULL, verbose = TRUE)
+preprocess_rna_seq_data(splineomics, normalize_func = NULL, verbose = FALSE)
 }
 \arguments{
 \item{splineomics}{\code{SplineOmics}: An S3 object of class \code{SplineOmics} that

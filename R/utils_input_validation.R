@@ -131,21 +131,17 @@ InputControl <- R6::R6Class("InputControl",
                 data_meta_index = data_meta_index
             )
 
-            if (!(nrow(meta) == ncol(data))) {
-                if (!is.null(data_meta_index)) {
-                    stop(
-                        paste0(
-                            "For index ", data_meta_index,
-                            "data column number must be equal to ",
-                            "meta row number"
-                        ),
-                        call. = FALSE
+            if (nrow(meta) != ncol(data)) {
+                msg <- if (!is.null(data_meta_index)) {
+                    paste0(
+                        "For index ", data_meta_index,
+                        ", data column number must be equal to meta row number."
                     )
                 } else {
-                    stop_call_false(paste0(
-                        "data column number must be equal to meta row number"
-                        ))
+                    "Data column number must be equal to meta row number."
                 }
+                
+                rlang::abort(msg)
             }
         },
 
@@ -184,15 +180,12 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (!is.data.frame(annotation)) {
-                stop_call_false(
-                    "annotation is not a dataframe but must be one!"
-                )
+                rlang::abort("Annotation must be a data frame.")
             }
-
+            
             if (nrow(annotation) != nrow(data)) {
-                stop_call_false(
-                    "annotation and data don't have the same nr. of rows",
-                    "but must have!"
+                rlang::abort(
+                    "Annotation and data must have the same number of rows."
                 )
             }
         },
@@ -227,42 +220,47 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (is.numeric(alphas)) {
-                if (length(alphas) != 1 
-                    || is.na(alphas) 
-                    || alphas < 0 
-                    || alphas > 1) {
-                    stop_call_false(
+                if (length(alphas) != 1 ||
+                    is.na(alphas) ||
+                    alphas < 0 ||
+                    alphas > 1) {
+                    rlang::abort(
                         "alphas must be a single numeric value between 0 and 1."
                     )
                 }
             } else if (is.list(alphas)) {
                 if (length(alphas) == 0 ||
                     any(!vapply(alphas, is.numeric, logical(1)))) {
-                    stop_call_false(
+                    rlang::abort(
                         "alphas must be a named list of numeric values."
+                        )
+                }
+                
+                alphas_vec <- unlist(alphas, use.names = FALSE)
+                
+                if (any(is.na(alphas_vec)) ||
+                    any(alphas_vec < 0) ||
+                    any(alphas_vec > 1)) {
+                    rlang::abort(
+                        c(
+                            "All values in the alphas list must be numeric",
+                            "and between 0 and 1."
+                        )
                     )
                 }
-
-                if (any(is.na(unlist(alphas))) ||
-                    any(unlist(alphas) < 0) ||
-                    any(unlist(alphas) > 1)) {
-                    stop_call_false(
-                        "All values in the alphas list must be numeric &",
-                        "between 0 and 1."
-                    )
-                }
-
+                
                 if (is.null(names(alphas)) || any(names(alphas) == "")) {
-                    stop_call_false(
+                    rlang::abort(
                         "alphas list must be named and contain no empty names."
                     )
                 }
             } else {
-                stop_call_false(paste0(
-                    "alphas must be either a numeric scalar or a named",
-                    "list of numeric",
-                    "values."
-                ))
+                rlang::abort(
+                    c(
+                        "alphas must be either a numeric scalar",
+                        "or a named list of numeric values."
+                    )
+                )
             }
         },
 
@@ -300,19 +298,23 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (!is.character(batch_effects)) {
-                stop_call_false(
-                    "batch_effects must be either FALSE or a character vector."
+                rlang::abort(
+                    "batch_effects must be FALSE or a character vector."
                 )
             }
-
-            if (length(batch_effects) < 1 || length(batch_effects) > 2) {
-                stop_call_false("batch_effects must have one or two elements.")
+            
+            if (length(batch_effects) < 1 ||
+                length(batch_effects) > 2) {
+                rlang::abort(
+                    "batch_effects must have one or two elements."
+                )
             }
-
-            if (any(batch_effects == "") || any(is.na(batch_effects))) {
-                stop_call_false(
+            
+            if (any(batch_effects == "") ||
+                any(is.na(batch_effects))) {
+                rlang::abort(
                     "batch_effects must not contain empty or NA entries."
-                    )
+                )
             }
         },
 
@@ -352,8 +354,8 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (length(datas) != length(metas)) {
-                stop(paste0("datas and metas must have the same length."),
-                    call. = FALSE
+                rlang::abort(
+                    "datas and metas must have the same length."
                 )
             }
 
@@ -403,17 +405,27 @@ InputControl <- R6::R6Class("InputControl",
                 return(NULL)
             }
 
-            if (!is.character(datas_descr) || any(nchar(datas_descr) > 80)) {
-                long_elements_indices <- which(nchar(datas_descr) > 80)
-                long_elements <- datas_descr[long_elements_indices]
-                error_message <- sprintf(
-                    "'datas_descr' must be a character vector with no element",
-                    "over 80 characters. Offending element(s) at",
-                    "indices %s: '%s'. Please shorten the description.",
-                    paste(long_elements_indices, collapse = ", "),
-                    paste(long_elements, collapse = "', '")
+            if (!is.character(datas_descr) ||
+                any(nchar(datas_descr) > 80)) {
+                long_idx <- which(nchar(datas_descr) > 80)
+                long_vals <- datas_descr[long_idx]
+                
+                rlang::abort(
+                    c(
+                        "datas_descr must be a character vector",
+                        "with no element longer than 80 characters.",
+                        paste0(
+                            "Offending indices: ",
+                            paste(long_idx, collapse = ", ")
+                        ),
+                        paste0(
+                            "Offending values: '",
+                            paste(long_vals, collapse = "', '"),
+                            "'."
+                        ),
+                        "Please shorten the description."
+                    )
                 )
-                stop(error_message)
             }
         },
 
@@ -439,45 +451,54 @@ InputControl <- R6::R6Class("InputControl",
         #'
         check_bp_cfg = function() {
             bp_cfg <- self$args[["bp_cfg"]]
-
+            
             required_args <- list(bp_cfg)
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
-            # Allow NULL (falls back to defaults elsewhere)
+            
             if (is.null(bp_cfg)) {
                 return(invisible(NULL))
             }
-
-            ## Basic structure checks
+            
             valid_structure <-
                 is.numeric(bp_cfg) &&
-                    length(bp_cfg) == 2 &&
-                    setequal(names(bp_cfg), c("n_cores", "blas_threads"))
-
+                length(bp_cfg) == 2 &&
+                setequal(
+                    names(bp_cfg),
+                    c("n_cores", "blas_threads")
+                )
+            
             if (!valid_structure) {
-                stop(
-                    "'bp_cfg' must be NULL or a numeric vector with *exactly*
-          two named ",
-                    "elements: c(n_cores = , blas_threads = )."
+                rlang::abort(
+                    c(
+                        "bp_cfg must be NULL or a numeric vector",
+                        "with exactly two named elements:",
+                        "c(n_cores = , blas_threads = )."
+                    )
                 )
             }
-
-            # Value checks
+            
             if (any(is.na(bp_cfg)) ||
                 any(bp_cfg < 1) ||
                 any(bp_cfg != as.integer(bp_cfg))) {
                 offending <- names(bp_cfg)[
-                    which(bp_cfg < 1 | bp_cfg != as.integer(bp_cfg))
+                    bp_cfg < 1 | bp_cfg != as.integer(bp_cfg)
                 ]
-                stop(
-                    "'bp_cfg' values must be positive whole numbers (>=1). ",
-                    "Offending element(s): ", paste(offending, collapse = ", ")
+                
+                rlang::abort(
+                    c(
+                        "bp_cfg values must be positive whole numbers",
+                        "(>= 1).",
+                        paste0(
+                            "Offending elements: ",
+                            paste(offending, collapse = ", ")
+                        )
+                    )
                 )
             }
-
+            
             invisible(NULL)
         },
 
@@ -496,69 +517,69 @@ InputControl <- R6::R6Class("InputControl",
         #'
         check_top_tables = function() {
             top_tables <- self$args$top_tables
-
+            
             required_args <- list(top_tables)
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
-            # Helper function to check data frames in a list
+            
             check_list_of_dataframes <- function(df_list) {
                 if (!is.list(df_list) ||
                     !all(vapply(df_list, is.data.frame, logical(1)))) {
-                    stop_call_false("Expected a list of dataframes")
+                    rlang::abort("Expected a list of data frames.")
                 } else {
                     if (length(df_list) != 2) {
-                        stop_call_false(paste(
-                            "top_tables must be a list of two lists if you",
-                            "want",
-                            "to cluster the hits of the limma results of",
-                            "avrg_diff_conditions or",
-                            "interaction_condition_time.",
-                            "The list must contain one of those two plus",
-                            "the time_effect limma result, in any order"
-                        ))
+                        rlang::abort(
+                            c(
+                                "top_tables must be a list of two lists",
+                                "to cluster limma hits from",
+                                "avrg_diff_conditions or",
+                                "interaction_condition_time.",
+                                "The list must contain one of those",
+                                "plus the time_effect limma result,",
+                                "in any order."
+                            )
+                        )
                     }
-
+                    
                     underscore_count <- vapply(
                         names(df_list),
                         function(name) sum(grepl("_", name)),
                         integer(1)
                     )
+                    
                     if (sum(underscore_count == 1) != 1 ||
                         sum(underscore_count == 4) != 1) {
-                        stop_call_false(paste(
-                            "top_tables must be a list of two lists if",
-                            "you want",
-                            "to cluster the hits of the limma results of",
-                            "avrg_diff_conditions or",
-                            "interaction_condition_time.",
-                            "The list must contain one of those two plus",
-                            "the time_effect limma result, in any order"
-                        ))
+                        rlang::abort(
+                            c(
+                                "top_tables must be a list of two lists",
+                                "to cluster limma hits from",
+                                "avrg_diff_conditions or",
+                                "interaction_condition_time.",
+                                "The list must contain one of those",
+                                "plus the time_effect limma result,",
+                                "in any order."
+                            )
+                        )
                     }
-
+                    
                     for (df in df_list) {
                         self$check_dataframe(df)
                     }
                 }
             }
-
-            # Check if top_tables is a list
+            
             if (!is.list(top_tables)) {
-                stop_call_false("top_tables must be a list")
+                rlang::abort("top_tables must be a list.")
             }
-
+            
             for (i in seq_along(top_tables)) {
                 element <- top_tables[[i]]
                 element_name <- names(top_tables)[i]
-
-                # Means it is a list of lists (so the user wants to cluster
-                # the hits of
-                # avrg_diff_conditions or interaction_condition_time with the
-                # help of the spline coeffs in time_effect)
-                if (!tibble::is_tibble(element) && is.list(element)) {
+                
+                if (!tibble::is_tibble(element) &&
+                    is.list(element)) {
                     check_list_of_dataframes(element)
                 } else if (tibble::is_tibble(element)) {
                     matches <- gregexpr("_", element_name)
@@ -567,33 +588,31 @@ InputControl <- R6::R6Class("InputControl",
                         function(x) if (x[1] == -1) 0 else length(x),
                         integer(1)
                     ))
-
+                    
                     if (underscore_count != 1) {
-                        stop(
-                            paste(
-                                "Very likely you did not pass the time_effect ",
-                                "result of limma, but rather one of ",
-                                "avrg_diff_conditions or ",
-                                "interaction_condition_time, which cannot be ",
-                                "passed alone (to cluster the hits of one of ",
-                                "those, put only one of them at a time into a ",
-                                "list with the time_effect result). Further ",
-                                "note: Please do not edit those list element ",
-                                "names by hand."
-                            ),
-                            call. = FALSE
+                        rlang::abort(
+                            c(
+                                "Very likely you did not pass the",
+                                "time_effect limma result, but",
+                                "rather avrg_diff_conditions or",
+                                "interaction_condition_time,",
+                                "which cannot be passed alone.",
+                                "To cluster hits from one of those,",
+                                "put only one of them at a time",
+                                "into a list with the time_effect",
+                                "result. Also do not edit those",
+                                "list element names by hand."
+                            )
                         )
                     }
-
+                    
                     self$check_dataframe(element)
                 } else {
-                    stop(
-                        paste(
-                            "top_tables must contain either data frames",
-                            "or lists of",
-                            "data frames"
-                        ),
-                        call. = FALSE
+                    rlang::abort(
+                        c(
+                            "top_tables must contain either",
+                            "data frames or lists of data frames."
+                        )
                     )
                 }
             }
@@ -623,111 +642,118 @@ InputControl <- R6::R6Class("InputControl",
             formula <- self$args[["design"]]
             meta <- self$args[["meta"]]
             meta_index <- self$args[["meta_index"]]
-
+            
             # Not strictly required
             meta_batch_column <- self$args[["meta_batch_column"]]
             meta_batch2_column <- self$args[["meta_batch2_column"]]
-
+            
             required_args <- list(
                 formula,
                 meta
             )
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
+            
             effects <- extract_effects(formula)
-
-            # Check if the formula is a valid character string
+            
             if (!is.character(formula) || length(formula) != 1) {
-                stop("The design formula must be a valid character string.",
-                    call. = FALSE
+                rlang::abort(
+                    "The design formula must be a valid character string."
                 )
             }
-
-            # Ensure the formula contains allowed characters only
+            
             allowed_chars <- "^[~ 1A-Za-z0-9_+*:()-|]*$"
             if (!grepl(allowed_chars, formula)) {
-                stop("The design formula contains invalid characters.",
-                    call. = FALSE
+                rlang::abort(
+                    "The design formula contains invalid characters."
                 )
             }
-
-            # Ensure the formula contains the intercept term 'X'
+            
             if (!grepl("\\bTime\\b", formula)) {
-                stop_call_false(
-                    "The design formula must include the term 'Time' as",
-                    "a fixed effect"
+                rlang::abort(
+                    c(
+                        "The design formula must include the term",
+                        "'Time' as a fixed effect."
+                    )
                 )
             }
-
+            
             formatted_formula <- gsub("1\\|", "", formula)
             formula_terms <- unlist(strsplit(gsub(
                 "[~+*:()]",
                 " ",
                 formatted_formula
             ), " "))
+            
             formula_terms <- formula_terms[formula_terms != ""]
             formula_terms <- setdiff(formula_terms, c("0", "1"))
-
-            # Check if the terms are present in the dataframe
+            
             missing_columns <- setdiff(formula_terms, names(meta))
             if (length(missing_columns) > 0) {
+                missing_txt <- paste(
+                    missing_columns,
+                    collapse = ", "
+                )
+                
                 if (!is.null(meta_index)) {
-                    stop_call_false(sprintf(
-                        "%s (data/meta pair index: %s): %s",
-                        "The following design columns are missing in meta",
-                        meta_index,
-                        paste(missing_columns, collapse = ", ")
-                    ))
+                    rlang::abort(
+                        paste0(
+                            "Data/meta pair index ",
+                            meta_index,
+                            ": design columns missing in meta: ",
+                            missing_txt,
+                            "."
+                        )
+                    )
                 } else {
-                    stop_call_false(paste(
-                        "The following design columns are missing in meta:",
-                        paste(missing_columns, collapse = ", ")
-                    ))
+                    rlang::abort(
+                        c(
+                            "Design columns missing in meta:",
+                            missing_txt
+                        )
+                    )
                 }
             }
-
-            # Convert formula to string for regex checking
+            
             formula_str <- as.character(formula)
-
-            # Check if batch column is provided and validate its presence in the
-            # formula
+            
             if (!is.null(meta_batch_column)) {
                 if (!grepl(meta_batch_column, formula_str)) {
-                    stop_call_false(
-                        paste(
-                            "The batch effect column",
-                            meta_batch_column,
-                            "is provided in the SplineOmics object as ",
-                            "the field meta_batch_column but not present ",
-                            "in the design formula. Please ensure that if ",
-                            "you specify a batch column, it is included ",
-                            "in the design formula to remove batch effects."
+                    rlang::abort(
+                        c(
+                            "The batch effect column is set in",
+                            "meta_batch_column but is not in the",
+                            "design formula.",
+                            paste0(
+                                "Missing column: ",
+                                meta_batch_column,
+                                "."
+                            ),
+                            "Include it to remove batch effects."
                         )
                     )
                 }
             }
-
-            # Check if the second batch column is provided and validate its
-            # presence
+            
             if (!is.null(meta_batch2_column)) {
                 if (!grepl(meta_batch2_column, formula_str)) {
-                    stop_call_false(
-                        paste(
-                            "The second batch effect column",
-                            meta_batch2_column,
-                            "is provided but not present in the ",
-                            "design formula. Please ensure that if ",
-                            "you specify a second batch column, it ",
-                            "is included in the design formula to ",
-                            "remove batch effects."
+                    rlang::abort(
+                        c(
+                            "The second batch effect column is set",
+                            "but is not in the design formula.",
+                            paste0(
+                                "Missing column: ",
+                                meta_batch2_column,
+                                "."
+                            ),
+                            "Include it to remove batch effects."
                         )
                     )
                 }
             }
-
+            
             return(TRUE)
         },
 
@@ -753,7 +779,7 @@ InputControl <- R6::R6Class("InputControl",
             robust_fit <- self$args[["robust_fit"]]
 
             if (!is.null(robust_fit) && !is.logical(robust_fit)) {
-                stop_call_false(
+                rlang::abort(
                     "'robust_fit' must be either TRUE, FALSE, or NULL."
                 )
             }
@@ -773,8 +799,7 @@ InputControl <- R6::R6Class("InputControl",
         #'
         #' @return
         #' Returns `TRUE` if `dream_params` passes all checks. Otherwise,
-        #' stops the function and returns an error message using
-        #' `stop_call_false`.
+        #' stops the function and returns an error message.
         #'
         check_dream_params = function() {
             dream_params <- self$args[["dream_params"]]
@@ -787,16 +812,16 @@ InputControl <- R6::R6Class("InputControl",
 
             # Check that dream_params is a named list
             if (!is.list(dream_params) || is.null(names(dream_params))) {
-                stop_call_false("dream_params must be a named list.")
+                rlang::abort("dream_params must be a named list.")
             }
 
             # Define allowed elements and check for unexpected elements
             allowed_elements <- c("dof", "KenwardRoger")
             if (!all(names(dream_params) %in% allowed_elements)) {
-                stop_call_false(
-                    "dream_params contains invalid elements.
-          Only 'dof' and 'KenwardRoger' are allowed."
-                )
+                rlang::abort(c(
+                "dream_params contains invalid elements.",
+                "Only 'dof' and 'KenwardRoger' are allowed."
+                ))
             }
 
             # If 'dof' is provided, check that it is an integer greater than 1
@@ -807,7 +832,7 @@ InputControl <- R6::R6Class("InputControl",
                         dream_params[["dof"]]
                         )
                     ) {
-                    stop_call_false("'dof' must be an integer greater than 1.")
+                    rlang::abort("'dof' must be an integer greater than 1.")
                 }
             }
 
@@ -815,13 +840,13 @@ InputControl <- R6::R6Class("InputControl",
             if ("KenwardRoger" %in% names(dream_params)) {
                 if (!is.logical(dream_params[["KenwardRoger"]]) ||
                     length(dream_params[["KenwardRoger"]]) != 1) {
-                    stop_call_false("'KenwardRoger' must be a boolean.")
+                    rlang::abort("'KenwardRoger' must be a boolean.")
                 }
             }
 
             # No unnamed elements should be present
             if (any(names(dream_params) == "")) {
-                stop_call_false(
+                rlang::abort(
                     "Unnamed elements are not allowed in dream_params."
                     )
             }
@@ -893,48 +918,56 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (mode != "isolated" && mode != "integrated") {
-                stop_call_false(
-                    "mode must be either 'isolated' or 'integrated' and not '",
-                    mode,
-                    "'!"
+                rlang::abort(
+                    c(
+                        "mode must be either 'isolated' or 'integrated'",
+                        paste0("and not '", mode, "'.")
+                    )
                 )
             }
 
-            # Convert design to character, if it's a formula
             design_str <- if (inherits(design, "formula")) {
                 deparse(design)
             } else {
                 as.character(design)
             }
             design_str <- paste(design_str, collapse = " ")
-
-            if (mode == "integrated" && !grepl("[*|:]", design_str)) {
-                warning(
-                    "In 'integrated' mode, the design formula ",
-                    "should contain an interaction term (e.g., ",
-                    "'*' or ':') between condition and time. ",
-                    "Otherwise, model coefficients for ",
-                    "non-reference levels may be missing."
+            
+            if (mode == "integrated" &&
+                !grepl("[*|:]", design_str)) {
+                rlang::warn(
+                    c(
+                        "In 'integrated' mode, the design formula",
+                        "should contain an interaction term",
+                        "('*' or ':') between condition and time.",
+                        "Otherwise, coefficients for non-reference",
+                        "levels may be missing."
+                    )
                 )
             }
-
+            
             effects <- extract_effects(design_str)
             
             if (mode == "isolated" &&
                 grepl("[*:]", effects[["fixed_effects"]])) {
-                
-                warning(
-                    "In 'isolated' mode, the fixed-effects design should not ",
-                    "contain interaction terms ('*' or ':'). These are not ",
-                    "required when each condition is modeled separately."
+                rlang::warn(
+                    c(
+                        "In 'isolated' mode, the fixed-effects",
+                        "design must not contain interaction",
+                        "terms ('*' or ':').",
+                        "They are not required when conditions",
+                        "are modeled separately."
+                    )
                 )
             }
             
             if (verbose) {
-                message(
-                    "\nEnsure the design has no Condition*Time ",
-                    "interaction for mode == 'isolated', and ",
-                    "includes it for mode == 'integrated'."
+                rlang::info(
+                    c(
+                        "Ensure the design has no Condition*Time",
+                        "interaction for mode == 'isolated',",
+                        "and includes it for mode == 'integrated'."
+                    )
                 )
             }
         },
@@ -1090,9 +1123,13 @@ InputControl <- R6::R6Class("InputControl",
 
             if (!all(names(top_tables) %in% required_names) ||
                 length(top_tables) != 3) {
-                stop("The list must contain exactly three named elements:
-         'time_effect', 'avrg_diff_conditions',
-         'interaction_condition_time'", call. = FALSE)
+                rlang::abort(
+                    c(
+                        "The list must contain exactly three named",
+                        "elements: 'time_effect', 'avrg_diff_conditions',",
+                        "'interaction_condition_time'."
+                    )
+                )
             }
 
             expected_cols1_3 <- c(
@@ -1164,39 +1201,36 @@ InputControl <- R6::R6Class("InputControl",
             }
             
             validate_scalar <- function(name, x) {
-                
-                # must be numeric, atomic, not matrix/dataframe
+                # must be numeric, atomic, not matrix or data frame
                 if (!is.numeric(x) || length(x) != 1L || !is.atomic(x)) {
-                    stop(
-                        sprintf("'%s' must be a single numeric value.", name),
-                        call. = FALSE
+                    rlang::abort(
+                        sprintf("'%s' must be a single numeric value.", name)
                     )
                 }
                 
                 # must be finite
                 if (!is.finite(x)) {
-                    stop(
+                    rlang::abort(
                         sprintf(
-                            "'%s' must be finite and not NA/NaN/Inf. Value: %s",
-                            name, as.character(x)
-                        ),
-                        call. = FALSE
+                            "'%s' must be finite and not NA, NaN, or Inf.",
+                            "Value: %s",
+                            name,
+                            as.character(x)
+                        )
                     )
                 }
                 
                 # > 0
                 if (x <= 0) {
-                    stop(
-                        sprintf("'%s' must be > 0. Value: %g", name, x),
-                        call. = FALSE
+                    rlang::abort(
+                        sprintf("'%s' must be > 0. Value: %g", name, x)
                     )
                 }
                 
                 # < 1
                 if (x >= 1) {
-                    stop(
-                        sprintf("'%s' must be < 1. Value: %g", name, x),
-                        call. = FALSE
+                    rlang::abort(
+                        sprintf("'%s' must be < 1. Value: %g", name, x)
                     )
                 }
                 
@@ -1246,10 +1280,12 @@ InputControl <- R6::R6Class("InputControl",
             if (!all(vapply(required_args, function(arg) {
                 is.numeric(arg) && arg >= 0 && arg <= 1
             }, logical(1)))) {
-                stop_call_false(
-                    "Both adj_pthresh_avrg_diff_conditions and",
-                    "adj_pthresh_interaction_condition_time must",
-                    "be floats between 0 and 1."
+                rlang::abort(
+                    c(
+                        "Both adj_pthresh_avrg_diff_conditions and",
+                        "adj_pthresh_interaction_condition_time must",
+                        "be floats between 0 and 1."
+                    )
                 )
             }
         },
@@ -1268,13 +1304,12 @@ InputControl <- R6::R6Class("InputControl",
         #'   match the unique levels in `meta[[condition]]`.
         #' * Each element must be a positive integer (e.g. 3) or a
         #'   vector of positive integers (e.g. 2:6).
+        #'   
         check_clusters = function() {
-            
             nr_clusters <- self$args[["nr_clusters"]]
             meta <- self$args[["meta"]]
             condition <- self$args[["condition"]]
             
-            # If any required field is missing, exit quietly
             if (any(vapply(
                 list(nr_clusters, meta, condition),
                 is.null,
@@ -1283,13 +1318,12 @@ InputControl <- R6::R6Class("InputControl",
                 return(NULL)
             }
             
-            # --- Extract and validate condition levels ---
             cond_vals <- meta[[condition]]
             if (is.null(cond_vals)) {
-                stop_call_false(
-                    "Column '", condition,
-                    "' not found in 'meta'."
-                )
+                rlang::abort(c(
+                    "Column not found in meta:",
+                    paste0("'", condition, "'.")
+                ))
             }
             
             cond_levels <- tryCatch(
@@ -1298,75 +1332,95 @@ InputControl <- R6::R6Class("InputControl",
             )
             
             if (is.null(cond_levels)) {
-                stop_call_false(
-                    "Could not obtain condition values as a string ",
-                    "vector from 'meta[[condition]]'."
-                )
+                rlang::abort(c(
+                    "Could not obtain condition values as",
+                    "a string vector from meta[[condition]]."
+                ))
             }
             
-            # --- Top-level type, length, and names of nr_clusters ---
             if (!is.list(nr_clusters)) {
-                stop_call_false(
-                    "'nr_clusters' must be a list with named ",
+                rlang::abort(c(
+                    "nr_clusters must be a list with named",
                     "elements."
-                )
+                ))
             }
             
             if (length(nr_clusters) != length(cond_levels)) {
-                stop_call_false(
-                    "'nr_clusters' must have length ",
-                    length(cond_levels),
-                    " to match the unique condition levels, but ",
-                    "has length ", length(nr_clusters), "."
-                )
+                rlang::abort(c(
+                    "nr_clusters must have length",
+                    as.character(length(cond_levels)),
+                    "to match the unique condition levels,",
+                    paste0(
+                        "but has length ",
+                        length(nr_clusters),
+                        "."
+                    )
+                ))
             }
             
             nms <- names(nr_clusters)
             if (is.null(nms) || any(is.na(nms)) || any(nms == "")) {
-                stop_call_false(
-                    "'nr_clusters' must be a named list; names ",
-                    "must be non-empty."
-                )
+                rlang::abort(c(
+                    "nr_clusters must be a named list;",
+                    "names must be non-empty."
+                ))
             }
             
-            # Names must match the condition levels exactly
             if (!setequal(nms, cond_levels)) {
-                stop_call_false(
-                    "Names of 'nr_clusters' must match levels in ",
-                    "'", condition, "'. Expected {",
-                    paste(cond_levels, collapse = ", "),
-                    "}, got {",
-                    paste(nms, collapse = ", "), "}."
-                )
+                rlang::abort(c(
+                    paste0(
+                        "Names of nr_clusters must match levels in '",
+                        condition,
+                        "'."
+                    ),
+                    paste0(
+                        "Expected {",
+                        paste(cond_levels, collapse = ", "),
+                        "}."
+                    ),
+                    paste0(
+                        "Got {",
+                        paste(nms, collapse = ", "),
+                        "}."
+                    )
+                ))
             }
             
-            # --- Element-wise validation ---
             for (i in seq_along(nr_clusters)) {
                 vec <- nr_clusters[[i]]
                 
                 if (!is.numeric(vec) || any(vec != as.integer(vec))) {
-                    stop_call_false(
-                        "Element '", nms[i],
-                        "' of 'nr_clusters' must be an integer ",
+                    rlang::abort(c(
+                        paste0(
+                            "Element '",
+                            nms[i],
+                            "' of nr_clusters must be an integer"
+                        ),
                         "vector (e.g. 3 or 2:6)."
-                    )
+                    ))
                 }
                 
                 if (any(vec <= 0)) {
-                    stop_call_false(
-                        "All integers inside 'nr_clusters' must be ",
-                        "positive (problem at element '",
-                        nms[i], "')."
-                    )
+                    rlang::abort(c(
+                        "All integers inside nr_clusters must be",
+                        "positive.",
+                        paste0("Problem at element '", nms[i], "'.")
+                    ))
                 }
                 
                 if (max(vec) > 100) {
-                    stop_call_false(
-                        "Element '", nms[i],
-                        "' of 'nr_clusters' has a value (",
-                        max(vec),
-                        ") greater than the allowed maximum of 100."
-                    )
+                    rlang::abort(c(
+                        paste0(
+                            "Element '",
+                            nms[i],
+                            "' of nr_clusters has a value"
+                        ),
+                        paste0(
+                            "(",
+                            max(vec),
+                            ") greater than the allowed maximum of 100."
+                        )
+                    ))
                 }
             }
             
@@ -1412,106 +1466,102 @@ InputControl <- R6::R6Class("InputControl",
             plot_info <- self$args$plot_info
             meta <- self$args$meta
             condition_column <- self$args[["condition"]]
-
+            
             required <- list(plot_info, meta, condition_column)
             if (any(vapply(required, is.null, logical(1)))) {
                 return(NULL)
             }
-
+            
             tl <- plot_info$treatment_labels
             tt <- plot_info$treatment_timepoints
-
+            
             if (is.null(tl) && is.null(tt)) {
                 return(invisible(TRUE))
             }
-
+            
             if (xor(is.null(tl), is.null(tt))) {
-                stop(
-                    "Provide both treatment_labels & treatment_timepoints,",
-                    "or neither.",
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "Provide both treatment_labels and",
+                    "treatment_timepoints, or neither."
+                ))
             }
-
+            
             if (!is.list(tl) || !is.list(tt)) {
-                stop(
-                    "treatment_labels and treatment_timepoints must both",
-                    "be lists.",
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "treatment_labels and treatment_timepoints",
+                    "must both be lists."
+                ))
             }
-
+            
             nms_l <- names(tl)
             nms_t <- names(tt)
-
+            
             if (is.null(nms_l) || is.null(nms_t) ||
                 any(is.na(nms_l)) || any(is.na(nms_t)) ||
-                any(nchar(nms_l) == 0) || any(nchar(nms_t) == 0)) {
-                stop(
-                    paste(
-                        "Both treatment_labels and treatment_timepoints must",
-                        " have named elements with non-empty names."
-                    ),
-                    call. = FALSE
-                )
+                any(nchar(nms_l) == 0) ||
+                any(nchar(nms_t) == 0)) {
+                rlang::abort(c(
+                    "Both treatment_labels and",
+                    "treatment_timepoints must be named",
+                    "lists with non-empty names."
+                ))
             }
-
+            
             if (any(duplicated(nms_l)) || any(duplicated(nms_t))) {
-                stop(
-                    "Names in treatment lists must be unique.",
-                    call. = FALSE
-                )
+                rlang::abort("Names in treatment lists must be unique.")
             }
-
+            
             allowed <- unique(as.character(meta[[condition_column]]))
-
+            
             invalid_l <- setdiff(nms_l, allowed)
             invalid_t <- setdiff(nms_t, allowed)
-
+            
             if (length(invalid_l) > 0L || length(invalid_t) > 0L) {
-                stop(
-                    paste0(
-                        "Invalid names in treatment lists. Allowed names are",
-                        "the values of `",
-                        condition_column
-                    ),
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "Invalid names in treatment lists.",
+                    "Allowed names are the values of",
+                    paste0("`", condition_column, "`.")
+                ))
             }
-
-            if (!setequal(nms_l, nms_t) || length(tl) != length(tt)) {
-                stop(
-                    "Both lists must have identical name sets and the same",
-                    "length.",
-                    call. = FALSE
-                )
+            
+            if (!setequal(nms_l, nms_t) ||
+                length(tl) != length(tt)) {
+                rlang::abort(c(
+                    "Both lists must have identical name sets",
+                    "and the same length."
+                ))
             }
-
+            
             ok_labels <- vapply(
                 tl,
-                function(x) is.character(x) && length(x) == 1L && !is.na(x),
+                function(x) is.character(x) &&
+                    length(x) == 1L &&
+                    !is.na(x),
                 logical(1)
             )
+            
             if (!all(ok_labels)) {
-                stop(
-                    "Each treatment_labels element must be a single string.",
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "Each treatment_labels element must be a",
+                    "single string."
+                ))
             }
-
+            
             ok_tps <- vapply(
                 tt,
-                function(x) is.numeric(x) && length(x) == 1L && !is.na(x),
+                function(x) is.numeric(x) &&
+                    length(x) == 1L &&
+                    !is.na(x),
                 logical(1)
             )
+            
             if (!all(ok_tps)) {
-                stop(
-                    "Each treatment_timepoints element must be a single",
-                    "numeric value.",
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "Each treatment_timepoints element must be a",
+                    "single numeric value."
+                ))
             }
-
+            
             invisible(TRUE)
         },
 
@@ -1534,98 +1584,90 @@ InputControl <- R6::R6Class("InputControl",
             plot_options <- self$args[["plot_options"]]
             meta <- self$args[["meta"]]
             condition <- self$args[["condition"]]
-
+            
             required_args <- list(
                 plot_options,
                 meta,
                 condition
             )
-
-            # Check if any required arguments are NULL
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
-            # Ensure at least one of the required elements is present in
-            # plot_options
+            
             if (!any(c(
                 "meta_replicate_column",
                 "cluster_heatmap_columns"
             ) %in% names(plot_options))) {
-                stop_call_false(
-                    "At least one of 'meta_replicate_column' or",
-                    "'cluster_heatmap_columns' must be present in plot_options"
-                )
+                rlang::abort(c(
+                    "At least one of meta_replicate_column or",
+                    "cluster_heatmap_columns must be present",
+                    "in plot_options."
+                ))
             }
-
-            # Check if meta_replicate_column is present
-            # and validate it
+            
             if ("meta_replicate_column" %in% names(plot_options)) {
-                if (!is.character(plot_options[["meta_replicate_column"]]) ||
-                    length(plot_options[["meta_replicate_column"]]) != 1) {
-                    stop_call_false(
-                        "'meta_replicate_column' must be a single string"
+                mrc <- plot_options[["meta_replicate_column"]]
+                
+                if (!is.character(mrc) || length(mrc) != 1L) {
+                    rlang::abort(
+                        "meta_replicate_column must be a single string."
                     )
                 }
                 
-                if (!plot_options[["meta_replicate_column"]] %in% 
-                    colnames(meta)) {
-                    stop_call_false(
-                        "The value of 'meta_replicate_column' does ",
-                        "not exist in the meta dataframe."
+                if (!mrc %in% colnames(meta)) {
+                    rlang::abort(c(
+                        "The value of meta_replicate_column does",
+                        "not exist as a column in meta."
+                    ))
+                }
+            }
+            
+            if ("cluster_heatmap_columns" %in% names(plot_options)) {
+                chc <- plot_options[["cluster_heatmap_columns"]]
+                
+                if (!is.logical(chc) || length(chc) != 1L) {
+                    rlang::abort(
+                        "cluster_heatmap_columns must be TRUE or FALSE."
                     )
                 }
             }
             
-            # Check if cluster_heatmap_columns is present
-            # and validate it
-            if ("cluster_heatmap_columns" %in% names(plot_options)) {
-                if (!is.logical(plot_options[["cluster_heatmap_columns"]]) ||
-                    length(plot_options[["cluster_heatmap_columns"]]) != 1) {
-                    stop_call_false(
-                        "'cluster_heatmap_columns' must be TRUE or FALSE"
-                    )
-                }
-            }
-
-            # Check if condition_colours is present and validate it
             if ("condition_colours" %in% names(plot_options)) {
                 cc <- plot_options[["condition_colours"]]
                 
                 if (!is.null(cc)) {
                     if (!is.list(cc)) {
-                        stop_call_false(
-                            "'condition_colours' must be a list or NULL."
+                        rlang::abort(
+                            "condition_colours must be a list or NULL."
                         )
                     }
                     
                     nm <- names(cc)
                     
                     if (is.null(nm) || any(!nzchar(nm))) {
-                        stop_call_false(
-                            "'condition_colours' must be a named list. ",
+                        rlang::abort(c(
+                            "condition_colours must be a named list.",
                             "Names must be non-empty condition levels."
-                        )
+                        ))
                     }
                     
                     if (anyDuplicated(nm)) {
-                        stop_call_false(
-                            "'condition_colours' has duplicated names."
+                        rlang::abort(
+                            "condition_colours has duplicated names."
                         )
                     }
                     
                     if (!is.character(condition) ||
                         length(condition) != 1L) {
-                        stop_call_false(
-                            "'condition' must be a single string."
-                        )
+                        rlang::abort("condition must be a single string.")
                     }
                     
                     if (!condition %in% colnames(meta)) {
-                        stop_call_false(
-                            "The value of 'condition' does not exist ",
-                            "as a column in the meta dataframe."
-                        )
+                        rlang::abort(c(
+                            "The value of condition does not exist",
+                            "as a column in meta."
+                        ))
                     }
                     
                     cond_levels <- unique(meta[[condition]])
@@ -1634,23 +1676,29 @@ InputControl <- R6::R6Class("InputControl",
                     extra <- setdiff(nm, cond_levels)
                     
                     if (length(extra) > 0L) {
-                        stop_call_false(
-                            "Unknown condition(s) in 'condition_colours': ",
+                        rlang::abort(c(
+                            "Unknown condition(s) in condition_colours:",
                             paste(extra, collapse = ", ")
-                        )
+                        ))
                     }
                     
                     bad_len <- vapply(cc, length, integer(1)) != 1L
-                    bad_chr <- vapply(cc, function(x) !is.character(x),
-                                      logical(1))
-                    bad_na <- vapply(cc, function(x) is.na(x),
-                                     logical(1))
+                    bad_chr <- vapply(
+                        cc,
+                        function(x) !is.character(x),
+                        logical(1)
+                    )
+                    bad_na <- vapply(
+                        cc,
+                        function(x) is.na(x),
+                        logical(1)
+                    )
                     
                     if (any(bad_len) || any(bad_chr) || any(bad_na)) {
-                        stop_call_false(
-                            "'condition_colours' values must be non-NA ",
+                        rlang::abort(c(
+                            "condition_colours values must be non-NA",
                             "character scalars."
-                        )
+                        ))
                     }
                     
                     cols <- unlist(cc, use.names = FALSE)
@@ -1670,10 +1718,10 @@ InputControl <- R6::R6Class("InputControl",
                     
                     if (!all(ok)) {
                         bad <- unique(cols[!ok])
-                        stop_call_false(
-                            "Invalid colour(s) in 'condition_colours': ",
+                        rlang::abort(c(
+                            "Invalid colour(s) in condition_colours:",
                             paste(bad, collapse = ", ")
-                        )
+                        ))
                     }
                 }
             }
@@ -1709,14 +1757,14 @@ InputControl <- R6::R6Class("InputControl",
 
             # Check if raw_data is a numeric matrix (NA values allowed)
             if (!is.matrix(raw_data) || !is.numeric(raw_data)) {
-                stop_call_false(
+                rlang::abort(
                     "'raw_data' must be a numeric matrix (NA values allowed)"
                 )
             }
 
             # Check if raw_data has the same dimensions as data
             if (!all(dim(raw_data) == dim(data))) {
-                stop_call_false(
+                rlang::abort(
                     "'raw_data' must have the same dimensions as 'data'"
                 )
             }
@@ -1746,55 +1794,47 @@ InputControl <- R6::R6Class("InputControl",
         #'
         check_report_dir = function() {
             report_dir <- self$args[["report_dir"]]
-
+            
             if (is.null(report_dir)) {
-                # some functions just have a different name.
                 report_dir <- self$args$output_dir
             }
-
+            
             required_args <- list(report_dir)
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
-            # Attempt to create the directory if it does not exist
+            
             if (!file.exists(report_dir)) {
                 tryCatch(
                     {
                         dir.create(report_dir, recursive = TRUE)
                     },
                     warning = function(w) {
-                        stop_call_false(
-                            sprintf(
-                                "Warning occurred while creating the",
-                                "directory: %s",
-                                w$message
-                            )
-                        )
+                        rlang::abort(c(
+                            "Warning occurred while creating the",
+                            paste0("directory: ", w$message)
+                        ))
                     },
                     error = function(e) {
-                        stop_call_false(
-                            sprintf(
-                                "Error occurred while creating the",
-                                "directory: %s",
-                                e$message
-                            )
-                        )
+                        rlang::abort(c(
+                            "Error occurred while creating the",
+                            paste0("directory: ", e$message)
+                        ))
                     }
                 )
             }
-
-            # Verify that the directory exists and is a directory
-            if (!file.exists(report_dir) || !file.info(report_dir)$isdir) {
-                stop_call_false(
+            
+            if (!file.exists(report_dir) ||
+                !file.info(report_dir)$isdir) {
+                rlang::abort(
                     sprintf(
                         "The specified path is not a valid directory: %s",
                         report_dir
                     )
                 )
             }
-
+            
             return(TRUE)
         },
 
@@ -1819,21 +1859,21 @@ InputControl <- R6::R6Class("InputControl",
         check_genes = function() {
             data <- self$args$data
             genes <- self$args$genes
-
+            
             required_args <- list(data, genes)
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
+            
             if (!is.character(genes)) {
-                stop(paste0("genes must be a character vector"), call. = FALSE)
+                rlang::abort("genes must be a character vector.")
             }
-
+            
             if (length(genes) != nrow(data)) {
-                stop_call_false(paste0(
-                    "length(genes) must be equal to nrow(data)"
-                    ))
+                rlang::abort(
+                    "length(genes) must be equal to nrow(data)."
+                )
             }
         },
 
@@ -1872,14 +1912,14 @@ InputControl <- R6::R6Class("InputControl",
             supported_methods <- stats::p.adjust.methods
             if (!(is.character(padjust_method) &&
                 padjust_method %in% supported_methods)) {
-                stop(
-                    sprintf(paste(
-                        "padjust_method must be a character and one of the",
-                        "supported methods (%s).",
-                        paste(supported_methods, collapse = ", ")
-                    )),
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "padjust_method must be a character and one of",
+                    paste0(
+                        "the supported methods (",
+                        paste(supported_methods, collapse = ", "),
+                        ")."
+                    )
+                ))
             }
         },
 
@@ -1900,13 +1940,13 @@ InputControl <- R6::R6Class("InputControl",
         #'
         check_report_info = function() {
             report_info <- self$args[["report_info"]]
-
+            
             required_args <- list(report_info)
-
+            
             if (any(vapply(required_args, is.null, logical(1)))) {
                 return(NULL)
             }
-
+            
             mandatory_fields <- c(
                 "omics_data_type",
                 "data_description",
@@ -1915,92 +1955,93 @@ InputControl <- R6::R6Class("InputControl",
                 "contact_info",
                 "project_name"
             )
-
+            
             all_fields <- c(
                 mandatory_fields,
                 "method_description",
                 "results_summary",
                 "conclusions"
             )
-
-            # Check if report_info is a named list
+            
             if (!is.list(report_info) || is.null(names(report_info))) {
-                stop_call_false("report_info must be a named list.")
+                rlang::abort("report_info must be a named list.")
             }
-
-            # Check if all values in report_info are strings
+            
             non_string_fields <- vapply(
                 report_info,
                 function(x) !is.character(x),
                 logical(1)
             )
-
+            
             if (any(non_string_fields)) {
                 invalid_fields <- names(report_info)[non_string_fields]
-                stop_call_false(paste(
+                rlang::abort(c(
                     "The following fields in report_info must be strings:",
                     paste(invalid_fields, collapse = ", ")
                 ))
             }
-
-            # Check if all mandatory fields are present
+            
             missing_fields <- setdiff(mandatory_fields, names(report_info))
             if (length(missing_fields) > 0) {
-                stop_call_false(paste(
+                rlang::abort(c(
                     "Missing mandatory fields in report_info:",
                     paste(missing_fields, collapse = ", ")
                 ))
             }
-
-            # Check if there are any extra fields not in all_fields
+            
             extra_fields <- setdiff(names(report_info), all_fields)
             if (length(extra_fields) > 0) {
-                stop_call_false(paste(
+                rlang::abort(c(
                     "The following fields in report_info are not recognized:",
                     paste(extra_fields, collapse = ", ")
                 ))
             }
-
+            
             self$validate_omics_data_type(report_info[["omics_data_type"]])
-
+            
             excluded_fields <- c(
                 "data_description",
                 "method_description",
-                "results summary",
+                "results_summary",
                 "conclusions"
             )
-            excluded_limit <- 700
-
-            check_long_fields <- function(data,
-                                          excluded_fields,
-                                          excluded_limit) {
-                long_fields <- vapply(data, function(x) {
-                    if (any(names(data) %in% excluded_fields)) {
-                        any(nchar(x) > excluded_limit)
-                    } else {
-                        any(nchar(x) > 70)
-                    }
-                }, logical(1))
-                return(long_fields)
+            excluded_limit <- 700L
+            
+            check_long_fields <- function(
+                data,
+                excluded_fields,
+                excluded_limit
+                ) {
+                vapply(
+                    names(data),
+                    function(nm) {
+                        x <- data[[nm]]
+                        
+                        if (nm %in% excluded_fields) {
+                            any(nchar(x) > excluded_limit)
+                        } else {
+                            any(nchar(x) > 70)
+                        }
+                    },
+                    logical(1)
+                )
             }
-
-            # Check if any field exceeds 70 characters
+            
             long_fields <- check_long_fields(
                 report_info,
                 excluded_fields,
                 excluded_limit
             )
-
+            
             if (any(long_fields)) {
                 too_long_fields <- names(report_info)[long_fields]
-                stop_call_false(paste(
+                rlang::abort(c(
                     "The following fields have strings exceeding 70",
                     "characters:",
-                    paste(too_long_fields, collapse = ", "),
-                    sep = "\n"
+                    paste(too_long_fields, collapse = ", ")
                 ))
             }
-
+            
             return(TRUE)
         },
 
@@ -2053,8 +2094,8 @@ InputControl <- R6::R6Class("InputControl",
                 logical(1)
             ))
             ) {
-                stop_call_false(
-                    paste(
+                rlang::abort(
+                    c(
                         "All elements of feature_name_columns must be",
                         "characters with length 1."
                     )
@@ -2064,8 +2105,8 @@ InputControl <- R6::R6Class("InputControl",
             # Check if all elements of feature_name_columns are column names
             # in annotation
             if (!all(feature_name_columns %in% colnames(annotation))) {
-                stop_call_false(
-                    paste(
+                rlang::abort(
+                    c(
                         "All elements of feature_name_columns must be",
                         "column names",
                         "in annotation."
@@ -2101,7 +2142,7 @@ InputControl <- R6::R6Class("InputControl",
             }
 
             if (!rlang::is_bool(report)) {
-                stop_call_false("report must be either Boolean TRUE or FALSE")
+                rlang::abort("report must be either Boolean TRUE or FALSE")
             }
         },
 
@@ -2140,17 +2181,11 @@ InputControl <- R6::R6Class("InputControl",
             if (!is.numeric(support) ||
                 length(support) != 1 ||
                 support != as.integer(support)) {
-                stop(
-                    "support must be a single integer value!",
-                    call. = FALSE
-                )
+                rlang::abort("support must be a single integer value!")
             }
 
             if (support < 0) {
-                stop(
-                    "support must be non-negative!",
-                    call. = FALSE
-                )
+                rlang::abort("support must be non-negative!")
             }
         },
 
@@ -2189,7 +2224,7 @@ InputControl <- R6::R6Class("InputControl",
             if (!is.logical(verbose) 
                 || length(verbose) != 1L 
                 || is.na(verbose)) {
-                stop_call_false(
+                rlang::abort(
                     "`verbose` must be TRUE or FALSE (length-1 logical)."
                     )
             }
@@ -2233,159 +2268,122 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #' execution and returns an error message if any check
         #' fails.
         #' 
-        check_data = function(data,
-                              verbose,
-                              data_meta_index = NULL) {
+        check_data = function(
+            data,
+            verbose,
+            data_meta_index = NULL
+            ) {
             all_zero <- function(x) {
                 apply(x, 1, function(row) all(row == 0))
             }
-
-            # Check for all-zero rows
+            
             zero_rows <- which(all_zero(data))
             if (length(zero_rows) > 0) {
                 row_names <- rownames(data)[zero_rows]
-                stop_call_false(
-                    self$create_error_message(
-                        paste0(
-                            "Data must not contain rows where all values",
-                            "are zero! ",
-                            "Offending rows: ",
-                            paste(
-                                ifelse(
-                                    is.null(row_names),
-                                    zero_rows,
-                                    row_names
-                                ),
-                                collapse = ", "
-                            )
-                        ),
-                        data_meta_index
-                    )
-                )
+                
+                rlang::abort(self$create_error_message(
+                    paste0(
+                        "Data must not contain rows where all values ",
+                        "are zero! Offending rows: ",
+                        paste(
+                            ifelse(is.null(row_names), zero_rows, row_names),
+                            collapse = ", "
+                        )
+                    ),
+                    data_meta_index
+                ))
             }
-
-            # Check for all-NA rows
+            
             na_rows <- which(apply(data, 1, function(row) all(is.na(row))))
             if (length(na_rows) > 0) {
                 row_names <- rownames(data)[na_rows]
-                stop_call_false(
-                    self$create_error_message(
-                        paste0(
-                            "Data must not contain rows where all values",
-                            "are NA! ",
-                            "Offending rows: ",
-                            paste(
-                                ifelse(
-                                    is.null(row_names),
-                                    na_rows,
-                                    row_names
-                                ),
-                                collapse = ", "
-                            )
-                        ),
-                        data_meta_index
-                    )
-                )
+                
+                rlang::abort(self$create_error_message(
+                    paste0(
+                        "Data must not contain rows where all values ",
+                        "are NA! Offending rows: ",
+                        paste(
+                            ifelse(is.null(row_names), na_rows, row_names),
+                            collapse = ", "
+                        )
+                    ),
+                    data_meta_index
+                ))
             }
-
-            # Check for all-NA columns
+            
             na_cols <- which(apply(data, 2, function(col) all(is.na(col))))
             if (length(na_cols) > 0) {
                 col_names <- colnames(data)[na_cols]
-                stop_call_false(
-                    self$create_error_message(
-                        paste0(
-                            "Data must not contain columns where all values",
-                            "are NA! ",
-                            "Offending columns: ",
-                            paste(
-                                ifelse(
-                                    is.null(col_names),
-                                    na_cols,
-                                    col_names
-                                ),
-                                collapse = ", "
-                            )
-                        ),
-                        data_meta_index
-                    )
-                )
+                
+                rlang::abort(self$create_error_message(
+                    paste0(
+                        "Data must not contain columns where all ",
+                        "values are NA! Offending columns: ",
+                        paste(
+                            ifelse(is.null(col_names), na_cols, col_names),
+                            collapse = ", "
+                        )
+                    ),
+                    data_meta_index
+                ))
             }
-
-            # Ensure data is a numeric matrix
+            
             if (!inherits(data, "matrix") || !is.numeric(data)) {
-                stop_call_false(paste0(
-                    "Input 'data' must be a numeric matrix (class must",
-                    "include 'matrix'",
-                    "and typeof 'double'). ",
+                rlang::abort(paste0(
+                    "Input data must be a numeric matrix. ",
                     "Actual class: ", paste(class(data), collapse = ", "),
                     "; typeof: ", typeof(data), ". ",
                     data_meta_index
                 ))
             }
-
-            # Check for missing values (only hint instead of stopping execution)
+            
             if (isTRUE(verbose) && any(is.na(data))) {
-                message(
-                    self$create_error_message(
-                        paste0(
-                            "Hint: The data contains missing values ",
-                            "(NA). Ensure that imputation or handling ",
-                            "of missing values aligns with your ",
-                            "analysis requirements. Note that limma can ",
-                            "handle missing values (it just ignores ",
-                            "them), and therefore SplineOmics can also ",
-                            "handle them."
-                        ),
-                        data_meta_index
-                    )
-                )
+                rlang::info(self$create_error_message(
+                    paste0(
+                        "Hint: The data contains missing values (NA). ",
+                        "Ensure that imputation or handling of missing ",
+                        "values aligns with your analysis requirements. ",
+                        "Note that limma can handle missing values, so ",
+                        "SplineOmics can also handle them."
+                    ),
+                    data_meta_index
+                ))
             }
-
-            # Check for non-negative values, allowing NAs
+            
             if (isTRUE(verbose) && any(data < 0, na.rm = TRUE)) {
-                message(
-                    self$create_error_message(
-                        paste(
-                            "Hint: The data contains negative values. ",
-                            "This may occur if the data has been ",
-                            "transformed (e.g., log-transformed or ",
-                            "normalized) and is valid in such cases. ",
-                            "Ensure that the data preprocessing aligns ",
-                            "with your analysis requirements."
-                        ),
-                        data_meta_index
-                    )
-                )
+                rlang::info(self$create_error_message(
+                    paste0(
+                        "Hint: The data contains negative values. ",
+                        "This can occur after transformations ",
+                        "(e.g., log or normalization) and can be ",
+                        "valid. Ensure preprocessing aligns with ",
+                        "your analysis requirements."
+                    ),
+                    data_meta_index
+                ))
             }
-
-            # Check if row headers (rownames) are present and non-null
+            
             row_headers <- rownames(data)
             if (is.null(row_headers)) {
-                stop_call_false(
-                    self$create_error_message(
-                        "The data matrix must have row headers!",
-                        data_meta_index
-                    )
-                )
+                rlang::abort(self$create_error_message(
+                    "The data matrix must have row headers!",
+                    data_meta_index
+                ))
             }
-
-            # Check if all row headers are unique
+            
             if (any(duplicated(row_headers))) {
                 dupes <- unique(row_headers[duplicated(row_headers)])
-                stop(
-                    self$create_error_message(
-                        paste0(
-                            "The data matrix has duplicated row headers: ",
-                            paste(dupes, collapse = ", "), ". ",
-                            "All row names must be unique."
-                        ),
-                        data_meta_index
+                
+                rlang::abort(self$create_error_message(
+                    paste0(
+                        "The data matrix has duplicated row headers: ",
+                        paste(dupes, collapse = ", "),
+                        ". All row names must be unique."
                     ),
-                    call. = FALSE
-                )
+                    data_meta_index
+                ))
             }
-
+            
             return(TRUE)
         },
 
@@ -2421,63 +2419,58 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #' execution and returns an error message if any check
         #' fails.
         #' 
-        check_meta = function(meta,
-                              condition,
-                              meta_batch_column = NULL,
-                              meta_batch2_column = NULL,
-                              data_meta_index = NULL) {
+        check_meta = function(
+            meta,
+            condition,
+            meta_batch_column = NULL,
+            meta_batch2_column = NULL,
+            data_meta_index = NULL
+            ) {
             if (!is.data.frame(meta) ||
                 !"Time" %in% names(meta) ||
                 !is.numeric(meta[["Time"]])) {
-                stop_call_false(
-                    self$create_error_message(
-                        paste("meta must be a dataframe with the numeric",
-                        "column Time"),
-                        data_meta_index
-                    )
-                )
-            }
-
-            if (any(is.na(meta))) {
-                stop_call_false(
-                    self$create_error_message(
-                        "meta must not contain missing values.",
-                        data_meta_index
-                    )
-                )
-            }
-
-            # Check if condition is a single character
-            if (!is.character(condition) || length(condition) != 1) {
-                stop_call_false("'condition' must be a single character")
-            }
-
-            # Check if condition is a column in the meta dataframe
-            if (!condition %in% colnames(meta)) {
-                stop_call_false(self$create_error_message(
-                    sprintf(
-                        "The condition '%s' is not a %s",
-                        condition,
-                        paste("column in meta")
+                rlang::abort(self$create_error_message(
+                    paste0(
+                        "meta must be a data frame with a numeric ",
+                        "Time column."
                     ),
                     data_meta_index
                 ))
             }
-
-            # Check if the condition column is of appropriate type
-            if (!is.factor(meta[[condition]]) &&
-                !is.character(meta[[condition]])) {
-                stop(
-                    self$create_error_message(
-                        sprintf("The factor column '%s' must be of type
-                 factor or character.", condition),
-                        data_meta_index
-                    ),
-                    call. = FALSE
-                )
+            
+            if (any(is.na(meta))) {
+                rlang::abort(self$create_error_message(
+                    "meta must not contain missing values.",
+                    data_meta_index
+                ))
             }
             
-            # Check for illegal characters in condition values
+            if (!is.character(condition) || length(condition) != 1L) {
+                rlang::abort("condition must be a single character.")
+            }
+            
+            if (!condition %in% colnames(meta)) {
+                rlang::abort(self$create_error_message(
+                    sprintf(
+                        "The condition '%s' is not a column in meta.",
+                        condition
+                    ),
+                    data_meta_index
+                ))
+            }
+            
+            if (!is.factor(meta[[condition]]) &&
+                !is.character(meta[[condition]])) {
+                rlang::abort(self$create_error_message(
+                    sprintf(
+                        "The condition column '%s' must be factor or",
+                        "character.",
+                        condition
+                    ),
+                    data_meta_index
+                ))
+            }
+            
             cond_vals <- as.character(meta[[condition]])
             
             illegal_pat <- "[^A-Za-z0-9_]"
@@ -2493,96 +2486,94 @@ Level2Functions <- R6::R6Class("Level2Functions",
                             v,
                             gregexpr(illegal_pat, v)
                         )[[1]]
-                        paste("'", v, "' (bad: ", paste(chars, collapse = " "),
-                              ")", sep = "")
+                        
+                        paste0(
+                            "'", v, "' (bad: ",
+                            paste(chars, collapse = " "),
+                            ")"
+                        )
                     },
                     character(1)
                 )
                 
-                msg <- paste(
-                    "Values in column '", condition, "' contain illegal ",
-                    "characters.\nAllowed: A-Z, a-z, 0-9, _\nOffending:\n",
-                    paste0("  - ", detail, collapse = "\n"),
-                    sep = ""
-                )
-                
-                stop_call_false(msg)
+                rlang::abort(c(
+                    paste0(
+                        "Values in column '", condition,
+                        "' contain illegal characters."
+                    ),
+                    "Allowed: A-Z, a-z, 0-9, _",
+                    paste0(
+                        "Offending: ",
+                        paste(detail, collapse = "; ")
+                    )
+                ))
             }
-
+            
             if (!is.character(meta_batch2_column)) {
                 meta_batch2_column <- NULL
             }
-
-            if (is.null(meta_batch_column) && !is.null(meta_batch2_column)) {
-                stop(paste(
-                    "For removing the batch effect, batch2 can only",
-                    "be used when",
-                    "batch is used!"
-                ), call. = FALSE)
+            
+            if (is.null(meta_batch_column) &&
+                !is.null(meta_batch2_column)) {
+                rlang::abort(c(
+                    "For removing batch effects, batch2 can",
+                    "only be used when batch is used."
+                ))
             }
-
+            
             if (!is.null(meta_batch_column)) {
                 if (is.character(meta_batch_column)) {
                     if (meta_batch_column == "Time" ||
                         meta_batch_column == condition) {
-                        stop_call_false(paste(
-                            "meta_batch_column must not be == 'Time' or",
-                            condition
+                        rlang::abort(c(
+                            "meta_batch_column must not be Time or",
+                            paste0("'", condition, "'.")
                         ))
                     }
-
+                    
                     self$check_batch_column(
                         meta,
                         meta_batch_column,
                         data_meta_index
                     )
                 } else {
-                    stop(
-                        "meta_batch_column must be a character",
-                        call. = FALSE
-                    )
+                    rlang::abort("meta_batch_column must be a character.")
                 }
             }
-
+            
             if (!is.null(meta_batch2_column)) {
                 if (is.character(meta_batch2_column)) {
                     if (meta_batch2_column == "Time" ||
                         meta_batch2_column == condition) {
-                        stop_call_false(paste(
-                            "meta_batch2_column must not be == 'Time' or",
-                            condition
+                        rlang::abort(c(
+                            "meta_batch2_column must not be Time or",
+                            paste0("'", condition, "'.")
                         ))
                     }
-
+                    
                     if (meta_batch_column == meta_batch2_column) {
-                        stop(
-                            paste(
-                                "meta_batch_column must not be equal to",
-                                "meta_batch2_column"
-                            ),
-                            call. = FALSE
-                        )
+                        rlang::abort(c(
+                            "meta_batch_column must not be equal to",
+                            "meta_batch2_column."
+                        ))
                     }
-
+                    
                     self$check_batch_column(
                         meta,
                         meta_batch2_column,
                         data_meta_index
                     )
                 } else {
-                    stop(
-                        "meta_batch2_column must be a character",
-                        call. = FALSE
-                    )
+                    rlang::abort("meta_batch2_column must be a character.")
                 }
             }
-
-            # Check if batch column is blocked (only one level)
+            
             if (!is.null(meta_batch_column)) {
                 colname <- as.character(meta_batch_column)
                 n_levels <- length(unique(meta[[colname]]))
+                
                 if (n_levels <= 1) {
-                    stop(
+                    rlang::abort(self$create_error_message(
                         paste0(
                             "meta_batch_column '",
                             colname,
@@ -2590,16 +2581,17 @@ Level2Functions <- R6::R6Class("Level2Functions",
                             n_levels,
                             " level). Cannot be used."
                         ),
-                        call. = FALSE
-                    )
+                        data_meta_index
+                    ))
                 }
             }
-
+            
             if (!is.null(meta_batch2_column)) {
                 colname <- as.character(meta_batch2_column)
                 n_levels <- length(unique(meta[[colname]]))
+                
                 if (n_levels <= 1) {
-                    stop(
+                    rlang::abort(self$create_error_message(
                         paste0(
                             "meta_batch2_column '",
                             colname,
@@ -2607,11 +2599,11 @@ Level2Functions <- R6::R6Class("Level2Functions",
                             n_levels,
                             " level). Cannot be used."
                         ),
-                        call. = FALSE
-                    )
+                        data_meta_index
+                    ))
                 }
             }
-
+            
             return(TRUE)
         },
 
@@ -2629,7 +2621,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #' @return TRUE if the dataframe is valid, otherwise an error is thrown.
         #'
         check_dataframe = function(df) {
-            # Define the required columns and their expected types
             required_columns <- list(
                 AveExpr = "numeric",
                 P.Value = "numeric",
@@ -2638,32 +2629,28 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 feature_names = "character",
                 intercept = "numeric"
             )
-
-            # Check if all required columns are present
-            missing_columns <- setdiff(names(required_columns), names(df))
+            
+            missing_columns <- setdiff(
+                names(required_columns),
+                names(df)
+            )
+            
             if (length(missing_columns) > 0) {
-                stop(
-                    paste(
-                        "Missing columns in top_table:",
-                        paste(missing_columns, collapse = ", ")
-                    ),
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "Missing columns in top_table:",
+                    paste(missing_columns, collapse = ", ")
+                ))
             }
-
-            # Check if columns have the correct type
+            
             for (col in names(required_columns)) {
                 if (!inherits(df[[col]], required_columns[[col]])) {
-                    stop(
-                        paste(
-                            "top_table column", col, "must be of type",
-                            required_columns[[col]]
-                        ),
-                        call. = FALSE
-                    )
+                    rlang::abort(c(
+                        paste0("top_table column ", col, " must be of type"),
+                        required_columns[[col]]
+                    ))
                 }
             }
-
+            
             return(TRUE)
         },
 
@@ -2681,84 +2668,69 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #'
         check_spline_params_generally = function(spline_params) {
             allowed_fields <- c("spline_type", "degree", "dof")
-
+            
             if (!all(names(spline_params) %in% allowed_fields)) {
-                stop(
-                    paste(
-                        "spline_params contains invalid fields.",
-                        "Only 'spline_type',",
-                        "'degree', and 'dof' are allowed."
-                    ),
-                    call. = FALSE
-                )
+                rlang::abort(c(
+                    "spline_params contains invalid fields.",
+                    "Only spline_type, degree, and dof are allowed."
+                ))
             }
-
-            # Check if spline_type exists and contains valid values
+            
             if ("spline_type" %in% names(spline_params)) {
                 if (!all(spline_params$spline_type %in% c("b", "n"))) {
-                    stop(
-                        paste(
-                            "Elements of spline_type must be either",
-                            "'b' for B-splines",
-                            "or 'n' for natural cubic splines."
-                        ),
-                        call. = FALSE
-                    )
+                    rlang::abort(c(
+                        "Elements of spline_type must be either",
+                        "'b' for B-splines or 'n' for natural splines."
+                    ))
                 }
             } else {
-                stop("spline_type is missing in spline_params.", call. = FALSE)
+                rlang::abort("spline_type is missing in spline_params.")
             }
-
-            # Check if degree exists and is an integer vector for B-splines,
-            # and NA for natural splines
+            
             if ("degree" %in% names(spline_params)) {
                 for (i in seq_along(spline_params$spline_type)) {
                     if (spline_params$spline_type[i] == "b" &&
                         (!is.integer(spline_params$degree[i]) ||
-                            is.na(spline_params$degree[i]))) {
-                        stop(
-                            paste(
-                                "Degree must be specified as an integer for",
-                                "B-splines in spline_params."
-                            ),
-                            call. = FALSE
-                        )
+                         is.na(spline_params$degree[i]))) {
+                        rlang::abort(c(
+                            "Degree must be specified as an integer for",
+                            "B-splines in spline_params."
+                        ))
                     }
+                    
                     if (spline_params$spline_type[i] == "n" &&
                         !is.na(spline_params$degree[i])) {
-                        stop_call_false(
-                            "Degree must be NA for natural cubic ",
-                            "splines in spline_params."
-                        )
+                        rlang::abort(c(
+                            "Degree must be NA for natural cubic splines",
+                            "in spline_params."
+                        ))
                     }
                 }
             } else if (all(spline_params$spline_type == "b")) {
-                stop("degree is missing in spline_params.", call. = FALSE)
+                rlang::abort("degree is missing in spline_params.")
             }
-
-            # Check if dof exists and is an integer vector
+            
             if ("dof" %in% names(spline_params)) {
                 if (!all(spline_params$dof == as.integer(spline_params$dof))) {
-                    stop_call_false(
+                    rlang::abort(
                         "dof must be an integer vector in spline_params."
                         )
                 }
-                # B-spline DoF must be > 2 - but only if not zero
-                # (i.e., not auto)
+                
                 for (i in seq_along(spline_params$spline_type)) {
                     if (spline_params$spline_type[i] == "b" &&
                         spline_params$dof[i] != 0 &&
                         spline_params$dof[i] < 3) {
-                        stop_call_false(
-                            paste(
-                                "B-splines require DoF > 2 at index", i,
-                                "unless auto-selection (DoF = 0) is used."
-                            )
-                        )
+                        rlang::abort(c(
+                            paste0(
+                                "B-splines require DoF > 2 at index ", i, ","
+                                ),
+                            "unless auto-selection (DoF = 0) is used."
+                        ))
                     }
                 }
             } else {
-                stop("dof is missing in spline_params.", call. = FALSE)
+                rlang::abort("dof is missing in spline_params.")
             }
         },
 
@@ -2778,43 +2750,46 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #'
         #' @return No return value, called for side effects.
         #'
-        check_spline_params_mode_dependent = function(spline_params,
-                                                      mode,
-                                                      meta,
-                                                      condition) {
+        check_spline_params_mode_dependent = function(
+            spline_params,
+            mode,
+            meta,
+            condition
+            ) {
             if (mode == "integrated") {
-                # every entry in spline_params must be a scalar (length-1)
                 if (any(vapply(
                     spline_params,
-                    function(x) length(x) != 1,
+                    function(x) length(x) != 1L,
                     logical(1)
                 ))) {
-                    stop_call_false(paste(
-                        "All parameters in spline_params must have exactly",
-                        "one element",
-                        "when mode is 'integrated'.",
-                        "Different spline parameters for the different",
-                        "levels is not",
+                    rlang::abort(c(
+                        "All parameters in spline_params must have",
+                        "exactly one element when mode is integrated.",
+                        "Different parameters per level are not",
                         "supported for this mode."
                     ))
                 }
             } else if (mode == "isolated") {
                 num_levels <- length(unique(meta[[condition]]))
+                
                 if (any(vapply(
                     spline_params,
                     length,
-                    integer(1)) != num_levels
-                    )) {
-                    stop_call_false(paste(
-                        "Each vector in spline_params must have as many",
-                        "elements as there are unique elements in the",
-                        condition,
-                        "column of meta when mode is 'isolated'."
+                    integer(1)
+                ) != num_levels)) {
+                    rlang::abort(c(
+                        "Each vector in spline_params must have as",
+                        "many elements as there are unique values in",
+                        paste0(
+                            "meta[['",
+                            condition,
+                            "']] when mode is isolated."
+                            )
                     ))
                 }
             }
         },
-
+        
 
         #' Check Columns in Spline Test Configurations
         #'
@@ -2870,7 +2845,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                     paste(required_columns, collapse = ", "), "."
                 )
 
-                stop(error_message)
+                rlang::abort(error_message)
             }
         },
 
@@ -2902,7 +2877,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                     paste(unique(invalid_entries), collapse = ", ")
                 )
 
-                stop(error_message)
+                rlang::abort(error_message)
             }
         },
 
@@ -2929,26 +2904,30 @@ Level2Functions <- R6::R6Class("Level2Functions",
                     as.character(row$spline_type),
                     "n" = {
                         if (!is.na(row$degree))
-                            stop("degree must be NA for spline_type 'n'")
+                            rlang::abort(
+                                "degree must be NA for spline_type 'n'"
+                                )
                         
                         if (!is.integer(row$dof))
-                            stop(
+                            rlang::abort(c(
                                 "dof must be integer when not NA for",
                                 "spline_type 'n'"
-                                )
+                                ))
                     },
                     "b" = {
                         if (!is.integer(row$degree))
-                            stop("degree must be integer for spline_type 'b'")
+                            rlang::abort(
+                                "degree must be integer for spline_type 'b'"
+                                )
                         
                         if (!is.na(row$dof) && 
                             (!is.integer(row$dof) || row$dof < row$degree))
-                            stop(
+                            rlang::abort(c(
                                 "dof must be integer >= degree for",
                                 "spline_type 'b'"
-                                )
+                                ))
                     },
-                    stop("spline_type must be 'n' or 'b'")
+                    rlang::abort("spline_type must be 'n' or 'b'")
                 )
                 
             }
@@ -2972,8 +2951,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #'
         #' @keywords internal
         #'
-        check_max_and_min_dof = function(spline_test_configs,
-                                         metas) {
+        check_max_and_min_dof = function(
+            spline_test_configs,
+            metas
+            ) {
             for (i in seq_len(nrow(spline_test_configs))) {
                 row <- spline_test_configs[i, ]
                 spline_type <- row[["spline_type"]]
@@ -2982,28 +2963,27 @@ Level2Functions <- R6::R6Class("Level2Functions",
 
                 # Check if calculated or provided DoF is valid
                 if (dof < 2) {
-                    stop(
-                        "DoF must be at least 2, found DoF of ",
-                        dof,
-                        " at row ",
-                        i
-                        )
+                    rlang::abort(c(
+                        "DoF must be at least 2.",
+                        paste0("Found DoF ", dof, " at row ", i, ".")
+                    ))
                 }
 
                 for (j in seq_along(metas)) {
                     meta <- metas[[j]]
                     nr_timepoints <- length(unique(meta$Time))
                     if (dof > nr_timepoints) {
-                        stop(
-                        "DoF (",
-                        dof,
-                        ") cannot exceed the number of unique time points(",
-                        nr_timepoints,
-                        ") in meta",
-                        j,
-                        " at row ",
-                        i
-                        )
+                        rlang::abort(c(
+                            paste0(
+                                "DoF ", dof,
+                                " exceeds the number of unique time points."
+                            ),
+                            paste0(
+                                "Found ", nr_timepoints,
+                                " time points in meta ", j,
+                                ", row ", i, "."
+                            )
+                        ))
                     }
                 }
             }
@@ -3031,7 +3011,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
                                  expected_cols) {
             actual_cols <- names(df)
             if (!all(expected_cols %in% actual_cols)) {
-                stop_call_false(
+                rlang::abort(
                     "Dataframe columns do not match expected structure"
                     )
             }
@@ -3048,7 +3028,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
             )
             actual_classes <- vapply(df, class, character(1))
             if (!all(actual_classes == expected_classes)) {
-                stop_call_false(
+                rlang::abort(
                     "Dataframe column classes do not match expected classes"
                 )
             }
@@ -3078,7 +3058,7 @@ Level2Functions <- R6::R6Class("Level2Functions",
             x <- trimws(x)
             x <- gsub("\\s+", " ", x) # normalize spaces
             if (!nzchar(x)) {
-                stop_call_false(
+                rlang::abort(
                     "'omics_data_type' cannot be empty after trimming."
                     )
             }
@@ -3087,11 +3067,10 @@ Level2Functions <- R6::R6Class("Level2Functions",
                 perl = TRUE
             )
             if (!ok) {
-                stop_call_false(paste0(
-                    "The 'omics_data_type' may contain letters, digits,",
-                    "spaces, ",
-                    "and the symbols _ - / + ( ) . , (no control characters). ",
-                    "Got: ", sQuote(x)
+                rlang::abort(c(
+                    "omics_data_type may contain letters, digits, spaces,",
+                    "and the symbols _ - / + ( ) . , with no control chars.",
+                    paste0("Got: '", x, "'.")
                 ))
             }
             x
@@ -3163,7 +3142,9 @@ Level3Functions <- R6::R6Class("Level3Functions",
 
             # Check if the input is a list
             if (!is.list(voom_obj)) {
-                stop("The input is not a list. A voom object should be a list.")
+                rlang::abort(
+                    "The input is not a list. A voom object should be a list."
+                    )
             }
 
             # Check for the presence of the expected components
@@ -3224,14 +3205,13 @@ Level3Functions <- R6::R6Class("Level3Functions",
 
             # Report results
             if (length(issues) > 0) {
-                stop(
+                rlang::abort(c(
                     "The voom object failed the structure check:\n",
                     paste(
                         issues,
                         collapse = "\n"
-                    ),
-                    call. = FALSE
-                )
+                    )
+                ))
             } else {
                 return(TRUE)
             }
@@ -3255,20 +3235,21 @@ Level3Functions <- R6::R6Class("Level3Functions",
         #' @return NULL. The method is used for its side effects of throwing
         #'  errors or printing messages.
         #'
-        check_batch_column = function(meta,
-                                      meta_batch_column,
-                                      data_meta_index) {
+        check_batch_column = function(
+            meta,
+            meta_batch_column,
+            data_meta_index
+            ) {
             if (!is.null(meta_batch_column) &&
                 !(meta_batch_column %in% names(meta))) {
-                stop(
+                rlang::abort(
                     self$create_error_message(
                         sprintf(
-                            "Batch effect column '%s' not found in meta",
+                            "Batch effect column '%s' not found in meta.",
                             meta_batch_column
                         ),
                         data_meta_index
-                    ),
-                    call. = FALSE
+                    )
                 )
             }
             # else: valid column or NULL -> silently continue
@@ -3310,8 +3291,10 @@ Level4Functions <- R6::R6Class("Level4Functions",
         #' provided, the message includes the index; otherwise, it returns the
         #' message as is.
         #'
-        create_error_message = function(message,
-                                        data_meta_index = NULL) {
+        create_error_message = function(
+            message,
+            data_meta_index = NULL
+            ) {
             if (!is.null(data_meta_index)) {
                 return(sprintf(
                     "data/meta pair index %d: %s",
@@ -3347,7 +3330,8 @@ Level4Functions <- R6::R6Class("Level4Functions",
 #'
 check_splineomics_elements <- function(
     splineomics,
-    func_type) {
+    func_type
+    ) {
     required_elements <- switch(func_type,
         "explore_data" = c(
             "data",
@@ -3400,21 +3384,19 @@ check_splineomics_elements <- function(
     ]
 
     if (length(missing_elements) > 0) {
-        stop_call_false(paste(
-            "The following required elements for the function",
-            func_type,
-            "were not passed to the SplineOmics object:",
-            paste(
-                missing_elements,
-                collapse = ", "
+        rlang::abort(c(
+            paste0(
+                "The following required elements for ",
+                func_type,
+                " were not passed to the SplineOmics object:"
             ),
-            "\nAll required elements for",
-            func_type,
-            "are:",
-            paste(
-                required_elements,
-                collapse = ", "
-            )
+            paste(missing_elements, collapse = ", "),
+            paste0(
+                "All required elements for ",
+                func_type,
+                " are:"
+            ),
+            paste(required_elements, collapse = ", ")
         ))
     }
 }
@@ -3439,12 +3421,9 @@ check_null_elements <- function(args) {
     null_elements <- names(args)[vapply(args, is.null, logical(1))]
 
     if (length(null_elements) > 0) {
-        stop(
-            paste(
-                "The following function arguments are NULL:",
-                paste(null_elements, collapse = ", ")
-            ),
-            call. = FALSE
-        )
+        rlang::abort(c(
+            "The following function arguments are NULL:",
+            paste(null_elements, collapse = ", ")
+        ))
     }
 }
