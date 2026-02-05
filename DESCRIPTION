@@ -76,7 +76,10 @@ Suggests:
     devtools,
     compositions,
     withr,
-    ragg
+    ragg,
+    uwot (>= 0.2.0),
+    Matrix (>= 1.7),
+    RSpectra (>= 0.16),
 Encoding: UTF-8
 LazyData: false
 RoxygenNote: 7.3.3

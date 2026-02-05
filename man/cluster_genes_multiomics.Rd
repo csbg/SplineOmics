@@ -2,172 +2,142 @@
 % Please edit documentation in R/cluster_genes_multiomics.R
 \name{cluster_genes_multiomics}
 \alias{cluster_genes_multiomics}
-\title{Gene-Centric Multi-Omics Clustering Across Blocks and Data Modalities}
+\title{Gene-centric multi-omics clustering across data modalities}
 \usage{
 cluster_genes_multiomics(
-  blocks,
-  block_clusters,
-  modality_meta,
-  gene_mode = "intersection",
-  verbose = TRUE
+  data,
+  meta,
+  k,
+  gene_mode = c("intersection", "union"),
+  n_neighbors = 15L,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{blocks}{A named nested list specifying all data used for clustering.
-The outer list corresponds to analytical \emph{blocks} (e.g.,
-\code{time_Ctrl}, \code{interaction_Ctrl_vs_Treat}).
-Each element of the outer list is itself a named list whose elements are
-\emph{modalities} (e.g., \code{rna}, \code{protein}, \code{phospho}), each
-being a numeric matrix of dimension \code{features x spline_points}.
+\item{data}{Named list defining the multi-condition, multi-modality input data.
+The outer list corresponds to experimental conditions (e.g. control,
+treatment, time points). Each element of the outer list must itself be a
+named list of numeric matrices, one per data modality.
 
-For one-to-one (gene-level) modalities, rows represent genes directly.
-In this case, row names must be the gene identifiers themselves and must
-follow the pattern \code{<gene_id>}. The angle brackets are shown for
-illustration only and must not be included in the actual row names.
-Gene identifiers must be consistent across all one-to-one modalities;
-otherwise, genes cannot be matched across omics modalities during distance
-computation and clustering.
+For each condition, the inner list entries represent modalities and must
+share the same modality names across conditions. Each modality matrix must
+have row names and can be of two types:
 
-For many-to-one modalities (e.g., phospho sites, probes), rows represent
-features that map to genes and are summarized into gene-level pattern
-signatures
-based on the metadata tables. For these modalities, row names must follow the
-pattern \code{<gene_id>_<feature_id>}, where the gene identifier precedes
-the first underscore. Again, the angle brackets are for illustration only
-and must not be included in the actual row names.
-
-This row-naming convention is critical, as it defines how features are
-associated with genes and how genes are aligned across modalities prior to
-signature construction and downstream clustering.}
-
-\item{block_clusters}{A named list specifying the amount of clusters per block. The list names
-must match the names of \code{blocks}. Each element value specifies the
-number of gene clusters (\code{k}) to compute for the corresponding
-block.}
-
-\item{modality_meta}{A data frame containing \emph{modality-level metadata}. One row per (block ×
-modality). Must include:
 \describe{
-\item{\code{block}}{Block identifier linking to \code{block_meta}.}
-\item{\code{modality}}{Modality name within the block.}
-\item{\code{many_to_one_k}}{Number of pattern clusters to use for building
-pattern signatures for many-to-one modalities. \code{NA} for modalities
-that are already gene-level.}
-\item{\code{modality_w}}{
-Relative weight of this modality when combining modality-specific
-gene–gene distances within the block. Values are treated as
-\emph{relative} weights and are normalized internally, so they do not
-need to sum to 1 (e.g. 1, 1, 2 means the third modality has twice
-the weight of the others).
+\item{One-to-one (gene-level) modality}{Rows represent genes directly.
+Row names must be gene identifiers. Columns represent the
+modality-specific representation used for clustering, such as spline
+values at fixed time points, spline coefficients, or other numeric
+features.}
+
+\item{Many-to-one (feature-level) modality}{Rows represent features that
+map to genes (e.g., phospho sites, probes). Row names must follow the
+pattern \code{<gene_id>_<feature_id>} where the gene identifier precedes
+the first underscore. Such modalities are aggregated into gene-level
+pattern signature vectors using an internal feature clustering step prior
+to integration.}
 }
-}}
 
-\item{gene_mode}{Character string specifying how genes should be harmonized across modalities
-within each block prior to clustering.
+Modality matrices may differ in their number of columns both within and
+across conditions. After aggregation (if applicable) and normalization,
+all condition- and modality-specific gene-level matrices are aligned
+according to \code{gene_mode} and concatenated to form the gene-centric
+feature matrix used to construct the UMAP graph and clustering.}
+
+\item{meta}{Data frame describing modalities and required parameters for aggregation and
+weighting. Must be compatible with internal representation building helpers.
+At minimum, it must identify modalities and indicate whether a modality is
+one-to-one (gene-level) or many-to-one (feature-level) and provide the
+parameters required for many-to-one aggregation.}
+
+\item{k}{Integer. Number of gene clusters for spectral clustering.}
+
+\item{gene_mode}{Character string specifying how to harmonize genes across modalities prior
+to constructing the joint feature matrix:
 \describe{
-\item{\code{"intersection"}}{Retain only genes present in \emph{all}
-modalities of the block. Produces the most interpretable multi-omics
-clusters.}
-
-\item{\code{"union"}}{Retain genes present in \emph{any} modality of the
-block. Gene–gene distances are computed using only shared modalities per
-gene pair, with weights renormalized accordingly. Increases coverage but
-results in heterogeneous information across genes.}
+\item{\code{"intersection"}}{Retain only genes present in all modalities.}
+\item{\code{"union"}}{Retain genes present in any modality. Gene vectors
+are constructed using available modalities; missing modality blocks are
+handled internally.}
 }}
 
-\item{verbose}{Boolean flag indicating if info messages are be shown.}
+\item{n_neighbors}{Integer. Size of the local neighborhood used by UMAP to construct the
+k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
+values emphasize local structure.}
+
+\item{verbose}{Logical scalar indicating whether progress messages should be emitted via
+\code{rlang::inform()} by internal helpers.}
 }
 \value{
-A named list with three tibbles:
-
+A named list with the following elements:
 \describe{
-\item{\code{cluster_table}}{A tibble with one row per gene containing
-block-specific cluster assignments suitable for downstream enrichment
-analyses. Columns include the gene identifier and one clustering column
-per analytical block (e.g., \code{cluster_<cond>} or
-\code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
-block are assigned \code{NA}.}
+\item{\code{cluster_table}}{A tibble with one row per gene and columns
+\code{gene} and \code{cluster}.}
 
-\item{\code{centroid_info}}{A tibble with one row per block, modality,
-and cluster, summarizing modality-specific cluster centroids and
-within-cluster coherence. Columns include the block and modality
-identifiers, cluster label, gene coverage statistics, the QC method
-used (\code{qc_method}; \code{"Pearson R2"} for one-to-one modalities
-and \code{"BC(HD)"} for many-to-one modalities), mean and standard
-deviation of per-gene QC values (\code{mean_qc}, \code{sd_qc}),
-optional per-gene QC vectors (\code{qc_member}) as a list-column, and
-the centroid representation stored as a list-column (\code{centroid}).}
+\item{\code{centroid_info}}{A tibble summarizing modality-specific cluster
+centroids and within-cluster QC. The centroid representation is stored as a
+list-column.}
 
-\item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL} if no
-many-to-one modalities are present) providing clustering quality
-diagnostics for many-to-one feature clustering steps. One row per
-block, modality, and feature-cluster, including the many-to-one
-\code{k} value used, the number of features used, the QC method
-(\code{"Pearson R2"}), mean and standard deviation of per-feature QC
-values (\code{mean_qc}, \code{sd_qc}), optional per-feature QC vectors
-(\code{qc_member}) as a list-column, and the centroid representation
-stored as a list-column (\code{centroid}).}
+\item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL}) with QC
+diagnostics for many-to-one feature clustering steps, if any are present.}
+
+\item{\code{umap_fit}}{The object returned by \code{uwot::umap()},
+including \code{$embedding} (genes \eqn{\times} \code{n_components}) and,
+if requested via \code{ret_extra}, \code{$fgraph} (the UMAP fuzzy graph
+used for spectral clustering).}
 }
 }
 \description{
-Performs gene-centric clustering of multi-omics time-series data across
-multiple blocks (e.g., time effect, interaction effect) and data modalities
-(e.g., transcript, protein, feature-level modalities with many-to-one gene
-mapping). The function integrates multiple modalities within each block by
-computing modality-specific gene–gene distances, combining them via
-user-defined weights, and clustering genes based on the resulting unified
-distance matrix.
+Performs gene-centric clustering of multi-omics feature representations that
+are supplied as modality-specific matrices. The function harmonizes genes
+across modalities, constructs a gene-centric joint feature matrix, computes a
+UMAP neighborhood graph using \pkg{uwot}, and performs spectral clustering on
+the resulting UMAP fuzzy graph (\code{fgraph}).
 
-The function is flexible with respect to how spline trajectories,
-interaction representations, or feature-level signatures are constructed:
-these are precomputed outside the function, and supplied as matrices inside
-the \code{blocks} structure. Internally, the function simply performs
-harmonization of genes, distance computation, weighted integration, and
-clustering.
+The input matrices are assumed to be precomputed gene-level trajectories
+(e.g., spline values or coefficients) or many-to-one feature-level matrices
+(e.g., phospho sites) that are summarized into gene-level pattern signature
+vectors inside this function.
+
+This function performs statistical computation and returns the UMAP fit for
+downstream visualization. Clustering is performed on the UMAP graph rather
+than on the two-dimensional embedding coordinates.
 }
 \examples{
 set.seed(1)
+genes <- paste0("gene", 1:8)
 
-genes <- paste0("gene", 1:6)
-
-rna_time_ctrl <- matrix(
-    rnorm(6 * 5),
-    nrow = 6,
-    ncol = 5,
-    dimnames = list(genes, NULL)
-)
-rna_time_treat <- matrix(
-    rnorm(6 * 5),
-    nrow = 6,
-    ncol = 5,
-    dimnames = list(genes, NULL)
+rna <- matrix(
+  rnorm(length(genes) * 5),
+  nrow = length(genes),
+  dimnames = list(genes, NULL)
 )
 
-blocks <- list(
-    time_Ctrl = list(rna = rna_time_ctrl),
-    time_Treat = list(rna = rna_time_treat)
+prot <- matrix(
+  rnorm(length(genes) * 3),
+  nrow = length(genes),
+  dimnames = list(genes, NULL)
 )
 
-block_clusters <- list(
-    time_Ctrl = 2L,
-    time_Treat = 2L
+data <- list(
+  condition1 = list(rna = rna, protein = prot)
 )
 
-modality_meta <- data.frame(
-    block   = c("time_Ctrl", "time_Treat"),
-    modality   = c("rna", "rna"),
-    many_to_one_k = c(NA_real_, NA_real_),
-    modality_w = c(1, 1),
-    stringsAsFactors = FALSE
+meta <- data.frame(
+  modality = c("rna", "protein"),
+  many_to_one_k = c(NA_real_, NA_real_),
+  modality_w = c(1, 1),
+  stringsAsFactors = FALSE
 )
 
-cluster_table <- cluster_genes_multiomics(
-    blocks     = blocks,
-    block_clusters = block_clusters,
-    modality_meta = modality_meta,
-    gene_mode  = "intersection"
+res <- cluster_genes_multiomics(
+  data = data,
+  meta = meta,
+  k = 3L,
+  gene_mode = "intersection",
+  n_neighbors = 5L
 )
 
-cluster_table
+res$cluster_table
 
 }

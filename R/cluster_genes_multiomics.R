@@ -1,273 +1,215 @@
-#' Gene-Centric Multi-Omics Clustering Across Blocks and Data Modalities
+#' Gene-centric multi-omics clustering across data modalities
 #'
 #' @description
-#' Performs gene-centric clustering of multi-omics time-series data across
-#' multiple blocks (e.g., time effect, interaction effect) and data modalities
-#' (e.g., transcript, protein, feature-level modalities with many-to-one gene
-#' mapping). The function integrates multiple modalities within each block by
-#' computing modality-specific gene–gene distances, combining them via 
-#' user-defined weights, and clustering genes based on the resulting unified
-#'  distance matrix.
+#' Performs gene-centric clustering of multi-omics feature representations that
+#' are supplied as modality-specific matrices. The function harmonizes genes
+#' across modalities, constructs a gene-centric joint feature matrix, computes a
+#' UMAP neighborhood graph using \pkg{uwot}, and performs spectral clustering on
+#' the resulting UMAP fuzzy graph (\code{fgraph}).
 #'
-#' The function is flexible with respect to how spline trajectories,
-#' interaction representations, or feature-level signatures are constructed:
-#' these are precomputed outside the function, and supplied as matrices inside
-#' the \code{blocks} structure. Internally, the function simply performs
-#' harmonization of genes, distance computation, weighted integration, and
-#' clustering.
+#' The input matrices are assumed to be precomputed gene-level trajectories
+#' (e.g., spline values or coefficients) or many-to-one feature-level matrices
+#' (e.g., phospho sites) that are summarized into gene-level pattern signature
+#' vectors inside this function.
 #'
-#' @param blocks
-#' A named nested list specifying all data used for clustering.
-#' The outer list corresponds to analytical \emph{blocks} (e.g.,
-#' \code{time_Ctrl}, \code{interaction_Ctrl_vs_Treat}).
-#' Each element of the outer list is itself a named list whose elements are
-#' \emph{modalities} (e.g., \code{rna}, \code{protein}, \code{phospho}), each
-#'  being a numeric matrix of dimension \code{features x spline_points}.
+#' This function performs statistical computation and returns the UMAP fit for
+#' downstream visualization. Clustering is performed on the UMAP graph rather
+#' than on the two-dimensional embedding coordinates.
 #'
-#' For one-to-one (gene-level) modalities, rows represent genes directly.
-#' In this case, row names must be the gene identifiers themselves and must
-#' follow the pattern \code{<gene_id>}. The angle brackets are shown for
-#' illustration only and must not be included in the actual row names.
-#' Gene identifiers must be consistent across all one-to-one modalities;
-#' otherwise, genes cannot be matched across omics modalities during distance
-#' computation and clustering.
+#' @param data
+#' Named list defining the multi-condition, multi-modality input data.
+#' The outer list corresponds to experimental conditions (e.g. control,
+#' treatment, time points). Each element of the outer list must itself be a
+#' named list of numeric matrices, one per data modality.
 #'
-#' For many-to-one modalities (e.g., phospho sites, probes), rows represent
-#' features that map to genes and are summarized into gene-level pattern
-#' signatures
-#' based on the metadata tables. For these modalities, row names must follow the
-#' pattern \code{<gene_id>_<feature_id>}, where the gene identifier precedes
-#' the first underscore. Again, the angle brackets are for illustration only
-#' and must not be included in the actual row names.
+#' For each condition, the inner list entries represent modalities and must
+#' share the same modality names across conditions. Each modality matrix must
+#' have row names and can be of two types:
 #'
-#' This row-naming convention is critical, as it defines how features are
-#' associated with genes and how genes are aligned across modalities prior to
-#' signature construction and downstream clustering.
-#'
-#' @param block_clusters
-#' A named list specifying the amount of clusters per block. The list names
-#' must match the names of \code{blocks}. Each element value specifies the
-#' number of gene clusters (\code{k}) to compute for the corresponding
-#' block.
-#'
-#' @param modality_meta
-#' A data frame containing \emph{modality-level metadata}. One row per (block ×
-#' modality). Must include:
 #' \describe{
-#'   \item{\code{block}}{Block identifier linking to \code{block_meta}.}
-#'   \item{\code{modality}}{Modality name within the block.}
-#'   \item{\code{many_to_one_k}}{Number of pattern clusters to use for building
-#'   pattern signatures for many-to-one modalities. \code{NA} for modalities
-#'   that are already gene-level.}
-#'   \item{\code{modality_w}}{
-#'     Relative weight of this modality when combining modality-specific
-#'     gene–gene distances within the block. Values are treated as
-#'     *relative* weights and are normalized internally, so they do not
-#'     need to sum to 1 (e.g. 1, 1, 2 means the third modality has twice
-#'     the weight of the others).
-#'   }
+#'   \item{One-to-one (gene-level) modality}{Rows represent genes directly.
+#'   Row names must be gene identifiers. Columns represent the
+#'   modality-specific representation used for clustering, such as spline
+#'   values at fixed time points, spline coefficients, or other numeric
+#'   features.}
+#'
+#'   \item{Many-to-one (feature-level) modality}{Rows represent features that
+#'   map to genes (e.g., phospho sites, probes). Row names must follow the
+#'   pattern \code{<gene_id>_<feature_id>} where the gene identifier precedes
+#'   the first underscore. Such modalities are aggregated into gene-level
+#'   pattern signature vectors using an internal feature clustering step prior
+#'   to integration.}
 #' }
+#'
+#' Modality matrices may differ in their number of columns both within and
+#' across conditions. After aggregation (if applicable) and normalization,
+#' all condition- and modality-specific gene-level matrices are aligned
+#' according to \code{gene_mode} and concatenated to form the gene-centric
+#' feature matrix used to construct the UMAP graph and clustering.
+#'
+#' @param meta
+#' Data frame describing modalities and required parameters for aggregation and
+#' weighting. Must be compatible with internal representation building helpers.
+#' At minimum, it must identify modalities and indicate whether a modality is
+#' one-to-one (gene-level) or many-to-one (feature-level) and provide the
+#' parameters required for many-to-one aggregation.
+#'
+#' @param k
+#' Integer. Number of gene clusters for spectral clustering.
 #'
 #' @param gene_mode
-#' Character string specifying how genes should be harmonized across modalities
-#' within each block prior to clustering.  
+#' Character string specifying how to harmonize genes across modalities prior
+#' to constructing the joint feature matrix:
 #' \describe{
-#'   \item{\code{"intersection"}}{Retain only genes present in \emph{all}
-#'   modalities of the block. Produces the most interpretable multi-omics
-#'    clusters.}
-#'
-#'   \item{\code{"union"}}{Retain genes present in \emph{any} modality of the
-#'   block. Gene–gene distances are computed using only shared modalities per
-#'   gene pair, with weights renormalized accordingly. Increases coverage but
-#'   results in heterogeneous information across genes.}
+#'   \item{\code{"intersection"}}{Retain only genes present in all modalities.}
+#'   \item{\code{"union"}}{Retain genes present in any modality. Gene vectors
+#'   are constructed using available modalities; missing modality blocks are
+#'   handled internally.}
 #' }
-#' 
-#' @param verbose Boolean flag indicating if info messages are be shown.
+#'
+#' @param n_neighbors
+#' Integer. Size of the local neighborhood used by UMAP to construct the
+#' k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
+#' values emphasize local structure.
+#'
+#' @param verbose
+#' Logical scalar indicating whether progress messages should be emitted via
+#' \code{rlang::inform()} by internal helpers.
 #'
 #' @return
-#' A named list with three tibbles:
-#'
+#' A named list with the following elements:
 #' \describe{
-#'   \item{\code{cluster_table}}{A tibble with one row per gene containing
-#'   block-specific cluster assignments suitable for downstream enrichment
-#'   analyses. Columns include the gene identifier and one clustering column
-#'   per analytical block (e.g., \code{cluster_<cond>} or
-#'   \code{cluster_cat3_<cond1>_vs_<cond2>}). Genes not included in a given
-#'   block are assigned \code{NA}.}
+#'   \item{\code{cluster_table}}{A tibble with one row per gene and columns
+#'   \code{gene} and \code{cluster}.}
 #'
-#'   \item{\code{centroid_info}}{A tibble with one row per block, modality,
-#'   and cluster, summarizing modality-specific cluster centroids and
-#'   within-cluster coherence. Columns include the block and modality
-#'   identifiers, cluster label, gene coverage statistics, the QC method
-#'   used (\code{qc_method}; \code{"Pearson R2"} for one-to-one modalities
-#'   and \code{"BC(HD)"} for many-to-one modalities), mean and standard
-#'   deviation of per-gene QC values (\code{mean_qc}, \code{sd_qc}),
-#'   optional per-gene QC vectors (\code{qc_member}) as a list-column, and
-#'   the centroid representation stored as a list-column (\code{centroid}).}
+#'   \item{\code{centroid_info}}{A tibble summarizing modality-specific cluster
+#'   centroids and within-cluster QC. The centroid representation is stored as a
+#'   list-column.}
 #'
-#'   \item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL} if no
-#'   many-to-one modalities are present) providing clustering quality
-#'   diagnostics for many-to-one feature clustering steps. One row per
-#'   block, modality, and feature-cluster, including the many-to-one
-#'   \code{k} value used, the number of features used, the QC method
-#'   (\code{"Pearson R2"}), mean and standard deviation of per-feature QC
-#'   values (\code{mean_qc}, \code{sd_qc}), optional per-feature QC vectors
-#'   (\code{qc_member}) as a list-column, and the centroid representation
-#'   stored as a list-column (\code{centroid}).}
+#'   \item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL}) with QC
+#'   diagnostics for many-to-one feature clustering steps, if any are present.}
+#'
+#'   \item{\code{umap_fit}}{The object returned by \code{uwot::umap()},
+#'   including \code{$embedding} (genes \eqn{\times} \code{n_components}) and,
+#'   if requested via \code{ret_extra}, \code{$fgraph} (the UMAP fuzzy graph
+#'   used for spectral clustering).}
 #' }
-#' 
+#'
 #' @examples
 #' set.seed(1)
+#' genes <- paste0("gene", 1:8)
 #'
-#' genes <- paste0("gene", 1:6)
-#'
-#' rna_time_ctrl <- matrix(
-#'     rnorm(6 * 5),
-#'     nrow = 6,
-#'     ncol = 5,
-#'     dimnames = list(genes, NULL)
-#' )
-#' rna_time_treat <- matrix(
-#'     rnorm(6 * 5),
-#'     nrow = 6,
-#'     ncol = 5,
-#'     dimnames = list(genes, NULL)
+#' rna <- matrix(
+#'   rnorm(length(genes) * 5),
+#'   nrow = length(genes),
+#'   dimnames = list(genes, NULL)
 #' )
 #'
-#' blocks <- list(
-#'     time_Ctrl = list(rna = rna_time_ctrl),
-#'     time_Treat = list(rna = rna_time_treat)
+#' prot <- matrix(
+#'   rnorm(length(genes) * 3),
+#'   nrow = length(genes),
+#'   dimnames = list(genes, NULL)
 #' )
 #'
-#' block_clusters <- list(
-#'     time_Ctrl = 2L,
-#'     time_Treat = 2L
+#' data <- list(
+#'   condition1 = list(rna = rna, protein = prot)
 #' )
 #'
-#' modality_meta <- data.frame(
-#'     block   = c("time_Ctrl", "time_Treat"),
-#'     modality   = c("rna", "rna"),
-#'     many_to_one_k = c(NA_real_, NA_real_),
-#'     modality_w = c(1, 1),
-#'     stringsAsFactors = FALSE
+#' meta <- data.frame(
+#'   modality = c("rna", "protein"),
+#'   many_to_one_k = c(NA_real_, NA_real_),
+#'   modality_w = c(1, 1),
+#'   stringsAsFactors = FALSE
 #' )
 #'
-#' cluster_table <- cluster_genes_multiomics(
-#'     blocks     = blocks,
-#'     block_clusters = block_clusters,
-#'     modality_meta = modality_meta,
-#'     gene_mode  = "intersection"
+#' res <- cluster_genes_multiomics(
+#'   data = data,
+#'   meta = meta,
+#'   k = 3L,
+#'   gene_mode = "intersection",
+#'   n_neighbors = 5L
 #' )
 #'
-#' cluster_table
+#' res$cluster_table
 #'
 #' @export
 #' 
 cluster_genes_multiomics <- function(
-        blocks,
-        block_clusters,
-        modality_meta,
-        gene_mode = "intersection",
-        verbose = TRUE
+        data,
+        meta,
+        k,
+        gene_mode = c("intersection", "union"),
+        n_neighbors = 15L,
+        verbose = FALSE
 ) {
     start_time <- Sys.time()
+    .check_cluster_genes_multiomics_dependencies()
+    gene_mode <- match.arg(
+        gene_mode,
+        c("intersection", "union")
+        )
     
     .check_cluster_genes_multiomics_input(
-        blocks = blocks,
-        block_clusters = block_clusters,
-        modality_meta = modality_meta,
-        gene_mode = gene_mode,
-        verbose = verbose
+        data        = data,
+        meta        = meta,
+        k           = k,
+        n_neighbors = n_neighbors,
+        verbose     = verbose
     )
-    
-    block_ids <- names(blocks)
-    
-    block_assignments <- vector("list", length(block_ids))
-    names(block_assignments) <- block_ids
-    
-    centroid_list <- vector("list", length(block_ids))
-    names(centroid_list) <- block_ids
-    many_to_one_clustering_qc_list <- vector("list", length(block_ids))
-    names(many_to_one_clustering_qc_list) <- block_ids
-    
-    for (i in seq_along(block_ids)) {
-        b <- block_ids[i]
-        if (isTRUE(verbose)) {
-            message(
-                "[cluster_genes_multiomics] Block ",
-                i,
-                "/",
-                length(block_ids),
-                ": '",
-                b,
-                "'"
-            )
-        }
-        
-        k <- block_clusters[[b]]
 
-        res_b <- .cluster_genes_multiomics_block(
-            block_id = b,
-            blocks = blocks,
-            block_k = k,
-            modality_meta = modality_meta,
-            gene_mode = gene_mode,
-            verbose = verbose
-        )
-        
-        block_assignments[[b]] <- res_b$cl_b
-        centroid_list[[b]] <- res_b$centroid_info
-        many_to_one_clustering_qc_list[[b]] <- res_b$many_to_one_clustering_qc
-    }
-    
-    genes_all <- sort(unique(unlist(lapply(block_assignments, names))))
-    cluster_table <- data.frame(gene = genes_all, stringsAsFactors = FALSE)
-    
-    for (i in seq_along(block_ids)) {
-        b <- block_ids[i]
-        cl_b <- block_assignments[[b]]
-        if (is.null(cl_b)) next
-        
-        col_name <- b
-        if (!col_name %in% colnames(cluster_table)) {
-            cluster_table[[col_name]] <- NA_integer_
-        }
-        
-        genes_b <- names(cl_b)
-        idx_tbl <- match(genes_b, cluster_table$gene)
-        cluster_table[[col_name]][idx_tbl] <- as.integer(cl_b)
-    }
-    
-    centroid_info <- do.call(rbind, centroid_list)
-    many_to_one_clustering_qc_list <- Filter(
-        Negate(is.null),
-        many_to_one_clustering_qc_list
-        )
-    
-    many_to_one_clustering_qc <- if (
-        length(many_to_one_clustering_qc_list) > 0L
-        ) {
-        do.call(rbind, many_to_one_clustering_qc_list)
-    } else {
-        NULL
-    }
-    
+    rep <- .build_gene_centric_representation(
+        data      = data,
+        meta      = meta,
+        gene_mode = gene_mode,
+        verbose   = verbose
+    )
+
+    fit <- uwot::umap(
+        X            = rep$X,
+        n_neighbors  = n_neighbors,
+        n_components = 2,
+        ret_model    = TRUE,
+        ret_extra    = "fgraph"
+    )
+
+    cl <- .spectral_clustering(
+        W = fit$fgraph,
+        k = k
+    )
+    names(cl) <- rep$gene_ids
+
+    centroid_info <- .compute_centroids(
+        mats_norm = rep$mats_norm,
+        cl        = cl,
+        meta      = rep$aligned_meta
+    )
+
+    centroid_info <- .rank_clusters(centroid_info)
+
+    cluster_table <- tibble::tibble(
+        gene    = rep$gene_ids,
+        cluster = as.integer(cl)
+    )
+
     if (isTRUE(verbose)) {
         end_time <- Sys.time()
         elapsed <- end_time - start_time
-        formatted <- format(elapsed, digits = 2)
-        message("[cluster_genes_multiomics] total runtime: ", formatted)
+        message(
+            "[cluster_genes_multiomics] total runtime: ",
+            format(elapsed, digits = 2)
+        )
     }
     
     list(
-        cluster_table = tibble::as_tibble(cluster_table),
+        cluster_table = cluster_table,
         centroid_info = tibble::as_tibble(centroid_info),
         many_to_one_clustering_qc =
-            if (is.null(many_to_one_clustering_qc)) {
+            if (is.null(rep$many_to_one_clustering_qc)) {
                 NULL
             } else {
-                tibble::as_tibble(many_to_one_clustering_qc)
-            }
+                tibble::as_tibble(rep$many_to_one_clustering_qc)
+            },
+        umap_fit = fit
     )
 }
 
@@ -275,304 +217,1435 @@ cluster_genes_multiomics <- function(
 # Level 1 function definitions -------------------------------------------------
 
 
-#' Validate inputs for multi-omics gene clustering
+#' Validate availability of suggested package dependencies
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that validates all inputs passed to
-#' \code{cluster_genes_multiomics()}.  
+#' Internal helper that checks whether all suggested packages required for
+#' UMAP-based clustering and spectral graph clustering are installed.
 #'
-#' It performs:
+#' This function verifies the availability of the following packages:
+#'
 #' \itemize{
-#'   \item argument-wise checks for \code{blocks}, \code{block_meta},
-#'         \code{modality_meta}, and \code{gene_mode}, and
-#'   \item cross-argument consistency checks linking blocks, modalities,
-#'         and metadata.
+#'   \item{\pkg{uwot} for UMAP neighborhood graph construction.}
+#'   \item{\pkg{Matrix} for sparse matrix representations and operations.}
+#'   \item{\pkg{RSpectra} for sparse eigenvalue decomposition used in spectral
+#'   clustering.}
 #' }
 #'
-#' This function is a thin orchestrator that delegates to specialized
-#' internal checkers:
-#' \code{.check_cluster_genes_multiomics_gene_mode()},
-#' \code{.check_cluster_genes_multiomics_blocks()},
-#' \code{.check_cluster_genes_multiomics_block_clusters()},
-#' \code{.check_cluster_genes_multiomics_modality_meta()}, and
-#' \code{.check_cluster_genes_multiomics_cross_args()}.
-#'
-#' @param blocks
-#' Named list of blocks, one element per block.  
-#' Each block is itself a named list of modalities, where each modality is a
-#' numeric matrix (\code{features x spline_points}) with non-empty
-#' row names (feature or gene IDs).
-#'
-#' @param block_meta
-#' Data frame with block-level metadata.  
-#' Must contain the columns \code{block}, \code{block_k},
-#' \code{result_category}, \code{cond1}, and \code{cond2}.  
-#' The column \code{block_k} gives the number of clusters per block and
-#' must be positive and constant within each block.
-#'
-#' @param modality_meta
-#' Data frame with modality-level metadata.  
-#' Must contain the columns \code{block}, \code{modality}, \code{many_to_one_k},
-#' and \code{modality_w}.  
-#' The column \code{many_to_one_k} encodes whether a modality is many-to-one
-#' (positive integer) or one-to-one (NA).  
-#' The column \code{modality_w} provides non-negative modality weights whose
-#' sum must be positive within each block.
-#'
-#' @param gene_mode
-#' Character scalar specifying how genes should be combined across
-#' modalities within a block.  
-#' Must be either \code{"intersection"} or \code{"union"} and is
-#' validated via \code{\link[base]{match.arg}}.
-#' 
-#' @param verbose Boolean flag indicating if info messages are be shown.
+#' These packages are declared under \code{Suggests} rather than
+#' \code{Imports} because they are only required when this functionality is
+#' invoked. If one or more packages are missing, execution is aborted with an
+#' informative error message via \code{rlang::abort()}.
 #'
 #' @return
-#' Invisibly returns \code{TRUE} if all checks pass.  
-#' Otherwise, it raises an informative error (or warning) describing the
-#' first detected issue.
+#' Invisibly returns \code{TRUE} if all required packages are available.
+#' Otherwise, an error is raised.
 #' 
-.check_cluster_genes_multiomics_input <- function(
-        blocks,
-        block_clusters,
-        modality_meta,
-        gene_mode,
-        verbose
-) {
-    .check_cluster_genes_multiomics_gene_mode(gene_mode)
-    .check_cluster_genes_multiomics_blocks(blocks)
-    .check_cluster_genes_multiomics_block_clusters(
-        block_clusters = block_clusters,
-        blocks = blocks
-        )
-    .check_cluster_genes_multiomics_modality_meta(modality_meta)
-    .check_cluster_genes_multiomics_cross_args(
-        blocks = blocks,
-        modality_meta = modality_meta
-        )
+.check_cluster_genes_multiomics_dependencies <- function() {
+    missing <- character()
     
-    # verbose must be TRUE or FALSE (length 1 logical)
-    if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose)) {
-        stop_call_false(
-            "`verbose` must be either TRUE or FALSE (a single logical value)."
-        )
+    if (!requireNamespace("uwot", quietly = TRUE)) {
+        missing <- c(missing, "uwot")
+    }
+    if (!requireNamespace("Matrix", quietly = TRUE)) {
+        missing <- c(missing, "Matrix")
+    }
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+        missing <- c(missing, "RSpectra")
+    }
+    
+    if (length(missing) > 0) {
+        rlang::abort(c(
+            "Required suggested packages are not installed.",
+            paste0(
+                "Missing package(s): ",
+                paste(missing, collapse = ", ")
+            ),
+            "Please install them with:",
+            paste0(
+                "install.packages(c(",
+                paste(sprintf('"%s"', missing), collapse = ", "),
+                "))"
+            )
+        ))
     }
     
     invisible(TRUE)
 }
 
 
-#' Cluster genes within a single block and compute modality-wise centroids
+#' Validate inputs for gene-centric multi-omics clustering
 #'
 #' @noRd
 #'
 #' @description
-#' Internal helper that performs all clustering steps for a single block
-#' in the multi-omics workflow.  
+#' Internal helper that performs interface-level validation for
+#' \code{cluster_genes_multiomics()}. This function checks that:
 #'
-#' For the specified block, the function:
 #' \itemize{
-#'   \item extracts the relevant block-level and modality-level metadata,
-#'   \item converts many-to-one modalities into gene-level signatures,
-#'   \item selects genes according to the requested \code{gene_mode}
-#'         (\code{"intersection"} or \code{"union"}),
-#'   \item constructs a block-level distance matrix by combining
-#'         modality-level distances using per-modality weights, and
-#'   \item runs the clustering algorithm to obtain block-specific
-#'         gene–cluster assignments.
+#'   \item{\code{data} follows the expected nested structure
+#'   (condition × modality) and contains valid numeric matrices.}
+#'   \item{\code{meta} contains the required modality-level metadata columns
+#'   and valid entries.}
+#'   \item{Core scalar parameters (\code{k}, \code{n_pcs}, \code{knn_k}) are
+#'   well-formed integers in valid ranges.}
+#'   \item{Neighbor-search and graph parameters (\code{bn_param}, \code{sigma})
+#'   are valid.}
+#'   \item{\code{data} and \code{meta} agree on the set of modalities.}
+#'   \item{\code{verbose} is a valid logical scalar.}
 #' }
 #'
-#' After clustering, it computes per-modality cluster centroids and quality
-#' metrics through \code{.compute_block_centroids()}.
+#' All user-facing errors are raised via \code{rlang::abort()} to provide
+#' informative, structured messages. Downstream internal helpers rely on
+#' these checks and therefore assume inputs are valid.
 #'
-#' @param block_id
-#' Identifier of the block being processed. Must match a value in
-#' \code{block_meta$block} and \code{names(blocks)}.
+#' @param data
+#' Named list of conditions. Each condition is a named list of numeric
+#' modality matrices. See \code{cluster_genes_multiomics()} for the expected
+#' structure.
 #'
-#' @param blocks
-#' Named list of blocks as supplied to
-#' \code{cluster_genes_multiomics()}.  
-#' Each block is a named list of raw modality matrices.
+#' @param meta
+#' Data frame with one row per modality and required columns
+#' \code{modality}, \code{many_to_one_k}, and \code{modality_w}.
 #'
-#' @param block_meta
-#' Block-level metadata table.  
-#' Used to obtain \code{block_k} and to filter metadata for the current
-#' block.
+#' @param k
+#' Integer scalar giving the number of gene clusters for spectral clustering.
 #'
-#' @param modality_meta
-#' Modality-level metadata table.  
-#' Used to retrieve modality names, modality types (\code{many_to_one_k}), and
-#' modality weights for the current block.
+#' @param n_neighbors
+#' Integer. Size of the local neighborhood used by UMAP to construct the
+#' k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
+#' values emphasize local structure.
 #'
-#' @param gene_mode
-#' Character scalar specifying how to combine genes across modalities:
-#' either \code{"intersection"} or \code{"union"}.  
-#' Determines whether only shared genes or all genes across modalities
-#' contribute to the block-level distance.
+#' @param verbose
+#' Logical scalar indicating whether informative messages should be emitted.
 #'
 #' @return
-#' A list with two components:
-#' \describe{
-#'   \item{\code{cl_b}}{
-#'     Named vector of cluster assignments for all genes in the block.
-#'   }
+#' Invisibly returns \code{TRUE} if all checks pass. Otherwise, raises an
+#' error.
+#' 
+.check_cluster_genes_multiomics_input <- function(
+        data,
+        meta,
+        k,
+        n_neighbors,
+        verbose
+) {
+    .check_cluster_genes_multiomics_data(data)
+    .check_cluster_genes_multiomics_meta(meta)
+    
+    if (!is.numeric(k) || length(k) != 1L || is.na(k) ||
+        k != floor(k) || k < 2L) {
+        rlang::abort(c(
+            "Invalid `k`.",
+            "i" = "`k` must be a single integer >= 2."
+        ))
+    }
+
+    .check_cluster_genes_multiomics_cross_args(
+        data = data,
+        meta = meta
+    )
+    
+    if (!is.numeric(n_neighbors) ||
+        length(n_neighbors) != 1L ||
+        is.na(n_neighbors) ||
+        n_neighbors != floor(n_neighbors) ||
+        n_neighbors < 2L) {
+        rlang::abort(c(
+            "Invalid `n_neighbors`.",
+            "i" = "`n_neighbors` must be a single integer >= 2."
+        ))
+    }
+    
+    if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose)) {
+        rlang::abort(c(
+            "Invalid `verbose`.",
+            "i" = "`verbose` must be a single non-missing logical value."
+        ))
+    }
+    
+    invisible(TRUE)
+}
+
+
+#' Build a gene-centric joint feature representation across conditions
 #'
-#'   \item{\code{centroid_info}}{
-#'     Data frame with per-modality, per-cluster centroid trajectories and
-#'     associated summary metrics, as produced by
-#'     \code{.compute_block_centroids()}.
-#'   }
+#' @noRd
+#'
+#' @description
+#' Internal helper that converts nested multi-condition, multi-modality input
+#' data into a single **gene-centric joint feature matrix** suitable for PCA
+#' and downstream graph-based clustering.
+#'
+#' The helper performs the following conceptual steps:
+#'
+#' \itemize{
+#'   \item{Align modality metadata to the modalities present in \code{data}.}
+#'   \item{Collapse many-to-one modalities (e.g. sites, probes) into
+#'   gene-level pattern signatures using \code{many_to_one_k}.}
+#'   \item{Normalize each gene-level modality matrix using
+#'   \code{.normalize_modality_mat()} (z-scoring for one-to-one, Hellinger for
+#'   many-to-one signatures).}
+#'   \item{Harmonize the gene universe across all condition × modality blocks
+#'   according to \code{gene_mode} (intersection or union).}
+#'   \item{Align, weight, and concatenate all blocks to form the joint matrix
+#'   \code{X} with one row per gene.}
 #' }
 #'
-.cluster_genes_multiomics_block <- function(
-        block_id,
-        blocks,
-        block_k,
-        modality_meta,
+#' The returned \code{X} matrix is the direct input to PCA. Additional return
+#' components provide provenance (feature mapping, aligned metadata) and
+#' access to the normalized block matrices for centroid/QC computation.
+#'
+#' @param data
+#' Named list of conditions. Each condition is a named list of numeric
+#' matrices, one per modality. One-to-one modalities must use gene IDs as
+#' row names. Many-to-one modalities must use row names of the form
+#' \code{<gene_id>_<feature_id>} so that features can be mapped back to genes.
+#'
+#' @param meta
+#' Data frame with one row per modality describing modality-level parameters,
+#' including \code{modality}, \code{many_to_one_k}, and \code{modality_w}.
+#' This metadata is condition-independent.
+#'
+#' @param gene_mode
+#' Character string specifying how genes are harmonized across all blocks.
+#' \code{"intersection"} retains only genes present in all condition × modality
+#' blocks. \code{"union"} retains genes present in at least one block and
+#' fills missing blocks with zeros during concatenation.
+#'
+#' @param verbose
+#' Logical scalar indicating whether informative messages should be emitted.
+#' Currently unused in this helper, but included for a consistent internal
+#' interface.
+#'
+#' @return
+#' A list with the following components:
+#'
+#' \describe{
+#'   \item{\code{X}}{
+#'     Numeric matrix (\code{genes x features}) giving the gene-centric joint
+#'     feature representation obtained by weighting and concatenating all
+#'     condition × modality blocks. Row names are gene IDs. Column names
+#'     encode condition and modality provenance.}
+#'
+#'   \item{\code{gene_ids}}{
+#'     Character vector of gene IDs defining the row order used across all
+#'     downstream objects derived from \code{X}.}
+#'
+#'   \item{\code{feature_index}}{
+#'     Data frame mapping each column of \code{X} to its originating condition,
+#'     modality, and within-block feature name (and the modality weight used).}
+#'
+#'   \item{\code{mats_norm}}{
+#'     Nested list of normalized gene-level matrices, structured as
+#'     \code{mats_norm[[condition]][[modality]]}. This is used for downstream
+#'     centroid and QC summaries per condition and modality.}
+#'
+#'   \item{\code{aligned_meta}}{
+#'     Modality metadata aligned to the modalities present in \code{data},
+#'     including normalized modality weights and many-to-one flags.}
+#'
+#'   \item{\code{many_to_one_clustering_qc}}{
+#'     Data frame of QC diagnostics for many-to-one feature clustering steps,
+#'     or \code{NULL} if no many-to-one modalities are present.}
+#' }
+#' 
+.build_gene_centric_representation <- function(
+        data,
+        meta,
         gene_mode,
         verbose
 ) {
-    meta_b_modality <- 
-        modality_meta[modality_meta$block == block_id, , drop = FALSE]
+    cond_ids <- names(data)
+    mod_ids <- names(data[[1L]])
     
-    modality_names <- meta_b_modality$modality
-    modality_weights <- meta_b_modality$modality_w
-    
-    modality_mats_raw <- lapply(
-        modality_names,
-        function(ln) blocks[[block_id]][[ln]]
+    aligned_meta <- .align_modality_meta(
+        meta = meta,
+        modality_ids = mod_ids
     )
-    names(modality_mats_raw) <- modality_names
     
-    modality_mats <- vector("list", length(modality_names))
-    names(modality_mats) <- modality_names
-    feature_cluster_qc_by_modality <- list()
+    res_gene_level <- .collapse_many_to_one_modalities(
+        data = data,
+        meta = aligned_meta,
+        verbose = verbose
+    )
     
-    if (isTRUE(verbose)) {
-        message(
-            "  [block '",
-            block_id,
-            "'] building gene-level modality matrices..."
+    mats_gene <- res_gene_level$mats_gene
+    many_to_one_qc <- res_gene_level$many_to_one_clustering_qc
+    
+    mats_norm <- .normalize_gene_level_modalities(
+        mats_gene = mats_gene,
+        meta = aligned_meta,
+        verbose = verbose
+    )
+    
+    gene_ids <- .harmonize_genes_across_blocks(
+        mats_norm = mats_norm,
+        gene_mode = gene_mode
+    )
+    
+    X_res <- .flatten_blocks_to_joint_matrix(
+        mats_norm = mats_norm,
+        meta = aligned_meta,
+        gene_ids = gene_ids,
+        verbose = verbose
+    )
+    
+    list(
+        X = X_res$X,
+        gene_ids = gene_ids,
+        feature_index = X_res$feature_index,
+        mats_norm = mats_norm,
+        aligned_meta = aligned_meta,
+        many_to_one_clustering_qc = many_to_one_qc
+    )
+}
+
+
+#' Perform spectral clustering on a gene–gene adjacency matrix
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that performs **spectral clustering** on a weighted,
+#' undirected gene–gene graph represented by an adjacency matrix.
+#'
+#' Starting from the adjacency matrix \code{W}, the function constructs the
+#' (unnormalized) graph Laplacian \eqn{L = D - W}, where \eqn{D} is the diagonal
+#' degree matrix. The first \code{k} eigenvectors corresponding to the smallest
+#' eigenvalues of \eqn{L} define a low-dimensional spectral embedding of the
+#' genes.
+#'
+#' Genes are then clustered by applying k-means to this spectral embedding
+#' after row-wise normalization. This procedure identifies groups of genes
+#' that are tightly connected in the original kNN graph and therefore exhibit
+#' similar behavior in the reduced feature space.
+#'
+#' This implementation follows the standard unnormalized spectral clustering
+#' pipeline and is intended for moderate-sized graphs (e.g. thousands of
+#' genes), as typically encountered in gene-centric multi-omics analyses.
+#'
+#' @param W
+#' Numeric, symmetric matrix (\code{genes x genes}) representing the weighted
+#' adjacency matrix of the gene–gene graph. Entries must be non-negative, with
+#' zeros indicating no edge between gene pairs.
+#'
+#' @param k
+#' Integer scalar giving the number of clusters to compute. This also
+#' determines the number of eigenvectors retained for the spectral embedding.
+#'
+#' @return
+#' A list with one component:
+#'
+#' \describe{
+#'   \item{\code{membership}}{
+#'     Integer vector of length equal to the number of genes, giving the
+#'     cluster assignment for each gene. The order corresponds to the row and
+#'     column order of \code{W}.}
+#' }
+#' 
+.spectral_clustering <- function(
+        W, 
+        k
+        ) {
+    # Keep sparse if possible
+    if (!inherits(W, "Matrix")) W <- Matrix::Matrix(W, sparse = TRUE)
+    
+    # Symmetrize (important; UMAP graphs can be slightly asymmetric)
+    W <- (W + Matrix::t(W)) / 2
+    
+    # Remove self-loops
+    Matrix::diag(W) <- 0
+    
+    # Degrees
+    d <- Matrix::rowSums(W)
+    if (any(d < 0)) 
+        stop(
+            "W has negative weights; spectral clustering assumes",
+            "nonnegative weights."
+            )
+    
+    # Handle isolated nodes
+    d_inv_sqrt <- 1 / sqrt(pmax(d, .Machine$double.eps))
+    D_inv_sqrt <- Matrix::Diagonal(x = d_inv_sqrt)
+    
+    # Normalized Laplacian: L = I - D^{-1/2} W D^{-1/2}
+    n <- nrow(W)
+    L <- Matrix::Diagonal(n = n, x = 1) - (D_inv_sqrt %*% W %*% D_inv_sqrt)
+    
+    # Smallest eigenvectors of L
+    # (for k clusters you typically want the k smallest eigenvectors)
+    eig <- RSpectra::eigs_sym(
+        A     = L,
+        k     = k,
+        which = "SM"
         )
-    }
+    U <- eig$vectors
     
-    many_to_one <- setNames(
-        rep(FALSE, length(modality_names)),
-        modality_names
-    )
+    # Row-normalize (Ng, Jordan, Weiss style)
+    rs <- sqrt(rowSums(U^2))
+    rs[rs == 0] <- 1
+    U <- U / rs
     
-    for (i in seq_along(modality_names)) {
-        ln <- modality_names[i]
-        if (isTRUE(verbose)) message("    Modality: ", ln)
+    cl <- stats::kmeans(
+        x       = U,
+        centers = k,
+        nstart  = 10
+        )$cluster
+    cl <- as.integer(cl)
+    names(cl) <- rownames(W)
+    
+    cl
+}
+
+
+#' Compute modality- and condition-specific cluster centroids and QC summaries
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that summarizes the resulting gene clusters in the original
+#' normalized feature spaces for each condition and modality.
+#'
+#' For every condition × modality block in \code{mats_norm}, the function:
+#'
+#' \itemize{
+#'   \item{Computes a cluster centroid representation for each gene cluster.}
+#'   \item{Computes within-cluster coherence (QC) for each member gene relative
+#'   to its cluster centroid using \code{.compute_cluster_centroids_qc()}.}
+#'   \item{Tracks coverage, i.e. the fraction of genes in each cluster that
+#'   are present in the current condition × modality block. This is relevant
+#'   when \code{gene_mode = "union"} was used upstream and some genes are
+#'   missing from certain blocks.}
+#' }
+#'
+#' The QC method depends on the modality type:
+#'
+#' \itemize{
+#'   \item{\code{"Pearson R2"}} for one-to-one modalities (trajectory-like
+#'   features).
+#'   \item{\code{"BC(HD)"}} for many-to-one modalities represented as
+#'   Hellinger-transformed signature vectors.
+#' }
+#'
+#' The returned table is designed for downstream reporting and ranking of
+#' clusters by coherence.
+#'
+#' @param mats_norm
+#' Nested list of normalized gene-level matrices structured as
+#' \code{mats_norm[[condition]][[modality]]}. Row names are gene IDs; columns
+#' are modality-specific features.
+#'
+#' @param cl
+#' Integer vector of gene cluster assignments. \code{names(cl)} must be gene
+#' identifiers.
+#'
+#' @param meta
+#' Data frame of modality metadata aligned to the modalities used in
+#' \code{mats_norm}. Must contain at least \code{modality} and
+#' \code{many_to_one_k} to determine modality type.
+#'
+#' @return
+#' A data frame with one row per condition, modality, and gene cluster.
+#' Columns include:
+#'
+#' \describe{
+#'   \item{\code{condition}}{Condition identifier.}
+#'   \item{\code{modality}}{Modality identifier.}
+#'   \item{\code{modality_type}}{Either \code{"one_to_one"} or
+#'   \code{"many_to_one"}.}
+#'   \item{\code{cluster}}{Cluster label.}
+#'   \item{\code{n_genes_cluster}}{Number of genes assigned to the cluster.}
+#'   \item{\code{n_genes_used}}{Number of genes from the cluster present in
+#'   the current block.}
+#'   \item{\code{coverage}}{Fraction \code{n_genes_used / n_genes_cluster}.}
+#'   \item{\code{qc_method}}{QC method used (\code{"Pearson R2"} or
+#'   \code{"BC(HD)"}).}
+#'   \item{\code{mean_qc}}{Mean QC value across member genes.}
+#'   \item{\code{sd_qc}}{Standard deviation of QC values across member genes.}
+#'   \item{\code{qc_member}}{List-column of per-gene QC values.}
+#'   \item{\code{centroid}}{List-column of centroid vectors in the modality
+#'   feature space.}
+#' }
+#' 
+.compute_centroids <- function(
+        mats_norm,
+        cl,
+        meta
         
-        lk <- meta_b_modality$many_to_one_k[i]
-        mat_raw <- modality_mats_raw[[ln]]
+) {
+    cond_ids <- names(mats_norm)
+    mod_ids <- meta$modality
+    clusters <- sort(unique(as.integer(cl)))
+    out <- list()
+    row_i <- 0L
+    
+    for (cond in cond_ids) {
+        mats_cond <- mats_norm[[cond]]
         
-        is_m2o <- !is.na(lk)
-        many_to_one[[ln]] <- is_m2o
-        
-        if (!is_m2o) {
-            # one-to-one: normalize trajectories (row-wise z-score)
-            modality_mats[[ln]] <- .normalize_modality_mat(
-                mat_raw,
-                is_many_to_one = FALSE
+        for (m in mod_ids) {
+            mat_m <- mats_cond[[m]]
+            
+            lk <- meta$many_to_one_k[meta$modality == m][1L]
+            modality_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
+            
+            qc_method <- if (modality_type == "one_to_one") {
+                "Pearson R2"
+            } else {
+                "BC(HD)"
+            }
+            
+            stats_m <- .compute_cluster_centroids_qc(
+                X = mat_m,
+                cl = cl,
+                qc_method = qc_method,
+                center_scale_rows = FALSE,
+                require = "intersection"
+            )
+            
+            for (c in clusters) {
+                genes_cluster <- names(cl)[cl == c]
+                n_cluster <- length(genes_cluster)
+                
+                genes_used <- intersect(genes_cluster, rownames(mat_m))
+                n_used <- length(genes_used)
+                
+                coverage <- if (n_cluster > 0L) n_used / n_cluster else NA_real_
+                
+                st <- stats_m[stats_m$cluster == c, , drop = FALSE]
+                
+                if (nrow(st) == 0L) {
+                    st <- data.frame(
+                        cluster = c,
+                        n_used = 0L,
+                        qc_method = qc_method,
+                        mean_qc = NA_real_,
+                        sd_qc = NA_real_,
+                        qc_member =
+                            I(list(setNames(numeric(0), character(0)))),
+                        centroid = I(list(rep(NA_real_, ncol(mat_m)))),
+                        stringsAsFactors = FALSE
+                    )
+                }
+                
+                row_i <- row_i + 1L
+                out[[row_i]] <- data.frame(
+                    condition = cond,
+                    modality = m,
+                    modality_type = modality_type,
+                    cluster = c,
+                    n_genes_cluster = n_cluster,
+                    n_genes_used = n_used,
+                    coverage = coverage,
+                    qc_method = st$qc_method,
+                    mean_qc = st$mean_qc,
+                    sd_qc = st$sd_qc,
+                    qc_member = st$qc_member,
+                    centroid = st$centroid,
+                    stringsAsFactors = FALSE
                 )
-        } else {
-            rn <- rownames(mat_raw)
-            gene_ids <- sub("_.*$", "", rn)
-            feature_to_gene <- gene_ids
-            
-            sig_obj <- .build_site_signatures(
-                modality_mat     = mat_raw,
-                feature_to_gene  = feature_to_gene,
-                many_to_one_k    = lk
-            )
-            
-            sig <- sig_obj$signatures
-            sig <- sig[order(rownames(sig)), , drop = FALSE]
-            # many-to-one: Hellinger normalize signatures
-            modality_mats[[ln]] <- .normalize_modality_mat(
-                sig,
-                is_many_to_one = TRUE
-            )
-            
-            # collect QC if present/non-empty
-            qc <- sig_obj$many_to_one_clustering_qc
-            if (is.data.frame(qc) && nrow(qc) > 0L) {
-                qc$block <- block_id
-                qc$modality <- ln
-                qc$many_to_one_k <- lk
-                feature_cluster_qc_by_modality[[ln]] <- qc
             }
         }
     }
     
-    many_to_one_clustering_qc <- if (
-        length(feature_cluster_qc_by_modality
-               ) > 0L) {
-        do.call(rbind, feature_cluster_qc_by_modality)
+    if (length(out) == 0L) {
+        return(data.frame(
+            condition = character(0),
+            modality = character(0),
+            modality_type = character(0),
+            cluster = integer(0),
+            n_genes_cluster = integer(0),
+            n_genes_used = integer(0),
+            coverage = numeric(0),
+            qc_method = character(0),
+            mean_qc = numeric(0),
+            sd_qc = numeric(0),
+            qc_member = I(list()),
+            centroid = I(list()),
+            stringsAsFactors = FALSE
+        ))
+    }
+    
+    do.call(rbind, out)
+}
+
+
+# Level 2 function definitions -------------------------------------------------
+## .check_cluster_genes_multiomics_input ---------------------------------------
+
+
+#' Validate multi-condition, multi-modality input data
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that validates the structure and contents of the
+#' \code{data} argument passed to \code{cluster_genes_multiomics()}.
+#'
+#' The expected structure of \code{data} is a nested list:
+#'
+#' \itemize{
+#'   \item{Top level: named list of conditions.}
+#'   \item{Second level: for each condition, a named list of modalities.}
+#'   \item{Leaf level: numeric matrices with genes or features in rows.}
+#' }
+#'
+#' This function verifies that:
+#'
+#' \itemize{
+#'   \item{\code{data} is a non-empty named list with unique condition names.}
+#'   \item{Each condition contains a non-empty named list of modalities.}
+#'   \item{Each modality is a numeric matrix with valid dimensions.}
+#'   \item{Row names are present, non-empty, unique, and finite-valued.}
+#' }
+#'
+#' All checks are performed at the interface level so that downstream internal
+#' helpers may assume well-formed inputs.
+#'
+#' @param data
+#' Named list of conditions. Each condition is a named list of numeric
+#' modality matrices. One-to-one and many-to-one modalities are both allowed.
+#'
+#' @return
+#' Invisibly returns \code{TRUE} if all checks pass. Otherwise, raises an
+#' error via \code{rlang::abort()}.
+#' 
+.check_cluster_genes_multiomics_data <- function(data) {
+    if (!is.list(data) || length(data) == 0L) {
+        rlang::abort(c(
+            "Invalid `data`.",
+            "i" = paste0(
+                "`data` must be a non-empty named list of conditions, ",
+                "each containing a named list of modality matrices."
+            )
+        ))
+    }
+    
+    cond_names <- names(data)
+    if (is.null(cond_names) || anyNA(cond_names) || any(cond_names == "")) {
+        rlang::abort(c(
+            "Invalid `data`.",
+            "i" = "`data` must be a named list (no empty names)."
+        ))
+    }
+    
+    if (anyDuplicated(cond_names)) {
+        rlang::abort(c(
+            "Invalid `data`.",
+            "i" = "Condition names must be unique.",
+            "x" = paste0(
+                "Duplicated names: ",
+                paste(
+                    unique(cond_names[duplicated(cond_names)]),
+                    collapse = ", "
+                )
+            )
+        ))
+    }
+    
+    mod_name_list <- lapply(data, names)
+    mod_names <- sort(unique(unlist(mod_name_list, use.names = FALSE)))
+    
+    if (length(mod_names) == 0L) {
+        rlang::abort(c(
+            "Invalid `data`.",
+            "i" = "Each condition must contain a non-empty modality list."
+        ))
+    }
+    
+    for (cond in cond_names) {
+        mods <- data[[cond]]
+        
+        if (!is.list(mods) || length(mods) == 0L) {
+            rlang::abort(c(
+                "Invalid `data`.",
+                "i" =
+                    "Each condition must contain a non-empty modality list.",
+                "x" = paste0("Condition '", cond, "' is empty.")
+            ))
+        }
+        
+        mod_names_cond <- names(mods)
+        if (is.null(mod_names_cond) ||
+            anyNA(mod_names_cond) ||
+            any(mod_names_cond == "")) {
+            rlang::abort(c(
+                "Invalid `data`.",
+                "i" = paste0(
+                    "Each condition's modality list must be named ",
+                    "(no empty names)."
+                ),
+                "x" = paste0(
+                    "Condition '", cond, "' has invalid modality names."
+                )
+            ))
+        }
+        
+        if (anyDuplicated(mod_names_cond)) {
+            rlang::abort(c(
+                "Invalid `data`.",
+                "i" =
+                    "Modality names must be unique within each condition.",
+                "x" = paste0(
+                    "Condition '", cond,
+                    "' has duplicated modalities: ",
+                    paste(
+                        unique(
+                            mod_names_cond[
+                                duplicated(mod_names_cond)
+                            ]
+                        ),
+                        collapse = ", "
+                    )
+                )
+            ))
+        }
+        
+        for (m in mod_names_cond) {
+            mat <- mods[[m]]
+            
+            if (!is.matrix(mat) || !is.numeric(mat)) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" = "Each modality must be a numeric matrix.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' is not a numeric matrix."
+                    )
+                ))
+            }
+            
+            rn <- rownames(mat)
+            if (is.null(rn) || anyNA(rn) || any(rn == "")) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" =
+                        "Each modality matrix must have non-empty row names.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' has missing/empty row names."
+                    )
+                ))
+            }
+            
+            if (nrow(mat) < 2L) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" =
+                        "Each modality matrix must have at least 2 rows.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' has nrow = ", nrow(mat), "."
+                    )
+                ))
+            }
+            
+            if (ncol(mat) < 1L) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" =
+                        "Each modality matrix must have at least 1 column.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' has ncol = ", ncol(mat), "."
+                    )
+                ))
+            }
+            
+            if (any(!is.finite(mat))) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" =
+                        "Modality matrices must contain finite values.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' contains NA/NaN/Inf."
+                    )
+                ))
+            }
+            
+            if (anyDuplicated(rn)) {
+                rlang::abort(c(
+                    "Invalid `data` element.",
+                    "i" =
+                        "Row names must be unique within each matrix.",
+                    "x" = paste0(
+                        "Condition '", cond, "', modality '", m,
+                        "' has duplicated row names."
+                    )
+                ))
+            }
+        }
+    }
+    
+    invisible(TRUE)
+}
+
+
+#' Validate modality metadata for multi-omics clustering
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that validates the modality-level metadata supplied to
+#' \code{cluster_genes_multiomics()}.
+#'
+#' The \code{meta} data frame defines how individual data modalities are
+#' interpreted and weighted during construction of the gene-centric feature
+#' representation. This function performs structural and semantic checks to
+#' ensure that downstream steps can rely on a consistent and well-defined
+#' modality specification.
+#'
+#' In particular, this function verifies:
+#' \itemize{
+#'   \item Presence and correctness of required columns.
+#'   \item Uniqueness and validity of modality identifiers.
+#'   \item Correct specification of many-to-one collapsing parameters.
+#'   \item Valid, strictly positive modality weights.
+#' }
+#'
+#' @param meta
+#' A data frame with one row per modality and at least the following columns:
+#' \describe{
+#'   \item{\code{modality}}{
+#'     Character vector of unique modality identifiers. Each entry must match
+#'     a modality present in \code{data}.
+#'   }
+#'   \item{\code{many_to_one_k}}{
+#'     Numeric vector specifying the number of feature clusters used to collapse
+#'     many-to-one modalities to the gene level. Use \code{NA} for one-to-one
+#'     (already gene-level) modalities.
+#'   }
+#'   \item{\code{modality_w}}{
+#'     Numeric vector of strictly positive modality weights. Values are
+#'     normalized internally and control each modality's contribution to the
+#'     joint feature matrix.
+#'   }
+#' }
+#'
+#' @return
+#' Invisibly returns \code{TRUE} if \code{meta} is valid. Otherwise, raises an
+#' error via \code{rlang::abort()} describing the violation.
+#' 
+.check_cluster_genes_multiomics_meta <- function(meta) {
+    if (!is.data.frame(meta)) {
+        rlang::abort(c(
+            "Invalid `meta`.",
+            "i" = "`meta` must be a data frame."
+        ))
+    }
+    
+    if (nrow(meta) < 1L) {
+        rlang::abort(c(
+            "Invalid `meta`.",
+            "i" = "`meta` must have at least one row."
+        ))
+    }
+    
+    required_cols <- c("modality", "many_to_one_k", "modality_w")
+    missing_cols <- setdiff(required_cols, colnames(meta))
+    
+    if (length(missing_cols) > 0L) {
+        rlang::abort(c(
+            "Invalid `meta`.",
+            "i" = "Missing required columns.",
+            "x" = paste0(
+                "Missing: ",
+                paste(missing_cols, collapse = ", ")
+            )
+        ))
+    }
+    
+    modality <- meta$modality
+    
+    if (!is.character(modality)) {
+        rlang::abort(c(
+            "Invalid `meta$modality`.",
+            "i" = "`modality` must be a character vector."
+        ))
+    }
+    
+    if (anyNA(modality) || any(modality == "")) {
+        rlang::abort(c(
+            "Invalid `meta$modality`.",
+            "i" = "Modality names must be non-empty."
+        ))
+    }
+    
+    if (anyDuplicated(modality)) {
+        rlang::abort(c(
+            "Invalid `meta$modality`.",
+            "i" = "Each modality must appear only once.",
+            "x" = paste0(
+                "Duplicated: ",
+                paste(
+                    unique(modality[duplicated(modality)]),
+                    collapse = ", "
+                )
+            )
+        ))
+    }
+    
+    many_to_one_k <- meta$many_to_one_k
+    
+    if (!is.numeric(many_to_one_k)) {
+        rlang::abort(c(
+            "Invalid `meta$many_to_one_k`.",
+            "i" = "`many_to_one_k` must be numeric (NA for one-to-one)."
+        ))
+    }
+    
+    bad_k <- !is.na(many_to_one_k) &
+        (many_to_one_k < 2 |
+             many_to_one_k != floor(many_to_one_k))
+    
+    if (any(bad_k)) {
+        rlang::abort(c(
+            "Invalid `meta$many_to_one_k`.",
+            "i" = "Non-NA values must be integers >= 2.",
+            "x" = paste0(
+                "Invalid for: ",
+                paste(modality[bad_k], collapse = ", ")
+            )
+        ))
+    }
+    
+    modality_w <- meta$modality_w
+    
+    if (!is.numeric(modality_w) ||
+        anyNA(modality_w) ||
+        any(!is.finite(modality_w))) {
+        rlang::abort(c(
+            "Invalid `meta$modality_w`.",
+            "i" = "`modality_w` must be finite numeric values."
+        ))
+    }
+    
+    if (any(modality_w <= 0)) {
+        rlang::abort(c(
+            "Invalid `meta$modality_w`.",
+            "i" = "`modality_w` must be strictly positive.",
+            "x" = paste0(
+                "Non-positive for: ",
+                paste(modality[modality_w <= 0], collapse = ", ")
+            )
+        ))
+    }
+    
+    invisible(TRUE)
+}
+
+
+#' Validate consistency between data and modality metadata
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that checks cross-consistency between the modalities
+#' present in the input \code{data} object and the rows of the modality
+#' metadata table \code{meta}.
+#'
+#' The function ensures that:
+#'
+#' \itemize{
+#'   \item{Every modality appearing in any condition of \code{data} has a
+#'   corresponding entry in \code{meta}.}
+#'
+#'   \item{Every row in \code{meta} corresponds to a modality that is actually
+#'   present in \code{data}.}
+#' }
+#'
+#' This check guarantees that modality-level parameters (weights,
+#' many-to-one settings) are well-defined for all data blocks and that no
+#' extraneous metadata entries are provided.
+#'
+#' @param data
+#' Named list of conditions. Each condition is a named list of modality
+#' matrices.
+#'
+#' @param meta
+#' Data frame of modality metadata. Must include a \code{modality} column
+#' naming each modality.
+#'
+#' @return
+#' Invisibly returns \code{TRUE} if \code{data} and \code{meta} are consistent.
+#' Otherwise, raises an error via \code{rlang::abort()}.
+#' 
+.check_cluster_genes_multiomics_cross_args <- function(
+        data,
+        meta
+        ) {
+    data_mods <- sort(unique(unlist(lapply(data, names), use.names = FALSE)))
+    meta_mods <- meta$modality
+    
+    missing_in_meta <- setdiff(data_mods, meta_mods)
+    if (length(missing_in_meta) > 0L) {
+        rlang::abort(c(
+            "Invalid inputs.",
+            "i" = "All modalities in `data` must have an entry in `meta`.",
+            "x" = paste0(
+                "Missing in `meta`: ",
+                paste(missing_in_meta, collapse = ", ")
+            )
+        ))
+    }
+    
+    extra_in_meta <- setdiff(meta_mods, data_mods)
+    if (length(extra_in_meta) > 0L) {
+        rlang::abort(c(
+            "Invalid inputs.",
+            "i" = "All rows in `meta` must correspond to a modality in `data`.",
+            "x" = paste0(
+                "Unknown in `meta`: ",
+                paste(extra_in_meta, collapse = ", ")
+            )
+        ))
+    }
+    
+    invisible(TRUE)
+}
+
+
+## .build_gene_centric_representation ------------------------------------------
+
+
+#' Align modality metadata to the modalities present in the data
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that reorders and augments the modality-level metadata so
+#' that it is aligned with the set and order of modalities actually present
+#' in the input data.
+#'
+#' The function subsets \code{meta} to the modalities specified by
+#' \code{modality_ids}, preserving their order. It then derives additional
+#' modality-level annotations required downstream:
+#'
+#' \itemize{
+#'   \item{A logical flag indicating whether each modality is many-to-one.}
+#'   \item{Normalized modality weights that sum to one across modalities.}
+#' }
+#'
+#' The aligned metadata is used consistently for normalization, weighting,
+#' feature concatenation, and centroid/QC computation.
+#'
+#' @param meta
+#' Data frame with one row per modality describing modality-level parameters.
+#' Must contain at least the columns \code{modality}, \code{many_to_one_k},
+#' and \code{modality_w}.
+#'
+#' @param modality_ids
+#' Character vector of modality identifiers defining the desired order and
+#' subset of modalities.
+#'
+#' @return
+#' A data frame containing the aligned modality metadata, augmented with:
+#'
+#' \describe{
+#'   \item{\code{is_many_to_one}}{
+#'     Logical flag indicating whether the modality is many-to-one.}
+#'
+#'   \item{\code{modality_w_norm}}{
+#'     Numeric vector of modality weights normalized to sum to one.}
+#' }
+#' 
+.align_modality_meta <- function(
+        meta,
+        modality_ids
+) {
+    idx <- match(modality_ids, meta$modality)
+    meta <- meta[idx, , drop = FALSE]
+    meta$is_many_to_one <- !is.na(meta$many_to_one_k)
+    w <- meta$modality_w
+    meta$modality_w_norm <- w / sum(w)
+    rownames(meta) <- NULL
+    meta
+}
+
+
+#' Collapse many-to-one modalities to gene-level representations
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that converts all many-to-one modalities in the input data
+#' into gene-level matrices by building pattern signature representations.
+#'
+#' For each condition × modality block in \code{data}, the function inspects
+#' the modality metadata to determine whether the modality is one-to-one or
+#' many-to-one:
+#'
+#' \itemize{
+#'   \item{One-to-one modalities are passed through unchanged.}
+#'
+#'   \item{Many-to-one modalities (e.g. site- or probe-level measurements) are
+#'   collapsed to gene-level matrices using
+#'   \code{.build_site_signatures()}, which clusters features into global
+#'   archetypes and represents each gene as a fractional signature vector.}
+#' }
+#'
+#' Quality-control summaries from the many-to-one clustering step are
+#' collected across all conditions and modalities and returned alongside the
+#' gene-level matrices.
+#'
+#' @param data
+#' Named list of conditions. Each condition is a named list of modality
+#' matrices. Many-to-one modalities must use row names that encode gene
+#' identity (e.g. \code{<gene>_<feature>}).
+#'
+#' @param meta
+#' Data frame of modality metadata aligned to the modalities present in
+#' \code{data}. Must include \code{modality} and \code{many_to_one_k}.
+#'
+#' @param verbose
+#' Logical scalar indicating whether informative messages should be emitted.
+#' Currently unused in this helper, but included for a consistent internal
+#' interface.
+#'
+#' @return
+#' A list with two components:
+#'
+#' \describe{
+#'   \item{\code{mats_gene}}{
+#'     Nested list of gene-level matrices structured as
+#'     \code{mats_gene[[condition]][[modality]]}. One-to-one modalities are
+#'     unchanged; many-to-one modalities are replaced by gene-level signature
+#'     matrices.}
+#'
+#'   \item{\code{many_to_one_clustering_qc}}{
+#'     Data frame of QC summaries for many-to-one feature clustering steps,
+#'     aggregated across all conditions and modalities, or \code{NULL} if no
+#'     many-to-one modalities are present.}
+#' }
+#' 
+.collapse_many_to_one_modalities <- function(
+        data,
+        meta,
+        verbose
+) {
+    cond_ids <- names(data)
+    mod_ids <- meta$modality
+    
+    mats_gene <- vector("list", length(cond_ids))
+    names(mats_gene) <- cond_ids
+    
+    qc_list <- list()
+    
+    for (cond in cond_ids) {
+        mats_cond <- vector("list", length(mod_ids))
+        names(mats_cond) <- mod_ids
+        
+        for (i in seq_along(mod_ids)) {
+            m <- mod_ids[[i]]
+            lk <- meta$many_to_one_k[[i]]
+            mat_raw <- data[[cond]][[m]]
+            
+            if (is.na(lk)) {
+                mats_cond[[m]] <- mat_raw
+                next
+            }
+            
+            rn <- rownames(mat_raw)
+            feature_to_gene <- sub("_.*$", "", rn)
+            
+            sig_obj <- .build_site_signatures(
+                modality_mat = mat_raw,
+                feature_to_gene = feature_to_gene,
+                many_to_one_k = lk
+            )
+
+            sig <- sig_obj$signatures
+            sig <- sig[order(rownames(sig)), , drop = FALSE]
+            
+            mats_cond[[m]] <- sig
+            
+            qc <- sig_obj$many_to_one_clustering_qc
+            if (is.data.frame(qc) && nrow(qc) > 0L) {
+                qc$condition <- cond
+                qc$modality <- m
+                qc$many_to_one_k <- as.integer(lk)
+                qc_list[[length(qc_list) + 1L]] <- qc
+            }
+        }
+        
+        mats_gene[[cond]] <- mats_cond
+    }
+    
+    many_to_one_clustering_qc <- if (length(qc_list) > 0L) {
+        do.call(rbind, qc_list)
     } else {
         NULL
     }
     
-    if (isTRUE(verbose)) {
-        message(
-            "  [block '",
-            block_id,
-            "'] building joint feature matrix for multi-omics clustering..."
-        )
-    }
-
-    if (gene_mode == "intersection") {
-        X_block <- .build_block_feature_matrix_intersection(
-            modality_mats     = modality_mats,
-            modality_names    = modality_names,
-            modality_weights  = modality_weights,
-            many_to_one       = many_to_one
-        )
-    } else {
-        X_block <- .build_block_feature_matrix_union(
-            modality_mats     = modality_mats,
-            modality_names    = modality_names,
-            modality_weights  = modality_weights,
-            many_to_one       = many_to_one
-        ) 
-    }
-    
-    if (isTRUE(verbose)) {
-        message(
-            "  [block '",
-            block_id,
-            "'] clustering genes (k = ",
-            block_k,
-            ")..."
-        )
-    }
-
-    cl_b <- .cluster_feature_matrix(
-        feature_mat = X_block,
-        k           = block_k
-    )
-
-    centroid_info_b <- .compute_block_centroids(
-        block_id = block_id,
-        modality_mats = modality_mats,
-        cl_b = cl_b,
-        meta_b_modality = meta_b_modality
-    )
-    centroid_info_b <- .rank_clusters(centroid_info_b)
-    
     list(
-        cl_b = cl_b,
-        centroid_info = centroid_info_b,
+        mats_gene = mats_gene,
         many_to_one_clustering_qc = many_to_one_clustering_qc
     )
 }
 
 
-# Level 2 function definitions -------------------------------------------------
+#' Normalize gene-level modality matrices across conditions
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that applies modality-appropriate normalization to all
+#' gene-level matrices prior to gene harmonization and joint feature
+#' construction.
+#'
+#' Normalization is applied independently for each condition × modality block
+#' in \code{mats_gene}. The normalization strategy depends on the modality
+#' type, as defined in \code{meta}:
+#'
+#' \itemize{
+#'   \item{One-to-one modalities are normalized by row-wise z-scoring, making
+#'   clustering sensitive to relative patterns rather than absolute scale.}
+#'
+#'   \item{Many-to-one modalities (gene-level pattern signatures) are
+#'   normalized using a Hellinger transform (square root of non-negative
+#'   entries), yielding a geometry appropriate for Euclidean methods on
+#'   compositional data.}
+#' }
+#'
+#' The output preserves the original nested structure of the input, enabling
+#' downstream alignment, weighting, and centroid/QC computation.
+#'
+#' @param mats_gene
+#' Nested list of gene-level matrices structured as
+#' \code{mats_gene[[condition]][[modality]]}. Row names are gene identifiers.
+#'
+#' @param meta
+#' Data frame of modality metadata aligned to the modalities present in
+#' \code{mats_gene}. Must include \code{modality} and \code{many_to_one_k}.
+#'
+#' @param verbose
+#' Logical scalar indicating whether informative messages should be emitted.
+#' Currently unused in this helper, but included for a consistent internal
+#' interface.
+#'
+#' @return
+#' Nested list of normalized gene-level matrices with the same structure as
+#' \code{mats_gene}: \code{mats_norm[[condition]][[modality]]}.
+#' 
+.normalize_gene_level_modalities <- function(
+        mats_gene,
+        meta,
+        verbose
+) {
+    cond_ids <- names(mats_gene)
+    mod_ids <- meta$modality
+    
+    mats_norm <- vector("list", length(cond_ids))
+    names(mats_norm) <- cond_ids
+    
+    is_m2o <- !is.na(meta$many_to_one_k)
+    names(is_m2o) <- mod_ids
+    
+    for (cond in cond_ids) {
+        mats_cond <- vector("list", length(mod_ids))
+        names(mats_cond) <- mod_ids
+        
+        for (m in mod_ids) {
+            mats_cond[[m]] <- .normalize_modality_mat(
+                mat = mats_gene[[cond]][[m]],
+                is_many_to_one = is_m2o[[m]]
+            )
+        }
+        
+        mats_norm[[cond]] <- mats_cond
+    }
+    
+    mats_norm
+}
+
+
+#' Harmonize the gene universe across condition × modality blocks
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that determines the set of genes to be included in the
+#' gene-centric analysis by harmonizing row identities across all normalized
+#' condition × modality blocks in \code{mats_norm}.
+#'
+#' The gene universe is derived from the row names of every block
+#' \code{mats_norm[[condition]][[modality]]}. The harmonization policy is
+#' controlled by \code{gene_mode}:
+#'
+#' \itemize{
+#'   \item{\code{"intersection"}}{Retain only genes present in every block.}
+#'   \item{\code{"union"}}{Retain genes present in at least one block. Missing
+#'   genes in a block are handled downstream during concatenation by filling
+#'   zeros.}
+#' }
+#'
+#' The returned vector defines the global gene ordering used for building the
+#' joint feature matrix and ensures consistent alignment across downstream
+#' objects (PCA scores, kNN graph, adjacency matrix, clustering labels).
+#'
+#' @param mats_norm
+#' Nested list of normalized gene-level matrices structured as
+#' \code{mats_norm[[condition]][[modality]]}. Row names are gene identifiers.
+#'
+#' @param gene_mode
+#' Character string specifying the harmonization policy. Must be one of
+#' \code{"intersection"} or \code{"union"}.
+#'
+#' @return
+#' Character vector of gene identifiers defining the gene universe and a
+#' deterministic ordering for downstream alignment.
+#' 
+.harmonize_genes_across_blocks <- function(
+        mats_norm,
+        gene_mode
+        ) {
+    gene_sets <- unlist(
+        lapply(mats_norm, function(mats_cond) {
+            lapply(mats_cond, rownames)
+        }),
+        recursive = FALSE,
+        use.names = FALSE
+    )
+    
+    if (gene_mode == "intersection") {
+        return(Reduce(intersect, gene_sets))
+    }
+    
+    sort(unique(unlist(gene_sets, use.names = FALSE)))
+}
+
+
+#' Flatten normalized condition × modality blocks into a joint feature matrix
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that constructs the **gene-centric joint feature matrix**
+#' used for PCA by aligning and concatenating all normalized gene-level blocks
+#' across conditions and modalities.
+#'
+#' For each condition × modality block in \code{mats_norm}, the function:
+#'
+#' \itemize{
+#'   \item{Aligns the block to the global gene universe \code{gene_ids}. Genes
+#'   missing from a block are filled with zeros.}
+#'   \item{Applies the modality weight (from \code{meta$modality_w_norm}) to all
+#'   columns of that block. Weighting is applied as \code{sqrt(w)} so that
+#'   squared Euclidean distances in the concatenated space reflect the intended
+#'   modality contribution.}
+#'   \item{Prefixes block column names with condition and modality identifiers
+#'   (\code{<condition>__<modality>__<feature>}) to preserve provenance.}
+#'   \item{Records a feature-level index mapping each output column back to its
+#'   originating condition, modality, feature name, and modality weight.}
+#' }
+#'
+#' The resulting matrix has one row per gene and columns spanning all
+#' condition-specific representations across all modalities.
+#'
+#' @param mats_norm
+#' Nested list of normalized gene-level matrices structured as
+#' \code{mats_norm[[condition]][[modality]]}. Row names are gene identifiers.
+#'
+#' @param meta
+#' Data frame of modality metadata aligned to the modalities present in
+#' \code{mats_norm}. Must contain \code{modality} and \code{modality_w_norm}.
+#'
+#' @param gene_ids
+#' Character vector giving the global gene universe and row order for the
+#' output matrix. All blocks are aligned to this ordering.
+#'
+#' @param verbose
+#' Logical scalar indicating whether informative messages should be emitted.
+#' Currently unused in this helper, but included for a consistent internal
+#' interface.
+#'
+#' @return
+#' A list with two components:
+#'
+#' \describe{
+#'   \item{\code{X}}{
+#'     Numeric matrix (\code{genes x features}) giving the joint feature matrix
+#'     formed by concatenating all weighted condition × modality blocks. Row
+#'     names are \code{gene_ids}. Column names encode provenance.}
+#'
+#'   \item{\code{feature_index}}{
+#'     Data frame mapping each column of \code{X} to its originating condition,
+#'     modality, within-block feature name, and the modality weight used. The
+#'     \code{column} field matches \code{colnames(X)}.}
+#' }
+#' 
+.flatten_blocks_to_joint_matrix <- function(
+        mats_norm,
+        meta,
+        gene_ids,
+        verbose
+) {
+    cond_ids <- names(mats_norm)
+    mod_ids <- meta$modality
+    
+    w <- meta$modality_w_norm
+    names(w) <- mod_ids
+    
+    blocks <- list()
+    feat_index <- list()
+    
+    for (cond in cond_ids) {
+        for (m in mod_ids) {
+            mat <- mats_norm[[cond]][[m]]
+            
+            mat_aligned <- matrix(
+                0,
+                nrow = length(gene_ids),
+                ncol = ncol(mat),
+                dimnames = list(gene_ids, colnames(mat))
+            )
+            
+            idx <- match(rownames(mat), gene_ids)
+            keep <- !is.na(idx)
+            
+            if (any(keep)) {
+                mat_aligned[idx[keep], ] <- mat[keep, , drop = FALSE]
+            }
+            
+            block_w <- sqrt(w[[m]])
+            mat_aligned <- mat_aligned * block_w
+            
+            cn <- colnames(mat_aligned)
+            if (is.null(cn)) {
+                cn <- paste0("V", seq_len(ncol(mat_aligned)))
+            }
+            
+            colnames(mat_aligned) <- paste0(cond, "__", m, "__", cn)
+            
+            blocks[[length(blocks) + 1L]] <- mat_aligned
+            
+            feat_index[[length(feat_index) + 1L]] <- data.frame(
+                condition = cond,
+                modality = m,
+                feature = cn,
+                weight = w[[m]],
+                stringsAsFactors = FALSE
+            )
+        }
+    }
+    
+    X <- do.call(cbind, blocks)
+    
+    feature_index <- do.call(rbind, feat_index)
+    feature_index$column <- colnames(X)
+    
+    list(
+        X = X,
+        feature_index = feature_index
+    )
+}
+
+
+# Level 3 function definitions -------------------------------------------------
+
 
 
 #' Build gene-level pattern signatures from many-to-one features
@@ -647,14 +1720,16 @@ cluster_genes_multiomics <- function(
             call. = FALSE
         )
     }
+    
+    X_scaled <- scale(modality_mat)
 
     feature_clusters <- .cluster_feature_matrix(
-        feature_mat = scale(modality_mat),
+        feature_mat = X_scaled,
         k           = many_to_one_k
     )
 
     many_to_one_clustering_qc <- .compute_cluster_centroids_qc(
-        X  = scale(modality_mat),
+        X  = X_scaled,
         cl = feature_clusters,
         qc_method = "Pearson R2",
         center_scale_rows = TRUE,
@@ -687,228 +1762,6 @@ cluster_genes_multiomics <- function(
         feature_clusters = feature_clusters,
         many_to_one_clustering_qc = many_to_one_clustering_qc
     )
-}
-
-
-#' Build joint block-level feature matrix (intersection mode)
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that constructs a joint gene-level feature matrix for
-#' multi-omics clustering in \code{gene_mode = "intersection"}.
-#'
-#' Only genes present in \emph{all} modalities of the block are retained.
-#' For this common gene set, the function:
-#' \itemize{
-#'   \item extracts gene-level representations per modality,
-#'   \item applies modality-specific preprocessing and transformations,
-#'   \item standardizes features within each modality,
-#'   \item rescales modality blocks to enforce user-defined weights while
-#'         correcting for differing feature dimensionalities, and
-#'   \item concatenates all modality blocks into a single joint feature
-#'         matrix suitable for Euclidean clustering.
-#' }
-#'
-#' Many-to-one modalities (e.g. site or probe signatures) are automatically
-#' transformed using a Hellinger (square-root) transform prior to
-#' standardization, yielding a geometry appropriate for Euclidean methods.
-#'
-#' The resulting matrix can be passed directly to
-#' \code{.cluster_feature_matrix()} for joint gene-centric clustering across
-#' all modalities, without constructing gene--gene distance matrices.
-#'
-#' @param modality_mats
-#' Named list of gene-level numeric matrices, one per modality. Row names
-#' are gene identifiers; columns are modality-specific features (e.g.
-#' spline points or signature components).
-#'
-#' @param modality_names
-#' Character vector specifying which modalities to include and in what
-#' order. Must correspond to names in \code{modality_mats}.
-#'
-#' @param modality_weights
-#' Numeric vector of non-negative modality weights, same length and order
-#' as \code{modality_names}. Weights control the relative contribution of
-#' each modality to the joint feature space.
-#'
-#' @param many_to_one
-#' Logical or character vector indicating which modalities represent
-#' many-to-one gene summaries (e.g. site signatures). If logical, it must
-#' be named by modality. If character, it is interpreted as the set of
-#' many-to-one modality names.
-#'
-#' @return
-#' A numeric matrix of dimension \code{genes x features}, where each row
-#' corresponds to a gene present in all modalities and columns represent
-#' the weighted, standardized, and concatenated feature blocks across
-#' modalities. Row names are gene identifiers.
-#' 
-#' @importFrom purrr map reduce
-#' @importFrom dplyr case_when
-#' @importFrom rlang abort
-#' @importFrom stats setNames
-#'
-.build_block_feature_matrix_intersection <- function(
-        modality_mats,
-        modality_names,
-        modality_weights,
-        many_to_one = NULL
-) {
-    if (is.null(many_to_one)) {
-        many_to_one <- rep(FALSE, length(modality_names))
-        names(many_to_one) <- modality_names
-    } else if (is.logical(many_to_one)) {
-        if (is.null(names(many_to_one))) {
-            names(many_to_one) <- modality_names
-        }
-        many_to_one <- many_to_one[modality_names]
-    } else {
-        many_to_one <- stats::setNames(
-            modality_names %in% many_to_one,
-            modality_names
-        )
-    }
-
-    genes_block <- modality_mats[modality_names] |>
-        purrr::map(rownames) |>
-        purrr::reduce(intersect) |>
-        sort()
-    
-    w <- modality_weights / sum(modality_weights)
-    names(w) <- modality_names
-    
-    blocks <- purrr::map(
-        modality_names,
-        function(m) {
-            X <- modality_mats[[m]][genes_block, , drop = FALSE] |>
-                as.matrix()
-            p <- ncol(X)
-            X * sqrt(w[[m]] / p)
-        }
-    )
-    
-    X_block <- purrr::reduce(blocks, cbind)
-    rownames(X_block) <- genes_block
-    
-    X_block
-}
-
-
-#' Build joint block-level feature matrix (union mode)
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that constructs a joint gene-level feature matrix for
-#' multi-omics clustering in \code{gene_mode = "union"}.
-#'
-#' All genes present in \emph{any} modality of the block are retained. For
-#' each modality, genes not observed in that modality are represented by
-#' zero-valued feature blocks after standardization, such that the modality
-#' contributes no signal for those genes.
-#'
-#' For the union gene set, the function:
-#' \itemize{
-#'   \item aligns modality-specific gene-level feature matrices to the
-#'         union of genes,
-#'   \item applies modality-specific preprocessing and transformations,
-#'   \item standardizes features within each modality,
-#'   \item rescales modality blocks to enforce user-defined weights while
-#'         correcting for differing feature dimensionalities, and
-#'   \item concatenates all modality blocks into a single joint feature
-#'         matrix suitable for Euclidean clustering.
-#' }
-#'
-#' Many-to-one modalities (e.g. site or probe signatures) are automatically
-#' transformed using a Hellinger (square-root) transform prior to
-#' standardization, yielding a geometry appropriate for Euclidean methods.
-#'
-#' The resulting matrix can be passed directly to
-#' \code{.cluster_feature_matrix()} for joint gene-centric clustering across
-#' all modalities, without constructing gene--gene distance matrices.
-#'
-#' @param modality_mats
-#' Named list of gene-level numeric matrices, one per modality. Row names
-#' are gene identifiers; columns are modality-specific features (e.g.
-#' spline points or signature components).
-#'
-#' @param modality_names
-#' Character vector specifying which modalities to include and in what
-#' order. Must correspond to names in \code{modality_mats}.
-#'
-#' @param modality_weights
-#' Numeric vector of non-negative modality weights, same length and order
-#' as \code{modality_names}. Weights control the relative contribution of
-#' each modality to the joint feature space.
-#'
-#' @param many_to_one
-#' Logical or character vector indicating which modalities represent
-#' many-to-one gene summaries (e.g. site signatures). If logical, it must
-#' be named by modality. If character, it is interpreted as the set of
-#' many-to-one modality names.
-#'
-#' @return
-#' A numeric matrix of dimension \code{genes x features}, where each row
-#' corresponds to a gene present in at least one modality and columns
-#' represent the weighted, standardized, and concatenated feature blocks
-#' across modalities. Row names are gene identifiers.
-#'
-#' @importFrom purrr map reduce
-#' @importFrom dplyr case_when
-#' @importFrom rlang abort
-#' @importFrom stats setNames
-#'
-.build_block_feature_matrix_union <- function(
-        modality_mats,
-        modality_names,
-        modality_weights,
-        many_to_one = NULL
-) {
-    if (is.null(many_to_one)) {
-        many_to_one <- rep(FALSE, length(modality_names))
-        names(many_to_one) <- modality_names
-    } else if (is.logical(many_to_one)) {
-        if (is.null(names(many_to_one))) {
-            names(many_to_one) <- modality_names
-        }
-        many_to_one <- many_to_one[modality_names]
-    } else {
-        many_to_one <- stats::setNames(
-            modality_names %in% many_to_one,
-            modality_names
-        )
-    }
-    
-    genes_block <- modality_mats[modality_names] |>
-        purrr::map(rownames) |>
-        purrr::reduce(union) |>
-        sort()
-    
-    w <- modality_weights / sum(modality_weights)
-    names(w) <- modality_names
-    
-    blocks <- purrr::map(
-        modality_names,
-        function(m) {
-            mat <- modality_mats[[m]]
-            X <- matrix(
-                0,
-                nrow = length(genes_block),
-                ncol = ncol(mat),
-                dimnames = list(genes_block, colnames(mat))
-            )
-            idx <- match(rownames(mat), genes_block)
-            X[idx, ] <- as.matrix(mat)
-            p <- ncol(X)
-            X * sqrt(w[[m]] / p)
-        }
-    )
-    
-    X_block <- purrr::reduce(blocks, cbind)
-    rownames(X_block) <- genes_block
-    
-    X_block
 }
 
 
@@ -1047,791 +1900,6 @@ cluster_genes_multiomics <- function(
 }
 
 
-#' Compute per-modality cluster centroids and QC metrics within a block
-#'
-#' @noRd
-#'
-#' @description
-#' Internal wrapper that summarizes gene-level clusters for a single block
-#' by computing modality-specific centroid representations and associated
-#' quality-control (QC) metrics, then adding block- and modality-level
-#' bookkeeping such as coverage and modality type.
-#'
-#' Core centroid and QC calculations are delegated to
-#' \code{.compute_cluster_centroids_qc()} and are performed independently
-#' for each modality using a modality-appropriate similarity measure:
-#' \itemize{
-#'   \item \strong{one-to-one modalities}: Pearson correlation
-#'         coefficient squared (\eqn{R^2}),
-#'   \item \strong{many-to-one modalities}: Bhattacharyya coefficient in
-#'         Hellinger space (\code{"BC(HD)"}).
-#' }
-#'
-#' It is assumed that modality matrices have already been normalized
-#' upstream (row-wise z-scoring for one-to-one modalities; Hellinger
-#' transformation for many-to-one modalities). No additional scaling is
-#' applied here.
-#'
-#' For each modality and each cluster, the function:
-#' \itemize{
-#'   \item computes centroid vectors and per-gene QC values using
-#'         \code{.compute_cluster_centroids_qc()},
-#'   \item counts cluster membership (\code{n_genes_cluster}) from
-#'         \code{cl_b},
-#'   \item counts how many cluster genes are present in the modality
-#'         matrix (\code{n_genes_used}),
-#'   \item computes coverage as
-#'         \code{n_genes_used / n_genes_cluster}.
-#' }
-#'
-#' Modality types are inferred from \code{meta_b_modality$many_to_one_k}:
-#' \code{NA} indicates a one-to-one gene-level modality; non-\code{NA}
-#' values indicate many-to-one modalities.
-#'
-#' @param block_id
-#' Character (or factor) scalar giving the identifier of the block for which
-#' centroids and QC metrics are computed.
-#'
-#' @param modality_mats
-#' Named list of numeric matrices, one per modality in the block. Each
-#' matrix has dimensions \code{genes x features}, with row names
-#' corresponding to gene identifiers. Matrices are assumed to be already
-#' normalized according to modality type.
-#'
-#' @param cl_b
-#' Named integer vector of cluster assignments for genes in the block.
-#' Names must be gene identifiers used to match rows in
-#' \code{modality_mats}; values are cluster labels.
-#'
-#' @param meta_b_modality
-#' Data frame with modality-level metadata for this block. Must contain at
-#' least the columns \code{modality} (matching
-#' \code{names(modality_mats)}) and \code{many_to_one_k} for modality-type
-#' inference.
-#'
-#' @return
-#' A data frame with one row per \code{(modality, cluster)} combination in
-#' the block and the following columns:
-#' \describe{
-#'   \item{\code{block}}{Block identifier (same as \code{block_id}).}
-#'   \item{\code{modality}}{Modality name.}
-#'   \item{\code{modality_type}}{Character label, either
-#'         \code{"one_to_one"} or \code{"many_to_one"}.}
-#'   \item{\code{cluster}}{Cluster label.}
-#'   \item{\code{n_genes_cluster}}{Number of genes in the cluster according
-#'         to \code{cl_b}.}
-#'   \item{\code{n_genes_used}}{Number of cluster genes present in the
-#'         modality matrix and used to compute centroids and QC metrics.}
-#'   \item{\code{coverage}}{Fraction of cluster genes represented in the
-#'         modality (\code{n_genes_used / n_genes_cluster}).}
-#'   \item{\code{qc_method}}{QC metric used for this modality
-#'         (\code{"Pearson R2"} or \code{"BC(HD)"}).}
-#'   \item{\code{mean_qc}}{Mean QC value across genes used in this
-#'         modality and cluster.}
-#'   \item{\code{sd_qc}}{Standard deviation of the QC values across genes
-#'         used in this modality and cluster.}
-#'   \item{\code{qc_member}}{List-column; each entry is a named numeric
-#'         vector of per-gene QC values (names are gene IDs) for genes used
-#'         in this modality and cluster.}
-#'   \item{\code{centroid}}{List-column; each entry is a numeric vector
-#'         giving the centroid representation for this modality and
-#'         cluster.}
-#' }
-#' 
-.compute_block_centroids <- function(
-        block_id,
-        modality_mats,
-        cl_b,
-        meta_b_modality
-) {
-    out <- list()
-    row_i <- 0L
-    
-    clusters <- sort(unique(as.integer(cl_b)))
-    
-    for (ln in names(modality_mats)) {
-        mat_l <- modality_mats[[ln]]
-        
-        lk <- meta_b_modality$many_to_one_k[meta_b_modality$modality == ln][1L]
-        modality_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
-        
-        qc_method <- if (modality_type == "one_to_one") {
-            "Pearson R2"
-        } else {
-            "BC(HD)"
-        }
-        
-        stats_l <- .compute_cluster_centroids_qc(
-            X  = mat_l,
-            cl = cl_b,
-            qc_method = qc_method,
-            center_scale_rows = FALSE,
-            require = "intersection"
-        )
-        
-        for (c in clusters) {
-            genes_cluster <- names(cl_b)[cl_b == c]
-            n_cluster <- length(genes_cluster)
-            
-            genes_modality <- intersect(genes_cluster, rownames(mat_l))
-            n_used <- length(genes_modality)
-            
-            coverage <- if (n_cluster > 0L) n_used / n_cluster else NA_real_
-            
-            st <- stats_l[stats_l$cluster == c, , drop = FALSE]
-            if (nrow(st) == 0L) {
-                st <- data.frame(
-                    cluster   = c,
-                    n_used    = 0L,
-                    qc_method = qc_method,
-                    mean_qc   = NA_real_,
-                    sd_qc     = NA_real_,
-                    qc_member = I(list(setNames(numeric(0), character(0)))),
-                    centroid  = I(list(rep(NA_real_, ncol(mat_l)))),
-                    stringsAsFactors = FALSE
-                )
-            }
-            
-            row_i <- row_i + 1L
-            out[[row_i]] <- data.frame(
-                block           = block_id,
-                modality        = ln,
-                modality_type   = modality_type,
-                cluster         = c,
-                n_genes_cluster = n_cluster,
-                n_genes_used    = n_used,
-                coverage        = coverage,
-                qc_method       = st$qc_method,
-                mean_qc         = st$mean_qc,
-                sd_qc           = st$sd_qc,
-                qc_member       = st$qc_member,
-                centroid        = st$centroid,
-                stringsAsFactors = FALSE
-            )
-        }
-    }
-    
-    if (length(out) == 0L) {
-        return(data.frame(
-            block           = character(0),
-            modality        = character(0),
-            modality_type   = character(0),
-            cluster         = integer(0),
-            n_genes_cluster = integer(0),
-            n_genes_used    = integer(0),
-            coverage        = numeric(0),
-            qc_method       = character(0),
-            mean_qc         = numeric(0),
-            sd_qc           = numeric(0),
-            qc_member       = I(list()),
-            centroid        = I(list()),
-            stringsAsFactors = FALSE
-        ))
-    }
-    
-    do.call(rbind, out)
-}
-
-
-#' Validate the `gene_mode` argument
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that checks the validity of the \code{gene_mode}
-#' argument used by \code{cluster_genes_multiomics()}.  
-#'
-#' The mode determines how genes across modalities within a block should be
-#' combined and must be one of the two supported options.
-#'
-#' @param gene_mode
-#' Character scalar specifying how genes are aggregated across modalities.  
-#' Must be either \code{"intersection"} or \code{"union"}.  
-#' The value is validated using \code{\link[base]{match.arg}}.
-#'
-#' @return
-#' Invisibly returns the validated \code{gene_mode} value.
-#' 
-.check_cluster_genes_multiomics_gene_mode <- function(gene_mode) {
-    if (!is.character(gene_mode) || length(gene_mode) != 1L) {
-        stop(
-            "`gene_mode` must be a single character string ",
-            "('intersection' or 'union').",
-            call. = FALSE
-        )
-    }
-    gene_mode <- match.arg(gene_mode, c("intersection", "union"))
-    invisible(gene_mode)
-}
-
-
-#' Validate the `blocks` argument
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that validates the structure and content of the
-#' \code{blocks} argument used by \code{cluster_genes_multiomics()}.  
-#'
-#' The function checks:
-#' \itemize{
-#'   \item that \code{blocks} is a non-empty named list of blocks,
-#'   \item that each block is a non-empty named list of modalities, and
-#'   \item that each modality is a numeric matrix with non-empty row names
-#'         and non-zero dimensions.
-#' }
-#'
-#' @param blocks
-#' Named list of blocks, one element per block.  
-#' Each block contains a named list of modalities, where each modality is a
-#' numeric matrix (\code{features x spline_points}) with valid row names.
-#'
-#' @return
-#' Invisibly returns \code{blocks} if all checks pass.
-#' 
-.check_cluster_genes_multiomics_blocks <- function(blocks) {
-    # blocks: outer structure
-    if (!is.list(blocks) || length(blocks) == 0L) {
-        stop(
-            "`blocks` must be a non-empty named list ",
-            "(one element per block).",
-            call. = FALSE
-        )
-    }
-    if (is.null(names(blocks)) || any(names(blocks) == "")) {
-        stop(
-            "`blocks` must be a named list; all blocks must have ",
-            "non-empty names.",
-            call. = FALSE
-        )
-    }
-    
-    # blocks: inner structure (type/shape only)
-    for (block_name in names(blocks)) {
-        block_obj <- blocks[[block_name]]
-        
-        if (!is.list(block_obj) || length(block_obj) == 0L) {
-            stop(
-                "Each element of `blocks` must be a non-empty list of ",
-                "modalities. Block '", block_name, "' is not valid.",
-                call. = FALSE
-            )
-        }
-        if (is.null(names(block_obj)) || any(names(block_obj) == "")) {
-            stop(
-                "Each block in `blocks` must be a named list of modalities. ",
-                "Block '", block_name, "' has unnamed modalities.",
-                call. = FALSE
-            )
-        }
-        
-        for (modality_name in names(block_obj)) {
-            mat <- block_obj[[modality_name]]
-            
-            if (!is.matrix(mat)) {
-                stop(
-                    "Modality '", modality_name, "' in block '", block_name,
-                    "' must be a numeric matrix (features x spline_points).",
-                    call. = FALSE
-                )
-            }
-            if (!is.numeric(mat)) {
-                stop(
-                    "Modality '", modality_name, "' in block '", block_name,
-                    "' must be a numeric matrix.",
-                    call. = FALSE
-                )
-            }
-            if (nrow(mat) == 0L || ncol(mat) == 0L) {
-                stop(
-                    "Modality '", modality_name, "' in block '", block_name,
-                    "' has zero rows or columns.",
-                    call. = FALSE
-                )
-            }
-            if (is.null(rownames(mat)) || any(rownames(mat) == "")) {
-                stop(
-                    "Modality '", modality_name, "' in block '", block_name,
-                    "' must have rownames (feature or gene IDs).",
-                    call. = FALSE
-                )
-            }
-        }
-    }
-    
-    invisible(blocks)
-}
-
-
-#' Validate the `block_clusters` argument
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that validates the block-level clustering parameters
-#' supplied in \code{block_clusters}. The object must be a named list whose
-#' names match the block names in \code{blocks}. Each list element specifies
-#' the number of clusters \code{k} to compute for that block.
-#'
-#' The function checks:
-#' \itemize{
-#'   \item that \code{block_clusters} is a named list,
-#'   \item that \code{blocks} is a named list (outer list = blocks),
-#'   \item that block names match in both directions (no missing/excess),
-#'   \item that each \code{k} is a scalar, integer-like, and > 0.
-#' }
-#'
-#' @param block_clusters A named list. Names are block identifiers and must
-#'   match \code{names(blocks)}. Values are the number of clusters \code{k}
-#'   (integer-like scalars > 0) for the corresponding block.
-#'
-#' @param blocks A named nested list specifying all data used for clustering.
-#'   The outer list corresponds to analytical \emph{blocks}. Each block is a
-#'   named list of modalities, each a numeric matrix of dimension
-#'   \code{features x spline_points}. Row naming conventions define how
-#'   features map to genes and how genes are aligned across modalities.
-#'
-#' @return Invisibly returns \code{block_clusters} if all checks pass.
-#' 
-.check_cluster_genes_multiomics_block_clusters <- function(
-        block_clusters,
-        blocks
-) {
-    if (!is.list(block_clusters)) {
-        stop("`block_clusters` must be a named list.")
-    }
-    if (is.null(names(block_clusters)) || any(names(block_clusters) == "")) {
-        stop("`block_clusters` must have non-empty names (block identifiers).")
-    }
-    
-    if (!is.list(blocks)) {
-        stop("`blocks` must be a named list (outer list = blocks).")
-    }
-    if (is.null(names(blocks)) || any(names(blocks) == "")) {
-        stop("`blocks` must have non-empty names (block identifiers).")
-    }
-    
-    bc_names <- names(block_clusters)
-    b_names <- names(blocks)
-    
-    missing_in_bc <- setdiff(b_names, bc_names)
-    extra_in_bc <- setdiff(bc_names, b_names)
-    
-    if (length(missing_in_bc) > 0L) {
-        stop(
-            "Missing entries in `block_clusters` for blocks: ",
-            paste(missing_in_bc, collapse = ", ")
-        )
-    }
-    if (length(extra_in_bc) > 0L) {
-        stop(
-            "Unknown block names in `block_clusters` (not in `blocks`): ",
-            paste(extra_in_bc, collapse = ", ")
-        )
-    }
-    
-    is_int_like1 <- function(x) {
-        if (length(x) != 1L || is.na(x)) return(FALSE)
-        if (is.integer(x)) return(TRUE)
-        if (!is.numeric(x)) return(FALSE)
-        identical(x, as.numeric(as.integer(x)))
-    }
-    
-    for (bn in b_names) {
-        k <- block_clusters[[bn]]
-        
-        if (!is_int_like1(k)) {
-            stop(
-                "Invalid `block_clusters[[", bn, "]]`: must be an int-like ",
-                "scalar (e.g., 3L) and not NA."
-            )
-        }
-        if (as.integer(k) <= 0L) {
-            stop(
-                "Invalid `block_clusters[[", bn, "]]`: must be > 0."
-            )
-        }
-    }
-    
-    invisible(block_clusters)
-}
-
-
-#' Validate the `modality_meta` argument
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that validates the modality-level metadata supplied in
-#' \code{modality_meta}.  
-#'
-#' The function checks:
-#' \itemize{
-#'   \item that \code{modality_meta} is a data frame with required columns
-#'         \code{block}, \code{modality}, \code{many_to_one_k}, 
-#'         and \code{modality_w},
-#'   \item that \code{many_to_one_k} is numeric, positive where non-NA, and may
-#'         be \code{NA} to indicate one-to-one gene-level modalities,
-#'   \item that \code{modality_w} is numeric, non-negative, non-missing,
-#'         and sums to a strictly positive value within each block, and
-#'   \item that each \code{(block, modality)} combination appears exactly
-#'         once.
-#' }
-#'
-#' @param modality_meta
-#' Data frame containing modality-level metadata used by
-#' \code{cluster_genes_multiomics()}.  
-#' Must include valid entries for \code{many_to_one_k} and \code{modality_w},
-#' and uniquely identify each modality within each block.
-#'
-#' @return
-#' Invisibly returns \code{modality_meta} if all checks pass.
-#'
-.check_cluster_genes_multiomics_modality_meta <- function(modality_meta) {
-    # modality_meta: structure
-    if (!is.data.frame(modality_meta)) {
-        stop(
-            "`modality_meta` must be a data.frame (or tibble) with ",
-            "modality-level metadata.",
-            call. = FALSE
-        )
-    }
-    required_modality_cols <- c(
-        "block", 
-        "modality",
-        "many_to_one_k",
-        "modality_w"
-        )
-    missing_modality_cols <- setdiff(
-        required_modality_cols,
-        colnames(modality_meta)
-        )
-    if (length(missing_modality_cols) > 0L) {
-        stop(
-            "`modality_meta` is missing required columns: ",
-            paste(missing_modality_cols, collapse = ", "),
-            call. = FALSE
-        )
-    }
-    
-    # many_to_one_k: NA or positive numeric
-    if (!is.numeric(modality_meta$many_to_one_k)) {
-        stop(
-            "`modality_meta$many_to_one_k` must be numeric ",
-            "(positive integers) ",
-            "or NA.",
-            call. = FALSE
-        )
-    }
-    if (any(modality_meta$many_to_one_k[!is.na(modality_meta$many_to_one_k)]
-            <= 0)) {
-        stop(
-            "`modality_meta$many_to_one_k` must be positive when not NA.",
-            call. = FALSE
-        )
-    }
-    
-    # modality_w: numeric, non-negative; per-block sum > 0
-    if (!is.numeric(modality_meta$modality_w)) {
-        stop("`modality_meta$modality_w` must be numeric.", call. = FALSE)
-    }
-    if (any(is.na(modality_meta$modality_w))) {
-        stop(
-            "`modality_meta$modality_w` contains NA. Please provide weights ",
-            "for all rows.",
-            call. = FALSE
-        )
-    }
-    if (any(modality_meta$modality_w < 0)) {
-        stop(
-            "`modality_meta$modality_w` must be non-negative.",
-            call. = FALSE
-        )
-    }
-    
-    w_by_block <- tapply(modality_meta$modality_w, modality_meta$block, sum)
-    if (any(w_by_block <= 0)) {
-        bad_blocks <- names(w_by_block)[w_by_block <= 0]
-        stop(
-            "For each block, the sum of `modality_meta$modality_w` ",
-            "must be > 0. ",
-            "Blocks with invalid weights: ",
-            paste(bad_blocks, collapse = ", "),
-            call. = FALSE
-        )
-    }
-    
-    # ensure (block, modality) pairs in modality_meta are unique
-    bl_pairs <- paste(modality_meta$block, modality_meta$modality, sep = "||")
-    if (any(duplicated(bl_pairs))) {
-        dup <- unique(bl_pairs[duplicated(bl_pairs)])
-        stop(
-            "Duplicate (block, modality) combinations in `modality_meta`: ",
-            paste(dup, collapse = ", "),
-            ". Each (block, modality) must appear only once.",
-            call. = FALSE
-        )
-    }
-    
-    invisible(modality_meta)
-}
-
-
-#' Cross-validate `blocks` and `modality_meta`
-#'
-#' @noRd
-#'
-#' @description
-#' Internal helper that performs cross-argument consistency checks across
-#' \code{blocks} and \code{modality_meta}.
-#'
-#' The function verifies:
-#' \itemize{
-#'   \item that \code{blocks} is a named list of blocks and each block is a
-#'   named list of numeric matrices,
-#'   \item that every (block, modality) in \code{modality_meta} exists in
-#'   \code{blocks},
-#'   \item that each block has metadata rows for all its modalities (and no
-#'   extra rows for unknown modalities),
-#'   \item and performs per-modality checks driven by \code{modality_meta}.
-#' }
-#'
-#' Per-modality checks:
-#' \itemize{
-#'   \item no \code{NA} values in modality matrices,
-#'   \item one-to-one modalities (\code{many_to_one_k = NA}) have
-#'    unique rownames,
-#'   \item many-to-one modalities (\code{many_to_one_k > 0}) have rownames
-#'   containing
-#'   an underscore and have at least \code{max(2, many_to_one_k)} rows.
-#' }
-#'
-#' Finally, within each block, all one-to-one modalities share at least one
-#' common gene ID.
-#'
-#' @param blocks Named list of blocks as used by
-#'   \code{cluster_genes_multiomics()}, where each block contains a named
-#'   list of modality matrices.
-#'
-#' @param modality_meta Data frame with modality-level metadata, including at
-#'   least \code{block}, \code{modality}, and \code{many_to_one_k}. Entries
-#'    must be consistent with \code{blocks}.
-#'
-#' @return Invisibly returns \code{TRUE} if all checks pass.
-#' 
-.check_cluster_genes_multiomics_cross_args <- function(
-        blocks,
-        modality_meta
-) {
-    if (!is.list(blocks) ||
-        is.null(names(blocks)) ||
-        any(names(blocks) == "")) {
-        stop("`blocks` must be a named list (outer list = blocks).")
-    }
-    
-    if (!is.data.frame(modality_meta)) {
-        stop("`modality_meta` must be a data.frame/tibble.")
-    }
-    
-    req <- c("block", "modality", "many_to_one_k")
-    miss <- setdiff(req, names(modality_meta))
-    if (length(miss) > 0L) {
-        stop(
-            "`modality_meta` is missing required columns: ",
-            paste(miss, collapse = ", ")
-        )
-    }
-    
-    b_names <- names(blocks)
-    
-    for (b in b_names) {
-        blk <- blocks[[b]]
-        if (!is.list(blk) ||
-            is.null(names(blk)) ||
-            any(names(blk) == "")) {
-            stop(
-                "`blocks[[", b,
-                "]]` must be a named list of modality matrices."
-            )
-        }
-    }
-    
-    for (i in seq_len(nrow(modality_meta))) {
-        b <- modality_meta$block[i]
-        l <- modality_meta$modality[i]
-        
-        if (!is.character(b) ||
-            length(b) != 1L ||
-            is.na(b) ||
-            b == "") {
-            stop("`modality_meta$block` must contain non-empty strings.")
-        }
-        
-        if (!is.character(l) ||
-            length(l) != 1L ||
-            is.na(l) ||
-            l == "") {
-            stop("`modality_meta$modality` must contain non-empty strings.")
-        }
-        
-        if (!b %in% b_names) {
-            stop(
-                "Row ", i,
-                " of `modality_meta` refers to unknown block '",
-                b, "'."
-            )
-        }
-        
-        if (!l %in% names(blocks[[b]])) {
-            stop(
-                "Row ", i,
-                " of `modality_meta` refers to unknown modality '",
-                l, "' in block '", b, "'."
-            )
-        }
-    }
-    
-    for (b in b_names) {
-        rows_b <- modality_meta$block == b
-        if (!any(rows_b)) {
-            stop(
-                "Block '", b,
-                "' has no corresponding rows in `modality_meta`."
-            )
-        }
-        
-        modalitys_meta <- modality_meta$modality[rows_b]
-        modalitys_blk <- names(blocks[[b]])
-        
-        miss_modalitys <- setdiff(modalitys_blk, modalitys_meta)
-        extra_modalitys <- setdiff(modalitys_meta, modalitys_blk)
-        
-        if (length(miss_modalitys) > 0L) {
-            stop(
-                "Block '", b,
-                "' missing modality rows in `modality_meta`: ",
-                paste(miss_modalitys, collapse = ", ")
-            )
-        }
-        
-        if (length(extra_modalitys) > 0L) {
-            stop(
-                "Block '", b,
-                "' has unknown modalities in `modality_meta`: ",
-                paste(extra_modalitys, collapse = ", ")
-            )
-        }
-    }
-    
-    for (i in seq_len(nrow(modality_meta))) {
-        b <- modality_meta$block[i]
-        l <- modality_meta$modality[i]
-        lk <- modality_meta$many_to_one_k[i]
-        mat <- blocks[[b]][[l]]
-        
-        if (!is.matrix(mat) || !is.numeric(mat)) {
-            stop(
-                "Modality '", l,
-                "' in block '", b,
-                "' must be a numeric matrix."
-            )
-        }
-        
-        if (any(is.na(mat))) {
-            stop(
-                "Modality '", l,
-                "' in block '", b,
-                "' contains NA values."
-            )
-        }
-        
-        rn <- rownames(mat)
-        if (is.null(rn) ||
-            any(is.na(rn)) ||
-            any(rn == "")) {
-            stop(
-                "Modality '", l,
-                "' in block '", b,
-                "' must have non-empty rownames."
-            )
-        }
-        
-        if (is.na(lk)) {
-            if (any(duplicated(rn))) {
-                stop(
-                    "Modality '", l,
-                    "' in block '", b,
-                    "' is gene-level (many_to_one_k is NA) but has ",
-                    "duplicated ",
-                    "rownames."
-                )
-            }
-        } else {
-            if (!is.numeric(lk) ||
-                length(lk) != 1L ||
-                is.na(lk) ||
-                lk <= 0) {
-                stop(
-                    "`many_to_one_k` must be NA or a positive numeric scalar ",
-                    "for ",
-                    "modality '", l,
-                    "' in block '", b, "'."
-                )
-            }
-            
-            if (!all(grepl("_", rn, fixed = TRUE))) {
-                stop(
-                    "Many-to-one modality '", l,
-                    "' in block '", b,
-                    "' must use rownames '<gene>_<feature>'."
-                )
-            }
-            
-            min_n <- max(2L, as.integer(lk))
-            if (nrow(mat) < min_n) {
-                stop(
-                    "Many-to-one modality '", l,
-                    "' in block '", b,
-                    "' has too few rows. Need at least ",
-                    min_n, "."
-                )
-            }
-            
-            if (nrow(mat) < lk) {
-                stop(
-                    "Many-to-one modality '", l,
-                    "' in block '", b,
-                    "' has nrow < many_to_one_k. Reduce `many_to_one_k` ",
-                    "or add ",
-                    "features."
-                )
-            }
-        }
-    }
-    
-    for (b in b_names) {
-        rows_b <- modality_meta$block == b &
-            is.na(modality_meta$many_to_one_k)
-        modalitys_gene <- modality_meta$modality[rows_b]
-        
-        if (length(modalitys_gene) < 2L) next
-        
-        mats_b <- blocks[[b]][modalitys_gene]
-        genes_lists <- lapply(mats_b, rownames)
-        inter_b <- Reduce(intersect, genes_lists)
-        
-        if (length(inter_b) == 0L) {
-            stop(
-                "No common genes across gene-level modalities for block '",
-                b, "'."
-            )
-        }
-    }
-    
-    invisible(TRUE)
-}
-
-
 #' Rank cluster centroid summaries by overall within-cluster coherence
 #'
 #' @noRd
@@ -1891,7 +1959,7 @@ cluster_genes_multiomics <- function(
 }
 
 
-# Level 3 function definitions -------------------------------------------------
+# Level 4 function definitions -------------------------------------------------
 
 
 #' Compute cluster centroids and per-member QC values
