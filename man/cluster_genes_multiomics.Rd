@@ -44,11 +44,29 @@ all condition- and modality-specific gene-level matrices are aligned
 according to \code{gene_mode} and concatenated to form the gene-centric
 feature matrix used to construct the UMAP graph and clustering.}
 
-\item{meta}{Data frame describing modalities and required parameters for aggregation and
-weighting. Must be compatible with internal representation building helpers.
-At minimum, it must identify modalities and indicate whether a modality is
-one-to-one (gene-level) or many-to-one (feature-level) and provide the
-parameters required for many-to-one aggregation.}
+\item{meta}{Data frame with one row per modality, providing modality-level parameters
+required for gene-centric representation building. The data frame must
+contain at least the following columns:
+
+\describe{
+\item{\code{modality}}{
+Character scalar giving the modality identifier. Each value must match
+a modality name present in \code{data[[condition]]}. The order of rows
+defines the modality ordering used throughout downstream processing.}
+
+\item{\code{many_to_one_k}}{
+Integer or \code{NA}. If \code{NA}, the modality is treated as one-to-one
+(gene-level) and passed through unchanged. If an integer, the modality
+is treated as many-to-one (feature-level) and collapsed to gene-level
+signatures using \code{many_to_one_k} global archetypes.}
+
+\item{\code{modality_w}}{
+Numeric, non-negative scalar giving the relative weight of the modality
+in the joint feature space. Weights are normalized internally to sum to
+one across modalities before being applied.}
+}
+
+Additional columns may be present but are ignored.}
 
 \item{k}{Integer. Number of gene clusters for spectral clustering.}
 

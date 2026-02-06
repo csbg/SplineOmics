@@ -1,0 +1,164 @@
+# Find peaks and valleys in time-series omics data
+
+Identifies significant local peaks or valleys (excursions) in
+time-series omics data using a Union-Intersection Test (UIT)-based
+approach. This function performs statistical detection only and returns
+per-condition excursion statistics. Plotting and report generation are
+handled by
+[`create_pvc_report()`](https://csbg.github.io/SplineOmics/reference/create_pvc_report.md).
+
+## Usage
+
+``` r
+find_pvc(
+  splineomics,
+  alphas = 0.05,
+  padjust_method = "BH",
+  support = 1,
+  verbose = FALSE
+)
+```
+
+## Arguments
+
+- splineomics:
+
+  `list`: Preprocessed time-series input. Must include at least:
+
+  - `data`: `matrix` Feature-by-sample numeric matrix.
+
+  - `meta`: `data.frame` Sample metadata for `data` columns. Must
+    include a `"Time"` column and the column specified by `condition`.
+
+  - `condition`: `character(1)` Column name in `meta` that defines
+    condition levels.
+
+  - `meta_batch_column`: `character(1)` Column name in `meta`
+    identifying replicates or batches.
+
+  - `meta_batch2_column`: `character(1)` Optional second batch column
+    name in `meta`.
+
+- alphas:
+
+  `numeric(1)` \| `list(numeric)`: Significance threshold(s) for
+  excursion calls. A scalar applies to all condition levels. A named
+  list provides one threshold per condition level; names must match
+  levels in `meta[[condition]]`. Internally normalized for per-level
+  access.
+
+- padjust_method:
+
+  `character(1)`: Multiple testing correction method passed to
+  `pvc_test()`. Defaults to `"BH"`.
+
+- support:
+
+  `numeric(1)`: Minimum number of non-NA values required per timepoint
+  neighborhood to keep a PVC p-value. For a given feature at a target
+  timepoint, the target and its neighboring timepoints must each have at
+  least `support` non-NA observations; otherwise the p-value at the
+  target timepoint is set to `NA`.
+
+- verbose:
+
+  `logical(1)`: Boolean flag controlling the display of messages.
+
+## Value
+
+A named list by condition level. Each element contains:
+
+- `alpha`:
+
+  `numeric(1)` The threshold used for that level.
+
+- `pvc_adj_pvals`:
+
+  `matrix` Adjusted PVC p-values per feature and timepoint (after
+  support filtering).
+
+- `pvc_pattern_summary`:
+
+  `data.frame` Counts of excursion labels (`p`, `v`, `b`, `t`) per
+  timepoint.
+
+Attributes on the returned list include `padjust_method`, `support`, and
+`batch_effects`.
+
+## Details
+
+A peak or valley is a timepoint whose value is significantly different
+from both neighbors and deviates in the same direction: higher than both
+(peak) or lower than both (valley). This is tested via a compound limma
+contrast: \\(T - T\_{prev}) + (T - T\_{next}) = 2T - T\_{prev} -
+T\_{next}\\. The resulting p-values are adjusted and compared to the
+per-level `alpha`.
+
+## Examples
+
+``` r
+set.seed(1)
+
+toy6 <- matrix(
+  c(
+    3, 5, 8, 12, 17, 23,
+    23, 17, 13, 9, 6, 4,
+    5, 3, 2, 2, 3, 5,
+    1, 4, 9, 8, 4, 1,
+    10, 10, 10, 10, 10, 10,
+    2, 2, 2, 9, 12, 15,
+    4, 5, 7, 10, 14, 19,
+    12, 11, 9, 8, 9, 12
+  ),
+  nrow = 8,
+  ncol = 6,
+  byrow = TRUE,
+  dimnames = list(paste0("f", 1:8), paste0("s", 1:6))
+)
+
+wt0 <- rowMeans(toy6[, 1:3])
+ko0 <- rowMeans(toy6[, 4:6])
+
+spike_tp <- 3
+spike_amp <- 3
+
+flat4 <- function(base) cbind(base, base, base, base)
+wt <- flat4(wt0)
+wt[, spike_tp] <- wt[, spike_tp] + spike_amp
+ko <- flat4(ko0)
+
+rep3 <- function(M, sd = 0.2) {
+  do.call(cbind, lapply(1:3, function(i) {
+    M + matrix(rnorm(length(M), sd = sd), nrow(M), ncol(M))
+  }))
+}
+
+toy_data <- cbind(rep3(wt), rep3(ko))
+rownames(toy_data) <- rownames(toy6)
+colnames(toy_data) <- paste0("s", seq_len(ncol(toy_data)))
+
+time <- 0:3
+toy_meta <- data.frame(
+  Time = rep(time, times = 2 * 3),
+  condition = rep(c("WT", "KO"), each = 3 * length(time)),
+  Replicate = rep(paste0("R", 1:3), each = length(time), times = 2),
+  row.names = colnames(toy_data),
+  stringsAsFactors = FALSE
+)
+
+splineomics <- list(
+  data = toy_data,
+  meta = toy_meta,
+  condition = "condition",
+  meta_batch_column = "Replicate"
+)
+
+res <- find_pvc(
+  splineomics = splineomics,
+  alphas = 0.05,
+  padjust_method = "BH",
+  support = 1
+)
+#> design matrix of interest not specified. Assuming a one-group experiment.
+#> design matrix of interest not specified. Assuming a one-group experiment.
+```

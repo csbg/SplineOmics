@@ -1562,13 +1562,8 @@ differential expression analysis.</p>
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
-<span><span class="co">#&gt; Preprocessing RNA-seq data (normalization + voom)...</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; NOTE: If you manually stop run_limma_splines() in RStudio and  used parallelization for variancePartition::dream(), then those parallelized processes may continue running. Use your system's process manager to terminate them manually!</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished preprocessing RNA-seq</span></span>
-<span><span class="co">#&gt;         data in 0.2 minutes</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: the 'findbars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span></code></pre></div>
 <p>You can customize the normalization method by providing a specific
 normalization function through the <code>normalize_func</code> argument
 in the <code><a href="../reference/preprocess_rna_seq_data.html">preprocess_rna_seq_data()</a></code> function. For details on
@@ -1590,15 +1585,9 @@ correctly processed.</p>
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hint: The data contains negative values.  This may occur if the data has been  transformed (e.g., log-transformed or  normalized) and is valid in such cases.  Ensure that the data preprocessing aligns  with your analysis requirements.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
 <span><span class="co">#&gt; Array weights are ignored at this stage for RNA-seq data, as they were already incorporated during the preprocessing step.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Fitting global model...</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; NOTE: If you manually stop run_limma_splines() in RStudio and  used parallelization for variancePartition::dream(), then those parallelized processes may continue running. Use your system's process manager to terminate them manually!</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">Info</span> Finished limma spline analysis in 0.6 min</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: the 'nobars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span></code></pre></div>
 <p>The output of the function run_limma_splines() is a named list, where
 each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
 document</a> for an explanation of the different result categories. Each
@@ -1624,12 +1613,7 @@ generate p-value histograms an volcano plots.</p>
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_limma_report.html">create_limma_report</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
 <span>    report_dir <span class="op">=</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Limma report generation completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpZpaSKY/file2579a7030c76c .</span></span>
-<span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
-<span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p>You can view the generated analysis report of the create_limma_report
 function <a href="https://drive.google.com/uc?export=view&amp;id=1hvKloiaHQA5CO4Y6io8qC2lOpBJ54ypJ" class="external-link">here</a>.</p>
 </div>
@@ -1670,15 +1654,7 @@ function <a href="https://drive.google.com/uc?export=view&amp;id=1hvKloiaHQA5CO4
 <span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
 <span>    genes <span class="op">=</span> <span class="va">genes</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hint: The data contains negative values.  This may occur if the data has been  transformed (e.g., log-transformed or  normalized) and is valid in such cases.  Ensure that the data preprocessing aligns  with your analysis requirements.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Ensure the design has no Condition*Time interaction for mode == 'isolated', and includes it for mode == 'integrated'.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Performing the clustering...</span></span>
-<span><span class="co">#&gt; For the level:  constant</span></span>
-<span><span class="co">#&gt; For the level:  temp_shift</span></span>
-<span><span class="co">#&gt; Running this function took 0.0 min</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Generate the report:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"splineomics_report"</span><span class="op">)</span></span>
@@ -1700,7 +1676,7 @@ function <a href="https://drive.google.com/uc?export=view&amp;id=1hvKloiaHQA5CO4
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpZpaSKY/file2579a192ba687 .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/Rtmp2svI3R/file626479dafa12 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p>You can view the generated analysis report of the cluster_hits
@@ -1821,52 +1797,53 @@ dotplots in R.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] knitr_1.50        dplyr_1.1.4       readr_2.1.5       SplineOmics_0.4.2</span></span>
+<span><span class="co">#&gt; [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.17.1        jsonlite_2.0.0          </span></span>
-<span><span class="co">#&gt;   [4] shape_1.4.6.1            magrittr_2.0.3           farver_2.1.2            </span></span>
-<span><span class="co">#&gt;   [7] nloptr_2.2.1             rmarkdown_2.29           GlobalOptions_0.1.2     </span></span>
-<span><span class="co">#&gt;  [10] fs_1.6.6                 ragg_1.4.0               vctrs_0.6.5             </span></span>
-<span><span class="co">#&gt;  [13] minqa_1.2.8              base64enc_0.1-3          htmltools_0.5.8.1       </span></span>
-<span><span class="co">#&gt;  [16] progress_1.2.3           broom_1.0.8              Formula_1.2-5           </span></span>
-<span><span class="co">#&gt;  [19] variancePartition_1.38.0 sass_0.4.10              KernSmooth_2.23-26      </span></span>
-<span><span class="co">#&gt;  [22] bslib_0.9.0              htmlwidgets_1.6.4        desc_1.4.3              </span></span>
-<span><span class="co">#&gt;  [25] pbkrtest_0.5.4           plyr_1.8.9               cachem_1.1.0            </span></span>
-<span><span class="co">#&gt;  [28] lifecycle_1.0.4          iterators_1.0.14         pkgconfig_2.0.3         </span></span>
-<span><span class="co">#&gt;  [31] Matrix_1.7-3             R6_2.6.1                 fastmap_1.2.0           </span></span>
-<span><span class="co">#&gt;  [34] rbibutils_2.3            clue_0.3-66              digest_0.6.37           </span></span>
-<span><span class="co">#&gt;  [37] numDeriv_2016.8-1.1      colorspace_2.1-1         S4Vectors_0.46.0        </span></span>
-<span><span class="co">#&gt;  [40] textshaping_1.0.1        labeling_0.4.3           abind_1.4-8             </span></span>
-<span><span class="co">#&gt;  [43] compiler_4.5.2           bit64_4.6.0-1            aod_1.3.3               </span></span>
-<span><span class="co">#&gt;  [46] withr_3.0.2              doParallel_1.0.17        backports_1.5.0         </span></span>
-<span><span class="co">#&gt;  [49] BiocParallel_1.42.1      carData_3.0-5            gplots_3.2.0            </span></span>
-<span><span class="co">#&gt;  [52] MASS_7.3-65              rjson_0.2.23             corpcor_1.6.10          </span></span>
-<span><span class="co">#&gt;  [55] gtools_3.9.5             caTools_1.18.3           tools_4.5.2             </span></span>
-<span><span class="co">#&gt;  [58] zip_2.3.3                remaCor_0.0.18           glue_1.8.0              </span></span>
-<span><span class="co">#&gt;  [61] nlme_3.1-168             grid_4.5.2               checkmate_2.3.3         </span></span>
-<span><span class="co">#&gt;  [64] cluster_2.1.8.1          reshape2_1.4.4           generics_0.1.4          </span></span>
-<span><span class="co">#&gt;  [67] gtable_0.3.6             tzdb_0.5.0               tidyr_1.3.1             </span></span>
-<span><span class="co">#&gt;  [70] hms_1.1.3                car_3.1-3                BiocGenerics_0.54.0     </span></span>
-<span><span class="co">#&gt;  [73] ggrepel_0.9.6            foreach_1.5.2            pillar_1.11.0           </span></span>
-<span><span class="co">#&gt;  [76] stringr_1.5.1            vroom_1.6.5              limma_3.64.1            </span></span>
-<span><span class="co">#&gt;  [79] circlize_0.4.16          splines_4.5.2            lattice_0.22-5          </span></span>
-<span><span class="co">#&gt;  [82] renv_1.1.5               gmp_0.7-5                bit_4.6.0               </span></span>
-<span><span class="co">#&gt;  [85] tidyselect_1.2.1         ComplexHeatmap_2.24.1    locfit_1.5-9.12         </span></span>
-<span><span class="co">#&gt;  [88] pbapply_1.7-2            reformulas_0.4.1         IRanges_2.42.0          </span></span>
-<span><span class="co">#&gt;  [91] edgeR_4.6.3              svglite_2.2.1            RhpcBLASctl_0.23-42     </span></span>
-<span><span class="co">#&gt;  [94] stats4_4.5.2             xfun_0.52                Biobase_2.68.0          </span></span>
-<span><span class="co">#&gt;  [97] statmod_1.5.0            matrixStats_1.5.0        stringi_1.8.7           </span></span>
-<span><span class="co">#&gt; [100] yaml_2.3.10              boot_1.3-31              evaluate_1.0.4          </span></span>
-<span><span class="co">#&gt; [103] codetools_0.2-19         tibble_3.3.0             BiocManager_1.30.26     </span></span>
-<span><span class="co">#&gt; [106] cli_3.6.5                systemfonts_1.2.3        Rdpack_2.6.4            </span></span>
-<span><span class="co">#&gt; [109] jquerylib_0.1.4          Rcpp_1.1.0               EnvStats_3.1.0          </span></span>
-<span><span class="co">#&gt; [112] png_0.1-8                parallel_4.5.2           pkgdown_2.1.3           </span></span>
-<span><span class="co">#&gt; [115] ggplot2_3.5.2            prettyunits_1.2.0        ClusterR_1.3.3          </span></span>
-<span><span class="co">#&gt; [118] bitops_1.0-9             lme4_1.1-37              mvtnorm_1.3-3           </span></span>
-<span><span class="co">#&gt; [121] lmerTest_3.1-3           scales_1.4.0             purrr_1.1.0             </span></span>
-<span><span class="co">#&gt; [124] crayon_1.5.3             writexl_1.5.4            fANCOVA_0.6-1           </span></span>
-<span><span class="co">#&gt; [127] GetoptLong_1.0.5         rlang_1.1.6</span></span></code></pre>
+<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          </span></span>
+<span><span class="co">#&gt;   [4] shape_1.4.6.1            magrittr_2.0.4           farver_2.1.2            </span></span>
+<span><span class="co">#&gt;   [7] nloptr_2.2.1             rmarkdown_2.30           GlobalOptions_0.1.3     </span></span>
+<span><span class="co">#&gt;  [10] fs_1.6.6                 ragg_1.5.0               vctrs_0.7.1             </span></span>
+<span><span class="co">#&gt;  [13] minqa_1.2.8              base64enc_0.1-6          htmltools_0.5.9         </span></span>
+<span><span class="co">#&gt;  [16] progress_1.2.3           broom_1.0.12             Formula_1.2-5           </span></span>
+<span><span class="co">#&gt;  [19] variancePartition_1.38.1 sass_0.4.10              KernSmooth_2.23-26      </span></span>
+<span><span class="co">#&gt;  [22] bslib_0.10.0             htmlwidgets_1.6.4        desc_1.4.3              </span></span>
+<span><span class="co">#&gt;  [25] pbkrtest_0.5.5           plyr_1.8.9               cachem_1.1.0            </span></span>
+<span><span class="co">#&gt;  [28] lifecycle_1.0.5          iterators_1.0.14         pkgconfig_2.0.3         </span></span>
+<span><span class="co">#&gt;  [31] Matrix_1.7-4             R6_2.6.1                 fastmap_1.2.0           </span></span>
+<span><span class="co">#&gt;  [34] rbibutils_2.4.1          clue_0.3-66              digest_0.6.39           </span></span>
+<span><span class="co">#&gt;  [37] numDeriv_2016.8-1.1      colorspace_2.1-2         S4Vectors_0.46.0        </span></span>
+<span><span class="co">#&gt;  [40] textshaping_1.0.4        labeling_0.4.3           abind_1.4-8             </span></span>
+<span><span class="co">#&gt;  [43] compiler_4.5.2           withr_3.0.2              bit64_4.6.0-1           </span></span>
+<span><span class="co">#&gt;  [46] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                </span></span>
+<span><span class="co">#&gt;  [49] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           </span></span>
+<span><span class="co">#&gt;  [52] gplots_3.3.0             MASS_7.3-65              rjson_0.2.23            </span></span>
+<span><span class="co">#&gt;  [55] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          </span></span>
+<span><span class="co">#&gt;  [58] tools_4.5.2              otel_0.2.0               zip_2.3.3               </span></span>
+<span><span class="co">#&gt;  [61] remaCor_0.0.20           glue_1.8.0               nlme_3.1-168            </span></span>
+<span><span class="co">#&gt;  [64] grid_4.5.2               checkmate_2.3.4          cluster_2.1.8.1         </span></span>
+<span><span class="co">#&gt;  [67] reshape2_1.4.5           generics_0.1.4           gtable_0.3.6            </span></span>
+<span><span class="co">#&gt;  [70] tzdb_0.5.0               tidyr_1.3.2              hms_1.1.4               </span></span>
+<span><span class="co">#&gt;  [73] car_3.1-5                BiocGenerics_0.54.1      ggrepel_0.9.6           </span></span>
+<span><span class="co">#&gt;  [76] foreach_1.5.2            pillar_1.11.1            stringr_1.6.0           </span></span>
+<span><span class="co">#&gt;  [79] vroom_1.7.0              limma_3.64.3             circlize_0.4.17         </span></span>
+<span><span class="co">#&gt;  [82] splines_4.5.2            lattice_0.22-5           renv_1.1.7              </span></span>
+<span><span class="co">#&gt;  [85] gmp_0.7-5                bit_4.6.0                tidyselect_1.2.1        </span></span>
+<span><span class="co">#&gt;  [88] ComplexHeatmap_2.24.1    locfit_1.5-9.12          pbapply_1.7-4           </span></span>
+<span><span class="co">#&gt;  [91] reformulas_0.4.4         IRanges_2.42.0           edgeR_4.6.3             </span></span>
+<span><span class="co">#&gt;  [94] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.5.2            </span></span>
+<span><span class="co">#&gt;  [97] xfun_0.56                Biobase_2.68.0           statmod_1.5.1           </span></span>
+<span><span class="co">#&gt; [100] matrixStats_1.5.0        stringi_1.8.7            yaml_2.3.12             </span></span>
+<span><span class="co">#&gt; [103] boot_1.3-32              evaluate_1.0.5           codetools_0.2-19        </span></span>
+<span><span class="co">#&gt; [106] tibble_3.3.1             BiocManager_1.30.27      cli_3.6.5               </span></span>
+<span><span class="co">#&gt; [109] systemfonts_1.3.1        Rdpack_2.6.5             jquerylib_0.1.4         </span></span>
+<span><span class="co">#&gt; [112] Rcpp_1.1.1               EnvStats_3.1.0           png_0.1-8               </span></span>
+<span><span class="co">#&gt; [115] parallel_4.5.2           pkgdown_2.2.0            ggplot2_4.0.2           </span></span>
+<span><span class="co">#&gt; [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            </span></span>
+<span><span class="co">#&gt; [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          </span></span>
+<span><span class="co">#&gt; [124] scales_1.4.0             purrr_1.2.1              crayon_1.5.3            </span></span>
+<span><span class="co">#&gt; [127] writexl_1.5.4            fANCOVA_0.6-1            GetoptLong_1.1.0        </span></span>
+<span><span class="co">#&gt; [130] rlang_1.1.7</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -1879,7 +1856,7 @@ dotplots in R.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

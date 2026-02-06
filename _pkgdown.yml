@@ -76,6 +76,7 @@ reference:
       - explore_data
       - extract_data
       - find_pvc
+      - plot_umap_clusters
       - preprocess_rna_seq_data
       - print.SplineOmics
       - run_ora

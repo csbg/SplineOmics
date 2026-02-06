@@ -83,62 +83,35 @@ Rauter</h4>
 <div class="section level2">
 <h2 id="gene-centric-multiomics-clustering">Gene-centric multiomics clustering<a class="anchor" aria-label="anchor" href="#gene-centric-multiomics-clustering"></a>
 </h2>
-<p>This vignette explains the approach taken by the
-<code>SplineOmics</code> function:
-<code>cluster_genes_multiomics</code>. Figure 1 shows the methodological
-approach.</p>
+<p>This vignette demonstrates the gene-centric multi-omics clustering
+approach implemented in
+<code><a href="../reference/cluster_genes_multiomics.html">SplineOmics::cluster_genes_multiomics()</a></code> and shows how to
+visualize the results using
+<code><a href="../reference/plot_umap_clusters.html">SplineOmics::plot_umap_clusters()</a></code>.</p>
 <p><strong>Figure 1.</strong> Overview of the gene-centric multi-omics
 clustering approach.<br>
 See the figure <a href="https://raw.githubusercontent.com/csbg/SplineOmics_html_reports/main/figures/SplineOmics_%20cluster_genes_multiomics_approach.png" class="external-link"><strong>here</strong></a>.</p>
-<p>Here is now shown how to use <code><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics()</a></code>
-on a small, synthetic dataset. The example generates multi-omics
-time-series trajectories, including a many-to-one modality
-(feature-level measurements mapping to genes), and shows how to assemble
-the required inputs:</p>
-<ul>
-<li>
-<code>blocks</code> (nested list of block × modality matrices)</li>
-<li>
-<code>block_meta</code> (block-level metadata)</li>
-<li>
-<code>modality_meta</code> (modality-level metadata)</li>
-</ul>
-<p>The function returns a named list with two tibbles:</p>
-<ul>
-<li>
-<code>cluster_table</code>: per-gene cluster assignments per
-block</li>
-<li>
-<code>centroid_info</code>: per-block, per-modality centroid
-trajectories and within-cluster coherence summaries (and optionally
-per-member R² vectors)</li>
-</ul>
+<p>The example below uses a small synthetic dataset with two
+experimental conditions and three molecular modalities, including a
+many-to-one feature-level modality.</p>
+<div class="section level3">
+<h3 id="load-required-packages">Load required packages<a class="anchor" aria-label="anchor" href="#load-required-packages"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://csbg.github.io/SplineOmics">SplineOmics</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="simulate-multi-omics-time-series-data">1. Simulate multi-omics time-series data<a class="anchor" aria-label="anchor" href="#simulate-multi-omics-time-series-data"></a>
 </h3>
-<p>We generate two blocks (conditions): <code>Constant</code> and
-<code>Temp_shifted</code>. Each block contains three modalities:</p>
-<ul>
-<li>
-<code>rna</code> (one-to-one; one trajectory per gene)</li>
-<li>
-<code>protein</code> (one-to-one; one trajectory per gene)</li>
-<li>
-<code>phospho</code> (many-to-one; multiple features map to each
-gene)</li>
-</ul>
-<p>The synthetic data uses a small set of canonical temporal shapes and
-assigns each gene to one latent shape (for simulation only).</p>
+<p>We simulate expression trajectories for 40 genes measured at 9 time
+points. Each gene is assigned to one of five latent temporal patterns
+used only for data generation.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">n_genes</span> <span class="op">&lt;-</span> <span class="fl">40</span></span>
 <span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_genes</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">n_tp</span> <span class="op">&lt;-</span> <span class="fl">9</span></span>
 <span><span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="va">n_tp</span><span class="op">)</span></span>
 <span></span>
@@ -146,32 +119,33 @@ assigns each gene to one latent shape (for simulation only).</p>
 <span>  <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, mean <span class="op">=</span> <span class="fl">0</span>, sd <span class="op">=</span> <span class="va">sd</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">.shape_sin</span>  <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span></span>
-<span><span class="va">.shape_cos</span>  <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span></span>
-<span><span class="va">.shape_up</span>   <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">t</span> <span class="op">-</span> <span class="fl">1</span></span>
-<span><span class="va">.shape_down</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">t</span></span>
-<span><span class="va">.shape_peak</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="va">t</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">/</span> <span class="fl">0.18</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">*</span> <span class="fl">2</span> <span class="op">-</span> <span class="fl">1</span></span>
-<span></span>
 <span><span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  S1 <span class="op">=</span> <span class="fu">.shape_sin</span><span class="op">(</span><span class="va">t</span><span class="op">)</span>,</span>
-<span>  S2 <span class="op">=</span> <span class="fu">.shape_cos</span><span class="op">(</span><span class="va">t</span><span class="op">)</span>,</span>
-<span>  S3 <span class="op">=</span> <span class="fu">.shape_up</span><span class="op">(</span><span class="va">t</span><span class="op">)</span>,</span>
-<span>  S4 <span class="op">=</span> <span class="fu">.shape_down</span><span class="op">(</span><span class="va">t</span><span class="op">)</span>,</span>
-<span>  S5 <span class="op">=</span> <span class="fu">.shape_peak</span><span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span>  sin   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span>,</span>
+<span>  cos   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span>,</span>
+<span>  up    <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">t</span> <span class="op">-</span> <span class="fl">1</span>,</span>
+<span>  down  <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">t</span>,</span>
+<span>  peak  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="va">t</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">/</span> <span class="fl">0.18</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">*</span> <span class="fl">2</span> <span class="op">-</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">true_k</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
 <span><span class="va">gene_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">true_k</span><span class="op">)</span>, <span class="va">n_genes</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="simulate-rna-and-protein-one-to-one">1.1 Simulate RNA and protein (one-to-one)<a class="anchor" aria-label="anchor" href="#simulate-rna-and-protein-one-to-one"></a>
-</h4>
-<p>RNA is simulated from the latent shapes with noise. Protein is
-simulated as a lagged and scaled version of RNA (with additional noise),
-mimicking delayed protein dynamics relative to transcripts.</p>
+</div>
+<div class="section level3">
+<h3 id="simulate-rna-and-protein-one-to-one-modalities">1.1 Simulate RNA and protein (one-to-one modalities)<a class="anchor" aria-label="anchor" href="#simulate-rna-and-protein-one-to-one-modalities"></a>
+</h3>
+<p>RNA is generated directly from the latent shapes. Protein
+trajectories are simulated as lagged and scaled versions of RNA,
+mimicking delayed protein dynamics.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">.simulate_one_to_one</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">genes</span>, <span class="va">shapes</span>, <span class="va">gene_group</span>, <span class="va">noise_sd</span> <span class="op">=</span> <span class="fl">0.18</span><span class="op">)</span> <span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="va">.simulate_one_to_one</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">genes</span>,</span>
+<span>  <span class="va">shapes</span>,</span>
+<span>  <span class="va">gene_group</span>,</span>
+<span>  <span class="va">noise_sd</span> <span class="op">=</span> <span class="fl">0.18</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">n_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span></span>
 <span>  <span class="va">n_tp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
 <span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>    <span class="cn">NA_real_</span>,</span>
 <span>    nrow <span class="op">=</span> <span class="va">n_genes</span>,</span>
@@ -181,286 +155,223 @@ mimicking delayed protein dynamics relative to transcripts.</p>
 <span></span>
 <span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_genes</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">gene_group</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>    <span class="va">base</span> <span class="op">&lt;-</span> <span class="va">shapes</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span></span>
-<span>    <span class="va">X</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">base</span>, sd <span class="op">=</span> <span class="va">noise_sd</span><span class="op">)</span></span>
+<span>    <span class="va">X</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">shapes</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, sd <span class="op">=</span> <span class="va">noise_sd</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="va">X</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">rna_constant</span> <span class="op">&lt;-</span> <span class="fu">.simulate_one_to_one</span><span class="op">(</span></span>
+<span><span class="va">rna_ctrl</span> <span class="op">&lt;-</span> <span class="fu">.simulate_one_to_one</span><span class="op">(</span></span>
 <span>  genes <span class="op">=</span> <span class="va">genes</span>,</span>
 <span>  shapes <span class="op">=</span> <span class="va">shapes</span>,</span>
 <span>  gene_group <span class="op">=</span> <span class="va">gene_group</span>,</span>
 <span>  noise_sd <span class="op">=</span> <span class="fl">0.16</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">rna_temp</span> <span class="op">&lt;-</span> <span class="va">rna_constant</span></span>
+<span><span class="va">rna_treat</span> <span class="op">&lt;-</span> <span class="va">rna_ctrl</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_genes</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">gene_group</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>  <span class="va">warp</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">k</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span> <span class="fl">0.25</span> <span class="kw">else</span> <span class="fl">0.10</span></span>
-<span>  <span class="va">rna_temp</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">shapes</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="va">warp</span> <span class="op">*</span> <span class="va">t</span>, sd <span class="op">=</span> <span class="fl">0.16</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">rna_temp</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">genes</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rna_temp</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rna_constant</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">.lag_vec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">lag</span> <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">lag</span> <span class="op">&lt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">lag</span><span class="op">)</span>, <span class="va">x</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="va">lag</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">rna_treat</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span></span>
+<span>    <span class="fu">.add_noise</span><span class="op">(</span><span class="va">shapes</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="fl">0.15</span> <span class="op">*</span> <span class="va">t</span>, sd <span class="op">=</span> <span class="fl">0.16</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">protein_constant</span> <span class="op">&lt;-</span> <span class="va">rna_constant</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_genes</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">v</span> <span class="op">&lt;-</span> <span class="va">rna_constant</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span></span>
-<span>  <span class="va">protein_constant</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="fl">0.8</span> <span class="op">*</span> <span class="fu">.lag_vec</span><span class="op">(</span><span class="va">v</span>, lag <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">0.18</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">protein_constant</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">genes</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">protein_constant</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rna_constant</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">protein_temp</span> <span class="op">&lt;-</span> <span class="va">rna_temp</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_genes</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">v</span> <span class="op">&lt;-</span> <span class="va">rna_temp</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span></span>
-<span>  <span class="va">protein_temp</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="fl">0.85</span> <span class="op">*</span> <span class="fu">.lag_vec</span><span class="op">(</span><span class="va">v</span>, lag <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">0.18</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">protein_temp</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">genes</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">protein_temp</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rna_temp</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">protein_ctrl</span> <span class="op">&lt;-</span> <span class="va">rna_ctrl</span></span>
+<span><span class="va">protein_treat</span> <span class="op">&lt;-</span> <span class="va">rna_treat</span></span></code></pre></div>
 </div>
-<div class="section level4">
-<h4 id="simulate-phospho-features-many-to-one">1.2 Simulate phospho features (many-to-one)<a class="anchor" aria-label="anchor" href="#simulate-phospho-features-many-to-one"></a>
-</h4>
-<p>For each gene, we create 1–4 phospho features. Each feature follows
-the gene’s latent shape with feature-specific perturbations. Rows are
+<div class="section level3">
+<h3 id="simulate-phospho-features-many-to-one-modality">1.2 Simulate phospho features (many-to-one modality)<a class="anchor" aria-label="anchor" href="#simulate-phospho-features-many-to-one-modality"></a>
+</h3>
+<p>For each gene, multiple phospho features are generated. Rows are
 named <code>&lt;gene&gt;_&lt;feature&gt;</code> to encode the
 many-to-one mapping.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">.simulate_many_to_one</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">genes</span>, <span class="va">shapes</span>, <span class="va">gene_group</span>,</span>
-<span>                                  <span class="va">min_feat</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">max_feat</span> <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>                                  <span class="va">noise_sd</span> <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">feat_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">min_feat</span><span class="op">:</span><span class="va">max_feat</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">.simulate_many_to_one</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">genes</span>,</span>
+<span>  <span class="va">shapes</span>,</span>
+<span>  <span class="va">gene_group</span>,</span>
+<span>  <span class="va">min_feat</span> <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  <span class="va">max_feat</span> <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  <span class="va">noise_sd</span> <span class="op">=</span> <span class="fl">0.20</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">feat_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span></span>
+<span>    <span class="va">min_feat</span><span class="op">:</span><span class="va">max_feat</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span>,</span>
+<span>    replace <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">feat_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mapply.html" class="external-link">mapply</a></span><span class="op">(</span></span>
 <span>      <span class="kw">function</span><span class="op">(</span><span class="va">g</span>, <span class="va">n</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">g</span>, <span class="st">"_p"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>      <span class="va">genes</span>, <span class="va">feat_counts</span>,</span>
+<span>      <span class="va">genes</span>,</span>
+<span>      <span class="va">feat_counts</span>,</span>
 <span>      SIMPLIFY <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>    <span class="op">)</span>,</span>
 <span>    use.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">n_feat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">feat_ids</span><span class="op">)</span></span>
 <span>  <span class="va">n_tp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
 <span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>    <span class="cn">NA_real_</span>,</span>
-<span>    nrow <span class="op">=</span> <span class="va">n_feat</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">feat_ids</span><span class="op">)</span>,</span>
 <span>    ncol <span class="op">=</span> <span class="va">n_tp</span>,</span>
 <span>    dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">feat_ids</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"tp"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_tp</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">idx</span> <span class="op">&lt;-</span> <span class="fl">0L</span></span>
 <span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">gene_group</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>    <span class="va">base</span> <span class="op">&lt;-</span> <span class="va">shapes</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span></span>
-<span></span>
-<span>    <span class="va">n_f</span> <span class="op">&lt;-</span> <span class="va">feat_counts</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>    <span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_f</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">base</span> <span class="op">&lt;-</span> <span class="va">shapes</span><span class="op">[[</span><span class="va">gene_group</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span><span class="op">]</span></span>
+<span>    <span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">feat_counts</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>      <span class="va">idx</span> <span class="op">&lt;-</span> <span class="va">idx</span> <span class="op">+</span> <span class="fl">1L</span></span>
-<span></span>
-<span>      <span class="va">amp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.7</span>, <span class="fl">1.3</span><span class="op">)</span></span>
-<span>      <span class="va">drift</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span><span class="op">)</span></span>
-<span>      <span class="va">X</span><span class="op">[</span><span class="va">idx</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">amp</span> <span class="op">*</span> <span class="va">base</span> <span class="op">+</span> <span class="va">drift</span> <span class="op">*</span> <span class="va">t</span>, sd <span class="op">=</span> <span class="va">noise_sd</span><span class="op">)</span></span>
+<span>      <span class="va">X</span><span class="op">[</span><span class="va">idx</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">base</span>, sd <span class="op">=</span> <span class="va">noise_sd</span><span class="op">)</span></span>
 <span>    <span class="op">}</span></span>
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="va">X</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">phospho_constant</span> <span class="op">&lt;-</span> <span class="fu">.simulate_many_to_one</span><span class="op">(</span><span class="va">genes</span>, <span class="va">shapes</span>, <span class="va">gene_group</span><span class="op">)</span></span>
+<span><span class="va">phospho_ctrl</span> <span class="op">&lt;-</span> <span class="fu">.simulate_many_to_one</span><span class="op">(</span></span>
+<span>  <span class="va">genes</span>,</span>
+<span>  <span class="va">shapes</span>,</span>
+<span>  <span class="va">gene_group</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">phospho_temp</span> <span class="op">&lt;-</span> <span class="va">phospho_constant</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">phospho_temp</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"_.*$"</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">phospho_temp</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span></span>
-<span>  <span class="va">gi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">g</span>, <span class="va">genes</span><span class="op">)</span></span>
-<span>  <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">gene_group</span><span class="op">[</span><span class="va">gi</span><span class="op">]</span></span>
-<span>  <span class="va">bump</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">k</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span> <span class="fl">0.35</span> <span class="kw">else</span> <span class="fl">0.12</span></span>
-<span>  <span class="va">phospho_temp</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">.add_noise</span><span class="op">(</span><span class="va">phospho_temp</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">+</span> <span class="va">bump</span> <span class="op">*</span> <span class="va">t</span>, sd <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-</div>
+<span><span class="va">phospho_treat</span> <span class="op">&lt;-</span> <span class="va">phospho_ctrl</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="build-inputs-for-cluster_genes_multiomics">2. Build inputs for <code>cluster_genes_multiomics()</code><a class="anchor" aria-label="anchor" href="#build-inputs-for-cluster_genes_multiomics"></a>
+<h3 id="assemble-inputs-for-clustering">2. Assemble inputs for clustering<a class="anchor" aria-label="anchor" href="#assemble-inputs-for-clustering"></a>
 </h3>
-<p>Each block is a list of modality matrices. <code>block_meta</code>
-defines the number of gene clusters per block and the result category.
-<code>modality_meta</code> specifies, per (block × modality), whether a
-modality is one-to-one (<code>many_to_one_k = NA</code>) or many-to-one
-(<code>many_to_one_k</code> positive), and the relative modality
-weights.</p>
+<p>Each condition is represented as a list of modality matrices. The
+<code>meta</code> data frame describes modality properties shared across
+conditions.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  Constant <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    rna     <span class="op">=</span> <span class="va">rna_constant</span>,</span>
-<span>    protein <span class="op">=</span> <span class="va">protein_constant</span>,</span>
-<span>    phospho <span class="op">=</span> <span class="va">phospho_constant</span></span>
+<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  Ctrl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    rna     <span class="op">=</span> <span class="va">rna_ctrl</span>,</span>
+<span>    protein <span class="op">=</span> <span class="va">protein_ctrl</span>,</span>
+<span>    phospho <span class="op">=</span> <span class="va">phospho_ctrl</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  Temp_shifted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    rna     <span class="op">=</span> <span class="va">rna_temp</span>,</span>
-<span>    protein <span class="op">=</span> <span class="va">protein_temp</span>,</span>
-<span>    phospho <span class="op">=</span> <span class="va">phospho_temp</span></span>
+<span>  Treat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    rna     <span class="op">=</span> <span class="va">rna_treat</span>,</span>
+<span>    protein <span class="op">=</span> <span class="va">protein_treat</span>,</span>
+<span>    phospho <span class="op">=</span> <span class="va">phospho_treat</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">block_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Constant     <span class="op">=</span> <span class="fl">5L</span>,</span>
-<span>    Temp_shifted <span class="op">=</span> <span class="fl">5L</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">modality_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  block   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Constant"</span>, <span class="st">"Temp_shifted"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  modality   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"protein"</span>, <span class="st">"phospho"</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  many_to_one_k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span>,</span>
-<span>              <span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  modality_w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
-<span>              <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  modality      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"protein"</span>, <span class="st">"phospho"</span><span class="op">)</span>,</span>
+<span>  many_to_one_k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  modality_w    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="run-gene-centric-multi-omics-clustering">3. Run gene-centric multi-omics clustering<a class="anchor" aria-label="anchor" href="#run-gene-centric-multi-omics-clustering"></a>
 </h3>
-<p>The function returns a list with <code>cluster_table</code> and
-<code>centroid_info</code>.</p>
+<p>Clustering is performed on the UMAP neighborhood graph derived from
+the gene-centric representation.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics</a></span><span class="op">(</span></span>
-<span>  blocks         <span class="op">=</span> <span class="va">blocks</span>,</span>
-<span>  block_clusters <span class="op">=</span> <span class="va">block_clusters</span>,</span>
-<span>  modality_meta  <span class="op">=</span> <span class="va">modality_meta</span>,</span>
-<span>  gene_mode      <span class="op">=</span> <span class="st">"intersection"</span>,</span>
-<span>  verbose        <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  data         <span class="op">=</span> <span class="va">data</span>,</span>
+<span>  meta         <span class="op">=</span> <span class="va">meta</span>,</span>
+<span>  k            <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  gene_mode    <span class="op">=</span> <span class="st">"intersection"</span>,</span>
+<span>  n_neighbors  <span class="op">=</span> <span class="fl">15L</span>,</span>
+<span>  verbose      <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [cluster_genes_multiomics] total runtime: 1.2 secs</span></span></code></pre>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">cluster_table</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="visualize-clusters-in-umap-space">4. Visualize clusters in UMAP space<a class="anchor" aria-label="anchor" href="#visualize-clusters-in-umap-space"></a>
+</h3>
+<p>The UMAP embedding returned by the clustering function can be
+visualized using <code><a href="../reference/plot_umap_clusters.html">plot_umap_clusters()</a></code>.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_umap_clusters.html">plot_umap_clusters</a></span><span class="op">(</span></span>
+<span>  cluster_table  <span class="op">=</span> <span class="va">cluster_table</span>,</span>
+<span>  umap_embedding <span class="op">=</span> <span class="va">res</span><span class="op">$</span><span class="va">umap_fit</span><span class="op">$</span><span class="va">embedding</span>,</span>
+<span>  point_size     <span class="op">=</span> <span class="fl">1.2</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [cluster_genes_multiomics] Block 1/2: 'Constant'</span></span>
-<span><span class="co">#&gt;   [block 'Constant'] building gene-level modality matrices...</span></span>
-<span><span class="co">#&gt;     Modality: rna</span></span>
-<span><span class="co">#&gt;     Modality: protein</span></span>
-<span><span class="co">#&gt;     Modality: phospho</span></span>
-<span><span class="co">#&gt;   [block 'Constant'] building joint feature matrix for multi-omics clustering...</span></span>
-<span><span class="co">#&gt;   [block 'Constant'] clustering genes (k = 5)...</span></span>
-<span><span class="co">#&gt; [cluster_genes_multiomics] Block 2/2: 'Temp_shifted'</span></span>
-<span><span class="co">#&gt;   [block 'Temp_shifted'] building gene-level modality matrices...</span></span>
-<span><span class="co">#&gt;     Modality: rna</span></span>
-<span><span class="co">#&gt;     Modality: protein</span></span>
-<span><span class="co">#&gt;     Modality: phospho</span></span>
-<span><span class="co">#&gt;   [block 'Temp_shifted'] building joint feature matrix for multi-omics clustering...</span></span>
-<span><span class="co">#&gt;   [block 'Temp_shifted'] clustering genes (k = 5)...</span></span>
-<span><span class="co">#&gt; [cluster_genes_multiomics] total runtime: 0.047 secs</span></span></code></pre></div>
-<p>Show outputs:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">cluster_table</span></span>
-<span><span class="va">centroid_info</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">centroid_info</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">cluster_table</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 40 × 3</span></span></span>
-<span><span class="co">#&gt;    gene   Constant Temp_shifted</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> gene1         2            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> gene10        2            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> gene11        5            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> gene12        5            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> gene13        1            2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> gene14        1            2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> gene15        2            3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> gene16        5            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> gene17        5            4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> gene18        2            3</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">centroid_info</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 30 × 13</span></span></span>
-<span><span class="co">#&gt;    cluster block    modality modality_type n_genes_cluster n_genes_used coverage</span></span>
-<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>       5 Constant phospho  many_to_one                 7            7        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>       5 Constant protein  one_to_one                  7            7        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>       5 Constant rna      one_to_one                  7            7        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>       1 Constant phospho  many_to_one                10           10        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>       1 Constant protein  one_to_one                 10           10        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>       1 Constant rna      one_to_one                 10           10        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>       2 Constant phospho  many_to_one                11           11        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>       2 Constant protein  one_to_one                 11           11        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>       2 Constant rna      one_to_one                 11           11        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>       3 Constant phospho  many_to_one                 4            4        1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 20 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: qc_method &lt;chr&gt;, mean_qc &lt;dbl&gt;, sd_qc &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   qc_member &lt;I&lt;list&gt;&gt;, centroid &lt;I&lt;list&gt;&gt;, avg_qc_score &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Gene_centric_multiomics_clustering_files/figure-html/Visualize%20clusters%20in%20UMAP%20space-1.png" class="r-plt" alt="" width="700"></p>
 </div>
+<div class="section level3">
+<h3 id="session-information">Session information<a class="anchor" aria-label="anchor" href="#session-information"></a>
+</h3>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
+<span><span class="co">## Running under: Ubuntu 22.04.5 LTS</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Matrix products: default</span></span>
+<span><span class="co">## BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0 </span></span>
+<span><span class="co">## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0  LAPACK version 3.10.0</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## locale:</span></span>
+<span><span class="co">##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span><span class="co">##  [3] LC_TIME=de_AT.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span><span class="co">##  [5] LC_MONETARY=de_AT.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span><span class="co">##  [7] LC_PAPER=de_AT.UTF-8       LC_NAME=C                 </span></span>
+<span><span class="co">##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span><span class="co">## [11] LC_MEASUREMENT=de_AT.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## time zone: Europe/Vienna</span></span>
+<span><span class="co">## tzcode source: system (glibc)</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## attached base packages:</span></span>
+<span><span class="co">## [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## other attached packages:</span></span>
+<span><span class="co">## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.2</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## loaded via a namespace (and not attached):</span></span>
+<span><span class="co">##   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           </span></span>
+<span><span class="co">##   [4] writexl_1.5.4            rlang_1.1.7              magrittr_2.0.4          </span></span>
+<span><span class="co">##   [7] clue_0.3-66              GetoptLong_1.1.0         RcppAnnoy_0.0.23        </span></span>
+<span><span class="co">##  [10] otel_0.2.0               matrixStats_1.5.0        compiler_4.5.2          </span></span>
+<span><span class="co">##  [13] reshape2_1.4.5           png_0.1-8                systemfonts_1.3.1       </span></span>
+<span><span class="co">##  [16] vctrs_0.7.1              stringr_1.6.0            pkgconfig_2.0.3         </span></span>
+<span><span class="co">##  [19] shape_1.4.6.1            crayon_1.5.3             fastmap_1.2.0           </span></span>
+<span><span class="co">##  [22] backports_1.5.0          labeling_0.4.3           caTools_1.18.3          </span></span>
+<span><span class="co">##  [25] rmarkdown_2.30           nloptr_2.2.1             ragg_1.5.0              </span></span>
+<span><span class="co">##  [28] purrr_1.2.1              xfun_0.56                cachem_1.1.0            </span></span>
+<span><span class="co">##  [31] jsonlite_2.0.0           progress_1.2.3           EnvStats_3.1.0          </span></span>
+<span><span class="co">##  [34] remaCor_0.0.20           gmp_0.7-5                BiocParallel_1.42.2     </span></span>
+<span><span class="co">##  [37] broom_1.0.12             parallel_4.5.2           prettyunits_1.2.0       </span></span>
+<span><span class="co">##  [40] cluster_2.1.8.1          R6_2.6.1                 stringi_1.8.7           </span></span>
+<span><span class="co">##  [43] bslib_0.10.0             RColorBrewer_1.1-3       limma_3.64.3            </span></span>
+<span><span class="co">##  [46] boot_1.3-32              car_3.1-5                ClusterR_1.3.6          </span></span>
+<span><span class="co">##  [49] numDeriv_2016.8-1.1      jquerylib_0.1.4          Rcpp_1.1.1              </span></span>
+<span><span class="co">##  [52] iterators_1.0.14         knitr_1.51               base64enc_0.1-6         </span></span>
+<span><span class="co">##  [55] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.2           </span></span>
+<span><span class="co">##  [58] tidyselect_1.2.1         rstudioapi_0.18.0        abind_1.4-8             </span></span>
+<span><span class="co">##  [61] yaml_2.3.12              doParallel_1.0.17        gplots_3.3.0            </span></span>
+<span><span class="co">##  [64] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-0          </span></span>
+<span><span class="co">##  [67] lattice_0.22-5           withr_3.0.2              Biobase_2.68.0          </span></span>
+<span><span class="co">##  [70] S7_0.2.1                 evaluate_1.0.5           desc_1.4.3              </span></span>
+<span><span class="co">##  [73] zip_2.3.3                circlize_0.4.17          pillar_1.11.1           </span></span>
+<span><span class="co">##  [76] BiocManager_1.30.27      carData_3.0-6            KernSmooth_2.23-26      </span></span>
+<span><span class="co">##  [79] checkmate_2.3.4          renv_1.1.7               foreach_1.5.2           </span></span>
+<span><span class="co">##  [82] stats4_4.5.2             reformulas_0.4.4         generics_0.1.4          </span></span>
+<span><span class="co">##  [85] S4Vectors_0.46.0         hms_1.1.4                scales_1.4.0            </span></span>
+<span><span class="co">##  [88] aod_1.3.3                minqa_1.2.8              gtools_3.9.5            </span></span>
+<span><span class="co">##  [91] RhpcBLASctl_0.23-42      glue_1.8.0               tools_4.5.2             </span></span>
+<span><span class="co">##  [94] fANCOVA_0.6-1            variancePartition_1.38.1 RSpectra_0.16-2         </span></span>
+<span><span class="co">##  [97] lme4_1.1-38              mvtnorm_1.3-3            fs_1.6.6                </span></span>
+<span><span class="co">## [100] grid_4.5.2               tidyr_1.3.2              rbibutils_2.4.1         </span></span>
+<span><span class="co">## [103] colorspace_2.1-2         nlme_3.1-168             Formula_1.2-5           </span></span>
+<span><span class="co">## [106] cli_3.6.5                textshaping_1.0.4        svglite_2.2.2           </span></span>
+<span><span class="co">## [109] ComplexHeatmap_2.24.1    dplyr_1.2.0              uwot_0.2.4              </span></span>
+<span><span class="co">## [112] corpcor_1.6.10           gtable_0.3.6             sass_0.4.10             </span></span>
+<span><span class="co">## [115] digest_0.6.39            BiocGenerics_0.54.1      pbkrtest_0.5.5          </span></span>
+<span><span class="co">## [118] ggrepel_0.9.6            rjson_0.2.23             htmlwidgets_1.6.4       </span></span>
+<span><span class="co">## [121] farver_2.1.2             htmltools_0.5.9          pkgdown_2.2.0           </span></span>
+<span><span class="co">## [124] lifecycle_1.0.5          GlobalOptions_0.1.3      statmod_1.5.1           </span></span>
+<span><span class="co">## [127] MASS_7.3-65</span></span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
-</h2>
-<pre><code><span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 22.04.5 LTS</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0  LAPACK version 3.10.0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
-<span><span class="co">#&gt;  [3] LC_TIME=de_AT.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
-<span><span class="co">#&gt;  [5] LC_MONETARY=de_AT.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=de_AT.UTF-8       LC_NAME=C                 </span></span>
-<span><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
-<span><span class="co">#&gt; [11] LC_MEASUREMENT=de_AT.UTF-8 LC_IDENTIFICATION=C       </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: Europe/Vienna</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; attached base packages:</span></span>
-<span><span class="co">#&gt; [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_3.5.2     tibble_3.3.0      SplineOmics_0.4.2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] Rdpack_2.6.4             bitops_1.0-9             pbapply_1.7-2           </span></span>
-<span><span class="co">#&gt;   [4] writexl_1.5.4            rlang_1.1.6              magrittr_2.0.3          </span></span>
-<span><span class="co">#&gt;   [7] clue_0.3-66              GetoptLong_1.0.5         matrixStats_1.5.0       </span></span>
-<span><span class="co">#&gt;  [10] compiler_4.5.2           reshape2_1.4.4           png_0.1-8               </span></span>
-<span><span class="co">#&gt;  [13] systemfonts_1.2.3        vctrs_0.6.5              stringr_1.5.1           </span></span>
-<span><span class="co">#&gt;  [16] pkgconfig_2.0.3          shape_1.4.6.1            crayon_1.5.3            </span></span>
-<span><span class="co">#&gt;  [19] fastmap_1.2.0            backports_1.5.0          utf8_1.2.6              </span></span>
-<span><span class="co">#&gt;  [22] caTools_1.18.3           rmarkdown_2.29           nloptr_2.2.1            </span></span>
-<span><span class="co">#&gt;  [25] ragg_1.4.0               purrr_1.1.0              xfun_0.52               </span></span>
-<span><span class="co">#&gt;  [28] cachem_1.1.0             jsonlite_2.0.0           progress_1.2.3          </span></span>
-<span><span class="co">#&gt;  [31] EnvStats_3.1.0           remaCor_0.0.18           gmp_0.7-5               </span></span>
-<span><span class="co">#&gt;  [34] BiocParallel_1.42.1      broom_1.0.8              parallel_4.5.2          </span></span>
-<span><span class="co">#&gt;  [37] prettyunits_1.2.0        cluster_2.1.8.1          R6_2.6.1                </span></span>
-<span><span class="co">#&gt;  [40] stringi_1.8.7            bslib_0.9.0              RColorBrewer_1.1-3      </span></span>
-<span><span class="co">#&gt;  [43] limma_3.64.1             car_3.1-3                boot_1.3-31             </span></span>
-<span><span class="co">#&gt;  [46] ClusterR_1.3.3           numDeriv_2016.8-1.1      jquerylib_0.1.4         </span></span>
-<span><span class="co">#&gt;  [49] Rcpp_1.1.0               iterators_1.0.14         knitr_1.50              </span></span>
-<span><span class="co">#&gt;  [52] base64enc_0.1-3          IRanges_2.42.0           Matrix_1.7-3            </span></span>
-<span><span class="co">#&gt;  [55] splines_4.5.2            tidyselect_1.2.1         rstudioapi_0.17.1       </span></span>
-<span><span class="co">#&gt;  [58] abind_1.4-8              yaml_2.3.10              doParallel_1.0.17       </span></span>
-<span><span class="co">#&gt;  [61] gplots_3.2.0             codetools_0.2-19         plyr_1.8.9              </span></span>
-<span><span class="co">#&gt;  [64] lmerTest_3.1-3           lattice_0.22-5           withr_3.0.2             </span></span>
-<span><span class="co">#&gt;  [67] Biobase_2.68.0           evaluate_1.0.4           desc_1.4.3              </span></span>
-<span><span class="co">#&gt;  [70] zip_2.3.3                circlize_0.4.16          pillar_1.11.0           </span></span>
-<span><span class="co">#&gt;  [73] BiocManager_1.30.26      carData_3.0-5            KernSmooth_2.23-26      </span></span>
-<span><span class="co">#&gt;  [76] checkmate_2.3.3          renv_1.1.5               foreach_1.5.2           </span></span>
-<span><span class="co">#&gt;  [79] stats4_4.5.2             reformulas_0.4.1         generics_0.1.4          </span></span>
-<span><span class="co">#&gt;  [82] S4Vectors_0.46.0         hms_1.1.3                scales_1.4.0            </span></span>
-<span><span class="co">#&gt;  [85] aod_1.3.3                minqa_1.2.8              gtools_3.9.5            </span></span>
-<span><span class="co">#&gt;  [88] RhpcBLASctl_0.23-42      glue_1.8.0               tools_4.5.2             </span></span>
-<span><span class="co">#&gt;  [91] fANCOVA_0.6-1            variancePartition_1.38.0 lme4_1.1-37             </span></span>
-<span><span class="co">#&gt;  [94] mvtnorm_1.3-3            fs_1.6.6                 grid_4.5.2              </span></span>
-<span><span class="co">#&gt;  [97] tidyr_1.3.1              rbibutils_2.3            colorspace_2.1-1        </span></span>
-<span><span class="co">#&gt; [100] nlme_3.1-168             Formula_1.2-5            cli_3.6.5               </span></span>
-<span><span class="co">#&gt; [103] textshaping_1.0.1        svglite_2.2.1            ComplexHeatmap_2.24.1   </span></span>
-<span><span class="co">#&gt; [106] dplyr_1.1.4              corpcor_1.6.10           gtable_0.3.6            </span></span>
-<span><span class="co">#&gt; [109] sass_0.4.10              digest_0.6.37            BiocGenerics_0.54.0     </span></span>
-<span><span class="co">#&gt; [112] pbkrtest_0.5.4           ggrepel_0.9.6            rjson_0.2.23            </span></span>
-<span><span class="co">#&gt; [115] htmlwidgets_1.6.4        farver_2.1.2             htmltools_0.5.8.1       </span></span>
-<span><span class="co">#&gt; [118] pkgdown_2.1.3            lifecycle_1.0.4          GlobalOptions_0.1.2     </span></span>
-<span><span class="co">#&gt; [121] statmod_1.5.0            MASS_7.3-65</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -473,7 +384,7 @@ weights.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

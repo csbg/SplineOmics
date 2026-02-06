@@ -48,11 +48,29 @@
 #' feature matrix used to construct the UMAP graph and clustering.
 #'
 #' @param meta
-#' Data frame describing modalities and required parameters for aggregation and
-#' weighting. Must be compatible with internal representation building helpers.
-#' At minimum, it must identify modalities and indicate whether a modality is
-#' one-to-one (gene-level) or many-to-one (feature-level) and provide the
-#' parameters required for many-to-one aggregation.
+#' Data frame with one row per modality, providing modality-level parameters
+#' required for gene-centric representation building. The data frame must
+#' contain at least the following columns:
+#'
+#' \describe{
+#'   \item{\code{modality}}{
+#'     Character scalar giving the modality identifier. Each value must match
+#'     a modality name present in \code{data[[condition]]}. The order of rows
+#'     defines the modality ordering used throughout downstream processing.}
+#'
+#'   \item{\code{many_to_one_k}}{
+#'     Integer or \code{NA}. If \code{NA}, the modality is treated as one-to-one
+#'     (gene-level) and passed through unchanged. If an integer, the modality
+#'     is treated as many-to-one (feature-level) and collapsed to gene-level
+#'     signatures using \code{many_to_one_k} global archetypes.}
+#'
+#'   \item{\code{modality_w}}{
+#'     Numeric, non-negative scalar giving the relative weight of the modality
+#'     in the joint feature space. Weights are normalized internally to sum to
+#'     one across modalities before being applied.}
+#' }
+#'
+#' Additional columns may be present but are ignored.
 #'
 #' @param k
 #' Integer. Number of gene clusters for spectral clustering.
@@ -194,10 +212,10 @@ cluster_genes_multiomics <- function(
     if (isTRUE(verbose)) {
         end_time <- Sys.time()
         elapsed <- end_time - start_time
-        message(
+        rlang::inform(c(
             "[cluster_genes_multiomics] total runtime: ",
             format(elapsed, digits = 2)
-        )
+        ))
     }
     
     list(
@@ -1274,31 +1292,42 @@ cluster_genes_multiomics <- function(
 #' Internal helper that converts all many-to-one modalities in the input data
 #' into gene-level matrices by building pattern signature representations.
 #'
-#' For each condition × modality block in \code{data}, the function inspects
-#' the modality metadata to determine whether the modality is one-to-one or
-#' many-to-one:
+#' The function processes modalities using the modality metadata in
+#' \code{meta}:
 #'
 #' \itemize{
-#'   \item{One-to-one modalities are passed through unchanged.}
+#'   \item{One-to-one modalities are passed through unchanged for each
+#'   condition.}
 #'
 #'   \item{Many-to-one modalities (e.g. site- or probe-level measurements) are
-#'   collapsed to gene-level matrices using
-#'   \code{.build_site_signatures()}, which clusters features into global
-#'   archetypes and represents each gene as a fractional signature vector.}
+#'   pooled \emph{across all conditions} for a given modality and collapsed
+#'   using \code{.build_site_signatures()}. Feature trajectories are clustered
+#'   into \code{many_to_one_k} global temporal archetypes, and each gene is
+#'   represented by a fractional signature vector over these shared
+#'   archetypes.}
 #' }
 #'
+#' For many-to-one modalities, archetypes are fit once per modality on the
+#' pooled feature matrix. Condition-specific gene signatures are obtained by
+#' temporarily treating each gene-condition pair as a distinct gene identifier
+#' during signature construction and then splitting the resulting signature
+#' matrix back into per-condition gene-level matrices.
+#'
 #' Quality-control summaries from the many-to-one clustering step are
-#' collected across all conditions and modalities and returned alongside the
-#' gene-level matrices.
+#' collected across many-to-one modalities and returned alongside the gene-
+#' level matrices. QC rows corresponding to pooled fits are labeled with
+#' \code{condition = "POOLED"}.
 #'
 #' @param data
 #' Named list of conditions. Each condition is a named list of modality
-#' matrices. Many-to-one modalities must use row names that encode gene
-#' identity (e.g. \code{<gene>_<feature>}).
+#' matrices. One-to-one modalities must use gene IDs as row names. Many-to-one
+#' modalities must use row names that encode gene identity (e.g.
+#' \code{<gene>_<feature>}).
 #'
 #' @param meta
 #' Data frame of modality metadata aligned to the modalities present in
-#' \code{data}. Must include \code{modality} and \code{many_to_one_k}.
+#' \code{data}. Must include \code{modality} and \code{many_to_one_k}. A value
+#' of \code{NA} in \code{many_to_one_k} indicates a one-to-one modality.
 #'
 #' @param verbose
 #' Logical scalar indicating whether informative messages should be emitted.
@@ -1313,12 +1342,12 @@ cluster_genes_multiomics <- function(
 #'     Nested list of gene-level matrices structured as
 #'     \code{mats_gene[[condition]][[modality]]}. One-to-one modalities are
 #'     unchanged; many-to-one modalities are replaced by gene-level signature
-#'     matrices.}
+#'     matrices whose columns correspond to shared global archetypes.}
 #'
 #'   \item{\code{many_to_one_clustering_qc}}{
-#'     Data frame of QC summaries for many-to-one feature clustering steps,
-#'     aggregated across all conditions and modalities, or \code{NULL} if no
-#'     many-to-one modalities are present.}
+#'     Data frame of QC summaries for pooled many-to-one feature clustering
+#'     steps (one per many-to-one modality), or \code{NULL} if no many-to-one
+#'     modalities are present.}
 #' }
 #' 
 .collapse_many_to_one_modalities <- function(
@@ -1327,51 +1356,86 @@ cluster_genes_multiomics <- function(
         verbose
 ) {
     cond_ids <- names(data)
-    mod_ids <- meta$modality
-    
-    mats_gene <- vector("list", length(cond_ids))
-    names(mats_gene) <- cond_ids
-    
+    mod_ids  <- meta$modality
+
+    mats_gene <- setNames(vector(
+        "list",
+        length(cond_ids)
+        ), cond_ids)
     qc_list <- list()
     
     for (cond in cond_ids) {
-        mats_cond <- vector("list", length(mod_ids))
-        names(mats_cond) <- mod_ids
+        mats_gene[[cond]] <- setNames(vector(
+            "list",
+            length(mod_ids)
+            ), mod_ids)
+    }
+    
+    for (i in seq_along(mod_ids)) {
+        m  <- mod_ids[[i]]
+        lk <- meta$many_to_one_k[[i]]
         
-        for (i in seq_along(mod_ids)) {
-            m <- mod_ids[[i]]
-            lk <- meta$many_to_one_k[[i]]
-            mat_raw <- data[[cond]][[m]]
-            
-            if (is.na(lk)) {
-                mats_cond[[m]] <- mat_raw
-                next
+        if (is.na(lk)) { 
+            # means m is a one-to-one modality and is skipped
+            for (cond in cond_ids) {
+                mats_gene[[cond]][[m]] <- data[[cond]][[m]]
             }
-            
-            rn <- rownames(mat_raw)
-            feature_to_gene <- sub("_.*$", "", rn)
-            
-            sig_obj <- .build_site_signatures(
-                modality_mat = mat_raw,
-                feature_to_gene = feature_to_gene,
-                many_to_one_k = lk
-            )
-
-            sig <- sig_obj$signatures
-            sig <- sig[order(rownames(sig)), , drop = FALSE]
-            
-            mats_cond[[m]] <- sig
-            
-            qc <- sig_obj$many_to_one_clustering_qc
-            if (is.data.frame(qc) && nrow(qc) > 0L) {
-                qc$condition <- cond
-                qc$modality <- m
-                qc$many_to_one_k <- as.integer(lk)
-                qc_list[[length(qc_list) + 1L]] <- qc
-            }
+            next
         }
         
-        mats_gene[[cond]] <- mats_cond
+        mats_m <- lapply(cond_ids, function(cond) data[[cond]][[m]])
+        names(mats_m) <- cond_ids
+        mats_m <- mats_m[!vapply(mats_m, is.null, logical(1))]
+        
+        pooled_mat <- do.call(rbind, mats_m)
+        cond_of_row <- rep(
+            names(mats_m),
+            vapply(
+                mats_m,
+                nrow,
+                integer(1)
+                )
+            )
+        
+        rn <- rownames(pooled_mat)
+        gene_raw <- sub("_.*$", "", rn)
+        
+        # “Lift” the gene IDs to be condition-specific  
+        feature_to_gene <- paste0(
+            gene_raw,
+            "__",
+            cond_of_row
+            )
+        
+        # Fit archetypes globally and build signatures
+        sig_obj <- .build_site_signatures(
+            modality_mat    = pooled_mat,
+            feature_to_gene = feature_to_gene,
+            many_to_one_k   = as.integer(lk)
+        )
+        
+        sig_all <- sig_obj$signatures
+        
+        # Split signatures back into per-condition gene matrices
+        for (cond in cond_ids) { 
+            suffix <- paste0("__", cond, "$")
+            keep <- grepl(suffix, rownames(sig_all))
+            
+            sig_c <- sig_all[keep, , drop = FALSE]
+            rownames(sig_c) <- sub(suffix, "", rownames(sig_c))
+            
+            mats_gene[[cond]][[m]] <- sig_c[order(rownames(sig_c)), ,
+                                            drop = FALSE]
+        }
+        
+        # Collect QC from the pooled clustering run
+        qc <- sig_obj$many_to_one_clustering_qc
+        if (is.data.frame(qc) && nrow(qc) > 0L) {
+            qc$condition <- "POOLED"
+            qc$modality <- m
+            qc$many_to_one_k <- as.integer(lk)
+            qc_list[[length(qc_list) + 1L]] <- qc
+        }
     }
     
     many_to_one_clustering_qc <- if (length(qc_list) > 0L) {
@@ -1610,6 +1674,18 @@ cluster_genes_multiomics <- function(
                 mat_aligned[idx[keep], ] <- mat[keep, , drop = FALSE]
             }
             
+            # Block-wise scaling: normalize average squared L2 norm per gene
+            # to 1.
+            # This stabilizes heterogeneous blocks 
+            # (different feature counts / geometries)
+            # before applying modality weights and concatenation.
+            row_norm2 <- rowSums(mat_aligned^2)
+            present <- row_norm2 > 0
+            scale_fac <- sqrt(mean(row_norm2[present]))
+            if (is.finite(scale_fac) && scale_fac > 0) {
+                mat_aligned <- mat_aligned / scale_fac
+            }
+            
             block_w <- sqrt(w[[m]])
             mat_aligned <- mat_aligned * block_w
             
@@ -1645,7 +1721,6 @@ cluster_genes_multiomics <- function(
 
 
 # Level 3 function definitions -------------------------------------------------
-
 
 
 #' Build gene-level pattern signatures from many-to-one features
@@ -1714,11 +1789,10 @@ cluster_genes_multiomics <- function(
     
     feat_map <- as.character(feature_to_gene)
     if (length(feat_map) != nrow(modality_mat)) {
-        stop(
+        rlang::abort(c(
             "`feature_to_gene` must have length equal to nrow(modality_mat). ",
-            "Mapping is positional: element i is the gene ID for row i.",
-            call. = FALSE
-        )
+            "Mapping is positional: element i is the gene ID for row i."
+        ))
     }
     
     X_scaled <- scale(modality_mat)
