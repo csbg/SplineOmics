@@ -41,7 +41,7 @@ Each release section should follow the structure below:
 
 ------------------------------------------------------------------------
 
-#### \[v0.4.3\] (in preparation)
+#### \[v0.4.3\]
 
 ##### Added
 
@@ -64,6 +64,16 @@ Each release section should follow the structure below:
   functions: create_clustering_report(), create_ora_report(), and
   create_pvc_report(); are now containing the plotting/HTML-report
   generation code for the mentioned statistical functions.
+
+- Refactored cluster_genes_multiomics. Now it takes different inputs and
+  creates joint feature vectors for the genes, creates a UMAP graph and
+  clusters on that graph with the help of spectral clustering.
+
+##### Fixed
+
+- Reviewed extract_gene_sets(), download_enrichr_databases(), verbosity
+  default value, usage of message() and stop(), removed the here library
+  from the dependencies and changed the default input path to tempdir().
 
 #### \[v0.4.2\]
 

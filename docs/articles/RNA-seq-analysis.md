@@ -466,7 +466,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/Rtmp2svI3R/file626479dafa12 .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpwxlMvB/filea6a95b4a24d1 .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -601,7 +601,7 @@ You can view the generated analysis report of the run_gsea function
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.2
+    #> [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.3
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          

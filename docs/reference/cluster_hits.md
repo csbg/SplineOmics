@@ -385,7 +385,8 @@ toy_splineomics <- list(
 class(toy_splineomics) <- "SplineOmics"
 
 toy_splineomics <- run_limma_splines(toy_splineomics)
-#> Running Levene's test both feature wise and sample wise to implicitly decide whether to use the limma array weights or not.
+#> Running Levene's test both feature wise and sample wise to implicitly
+#> • decide whether to use the limma array weights or not.
 #> No random effects: fitting model with lmFit()...
 #> Running feature wise Levene's test...
 #> 
@@ -394,12 +395,13 @@ toy_splineomics <- run_limma_splines(toy_splineomics)
 #>     (p < 0.050): 0.00% (0/8 features)
 #> No violating features found.
 #> ------------------------------------------------------------
-#> Running Levene's test across samples to detect inter-sample variance differences...
+#> Running Levene's test across samples to detect
+#> • inter-sample variance differences...
 #> Levene's test p-value (sample-level): 0.1425
 #> ✅ No strong evidence of inter-sample variance differences.
 #> ------------------------------------------------------------
 #> ✅ No strong evidence for heteroscedasticity.
-#> Proceeding WITHOUT using robust strategy.
+#> • Proceeding WITHOUT using robust strategy.
 #> ------------------------------------------------------------
 
 # Clustering configuration: fixed k per condition

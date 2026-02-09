@@ -34,8 +34,8 @@ cluster_genes_multiomics(
 
   Named list defining the multi-condition, multi-modality input data.
   The outer list corresponds to experimental conditions (e.g. control,
-  treatment, time points). Each element of the outer list must itself be
-  a named list of numeric matrices, one per data modality.
+  and treatment). Each element of the outer list must itself be a named
+  list of numeric matrices, one per data modality.
 
   For each condition, the inner list entries represent modalities and
   must share the same modality names across conditions. Each modality
@@ -43,10 +43,11 @@ cluster_genes_multiomics(
 
   One-to-one (gene-level) modality
 
-  :   Rows represent genes directly. Row names must be gene identifiers.
-      Columns represent the modality-specific representation used for
-      clustering, such as spline values at fixed time points, spline
-      coefficients, or other numeric features.
+  :   Rows represent genes directly. Row names must be gene identifiers
+      in the format: `<gene_id>`. Columns represent the
+      modality-specific representation used for clustering, such as
+      spline values at fixed time points, spline coefficients, or other
+      numeric features.
 
   Many-to-one (feature-level) modality
 
@@ -57,21 +58,42 @@ cluster_genes_multiomics(
       pattern signature vectors using an internal feature clustering
       step prior to integration.
 
-  Modality matrices may differ in their number of columns both within
-  and across conditions. After aggregation (if applicable) and
-  normalization, all condition- and modality-specific gene-level
-  matrices are aligned according to `gene_mode` and concatenated to form
-  the gene-centric feature matrix used to construct the UMAP graph and
-  clustering.
+  The \<gene_id\> parts of the rownames of all modalities across all
+  conditions should match, otherwise, the gene-centric clustering is not
+  possible! Modality matrices may differ in their number of columns both
+  within and across conditions. After aggregation (for many-to-one
+  modalities) and normalization, all condition- and modality-specific
+  gene-level matrices are aligned according to `gene_mode` and
+  concatenated to form the gene-centric feature matrix used to construct
+  the UMAP graph and clustering.
 
 - meta:
 
-  Data frame describing modalities and required parameters for
-  aggregation and weighting. Must be compatible with internal
-  representation building helpers. At minimum, it must identify
-  modalities and indicate whether a modality is one-to-one (gene-level)
-  or many-to-one (feature-level) and provide the parameters required for
-  many-to-one aggregation.
+  Data frame with one row per modality, providing modality-level
+  parameters required for gene-centric representation building. The data
+  frame must contain at least the following columns:
+
+  `modality`
+
+  :   Character scalar giving the modality identifier. Each value must
+      match a modality name present in `data[[condition]]`. The order of
+      rows defines the modality ordering used throughout downstream
+      processing.
+
+  `many_to_one_k`
+
+  :   Integer or `NA`. If `NA`, the modality is treated as one-to-one
+      (gene-level) and passed through unchanged. If an integer, the
+      modality is treated as many-to-one (feature-level) and collapsed
+      to gene-level signatures using `many_to_one_k` global archetypes.
+
+  `modality_w`
+
+  :   Numeric, non-negative scalar giving the relative weight of the
+      modality in the joint feature space. Weights are normalized
+      internally to sum to one across modalities before being applied.
+
+  Additional columns may be present but are ignored.
 
 - k:
 

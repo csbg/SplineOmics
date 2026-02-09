@@ -15,7 +15,7 @@ between time and condition."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -262,7 +262,8 @@ the condition and the time.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">toy_splineomics</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"SplineOmics"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">toy_splineomics</span> <span class="op">&lt;-</span> <span class="fu">run_limma_splines</span><span class="op">(</span><span class="va">toy_splineomics</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Running Levene's test both feature wise and sample wise to implicitly decide whether to use the limma array weights or not.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Running Levene's test both feature wise and sample wise to implicitly</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> decide whether to use the limma array weights or not.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No random effects: fitting model with lmFit()...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Running feature wise Levene's test...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
@@ -271,12 +272,13 @@ the condition and the time.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     (p &lt; 0.050): 0.00% (0/8 features)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No violating features found.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Running Levene's test across samples to detect inter-sample variance differences...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Running Levene's test across samples to detect</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> inter-sample variance differences...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Levene's test p-value (sample-level): 0.1425</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ✅ No strong evidence of inter-sample variance differences.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ✅ No strong evidence for heteroscedasticity.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Proceeding WITHOUT using robust strategy.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> Proceeding WITHOUT using robust strategy.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

@@ -8408,7 +8408,7 @@ you can see the resulting HTML report.
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] knitr_1.51        dplyr_1.2.0       SplineOmics_0.4.2
+    #> [1] knitr_1.51        dplyr_1.2.0       SplineOmics_0.4.3
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           

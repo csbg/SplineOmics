@@ -205,7 +205,8 @@ res <- cluster_genes_multiomics(
 )
 ```
 
-    ## [cluster_genes_multiomics] total runtime: 1.2 secs
+    ## [cluster_genes_multiomics] total runtime: 
+    ## • 1 secs
 
 ``` r
 cluster_table <- res$cluster_table
@@ -258,7 +259,7 @@ sessionInfo()
     ## [1] stats     graphics  grDevices datasets  utils     methods   base     
     ## 
     ## other attached packages:
-    ## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.2
+    ## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.3
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           

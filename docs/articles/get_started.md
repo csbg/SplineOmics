@@ -496,7 +496,7 @@ plots <- SplineOmics::explore_data(
 #> Making cv plots...
 #> 
 #>  Info Exploratory data analysis completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpkMBTQb/file60b4e6573c .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f8217c711a .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -689,7 +689,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpkMBTQb/file60b47164ddd5 .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f81b2d6c9c .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -941,7 +941,7 @@ options under the Feedback section of the README on GitHub. Thank you!
     #>  [1] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      
     #>  [4] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.1 
     #>  [7] generics_0.1.4       knitr_1.51           dplyr_1.2.0         
-    #> [10] SplineOmics_0.4.2   
+    #> [10] SplineOmics_0.4.3   
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          

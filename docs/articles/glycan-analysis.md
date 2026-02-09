@@ -423,7 +423,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/Rtmp2gFq4v/file611c616cfdf0 .
+#>  Your HTML reports are located in the directory:  /tmp/Rtmpxx0wDt/filea5605be6602c .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -461,7 +461,7 @@ contains an interaction effect).
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] compositions_2.0-9 knitr_1.51         dplyr_1.2.0        SplineOmics_0.4.2 
+    #> [1] compositions_2.0-9 knitr_1.51         dplyr_1.2.0        SplineOmics_0.4.3 
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] RColorBrewer_1.1-3       tensorA_0.36.2.1         rstudioapi_0.18.0       

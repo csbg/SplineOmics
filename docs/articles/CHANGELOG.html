@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,7 +137,7 @@ future.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="v0-4-3-in-preparation">[v0.4.3] (in preparation)<a class="anchor" aria-label="anchor" href="#v0-4-3-in-preparation"></a>
+<h4 id="v0-4-3">[v0.4.3]<a class="anchor" aria-label="anchor" href="#v0-4-3"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
@@ -164,6 +164,20 @@ generation for: cluster_hits(), run_ora(), and find_pvc(). Therefore,
 the new functions: create_clustering_report(), create_ora_report(), and
 create_pvc_report(); are now containing the plotting/HTML-report
 generation code for the mentioned statistical functions.</p></li>
+<li><p>Refactored cluster_genes_multiomics. Now it takes different
+inputs and creates joint feature vectors for the genes, creates a UMAP
+graph and clusters on that graph with the help of spectral
+clustering.</p></li>
+</ul>
+</div>
+<div class="section level5">
+<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+</h5>
+<ul>
+<li>Reviewed extract_gene_sets(), download_enrichr_databases(),
+verbosity default value, usage of message() and stop(), removed the here
+library from the dependencies and changed the default input path to
+tempdir().</li>
 </ul>
 </div>
 </div>
@@ -186,7 +200,7 @@ checks</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a>
+<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
 </h5>
 <ul>
 <li><p><code><a href="../reference/cluster_hits.html">cluster_hits()</a></code>: cT and cDT results sheet
@@ -218,7 +232,7 @@ vignette was added yet. This will be done in a future version.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a>
+<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
 </h5>
 <ul>
 <li><p>use_array_weights behavior for variancePartition linear mixed
@@ -290,7 +304,7 @@ for plots.</p></li>
 <h4 id="v0-3-3">[v0.3.3]<a class="anchor" aria-label="anchor" href="#v0-3-3"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-3">Fixed<a class="anchor" aria-label="anchor" href="#fixed-3"></a>
+<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
 </h5>
 <ul>
 <li>Bugs occuring in the functions extract_data(), explore_data(), and
@@ -322,7 +336,7 @@ HTML report.</li>
 <h4 id="v0-3-2">[v0.3.2]<a class="anchor" aria-label="anchor" href="#v0-3-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-4"></a>
+<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
 </h5>
 <ul>
 <li>The cluster_hits() function now does not modify the gene symbols
@@ -399,7 +413,7 @@ run.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-5">Fixed<a class="anchor" aria-label="anchor" href="#fixed-5"></a>
+<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
 </h5>
 <ul>
 <li><p>Some documentation was outdated or too vague. Improved
@@ -507,7 +521,7 @@ test.</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-6">Fixed<a class="anchor" aria-label="anchor" href="#fixed-6"></a>
+<h5 id="fixed-7">Fixed<a class="anchor" aria-label="anchor" href="#fixed-7"></a>
 </h5>
 <ul>
 <li><p>Red spline curves: Before, it was just generated with the help of
@@ -534,7 +548,7 @@ seemingly had no effect. This was now fixed.</p></li>
 <h4 id="section-1">[0.2.0] - 2025-05-08<a class="anchor" aria-label="anchor" href="#section-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="fixed-7">Fixed<a class="anchor" aria-label="anchor" href="#fixed-7"></a>
+<h5 id="fixed-8">Fixed<a class="anchor" aria-label="anchor" href="#fixed-8"></a>
 </h5>
 <ul>
 <li><p>Bug that prevented the generation of the double spline plots when
@@ -666,7 +680,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="fixed-8">Fixed<a class="anchor" aria-label="anchor" href="#fixed-8"></a>
+<h5 id="fixed-9">Fixed<a class="anchor" aria-label="anchor" href="#fixed-9"></a>
 </h5>
 <ul>
 <li>Small bug that made it impossible having no treatment label for a
@@ -739,7 +753,7 @@ in a separate field.</li>
 and 3).</li>
 </ul>
 <div class="section level5">
-<h5 id="fixed-9">Fixed<a class="anchor" aria-label="anchor" href="#fixed-9"></a>
+<h5 id="fixed-10">Fixed<a class="anchor" aria-label="anchor" href="#fixed-10"></a>
 </h5>
 <ul>
 <li>A few smaller visual things for the HTML reports.</li>
