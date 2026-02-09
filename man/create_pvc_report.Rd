@@ -51,3 +51,75 @@ For each condition level, the function subsets \code{splineomics$data} and
 calls \code{generate_report_html()} with the plots, metadata, and report header
 settings derived from \code{pvc_results} and \code{splineomics}.
 }
+\examples{
+## Runnable example using packaged extdata (small subset for speed)
+data_in <- readRDS(
+  xzfile(
+    system.file(
+      "extdata",
+      "phosphoproteomics_data.rds.xz",
+      package = "SplineOmics"
+    )
+  )
+)
+
+meta <- read.csv(
+  system.file(
+    "extdata",
+    "phosphoproteomics_meta.csv",
+    package = "SplineOmics"
+  ),
+  stringsAsFactors = FALSE
+)
+
+first_na_col <- which(is.na(data_in[1, ]))[1]
+annotation_all <- data_in[, (first_na_col + 1):ncol(data_in), drop = FALSE]
+
+## Extract a small feature subset to keep examples fast
+data_mat <- SplineOmics::extract_data(
+  data = data_in,
+  feature_name_columns = c("T..Gene"),
+  use_row_index = TRUE,
+  top_row = 1,
+  bottom_row = 50,
+  right_col = 36,
+  left_col = 1
+)
+
+## IMPORTANT: subset annotation to match the selected features
+keep_ids <- rownames(data_mat)
+annotation <- annotation_all[
+    annotation_all$T..Gene \%in\% keep_ids, , drop = FALSE
+    ]
+annotation <- annotation[
+    match(keep_ids, annotation$T..Gene), , drop = FALSE
+    ]
+
+splineomics <- SplineOmics::create_splineomics(
+  data = data_mat,
+  meta = meta,
+  annotation = annotation,
+  condition = "Phase",
+  meta_batch_column = "Reactor"
+)
+
+pvc_results <- SplineOmics::find_pvc(
+  splineomics = splineomics,
+  alphas = 0.025,
+  padjust_method = "BH",
+  support = 1
+)
+
+report_dir <- file.path(tempdir(), "pvc_report_example")
+dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+
+out <- SplineOmics::create_pvc_report(
+  splineomics = splineomics,
+  pvc_results = pvc_results,
+  verbose = FALSE,
+  report_dir = report_dir
+)
+
+names(out)
+
+}

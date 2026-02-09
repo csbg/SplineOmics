@@ -18,8 +18,8 @@
 #'
 #' @param data
 #' Named list defining the multi-condition, multi-modality input data.
-#' The outer list corresponds to experimental conditions (e.g. control,
-#' treatment, time points). Each element of the outer list must itself be a
+#' The outer list corresponds to experimental conditions (e.g. control, and
+#' treatment). Each element of the outer list must itself be a
 #' named list of numeric matrices, one per data modality.
 #'
 #' For each condition, the inner list entries represent modalities and must
@@ -28,7 +28,8 @@
 #'
 #' \describe{
 #'   \item{One-to-one (gene-level) modality}{Rows represent genes directly.
-#'   Row names must be gene identifiers. Columns represent the
+#'   Row names must be gene identifiers in the format: \code{<gene_id>}.
+#'   Columns represent the
 #'   modality-specific representation used for clustering, such as spline
 #'   values at fixed time points, spline coefficients, or other numeric
 #'   features.}
@@ -40,9 +41,12 @@
 #'   pattern signature vectors using an internal feature clustering step prior
 #'   to integration.}
 #' }
-#'
+#' 
+#' The <gene_id> parts of the rownames of all modalities across all conditions
+#' should match, otherwise, the gene-centric clustering is not possible!
 #' Modality matrices may differ in their number of columns both within and
-#' across conditions. After aggregation (if applicable) and normalization,
+#' across conditions. After aggregation (for many-to-one modalities) and
+#' normalization,
 #' all condition- and modality-specific gene-level matrices are aligned
 #' according to \code{gene_mode} and concatenated to form the gene-centric
 #' feature matrix used to construct the UMAP graph and clustering.

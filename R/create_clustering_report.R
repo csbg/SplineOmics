@@ -96,6 +96,51 @@
 #'
 #' The returned plots are invisibly written to disk as part of the report
 #' generation process.
+#' 
+#' @examples
+#' ## Minimal toy example for report generation
+#'
+#' ## Fake SplineOmics object (only required slots populated)
+#' splineomics <- list(
+#'   data = matrix(rnorm(20), nrow = 5),
+#'   meta = data.frame(
+#'     condition = rep(c("A", "B"), length.out = 5),
+#'     time = seq_len(5)
+#'   ),
+#'   condition = "condition",
+#'   mode = "timecourse",
+#'   spline_params = list(),
+#'   report_info = list(),
+#'   design = ~ condition,
+#'   meta_batch_column = NULL,
+#'   meta_batch2_column = NULL,
+#'   feature_name_columns = NULL,
+#'   annotation = NULL,
+#'   homosc_violation_result = list(
+#'     violation = FALSE,
+#'     percent_violated = 0
+#'   )
+#' )
+#'
+#' ## Fake report payload
+#' report_payload <- list(
+#'   splineomics = splineomics,
+#'   all_levels_clustering = list(),
+#'   genes = paste0("gene", seq_len(5)),
+#'   predicted_timecurves = array(0, dim = c(5, 5, 2)),
+#'   category_2_and_3_hits = list(),
+#'   adj_pthresh_time_effect = 0.05,
+#'   adj_pthresh_avrg_diff_conditions = 0.05,
+#'   adj_pthresh_interaction_condition_time = 0.05,
+#'   min_effect_size = 0
+#' )
+#'
+#' ## Generate report (writes to temp directory)
+#' plots <- create_clustering_report(
+#'   report_payload = report_payload,
+#'   report_dir = tempdir(),
+#'   verbose = FALSE
+#' )
 #'
 #' @export
 #' 
@@ -125,6 +170,7 @@ create_clustering_report <- function(
         eval,
         parent.frame()
     )
+    splineomics <- report_payload[["splineomics"]]
     meta <- splineomics[["meta"]]
     condition <- splineomics[["condition"]]
     args[["meta"]]      <- meta
@@ -139,7 +185,6 @@ create_clustering_report <- function(
         mustWork = FALSE
     )
     
-    splineomics <- report_payload[["splineomics"]]
     data <- splineomics[["data"]]
     mode <- splineomics[["mode"]]
     spline_params <- splineomics[["spline_params"]]
@@ -233,10 +278,12 @@ create_clustering_report <- function(
         max_hit_number = max_hit_number,
         verbose = verbose
     )
-    print_info_message(
-        message_prefix = "Clustering the hits",
-        report_dir = report_dir
-    )
+    if (verbose) {
+        print_info_message(
+            message_prefix = "Clustering the hits",
+            report_dir = report_dir
+        )
+    }
     plots
 }
 

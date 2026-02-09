@@ -353,62 +353,51 @@ extract_effects <- function(formula_string) {
 #' @importFrom stats residuals
 #'
 check_homoscedasticity_violation <- function(
-    data,
-    meta,
-    design,
-    design2design_matrix_result,
-    condition,
-    use_random_effects = FALSE,
-    data_type = "other-omics",
-    p_threshold = 0.05,
-    fraction_threshold = 0.1) {
-    message(paste(
+        data,
+        meta,
+        design,
+        design2design_matrix_result,
+        condition,
+        use_random_effects = FALSE,
+        data_type = "other-omics",
+        p_threshold = 0.05,
+        fraction_threshold = 0.1
+) {
+    rlang::inform(c(
         "Running Levene's test both feature wise and sample wise to implicitly",
         "decide whether to use the limma array weights or not."
     ))
-
+    
     if (use_random_effects) {
-        message(
-            "Checking for heteroscedasticity violation with Levene's test in
-      the presence of random effects is currently out of order. Hopefully,
-      it will be available in future versions of SplineOmics"
-        )
-
+        rlang::inform(c(
+            "Checking for heteroscedasticity violation with Levene's test in",
+            "the presence of random effects is currently out of order.",
+            "Hopefully, it will be available in future versions of SplineOmics."
+        ))
+        
         return(list(
-            violation = FALSE, # Single Boolean flag
+            violation = FALSE,
             bp_df = NULL
         ))
-
-        # message("Random effects detected: fitting model with dream()...")
-        #
-        # colnames(data) <- rownames(meta)   # dream requires this format
-        #
-        # # Fit dream model
-        # fit <- variancePartition::dream(
-        #   exprObj = data,
-        #   formula = stats::as.formula(design),
-        #   data = design2design_matrix_result[["meta"]],
-        #   ddf = NULL
-        # )
-        # fit <- variancePartition::eBayes(fit = fit)
     } else {
-        message("No random effects: fitting model with lmFit()...")
-
-        # Fit limma model
+        rlang::inform(
+            "No random effects: fitting model with lmFit()..."
+        )
+        
         fit <- limma::lmFit(
             object = data,
             design = design2design_matrix_result[["design_matrix"]]
         )
         fit <- limma::eBayes(fit = fit)
     }
-
-    # 2. Extract residuals   (# residuals: features x samples)
+    
+    # Extract residuals (features x samples)
     residuals_matrix <- stats::residuals(
         fit,
         y = data
     )
-
-    # Run Levene’s test feature-wise
+    
+    # Feature-wise Levene's test
     featurewise_levene_result <- check_featurewise_heteroscedasticity_levene(
         residuals_matrix = residuals_matrix,
         meta = meta,
@@ -416,60 +405,75 @@ check_homoscedasticity_violation <- function(
         p_threshold = p_threshold,
         fraction_threshold = fraction_threshold
     )
-
+    
     bp_df <- featurewise_levene_result$bp_df
     fraction_violated <- featurewise_levene_result$fraction_violated
     feature_wise_violation <- featurewise_levene_result$feature_wise_violation
-
-    # Run sample-wise Levene's test
+    
+    # Sample-wise Levene's test
     groupwise_variation_flag <- check_samplewise_heteroscedasticity_levene(
         residuals_matrix = residuals_matrix,
         p_threshold = p_threshold
     )
-
-    # Combine decision
+    
+    # Combined decision
     violation <- feature_wise_violation || groupwise_variation_flag
-
-    # Report decision with detailed reasoning
-    message("------------------------------------------------------------")
+    
+    rlang::inform(
+        "------------------------------------------------------------"
+    )
+    
     if (violation) {
-        message(
-            "\u2757 Heteroscedasticity detected. Proceeding with",
-            "robust strategy."
-        )
-
-        reason <- switch(paste(
+        rlang::inform(c(
+            "\u2757 Heteroscedasticity detected.",
+            "Proceeding with robust strategy."
+        ))
+        
+        reason_key <- interaction(
             feature_wise_violation,
             groupwise_variation_flag,
             sep = "-"
-        ),
-        "TRUE-TRUE"  = "Both feature-wise & sample-wise tests show violation.",
-        "TRUE-FALSE" = "Feature-wise test indicated violation.",
-        "FALSE-TRUE" = "Sample-wise test indicated violation."
         )
-        message(paste("Reason:", reason))
-
+        
+        reason <- switch(
+            as.character(reason_key),
+            "TRUE-TRUE"  = "Both feature- & sample-wise tests show violation.",
+            "TRUE-FALSE" = "Feature-wise test indicated violation.",
+            "FALSE-TRUE" = "Sample-wise test indicated violation."
+        )
+        
+        rlang::inform(
+            c("Reason:", reason)
+        )
+        
         if (data_type == "rna-seq") {
-            message("\u27A1\uFE0F  Using robust RNA-seq strategy:")
-            message("voomWithQualityWeights() to downweight noisy samples.")
+            rlang::inform(c(
+                "\u27A1\uFE0F  Using robust RNA-seq strategy:",
+                "voomWithQualityWeights() to downweight noisy samples."
+            ))
         } else {
-            message("\u27A1\uFE0F  Using robust modeling strategy:")
-            message(
-                "arrayWeights() and eBayes(robust = TRUE) to stabilize",
-                "variance."
-                )
+            rlang::inform(c(
+                "\u27A1\uFE0F  Using robust modeling strategy:",
+                "arrayWeights() and eBayes(robust = TRUE)",
+                " to stabilize variance."
+            ))
         }
     } else {
-        message("\u2705 No strong evidence for heteroscedasticity.")
-        message("Proceeding WITHOUT using robust strategy.")
+        rlang::inform(c(
+            "\u2705 No strong evidence for heteroscedasticity.",
+            "Proceeding WITHOUT using robust strategy."
+        ))
     }
-    message("------------------------------------------------------------\n")
-
-    return(list(
+    
+    rlang::inform(
+        "------------------------------------------------------------"
+    )
+    
+    list(
         violation = violation,
         bp_df = bp_df,
         percent_violated = 100 * fraction_violated
-    ))
+    )
 }
 
 
@@ -680,16 +684,17 @@ check_featurewise_heteroscedasticity_levene <- function(
 #' @importFrom car leveneTest
 #'
 check_samplewise_heteroscedasticity_levene <- function(
-    residuals_matrix,
-    p_threshold = 0.05) {
-    message(paste(
-        "Running Levene's test across samples to detect inter-sample variance",
-        "differences..."
+        residuals_matrix,
+        p_threshold = 0.05
+        ) {
+    rlang::inform(c(
+        "Running Levene's test across samples to detect",
+        "inter-sample variance differences..."
     ))
-
+    
     # Transpose: rows = samples, columns = features
     sample_residuals <- t(residuals_matrix)
-
+    
     # Stack into long format
     long_data <- data.frame(
         residual = as.vector(sample_residuals),
@@ -700,26 +705,32 @@ check_samplewise_heteroscedasticity_levene <- function(
             )
         )
     )
-
+    
     # Run Levene’s test across samples
     levene_res <- car::leveneTest(
         residual ~ sample,
         data = long_data
     )
+    
     pval <- levene_res[["Pr(>F)"]][1]
-
-    message(sprintf("Levene's test p-value (sample-level): %.4g", pval))
-
+    
+    rlang::inform(
+        sprintf(
+            "Levene's test p-value (sample-level): %.4g",
+            pval
+        )
+    )
+    
     if (!is.na(pval) && pval < p_threshold) {
-        message(paste(
+        rlang::inform(c(
             "\u2757 Evidence of heteroscedasticity across samples",
-            "(violation detected).\n"
+            "(violation detected)."
         ))
-        return(TRUE)
+        TRUE
     } else {
-        message(
-            "\u2705 No strong evidence of inter-sample variance differences.\n"
-            )
-        return(FALSE)
+        rlang::inform(
+            "\u2705 No strong evidence of inter-sample variance differences."
+        )
+        FALSE
     }
 }

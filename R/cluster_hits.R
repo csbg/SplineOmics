@@ -584,7 +584,7 @@ check_inputs_cluster_hits <- function(
     min_cluster_r2
     ) {
     if (!is.list(min_effect_size)) {
-        stop_call_false("`min_effect_size` must be a list.")
+        rlang::abort("`min_effect_size` must be a list.")
     }
 
     allowed_names <- c(
@@ -597,7 +597,7 @@ check_inputs_cluster_hits <- function(
     # names must be a subset of the allowed set (no extras)
     if (length(nm) > 0 && !all(nm %in% allowed_names)) {
         bad <- setdiff(nm, allowed_names)
-        stop_call_false(paste(
+        rlang::abort(c(
             "`min_effect_size` has unknown names:",
             paste(bad, collapse = ", ")
         ))
@@ -610,7 +610,7 @@ check_inputs_cluster_hits <- function(
     for (n in intersect(nm, allowed_names)) {
         val <- min_effect_size[[n]]
         if (!is.numeric(val) || length(val) != 1L) {
-            stop_call_false(paste0(
+            rlang::abort(c(
                 "`min_effect_size$", n, "` must be one numeric value."
             ))
         }
@@ -622,7 +622,7 @@ check_inputs_cluster_hits <- function(
         length(min_cluster_r2) != 1L ||
         min_cluster_r2 < 0 ||
         min_cluster_r2 >= 1) {
-        stop(paste(
+        rlang::abort(c(
             "min_cluster_r2 must be a float >=0 and <1 but is",
             min_cluster_r2
             ))
