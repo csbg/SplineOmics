@@ -50,6 +50,18 @@
 #' all condition- and modality-specific gene-level matrices are aligned
 #' according to \code{gene_mode} and concatenated to form the gene-centric
 #' feature matrix used to construct the UMAP graph and clustering.
+#' 
+#' When multiple conditions are supplied, many-to-one modalities are processed
+#' by pooling all feature-level observations across conditions prior to
+#' constructing gene-level pattern signatures. This means that the global
+#' archetype basis used for feature aggregation is learned jointly across
+#' conditions.
+#'
+#' As a consequence, gene representations from different conditions are
+#' expressed in a shared feature space, enabling direct comparison of gene
+#' trajectories across conditions. Running the function separately for each
+#' condition would instead learn independent archetype bases and may therefore
+#' produce different gene-level representations for many-to-one modalities.
 #'
 #' @param meta
 #' Data frame with one row per modality, providing modality-level parameters
@@ -103,18 +115,36 @@
 #' \describe{
 #'   \item{\code{cluster_table}}{A tibble with one row per gene and columns
 #'   \code{gene} and \code{cluster}.}
-#'
-#'   \item{\code{centroid_info}}{A tibble summarizing modality-specific cluster
-#'   centroids and within-cluster QC. The centroid representation is stored as a
-#'   list-column.}
-#'
+#'   \item{\code{centroid_info}}{
+#'     A tibble with one row per \code{(condition, modality, cluster)} that
+#'     summarizes cluster centroids, block coverage, and within-cluster
+#'     coherence statistics. The centroid is stored as a list-column and its
+#'     interpretation depends on modality type: for one-to-one modalities the
+#'     centroid is a mean normalized trajectory/feature vector (typically
+#'     row-wise z-scored), whereas for many-to-one modalities the centroid is a
+#'     raw archetype mixture vector (signature fractions over
+#''     \code{many_to_one_k} global archetypes; not Hellinger-transformed) and
+#'     therefore sums to 1 when defined. Coherence is reported via
+#'     \code{qc_method} and \code{mean_qc}/\code{sd_qc}, computed in the
+#'     normalized clustering space (Pearson R\eqn{^2} for one-to-one,
+#'     Bhattacharyya coefficient in Hellinger space for many-to-one).
+#'     The columns \code{centroid_type} and \code{centroid_feature_names}
+#'     provide machine-readable metadata for plotting the centroid vector.
+#'   }
 #'   \item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL}) with QC
 #'   diagnostics for many-to-one feature clustering steps, if any are present.}
-#'
-#'   \item{\code{umap_fit}}{The object returned by \code{uwot::umap()},
-#'   including \code{$embedding} (genes \eqn{\times} \code{n_components}) and,
-#'   if requested via \code{ret_extra}, \code{$fgraph} (the UMAP fuzzy graph
-#'   used for spectral clustering).}
+#'   \item{\code{many_to_one_archetypes}}{
+#'     A named list (or \code{NULL}) with the global archetypes learned for each
+#'     many-to-one modality. Archetypes are fit once per modality on pooled
+#'     feature-level trajectories across all supplied conditions.
+#'     Each entry is keyed by modality name and contains:
+#'     \code{archetypes} (a \code{k x p} numeric matrix of archetype patterns),
+#'     \code{k} (the number of archetypes), and \code{feature_names}
+#'     (column names for the \code{p} features / time points).}
+#'   \item{\code{umap_fit}}{
+#'     The object returned by \code{uwot::umap()}, including \code{$embedding}
+#'     (genes x \code{n_components}) and \code{$fgraph} (the UMAP fuzzy graph)
+#'     when requested via \code{ret_extra}.}
 #' }
 #'
 #' @examples
@@ -202,6 +232,7 @@ cluster_genes_multiomics <- function(
 
     centroid_info <- .compute_centroids(
         mats_norm = rep$mats_norm,
+        mats_gene = rep$mats_gene,
         cl        = cl,
         meta      = rep$aligned_meta
     )
@@ -231,6 +262,7 @@ cluster_genes_multiomics <- function(
             } else {
                 tibble::as_tibble(rep$many_to_one_clustering_qc)
             },
+        many_to_one_archetypes = rep$many_to_one_archetypes,
         umap_fit = fit
     )
 }
@@ -472,6 +504,10 @@ cluster_genes_multiomics <- function(
 #'   \item{\code{many_to_one_clustering_qc}}{
 #'     Data frame of QC diagnostics for many-to-one feature clustering steps,
 #'     or \code{NULL} if no many-to-one modalities are present.}
+#'     
+#'   \item{\code{many_to_one_archetypes}}{
+#'     list keyed by modality, each containing archetypes (k×T), k,
+#'      and feature_names}
 #' }
 #' 
 .build_gene_centric_representation <- function(
@@ -493,12 +529,9 @@ cluster_genes_multiomics <- function(
         meta = aligned_meta,
         verbose = verbose
     )
-    
-    mats_gene <- res_gene_level$mats_gene
-    many_to_one_qc <- res_gene_level$many_to_one_clustering_qc
-    
+
     mats_norm <- .normalize_gene_level_modalities(
-        mats_gene = mats_gene,
+        mats_gene = res_gene_level$mats_gene,
         meta = aligned_meta,
         verbose = verbose
     )
@@ -516,12 +549,14 @@ cluster_genes_multiomics <- function(
     )
     
     list(
-        X = X_res$X,
-        gene_ids = gene_ids,
-        feature_index = X_res$feature_index,
-        mats_norm = mats_norm,
-        aligned_meta = aligned_meta,
-        many_to_one_clustering_qc = many_to_one_qc
+        X                         = X_res$X,
+        gene_ids                  = gene_ids,
+        feature_index             = X_res$feature_index,
+        mats_norm                 = mats_norm,
+        mats_gene                 = res_gene_level$mats_gene,
+        aligned_meta              = aligned_meta,
+        many_to_one_clustering_qc = res_gene_level$many_to_one_clustering_qc,
+        many_to_one_archetypes    = res_gene_level$many_to_one_archetypes
     )
 }
 
@@ -628,37 +663,29 @@ cluster_genes_multiomics <- function(
 #' @noRd
 #'
 #' @description
-#' Internal helper that summarizes the resulting gene clusters in the original
-#' normalized feature spaces for each condition and modality.
+#' Internal helper that summarizes the resulting gene clusters for each
+#' condition and modality by computing cluster centroids for downstream
+#' visualization together with within-cluster coherence (QC) statistics.
 #'
-#' For every condition × modality block in \code{mats_norm}, the function:
-#'
-#' \itemize{
-#'   \item{Computes a cluster centroid representation for each gene cluster.}
-#'   \item{Computes within-cluster coherence (QC) for each member gene relative
-#'   to its cluster centroid using \code{.compute_cluster_centroids_qc()}.}
-#'   \item{Tracks coverage, i.e. the fraction of genes in each cluster that
-#'   are present in the current condition × modality block. This is relevant
-#'   when \code{gene_mode = "union"} was used upstream and some genes are
-#'   missing from certain blocks.}
-#' }
-#'
-#' The QC method depends on the modality type:
-#'
-#' \itemize{
-#'   \item{\code{"Pearson R2"}} for one-to-one modalities (trajectory-like
-#'   features).
-#'   \item{\code{"BC(HD)"}} for many-to-one modalities represented as
-#'   Hellinger-transformed signature vectors.
-#' }
-#'
-#' The returned table is designed for downstream reporting and ranking of
-#' clusters by coherence.
+#' The function operates on condition × modality blocks and returns a
+#' summary table describing cluster centroids, cluster coverage within each
+#' block, and QC statistics measuring how well cluster members align with
+#' their centroids.
 #'
 #' @param mats_norm
 #' Nested list of normalized gene-level matrices structured as
 #' \code{mats_norm[[condition]][[modality]]}. Row names are gene IDs; columns
-#' are modality-specific features.
+#' are modality-specific features. For many-to-one modalities, these matrices
+#' are expected to be Hellinger-transformed signature representations (e.g.,
+#' \code{sqrt(p)}).
+#'
+#' @param mats_gene
+#' Nested list of gene-level matrices prior to modality-specific normalization,
+#' structured as \code{mats_gene[[condition]][[modality]]}. For one-to-one
+#' modalities, these are the original gene-level representations (e.g.
+#' trajectories). For many-to-one modalities, these are signature fraction
+#' matrices \code{p} (non-negative rows summing to 1) used to compute
+#' interpretable centroid mixtures over archetypes.
 #'
 #' @param cl
 #' Integer vector of gene cluster assignments. \code{names(cl)} must be gene
@@ -666,8 +693,8 @@ cluster_genes_multiomics <- function(
 #'
 #' @param meta
 #' Data frame of modality metadata aligned to the modalities used in
-#' \code{mats_norm}. Must contain at least \code{modality} and
-#' \code{many_to_one_k} to determine modality type.
+#' \code{mats_norm} and \code{mats_gene}. Must contain at least
+#' \code{modality} and \code{many_to_one_k} to determine modality type.
 #'
 #' @return
 #' A data frame with one row per condition, modality, and gene cluster.
@@ -678,25 +705,41 @@ cluster_genes_multiomics <- function(
 #'   \item{\code{modality}}{Modality identifier.}
 #'   \item{\code{modality_type}}{Either \code{"one_to_one"} or
 #'   \code{"many_to_one"}.}
+#'   \item{\code{centroid_type}}{
+#'     String describing the interpretation of the \code{centroid} list-column:
+#'     \code{"trajectory_norm"} for one-to-one modalities (centroid in the
+#'     normalized trajectory/feature space) and \code{"signature_fraction"} for
+#'     many-to-one modalities (centroid is a fraction vector over archetypes).}
+#'   \item{\code{centroid_feature_names}}{
+#'     List-column of character vectors giving the feature names corresponding
+#'     to the centroid coordinates. For one-to-one modalities this typically
+#'     corresponds to time-grid points or coefficient names; for many-to-one
+#'     modalities this corresponds to archetype identifiers (e.g.
+#'     \code{"cluster_1"}, \code{"cluster_2"}, ...).}
 #'   \item{\code{cluster}}{Cluster label.}
 #'   \item{\code{n_genes_cluster}}{Number of genes assigned to the cluster.}
 #'   \item{\code{n_genes_used}}{Number of genes from the cluster present in
-#'   the current block.}
+#'   the current condition × modality block used to compute the centroid.}
 #'   \item{\code{coverage}}{Fraction \code{n_genes_used / n_genes_cluster}.}
 #'   \item{\code{qc_method}}{QC method used (\code{"Pearson R2"} or
 #'   \code{"BC(HD)"}).}
-#'   \item{\code{mean_qc}}{Mean QC value across member genes.}
-#'   \item{\code{sd_qc}}{Standard deviation of QC values across member genes.}
-#'   \item{\code{qc_member}}{List-column of per-gene QC values.}
-#'   \item{\code{centroid}}{List-column of centroid vectors in the modality
-#'   feature space.}
+#'   \item{\code{mean_qc}}{Mean QC value across member genes (computed in the
+#'   normalized/clustering space).}
+#'   \item{\code{sd_qc}}{Standard deviation of QC values across member genes
+#'   (computed in the normalized/clustering space).}
+#'   \item{\code{qc_member}}{List-column of per-gene QC values (computed in the
+#'   normalized/clustering space).}
+#'   \item{\code{centroid}}{
+#'     List-column of numeric centroid vectors. For one-to-one modalities this
+#'     is a centroid in the normalized modality feature space; for many-to-one
+#'     modalities this is an interpretable centroid mixture vector of raw
+#'     signature fractions over archetypes (rows sum to 1 when defined).}
 #' }
-#' 
 .compute_centroids <- function(
         mats_norm,
+        mats_gene,
         cl,
         meta
-        
 ) {
     cond_ids <- names(mats_norm)
     mod_ids <- meta$modality
@@ -705,22 +748,32 @@ cluster_genes_multiomics <- function(
     row_i <- 0L
     
     for (cond in cond_ids) {
-        mats_cond <- mats_norm[[cond]]
-        
         for (m in mod_ids) {
-            mat_m <- mats_cond[[m]]
-            
             lk <- meta$many_to_one_k[meta$modality == m][1L]
-            modality_type <- if (is.na(lk)) "one_to_one" else "many_to_one"
+            is_m2o <- !is.na(lk)
             
-            qc_method <- if (modality_type == "one_to_one") {
-                "Pearson R2"
-            } else {
-                "BC(HD)"
-            }
+            modality_type <- 
+                if (!is_m2o) "one_to_one" else "many_to_one"
+            centroid_type <- 
+                if (!is_m2o) "trajectory_norm" else "signature_fraction"
             
+            # Use normalized matrix for QC (clustering space)
+            mat_m_norm <- mats_norm[[cond]][[m]]
+            
+            # Use gene-level (pre-normalization) matrix for plotting centroids
+            # in m2o
+            mat_m_gene <- mats_gene[[cond]][[m]]
+            
+            # Choose centroid matrix + feature names depending on modality type
+            mat_centroid <- if (!is_m2o) mat_m_norm else mat_m_gene
+            centroid_feature_names <- colnames(mat_centroid)
+            
+            qc_method <- if (!is_m2o) "Pearson R2" else "BC(HD)"
+            
+            # QC computed in clustering space; keep centroid in stats_m only
+            # for QC reporting
             stats_m <- .compute_cluster_centroids_qc(
-                X = mat_m,
+                X = mat_m_norm,
                 cl = cl,
                 qc_method = qc_method,
                 center_scale_rows = FALSE,
@@ -731,13 +784,40 @@ cluster_genes_multiomics <- function(
                 genes_cluster <- names(cl)[cl == c]
                 n_cluster <- length(genes_cluster)
                 
-                genes_used <- intersect(genes_cluster, rownames(mat_m))
+                # Coverage should reflect genes actually present in the
+                # centroid space
+                genes_used <- intersect(genes_cluster, rownames(mat_centroid))
                 n_used <- length(genes_used)
-                
                 coverage <- if (n_cluster > 0L) n_used / n_cluster else NA_real_
                 
                 st <- stats_m[stats_m$cluster == c, , drop = FALSE]
                 
+                # Compute centroid for plotting
+                cent <- if (n_used == 0L) {
+                    rep(NA_real_, ncol(mat_centroid))
+                } else if (n_used == 1L) {
+                    as.numeric(mat_centroid[genes_used[1L], ])
+                } else {
+                    colMeans(
+                        mat_centroid[genes_used, , drop = FALSE], na.rm = TRUE
+                        )
+                }
+                
+                # For many-to-one: enforce valid fraction vector
+                # (robust renormalization)
+                if (is_m2o && n_used > 0L) {
+                    cent[!is.finite(cent)] <- 0
+                    cent <- pmax(0, cent)
+                    s <- sum(cent)
+                    if (is.finite(s) && s > 0) {
+                        cent <- cent / s
+                    } else {
+                        cent <- rep(NA_real_, length(cent))
+                    }
+                }
+                
+                # If QC table has no row for this cluster
+                # (can happen if no overlap), create placeholder
                 if (nrow(st) == 0L) {
                     st <- data.frame(
                         cluster = c,
@@ -745,9 +825,7 @@ cluster_genes_multiomics <- function(
                         qc_method = qc_method,
                         mean_qc = NA_real_,
                         sd_qc = NA_real_,
-                        qc_member =
-                            I(list(setNames(numeric(0), character(0)))),
-                        centroid = I(list(rep(NA_real_, ncol(mat_m)))),
+                        qc_member = I(list(setNames(numeric(0), character(0)))),
                         stringsAsFactors = FALSE
                     )
                 }
@@ -757,6 +835,8 @@ cluster_genes_multiomics <- function(
                     condition = cond,
                     modality = m,
                     modality_type = modality_type,
+                    centroid_type = centroid_type,                             
+                    centroid_feature_names = I(list(centroid_feature_names)),  
                     cluster = c,
                     n_genes_cluster = n_cluster,
                     n_genes_used = n_used,
@@ -765,7 +845,7 @@ cluster_genes_multiomics <- function(
                     mean_qc = st$mean_qc,
                     sd_qc = st$sd_qc,
                     qc_member = st$qc_member,
-                    centroid = st$centroid,
+                    centroid = I(list(cent)),                                   
                     stringsAsFactors = FALSE
                 )
             }
@@ -777,6 +857,8 @@ cluster_genes_multiomics <- function(
             condition = character(0),
             modality = character(0),
             modality_type = character(0),
+            centroid_type = character(0),                
+            centroid_feature_names = I(list()),         
             cluster = integer(0),
             n_genes_cluster = integer(0),
             n_genes_used = integer(0),
@@ -1367,6 +1449,7 @@ cluster_genes_multiomics <- function(
         length(cond_ids)
         ), cond_ids)
     qc_list <- list()
+    many_to_one_archetypes <- list()
     
     for (cond in cond_ids) {
         mats_gene[[cond]] <- setNames(vector(
@@ -1417,7 +1500,11 @@ cluster_genes_multiomics <- function(
             feature_to_gene = feature_to_gene,
             many_to_one_k   = as.integer(lk)
         )
-        
+        many_to_one_archetypes[[m]] <- list(
+            archetypes = sig_obj$archetypes,
+            k = as.integer(lk),
+            feature_names = colnames(pooled_mat)
+        )
         sig_all <- sig_obj$signatures
         
         # Split signatures back into per-condition gene matrices
@@ -1449,8 +1536,9 @@ cluster_genes_multiomics <- function(
     }
     
     list(
-        mats_gene = mats_gene,
-        many_to_one_clustering_qc = many_to_one_clustering_qc
+        mats_gene                 = mats_gene,
+        many_to_one_clustering_qc = many_to_one_clustering_qc,
+        many_to_one_archetypes    = many_to_one_archetypes
     )
 }
 
@@ -1814,6 +1902,16 @@ cluster_genes_multiomics <- function(
         require = "intersection"
     )
     
+    archetypes <- matrix(NA_real_, nrow = many_to_one_k, ncol = ncol(X_scaled))
+    rownames(archetypes) <- paste0("cluster_", seq_len(many_to_one_k))
+    colnames(archetypes) <- colnames(X_scaled)
+    
+    for (j in seq_len(many_to_one_k)) {
+        idx <- which(feature_clusters == j)
+        if (length(idx) == 0L) next
+        archetypes[j, ] <- colMeans(X_scaled[idx, , drop = FALSE], na.rm = TRUE)
+    }
+    
     # 2) Build gene x K signature matrix (fractions per global archetype)
     genes <- sort(unique(feat_map))
     sig_mat <- matrix(
@@ -1836,8 +1934,9 @@ cluster_genes_multiomics <- function(
     }
     
     list(
-        signatures       = sig_mat,
-        feature_clusters = feature_clusters,
+        signatures                = sig_mat,
+        feature_clusters          = feature_clusters,
+        archetypes                = archetypes,
         many_to_one_clustering_qc = many_to_one_clustering_qc
     )
 }
@@ -2007,12 +2106,8 @@ cluster_genes_multiomics <- function(
 #' @importFrom stats aggregate
 #'
 .rank_clusters <- function(centroid_info_b) {
-    score <- centroid_info_b$mean_qc
-    is_hel <- centroid_info_b$qc_method == "BC(HD)"
-    score[is_hel] <- 1 - score[is_hel]
-    
     tmp <- centroid_info_b
-    tmp$qc_score <- score
+    tmp$qc_score <- tmp$mean_qc
     
     avg <- stats::aggregate(
         qc_score ~ cluster,

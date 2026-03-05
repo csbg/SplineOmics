@@ -2273,10 +2273,19 @@ Level2Functions <- R6::R6Class("Level2Functions",
             verbose,
             data_meta_index = NULL
             ) {
+            # Basic structural validation
+            if (!(is.matrix(data) || is.data.frame(data))) {
+                rlang::abort(
+                    paste0(
+                        "Input 'data' must be a matrix or data.frame. ",
+                        "Actual class: ", paste(class(data), collapse = ", "),
+                        "."
+                    )
+                )
+            }
             all_zero <- function(x) {
                 apply(x, 1, function(row) all(row == 0))
             }
-            
             zero_rows <- which(all_zero(data))
             if (length(zero_rows) > 0) {
                 row_names <- rownames(data)[zero_rows]

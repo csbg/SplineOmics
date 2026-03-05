@@ -236,10 +236,13 @@ run_limma_splines <- function(
         use_array_weights <- splineomics[["use_array_weights"]]
     } else {     # For RNA-seq data, array weights were handled beforehand.
         use_array_weights <- FALSE
-        message(
-            "Array weights are ignored at this stage for RNA-seq data, ",
-            "as they were already incorporated during the preprocessing step."
-        )
+        if (isTRUE(verbose)) {
+            rlang::inform(c(
+                "Array weights are ignored at this stage for RNA-seq data, ",
+                "as they were already incorporated during the preprocessing ",
+                "step."
+            ))
+        }
     }
     
     bp_cfg <- splineomics[["bp_cfg"]]

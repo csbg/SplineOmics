@@ -46,7 +46,19 @@ across conditions. After aggregation (for many-to-one modalities) and
 normalization,
 all condition- and modality-specific gene-level matrices are aligned
 according to \code{gene_mode} and concatenated to form the gene-centric
-feature matrix used to construct the UMAP graph and clustering.}
+feature matrix used to construct the UMAP graph and clustering.
+
+When multiple conditions are supplied, many-to-one modalities are processed
+by pooling all feature-level observations across conditions prior to
+constructing gene-level pattern signatures. This means that the global
+archetype basis used for feature aggregation is learned jointly across
+conditions.
+
+As a consequence, gene representations from different conditions are
+expressed in a shared feature space, enabling direct comparison of gene
+trajectories across conditions. Running the function separately for each
+condition would instead learn independent archetype bases and may therefore
+produce different gene-level representations for many-to-one modalities.}
 
 \item{meta}{Data frame with one row per modality, providing modality-level parameters
 required for gene-centric representation building. The data frame must
@@ -95,18 +107,36 @@ A named list with the following elements:
 \describe{
 \item{\code{cluster_table}}{A tibble with one row per gene and columns
 \code{gene} and \code{cluster}.}
-
-\item{\code{centroid_info}}{A tibble summarizing modality-specific cluster
-centroids and within-cluster QC. The centroid representation is stored as a
-list-column.}
-
+\item{\code{centroid_info}}{
+A tibble with one row per \code{(condition, modality, cluster)} that
+summarizes cluster centroids, block coverage, and within-cluster
+coherence statistics. The centroid is stored as a list-column and its
+interpretation depends on modality type: for one-to-one modalities the
+centroid is a mean normalized trajectory/feature vector (typically
+row-wise z-scored), whereas for many-to-one modalities the centroid is a
+raw archetype mixture vector (signature fractions over
+'     \code{many_to_one_k} global archetypes; not Hellinger-transformed) and
+therefore sums to 1 when defined. Coherence is reported via
+\code{qc_method} and \code{mean_qc}/\code{sd_qc}, computed in the
+normalized clustering space (Pearson R\eqn{^2} for one-to-one,
+Bhattacharyya coefficient in Hellinger space for many-to-one).
+The columns \code{centroid_type} and \code{centroid_feature_names}
+provide machine-readable metadata for plotting the centroid vector.
+}
 \item{\code{many_to_one_clustering_qc}}{A tibble (or \code{NULL}) with QC
 diagnostics for many-to-one feature clustering steps, if any are present.}
-
-\item{\code{umap_fit}}{The object returned by \code{uwot::umap()},
-including \code{$embedding} (genes \eqn{\times} \code{n_components}) and,
-if requested via \code{ret_extra}, \code{$fgraph} (the UMAP fuzzy graph
-used for spectral clustering).}
+\item{\code{many_to_one_archetypes}}{
+A named list (or \code{NULL}) with the global archetypes learned for each
+many-to-one modality. Archetypes are fit once per modality on pooled
+feature-level trajectories across all supplied conditions.
+Each entry is keyed by modality name and contains:
+\code{archetypes} (a \code{k x p} numeric matrix of archetype patterns),
+\code{k} (the number of archetypes), and \code{feature_names}
+(column names for the \code{p} features / time points).}
+\item{\code{umap_fit}}{
+The object returned by \code{uwot::umap()}, including \code{$embedding}
+(genes x \code{n_components}) and \code{$fgraph} (the UMAP fuzzy graph)
+when requested via \code{ret_extra}.}
 }
 }
 \description{
