@@ -1887,7 +1887,8 @@ cluster_genes_multiomics <- function(
         ))
     }
     
-    X_scaled <- scale(modality_mat)
+    X_scaled <- t(scale(t(modality_mat)))
+    X_scaled[is.na(X_scaled)] <- 0
 
     feature_clusters <- .cluster_feature_matrix(
         feature_mat = X_scaled,

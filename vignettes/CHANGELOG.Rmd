@@ -51,6 +51,15 @@ Each release section should follow the structure below:
 
 --------------------------------------------------------------------------------
 
+### [v0.4.4]  (in preparation)
+
+#### Added
+
+-   cluster_genes_multiomics() now returns shape archetypes for many-to-one
+    layers, and the centroids for those layers are returned without
+    normalization.
+
+
 ### [v0.4.3]
 
 #### Added
