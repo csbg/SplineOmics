@@ -10,6 +10,7 @@ cluster_genes_multiomics(
   k,
   gene_mode = c("intersection", "union"),
   n_neighbors = 15L,
+  min_graph_purity = 0,
   verbose = FALSE
 )
 }
@@ -98,6 +99,13 @@ handled internally.}
 \item{n_neighbors}{Integer. Size of the local neighborhood used by UMAP to construct the
 k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
 values emphasize local structure.}
+
+\item{min_graph_purity}{Numeric scalar in \eqn{[0, 1]} controlling post-clustering filtering based
+on graph-based assignment purity. For each gene, purity is defined as the
+fraction of its total graph connectivity (\code{fgraph}) that lies within
+its assigned cluster. Genes with \code{purity < min_graph_purity} are
+reassigned to cluster \code{0} ("other"). Default \code{0} disables
+filtering.}
 
 \item{verbose}{Logical scalar indicating whether progress messages should be emitted via
 \code{rlang::inform()} by internal helpers.}

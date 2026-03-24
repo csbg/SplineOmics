@@ -151,14 +151,14 @@ plots <- SplineOmics::explore_data(
 #> Making cv plots...
 #> 
 #>  Info Exploratory data analysis completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/Rtmpm8EN4T/explore_data_demo .
+#>  Your HTML reports are located in the directory:  /tmp/RtmplJliIR/explore_data_demo .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 
 # Inspect what was written
 list.files(report_dir, recursive = TRUE)
-#> [1] "explore_batch_corrected_data_PTX_09_02_2026-15_25_47.html"
-#> [2] "explore_data_PTX_09_02_2026-15_25_47.html"                
+#> [1] "explore_batch_corrected_data_PTX_24_03_2026-15_46_10.html"
+#> [2] "explore_data_PTX_24_03_2026-15_46_10.html"                
 
 # `plots` is a named list of ggplot objects (e.g., plots$raw_data$pca, etc.)
 # print(plots$raw_data$pca)

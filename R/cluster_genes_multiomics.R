@@ -105,6 +105,14 @@
 #' Integer. Size of the local neighborhood used by UMAP to construct the
 #' k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
 #' values emphasize local structure.
+#' 
+#' @param min_graph_purity
+#' Numeric scalar in \eqn{[0, 1]} controlling post-clustering filtering based
+#' on graph-based assignment purity. For each gene, purity is defined as the
+#' fraction of its total graph connectivity (\code{fgraph}) that lies within
+#' its assigned cluster. Genes with \code{purity < min_graph_purity} are
+#' reassigned to cluster \code{0} ("other"). Default \code{0} disables
+#' filtering.
 #'
 #' @param verbose
 #' Logical scalar indicating whether progress messages should be emitted via
@@ -192,6 +200,7 @@ cluster_genes_multiomics <- function(
         k,
         gene_mode = c("intersection", "union"),
         n_neighbors = 15L,
+        min_graph_purity = 0,
         verbose = FALSE
 ) {
     start_time <- Sys.time()
@@ -229,6 +238,14 @@ cluster_genes_multiomics <- function(
         k = k
     )
     names(cl) <- rep$gene_ids
+    
+    purity_res <- .filter_clusters_by_graph_purity(
+        W = fit$fgraph,
+        cl = cl,
+        min_graph_purity = min_graph_purity
+    )
+    cl <- purity_res$cluster
+    graph_purity <- purity_res$graph_purity
 
     centroid_info <- .compute_centroids(
         mats_norm = rep$mats_norm,
@@ -658,6 +675,65 @@ cluster_genes_multiomics <- function(
 }
 
 
+#' Reassign low-purity genes to cluster 0 based on graph structure
+#'
+#' @noRd
+#'
+#' @description
+#' Internal helper that filters cluster assignments using a graph-based
+#' purity criterion. For each gene, the fraction of its total graph
+#' connectivity that lies within its assigned cluster is computed via
+#' \code{.compute_graph_cluster_purity()}.
+#'
+#' Genes with purity below \code{min_graph_purity} (or undefined purity)
+#' are reassigned to cluster \code{0}, representing an "other" or
+#' unassigned group.
+#'
+#' @param W
+#' Numeric matrix or sparse \code{Matrix} representing a weighted adjacency
+#' matrix (\code{genes x genes}).
+#'
+#' @param cl
+#' Integer vector of cluster assignments of length \code{nrow(W)}. The order
+#' must correspond to the rows of \code{W}.
+#'
+#' @param min_graph_purity
+#' Numeric scalar in \eqn{[0, 1]}. Genes with purity below this threshold
+#' are reassigned to cluster \code{0}. Default \code{0} disables filtering.
+#'
+#' @return
+#' A list with two elements:
+#' \describe{
+#'   \item{\code{cluster}}{Integer vector of updated cluster assignments.}
+#'   \item{\code{graph_purity}}{Numeric vector of per-gene purity scores.}
+#' }
+.filter_clusters_by_graph_purity <- function(
+        W,
+        cl,
+        min_graph_purity = 0
+) {
+    if (!is.numeric(min_graph_purity) ||
+        length(min_graph_purity) != 1L ||
+        is.na(min_graph_purity) ||
+        min_graph_purity < 0 ||
+        min_graph_purity > 1) {
+        stop("min_graph_purity must be a single number in [0, 1].")
+    }
+    
+    purity <- .compute_graph_cluster_purity(W = W, cl = cl)
+    
+    cl_filtered <- as.integer(cl)
+    names(cl_filtered) <- names(cl)
+    
+    cl_filtered[is.na(purity) | purity < min_graph_purity] <- 0L
+    
+    list(
+        cluster = cl_filtered,
+        graph_purity = purity
+    )
+}
+
+
 #' Compute modality- and condition-specific cluster centroids and QC summaries
 #'
 #' @noRd
@@ -744,6 +820,7 @@ cluster_genes_multiomics <- function(
     cond_ids <- names(mats_norm)
     mod_ids <- meta$modality
     clusters <- sort(unique(as.integer(cl)))
+    clusters <- clusters[clusters != 0L]
     out <- list()
     row_i <- 0L
     
@@ -1809,6 +1886,83 @@ cluster_genes_multiomics <- function(
         X = X,
         feature_index = feature_index
     )
+}
+
+
+#' Compute per-gene within-cluster graph purity
+#'
+#' @description
+#' Internal helper that computes a **node-level cluster assignment purity**
+#' score for each gene based on a weighted adjacency matrix.
+#'
+#' Given a graph \code{W} and cluster assignments \code{cl}, the purity of
+#' gene \eqn{i} is defined as the fraction of its total edge weight that
+#' connects to genes in the same cluster:
+#' \deqn{
+#' \mathrm{purity}_i =
+#' \frac{\sum_{j:\, c_j = c_i} W_{ij}}{\sum_j W_{ij}}
+#' }
+#'
+#' This quantity measures how strongly a gene is embedded within its assigned
+#' cluster in the graph. Values close to 1 indicate that most of the gene's
+#' connectivity lies within its cluster, whereas lower values indicate more
+#' ambiguous or boundary assignments.
+#'
+#' @param W
+#' Numeric matrix or sparse \code{Matrix} representing a weighted adjacency
+#' matrix (\code{genes x genes}). Entries must be non-negative. The matrix is
+#' symmetrized internally and diagonal entries are set to zero.
+#'
+#' @param cl
+#' Integer vector of cluster assignments of length \code{nrow(W)}. The order
+#' must correspond to the row (and column) order of \code{W}. Optional names
+#' are preserved in the output.
+#'
+#' @return
+#' A numeric vector of length \code{length(cl)} giving the purity score for
+#' each gene. Values lie in \eqn{[0, 1]} when defined; genes with zero total
+#' connectivity receive \code{NA}.
+#' 
+#' @noRd
+.compute_graph_cluster_purity <- function(
+        W,
+        cl
+) {
+    if (!inherits(W, "Matrix")) {
+        W <- Matrix::Matrix(W, sparse = TRUE)
+    }
+    
+    W <- (W + Matrix::t(W)) / 2
+    Matrix::diag(W) <- 0
+    
+    cl <- as.integer(cl)
+    
+    if (length(cl) != nrow(W)) {
+        stop("length(cl) must equal nrow(W).")
+    }
+    
+    total_w <- Matrix::rowSums(W)
+    
+    purity <- vapply(
+        seq_along(cl),
+        FUN.VALUE = numeric(1),
+        FUN = function(i) {
+            if (!is.finite(total_w[i]) || total_w[i] <= 0) {
+                return(NA_real_)
+            }
+            
+            same_idx <- which(cl == cl[i])
+            within_w <- sum(W[i, same_idx])
+            
+            as.numeric(within_w / total_w[i])
+        }
+    )
+    
+    if (!is.null(names(cl))) {
+        names(purity) <- names(cl)
+    }
+    
+    purity
 }
 
 

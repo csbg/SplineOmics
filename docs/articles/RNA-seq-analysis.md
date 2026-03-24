@@ -361,7 +361,6 @@ function:
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
-#> Array weights are ignored at this stage for RNA-seq data, as they were already incorporated during the preprocessing step.
 #> Warning: the 'nobars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.
 #> This warning is displayed once per session.
 ```
@@ -466,7 +465,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpwxlMvB/filea6a95b4a24d1 .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpYc3Ez4/filed8165161149a .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -578,7 +577,7 @@ You can view the generated analysis report of the run_gsea function
 
 ## Session Info
 
-    #> R version 4.5.2 (2025-10-31)
+    #> R version 4.5.3 (2026-03-11)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -601,7 +600,7 @@ You can view the generated analysis report of the run_gsea function
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.3
+    #> [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.4
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          
@@ -618,31 +617,31 @@ You can view the generated analysis report of the run_gsea function
     #>  [34] rbibutils_2.4.1          clue_0.3-66              digest_0.6.39           
     #>  [37] numDeriv_2016.8-1.1      colorspace_2.1-2         S4Vectors_0.46.0        
     #>  [40] textshaping_1.0.4        labeling_0.4.3           abind_1.4-8             
-    #>  [43] compiler_4.5.2           withr_3.0.2              bit64_4.6.0-1           
+    #>  [43] compiler_4.5.3           withr_3.0.2              bit64_4.6.0-1           
     #>  [46] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                
     #>  [49] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           
     #>  [52] gplots_3.3.0             MASS_7.3-65              rjson_0.2.23            
     #>  [55] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          
-    #>  [58] tools_4.5.2              otel_0.2.0               zip_2.3.3               
+    #>  [58] tools_4.5.3              otel_0.2.0               zip_2.3.3               
     #>  [61] remaCor_0.0.20           glue_1.8.0               nlme_3.1-168            
-    #>  [64] grid_4.5.2               checkmate_2.3.4          cluster_2.1.8.1         
+    #>  [64] grid_4.5.3               checkmate_2.3.4          cluster_2.1.8.2         
     #>  [67] reshape2_1.4.5           generics_0.1.4           gtable_0.3.6            
     #>  [70] tzdb_0.5.0               tidyr_1.3.2              hms_1.1.4               
     #>  [73] car_3.1-5                BiocGenerics_0.54.1      ggrepel_0.9.6           
     #>  [76] foreach_1.5.2            pillar_1.11.1            stringr_1.6.0           
     #>  [79] vroom_1.7.0              limma_3.64.3             circlize_0.4.17         
-    #>  [82] splines_4.5.2            lattice_0.22-5           renv_1.1.7              
+    #>  [82] splines_4.5.3            lattice_0.22-9           renv_1.1.7              
     #>  [85] gmp_0.7-5                bit_4.6.0                tidyselect_1.2.1        
     #>  [88] ComplexHeatmap_2.24.1    locfit_1.5-9.12          pbapply_1.7-4           
     #>  [91] reformulas_0.4.4         IRanges_2.42.0           edgeR_4.6.3             
-    #>  [94] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.5.2            
+    #>  [94] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.5.3            
     #>  [97] xfun_0.56                Biobase_2.68.0           statmod_1.5.1           
     #> [100] matrixStats_1.5.0        stringi_1.8.7            yaml_2.3.12             
     #> [103] boot_1.3-32              evaluate_1.0.5           codetools_0.2-19        
     #> [106] tibble_3.3.1             BiocManager_1.30.27      cli_3.6.5               
     #> [109] systemfonts_1.3.1        Rdpack_2.6.5             jquerylib_0.1.4         
     #> [112] Rcpp_1.1.1               EnvStats_3.1.0           png_0.1-8               
-    #> [115] parallel_4.5.2           pkgdown_2.2.0            ggplot2_4.0.2           
+    #> [115] parallel_4.5.3           pkgdown_2.2.0            ggplot2_4.0.2           
     #> [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            
     #> [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          
     #> [124] scales_1.4.0             purrr_1.2.1              crayon_1.5.3            

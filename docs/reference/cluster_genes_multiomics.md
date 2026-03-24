@@ -24,6 +24,7 @@ cluster_genes_multiomics(
   k,
   gene_mode = c("intersection", "union"),
   n_neighbors = 15L,
+  min_graph_purity = 0,
   verbose = FALSE
 )
 ```
@@ -66,6 +67,19 @@ cluster_genes_multiomics(
   gene-level matrices are aligned according to `gene_mode` and
   concatenated to form the gene-centric feature matrix used to construct
   the UMAP graph and clustering.
+
+  When multiple conditions are supplied, many-to-one modalities are
+  processed by pooling all feature-level observations across conditions
+  prior to constructing gene-level pattern signatures. This means that
+  the global archetype basis used for feature aggregation is learned
+  jointly across conditions.
+
+  As a consequence, gene representations from different conditions are
+  expressed in a shared feature space, enabling direct comparison of
+  gene trajectories across conditions. Running the function separately
+  for each condition would instead learn independent archetype bases and
+  may therefore produce different gene-level representations for
+  many-to-one modalities.
 
 - meta:
 
@@ -120,6 +134,15 @@ cluster_genes_multiomics(
   k-nearest-neighbor graph. Larger values emphasize broader structure,
   smaller values emphasize local structure.
 
+- min_graph_purity:
+
+  Numeric scalar in \\\[0, 1\]\\ controlling post-clustering filtering
+  based on graph-based assignment purity. For each gene, purity is
+  defined as the fraction of its total graph connectivity (`fgraph`)
+  that lies within its assigned cluster. Genes with
+  `purity < min_graph_purity` are reassigned to cluster `0` ("other").
+  Default `0` disables filtering.
+
 - verbose:
 
   Logical scalar indicating whether progress messages should be emitted
@@ -136,22 +159,41 @@ A named list with the following elements:
 
 - `centroid_info`:
 
-  A tibble summarizing modality-specific cluster centroids and
-  within-cluster QC. The centroid representation is stored as a
-  list-column.
+  A tibble with one row per `(condition, modality, cluster)` that
+  summarizes cluster centroids, block coverage, and within-cluster
+  coherence statistics. The centroid is stored as a list-column and its
+  interpretation depends on modality type: for one-to-one modalities the
+  centroid is a mean normalized trajectory/feature vector (typically
+  row-wise z-scored), whereas for many-to-one modalities the centroid is
+  a raw archetype mixture vector (signature fractions over '
+  `many_to_one_k` global archetypes; not Hellinger-transformed) and
+  therefore sums to 1 when defined. Coherence is reported via
+  `qc_method` and `mean_qc`/`sd_qc`, computed in the normalized
+  clustering space (Pearson R\\^2\\ for one-to-one, Bhattacharyya
+  coefficient in Hellinger space for many-to-one). The columns
+  `centroid_type` and `centroid_feature_names` provide machine-readable
+  metadata for plotting the centroid vector.
 
 - `many_to_one_clustering_qc`:
 
   A tibble (or `NULL`) with QC diagnostics for many-to-one feature
   clustering steps, if any are present.
 
+- `many_to_one_archetypes`:
+
+  A named list (or `NULL`) with the global archetypes learned for each
+  many-to-one modality. Archetypes are fit once per modality on pooled
+  feature-level trajectories across all supplied conditions. Each entry
+  is keyed by modality name and contains: `archetypes` (a `k x p`
+  numeric matrix of archetype patterns), `k` (the number of archetypes),
+  and `feature_names` (column names for the `p` features / time points).
+
 - `umap_fit`:
 
   The object returned by
   [`uwot::umap()`](https://jlmelville.github.io/uwot/reference/umap.html),
-  including `$embedding` (genes \\\times\\ `n_components`) and, if
-  requested via `ret_extra`, `$fgraph` (the UMAP fuzzy graph used for
-  spectral clustering).
+  including `$embedding` (genes x `n_components`) and `$fgraph` (the
+  UMAP fuzzy graph) when requested via `ret_extra`.
 
 ## Examples
 

@@ -29,7 +29,7 @@ than on the two-dimensional embedding coordinates."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,7 @@ than on the two-dimensional embedding coordinates.</p>
 <span>  <span class="va">k</span>,</span>
 <span>  gene_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"intersection"</span>, <span class="st">"union"</span><span class="op">)</span>,</span>
 <span>  n_neighbors <span class="op">=</span> <span class="fl">15L</span>,</span>
+<span>  min_graph_purity <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -135,7 +136,17 @@ across conditions. After aggregation (for many-to-one modalities) and
 normalization,
 all condition- and modality-specific gene-level matrices are aligned
 according to <code>gene_mode</code> and concatenated to form the gene-centric
-feature matrix used to construct the UMAP graph and clustering.</p></dd>
+feature matrix used to construct the UMAP graph and clustering.</p>
+<p>When multiple conditions are supplied, many-to-one modalities are processed
+by pooling all feature-level observations across conditions prior to
+constructing gene-level pattern signatures. This means that the global
+archetype basis used for feature aggregation is learned jointly across
+conditions.</p>
+<p>As a consequence, gene representations from different conditions are
+expressed in a shared feature space, enabling direct comparison of gene
+trajectories across conditions. Running the function separately for each
+condition would instead learn independent archetype bases and may therefore
+produce different gene-level representations for many-to-one modalities.</p></dd>
 
 
 <dt id="arg-meta">meta<a class="anchor" aria-label="anchor" href="#arg-meta"></a></dt>
@@ -188,6 +199,15 @@ k-nearest-neighbor graph. Larger values emphasize broader structure, smaller
 values emphasize local structure.</p></dd>
 
 
+<dt id="arg-min-graph-purity">min_graph_purity<a class="anchor" aria-label="anchor" href="#arg-min-graph-purity"></a></dt>
+<dd><p>Numeric scalar in \([0, 1]\) controlling post-clustering filtering based
+on graph-based assignment purity. For each gene, purity is defined as the
+fraction of its total graph connectivity (<code>fgraph</code>) that lies within
+its assigned cluster. Genes with <code>purity &lt; min_graph_purity</code> are
+reassigned to cluster <code>0</code> ("other"). Default <code>0</code> disables
+filtering.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical scalar indicating whether progress messages should be emitted via
 <code><a href="https://rlang.r-lib.org/reference/abort.html" class="external-link">rlang::inform()</a></code> by internal helpers.</p></dd>
@@ -199,23 +219,39 @@ values emphasize local structure.</p></dd>
 <dd><p>A tibble with one row per gene and columns
 <code>gene</code> and <code>cluster</code>.</p></dd>
 
-
 <dt><code>centroid_info</code></dt>
-<dd><p>A tibble summarizing modality-specific cluster
-centroids and within-cluster QC. The centroid representation is stored as a
-list-column.</p></dd>
-
+<dd><p>A tibble with one row per <code>(condition, modality, cluster)</code> that
+summarizes cluster centroids, block coverage, and within-cluster
+coherence statistics. The centroid is stored as a list-column and its
+interpretation depends on modality type: for one-to-one modalities the
+centroid is a mean normalized trajectory/feature vector (typically
+row-wise z-scored), whereas for many-to-one modalities the centroid is a
+raw archetype mixture vector (signature fractions over
+'     <code>many_to_one_k</code> global archetypes; not Hellinger-transformed) and
+therefore sums to 1 when defined. Coherence is reported via
+<code>qc_method</code> and <code>mean_qc</code>/<code>sd_qc</code>, computed in the
+normalized clustering space (Pearson R\(^2\) for one-to-one,
+Bhattacharyya coefficient in Hellinger space for many-to-one).
+The columns <code>centroid_type</code> and <code>centroid_feature_names</code>
+provide machine-readable metadata for plotting the centroid vector.</p></dd>
 
 <dt><code>many_to_one_clustering_qc</code></dt>
 <dd><p>A tibble (or <code>NULL</code>) with QC
 diagnostics for many-to-one feature clustering steps, if any are present.</p></dd>
 
+<dt><code>many_to_one_archetypes</code></dt>
+<dd><p>A named list (or <code>NULL</code>) with the global archetypes learned for each
+many-to-one modality. Archetypes are fit once per modality on pooled
+feature-level trajectories across all supplied conditions.
+Each entry is keyed by modality name and contains:
+<code>archetypes</code> (a <code>k x p</code> numeric matrix of archetype patterns),
+<code>k</code> (the number of archetypes), and <code>feature_names</code>
+(column names for the <code>p</code> features / time points).</p></dd>
 
 <dt><code>umap_fit</code></dt>
-<dd><p>The object returned by <code><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">uwot::umap()</a></code>,
-including <code>$embedding</code> (genes \(\times\) <code>n_components</code>) and,
-if requested via <code>ret_extra</code>, <code>$fgraph</code> (the UMAP fuzzy graph
-used for spectral clustering).</p></dd>
+<dd><p>The object returned by <code><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">uwot::umap()</a></code>, including <code>$embedding</code>
+(genes x <code>n_components</code>) and <code>$fgraph</code> (the UMAP fuzzy graph)
+when requested via <code>ret_extra</code>.</p></dd>
 
 
 </dl></div>

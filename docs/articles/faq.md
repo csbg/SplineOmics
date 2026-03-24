@@ -262,7 +262,7 @@ currently limited to comparisons between two conditions at a time.
 
 ## Session Info
 
-    ## R version 4.5.2 (2025-10-31)
+    ## R version 4.5.3 (2026-03-11)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 22.04.5 LTS
     ## 
@@ -290,8 +290,8 @@ currently limited to comparisons between two conditions at a time.
     ##  [7] knitr_1.51          htmltools_0.5.9     rmarkdown_2.30     
     ## [10] lifecycle_1.0.5     cli_3.6.5           sass_0.4.10        
     ## [13] pkgdown_2.2.0       textshaping_1.0.4   jquerylib_0.1.4    
-    ## [16] renv_1.1.7          systemfonts_1.3.1   compiler_4.5.2     
-    ## [19] rstudioapi_0.18.0   tools_4.5.2         ragg_1.5.0         
+    ## [16] renv_1.1.7          systemfonts_1.3.1   compiler_4.5.3     
+    ## [19] rstudioapi_0.18.0   tools_4.5.3         ragg_1.5.0         
     ## [22] bslib_0.10.0        evaluate_1.0.5      yaml_2.3.12        
     ## [25] otel_0.2.0          BiocManager_1.30.27 jsonlite_2.0.0     
     ## [28] htmlwidgets_1.6.4   rlang_1.1.7         fs_1.6.6

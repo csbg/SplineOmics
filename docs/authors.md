@@ -11,13 +11,13 @@ Source:
 [`DESCRIPTION`](https://github.com/csbg/SplineOmics/blob/HEAD/DESCRIPTION)
 
 Rauter T (2026). *SplineOmics: Streamlines the process of analysing
-omics timeseries data with splines*. R package version 0.4.3,
+omics timeseries data with splines*. R package version 0.4.4,
 <https://csbg.github.io/SplineOmics>.
 
     @Manual{,
       title = {SplineOmics: Streamlines the process of analysing omics timeseries data with splines},
       author = {Thomas Rauter},
       year = {2026},
-      note = {R package version 0.4.3},
+      note = {R package version 0.4.4},
       url = {https://csbg.github.io/SplineOmics},
     }

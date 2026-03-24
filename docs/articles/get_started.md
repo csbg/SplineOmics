@@ -118,15 +118,15 @@ library(org.Mm.eg.db) # BioConductor database
 
 ## Load the files
 
-In this example, the proteomics_data.rds file contains the numeric
+In this example, the proteomics_data.rds.xz file contains the numeric
 values (the intensities) and also the feature descriptions, such as gene
 and protein name (= annotation part). Usually, you would load the data
 from for example an Excel file, but the .rds file is more compressed,
 which is the reason this format was chosen here to limit the size of the
 SplineOmics package.
 
-The file meta.xlsx contains the meta information, which are the
-descriptions of the columns of the numeric values of data.
+The file proteomics_meta.csv contains the meta information, which are
+the descriptions of the columns of the numeric values of data.
 
 (These example files are part of the package and don’t have to be
 present on your system).
@@ -270,9 +270,10 @@ can:
 - **Assign rowheaders**:
   - If no annotation columns are specified, rowheaders will be
     increasing numbers.
-  - If annotation columns are specified (like
-    `"First.Protein.Description"` and `"ID"` in this example), these
-    will be combined to form the rowheaders (feature names).
+  - If annotation columns are specified (like `"Gene_name"` in this
+    example), these values are used to construct the rowheaders (feature
+    names). Optionally, the row index can also be included to guarantee
+    uniqueness of the feature names.
 
 #### Usage in Plotting
 
@@ -496,7 +497,7 @@ plots <- SplineOmics::explore_data(
 #> Making cv plots...
 #> 
 #>  Info Exploratory data analysis completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f8217c711a .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e30a27020 .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -531,7 +532,10 @@ the integrated mode, the condition column (here Phase) must be included
 in the design. Isolated means that limma only uses the part of the
 dataset that belongs to a level to obtain the results for that level.
 
-To generate the limma result categories 2 and 3 ()
+In this example we use the **integrated** mode and a design formula that
+includes a condition–time interaction. This allows SplineOmics to
+generate limma result categories 2 (average differences between
+conditions) and 3 (condition–time interactions).
 
 ``` r
 splineomics <- SplineOmics::update_splineomics(
@@ -563,12 +567,17 @@ splineomics <- SplineOmics::run_limma_splines(
 )
 ```
 
-The output of the function run_limma_splines() is a named list, where
-each element is a specific “category” of results. Refer to [this
+The output of
+[`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
+is stored inside the SplineOmics object and contains a named list where
+each element represents one of the limma result categories. Refer to
+[this
 document](https://csbg.github.io/SplineOmics/articles/limma_result_categories.html)
-for an explanation of the different result categories. Each of those
-elements is a list, containing as elements the respective limma
-topTables, either for each level or each comparison between two levels.
+for an explanation of the different categories.
+
+Each category contains one or more limma `topTable` results. Depending
+on the category, these tables correspond either to individual conditions
+or to pairwise comparisons between conditions.
 
 The element “time_effect” is a list, where each element is the topTable
 where the p-value for each feature for the respective level are
@@ -611,19 +620,27 @@ category 1.
 ## Cluster the hits (significant features)
 
 After we obtained the limma spline results, we can cluster the hits
-based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are
-features (e.g. proteins) that have an adj. p-value below the threshold.
-K-means clustering is used to place every hit in one of as many clusters
-as we have specified for that specific level.
+based on their temporal pattern (their spline shape).
+
+Hits are defined by adjusted p-value thresholds for the different limma
+result categories (time effect / average differences between conditions
+/ condition–time interaction). Optionally,
+[`cluster_hits()`](https://csbg.github.io/SplineOmics/reference/cluster_hits.md)
+can apply additional effect-size cutoffs (`min_effect_size`) so that
+statistically significant but biologically trivial changes are excluded.
+
+Clustering is performed with k-means on the predicted spline
+trajectories. Optionally, clusters can be pruned using `min_cluster_r2`:
+members with low squared correlation to their cluster centroid are
+reassigned to cluster `0` (the “other” cluster).
 
 ``` r
 # The amount of clusters can be a fixed number (e.g. 6) or a range. When you
-# specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the
-# cluster_hits() function tries all those cluster numbers and picks the one with
-# the highest silhouette score (automatic cluster number identification). When
-# you don't want to have a clustering for a level, write 1 for the cluster
-# number for that level.
+# specify a range (e.g. 2:6), then the cluster_hits() function tries all k in
+# that range and selects the k that minimizes the Bayesian Information Criterion
+# (BIC) computed from the k-means fit (lower is better; ties broken by the first
+# minimum encountered). When you don't want to have a clustering for a level,
+# write 1 for the cluster number for that level.
 nr_clusters <- list(
     Exponential = 6, # specifically 6 clusters for the exponential phase level
     Stationary = 2:3 # range of cluster numbers for the stationary phase level
@@ -665,10 +682,19 @@ clustering_results <- SplineOmics::cluster_hits(
     adj_pthresh_time_effect = 0.05,
     adj_pthresh_avrg_diff_conditions = 0.05,
     adj_pthresh_interaction_condition_time = 0.05,
+    min_effect_size = list(
+        time_effect = 0,
+        avg_diff_cond = 0,
+        interaction_cond_time = 0
+    ),
+    min_cluster_r2 = 0,
     nr_clusters = nr_clusters,
     genes = genes
 )
 ```
+
+Note: Category 2 and 3 hits are only evaluated in integrated mode (and
+only if their respective thresholds are \> 0).
 
 Generate the report:
 
@@ -689,30 +715,48 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f81b2d6c9c .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e3f2a71a8 .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
 
+[`create_clustering_report()`](https://csbg.github.io/SplineOmics/reference/create_clustering_report.md)
+consumes the precomputed `report_payload` returned by
+[`cluster_hits()`](https://csbg.github.io/SplineOmics/reference/cluster_hits.md)
+and generates an HTML report with the associated visualizations.
+
 You can view the generated analysis report of the clustering
 [here](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html).
 
+Depending on the settings used in
+[`cluster_hits()`](https://csbg.github.io/SplineOmics/reference/cluster_hits.md),
+the report may also reflect effect-size filtering (`min_effect_size`)
+and optional pruning of clusters via `min_cluster_r2`, where
+low-centroid-similarity features are assigned to cluster `0` (“other”).
+If `raw_data` is provided, imputed values can be highlighted in the
+spline plots.
+
 As discussed before, there are three limma result categories. The
-cluster_hits() report shows the results of all three, if they are
-present (category 2 and 3 can only be generated when the design formula
-contains an interaction effect).
+clustering report shows all categories that are available in the current
+analysis.
+
+Category 2 (average differences between conditions) is available in
+integrated mode when condition contrasts are defined; it does not
+require an interaction term. Category 3 (condition–time interaction)
+requires that the design includes a condition–time interaction.
 
 ## Perform overrepresentation analysis (ORA)
 
 Once the clustered hits are identified, a subsequent step to gain
-biological insights is to perform ORA For this, the respective genes can
-be assigned to each clustered hit, and ORA can be carried out. To
-proceed, the Enrichr databases of choice need to be downloaded:
+biological insights is to perform **overrepresentation analysis (ORA)**.
+For this, the respective genes can be assigned to each clustered hit,
+and ORA can be carried out. To proceed, the Enrichr databases of choice
+need to be downloaded:
 
 ``` r
 # Create a temporary directory for R CMD check
 results_dir <- file.path(tempdir(), "ora")
-dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
@@ -736,9 +780,6 @@ SplineOmics::download_enrichr_databases(
     filename = "databases.tsv"
 )
 ```
-
-Per default the file is placed in the current working directory, which
-is the root dir of the R project.
 
 To run ORA, the downloaded database file has to be loaded as a
 dataframe. Further, optionally, the clusterProfiler parameters and the
@@ -914,7 +955,7 @@ options under the Feedback section of the README on GitHub. Thank you!
 
 ## Session Info
 
-    #> R version 4.5.2 (2025-10-31)
+    #> R version 4.5.3 (2026-03-11)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -941,7 +982,7 @@ options under the Feedback section of the README on GitHub. Thank you!
     #>  [1] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      
     #>  [4] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.1 
     #>  [7] generics_0.1.4       knitr_1.51           dplyr_1.2.0         
-    #> [10] SplineOmics_0.4.3   
+    #> [10] SplineOmics_0.4.4   
     #> 
     #> loaded via a namespace (and not attached):
     #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          
@@ -959,19 +1000,19 @@ options under the Feedback section of the README on GitHub. Thank you!
     #>  [37] clue_0.3-66              digest_0.6.39            numDeriv_2016.8-1.1     
     #>  [40] colorspace_2.1-2         textshaping_1.0.4        RSQLite_2.4.5           
     #>  [43] labeling_0.4.3           httr_1.4.7               abind_1.4-8             
-    #>  [46] compiler_4.5.2           withr_3.0.2              bit64_4.6.0-1           
+    #>  [46] compiler_4.5.3           withr_3.0.2              bit64_4.6.0-1           
     #>  [49] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                
     #>  [52] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           
     #>  [55] DBI_1.2.3                gplots_3.3.0             MASS_7.3-65             
     #>  [58] rjson_0.2.23             corpcor_1.6.10           gtools_3.9.5            
-    #>  [61] caTools_1.18.3           tools_4.5.2              otel_0.2.0              
+    #>  [61] caTools_1.18.3           tools_4.5.3              otel_0.2.0              
     #>  [64] zip_2.3.3                remaCor_0.0.20           glue_1.8.0              
-    #>  [67] nlme_3.1-168             grid_4.5.2               checkmate_2.3.4         
-    #>  [70] cluster_2.1.8.1          reshape2_1.4.5           gtable_0.3.6            
+    #>  [67] nlme_3.1-168             grid_4.5.3               checkmate_2.3.4         
+    #>  [70] cluster_2.1.8.2          reshape2_1.4.5           gtable_0.3.6            
     #>  [73] tidyr_1.3.2              hms_1.1.4                XVector_0.48.0          
     #>  [76] car_3.1-5                ggrepel_0.9.6            foreach_1.5.2           
     #>  [79] pillar_1.11.1            stringr_1.6.0            limma_3.64.3            
-    #>  [82] circlize_0.4.17          splines_4.5.2            lattice_0.22-5          
+    #>  [82] circlize_0.4.17          splines_4.5.3            lattice_0.22-9          
     #>  [85] renv_1.1.7               gmp_0.7-5                bit_4.6.0               
     #>  [88] tidyselect_1.2.1         ComplexHeatmap_2.24.1    Biostrings_2.76.0       
     #>  [91] pbapply_1.7-4            reformulas_0.4.4         svglite_2.2.2           
@@ -981,7 +1022,7 @@ options under the Feedback section of the README on GitHub. Thank you!
     #> [103] codetools_0.2-19         tibble_3.3.1             BiocManager_1.30.27     
     #> [106] cli_3.6.5                systemfonts_1.3.1        Rdpack_2.6.5            
     #> [109] jquerylib_0.1.4          GenomeInfoDb_1.44.3      Rcpp_1.1.1              
-    #> [112] EnvStats_3.1.0           png_0.1-8                parallel_4.5.2          
+    #> [112] EnvStats_3.1.0           png_0.1-8                parallel_4.5.3          
     #> [115] pkgdown_2.2.0            ggplot2_4.0.2            blob_1.3.0              
     #> [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            
     #> [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          

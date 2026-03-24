@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -279,7 +279,7 @@ the gene-centric representation.</p>
 <span>  verbose      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [cluster_genes_multiomics] total runtime: </span></span>
-<span><span class="co">## <span style="color: #00BBBB;">•</span> 1 secs</span></span></code></pre>
+<span><span class="co">## <span style="color: #00BBBB;">•</span> 1.2 secs</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cluster_table</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">cluster_table</span></span></code></pre></div>
 </div>
@@ -303,7 +303,7 @@ visualized using <code><a href="../reference/plot_umap_clusters.html">plot_umap_
 </h3>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## R version 4.5.2 (2025-10-31)</span></span>
+<pre><code><span><span class="co">## R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 22.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -326,13 +326,13 @@ visualized using <code><a href="../reference/plot_umap_clusters.html">plot_umap_
 <span><span class="co">## [1] stats     graphics  grDevices datasets  utils     methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.3</span></span>
+<span><span class="co">## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.4</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           </span></span>
 <span><span class="co">##   [4] writexl_1.5.4            rlang_1.1.7              magrittr_2.0.4          </span></span>
 <span><span class="co">##   [7] clue_0.3-66              GetoptLong_1.1.0         RcppAnnoy_0.0.23        </span></span>
-<span><span class="co">##  [10] otel_0.2.0               matrixStats_1.5.0        compiler_4.5.2          </span></span>
+<span><span class="co">##  [10] otel_0.2.0               matrixStats_1.5.0        compiler_4.5.3          </span></span>
 <span><span class="co">##  [13] reshape2_1.4.5           png_0.1-8                systemfonts_1.3.1       </span></span>
 <span><span class="co">##  [16] vctrs_0.7.1              stringr_1.6.0            pkgconfig_2.0.3         </span></span>
 <span><span class="co">##  [19] shape_1.4.6.1            crayon_1.5.3             fastmap_1.2.0           </span></span>
@@ -341,28 +341,28 @@ visualized using <code><a href="../reference/plot_umap_clusters.html">plot_umap_
 <span><span class="co">##  [28] purrr_1.2.1              xfun_0.56                cachem_1.1.0            </span></span>
 <span><span class="co">##  [31] jsonlite_2.0.0           progress_1.2.3           EnvStats_3.1.0          </span></span>
 <span><span class="co">##  [34] remaCor_0.0.20           gmp_0.7-5                BiocParallel_1.42.2     </span></span>
-<span><span class="co">##  [37] broom_1.0.12             parallel_4.5.2           prettyunits_1.2.0       </span></span>
-<span><span class="co">##  [40] cluster_2.1.8.1          R6_2.6.1                 stringi_1.8.7           </span></span>
+<span><span class="co">##  [37] broom_1.0.12             parallel_4.5.3           prettyunits_1.2.0       </span></span>
+<span><span class="co">##  [40] cluster_2.1.8.2          R6_2.6.1                 stringi_1.8.7           </span></span>
 <span><span class="co">##  [43] bslib_0.10.0             RColorBrewer_1.1-3       limma_3.64.3            </span></span>
 <span><span class="co">##  [46] boot_1.3-32              car_3.1-5                ClusterR_1.3.6          </span></span>
 <span><span class="co">##  [49] numDeriv_2016.8-1.1      jquerylib_0.1.4          Rcpp_1.1.1              </span></span>
 <span><span class="co">##  [52] iterators_1.0.14         knitr_1.51               base64enc_0.1-6         </span></span>
-<span><span class="co">##  [55] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.2           </span></span>
+<span><span class="co">##  [55] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.3           </span></span>
 <span><span class="co">##  [58] tidyselect_1.2.1         rstudioapi_0.18.0        abind_1.4-8             </span></span>
 <span><span class="co">##  [61] yaml_2.3.12              doParallel_1.0.17        gplots_3.3.0            </span></span>
 <span><span class="co">##  [64] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-0          </span></span>
-<span><span class="co">##  [67] lattice_0.22-5           withr_3.0.2              Biobase_2.68.0          </span></span>
+<span><span class="co">##  [67] lattice_0.22-9           withr_3.0.2              Biobase_2.68.0          </span></span>
 <span><span class="co">##  [70] S7_0.2.1                 evaluate_1.0.5           desc_1.4.3              </span></span>
 <span><span class="co">##  [73] zip_2.3.3                circlize_0.4.17          pillar_1.11.1           </span></span>
 <span><span class="co">##  [76] BiocManager_1.30.27      carData_3.0-6            KernSmooth_2.23-26      </span></span>
 <span><span class="co">##  [79] checkmate_2.3.4          renv_1.1.7               foreach_1.5.2           </span></span>
-<span><span class="co">##  [82] stats4_4.5.2             reformulas_0.4.4         generics_0.1.4          </span></span>
+<span><span class="co">##  [82] stats4_4.5.3             reformulas_0.4.4         generics_0.1.4          </span></span>
 <span><span class="co">##  [85] S4Vectors_0.46.0         hms_1.1.4                scales_1.4.0            </span></span>
 <span><span class="co">##  [88] aod_1.3.3                minqa_1.2.8              gtools_3.9.5            </span></span>
-<span><span class="co">##  [91] RhpcBLASctl_0.23-42      glue_1.8.0               tools_4.5.2             </span></span>
+<span><span class="co">##  [91] RhpcBLASctl_0.23-42      glue_1.8.0               tools_4.5.3             </span></span>
 <span><span class="co">##  [94] fANCOVA_0.6-1            variancePartition_1.38.1 RSpectra_0.16-2         </span></span>
 <span><span class="co">##  [97] lme4_1.1-38              mvtnorm_1.3-3            fs_1.6.6                </span></span>
-<span><span class="co">## [100] grid_4.5.2               tidyr_1.3.2              rbibutils_2.4.1         </span></span>
+<span><span class="co">## [100] grid_4.5.3               tidyr_1.3.2              rbibutils_2.4.1         </span></span>
 <span><span class="co">## [103] colorspace_2.1-2         nlme_3.1-168             Formula_1.2-5           </span></span>
 <span><span class="co">## [106] cli_3.6.5                textshaping_1.0.4        svglite_2.2.2           </span></span>
 <span><span class="co">## [109] ComplexHeatmap_2.24.1    dplyr_1.2.0              uwot_0.2.4              </span></span>

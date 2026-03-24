@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,10 +137,23 @@ future.</li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="v0-4-3">[v0.4.3]<a class="anchor" aria-label="anchor" href="#v0-4-3"></a>
+<h4 id="v0-4-4-in-preparation">[v0.4.4] (in preparation)<a class="anchor" aria-label="anchor" href="#v0-4-4-in-preparation"></a>
 </h4>
 <div class="section level5">
 <h5 id="added-1">Added<a class="anchor" aria-label="anchor" href="#added-1"></a>
+</h5>
+<ul>
+<li>cluster_genes_multiomics() now returns shape archetypes for
+many-to-one layers, and the centroids for those layers are returned
+without normalization.</li>
+</ul>
+</div>
+</div>
+<div class="section level4">
+<h4 id="v0-4-3">[v0.4.3]<a class="anchor" aria-label="anchor" href="#v0-4-3"></a>
+</h4>
+<div class="section level5">
+<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
 </h5>
 <ul>
 <li><p>condition_colours support to plot options. Users can now provide
@@ -185,7 +198,7 @@ tempdir().</li>
 <h4 id="v0-4-2">[v0.4.2]<a class="anchor" aria-label="anchor" href="#v0-4-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-2">Added<a class="anchor" aria-label="anchor" href="#added-2"></a>
+<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
 </h5>
 <ul>
 <li><p><code><a href="../reference/cluster_genes_multiomics.html">cluster_genes_multiomics()</a></code>, a gene-centric
@@ -216,7 +229,7 @@ more robustly (had clear weaknesses before)</p></li>
 <h4 id="v0-4-1">[v0.4.1]<a class="anchor" aria-label="anchor" href="#v0-4-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-3">Added<a class="anchor" aria-label="anchor" href="#added-3"></a>
+<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
 </h5>
 <ul>
 <li><p>Effect size thresholds are now reported in the HTML report
@@ -323,7 +336,7 @@ generated.</li>
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-4">Added<a class="anchor" aria-label="anchor" href="#added-4"></a>
+<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
 </h5>
 <ul>
 <li>The signed r² as the quality score for the cluster members is now
@@ -386,7 +399,7 @@ default, no HMTL report is generated.</p></li>
 <h4 id="v0-3-1">[v0.3.1]<a class="anchor" aria-label="anchor" href="#v0-3-1"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-5">Added<a class="anchor" aria-label="anchor" href="#added-5"></a>
+<h5 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
 </h5>
 <ul>
 <li><p>Effect size computations and thresholding for the splines.
@@ -479,7 +492,7 @@ is large, it uses the minibatch version of kmeans, which is a lot faster
 </ul>
 </div>
 <div class="section level5">
-<h5 id="added-6">Added<a class="anchor" aria-label="anchor" href="#added-6"></a>
+<h5 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
 </h5>
 <ul>
 <li><p>Auto-dof with loocv: Introduced new capability, that
@@ -628,7 +641,7 @@ not gsea (gene set enrichment analysis) in the stricter sense.</p></li>
 </div>
 </div>
 <div class="section level4">
-<h4 id="added-7">Added<a class="anchor" aria-label="anchor" href="#added-7"></a>
+<h4 id="added-8">Added<a class="anchor" aria-label="anchor" href="#added-8"></a>
 </h4>
 <ul>
 <li><p>find_pvc() function. This function performs a compount contrast
@@ -673,7 +686,7 @@ example intergrated vs. isolated approach with the same data).</p></li>
 <h4 id="section-2">[0.1.2] - 2025-02-11<a class="anchor" aria-label="anchor" href="#section-2"></a>
 </h4>
 <div class="section level5">
-<h5 id="added-8">Added<a class="anchor" aria-label="anchor" href="#added-8"></a>
+<h5 id="added-9">Added<a class="anchor" aria-label="anchor" href="#added-9"></a>
 </h5>
 <ul>
 <li>Level name in title of overall spline plots.</li>
@@ -722,7 +735,7 @@ formula, rather than being passed as part of the dream_params.</li>
 </ul>
 </div>
 <div class="section level4">
-<h4 id="added-9">Added<a class="anchor" aria-label="anchor" href="#added-9"></a>
+<h4 id="added-10">Added<a class="anchor" aria-label="anchor" href="#added-10"></a>
 </h4>
 <ul>
 <li>Added linear mixed models for modeling random effects. The
@@ -765,7 +778,7 @@ and 3).</li>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">## R version 4.5.2 (2025-10-31)</span></span>
+<pre><code><span><span class="co">## R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 22.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -793,8 +806,8 @@ and 3).</li>
 <span><span class="co">##  [7] knitr_1.51          htmltools_0.5.9     rmarkdown_2.30     </span></span>
 <span><span class="co">## [10] lifecycle_1.0.5     cli_3.6.5           sass_0.4.10        </span></span>
 <span><span class="co">## [13] pkgdown_2.2.0       textshaping_1.0.4   jquerylib_0.1.4    </span></span>
-<span><span class="co">## [16] renv_1.1.7          systemfonts_1.3.1   compiler_4.5.2     </span></span>
-<span><span class="co">## [19] rstudioapi_0.18.0   tools_4.5.2         ragg_1.5.0         </span></span>
+<span><span class="co">## [16] renv_1.1.7          systemfonts_1.3.1   compiler_4.5.3     </span></span>
+<span><span class="co">## [19] rstudioapi_0.18.0   tools_4.5.3         ragg_1.5.0         </span></span>
 <span><span class="co">## [22] bslib_0.10.0        evaluate_1.0.5      yaml_2.3.12        </span></span>
 <span><span class="co">## [25] otel_0.2.0          BiocManager_1.30.27 jsonlite_2.0.0     </span></span>
 <span><span class="co">## [28] htmlwidgets_1.6.4   rlang_1.1.7         fs_1.6.6</span></span></code></pre>

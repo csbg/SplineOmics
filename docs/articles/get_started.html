@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SplineOmics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -212,14 +212,14 @@ functions can be viewed <a href="https://csbg.github.io/SplineOmics/reference">h
 <div class="section level2">
 <h2 id="load-the-files">Load the files<a class="anchor" aria-label="anchor" href="#load-the-files"></a>
 </h2>
-<p>In this example, the proteomics_data.rds file contains the numeric
+<p>In this example, the proteomics_data.rds.xz file contains the numeric
 values (the intensities) and also the feature descriptions, such as gene
 and protein name (= annotation part). Usually, you would load the data
 from for example an Excel file, but the .rds file is more compressed,
 which is the reason this format was chosen here to limit the size of the
 SplineOmics package.</p>
-<p>The file meta.xlsx contains the meta information, which are the
-descriptions of the columns of the numeric values of data.</p>
+<p>The file proteomics_meta.csv contains the meta information, which are
+the descriptions of the columns of the numeric values of data.</p>
 <p>(These example files are part of the package and don’t have to be
 present on your system).</p>
 <p>Please note that this dataset is an actual experimental dataset, but
@@ -758,10 +758,10 @@ in the cells above the respective columns of the data matrix field.</li>
 <ul>
 <li>If no annotation columns are specified, rowheaders will be
 increasing numbers.</li>
-<li>If annotation columns are specified (like
-<code>"First.Protein.Description"</code> and <code>"ID"</code> in this
-example), these will be combined to form the rowheaders (feature
-names).</li>
+<li>If annotation columns are specified (like <code>"Gene_name"</code>
+in this example), these values are used to construct the rowheaders
+(feature names). Optionally, the row index can also be included to
+guarantee uniqueness of the feature names.</li>
 </ul>
 </li>
 </ul>
@@ -1022,7 +1022,7 @@ exploratory data analysis.</p>
 <span><span class="co">#&gt; Making cv plots...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Exploratory data analysis completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f8217c711a .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e30a27020 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
 <p><a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">Here</a>
@@ -1053,7 +1053,10 @@ the integrated mode, the condition column (here Phase) must be included
 in the design. Isolated means that limma only uses the part of the
 dataset that belongs to a level to obtain the results for that
 level.</p>
-<p>To generate the limma result categories 2 and 3 ()</p>
+<p>In this example we use the <strong>integrated</strong> mode and a
+design formula that includes a condition–time interaction. This allows
+SplineOmics to generate limma result categories 2 (average differences
+between conditions) and 3 (condition–time interactions).</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/update_splineomics.html">update_splineomics</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span>,</span>
@@ -1078,12 +1081,13 @@ SplineOmics object:</p>
 <code class="sourceCode R"><span><span class="va">splineomics</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/run_limma_splines.html">run_limma_splines</a></span><span class="op">(</span></span>
 <span>    splineomics <span class="op">=</span> <span class="va">splineomics</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The output of the function run_limma_splines() is a named list, where
-each element is a specific “category” of results. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
-document</a> for an explanation of the different result categories. Each
-of those elements is a list, containing as elements the respective limma
-topTables, either for each level or each comparison between two
-levels.</p>
+<p>The output of <code><a href="../reference/run_limma_splines.html">run_limma_splines()</a></code> is stored inside the
+SplineOmics object and contains a named list where each element
+represents one of the limma result categories. Refer to <a href="https://csbg.github.io/SplineOmics/articles/limma_result_categories.html">this
+document</a> for an explanation of the different categories.</p>
+<p>Each category contains one or more limma <code>topTable</code>
+results. Depending on the category, these tables correspond either to
+individual conditions or to pairwise comparisons between conditions.</p>
 <p>The element “time_effect” is a list, where each element is the
 topTable where the p-value for each feature for the respective level are
 reported.</p>
@@ -1119,18 +1123,25 @@ result category 1.</p>
 <h2 id="cluster-the-hits-significant-features">Cluster the hits (significant features)<a class="anchor" aria-label="anchor" href="#cluster-the-hits-significant-features"></a>
 </h2>
 <p>After we obtained the limma spline results, we can cluster the hits
-based on their temporal pattern (their spline shape). We define what a
-hit is by setting an adj. p-value threshold for every level. Hits are
-features (e.g. proteins) that have an adj. p-value below the threshold.
-K-means clustering is used to place every hit in one of as many clusters
-as we have specified for that specific level.</p>
+based on their temporal pattern (their spline shape).</p>
+<p>Hits are defined by adjusted p-value thresholds for the different
+limma result categories (time effect / average differences between
+conditions / condition–time interaction). Optionally,
+<code><a href="../reference/cluster_hits.html">cluster_hits()</a></code> can apply additional effect-size cutoffs
+(<code>min_effect_size</code>) so that statistically significant but
+biologically trivial changes are excluded.</p>
+<p>Clustering is performed with k-means on the predicted spline
+trajectories. Optionally, clusters can be pruned using
+<code>min_cluster_r2</code>: members with low squared correlation to
+their cluster centroid are reassigned to cluster <code>0</code> (the
+“other” cluster).</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># The amount of clusters can be a fixed number (e.g. 6) or a range. When you</span></span>
-<span><span class="co"># specify a range (e.g. 2:3, which corresponds to 2 3 in the vector) then the</span></span>
-<span><span class="co"># cluster_hits() function tries all those cluster numbers and picks the one with</span></span>
-<span><span class="co"># the highest silhouette score (automatic cluster number identification). When</span></span>
-<span><span class="co"># you don't want to have a clustering for a level, write 1 for the cluster</span></span>
-<span><span class="co"># number for that level.</span></span>
+<span><span class="co"># specify a range (e.g. 2:6), then the cluster_hits() function tries all k in</span></span>
+<span><span class="co"># that range and selects the k that minimizes the Bayesian Information Criterion</span></span>
+<span><span class="co"># (BIC) computed from the k-means fit (lower is better; ties broken by the first</span></span>
+<span><span class="co"># minimum encountered). When you don't want to have a clustering for a level,</span></span>
+<span><span class="co"># write 1 for the cluster number for that level.</span></span>
 <span><span class="va">nr_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    Exponential <span class="op">=</span> <span class="fl">6</span>, <span class="co"># specifically 6 clusters for the exponential phase level</span></span>
 <span>    Stationary <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">3</span> <span class="co"># range of cluster numbers for the stationary phase level</span></span>
@@ -1169,9 +1180,17 @@ as we have specified for that specific level.</p>
 <span>    adj_pthresh_time_effect <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_avrg_diff_conditions <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    adj_pthresh_interaction_condition_time <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    min_effect_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        time_effect <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>        avg_diff_cond <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>        interaction_cond_time <span class="op">=</span> <span class="fl">0</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    min_cluster_r2 <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>    nr_clusters <span class="op">=</span> <span class="va">nr_clusters</span>,</span>
 <span>    genes <span class="op">=</span> <span class="va">genes</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>Note: Category 2 and 3 hits are only evaluated in integrated mode
+(and only if their respective thresholds are &gt; 0).</p>
 <p>Generate the report:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">SplineOmics</span><span class="fu">::</span><span class="fu"><a href="../reference/create_clustering_report.html">create_clustering_report</a></span><span class="op">(</span></span>
@@ -1190,26 +1209,39 @@ as we have specified for that specific level.</p>
 <span><span class="co">#&gt; Generating report. This takes a few seconds.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  <span style="color: #00BB00;">Info</span> Clustering the hits completed successfully.</span></span>
-<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpPca44v/filea4f81b2d6c9c .</span></span>
+<span><span class="co">#&gt;  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e3f2a71a8 .</span></span>
 <span><span class="co">#&gt;  Please note that due to embedded files, the reports might be flagged as</span></span>
 <span><span class="co">#&gt;  harmful by other software. Rest assured that they provide no harm.</span></span></code></pre></div>
+<p><code><a href="../reference/create_clustering_report.html">create_clustering_report()</a></code> consumes the precomputed
+<code>report_payload</code> returned by <code><a href="../reference/cluster_hits.html">cluster_hits()</a></code> and
+generates an HTML report with the associated visualizations.</p>
 <p>You can view the generated analysis report of the clustering <a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">here</a>.</p>
+<p>Depending on the settings used in <code><a href="../reference/cluster_hits.html">cluster_hits()</a></code>, the
+report may also reflect effect-size filtering
+(<code>min_effect_size</code>) and optional pruning of clusters via
+<code>min_cluster_r2</code>, where low-centroid-similarity features are
+assigned to cluster <code>0</code> (“other”). If <code>raw_data</code>
+is provided, imputed values can be highlighted in the spline plots.</p>
 <p>As discussed before, there are three limma result categories. The
-cluster_hits() report shows the results of all three, if they are
-present (category 2 and 3 can only be generated when the design formula
-contains an interaction effect).</p>
+clustering report shows all categories that are available in the current
+analysis.</p>
+<p>Category 2 (average differences between conditions) is available in
+integrated mode when condition contrasts are defined; it does not
+require an interaction term. Category 3 (condition–time interaction)
+requires that the design includes a condition–time interaction.</p>
 </div>
 <div class="section level2">
 <h2 id="perform-overrepresentation-analysis-ora">Perform overrepresentation analysis (ORA)<a class="anchor" aria-label="anchor" href="#perform-overrepresentation-analysis-ora"></a>
 </h2>
 <p>Once the clustered hits are identified, a subsequent step to gain
-biological insights is to perform ORA For this, the respective genes can
-be assigned to each clustered hit, and ORA can be carried out. To
-proceed, the Enrichr databases of choice need to be downloaded:</p>
+biological insights is to perform <strong>overrepresentation analysis
+(ORA)</strong>. For this, the respective genes can be assigned to each
+clustered hit, and ORA can be carried out. To proceed, the Enrichr
+databases of choice need to be downloaded:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a temporary directory for R CMD check</span></span>
 <span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"ora"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">report_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">results_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Specify which databases you want to download from Enrichr</span></span>
 <span><span class="va">gene_set_lib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -1232,8 +1264,6 @@ proceed, the Enrichr databases of choice need to be downloaded:</p>
 <span>    output_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
 <span>    filename <span class="op">=</span> <span class="st">"databases.tsv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Per default the file is placed in the current working directory,
-which is the root dir of the R project.</p>
 <p>To run ORA, the downloaded database file has to be loaded as a
 dataframe. Further, optionally, the clusterProfiler parameters and the
 report dir can be specified. The function run_ora() runs ORA using
@@ -1389,7 +1419,7 @@ Thank you!</p>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<pre><code><span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">#&gt; Running under: Ubuntu 22.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1416,7 +1446,7 @@ Thank you!</p>
 <span><span class="co">#&gt;  [1] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      </span></span>
 <span><span class="co">#&gt;  [4] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.1 </span></span>
 <span><span class="co">#&gt;  [7] generics_0.1.4       knitr_1.51           dplyr_1.2.0         </span></span>
-<span><span class="co">#&gt; [10] SplineOmics_0.4.3   </span></span>
+<span><span class="co">#&gt; [10] SplineOmics_0.4.4   </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          </span></span>
@@ -1434,19 +1464,19 @@ Thank you!</p>
 <span><span class="co">#&gt;  [37] clue_0.3-66              digest_0.6.39            numDeriv_2016.8-1.1     </span></span>
 <span><span class="co">#&gt;  [40] colorspace_2.1-2         textshaping_1.0.4        RSQLite_2.4.5           </span></span>
 <span><span class="co">#&gt;  [43] labeling_0.4.3           httr_1.4.7               abind_1.4-8             </span></span>
-<span><span class="co">#&gt;  [46] compiler_4.5.2           withr_3.0.2              bit64_4.6.0-1           </span></span>
+<span><span class="co">#&gt;  [46] compiler_4.5.3           withr_3.0.2              bit64_4.6.0-1           </span></span>
 <span><span class="co">#&gt;  [49] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                </span></span>
 <span><span class="co">#&gt;  [52] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           </span></span>
 <span><span class="co">#&gt;  [55] DBI_1.2.3                gplots_3.3.0             MASS_7.3-65             </span></span>
 <span><span class="co">#&gt;  [58] rjson_0.2.23             corpcor_1.6.10           gtools_3.9.5            </span></span>
-<span><span class="co">#&gt;  [61] caTools_1.18.3           tools_4.5.2              otel_0.2.0              </span></span>
+<span><span class="co">#&gt;  [61] caTools_1.18.3           tools_4.5.3              otel_0.2.0              </span></span>
 <span><span class="co">#&gt;  [64] zip_2.3.3                remaCor_0.0.20           glue_1.8.0              </span></span>
-<span><span class="co">#&gt;  [67] nlme_3.1-168             grid_4.5.2               checkmate_2.3.4         </span></span>
-<span><span class="co">#&gt;  [70] cluster_2.1.8.1          reshape2_1.4.5           gtable_0.3.6            </span></span>
+<span><span class="co">#&gt;  [67] nlme_3.1-168             grid_4.5.3               checkmate_2.3.4         </span></span>
+<span><span class="co">#&gt;  [70] cluster_2.1.8.2          reshape2_1.4.5           gtable_0.3.6            </span></span>
 <span><span class="co">#&gt;  [73] tidyr_1.3.2              hms_1.1.4                XVector_0.48.0          </span></span>
 <span><span class="co">#&gt;  [76] car_3.1-5                ggrepel_0.9.6            foreach_1.5.2           </span></span>
 <span><span class="co">#&gt;  [79] pillar_1.11.1            stringr_1.6.0            limma_3.64.3            </span></span>
-<span><span class="co">#&gt;  [82] circlize_0.4.17          splines_4.5.2            lattice_0.22-5          </span></span>
+<span><span class="co">#&gt;  [82] circlize_0.4.17          splines_4.5.3            lattice_0.22-9          </span></span>
 <span><span class="co">#&gt;  [85] renv_1.1.7               gmp_0.7-5                bit_4.6.0               </span></span>
 <span><span class="co">#&gt;  [88] tidyselect_1.2.1         ComplexHeatmap_2.24.1    Biostrings_2.76.0       </span></span>
 <span><span class="co">#&gt;  [91] pbapply_1.7-4            reformulas_0.4.4         svglite_2.2.2           </span></span>
@@ -1456,7 +1486,7 @@ Thank you!</p>
 <span><span class="co">#&gt; [103] codetools_0.2-19         tibble_3.3.1             BiocManager_1.30.27     </span></span>
 <span><span class="co">#&gt; [106] cli_3.6.5                systemfonts_1.3.1        Rdpack_2.6.5            </span></span>
 <span><span class="co">#&gt; [109] jquerylib_0.1.4          GenomeInfoDb_1.44.3      Rcpp_1.1.1              </span></span>
-<span><span class="co">#&gt; [112] EnvStats_3.1.0           png_0.1-8                parallel_4.5.2          </span></span>
+<span><span class="co">#&gt; [112] EnvStats_3.1.0           png_0.1-8                parallel_4.5.3          </span></span>
 <span><span class="co">#&gt; [115] pkgdown_2.2.0            ggplot2_4.0.2            blob_1.3.0              </span></span>
 <span><span class="co">#&gt; [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            </span></span>
 <span><span class="co">#&gt; [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          </span></span>
