@@ -25,6 +25,10 @@ jobs:
       R_BITMAP_TYPE: cairo
       BIOC_VERSION: '3.21'
 
+      # Prevent renv from auto-activating during CI unless explicitly restored.
+      # This avoids mixing renv lockfile state with BiocManager/setup-r-dependencies.
+      RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +38,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libz-dev libbz2-dev liblzma-dev libcurl4-openssl-dev \
-            libssl-dev libxml2-dev libgit2-dev build-essential
+            libssl-dev libxml2-dev libgit2-dev build-essential \
+            libharfbuzz-dev libfribidi-dev libfontconfig1-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+            qpdf ghostscript
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -43,7 +50,7 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
 
-      - name: Configure repositories
+      - name: Configure and initialize Bioconductor
         shell: Rscript {0}
         run: |
           cran <- if (.Platform$OS.type == "windows") {
@@ -62,9 +69,25 @@ jobs:
           cat("Repos:\n")
           print(getOption("repos"))
 
+          BiocManager::install(
+            version = Sys.getenv("BIOC_VERSION"),
+            ask = FALSE,
+            update = TRUE
+          )
+
       - name: Install Bioconductor core dependencies explicitly
         shell: Rscript {0}
         run: |
+          cran <- if (.Platform$OS.type == "windows") {
+            "https://packagemanager.posit.co/cran/2026-01-01"
+          } else {
+            "https://packagemanager.posit.co/cran/__linux__/jammy/2026-01-01"
+          }
+
+          repos <- BiocManager::repositories(version = Sys.getenv("BIOC_VERSION"))
+          repos["CRAN"] <- cran
+          options(repos = repos)
+
           BiocManager::install(
             c("BiocParallel", "limma", "variancePartition"),
             version = Sys.getenv("BIOC_VERSION"),
@@ -76,12 +99,28 @@ jobs:
         shell: Rscript {0}
         run: |
           sessionInfo()
-          pkgs <- c("variancePartition", "lme4", "lmerTest", "limma", "BiocParallel")
+
+          pkgs <- c(
+            "BiocManager",
+            "BiocParallel",
+            "limma",
+            "variancePartition",
+            "lme4",
+            "lmerTest",
+            "pbkrtest",
+            "Matrix",
+            "RcppEigen"
+          )
+
           for (p in pkgs) {
+            cat(p, ": ")
             if (requireNamespace(p, quietly = TRUE)) {
-              cat(p, as.character(packageVersion(p)), "\n")
+              cat(as.character(packageVersion(p)), "\n")
+            } else {
+              cat("not installed\n")
             }
           }
+
           BiocManager::valid()
 
       - uses: r-lib/actions/setup-r-dependencies@v2
