@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>"
 )
+
+run_full_vignette <- identical(Sys.getenv("RUN_FULL_VIGNETTES"), "true")
 ```
 
 # About this vignette
@@ -137,7 +139,7 @@ library(compositions) # For clr transforming the glycan data
 
 # Load the files
 
-```{r load the files, , eval = TRUE}
+```{r load the files, eval = TRUE}
 data <- read.csv(
     system.file(
         "extdata",
@@ -286,7 +288,7 @@ the linear mixed models that we use will model Reactor as a random effect.
 Run the `run_limma_splines()` function with the updated SplineOmics
 object:
 
-```{r limma spline analysis, eval = TRUE}
+```{r limma spline analysis, eval = run_full_vignette}
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
@@ -307,7 +309,7 @@ using variance "outliers" for the variance shrinkage.
 The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
-```{r build limma report, eval = TRUE}
+```{r build limma report, eval = run_full_vignette}
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -322,7 +324,7 @@ function
 
 Prepare arguments:
 
-```{r prepare arguments, eval = TRUE}
+```{r prepare arguments, eval = run_full_vignette}
 nr_clusters <- list(
     constant = 2,
     tshifted = 2
@@ -353,7 +355,7 @@ plot_options <- list(
 
 Run the clustering:
 
-```{r cluster the hits, eval = TRUE}
+```{r cluster the hits, eval = run_full_vignette}
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
@@ -366,7 +368,7 @@ clustering_results <- SplineOmics::cluster_hits(
 
 Generate the report:
 
-```{r generate clustering report, eval = TRUE}
+```{r generate clustering report, eval = run_full_vignette}
 plots <- SplineOmics::create_clustering_report(
     report_payload = clustering_results$report_payload,
     plot_info = plot_info,
