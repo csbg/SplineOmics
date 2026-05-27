@@ -1,9 +1,9 @@
-on:
+name: R-CMD-check.yaml
+
+"on":
   push:
     branches: [main, master]
   pull_request:
-
-name: R-CMD-check.yaml
 
 permissions: read-all
 
@@ -124,9 +124,9 @@ jobs:
           BiocManager::valid()
 
       - uses: r-lib/actions/setup-r-dependencies@v2
-	with:
-	  extra-packages: any::rcmdcheck
-	  needs: check
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
