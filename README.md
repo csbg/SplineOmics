@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # SplineOmics
 
 [![License:
@@ -25,35 +19,30 @@ The graphical abstract below shows the full workflow streamlined by
 `SplineOmics`:
 
 <figure>
-
-<img src="man/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"/>
-
-<figcaption aria-hidden="true">
-
-Graphical Abstract of SplineOmics Workflow
-
-</figcaption>
-
+<img src="man/figures/SplineOmics_graphical_abstract.png"
+alt="Graphical Abstract of SplineOmics Workflow" />
+<figcaption aria-hidden="true">Graphical Abstract of SplineOmics
+Workflow</figcaption>
 </figure>
 
 ## Table of Contents
 
--   [📘 Introduction](#-introduction)
--   [🔧 Installation](#-installation)
-    -   [🐳 Docker Container](#-docker-container)
--   [▶️ Usage](#-usage)
-    -   [🎓 Tutorial](#-tutorial)
-    -   [📋 Details](#-details)
-    -   [🧬 RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
--   [📦 Dependencies](#-dependencies)
--   [📚 Further Reading](#-further-reading)
--   [❓ Getting Help](#-getting-help)
--   [💬 Feedback](#-feedback)
--   [📜 License](#-license)
--   [🎓 Citation](#-citation)
--   [🌟 Contributors](#-contributors)
--   [🙏 Acknowledgements](#-acknowledgements)
--   [⭐ Liking this project](#liking-this-project)
+- [📘 Introduction](#-introduction)
+- [🔧 Installation](#-installation)
+  - [🐳 Docker Container](#-docker-container)
+- [▶️ Usage](#-usage)
+  - [🎓 Tutorial](#-tutorial)
+  - [📋 Details](#-details)
+  - [🧬 RNA-seq and Glycan Data](#-rna-seq-and-glycan-data)
+- [📦 Dependencies](#-dependencies)
+- [📚 Further Reading](#-further-reading)
+- [❓ Getting Help](#-getting-help)
+- [💬 Feedback](#-feedback)
+- [📜 License](#-license)
+- [🎓 Citation](#-citation)
+- [🌟 Contributors](#-contributors)
+- [🙏 Acknowledgements](#-acknowledgements)
+- [⭐ Liking this project](#liking-this-project)
 
 ## 📘 Introduction
 
@@ -87,36 +76,35 @@ fractional abundances, etc.).
 
 With `SplineOmics`, you can:
 
--   **Automatically perform exploratory data analysis:**
+- **Automatically perform exploratory data analysis:**
 
-    The `explore_data()` function generates an HTML report, containing
-    various plots, such as density, PCA, and correlation heatmap plots
-    ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
+  The `explore_data()` function generates an HTML report, containing
+  various plots, such as density, PCA, and correlation heatmap plots
+  ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
 
--   **Perform limma spline analysis:**
+- **Perform limma spline analysis:**
 
-    Use the `run_limma_splines()` function to perform the `limma`
-    analysis with splines once the optimal hyperparameters are
-    identified ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
+  Use the `run_limma_splines()` function to perform the `limma` analysis
+  with splines once the optimal hyperparameters are identified ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
 
--   **Find jumps and drops in the timecourse:**
+- **Find jumps and drops in the timecourse:**
 
-    Use the `find_pvc()` function for that ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html)).
+  Use the `find_pvc()` function for that ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html)).
 
--   **Cluster significant features:**
+- **Cluster significant features:**
 
-    Cluster the significant features (hits) identified in the spline
-    analysis with the `cluster_hits()` function ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
+  Cluster the significant features (hits) identified in the spline
+  analysis with the `cluster_hits()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
 
--   **Run ORA with clustered hits:**
+- **Run ORA with clustered hits:**
 
-    Perform over-representation analysis (ORA) using the clustered hits
-    with the `run_ora()` function ([example
-    report](https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html)).
+  Perform over-representation analysis (ORA) using the clustered hits
+  with the `run_ora()` function ([example
+  report](https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html)).
 
 ## 🔧 Installation
 
@@ -130,11 +118,11 @@ GitHub repository into your R environment.
 
 #### Prerequisites
 
--   Ensure **R** is installed on your system. If not, download and
-    install it from [CRAN](https://cran.r-project.org/).
--   **RStudio** is recommended for a more user-friendly experience
-    with R. Download and install RStudio from
-    [posit.co](https://posit.co/download/rstudio-desktop/).
+- Ensure **R** is installed on your system. If not, download and install
+  it from [CRAN](https://cran.r-project.org/).
+- **RStudio** is recommended for a more user-friendly experience with R.
+  Download and install RStudio from
+  [posit.co](https://posit.co/download/rstudio-desktop/).
 
 #### Installation Steps
 
@@ -207,7 +195,7 @@ if (status) {
 }
 ```
 
-📌 **Note on documentation:**\
+📌 **Note on documentation:**  
 The website only contains the documentation for the most recent
 `SplineOmics` version. To get the documentation of any currently
 installed version, run:
@@ -347,12 +335,12 @@ Discussions](https://github.com/csbg/SplineOmics/discussions) page for
 We appreciate your feedback! Besides raising issues, you can provide
 feedback in the following ways:
 
--   **Direct Email**: Send your feedback directly to [Thomas
-    Rauter](mailto:thomas.rauter@plus.ac.at).
+- **Direct Email**: Send your feedback directly to [Thomas
+  Rauter](mailto:thomas.rauter@plus.ac.at).
 
--   **Anonymous Feedback**: Use [this Google
-    Form](https://forms.gle/jocMXSxLf3GrGBdT9) to provide anonymous
-    feedback by answering questions.
+- **Anonymous Feedback**: Use [this Google
+  Form](https://forms.gle/jocMXSxLf3GrGBdT9) to provide anonymous
+  feedback by answering questions.
 
 Your feedback helps us improve the project and address any issues you
 may encounter.
@@ -382,29 +370,27 @@ of `SplineOmics`. Thank you for using our package!
 
 ## 🌟 Contributors
 
--   [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
-    package, developed the approach together with Veronika Schäpertöns
-    under guidance from Nikolaus Fortelny and Wolfgang Esser-Skala.
--   [Nikolaus Fortelny](https://github.com/nfortelny) - 🧠 Principal
-    Investigator, provided guidance and support for the overall
-    approach.
--   [Wolfgang Esser-Skala](https://github.com/skafdasschaf) - Helped
-    reviewing code, delivered improvement suggestions and scientific
-    guidance to develop the approach.
--   [Veronika Schäpertöns](https://github.com/VSchaepertoens) -
-    Developed one internal plotting function, as well as some code for
-    the exploratory data analysis plots, and the overall approach
-    together with Thomas Rauter.
--   [Dominik Hofreither](https://github.com/dh2305) - was (i) actively
-    involved as a tester, (ii) provided datasets that helped define the
-    problem addressed by the package, (iii) contributed numerous ideas
-    that shaped its development, and (iv) as an end-user, provided
-    feedback that improved its functionality.
--   [Larissa Hofer](https://github.com/larissahofer) - contributed
-    through feedback and beta-testing, and by providing the epigenetics
-    and RNA datasets used as examples in the package documentation.
-    These datasets were also used to define the problem addressed by the
-    package.
+- [Thomas-Rauter](https://github.com/Thomas-Rauter) - 🚀 Wrote the
+  package, developed the approach together with Veronika Schäpertöns
+  under guidance from Nikolaus Fortelny and Wolfgang Esser-Skala.
+- [Nikolaus Fortelny](https://github.com/nfortelny) - 🧠 Principal
+  Investigator, provided guidance and support for the overall approach.
+- [Wolfgang Esser-Skala](https://github.com/skafdasschaf) - Helped
+  reviewing code, delivered improvement suggestions and scientific
+  guidance to develop the approach.
+- [Veronika Schäpertöns](https://github.com/VSchaepertoens) - Developed
+  one internal plotting function, as well as some code for the
+  exploratory data analysis plots, and the overall approach together
+  with Thomas Rauter.
+- [Dominik Hofreither](https://github.com/dh2305) - was (i) actively
+  involved as a tester, (ii) provided datasets that helped define the
+  problem addressed by the package, (iii) contributed numerous ideas
+  that shaped its development, and (iv) as an end-user, provided
+  feedback that improved its functionality.
+- [Larissa Hofer](https://github.com/larissahofer) - contributed through
+  feedback and beta-testing, and by providing the epigenetics and RNA
+  datasets used as examples in the package documentation. These datasets
+  were also used to define the problem addressed by the package.
 
 ## 🙏 Acknowledgements
 
@@ -416,7 +402,7 @@ University of Salzburg, Austria. You can find more information about
 Prof. Fortelny’s research group
 [here](https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/).
 
-## ⭐ Liking this project {#liking-this-project}
+## ⭐ Liking this project
 
 If you find this package useful for your research or analysis, please
 consider giving the repository a **star** on GitHub. Starring helps
