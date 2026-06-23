@@ -1196,8 +1196,14 @@ plot_cv <- function(
 #' @return A ggplot object representing the PCA plot.
 #'
 #' @importFrom stats prcomp
-#' @importFrom ggplot2 ggplot geom_point xlim xlab ylab ggtitle theme_minimal
-#' theme
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 xlim
+#' @importFrom ggplot2 xlab
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 theme
 #' @importFrom ggrepel geom_text_repel
 #'
 make_pca_plot <- function(

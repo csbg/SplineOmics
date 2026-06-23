@@ -486,6 +486,7 @@ cluster_hits <- function(
         min_cluster_r2 = min_cluster_r2,
         verbose = verbose
     )
+    
 
     cluster_table <- construct_cluster_table(
         limma_splines_results = splineomics[["limma_splines_result"]],
@@ -493,6 +494,7 @@ cluster_hits <- function(
         category_2_and_3_hits = all_top_tables[["category_2_and_3_hits"]],
         genes = genes
     )
+
     
     report_payload <- list(
         splineomics = splineomics,
@@ -1600,11 +1602,26 @@ get_category_2_and_3_hits <- function(
 #'   * `cluster_cat2_<suffix>` for each Cat2 contrast
 #'   * `cluster_cat3_<suffix>` for each Cat3 contrast
 #'
-#' @importFrom dplyr mutate transmute filter select rename left_join
-#'   arrange distinct group_by ungroup slice_head bind_rows coalesce
-#'   case_when rowwise c_across
-#' @importFrom tibble as_tibble tibble
-#' @importFrom rlang sym .data
+#' @importFrom dplyr mutate
+#' @importFrom dplyr transmute
+#' @importFrom dplyr filter
+#' @importFrom dplyr select
+#' @importFrom dplyr rename
+#' @importFrom dplyr left_join
+#' @importFrom dplyr arrange
+#' @importFrom dplyr distinct
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr slice_head
+#' @importFrom dplyr bind_rows
+#' @importFrom dplyr coalesce
+#' @importFrom dplyr case_when
+#' @importFrom dplyr rowwise
+#' @importFrom dplyr c_across
+#' @importFrom tibble as_tibble
+#' @importFrom tibble tibble
+#' @importFrom rlang sym
+#' @importFrom rlang .data
 #'
 construct_cluster_table <- function(
         limma_splines_results,
@@ -3207,8 +3224,13 @@ kmeans_clustering <- function(
 #' @return A data frame with up to `max_n` rows and columns
 #'   `feature_nr` and `feature_names`, containing the selected features.
 #'
-#' @importFrom dplyr bind_rows select distinct slice_head arrange anti_join
-#'                   any_of
+#' @importFrom dplyr bind_rows
+#' @importFrom dplyr select
+#' @importFrom dplyr distinct
+#' @importFrom dplyr slice_head
+#' @importFrom dplyr arrange
+#' @importFrom dplyr anti_join
+#' @importFrom dplyr any_of
 #' @importFrom rlang .data
 #'
 select_balanced_hits <- function(

@@ -2813,8 +2813,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #'
         #' @return No return value, called for side effects.
         #'
-        #' @keywords internal
-        #'
         check_columns_spline_test_configs = function(spline_test_configs) {
             required_columns <- c(
                 "spline_type",
@@ -2872,8 +2870,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #'
         #' @return No return value, called for side effects.
         #'
-        #' @keywords internal
-        #'
         check_spline_type_column = function(spline_test_configs) {
             if (!all(spline_test_configs$spline_type %in% c("n", "b"))) {
                 # Identify invalid entries
@@ -2903,8 +2899,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #' configurations.
         #'
         #' @return TRUE if all checks pass, otherwise an error is thrown.
-        #'
-        #' @keywords internal
         #'
         check_spline_type_params = function(spline_test_configs) {
             for (i in seq_len(nrow(spline_test_configs))) {
@@ -2957,8 +2951,6 @@ Level2Functions <- R6::R6Class("Level2Functions",
         #' @param metas A list of metadata corresponding to the data matrices.
         #'
         #' @return No return value, called for side effects.
-        #'
-        #' @keywords internal
         #'
         check_max_and_min_dof = function(
             spline_test_configs,

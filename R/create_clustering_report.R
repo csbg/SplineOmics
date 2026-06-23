@@ -1034,8 +1034,15 @@ plot_cluster_quality <- function(category_result) {
 #' @return A ggplot object representing the average curves by cluster.
 #'
 #' @importFrom scales hue_pal
-#' @importFrom ggplot2 ggplot geom_line ggtitle xlab ylab scale_color_brewer
-#'                     theme_minimal aes element_text
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 xlab
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 scale_color_brewer
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 element_text
 #' @importFrom rlang .data
 #'
 plot_all_mean_splines <- function(
@@ -1455,8 +1462,14 @@ generate_spline_comparisons <- function(
 #' the plot layout.
 #'
 #' @importFrom splines ns
-#' @importFrom ggplot2 ggplot geom_point geom_line theme_minimal labs theme
-#'                     scale_x_continuous annotate
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 scale_x_continuous
+#' @importFrom ggplot2 annotate
 #' @importFrom scales hue_pal
 #' @importFrom rlang .data
 #'
@@ -2519,8 +2532,16 @@ build_cluster_hits_report <- function(
 #' and displays counts on the y-axis. The mean line is drawn at
 #' \code{mean(r2, na.rm = TRUE)}.
 #'
-#' @importFrom ggplot2 ggplot aes geom_histogram after_stat geom_vline theme
-#'                     scale_color_manual labs coord_cartesian theme_minimal
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_histogram
+#' @importFrom ggplot2 after_stat
+#' @importFrom ggplot2 geom_vline
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 scale_color_manual
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 coord_cartesian
+#' @importFrom ggplot2 theme_minimal
 #' @importFrom rlang .data
 #'
 plot_cluster_quality_distribution <- function(
@@ -2982,9 +3003,16 @@ get_cluster_colors <- function(curve_values) {
 #' @importFrom dplyr arrange mutate
 #' @importFrom tibble rownames_to_column
 #' @importFrom tidyr pivot_longer
-#' @importFrom ggplot2 ggplot geom_line scale_colour_manual theme_minimal
-#'                     ggtitle aes labs element_rect
-#' @importFrom rlang sym .data
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 scale_colour_manual
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 element_rect
+#' @importFrom rlang sym
+#' @importFrom rlang .data
 #' @importFrom scales hue_pal
 #'
 plot_single_and_mean_splines <- function(

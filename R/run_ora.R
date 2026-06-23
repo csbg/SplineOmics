@@ -1980,9 +1980,21 @@ add_odds_ratios_to_ora <- function(ora_results) {
 #' @seealso \code{\link{prepare_plot_data}} for preparing the filtered input,
 #'   and \code{\link{add_odds_ratios_to_ora}} to precompute odds ratios.
 #'
-#' @importFrom ggplot2 ggplot aes geom_point geom_blank ylab
-#'   scale_color_gradient scale_size_area theme_bw theme element_blank
-#'   element_text labs coord_cartesian scale_y_discrete guide_colorbar
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 geom_blank
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 scale_color_gradient
+#' @importFrom ggplot2 scale_size_area
+#' @importFrom ggplot2 theme_bw
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 element_blank
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 coord_cartesian
+#' @importFrom ggplot2 scale_y_discrete
+#' @importFrom ggplot2 guide_colorbar
 #' @importFrom scales oob_squish
 #' @importFrom grid unit
 #' @importFrom rlang .data

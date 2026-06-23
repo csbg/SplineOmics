@@ -8,17 +8,20 @@ Authors@R:
            role = c("aut", "cre", "fnd"),
            comment = c(ORCID = "0009-0004-5578-3628"))
 Description: SplineOmics streamlines the analysis of time-series omics data
- by fitting spline curves and using limma for hypothesis testing. It requires 
- a data matrix with features (e.g., proteins, metabolites) in rows and time 
- point samples in columns, with no missing values. Metadata about the samples 
- can be provided through a separate meta table, and an optional annotation 
- table can supply additional feature identifiers. The package provides several 
- capabilities: exploratory data analysis through HTML reports with plots like 
- PCA and heatmaps, hyperparameter screening for limma splines, and spline-based 
- limma analysis to identify significant features. Users can cluster these 
- significant features and perform gene set enrichment analysis (GSEA) on the 
- clusters. All results are presented in HTML reports to facilitate easy 
- interpretation and visualization.
+ by fitting spline curves and using limma for hypothesis testing. It requires
+ a data matrix with features (e.g., proteins, metabolites) in rows and time
+ point samples in columns. Metadata about the samples can be provided through
+ a separate meta table, and an optional annotation table can supply additional
+ feature identifiers. Capabilities include exploratory data analysis (HTML
+ reports with PCA, heatmaps, and related plots), spline-based limma analysis
+ with optional automatic tuning of spline degrees of freedom via
+ leave-one-out cross-validation, local peak-valley-cliff (PVC) excursion
+ testing, clustering of significant features, over-representation analysis
+ (ORA) with clusterProfiler enricher-style tests on clustered hits, comparison
+ of two SplineOmics result objects, and gene-centric multi-omics clustering
+ with UMAP visualization. Statistical computations are separated from HTML
+ report generation where appropriate. Gene-set libraries can be obtained from
+ Enrichr or Bioconductor organism databases.
 License: MIT + file LICENSE
 URL: https://csbg.github.io/SplineOmics
 BugReports: https://github.com/csbg/SplineOmics/issues
@@ -82,7 +85,7 @@ Suggests:
     RSpectra (>= 0.16),
 Encoding: UTF-8
 LazyData: false
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

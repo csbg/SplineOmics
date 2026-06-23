@@ -389,8 +389,14 @@ validate_compare_inputs <- function(
 #' @param splineomics2_description Character. Label for y-axis.
 #' @param point_color Character. Color of plotted points (default: "black").
 #'
-#' @importFrom ggplot2 ggplot aes geom_point geom_abline geom_vline geom_hline
-#'                     labs theme_minimal
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 geom_abline
+#' @importFrom ggplot2 geom_vline
+#' @importFrom ggplot2 geom_hline
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 theme_minimal
 #' @importFrom rlang .data
 #'
 #' @return A ggplot object showing the correlation with threshold lines.

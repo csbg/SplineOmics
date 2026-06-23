@@ -1547,8 +1547,11 @@ select_spline_dof_loocv <- function(
 #'   registration inside BiocParallel-aware functions.
 #'
 #' @importFrom RhpcBLASctl blas_set_num_threads
-#' @importFrom BiocParallel SerialParam SnowParam MulticoreParam register
-#'                          bpstart
+#' @importFrom BiocParallel SerialParam
+#' @importFrom BiocParallel SnowParam
+#' @importFrom BiocParallel MulticoreParam
+#' @importFrom BiocParallel register
+#' @importFrom BiocParallel bpstart
 #'
 bp_setup <- function(
     bp_cfg,
