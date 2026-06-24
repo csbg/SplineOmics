@@ -119,7 +119,11 @@ and the annotation info, such as gene name, was randomly shuffled.
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
+#> Registered S3 method overwritten by 'lme4':
+#>   method           from
+#>   na.action.merMod car
 library(dplyr) # For data manipulation
 #> 
 #> Attaching package: 'dplyr'
@@ -160,6 +164,7 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.
 
 ``` r
+
 data <- readRDS(xzfile(system.file(
     "extdata",
     "phosphoproteomics_data.rds.xz",
@@ -183,6 +188,7 @@ annotation <- data |> dplyr::select((first_na_col + 1):ncol(data))
 ### Show top rows of data
 
 ``` r
+
 kable(
     head(data),
     format = "markdown"
@@ -201,6 +207,7 @@ kable(
 ### Show top rows of meta
 
 ``` r
+
 kable(
     head(meta),
     format = "markdown"
@@ -219,6 +226,7 @@ kable(
 ### Show top rows of annotation
 
 ``` r
+
 kable(
     head(annotation),
     format = "markdown"
@@ -237,6 +245,7 @@ kable(
 ### Bring the Inputs into the Standardized Format
 
 ``` r
+
 data <- SplineOmics::extract_data(
     # The dataframe with the numbers on the left and info on the right.
     data = data,
@@ -253,6 +262,7 @@ data <- SplineOmics::extract_data(
 ### SplineOmics Object
 
 ``` r
+
 # Those fields are mandatory, because we believe that when such a report is
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
@@ -266,6 +276,7 @@ report_info <- list(
 ```
 
 ``` r
+
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
     data = data,
@@ -280,6 +291,7 @@ splineomics <- SplineOmics::create_splineomics(
 ## Run the PVC-analysis
 
 ``` r
+
 # Check out the documentation of the function under the Reference tab.
 pvc_results <- SplineOmics::find_pvc(
     splineomics = splineomics,
@@ -4324,6 +4336,7 @@ pvc_results
 ## Create the plots and HTML report
 
 ``` r
+
 plot_info <- list(
     y_axis_label = "log2 intensity",
     time_unit = "min",
@@ -8385,7 +8398,7 @@ you can see the resulting HTML report.
 
 ## Session Info
 
-    #> R version 4.5.3 (2026-03-11)
+    #> R version 4.6.0 (2026-04-24)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -8408,47 +8421,47 @@ you can see the resulting HTML report.
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] knitr_1.51        dplyr_1.2.0       SplineOmics_0.4.4
+    #> [1] knitr_1.51        dplyr_1.2.1       SplineOmics_0.4.4
     #> 
     #> loaded via a namespace (and not attached):
-    #>   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           
-    #>   [4] writexl_1.5.4            rlang_1.1.7              magrittr_2.0.4          
-    #>   [7] clue_0.3-66              GetoptLong_1.1.0         otel_0.2.0              
-    #>  [10] matrixStats_1.5.0        compiler_4.5.3           reshape2_1.4.5          
-    #>  [13] png_0.1-8                systemfonts_1.3.1        vctrs_0.7.1             
+    #>   [1] Rdpack_2.6.6             bitops_1.0-9             pbapply_1.7-4           
+    #>   [4] writexl_1.5.4            rlang_1.2.0              magrittr_2.0.5          
+    #>   [7] clue_0.3-68              GetoptLong_1.1.1         otel_0.2.0              
+    #>  [10] matrixStats_1.5.0        compiler_4.6.0           reshape2_1.4.5          
+    #>  [13] png_0.1-9                systemfonts_1.3.2        vctrs_0.7.3             
     #>  [16] stringr_1.6.0            pkgconfig_2.0.3          shape_1.4.6.1           
-    #>  [19] crayon_1.5.3             fastmap_1.2.0            backports_1.5.0         
-    #>  [22] caTools_1.18.3           rmarkdown_2.30           nloptr_2.2.1            
-    #>  [25] ragg_1.5.0               purrr_1.2.1              xfun_0.56               
+    #>  [19] crayon_1.5.3             fastmap_1.2.0            backports_1.5.1         
+    #>  [22] caTools_1.18.3           rmarkdown_2.31           nloptr_2.2.1            
+    #>  [25] ragg_1.5.2               purrr_1.2.2              xfun_0.59               
     #>  [28] cachem_1.1.0             jsonlite_2.0.0           progress_1.2.3          
-    #>  [31] EnvStats_3.1.0           remaCor_0.0.20           gmp_0.7-5               
-    #>  [34] BiocParallel_1.42.2      broom_1.0.12             parallel_4.5.3          
+    #>  [31] EnvStats_3.1.0           remaCor_0.0.20           gmp_0.7-5.1             
+    #>  [34] BiocParallel_1.46.0      broom_1.0.13             parallel_4.6.0          
     #>  [37] prettyunits_1.2.0        cluster_2.1.8.2          R6_2.6.1                
-    #>  [40] stringi_1.8.7            bslib_0.10.0             RColorBrewer_1.1-3      
-    #>  [43] limma_3.64.3             boot_1.3-32              car_3.1-5               
+    #>  [40] stringi_1.8.7            bslib_0.11.0             RColorBrewer_1.1-3      
+    #>  [43] limma_3.68.4             boot_1.3-32              car_3.1-5               
     #>  [46] ClusterR_1.3.6           numDeriv_2016.8-1.1      jquerylib_0.1.4         
-    #>  [49] Rcpp_1.1.1               iterators_1.0.14         base64enc_0.1-6         
-    #>  [52] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.3           
-    #>  [55] tidyselect_1.2.1         rstudioapi_0.18.0        abind_1.4-8             
+    #>  [49] Rcpp_1.1.1-1.1           iterators_1.0.14         base64enc_0.1-6         
+    #>  [52] IRanges_2.46.0           Matrix_1.7-5             splines_4.6.0           
+    #>  [55] tidyselect_1.2.1         rstudioapi_0.19.0        abind_1.4-8             
     #>  [58] yaml_2.3.12              doParallel_1.0.17        gplots_3.3.0            
-    #>  [61] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-0          
-    #>  [64] lattice_0.22-9           tibble_3.3.1             withr_3.0.2             
-    #>  [67] Biobase_2.68.0           S7_0.2.1                 evaluate_1.0.5          
-    #>  [70] desc_1.4.3               zip_2.3.3                circlize_0.4.17         
+    #>  [61] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-1          
+    #>  [64] lattice_0.22-9           tibble_3.3.1             withr_3.0.3             
+    #>  [67] Biobase_2.72.0           S7_0.2.2                 evaluate_1.0.5          
+    #>  [70] desc_1.4.3               zip_3.0.0                circlize_0.4.18         
     #>  [73] pillar_1.11.1            BiocManager_1.30.27      carData_3.0-6           
-    #>  [76] KernSmooth_2.23-26       checkmate_2.3.4          renv_1.1.7              
-    #>  [79] foreach_1.5.2            stats4_4.5.3             reformulas_0.4.4        
-    #>  [82] generics_0.1.4           S4Vectors_0.46.0         hms_1.1.4               
-    #>  [85] ggplot2_4.0.2            scales_1.4.0             aod_1.3.3               
+    #>  [76] KernSmooth_2.23-26       checkmate_2.3.4          renv_1.2.3              
+    #>  [79] foreach_1.5.2            stats4_4.6.0             reformulas_0.4.4        
+    #>  [82] generics_0.1.4           S4Vectors_0.50.1         hms_1.1.4               
+    #>  [85] ggplot2_4.0.3            scales_1.4.0             aod_1.3.3               
     #>  [88] minqa_1.2.8              gtools_3.9.5             RhpcBLASctl_0.23-42     
-    #>  [91] glue_1.8.0               tools_4.5.3              fANCOVA_0.6-1           
-    #>  [94] variancePartition_1.38.1 lme4_1.1-38              mvtnorm_1.3-3           
-    #>  [97] fs_1.6.6                 grid_4.5.3               tidyr_1.3.2             
-    #> [100] rbibutils_2.4.1          colorspace_2.1-2         nlme_3.1-168            
-    #> [103] Formula_1.2-5            cli_3.6.5                textshaping_1.0.4       
-    #> [106] svglite_2.2.2            ComplexHeatmap_2.24.1    corpcor_1.6.10          
+    #>  [91] glue_1.8.1               tools_4.6.0              fANCOVA_0.6-1           
+    #>  [94] variancePartition_1.42.0 lme4_2.0-1               mvtnorm_1.4-1           
+    #>  [97] fs_2.1.0                 grid_4.6.0               tidyr_1.3.2             
+    #> [100] rbibutils_2.4.1          colorspace_2.1-2         nlme_3.1-169            
+    #> [103] Formula_1.2-5            cli_3.6.6                textshaping_1.0.5       
+    #> [106] svglite_2.2.2            ComplexHeatmap_2.28.0    corpcor_1.6.10          
     #> [109] gtable_0.3.6             sass_0.4.10              digest_0.6.39           
-    #> [112] BiocGenerics_0.54.1      pbkrtest_0.5.5           ggrepel_0.9.6           
+    #> [112] BiocGenerics_0.58.1      pbkrtest_0.5.5           ggrepel_0.9.8           
     #> [115] rjson_0.2.23             htmlwidgets_1.6.4        farver_2.1.2            
     #> [118] htmltools_0.5.9          pkgdown_2.2.0            lifecycle_1.0.5         
-    #> [121] GlobalOptions_0.1.3      statmod_1.5.1            MASS_7.3-65
+    #> [121] GlobalOptions_0.1.4      statmod_1.5.2            MASS_7.3-65

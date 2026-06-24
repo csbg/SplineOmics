@@ -109,12 +109,10 @@ run_ora(
 - enrichGO_cfg:
 
   `list` \| `NULL`: A named list specifying the configuration for
-  running GO enrichment with Bioconductor's
-  [`enrichGO`](https://rdrr.io/pkg/clusterProfiler/man/enrichGO.html).
-  This is only needed when you want to perform GO Biological Process
-  (BP), Molecular Function (MF), or Cellular Component (CC) enrichment
-  using Bioconductor's organism databases (e.g., `org.Mm.eg.db` for
-  mouse).
+  running GO enrichment with Bioconductor's `enrichGO`. This is only
+  needed when you want to perform GO Biological Process (BP), Molecular
+  Function (MF), or Cellular Component (CC) enrichment using
+  Bioconductor's organism databases (e.g., `org.Mm.eg.db` for mouse).
 
   The list must be named according to the GO ontology, e.g., `"GO_BP"`,
   `"GO_MF"`, `"GO_CC"`. Each entry must provide:
@@ -127,9 +125,8 @@ run_ora(
   - `ontology`: `character(1)` One of `"BP"`, `"MF"`, or `"CC"`.
 
   If `enrichGO_cfg` is `NULL` (default), no Bioconductor-based GO
-  enrichment is performed. All enrichment runs through
-  [`enricher`](https://rdrr.io/pkg/clusterProfiler/man/enricher.html)
-  with the provided TERM2GENE mappings.
+  enrichment is performed. All enrichment runs through `enricher` with
+  the provided TERM2GENE mappings.
 
 - universe:
 
@@ -164,6 +161,7 @@ A named list with two elements:
 ## Examples
 
 ``` r
+if (FALSE) { # requireNamespace("clusterProfiler", quietly = TRUE)
 {
     set.seed(1)
 
@@ -201,31 +199,5 @@ A named list with two elements:
     # see sections and files written
     names(res)
 }
-#> 
-#> 
-#>  Running clusterProfiler for column: cluster_condA
-#> 
-#> Cluster: cluster_1
-#> Database: ToyDB
-#> Foreground genes:3
-#> Foreground genes overlapping with database: 3 (100%)
-#> 
-#> Cluster: cluster_2
-#> Database: ToyDB
-#> Foreground genes:3
-#> Foreground genes overlapping with database: 2 (66.7%)
-#> 
-#> 
-#>  Running clusterProfiler for column: cluster_condB
-#> 
-#> Cluster: cluster_1
-#> Database: ToyDB
-#> Foreground genes:3
-#> Foreground genes overlapping with database: 2 (66.7%)
-#> 
-#> Cluster: cluster_2
-#> Database: ToyDB
-#> Foreground genes:2
-#> Foreground genes overlapping with database: 2 (100%)
-#> [1] "all_results"    "report_payload"
+}
 ```

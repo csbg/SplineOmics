@@ -106,6 +106,7 @@ The main objectives of this analysis are:
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
 #> Warning: replacing previous import 'limma::topTable' by
 #> 'variancePartition::topTable' when loading 'SplineOmics'
@@ -127,6 +128,7 @@ library(knitr) # For Showing the head of the data and the meta tables.
 ## Load the files
 
 ``` r
+
 data <- readRDS(xzfile(system.file(
   "extdata",
   "rna_seq_data.rds.xz",
@@ -146,6 +148,7 @@ meta <- readr::read_csv(
 ### Show top rows of data
 
 ``` r
+
 kable(
   head(data),
   format = "markdown"
@@ -182,6 +185,7 @@ plate (e.g., `plate_1` before `plate_2`).
 ### Show top rows of meta
 
 ``` r
+
 kable(
   head(meta),
   format = "markdown"
@@ -211,6 +215,7 @@ genes with zero counts in all samples provide no information for
 downstream analyses.
 
 ``` r
+
 rows_before <- nrow(data)
 
 # Filter data rows
@@ -233,6 +238,7 @@ cat(sprintf(
 ## Perform EDA (exploratory data analysis)
 
 ``` r
+
 report_info <- list(
   omics_data_type = "RNA",
   data_description = "RNA-seq data of CHO cells",
@@ -249,6 +255,7 @@ report_dir <- here::here(
 ```
 
 ``` r
+
 splineomics <- SplineOmics::create_splineomics(
   data = data,
   meta = meta,
@@ -259,6 +266,7 @@ splineomics <- SplineOmics::create_splineomics(
 ```
 
 ``` r
+
 plots <- SplineOmics::explore_data(
   splineomics = splineomics, 
   report_dir = report_dir
@@ -280,6 +288,7 @@ idea of what do use.
 Lets define our parameters and put them into the `SplineOmics` object:
 
 ``` r
+
 spline_params = list(
   spline_type = c("n"),    # natural cubic splines
   dof = c(3L)              # Degree of freedom of 3 for the splines.
@@ -318,6 +327,7 @@ structures. The calculated weights account for both fixed and random
 effects, providing robust results for differential expression analysis.
 
 ``` r
+
 voom_obj <- SplineOmics::preprocess_rna_seq_data(
   splineomics = splineomics
 )
@@ -349,6 +359,7 @@ matrix and the `rna_seq_data` argument contains an object compatible
 with `limma`, your data will be correctly processed.
 
 ``` r
+
 splineomics <- SplineOmics::update_splineomics(
   splineomics = splineomics,
   data = voom_obj$E,
@@ -361,6 +372,7 @@ Run the
 function with the updated SplineOmics object:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
   splineomics = splineomics
 )
@@ -395,6 +407,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 report_dir <- here::here(
   "results",
   "limma_reports"
@@ -531,6 +544,7 @@ can be assigned to each clustered hit, and GSEA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
 ``` r
+
 # Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
   "WikiPathways_2019_Human",
@@ -564,6 +578,7 @@ using clusterProfiler, generates an HTML report and returns the GSEA
 dotplots in R.
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- here::here(
   "databases.tsv"
@@ -595,6 +610,7 @@ The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
 ``` r
+
 result <- SplineOmics::run_gsea(
   # A dataframe with three columns: feature, cluster, and gene. Feature contains
   # the integer index of the feature, cluster the integer specifying the cluster

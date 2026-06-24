@@ -122,6 +122,7 @@ filesystem, this will make the installation log files available there.
 New R packages can be installed the normal way:
 
 ``` r
+
 install.packages("package_name")
 ```
 
@@ -263,7 +264,7 @@ docker run -it \
 
 ## Session Info
 
-    ## R version 4.5.3 (2026-03-11)
+    ## R version 4.6.0 (2026-04-24)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 22.04.5 LTS
     ## 
@@ -287,12 +288,12 @@ docker run -it \
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] desc_1.4.3          digest_0.6.39       R6_2.6.1           
-    ##  [4] fastmap_1.2.0       xfun_0.56           cachem_1.1.0       
-    ##  [7] knitr_1.51          htmltools_0.5.9     rmarkdown_2.30     
-    ## [10] lifecycle_1.0.5     cli_3.6.5           sass_0.4.10        
-    ## [13] pkgdown_2.2.0       textshaping_1.0.4   jquerylib_0.1.4    
-    ## [16] renv_1.1.7          systemfonts_1.3.1   compiler_4.5.3     
-    ## [19] rstudioapi_0.18.0   tools_4.5.3         ragg_1.5.0         
-    ## [22] bslib_0.10.0        evaluate_1.0.5      yaml_2.3.12        
+    ##  [4] fastmap_1.2.0       xfun_0.59           cachem_1.1.0       
+    ##  [7] knitr_1.51          htmltools_0.5.9     rmarkdown_2.31     
+    ## [10] lifecycle_1.0.5     cli_3.6.6           sass_0.4.10        
+    ## [13] pkgdown_2.2.0       textshaping_1.0.5   jquerylib_0.1.4    
+    ## [16] renv_1.2.3          systemfonts_1.3.2   compiler_4.6.0     
+    ## [19] rstudioapi_0.19.0   tools_4.6.0         ragg_1.5.2         
+    ## [22] bslib_0.11.0        evaluate_1.0.5      yaml_2.3.12        
     ## [25] otel_0.2.0          BiocManager_1.30.27 jsonlite_2.0.0     
-    ## [28] htmlwidgets_1.6.4   rlang_1.1.7         fs_1.6.6
+    ## [28] htmlwidgets_1.6.4   rlang_1.2.0         fs_2.1.0

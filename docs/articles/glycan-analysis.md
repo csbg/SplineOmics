@@ -59,7 +59,7 @@ analysis appropriately handles the hierarchical structure of the data
 and avoids incorrect conclusions.
 
 In this vignette, we will demonstrate how to use linear mixed models to
-address these challenges and properly account for both reactor and plate
+address these challenges and properly account for both reactor and batch
 effects.
 
 #### Further info
@@ -108,7 +108,11 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
+#> Registered S3 method overwritten by 'lme4':
+#>   method           from
+#>   na.action.merMod car
 library(dplyr) # For data manipulation
 #> 
 #> Attaching package: 'dplyr'
@@ -138,6 +142,7 @@ library(compositions) # For clr transforming the glycan data
 ## Load the files
 
 ``` r
+
 data <- read.csv(
     system.file(
         "extdata",
@@ -168,6 +173,7 @@ data <- data.matrix(data)
 ### Show top rows of data
 
 ``` r
+
 knitr::kable(
     head(data),
     format = "markdown"
@@ -186,6 +192,7 @@ knitr::kable(
 ### Show top rows of meta
 
 ``` r
+
 knitr::kable(
     head(meta),
     format = "markdown"
@@ -204,6 +211,7 @@ knitr::kable(
 ## Perform EDA (exploratory data analysis)
 
 ``` r
+
 # Those fields are mandatory, because we believe that when such a report is
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
@@ -235,6 +243,7 @@ lead to biased or misleading results. CLR transformation is thus the
 more appropriate and statistically sound choice for downstream modeling.
 
 ``` r
+
 # TRANSPOSE: make samples rows, features columns
 data_t <- t(data)
 
@@ -250,6 +259,7 @@ clr_data <- unclass(clr_data)
 ```
 
 ``` r
+
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
     data = clr_data,
@@ -279,6 +289,7 @@ print(splineomics)
 ```
 
 ``` r
+
 plots <- SplineOmics::explore_data(
     splineomics = splineomics, # SplineOmics object
     report_dir = report_dir
@@ -293,13 +304,18 @@ the report for the batch-corrected data.
 
 ## Run limma spline analysis
 
-In this example, we are skipping finding the best hyperparameters with
-the screen_limma_hyperparams() function, because we already have a clear
-idea of what do use.
+We set spline parameters manually here (`dof = 2`). Alternatively, set
+`spline_params$dof = 0` in
+[`update_splineomics()`](https://csbg.github.io/SplineOmics/reference/update_splineomics.md)
+to let
+[`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
+choose the degrees of freedom by leave-one-out cross-validation (see the
+**get_started** vignette).
 
-Lets define our parameters and put them into the `SplineOmics` object:
+Define the parameters and store them in the `SplineOmics` object:
 
 ``` r
+
 splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     use_array_weights = FALSE,
@@ -307,8 +323,8 @@ splineomics <- SplineOmics::update_splineomics(
     design = "~ 1 + Condition*Time + Batch + (1|Reactor)",
     mode = "integrated", # means limma uses the full data for each condition.
     spline_params = list(
-        spline_type = c("n"), 
-        dof = c(2L) 
+        spline_type = c("n"),
+        dof = c(2L) # use 0L for automatic selection via LOOCV
     )
 )
 ```
@@ -322,25 +338,22 @@ Run the
 function with the updated SplineOmics object:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
-#> Warning: the 'nobars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.
-#> This warning is displayed once per session.
-#> Warning: the 'findbars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.
-#> This warning is displayed once per session.
 ```
 
-Note that for our dataset, the Wilcoxon signed rank exact test revealed
-that we have a problem of heteroscedasticity for our data. This means
-that the variance between the samples is significantly higher in the
-stationary phase compared to the exponential phase. This is a violation
-for the assumption of homoscedasticity of linear models, which means
-that the derived p-values are not trustworthy. To adress this issue,
-limma has a function (arrayWeights) which downweights samples with
-higher variance, which we then use here automatically. Further, the
-eBayes function of limma with the robust = TRUE argument avoids using
-variance “outliers” for the variance shrinkage.
+Heteroscedasticity (unequal variance across samples) can affect CLR-
+transformed glycan data as well. In this example we set
+`use_array_weights = FALSE` for a fixed robustness choice. For your own
+data, consider `use_array_weights = NULL` so SplineOmics applies array
+weights automatically when the Levene test indicates heteroscedasticity,
+or set it to `TRUE` to always use `limma` array weights with robust
+`eBayes`. See the
+[FAQ](https://csbg.github.io/SplineOmics/articles/faq.md) and
+[`create_splineomics()`](https://csbg.github.io/SplineOmics/reference/create_splineomics.md)
+for details.
 
 ## Build limma report
 
@@ -348,6 +361,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -363,6 +377,7 @@ function
 Prepare arguments:
 
 ``` r
+
 nr_clusters <- list(
     constant = 2,
     tshifted = 2
@@ -394,6 +409,7 @@ plot_options <- list(
 Run the clustering:
 
 ``` r
+
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
@@ -407,6 +423,7 @@ clustering_results <- SplineOmics::cluster_hits(
 Generate the report:
 
 ``` r
+
 plots <- SplineOmics::create_clustering_report(
     report_payload = clustering_results$report_payload,
     plot_info = plot_info,
@@ -415,17 +432,6 @@ plots <- SplineOmics::create_clustering_report(
     max_hit_number = 5,
     report_dir = withr::local_tempdir()
 )
-#> Generating heatmap...
-#> Generating cluster mean splines for level:  constant
-#> Generating spline plots...
-#> Generating cluster mean splines for level:  tshifted
-#> Generating spline plots...
-#> Generating report. This takes a few seconds.
-#> 
-#>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpyhbjTE/filed6d64657264d .
-#>  Please note that due to embedded files, the reports might be flagged as
-#>  harmful by other software. Rest assured that they provide no harm.
 ```
 
 You can view the generated analysis report of the cluster_hits function
@@ -438,7 +444,7 @@ contains an interaction effect).
 
 ## Session Info
 
-    #> R version 4.5.3 (2026-03-11)
+    #> R version 4.6.0 (2026-04-24)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -461,49 +467,48 @@ contains an interaction effect).
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] compositions_2.0-9 knitr_1.51         dplyr_1.2.0        SplineOmics_0.4.4 
+    #> [1] compositions_2.0-9 knitr_1.51         dplyr_1.2.1        SplineOmics_0.4.4 
     #> 
     #> loaded via a namespace (and not attached):
-    #>   [1] RColorBrewer_1.1-3       tensorA_0.36.2.1         rstudioapi_0.18.0       
-    #>   [4] jsonlite_2.0.0           shape_1.4.6.1            magrittr_2.0.4          
-    #>   [7] farver_2.1.2             nloptr_2.2.1             rmarkdown_2.30          
-    #>  [10] GlobalOptions_0.1.3      fs_1.6.6                 ragg_1.5.0              
-    #>  [13] vctrs_0.7.1              minqa_1.2.8              base64enc_0.1-6         
-    #>  [16] htmltools_0.5.9          progress_1.2.3           broom_1.0.12            
-    #>  [19] Formula_1.2-5            variancePartition_1.38.1 sass_0.4.10             
-    #>  [22] KernSmooth_2.23-26       bslib_0.10.0             htmlwidgets_1.6.4       
-    #>  [25] desc_1.4.3               pbkrtest_0.5.5           plyr_1.8.9              
-    #>  [28] cachem_1.1.0             lifecycle_1.0.5          iterators_1.0.14        
-    #>  [31] pkgconfig_2.0.3          Matrix_1.7-4             R6_2.6.1                
-    #>  [34] fastmap_1.2.0            rbibutils_2.4.1          clue_0.3-66             
-    #>  [37] digest_0.6.39            numDeriv_2016.8-1.1      colorspace_2.1-2        
-    #>  [40] S4Vectors_0.46.0         textshaping_1.0.4        labeling_0.4.3          
-    #>  [43] abind_1.4-8              compiler_4.5.3           aod_1.3.3               
-    #>  [46] withr_3.0.2              doParallel_1.0.17        S7_0.2.1                
-    #>  [49] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           
-    #>  [52] gplots_3.3.0             MASS_7.3-65              bayesm_3.1-7            
-    #>  [55] rjson_0.2.23             corpcor_1.6.10           gtools_3.9.5            
-    #>  [58] caTools_1.18.3           tools_4.5.3              otel_0.2.0              
-    #>  [61] zip_2.3.3                remaCor_0.0.20           glue_1.8.0              
-    #>  [64] nlme_3.1-168             grid_4.5.3               checkmate_2.3.4         
-    #>  [67] cluster_2.1.8.2          reshape2_1.4.5           generics_0.1.4          
-    #>  [70] gtable_0.3.6             tidyr_1.3.2              hms_1.1.4               
-    #>  [73] car_3.1-5                BiocGenerics_0.54.1      ggrepel_0.9.6           
-    #>  [76] foreach_1.5.2            pillar_1.11.1            stringr_1.6.0           
-    #>  [79] limma_3.64.3             robustbase_0.99-6        circlize_0.4.17         
-    #>  [82] splines_4.5.3            lattice_0.22-9           renv_1.1.7              
-    #>  [85] gmp_0.7-5                tidyselect_1.2.1         ComplexHeatmap_2.24.1   
-    #>  [88] pbapply_1.7-4            reformulas_0.4.4         IRanges_2.42.0          
-    #>  [91] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.5.3            
-    #>  [94] xfun_0.56                Biobase_2.68.0           statmod_1.5.1           
-    #>  [97] matrixStats_1.5.0        DEoptimR_1.1-4           stringi_1.8.7           
-    #> [100] yaml_2.3.12              boot_1.3-32              evaluate_1.0.5          
-    #> [103] codetools_0.2-19         tibble_3.3.1             BiocManager_1.30.27     
-    #> [106] cli_3.6.5                systemfonts_1.3.1        Rdpack_2.6.5            
-    #> [109] jquerylib_0.1.4          Rcpp_1.1.1               EnvStats_3.1.0          
-    #> [112] png_0.1-8                parallel_4.5.3           pkgdown_2.2.0           
-    #> [115] ggplot2_4.0.2            prettyunits_1.2.0        ClusterR_1.3.6          
-    #> [118] bitops_1.0-9             lme4_1.1-38              mvtnorm_1.3-3           
-    #> [121] lmerTest_3.2-0           scales_1.4.0             purrr_1.2.1             
-    #> [124] crayon_1.5.3             writexl_1.5.4            fANCOVA_0.6-1           
-    #> [127] GetoptLong_1.1.0         rlang_1.1.7
+    #>   [1] Rdpack_2.6.6             bitops_1.0-9             pbapply_1.7-4           
+    #>   [4] writexl_1.5.4            rlang_1.2.0              magrittr_2.0.5          
+    #>   [7] clue_0.3-68              GetoptLong_1.1.1         otel_0.2.0              
+    #>  [10] matrixStats_1.5.0        compiler_4.6.0           reshape2_1.4.5          
+    #>  [13] png_0.1-9                systemfonts_1.3.2        vctrs_0.7.3             
+    #>  [16] stringr_1.6.0            pkgconfig_2.0.3          shape_1.4.6.1           
+    #>  [19] crayon_1.5.3             fastmap_1.2.0            backports_1.5.1         
+    #>  [22] caTools_1.18.3           rmarkdown_2.31           nloptr_2.2.1            
+    #>  [25] ragg_1.5.2               purrr_1.2.2              xfun_0.59               
+    #>  [28] cachem_1.1.0             jsonlite_2.0.0           progress_1.2.3          
+    #>  [31] EnvStats_3.1.0           remaCor_0.0.20           gmp_0.7-5.1             
+    #>  [34] BiocParallel_1.46.0      broom_1.0.13             parallel_4.6.0          
+    #>  [37] prettyunits_1.2.0        cluster_2.1.8.2          R6_2.6.1                
+    #>  [40] stringi_1.8.7            bslib_0.11.0             RColorBrewer_1.1-3      
+    #>  [43] limma_3.68.4             boot_1.3-32              car_3.1-5               
+    #>  [46] ClusterR_1.3.6           numDeriv_2016.8-1.1      jquerylib_0.1.4         
+    #>  [49] Rcpp_1.1.1-1.1           iterators_1.0.14         base64enc_0.1-6         
+    #>  [52] IRanges_2.46.0           Matrix_1.7-5             splines_4.6.0           
+    #>  [55] tidyselect_1.2.1         rstudioapi_0.19.0        abind_1.4-8             
+    #>  [58] yaml_2.3.12              doParallel_1.0.17        gplots_3.3.0            
+    #>  [61] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-1          
+    #>  [64] lattice_0.22-9           tibble_3.3.1             Biobase_2.72.0          
+    #>  [67] S7_0.2.2                 evaluate_1.0.5           desc_1.4.3              
+    #>  [70] bayesm_3.1-7             zip_3.0.0                circlize_0.4.18         
+    #>  [73] pillar_1.11.1            BiocManager_1.30.27      tensorA_0.36.2.1        
+    #>  [76] carData_3.0-6            KernSmooth_2.23-26       checkmate_2.3.4         
+    #>  [79] renv_1.2.3               foreach_1.5.2            stats4_4.6.0            
+    #>  [82] reformulas_0.4.4         generics_0.1.4           S4Vectors_0.50.1        
+    #>  [85] hms_1.1.4                ggplot2_4.0.3            scales_1.4.0            
+    #>  [88] aod_1.3.3                minqa_1.2.8              gtools_3.9.5            
+    #>  [91] RhpcBLASctl_0.23-42      glue_1.8.1               tools_4.6.0             
+    #>  [94] fANCOVA_0.6-1            robustbase_0.99-7        variancePartition_1.42.0
+    #>  [97] lme4_2.0-1               mvtnorm_1.4-1            fs_2.1.0                
+    #> [100] grid_4.6.0               tidyr_1.3.2              rbibutils_2.4.1         
+    #> [103] colorspace_2.1-2         nlme_3.1-169             Formula_1.2-5           
+    #> [106] cli_3.6.6                textshaping_1.0.5        svglite_2.2.2           
+    #> [109] ComplexHeatmap_2.28.0    corpcor_1.6.10           DEoptimR_1.2-0          
+    #> [112] gtable_0.3.6             sass_0.4.10              digest_0.6.39           
+    #> [115] BiocGenerics_0.58.1      pbkrtest_0.5.5           ggrepel_0.9.8           
+    #> [118] rjson_0.2.23             htmlwidgets_1.6.4        farver_2.1.2            
+    #> [121] htmltools_0.5.9          pkgdown_2.2.0            lifecycle_1.0.5         
+    #> [124] GlobalOptions_0.1.4      statmod_1.5.2            MASS_7.3-65

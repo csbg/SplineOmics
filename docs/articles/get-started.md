@@ -43,6 +43,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ## Load the packages
 
 ``` r
+
 # library(SplineOmics)
 library(devtools)
 #> Loading required package: usethis
@@ -163,6 +164,7 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.
 
 ``` r
+
 data <- readRDS(xzfile(system.file(
     "extdata",
     "proteomics_data.rds.xz",
@@ -188,6 +190,7 @@ annotation <- data |>
 ### Show top rows of data
 
 ``` r
+
 kable(
     head(data),
     format = "markdown"
@@ -206,6 +209,7 @@ kable(
 ### Show top rows of meta
 
 ``` r
+
 kable(
     head(meta),
     format = "markdown"
@@ -224,6 +228,7 @@ kable(
 ### Show top rows of annotation
 
 ``` r
+
 kable(
     head(annotation),
     format = "markdown"
@@ -300,6 +305,7 @@ is shown individually, such as:
 - **Spline plots** with the datapoints from an individual feature.
 
 ``` r
+
 data <- SplineOmics::extract_data(
     # The dataframe with the numbers on the left and info on the right.
     data = data,
@@ -381,6 +387,7 @@ offers several optional arguments:
   R environment)
 
 ``` r
+
 # Those fields are mandatory, because we believe that when such a report is
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
@@ -448,6 +455,7 @@ object when it is passed to the respective function.
 - **spline_params**: Parameters for the spline functions.
 
 ``` r
+
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
     data = data,
@@ -481,6 +489,7 @@ Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.
 
 ``` r
+
 plots <- SplineOmics::explore_data(
     splineomics = splineomics, # SplineOmics object
     report_dir = withr::local_tempdir()
@@ -545,6 +554,7 @@ dataset that belongs to a level to obtain the results for that level.
 To generate the limma result categories 2 and 3 ()
 
 ``` r
+
 splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     design = "~ 1 + Phase*Time + Reactor", # best design formula
@@ -567,6 +577,7 @@ Run the
 function with the updated SplineOmics object:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
@@ -602,6 +613,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -637,6 +649,7 @@ Hierarchical clustering is used to place every hit in one of as many
 clusters as we have specified for that specific level.
 
 ``` r
+
 # Important note: When you define parameters for the levels, always define them
 # in the order those levels appear in the meta condition column! Otherwise,
 # there will be a mixup!
@@ -690,6 +703,7 @@ plot_options <- list(
 Run the function:
 
 ``` r
+
 report_dir <- file.path(tempdir(), "splineomics_report")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -742,6 +756,7 @@ be assigned to each clustered hit, and ORA can be carried out. To
 proceed, the Enrichr databases of choice need to be downloaded:
 
 ``` r
+
 # Create a temporary directory for R CMD check
 results_dir <- file.path(tempdir(), "ora")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
@@ -779,6 +794,7 @@ clusterProfiler, generates an HTML report and returns the ORA dotplots
 in R.
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(results_dir, "databases.tsv")
 
@@ -803,6 +819,7 @@ The function below runs the clusterProfiler for all clusters and all
 levels, and generates the HTML report:
 
 ``` r
+
 result <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
@@ -842,6 +859,7 @@ The BioConductor databases are an example for that, and SplineOmics also
 contains a function to conveniently download these.
 
 ``` r
+
 SplineOmics::extract_gene_sets(
     organism_db = "org.Mm.eg.db",
     output_dir = results_dir,
@@ -850,6 +868,7 @@ SplineOmics::extract_gene_sets(
 ```
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(
     results_dir,
@@ -900,6 +919,7 @@ enrichGO_cfg <- list(
 ```
 
 ``` r
+
 result <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,

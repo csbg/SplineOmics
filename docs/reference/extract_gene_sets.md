@@ -6,9 +6,8 @@ Bioconductor organism annotation package (e.g., `org.Hs.eg.db`,
 standardized format. The output includes mappings for Gene Ontology (GO)
 Biological Process (BP), Molecular Function (MF), Cellular Component
 (CC), and KEGG pathways. The resulting file can be used directly with
-enrichment functions such as
-[`clusterProfiler::enricher()`](https://rdrr.io/pkg/clusterProfiler/man/enricher.html)
-with `TERM2GENE`.
+enrichment functions such as `clusterProfiler::enricher()` with
+`TERM2GENE`.
 
 ## Usage
 
@@ -99,8 +98,8 @@ if (requireNamespace("org.Mm.eg.db", quietly = TRUE) &&
 #> 'select()' returned 1:many mapping between keys and columns
 #> 'select()' returned 1:many mapping between keys and columns
 #> 
-#> Gene set extraction complete complete! The file has been saved as: /tmp/RtmplJliIR/mm_genesets.tsv
-#> [1] "/tmp/RtmplJliIR/mm_genesets.tsv"
+#> Gene set extraction complete complete! The file has been saved as: /tmp/RtmptbVtZK/mm_genesets.tsv
+#> [1] "/tmp/RtmptbVtZK/mm_genesets.tsv"
 
 # If the organism package is not installed, you can still see the TSV format:
 tiny <- data.frame(

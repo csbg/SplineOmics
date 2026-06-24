@@ -7,12 +7,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Streamlines the process of analysing omics timeseries data with splines • SplineOmics</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Streamlines the process of analysing omics timeseries data with splines">
-<meta name="description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
-<meta property="og:description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns, with no missing values. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. The package provides several capabilities: exploratory data analysis through HTML reports with plots like PCA and heatmaps, hyperparameter screening for limma splines, and spline-based limma analysis to identify significant features. Users can cluster these significant features and perform gene set enrichment analysis (GSEA) on the clusters. All results are presented in HTML reports to facilitate easy interpretation and visualization.">
+<meta name="description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. Capabilities include exploratory data analysis (HTML reports with PCA, heatmaps, and related plots), spline-based limma analysis with optional automatic tuning of spline degrees of freedom via leave-one-out cross-validation, local peak-valley-cliff (PVC) excursion testing, clustering of significant features, over-representation analysis (ORA) with clusterProfiler enricher-style tests on clustered hits, comparison of two SplineOmics result objects, and gene-centric multi-omics clustering with UMAP visualization. Statistical computations are separated from HTML report generation where appropriate. Gene-set libraries can be obtained from Enrichr or Bioconductor organism databases.">
+<meta property="og:description" content="SplineOmics streamlines the analysis of time-series omics data by fitting spline curves and using limma for hypothesis testing. It requires a data matrix with features (e.g., proteins, metabolites) in rows and time point samples in columns. Metadata about the samples can be provided through a separate meta table, and an optional annotation table can supply additional feature identifiers. Capabilities include exploratory data analysis (HTML reports with PCA, heatmaps, and related plots), spline-based limma analysis with optional automatic tuning of spline degrees of freedom via leave-one-out cross-validation, local peak-valley-cliff (PVC) excursion testing, clustering of significant features, over-representation analysis (ORA) with clusterProfiler enricher-style tests on clustered hits, comparison of two SplineOmics result objects, and gene-centric multi-omics clustering with UMAP visualization. Statistical computations are separated from HTML report generation where appropriate. Gene-set libraries can be obtained from Enrichr or Bioconductor organism databases.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -71,8 +71,8 @@
 <p><img src="reference/figures/hex_logo.png" align="left" width="65"></p>
 <p>The R package <code>SplineOmics</code> finds the significant features (hits) of time-series -omics data by using splines and <code>limma</code> for hypothesis testing. It then clusters the hits based on the spline shape while showing all results in summary HTML reports.</p>
 <p>The graphical abstract below shows the full workflow streamlined by <code>SplineOmics</code>:</p>
-<figure><p><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"></p>
-<figcaption aria-hidden="true"><p>Graphical Abstract of SplineOmics Workflow</p>
+<figure><img src="reference/figures/SplineOmics_graphical_abstract.png" alt="Graphical Abstract of SplineOmics Workflow"><figcaption aria-hidden="true">
+Graphical Abstract of SplineOmics Workflow
 </figcaption></figure><div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
@@ -116,7 +116,7 @@
 <h3 id="what-do-i-need-precisely">What do I need precisely?<a class="anchor" aria-label="anchor" href="#what-do-i-need-precisely"></a>
 </h3>
 <ol style="list-style-type: decimal">
-<li><p><strong>Data</strong>: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The data must have no NA values, should have normally distributed features and no dependence between the samples.</p></li>
+<li><p><strong>Data</strong>: A data matrix where each row is a feature (e.g., protein, metabolite, etc.) and each column is a sample taken at a specific time. The matrix must be numeric. Partial <code>NA</code> values are tolerated by <code>limma</code>, but rows or columns that are entirely <code>NA</code> are rejected; imputation or filtering sparse features is still recommended for reliable results. Features should ideally be normally distributed, with no dependence between samples.</p></li>
 <li><p><strong>Meta</strong>: A table with metadata on the columns/samples of the data matrix (e.g., batch, time point, etc.)</p></li>
 <li><p><strong>Annotation</strong> (optional): A table with identifiers on the rows/features of the data matrix (e.g., gene and protein name).</p></li>
 </ol>
@@ -128,23 +128,31 @@
 <ul>
 <li>
 <p><strong>Automatically perform exploratory data analysis:</strong></p>
-<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report, containing various plots, such as density, PCA, and correlation heatmap plots (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">example report</a>).</p>
+<p>The <code><a href="reference/explore_data.html">explore_data()</a></code> function generates an HTML report with plots such as density, PCA, and correlation heatmaps (<a href="https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html">example report</a>).</p>
 </li>
 <li>
-<p><strong>Perform limma spline analysis:</strong></p>
-<p>Use the <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> function to perform the <code>limma</code> analysis with splines once the optimal hyperparameters are identified (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">example report</a>).</p>
+<p><strong>Perform limma spline analysis (with optional automatic tuning):</strong></p>
+<p>Use <code><a href="reference/run_limma_splines.html">run_limma_splines()</a></code> for spline-based <code>limma</code> testing. Set <code>spline_params$dof = 0</code> to select spline degrees of freedom by leave-one-out cross-validation; for mixed models, set <code>dream_params$dof = 0</code> similarly. Use <code><a href="reference/create_limma_report.html">create_limma_report()</a></code> for the HTML summary (<a href="https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html">example report</a>).</p>
 </li>
 <li>
-<p><strong>Find jumps and drops in the timecourse:</strong></p>
-<p>Use the <code><a href="reference/find_pvc.html">find_pvc()</a></code> function for that (<a href="https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html">example report</a>).</p>
+<p><strong>Detect local peaks, valleys, and cliffs (PVC analysis):</strong></p>
+<p><code><a href="reference/find_pvc.html">find_pvc()</a></code> runs the statistical excursion test; <code><a href="reference/create_pvc_report.html">create_pvc_report()</a></code> builds plots and the HTML report (<a href="https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html">example report</a>).</p>
 </li>
 <li>
 <p><strong>Cluster significant features:</strong></p>
-<p>Cluster the significant features (hits) identified in the spline analysis with the <code><a href="reference/cluster_hits.html">cluster_hits()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">example report</a>).</p>
+<p><code><a href="reference/cluster_hits.html">cluster_hits()</a></code> clusters hits by spline shape; <code><a href="reference/create_clustering_report.html">create_clustering_report()</a></code> generates the HTML report (<a href="https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html">example report</a>).</p>
 </li>
 <li>
-<p><strong>Run ORA with clustered hits:</strong></p>
-<p>Perform over-representation analysis (ORA) using the clustered hits with the <code><a href="reference/run_ora.html">run_ora()</a></code> function (<a href="https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html">example report</a>).</p>
+<p><strong>Run over-representation analysis (ORA) on clustered hits:</strong></p>
+<p><code><a href="reference/run_ora.html">run_ora()</a></code> performs clusterProfiler <code>enricher</code>-style ORA on gene sets per cluster; <code><a href="reference/create_ora_report.html">create_ora_report()</a></code> produces the HTML report (<a href="https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html">example report</a>). Download gene-set libraries with <code><a href="reference/download_enrichr_databases.html">download_enrichr_databases()</a></code> or <code><a href="reference/extract_gene_sets.html">extract_gene_sets()</a></code> from Bioconductor organism databases.</p>
+</li>
+<li>
+<p><strong>Compare two SplineOmics analyses:</strong></p>
+<p><code><a href="reference/compare_results.html">compare_results()</a></code> correlates and contrasts hit sets and adjusted p-values between two result objects.</p>
+</li>
+<li>
+<p><strong>Cluster genes across multiple omics modalities:</strong></p>
+<p><code><a href="reference/cluster_genes_multiomics.html">cluster_genes_multiomics()</a></code> integrates gene-centric multi-omics trajectories; visualize with <code><a href="reference/plot_umap_clusters.html">plot_umap_clusters()</a></code> (see the <a href="https://csbg.github.io/SplineOmics/articles/Gene_centric_multiomics_clustering.html">multi-omics vignette</a>).</p>
 </li>
 </ul>
 </div>
@@ -160,7 +168,8 @@
 <h4 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
 </h4>
 <ul>
-<li>Ensure <strong>R</strong> is installed on your system. If not, download and install it from <a href="https://cran.r-project.org/" class="external-link">CRAN</a>.</li>
+<li>
+<strong>R</strong> (&gt;= 4.5.0) is required for the current release. If needed, download and install R from <a href="https://cran.r-project.org/" class="external-link">CRAN</a>.</li>
 <li>
 <strong>RStudio</strong> is recommended for a more user-friendly experience with R. Download and install RStudio from <a href="https://posit.co/download/rstudio-desktop/" class="external-link">posit.co</a>.</li>
 </ul>
@@ -197,7 +206,7 @@
 </ol>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span></code></pre></div>
-<ol start="5" style="list-style-type: decimal">
+<ol start="6" style="list-style-type: decimal">
 <li>
 <strong>Install</strong> the <strong><code>SplineOmics</code></strong> package from GitHub and all its non-Bioconductor dependencies, using <code>remotes</code>
 </li>
@@ -205,18 +214,18 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
 <span>  <span class="st">"csbg/SplineOmics"</span>,   <span class="co"># GitHub repository</span></span>
-<span>  ref <span class="op">=</span> <span class="st">"&lt;tag&gt;"</span>,        <span class="co"># Version to install, e.g. v0.4.2 </span></span>
+<span>  ref <span class="op">=</span> <span class="st">"&lt;tag&gt;"</span>,        <span class="co"># Version to install, e.g. v0.4.4 </span></span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Install all dependencies</span></span>
 <span>  upgrade <span class="op">=</span> <span class="st">"always"</span>    <span class="co"># Always upgrade dependencies</span></span>
 <span>  <span class="co"># force = TRUE        # when encountering issues</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<ol start="6" style="list-style-type: decimal">
+<ol start="7" style="list-style-type: decimal">
 <li>
 <strong>Verify</strong> the <strong>installation</strong> of the <code>SplineOmics</code> package:</li>
 </ol>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="st">"SplineOmics"</span></span>
-<span><span class="va">ver</span> <span class="op">&lt;-</span> <span class="st">"0.4.2"</span></span>
+<span><span class="va">ver</span> <span class="op">&lt;-</span> <span class="st">"0.4.4"</span></span>
 <span></span>
 <span><span class="va">status</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pkg</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -296,7 +305,7 @@ The website only contains the documentation for the most recent <code>SplineOmic
 <div class="section level3">
 <h3 id="r-version">R Version<a class="anchor" aria-label="anchor" href="#r-version"></a>
 </h3>
-<p>Depending on the version of <code>SplineOmics</code>, for the most recent, 4.5.0 or higher.</p>
+<p>SplineOmics 0.4.4 requires <strong>R &gt;= 4.5.0</strong>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -353,7 +362,7 @@ The website only contains the documentation for the most recent <code>SplineOmic
 <p>This work was carried out in the context of the DigiTherapeutX project, which was funded by the Austrian Science Fund (FWF). The research was conducted under the supervision of Prof. Nikolaus Fortelny, who leads the Computational Systems Biology working group at the Paris Lodron University of Salzburg, Austria. You can find more information about Prof. Fortelny’s research group <a href="https://www.plus.ac.at/biowissenschaften/der-fachbereich/arbeitsgruppen/fortelny/" class="external-link">here</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="liking-this-project">⭐ Liking this project<a class="anchor" aria-label="anchor" href="#liking-this-project"></a>
+<h2 id="star-liking-this-project">⭐ Liking this project<a class="anchor" aria-label="anchor" href="#star-liking-this-project"></a>
 </h2>
 <p>If you find this package useful for your research or analysis, please consider giving the repository a <strong>star</strong> on GitHub. Starring helps increase the visibility of the project and supports its continued development.</p>
 <p>To star the repository, you need to be logged in to your GitHub account and click the <strong>“Star”</strong> button in the top-right corner of this page.</p>

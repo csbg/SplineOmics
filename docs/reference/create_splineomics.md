@@ -102,7 +102,11 @@ create_splineomics(
 
 - design:
 
-  `matrix` \| `NULL`: Design matrix or similar object (optional).
+  `character(1)` \| `NULL`: A character string representing the limma
+  design formula (optional). For example, `"~ 1 + Phase*Time + Reactor"`
+  for an integrated design, or `"~ 1 + Time + Reactor"` for an isolated
+  design. Must include `Time` as a fixed effect. Random effects are
+  specified in the formula (e.g. `(1|Reactor)`).
 
 - use_array_weights:
 
@@ -217,8 +221,8 @@ toy_bp <- c(n_cores = 1, blas_threads = 1)
 # Dream params example (optional)
 toy_dream <- list(dof = 3L, KenwardRoger = FALSE)
 
-# Simple design matrix (intercept + condition + time)
-toy_design <- stats::model.matrix(~ Condition + Time, data = toy_meta)
+# Design formula (isolated mode: no condition term)
+toy_design <- "~ 1 + Time + Batch"
 
 # Required report fields
 toy_report <- list(
@@ -264,10 +268,7 @@ str(so, max.level = 1)
 #>  $ meta_batch_column   : chr "Batch"
 #>  $ meta_batch2_column  : NULL
 #>  $ feature_name_columns: chr [1:2] "feature_id" "symbol"
-#>  $ design              : num [1:6, 1:3] 1 1 1 1 1 1 0 0 0 1 ...
-#>   ..- attr(*, "dimnames")=List of 2
-#>   ..- attr(*, "assign")= int [1:3] 0 1 2
-#>   ..- attr(*, "contrasts")=List of 1
+#>  $ design              : chr "~ 1 + Time + Batch"
 #>  $ use_array_weights   : logi FALSE
 #>  $ dream_params        :List of 2
 #>  $ mode                : chr "isolated"

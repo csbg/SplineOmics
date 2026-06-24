@@ -148,6 +148,7 @@ if (requireNamespace("edgeR", quietly = TRUE) &&
         dim(so2$rna_seq_data$E)
     }
 }
+#> calcNormFactors has been renamed to normLibSizes
 #> Coefficients not estimable: X3 
 #> Warning: Partial NA coefficients for 4 probe(s)
 #> [1] 4 6

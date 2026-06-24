@@ -20,7 +20,16 @@ feature-level modality.
 ### Load required packages
 
 ``` r
+
 library(SplineOmics)
+```
+
+    ## Registered S3 method overwritten by 'lme4':
+    ##   method           from
+    ##   na.action.merMod car
+
+``` r
+
 library(tibble)
 library(ggplot2)
 ```
@@ -32,6 +41,7 @@ points. Each gene is assigned to one of five latent temporal patterns
 used only for data generation.
 
 ``` r
+
 set.seed(1)
 n_genes <- 40
 genes <- paste0("gene", seq_len(n_genes))
@@ -61,6 +71,7 @@ are simulated as lagged and scaled versions of RNA, mimicking delayed
 protein dynamics.
 
 ``` r
+
 .simulate_one_to_one <- function(
   genes,
   shapes,
@@ -109,6 +120,7 @@ For each gene, multiple phospho features are generated. Rows are named
 `<gene>_<feature>` to encode the many-to-one mapping.
 
 ``` r
+
 .simulate_many_to_one <- function(
   genes,
   shapes,
@@ -168,6 +180,7 @@ Each condition is represented as a list of modality matrices. The `meta`
 data frame describes modality properties shared across conditions.
 
 ``` r
+
 data <- list(
   Ctrl = list(
     rna     = rna_ctrl,
@@ -195,6 +208,7 @@ Clustering is performed on the UMAP neighborhood graph derived from the
 gene-centric representation.
 
 ``` r
+
 res <- cluster_genes_multiomics(
   data         = data,
   meta         = meta,
@@ -209,6 +223,7 @@ res <- cluster_genes_multiomics(
     ## • 1.2 secs
 
 ``` r
+
 cluster_table <- res$cluster_table
 ```
 
@@ -219,6 +234,7 @@ using
 [`plot_umap_clusters()`](https://csbg.github.io/SplineOmics/reference/plot_umap_clusters.md).
 
 ``` r
+
 p <- plot_umap_clusters(
   cluster_table  = cluster_table,
   umap_embedding = res$umap_fit$embedding,
@@ -233,10 +249,11 @@ print(p)
 ### Session information
 
 ``` r
+
 sessionInfo()
 ```
 
-    ## R version 4.5.3 (2026-03-11)
+    ## R version 4.6.0 (2026-04-24)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 22.04.5 LTS
     ## 
@@ -259,49 +276,49 @@ sessionInfo()
     ## [1] stats     graphics  grDevices datasets  utils     methods   base     
     ## 
     ## other attached packages:
-    ## [1] ggplot2_4.0.2     tibble_3.3.1      SplineOmics_0.4.4
+    ## [1] ggplot2_4.0.3     tibble_3.3.1      SplineOmics_0.4.4
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] Rdpack_2.6.5             bitops_1.0-9             pbapply_1.7-4           
-    ##   [4] writexl_1.5.4            rlang_1.1.7              magrittr_2.0.4          
-    ##   [7] clue_0.3-66              GetoptLong_1.1.0         RcppAnnoy_0.0.23        
-    ##  [10] otel_0.2.0               matrixStats_1.5.0        compiler_4.5.3          
-    ##  [13] reshape2_1.4.5           png_0.1-8                systemfonts_1.3.1       
-    ##  [16] vctrs_0.7.1              stringr_1.6.0            pkgconfig_2.0.3         
+    ##   [1] Rdpack_2.6.6             bitops_1.0-9             pbapply_1.7-4           
+    ##   [4] writexl_1.5.4            rlang_1.2.0              magrittr_2.0.5          
+    ##   [7] clue_0.3-68              GetoptLong_1.1.1         RcppAnnoy_0.0.23        
+    ##  [10] otel_0.2.0               matrixStats_1.5.0        compiler_4.6.0          
+    ##  [13] reshape2_1.4.5           png_0.1-9                systemfonts_1.3.2       
+    ##  [16] vctrs_0.7.3              stringr_1.6.0            pkgconfig_2.0.3         
     ##  [19] shape_1.4.6.1            crayon_1.5.3             fastmap_1.2.0           
-    ##  [22] backports_1.5.0          labeling_0.4.3           caTools_1.18.3          
-    ##  [25] rmarkdown_2.30           nloptr_2.2.1             ragg_1.5.0              
-    ##  [28] purrr_1.2.1              xfun_0.56                cachem_1.1.0            
+    ##  [22] backports_1.5.1          labeling_0.4.3           caTools_1.18.3          
+    ##  [25] rmarkdown_2.31           nloptr_2.2.1             ragg_1.5.2              
+    ##  [28] purrr_1.2.2              xfun_0.59                cachem_1.1.0            
     ##  [31] jsonlite_2.0.0           progress_1.2.3           EnvStats_3.1.0          
-    ##  [34] remaCor_0.0.20           gmp_0.7-5                BiocParallel_1.42.2     
-    ##  [37] broom_1.0.12             parallel_4.5.3           prettyunits_1.2.0       
+    ##  [34] remaCor_0.0.20           gmp_0.7-5.1              BiocParallel_1.46.0     
+    ##  [37] broom_1.0.13             parallel_4.6.0           prettyunits_1.2.0       
     ##  [40] cluster_2.1.8.2          R6_2.6.1                 stringi_1.8.7           
-    ##  [43] bslib_0.10.0             RColorBrewer_1.1-3       limma_3.64.3            
+    ##  [43] bslib_0.11.0             RColorBrewer_1.1-3       limma_3.68.4            
     ##  [46] boot_1.3-32              car_3.1-5                ClusterR_1.3.6          
-    ##  [49] numDeriv_2016.8-1.1      jquerylib_0.1.4          Rcpp_1.1.1              
+    ##  [49] numDeriv_2016.8-1.1      jquerylib_0.1.4          Rcpp_1.1.1-1.1          
     ##  [52] iterators_1.0.14         knitr_1.51               base64enc_0.1-6         
-    ##  [55] IRanges_2.42.0           Matrix_1.7-4             splines_4.5.3           
-    ##  [58] tidyselect_1.2.1         rstudioapi_0.18.0        abind_1.4-8             
+    ##  [55] IRanges_2.46.0           Matrix_1.7-5             splines_4.6.0           
+    ##  [58] tidyselect_1.2.1         rstudioapi_0.19.0        abind_1.4-8             
     ##  [61] yaml_2.3.12              doParallel_1.0.17        gplots_3.3.0            
-    ##  [64] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-0          
-    ##  [67] lattice_0.22-9           withr_3.0.2              Biobase_2.68.0          
-    ##  [70] S7_0.2.1                 evaluate_1.0.5           desc_1.4.3              
-    ##  [73] zip_2.3.3                circlize_0.4.17          pillar_1.11.1           
+    ##  [64] codetools_0.2-19         plyr_1.8.9               lmerTest_3.2-1          
+    ##  [67] lattice_0.22-9           withr_3.0.3              Biobase_2.72.0          
+    ##  [70] S7_0.2.2                 evaluate_1.0.5           desc_1.4.3              
+    ##  [73] zip_3.0.0                circlize_0.4.18          pillar_1.11.1           
     ##  [76] BiocManager_1.30.27      carData_3.0-6            KernSmooth_2.23-26      
-    ##  [79] checkmate_2.3.4          renv_1.1.7               foreach_1.5.2           
-    ##  [82] stats4_4.5.3             reformulas_0.4.4         generics_0.1.4          
-    ##  [85] S4Vectors_0.46.0         hms_1.1.4                scales_1.4.0            
+    ##  [79] checkmate_2.3.4          renv_1.2.3               foreach_1.5.2           
+    ##  [82] stats4_4.6.0             reformulas_0.4.4         generics_0.1.4          
+    ##  [85] S4Vectors_0.50.1         hms_1.1.4                scales_1.4.0            
     ##  [88] aod_1.3.3                minqa_1.2.8              gtools_3.9.5            
-    ##  [91] RhpcBLASctl_0.23-42      glue_1.8.0               tools_4.5.3             
-    ##  [94] fANCOVA_0.6-1            variancePartition_1.38.1 RSpectra_0.16-2         
-    ##  [97] lme4_1.1-38              mvtnorm_1.3-3            fs_1.6.6                
-    ## [100] grid_4.5.3               tidyr_1.3.2              rbibutils_2.4.1         
-    ## [103] colorspace_2.1-2         nlme_3.1-168             Formula_1.2-5           
-    ## [106] cli_3.6.5                textshaping_1.0.4        svglite_2.2.2           
-    ## [109] ComplexHeatmap_2.24.1    dplyr_1.2.0              uwot_0.2.4              
+    ##  [91] RhpcBLASctl_0.23-42      glue_1.8.1               tools_4.6.0             
+    ##  [94] fANCOVA_0.6-1            variancePartition_1.42.0 RSpectra_0.16-2         
+    ##  [97] lme4_2.0-1               mvtnorm_1.4-1            fs_2.1.0                
+    ## [100] grid_4.6.0               tidyr_1.3.2              rbibutils_2.4.1         
+    ## [103] colorspace_2.1-2         nlme_3.1-169             Formula_1.2-5           
+    ## [106] cli_3.6.6                textshaping_1.0.5        svglite_2.2.2           
+    ## [109] ComplexHeatmap_2.28.0    dplyr_1.2.1              uwot_0.2.4              
     ## [112] corpcor_1.6.10           gtable_0.3.6             sass_0.4.10             
-    ## [115] digest_0.6.39            BiocGenerics_0.54.1      pbkrtest_0.5.5          
-    ## [118] ggrepel_0.9.6            rjson_0.2.23             htmlwidgets_1.6.4       
+    ## [115] digest_0.6.39            BiocGenerics_0.58.1      pbkrtest_0.5.5          
+    ## [118] ggrepel_0.9.8            rjson_0.2.23             htmlwidgets_1.6.4       
     ## [121] farver_2.1.2             htmltools_0.5.9          pkgdown_2.2.0           
-    ## [124] lifecycle_1.0.5          GlobalOptions_0.1.3      statmod_1.5.1           
+    ## [124] lifecycle_1.0.5          GlobalOptions_0.1.4      statmod_1.5.2           
     ## [127] MASS_7.3-65

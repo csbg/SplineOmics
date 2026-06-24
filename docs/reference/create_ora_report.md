@@ -69,7 +69,7 @@ the plots outside the HTML report.
 
 [`run_ora()`](https://csbg.github.io/SplineOmics/reference/run_ora.md),
 [`cluster_hits()`](https://csbg.github.io/SplineOmics/reference/cluster_hits.md),
-[`clusterProfiler::enricher()`](https://rdrr.io/pkg/clusterProfiler/man/enricher.html)
+`clusterProfiler::enricher()`
 
 ## Examples
 

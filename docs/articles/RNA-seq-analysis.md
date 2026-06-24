@@ -91,11 +91,11 @@ The main objectives of this analysis are:
   significant temporal changes (hits) will be grouped into clusters
   based on their time-dependent expression patterns.
 
-- **Perform gene set enrichment analysis**: For each cluster, a gene set
-  enrichment analysis will be conducted to identify whether specific
-  biological pathways or processes are up- or downregulated in response
-  to feeding and how these processes are influenced by the temperature
-  shift.
+- **Perform over-representation analysis (ORA)**: For each cluster, ORA
+  will be conducted to identify whether specific biological pathways or
+  processes are over-represented among clustered hits and how enrichment
+  differs between constant-temperature and temperature-shifted
+  conditions.
 
 - **Assess the impact of temperature shifts on temporal patterns**: The
   analysis will determine whether the temporal patterns of gene
@@ -111,7 +111,11 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
+#> Registered S3 method overwritten by 'lme4':
+#>   method           from
+#>   na.action.merMod car
 library(readr) # For reading the meta CSV file
 library(dplyr) # For data manipulation
 #> 
@@ -128,6 +132,7 @@ library(knitr) # For Showing the head of the data and the meta tables.
 ## Load the files
 
 ``` r
+
 data <- readRDS(xzfile(system.file(
     "extdata",
     "rna_seq_data.rds.xz",
@@ -147,6 +152,7 @@ meta <- readr::read_csv(
 ### Show top rows of data
 
 ``` r
+
 kable(
     head(data),
     format = "markdown"
@@ -183,6 +189,7 @@ plate (e.g., `plate_1` before `plate_2`).
 ### Show top rows of meta
 
 ``` r
+
 kable(
     head(meta),
     format = "markdown"
@@ -212,6 +219,7 @@ genes with zero counts in all samples provide no information for
 downstream analyses.
 
 ``` r
+
 rows_before <- nrow(data)
 
 # Filter data rows
@@ -234,6 +242,7 @@ cat(sprintf(
 ## Perform EDA (exploratory data analysis)
 
 ``` r
+
 report_info <- list(
     omics_data_type = "RNA",
     data_description = "RNA-seq data of CHO cells",
@@ -251,6 +260,7 @@ report_dir <- file.path(
 ```
 
 ``` r
+
 splineomics <- SplineOmics::create_splineomics(
     data = data,
     meta = meta,
@@ -261,6 +271,7 @@ splineomics <- SplineOmics::create_splineomics(
 ```
 
 ``` r
+
 plots <- SplineOmics::explore_data(
     splineomics = splineomics,
     report_dir = report_dir
@@ -275,16 +286,21 @@ the report for the batch-corrected data.
 
 ## Run limma spline analysis
 
-In this example, we are skipping finding the best hyperparameters with
-the screen_limma_hyperparams() function, because we already have a clear
-idea of what do use.
+We set spline parameters manually here (`dof = 3`). Alternatively, set
+`spline_params$dof = 0` in
+[`update_splineomics()`](https://csbg.github.io/SplineOmics/reference/update_splineomics.md)
+to let
+[`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
+choose the degrees of freedom by leave-one-out cross-validation (see the
+**get_started** vignette).
 
-Lets define our parameters and put them into the `SplineOmics` object:
+Define the parameters and store them in the `SplineOmics` object:
 
 ``` r
+
 spline_params <- list(
     spline_type = c("n"), # natural cubic splines
-    dof = c(3L) # Degree of freedom of 3 for the splines.
+    dof = c(3L) # degrees of freedom; use 0L for automatic selection
 )
 
 design <- "~ 1 + Condition*Time + Plate + (1|Reactor)"
@@ -324,11 +340,11 @@ structures. The calculated weights account for both fixed and random
 effects, providing robust results for differential expression analysis.
 
 ``` r
+
 splineomics <- SplineOmics::preprocess_rna_seq_data(
     splineomics = splineomics
 )
-#> Warning: the 'findbars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.
-#> This warning is displayed once per session.
+#> calcNormFactors has been renamed to normLibSizes
 ```
 
 You can customize the normalization method by providing a specific
@@ -358,11 +374,10 @@ Run the
 function:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
-#> Warning: the 'nobars' function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.
-#> This warning is displayed once per session.
 ```
 
 The output of the function run_limma_splines() is a named list, where
@@ -390,6 +405,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -405,6 +421,7 @@ function
 Prepare arguments:
 
 ``` r
+
 nr_clusters <- list(
     constant = 4,
     temp_shift = 4
@@ -433,6 +450,7 @@ plot_options <- list(
 Run the clustering:
 
 ``` r
+
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
@@ -446,6 +464,7 @@ clustering_results <- SplineOmics::cluster_hits(
 Generate the report:
 
 ``` r
+
 report_dir <- file.path(tempdir(), "splineomics_report")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -465,7 +484,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpYc3Ez4/filed8165161149a .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpwJlsOi/file8d32648dabee .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -478,14 +497,16 @@ cluster_hits() report shows the results of all three, if they are
 present (category 2 and 3 can only be generated when the design formula
 contains an interaction effect).
 
-## Perform gene set enrichment analysis (GSEA)
+## Perform over-representation analysis (ORA)
 
 Once the clustered hits are identified, a subsequent step to gain
-biological insights is to perform GSEA. For this, the respective genes
-can be assigned to each clustered hit, and GSEA can be carried out. To
-proceed, the Enrichr databases of choice need to be downloaded:
+biological insights is to perform **over-representation analysis
+(ORA)**. For each cluster, genes assigned to clustered hits can be
+tested for enrichment against gene-set libraries. To proceed, download
+the Enrichr databases of choice:
 
 ``` r
+
 # Specify which databases you want to download from Enrichr
 gene_set_lib <- c(
     "WikiPathways_2019_Human",
@@ -512,13 +533,17 @@ SplineOmics::download_enrichr_databases(
 Per default the file is placed in the current working directory, which
 is the root dir of the R project.
 
-To run GSEA, the downloaded database file has to be loaded as a
-dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function create_gsea_report() runs GSEA
-using clusterProfiler, generates an HTML report and returns the GSEA
-dotplots in R.
+To run ORA, load the downloaded database file as a data frame and
+optionally set `clusterProfiler` parameters.
+[`run_ora()`](https://csbg.github.io/SplineOmics/reference/run_ora.md)
+performs over-representation analysis with **clusterProfiler** and
+returns enrichment results plus a `report_payload` for reporting. It
+does not write HTML or plots; use
+[`create_ora_report()`](https://csbg.github.io/SplineOmics/reference/create_ora_report.md)
+for that (see below).
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(
     tempdir(),
@@ -543,13 +568,14 @@ clusterProfiler_params <- list(
 report_dir <- file.path(
     tempdir(),
     "results",
-    "gsea_reports"
+    "ora_reports"
 )
 ```
 
 Run ORA:
 
 ``` r
+
 ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
@@ -563,6 +589,7 @@ ora_results <- SplineOmics::run_ora(
 Create ORA HTML report:
 
 ``` r
+
 plots <- SplineOmics::create_ora_report(
     report_payload = ora_results$report_payload,
     report_info = report_info,
@@ -572,12 +599,13 @@ plots <- SplineOmics::create_ora_report(
 )
 ```
 
-You can view the generated analysis report of the run_gsea function
+You can view the generated ORA HTML report from
+[`create_ora_report()`](https://csbg.github.io/SplineOmics/reference/create_ora_report.md)
 [here](https://drive.google.com/uc?export=view&id=1EvPiEwHyGnBQFxRets00s87tochgyGK4).
 
 ## Session Info
 
-    #> R version 4.5.3 (2026-03-11)
+    #> R version 4.6.0 (2026-04-24)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -600,50 +628,50 @@ You can view the generated analysis report of the run_gsea function
     #> [1] stats     graphics  grDevices datasets  utils     methods   base     
     #> 
     #> other attached packages:
-    #> [1] knitr_1.51        dplyr_1.2.0       readr_2.1.6       SplineOmics_0.4.4
+    #> [1] knitr_1.51        dplyr_1.2.1       readr_2.2.0       SplineOmics_0.4.4
     #> 
     #> loaded via a namespace (and not attached):
-    #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          
-    #>   [4] shape_1.4.6.1            magrittr_2.0.4           farver_2.1.2            
-    #>   [7] nloptr_2.2.1             rmarkdown_2.30           GlobalOptions_0.1.3     
-    #>  [10] fs_1.6.6                 ragg_1.5.0               vctrs_0.7.1             
+    #>   [1] RColorBrewer_1.1-3       rstudioapi_0.19.0        jsonlite_2.0.0          
+    #>   [4] shape_1.4.6.1            magrittr_2.0.5           farver_2.1.2            
+    #>   [7] nloptr_2.2.1             rmarkdown_2.31           GlobalOptions_0.1.4     
+    #>  [10] fs_2.1.0                 ragg_1.5.2               vctrs_0.7.3             
     #>  [13] minqa_1.2.8              base64enc_0.1-6          htmltools_0.5.9         
-    #>  [16] progress_1.2.3           broom_1.0.12             Formula_1.2-5           
-    #>  [19] variancePartition_1.38.1 sass_0.4.10              KernSmooth_2.23-26      
-    #>  [22] bslib_0.10.0             htmlwidgets_1.6.4        desc_1.4.3              
+    #>  [16] progress_1.2.3           broom_1.0.13             Formula_1.2-5           
+    #>  [19] variancePartition_1.42.0 sass_0.4.10              KernSmooth_2.23-26      
+    #>  [22] bslib_0.11.0             htmlwidgets_1.6.4        desc_1.4.3              
     #>  [25] pbkrtest_0.5.5           plyr_1.8.9               cachem_1.1.0            
     #>  [28] lifecycle_1.0.5          iterators_1.0.14         pkgconfig_2.0.3         
-    #>  [31] Matrix_1.7-4             R6_2.6.1                 fastmap_1.2.0           
-    #>  [34] rbibutils_2.4.1          clue_0.3-66              digest_0.6.39           
-    #>  [37] numDeriv_2016.8-1.1      colorspace_2.1-2         S4Vectors_0.46.0        
-    #>  [40] textshaping_1.0.4        labeling_0.4.3           abind_1.4-8             
-    #>  [43] compiler_4.5.3           withr_3.0.2              bit64_4.6.0-1           
-    #>  [46] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                
-    #>  [49] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           
+    #>  [31] Matrix_1.7-5             R6_2.6.1                 fastmap_1.2.0           
+    #>  [34] rbibutils_2.4.1          clue_0.3-68              digest_0.6.39           
+    #>  [37] numDeriv_2016.8-1.1      colorspace_2.1-2         S4Vectors_0.50.1        
+    #>  [40] textshaping_1.0.5        labeling_0.4.3           abind_1.4-8             
+    #>  [43] compiler_4.6.0           withr_3.0.3              bit64_4.8.2             
+    #>  [46] aod_1.3.3                doParallel_1.0.17        S7_0.2.2                
+    #>  [49] backports_1.5.1          BiocParallel_1.46.0      carData_3.0-6           
     #>  [52] gplots_3.3.0             MASS_7.3-65              rjson_0.2.23            
     #>  [55] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          
-    #>  [58] tools_4.5.3              otel_0.2.0               zip_2.3.3               
-    #>  [61] remaCor_0.0.20           glue_1.8.0               nlme_3.1-168            
-    #>  [64] grid_4.5.3               checkmate_2.3.4          cluster_2.1.8.2         
+    #>  [58] tools_4.6.0              otel_0.2.0               zip_3.0.0               
+    #>  [61] remaCor_0.0.20           glue_1.8.1               nlme_3.1-169            
+    #>  [64] grid_4.6.0               checkmate_2.3.4          cluster_2.1.8.2         
     #>  [67] reshape2_1.4.5           generics_0.1.4           gtable_0.3.6            
     #>  [70] tzdb_0.5.0               tidyr_1.3.2              hms_1.1.4               
-    #>  [73] car_3.1-5                BiocGenerics_0.54.1      ggrepel_0.9.6           
+    #>  [73] car_3.1-5                BiocGenerics_0.58.1      ggrepel_0.9.8           
     #>  [76] foreach_1.5.2            pillar_1.11.1            stringr_1.6.0           
-    #>  [79] vroom_1.7.0              limma_3.64.3             circlize_0.4.17         
-    #>  [82] splines_4.5.3            lattice_0.22-9           renv_1.1.7              
-    #>  [85] gmp_0.7-5                bit_4.6.0                tidyselect_1.2.1        
-    #>  [88] ComplexHeatmap_2.24.1    locfit_1.5-9.12          pbapply_1.7-4           
-    #>  [91] reformulas_0.4.4         IRanges_2.42.0           edgeR_4.6.3             
-    #>  [94] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.5.3            
-    #>  [97] xfun_0.56                Biobase_2.68.0           statmod_1.5.1           
+    #>  [79] vroom_1.7.1              limma_3.68.4             circlize_0.4.18         
+    #>  [82] splines_4.6.0            lattice_0.22-9           renv_1.2.3              
+    #>  [85] gmp_0.7-5.1              bit_4.6.0                tidyselect_1.2.1        
+    #>  [88] ComplexHeatmap_2.28.0    locfit_1.5-9.12          pbapply_1.7-4           
+    #>  [91] reformulas_0.4.4         IRanges_2.46.0           edgeR_4.10.1            
+    #>  [94] svglite_2.2.2            RhpcBLASctl_0.23-42      stats4_4.6.0            
+    #>  [97] xfun_0.59                Biobase_2.72.0           statmod_1.5.2           
     #> [100] matrixStats_1.5.0        stringi_1.8.7            yaml_2.3.12             
     #> [103] boot_1.3-32              evaluate_1.0.5           codetools_0.2-19        
-    #> [106] tibble_3.3.1             BiocManager_1.30.27      cli_3.6.5               
-    #> [109] systemfonts_1.3.1        Rdpack_2.6.5             jquerylib_0.1.4         
-    #> [112] Rcpp_1.1.1               EnvStats_3.1.0           png_0.1-8               
-    #> [115] parallel_4.5.3           pkgdown_2.2.0            ggplot2_4.0.2           
+    #> [106] tibble_3.3.1             BiocManager_1.30.27      cli_3.6.6               
+    #> [109] systemfonts_1.3.2        Rdpack_2.6.6             jquerylib_0.1.4         
+    #> [112] Rcpp_1.1.1-1.1           EnvStats_3.1.0           png_0.1-9               
+    #> [115] parallel_4.6.0           pkgdown_2.2.0            ggplot2_4.0.3           
     #> [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            
-    #> [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          
-    #> [124] scales_1.4.0             purrr_1.2.1              crayon_1.5.3            
-    #> [127] writexl_1.5.4            fANCOVA_0.6-1            GetoptLong_1.1.0        
-    #> [130] rlang_1.1.7
+    #> [121] lme4_2.0-1               mvtnorm_1.4-1            lmerTest_3.2-1          
+    #> [124] scales_1.4.0             purrr_1.2.2              crayon_1.5.3            
+    #> [127] writexl_1.5.4            fANCOVA_0.6-1            GetoptLong_1.1.1        
+    #> [130] rlang_1.2.0

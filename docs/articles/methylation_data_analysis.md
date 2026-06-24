@@ -69,6 +69,7 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
 library(readr) # For reading the meta CSV file
 library(here) # For managing filepaths
@@ -88,6 +89,7 @@ library(knitr) # For Showing the head of the data and the meta tables.
 ## Load the files
 
 ``` r
+
 data_df <- readRDS(xzfile(system.file(
     "extdata",
     "methylation_data.rds.xz",
@@ -108,6 +110,7 @@ meta$Condition[meta$Condition == "Temp. Shifted"] <- "Temp_shift"
 ### Show top rows of data
 
 ``` r
+
 kable(
     head(data),
     format = "markdown"
@@ -126,6 +129,7 @@ kable(
 ### Show top rows of meta
 
 ``` r
+
 kable(
     head(meta),
     format = "markdown"
@@ -142,6 +146,7 @@ kable(
 | 4 | 5 | 48 | E16 | Temp_shift | CharRun1 | NISTCHO | 1x10^6 cells | 2024-11-04 | NIST CHO BR24 48H E16 | 1.892 | 30.9 | 9.9 |
 
 ``` r
+
 data <- SplineOmics::extract_data(
     # The dataframe with the numbers on the left and info on the right.
     data = data_df,
@@ -157,6 +162,7 @@ data <- SplineOmics::extract_data(
 ## Perform EDA (exploratory data analysis)
 
 ``` r
+
 report_info <- list(
     omics_data_type = "EPI",
     data_description = "Methylation data of CHO cells",
@@ -173,6 +179,7 @@ report_dir <- here::here(
 ```
 
 ``` r
+
 splineomics <- SplineOmics::create_splineomics(
     data = data,
     meta = meta,
@@ -183,6 +190,7 @@ splineomics <- SplineOmics::create_splineomics(
 ```
 
 ``` r
+
 plots <- SplineOmics::explore_data(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -255,6 +263,7 @@ idea of what do use.
 Lets define our parameters and put them into the `SplineOmics` object:
 
 ``` r
+
 spline_params <- list(
     spline_type = c("n"), # natural cubic splines
     dof = c(3L) # Degree of freedom of 3 for the splines.
@@ -280,6 +289,7 @@ Run the
 function:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
@@ -301,6 +311,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -317,6 +328,7 @@ plots <- SplineOmics::create_limma_report(
 Prepare arguments:
 
 ``` r
+
 nr_clusters <- list(
     Constant   = 2:6,
     Temp_shift = 2:6
@@ -349,6 +361,7 @@ plot_options <- list(
 Run the clustering:
 
 ``` r
+
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
@@ -370,6 +383,7 @@ clustering_results <- SplineOmics::cluster_hits(
 Generate the report:
 
 ``` r
+
 plots <- SplineOmics::create_clustering_report(
     report_payload = clustering_results$report_payload,
     plot_info = plot_info,

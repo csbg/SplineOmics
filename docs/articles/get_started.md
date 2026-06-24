@@ -24,16 +24,16 @@ setup:
 
 The main goals of this analysis are:
 
-- **Identify proteins with significant temporal changes**: Out of 7162
-  cellular proteins, the objective is to detect which proteins show a
-  significant change over time after the CHO cells were fed (i.e., the
-  impact of the feeding).
+- **Identify proteins with significant temporal changes**: Among the
+  1165 proteins in this example dataset, the objective is to detect
+  which proteins show a significant change over time after the CHO cells
+  were fed (i.e., the impact of the feeding).
 - **Cluster hits based on temporal patterns**: The proteins (hits) with
   significant temporal changes will be clustered according to their
   time-based patterns.
-- **Perform gene set enrichment analysis**: For each cluster, a gene set
-  enrichment analysis will be performed to determine if specific
-  biological processes are up- or downregulated after feeding.
+- **Perform over-representation analysis (ORA)**: For each cluster, ORA
+  will be performed to determine if specific biological processes are
+  over-represented among the clustered hits after feeding.
 
 #### Note
 
@@ -43,7 +43,11 @@ viewed [here](https://csbg.github.io/SplineOmics/reference)
 ## Load the packages
 
 ``` r
+
 library(SplineOmics)
+#> Registered S3 method overwritten by 'lme4':
+#>   method           from
+#>   na.action.merMod car
 library(dplyr) # For data manipulation
 #> 
 #> Attaching package: 'dplyr'
@@ -145,6 +149,7 @@ the annotation info, which can be copied in a separate dataframe, as
 shown below.
 
 ``` r
+
 data <- readRDS(xzfile(system.file(
     "extdata",
     "proteomics_data.rds.xz",
@@ -170,6 +175,7 @@ annotation <- data |>
 ### Show top rows of data
 
 ``` r
+
 kable(
     head(data),
     format = "markdown"
@@ -188,6 +194,7 @@ kable(
 ### Show top rows of meta
 
 ``` r
+
 kable(
     head(meta),
     format = "markdown"
@@ -206,6 +213,7 @@ kable(
 ### Show top rows of annotation
 
 ``` r
+
 kable(
     head(annotation),
     format = "markdown"
@@ -223,10 +231,12 @@ kable(
 
 Three comments about the characteristics the input data should have:
 
-- The data must not contain any NA values or other special values, and
-  must consist only of numbers. For example, the original proteomics
-  data contained some NA values, which were resolved in this case by
-  imputation (replacing NA values with numbers).
+- The data must be a numeric matrix without non-numeric values. Partial
+  `NA` values are tolerated by `limma`, but rows or columns that are
+  entirely `NA` are rejected. For reliable results, imputation or
+  filtering is still recommended — for example, the original proteomics
+  data contained some `NA` values, which were imputed before this
+  analysis.
 
 - All features of the data should ideally be normally distributed when
   analyzed with `limma`, which fits a linear model to each feature.
@@ -283,6 +293,7 @@ is shown individually, such as:
 - **Spline plots** with the datapoints from an individual feature.
 
 ``` r
+
 data <- SplineOmics::extract_data(
     # The dataframe with the numbers on the left and info on the right.
     data = data,
@@ -321,49 +332,36 @@ function can handle this for you.
 
 #### Using `explore_data()` for EDA
 
-The **SplineOmics** package provides the function
+The **SplineOmics** package provides
 [`explore_data()`](https://csbg.github.io/SplineOmics/reference/explore_data.md)
-to perform EDA. This function requires the following arguments:
+to run EDA from a **SplineOmics** object (created with
+[`create_splineomics()`](https://csbg.github.io/SplineOmics/reference/create_splineomics.md);
+see below). The object must already contain `data`, `meta`, `condition`,
+and `report_info`. Optional batch columns (`meta_batch_column`,
+`meta_batch2_column`) are also read from the object.
 
-- **data**: The numeric data matrix.
-- **meta**: The metadata table.
-- **condition**: The name of the column in the metadata that contains
-  the levels of the experiment (e.g., “Exponential” and “Stationary”).
-- **report_info**: A list that contains general information about the
-  analysis, such as the name of the analyst and the datatype (e.g.
-  proteomics)
+**Function arguments:**
 
-#### Optional Arguments
+- **`splineomics`**: The SplineOmics object with the inputs above.
+- **`report_dir`**: Directory where HTML reports are saved (defaults to
+  [`tempdir()`](https://rdrr.io/r/base/tempfile.html)).
+- **`report`**: Logical; set to `FALSE` to return plots only and skip
+  the HTML report.
 
-In addition to the required arguments,
-[`explore_data()`](https://csbg.github.io/SplineOmics/reference/explore_data.md)
-offers several optional arguments:
+If at least one batch column was set in
+[`create_splineomics()`](https://csbg.github.io/SplineOmics/reference/create_splineomics.md),
+the function will:
 
-- **meta_batch_column**: The name of the column that contains the first
-  batch effect.
+- Use
+  [`limma::removeBatchEffect()`](https://rdrr.io/pkg/limma/man/removeBatchEffect.html)
+  before plotting.
+- Generate two EDA HTML reports: one for **uncorrected data** and one
+  for **batch-corrected data**.
 
-- **meta_batch2_column**: The name of the column that contains the
-  second batch effect.
-
-  If at least one batch column is provided, the function will:
-
-  - Use the `removeBatchEffect()` function from **limma** to remove the
-    batch effect from the data before plotting.
-  - Generate two EDA HTML reports: one for the **uncorrected data** and
-    one for the **batch-corrected data**.
-
-#### Output and Report Options
-
-- By default, the reports are saved in the **current working
-  directory**, but this location can be changed using the `report_dir`
-  argument.
-- The function also **returns all plots** generated during the analysis,
-  so that you can modify them according to your own needs.
-- If you do not want a report to be generated, you can set the `report`
-  argument to `FALSE` (when you for example just want the figures in the
-  R environment)
+The function **returns all plots** as a named list of ggplot objects.
 
 ``` r
+
 # Those fields are mandatory, because we believe that when such a report is
 # opened after half a year, those infos can be very helpful.
 report_info <- list(
@@ -385,13 +383,13 @@ report_dir <- file.path(
 ### SplineOmics Object
 
 In the SplineOmics package, multiple functions take the same arguments
-as input. To make this easier and to avoid errors, we decided that those
-arguments are not provided individually to the functions, but are all
-stored in an R6 object (which is of type ‘SplineOmics’) and then this
-object is passed to the functions. Additionally, some functions generate
-intermediate output, which is just necessary for the next function in
-the workflow, which is then also just passed along by updating the
-SplineOmics object. But you don’t have to worry about this.
+as input. To make this easier and to avoid errors, those arguments are
+stored in an S3 object of class `SplineOmics` (a named list) and passed
+to downstream functions. Additionally, some functions add intermediate
+results back into the object via
+[`update_splineomics()`](https://csbg.github.io/SplineOmics/reference/update_splineomics.md).
+You do not need to manage those updates manually beyond calling the
+workflow functions.
 
 #### Functionality
 
@@ -405,7 +403,7 @@ The documentation of the function that creates the SplineOmics object
 can be found
 [here](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)
 and the documentation of the function that updates it
-\[[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html)
+[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html).
 
 The documentation for each function that takes the SplineOmics object as
 input specifies which arguments must be present in the SplineOmics
@@ -438,6 +436,7 @@ object when it is passed to the respective function.
 - **spline_params**: Parameters for the spline functions.
 
 ``` r
+
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
     data = data,
@@ -471,6 +470,7 @@ Now that we have the SplineOmics object defined, we can perform our
 exploratory data analysis.
 
 ``` r
+
 plots <- SplineOmics::explore_data(
     splineomics = splineomics, # SplineOmics object
     report_dir = withr::local_tempdir()
@@ -497,7 +497,7 @@ plots <- SplineOmics::explore_data(
 #> Making cv plots...
 #> 
 #>  Info Exploratory data analysis completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e30a27020 .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpBDD6yz/file8ad72474f509 .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -538,6 +538,7 @@ generate limma result categories 2 (average differences between
 conditions) and 3 (condition–time interactions).
 
 ``` r
+
 splineomics <- SplineOmics::update_splineomics(
     splineomics = splineomics,
     design = "~ 1 + Phase*Time + Reactor", # best design formula
@@ -551,17 +552,24 @@ splineomics <- SplineOmics::update_splineomics(
     use_array_weights = FALSE,
     spline_params = list(
         spline_type = c("n"), # natural cubic splines (take these if unsure)
-        # If you are unsure about which dof, start with 2 and increase
-        dof = c(2L) 
+        # If unsure about dof, start with 2 and increase; or set dof = 0
+        # for automatic selection via leave-one-out cross-validation.
+        dof = c(2L)
     )
 )
 ```
+
+Setting `spline_params$dof = 0` lets
+[`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
+choose the spline degrees of freedom by leave-one-out cross-validation
+instead of using a fixed value.
 
 Run the
 [`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
 function with the updated SplineOmics object:
 
 ``` r
+
 splineomics <- SplineOmics::run_limma_splines(
     splineomics = splineomics
 )
@@ -597,6 +605,7 @@ The topTables of all three limma result categories can be used to
 generate p-value histograms an volcano plots.
 
 ``` r
+
 plots <- SplineOmics::create_limma_report(
     splineomics = splineomics,
     report_dir = withr::local_tempdir()
@@ -635,6 +644,7 @@ members with low squared correlation to their cluster centroid are
 reassigned to cluster `0` (the “other” cluster).
 
 ``` r
+
 # The amount of clusters can be a fixed number (e.g. 6) or a range. When you
 # specify a range (e.g. 2:6), then the cluster_hits() function tries all k in
 # that range and selects the k that minimizes the Bayesian Information Criterion
@@ -677,6 +687,7 @@ plot_options <- list(
 Run the clustering:
 
 ``` r
+
 clustering_results <- SplineOmics::cluster_hits(
     splineomics = splineomics,
     adj_pthresh_time_effect = 0.05,
@@ -699,6 +710,7 @@ only if their respective thresholds are \> 0).
 Generate the report:
 
 ``` r
+
 plots <- SplineOmics::create_clustering_report(
     report_payload = clustering_results$report_payload,
     plot_info = plot_info,
@@ -715,7 +727,7 @@ plots <- SplineOmics::create_clustering_report(
 #> Generating report. This takes a few seconds.
 #> 
 #>  Info Clustering the hits completed successfully.
-#>  Your HTML reports are located in the directory:  /tmp/RtmpiprXq3/filed64e3f2a71a8 .
+#>  Your HTML reports are located in the directory:  /tmp/RtmpBDD6yz/file8ad71b08929a .
 #>  Please note that due to embedded files, the reports might be flagged as
 #>  harmful by other software. Rest assured that they provide no harm.
 ```
@@ -754,6 +766,7 @@ and ORA can be carried out. To proceed, the Enrichr databases of choice
 need to be downloaded:
 
 ``` r
+
 # Create a temporary directory for R CMD check
 results_dir <- file.path(tempdir(), "ora")
 dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
@@ -781,13 +794,17 @@ SplineOmics::download_enrichr_databases(
 )
 ```
 
-To run ORA, the downloaded database file has to be loaded as a
-dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function run_ora() runs ORA using
-clusterProfiler, generates an HTML report and returns the ORA dotplots
-in R.
+To run ORA, load the downloaded database file as a data frame and
+optionally set `clusterProfiler` parameters.
+[`run_ora()`](https://csbg.github.io/SplineOmics/reference/run_ora.md)
+performs over-representation analysis with **clusterProfiler** and
+returns enrichment results plus a `report_payload` for reporting. It
+does not write HTML or plots; use
+[`create_ora_report()`](https://csbg.github.io/SplineOmics/reference/create_ora_report.md)
+for that (see below).
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(results_dir, "databases.tsv")
 
@@ -811,6 +828,7 @@ clusterProfiler_params <- list(
 Run ORA:
 
 ``` r
+
 ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
@@ -822,6 +840,7 @@ ora_results <- SplineOmics::run_ora(
 Create ORA HTML report:
 
 ``` r
+
 plots <- SplineOmics::create_ora_report(
     report_payload = ora_results$report_payload,
     report_info = report_info,
@@ -831,7 +850,8 @@ plots <- SplineOmics::create_ora_report(
 )
 ```
 
-You can view the generated analysis report of the run_ora function
+You can view the generated ORA HTML report from
+[`create_ora_report()`](https://csbg.github.io/SplineOmics/reference/create_ora_report.md)
 [here](https://csbg.github.io/SplineOmics_html_reports/run_ora_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
@@ -860,6 +880,7 @@ The BioConductor databases are an example for that, and SplineOmics also
 contains a function to conveniently download these.
 
 ``` r
+
 SplineOmics::extract_gene_sets(
     organism_db = "org.Mm.eg.db",
     output_dir = results_dir,
@@ -868,6 +889,7 @@ SplineOmics::extract_gene_sets(
 ```
 
 ``` r
+
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(
     results_dir,
@@ -919,6 +941,7 @@ enrichGO_cfg <- list(
 Run ORA:
 
 ``` r
+
 ora_results <- SplineOmics::run_ora(
     cluster_table = clustering_results[["cluster_table"]],
     databases = databases,
@@ -932,6 +955,7 @@ ora_results <- SplineOmics::run_ora(
 Create ORA HTML report:
 
 ``` r
+
 plots <- SplineOmics::create_ora_report(
     report_payload = ora_results$report_payload,
     report_info = report_info,
@@ -955,7 +979,7 @@ options under the Feedback section of the README on GitHub. Thank you!
 
 ## Session Info
 
-    #> R version 4.5.3 (2026-03-11)
+    #> R version 4.6.0 (2026-04-24)
     #> Platform: x86_64-pc-linux-gnu
     #> Running under: Ubuntu 22.04.5 LTS
     #> 
@@ -979,53 +1003,52 @@ options under the Feedback section of the README on GitHub. Thank you!
     #> [8] base     
     #> 
     #> other attached packages:
-    #>  [1] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      
-    #>  [4] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.1 
-    #>  [7] generics_0.1.4       knitr_1.51           dplyr_1.2.0         
+    #>  [1] org.Mm.eg.db_3.23.0  AnnotationDbi_1.74.0 IRanges_2.46.0      
+    #>  [4] S4Vectors_0.50.1     Biobase_2.72.0       BiocGenerics_0.58.1 
+    #>  [7] generics_0.1.4       knitr_1.51           dplyr_1.2.1         
     #> [10] SplineOmics_0.4.4   
     #> 
     #> loaded via a namespace (and not attached):
-    #>   [1] RColorBrewer_1.1-3       rstudioapi_0.18.0        jsonlite_2.0.0          
-    #>   [4] shape_1.4.6.1            magrittr_2.0.4           farver_2.1.2            
-    #>   [7] nloptr_2.2.1             rmarkdown_2.30           GlobalOptions_0.1.3     
-    #>  [10] fs_1.6.6                 ragg_1.5.0               vctrs_0.7.1             
+    #>   [1] RColorBrewer_1.1-3       rstudioapi_0.19.0        jsonlite_2.0.0          
+    #>   [4] shape_1.4.6.1            magrittr_2.0.5           farver_2.1.2            
+    #>   [7] nloptr_2.2.1             rmarkdown_2.31           GlobalOptions_0.1.4     
+    #>  [10] fs_2.1.0                 ragg_1.5.2               vctrs_0.7.3             
     #>  [13] memoise_2.0.1            minqa_1.2.8              base64enc_0.1-6         
-    #>  [16] htmltools_0.5.9          progress_1.2.3           broom_1.0.12            
-    #>  [19] Formula_1.2-5            variancePartition_1.38.1 sass_0.4.10             
-    #>  [22] KernSmooth_2.23-26       bslib_0.10.0             htmlwidgets_1.6.4       
+    #>  [16] htmltools_0.5.9          progress_1.2.3           broom_1.0.13            
+    #>  [19] Formula_1.2-5            variancePartition_1.42.0 sass_0.4.10             
+    #>  [22] KernSmooth_2.23-26       bslib_0.11.0             htmlwidgets_1.6.4       
     #>  [25] desc_1.4.3               pbkrtest_0.5.5           plyr_1.8.9              
     #>  [28] cachem_1.1.0             lifecycle_1.0.5          iterators_1.0.14        
-    #>  [31] pkgconfig_2.0.3          Matrix_1.7-4             R6_2.6.1                
-    #>  [34] fastmap_1.2.0            GenomeInfoDbData_1.2.14  rbibutils_2.4.1         
-    #>  [37] clue_0.3-66              digest_0.6.39            numDeriv_2016.8-1.1     
-    #>  [40] colorspace_2.1-2         textshaping_1.0.4        RSQLite_2.4.5           
-    #>  [43] labeling_0.4.3           httr_1.4.7               abind_1.4-8             
-    #>  [46] compiler_4.5.3           withr_3.0.2              bit64_4.6.0-1           
-    #>  [49] aod_1.3.3                doParallel_1.0.17        S7_0.2.1                
-    #>  [52] backports_1.5.0          BiocParallel_1.42.2      carData_3.0-6           
-    #>  [55] DBI_1.2.3                gplots_3.3.0             MASS_7.3-65             
-    #>  [58] rjson_0.2.23             corpcor_1.6.10           gtools_3.9.5            
-    #>  [61] caTools_1.18.3           tools_4.5.3              otel_0.2.0              
-    #>  [64] zip_2.3.3                remaCor_0.0.20           glue_1.8.0              
-    #>  [67] nlme_3.1-168             grid_4.5.3               checkmate_2.3.4         
-    #>  [70] cluster_2.1.8.2          reshape2_1.4.5           gtable_0.3.6            
-    #>  [73] tidyr_1.3.2              hms_1.1.4                XVector_0.48.0          
-    #>  [76] car_3.1-5                ggrepel_0.9.6            foreach_1.5.2           
-    #>  [79] pillar_1.11.1            stringr_1.6.0            limma_3.64.3            
-    #>  [82] circlize_0.4.17          splines_4.5.3            lattice_0.22-9          
-    #>  [85] renv_1.1.7               gmp_0.7-5                bit_4.6.0               
-    #>  [88] tidyselect_1.2.1         ComplexHeatmap_2.24.1    Biostrings_2.76.0       
-    #>  [91] pbapply_1.7-4            reformulas_0.4.4         svglite_2.2.2           
-    #>  [94] RhpcBLASctl_0.23-42      xfun_0.56                statmod_1.5.1           
-    #>  [97] matrixStats_1.5.0        UCSC.utils_1.4.0         stringi_1.8.7           
-    #> [100] yaml_2.3.12              boot_1.3-32              evaluate_1.0.5          
-    #> [103] codetools_0.2-19         tibble_3.3.1             BiocManager_1.30.27     
-    #> [106] cli_3.6.5                systemfonts_1.3.1        Rdpack_2.6.5            
-    #> [109] jquerylib_0.1.4          GenomeInfoDb_1.44.3      Rcpp_1.1.1              
-    #> [112] EnvStats_3.1.0           png_0.1-8                parallel_4.5.3          
-    #> [115] pkgdown_2.2.0            ggplot2_4.0.2            blob_1.3.0              
-    #> [118] prettyunits_1.2.0        ClusterR_1.3.6           bitops_1.0-9            
-    #> [121] lme4_1.1-38              mvtnorm_1.3-3            lmerTest_3.2-0          
-    #> [124] scales_1.4.0             purrr_1.2.1              crayon_1.5.3            
-    #> [127] writexl_1.5.4            fANCOVA_0.6-1            GetoptLong_1.1.0        
-    #> [130] rlang_1.1.7              KEGGREST_1.48.1
+    #>  [31] pkgconfig_2.0.3          Matrix_1.7-5             R6_2.6.1                
+    #>  [34] fastmap_1.2.0            rbibutils_2.4.1          clue_0.3-68             
+    #>  [37] digest_0.6.39            numDeriv_2016.8-1.1      colorspace_2.1-2        
+    #>  [40] textshaping_1.0.5        RSQLite_3.53.2           labeling_0.4.3          
+    #>  [43] httr_1.4.8               abind_1.4-8              compiler_4.6.0          
+    #>  [46] withr_3.0.3              bit64_4.8.2              aod_1.3.3               
+    #>  [49] doParallel_1.0.17        S7_0.2.2                 backports_1.5.1         
+    #>  [52] BiocParallel_1.46.0      carData_3.0-6            DBI_1.3.0               
+    #>  [55] gplots_3.3.0             MASS_7.3-65              rjson_0.2.23            
+    #>  [58] corpcor_1.6.10           gtools_3.9.5             caTools_1.18.3          
+    #>  [61] tools_4.6.0              otel_0.2.0               zip_3.0.0               
+    #>  [64] remaCor_0.0.20           glue_1.8.1               nlme_3.1-169            
+    #>  [67] grid_4.6.0               checkmate_2.3.4          cluster_2.1.8.2         
+    #>  [70] reshape2_1.4.5           gtable_0.3.6             tidyr_1.3.2             
+    #>  [73] hms_1.1.4                XVector_0.52.0           car_3.1-5               
+    #>  [76] ggrepel_0.9.8            foreach_1.5.2            pillar_1.11.1           
+    #>  [79] stringr_1.6.0            limma_3.68.4             circlize_0.4.18         
+    #>  [82] splines_4.6.0            lattice_0.22-9           renv_1.2.3              
+    #>  [85] gmp_0.7-5.1              bit_4.6.0                tidyselect_1.2.1        
+    #>  [88] ComplexHeatmap_2.28.0    Biostrings_2.80.1        pbapply_1.7-4           
+    #>  [91] reformulas_0.4.4         Seqinfo_1.2.0            svglite_2.2.2           
+    #>  [94] RhpcBLASctl_0.23-42      xfun_0.59                statmod_1.5.2           
+    #>  [97] matrixStats_1.5.0        stringi_1.8.7            yaml_2.3.12             
+    #> [100] boot_1.3-32              evaluate_1.0.5           codetools_0.2-19        
+    #> [103] tibble_3.3.1             BiocManager_1.30.27      cli_3.6.6               
+    #> [106] systemfonts_1.3.2        Rdpack_2.6.6             jquerylib_0.1.4         
+    #> [109] Rcpp_1.1.1-1.1           EnvStats_3.1.0           png_0.1-9               
+    #> [112] parallel_4.6.0           pkgdown_2.2.0            ggplot2_4.0.3           
+    #> [115] blob_1.3.0               prettyunits_1.2.0        ClusterR_1.3.6          
+    #> [118] bitops_1.0-9             lme4_2.0-1               mvtnorm_1.4-1           
+    #> [121] lmerTest_3.2-1           scales_1.4.0             purrr_1.2.2             
+    #> [124] crayon_1.5.3             writexl_1.5.4            fANCOVA_0.6-1           
+    #> [127] GetoptLong_1.1.1         rlang_1.2.0              KEGGREST_1.52.2

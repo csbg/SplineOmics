@@ -60,8 +60,11 @@ fractional abundances, etc.).
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
-    time. The data must have no NA values, should have normally
-    distributed features and no dependence between the samples.
+    time. The matrix must be numeric. Partial `NA` values are tolerated
+    by `limma`, but rows or columns that are entirely `NA` are rejected;
+    imputation or filtering sparse features is still recommended for
+    reliable results. Features should ideally be normally distributed,
+    with no dependence between samples.
 
 2.  **Meta**: A table with metadata on the columns/samples of the data
     matrix (e.g., batch, time point, etc.)
@@ -77,40 +80,64 @@ With `SplineOmics`, you can:
 
   The
   [`explore_data()`](https://csbg.github.io/SplineOmics/reference/explore_data.md)
-  function generates an HTML report, containing various plots, such as
-  density, PCA, and correlation heatmap plots ([example
+  function generates an HTML report with plots such as density, PCA, and
+  correlation heatmaps ([example
   report](https://csbg.github.io/SplineOmics_html_reports/explore_data_PTX.html)).
 
-- **Perform limma spline analysis:**
+- **Perform limma spline analysis (with optional automatic tuning):**
 
-  Use the
+  Use
   [`run_limma_splines()`](https://csbg.github.io/SplineOmics/reference/run_limma_splines.md)
-  function to perform the `limma` analysis with splines once the optimal
-  hyperparameters are identified ([example
+  for spline-based `limma` testing. Set `spline_params$dof = 0` to
+  select spline degrees of freedom by leave-one-out cross-validation;
+  for mixed models, set `dream_params$dof = 0` similarly. Use
+  [`create_limma_report()`](https://csbg.github.io/SplineOmics/reference/create_limma_report.md)
+  for the HTML summary ([example
   report](https://csbg.github.io/SplineOmics_html_reports/create_limma_report_PTX.html)).
 
-- **Find jumps and drops in the timecourse:**
+- **Detect local peaks, valleys, and cliffs (PVC analysis):**
 
-  Use the
   [`find_pvc()`](https://csbg.github.io/SplineOmics/reference/find_pvc.md)
-  function for that ([example
+  runs the statistical excursion test;
+  [`create_pvc_report()`](https://csbg.github.io/SplineOmics/reference/create_pvc_report.md)
+  builds plots and the HTML report ([example
   report](https://csbg.github.io/SplineOmics_html_reports/pvc_report_PPTX.html)).
 
 - **Cluster significant features:**
 
-  Cluster the significant features (hits) identified in the spline
-  analysis with the
   [`cluster_hits()`](https://csbg.github.io/SplineOmics/reference/cluster_hits.md)
-  function ([example
+  clusters hits by spline shape;
+  [`create_clustering_report()`](https://csbg.github.io/SplineOmics/reference/create_clustering_report.md)
+  generates the HTML report ([example
   report](https://csbg.github.io/SplineOmics_html_reports/report_clustered_hits_PTX.html)).
 
-- **Run ORA with clustered hits:**
+- **Run over-representation analysis (ORA) on clustered hits:**
 
-  Perform over-representation analysis (ORA) using the clustered hits
-  with the
   [`run_ora()`](https://csbg.github.io/SplineOmics/reference/run_ora.md)
-  function ([example
+  performs clusterProfiler `enricher`-style ORA on gene sets per
+  cluster;
+  [`create_ora_report()`](https://csbg.github.io/SplineOmics/reference/create_ora_report.md)
+  produces the HTML report ([example
   report](https://csbg.github.io/SplineOmics_html_reports/run_ora_report.html)).
+  Download gene-set libraries with
+  [`download_enrichr_databases()`](https://csbg.github.io/SplineOmics/reference/download_enrichr_databases.md)
+  or
+  [`extract_gene_sets()`](https://csbg.github.io/SplineOmics/reference/extract_gene_sets.md)
+  from Bioconductor organism databases.
+
+- **Compare two SplineOmics analyses:**
+
+  [`compare_results()`](https://csbg.github.io/SplineOmics/reference/compare_results.md)
+  correlates and contrasts hit sets and adjusted p-values between two
+  result objects.
+
+- **Cluster genes across multiple omics modalities:**
+
+  [`cluster_genes_multiomics()`](https://csbg.github.io/SplineOmics/reference/cluster_genes_multiomics.md)
+  integrates gene-centric multi-omics trajectories; visualize with
+  [`plot_umap_clusters()`](https://csbg.github.io/SplineOmics/reference/plot_umap_clusters.md)
+  (see the [multi-omics
+  vignette](https://csbg.github.io/SplineOmics/articles/Gene_centric_multiomics_clustering.html)).
 
 ## 🔧 Installation
 
@@ -124,8 +151,8 @@ GitHub repository into your R environment.
 
 #### Prerequisites
 
-- Ensure **R** is installed on your system. If not, download and install
-  it from [CRAN](https://cran.r-project.org/).
+- **R** (\>= 4.5.0) is required for the current release. If needed,
+  download and install R from [CRAN](https://cran.r-project.org/).
 - **RStudio** is recommended for a more user-friendly experience with R.
   Download and install RStudio from
   [posit.co](https://posit.co/download/rstudio-desktop/).
@@ -145,6 +172,7 @@ necessary, and you can safely ignore this message.
 2.  Create a **virtual environment** with `renv`
 
 ``` r
+
 renv::init()
 ```
 
@@ -152,12 +180,14 @@ renv::init()
     already installed)
 
 ``` r
+
 install.packages("BiocManager")
 ```
 
 4.  Install required Bioconductor packages
 
 ``` r
+
 BiocManager::install(
   c("ComplexHeatmap", "limma", "variancePartition")
   # force = TRUE   # when encountering issues
@@ -167,27 +197,30 @@ BiocManager::install(
 5.  Install `remotes` for GitHub package installation
 
 ``` r
+
 install.packages("remotes")
 ```
 
-5.  **Install** the **`SplineOmics`** package from GitHub and all its
+6.  **Install** the **`SplineOmics`** package from GitHub and all its
     non-Bioconductor dependencies, using `remotes`
 
 ``` r
+
 remotes::install_github(
   "csbg/SplineOmics",   # GitHub repository
-  ref = "<tag>",        # Version to install, e.g. v0.4.2 
+  ref = "<tag>",        # Version to install, e.g. v0.4.4 
   dependencies = TRUE,  # Install all dependencies
   upgrade = "always"    # Always upgrade dependencies
   # force = TRUE        # when encountering issues
 )
 ```
 
-6.  **Verify** the **installation** of the `SplineOmics` package:
+7.  **Verify** the **installation** of the `SplineOmics` package:
 
 ``` r
+
 pkg <- "SplineOmics"
-ver <- "0.4.2"
+ver <- "0.4.4"
 
 status <- tryCatch({
   library(pkg, character.only = TRUE)
@@ -207,6 +240,7 @@ The website only contains the documentation for the most recent
 installed version, run:
 
 ``` r
+
 help(package="SplineOmics")
 ```
 
@@ -303,6 +337,7 @@ Centered Log Ratio (CLR) transformation to the data with the clr
 function from the compositions package:
 
 ``` r
+
 library(compositions)
 clr_transformed_data <- clr(data_matrix)  # use as SplineOmics input
 ```
@@ -314,13 +349,13 @@ of the data, log2 transform your data instead and use that as input for
 the `SplineOmics` package.
 
 ``` r
+
 log2_transformed_data <- log2(data_matrix)  # use as SplineOmics input
 ```
 
 ### R Version
 
-Depending on the version of `SplineOmics`, for the most recent, 4.5.0 or
-higher.
+SplineOmics 0.4.4 requires **R \>= 4.5.0**.
 
 ## ❓ Getting Help
 
