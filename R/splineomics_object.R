@@ -49,7 +49,11 @@
 #' how feature names displayed above each spline plot were created. Use the same
 #' vector that was used to create the row headers for the data matrix.
 #'
-#' @param design `matrix` | `NULL`: Design matrix or similar object (optional).
+#' @param design `character(1)` | `NULL`: A character string representing the
+#' limma design formula (optional). For example, `"~ 1 + Phase*Time +
+#' Reactor"` for an integrated design, or `"~ 1 + Time + Reactor"` for an
+#' isolated design. Must include `Time` as a fixed effect. Random effects
+#' are specified in the formula (e.g. `(1|Reactor)`).
 #'
 #' @param use_array_weights `logical(1)`: Boolean flag indicating whether to use
 #' the robust fitting strategy to handle heteroskedasticity. If `NULL`, this is
@@ -137,8 +141,8 @@
 #' # Dream params example (optional)
 #' toy_dream <- list(dof = 3L, KenwardRoger = FALSE)
 #'
-#' # Simple design matrix (intercept + condition + time)
-#' toy_design <- stats::model.matrix(~ Condition + Time, data = toy_meta)
+#' # Design formula (isolated mode: no condition term)
+#' toy_design <- "~ 1 + Time + Batch"
 #'
 #' # Required report fields
 #' toy_report <- list(
@@ -234,6 +238,7 @@ create_splineomics <- function(
 #' )
 #' toy_meta <- data.frame(
 #'     SampleID = colnames(toy_data),
+#'     Time = c(0, 0, 1, 1),
 #'     Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
 #'     stringsAsFactors = FALSE,
 #'     row.names = colnames(toy_data)
@@ -245,8 +250,8 @@ create_splineomics <- function(
 #'     condition = toy_meta$Condition
 #' )
 #'
-#' # Update the mode and add a new design matrix
-#' new_design <- model.matrix(~Condition, data = toy_meta)
+#' # Update the mode and design formula
+#' new_design <- "~ 1 + Condition*Time"
 #' so_updated <- update_splineomics(so,
 #'     mode = "integrated",
 #'     design = new_design

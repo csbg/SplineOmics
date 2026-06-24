@@ -72,7 +72,10 @@ specifying secondary batch information (optional).}
 how feature names displayed above each spline plot were created. Use the same
 vector that was used to create the row headers for the data matrix.}
 
-\item{design}{\code{matrix} | \code{NULL}: Design matrix or similar object (optional).}
+\item{design}{\code{character(1)} | \code{NULL}: A character string representing the
+limma design formula (optional). For example, \code{"~ 1 + Phase*Time + Reactor"} for an integrated design, or \code{"~ 1 + Time + Reactor"} for an
+isolated design. Must include \code{Time} as a fixed effect. Random effects
+are specified in the formula (e.g. \code{(1|Reactor)}).}
 
 \item{use_array_weights}{\code{logical(1)}: Boolean flag indicating whether to use
 the robust fitting strategy to handle heteroskedasticity. If \code{NULL}, this is
@@ -170,8 +173,8 @@ toy_bp <- c(n_cores = 1, blas_threads = 1)
 # Dream params example (optional)
 toy_dream <- list(dof = 3L, KenwardRoger = FALSE)
 
-# Simple design matrix (intercept + condition + time)
-toy_design <- stats::model.matrix(~ Condition + Time, data = toy_meta)
+# Design formula (isolated mode: no condition term)
+toy_design <- "~ 1 + Time + Batch"
 
 # Required report fields
 toy_report <- list(

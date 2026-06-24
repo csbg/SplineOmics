@@ -25,6 +25,7 @@ toy_data <- matrix(rnorm(12),
 )
 toy_meta <- data.frame(
     SampleID = colnames(toy_data),
+    Time = c(0, 0, 1, 1),
     Condition = c("Ctrl", "Ctrl", "Trt", "Trt"),
     stringsAsFactors = FALSE,
     row.names = colnames(toy_data)
@@ -36,8 +37,8 @@ so <- create_splineomics(
     condition = toy_meta$Condition
 )
 
-# Update the mode and add a new design matrix
-new_design <- model.matrix(~Condition, data = toy_meta)
+# Update the mode and design formula
+new_design <- "~ 1 + Condition*Time"
 so_updated <- update_splineomics(so,
     mode = "integrated",
     design = new_design
