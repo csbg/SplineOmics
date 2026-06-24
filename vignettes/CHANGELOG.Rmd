@@ -51,13 +51,19 @@ Each release section should follow the structure below:
 
 --------------------------------------------------------------------------------
 
-### [v0.4.4]  (in preparation)
+### [v0.4.4] - 2026-03-25
 
 #### Added
 
 -   cluster_genes_multiomics() now returns shape archetypes for many-to-one
     layers, and the centroids for those layers are returned without
     normalization.
+
+#### Changed
+
+-   Updated package documentation (README, vignettes, and FAQ) to match
+    the current API: ORA workflow, analysis/report splits, spline dof
+    tuning, and missing-value guidance.
 
 
 ### [v0.4.3]
