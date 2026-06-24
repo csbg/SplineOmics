@@ -80,7 +80,7 @@ of the condition. This approach ensures that the analysis appropriately handles
 the hierarchical structure of the data and avoids incorrect conclusions.
 
 In this vignette, we will demonstrate how to use linear mixed models to
-address these challenges and properly account for both reactor and plate
+address these challenges and properly account for both reactor and batch
 effects.
 
 ### Further info
@@ -262,11 +262,12 @@ the report for the batch-corrected data.
 
 # Run limma spline analysis
 
-In this example, we are skipping finding the best hyperparameters with
-the screen_limma_hyperparams() function, because we already have a clear
-idea of what do use.
+We set spline parameters manually here (`dof = 2`). Alternatively, set
+`spline_params$dof = 0` in `update_splineomics()` to let
+`run_limma_splines()` choose the degrees of freedom by leave-one-out
+cross-validation (see the **get_started** vignette).
 
-Lets define our parameters and put them into the `SplineOmics` object:
+Define the parameters and store them in the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
 splineomics <- SplineOmics::update_splineomics(
@@ -276,8 +277,8 @@ splineomics <- SplineOmics::update_splineomics(
     design = "~ 1 + Condition*Time + Batch + (1|Reactor)",
     mode = "integrated", # means limma uses the full data for each condition.
     spline_params = list(
-        spline_type = c("n"), 
-        dof = c(2L) 
+        spline_type = c("n"),
+        dof = c(2L) # use 0L for automatic selection via LOOCV
     )
 )
 ```
@@ -294,15 +295,13 @@ splineomics <- SplineOmics::run_limma_splines(
 )
 ```
 
-Note that for our dataset, the Wilcoxon signed rank exact test revealed that we
-have a problem of heteroscedasticity for our data. This means that the variance
-between the samples is significantly higher in the stationary phase compared to
-the exponential phase. This is a violation for the assumption of
-homoscedasticity of linear models, which means that the derived p-values are not
-trustworthy. To adress this issue, limma has a function (arrayWeights) which 
-downweights samples with higher variance, which we then use here automatically.
-Further, the eBayes function of limma with the robust = TRUE argument avoids
-using variance "outliers" for the variance shrinkage.
+Heteroscedasticity (unequal variance across samples) can affect CLR-
+transformed glycan data as well. In this example we set
+`use_array_weights = FALSE` for a fixed robustness choice. For your own
+data, consider `use_array_weights = NULL` so SplineOmics applies array
+weights automatically when the Levene test indicates heteroscedasticity,
+or set it to `TRUE` to always use `limma` array weights with robust
+`eBayes`. See the [FAQ](faq.html) and `create_splineomics()` for details.
 
 # Build limma report
 
