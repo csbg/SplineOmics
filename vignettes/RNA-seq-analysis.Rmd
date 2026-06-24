@@ -113,11 +113,11 @@ The main objectives of this analysis are:
     significant temporal changes (hits) will be grouped into clusters
     based on their time-dependent expression patterns.
 
--   **Perform gene set enrichment analysis**: For each cluster, a gene
-    set enrichment analysis will be conducted to identify whether
-    specific biological pathways or processes are up- or downregulated
-    in response to feeding and how these processes are influenced by the
-    temperature shift.
+-   **Perform over-representation analysis (ORA)**: For each cluster,
+    ORA will be conducted to identify whether specific biological
+    pathways or processes are over-represented among clustered hits and
+    how enrichment differs between constant-temperature and
+    temperature-shifted conditions.
 
 -   **Assess the impact of temperature shifts on temporal patterns**:
     The analysis will determine whether the temporal patterns of gene
@@ -268,16 +268,17 @@ the report for the batch-corrected data.
 
 # Run limma spline analysis
 
-In this example, we are skipping finding the best hyperparameters with
-the screen_limma_hyperparams() function, because we already have a clear
-idea of what do use.
+We set spline parameters manually here (`dof = 3`). Alternatively, set
+`spline_params$dof = 0` in `update_splineomics()` to let
+`run_limma_splines()` choose the degrees of freedom by leave-one-out
+cross-validation (see the **get_started** vignette).
 
-Lets define our parameters and put them into the `SplineOmics` object:
+Define the parameters and store them in the `SplineOmics` object:
 
 ```{r Update the SplineOmics object, eval = TRUE}
 spline_params <- list(
     spline_type = c("n"), # natural cubic splines
-    dof = c(3L) # Degree of freedom of 3 for the splines.
+    dof = c(3L) # degrees of freedom; use 0L for automatic selection
 )
 
 design <- "~ 1 + Condition*Time + Plate + (1|Reactor)"
@@ -447,12 +448,13 @@ cluster_hits() report shows the results of all three, if they are
 present (category 2 and 3 can only be generated when the design formula
 contains an interaction effect).
 
-# Perform gene set enrichment analysis (GSEA)
+# Perform over-representation analysis (ORA)
 
-Once the clustered hits are identified, a subsequent step to gain biological 
-insights is to perform GSEA. For this, the respective genes can be assigned to 
-each clustered hit, and GSEA can be carried out. To proceed, the Enrichr 
-databases of choice need to be downloaded:
+Once the clustered hits are identified, a subsequent step to gain
+biological insights is to perform **over-representation analysis
+(ORA)**. For each cluster, genes assigned to clustered hits can be
+tested for enrichment against gene-set libraries. To proceed, download
+the Enrichr databases of choice:
 
 ```{r download Enrichr databases, eval = FALSE}
 # Specify which databases you want to download from Enrichr
@@ -481,13 +483,13 @@ SplineOmics::download_enrichr_databases(
 Per default the file is placed in the current working directory, which
 is the root dir of the R project.
 
-To run GSEA, the downloaded database file has to be loaded as a
-dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function create_gsea_report() runs GSEA
-using clusterProfiler, generates an HTML report and returns the GSEA
-dotplots in R.
+To run ORA, load the downloaded database file as a data frame and
+optionally set `clusterProfiler` parameters. `run_ora()` performs
+over-representation analysis with **clusterProfiler** and returns
+enrichment results plus a `report_payload` for reporting. It does not
+write HTML or plots; use `create_ora_report()` for that (see below).
 
-```{r prepare arguments for GSEA, eval = FALSE}
+```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
 downloaded_dbs_filepath <- file.path(
     tempdir(),
@@ -512,7 +514,7 @@ clusterProfiler_params <- list(
 report_dir <- file.path(
     tempdir(),
     "results",
-    "gsea_reports"
+    "ora_reports"
 )
 ```
 
@@ -541,7 +543,7 @@ plots <- SplineOmics::create_ora_report(
 )
 ```
 
-You can view the generated analysis report of the run_gsea function
+You can view the generated ORA HTML report from `create_ora_report()`
 [here](https://drive.google.com/uc?export=view&id=1EvPiEwHyGnBQFxRets00s87tochgyGK4).
 
 # Session Info
