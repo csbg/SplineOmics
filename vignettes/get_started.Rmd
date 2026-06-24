@@ -152,10 +152,12 @@ kable(
 
 Three comments about the characteristics the input data should have:
 
--   The data must not contain any NA values or other special values, and
-    must consist only of numbers. For example, the original proteomics
-    data contained some NA values, which were resolved in this case by
-    imputation (replacing NA values with numbers).
+-   The data must be a numeric matrix without non-numeric values.
+    Partial `NA` values are tolerated by `limma`, but rows or columns
+    that are entirely `NA` are rejected. For reliable results, imputation
+    or filtering is still recommended — for example, the original
+    proteomics data contained some `NA` values, which were imputed before
+    this analysis.
 
 -   All features of the data should ideally be normally distributed when
     analyzed with `limma`, which fits a linear model to each feature.

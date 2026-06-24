@@ -75,8 +75,11 @@ fractional abundances, etc.).
 
 1.  **Data**: A data matrix where each row is a feature (e.g., protein,
     metabolite, etc.) and each column is a sample taken at a specific
-    time. The data must have no NA values, should have normally
-    distributed features and no dependence between the samples.
+    time. The matrix must be numeric. Partial `NA` values are tolerated
+    by `limma`, but rows or columns that are entirely `NA` are rejected;
+    imputation or filtering sparse features is still recommended for
+    reliable results. Features should ideally be normally distributed,
+    with no dependence between samples.
 
 2.  **Meta**: A table with metadata on the columns/samples of the data
     matrix (e.g., batch, time point, etc.)

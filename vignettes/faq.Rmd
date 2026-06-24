@@ -24,16 +24,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Does SplineOmics handle missing values?
 
-Yes. SplineOmics can handle missing values gracefully because it uses
-`limma` as the statistical engine for model fitting and differential
-analysis. The `limma` package is designed to work with incomplete
-expression matrices — missing values are simply ignored when estimating
-model parameters and computing contrasts, without causing errors.
+**Partially.** SplineOmics uses `limma`, which can fit models when the
+data matrix contains some `NA` values — `limma` ignores missing entries
+when estimating coefficients and contrasts.
 
-This means you do not necessarily need to impute or remove features with
-a few missing entries before running SplineOmics. However, if a feature
-has too many missing values (for example, across most samples), consider
-removing it.
+SplineOmics still enforces basic checks on the input matrix:
+
+-   **Allowed:** sparse missing values in otherwise valid rows and
+    columns (you may see an informative message when `verbose = TRUE`).
+-   **Rejected:** rows or columns where **all** values are `NA`.
+-   **Required:** a numeric `matrix` (no non-numeric entries).
+
+**Recommendation:** impute or remove features with many missing values
+before analysis. Sparse `NA`s may run, but imputation (or complete-case
+filtering) usually gives more stable p-values and plots. The
+**get_started** vignette imputes missing proteomics values for this
+reason.
+
+In short: you do not always need a fully complete matrix, but treating
+the data as complete after thoughtful preprocessing remains best
+practice.
 
 ------------------------------------------------------------------------
 

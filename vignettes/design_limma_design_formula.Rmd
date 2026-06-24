@@ -1,6 +1,7 @@
 ---
 title: "Designing a Limma Design Formula"
-author: "Your Name"
+author: "Thomas Rauter"
+date: "21 January, 2025"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Designing a Limma Design Formula}
