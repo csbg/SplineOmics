@@ -47,16 +47,16 @@ setup:
 
 The main goals of this analysis are:
 
--   **Identify proteins with significant temporal changes**: Out of 7162
-    cellular proteins, the objective is to detect which proteins show a
-    significant change over time after the CHO cells were fed (i.e., the
-    impact of the feeding).
+-   **Identify proteins with significant temporal changes**: Among the
+    1165 proteins in this example dataset, the objective is to detect
+    which proteins show a significant change over time after the CHO
+    cells were fed (i.e., the impact of the feeding).
 -   **Cluster hits based on temporal patterns**: The proteins (hits)
     with significant temporal changes will be clustered according to
     their time-based patterns.
--   **Perform gene set enrichment analysis**: For each cluster, a gene
-    set enrichment analysis will be performed to determine if specific
-    biological processes are up- or downregulated after feeding.
+-   **Perform over-representation analysis (ORA)**: For each cluster,
+    ORA will be performed to determine if specific biological processes
+    are over-represented among the clustered hits after feeding.
 
 ### Note
 
@@ -247,45 +247,28 @@ can handle this for you.
 
 ### Using `explore_data()` for EDA
 
-The **SplineOmics** package provides the function `explore_data()` to
-perform EDA. This function requires the following arguments:
+The **SplineOmics** package provides `explore_data()` to run EDA from a
+**SplineOmics** object (created with `create_splineomics()`; see below).
+The object must already contain `data`, `meta`, `condition`, and
+`report_info`. Optional batch columns (`meta_batch_column`,
+`meta_batch2_column`) are also read from the object.
 
--   **data**: The numeric data matrix.
--   **meta**: The metadata table.
--   **condition**: The name of the column in the metadata that contains
-    the levels of the experiment (e.g., "Exponential" and "Stationary").
--   **report_info**: A list that contains general information about the
-    analysis, such as the name of the analyst and the datatype (e.g.
-    proteomics)
+**Function arguments:**
 
-### Optional Arguments
+-   **`splineomics`**: The SplineOmics object with the inputs above.
+-   **`report_dir`**: Directory where HTML reports are saved (defaults
+    to `tempdir()`).
+-   **`report`**: Logical; set to `FALSE` to return plots only and skip
+    the HTML report.
 
-In addition to the required arguments, `explore_data()` offers several
-optional arguments:
+If at least one batch column was set in `create_splineomics()`, the
+function will:
 
--   **meta_batch_column**: The name of the column that contains the
-    first batch effect.
+-   Use `limma::removeBatchEffect()` before plotting.
+-   Generate two EDA HTML reports: one for **uncorrected data** and one
+    for **batch-corrected data**.
 
--   **meta_batch2_column**: The name of the column that contains the
-    second batch effect.
-
-    If at least one batch column is provided, the function will:
-
-    -   Use the `removeBatchEffect()` function from **limma** to remove
-        the batch effect from the data before plotting.
-    -   Generate two EDA HTML reports: one for the **uncorrected data**
-        and one for the **batch-corrected data**.
-
-### Output and Report Options
-
--   By default, the reports are saved in the **current working
-    directory**, but this location can be changed using the `report_dir`
-    argument.
--   The function also **returns all plots** generated during the
-    analysis, so that you can modify them according to your own needs.
--   If you do not want a report to be generated, you can set the
-    `report` argument to `FALSE` (when you for example just want the
-    figures in the R environment)
+The function **returns all plots** as a named list of ggplot objects.
 
 ```{r Load EDA arguments, eval = TRUE}
 # Those fields are mandatory, because we believe that when such a report is
@@ -309,13 +292,11 @@ report_dir <- file.path(
 ## SplineOmics Object
 
 In the SplineOmics package, multiple functions take the same arguments
-as input. To make this easier and to avoid errors, we decided that those
-arguments are not provided individually to the functions, but are all
-stored in an R6 object (which is of type 'SplineOmics') and then this
-object is passed to the functions. Additionally, some functions generate
-intermediate output, which is just necessary for the next function in
-the workflow, which is then also just passed along by updating the
-SplineOmics object. But you don't have to worry about this.
+as input. To make this easier and to avoid errors, those arguments are
+stored in an S3 object of class `SplineOmics` (a named list) and passed
+to downstream functions. Additionally, some functions add intermediate
+results back into the object via `update_splineomics()`. You do not need
+to manage those updates manually beyond calling the workflow functions.
 
 ### Functionality
 
@@ -329,7 +310,7 @@ The documentation of the function that creates the SplineOmics object
 can be found
 [here](https://csbg.github.io/SplineOmics/reference/create_splineomics.html)
 and the documentation of the function that updates it
-[[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html)
+[here](https://csbg.github.io/SplineOmics/reference/update_splineomics.html).
 
 The documentation for each function that takes the SplineOmics object as
 input specifies which arguments must be present in the SplineOmics
@@ -437,11 +418,16 @@ splineomics <- SplineOmics::update_splineomics(
     use_array_weights = FALSE,
     spline_params = list(
         spline_type = c("n"), # natural cubic splines (take these if unsure)
-        # If you are unsure about which dof, start with 2 and increase
-        dof = c(2L) 
+        # If unsure about dof, start with 2 and increase; or set dof = 0
+        # for automatic selection via leave-one-out cross-validation.
+        dof = c(2L)
     )
 )
 ```
+
+Setting `spline_params$dof = 0` lets `run_limma_splines()` choose the
+spline degrees of freedom by leave-one-out cross-validation instead of
+using a fixed value.
 
 Run the `run_limma_splines()` function with the updated SplineOmics
 object:
@@ -653,11 +639,11 @@ SplineOmics::download_enrichr_databases(
 )
 ```
 
-To run ORA, the downloaded database file has to be loaded as a
-dataframe. Further, optionally, the clusterProfiler parameters and the
-report dir can be specified. The function run_ora() runs ORA using
-clusterProfiler, generates an HTML report and returns the ORA dotplots
-in R.
+To run ORA, load the downloaded database file as a data frame and
+optionally set `clusterProfiler` parameters. `run_ora()` performs
+over-representation analysis with **clusterProfiler** and returns
+enrichment results plus a `report_payload` for reporting. It does not
+write HTML or plots; use `create_ora_report()` for that (see below).
 
 ```{r prepare arguments for ORA, eval = FALSE}
 # Specify the filepath of the TSV file with the database info
@@ -703,7 +689,7 @@ plots <- SplineOmics::create_ora_report(
 )
 ```
 
-You can view the generated analysis report of the run_ora function
+You can view the generated ORA HTML report from `create_ora_report()`
 [here](https://csbg.github.io/SplineOmics_html_reports/run_ora_report_PTX.html).
 
 This report first shows all enrichment results, where more than 2 genes
